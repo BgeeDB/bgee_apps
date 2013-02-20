@@ -6,7 +6,7 @@
   
   <parent>
     <groupId>org.bgee</groupId>
-    <artifactId>bgee-project</artifactId>
+    <artifactId>bgee-applications</artifactId>
     <version>13</version>
   </parent>
   

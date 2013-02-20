@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   
   <groupId>org.bgee</groupId>
-  <artifactId>bgee-project</artifactId>
+  <artifactId>bgee-applications</artifactId>
   <packaging>pom</packaging>
   <version>13</version>
   <name>Bgee</name>

@@ -83,7 +83,7 @@ public class OWLGraphReducerTest
 	 * {@link org.bgee.pipeline.uberon.OWLGraphReducer#filterRelations(Collection, boolean)}.
 	 */
 	@Test
-	public void filterRelationsTest()
+	public void shouldFilterRelationsTest()
 	{
 		
 	}

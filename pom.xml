@@ -89,6 +89,12 @@
         <version>0.2.1-SNAPSHOT</version>
         <scope>compile</scope>
       </dependency>
+      <dependency>
+        <groupId>sbc.orthoxml</groupId>
+        <artifactId>orthoxml</artifactId>
+        <version>0.1b</version>
+        <scope>compile</scope>
+      </dependency>
       <!-- End for pipeline -->
     
       <!-- Needed for the webapp -->

@@ -27,6 +27,11 @@
       <artifactId>OWLTools-Parent</artifactId>
     </dependency>
       
+    <dependency>
+      <groupId>sbc.orthoxml</groupId>
+      <artifactId>orthoxml</artifactId>
+    </dependency>
+      
   </dependencies>
   
   <build>

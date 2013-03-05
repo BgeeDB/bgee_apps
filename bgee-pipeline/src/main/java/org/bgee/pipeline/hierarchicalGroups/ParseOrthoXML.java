@@ -2,6 +2,9 @@ package org.bgee.pipeline.hierarchicalGroups;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,19 +19,38 @@ import sbc.orthoxml.io.OrthoXMLReader;
 
 /**
  * This class parses the orthoxml file which contains all the data of the
- * hierarchical orthologus groups obtained from OMA. It retreives all the data
+ * hierarchical orthologus groups obtained from OMA. It retrieves all the data
  * pertaining to the orthologus genes
  * 
- * @author vampire
+ * @author Komal Sanjeev
  * 
  */
 public class ParseOrthoXML {
 
-	private static long initialID = 1;
+	private static long hierarchicalGroupId = 1;
 	private static long nestedSetId = 1;
 
+	/**
+	 * Performs the complete task of reading the orthoxml file and adding the
+	 * data into the database.
+	 * <p>
+	 * 
+	 * 
+	 * @throws FileNotFoundException
+	 *             if the OrthoXMLReader cannot find the file
+	 * @throws XMLStreamException
+	 *             if there is an error in the well-formedness of the XML or
+	 *             other unexpected processing errors.
+	 * @throws XMLParseException
+	 *             if there is an error in parsing the XML retrieved by the
+	 *             PrthoXMLReader
+	 * @throws SQLException
+	 *             if there is an error establishing a connection to the
+	 *             database
+	 * 
+	 */
 	public void parseXML() throws FileNotFoundException, XMLStreamException,
-			XMLParseException {
+			XMLParseException, SQLException {
 
 		// Get the orthoXML file.
 		String orthoXmlFile = this.getClass().getResource("").toString();
@@ -36,14 +58,14 @@ public class ParseOrthoXML {
 
 		OrthoXMLReader reader = new OrthoXMLReader(file);
 
-		ParseOrthoXML.initialID = 1;
+		ParseOrthoXML.hierarchicalGroupId = 1;
 		Group group;
 
 		// read all the groups in the file iteratively
 		while ((group = reader.next()) != null) {
 
 			Node rootNode = new Node();
-			rootNode.setNodeId(ParseOrthoXML.initialID++);
+			rootNode.setNodeId(ParseOrthoXML.hierarchicalGroupId++);
 
 			// Build the tree of the current group
 			BuildTree(group, rootNode);
@@ -53,9 +75,6 @@ public class ParseOrthoXML {
 			// store them as a nested set.
 			ParseOrthoXML.nestedSetId = 0;
 			buildNestedSet(rootNode);
-
-			// Print the tree
-			getTree(rootNode);
 
 			// Add data of the tree to database
 			addToHierarchicalGroupsTable(group, rootNode);
@@ -89,7 +108,7 @@ public class ParseOrthoXML {
 
 			// Make a new node object for every child, and set a unique ID
 			Node childNode = new Node();
-			childNode.setNodeId(ParseOrthoXML.initialID++);
+			childNode.setNodeId(ParseOrthoXML.hierarchicalGroupId++);
 
 			// Add that node as a child to the parent node
 			node.addChild(childNode);
@@ -100,7 +119,7 @@ public class ParseOrthoXML {
 			for (Gene gene : child.getGenes()) {
 				Node leaf = new Node();
 				childNode.addChild(leaf);
-				leaf.setNodeId(ParseOrthoXML.initialID++);
+				leaf.setNodeId(ParseOrthoXML.hierarchicalGroupId++);
 				leaf.setGeneID(gene.getProteinIdentifier());
 			}
 
@@ -122,7 +141,7 @@ public class ParseOrthoXML {
 	 * <p>
 	 * rightBound = leftBound + 2(number of child nodes) + 1
 	 * 
-	 * @param root
+	 * @param node
 	 *            the root <code>Node</code> of the tree whose nested set model
 	 *            is to be built.
 	 */
@@ -163,10 +182,6 @@ public class ParseOrthoXML {
 		return c;
 	}
 
-	public void getTree(Node node) {
-
-	}
-
 	/**
 	 * Add data of the <code>Tree</code> whose root <code>Node</code> is being
 	 * passed as a parameter.
@@ -182,17 +197,57 @@ public class ParseOrthoXML {
 	 *            the root node of the <code>Group</code> whose data is being
 	 *            added into the database
 	 * @throws SQLException
+	 *             if there is an error establishing a connection to the
+	 *             database
 	 */
-	public void addToHierarchicalGroupsTable(Group group, Node node) {
+	public void addToHierarchicalGroupsTable(Group group, Node node)
+			throws SQLException {
 
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e) {
+			System.out.println(e.toString());
+		}
+
+		Connection connection = DriverManager.getConnection(
+				"jdbc:mysql://localhost:3306/database", "username", "password");
+		String sql = "INSERT INTO hierarchicalGroup (uniqueRowId, hierarchicalGroupId, hierarchicalGroupLeftBound, hierarchicalGroupRightBound, "
+				+ "ncbiTaxonomyId, ncbiGeneId)" + " VALUES (?, ?, ?, ?, ?, ?)";
+
+		try {
+			PreparedStatement preparedStatement = connection
+					.prepareStatement(sql);
+			preparedStatement.setLong(1, node.getNodeId());
+			preparedStatement.setString(2, group.getId());
+			preparedStatement.setLong(3, node.getHierarchicalLeftBound());
+			preparedStatement.setLong(4, node.getHierarchicalRightBound());
+			preparedStatement.setString(5, node.getNcbiTaxonomyId());
+			preparedStatement.setString(6, node.getGeneID());
+			preparedStatement.executeUpdate();
+
+		} catch (SQLException e) {
+			System.out.println(e.toString());
+		} finally {
+			connection.close();
+		}
+
+		// Recurse!!
+		for (Node childNode : node.getChildNodes()) {
+			addToHierarchicalGroupsTable(group, childNode);
+		}
 	}
 
 	/**
 	 * Reads the species IDs of all the species present in the orthoxml file.
 	 * 
 	 * @throws XMLParseException
+	 *             if there is an error in parsing the XML retrieved by the
+	 *             OrthoXMLReader
 	 * @throws XMLStreamException
+	 *             if there is an error in the well-formedness of the XML or
+	 *             other unexpected processing errors.
 	 * @throws FileNotFoundException
+	 *             if the OrthoXMLReader cannot find the file
 	 */
 	public static void getSpecies(File file) throws FileNotFoundException,
 			XMLStreamException, XMLParseException {

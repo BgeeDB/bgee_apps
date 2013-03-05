@@ -62,7 +62,7 @@ public class Node {
 		this.setGeneID(null);
 	}
 
-	public Node(int data) {
+	public Node(long data) {
 		setNodeId(data);
 		this.setChildNodes(new ArrayList<Node>());
 		this.setHierarchicalLeftBound(0);
@@ -74,7 +74,7 @@ public class Node {
 	/**
 	 * @return the nodeId
 	 */
-	public long getId() {
+	public long getNodeId() {
 		return this.nodeId;
 	}
 
@@ -97,16 +97,16 @@ public class Node {
 	}
 
 	/**
-	 * @param children
-	 *            the children to set
+	 * @param childNodes
+	 *            the childNodes to set
 	 */
 	public void setChildNodes(List<Node> children) {
 		this.childNodes = children;
 	}
 
 	/**
-	 * @param child
-	 *            the child to add
+	 * @param childNode
+	 *            the childNode to add
 	 */
 	public void addChild(Node child) {
 		if (childNodes == null) {

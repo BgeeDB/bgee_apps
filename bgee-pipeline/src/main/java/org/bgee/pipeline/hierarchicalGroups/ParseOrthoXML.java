@@ -53,7 +53,9 @@ public class ParseOrthoXML {
 			XMLParseException, SQLException {
 
 		// Get the orthoXML file.
-		String orthoXmlFile = this.getClass().getResource("").toString();
+		String orthoXmlFile = this.getClass()
+				.getResource("/orthoxml/HierarchicalGroupsTest.orthoxml")
+				.toString();
 		File file = new File(orthoXmlFile);
 
 		OrthoXMLReader reader = new OrthoXMLReader(file);

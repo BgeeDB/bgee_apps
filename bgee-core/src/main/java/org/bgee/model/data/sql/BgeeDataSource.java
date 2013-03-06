@@ -77,10 +77,10 @@ public class BgeeDataSource
 			//here it is likely that we are in a standalone context, 
 			//then we don't need a DataSource and will rely on a classic DriverManager
 			log.info("No DataSource obtained from InitialContext using JNDI, register Driver {}", 
-					BgeeProperties.getJdbcDriverName());
+					BgeeProperties.getJdbcDriver());
 			//we register the Driver once 
 			try {
-				Class.forName(BgeeProperties.getJdbcDriverName());
+				Class.forName(BgeeProperties.getJdbcDriver());
 			} catch (ClassNotFoundException e1) {
 				log.error("Could not load Driver", e1);
 				driverRegErrTemp = true;

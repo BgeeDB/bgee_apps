@@ -35,9 +35,43 @@ public class BgeeProperties
 	 * to determine how <code>Connection</code>s should be obtained 
 	 * when a <code>DataSource</code> is not available (standalone context). 
 	 * <p>
+	 * Corresponds to the property <code>bgee.jdbc.driver</code>. 
 	 * If a <code>DataSource</code> was set (using JNDI), then this property is not used. 
 	 */
-	private static String jdbcDriverName;
+	private static String jdbcDriver;
+	/**
+	 * A <code>String</code> representing a database url of the form 
+	 * <code>jdbc:subprotocol:subname</code>, to connect to the database 
+	 * using the driver specified by <code>jdbcDriver</code>. 
+	 * An example is <code>jdbc:log4jdbc:mysql://127.0.0.1:3306/bgee_v12</code> 
+	 * <p>
+	 * IMPORTANT: Do NOT put in this URL the username and password you want to use. 
+	 * You need to set <code>jdbcUsername</code> and <code>jdbcPassword</code> instead. 
+	 * Otherwise you won't be able to use the method <code>getConnection(username, password)</code>, 
+	 * but only the method <code>getConnection()</code>. 
+	 * <p>
+	 * Corresponds to the property <code>bgee.jdbc.url</code>. 
+	 * If a DataSource was set (using JNDI), then this property is not used.
+	 */
+	private static String jdbcUrl;
+	/**
+	 * A <code>String</code> representing the default username to use to connect 
+	 * to the database specified in <code>jdbcUrl</code>, using the Driver specified in 
+	 * <code>jdbcDriver</code>. 
+	 * <p>
+	 * Corresponds to the property <code>bgee.jdbc.username</code>.
+	 * If a DataSource was set (using JNDI), then this property is not used.
+	 */
+	private static String jdbcUsername;
+	/**
+	 * A <code>String</code> representing the default password to use to connect 
+	 * to the database specified in <code>jdbcUrl</code>, using the Driver specified in 
+	 * <code>jdbcDriver</code>. 
+	 * <p>
+	 * Corresponds to the property <code>bgee.jdbc.password</code>.
+	 * If a DataSource was set (using JNDI), then this property is not used.
+	 */
+	private static String jdbcPassword;
 	
 	/**
 	 * Static initializer. 
@@ -54,79 +88,122 @@ public class BgeeProperties
 	}
 	
 	/**
-	 * Initialize all Bgee properties.
+	 * Initialize (or re-initialize) all Bgee properties.
 	 */
 	public static void init()
 	{
 		log.entry();
 		log.info("Bgee properties initialization...");
 
-		java.util.Properties props = new java.util.Properties(System.getProperties());
+		java.util.Properties sysProps = new java.util.Properties(System.getProperties());
 		//try to get the properties file.
 		//default name is bgee.properties
 		//check first if an alternative name has been provided in the System properties
-		String propertyFile = getStringOption(props, "bgee.properties.file", 
+		String propertyFile = sysProps.getProperty("bgee.properties.file", 
 				"/bgee.properties");
+		log.debug("Trying to use properties file {}", propertyFile);
 
+		java.util.Properties fileProps = null;
 		InputStream propStream =
 				BgeeProperties.class.getResourceAsStream(propertyFile);
 		if (propStream != null) {
 			try {
-				props.load(propStream);
+				fileProps = new java.util.Properties();
+				fileProps.load(propStream);
+				log.debug("{} loaded from classpath", propertyFile);
 			} catch (IOException e) {
-				log.error("Error when loading bgee.properties from classpath", e);
+				log.error("Error when loading properties file from classpath", e);
 			} finally {
 				try {
 					propStream.close();
 				} catch (IOException e) {
-					log.error("Error when closing bgee.properties file", e);
+					log.error("Error when closing properties file", e);
 				}
 			}
-			log.debug("bgee.properties loaded from classpath");
 		} else {
-			log.debug("bgee.properties not found in classpath. Using System properties.");
+			log.debug("{} not found in classpath. Using System properties only.", propertyFile);
 		}
 
-		jdbcDriverName = getStringOption(props, "bgee.jdbc.driver", null);
+		jdbcDriver   = getStringOption(sysProps, fileProps, "bgee.jdbc.driver", null);
+		jdbcUrl      = getStringOption(sysProps, fileProps, "bgee.jdbc.url", null);
+		jdbcUsername = getStringOption(sysProps, fileProps, "bgee.jdbc.username", null);
+		jdbcPassword = getStringOption(sysProps, fileProps, "bgee.jdbc.password", null);
 
 		log.info("Initialization done.");
 		log.exit();
 	}
 	
 	/**
-	 * Retrieve a property from <code>props</code> corresponding to <code>key</code>. 
-	 * Return <code>defaultValue</code> if the property is not defined or empty.
+	 * Try to retrieve the property corresponding to <code>key</code>, 
+	 * first from the System properties (<code>sysProps</code>), 
+	 * then, if undefined or empty, from properties retrieved from the Bgee property file 
+	 * (<code>fileProps</code>). If the property is undefined or empty 
+	 * in both <code>fileProps</code> and <code>sysProps</code>, 
+	 * return <code>defaultValue</code>.
 	 *
-	 * @param props 		<code>java.sql.Properties</code> to get the property from.
-	 * @param key		 	property key.
+	 * @param sysProps 		<code>java.sql.Properties</code> retrieved from System properties, 
+	 * 						where <code>key</code> is first searched in.
+	 * @param fileProps	 	<code>java.sql.Properties</code> retrieved 
+	 * 						from the Bgee properties file, 
+	 * 						where <code>key</code> is searched in if the property 
+	 * 						was undefined or empty in <code>sysProps</code>. 
+	 * 						Can be <code>null</code> if no properties file was found.
 	 * @param defaultValue	default value that will be returned if the property 
-	 * 						is not defined or empty.
+	 * 						is undefined or empty in both <code>Properties</code>.
 	 *
 	 * @return 			A <code>String</code> corresponding to the value
 	 * 					for that property key. 
 	 * 					Or <code>defaultValue</code> if not defined or empty.
 	 */
-	private static String getStringOption(java.util.Properties props, String key, 
+	private static String getStringOption(java.util.Properties sysProps, 
+			java.util.Properties fileProps, String key, 
 			String defaultValue)
 	{
-		log.entry(props, key);
+		log.entry(fileProps, sysProps, key, defaultValue);
 
-		String propValue = props.getProperty(key);
-		if (propValue == null || propValue.length()==0) {
-			log.debug("Property {} not defined, using default value {}", key, defaultValue);
-			propValue = defaultValue; 
+		String propValue = sysProps.getProperty(key);
+		
+		if (propValue != null && propValue.length() != 0) {
+			log.debug("Retrieved from System properties {}={}", key, propValue);
 		} else {
-			log.debug("Retrieved {}={}", key, propValue);
+			if (fileProps != null) {
+			    propValue = fileProps.getProperty(key);
+			}
+			if (propValue != null && propValue.length() != 0) {
+				log.debug("Retrieved from properties file {}={}", key, propValue);
+			} else {
+				log.debug("Property {} not defined neither in properties file nor in System properties, using default value {}", 
+						key, defaultValue);
+				propValue = defaultValue; 
+			}
 		}
 
 		return log.exit(propValue);
 	}
 	
 	/**
-	 * @return the jdbcDriverName
-	 * @see #jdbcDriverName
+	 * @return the jdbcDriver
+	 * @see #jdbcDriver
 	 */
-	public static String getJdbcDriverName() {
-		return jdbcDriverName;
+	public static String getJdbcDriver() {
+		return jdbcDriver;
+	}
+	/**
+	 * @return the {@link #jdbcUrl}
+	 */
+	public static String getJdbcUrl() {
+		return jdbcUrl;
+	}
+	/**
+	 * @return the {@link #jdbcUsername}
+	 */
+	public static String getJdbcUsername() {
+		return jdbcUsername;
+	}
+	/**
+	 * @return the {@link #jdbcPassword}
+	 */
+	public static String getJdbcPassword() {
+		return jdbcPassword;
 	}
 }

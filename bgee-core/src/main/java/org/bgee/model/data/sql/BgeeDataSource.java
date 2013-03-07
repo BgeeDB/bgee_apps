@@ -103,14 +103,21 @@ public class BgeeDataSource
 		} catch (NamingException e) {
 			//here it is likely that we are in a standalone context, 
 			//then we don't need a DataSource and will rely on a classic DriverManager
-			log.info("No DataSource obtained from InitialContext using JNDI, register Driver {}", 
-					BgeeProperties.getJdbcDriver());
-			//we register the Driver once 
-			try {
-				Class.forName(BgeeProperties.getJdbcDriver());
-			} catch (ClassNotFoundException e1) {
-				log.error("Could not load Driver", e1);
-				driverRegErrTemp = true;
+			//if the name of a driver was provide, try to load it, 
+			//otherwise, only the URL to connect will be used
+			if (BgeeProperties.getJdbcDriver() != null) {
+				log.info("No DataSource obtained from InitialContext using JNDI, register Driver {}", 
+						BgeeProperties.getJdbcDriver());
+				//we register the Driver once 
+				try {
+					Class.forName(BgeeProperties.getJdbcDriver());
+				} catch (ClassNotFoundException e1) {
+					log.error("Could not load Driver", e1);
+					driverRegErrTemp = true;
+				}
+			} else {
+				log.info("Will rely on URL to identify proper Driver: {}", 
+						BgeeProperties.getJdbcUrl());
 			}
 		}
 		realDataSource = dataSourceTemp;
@@ -154,7 +161,15 @@ public class BgeeDataSource
 		log.exit();
 	}
 	
-	
+	/**
+	 * Close all <code>BgeeConnection</code>s that this <code>BgeeDataSource</code> holds, 
+	 * 
+	 * @return
+	 */
+	public int closeConnections()
+	{
+		
+	}
 	
 	/**
 	 * @param openConnections A <code>Map<String,BgeeConnection></code> to set {@link #openConnections} 

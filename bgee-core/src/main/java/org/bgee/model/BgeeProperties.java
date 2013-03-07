@@ -3,6 +3,7 @@ package org.bgee.model;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,6 +31,10 @@ public class BgeeProperties
 	 * to then obtain <code>Connection</code>s from a <code>DriverManager</code>. 
 	 * Examples are <code>com.mysql.jdbc.Driver</code>, 
 	 * or <code>org.bgee.easycache4jdbc.sql.jdbcapi.Driver</code>. 
+	 * <p>
+	 * This property can be left <code>null</code>. In that case, 
+	 * only the {@link #jdbcUrl} will be used to obtain the proper <code>Driver</code>. 
+	 * However, it is more explicit to set it.
 	 * <p>
 	 * This property is used by {@link org.bgee.model.data.sql.BgeeDataSource BgeeDataSource} 
 	 * to determine how <code>Connection</code>s should be obtained 
@@ -161,13 +166,13 @@ public class BgeeProperties
 
 		String propValue = sysProps.getProperty(key);
 		
-		if (propValue != null && propValue.length() != 0) {
+		if (StringUtils.isNotBlank(propValue)) {
 			log.debug("Retrieved from System properties {}={}", key, propValue);
 		} else {
 			if (fileProps != null) {
 			    propValue = fileProps.getProperty(key);
 			}
-			if (propValue != null && propValue.length() != 0) {
+			if (StringUtils.isNotBlank(propValue)) {
 				log.debug("Retrieved from properties file {}={}", key, propValue);
 			} else {
 				log.debug("Property {} not defined neither in properties file nor in System properties, using default value {}", 

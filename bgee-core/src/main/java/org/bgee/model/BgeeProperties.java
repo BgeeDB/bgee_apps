@@ -47,8 +47,6 @@ public class BgeeProperties
 	 * <p>
 	 * IMPORTANT: Do NOT put in this URL the username and password you want to use. 
 	 * You need to set <code>jdbcUsername</code> and <code>jdbcPassword</code> instead. 
-	 * Otherwise you won't be able to use the method <code>getConnection(username, password)</code>, 
-	 * but only the method <code>getConnection()</code>. 
 	 * <p>
 	 * Corresponds to the property <code>bgee.jdbc.url</code>. 
 	 * If a DataSource was set (using JNDI), then this property is not used.

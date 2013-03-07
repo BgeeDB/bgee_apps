@@ -1,5 +1,8 @@
 package org.bgee.model.data.sql;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -38,6 +41,21 @@ import org.bgee.model.BgeeProperties;
  */
 public class BgeeDataSource 
 {
+	//****************************
+	// CLASS ATTRIBUTES
+	//****************************
+	/**
+	 * A <code>ThreadLocal</code> used for this class to be a "per-thread singleton" 
+	 * (yes, we know this term is incorrect).
+	 * Each thread will have its own instance of this class, and only one.
+	 */
+	private static final ThreadLocal<BgeeDataSource> bgeeDataSource =
+		new ThreadLocal<BgeeDataSource>() {
+		    @Override 
+		    protected BgeeDataSource initialValue() {
+			    return new BgeeDataSource();
+		    }
+	    };
 	/**
 	 * The real <code>DataSource</code> that this class wraps. 
 	 * <code>null</code> if no <code>DataSource</code> could be obtained 
@@ -58,7 +76,16 @@ public class BgeeDataSource
 	 * <code>Logger</code> of the class. 
 	 */
 	private final static Logger log = LogManager.getLogger(BgeeDataSource.class.getName());
+	
+	//****************************
+	// INSTANCE ATTRIBUTES
+	//****************************
+	private Map<String, BgeeConnection> openConnections;
+	
 
+	//****************************
+	// CLASS METHODS
+	//****************************
 	/**
 	 * Static initializer, initialize {@link realDataSource}, 
 	 * or try to register a <code>Driver</code>.
@@ -90,5 +117,60 @@ public class BgeeDataSource
 		driverRegistrationError = driverRegErrTemp;
 		log.info("BgeeDataSource initialization done.");
 		log.exit();
+	}
+	
+	/**
+	 * Return a <code>BgeeDataSource</code> object. At the first call of this method 
+	 * inside a given thread, a new <code>BgeeDataSource</code> will be instantiated 
+	 * and returned. Then all subsequent calls to this method inside the same thread 
+	 * will return the same <code>BgeeDataSource</code> object 
+	 * (use of a <code>ThreadLocal</code>). 
+	 * <p>
+	 * This is to ensure that each thread uses one and only one 
+	 * <code>BgeeDataSource</code> instance, 
+	 * independent from other threads ("per-thread singleton").
+	 *  
+	 * @return	A <code>BgeeDataSource</code> object, instantiated at the first call 
+	 * 			of this method. Subsequent call will return the same object.
+	 */
+	public static BgeeDataSource getBgeeDataSource()
+	{
+		log.entry();
+		return log.exit(bgeeDataSource.get());
+	}
+	
+	//****************************
+	// INSTANCE METHODS
+	//****************************
+	/**
+	 * Private constructor. Instances of this class can only be obtained 
+	 * through the <code>static</code> method {@link getBgeeDataSource()}. 
+	 * This is to ensure that a thread will use its own and only one instance of this class.
+	 */
+	private BgeeDataSource()
+	{
+		log.entry();
+		this.setOpenConnections(new HashMap<String, BgeeConnection>());
+		log.exit();
+	}
+	
+	
+	
+	/**
+	 * @param openConnections A <code>Map<String,BgeeConnection></code> to set {@link #openConnections} 
+	 */
+	private void setOpenConnections(Map<String, BgeeConnection> openConnections) {
+		this.openConnections = openConnections;
+	}
+	/**
+	 * Store <code>connection</code> in the <code>Map</code> {@link #openConnections}, 
+	 * associated to the key provided by a call on <code>connection</code>  
+	 * to the method <code>getId()</code>.
+	 * 
+	 * @param connection 	A <code>BgeeConnection</code> that is opened, to be stored. 
+	 */
+	private void storeOpenConnection(BgeeConnection connection)
+	{
+		this.openConnections.put(connection.getId(), connection);
 	}
 }

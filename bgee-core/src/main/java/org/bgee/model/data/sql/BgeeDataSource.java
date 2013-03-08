@@ -1,9 +1,13 @@
 package org.bgee.model.data.sql;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -84,6 +88,13 @@ public class BgeeDataSource
      */
     private static final ConcurrentMap<Long, BgeeDataSource> bgeeDataSources = 
     		new ConcurrentHashMap<Long, BgeeDataSource>();
+    /**
+     * An <code>AtomicBoolean</code> to define if <code>BgeeDataSource</code>s 
+     * can still be acquired (using {@link #getBgeeDataSource()}), 
+     * or if it is not possible anymore (meaning that the method {@link #closeAll()} 
+     * has been called)
+     */
+    private static final AtomicBoolean dataSourcesClosed = new AtomicBoolean();
 	/**
 	 * The real <code>DataSource</code> that this class wraps. 
 	 * <code>null</code> if no <code>DataSource</code> could be obtained 
@@ -126,6 +137,8 @@ public class BgeeDataSource
 	static {
 		log.entry();
 		log.info("Initializing BgeeDataSource...");
+		
+		dataSourcesClosed.set(false);
 		
 		DataSource dataSourceTemp = null;
 		boolean driverRegErrTemp = false; 
@@ -172,16 +185,28 @@ public class BgeeDataSource
 	 * independent from other threads ("per-thread singleton").
 	 * <p>
 	 * An exception is if you call this method 
-     * after having called {@link #close()} or {@link #closeAll()}.
+     * after having called {@link #close()}.
      * In that case, this method would return a new <code>BgeeDataSource</code> instance. 
      * It is not a big deal.
+     * <p>
+     * Note that after having called {@link #closeAll()}, no <code>BgeeDataSource</code> 
+     * can be obtained anymore. This method will throw a <code>SQLException</code> 
+     * if <code>closeAll()</code> has been previously called.
 	 *  
 	 * @return	A <code>BgeeDataSource</code> object, instantiated at the first call 
-	 * 			of this method. Subsequent call will return the same object.
+	 * 			of this method. Subsequent call will return the same object. 
+	 * @throws SQLException 	If no <code>BgeeDataSource</code> can be obtained anymore. 
 	 */
-	public static BgeeDataSource getBgeeDataSource()
+	public static BgeeDataSource getBgeeDataSource() throws SQLException
 	{
 		log.entry();
+		
+	    if (dataSourcesClosed.get()) {
+	    	log.debug("Trying to obtain a BgeeDataSource after they have been closed, returning null");
+	    	throw new SQLException("closeAll() has been already called, " +
+	    			"it is not possible to acquire a BgeeDataSource anymore");
+	    }
+	    
 		long threadId = Thread.currentThread().getId();
 		
 		if (!bgeeDataSources.containsKey(threadId)) {
@@ -198,8 +223,11 @@ public class BgeeDataSource
 	
 	/**
 	 * Close all <code>BgeeDataSource</code>s currently registered 
-	 * (call {@link #close()} on each of them). 
-	 * It returns the number of <code>BgeeDataSource</code>s that were closed. 
+	 * (call {@link #close()} on each of them), and prevent any 
+	 * <code>BgeeDataSource</code> to be obtained again (calling {@link #getBgeeDataSource()} 
+	 * after having called this method will throw an Exception). 
+	 * <p>
+	 * This method returns the number of <code>BgeeDataSource</code>s that were closed. 
 	 * <p>
 	 * This method is called for instance when a <code>ShutdownListener</code> 
 	 * want to close all <code>Connection</code>s and release all 
@@ -210,24 +238,49 @@ public class BgeeDataSource
 	 */
 	public static int closeAll()
 	{
+		log.entry();
 		
+		//this AtomicBoolean will act more or less like a lock 
+		//(no new BgeeDataSource can be obtained after this AtomicBoolean is set true).
+		//It's not totally true, but we don't except any major error if it doesn't act like a lock.
+		dataSourcesClosed.set(true);
+		
+		int sourcesCount = bgeeDataSources.size();
+		//get a shallow copy of bgeeDataSources, so that the remove operation 
+		//performed by the method close() will not interfere with the iteration
+		Collection<BgeeDataSource> shallowCopy = new ArrayList<BgeeDataSource>(bgeeDataSources.values());
+		for (BgeeDataSource dataSource: shallowCopy) {
+			dataSource.close();
+		}
+		
+		return log.exit(sourcesCount);
 	}
 	/**
 	 * Retrieve the <code>BgeeDataSource</code> associated to <code>threadId</code>, 
-	 * abort all <code>BgeeConnection</code>s that it holds, and release 
+	 * close all <code>BgeeConnection</code>s that it holds, and release 
 	 * the <code>BgeeDataSource</code> (a call to {@link getBgeeDataSource()}, 
 	 * from the thread with the ID <code>threadId</code>, would return a new 
 	 * <code>BgeeDataSource</code> instance). 
+	 * Return the number of <code>BgeeConnection</code>s 
+	 * that were closed following a call to this method.
 	 * <p>
 	 * This method is most likely used by a monitoring thread wanting to abort 
 	 * execution of the monitored thread. 
 	 * 
 	 * @param threadId 	A <code>long</code> that is the ID of the thread for which 
 	 * 					we want to abort the <code>BgeeDataSource</code> associated with.
+	 * @return 			An <code>int</code> being the number of <code>BgeeConnection</code>s 
+	 * 					that were aborted following a call to this method.
 	 */
-	public static void abort(long threadId)
+	public static int close(long threadId)
 	{
+		log.entry();
 		
+		BgeeDataSource sourceToClose = bgeeDataSources.get(threadId);
+		if (sourceToClose != null) {
+			return log.exit(sourceToClose.close());
+		}
+		return log.exit(0);
 	}
 	
 	//****************************
@@ -249,6 +302,8 @@ public class BgeeDataSource
 	 * Close all <code>BgeeConnection</code>s that this <code>BgeeDataSource</code> holds, 
 	 * and release this <code>BgeeDataSource</code> (a call to {@link #getBgeeDataSource()} 
 	 * will return a new <code>BgeeDataSource</code> instance). 
+	 * Return the number of <code>BgeeConnection</code>s 
+	 * that were closed following a call to this method.
 	 * 
 	 * @return 	An <code>int</code> that is the number of <code>BgeeConnection</code>s 
 	 * 			that were closed following a call to this method.
@@ -256,8 +311,23 @@ public class BgeeDataSource
 	public int close()
 	{
 		log.entry();
-		
-		log.exit();
+		int connectionCount = this.getOpenConnections().size();
+		//get a shallow copy of the collection, so that the removal of a connection 
+		//will not interfere with the iteration
+		Collection<BgeeConnection> shallowCopy = 
+				new ArrayList<BgeeConnection>(this.getOpenConnections().values());
+		for (BgeeConnection connToClose: shallowCopy) {
+			try {
+				//calling this method will automatically remove the connection 
+				//from openConnections, and will release this BgeeDataSource 
+				//if there are no more opened connections. 
+				connToClose.close();
+			} catch (SQLException e) {
+				//do nothing, because the connection will be removed from openConnections
+				//even if an Exception occurs
+			}
+		}
+		return log.exit(connectionCount);
 	}
 	
 	/**

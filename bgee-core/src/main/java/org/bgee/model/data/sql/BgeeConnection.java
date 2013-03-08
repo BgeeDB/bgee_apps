@@ -3,6 +3,7 @@ package org.bgee.model.data.sql;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,16 +17,21 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 13, Mar 2013
  * @since Bgee 13
  */
-public class BgeeConnection 
+public class BgeeConnection implements AutoCloseable
 {
 	/**
 	 * <code>Logger</code> of the class. 
 	 */
 	private final static Logger log = LogManager.getLogger(BgeeConnection.class.getName());
 	/**
+	 * The <code>BgeeDataSource</code> used to obtain this <code>BgeeConnection</code>. 
+	 * Used for notifications purpose. 
+	 */
+	private final BgeeDataSource bgeeDataSource;
+	/**
 	 * The real <code>java.sql.Connection</code> that this class wraps.
 	 */
-    private Connection realConnection;
+    private final Connection realConnection;
     /**
      * A <code>String</code> representing an identifier 
      * for this <code>BgeeConnection</code> object. It is built at instantiation 
@@ -33,7 +39,7 @@ public class BgeeConnection
      * to be tracked by the container <code>BgeeDataSource</code> object 
      * (the <code>BgeeDataSource</code> that instantiated this <code>BgeeConnection</code>).
      */
-    private String id;
+    private final String id;
     
     /**
      * Default constructor, should not be used. 
@@ -66,7 +72,13 @@ public class BgeeConnection
     		String username, String password)
     {
     	log.entry(dataSource, realConnection, username, "password not logged");
-    	this.setRealConnection(realConnection);
+    	
+    	this.bgeeDataSource = dataSource;
+    	this.realConnection = realConnection;
+    	//generate the ID
+    	//I don't like much storing a password in memory, let's hash it
+    	this.id = DigestUtils.sha1Hex(username + "[separator]" + password);
+    	
     	log.exit();
     }
     
@@ -86,9 +98,35 @@ public class BgeeConnection
 		return this.realConnection;
 	}
 	/**
-	 * @param realConnection A <code>Connection</code> to set {@link #realConnection} 
+	 * @return the {@link #id}
 	 */
-	private void setRealConnection(Connection realConnection) {
-		this.realConnection = realConnection;
+	public String getId() {
+		return this.id;
+	}
+	/**
+	 * @return the {@link #bgeeDataSource}
+	 */
+	private BgeeDataSource getBgeeDataSource() {
+		return this.bgeeDataSource;
+	}
+	
+	/**
+	 * Close the real <code>Connection</code> that this class wraps, 
+	 * and notify of the closing the <code>BgeeDataSource</code> used to obtain 
+	 * this <code>BgeeConnection</code>.
+	 * 
+	 * @throws SQLException 	If the real <code>Connection</code> that this class wraps
+	 * 							throws a <code>SQLException</code> when closing.  
+	 */
+	@Override
+	public void close() throws SQLException {
+		try {
+		    this.getRealConnection().close();
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			this.getBgeeDataSource().connectionClosed(this.getId());
+		}
+		
 	}
 }

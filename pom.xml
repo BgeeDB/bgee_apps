@@ -119,6 +119,16 @@
         <scope>provided</scope>
       </dependency>
       <!-- End for webapp -->
+      
+      <!-- Needed for the core layer -->
+      <dependency>
+	    <groupId>commons-codec</groupId>
+	    <artifactId>commons-codec</artifactId>
+	    <version>1.7</version>
+	    <scope>compile</scope>
+      </dependency>
+            
+      <!-- End for the core layer -->
   
     </dependencies>
   </dependencyManagement>

@@ -37,6 +37,11 @@ import java.util.Calendar;
 public class BgeePreparedStatement implements PreparedStatement
 {
 	/**
+	 * The <code>BgeeConnection</code> that was used 
+     * to obtain this <code>BgeePreparedStatement</code>.
+	 */
+	private BgeeConnection bgeeConnection;
+	/**
 	 * The real <code>java.sql.PreparedStatement</code> that this class wraps.
 	 */
     private PreparedStatement realPreparedStatement;
@@ -48,22 +53,42 @@ public class BgeePreparedStatement implements PreparedStatement
      */
     protected BgeePreparedStatement() 
     {
-    	this(null);
+    	this(null, null);
     }
     /**
      * Constructor used to provide the real <code>java.sql.PreparedStatement</code> 
-     * that this class wraps.
+     * that this class wraps, and the <code>BgeeConnection</code> used to obtain 
+     * this <code>BgeePreparedStatement</code>, for notification purpose.
+     * <p>
      * Constructor protected, so that only a {@link BgeeConnection} can provide 
      * a <code>BgeePreparedStatement</code>.
+     * 
+     * @param connection				The <code>BgeeConnection</code> that was used 
+     * 									to obtain this <code>BgeePreparedStatement</code>.
      * @param realPreparedStatement 	The <code>java.sql.PreparedStatement</code> 
      * 									that this class wraps
      */
-    protected BgeePreparedStatement(PreparedStatement realPreparedStatement)
+    protected BgeePreparedStatement(BgeeConnection connection, 
+    		PreparedStatement realPreparedStatement)
     {
+    	this.setBgeeConnection(connection);
     	this.setRealPreparedStatement(realPreparedStatement);
     }
     
     
+	/**
+	 * @return the {@link #bgeeConnection}
+	 */
+    //not yet used (no notification to the connection implemented yet)
+	private BgeeConnection getBgeeConnection() {
+		return this.bgeeConnection;
+	}
+	/**
+	 * @param bgeeConnection A <code>BgeeConnection</code> to set {@link #bgeeConnection} 
+	 */
+	private void setBgeeConnection(BgeeConnection bgeeConnection) {
+		this.bgeeConnection = bgeeConnection;
+	}
 	/**
 	 * @return the {@link #realPreparedStatement}
 	 */

@@ -34,11 +34,12 @@ import java.util.Calendar;
  * @version Bgee 13, Mar 2013
  * @since Bgee 13
  */
-public class BgeePreparedStatement implements PreparedStatement
+public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
 {
 	/**
 	 * The <code>BgeeConnection</code> that was used 
      * to obtain this <code>BgeePreparedStatement</code>.
+     * Used for notification purpose. 
 	 */
 	private BgeeConnection bgeeConnection;
 	/**

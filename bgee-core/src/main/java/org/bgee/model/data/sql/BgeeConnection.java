@@ -11,6 +11,9 @@ import org.apache.logging.log4j.Logger;
  * This class is used to connect to the Bgee database. 
  * It provides only the functionalities of the <code>java.sql.Connection</code> interface 
  * that are used in the Bgee project. So it does not implement the actual interface.
+ * <p>
+ * It implements the <code>AutoCloseable</code> interface so that it can be used in a 
+ * <code>try-with-resources</code> statement.
  * 
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013
@@ -58,7 +61,7 @@ public class BgeeConnection implements AutoCloseable
      * @param dataSource 		The <code>BgeeDataSource</code> used to obtain 
      * 							this connection. Is used for notifications purpose 
      * 							(notably when <code>close()</code> is called 
-     * 							on this connection <code>BgeeConnection</code>).
+     * 							on this <code>BgeeConnection</code>).
      * @param realConnection 	The <code>java.sql.Connection</code> that this class wraps
      * @param id 				A <code>String</code> representing the ID of this 
      * 							<code>BgeeConnection</code>, used by <code>dataSource</code> 
@@ -94,7 +97,7 @@ public class BgeeConnection implements AutoCloseable
 	/**
 	 * @return the {@link #id}
 	 */
-	public String getId() {
+	protected String getId() {
 		return this.id;
 	}
 	/**

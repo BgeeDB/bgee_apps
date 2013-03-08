@@ -33,8 +33,8 @@ import org.bgee.model.BgeeProperties;
  * In the standalone context, the parameters to establish a connection are retrieved from 
  * the {@link org.bgee.model.BgeeProperties BgeeProperties}.
  * <p>
- * Any calls, <b>inside a thread</b>, to the method {@link #getBgeeDataSource()}, 
- * will return the same <code>BgeeDataSource</code> instance. 
+ * Any call, <b>inside a thread</b>, to the method {@link #getBgeeDataSource()}, 
+ * will always return the same <code>BgeeDataSource</code> instance. 
  * An exception is if you call this method 
  * after having called {@link #close()} or {@link #closeAll()}.
  * In that case, <code>getBgeeDataSource()</code> 
@@ -45,20 +45,20 @@ import org.bgee.model.BgeeProperties;
  * with a given <code>username</code> and a given <code>password</code>,
  * (meaning, using {@link #getConnection()} or {@link #getConnection(String, String)}), 
  * this class obtains a <code>Connection</code>, either from a <code>DataSource</code> 
- * or a <code>Driver</code>, depending on the context, and return it. 
+ * or the <code>DriverManager</code>, depending on the context, and return it. 
  * This <code>BgeeDataSource</code> object stores these <code>BgeeConnection</code>s, 
  * so that any consecutive call to obtain a <code>Connection</code> 
  * with the same <code>username</code> and <code>password</code>, 
  * will return the same <code>BgeeConnection</code> object, 
  * without trying to obtain a new <code>Connection</code> from a <code>DataSource</code> 
- * or a <code>Driver</code>. 
+ * or a <code>DriverManager</code>. 
  * <p>
- * An exception is that when a <code>BgeeConnection</code> is closed, 
+ * An exception is that, when a <code>BgeeConnection</code> is closed, 
  * this <code>BgeeDataSource</code> release it, 
  * so that a consecutive call to obtain a <code>Connection</code> 
  * with the same <code>username</code> and <code>password</code>, 
  * will obtain a new <code>Connection</code> from a <code>DataSource</code> 
- * or a <code>Driver</code> again.
+ * or a <code>DriverManager</code> again.
  *  
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013
@@ -74,7 +74,7 @@ public class BgeeDataSource
      * associated with the ID of the thread that requested it. 
      * <p>
      * This <code>Map</code> is used to provide a unique and independent 
-     * <code>BgeeDataSource</code> instance to a thread: 
+     * <code>BgeeDataSource</code> instance to each thread: 
      * a <code>BgeeDataSource</code> is added to this <code>Map</code> 
      * when {@link #getBgeeDataSource()} is called, if the thread ID is not already 
      * present in the <code>keySet</code> of the <code>Map</code>. 
@@ -87,7 +87,7 @@ public class BgeeDataSource
      * or when a thread performing monitoring of another thread want to interrupt it.
      * <p>
      * A <code>BgeeDataSource</code> is removed from this <code>Map</code> 
-     * when the method {@link #close()} is called. 
+     * when the method {@link #close()} is called on it. 
      */
     private static final ConcurrentMap<Long, BgeeDataSource> bgeeDataSources = 
     		new ConcurrentHashMap<Long, BgeeDataSource>();
@@ -104,28 +104,6 @@ public class BgeeDataSource
 	 * from <code>InitialContext</code> (see static initializer).
 	 */
 	private static final DataSource realDataSource;
-	/**
-	 * A <code>boolean</code> that is <code>true</code> if an error occurred 
-	 * while trying to register a <code>Driver</code> during the static initialization. 
-	 * It is used because no <code>SQLException</code> can be thrown 
-	 * from the static initializer. This <code>boolean</code> will be thus checked 
-	 * when trying to obtain a <code>Connection</code> from the <code>DriverManager</code>, 
-	 * and a <code>SQLException</code> thrown if this <code>boolean</code> 
-	 * is <code>true</code>.
-	 */
-	private static final boolean driverRegistrationError;
-	/**
-	 * A <code>String</code> representing the value that must be replaced by 
-	 * {@link org.bgee.model.BgeeProperties#getJdbcUsername}, in the JDBC URL 
-	 * used to obtain a connection from a <code>DriverManager</code>.
-	 */
-	private static final String URLUSERNAMETAG = "USERNAME";
-	/**
-	 * A <code>String</code> representing the value that must be replaced by 
-	 * {@link org.bgee.model.BgeeProperties#getJdbcPassword}, in the JDBC URL 
-	 * used to obtain a connection from a <code>DriverManager</code>.
-	 */
-	private static final String URLPASSWORDTAG = "PASSWORD";
 	/**
 	 * <code>Logger</code> of the class. 
 	 */
@@ -156,34 +134,16 @@ public class BgeeDataSource
 		dataSourcesClosed.set(false);
 		
 		DataSource dataSourceTemp = null;
-		boolean driverRegErrTemp = false; 
 		try {
+			//try to get a DataSource using JNDI
 			Context ctx = new InitialContext();
 			dataSourceTemp = (DataSource) ctx.lookup("java:comp/env/jdbc/bgeedatasource");
-			//here it is likely that we are in a webapp context
 			log.info("DataSource obtained from InitialContext using JNDI");
 		} catch (NamingException e) {
-			//here it is likely that we are in a standalone context, 
-			//then we don't need a DataSource and will rely on a classic DriverManager
-			//if the name of a driver was provide, try to load it, 
-			//otherwise, only the URL to connect will be used
-			if (BgeeProperties.getJdbcDriver() != null) {
-				log.info("No DataSource obtained from InitialContext using JNDI, register Driver {}", 
-						BgeeProperties.getJdbcDriver());
-				//we register the Driver once 
-				try {
-					Class.forName(BgeeProperties.getJdbcDriver());
-				} catch (ClassNotFoundException e1) {
-					log.error("Could not load Driver", e1);
-					driverRegErrTemp = true;
-				}
-			} else {
-				log.info("Will rely on URL to identify proper Driver: {}", 
-						BgeeProperties.getJdbcUrl());
-			}
+			log.info("No DataSource obtained from InitialContext using JNDI, will rely on the DriverManager using URL {}", 
+					BgeeProperties.getJdbcUrl());
 		}
 		realDataSource = dataSourceTemp;
-		driverRegistrationError = driverRegErrTemp;
 		
 		log.info("BgeeDataSource initialization done.");
 		log.exit();
@@ -200,7 +160,7 @@ public class BgeeDataSource
 	 * independent from other threads ("per-thread singleton").
 	 * <p>
 	 * An exception is if you call this method 
-     * after having called {@link #close()}.
+     * after having called {@link #close()} on the <code>BgeeDataSource</code>.
      * In that case, this method would return a new <code>BgeeDataSource</code> instance. 
      * It is not a big deal.
      * <p>
@@ -209,7 +169,7 @@ public class BgeeDataSource
      * if <code>closeAll()</code> has been previously called.
 	 *  
 	 * @return	A <code>BgeeDataSource</code> object, instantiated at the first call 
-	 * 			of this method. Subsequent call will return the same object. 
+	 * 			of this method. Subsequent calls will return the same object. 
 	 * @throws SQLException 	If no <code>BgeeDataSource</code> can be obtained anymore. 
 	 */
 	public static BgeeDataSource getBgeeDataSource() throws SQLException
@@ -217,7 +177,6 @@ public class BgeeDataSource
 		log.entry();
 		
 	    if (dataSourcesClosed.get()) {
-	    	log.debug("Trying to obtain a BgeeDataSource after they have been closed, returning null");
 	    	throw new SQLException("closeAll() has been already called, " +
 	    			"it is not possible to acquire a BgeeDataSource anymore");
 	    }
@@ -225,10 +184,10 @@ public class BgeeDataSource
 		long threadId = Thread.currentThread().getId();
 		
 		if (!bgeeDataSources.containsKey(threadId)) {
-			//we take care of instantiating the BgeeDataSource only if needed
+			//instantiate the BgeeDataSource only if needed
 			BgeeDataSource source = new BgeeDataSource();
-			//we don't use putifAbsent as the threadId make sure 
-			//there won't be any key collision
+			//we don't use putifAbsent, as the threadId make sure 
+			//there won't be any multi-threading key collision
 		    bgeeDataSources.put(threadId, source);
 		    
 		    return log.exit(source);
@@ -238,9 +197,9 @@ public class BgeeDataSource
 	
 	/**
 	 * Close all <code>BgeeDataSource</code>s currently registered 
-	 * (call {@link #close()} on each of them), and prevent any 
+	 * (call {@link #close()} on each of them), and prevent any new 
 	 * <code>BgeeDataSource</code> to be obtained again (calling {@link #getBgeeDataSource()} 
-	 * after having called this method will throw an Exception). 
+	 * after having called this method will throw a <code>SQLException</code>). 
 	 * <p>
 	 * This method returns the number of <code>BgeeDataSource</code>s that were closed. 
 	 * <p>
@@ -256,14 +215,15 @@ public class BgeeDataSource
 		log.entry();
 		
 		//this AtomicBoolean will act more or less like a lock 
-		//(no new BgeeDataSource can be obtained after this AtomicBoolean is set true).
+		//(no new BgeeDataSource can be obtained after this AtomicBoolean is set to true).
 		//It's not totally true, but we don't except any major error if it doesn't act like a lock.
 		dataSourcesClosed.set(true);
 		
 		int sourcesCount = bgeeDataSources.size();
 		//get a shallow copy of bgeeDataSources, so that the remove operation 
 		//performed by the method close() will not interfere with the iteration
-		Collection<BgeeDataSource> shallowCopy = new ArrayList<BgeeDataSource>(bgeeDataSources.values());
+		Collection<BgeeDataSource> shallowCopy = 
+				new ArrayList<BgeeDataSource>(bgeeDataSources.values());
 		for (BgeeDataSource dataSource: shallowCopy) {
 			dataSource.close();
 		}
@@ -272,12 +232,7 @@ public class BgeeDataSource
 	}
 	/**
 	 * Retrieve the <code>BgeeDataSource</code> associated to <code>threadId</code>, 
-	 * close all <code>BgeeConnection</code>s that it holds, and release 
-	 * the <code>BgeeDataSource</code> (a call to {@link getBgeeDataSource()}, 
-	 * from the thread with the ID <code>threadId</code>, would return a new 
-	 * <code>BgeeDataSource</code> instance). 
-	 * Return the number of <code>BgeeConnection</code>s 
-	 * that were closed following a call to this method.
+	 * call {@link #close()} on it, and return the value that it returned.
 	 * <p>
 	 * This method is most likely used by a monitoring thread wanting to abort 
 	 * execution of the monitored thread. 
@@ -285,13 +240,19 @@ public class BgeeDataSource
 	 * @param threadId 	A <code>long</code> that is the ID of the thread for which 
 	 * 					we want to abort the <code>BgeeDataSource</code> associated with.
 	 * @return 			An <code>int</code> being the number of <code>BgeeConnection</code>s 
-	 * 					that were aborted following a call to this method.
+	 * 					that were closed following a call to this method.
+	 * @see #close()
 	 */
 	public static int close(long threadId)
 	{
-		log.entry();
+		log.entry(threadId);
 		
 		BgeeDataSource sourceToClose = bgeeDataSources.get(threadId);
+		//here, sourceToClose could be null, but the thread with the ID threadId 
+		//could have requested a new BgeeDataSource just after. 
+		//we do not deal with this case, as this method is most likely called 
+		//by a monitoring thread, on a monitored thread (so the monitored thread 
+		//is supposed to already have acquired a BgeeDataSource to do its task)
 		if (sourceToClose != null) {
 			return log.exit(sourceToClose.close());
 		}
@@ -315,8 +276,9 @@ public class BgeeDataSource
 	
 	/**
 	 * Attempt to establish a connection, either from a <code>DataSource</code> 
-	 * if one was provided from a <code>Context</code>, or from a JDBC <code>Driver</code> 
-	 * defined in the Bgee properties. Default username and password are used. 
+	 * if one was provided using JNDI, or from a JDBC <code>Driver</code> 
+	 * obtained thanks to the <code>BgeeProperties</code>. 
+	 * Default username and password are used. 
 	 * <p>
 	 * If a <code>BgeeConnection</code> with the same parameters is already hold 
 	 * by this <code>BgeeDataSource</code>, then return it without creating a new one. 
@@ -324,8 +286,7 @@ public class BgeeDataSource
 	 * as long as it is not closed. 
 	 * 
 	 * @return	A <code>BgeeConnection</code> opened to the data source. 
-	 * @throws SQLException 	If an error occurred while trying to obtain the connection, 
-	 * 							or if the needed <code>Driver</code> could not be loaded.
+	 * @throws SQLException 	If an error occurred while trying to obtain the connection.
 	 * @see #getConnection(String, String)
 	 */
 	public BgeeConnection getConnection() throws SQLException
@@ -352,9 +313,12 @@ public class BgeeDataSource
 	}
 	/**
 	 * Attempt to establish a connection, either from a <code>DataSource</code> 
-	 * if one was provided from a <code>Context</code>, or from a JDBC <code>Driver</code> 
-	 * defined in the Bgee properties, using the provided 
+	 * if one was provided using JNDI, or from a JDBC <code>Driver</code> 
+	 * obtained thanks to the <code>BgeeProperties</code>, using the provided 
 	 * <code>username</code> and <code>password</code>. 
+	 * If a <code>DataSource</code> is provided, 
+	 * and if <code>username</code> and <code>password</code> are <code>null</code>, 
+	 * then return the value returned by <code>DataSource.getConnection()</code>. 
 	 * <p>
 	 * If a <code>BgeeConnection</code> with the same parameters is already hold 
 	 * by this <code>BgeeDataSource</code>, then return it without creating a new one. 
@@ -366,44 +330,38 @@ public class BgeeDataSource
 	 * @param password 	A <code>String</code> defining the password to use 
 	 * 					to open the connection.
 	 * @return			A <code>BgeeConnection</code> opened to the data source. 
-	 * @throws SQLException 	If an error occurred while trying to obtain the connection, 
-	 * 							or if the needed <code>Driver</code> could not be loaded.
+	 * @throws SQLException 	If an error occurred while trying to obtain the connection.
 	 * @see #getConnection()
 	 */
 	public BgeeConnection getConnection(String username, String password) throws SQLException
 	{
 		log.entry(username, password);
-		log.debug("Trying to obtain a BgeeConnection with username {} and password {}...", 
-				username, password);
-		
-		//if we couldn't register the driver, don't try to get a connection 
-		//from the DriverManager, just throw an Exception
-		if (driverRegistrationError) {
-			throw new SQLException("The Driver {} could not be properly registered.", 
-					BgeeProperties.getJdbcDriver());
-		}
+		log.debug("Trying to obtain a BgeeConnection using username {}...", 
+				username);
 		
 		String connectionId = this.generateConnectionId(username, password);
 		BgeeConnection connection = this.getOpenConnections().get(connectionId);
 		//if the connection already exists, return it
 		if (connection != null) {
-			log.debug("Return an already opened Connection");
+			log.debug("Return an already opened Connection with ID {}", connection.getId());
 			return log.exit(connection);
 		}
 		//otherwise, create a new connection
 		Connection realConnection = null;
 		if (realDataSource != null) {
-			log.debug("Trying to obtain a new Connection from the DataSource");
 			if (username == null && password == null) {
+				log.debug("Trying to obtain a new Connection from the DataSource using default username");
 				realConnection = realDataSource.getConnection();
 			} else {
+				log.debug("Trying to obtain a new Connection from the DataSource using username {}", 
+						username);
 				realConnection = realDataSource.getConnection(username, password);
 			}
 		} else {
-			String urlToUse = BgeeProperties.getJdbcUrl()
-					.replace(URLUSERNAMETAG, username).replace(URLPASSWORDTAG, password);
-			log.debug("Trying to obtain a new Connection from the Driver, using the URL {}", urlToUse);
-			realConnection = DriverManager.getConnection(urlToUse);
+			log.debug("Trying to obtain a new Connection from the DriverManager, using URL {} and username {}", 
+					BgeeProperties.getJdbcUrl(), username);
+			realConnection = DriverManager.getConnection(BgeeProperties.getJdbcUrl(), 
+					username, password);
 		}
 		//just in case we couldn't obtain the connection, without exception
 		if (realConnection == null) {
@@ -414,7 +372,7 @@ public class BgeeDataSource
 		//store and return it
 		this.storeOpenConnection(connection);
 		
-		log.debug("Return a newly opened Connection");
+		log.debug("Return a newly opened Connection with ID {}", connection.getId());
 		return log.exit(connection);
 	}
 	
@@ -527,20 +485,23 @@ public class BgeeDataSource
 	}
 	/**
 	 * Generate an ID to uniquely identify the <code>BgeeConnection</code>s 
-	 * holded by this <code>BgeeDataSource</code>. It is based on the 
-	 * <code>username</code> and <code>password</code> used to open 
-	 * the connection. 
+	 * holded by this <code>BgeeDataSource</code>. It is based on 
+	 * {@link org.bgee.model.BgeeProperties#getJdbcUrl() BgeeProperties.getJdbcUrl()}, 
+	 * <code>username</code>, and <code>password</code>. 
 	 * 
 	 * @param username 	A <code>String</code> defining the username used to open 
 	 * 					the connection. Will be used to generate the ID.
 	 * @param password	A <code>String</code> defining the password used to open 
 	 * 					the connection. Will be used to generate the ID.
 	 * @return 			A <code>String</code> representing an ID generated from 
-	 * 					<code>username</code> and <code>password</code>.
+	 * 					the JDBC URL, <code>username</code>, and <code>password</code>.
 	 */
 	private String generateConnectionId(String username, String password)
 	{
 		//I don't like much storing a password in memory, let's hash it
-    	return DigestUtils.sha1Hex(username + "[separator]" + password);
+		//put the JDBC URL in the hash in case it was changed after the instantiation 
+		//of this BgeeDataSource
+    	return DigestUtils.sha1Hex(BgeeProperties.getJdbcUrl() + "[sep]" + 
+		                           username + "[sep]" + password);
 	}
 }

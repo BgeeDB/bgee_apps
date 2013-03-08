@@ -128,7 +128,7 @@ public class MockDriverUtils
 	/**
 	 * @return the {@link #mockDriver}
 	 */
-	private Driver getMockDriver() {
+	public Driver getMockDriver() {
 		return mockDriver;
 	}
 	/**

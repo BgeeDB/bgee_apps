@@ -48,10 +48,14 @@ public class BgeeProperties
 	 * A <code>String</code> representing a database url of the form 
 	 * <code>jdbc:subprotocol:subname</code>, to connect to the database 
 	 * using the driver specified by <code>jdbcDriver</code>. 
-	 * An example is <code>jdbc:log4jdbc:mysql://127.0.0.1:3306/bgee_v12</code> 
+	 * An example is <code>jdbc:log4jdbc:mysql://127.0.0.1:3306/bgee_v12?user=USERNAME&password=PASSWORD</code> 
 	 * <p>
-	 * IMPORTANT: Do NOT put in this URL the username and password you want to use. 
-	 * You need to set <code>jdbcUsername</code> and <code>jdbcPassword</code> instead. 
+	 * IMPORTANT: Do NOT provide the actual username and password you want to use 
+	 * by default in the URL. Just put <code>USERNAME</code> and <code>PASSWORD</code> 
+	 * (upper case) where they should go in the URL, 
+	 * and set the properties {@link #jdbcUsername} and {@link #jdbcPassword}. 
+	 * Otherwise you wouldn't be able to use {@link #getConnection(String, ,String)}, 
+	 * but only {@link #getConnection()}.
 	 * <p>
 	 * Corresponds to the property <code>bgee.jdbc.url</code>. 
 	 * If a DataSource was set (using JNDI), then this property is not used.

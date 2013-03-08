@@ -1,5 +1,7 @@
 package org.bgee.model.data.sql;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,6 +16,7 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
@@ -111,6 +114,18 @@ public class BgeeDataSource
 	 * is <code>true</code>.
 	 */
 	private static final boolean driverRegistrationError;
+	/**
+	 * A <code>String</code> representing the value that must be replaced by 
+	 * {@link org.bgee.model.BgeeProperties#getJdbcUsername}, in the JDBC URL 
+	 * used to obtain a connection from a <code>DriverManager</code>.
+	 */
+	private static final String URLUSERNAMETAG = "USERNAME";
+	/**
+	 * A <code>String</code> representing the value that must be replaced by 
+	 * {@link org.bgee.model.BgeeProperties#getJdbcPassword}, in the JDBC URL 
+	 * used to obtain a connection from a <code>DriverManager</code>.
+	 */
+	private static final String URLPASSWORDTAG = "PASSWORD";
 	/**
 	 * <code>Logger</code> of the class. 
 	 */
@@ -299,6 +314,111 @@ public class BgeeDataSource
 	}
 	
 	/**
+	 * Attempt to establish a connection, either from a <code>DataSource</code> 
+	 * if one was provided from a <code>Context</code>, or from a JDBC <code>Driver</code> 
+	 * defined in the Bgee properties. Default username and password are used. 
+	 * <p>
+	 * If a <code>BgeeConnection</code> with the same parameters is already hold 
+	 * by this <code>BgeeDataSource</code>, then return it without creating a new one. 
+	 * This <code>BgeeDataSource</code> will hold a <code>BgeeConnection</code> 
+	 * as long as it is not closed. 
+	 * 
+	 * @return	A <code>BgeeConnection</code> opened to the data source. 
+	 * @throws SQLException 	If an error occurred while trying to obtain the connection, 
+	 * 							or if the needed <code>Driver</code> could not be loaded.
+	 * @see #getConnection(String, String)
+	 */
+	public BgeeConnection getConnection() throws SQLException
+	{
+		log.entry();
+		
+		String username = null;
+		String password = null;
+		//if we rely on a DriverManager and not on a DataSource, 
+		//we get the username and password from the Bgee properties.
+		//if we rely on a DataSource, we do not obtain the default username and password 
+		//from the InitialContext.
+		
+		//TODO: try to obtain the default username and password from the InitialContext.
+		//Because, when using a DataSource, if we call getConnection(), 
+		//then getConnection(String, String) with the default values, 
+		//it would be seen as two different connections, while it should be the same.
+		if (realDataSource == null) {
+			username = BgeeProperties.getJdbcUsername();
+			password = BgeeProperties.getJdbcPassword();
+		}
+		
+		return log.exit(this.getConnection(username, password));
+	}
+	/**
+	 * Attempt to establish a connection, either from a <code>DataSource</code> 
+	 * if one was provided from a <code>Context</code>, or from a JDBC <code>Driver</code> 
+	 * defined in the Bgee properties, using the provided 
+	 * <code>username</code> and <code>password</code>. 
+	 * <p>
+	 * If a <code>BgeeConnection</code> with the same parameters is already hold 
+	 * by this <code>BgeeDataSource</code>, then return it without creating a new one. 
+	 * This <code>BgeeDataSource</code> will hold a <code>BgeeConnection</code> 
+	 * as long as it is not closed. 
+	 * 
+	 * @param username 	A <code>String</code> defining the username to use 
+	 * 					to open the connection.
+	 * @param password 	A <code>String</code> defining the password to use 
+	 * 					to open the connection.
+	 * @return			A <code>BgeeConnection</code> opened to the data source. 
+	 * @throws SQLException 	If an error occurred while trying to obtain the connection, 
+	 * 							or if the needed <code>Driver</code> could not be loaded.
+	 * @see #getConnection()
+	 */
+	public BgeeConnection getConnection(String username, String password) throws SQLException
+	{
+		log.entry(username, password);
+		log.debug("Trying to obtain a BgeeConnection with username {} and password {}...", 
+				username, password);
+		
+		//if we couldn't register the driver, don't try to get a connection 
+		//from the DriverManager, just throw an Exception
+		if (driverRegistrationError) {
+			throw new SQLException("The Driver {} could not be properly registered.", 
+					BgeeProperties.getJdbcDriver());
+		}
+		
+		String connectionId = this.generateConnectionId(username, password);
+		BgeeConnection connection = this.getOpenConnections().get(connectionId);
+		//if the connection already exists, return it
+		if (connection != null) {
+			log.debug("Return an already opened Connection");
+			return log.exit(connection);
+		}
+		//otherwise, create a new connection
+		Connection realConnection = null;
+		if (realDataSource != null) {
+			log.debug("Trying to obtain a new Connection from the DataSource");
+			if (username == null && password == null) {
+				realConnection = realDataSource.getConnection();
+			} else {
+				realConnection = realDataSource.getConnection(username, password);
+			}
+		} else {
+			String urlToUse = BgeeProperties.getJdbcUrl()
+					.replace(URLUSERNAMETAG, username).replace(URLPASSWORDTAG, password);
+			log.debug("Trying to obtain a new Connection from the Driver, using the URL {}", urlToUse);
+			realConnection = DriverManager.getConnection(urlToUse);
+		}
+		//just in case we couldn't obtain the connection, without exception
+		if (realConnection == null) {
+			throw new SQLException("Could not obtain a Connection");
+		}
+		//now create the new BgeeConnection
+		connection = new BgeeConnection(this, realConnection, connectionId);
+		//store and return it
+		this.storeOpenConnection(connection);
+		
+		log.debug("Return a newly opened Connection");
+		return log.exit(connection);
+	}
+	
+	/**
 	 * Close all <code>BgeeConnection</code>s that this <code>BgeeDataSource</code> holds, 
 	 * and release this <code>BgeeDataSource</code> (a call to {@link #getBgeeDataSource()} 
 	 * will return a new <code>BgeeDataSource</code> instance). 
@@ -404,5 +524,23 @@ public class BgeeDataSource
 	 */
 	private Map<String, BgeeConnection> getOpenConnections() {
 		return this.openConnections;
+	}
+	/**
+	 * Generate an ID to uniquely identify the <code>BgeeConnection</code>s 
+	 * holded by this <code>BgeeDataSource</code>. It is based on the 
+	 * <code>username</code> and <code>password</code> used to open 
+	 * the connection. 
+	 * 
+	 * @param username 	A <code>String</code> defining the username used to open 
+	 * 					the connection. Will be used to generate the ID.
+	 * @param password	A <code>String</code> defining the password used to open 
+	 * 					the connection. Will be used to generate the ID.
+	 * @return 			A <code>String</code> representing an ID generated from 
+	 * 					<code>username</code> and <code>password</code>.
+	 */
+	private String generateConnectionId(String username, String password)
+	{
+		//I don't like much storing a password in memory, let's hash it
+    	return DigestUtils.sha1Hex(username + "[separator]" + password);
 	}
 }

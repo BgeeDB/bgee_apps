@@ -3,7 +3,6 @@ package org.bgee.model.data.sql;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,8 +33,7 @@ public class BgeeConnection implements AutoCloseable
     private final Connection realConnection;
     /**
      * A <code>String</code> representing an identifier 
-     * for this <code>BgeeConnection</code> object. It is built at instantiation 
-     * from the parameters of the constructor. It is used for the connection 
+     * for this <code>BgeeConnection</code> object. It is used for the connection 
      * to be tracked by the container <code>BgeeDataSource</code> object 
      * (the <code>BgeeDataSource</code> that instantiated this <code>BgeeConnection</code>).
      */
@@ -48,13 +46,12 @@ public class BgeeConnection implements AutoCloseable
      */
     protected BgeeConnection() 
     {
-    	this(null, null, null, null);
+    	this(null, null, null);
     }
     /**
      * Constructor providing the <code>BgeeDataSource</code> object used to instantiate 
      * this connection (for notifications purpose), the real <code>java.sql.Connection</code> 
-     * that this class wraps, and the <code>username</code> and <code>password</code> 
-     * that were used to open the connection, used to generate the {@link #id}.
+     * that this class wraps, and the <code>id</code> to use to identify and track this connection.
      * 
      * Constructor protected, so that only a {@link BgeeDataSource} can instantiate 
      * a <code>BgeeConnection</code>.
@@ -63,21 +60,18 @@ public class BgeeConnection implements AutoCloseable
      * 							(notably when <code>close()</code> is called 
      * 							on this connection <code>BgeeConnection</code>).
      * @param realConnection 	The <code>java.sql.Connection</code> that this class wraps
-     * @param username 			A <code>String</code> used as username to open the connection. 
-     * 							will be used to generate <code>id</code>.
-     * @param password 			A <code>String</code> used as password to open the connection. 
-     * 							will be used to generate <code>id</code>.
+     * @param id 				A <code>String</code> representing the ID of this 
+     * 							<code>BgeeConnection</code>, used by <code>dataSource</code> 
+     * 							to track the connection.
      */
     protected BgeeConnection(BgeeDataSource dataSource, Connection realConnection, 
-    		String username, String password)
+    		String id)
     {
-    	log.entry(dataSource, realConnection, username, "password not logged");
+    	log.entry(dataSource, realConnection, id);
     	
     	this.bgeeDataSource = dataSource;
     	this.realConnection = realConnection;
-    	//generate the ID
-    	//I don't like much storing a password in memory, let's hash it
-    	this.id = DigestUtils.sha1Hex(username + "[separator]" + password);
+    	this.id = id;
     	
     	log.exit();
     }

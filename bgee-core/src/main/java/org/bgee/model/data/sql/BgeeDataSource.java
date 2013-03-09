@@ -463,7 +463,9 @@ public class BgeeDataSource
 	 */
 	private void release()
 	{
+		log.entry();
 		bgeeDataSources.remove(Thread.currentThread().getId());
+		log.exit();
 	}
 	
 	/**

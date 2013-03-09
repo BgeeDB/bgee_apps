@@ -142,6 +142,23 @@ public class BgeeDataSource
 		} catch (NamingException e) {
 			log.info("No DataSource obtained from InitialContext using JNDI, will rely on the DriverManager using URL {}", 
 					BgeeProperties.getJdbcUrl());
+			//if the name of a JDBC driver was provided, try to load it.
+			//it should not be needed, but some buggy JDBC Drivers need to be 
+			//"manually" loaded.
+			if (BgeeProperties.getJdbcDriver() != null) {
+				try {
+					//also, calling newInstance() should not be needed, 
+					//but some buggy JDBC Drivers do not properly initialized 
+					//themselves in the static initializer.
+					Class.forName(BgeeProperties.getJdbcDriver()).newInstance();
+				} catch (InstantiationException | IllegalAccessException
+						| ClassNotFoundException e1) {
+					//here, we do nothing: the JDBC Driver could not be loaded, 
+					//SQLExceptions will be thrown when getConnection will be called anyway.
+					log.error("Could not load the JDBC Driver " + 
+					    BgeeProperties.getJdbcDriver(), e1);
+				}
+			}
 		}
 		realDataSource = dataSourceTemp;
 		

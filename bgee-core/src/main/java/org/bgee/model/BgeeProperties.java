@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * Of note, an additional property allows to change the name of the property file 
  * to use (corresponds to the property <code>bgee.properties.file</code>).
- * It is useful for unit testing for instance. 
  * <p>
  * This class has been inspired from <code>net.sf.log4jdbc.DriverSpy</code> 
  * developed by Arthur Blake.
@@ -35,6 +34,21 @@ public class BgeeProperties
 	 * <code>Logger</code> of the class. 
 	 */
 	private final static Logger log = LogManager.getLogger(BgeeProperties.class.getName());
+	/**
+	 * A <code>String</code> corresponding to the name of the JDBC <code>Driver</code> 
+	 * used to obtain connections. 
+	 * Examples are <code>com.mysql.jdbc.Driver</code>, 
+	 * or <code>org.bgee.easycache4jdbc.sql.jdbcapi.Driver</code>. 
+	 * <p>
+	 * IMPORTANT: this property does not need to be provided. It is useful only 
+	 * for some buggy JDBC <code>Driver</code>s, that fail to register themselves to the 
+	 * <code>DriverManager</code>. In that case, it is needed to explicitly load 
+	 * the <code>Driver</code>, using this class name.  
+	 * <p>
+	 * Corresponds to the property <code>bgee.jdbc.driver</code>. 
+	 * If a <code>DataSource</code> was set (using JNDI), then this property is not used. 
+	 */
+	private static String jdbcDriver;
 	/**
 	 * A <code>String</code> representing a database url of the form 
 	 * <code>jdbc:subprotocol:subname</code>, to connect to the database 
@@ -54,7 +68,7 @@ public class BgeeProperties
 	private static String jdbcUrl;
 	/**
 	 * A <code>String</code> representing the default username to use to connect 
-	 * to the database using the <code>jdbcUrl</code>. 
+	 * to the database using <code>jdbcUrl</code>. 
 	 * <p>
 	 * Corresponds to the property <code>bgee.jdbc.username</code>.
 	 * If a DataSource was set (using JNDI), then this property is not used.
@@ -62,7 +76,7 @@ public class BgeeProperties
 	private static String jdbcUsername;
 	/**
 	 * A <code>String</code> representing the default password to use to connect 
-	 * to the database using the <code>jdbcUrl</code>. 
+	 * to the database using <code>jdbcUrl</code>. 
 	 * <p>
 	 * Corresponds to the property <code>bgee.jdbc.password</code>.
 	 * If a DataSource was set (using JNDI), then this property is not used.
@@ -120,6 +134,7 @@ public class BgeeProperties
 			log.debug("{} not found in classpath. Using System properties only.", propertyFile);
 		}
 
+		jdbcDriver   = getStringOption(sysProps, fileProps, "bgee.jdbc.driver", null);
 		jdbcUrl      = getStringOption(sysProps, fileProps, "bgee.jdbc.url", null);
 		jdbcUsername = getStringOption(sysProps, fileProps, "bgee.jdbc.username", null);
 		jdbcPassword = getStringOption(sysProps, fileProps, "bgee.jdbc.password", null);
@@ -176,6 +191,13 @@ public class BgeeProperties
 		return log.exit(propValue);
 	}
 	
+	/**
+	 * @return the jdbcDriver
+	 * @see #jdbcDriver
+	 */
+	public static String getJdbcDriver() {
+		return jdbcDriver;
+	}
 	/**
 	 * @return the {@link #jdbcUrl}
 	 */

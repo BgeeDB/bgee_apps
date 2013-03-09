@@ -59,6 +59,10 @@ import org.bgee.model.BgeeProperties;
  * with the same <code>username</code> and <code>password</code>, 
  * will obtain a new <code>Connection</code> from a <code>DataSource</code> 
  * or a <code>DriverManager</code> again.
+ * <p>
+ * You should always call {@link #close()} at the end of the execution of one thread, 
+ * and {@link #closeAll()} in multi-threads context (for instance, in a webapp context 
+ * when the webapp is shutdown).
  *  
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013

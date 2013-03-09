@@ -63,6 +63,10 @@ import org.apache.logging.log4j.Logger;
  * will return a new <code>BgeeProperties</code> instance, with the attributes re-initialized 
  * using the System or file properties.
  * <p>
+ * You should always call {@link #release()} at the end of the execution of one thread, 
+ * and {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
+ * when the webapp is shutdown).
+ * <p>
  * This class has been inspired from <code>net.sf.log4jdbc.DriverSpy</code> 
  * developed by Arthur Blake.
  * 

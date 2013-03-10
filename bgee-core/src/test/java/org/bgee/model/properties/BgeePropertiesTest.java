@@ -2,9 +2,7 @@ package org.bgee.model.properties;
 
 import static org.junit.Assert.*;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Exchanger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -95,49 +93,56 @@ public class BgeePropertiesTest extends TestAncestor
 			public BgeeProperties prop1;
 			public BgeeProperties prop2;
 			
-			public final Lock lock = new ReentrantLock();
-			public final Condition oneAtATime = lock.newCondition();
-			
-			public boolean propsAcquiredInSecondThread = false;
-			public boolean followingJobDone = false;
+			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			
 			@Override
 			public void run() {
-				this.lock.lock();
 				try {
+					//start of the synchronization 
+	                int turn = 1;
+	                while (turn != 2) {
+	                    turn = this.exchanger.exchange(turn);
+	                }
+	                
 			        prop1 = BgeeProperties.getBgeeProperties();
 			        prop2 = BgeeProperties.getBgeeProperties();
-			        this.propsAcquiredInSecondThread = true;
-			        this.oneAtATime.signal();
 			        
-			        while (!this.followingJobDone) {
-			        	this.oneAtATime.await();
+			        //main thread's turn
+			        turn = 1;
+			        this.exchanger.exchange(turn);
+			        //wait for this thread's turn
+			        while (turn != 2) {
+				        turn = this.exchanger.exchange(turn);
 			        }
 			        
 			        prop1 = BgeeProperties.getBgeeProperties();
 			        prop2 = BgeeProperties.getBgeeProperties();
-			        this.propsAcquiredInSecondThread = true;
-			        this.oneAtATime.signal();
+			        
+			        //main thread's turn
+			        turn = 1;
+			        this.exchanger.exchange(turn);
 			        
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
-				} finally {
-					this.lock.unlock();
-				}
+				} 
 				
 			}
 		}
-		ThreadTest test = new ThreadTest();
 		
-		test.lock.lock();
 		try {
 			//get a BgeeProperties in the main thread
 			BgeeProperties mainProp1 = BgeeProperties.getBgeeProperties();
-			//load the properties in a second thread
-			test.start();
-			while (!test.propsAcquiredInSecondThread) {
-				test.oneAtATime.await();
-			}
+			
+			//launch the job in the second thread
+	        ThreadTest test = new ThreadTest();
+	        test.start();
+	        //start of the synchronization
+	        int turn = 2;
+	        test.exchanger.exchange(turn);
+	        //wait for this thread's turn
+	        while (turn != 1) {
+	            turn = test.exchanger.exchange(turn);
+	        }
 
 			//the 2 props in the second thread should be the same
 			assertEquals("A same thread acquired two instances of BgeeProperties", 
@@ -151,11 +156,11 @@ public class BgeePropertiesTest extends TestAncestor
 			//now, release BgeeProperties in the second thread
 			test.prop1.release();
 			//then let the second thread acquire new BgeeProperties again
-			test.propsAcquiredInSecondThread = false;
-			test.followingJobDone = true;
-			test.oneAtATime.signal();
-			while (!test.propsAcquiredInSecondThread) {
-				test.oneAtATime.await();
+			turn = 2;
+			test.exchanger.exchange(turn);
+			//wait for this thread's turn
+			while (turn != 1) {
+				turn = test.exchanger.exchange(turn);
 			}
 			
 			//it should have acquired two new and identical BgeeProperties
@@ -176,12 +181,6 @@ public class BgeePropertiesTest extends TestAncestor
 			
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-		} finally {
-			test.lock.unlock();
-		}
-
-		
-		
-		
+		} 
 	}
 }

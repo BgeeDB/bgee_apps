@@ -81,7 +81,7 @@ public class BgeePropertiesTest extends TestAncestor
 	 * from different threads. 
 	 */
 	@Test
-	public void shouldAcquirePropsInTwoThreads()
+	public void shouldAcquirePropsInTwoThreads() 
 	{
 		/**
 		 * An anonymous class to acquire <code>BgeeProperties</code>s 
@@ -94,11 +94,12 @@ public class BgeePropertiesTest extends TestAncestor
 			public void run() {
 				prop1 = BgeeProperties.getBgeeProperties();
 				prop2 = BgeeProperties.getBgeeProperties();
-				try {
-					this.wait();
-				} catch (InterruptedException e) {
-					prop1 = BgeeProperties.getBgeeProperties();
-					prop2 = BgeeProperties.getBgeeProperties();
+				synchronized(this) {
+					try {
+						this.wait();
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
 				}
 			}
 		}
@@ -106,6 +107,7 @@ public class BgeePropertiesTest extends TestAncestor
 		
 		//get a BgeeProperties in the main thread
 		BgeeProperties mainProp1 = BgeeProperties.getBgeeProperties();
+		wrong approach, main thread also has to wait here
 		//load the properties in a second thread
 		test.start();
 		//the 2 props in the second thread should be the same

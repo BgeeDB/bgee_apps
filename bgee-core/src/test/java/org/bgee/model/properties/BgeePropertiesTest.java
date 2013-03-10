@@ -2,6 +2,10 @@ package org.bgee.model.properties;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
@@ -90,53 +94,94 @@ public class BgeePropertiesTest extends TestAncestor
 		class ThreadTest extends Thread {
 			public BgeeProperties prop1;
 			public BgeeProperties prop2;
+			
+			public final Lock lock = new ReentrantLock();
+			public final Condition oneAtATime = lock.newCondition();
+			
+			public boolean propsAcquiredInSecondThread = false;
+			public boolean followingJobDone = false;
+			
 			@Override
 			public void run() {
-				prop1 = BgeeProperties.getBgeeProperties();
-				prop2 = BgeeProperties.getBgeeProperties();
-				synchronized(this) {
-					try {
-						this.wait();
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
+				this.lock.lock();
+				try {
+			        prop1 = BgeeProperties.getBgeeProperties();
+			        prop2 = BgeeProperties.getBgeeProperties();
+			        this.propsAcquiredInSecondThread = true;
+			        this.oneAtATime.signal();
+			        
+			        while (!this.followingJobDone) {
+			        	this.oneAtATime.await();
+			        }
+			        
+			        prop1 = BgeeProperties.getBgeeProperties();
+			        prop2 = BgeeProperties.getBgeeProperties();
+			        this.propsAcquiredInSecondThread = true;
+			        this.oneAtATime.signal();
+			        
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				} finally {
+					this.lock.unlock();
 				}
+				
 			}
 		}
 		ThreadTest test = new ThreadTest();
 		
-		//get a BgeeProperties in the main thread
-		BgeeProperties mainProp1 = BgeeProperties.getBgeeProperties();
-		wrong approach, main thread also has to wait here
-		//load the properties in a second thread
-		test.start();
-		//the 2 props in the second thread should be the same
-		assertEquals("A same thread acquired two instances of BgeeProperties", 
-				test.prop1, test.prop2);
-		//and the props should be different in the different threads
-		assertNotEquals("Two threads acquired a same instance of BgeeProperties", 
-				mainProp1, test.prop1);
+		test.lock.lock();
+		try {
+			//get a BgeeProperties in the main thread
+			BgeeProperties mainProp1 = BgeeProperties.getBgeeProperties();
+			//load the properties in a second thread
+			test.start();
+			while (!test.propsAcquiredInSecondThread) {
+				test.oneAtATime.await();
+			}
+
+			//the 2 props in the second thread should be the same
+			assertEquals("A same thread acquired two instances of BgeeProperties", 
+					test.prop1, test.prop2);
+			//and the props should be different in the different threads
+			assertNotEquals("Two threads acquired a same instance of BgeeProperties", 
+					mainProp1, test.prop1);
+			
+			//store a prop of the second thread for next test
+			BgeeProperties secondProp1 = test.prop1;
+			//now, release BgeeProperties in the second thread
+			test.prop1.release();
+			//then let the second thread acquire new BgeeProperties again
+			test.propsAcquiredInSecondThread = false;
+			test.followingJobDone = true;
+			test.oneAtATime.signal();
+			while (!test.propsAcquiredInSecondThread) {
+				test.oneAtATime.await();
+			}
+			
+			//it should have acquired two new and identical BgeeProperties
+			assertNotEquals("The BgeeProperties were not correctly released", 
+					secondProp1, test.prop1);
+			assertEquals("A same thread acquired two instances of BgeeProperties", 
+					test.prop1, test.prop2);
+			//and still different from the BgeeProperties in this thread
+			assertNotEquals("Two threads acquired a same instance of BgeeProperties", 
+					mainProp1, test.prop1);
+			//check if the BgeeProperties was also release in the main thread
+			BgeeProperties mainProp2 = BgeeProperties.getBgeeProperties();
+			assertNotEquals("The BgeeProperties were not correctly released", 
+					mainProp1, mainProp2);
+			//and still different from the BgeeProperties in the second thread
+			assertNotEquals("Two threads acquired a same instance of BgeeProperties", 
+					mainProp2, test.prop1);
+			
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		} finally {
+			test.lock.unlock();
+		}
+
 		
-		//store a prop of the second thread for next test
-		BgeeProperties secondProp1 = test.prop1;
-		//now, release BgeeProperties in the second thread
-		test.prop1.release();
-		//then let the second thread acquire new BgeeProperties again
-		test.notify();
-		//it should have acquired two new and identical BgeeProperties
-		assertNotEquals("The BgeeProperties were not correctly released", 
-				secondProp1, test.prop1);
-		assertEquals("A same thread acquired two instances of BgeeProperties", 
-				test.prop1, test.prop2);
-		//and still different from the BgeeProperties in this thread
-		assertNotEquals("Two threads acquired a same instance of BgeeProperties", 
-				mainProp1, test.prop1);
-		//check if the BgeeProperties was also release in the main thread
-		BgeeProperties mainProp2 = BgeeProperties.getBgeeProperties();
-		assertNotEquals("The BgeeProperties were not correctly released", 
-				mainProp1, mainProp2);
-		//and still different from the BgeeProperties in the second thread
-		assertNotEquals("Two threads acquired a same instance of BgeeProperties", 
-				mainProp2, test.prop1);
+		
+		
 	}
 }

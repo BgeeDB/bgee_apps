@@ -2,8 +2,7 @@ package org.bgee.model;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,7 +64,8 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * You should always call {@link #release()} at the end of the execution of one thread, 
  * and {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
- * when the webapp is shutdown).
+ * when the webapp is shutdown). Otherwise, there is small risk to have a collision 
+ * of thread IDs, used to store in a <code>Map</code> the <code>BgeeProperties</code>s.
  * <p>
  * This class has been inspired from <code>net.sf.log4jdbc.DriverSpy</code> 
  * developed by Arthur Blake.
@@ -345,9 +345,26 @@ public class BgeeProperties
 		}
 		return log.exit(bgeeProperties.get(threadId));
 	}
+
+	/**
+	 * Release the <code>BgeeProperties</code> associated to the thread 
+	 * calling this method. A call to {@link #getBgeeProperties()} from this thread 
+	 * will return a new <code>BgeeProperties</code> instance. 
+	 * 
+	 * @return 	<code>true</code> if there was a <code>BgeeProperties</code> to release 
+	 * 			for the caller thread, <code>false</code> otherwise.
+	 */
+	public static boolean release()
+	{
+		log.entry();
+		if (bgeeProperties.remove(Thread.currentThread().getId()) != null) {
+			return log.exit(true);
+		}
+		return log.exit(false);
+	}
 	/**
 	 * Release all <code>BgeeProperties</code>s currently registered 
-	 * (call {@link #release()} on each of them), and prevent any new 
+	 * and prevent any new 
 	 * <code>BgeeProperties</code> to be obtained again (calling {@link #getBgeeProperties()} 
 	 * after having called this method will throw a <code>IllegalStateException</code>). 
 	 * <p>
@@ -368,13 +385,12 @@ public class BgeeProperties
 		//It's not totally true, but we don't except any major error if it doesn't act like a lock.
 		bgeePropertiesClosed.set(true);
 		
-		int propCount = bgeeProperties.size();
-		//get a shallow copy of bgeeProperties, so that the remove operation 
-		//performed by the method release() will not interfere with the iteration
-		Collection<BgeeProperties> shallowCopy = 
-				new ArrayList<BgeeProperties>(bgeeProperties.values());
-		for (BgeeProperties prop: shallowCopy) {
-			prop.release();
+		int propCount = 0;
+		Iterator<BgeeProperties> propIterator = bgeeProperties.values().iterator();
+		while (propIterator.hasNext()) {
+			propIterator.next();
+			propCount++;
+			propIterator.remove();
 		}
 		
 		return log.exit(propCount);
@@ -385,7 +401,8 @@ public class BgeeProperties
 	//*********************************
 	/**
 	 * Private constructor, instances can be obtained only through the use 
-	 * of the static method {@link getBgeeProperties()}.
+	 * of the static method {@link getBgeeProperties()}. 
+	 * <p>
 	 * Instance attributes are initialized using the corresponding 
 	 * class attributes. 
 	 */
@@ -396,15 +413,21 @@ public class BgeeProperties
 		this.setJdbcUsername(jdbcUsername);
 		this.setJdbcPassword(jdbcPassword);
 	}
+	
 	/**
-	 * Release this <code>BgeeProperties</code> (a call to {@link #getBgeeProperties()} 
-	 * will return a new <code>BgeeProperties</code> instance). 
+	 * Determine whether this <code>BgeeProperties</code> was released 
+	 * (following a call to {@link #release()}).
+	 * 
+	 * @return	<code>true</code> if this <code>BgeeProperties</code> was released, 
+	 * 			<code>false</code> otherwise.
 	 */
-	public void release()
+	public boolean isReleased()
 	{
 		log.entry();
-		bgeeProperties.remove(Thread.currentThread().getId());
-		log.exit();
+		if (bgeeProperties.containsValue(this)) {
+			return log.exit(false);
+		}
+		return log.exit(true);
 	}
 	
 	/**

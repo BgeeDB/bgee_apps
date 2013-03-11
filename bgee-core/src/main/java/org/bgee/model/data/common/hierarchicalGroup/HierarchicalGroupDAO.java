@@ -2,6 +2,11 @@ package org.bgee.model.data.common.hierarchicalGroup;
 
 import java.util.Collection;
 
+/**
+ * An interface
+ * 
+ * @author Komal Sanjeev
+ */
 public interface HierarchicalGroupDAO {
 
 	/**
@@ -28,24 +33,5 @@ public interface HierarchicalGroupDAO {
 
 	public Collection<String> getHierarchicalOrthologusGenes(String queryGene,
 			long ncbiTaxonomyId);
-
-	/**
-	 * Retrieves the parent node for the query to be performed on the nested set
-	 * model of {@link #getHierarchicalOrthologusGenes(String, long)}.
-	 * 
-	 * @param hierarchicalGroupTO
-	 * @see #getHierarchicalOrthologusGenes(String, long)
-	 */
-	public void getParentNodeForNestedSetQuery(
-			HierarchicalGroupTO hierarchicalGroupTO);
-
-	/**
-	 * Retrieves all the orthologus genes in the sub-group whose parent node is
-	 * retrieved by {@link #getParentNodeForNestedSetQuery(HierarchicalGroupTO)}
-	 * 
-	 * @param hierarchicalGroupTO
-	 * @see #getParentNodeForNestedSetQuery(HierarchicalGroupTO)
-	 */
-	public void performNestedSetQuery(HierarchicalGroupTO hierarchicalGroupTO);
 
 }

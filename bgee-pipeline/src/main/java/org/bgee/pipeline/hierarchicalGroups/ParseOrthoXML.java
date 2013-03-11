@@ -67,7 +67,7 @@ public class ParseOrthoXML {
 		while ((group = reader.next()) != null) {
 
 			Node rootNode = new Node();
-			rootNode.setNodeId(ParseOrthoXML.hierarchicalGroupId++);
+			rootNode.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
 
 			// Build the tree of the current group
 			BuildTree(group, rootNode);
@@ -110,7 +110,7 @@ public class ParseOrthoXML {
 
 			// Make a new node object for every child, and set a unique ID
 			Node childNode = new Node();
-			childNode.setNodeId(ParseOrthoXML.hierarchicalGroupId++);
+			childNode.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
 
 			// Add that node as a child to the parent node
 			node.addChild(childNode);
@@ -121,7 +121,7 @@ public class ParseOrthoXML {
 			for (Gene gene : child.getGenes()) {
 				Node leaf = new Node();
 				childNode.addChild(leaf);
-				leaf.setNodeId(ParseOrthoXML.hierarchicalGroupId++);
+				leaf.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
 				leaf.setGeneID(gene.getProteinIdentifier());
 			}
 
@@ -219,7 +219,7 @@ public class ParseOrthoXML {
 		try {
 			PreparedStatement preparedStatement = connection
 					.prepareStatement(sql);
-			preparedStatement.setLong(1, node.getNodeId());
+			preparedStatement.setLong(1, node.getHierarchicalGroupId());
 			preparedStatement.setString(2, group.getId());
 			preparedStatement.setLong(3, node.getHierarchicalLeftBound());
 			preparedStatement.setLong(4, node.getHierarchicalRightBound());

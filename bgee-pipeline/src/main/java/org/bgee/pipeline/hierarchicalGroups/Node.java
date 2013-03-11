@@ -11,14 +11,14 @@ import java.util.List;
  * 
  * @author Komal Sanjeev
  * @version
- * @since
+ * @since March 2013
  */
 public class Node {
 
 	/**
 	 * An <code>long</code> representing a unique ID for every entry node.
 	 */
-	private long nodeId;
+	private long hierarchicalGroupId;
 
 	/**
 	 * A <code>List</code> of <code>Node</code> objects representing the all the
@@ -54,7 +54,7 @@ public class Node {
 	 * Default constructor
 	 */
 	public Node() {
-		this.setNodeId(0);
+		this.setHierarchicalGroupId(0);
 		this.setChildNodes(new ArrayList<Node>());
 		this.setHierarchicalLeftBound(0);
 		this.setHierarchicalRightBound(0);
@@ -63,7 +63,7 @@ public class Node {
 	}
 
 	public Node(long data) {
-		setNodeId(data);
+		setHierarchicalGroupId(data);
 		this.setChildNodes(new ArrayList<Node>());
 		this.setHierarchicalLeftBound(0);
 		this.setHierarchicalRightBound(0);
@@ -74,16 +74,16 @@ public class Node {
 	/**
 	 * @return the nodeId
 	 */
-	public long getNodeId() {
-		return this.nodeId;
+	public long getHierarchicalGroupId() {
+		return this.hierarchicalGroupId;
 	}
 
 	/**
 	 * @param nodeId
 	 *            the nodeId to set
 	 */
-	public void setNodeId(long nodeId) {
-		this.nodeId = nodeId;
+	public void setHierarchicalGroupId(long hierarchicalGroupId) {
+		this.hierarchicalGroupId = hierarchicalGroupId;
 	}
 
 	/**

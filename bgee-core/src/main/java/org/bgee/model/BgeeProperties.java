@@ -333,6 +333,7 @@ public class BgeeProperties
 	    }
 	    
 		long threadId = Thread.currentThread().getId();
+		log.debug("Trying to obtain a BgeeProperties instance from Thread {}", threadId);
 		
 		if (!bgeeProperties.containsKey(threadId)) {
 			//instantiate the BgeeProperties only if needed
@@ -340,9 +341,11 @@ public class BgeeProperties
 			//we don't use putifAbsent, as the threadId make sure 
 			//there won't be any multi-threading key collision
 			bgeeProperties.put(threadId, prop);
-		    
+			log.debug("Return a new BgeeProperties instance");
+			
 		    return log.exit(prop);
 		}
+		log.debug("Return an already existing BgeeProperties instance");
 		return log.exit(bgeeProperties.get(threadId));
 	}
 

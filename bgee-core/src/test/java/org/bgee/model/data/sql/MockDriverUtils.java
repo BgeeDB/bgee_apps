@@ -40,7 +40,7 @@ public class MockDriverUtils
 	 * A <code>String</code> representing the URL that the mock <code>Driver</code> 
 	 * will accept.
 	 */
-	public final String MOCKURL = "jdbc:mock:test";
+	public final static String MOCKURL = "jdbc:mock:test";
 	/**
 	 * The mock <code>Driver</code> that this class is responsible to register 
 	 * to the <code>DriverManager</code>.
@@ -80,7 +80,7 @@ public class MockDriverUtils
 			//will return a mock Connection, that unit tests will use.
 			//all calls to the connect method will return the same mock Connection instance.
 			this.setMockConnection(mock(Connection.class));
-			when(mockDriver.connect(MOCKURL, any(Properties.class)))
+			when(mockDriver.connect(eq(MOCKURL), any(Properties.class)))
 			.thenReturn(this.getMockConnection());
 
 			//register the mock Driver

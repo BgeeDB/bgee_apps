@@ -205,6 +205,7 @@ public class BgeeDataSource
 	    }
 	    
 		long threadId = Thread.currentThread().getId();
+		log.debug("Trying to obtain a BgeeDataSource instance from Thread {}", threadId);
 		
 		if (!bgeeDataSources.containsKey(threadId)) {
 			//instantiate the BgeeDataSource only if needed
@@ -212,9 +213,11 @@ public class BgeeDataSource
 			//we don't use putifAbsent, as the threadId make sure 
 			//there won't be any multi-threading key collision
 		    bgeeDataSources.put(threadId, source);
+		    log.debug("Return a new BgeeDataSource instance");
 		    
 		    return log.exit(source);
 		}
+		log.debug("Return an already existing BgeeDataSource instance");
 		return log.exit(bgeeDataSources.get(threadId));
 	}
 	

@@ -2,7 +2,6 @@ package org.bgee.model;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -62,10 +61,10 @@ import org.apache.logging.log4j.Logger;
  * will return a new <code>BgeeProperties</code> instance, with the attributes re-initialized 
  * using the System or file properties.
  * <p>
- * You should always call {@link #release()} at the end of the execution of one thread, 
- * and {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
- * when the webapp is shutdown). Otherwise, there is small risk to have a collision 
- * of thread IDs, used to store in a <code>Map</code> the <code>BgeeProperties</code>s.
+ * You should always call <code>BgeeProperties.getBgeeProperties().release()</code> 
+ * at the end of the execution of one thread, 
+ * or {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
+ * when the webapp is shutdown). 
  * <p>
  * This class has been inspired from <code>net.sf.log4jdbc.DriverSpy</code> 
  * developed by Arthur Blake.
@@ -86,12 +85,12 @@ public class BgeeProperties
 	
 	/**
      * A <code>ConcurrentMap</code> used to store all <code>BgeeProperties</code> instances, 
-     * associated with the ID of the thread that requested it. 
+     * associated with the <code>Thread</code> object that requested it. 
      * <p>
      * This <code>Map</code> is used to provide a unique and independent 
      * <code>BgeeProperties</code> instance to each thread: 
      * a <code>BgeeProperties</code> is added to this <code>Map</code> 
-     * when {@link #getBgeeProperties()} is called, if the thread ID is not already 
+     * when {@link #getBgeeProperties()} is called, if the thread is not already 
      * present in the <code>keySet</code> of the <code>Map</code>. 
      * Otherwise, the already stored <code>BgeeProperties</code> is returned. 
      * <p>
@@ -101,11 +100,12 @@ public class BgeeProperties
      * want to properly remove all <code>BgeeProperties</code>; 
      * or when a thread performing monitoring of another thread want to modify a property.
      * <p>
-     * A <code>BgeeProperties</code> is removed from this <code>Map</code> 
-     * when the method {@link #release()} is called on it. 
+     * A <code>BgeeProperties</code> is removed from this <code>Map</code> for a thread
+     * when the method {@link #release()} is called from this thread. 
+     * All <code>BgeeProperties</code> are removed when {@link #releaseAll()} is called.
      */
-    private static final ConcurrentMap<Long, BgeeProperties> bgeeProperties = 
-    		new ConcurrentHashMap<Long, BgeeProperties>();
+    private static final ConcurrentMap<Thread, BgeeProperties> bgeeProperties = 
+    		new ConcurrentHashMap<Thread, BgeeProperties>();
     /**
      * An <code>AtomicBoolean</code> to define if <code>BgeeProperties</code>s 
      * can still be acquired (using {@link #getBgeeProperties()}), 
@@ -309,9 +309,10 @@ public class BgeeProperties
 	 * <code>BgeeProperties</code> instance, 
 	 * independent from other threads ("per-thread singleton").
 	 * <p>
-	 * An exception is if you call this method 
-     * after having called {@link #release()} on the <code>BgeeProperties</code>.
-     * In that case, this method would return a new <code>BgeeProperties</code> instance, 
+	 * An exception is if you call this method from a thread
+     * after having called {@link #release()} from this thread.
+     * In that case, this method would return a new <code>BgeeProperties</code> instance 
+     * when called from this thread, 
      * with attributes re-initialized using the <code>Properties</code> from 
      * the properties file or the System properties. 
      * <p>
@@ -326,45 +327,30 @@ public class BgeeProperties
 	public static BgeeProperties getBgeeProperties() throws IllegalStateException
 	{
 		log.entry();
+
+	    Thread currentThread = Thread.currentThread();
+		log.debug("Trying to obtain a BgeeProperties instance for Thread {}", 
+				currentThread.getId());
 		
 	    if (bgeePropertiesClosed.get()) {
 	    	throw new IllegalStateException("releaseAll() has been already called, " +
 	    			"it is not possible to acquire a BgeeProperties anymore");
 	    }
-	    
-		long threadId = Thread.currentThread().getId();
-		log.debug("Trying to obtain a BgeeProperties instance from Thread {}", threadId);
 		
-		if (!bgeeProperties.containsKey(threadId)) {
+		BgeeProperties props = bgeeProperties.get(currentThread);
+		if (props == null) {
 			//instantiate the BgeeProperties only if needed
-			BgeeProperties prop = new BgeeProperties();
-			//we don't use putifAbsent, as the threadId make sure 
+			props = new BgeeProperties();
+			//we don't use putifAbsent, as the thread as key make sure 
 			//there won't be any multi-threading key collision
-			bgeeProperties.put(threadId, prop);
+			bgeeProperties.put(currentThread, props);
 			log.debug("Return a new BgeeProperties instance");
-			
-		    return log.exit(prop);
+		} else {
+		    log.debug("Return an already existing BgeeProperties instance");
 		}
-		log.debug("Return an already existing BgeeProperties instance");
-		return log.exit(bgeeProperties.get(threadId));
+		return log.exit(props);
 	}
-
-	/**
-	 * Release the <code>BgeeProperties</code> associated to the thread 
-	 * calling this method. A call to {@link #getBgeeProperties()} from this thread 
-	 * will return a new <code>BgeeProperties</code> instance. 
-	 * 
-	 * @return 	<code>true</code> if there was a <code>BgeeProperties</code> to release 
-	 * 			for the caller thread, <code>false</code> otherwise.
-	 */
-	public static boolean release()
-	{
-		log.entry();
-		if (bgeeProperties.remove(Thread.currentThread().getId()) != null) {
-			return log.exit(true);
-		}
-		return log.exit(false);
-	}
+	
 	/**
 	 * Release all <code>BgeeProperties</code>s currently registered 
 	 * and prevent any new 
@@ -388,13 +374,8 @@ public class BgeeProperties
 		//It's not totally true, but we don't except any major error if it doesn't act like a lock.
 		bgeePropertiesClosed.set(true);
 		
-		int propCount = 0;
-		Iterator<BgeeProperties> propIterator = bgeeProperties.values().iterator();
-		while (propIterator.hasNext()) {
-			propIterator.next();
-			propCount++;
-			propIterator.remove();
-		}
+		int propCount = bgeeProperties.size();
+		bgeeProperties.clear();
 		
 		return log.exit(propCount);
 	}
@@ -416,6 +397,21 @@ public class BgeeProperties
 		this.setJdbcUsername(jdbcUsername);
 		this.setJdbcPassword(jdbcPassword);
 	}
+
+	/**
+	 * Release this <code>BgeeProperties</code>. 
+	 * A call to {@link #getBgeeProperties()} from the thread that was holding it 
+	 * will return a new <code>BgeeProperties</code> instance. 
+	 * 
+	 * @return 	<code>true</code> if this <code>BgeeProperties</code> was released, 
+	 * 			<code>false</code> if it was already released.
+	 */
+	public boolean release()
+	{
+		log.entry();
+		return log.exit(
+				bgeeProperties.values().remove(this));
+	}
 	
 	/**
 	 * Determine whether this <code>BgeeProperties</code> was released 
@@ -427,10 +423,8 @@ public class BgeeProperties
 	public boolean isReleased()
 	{
 		log.entry();
-		if (bgeeProperties.containsValue(this)) {
-			return log.exit(false);
-		}
-		return log.exit(true);
+		return log.exit(
+				!bgeeProperties.containsValue(this));
 	}
 	
 	/**

@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,8 +37,8 @@ import org.bgee.model.BgeeProperties;
  * will always return the same <code>BgeeDataSource</code> instance. 
  * An exception is if you call this method 
  * after having called {@link #close()} or {@link #closeAll()}.
- * In that case, <code>getBgeeDataSource()</code> 
- * would return a new <code>BgeeDataSource</code> instance. It is not a big deal.
+ * In that case, a call <code>getBgeeDataSource()</code> from this thread 
+ * would return a new <code>BgeeDataSource</code> instance. 
  * <p>
  * Following the first call <b>on a given <code>BgeeDataSource</code> instance</b> 
  * to a method to obtain a connection, 
@@ -54,17 +53,17 @@ import org.bgee.model.BgeeProperties;
  * without trying to obtain a new <code>Connection</code> from a <code>DataSource</code> 
  * or a <code>DriverManager</code>. 
  * <p>
- * An exception is that, when a <code>BgeeConnection</code> is closed, 
- * this <code>BgeeDataSource</code> release it, 
+ * An exception is that, when a <code>BgeeConnection</code> is closed 
+ * (by calling {@link BgeeConnection#close()}), this <code>BgeeDataSource</code> release it, 
  * so that a consecutive call to obtain a <code>Connection</code> 
  * with the same <code>username</code> and <code>password</code>, 
  * will obtain a new <code>Connection</code> from a <code>DataSource</code> 
  * or a <code>DriverManager</code> again.
  * <p>
- * You should always call {@link #release()} at the end of the execution of one thread, 
- * and {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
- * when the webapp is shutdown). Otherwise, there is small risk to have a collision 
- * of thread IDs, used to store in a <code>Map</code> the <code>BgeeDataSource</code>s.
+ * You should always call <code>BgeeDataSource.getBgeeDataSource().close()</code> 
+ * at the end of the execution of a thread, 
+ * and {@link #closeAll()} in multi-threads context (for instance, in a webapp context 
+ * when the webapp is shutdown). 
  *  
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013
@@ -77,7 +76,7 @@ public class BgeeDataSource
 	//****************************
 	/**
      * A <code>ConcurrentMap</code> used to store all <code>BgeeDataSource</code>s, 
-     * associated with the ID of the thread that requested it. 
+     * associated with the <code>Thread</code> object that requested it. 
      * <p>
      * This <code>Map</code> is used to provide a unique and independent 
      * <code>BgeeDataSource</code> instance to each thread: 
@@ -92,11 +91,14 @@ public class BgeeDataSource
      * want to properly close all <code>BgeeDataSource</code>s; 
      * or when a thread performing monitoring of another thread want to interrupt it.
      * <p>
-     * A <code>BgeeDataSource</code> is removed from this <code>Map</code> 
-     * when the method {@link #close()} is called on it. 
+     * A <code>BgeeDataSource</code> is removed from this <code>Map</code> for a thread
+     * when the method {@link #release()} is called from this thread, 
+     * or when the method  {@link #release(long)} is called with the ID of the thread 
+     * provided as argument, from any other thread. 
+     * All <code>BgeeDataSource</code> are removed when {@link #releaseAll()} is called.
      */
-    private static final ConcurrentMap<Long, BgeeDataSource> bgeeDataSources = 
-    		new ConcurrentHashMap<Long, BgeeDataSource>();
+    private static final ConcurrentMap<Thread, BgeeDataSource> bgeeDataSources = 
+    		new ConcurrentHashMap<Thread, BgeeDataSource>();
     /**
      * An <code>AtomicBoolean</code> to define if <code>BgeeDataSource</code>s 
      * can still be acquired (using {@link #getBgeeDataSource()}), 
@@ -182,10 +184,11 @@ public class BgeeDataSource
 	 * <code>BgeeDataSource</code> instance, 
 	 * independent from other threads ("per-thread singleton").
 	 * <p>
-	 * An exception is if you call this method 
-     * after having called {@link #release()}.
-     * In that case, this method would return a new <code>BgeeDataSource</code> instance. 
-     * It is not a big deal.
+	 * An exception is if you call this method from a thread
+     * after having called {@link #release()} from this thread, 
+     * or {@link #release(long)} by providing the ID of the thread as a parameter.
+     * In that case, this method would return a new <code>BgeeDataSource</code> instance 
+     * when called from this thread. 
      * <p>
      * Note that after having called {@link #releaseAll()}, no <code>BgeeDataSource</code> 
      * can be obtained anymore. This method will throw a <code>SQLException</code> 
@@ -200,81 +203,31 @@ public class BgeeDataSource
 		log.entry();
 		
 	    if (dataSourcesClosed.get()) {
-	    	throw new SQLException("closeAll() has been already called, " +
+	    	throw new SQLException("releaseAll() has been already called, " +
 	    			"it is not possible to acquire a BgeeDataSource anymore");
 	    }
 	    
-		long threadId = Thread.currentThread().getId();
-		log.debug("Trying to obtain a BgeeDataSource instance from Thread {}", threadId);
+	    Thread currentThread = Thread.currentThread();
+		log.debug("Trying to obtain a BgeeDataSource instance from Thread {}", 
+				currentThread.getId());
 		
-		if (!bgeeDataSources.containsKey(threadId)) {
+		BgeeDataSource source = bgeeDataSources.get(currentThread);
+		if (source == null) {
 			//instantiate the BgeeDataSource only if needed
-			BgeeDataSource source = new BgeeDataSource();
-			//we don't use putifAbsent, as the threadId make sure 
+			source = new BgeeDataSource();
+			//we don't use putifAbsent, as the thread object make sure 
 			//there won't be any multi-threading key collision
-		    bgeeDataSources.put(threadId, source);
+		    bgeeDataSources.put(currentThread, source);
 		    log.debug("Return a new BgeeDataSource instance");
-		    
-		    return log.exit(source);
+		} else {
+		    log.debug("Return an already existing BgeeDataSource instance");
 		}
-		log.debug("Return an already existing BgeeDataSource instance");
-		return log.exit(bgeeDataSources.get(threadId));
+		return log.exit(source);
 	}
 	
 	/**
-	 * Release the <code>BgeeDataSource</code> associated to the thread 
-	 * calling this method, and close all the connections that it holds. 
-	 * A call to {@link #getBgeeDataSource()} from this thread 
-	 * will return a new <code>BgeeDataSource</code> instance. 
-	 * 
-	 * @return 	<code>true</code> if there was a <code>BgeeDataSource</code> to release 
-	 * 			for the caller thread, <code>false</code> otherwise.
-	 */
-	public static boolean release()
-	{
-		log.entry();
-		BgeeDataSource threadSource = bgeeDataSources.remove(Thread.currentThread().getId());
-		if (threadSource != null) {
-			threadSource.close();
-			return log.exit(true);
-		}
-		return log.exit(false);
-	}
-	/**
-	 * Retrieve the <code>BgeeDataSource</code> associated to <code>threadId</code>, 
-	 * and close all connections that it holds. A call to {@link #getBgeeDataSource()} 
-	 * from the thread with the ID <code>threadId</code> will return a new 
-	 * <code>BgeeDataSource</code> instance.
-	 * <p>
-	 * This method is most likely used by a monitoring thread wanting to abort 
-	 * execution of the monitored thread. 
-	 * 
-	 * @param threadId 	A <code>long</code> that is the ID of the thread for which 
-	 * 					we want to abort the <code>BgeeDataSource</code> associated with.
-	 * @return 	<code>true</code> if there was a <code>BgeeDataSource</code> to release 
-	 * 			for the thread with the ID <code>threadId</code>, <code>false</code> otherwise.
-	 * @see #release()
-	 */
-	public static boolean release(long threadId)
-	{
-		log.entry(threadId);
-		
-		BgeeDataSource sourceToClose = bgeeDataSources.remove(threadId);
-		//here, sourceToClose could be null, but the thread with the ID threadId 
-		//could have requested a new BgeeDataSource just after. 
-		//we do not deal with this case, as this method is most likely called 
-		//by a monitoring thread, on a monitored thread (so the monitored thread 
-		//is supposed to already have acquired a BgeeDataSource to do its task)
-		if (sourceToClose != null) {
-			sourceToClose.close();
-			return log.exit(true);
-		}
-		return log.exit(false);
-	}
-	
-	/**
-	 * Release all <code>BgeeDataSource</code>s currently registered 
-	 * (and close all opened connections that they hold),
+	 * Call {@link #close()} on all <code>BgeeDataSource</code>s currently registered 
+	 * (so it also closes all opened connections that they hold),
 	 * and prevent any new <code>BgeeDataSource</code> to be obtained again 
 	 * (calling {@link #getBgeeDataSource()} from any thread 
 	 * after having called this method will throw a <code>SQLException</code>). 
@@ -288,7 +241,7 @@ public class BgeeDataSource
 	 * @return 	An <code>int</code> that is the number of <code>BgeeDataSource</code>s 
 	 * 			that were closed
 	 */
-	public static int releaseAll()
+	public static int closeAll()
 	{
 		log.entry();
 		
@@ -298,12 +251,9 @@ public class BgeeDataSource
 		dataSourcesClosed.set(true);
 		
 		int sourcesCount = 0;
-		Iterator<BgeeDataSource> sourceIterator = bgeeDataSources.values().iterator();
-		while (sourceIterator.hasNext()) {
-			BgeeDataSource source = sourceIterator.next();
+		for (BgeeDataSource source: bgeeDataSources.values()) {
 			sourcesCount++;
 			source.close();
-			sourceIterator.remove();
 		}
 		
 		return log.exit(sourcesCount);
@@ -333,10 +283,15 @@ public class BgeeDataSource
 	 * If a <code>BgeeConnection</code> with the same parameters is already hold 
 	 * by this <code>BgeeDataSource</code>, then return it without creating a new one. 
 	 * This <code>BgeeDataSource</code> will hold a <code>BgeeConnection</code> 
-	 * as long as it is not closed. 
+	 * as long as it is not closed (by a call to {@link BgeeConnection#close()}). 
+	 * <p>
+	 * If this <code>BgeeDataSource</code> was closed ({@link #isClosed()} 
+	 * returns <code>true</code>), following a call to {@link #close()} or 
+	 * {@link #closeAll()}, this method will throw a <code>SQLException</code>.
 	 * 
 	 * @return	A <code>BgeeConnection</code> opened to the data source. 
-	 * @throws SQLException 	If an error occurred while trying to obtain the connection.
+	 * @throws SQLException 	If an error occurred while trying to obtain the connection, 
+	 * 							of if this <code>BgeeDataSource</code> was closed.
 	 * @see #getConnection(String, String)
 	 */
 	public BgeeConnection getConnection() throws SQLException
@@ -373,14 +328,19 @@ public class BgeeDataSource
 	 * If a <code>BgeeConnection</code> with the same parameters is already hold 
 	 * by this <code>BgeeDataSource</code>, then return it without creating a new one. 
 	 * This <code>BgeeDataSource</code> will hold a <code>BgeeConnection</code> 
-	 * as long as it is not closed. 
+	 * as long as it is not closed (by a call to {@link BgeeConnection#close()}). 
+	 * <p>
+	 * If this <code>BgeeDataSource</code> was closed ({@link #isClosed()} 
+	 * returns <code>true</code>), following a call to {@link #close()} or 
+	 * {@link #closeAll()}, this method will throw a <code>SQLException</code>.
 	 * 
 	 * @param username 	A <code>String</code> defining the username to use 
 	 * 					to open the connection.
 	 * @param password 	A <code>String</code> defining the password to use 
 	 * 					to open the connection.
 	 * @return			A <code>BgeeConnection</code> opened to the data source. 
-	 * @throws SQLException 	If an error occurred while trying to obtain the connection.
+	 * @throws SQLException 	If an error occurred while trying to obtain the connection, 
+	 * 							of if this <code>BgeeDataSource</code> was closed.
 	 * @see #getConnection()
 	 */
 	public BgeeConnection getConnection(String username, String password) throws SQLException
@@ -388,6 +348,10 @@ public class BgeeDataSource
 		log.entry(username, password);
 		log.debug("Trying to obtain a BgeeConnection using username {}...", 
 				username);
+		
+		if (this.isClosed()) {
+			throw new SQLException("This BgeeDataSource is already closed.");
+		}
 		
 		String connectionId = this.generateConnectionId(username, password);
 		BgeeConnection connection = this.getOpenConnections().get(connectionId);
@@ -426,21 +390,31 @@ public class BgeeDataSource
 		return log.exit(connection);
 	}
 
-	
 	/**
-	 * Determine whether this <code>BgeeDataSource</code> was released 
-	 * (following a call to {@link #release()}).
+	 * Close all <code>BgeeConnection</code>s that this <code>BgeeDataSource</code> holds, 
+	 * and release this <code>BgeeDataSource</code> 
+	 * (a call to {@link #getBgeeDataSource()} from the thread that was holding it 
+	 * will return a new <code>BgeeDataSource</code> instance).
+	 * <p>
+	 * Following a call to this method, it is not possible to acquire new 
+	 * <code>BgeeConnection</code>s by a call to {@link #getConnection()} or 
+	 * {@link #getConnection(String, String)} on this object 
+	 * (it would throw a <code>SQLException</code>). A new instance should be acquired 
+	 * by a call to {@link #getBgeeDataSource()}.
 	 * 
-	 * @return	<code>true</code> if this <code>BgeeDataSource</code> was released, 
-	 * 			<code>false</code> otherwise.
+	 * @return 	<code>true</code> if this <code>BgeeDataSource</code> was closed 
+	 * 			following a call to this method, 
+	 * 			<code>false</code> if it was already closed.
 	 */
-	public boolean isReleased()
+	public boolean close()
 	{
 		log.entry();
-		if (bgeeDataSources.containsValue(this)) {
-			return log.exit(false);
-		}
-		return log.exit(true);
+		//we remove this BgeeDataSource from the Map before closing the connections, 
+		//as the absence from the map will prevent getConnection methods to be 
+		//successfully called.
+		boolean wasRemoved = bgeeDataSources.values().remove(this);
+		this.closeConnections();
+		return log.exit(wasRemoved);
 	}
 	
 	/**
@@ -451,7 +425,7 @@ public class BgeeDataSource
 	 * @return 	An <code>int</code> that is the number of <code>BgeeConnection</code>s 
 	 * 			that were closed following a call to this method.
 	 */
-	private int close()
+	private int closeConnections()
 	{
 		log.entry();
 		int connectionCount = this.getOpenConnections().size();
@@ -470,6 +444,20 @@ public class BgeeDataSource
 			}
 		}
 		return log.exit(connectionCount);
+	}
+	
+	/**
+	 * Determine whether this <code>BgeeDataSource</code> was closed 
+	 * (following a call to {@link #close()} or {@link #closeAll()}).
+	 * 
+	 * @return	<code>true</code> if this <code>BgeeDataSource</code> was closed, 
+	 * 			<code>false</code> otherwise.
+	 */
+	public boolean isClosed()
+	{
+		log.entry();
+		return log.exit(
+				!bgeeDataSources.containsValue(this));
 	}
 	
 	/**

@@ -165,11 +165,11 @@ public class BgeePropertiesTest extends TestAncestor
 			BgeeProperties prop1 = BgeeProperties.getBgeeProperties();
 			
 			//release it, should return true
-			assertEquals("A BgeeProperties was not correctly released", 
-					true, prop1.release());
+			assertTrue("A BgeeProperties was not correctly released", 
+					prop1.release());
 			//calling it again should do nothing
-			assertEquals("The returned value of release() is inaccurate", 
-					false, prop1.release());
+			assertFalse("The returned value of release() is inaccurate", 
+					prop1.release());
 			
 			//acquire a new BgeeProperties
 			BgeeProperties prop2 = BgeeProperties.getBgeeProperties();
@@ -181,24 +181,24 @@ public class BgeePropertiesTest extends TestAncestor
 	        test.exchanger.exchange(null);
 	        
 	        //test the returned value of the two calls to release() in the second thread
-	        assertEquals("A BgeeProperties was not correctly released in second thread", 
-					true, test.firstReleaseReturn);
-			assertEquals("The returned value of release() is inaccurate in second thread", 
-					false, test.secondReleaseReturn);
+	        assertTrue("A BgeeProperties was not correctly released in second thread", 
+					test.firstReleaseReturn);
+	        assertFalse("The returned value of release() is inaccurate in second thread", 
+					test.secondReleaseReturn);
 
 			//the first BgeeProperties of the main thread and the second thread 
 	        //should be released
-			assertEquals("A BgeeProperties was not correctly released in the main thread", 
-					prop1.isReleased(), true);
-			assertEquals("A BgeeProperties was not correctly released in the second thread", 
-					test.prop1.isReleased(), true);
+	        assertTrue("A BgeeProperties was not correctly released in the main thread", 
+					prop1.isReleased());
+	        assertTrue("A BgeeProperties was not correctly released in the second thread", 
+					test.prop1.isReleased());
 			
 			//the first BgeeProperties of the main thread and the second thread 
 	        //should NOT be released
-			assertEquals("A BgeeProperties should not have been released in the main thread", 
-					prop2.isReleased(), false);
-			assertEquals("A BgeeProperties should not have been released in the second thread", 
-					test.prop2.isReleased(), false);
+	        assertFalse("A BgeeProperties should not have been released in the main thread", 
+					prop2.isReleased());
+	        assertFalse("A BgeeProperties should not have been released in the second thread", 
+					test.prop2.isReleased());
 			
 			//release the BgeeProperties one by one without calling releaseAll(), 
 			//that would make other test to fail

@@ -96,6 +96,12 @@ public class ReleaseAllTest extends TestAncestor
 	        //wait for this thread's turn
 	        test.exchanger.exchange(null);
 	        
+	        //none of the properties should be tagged as released
+	        assertFalse("The returned value of isReleased() is inaccurate.", 
+					prop1.isReleased());
+			assertFalse("The returned value of isReleased() is inaccurate in the second thread.", 
+					test.prop1.isReleased());
+	        
 	        //call the tested method releaseAll()
 	        //should have release two BgeeProperties (two threads) 
 	        assertEquals("The value returned by releaseAll() was inaccurate.", 
@@ -105,10 +111,10 @@ public class ReleaseAllTest extends TestAncestor
 					0, BgeeProperties.releaseAll());
 	        
 			//the BgeeProperties acquired in both Threads should have been released
-	        assertEquals("A BgeeProperties was not correctly released in the main thread", 
-					prop1.isReleased(), true);
-			assertEquals("A BgeeProperties was not correctly released in the second thread", 
-					test.prop1.isReleased(), true);
+	        assertTrue("A BgeeProperties was not correctly released in the main thread", 
+	        		prop1.isReleased());
+			assertTrue("A BgeeProperties was not correctly released in the second thread", 
+					test.prop1.isReleased());
 			
 	        //trying to acquire a new BgeeProperties should throw an IllegalStateException
 	        try {
@@ -123,9 +129,9 @@ public class ReleaseAllTest extends TestAncestor
 			//wait for this thread's turn
 			test.exchanger.exchange(null);
 			
-			assertEquals("getBgeeProperties() did not throw an Exception in the second thread " +
+			assertTrue("getBgeeProperties() did not throw an Exception in the second thread " +
 					"after releaseAll() was called.", 
-					true, test.exceptionThrown);
+					test.exceptionThrown);
 			
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();

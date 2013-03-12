@@ -58,8 +58,8 @@ public class BgeePropertiesTest extends TestAncestor
 		 * and to be run alternatively to the main thread.
 		 */
 		class ThreadTest extends Thread {
-			public BgeeProperties prop1;
-			public BgeeProperties prop2;
+			public volatile BgeeProperties prop1;
+			public volatile BgeeProperties prop2;
 			/**
 			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
 			 */
@@ -129,10 +129,10 @@ public class BgeePropertiesTest extends TestAncestor
 		 * and to be run alternatively to the main thread.
 		 */
 		class ThreadTest extends Thread {
-			public BgeeProperties prop1;
-			public BgeeProperties prop2;
-			public boolean firstReleaseReturn;
-			public boolean secondReleaseReturn;
+			public volatile BgeeProperties prop1;
+			public volatile BgeeProperties prop2;
+			public volatile boolean firstReleaseReturn;
+			public volatile boolean secondReleaseReturn;
 			/**
 			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
 			 */
@@ -193,7 +193,7 @@ public class BgeePropertiesTest extends TestAncestor
 	        assertTrue("A BgeeProperties was not correctly released in the second thread", 
 					test.prop1.isReleased());
 			
-			//the first BgeeProperties of the main thread and the second thread 
+			//the second BgeeProperties of the main thread and the second thread 
 	        //should NOT be released
 	        assertFalse("A BgeeProperties should not have been released in the main thread", 
 					prop2.isReleased());

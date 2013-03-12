@@ -1,17 +1,14 @@
 package org.bgee.model.data.sql.datasource;
 
-import static org.junit.Assert.*;
-
 import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.BgeeProperties;
 import org.bgee.model.TestAncestor;
-import org.bgee.model.data.sql.BgeeConnection;
 import org.bgee.model.data.sql.BgeeDataSource;
-import org.bgee.model.data.sql.MockDriverUtils;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,6 +28,7 @@ import org.junit.Test;
 public class DataSourceDriverManagerTest extends TestAncestor
 {
     private final static Logger log = LogManager.getLogger(DataSourceDriverManagerTest.class.getName());
+    private final static DataSourceTest dataSourceTest = new DataSourceTest();
 	
 	/**
 	 * Default Constructor. 
@@ -45,38 +43,45 @@ public class DataSourceDriverManagerTest extends TestAncestor
 	}
 	
 	/**
-	 * @see DataSourceTest#init()
+	 * @see {@link DataSourceTest#initClass()}
 	 */
 	@BeforeClass
-	public static void init()
+	public static void initClass()
 	{
-		DataSourceTest.init();
+		DataSourceTest.initClass();
+	}
+	/**
+	 * @see {@link DataSourceTest#unloadClass()}
+	 */
+	@AfterClass
+	public static void unloadClass()
+	{
+		DataSourceTest.unloadClass();
+	}
+	
+	/**
+	 * @see DataSourceTest#init()
+	 */
+	@Before
+	public void init()
+	{
+	    dataSourceTest.init();
 	}
 	/**
 	 * @see DataSourceTest#unload()
 	 */
-	@AfterClass
-	public static void unload()
+	@After
+	public void unload()
 	{
-		DataSourceTest.unload();
+		dataSourceTest.unload();
 	}
 	
 	@Test
-	public void loadDataSourceUsingDriverManager()
+	public void loadDataSourceUsingDriverManager() throws SQLException
 	{		
 		//get a BgeeDataSource
-		BgeeDataSource sourceTest = null;
-		try {
-			sourceTest = BgeeDataSource.getBgeeDataSource();
-		} catch (SQLException e) {
-			fail("SQLException thrown when trying to acquire a BgeeDataSource");
-		}
-		
+		BgeeDataSource sourceTest = BgeeDataSource.getBgeeDataSource();
 		//get a BgeeConnection
-		try {
-			BgeeConnection connTest = sourceTest.getConnection();
-		} catch (SQLException e) {
-			fail("SQLException thrown when trying to acquire a BgeeConnection");
-		}
+		sourceTest.getConnection();
 	}
 }

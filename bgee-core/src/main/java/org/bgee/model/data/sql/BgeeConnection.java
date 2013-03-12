@@ -124,6 +124,18 @@ public class BgeeConnection implements AutoCloseable
 		} finally {
 			this.getBgeeDataSource().connectionClosed(this.getId());
 		}
-		
+	}
+	/**
+	 * Retrieves whether this <code>BgeeConnection</code> object has been closed. 
+	 * A <code>BgeeConnection</code> is closed if the method {@link #close()} 
+	 * has been called on it, or on its container <code>BgeeDataSource</code>.
+	 *  
+	 * @return 	<code>true</code> if this <code>BgeeConnection</code> object is closed; 
+	 * 			<code>false</code> if it is still open.
+	 * @throws SQLException		if a database access error occurs
+	 */
+	public boolean isClosed() throws SQLException
+	{
+		return this.getRealConnection().isClosed();
 	}
 }

@@ -69,7 +69,7 @@ import org.bgee.model.BgeeProperties;
  * @version Bgee 13, Mar 2013
  * @since Bgee 13
  */
-public class BgeeDataSource 
+public class BgeeDataSource implements AutoCloseable
 {
 	//****************************
 	// CLASS ATTRIBUTES
@@ -401,20 +401,17 @@ public class BgeeDataSource
 	 * {@link #getConnection(String, String)} on this object 
 	 * (it would throw a <code>SQLException</code>). A new instance should be acquired 
 	 * by a call to {@link #getBgeeDataSource()}.
-	 * 
-	 * @return 	<code>true</code> if this <code>BgeeDataSource</code> was closed 
-	 * 			following a call to this method, 
-	 * 			<code>false</code> if it was already closed.
 	 */
-	public boolean close()
+	public void close()
 	{
 		log.entry();
 		//we remove this BgeeDataSource from the Map before closing the connections, 
 		//as the absence from the map will prevent getConnection methods to be 
 		//successfully called.
-		boolean wasRemoved = bgeeDataSources.values().remove(this);
+		bgeeDataSources.values().remove(this);
 		this.closeConnections();
-		return log.exit(wasRemoved);
+		
+		log.exit();
 	}
 	
 	/**

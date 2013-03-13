@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.data.sql.BgeeConnection;
 import org.bgee.model.data.sql.BgeeDataSource;
-import org.bgee.model.data.sql.MockDriverUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -36,15 +35,9 @@ import static org.mockito.Mockito.*;
 public class DataSourceTest extends TestAncestor
 {
     private final static Logger log = LogManager.getLogger(DataSourceTest.class.getName());
-	/**
-	 * The <code>MockDriverUtils</code> providing mocked <code>Driver</code> 
-	 * and mocked <code>Connection</code>s.
-	 */
-	private MockDriverUtils mockDriverUtils;
 	
 	/**
-	 * Default constructor, protected so that only classes from this package 
-	 * can use it.
+	 * Default constructor.
 	 */
 	public DataSourceTest()
 	{
@@ -56,54 +49,37 @@ public class DataSourceTest extends TestAncestor
 	}
 	
 	/**
-	 * Change the System properties 
-	 * in order to automatically acquire mocked <code>Driver</code>.
+	 * @see {@link InitDataSourceTest#initClass()}
 	 */
 	@BeforeClass
 	public static void initClass()
 	{
-		System.setProperty("bgee.properties.file", "/none");
-		System.setProperty("bgee.jdbc.url", MockDriverUtils.MOCKURL);
-		System.clearProperty("bgee.jdbc.driver");
-		System.setProperty("bgee.jdbc.username", "bgee.jdbc.username.test");
-		System.setProperty("bgee.jdbc.password", "bgee.jdbc.password.test");
+		InitDataSourceTest.initClass();
 	}
 	/**
-	 * Reset the System properties that were changed 
-	 * in order to automatically acquire mocked <code>Driver</code>.
+	 * @see {@link InitDataSourceTest#unloadClass()}
 	 */
 	@AfterClass
 	public static void unloadClass()
 	{
-		System.clearProperty("bgee.jdbc.url");
+		InitDataSourceTest.unloadClass();
 	}
 	
 	/**
-	 * Obtain a mocked <code>Driver</code> 
-	 * that will registered itself to the <code>DriverManager</code>, allowing to provide 
-	 * mocked <code>Connection</code>s. Also change
-	 * the <code>BgeeProperties</code> <code>jdbcUrl</code> and <code>jdbcDriver</code> 
-	 * in order to automatically use this mocked <code>Driver</code>.
-	 * @see #unload()
+	 * @see InitDataSourceTest#init()
 	 */
 	@Before
 	public void init()
 	{
-		this.mockDriverUtils = new MockDriverUtils();
+		InitDataSourceTest.init();
 	}
 	/**
-	 * Deregister the mocked <code>Driver</code> and reset the <code>BgeeProperties</code>.
-	 * @see #init()
+	 * @see InitDataSourceTest#unload()
 	 */
 	@After
 	public void unload()
 	{
-		this.mockDriverUtils.deregister();
-	}
-	
-	public MockDriverUtils getMockDriverUtils()
-	{
-		return this.mockDriverUtils;
+		InitDataSourceTest.unload();
 	}
 	
 	
@@ -395,7 +371,7 @@ public class DataSourceTest extends TestAncestor
 
 			//close() should have been called on the mocked connection exactly three times 
 			//(because we opened three connections in this thread)
-			verify(this.getMockDriverUtils().getMockConnection(), times(3)).close();
+			verify(InitDataSourceTest.getMockDriverUtils().getMockConnection(), times(3)).close();
 			//trying to acquire a Connection again should throw a SQLException
 			try {
 				source1.getConnection();

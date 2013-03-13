@@ -28,7 +28,6 @@ import org.junit.Test;
 public class DataSourceDriverManagerTest extends TestAncestor
 {
     private final static Logger log = LogManager.getLogger(DataSourceDriverManagerTest.class.getName());
-    private final static DataSourceTest dataSourceTest = new DataSourceTest();
 	
 	/**
 	 * Default Constructor. 
@@ -43,37 +42,37 @@ public class DataSourceDriverManagerTest extends TestAncestor
 	}
 	
 	/**
-	 * @see {@link DataSourceTest#initClass()}
+	 * @see {@link InitDataSourceTest#initClass()}
 	 */
 	@BeforeClass
 	public static void initClass()
 	{
-		DataSourceTest.initClass();
+		InitDataSourceTest.initClass();
 	}
 	/**
-	 * @see {@link DataSourceTest#unloadClass()}
+	 * @see {@link InitDataSourceTest#unloadClass()}
 	 */
 	@AfterClass
 	public static void unloadClass()
 	{
-		DataSourceTest.unloadClass();
+		InitDataSourceTest.unloadClass();
 	}
 	
 	/**
-	 * @see DataSourceTest#init()
+	 * @see InitDataSourceTest#init()
 	 */
 	@Before
 	public void init()
 	{
-	    dataSourceTest.init();
+		InitDataSourceTest.init();
 	}
 	/**
-	 * @see DataSourceTest#unload()
+	 * @see InitDataSourceTest#unload()
 	 */
 	@After
 	public void unload()
 	{
-		dataSourceTest.unload();
+		InitDataSourceTest.unload();
 	}
 	
 	/**

@@ -12,6 +12,13 @@ import java.util.List;
 import javax.management.modelmbean.XMLParseException;
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeProperties;
+import org.bgee.model.data.sql.BgeeConnection;
+import org.bgee.model.data.sql.BgeeDataSource;
+import org.bgee.model.data.sql.BgeePreparedStatement;
+
 import sbc.orthoxml.Gene;
 import sbc.orthoxml.Group;
 import sbc.orthoxml.Species;
@@ -30,11 +37,21 @@ public class ParseOrthoXML {
 	private static long hierarchicalGroupId = 1;
 	private static long nestedSetId = 1;
 
+	private final static Logger log = LogManager.getLogger(ParseOrthoXML.class
+			.getName());
+
 	/**
-	 * Performs the complete task of reading the orthoxml file and adding the
-	 * data into the database.
+	 * Performs the complete task of reading the Hierarchical Groups orthoxml
+	 * file and adding the data into the database.
 	 * <p>
-	 * 
+	 * This method reads the Hierarchical Groups OrthoXML file, and adds all the
+	 * data required to the database. It first iterates through all the
+	 * orthologus groups present in the file and builds a tree like model with
+	 * <code>Node</code>s. It then iterates through this tree to build a nested
+	 * set model.
+	 * <p>
+	 * After the data required to store the groups as a nested set model is
+	 * generated, this data is added to the HierarchicalGroup and gene tables.
 	 * 
 	 * @throws FileNotFoundException
 	 *             if the OrthoXMLReader cannot find the file
@@ -52,10 +69,17 @@ public class ParseOrthoXML {
 	public void parseXML() throws FileNotFoundException, XMLStreamException,
 			XMLParseException, SQLException {
 
+		log.entry();
+
 		// Get the orthoXML file.
 		String orthoXmlFile = this.getClass()
 				.getResource("/orthoxml/HierarchicalGroupsTest.orthoxml")
 				.toString();
+
+		if (log.isDebugEnabled()) {
+			log.debug("Hierarchical Groups OrthoXML File: {}", orthoXmlFile);
+		}
+
 		File file = new File(orthoXmlFile);
 
 		OrthoXMLReader reader = new OrthoXMLReader(file);
@@ -66,21 +90,43 @@ public class ParseOrthoXML {
 		// read all the groups in the file iteratively
 		while ((group = reader.next()) != null) {
 
+			if (log.isDebugEnabled()) {
+				log.debug("OrthologusGroupId: {}", group.getId());
+			}
+
 			Node rootNode = new Node();
 			rootNode.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
 
+			if (log.isInfoEnabled()) {
+				log.info("Building Tree..");
+			}
 			// Build the tree of the current group
-			BuildTree(group, rootNode);
+			this.buildTree(group, rootNode);
 
+			if (log.isInfoEnabled()) {
+				log.info("Building Nested Set Model..");
+			}
 			// After building the tree, now traverse the tree again to
 			// assign the hierarchical left bound and right bound in order to
 			// store them as a nested set.
 			ParseOrthoXML.nestedSetId = 0;
-			buildNestedSet(rootNode);
+			this.buildNestedSet(rootNode);
 
-			// Add data of the tree to database
-			addToHierarchicalGroupsTable(group, rootNode);
+			if (log.isInfoEnabled()) {
+				log.info("Adding data to hierarchicalGroup table.. ");
+			}
+			// Add data of this group to the HierarchicalGroup table
+			this.addToHierarchicalGroupTable(group, rootNode);
+
+			if (log.isInfoEnabled()) {
+				log.info("Adding data to gene table.. ");
+			}
+			// Add data of this group to the gene table
+			this.addToGeneTable(group, rootNode);
+
 		}
+
+		log.exit();
 	}
 
 	/**
@@ -100,35 +146,38 @@ public class ParseOrthoXML {
 	 *            is to be built
 	 * 
 	 */
-	public void BuildTree(Group group, Node node) {
+	public void buildTree(Group group, Node node) {
+
+		log.entry(group, node);
 
 		// Adding the NCBI taxonomy ID,i.e,the hierarchical level
 		node.setNcbiTaxonomyId(group.getProperty("TaxRange"));
+
+		// For all the leaves, i.e, the genes, create a node for each of
+		// them add data about their GeneIDs to the <code>Node</code>
+		// object.
+		for (Gene gene : group.getGenes()) {
+			Node leaf = new Node();
+			node.addChild(leaf);
+			leaf.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
+			leaf.setGeneID(gene.getProteinIdentifier());
+		}
 
 		// Iterating through all the children of the current group
 		for (Group child : group.getChildren()) {
 
 			// Make a new node object for every child, and set a unique ID
 			Node childNode = new Node();
-			childNode.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
+			childNode
+					.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
 
 			// Add that node as a child to the parent node
 			node.addChild(childNode);
 
-			// For all the leaves, i.e, the genes, create a node for each of
-			// them add data about their GeneIDs to the <code>Node</code>
-			// object.
-			for (Gene gene : child.getGenes()) {
-				Node leaf = new Node();
-				childNode.addChild(leaf);
-				leaf.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
-				leaf.setGeneID(gene.getProteinIdentifier());
-			}
-
 			// Recurse!!
-			BuildTree(child, childNode);
+			buildTree(child, childNode);
 		}
-
+		log.exit();
 	}
 
 	/**
@@ -148,6 +197,7 @@ public class ParseOrthoXML {
 	 *            is to be built.
 	 */
 	public void buildNestedSet(Node node) {
+		log.entry(node);
 		// For every node visited, increment the ID.
 		ParseOrthoXML.nestedSetId++;
 		// Left
@@ -161,6 +211,7 @@ public class ParseOrthoXML {
 			buildNestedSet(childNode);
 			ParseOrthoXML.nestedSetId++;
 		}
+		log.exit();
 	}
 
 	/**
@@ -177,20 +228,23 @@ public class ParseOrthoXML {
 	 *         tree/subtree
 	 */
 	public static int count(Node node) {
+		log.entry(node);
 		int c = 1;
 		for (Node childNode : node.getChildNodes()) {
 			c += count(childNode);
 		}
-		return c;
+		return log.exit(c);
 	}
 
 	/**
-	 * Add data of the <code>Tree</code> whose root <code>Node</code> is being
+	 * Add data of the <code>Group</code> whose root <code>Node</code> is being
 	 * passed as a parameter.
 	 * <p>
-	 * This method recursively iterates through the <code>Tree</code> whose root
-	 * <code>Node</code> is passed as a parameter, and adds the data pertaining
-	 * to every node into the hierarchicalGroup table.
+	 * This method recursively iterates through the <code>Node</code>s of the
+	 * <code>Group</code> whose root <code>Node</code> is passed as a parameter,
+	 * and adds the data pertaining to every node into the hierarchicalGroup
+	 * table. The data includes the hierarchicalGroupId, orthologusGroupId,
+	 * hierarchicalLeftBound, hierarchicalRightBound, and the ncbiTaxonomyId.
 	 * 
 	 * @param group
 	 *            the orthologus group ID of the current <code>Group</code>
@@ -202,41 +256,113 @@ public class ParseOrthoXML {
 	 *             if there is an error establishing a connection to the
 	 *             database
 	 */
-	public void addToHierarchicalGroupsTable(Group group, Node node)
+	public void addToHierarchicalGroupTable(Group group, Node node)
 			throws SQLException {
 
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-		} catch (ClassNotFoundException e) {
-			System.out.println(e.toString());
-		}
+		log.entry(group, node);
 
-		Connection connection = DriverManager.getConnection(
-				"jdbc:mysql://localhost:3306/database", "username", "password");
+		BgeeProperties props = BgeeProperties.getBgeeProperties();
+		
+		BgeeDataSource source = BgeeDataSource.getBgeeDataSource();
+		BgeeConnection connection = source.getConnection();
+
 		String sql = "INSERT INTO hierarchicalGroup (uniqueRowId, hierarchicalGroupId, hierarchicalGroupLeftBound, hierarchicalGroupRightBound, "
 				+ "ncbiTaxonomyId, ncbiGeneId)" + " VALUES (?, ?, ?, ?, ?, ?)";
 
 		try {
-			PreparedStatement preparedStatement = connection
-					.prepareStatement(sql);
-			preparedStatement.setLong(1, node.getHierarchicalGroupId());
-			preparedStatement.setString(2, group.getId());
-			preparedStatement.setLong(3, node.getHierarchicalLeftBound());
-			preparedStatement.setLong(4, node.getHierarchicalRightBound());
-			preparedStatement.setString(5, node.getNcbiTaxonomyId());
-			preparedStatement.setString(6, node.getGeneID());
-			preparedStatement.executeUpdate();
+			BgeePreparedStatement bgeePreparedStatement = connection.prepareStatement(sql);
+			bgeePreparedStatement.setLong(1, node.getHierarchicalGroupId());
+			bgeePreparedStatement.setString(2, group.getId());
+			bgeePreparedStatement.setLong(3, node.getHierarchicalLeftBound());
+			bgeePreparedStatement.setLong(4, node.getHierarchicalRightBound());
+			bgeePreparedStatement.setString(5, node.getNcbiTaxonomyId());
+
+			if (log.isDebugEnabled()) {
+				log.debug(bgeePreparedStatement.toString());
+			}
+
+			bgeePreparedStatement.executeUpdate();
 
 		} catch (SQLException e) {
-			System.out.println(e.toString());
+			log.error(e.toString());
 		} finally {
 			connection.close();
 		}
 
 		// Recurse!!
 		for (Node childNode : node.getChildNodes()) {
-			addToHierarchicalGroupsTable(group, childNode);
+			addToHierarchicalGroupTable(group, childNode);
 		}
+		log.exit();
+	}
+
+	/**
+	 * Add data of the <code>Group</code> whose root <code>Node</code> is being
+	 * passed as a parameter.
+	 * <p>
+	 * This method recursively iterates through the <code>Node</code>s of the
+	 * <code>Group</code> whose root <code>Node</code> is passed as a parameter,
+	 * and adds the data pertaining to every node into the gene table. The data
+	 * includes the hierarchicalGroupId corresponding to the geneId.
+	 * 
+	 * @param group
+	 *            the orthologus group ID of the current <code>Group</code>
+	 *            whose data is being added into the database.
+	 * @param root
+	 *            the root node of the <code>Group</code> whose data is being
+	 *            added into the database
+	 * @throws SQLException
+	 *             if there is an error establishing a connection to the
+	 *             database
+	 */
+	public void addToGeneTable(Group group, Node node) throws SQLException {
+
+		log.entry(group, node);
+
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e) {
+			log.error("here.. " + e.toString());
+		}
+
+		// If gene,
+		if (node.getGeneID() != null) {
+
+			String[] geneIds = node.getGeneID().split("; ");
+			
+			Connection connection = DriverManager.getConnection(
+					"jdbc:mysql://localhost:3306/db", "user", "pass");
+
+			String sql = "UPDATE gene SET hierarchicalGroupId='"
+					+ node.getHierarchicalGroupId() + "' WHERE ";
+
+			for (String id : geneIds) {
+				sql = sql + "geneId='" + id + "' OR ";
+			}
+
+			sql = sql + " geneId='';";
+
+			try {
+				PreparedStatement preparedStatement = connection
+						.prepareStatement(sql);
+
+				if (log.isDebugEnabled()) {
+					log.debug(preparedStatement.toString());
+				}
+
+				preparedStatement.executeUpdate();
+			} catch (SQLException e) {
+				log.error(e.toString());
+			} finally {
+				connection.close();
+			}
+
+		}
+		// Recurse!!
+		for (Node childNode : node.getChildNodes()) {
+			addToGeneTable(group, childNode);
+		}
+		log.exit();
 	}
 
 	/**
@@ -251,8 +377,10 @@ public class ParseOrthoXML {
 	 * @throws FileNotFoundException
 	 *             if the OrthoXMLReader cannot find the file
 	 */
-	public static void getSpecies(File file) throws FileNotFoundException,
-			XMLStreamException, XMLParseException {
+	public static ArrayList<String> getSpecies(File file)
+			throws FileNotFoundException, XMLStreamException, XMLParseException {
+
+		log.entry();
 
 		// Read the species iteratively
 		OrthoXMLReader reader = new OrthoXMLReader(file);
@@ -260,9 +388,12 @@ public class ParseOrthoXML {
 		List<Species> species = new ArrayList<Species>();
 		species = reader.getSpecies();
 
+		ArrayList<String> speciesIds = new ArrayList<String>();
 		for (Species specie : species) {
-			System.out.println(specie.getName());
+			speciesIds.add(specie.getName());
 		}
+
+		return log.exit(speciesIds);
 	}
 
 }

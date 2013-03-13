@@ -41,11 +41,11 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
      * to obtain this <code>BgeePreparedStatement</code>.
      * Used for notification purpose. 
 	 */
-	private BgeeConnection bgeeConnection;
+	private final BgeeConnection bgeeConnection;
 	/**
 	 * The real <code>java.sql.PreparedStatement</code> that this class wraps.
 	 */
-    private PreparedStatement realPreparedStatement;
+    private final PreparedStatement realPreparedStatement;
     
     /**
      * Default constructor, should not be used. 
@@ -72,8 +72,8 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
     protected BgeePreparedStatement(BgeeConnection connection, 
     		PreparedStatement realPreparedStatement)
     {
-    	this.setBgeeConnection(connection);
-    	this.setRealPreparedStatement(realPreparedStatement);
+    	this.bgeeConnection = connection;
+    	this.realPreparedStatement = realPreparedStatement;
     }
     
     
@@ -85,23 +85,10 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
 		return this.bgeeConnection;
 	}
 	/**
-	 * @param bgeeConnection A <code>BgeeConnection</code> to set {@link #bgeeConnection} 
-	 */
-	private void setBgeeConnection(BgeeConnection bgeeConnection) {
-		this.bgeeConnection = bgeeConnection;
-	}
-	/**
 	 * @return the {@link #realPreparedStatement}
 	 */
 	private PreparedStatement getRealPreparedStatement() {
 		return realPreparedStatement;
-	}
-	/**
-	 * @param realPreparedStatement A <code>PreparedStatement</code> 
-	 * 								to set {@link #realPreparedStatement} 
-	 */
-	private void setRealPreparedStatement(PreparedStatement realPreparedStatement) {
-		this.realPreparedStatement = realPreparedStatement;
 	}
 
 	

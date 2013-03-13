@@ -1,5 +1,6 @@
 package org.bgee.model.data.sql;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +15,7 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class BgeeConnectionTest extends TestAncestor
@@ -75,19 +77,46 @@ public class BgeeConnectionTest extends TestAncestor
 	public void shouldCloseConnection() throws SQLException
 	{
 		//set the mocked connection
-		when(InitDataSourceTest.getMockDriverUtils().getMockConnection()
-				.isClosed()).thenAnswer(new Answer<Boolean>() {
-					@Override
-					public Boolean answer(InvocationOnMock invocation) {
-				         //test if close() has been called
+		when(InitDataSourceTest.getMockDriverUtils().getMockConnection().isClosed())
+		    .thenAnswer(new Answer<Boolean>() {
+				@Override
+				public Boolean answer(InvocationOnMock invocation) {
+			        try {
+						verify((Connection) invocation.getMock()).close();
+						return true;
+					} catch (Throwable e) {
 						return false;
-				     }
-				});
+					}
+			    }
+			});
 		
-		//get a connection
-		BgeeConnection conn = BgeeDataSource.getBgeeDataSource().getConnection();
-		//close it
-		conn.close();
+		//get two connections
+		BgeeConnection conn1 = BgeeDataSource.getBgeeDataSource().getConnection();
+		BgeeConnection conn2 = BgeeDataSource.getBgeeDataSource().getConnection("", "");
+		//close the first connection
+		conn1.close();
 		//check that it was correctly closed
+		assertTrue("The connection was not properly closed", conn1.isClosed());
+		//and that trying to get this connection again will return a new one
+		assertNotEquals("A BgeeConnection was acquired after it has been closed", 
+				conn1, BgeeDataSource.getBgeeDataSource().getConnection());
+		//but we can still obtain the second connection
+		assertEquals("Closing a BgeeConnection interfered with another one", 
+				conn2, BgeeDataSource.getBgeeDataSource().getConnection("", ""));
+	}
+	
+	/**
+	 * Test the method {@link org.bgee.model.data.sql.BgeeConnection#prepareStatement(String) 
+	 * BgeeConnection#prepareStatement(String)}
+	 * @throws SQLException 
+	 */
+	@Test
+	public void shouldPrepareStatement() throws SQLException
+	{
+		//get a PreparedStatement
+		BgeePreparedStatement statement = 
+				BgeeDataSource.getBgeeDataSource().getConnection().prepareStatement("test");
+		assertNotNull("Could not acquire a BgeePreparedStatement", statement);
+		
 	}
 }

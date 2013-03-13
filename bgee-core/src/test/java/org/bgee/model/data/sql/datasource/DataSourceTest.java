@@ -412,6 +412,14 @@ public class DataSourceTest extends TestAncestor
 	        if (test.exceptionThrown) {
 	        	throw new SQLException("A SQLException occurred in the second thread.");
 	        }
+	        
+			//this thread should still be capable of getting a new connection 
+			//by getting a new BgeeDataSource. This connection will be different 
+			//than the first one
+			BgeeConnection conn3 = BgeeDataSource.getBgeeDataSource().getConnection();
+			assertNotNull("Failed to acquire a BgeeConnection", conn3);
+			assertNotEquals("Two BgeeDataSources acquire a same BgeeConnection instance ", 
+	        		conn1, conn3);
 			
 			//close the BgeeDataSource one by one without calling closeAll(), 
 			//that would make other test to fail

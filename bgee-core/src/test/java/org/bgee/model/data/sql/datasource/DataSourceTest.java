@@ -62,8 +62,11 @@ public class DataSourceTest extends TestAncestor
 	@BeforeClass
 	public static void initClass()
 	{
+		System.setProperty("bgee.properties.file", "/none");
 		System.setProperty("bgee.jdbc.url", MockDriverUtils.MOCKURL);
 		System.clearProperty("bgee.jdbc.driver");
+		System.setProperty("bgee.jdbc.username", "bgee.jdbc.username.test");
+		System.setProperty("bgee.jdbc.password", "bgee.jdbc.password.test");
 	}
 	/**
 	 * Reset the System properties that were changed 

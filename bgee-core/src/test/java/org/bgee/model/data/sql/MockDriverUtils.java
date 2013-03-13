@@ -22,11 +22,6 @@ import static org.mockito.Mockito.*;
  * During unit testing, developers should then simply obtain 
  * this mock <code>Connection</code>, and define some mock methods. 
  * <p>
- * A convenient mock <code>PreparedStatement</code> can be obtained by calling 
- * {@link #getMockPreparedStatement()}. This <code>PreparedStatement</code> is the one 
- * returned when calling <code>preparedStatement(String)</code> 
- * on the mock <code>Connection</code>.
- * <p>
  * When done using this <code>MockDriverUtils</code> object, 
  * a call to {@link #deregister()} must be made.
  * 

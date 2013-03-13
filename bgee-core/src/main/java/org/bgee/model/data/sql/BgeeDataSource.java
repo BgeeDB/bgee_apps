@@ -142,6 +142,7 @@ public class BgeeDataSource implements AutoCloseable
 		dataSourcesClosed.set(false);
 		
 		DataSource dataSourceTemp = null;
+		BgeeProperties props = BgeeProperties.getBgeeProperties();
 		try {
 			//try to get a DataSource using JNDI
 			Context ctx = new InitialContext();
@@ -149,22 +150,22 @@ public class BgeeDataSource implements AutoCloseable
 			log.info("DataSource obtained from InitialContext using JNDI");
 		} catch (NamingException e) {
 			log.info("No DataSource obtained from InitialContext using JNDI, will rely on the DriverManager using URL {}", 
-					BgeeProperties.getBgeeProperties().getJdbcUrl());
+					props.getJdbcUrl());
 			//if the name of a JDBC driver was provided, try to load it.
 			//it should not be needed, but some buggy JDBC Drivers need to be 
 			//"manually" loaded.
-			if (BgeeProperties.getBgeeProperties().getJdbcDriver() != null) {
+			if (props.getJdbcDriver() != null) {
 				try {
 					//also, calling newInstance() should not be needed, 
 					//but some buggy JDBC Drivers do not properly initialized 
 					//themselves in the static initializer.
-					Class.forName(BgeeProperties.getBgeeProperties().getJdbcDriver()).newInstance();
+					Class.forName(props.getJdbcDriver()).newInstance();
 				} catch (InstantiationException | IllegalAccessException
 						| ClassNotFoundException e1) {
 					//here, we do nothing: the JDBC Driver could not be loaded, 
 					//SQLExceptions will be thrown when getConnection will be called anyway.
 					log.error("Could not load the JDBC Driver " + 
-					    BgeeProperties.getBgeeProperties().getJdbcDriver(), e1);
+							props.getJdbcDriver(), e1);
 				}
 			}
 		}
@@ -310,8 +311,9 @@ public class BgeeDataSource implements AutoCloseable
 		//then getConnection(String, String) with the default values, 
 		//it would be seen as two different connections, while it should be the same.
 		if (realDataSource == null) {
-			username = BgeeProperties.getBgeeProperties().getJdbcUsername();
-			password = BgeeProperties.getBgeeProperties().getJdbcPassword();
+			BgeeProperties props = BgeeProperties.getBgeeProperties();
+			username = props.getJdbcUsername();
+			password = props.getJdbcPassword();
 		}
 		
 		return log.exit(this.getConnection(username, password));
@@ -352,8 +354,10 @@ public class BgeeDataSource implements AutoCloseable
 		if (this.isClosed()) {
 			throw new SQLException("This BgeeDataSource is already closed.");
 		}
-		
-		String connectionId = this.generateConnectionId(username, password);
+
+		BgeeProperties props = BgeeProperties.getBgeeProperties();
+		String connectionId = this.generateConnectionId(props.getJdbcUrl(), 
+				username, password);
 		BgeeConnection connection = this.getOpenConnections().get(connectionId);
 		//if the connection already exists, return it
 		if (connection != null) {
@@ -373,8 +377,8 @@ public class BgeeDataSource implements AutoCloseable
 			}
 		} else {
 			log.debug("Trying to obtain a new Connection from the DriverManager, using URL {} and username {}", 
-					BgeeProperties.getBgeeProperties().getJdbcUrl(), username);
-			realConnection = DriverManager.getConnection(BgeeProperties.getBgeeProperties().getJdbcUrl(), 
+					props.getJdbcUrl(), username);
+			realConnection = DriverManager.getConnection(props.getJdbcUrl(), 
 					username, password);
 		}
 		//just in case we couldn't obtain the connection, without exception
@@ -512,10 +516,11 @@ public class BgeeDataSource implements AutoCloseable
 	}
 	/**
 	 * Generate an ID to uniquely identify the <code>BgeeConnection</code>s 
-	 * holded by this <code>BgeeDataSource</code>. It is based on 
-	 * {@link org.bgee.model.BgeeProperties#getJdbcUrl() BgeeProperties.getJdbcUrl()}, 
-	 * <code>username</code>, and <code>password</code>. 
+	 * holded by this <code>BgeeDataSource</code>. It is based on  
+	 * <code>jdbcUrl</code>, <code>username</code>, and <code>password</code>. 
 	 * 
+	 * @param jdbcUrl 	A <code>String</code> defining the JDBC URL used to open 
+	 * 					the connection. Will be used to generate the ID.
 	 * @param username 	A <code>String</code> defining the username used to open 
 	 * 					the connection. Will be used to generate the ID.
 	 * @param password	A <code>String</code> defining the password used to open 
@@ -523,12 +528,11 @@ public class BgeeDataSource implements AutoCloseable
 	 * @return 			A <code>String</code> representing an ID generated from 
 	 * 					the JDBC URL, <code>username</code>, and <code>password</code>.
 	 */
-	private String generateConnectionId(String username, String password)
+	private String generateConnectionId(String jdbcUrl, String username, String password)
 	{
 		//I don't like much storing a password in memory, let's hash it
 		//put the JDBC URL in the hash in case it was changed after the instantiation 
 		//of this BgeeDataSource
-    	return DigestUtils.sha1Hex(BgeeProperties.getBgeeProperties().getJdbcUrl() + "[sep]" + 
-		                           username + "[sep]" + password);
+    	return DigestUtils.sha1Hex(jdbcUrl + "[sep]" + username + "[sep]" + password);
 	}
 }

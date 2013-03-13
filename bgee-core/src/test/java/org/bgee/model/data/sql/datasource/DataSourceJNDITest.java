@@ -1,5 +1,8 @@
 package org.bgee.model.data.sql.datasource;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Test the loading of {@link org.bgee.mode.data.BgeeDataSource BgeeDataSource} 
  * when using a <code>DataSource</code> loaded using JNDI,
@@ -14,7 +17,19 @@ package org.bgee.model.data.sql.datasource;
  * @see DataSourceDriverManagerTest
  * @since Bgee 13
  */
-public class DataSourceJNDITest 
+public class DataSourceJNDITest extends DataSourceDriverManagerTest
 {
-
+	private final static Logger log = LogManager.getLogger(DataSourceJNDITest.class.getName());
+	
+	/**
+	 * Default Constructor. 
+	 */
+	public DataSourceJNDITest()
+	{
+		super();
+	}
+	@Override
+	protected Logger getLogger() {
+		return log;
+	}
 }

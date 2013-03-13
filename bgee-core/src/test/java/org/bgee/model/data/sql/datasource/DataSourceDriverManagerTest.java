@@ -76,8 +76,14 @@ public class DataSourceDriverManagerTest extends TestAncestor
 		dataSourceTest.unload();
 	}
 	
+	/**
+	 * Test the acquisition of a <code>BgeeDataSource</code> and 
+	 * of a <code>BgeeConnection</code>.
+	 * 
+	 * @throws SQLException
+	 */
 	@Test
-	public void loadDataSourceUsingDriverManager() throws SQLException
+	public void getDataSourceAndConnection() throws SQLException
 	{		
 		//get a BgeeDataSource
 		BgeeDataSource sourceTest = BgeeDataSource.getBgeeDataSource();

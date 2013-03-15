@@ -36,12 +36,14 @@ public class Entity
     
     
 	/**
+	 * Gets the ID of this <code>Entity</code>.
 	 * @return 	A <code>String</code> representing the ID of this <code>Entity</code>
 	 */
 	public String getId() {
 		return this.id;
 	}
 	/**
+	 * Sets the ID of this <code>Entity</code>.
 	 * @param id A <code>String</code> that is the ID to set.
 	 */
 	public void setId(String id) {
@@ -49,13 +51,14 @@ public class Entity
 	}
 	
 	/**
-	 * Get the name of this <code>Entity</code>.
+	 * Gets the name of this <code>Entity</code>.
 	 * @return 	A <code>String</code> representing the name of this <code>Entity</code>
 	 */
 	public String getName() {
 		return name;
 	}
 	/**
+	 * Sets the name of this <code>Entity</code>.
 	 * @param name A <code>String</code> that is the name to set.
 	 */
 	public void setName(String name) {
@@ -63,13 +66,14 @@ public class Entity
 	}
 	
 	/**
-	 * Get a description of this <code>Entity</code>.
+	 * Gets the description for this <code>Entity</code>.
 	 * @return 	A <code>String</code> that is a description of this <code>Entity</code>
 	 */
 	public String getDescription() {
 		return description;
 	}
 	/**
+	 * Sets the description of this <code>Entity</code>.
 	 * @param description A <code>String</code> that is the description to set. 
 	 */
 	public void setDescription(String description) {

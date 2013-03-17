@@ -56,6 +56,8 @@ public class PropertiesFromFileTest extends TestAncestor
 				BgeeProperties.getBgeeProperties().getJdbcUsername());
 		assertEquals("Incorrect property jdbcPassword", "bgee.jdbc.password.test", 
 				BgeeProperties.getBgeeProperties().getJdbcPassword());
+		assertTrue("Incorrect property useStaticFactories",  
+				BgeeProperties.getBgeeProperties().useStaticFactories());
 		
 		//clear the System properties
 		System.clearProperty("bgee.properties.file");

@@ -2,13 +2,15 @@ package org.bgee.model;
 
 /**
  * Parent class of all classes corresponding to real entities in the Bgee database. 
+ * For instance, a <code>Gene</code>, a <code>Species</code>, 
+ * a <code>RNASeqExperiment</code>, ...
  * They almost all have an ID, a name, and a description.
  * 
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013
  * @since Bgee 01
  */
-public class Entity 
+public abstract class Entity 
 {
 	/**
 	 * A <code>String</code> representing the ID of this <code>Entity</code>.

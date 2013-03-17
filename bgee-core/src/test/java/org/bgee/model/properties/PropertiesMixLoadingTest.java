@@ -57,6 +57,7 @@ public class PropertiesMixLoadingTest extends TestAncestor
 		//set only some properties via System properties
 		System.setProperty("bgee.jdbc.username", "bgee.jdbc.username.test.sys");
 		System.setProperty("bgee.jdbc.password", "bgee.jdbc.password.test.sys");
+		System.setProperty("bgee.static.factories", "on");
 		
 		//check if the properties correspond to values in the test file
 		assertEquals("Incorrect property jdbcDriver", "bgee.jdbc.driver.test", 
@@ -67,10 +68,13 @@ public class PropertiesMixLoadingTest extends TestAncestor
 				BgeeProperties.getBgeeProperties().getJdbcUsername());
 		assertEquals("Incorrect property jdbcPassword", "bgee.jdbc.password.test.sys", 
 				BgeeProperties.getBgeeProperties().getJdbcPassword());
+		assertTrue("Incorrect property useStaticFactories",  
+				BgeeProperties.getBgeeProperties().useStaticFactories());
 
 		//clear the System properties
 		System.clearProperty("bgee.properties.file");
 		System.clearProperty("bgee.jdbc.username");
 		System.clearProperty("bgee.jdbc.password");
+		System.clearProperty("bgee.static.factories");
 	}
 }

@@ -174,7 +174,7 @@
     
     <!-- Bgee ShutdownListener, to shutdown cache and remove various ThreadLocal -->
     <listener>
-        <listener-class>controller.servletUtils.ShutdownListener</listener-class>
+        <listener-class>org.bgee.controller.servletutils.ServletContextListener</listener-class>
     </listener>
 
 

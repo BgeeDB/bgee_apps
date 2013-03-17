@@ -48,6 +48,7 @@ public class PropertiesFromSystemTest extends TestAncestor
 		System.setProperty("bgee.jdbc.url", "bgee.jdbc.url.test");
 		System.setProperty("bgee.jdbc.username", "bgee.jdbc.username.test");
 		System.setProperty("bgee.jdbc.password", "bgee.jdbc.password.test");
+		System.setProperty("bgee.static.factories", "yes");
 
 		//set the properties file to an non-existing file, 
 		//so that System properties are used 
@@ -62,11 +63,14 @@ public class PropertiesFromSystemTest extends TestAncestor
 				BgeeProperties.getBgeeProperties().getJdbcUsername());
 		assertEquals("Incorrect property jdbcPassword", "bgee.jdbc.password.test", 
 				BgeeProperties.getBgeeProperties().getJdbcPassword());
+		assertTrue("Incorrect property useStaticFactories",  
+				BgeeProperties.getBgeeProperties().useStaticFactories());
 		
 		//clear the System properties
 		System.clearProperty("bgee.jdbc.driver");
 		System.clearProperty("bgee.jdbc.url");
 		System.clearProperty("bgee.jdbc.username");
 		System.clearProperty("bgee.jdbc.password");
+		System.clearProperty("bgee.static.factories");
 	}
 }

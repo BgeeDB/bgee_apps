@@ -33,6 +33,8 @@ import org.apache.logging.log4j.Logger;
  * Mandatory.
  * <li><code>bgee.jdbc.password</code>: default password to connect to the data source.
  * Mandatory.
+ * <li><code>bgee.static.factories</code>: define whether static factories 
+ * should be used when available.
  * <li><code>bgee.properties.file</code>: path to the properties file to use, 
  * from the classpath. Optional.
  * </ul>
@@ -62,7 +64,7 @@ import org.apache.logging.log4j.Logger;
  * using the System or file properties.
  * <p>
  * You should always call <code>BgeeProperties.getBgeeProperties().release()</code> 
- * at the end of the execution of one thread, 
+ * at the end of the execution of a thread, 
  * or {@link #releaseAll()} in multi-threads context (for instance, in a webapp context 
  * when the webapp is shutdown). 
  * <p>
@@ -162,6 +164,21 @@ public class BgeeProperties
 	 * If a DataSource was set (using JNDI), then this property is not used.
 	 */
 	private static final String jdbcPassword;
+	/**
+	 * A <code>boolean</code> defining whether static factories should be used when available.
+	 * See {@link org.bgee.model.EntityFactoryProvider EntityFactoryProvider} for more details.
+     * <p>
+     * If <code>true</code>, static factories will be used when available. 
+     * Corresponds to the property <code>bgee.static.factories</code>. 
+     * Default value is <code>false</code>.
+     * <p>
+     * Note that this property cannot be modified locally in a given thread 
+     * (no corresponding instance variable), 
+     * as it increases the memory load when used, thus impacting all threads.
+     * 
+     * @see org.bgee.model.EntityFactoryProvider
+	 */
+	private static final boolean useStaticFactories;
 
 	//*********************************
 	// INSTANCE ATTRIBUTES
@@ -247,6 +264,8 @@ public class BgeeProperties
 		jdbcUrl      = getStringOption(sysProps, fileProps, "bgee.jdbc.url", null);
 		jdbcUsername = getStringOption(sysProps, fileProps, "bgee.jdbc.username", null);
 		jdbcPassword = getStringOption(sysProps, fileProps, "bgee.jdbc.password", null);
+		useStaticFactories = getBooleanOption(sysProps, fileProps, "bgee.static.factories", 
+				false);
 
 		log.info("Initialization done.");
 		log.exit();
@@ -299,6 +318,52 @@ public class BgeeProperties
 
 		return log.exit(propValue);
 	}
+	
+
+	
+	/**
+	 * Try to retrieve the property corresponding to <code>key</code>, 
+	 * first from the System properties (<code>sysProps</code>), 
+	 * then, if undefined or empty, from properties retrieved from the Bgee property file 
+	 * (<code>fileProps</code>), and cast it into a <code>boolean</code> 
+	 * (if the value of the property is set, and equal to "true", "yes", or "on", 
+	 * the returned boolean will be <code>true</code>, <code>false</code> otherwise). 
+	 * If the property is undefined or empty in both <code>fileProps</code> 
+	 * and <code>sysProps</code>, return <code>defaultValue</code>.
+	 *
+	 * @param sysProps 		<code>java.sql.Properties</code> retrieved from System properties, 
+	 * 						where <code>key</code> is first searched in.
+	 * @param fileProps	 	<code>java.sql.Properties</code> retrieved 
+	 * 						from the Bgee properties file, 
+	 * 						where <code>key</code> is searched in if the property 
+	 * 						was undefined or empty in <code>sysProps</code>. 
+	 * 						Can be <code>null</code> if no properties file was found.
+	 * @param defaultValue	default value that will be returned if the property 
+	 * 						is undefined or empty in both <code>Properties</code>.
+	 *
+	 * @return 			A <code>boolean</code> corresponding to the value
+	 * 					for that property key (if the value of the property is set and equal 
+	 * 					to "true", "yes", or "on", the returned boolean 
+	 * 					will be <code>true</code>, <code>false</code> otherwise). 
+	 * 					Or <code>defaultValue</code> if not defined or empty.
+	 */
+	private static boolean getBooleanOption(java.util.Properties sysProps, 
+			java.util.Properties fileProps, String key, 
+			boolean defaultValue)
+	{
+		log.entry(fileProps, sysProps, key, defaultValue);
+
+		String propValue = getStringOption(sysProps, fileProps, key, null);
+		boolean val = defaultValue;
+		if (propValue != null) {
+			val= "true".equals(propValue) ||
+				 "yes".equals(propValue) || 
+				 "on".equals(propValue);
+		}
+
+		return log.exit(val);
+	}
+	
 	/**
 	 * Return a <code>BgeeProperties</code> object. At the first call of this method 
 	 * inside a given thread, a new <code>BgeeProperties</code> will be instantiated 
@@ -399,7 +464,7 @@ public class BgeeProperties
 	}
 
 	/**
-	 * Release this <code>BgeeProperties</code>. 
+	 * Releases this <code>BgeeProperties</code>. 
 	 * A call to {@link #getBgeeProperties()} from the thread that was holding it 
 	 * will return a new <code>BgeeProperties</code> instance. 
 	 * 
@@ -414,7 +479,7 @@ public class BgeeProperties
 	}
 	
 	/**
-	 * Determine whether this <code>BgeeProperties</code> was released 
+	 * Determines whether this <code>BgeeProperties</code> was released 
 	 * (following a call to {@link #release()}).
 	 * 
 	 * @return	<code>true</code> if this <code>BgeeProperties</code> was released, 
@@ -428,7 +493,7 @@ public class BgeeProperties
 	}
 	
 	/**
-	 * Return the name of the JDBC <code>Driver</code> to use 
+	 * Returns the name of the JDBC <code>Driver</code> to use 
 	 * to connect to the data source.
 	 * @return 	a <code>String</code> corresponding to the name 
 	 * 			of the JDBC <code>Driver</code>
@@ -437,7 +502,7 @@ public class BgeeProperties
 		return this.localJdbcDriver;
 	}
 	/**
-	 * Set the name of the JDBC <code>Driver</code> to use 
+	 * Sets the name of the JDBC <code>Driver</code> to use 
 	 * to connect to the data source.
 	 * @param jdbcDriver	a <code>String</code> corresponding to the name 
 	 * 						of the JDBC <code>Driver</code>
@@ -447,7 +512,7 @@ public class BgeeProperties
 	}
 	
 	/**
-	 * Return the database url of the form <code>jdbc:subprotocol:subname</code>, 
+	 * Returns the database url of the form <code>jdbc:subprotocol:subname</code>, 
 	 * to use to connect to the data source using the <code>DriverManager</code>. 
 	 * @return 	a <code>String</code> representing the JDBC URL to use
 	 */
@@ -455,7 +520,7 @@ public class BgeeProperties
 		return this.localJdbcUrl;
 	}
 	/**
-	 * Set the database url of the form <code>jdbc:subprotocol:subname</code>, 
+	 * Sets the database url of the form <code>jdbc:subprotocol:subname</code>, 
 	 * to use to connect to the data source using the <code>DriverManager</code>. 
 	 * @param jdbcUrl 	a <code>String</code> representing the JDBC URL to use
 	 */
@@ -464,7 +529,7 @@ public class BgeeProperties
 	}
 	
 	/**
-	 * Return the default username to use to connect to the data source 
+	 * Returns the default username to use to connect to the data source 
 	 * using the JDBC URL.
 	 * @return 	a <code>String</code> representing the default username.
 	 */
@@ -472,7 +537,7 @@ public class BgeeProperties
 		return this.localJdbcUsername;
 	}
 	/**
-	 * Set the default username to use to connect to the data source 
+	 * Sets the default username to use to connect to the data source 
 	 * using the JDBC URL.
 	 * @param jdbcUsername	a <code>String</code> representing the default username.
 	 */
@@ -481,7 +546,7 @@ public class BgeeProperties
 	}
 	
 	/**
-	 * Return the default password to use to connect to the data source 
+	 * Returns the default password to use to connect to the data source 
 	 * using the JDBC URL.
 	 * @return 	a <code>String</code> representing the default password.
 	 */
@@ -489,11 +554,32 @@ public class BgeeProperties
 		return this.localJdbcPassword;
 	}
 	/**
-	 * Set the default password to use to connect to the data source 
+	 * Sets the default password to use to connect to the data source 
 	 * using the JDBC URL.
 	 * @param jdbcPassword	a <code>String</code> representing the default password.
 	 */
 	public void setJdbcPassword(String jdbcPassword) {
 		this.localJdbcPassword = jdbcPassword;
+	}
+
+	/**
+	 * Returns a <code>boolean</code> defining whether static factories should be used 
+	 * when available.
+	 * See {@link org.bgee.model.EntityFactoryProvider EntityFactoryProvider} for more details.
+     * <p>
+     * If <code>true</code>, static factories will be used when available. 
+     * Corresponds to the property <code>bgee.static.factories</code>. 
+     * Default value is <code>false</code>.
+     * <p>
+     * Note that this property cannot be modified locally in a given thread, 
+     * as it increases the memory load when used, thus impacting all threads.
+     * 
+	 * @return 	a <code>boolean</code> defining whether static factories should be used 
+	 * 			when available.
+     * @see org.bgee.model.EntityFactoryProvider
+     * @see #setUseStaticFactory(boolean)
+	 */
+	public boolean useStaticFactories() {
+		return useStaticFactories;
 	}
 }

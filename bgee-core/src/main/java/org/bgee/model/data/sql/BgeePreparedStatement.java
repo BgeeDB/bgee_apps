@@ -81,6 +81,7 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
 	 * @return the {@link #bgeeConnection}
 	 */
     //not yet used (no notification to the connection implemented yet)
+	@SuppressWarnings("unused")
 	private BgeeConnection getBgeeConnection() {
 		return this.bgeeConnection;
 	}

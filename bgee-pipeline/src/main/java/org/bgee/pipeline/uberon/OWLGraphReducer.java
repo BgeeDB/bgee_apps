@@ -11,7 +11,7 @@ import owltools.graph.OWLGraphWrapper;
 
 public class OWLGraphReducer 
 {
-	private final static Logger LOGGER = LogManager.getLogger(OWLGraphReducer.class.getName());
+	private final static Logger log = LogManager.getLogger(OWLGraphReducer.class.getName());
 	/**
 	 * The <code>OWLGraphWrapper</code> on which the operations will be performed 
 	 * (relation reduction, edge propagation, ...).
@@ -26,10 +26,12 @@ public class OWLGraphReducer
     	this(null);
     }
 	/**
-	 * Constructor of the class. 
+	 * Constructor of the class, providing the <code>OWLGraphWrapper</code> 
+	 * wrapped by this class, on which operations will be performed 
+	 * (relation reduction, edge propagation, ...). 
 	 * 
 	 * @param owlGraphWrapper 	The <code>OWLGraphWrapper</code> on which the operations 
-	 * 							will be performed (relation reduction, edge propagation, ...).
+	 * 							will be performed.
 	 */
     public OWLGraphReducer(OWLGraphWrapper owlGraphWrapper)
     {
@@ -39,7 +41,7 @@ public class OWLGraphReducer
     /**
      * Remove from the ontology all OBO relations that are not listed 
      * in <code>allowedRelations</code> (with the exception of <code>is_a</code> relations, 
-     * which are never removed). 
+     * which are not removed). 
      * <p>
      * <code>allowedRels</code> should contain the 
      * @param allowedRelations
@@ -80,14 +82,17 @@ public class OWLGraphReducer
     
 
 	/**
-	 * @return the <code>owlGraphWrapper</code>
-	 * @see #owlGraphWrapper
+	 * Gets the <code>OWLGraphWrapper</code> wrapped by this class, 
+	 * on which the operations are performed (relation reduction, 
+	 * edge propagation, ...).
+	 * 
+	 * @return the  <code>OWLGraphWrapper</code> wrapped by this class.
 	 */
 	public OWLGraphWrapper getOwlGraphWrapper() {
 		return this.owlGraphWrapper;
 	}
 	/**
-	 * @param owlGraphWrapper the <code>owlGraphWrapper</code> to set
+	 * @param owlGraphWrapper the <code>owlGraphWrapper</code> wrapped by this class.
 	 * @see #owlGraphWrapper
 	 */
 	private void setOwlGraphWrapper(OWLGraphWrapper owlGraphWrapper) {

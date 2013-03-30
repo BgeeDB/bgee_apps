@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.TestAncestor;
+import org.bgee.model.properties.BgeePropertiesTest;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,35 +26,22 @@ import owltools.io.ParserWrapper;
  * @since Bgee 13
  *
  */
-public class OWLGraphReducerTest 
+public class OWLGraphReducerTest extends TestAncestor
 {
-	private final static Logger LOGGER = LogManager.getLogger(OWLGraphReducer.class.getName());
-	/**
-	 * A <code>OWLGraphWrapper</code> used to store an ontology 
-	 * to perform modifications on. 
-	 */
-	private OWLGraphWrapper graphWrapper;
+    private final static Logger log = 
+    		LogManager.getLogger(OWLGraphReducerTest.class.getName());
 	
 	/**
-	 * A <code>TestWatcher</code> to log starting, succeeded and failed tests. 
+	 * Default Constructor. 
 	 */
-	@Rule
-	public TestWatcher watchman = new TestWatcher() {
-	    @Override
-	    protected void starting(Description description) {
-	        LOGGER.info("Starting test: {}", description);
-	    }
-	    @Override
-	    protected void failed(Throwable e, Description description) {
-	    	if (LOGGER.isErrorEnabled()) {
-	            LOGGER.error("Test failed: " + description, e);
-	    	}
-	    }
-	    @Override
-	    protected void succeeded(Description description) {
-	        LOGGER.info("Test succeeded: {}", description);
-	    }
-	};
+	public OWLGraphReducerTest()
+	{
+		super();
+	}
+	@Override
+	protected Logger getLogger() {
+		return log;
+	}
 	
 	/**
 	 * Load the (really basic) ontology <code>/ontologies/OWLGraphReducerTest.obo</code> 

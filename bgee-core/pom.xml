@@ -23,6 +23,6 @@
   </dependencies>
   
   <build>
-    <finalName>bgee-core</finalName>
+    <finalName>bgee-core-${project.version}</finalName>
   </build>
 </project>

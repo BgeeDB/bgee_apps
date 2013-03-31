@@ -30,7 +30,7 @@
   </dependencies>
   
   <build>
-    <finalName>bgee-webapp</finalName>
+    <finalName>bgee-webapp-${project.version}</finalName>
   </build>
   
 </project>

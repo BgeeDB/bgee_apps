@@ -35,7 +35,7 @@
   </dependencies>
   
   <build>
-      <finalName>bgee-pipeline</finalName>
+      <finalName>bgee-pipeline-${project.version}</finalName>
   </build>
   
 </project>

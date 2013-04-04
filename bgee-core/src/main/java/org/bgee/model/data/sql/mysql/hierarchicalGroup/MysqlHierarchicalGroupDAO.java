@@ -58,12 +58,13 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 				+ "t4.hierarchicalGroupRightBound <= t3.hierarchicalGroupRightBound AND "
 				+ "t4.orthologousGroupId = t3.orthologousGroupId "
 				+ "INNER JOIN gene AS t5 ON t5.hierarchicalGroupId = t4.hierarchicalGroupId "
-				+ "WHERE t1.geneId = '" + queryGene
-				+ "' and t3.ncbiTaxonomyId='" + ncbiTaxonomyId + "';";
+				+ "WHERE t1.geneId = '?' and t3.ncbiTaxonomyId='?';";
 
 		try {
 			PreparedStatement preparedStatement = connection
 					.prepareStatement(sql);
+			preparedStatement.setString(1, queryGene);
+			preparedStatement.setString(2, ncbiTaxonomyId);
 			ResultSet resultSet = preparedStatement.executeQuery();
 
 			while (resultSet.next()) {

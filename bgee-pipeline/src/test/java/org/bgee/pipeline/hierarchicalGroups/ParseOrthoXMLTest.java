@@ -6,6 +6,10 @@ public class ParseOrthoXMLTest {
 
 	public void testParseXml() {
 
+		String orthoXmlFile = this.getClass()
+				.getResource("/orthoxml/HierarchicalGroupsTest.orthoxml")
+				.toString();
+		
 	}
 
 	public void testBuildTree() {

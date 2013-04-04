@@ -73,7 +73,7 @@ public class ParseOrthoXML {
 
 		// Get the orthoXML file.
 		String orthoXmlFile = this.getClass()
-				.getResource("/orthoxml/HierarchicalGroupsTest.orthoxml")
+				.getResource("/orthoxml/HierarchicalGroups.orthoxml")
 				.toString();
 
 		if (log.isDebugEnabled()) {

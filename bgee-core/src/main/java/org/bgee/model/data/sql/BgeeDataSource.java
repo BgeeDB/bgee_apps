@@ -14,11 +14,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.sql.DataSource;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tomcat.jdbc.pool.DataSource;
 import org.bgee.model.BgeeProperties;
 
 /**
@@ -146,7 +146,7 @@ public class BgeeDataSource implements AutoCloseable
 		try {
 			//try to get a DataSource using JNDI
 			Context ctx = new InitialContext();
-			dataSourceTemp = (DataSource) ctx.lookup("java:comp/env/jdbc/bgeedatasource");
+			dataSourceTemp = (DataSource) ctx.lookup(props.getdataSourceResourceName());
 			log.info("DataSource obtained from InitialContext using JNDI");
 		} catch (NamingException e) {
 			log.info("No DataSource obtained from InitialContext using JNDI, will rely on the DriverManager using URL {}", 

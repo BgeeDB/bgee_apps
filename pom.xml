@@ -1,158 +1,171 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  
-  <groupId>org.bgee</groupId>
-  <artifactId>bgee-applications</artifactId>
-  <packaging>pom</packaging>
-  <version>13</version>
-  <name>Bgee</name>
-  <url>http://www.bgee.org/</url>
-  <description>Bgee allows to automatically compare gene expression patterns between species, by referencing expression data on anatomical ontologies, and designing homology relationships between them.</description>
-  <organization>
-      <name>Evolutionary Bioinformatics Group - 
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>org.bgee</groupId>
+	<artifactId>bgee-applications</artifactId>
+	<packaging>pom</packaging>
+	<version>13</version>
+	<name>Bgee</name>
+	<url>http://www.bgee.org/</url>
+	<description>Bgee allows to automatically compare gene expression patterns between species, by referencing expression data on anatomical ontologies, and designing homology relationships between them.</description>
+	<organization>
+		<name>Evolutionary Bioinformatics Group - 
             Swiss Institute of Bioinformatics - 
             Department of Ecology and Evolution - 
             University of Lausanne</name>
-      <url>http://bioinfo.unil.ch/</url>
-  </organization>
-  <developers>
-      <developer>
-          <name>Frederic Bastian</name>
-          <email>frederic.bastian@unil.ch</email>
-      </developer>
-  </developers>
-  <contributors>
-      <contributor>
-          <name></name>
-          <email></email>
-      </contributor>
-  </contributors>
-  <mailingLists>
-      <mailingList>
-          <name>bgee@isb-sib.ch</name>
-      </mailingList>
-  </mailingLists>
-  
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-  
-  <repositories>
-    <repository>
-      <id>bgee-local-repository</id>
-      <url>file://${basedir}/../m2_local_repository/repository</url>
-    </repository>
-  </repositories>
-  
-  <modules>
-    <module>bgee-core</module>
-    <module>bgee-webapp</module>
-    <module>bgee-pipeline</module>
-  </modules>
-  
-  <!-- Dependencies needed for *all* sub-projects -->
-  <dependencies>
-      
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <version>2.0-beta4</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <version>2.0-beta4</version>
-      <scope>compile</scope>
-    </dependency>
-    
-    <dependency>
-	  <groupId>commons-lang</groupId>
-	  <artifactId>commons-lang</artifactId>
-	  <version>2.6</version>
-      <scope>compile</scope>
-    </dependency>
-      
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>1.9.5</version>
-      <scope>test</scope>
-    </dependency>
-    
-  </dependencies>
-  
-  <!-- Dependencies needed for some sub-projects -->
-  <dependencyManagement>
-    <dependencies>
-    
-      <!-- Needed for the pipeline -->
-      <dependency>
-        <groupId>org.bbop</groupId>
-        <artifactId>OWLTools-Parent</artifactId>
-        <version>0.2.1-SNAPSHOT</version>
-        <scope>compile</scope>
-      </dependency>
-      <dependency>
-        <groupId>sbc.orthoxml</groupId>
-        <artifactId>orthoxml</artifactId>
-        <version>0.1b</version>
-        <scope>compile</scope>
-      </dependency>
-      <!-- End for pipeline -->
-    
-      <!-- Needed for the webapp -->
-      <dependency>
-        <groupId>org.apache.tomcat</groupId>
-        <artifactId>tomcat-servlet-api</artifactId>
-        <version>7.0.35</version>
-        <scope>provided</scope>
-      </dependency>
-      <!-- End for webapp -->
-      
-      <!-- Needed for the core layer -->
-      <dependency>
-	    <groupId>commons-codec</groupId>
-	    <artifactId>commons-codec</artifactId>
-	    <version>1.7</version>
-	    <scope>compile</scope>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.bgee.log4jdbc-log4j2</groupId>
-        <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
-        <version>1.11</version>
-	    <scope>compile</scope>
-      </dependency>
-            
-      <!-- End for the core layer -->
-  
-    </dependencies>
-  </dependencyManagement>
-  
-  <!-- in order to compile with JDK 1.7 -->
-  <build>
-      <plugins>
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-compiler-plugin</artifactId>
-              <version>3.0</version>
-              <configuration>
-                  <source>1.7</source>
-                  <target>1.7</target>
-              </configuration>
-          </plugin>
-      </plugins>
-  </build>
-  
+		<url>http://bioinfo.unil.ch/</url>
+	</organization>
+	<developers>
+		<developer>
+			<name>Frederic Bastian</name>
+			<email>frederic.bastian@unil.ch</email>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name></name>
+			<email></email>
+		</contributor>
+	</contributors>
+	<mailingLists>
+		<mailingList>
+			<name>bgee@isb-sib.ch</name>
+		</mailingList>
+	</mailingLists>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>bgee-local-repository</id>
+			<url>file://${basedir}/../m2_local_repository/repository</url>
+		</repository>
+	</repositories>
+
+	<modules>
+		<module>bgee-core</module>
+		<module>bgee-webapp</module>
+		<module>bgee-pipeline</module>
+	</modules>
+
+	<!-- Dependencies needed for *all* sub-projects -->
+	<dependencies>
+
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.0-beta4</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>2.0-beta4</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.9.5</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-jdbc</artifactId>
+			<version>7.0.39</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.sun.messaging.mq</groupId>
+			<artifactId>fscontext</artifactId>
+			<version>4.4</version>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+	<!-- Dependencies needed for some sub-projects -->
+	<dependencyManagement>
+		<dependencies>
+
+			<!-- Needed for the pipeline -->
+			<dependency>
+				<groupId>org.bbop</groupId>
+				<artifactId>OWLTools-Parent</artifactId>
+				<version>0.2.1-SNAPSHOT</version>
+				<scope>compile</scope>
+			</dependency>
+			<dependency>
+				<groupId>sbc.orthoxml</groupId>
+				<artifactId>orthoxml</artifactId>
+				<version>0.1b</version>
+				<scope>compile</scope>
+			</dependency>
+			<!-- End for pipeline -->
+
+			<!-- Needed for the webapp -->
+			<dependency>
+				<groupId>org.apache.tomcat</groupId>
+				<artifactId>tomcat-servlet-api</artifactId>
+				<version>7.0.35</version>
+				<scope>provided</scope>
+			</dependency>
+			<!-- End for webapp -->
+
+			<!-- Needed for the core layer -->
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>1.7</version>
+				<scope>compile</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.bgee.log4jdbc-log4j2</groupId>
+				<artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
+				<version>1.11</version>
+				<scope>compile</scope>
+			</dependency>
+
+			<!-- End for the core layer -->
+
+		</dependencies>
+	</dependencyManagement>
+
+	<!-- in order to compile with JDK 1.7 -->
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 </project>

@@ -46,13 +46,18 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
 	 * The real <code>java.sql.PreparedStatement</code> that this class wraps.
 	 */
     private final PreparedStatement realPreparedStatement;
+    /**
+     * The real <code>java.sql.PreparedStatement</code> that this class wraps.
+     */
+    private final String sql;
     
     /**
      * Default constructor, should not be used. 
      * Constructor protected, so that only a {@link BgeeConnection} can provide 
      * a <code>BgeePreparedStatement</code>.
+     * @throws SQLException 
      */
-    protected BgeePreparedStatement() 
+    protected BgeePreparedStatement() throws SQLException 
     {
     	this(null, null);
     }
@@ -68,12 +73,14 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
      * 									to obtain this <code>BgeePreparedStatement</code>.
      * @param realPreparedStatement 	The <code>java.sql.PreparedStatement</code> 
      * 									that this class wraps
+     * @throws SQLException 
      */
     protected BgeePreparedStatement(BgeeConnection connection, 
-    		PreparedStatement realPreparedStatement)
+    		String sql) throws SQLException
     {
     	this.bgeeConnection = connection;
-    	this.realPreparedStatement = realPreparedStatement;
+    	this.sql = sql;
+    	this.realPreparedStatement = connection.getRealConnection().prepareStatement(sql);
     }
     
     
@@ -165,13 +172,15 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
 		getRealPreparedStatement().setNull(parameterIndex, sqlType);
 	}
 	/**
-	 * @throws SQLException
-	 * @see java.sql.Statement#close()
+	 * This method put back the <code>BgeePreparedStatement</code> in the PreparedStatement Pool
+	 * instead of actually closing it and the underlying real <code>PreparedStatement<code>
 	 */
     @Override
-    public void close() throws SQLException {
-		getRealPreparedStatement().close();
-	}
+    public void close() {
+                
+        this.getBgeeConnection().getPreparedStatementPool().put(this.sql,this);
+    
+    }
 	/**
 	 * @return
 	 * @throws SQLException

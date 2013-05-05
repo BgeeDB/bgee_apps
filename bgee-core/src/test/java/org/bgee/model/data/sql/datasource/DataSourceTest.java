@@ -22,14 +22,14 @@ import static org.mockito.Mockito.*;
  * {@link org.bgee.mode.data.BgeeDataSource BgeeDataSource}. 
  * It also provides some test on its own.
  * <p>
- * It is used by {@link DataSourceDriverManagerTest} and {@link DataSourceJNDITest} 
+ * It is used by {@link DataSourceDriverManagerTest} and {@link JNDIDataSourceIntegrationTest} 
  * to run common methods ({@link #init()}, {@link #unload()}, 
  * and {@link #getMockDriverUtils()}).
  * 
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013
  * @see DataSourceDriverManagerTest
- * @see DataSourceJNDITest
+ * @see JNDIDataSourceIntegrationTest
  * @since Bgee 13
  */
 public class DataSourceTest extends TestAncestor

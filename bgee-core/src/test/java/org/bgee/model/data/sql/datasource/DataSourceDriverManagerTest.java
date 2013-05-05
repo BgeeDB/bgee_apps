@@ -18,12 +18,12 @@ import org.junit.Test;
  * The loading when using a <code>DataSource</code> is tested in a separated class: 
  * <code>BgeeDataSource</code> parameters are set only once at class loading, 
  * so only once for a given <code>ClassLoader</code>, so it has to be done 
- * in different classes. See {@link DataSourceJNDITest}.
+ * in different classes. See {@link JNDIDataSourceIntegrationTest}.
  * 
  * @author Frederic Bastian
  * @author Mathieu Seppey
  * @version Bgee 13, May 2013
- * @see DataSourceJNDITest
+ * @see JNDIDataSourceIntegrationTest
  * @since Bgee 13
  */
 public class DataSourceDriverManagerTest extends TestAncestor

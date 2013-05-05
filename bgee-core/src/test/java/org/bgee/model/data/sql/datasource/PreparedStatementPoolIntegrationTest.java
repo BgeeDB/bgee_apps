@@ -22,14 +22,14 @@ import org.junit.Test;
  * @see BgeeConnection
  * @since Bgee 13
  */
-public class PreparedStatementPoolTest extends DataSourceDriverManagerTest
+public class PreparedStatementPoolIntegrationTest extends DataSourceDriverManagerTest
 {
-    private final static Logger log = LogManager.getLogger(PreparedStatementPoolTest.class.getName());
+    private final static Logger log = LogManager.getLogger(PreparedStatementPoolIntegrationTest.class.getName());
 
     /**
      * Default Constructor. 
      */
-    public PreparedStatementPoolTest()
+    public PreparedStatementPoolIntegrationTest()
     {
         super();
     }

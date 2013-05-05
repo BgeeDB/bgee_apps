@@ -29,14 +29,14 @@ import org.junit.Test;
  * @see DataSourceDriverManagerTest
  * @since Bgee 13
  */
-public class DataSourceJNDITest extends DataSourceDriverManagerTest
+public class JNDIDataSourceIntegrationTest extends DataSourceDriverManagerTest
 {
-    private final static Logger log = LogManager.getLogger(DataSourceJNDITest.class.getName());
+    private final static Logger log = LogManager.getLogger(JNDIDataSourceIntegrationTest.class.getName());
 
     /**
      * Default Constructor. 
      */
-    public DataSourceJNDITest()
+    public JNDIDataSourceIntegrationTest()
     {
         super();
     }

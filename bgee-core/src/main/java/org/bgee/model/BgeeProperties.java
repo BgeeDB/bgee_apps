@@ -72,7 +72,8 @@ import org.apache.logging.log4j.Logger;
  * developed by Arthur Blake.
  * 
  * @author Frederic Bastian
- * @version Bgee 13, Mar 2013
+ * @author Mathieu Seppey
+ * @version Bgee 13, May 2013
  * @since Bgee 13
  */
 public class BgeeProperties 
@@ -278,9 +279,9 @@ public class BgeeProperties
         dataSourceResourceName   = getStringOption(sysProps, fileProps, "bgee.jdbc.pool.DataSource.resourceName", 
                 "java:comp/env/jdbc/bgeedatasource");
 
-
         log.info("Initialization done.");
         log.exit();
+        
     }
 
     /**

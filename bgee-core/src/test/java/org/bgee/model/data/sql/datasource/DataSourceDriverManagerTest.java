@@ -21,7 +21,8 @@ import org.junit.Test;
  * in different classes. See {@link DataSourceJNDITest}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13, Mar 2013
+ * @author Mathieu Seppey
+ * @version Bgee 13, May 2013
  * @see DataSourceJNDITest
  * @since Bgee 13
  */
@@ -42,12 +43,14 @@ public class DataSourceDriverManagerTest extends TestAncestor
 	}
 	
 	/**
+	 * @throws Exception 
 	 * @see {@link InitDataSourceTest#initClass()}
 	 */
 	@BeforeClass
-	public static void initClass()
+	public static void initClass() throws Exception
 	{
 		InitDataSourceTest.initClass();
+		InitDataSourceTest.initInitialContext();
 	}
 	/**
 	 * @see {@link InitDataSourceTest#unloadClass()}

@@ -23,6 +23,8 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 /**
  * Abstraction layer to use a <code>java.sql.PreparedStatement</code>. 
  * <p>
@@ -31,7 +33,8 @@ import java.util.Calendar;
  * in the <code>Driver</code> used. 
  * 
  * @author Frederic Bastian
- * @version Bgee 13, Mar 2013
+ * @authro Mathieu Seppey
+ * @version Bgee 13, May 2013
  * @since Bgee 13
  */
 public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
@@ -71,8 +74,8 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
      * 
      * @param connection				The <code>BgeeConnection</code> that was used 
      * 									to obtain this <code>BgeePreparedStatement</code>.
-     * @param realPreparedStatement 	The <code>java.sql.PreparedStatement</code> 
-     * 									that this class wraps
+     * @param sql                    	The <code>String</code> that contains the sql 
+     *                                  used to build the <code>PreparedStatement</code>
      * @throws SQLException 
      */
     protected BgeePreparedStatement(BgeeConnection connection, 
@@ -173,12 +176,17 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
 	}
 	/**
 	 * This method put back the <code>BgeePreparedStatement</code> in the PreparedStatement Pool
-	 * instead of actually closing it and the underlying real <code>PreparedStatement<code>
+	 * instead of actually closing it and the underlying real <code>PreparedStatement</code>.
+	 * 
+	 * It clears the parameters of the statement before, 
+	 * and hashes the sql <code>String</code> to use it as pool key
+	 * 
+	 * @throws SQLException 
 	 */
     @Override
-    public void close() {
-                
-        this.getBgeeConnection().getPreparedStatementPool().put(this.sql,this);
+    public void close() throws SQLException {
+        this.clearParameters();
+        this.getBgeeConnection().getPreparedStatementPool().put(DigestUtils.sha256Hex(this.sql),this);
     
     }
 	/**

@@ -1,12 +1,16 @@
 package org.bgee.model.data.sql;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
-
-import static org.mockito.Mockito.*;
 
 /**
  * At instantiation, this class automatically registers a mock <code>Driver</code> 
@@ -19,6 +23,9 @@ import static org.mockito.Mockito.*;
  * (whatever the value of the parameters)
  * will always return the same mock <code>Connection</code> instance.
  * <p>
+ * Any call to the mocked connection prepareStatement method
+ * will return a mock <code>PreparedStatement</code>
+ * <p>
  * During unit testing, developers should then simply obtain 
  * this mock <code>Connection</code>, and define some mock methods. 
  * <p>
@@ -26,7 +33,8 @@ import static org.mockito.Mockito.*;
  * a call to {@link #deregister()} must be made.
  * 
  * @author Frederic Bastian
- * @version Bgee 13, Mar 2013
+ * @author Mathieu Seppey
+ * @version Bgee 13, May 2013
  * @since Bgee 13
  */
 public class MockDriverUtils 
@@ -73,12 +81,17 @@ public class MockDriverUtils
 			//create the mock Driver
 			Driver mockDriver = mock(Driver.class);
 			when(mockDriver.acceptsURL(eq(MOCKURL))).thenReturn(true);
-
+			
 			//will return a mock Connection, that unit tests will use.
 			//all calls to the connect method will return the same mock Connection instance.
 			mockConnectionTemp = mock(Connection.class);
 			when(mockDriver.connect(eq(MOCKURL), any(Properties.class)))
 			    .thenReturn(mockConnectionTemp);
+
+	        // Mock a preparedStatement
+	        PreparedStatement mockPrep = mock(PreparedStatement.class);
+	        when(mockConnectionTemp.prepareStatement(any(String.class)))
+	        .thenReturn(mockPrep);
 
 			//register the mock Driver
 			DriverManager.registerDriver(mockDriver);

@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author Frederic Bastian
  * @author Mathieu Seppey
- * @version Bgee 13, Mar 2013
+ * @version Bgee 13, May 2013
  * @since Bgee 13
  */
 public class BgeeConnection implements AutoCloseable
@@ -88,10 +89,12 @@ public class BgeeConnection implements AutoCloseable
 
     /**
      * Provide a <code>BgeePreparedStatement</code> fetched in the pool if 
-     * any available for the requested sql. Else create and return a new one.
+     * any is available for the requested sql. Else create and return a new one.
      * 
      * When an existing <code>BgeePreparedStatement</code> is returned, it is
      * removed from the pool making it unavailable.
+     * 
+     * It hashes the sql <code>String</code> to use it as pool key
      * 
      * @param sql a <code>String</code> with contains the PreparedStatement sql
      * @return a <code>BgeePreparedStatement</code> which already existed or newly created
@@ -101,13 +104,18 @@ public class BgeeConnection implements AutoCloseable
     public BgeePreparedStatement prepareStatement(String sql) throws SQLException 
     {
         log.entry(sql);
+        
+        String digestedSql = DigestUtils.sha256Hex(sql) ;
 
-        if(this.preparedStatementPool.containsKey(sql)){
-            return log.exit(
-                    this.preparedStatementPool.remove(sql));
+        if(this.preparedStatementPool.containsKey(digestedSql)){
+            BgeePreparedStatement Bps =  this.preparedStatementPool.remove(digestedSql);
+            log.debug("Return a already existing BgeePreparedStatement : {}", Bps.toString());            
+            return log.exit(Bps);
         }
         else{
-            return log.exit(new BgeePreparedStatement(this, sql));
+            BgeePreparedStatement Bps =  new BgeePreparedStatement(this, sql);
+            log.debug("Return a newly created BgeePreparedStatement : {}", Bps.toString());            
+            return log.exit(Bps);
         }
     }
 
@@ -167,5 +175,5 @@ public class BgeeConnection implements AutoCloseable
     {
         return this.preparedStatementPool;
     }
-    
+
 }

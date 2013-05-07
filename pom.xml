@@ -144,7 +144,7 @@
 			<dependency>
 				<groupId>org.bgee.log4jdbc-log4j2</groupId>
 				<artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
-				<version>1.11</version>
+				<version>1.12</version>
 				<scope>compile</scope>
 			</dependency>
 

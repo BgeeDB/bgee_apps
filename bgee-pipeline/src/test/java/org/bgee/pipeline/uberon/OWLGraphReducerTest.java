@@ -5,12 +5,8 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
-import org.bgee.model.properties.BgeePropertiesTest;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -30,6 +26,10 @@ public class OWLGraphReducerTest extends TestAncestor
 {
     private final static Logger log = 
     		LogManager.getLogger(OWLGraphReducerTest.class.getName());
+    /**
+     * The <code>OWLGraphWrapper</code> used to perform the test. 
+     */
+    private OWLGraphWrapper graphWrapper;
 	
 	/**
 	 * Default Constructor. 
@@ -59,12 +59,12 @@ public class OWLGraphReducerTest extends TestAncestor
 	public void loadTestOntology() 
 			throws OWLOntologyCreationException, OBOFormatParserException, IOException
 	{
-		LOGGER.debug("Wrapping test ontology into OWLGraphWrapper...");
+		log.debug("Wrapping test ontology into OWLGraphWrapper...");
 		ParserWrapper parserWrapper = new ParserWrapper();
         OWLOntology ont = parserWrapper.parse(
         		this.getClass().getResource("/ontologies/OWLGraphReducerTest.obo").getFile());
     	this.graphWrapper = new OWLGraphWrapper(ont);
-		LOGGER.debug("Done.");
+		log.debug("Done.");
 	}
 	
 	/**

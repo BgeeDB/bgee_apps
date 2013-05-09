@@ -1,6 +1,7 @@
 package org.bgee.model.data.sql.datasource;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.sql.SQLException;
 
@@ -24,7 +25,8 @@ import org.junit.Test;
  */
 public class PreparedStatementPoolIntegrationTest extends DataSourceDriverManagerTest
 {
-    private final static Logger log = LogManager.getLogger(PreparedStatementPoolIntegrationTest.class.getName());
+    private final static Logger log = LogManager.getLogger(
+            PreparedStatementPoolIntegrationTest.class.getName());
 
     /**
      * Default Constructor. 
@@ -61,7 +63,8 @@ public class PreparedStatementPoolIntegrationTest extends DataSourceDriverManage
         // Create another prepared Statement with a sql string 1
         BgeePreparedStatement ps2 = con.prepareStatement(sql1); 
         // Check that both BgeePreparedStatement are the same object
-        assertTrue("The BgeePreparedStatement pool did not provide the already created BgeePreparedStatement",ps1 == ps2);
+        assertEquals("The BgeePreparedStatement pool" +
+        		"did not provide the already created BgeePreparedStatement",ps1,ps2);
 
         // Test 2
         // Create a prepared Statement with a sql string 1
@@ -70,8 +73,8 @@ public class PreparedStatementPoolIntegrationTest extends DataSourceDriverManage
         // Create another prepared Statement with a sql string 1
         BgeePreparedStatement ps4 = con.prepareStatement(sql1); 
         // Check that both BgeePreparedStatement are not the same object
-        assertTrue("The BgeePreparedStatement pool did provide an already " +
-                "created BgeePreparedStatement when it has to be not available",ps3 != ps4);
+        assertNotEquals("The BgeePreparedStatement pool did provide an already " +
+                "created BgeePreparedStatement when it has to be not available",ps3,ps4);
 
         // Test 3
         // Create a prepared Statement with a sql string 1
@@ -81,8 +84,8 @@ public class PreparedStatementPoolIntegrationTest extends DataSourceDriverManage
         // Create another prepared Statement with a sql string 2
         BgeePreparedStatement ps6 = con.prepareStatement(sql2); 
         // Check that both BgeePreparedStatement are not the same object
-        assertTrue("The BgeePreparedStatement pool did provide an already " +
-                "created BgeePreparedStatement corresponding to the wrong key",ps5 != ps6);
+        assertNotEquals("The BgeePreparedStatement pool did provide an already " +
+                "created BgeePreparedStatement corresponding to the wrong key",ps5,ps6);
 
     }
 }

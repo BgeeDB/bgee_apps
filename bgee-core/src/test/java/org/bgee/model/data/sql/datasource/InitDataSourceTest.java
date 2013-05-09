@@ -2,6 +2,7 @@ package org.bgee.model.data.sql.datasource;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 
@@ -45,20 +46,30 @@ public class InitDataSourceTest
         System.setProperty("bgee.jdbc.password", "bgee.jdbc.password.test");
         System.setProperty("bgee.jdbc.pool.DataSource.resourceName","testdatasource");
     }
-    public static void initInitialContext() throws Exception{
+    /**
+     * Create a naming service initial context in order to use a JNDI DataSource
+     * 
+     * @throws NamingException 
+     * @throws IllegalStateException 
+     */
+    public static void initInitialContext() throws IllegalStateException, NamingException{
 
+        // Set RefFSContextFactory as initial context factory.
         System.setProperty(Context.INITIAL_CONTEXT_FACTORY,
                 RefFSContextFactory.class.getName());
-
+        
+        // Set the java tmp directory as filesystem service provider
         System.setProperty(Context.PROVIDER_URL,"file:"+System.getProperty("java.io.tmpdir"));        
 
-        Reference ref = new Reference(DataSource.class.getName(),DataSourceFactory.class.getName(),null);
+        // Create a reference to a datasource object...
+        Reference ref = new Reference(DataSource.class.getName(),
+                DataSourceFactory.class.getName(),null);
 
         ref.add(new StringRefAddr("driverClassName",DriverTestImpl.class.getName()));
-        ref.add(new StringRefAddr("url",MockDriverUtils.MOCKURL));
 
-        new InitialContext().rebind(BgeeProperties.getBgeeProperties().getdataSourceResourceName(), ref);   
-
+        // And bind it to the initial context with the name coming from the properties
+        new InitialContext().rebind(
+                BgeeProperties.getBgeeProperties().getDataSourceResourceName(), ref);   
 
     } 
     /**

@@ -33,6 +33,10 @@ import org.apache.logging.log4j.Logger;
  * Mandatory.
  * <li><code>bgee.jdbc.password</code>: default password to connect to the data source.
  * Mandatory.
+ * <li><code>bgee.jdbc.pool.DataSource.resourceName</code>: A <code>String</code>
+ * containing the name of the resource to look up to get the dataSource. Optional.
+ * <li><code>bgee.jdbc.preparedStatementPoolSize</code>: An <code>int</code> containing
+ * the maximum size allowed for a <code>PreparedStatement</code> Pool. Optional.
  * <li><code>bgee.static.factories</code>: define whether static factories 
  * should be used when available.
  * <li><code>bgee.properties.file</code>: path to the properties file to use, 
@@ -166,6 +170,24 @@ public class BgeeProperties
      */
     private static final String jdbcPassword;
     /**
+     * A <code>String</code> containing the name of the resource to look up
+     * to get the dataSource
+     * <p>
+     * Default value is <code>java:comp/env/jdbc/bgeedatasource</code>
+     * 
+     * */
+    private static final String dataSourceResourceName;
+    /**
+     * An <code>int</code> containing the maximum size 
+     * allowed for a <code>PreparedStatement</code> Pool
+     * <p>
+     * Default value is 5000
+     * 
+     * @see org.bgee.model.data.sql.BgeeConnection
+     * 
+     * */
+    private static final int preparedStatementPoolMaxSize;    
+    /**
      * A <code>boolean</code> defining whether static factories should be used when available.
      * See {@link org.bgee.model.EntityFactoryProvider EntityFactoryProvider} for more details.
      * <p>
@@ -180,14 +202,6 @@ public class BgeeProperties
      * @see org.bgee.model.EntityFactoryProvider
      */
     private static final boolean useStaticFactories;
-    /**
-     * A <code>String</code> containing the name of the resource to look up
-     * to get the dataSource
-     * 
-     * Default value is java:comp/env/jdbc/bgeedatasource
-     * 
-     * */
-    private static String dataSourceResourceName;
 
     //*********************************
     // INSTANCE ATTRIBUTES
@@ -221,6 +235,20 @@ public class BgeeProperties
      * @see #jdbcPassword;
      */
     private String localJdbcPassword;
+    /**
+     * A <code>String</code> containing the name of the resource to look up
+     * to get the dataSource. Initialized at instantiation 
+     * from {@link #dataSourceResourceName}
+     * @see #dataSourceResourceName
+     */
+    private String localDataSourceResourceName;
+    /**
+     * An <code>int</code> containing the maximum size 
+     * allowed for a <code>PreparedStatement</code> Pool. Initialized at instantiation 
+     * from{@link #preparedStatementPoolMaxSize}
+     * @see #preparedStatementPoolMaxSize
+     */
+    private int localPreparedStatementPoolMaxSize;
 
 
     //*********************************
@@ -276,8 +304,11 @@ public class BgeeProperties
         jdbcPassword = getStringOption(sysProps, fileProps, "bgee.jdbc.password", null);
         useStaticFactories = getBooleanOption(sysProps, fileProps, "bgee.static.factories", 
                 false);
-        dataSourceResourceName   = getStringOption(sysProps, fileProps, "bgee.jdbc.pool.DataSource.resourceName", 
-                "java:comp/env/jdbc/bgeedatasource");
+        dataSourceResourceName   = getStringOption(sysProps, fileProps, 
+                "bgee.jdbc.pool.DataSource.resourceName","java:comp/env/jdbc/bgeedatasource");
+        
+        preparedStatementPoolMaxSize = Integer.valueOf(getStringOption(sysProps,
+                fileProps, "bgee.jdbc.preparedStatementPoolSize","5000"));
 
         log.info("Initialization done.");
         log.exit();
@@ -474,6 +505,9 @@ public class BgeeProperties
         this.setJdbcUrl(jdbcUrl);
         this.setJdbcUsername(jdbcUsername);
         this.setJdbcPassword(jdbcPassword);
+        this.setDataSourceResourceName(dataSourceResourceName);
+        this.setPreparedStatementPoolMaxSize(preparedStatementPoolMaxSize);
+        
     }
 
     /**
@@ -575,13 +609,35 @@ public class BgeeProperties
         this.localJdbcPassword = jdbcPassword;
     }
     /**
-     * Returns the default password to use to connect to the data source 
-     * using the JDBC URL.
-     * @return  a <code>String</code> representing the default password.
+     * Returns the name of the resource to look up to get the dataSource
+     * @return a <code>String</code> representing the name of the resource
      */
-    public String getdataSourceResourceName() {
-        return BgeeProperties.dataSourceResourceName;
-    }    
+    public String getDataSourceResourceName() {
+        return this.localDataSourceResourceName;
+    } 
+    /**
+     * Sets the name of the resource to look up to get the dataSource
+     * @param dataSourceResourceName a <code>String</code> representing
+     * the name of the resource
+     */
+    public void setDataSourceResourceName(String dataSourceResourceName) {
+        this.localDataSourceResourceName = dataSourceResourceName;
+    }
+    /**
+     * Returns the maximum allowed size for a <code>PreparedStatement</code> pool.
+     * @return an <code>int</code> representing the maximum size of the pool.
+     */
+    public int getPreparedStatementPoolMaxSize() {
+        return this.localPreparedStatementPoolMaxSize;
+    } 
+    /**
+     * Sets the maximum allowed size for a <code>PreparedStatement</code> pool.
+     * @param preparedStatementPoolMaxSize an <code>int</code> representing
+     * the maximum size of the pool.
+     */
+    public void setPreparedStatementPoolMaxSize(int preparedStatementPoolMaxSize) {
+        this.localPreparedStatementPoolMaxSize = preparedStatementPoolMaxSize;
+    }     
 
     /**
      * Returns a <code>boolean</code> defining whether static factories should be used 

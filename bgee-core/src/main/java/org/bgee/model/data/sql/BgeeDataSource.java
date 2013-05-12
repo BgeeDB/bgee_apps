@@ -147,9 +147,9 @@ public class BgeeDataSource implements AutoCloseable
         try {
             //try to get a DataSource using JNDI
             Context ctx = new InitialContext();
-            dataSourceTemp = (DataSource) ctx.lookup(props.getdataSourceResourceName());
+            dataSourceTemp = (DataSource) ctx.lookup(props.getDataSourceResourceName());
             log.info("DataSource obtained from InitialContext {} using JNDI", 
-            		props.getdataSourceResourceName());
+            		props.getDataSourceResourceName());
         } catch (NamingException e) {
                         
             log.info("No DataSource obtained from InitialContext using JNDI, will rely on the DriverManager using URL {}", 

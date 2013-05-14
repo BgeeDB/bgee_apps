@@ -24,7 +24,7 @@
   
     <dependency>
       <groupId>org.bbop</groupId>
-      <artifactId>OWLTools-Parent</artifactId>
+      <artifactId>OWLTools-Core</artifactId>
     </dependency>
       
     <dependency>

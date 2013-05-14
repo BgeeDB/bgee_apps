@@ -112,7 +112,7 @@
 			<!-- Needed for the pipeline -->
 			<dependency>
 				<groupId>org.bbop</groupId>
-				<artifactId>OWLTools-Parent</artifactId>
+				<artifactId>OWLTools-Core</artifactId>
 				<version>0.2.1-SNAPSHOT</version>
 				<scope>compile</scope>
 			</dependency>

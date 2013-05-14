@@ -15,17 +15,17 @@ import owltools.graph.OWLGraphWrapper;
 import owltools.io.ParserWrapper;
 
 /**
- * Test the functionalities of {@link org.bgee.pipeline.uberon.OWLGraphReducer}.
+ * Test the functionalities of {@link org.bgee.pipeline.uberon.OWLGraphManipulator}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13, Feb 2013
  * @since Bgee 13
  *
  */
-public class OWLGraphReducerTest extends TestAncestor
+public class OWLGraphManipulatorTest extends TestAncestor
 {
     private final static Logger log = 
-    		LogManager.getLogger(OWLGraphReducerTest.class.getName());
+    		LogManager.getLogger(OWLGraphManipulatorTest.class.getName());
     /**
      * The <code>OWLGraphWrapper</code> used to perform the test. 
      */
@@ -34,7 +34,7 @@ public class OWLGraphReducerTest extends TestAncestor
 	/**
 	 * Default Constructor. 
 	 */
-	public OWLGraphReducerTest()
+	public OWLGraphManipulatorTest()
 	{
 		super();
 	}
@@ -44,7 +44,7 @@ public class OWLGraphReducerTest extends TestAncestor
 	}
 	
 	/**
-	 * Load the (really basic) ontology <code>/ontologies/OWLGraphReducerTest.obo</code> 
+	 * Load the (really basic) ontology <code>/ontologies/OWLGraphManipulatorTest.obo</code> 
 	 * into {@link #graphWrapper}.
 	 * It is loaded before the execution of each test, so that a test can modify it 
 	 * without impacting another test.
@@ -62,14 +62,14 @@ public class OWLGraphReducerTest extends TestAncestor
 		log.debug("Wrapping test ontology into OWLGraphWrapper...");
 		ParserWrapper parserWrapper = new ParserWrapper();
         OWLOntology ont = parserWrapper.parse(
-        		this.getClass().getResource("/ontologies/OWLGraphReducerTest.obo").getFile());
+        		this.getClass().getResource("/ontologies/OWLGraphManipulatorTest.obo").getFile());
     	this.graphWrapper = new OWLGraphWrapper(ont);
 		log.debug("Done.");
 	}
 	
 	/**
 	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphReducer#filterRelations(Collection, boolean)}.
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)}.
 	 */
 	@Test
 	public void shouldFilterRelationsTest()

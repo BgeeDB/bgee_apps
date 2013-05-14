@@ -9,9 +9,9 @@ import org.semanticweb.owlapi.model.OWLClass;
 
 import owltools.graph.OWLGraphWrapper;
 
-public class OWLGraphReducer 
+public class OWLGraphManipulator 
 {
-	private final static Logger log = LogManager.getLogger(OWLGraphReducer.class.getName());
+	private final static Logger log = LogManager.getLogger(OWLGraphManipulator.class.getName());
 	/**
 	 * The <code>OWLGraphWrapper</code> on which the operations will be performed 
 	 * (relation reduction, edge propagation, ...).
@@ -21,7 +21,7 @@ public class OWLGraphReducer
 	/**
 	 * Default constructor. 
 	 */
-	public OWLGraphReducer()
+	public OWLGraphManipulator()
     {
     	this(null);
     }
@@ -33,7 +33,7 @@ public class OWLGraphReducer
 	 * @param owlGraphWrapper 	The <code>OWLGraphWrapper</code> on which the operations 
 	 * 							will be performed.
 	 */
-    public OWLGraphReducer(OWLGraphWrapper owlGraphWrapper)
+    public OWLGraphManipulator(OWLGraphWrapper owlGraphWrapper)
     {
     	this.setOwlGraphWrapper(owlGraphWrapper);
     }

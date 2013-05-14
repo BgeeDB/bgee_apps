@@ -6,13 +6,11 @@
     </Console>
   </appenders>
   <loggers>
-    <root level="debug">
+    <root level="off">
       <appender-ref ref="Console"/>
-    </root>    
-    <!-- 
-    <logger name="extra" level="debug">
+    </root>  
+    <logger name="org.bgee.pipeline" level="debug">
       <appender-ref ref="Console"/>
     </logger>
-    -->
   </loggers>
 </configuration>

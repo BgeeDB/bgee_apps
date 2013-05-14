@@ -7,24 +7,26 @@ name: root
 
 [Term]
 id: FOO:0002
-name: level1-part_of-root
+name: A
 relationship: part_of FOO:0001 ! root
 
 [Term]
 id: FOO:0003
-name: test-conversion-in_deep_part_of
+name: B
 relationship: in_deep_part_of FOO:0001 ! root
 
 [Term]
 id: FOO:0004
-name: test-redundant-part_of
-relationship: part_of FOO:0002 ! level1-part_of-root
+name: C
+comment: part_of relation to root is redundant. 
+relationship: part_of FOO:0002 ! A
 relationship: part_of FOO:0001 ! root
 
 [Term]
 id: FOO:0005
-name: test-redundant-is_a-over-part_of
-relationship: part_of FOO:0002 ! level1-part_of-root
+name: D
+comment: is_a relation to root redundant only when simplifying a graph over is_a and part_of relations at the same time. 
+relationship: part_of FOO:0002 ! A
 is_a: FOO:0001 ! root
 
 [Typedef]

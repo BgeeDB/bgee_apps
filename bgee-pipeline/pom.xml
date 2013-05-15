@@ -20,15 +20,23 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>bgee-core</artifactId>
       <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+    <groupId>${project.groupId}</groupId>
+      <artifactId>bgee-core</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
   
     <dependency>
       <groupId>org.bbop</groupId>
-      <artifactId>OWLTools-Core</artifactId>
+      <artifactId>OWLTools-all</artifactId>
     </dependency>
       
     <dependency>
-      <groupId>sbc.orthoxml</groupId>
+      <groupId>sbc</groupId>
       <artifactId>orthoxml</artifactId>
     </dependency>
       

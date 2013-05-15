@@ -112,12 +112,12 @@
 			<!-- Needed for the pipeline -->
 			<dependency>
 				<groupId>org.bbop</groupId>
-				<artifactId>OWLTools-Core</artifactId>
+				<artifactId>OWLTools-all</artifactId>
 				<version>0.2.1-SNAPSHOT</version>
 				<scope>compile</scope>
 			</dependency>
 			<dependency>
-				<groupId>sbc.orthoxml</groupId>
+				<groupId>sbc</groupId>
 				<artifactId>orthoxml</artifactId>
 				<version>0.1b</version>
 				<scope>compile</scope>

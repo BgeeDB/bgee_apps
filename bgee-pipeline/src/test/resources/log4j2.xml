@@ -9,7 +9,7 @@
     <root level="off">
       <appender-ref ref="Console"/>
     </root>  
-    <logger name="org.bgee.pipeline" level="debug">
+    <logger name="org.bgee.pipeline" level="debug" additivity="false">
       <appender-ref ref="Console"/>
     </logger>
   </loggers>

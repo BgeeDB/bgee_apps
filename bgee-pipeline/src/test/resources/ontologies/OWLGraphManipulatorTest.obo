@@ -29,15 +29,74 @@ comment: is_a relation to root redundant only when simplifying a graph over is_a
 relationship: part_of FOO:0002 ! A
 is_a: FOO:0001 ! root
 
+[Term]
+id: FOO:0006
+name: subgraph2_root
+comment: term root of a subgraph to remove to test OWLGraphManipulator.filterSubgraph(Collection<String>) 
+is_a: FOO:0001 ! root
+
+[Term]
+id: FOO:0007
+name: subgraph2_A
+comment: term part of the subgraph to remove, should be removed (test OWLGraphManipulator.filterSubgraph(Collection<String>))
+relationship: part_of FOO:0006 ! subgraph2_root
+
+[Term]
+id: FOO:0008
+name: subgraph2_B
+comment: term part of the subgraph to remove, should be removed (test OWLGraphManipulator.filterSubgraph(Collection<String>))
+relationship: develops_from FOO:0007 ! subgraph2_A
+
+[Term]
+id: FOO:0009
+name: subgraph2_C
+comment: term part of the subgraph to remove, should be removed (test OWLGraphManipulator.filterSubgraph(Collection<String>))
+relationship: overlaps FOO:0007 ! subgraph2_A
+
+[Term]
+id: FOO:0010
+name: subgraph2_D
+comment: term part of the subgraph to remove, should be removed (test OWLGraphManipulator.filterSubgraph(Collection<String>))
+relationship: part_of FOO:0009 ! subgraph2_C
+
+[Term]
+id: FOO:0011
+name: subgraph2_subgraph1
+comment: term part of both the subgraph to remove, and the subgraph to keep, should NOT be removed (test OWLGraphManipulator.filterSubgraph(Collection<String>))
+relationship: part_of FOO:0009 ! subgraph2_C
+is_a: FOO:0002 ! A
+
+[Term]
+id: FOO:0012
+name: subgraph2_E
+comment: term part of the subgraph to remove, should be removed (test OWLGraphManipulator.filterSubgraph(Collection<String>))
+relationship: develops_from_part_of FOO:0007 ! subgraph2_A
+
+[Term]
+id: FOO:0013
+name: subgraph3_root
+comment: term root of a subgraph to remove to test OWLGraphManipulator.filterSubgraph(Collection<String>) 
+is_a: FOO:0001 ! root
+
 [Typedef]
 id: overlaps
 name: overlaps
 def: "A overlaps B if they share some part in common." []
 xref: RO:0002131
-transitive_over: part_of  ! part of
-holds_over_chain: has_part overlaps  ! overlaps
-holds_over_chain: has_part part_of  ! part of
+transitive_over: part_of ! part of
+holds_over_chain: has_part overlaps ! overlaps
+holds_over_chain: has_part part_of ! part of
 expand_expression_to: "BFO_0000051 some (BFO_0000050 some ?Y)" []
+
+[Typedef]
+id: has_part
+name: has_part
+namespace: anatomical_entity_ontology
+is_transitive: true
+inverse_of: part_of  ! part of
+xref: BFO:0000051
+xref: OBO_REL:has_part
+is_a: overlaps  ! overlaps
 
 [Typedef]
 id: part_of
@@ -52,3 +111,36 @@ id: in_deep_part_of
 name: in_deep_part_of
 namespace: uberon
 is_a: part_of ! part of
+
+[Typedef]
+id: has_developmental_contribution_from
+name: has developmental contribution from
+namespace: uberon
+is_transitive: true
+xref: RO:0002254
+holds_over_chain: has_part develops_from  ! develops from
+
+[Typedef]
+id: develops_from
+name: develops from
+namespace: zebrafish_anatomical_ontology
+is_transitive: true
+xref: RO:0002202
+is_a: has_developmental_contribution_from  ! has developmental contribution from
+transitive_over: part_of  ! part of
+holds_over_chain: part_of develops_from  ! develops from
+
+[Typedef]
+id: directly_develops_from
+name: directly_develops_from
+namespace: uberon
+xref: RO:0002207
+
+[Typedef]
+id: develops_from_part_of
+name: develops_from_part_of
+namespace: uberon
+xref: RO:0002225
+is_a: develops_from  ! develops from
+holds_over_chain: directly_develops_from part_of  ! part of
+

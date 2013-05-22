@@ -37,6 +37,9 @@ import org.apache.logging.log4j.Logger;
  * containing the name of the resource to look up to get the dataSource. Optional.
  * <li><code>bgee.jdbc.preparedStatementPoolSize</code>: An <code>int</code> containing
  * the maximum size allowed for a <code>PreparedStatement</code> Pool. Optional.
+ * <li><code>bgee.jdbc.preparedStatementPoolsMaxTotalSize</code>: An <code>int</code>
+ * containing the maximum cumulated size allowed for all <code>PreparedStatement</code>
+ *  Pools. Optional.
  * <li><code>bgee.static.factories</code>: define whether static factories 
  * should be used when available.
  * <li><code>bgee.properties.file</code>: path to the properties file to use, 
@@ -179,14 +182,25 @@ public class BgeeProperties
     private static final String dataSourceResourceName;
     /**
      * An <code>int</code> containing the maximum size 
-     * allowed for a <code>PreparedStatement</code> Pool
+     * allowed for a single <code>PreparedStatement</code> pool
      * <p>
-     * Default value is 5000
+     * Default value is 1000
      * 
      * @see org.bgee.model.data.sql.BgeeConnection
      * 
      * */
-    private static final int preparedStatementPoolMaxSize;    
+    private static final int prStPoolMaxSize;  
+    /**
+     * An <code>int</code> containing the maximum cumulated size 
+     * allowed for a all <code>PreparedStatement</code> pools
+     * in the application
+     * <p>
+     * Default value is 10000
+     * 
+     * @see org.bgee.model.data.sql.BgeeConnection
+     * 
+     * */
+    private static final int prStPoolsMaxTotalSize;  
     /**
      * A <code>boolean</code> defining whether static factories should be used when available.
      * See {@link org.bgee.model.EntityFactoryProvider EntityFactoryProvider} for more details.
@@ -245,10 +259,19 @@ public class BgeeProperties
     /**
      * An <code>int</code> containing the maximum size 
      * allowed for a <code>PreparedStatement</code> Pool. Initialized at instantiation 
-     * from{@link #preparedStatementPoolMaxSize}
-     * @see #preparedStatementPoolMaxSize
+     * from {@link #prStPoolMaxSize}
+     * @see #prStPoolMaxSize
      */
-    private int localPreparedStatementPoolMaxSize;
+    private int localPrStPoolMaxSize;
+    /**
+     * An <code>int</code> containing the maximum cumulated size 
+     * allowed for a all <code>PreparedStatement</code> pools in the application
+     * Initialized at instantiation
+     * from {@link #prStPoolsMaxTotalSize}
+     * @see #prStPoolsMaxTotalSize
+     * 
+     * */
+    private int localPrStPoolsMaxTotalSize;
 
 
     //*********************************
@@ -307,9 +330,16 @@ public class BgeeProperties
         dataSourceResourceName   = getStringOption(sysProps, fileProps, 
                 "bgee.jdbc.pool.DataSource.resourceName","java:comp/env/jdbc/bgeedatasource");
         
-        preparedStatementPoolMaxSize = Integer.valueOf(getStringOption(sysProps,
-                fileProps, "bgee.jdbc.preparedStatementPoolSize","5000"));
+        prStPoolMaxSize = Integer.valueOf(getStringOption(sysProps,
+                fileProps, "bgee.jdbc.preparedStatementPoolMaxSize","1000"));
+        
+        log.debug("Set prStPoolMaxSize to {}",prStPoolMaxSize);
+        
+        prStPoolsMaxTotalSize = Integer.valueOf(getStringOption(sysProps,
+                fileProps, "bgee.jdbc.preparedStatementPoolsMaxTotalSize","10000"));
 
+        log.debug("Set prStPoolsMaxTotalSize to {}",prStPoolsMaxTotalSize);
+        
         log.info("Initialization done.");
         log.exit();
         
@@ -506,7 +536,8 @@ public class BgeeProperties
         this.setJdbcUsername(jdbcUsername);
         this.setJdbcPassword(jdbcPassword);
         this.setDataSourceResourceName(dataSourceResourceName);
-        this.setPreparedStatementPoolMaxSize(preparedStatementPoolMaxSize);
+        this.setPrStPoolMaxSize(prStPoolMaxSize);
+        this.setPrStPoolsMaxTotalSize(prStPoolsMaxTotalSize);
         
     }
 
@@ -624,20 +655,35 @@ public class BgeeProperties
         this.localDataSourceResourceName = dataSourceResourceName;
     }
     /**
-     * Returns the maximum allowed size for a <code>PreparedStatement</code> pool.
+     * Returns the maximum allowed size for a single <code>PreparedStatement</code> pool.
      * @return an <code>int</code> representing the maximum size of the pool.
      */
-    public int getPreparedStatementPoolMaxSize() {
-        return this.localPreparedStatementPoolMaxSize;
+    public int getPrStPoolMaxSize() {
+        return this.localPrStPoolMaxSize;
     } 
     /**
-     * Sets the maximum allowed size for a <code>PreparedStatement</code> pool.
-     * @param preparedStatementPoolMaxSize an <code>int</code> representing
+     * Returns the maximum allowed cumulated size for all <code>PreparedStatement</code> pools.
+     * @return an <code>int</code> representing the maximum cumulated size allowed for pools.
+     */
+    public int getPrStPoolsMaxTotalSize() {
+        return localPrStPoolsMaxTotalSize;
+    } 
+    /**
+     * Sets the maximum allowed size for a single <code>PreparedStatement</code> pool.
+     * @param prStPoolMaxSize an <code>int</code> representing
      * the maximum size of the pool.
      */
-    public void setPreparedStatementPoolMaxSize(int preparedStatementPoolMaxSize) {
-        this.localPreparedStatementPoolMaxSize = preparedStatementPoolMaxSize;
-    }     
+    public void setPrStPoolMaxSize(int prStPoolMaxSize) {
+        this.localPrStPoolMaxSize = prStPoolMaxSize;
+    }   
+    /**
+     * Sets the maximum allowed cumulated size for all <code>PreparedStatement</code> pools.
+     * @param prStPoolsMaxTotalSize an <code>int</code> representing
+     * the maximum cumulated size allowed for pools.
+     */
+    public void setPrStPoolsMaxTotalSize(int prStPoolsMaxTotalSize) {
+        this.localPrStPoolsMaxTotalSize = prStPoolsMaxTotalSize;
+    }    
 
     /**
      * Returns a <code>boolean</code> defining whether static factories should be used 

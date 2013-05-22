@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -118,6 +119,21 @@ public class BgeeDataSource implements AutoCloseable
      */
     private final static Logger log = LogManager.getLogger(BgeeDataSource.class.getName());
 
+    /**
+     * An <code>AtomicInteger</code> that keep count of all pooled 
+     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
+     *  of every instanced <code>BgeeDatasource</code>
+     */
+    private static AtomicInteger bgeePrStPoolsTotalSize ;
+    /**
+     * A <code>ConcurrentHashMap</code> that contains the <code>BgeeDataSource</code>
+     * which has the most pooled <code>BgeePreparedStatement</code> and the number of it.
+     * It uses the <code>BgeeDataSource</code> as key and the number as entry
+     */
+    private static ConcurrentHashMap<BgeeDataSource,Integer>
+    bgeeDataSourceWithMaxPrStPooled;
+
+
     //****************************
     // INSTANCE ATTRIBUTES
     //****************************
@@ -127,6 +143,21 @@ public class BgeeDataSource implements AutoCloseable
      * (see {@link BgeeConnection#getId()}). 
      */
     private Map<String, BgeeConnection> openConnections;
+
+    /**
+     * An <code>AtomicInteger</code> that keep count of all pooled 
+     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
+     *  of the current <code>BgeeDatasource</code>
+     */
+    private AtomicInteger bgeePrStPoolsDataSourceSize;    
+
+    /**
+     * A <code>ConcurrentHashMap</code> that contains the <code>BgeeConnection</code>
+     * which has the most pooled <code>BgeePreparedStatement</code>
+     * for the current <code>BgeeDatasource</code>  and the number of it.
+     * It uses the <code>BgeeConnection</code> as key and the number as entry
+     */
+    private ConcurrentHashMap<BgeeConnection,Integer> bgeeConnWithMaxPrStPooled ;
 
 
     //****************************
@@ -142,6 +173,11 @@ public class BgeeDataSource implements AutoCloseable
 
         dataSourcesClosed.set(false);
 
+        // Inits the variables that keep count of the global prepared statement pooling
+        BgeeDataSource.bgeeDataSourceWithMaxPrStPooled = 
+                new ConcurrentHashMap<BgeeDataSource,Integer>();
+        BgeeDataSource.bgeePrStPoolsTotalSize = new AtomicInteger(0);
+
         DataSource dataSourceTemp = null;
         BgeeProperties props = BgeeProperties.getBgeeProperties();
         try {
@@ -149,9 +185,9 @@ public class BgeeDataSource implements AutoCloseable
             Context ctx = new InitialContext();
             dataSourceTemp = (DataSource) ctx.lookup(props.getDataSourceResourceName());
             log.info("DataSource obtained from InitialContext {} using JNDI", 
-            		props.getDataSourceResourceName());
+                    props.getDataSourceResourceName());
         } catch (NamingException e) {
-                        
+
             log.info("No DataSource obtained from InitialContext using JNDI, will rely on the DriverManager using URL {}", 
                     props.getJdbcUrl());
             //if the name of a JDBC driver was provided, try to load it.
@@ -219,6 +255,11 @@ public class BgeeDataSource implements AutoCloseable
         if (source == null) {
             //instantiate the BgeeDataSource only if needed
             source = new BgeeDataSource();
+
+            // Inits the variables that keep count 
+            // of the prepared statement pooling for this BgeeDataSource
+            source.bgeeConnWithMaxPrStPooled = new ConcurrentHashMap<BgeeConnection, Integer>();
+            source.bgeePrStPoolsDataSourceSize = new AtomicInteger(0);
             //we don't use putifAbsent, as the thread object make sure 
             //there won't be any multi-threading key collision
             bgeeDataSources.put(currentThread, source);
@@ -261,6 +302,78 @@ public class BgeeDataSource implements AutoCloseable
         }
 
         return log.exit(sourcesCount);
+    }
+
+    /**
+     * @return An <code>AtomicInteger</code> that keep count of all pooled 
+     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
+     * of every instanced <code>BgeeDatasource</code>
+     */
+    protected static AtomicInteger getBgeePrStPoolsTotalSize(){
+        return BgeeDataSource.bgeePrStPoolsTotalSize;
+    }
+
+    /**
+     * @return A <code>ConcurrentHashMap</code> that contains the <code>BgeeDataSource</code>
+     * which has the most pooled <code>BgeePreparedStatement</code> and the number of it.
+     * It uses the <code>BgeeDataSource</code> as key and the number as entry
+     */
+    protected static ConcurrentHashMap<BgeeDataSource,Integer> 
+    getBgeeDataSourceWithMaxPrStPooled(){
+        return BgeeDataSource.bgeeDataSourceWithMaxPrStPooled;
+    }
+
+    /**
+     * Sets an <code>AtomicInteger</code> that keep count of all pooled 
+     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
+     * of every instanced <code>BgeeDatasource</code>
+     * 
+     * @param size An <code>int</code> that is the number of pooled 
+     * <code>BgeePreparedStatement</code>
+     * 
+     */
+    protected static void setBgeePrStPoolsTotalSize(int size){
+        BgeeDataSource.bgeePrStPoolsTotalSize = new AtomicInteger(size);
+    }
+
+    /**
+     * Sets a <code>ConcurrentHashMap</code> that contains the <code>BgeeDataSource</code>
+     * which has the most pooled <code>BgeePreparedStatement</code> and the number of it.
+     * It uses the <code>BgeeDataSource</code> as key and the number as entry
+     * 
+     * @param ds    A <code>BgeeDataSource</code> which is the one with the most pooled 
+     *              <code>BgeePreparedStatement</code>
+     * @param size  An <code>Integer</code> which is the number of 
+     *              <code>BgeePreparedStatement</code>
+     * 
+     */
+    protected static void setBgeeDataSourceWithMaxPrStPooled(BgeeDataSource ds,Integer size){
+        BgeeDataSource.bgeeDataSourceWithMaxPrStPooled.clear();
+        BgeeDataSource.bgeeDataSourceWithMaxPrStPooled.put(ds, size);
+    }    
+    
+    /**
+     * Checks if the maximum of <code>BgeePreparedStatement</code> allowed is reached, and
+     * if it is the case, retrieves the <code>BgeeConnection</code> among all available 
+     * which has the most pooled <code>BgeePreparedStatement</code>
+     * and call its pool cleaning method
+     * @see BgeeConnection
+     */
+    protected static void checkAndCleanBgeePsStPools(){
+        
+        log.entry();
+
+        if(BgeeDataSource.getBgeePrStPoolsTotalSize().intValue() <  
+                BgeeProperties.getBgeeProperties().getPrStPoolsMaxTotalSize()){
+        }
+        else {
+            log.info("Too many prepared statement among all datasources");
+            BgeeDataSource.bgeeDataSourceWithMaxPrStPooled.keys().nextElement()
+            .bgeeConnWithMaxPrStPooled.keys().nextElement().makeRoomInThePrStPool();
+        }
+        
+        log.exit();
+        
     }
 
     //****************************
@@ -537,5 +650,54 @@ public class BgeeDataSource implements AutoCloseable
         //put the JDBC URL in the hash in case it was changed after the instantiation 
         //of this BgeeDataSource
         return DigestUtils.sha1Hex(jdbcUrl + "[sep]" + username + "[sep]" + password);
-    }	
+    }
+
+    /**
+     * @return an <code>AtomicInteger</code> that keep count of all pooled 
+     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
+     *  of the current <code>BgeeDatasource</code>
+     */
+    protected AtomicInteger getPrStPoolsDataSourceSize(){
+        return this.bgeePrStPoolsDataSourceSize;
+    }
+
+    /**
+     * Sets an <code>AtomicInteger</code> that keep count of all pooled 
+     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
+     * of the current <code>BgeeDatasource</code>
+     * 
+     * @param size An <code>int<code> that contains the number of pooled 
+     *        <code>BgeePreparedStatement</code>
+     *  
+     */
+    protected void setPrStPoolsDataSourceSize(int size){
+        this.bgeePrStPoolsDataSourceSize = new AtomicInteger(size) ;
+    }    
+
+    /**
+     * @return A <code>ConcurrentHashMap</code> that contains the <code>BgeeConnection</code>
+     * which has the most pooled <code>BgeePreparedStatement</code> 
+     * for the current <code>BgeeDatasource</code> and the number of it.
+     * It uses the <code>BgeeConnection</code> as key and the number as entry
+     */
+    protected ConcurrentHashMap<BgeeConnection,Integer> getBgeeConnWithMaxPrStPooled(){
+        return this.bgeeConnWithMaxPrStPooled;
+    }
+
+    /**
+     * Sets a <code>ConcurrentHashMap</code> that contains the <code>BgeeConnection</code>
+     * which has the most pooled <code>BgeePreparedStatement</code> 
+     * for the current <code>BgeeDatasource</code>  and the number of it.
+     * It uses the <code>BgeeConnection</code> as key and the number as entry
+     * 
+     * @param bgc    A <code>BgeeConnection</code> which is the one with the most pooled 
+     *              <code>BgeePreparedStatement</code>
+     * @param size  An <code>Integer</code> which is the number of 
+     *              <code>BgeePreparedStatement</code>
+     */
+    protected void setBgeeConnWithMaxPrStPooled(BgeeConnection bgc,Integer size){
+        this.bgeeConnWithMaxPrStPooled.clear();
+        this.bgeeConnWithMaxPrStPooled.put(bgc, size);
+    }
+
 }

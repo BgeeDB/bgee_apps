@@ -2,7 +2,7 @@ package org.bgee.model.data.sql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
@@ -45,10 +45,11 @@ public class BgeeConnection implements AutoCloseable
      */
     private final String id;
     /**
-     * A <code>HashMap</code> which contains every available <code>BgeePreparedStatement</code>
+     * A <code>Map</code> which contains every available
+     * <code>BgeePreparedStatement</code>
      * related to this <code>BgeeConnection</code>
      */
-    private final HashMap<String,BgeePreparedStatement> preparedStatementPool;
+    private final Map<String,BgeePreparedStatement> bgeePrStPool;
     /**
      * Default constructor, should not be used. 
      * Constructor protected, so that only a {@link BgeeDataSource} can provide 
@@ -82,40 +83,45 @@ public class BgeeConnection implements AutoCloseable
         this.bgeeDataSource = dataSource;
         this.realConnection = realConnection;
         this.id = id;
-        this.preparedStatementPool = new HashMap<String,BgeePreparedStatement>();
+        this.bgeePrStPool = new BgeePrStPool<String,BgeePreparedStatement>(this);
 
         log.exit();
     }
 
     /**
-     * Provide a <code>BgeePreparedStatement</code> fetched in the pool if 
+     * Provide a <code>BgeePreparedStatement</code> for the requested sql.
+     * <p>
+     * It is fetched in the <code>BgeePreparedStatement</code> pool if 
      * any is available for the requested sql. Else create and return a new one.
-     * 
+     * <p>
      * When an existing <code>BgeePreparedStatement</code> is returned, it is
      * removed from the pool making it unavailable.
-     * 
+     * <p>
      * It hashes the sql <code>String</code> to use it as pool key
      * 
-     * @param sql a <code>String</code> with contains the PreparedStatement sql
-     * @return a <code>BgeePreparedStatement</code> which already existed or newly created
+     * @param   sql a <code>String</code> with contains the PreparedStatement sql
+     * @return  a <code>BgeePreparedStatement</code> which already existed or newly created
      *  
-     * @throws SQLException
+     * @throws SQLException if a database error occurred or if the method is called on
+     * a closed connection
      */
     public BgeePreparedStatement prepareStatement(String sql) throws SQLException 
     {
         log.entry(sql);
-        
+
         String digestedSql = DigestUtils.sha256Hex(sql) ;
 
-        if(this.preparedStatementPool.containsKey(digestedSql)){
-            BgeePreparedStatement Bps =  this.preparedStatementPool.remove(digestedSql);
-            log.debug("Return a already existing BgeePreparedStatement : {}", Bps.toString());            
-            return log.exit(Bps);
+        if(this.bgeePrStPool.containsKey(digestedSql)){
+            BgeePreparedStatement bps =  this.bgeePrStPool.remove(digestedSql);
+            log.debug("Return a already existing BgeePreparedStatement : {}", bps.toString());  
+
+            return log.exit(bps);
         }
         else{
-            BgeePreparedStatement Bps =  new BgeePreparedStatement(this, sql);
-            log.debug("Return a newly created BgeePreparedStatement : {}", Bps.toString());            
-            return log.exit(Bps);
+            BgeePreparedStatement bps = new BgeePreparedStatement(digestedSql,this,
+                    this.getRealConnection().prepareStatement(sql));
+            log.debug("Return a newly created BgeePreparedStatement : {}", bps.toString());         
+            return log.exit(bps);
         }
     }
 
@@ -135,10 +141,38 @@ public class BgeeConnection implements AutoCloseable
     /**
      * @return the {@link #bgeeDataSource}
      */
-    private BgeeDataSource getBgeeDataSource() {
+    protected BgeeDataSource getBgeeDataSource() {
         return this.bgeeDataSource;
     }
 
+    /**
+     * Remove the first entry of the <code>BgeePrStPool</code>
+     */    
+    protected void makeRoomInThePrStPool(){
+    
+        log.entry();
+        
+        log.info("Too many prepared statement pool for connection {}",
+                this.toString()); 
+    
+        String key = this.bgeePrStPool.keySet().iterator().next();
+    
+        this.bgeePrStPool.remove(key);
+        
+        log.exit();
+    
+    }
+    /**
+     * Add a <code>BgeePreparedStatement</code> to the <code>BgeePrStPool</code>
+     * 
+     * @param ps   a BgeePreparedStatement to be added to the pool
+     * 
+     */
+    protected void addToPrStPool(BgeePreparedStatement ps){
+        log.entry(ps);
+        this.bgeePrStPool.put(ps.getId(),ps);
+        log.exit();
+    }
     /**
      * Close the real <code>Connection</code> that this class wraps, 
      * and notify of the closing the <code>BgeeDataSource</code> used to obtain 
@@ -170,10 +204,4 @@ public class BgeeConnection implements AutoCloseable
     {
         return this.getRealConnection().isClosed();
     }
-
-    protected HashMap<String,BgeePreparedStatement> getPreparedStatementPool()
-    {
-        return this.preparedStatementPool;
-    }
-
 }

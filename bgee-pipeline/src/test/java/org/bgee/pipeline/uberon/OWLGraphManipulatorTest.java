@@ -80,7 +80,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	@Test
 	public void shouldFilterRelationsTest()
 	{
-		this.getLogger().info("Ye: {}", this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0005").getSuperClasses(this.graphManipulator.getOwlGraphWrapper().getSourceOntology()));
+		
 	}
 	
 	/**

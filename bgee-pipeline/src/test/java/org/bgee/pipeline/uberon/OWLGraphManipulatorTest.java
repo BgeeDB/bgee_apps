@@ -12,9 +12,11 @@ import org.bgee.model.TestAncestor;
 import org.junit.Before;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
 import owltools.io.ParserWrapper;
 
@@ -123,6 +125,21 @@ public class OWLGraphManipulatorTest extends TestAncestor
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0011"));
 		assertNotNull("A term part of both subgraphs was incorrectly removed", 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0014"));
+		
+		//now, we need to check that the relation FOO:0003 B is_a FOO:0001 root 
+		//has been removed (FOO:0003 should be kept as it is part of a subgraph to keep, 
+		//but the relation to the root is still an undesired subgraph, 
+		//that should be removed)
+		OWLClass root = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		for (OWLGraphEdge incomingEdge: 
+		    this.graphManipulator.getOwlGraphWrapper().getIncomingEdges(root)) {
+			assertNotEquals("The relation FOO:0003 B is_a FOO:0001 root, " +
+					"causing an undesired subgraph, was not correctly removed", 
+					"FOO:0003", 
+					this.graphManipulator.getOwlGraphWrapper().getIdentifier(
+							incomingEdge.getSource()));
+		}
 	}
 	
 	/**
@@ -144,6 +161,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		//remove the subgraph
 		Collection<String> toRemove = new ArrayList<String>();
 		toRemove.add("FOO:0006");
+		//add as a root to remove a term that is in the FOO:0006 subgraph, 
+		//to check if the ancestors check will not lead to keep erroneously FOO:0007
+		toRemove.add("FOO:0008");
 		int countRemoved = this.graphManipulator.removeSubgraphs(toRemove);
 
 		//The test ontology is designed so that 6 classes should have been removed

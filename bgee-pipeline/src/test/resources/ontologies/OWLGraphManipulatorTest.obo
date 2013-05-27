@@ -15,7 +15,7 @@ id: FOO:0003
 name: B
 comment: the is_a relation to the root should be removed when testing filterSubgraphs(Collection), not the term itself.
 relationship: in_deep_part_of FOO:0002 ! A
-is_a: FOO:0001 | root
+is_a: FOO:0001 ! root
 
 [Term]
 id: FOO:0004

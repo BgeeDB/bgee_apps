@@ -79,7 +79,10 @@ public class OWLGraphManipulator
      * getOWLClassByIdentifier(String)}).
      * <p>
      * All classes not part of these subgraphs, and not ancestors of these allowed roots, 
-     * will be removed from the ontology.
+     * will be removed from the ontology. Also, any direct relation between an ancestor 
+     * of a subgraph root and one of its descendants will be removed, 
+     * as this would represent an undesired subgraph. 
+     * <p>
      * This method returns the number of <code>OWLClass</code>es removed as a result.
      * <p>
      * This is the opposite method of <code>removeSubgraphs(Collection<String>)</code>.
@@ -98,8 +101,11 @@ public class OWLGraphManipulator
     	log.info("Keeping only subgraphs of allowed roots: {}", allowedSubgraphRoots);
     	
     	//first, we get all OWLObjects descendants and ancestors of the allowed roots, 
-    	//to define which OWLObjects should be kept in the ontology 
-    	Set<String> toKeep = new HashSet<String>();
+    	//to define which OWLObjects should be kept in the ontology. 
+    	//We store ancestors and descendants in different collections to check 
+    	//for undesired relations after class removals. 
+    	Set<String> toKeep      = new HashSet<String>();
+    	Set<String> ancestorIds = new HashSet<String>();
     	for (String allowedRootId: allowedSubgraphRoots) {
     		OWLClass allowedRoot = 
     				this.getOwlGraphWrapper().getOWLClassByIdentifier(allowedRootId);
@@ -113,21 +119,35 @@ public class OWLGraphManipulator
     					this.getOwlGraphWrapper().getDescendants(allowedRoot);
     			relatives.addAll(this.getOwlGraphWrapper().getAncestors(allowedRoot));
     			
-    			//fill the Collection toKeep
-    			for (OWLObject relative: relatives) {
+    			//fill the Collection toKeep and ancestorsIds
+    			//(code could be factorized)
+    			for (OWLObject descendant: 
+    				    this.getOwlGraphWrapper().getDescendants(allowedRoot)) {
     				
-    				if (relative instanceof OWLClass) {
+    				if (descendant instanceof OWLClass) {
     				    String shortFormName = 
-    							this.getOwlGraphWrapper().getIdentifier(relative);
+    							this.getOwlGraphWrapper().getIdentifier(descendant);
     				    toKeep.add(shortFormName);
-    				    log.debug("Allowed relative class: {}", shortFormName);
+    				    log.debug("Allowed descent class: {}", shortFormName);
     				}
     			}
+    			for (OWLObject ancestor: 
+				    this.getOwlGraphWrapper().getAncestors(allowedRoot)) {
+				
+    				if (ancestor instanceof OWLClass) {
+    					String shortFormName = 
+    							this.getOwlGraphWrapper().getIdentifier(ancestor);
+    					toKeep.add(shortFormName);
+    					ancestorIds.add(shortFormName);
+    					log.debug("Allowed ancestor class: {}", shortFormName);
+    				}
+			    }
     		} else {
     			log.debug("Discarded root class: {}", allowedRootId);
     		}
     	}
     	
+    	//remove unwanted classes
     	int classesRemoved = this.filterClasses(toKeep);
     	
     	if (log.isInfoEnabled()) {
@@ -138,6 +158,36 @@ public class OWLGraphManipulator
     	    log.info("Done keeping only subgraphs of allowed roots, {} classes removed over {} classes total.", 
     	    		new Integer(classesRemoved), new Integer(classesCount));
     	}
+    	
+    	//remove any relation between an ancestor of an allowed root and one of its descendant, 
+    	//as it would represent an undesired subgraph. 
+    	for (String ancestorId: ancestorIds) {
+    		//get direct descendants of the ancestor
+    		OWLClass ancestor = 
+    				this.getOwlGraphWrapper().getOWLClassByIdentifier(ancestorId);
+    		for (OWLGraphEdge incomingEdge: 
+    			    this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
+
+    			OWLObject directDescendant = incomingEdge.getSource();
+				String descentId = 
+						this.getOwlGraphWrapper().getIdentifier(directDescendant);
+				
+				//if the descendant is not an allowed root, nor an ancestor of an allowed root, 
+				//then the relation should be removed. 
+				String iriId = ((OWLClass) directDescendant).getIRI().toString();
+    			if (directDescendant instanceof OWLClass && 
+    				!allowedSubgraphRoots.contains(descentId) && 
+    				!allowedSubgraphRoots.contains(iriId) && 
+    				!ancestorIds.contains(descentId) && 
+    				!ancestorIds.contains(iriId) ) {
+    				
+    				this.removeEdge(incomingEdge);
+    				log.debug("Undesired subgraph, relation between {} and {} removed", 
+    						ancestorId, descentId);
+    			} 
+    		}
+    	}
+    	
     	
     	return log.exit(classesRemoved);
     }
@@ -247,7 +297,11 @@ public class OWLGraphManipulator
     						shortFormName);
     				//at this point, why not just calling filterSubgraphs 
     				//on these allowed roots, could you ask.
-    				//Well, because we also need to keep the ancestors stored in ancestorIds.
+    				//Well, first, because we also need to keep the ancestors 
+    				//stored in ancestorIds, as some of them might not be ancestor 
+    				//of these allowed roots. Second, because we do not need to check 
+    				//for relations that would represent undesired subgraphs, 
+    				//as in filterSubgraphs.
 
     				toKeep.add(shortFormName);
     				//get all descendants of this alternative subgraph root, to be kept

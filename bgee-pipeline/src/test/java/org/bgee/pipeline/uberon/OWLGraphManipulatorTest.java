@@ -230,8 +230,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 			true, 0, false);
 	}
 	
-	@Test
-	public void test() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+	public void test() 
 	{
 		OWLGraphWrapper wrapper = this.graphManipulator.getOwlGraphWrapper();
     	

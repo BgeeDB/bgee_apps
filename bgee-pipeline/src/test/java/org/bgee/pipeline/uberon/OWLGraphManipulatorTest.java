@@ -2,10 +2,17 @@ package org.bgee.pipeline.uberon;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,12 +20,20 @@ import org.bgee.model.TestAncestor;
 import org.junit.Before;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.io.OWLXMLOntologyFormat;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyFormat;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLGraphWrapperEdges;
 import owltools.io.ParserWrapper;
 
 /**
@@ -213,6 +228,43 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		//0 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
 			true, 0, false);
+	}
+	
+	@Test
+	public void test() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+	{
+		OWLGraphWrapper wrapper = this.graphManipulator.getOwlGraphWrapper();
+    	
+		Collection<OWLGraphEdge> edges = wrapper.getEdgesBetween(
+				wrapper.getOWLClassByIdentifier("FOO:0004"),
+				wrapper.getOWLClassByIdentifier("FOO:0001"));
+		for (OWLGraphEdge edge: edges) {
+			log.info("YE {}", edge);
+			log.info("YA {}", edge.getQuantifiedPropertyList());
+			for (OWLGraphEdge edge2: wrapper.getOWLGraphEdgeSubsumers(edge)) {
+			    log.info("YO {}", edge2);
+			}
+		}
+		
+		Collection<OWLGraphEdge> edges2 = wrapper.getOutgoingEdges(wrapper.getOWLClassByIdentifier("FOO:0004"));
+		for (OWLGraphEdge edge: edges2) {
+			if (wrapper.getIdentifier(edge.getTarget()).equals("FOO:0002")) {
+				for (OWLGraphEdge edge3: wrapper.getOWLGraphEdgeSubsumers(edge)) {
+				    log.info("YOOO1 {}", wrapper.edgeToTargetExpression(edge3));
+				}
+				Collection<OWLGraphEdge> edges3 = wrapper.getOutgoingEdges(edge.getTarget());
+				for (OWLGraphEdge edge2: edges3) {
+					if (wrapper.getIdentifier(edge2.getTarget()).equals("FOO:0001")) {
+						OWLGraphEdge combine = wrapper.combineEdgePair(edge.getSource(), 
+								edge, edge2, 0);
+						log.info("YII {}", combine.getQuantifiedPropertyList().size());
+						for (OWLGraphEdge edge3: wrapper.getOWLGraphEdgeSubsumers(combine)) {
+						    log.info("YOOO {}", wrapper.edgeToTargetExpression(edge3));
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	

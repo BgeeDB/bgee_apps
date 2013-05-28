@@ -15,14 +15,14 @@ id: FOO:0003
 name: B
 comment: the is_a relation to the root should be removed when testing filterSubgraphs(Collection), not the term itself.
 relationship: in_deep_part_of FOO:0002 ! A
-is_a: FOO:0001 ! root
+relationship: part_of FOO:0001 ! root
 
 [Term]
 id: FOO:0004
 name: C
 comment: part_of relation to root is redundant. 
 relationship: part_of FOO:0002 ! A
-relationship: part_of FOO:0001 ! root
+relationship: overlaps FOO:0001 ! root
 
 [Term]
 id: FOO:0005

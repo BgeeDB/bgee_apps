@@ -617,9 +617,45 @@ public class OWLGraphManipulator
     
     
     
-    public void reduce(Collection<String> targetRel)
+    /**
+     * Remove redundant relations. A relation is considered redundant 
+     * when there exists a composed relation between two classes 
+     * (separated by several relations), equivalent to a direct relation 
+     * between these classes. The direct relation is considered redundant 
+     * and is removed. 
+     * <p>
+     * For instance, for a transitive relation r, if A r B r C, then A r C 
+     * is a redundant relation.
+     */
+    public int reduceRelations()
     {
+    	log.entry();
+    	log.info("Start relation reduction...");
     	
+    	//we will go the hardcore way: iterate each class, 
+    	//and for each class, check all the paths to the root
+    	Set<OWLClass> uberonClasses = this.uberonWrapper.getSourceOntology().getClassesInSignature();
+    	if (LOGGER.isDebugEnabled()) {
+        	LOGGER.debug("Inspecting {} classes...", new Integer(uberonClasses.size()));
+    	}
+    	
+    	for (OWLClass myClass: uberonClasses) {
+    		LOGGER.trace("Start examining all outgoing edges to the root for class {}", 
+		        		myClass);
+    		
+    		//iterate all outgoing edges
+    		for (OWLGraphEdge outgoingEdge: this.uberonWrapper.getOutgoingEdges(myClass)) {
+    		    //start to walk each outgoing edge until the root
+    		    this.recursiveRemoveRedundancy(myClass, outgoingEdge);
+    		}
+    	}
+    	
+    	if (LOGGER.isInfoEnabled()) {
+    	    LOGGER.info("Done removing redundant relations, {} removed.", 
+    	    		new Integer(axiomCount - this.uberonWrapper.getSourceOntology().getAxiomCount()));
+    	}
+    	
+    	log.info("Done relation reduction.");
     }
     
     public void removeRelToSubsetIfNonOrphan(Collection<String> subsets)

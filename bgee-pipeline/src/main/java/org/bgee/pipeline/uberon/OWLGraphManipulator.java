@@ -1,6 +1,7 @@
 package org.bgee.pipeline.uberon;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -9,12 +10,12 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObject;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
@@ -107,7 +108,7 @@ public class OWLGraphManipulator
     public int filterSubgraphs(Collection<String> allowedSubgraphRoots)
     {
     	log.entry(allowedSubgraphRoots);
-    	log.info("Keeping only subgraphs of allowed roots: {}", allowedSubgraphRoots);
+    	log.info("Start filtering subgraphs of allowed roots: {}", allowedSubgraphRoots);
 
 		int classesCount   = 0;
     	if (log.isInfoEnabled()) {
@@ -163,9 +164,9 @@ public class OWLGraphManipulator
     	int classesRemoved = this.filterClasses(toKeep);
     	
     	
-    	//remove any relation between an ancestor of an allowed root and one of its descendant, 
+    	//remove any relation between an ancestor of an allowed root and one of its descendants, 
     	//as it would represent an undesired subgraph. 
-    	int relRemovedCount = 0;
+    	Collection<OWLGraphEdge> edgesToRemove = new ArrayList<OWLGraphEdge>();
     	for (String ancestorId: ancestorIds) {
     		//get direct descendants of the ancestor
     		OWLClass ancestor = 
@@ -186,18 +187,18 @@ public class OWLGraphManipulator
     						!ancestorIds.contains(descentId) && 
     						!ancestorIds.contains(iriId) ) {
 
-    					this.removeEdge(incomingEdge);
-    					relRemovedCount++;
+    					edgesToRemove.add(incomingEdge);
     					log.debug("Undesired subgraph, relation between {} and {} removed", 
     							ancestorId, descentId);
     				}
     			} 
     		}
     	}
+    	this.removeEdges(edgesToRemove);
     	
-    	log.info("Done keeping only subgraphs of allowed roots, {} classes removed over {} classes total, {} undesired relations removed.", 
+    	log.info("Done filtering subgraphs of allowed roots, {} classes removed over {} classes total, {} undesired relations removed.", 
     	   		new Integer(classesRemoved), new Integer(classesCount), 
-    	   		new Integer(relRemovedCount));
+    	   		new Integer(edgesToRemove.size()));
     	
     	return log.exit(classesRemoved);
     }
@@ -226,6 +227,8 @@ public class OWLGraphManipulator
      */
     public int removeSubgraphs(Collection<String> subgraphRoots)
     {
+    	log.entry(subgraphRoots);
+    	log.info("Start removing subgraphs of undesired roots: {}", subgraphRoots);
     	//as we do not want to remove classes that are part of other subgraphs, 
     	//it is not just as simple as removing all descendants of 
     	//the roots of the subgraphs to remove. 
@@ -286,10 +289,10 @@ public class OWLGraphManipulator
     				this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
 
     				OWLObject directDescendant = incomingEdge.getSource();
-    				String shortFormName = 
-    						this.getOwlGraphWrapper().getIdentifier(directDescendant);
 
     				if (directDescendant instanceof OWLClass) { 
+        				String shortFormName = 
+        						this.getOwlGraphWrapper().getIdentifier(directDescendant);
         				//just in case the rootId was not an OBO-style ID
         				String iriId = ((OWLClass) directDescendant).getIRI().toString();
 
@@ -362,7 +365,10 @@ public class OWLGraphManipulator
     	for (OWLOntology o : this.getOwlGraphWrapper().getAllOntologies()) {
     		for (OWLClass iterateClass: o.getClassesInSignature()) {
 			    String shortFormName = this.getOwlGraphWrapper().getIdentifier(iterateClass);
-			    if (!classIdsToKeep.contains(shortFormName)) {
+			    //in case the IDs were not OBO-style IDs
+			    String iriId = iterateClass.getIRI().toString();
+			    if (!classIdsToKeep.contains(shortFormName) && 
+			    		!classIdsToKeep.contains(iriId)) {
 				    iterateClass.accept(remover);
 				    classesRemoved++;
 				    log.debug("Removing: {}", shortFormName);
@@ -377,21 +383,76 @@ public class OWLGraphManipulator
     
     
     /**
-     * Remove from the ontology all OBO relations that are not listed 
-     * in <code>allowedRelations</code>. However, 
-     * <code>SubClassOf</code>/<code>is_a</code> relations are not removed. 
-     * If <code>allowSubRelations</code> is <code>true</code>, then the relations 
-     * that are subproperties of the allowed relations are also kept 
-     * (e.g., if RO:0002131 "overlaps" is allowed, and <code>allowSubRelations</code> 
-     * is <code>true</code>, then RO:0002151 "partially_overlaps" is also allowed). 
+     * Filter the <code>OWLSubClassOfAxiom</code>s in the ontology to keep only  
+     * those that correspond to OBO relations listed in <code>allowedRels</code>, 
+     * as OBO-style IDs. <code>SubClassOf</code>/<code>is_a</code> relations 
+     * will not be removed, whatever the content of <code>allowedRels</code>. 
      * <p>
-     * <code>allowedRels</code> should contain the 
-     * @param allowedRelations
-     * @param allowSubRelations
+     * If <code>allowSubRels</code> is <code>true</code>, then the relations 
+     * that are subproperties of the allowed relations are also kept 
+     * (e.g., if RO:0002131 "overlaps" is allowed, and <code>allowSubRels</code> 
+     * is <code>true</code>, then RO:0002151 "partially_overlaps" is also allowed). 
+     * 
+     * @param allowedRels 		A <code>Collection</code> of <code>String</code>s 
+     * 							representing the OBO-style IDs of the relations 
+     * 							to keep in the ontology, e.g. "BFO:0000050". 
+     * @param allowSubRels		A <code>boolean</code> defining whether sub-relations 
+     * 							of the allowed relations should also be kept. 
+     * @return 					An <code>int</code> representing the number of relations 
+     * 							removed. 
      */
-    public void filterRelations(Collection<String> allowedRels, boolean allowSubRelations)
+    public int filterRelations(Collection<String> allowedRels, boolean allowSubRels)
     {
+    	log.entry(allowedRels, allowSubRels);
+    	log.info("Start filtering allowed relations {}", allowedRels);
+    	//in order to use owltools capabilities, we are not going to simply examine 
+    	//all axioms in the ontology, but we will iterate each class and examine 
+    	//their outgoing edges
+    	Collection<OWLGraphEdge> relsToRemove = new ArrayList<OWLGraphEdge>();
     	
+    	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
+    		
+    		for (OWLClass iterateClass: ont.getClassesInSignature()) {
+    			for (OWLGraphEdge outgoingEdge: 
+    				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
+    				
+    				Collection<OWLGraphEdge> toTest = new ArrayList<OWLGraphEdge>();
+    				toTest.add(outgoingEdge);
+    				//if subrelations are allowed, we generalize over quantified properties
+    				//to check if this relation is a subrelation of an allowed relation.
+    				if (allowSubRels) {
+    					toTest.addAll(
+    						this.getOwlGraphWrapper().getOWLGraphEdgeSubsumers(outgoingEdge));
+    				}
+    				
+    				//check if allowed
+    				boolean allowed = false;
+    				edge: for (OWLGraphEdge edgeToTest: toTest) {
+    					OWLQuantifiedProperty prop = edgeToTest.getSingleQuantifiedProperty();
+    					//in case the allowedRels IDs were not OBO-style IDs
+    				    String iriId = prop.getPropertyId();
+    				    String oboId = this.getOwlGraphWrapper().getIdentifier(
+    						IRI.create(iriId));
+    				    if (prop.getQuantifier() == Quantifier.SUBCLASS_OF || 
+    				    		allowedRels.contains(oboId) || allowedRels.contains(iriId)) {
+    				    	allowed = true;
+    				    	break edge;
+    				    }
+    				}
+    				
+    				//remove rel if not allowed
+    				if (!allowed) {
+    					relsToRemove.add(outgoingEdge);
+    				}
+    			}
+    		}
+    	}
+    	
+    	this.removeEdges(relsToRemove);
+
+    	log.info("Done filtering allowed relations, {} relations removed.", 
+    			relsToRemove.size());
+    	return log.exit(relsToRemove.size());
     }
     
     public void replaceRelations(Map<String, String> replaceRel)
@@ -424,16 +485,44 @@ public class OWLGraphManipulator
     
     /**
      * Remove <code>edge</code> from the ontology. 
-     * This method transform <code>edge</code> into an <code>OWLSubClassOfAxiom</code>, 
-     * then call {@link #removeAxiom(OWLAxiom)} using it. 
+     * This method transforms the <code>OWLGraphEdge</code> <code>edge</code> 
+     * into an <code>OWLSubClassOfAxiom</code>, 
+     * then call {@link #removeAxiom(OWLAxiom)} on it. 
      * 
-     * @param axiom 	The <code>OWLAxiom</code> to remove from the ontology. 
+     * @param edge 	The <code>OWLGraphEdge</code> corresponding to 
+     * 				a <code>OWLSubClassOfAxiom</code> to be removed from the ontology. 
      * @see #removeAxiom(OWLAxiom)
      */
-    private void removeEdge(OWLGraphEdge edge)
+    public void removeEdge(OWLGraphEdge edge)
     {
     	log.entry(edge);
     	this.removeAxiom(this.getAxiom(edge));
+    	log.exit();
+    }
+    /**
+     * Remove <code>edges</code> from the ontology. 
+     * This method transforms the <code>OWLGraphEdge</code>s in <code>edge</code>s 
+     * into <code>OWLSubClassOfAxiom</code>s, 
+     * then call {@link #removeAxioms(Collection)} on them. 
+     * <p>
+     * By using this method rather than {@link #removeEdge(OWLGraphEdge)} 
+     * on each individual <code>OWLGraphEdge</code>, you ensure that there will be 
+     * only one update of the <code>OWLOntology</code> triggered, 
+     * and only one update of the <code>OWLGraphWrapper</code> cache.
+     * 
+     * @param edge 	A <code>Collection</code> of <code>OWLGraphEdge</code>s corresponding to 
+     * 				<code>OWLSubClassOfAxiom</code>s to be removed from the ontology. 
+     * @see #removeEdge(OWLGraphEdge)
+     * @see #removeAxioms(Collection)
+     */
+    public void removeEdges(Collection<OWLGraphEdge> edges)
+    {
+    	log.entry(edges);
+    	Collection<OWLAxiom> axioms = new ArrayList<OWLAxiom>();
+    	for (OWLGraphEdge edge: edges) {
+    		axioms.add(this.getAxiom(edge));
+    	}
+    	this.removeAxioms(axioms);
     	log.exit();
     }
     /**
@@ -445,14 +534,41 @@ public class OWLGraphManipulator
     private void removeAxiom(OWLAxiom axiom)
     {
     	log.entry(axiom);
+    	this.removeAxioms(Arrays.asList(axiom));
+    	log.exit();
+    }
+    /**
+     * Remove <code>axioms</code> from the ontology. 
+     * <p>
+     * By using this method rather than {@link #removeAxiom(OWLAxiom)} 
+     * on each individual <code>OWLAxiom</code>, you ensure that there will be 
+     * only one update of the <code>OWLOntology</code> triggered, 
+     * and only one update of the <code>OWLGraphWrapper</code> cache.
+     * 
+     * @param axioms 	A <code>Collection</code> of <code>OWLAxiom</code>s 
+     * 					to remove from the ontology.
+     * @see #removeAxiom(OWLAxiom) 
+     * @see #removeEdges(OWLGraphEdge)
+     */
+    private void removeAxioms(Collection<OWLAxiom> axioms)
+    {
+    	log.entry(axioms);
+    	if (axioms.isEmpty()) {
+    		log.exit(); return;
+    	}
+
     	List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
+    	
     	for (OWLOntology ontology: this.getOwlGraphWrapper().getAllOntologies()) {
-    		if (ontology.containsAxiom(axiom)) {
-    			RemoveAxiom remove = new RemoveAxiom(ontology, axiom);
-    			changes.add(remove);
-    			log.debug("Relation removed, axiom: {}", axiom);
+    		for (OWLAxiom axiom: axioms) {
+    			if (ontology.containsAxiom(axiom)) {
+    				RemoveAxiom remove = new RemoveAxiom(ontology, axiom);
+    				changes.add(remove);
+    				log.debug("Relation removed, axiom: {}", axiom);
+    			}
     		}
     	}
+    	
     	this.applyChanges(changes);
     	log.exit();
     }
@@ -473,31 +589,11 @@ public class OWLGraphManipulator
 	{
         log.entry(edge);
 		
-        OWLQuantifiedProperty property = edge.getSingleQuantifiedProperty();
-		Quantifier quantifier          = property.getQuantifier();
-		String propertyId              = property.getPropertyId();
-		OWLClassExpression source      = (OWLClassExpression) edge.getSource();
-		OWLClassExpression target      = (OWLClassExpression) edge.getTarget();
-		
+        OWLClassExpression source      = (OWLClassExpression) edge.getSource();
     	OWLDataFactory factory = this.getOwlGraphWrapper().getManager().getOWLDataFactory();
-    	OWLClassExpression targetExpression = null;
-    	
-		if (quantifier == Quantifier.SUBCLASS_OF) {
-			log.trace("Creating axiom for an is_a relation from {} to {}", 
-					source, target);
-			targetExpression = target;
-			
-		} else {
-			log.trace("Creating axiom for a relation {} from {} to {}", propertyId, 
-					source, target);
-			
-			OWLObjectProperty relationProperty = (OWLObjectProperty) 
-					this.getOwlGraphWrapper().getOWLObjectByIdentifier(propertyId);
-			targetExpression = factory.getOWLObjectSomeValuesFrom(relationProperty,
-	    			target);
-		}
 		
-		OWLSubClassOfAxiom ax = factory.getOWLSubClassOfAxiom(source, targetExpression);
+		OWLSubClassOfAxiom ax = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.getOwlGraphWrapper().edgeToTargetExpression(edge));
     	
     	return log.exit(ax);
 	}

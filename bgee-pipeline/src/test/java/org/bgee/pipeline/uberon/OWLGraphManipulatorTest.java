@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
@@ -75,12 +76,77 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	
 	/**
 	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)}.
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * with the <code>boolean</code> parameters set to <code>false</code>.
 	 */
 	@Test
-	public void shouldFilterRelationsTest()
+	public void shouldFilterRelations()
 	{
+		//filter relations to keep only is_a, part_of and develops_from
+		//4 relations should be removed
+		this.shouldFilterRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
+				false, 4);
+	}
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * with the <code>boolean</code> parameters set to <code>true</code>.
+	 */
+	@Test
+	public void shouldFilterRelationsWithSubRel()
+	{
+		//filter relations to keep is_a, part_of, develops_from, 
+		//and their sub-relations.
+		//2 relations should be removed
+		this.shouldFilterRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
+				true, 2);
+	}
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * when filtering a relation with a non-OBO-style ID (in this method, 
+	 * <code>http://semanticscience.org/resource/SIO_000657</code>).
+	 */
+	@Test
+	public void shouldFilterRelationsWithNonOboId()
+	{
+		//filter relations to keep only is_a and transformation_of relations
+		//10 relations should be removed
+		this.shouldFilterRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
+				true, 10);
+	}	
+	/**
+	 * Method to test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * with various configurations, called by the method performing the actual unit test. 
+	 * 
+	 * @param allowedRels 		corresponds to the first parameter of 
+	 * 							the <code>filterRelation</code> method.
+	 * @param allowSubRels		corresponds to the second parameter of 
+	 * 							the <code>filterRelation</code> method.
+	 * @param expRelsRemoved 	An <code>int</code> representing the expected number 
+	 * 							of relations removed
+	 */
+	private void shouldFilterRelations(Collection<String> allowedRels, 
+			boolean allowSubRels, int expRelsRemoved)
+	{
+		//get the original number of axioms
+		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
+			    .getSourceOntology().getAxiomCount();
 		
+		//filter relations to keep 
+		int relRemovedCount = 
+				this.graphManipulator.filterRelations(allowedRels, allowSubRels);
+		//expRelsRemoved relations should have been removed
+		assertEquals("Incorrect number of relations removed", expRelsRemoved, relRemovedCount);
+		
+		//get the number of axioms after removal
+		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
+			    .getSourceOntology().getAxiomCount();
+		//check that it corresponds to the returned value
+		assertEquals("The number of relations removed does not correspond to " +
+				"the number of axioms removed", 
+				axiomCountBefore - axiomCountAfter, relRemovedCount);
 	}
 	
 	/**

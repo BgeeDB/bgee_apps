@@ -90,9 +90,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldFilterRelations()
 	{
 		//filter relations to keep only is_a, part_of and develops_from
-		//4 relations should be removed
+		//5 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-				false, 4, true);
+				false, 5, true);
 	}
 	/**
 	 * Test the functionalities of 
@@ -104,9 +104,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	{
 		//filter relations to keep is_a, part_of, develops_from, 
 		//and their sub-relations.
-		//2 relations should be removed
+		//3 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-				true, 2, true);
+				true, 3, true);
 	}
 	/**
 	 * Test the functionalities of 
@@ -118,9 +118,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldFilterRelationsWithNonOboId()
 	{
 		//filter relations to keep only is_a and transformation_of relations
-		//10 relations should be removed
+		//11 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
-				true, 10, true);
+				true, 11, true);
 	}	
 	/**
 	 * Test the functionalities of 
@@ -131,9 +131,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldFilterAllRelations()
 	{
 		//filter relations to keep only is_a relations
-		//11 relations should be removed
+		//12 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
-				true, 11, true);
+				true, 12, true);
 	}
 	/**
 	 * Method to test the functionalities of 

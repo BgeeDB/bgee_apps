@@ -1,12 +1,16 @@
 package org.bgee.pipeline.uberon;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +20,8 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
@@ -24,6 +30,7 @@ import org.semanticweb.owlapi.util.OWLEntityRemover;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLGraphWrapperEdges;
 import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
@@ -631,7 +638,7 @@ public class OWLGraphManipulator
     {
     	log.entry();
     	log.info("Start relation reduction...");
-    	
+    	/*
     	//we will go the hardcore way: iterate each class, 
     	//and for each class, check all the paths to the root
     	Set<OWLClass> uberonClasses = this.uberonWrapper.getSourceOntology().getClassesInSignature();
@@ -654,9 +661,139 @@ public class OWLGraphManipulator
     	    LOGGER.info("Done removing redundant relations, {} removed.", 
     	    		new Integer(axiomCount - this.uberonWrapper.getSourceOntology().getAxiomCount()));
     	}
-    	
+    	*/
     	log.info("Done relation reduction.");
+    	return 0;
     }
+    
+    /**
+     * Perform a combination of a pair of <code>OWLQuantifiedProperty</code>s 
+     * over super properties, unlike the method 
+     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code>. 
+     * <strong>Warning: </strong> note that you should call this method only after 
+     * <code>combinedQuantifiedPropertyPair</code> failed to combine properties. 
+     * <p>
+     * This methods determines if <code>prop1</code> is a super property 
+     * of <code>prop2</code> that can be combined, or <code>prop2</code> a super property 
+     * of <code>prop1</code> that can be combined, 
+     * or if they have a super property in common that can be combined. 
+     * If such a suitable super property is identified, <code>prop1</code> and 
+     * <code>prop2</code> are combined by calling the method 
+     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code> 
+     * on that super property, as a pair (notably to check for transitivity). 
+     * All super properties will be sequentially tested from the more precise one 
+     * to the more general one, trying to find one that can be combined. 
+     * If no combination can be performed, return <code>null</code>.
+     * <p>
+     * For example: 
+     * <ul>
+     * <li>If property r2 is transitive, and is the super property of r1, then 
+     * A r1 B * B r2 C --> A r2 C
+     * <li>If property r3 is transitive, and is the super property of both r1 and r2, then 
+     * A r1 B * B r2 C --> A r3 C 
+     * </ul>
+     * 
+     * @param prop1 	First <code>OWLQuantifiedProperty</code> to combine
+     * @param prop2		Second <code>OWLQuantifiedProperty</code> to combine
+     * @return			A <code>OWLQuantifiedProperty</code> representing a combination 
+     * 					of <code>prop1</code> and <code>prop2</code> over super properties. 
+     * 					<code>null</code> if cannot be combined. 
+     */
+    private OWLQuantifiedProperty combinePropertyPairOverSuperProperties(
+            OWLQuantifiedProperty prop1, OWLQuantifiedProperty prop2) 
+            		throws NoSuchMethodException, SecurityException, IllegalAccessException, 
+            		IllegalArgumentException, InvocationTargetException 
+    {
+    	log.entry(prop1, prop2);
+    	log.debug("Searching for common super property to combine {} and {}", 
+    			prop1, prop2);
+    	//local implementation of getSuperPropertyReflexiveClosureOf, to order super properties 
+    	//from the more precise to the more general, with prop as the first element. 
+    	//the first element is the property itself, 
+    	//to check if it is a super property of the other property
+    	LinkedHashSet<OWLObjectPropertyExpression> superProps1 = 
+    			this.getSuperPropertyReflexiveClosureOf(prop1.getProperty());
+    	LinkedHashSet<OWLObjectPropertyExpression> superProps2 = 
+    			this.getSuperPropertyReflexiveClosureOf(prop2.getProperty());
+    	
+    	//OWLGraphWrapperEdges.combinedQuantifiedPropertyPair should be made public.
+    	//here's a hack to use it
+    	Method combineMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
+    			"combinedQuantifiedPropertyPair", 
+				new Class<?>[] {OWLQuantifiedProperty.class, OWLQuantifiedProperty.class});
+    	combineMethod.setAccessible(true);
+    	//OWLGraphWrapperEdges.isExcluded should be made public, or a method to achieve 
+    	//a part of the operations performed in OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers 
+    	//provided (see code below).
+    	//here's a hack to use it
+    	Method excludedMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
+    			"isExcluded", 
+				new Class<?>[] {OWLQuantifiedProperty.class});
+    	excludedMethod.setAccessible(true);
+    	
+		
+    	//search for a common super property
+    	superProps1.retainAll(superProps2);
+    	for (OWLObjectPropertyExpression prop: superProps1) {
+
+    		//code from OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers
+    		if (!prop.equals(
+    				this.getOwlGraphWrapper().getDataFactory().getOWLTopObjectProperty()) && 
+
+    				prop instanceof OWLObjectProperty) {
+
+    			OWLQuantifiedProperty newQp = 
+    					new OWLQuantifiedProperty(prop, prop1.getQuantifier());
+    			boolean isExcluded = (boolean) excludedMethod.invoke(
+    					this.getOwlGraphWrapper(), new Object[] {newQp});
+    			if (!isExcluded) {
+    				OWLQuantifiedProperty combined = 
+    					(OWLQuantifiedProperty) combineMethod.invoke(this.getOwlGraphWrapper(), 
+    	    			new Object[] {newQp, newQp});
+    				if (combined != null) {
+        				log.debug("Common super property identified, combining {}", newQp);
+    					return log.exit(combined);
+    				}
+    			}
+    		}
+    	}
+    	
+    	log.debug("No common super property found to combine.");
+    	return log.exit(null);
+    }
+    
+    /**
+     * Returns all parent properties of <code>prop</code> in all ontologies, 
+     * and <code>prop</code> itself as the first element (reflexive). 
+     * Unlike the method <code>owltools.graph.OWLGraphWrapperEdges.getSuperPropertyReflexiveClosureOf</code>, 
+     * the returned super properties here are ordered from the more precise to the more general 
+     * (e.g., "in_deep_part_of", then "part_of", then "overlaps"). 
+     * 
+     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
+     * 				the ordered super properties. 
+     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
+     * 				ordered from the more precise to the more general, with <code>prop</code> 
+     * 				as the first element. 
+     */
+    private LinkedHashSet<OWLObjectPropertyExpression> getSuperPropertyReflexiveClosureOf(
+    		OWLObjectPropertyExpression prop) 
+    {
+    	log.entry(prop);
+    	LinkedHashSet<OWLObjectPropertyExpression> superProps = 
+    			new LinkedHashSet<OWLObjectPropertyExpression>();
+    	superProps.add(prop);
+		Stack<OWLObjectPropertyExpression> stack = new Stack<OWLObjectPropertyExpression>();
+		stack.add(prop);
+		while (!stack.isEmpty()) {
+			OWLObjectPropertyExpression nextProp = stack.pop();
+			Set<OWLObjectPropertyExpression> directSupers = 
+					this.getOwlGraphWrapper().getSuperPropertiesOf(nextProp);
+			directSupers.removeAll(superProps);
+			stack.addAll(directSupers);
+			superProps.addAll(directSupers);
+		}
+		return log.exit(superProps);
+	}
     
     public void removeRelToSubsetIfNonOrphan(Collection<String> subsets)
     {

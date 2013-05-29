@@ -148,3 +148,29 @@ xref: http://semanticscience.org/resource/SIO_000657
 is_transitive: true
 is_a: develops_from ! develops_from
 
+[Typedef]
+id: fake_rel1
+name: fake_rel1
+namespace: fake_rel
+is_transitive: true
+
+[Typedef]
+id: fake_rel2
+name: fake_rel2
+namespace: fake_rel
+is_a: fake_rel1 ! fake_rel1
+
+[Typedef]
+id: fake_rel3
+name: fake_rel3
+namespace: fake_rel
+is_transitive: true
+is_a: fake_rel2 ! fake_rel2
+
+[Typedef]
+id: fake_rel4
+name: fake_rel4
+namespace: fake_rel
+is_transitive: true
+is_a: fake_rel2 ! fake_rel2
+

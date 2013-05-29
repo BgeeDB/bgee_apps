@@ -633,7 +633,9 @@ public class OWLGraphManipulator
      * and is removed. 
      * <p>
      * For instance, for a transitive relation r, if A r B r C, then A r C 
-     * is a redundant relation.
+     * is a redundant relation. Relations are also combined over super properties 
+     * (see {@link #combinePropertyPairOverSuperProperties(OWLQuantifiedProperty, 
+     * OWLQuantifiedProperty)})
      */
     public int reduceRelations()
     {
@@ -645,6 +647,7 @@ public class OWLGraphManipulator
     	int relationsRemoved = 0;
         for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
     		for (OWLClass iterateClass: ont.getClassesInSignature()) {
+    			log.trace("Start examining class {}...", iterateClass);
     			
     			Set<OWLGraphEdge> outgoingEdges = 
     				this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
@@ -654,12 +657,14 @@ public class OWLGraphManipulator
     				if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
     					continue;
     				}
+    				log.trace("Start a walk to the root");
 
         			Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
         			edgesInspected.addFirst(outgoingEdge);
         			
         			OWLGraphEdge currentEdge;
         			while ((currentEdge = edgesInspected.pollFirst()) != null) {
+        				log.trace("Current edge examined on the walk: {}", currentEdge);
         				
         				//get the outgoing edges starting from the target of currentEdge, 
         				//and compose these relations with currentEdge, 
@@ -667,6 +672,8 @@ public class OWLGraphManipulator
         				for (OWLGraphEdge nextEdge: 
         					this.getOwlGraphWrapper().getOutgoingEdges(
         							currentEdge.getTarget())) {
+        					log.trace("Try to combine with outgoing edge from current edge target: {}", 
+        							nextEdge);
         					
         					OWLGraphEdge combine = 
         							this.getOwlGraphWrapper().combineEdgePair(
@@ -693,33 +700,49 @@ public class OWLGraphManipulator
         						//at this point, if the properties have not been combined, 
         						//there is nothing we can do.
         						if (combine.getQuantifiedPropertyList().size() == 1) {
+        							log.trace("Edges successfully combined into: {}", 
+        									combine);
         							
         							//edges successfully combined into one relation,
         							//check if this combined relation correspond to 
         							//one of the primitive outgoingEdges; in that case, 
         							//this edge is a redundant relation, to be removed
+        							boolean removed = false;
         							for (OWLGraphEdge checkEdge: outgoingEdges) {
         								if (checkEdge.equals(combine)) {
         									//redundant relation identified
         									if (this.removeEdge(checkEdge)) {
         										relationsRemoved++;
+        										removed = true;
+        										log.debug("Removing redundant relation: {}", 
+        												checkEdge);
         									}
         								}
+        							}
+        							if (!removed) {
+        								log.trace("No redundant relation found for the combined relation");
         							}
         							
         							//add the combine relation to the stack to continue 
         							//the walk to the root
+        							log.trace("Combined relation added to the stack to be walked");
         							edgesInspected.addFirst(combine);
         							
         						} else if (combine.getQuantifiedPropertyList().size() > 2) {
         							//should never be reached
         							throw new AssertionError("Unexpected number of properties " +
         									"in edge: " + combine);
+        						} else {
+        							log.trace("Could not combine edges.");
         						}
-        					}
+        					} else {
+    							log.trace("Could not combine edges.");
+    						}
         				}
+        				log.trace("Done examining edge: {}", currentEdge);
         			}
     			}
+    			log.trace("Done examining class {}", iterateClass);
     		}
         }
     	

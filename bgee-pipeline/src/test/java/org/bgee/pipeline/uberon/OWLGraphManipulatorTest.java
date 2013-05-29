@@ -80,146 +80,18 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	}
 	
 	
-	
+	//***********************************************
+	//    RELATION REDUCTION AND RELATED TESTS
+	//***********************************************
 	/**
-	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
-	 * with the <code>boolean</code> parameters set to <code>false</code>.
+	 * Test the functionality of {@link OWLGraphManipulator.reduceRelations()}.
 	 */
 	@Test
-	public void shouldFilterRelations()
+	public void shouldReduceRelation()
 	{
-		//filter relations to keep only is_a, part_of and develops_from
-		//5 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-				false, 5, true);
+		this.graphManipulator.reduceRelations();
 	}
-	/**
-	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
-	 * with the <code>boolean</code> parameters set to <code>true</code>.
-	 */
-	@Test
-	public void shouldFilterRelationsWithSubRel()
-	{
-		//filter relations to keep is_a, part_of, develops_from, 
-		//and their sub-relations.
-		//3 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-				true, 3, true);
-	}
-	/**
-	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
-	 * when filtering a relation with a non-OBO-style ID (in this method, 
-	 * <code>http://semanticscience.org/resource/SIO_000657</code>).
-	 */
-	@Test
-	public void shouldFilterRelationsWithNonOboId()
-	{
-		//filter relations to keep only is_a and transformation_of relations
-		//11 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
-				true, 11, true);
-	}	
-	/**
-	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
-	 * when filtering all relations but is_a.
-	 */
-	@Test
-	public void shouldFilterAllRelations()
-	{
-		//filter relations to keep only is_a relations
-		//12 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
-				true, 12, true);
-	}
-	/**
-	 * Method to test the functionalities of 
-	 * {@link OWLGraphManipulator#filterRelations(Collection, boolean)} and 
-	 * {@link OWLGraphManipulator#removeRelations(Collection, boolean)}
-	 * with various configurations, called by the methods performing the actual unit test. 
-	 * 
-	 * @param rels 				corresponds to the first parameter of 
-	 * 							the <code>filterRelations</code> or 
-	 * 							<code>removeRelations</code> method.
-	 * @param subRels			corresponds to the second parameter of 
-	 * 							the <code>filterRelations</code> or 
-	 * 							<code>removeRelations</code> method.
-	 * @param expRelsRemoved 	An <code>int</code> representing the expected number 
-	 * 							of relations removed
-	 * @param filter 			A <code>boolean</code> defining whether the method tested is 
-	 * 							<code>filterRelations</code>, or <code>removeRelations</code>. 
-	 * 							If <code>true</code>, the method tested is 
-	 * 							<code>filterRelations</code>.
-	 */
-	private void shouldFilterOrRemoveRelations(Collection<String> rels, 
-			boolean subRels, int expRelsRemoved, boolean filter)
-	{
-		//get the original number of axioms
-		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
-			    .getSourceOntology().getAxiomCount();
-		
-		//filter relations to keep 
-		int relRemovedCount = 0;
-		if (filter) {
-			relRemovedCount = this.graphManipulator.filterRelations(rels, subRels);
-		} else {
-			relRemovedCount = this.graphManipulator.removeRelations(rels, subRels);
-		}
-		//expRelsRemoved relations should have been removed
-		assertEquals("Incorrect number of relations removed", expRelsRemoved, relRemovedCount);
-		
-		//get the number of axioms after removal
-		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
-			    .getSourceOntology().getAxiomCount();
-		//check that it corresponds to the returned value
-		assertEquals("The number of relations removed does not correspond to " +
-				"the number of axioms removed", 
-				axiomCountBefore - axiomCountAfter, relRemovedCount);
-	}
-	
-	/**
-	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#removeRelations(Collection, boolean)} 
-	 * with the <code>boolean</code> parameters set to <code>false</code>.
-	 */
-	@Test
-	public void shouldRemoveRelations()
-	{
-		//remove part_of and develops_from relations
-		//7 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-			false, 7, false);
-	}
-	/**
-	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#removeRelations(Collection, boolean)} 
-	 * with the <code>boolean</code> parameters set to <code>true</code>.
-	 */
-	@Test
-	public void shouldRemoveRelationsWithSubRel()
-	{
-		//remove develops_from relations and sub-relations
-		//2 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList("RO:0002202"), 
-			true, 2, false);
-	}
-	/**
-	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#removeRelations(Collection, boolean)} 
-	 * with an empty list of relations to remove, to check that it actually removed nothing.
-	 */
-	@Test
-	public void shouldRemoveNoRelation()
-	{
-		//remove nothing
-		//0 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
-			true, 0, false);
-	}
-	
+
 	/**
 	 * Test the functionalities of
 	 * {@link OWLGraphManipulator#combinedPropertyPairOverSuperProperties(OWLQuantifiedProperty, OWLQuantifiedProperty)}.
@@ -290,6 +162,153 @@ public class OWLGraphManipulatorTest extends TestAncestor
 				fakeRel1, combine.getProperty());
 	}
 	
+	
+	//***********************************************
+	//    RELATION FILTERING AND REMOVAL TESTS
+	//***********************************************
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * with the <code>boolean</code> parameters set to <code>false</code>.
+	 */
+	@Test
+	public void shouldFilterRelations()
+	{
+		//filter relations to keep only is_a, part_of and develops_from
+		//5 relations should be removed
+		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
+				false, 5, true);
+	}
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * with the <code>boolean</code> parameters set to <code>true</code>.
+	 */
+	@Test
+	public void shouldFilterRelationsWithSubRel()
+	{
+		//filter relations to keep is_a, part_of, develops_from, 
+		//and their sub-relations.
+		//3 relations should be removed
+		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
+				true, 3, true);
+	}
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * when filtering a relation with a non-OBO-style ID (in this method, 
+	 * <code>http://semanticscience.org/resource/SIO_000657</code>).
+	 */
+	@Test
+	public void shouldFilterRelationsWithNonOboId()
+	{
+		//filter relations to keep only is_a and transformation_of relations
+		//11 relations should be removed
+		this.shouldFilterOrRemoveRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
+				true, 11, true);
+	}	
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * when filtering all relations but is_a.
+	 */
+	@Test
+	public void shouldFilterAllRelations()
+	{
+		//filter relations to keep only is_a relations
+		//12 relations should be removed
+		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
+				true, 12, true);
+	}
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#removeRelations(Collection, boolean)} 
+	 * with the <code>boolean</code> parameters set to <code>false</code>.
+	 */
+	@Test
+	public void shouldRemoveRelations()
+	{
+		//remove part_of and develops_from relations
+		//7 relations should be removed
+		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
+			false, 7, false);
+	}
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#removeRelations(Collection, boolean)} 
+	 * with the <code>boolean</code> parameters set to <code>true</code>.
+	 */
+	@Test
+	public void shouldRemoveRelationsWithSubRel()
+	{
+		//remove develops_from relations and sub-relations
+		//2 relations should be removed
+		this.shouldFilterOrRemoveRelations(Arrays.asList("RO:0002202"), 
+			true, 2, false);
+	}
+	/**
+	 * Test the functionalities of 
+	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#removeRelations(Collection, boolean)} 
+	 * with an empty list of relations to remove, to check that it actually removed nothing.
+	 */
+	@Test
+	public void shouldRemoveNoRelation()
+	{
+		//remove nothing
+		//0 relations should be removed
+		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
+			true, 0, false);
+	}
+	/**
+	 * Method to test the functionalities of 
+	 * {@link OWLGraphManipulator#filterRelations(Collection, boolean)} and 
+	 * {@link OWLGraphManipulator#removeRelations(Collection, boolean)}
+	 * with various configurations, called by the methods performing the actual unit test. 
+	 * 
+	 * @param rels 				corresponds to the first parameter of 
+	 * 							the <code>filterRelations</code> or 
+	 * 							<code>removeRelations</code> method.
+	 * @param subRels			corresponds to the second parameter of 
+	 * 							the <code>filterRelations</code> or 
+	 * 							<code>removeRelations</code> method.
+	 * @param expRelsRemoved 	An <code>int</code> representing the expected number 
+	 * 							of relations removed
+	 * @param filter 			A <code>boolean</code> defining whether the method tested is 
+	 * 							<code>filterRelations</code>, or <code>removeRelations</code>. 
+	 * 							If <code>true</code>, the method tested is 
+	 * 							<code>filterRelations</code>.
+	 */
+	private void shouldFilterOrRemoveRelations(Collection<String> rels, 
+			boolean subRels, int expRelsRemoved, boolean filter)
+	{
+		//get the original number of axioms
+		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
+			    .getSourceOntology().getAxiomCount();
+		
+		//filter relations to keep 
+		int relRemovedCount = 0;
+		if (filter) {
+			relRemovedCount = this.graphManipulator.filterRelations(rels, subRels);
+		} else {
+			relRemovedCount = this.graphManipulator.removeRelations(rels, subRels);
+		}
+		//expRelsRemoved relations should have been removed
+		assertEquals("Incorrect number of relations removed", expRelsRemoved, relRemovedCount);
+		
+		//get the number of axioms after removal
+		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
+			    .getSourceOntology().getAxiomCount();
+		//check that it corresponds to the returned value
+		assertEquals("The number of relations removed does not correspond to " +
+				"the number of axioms removed", 
+				axiomCountBefore - axiomCountAfter, relRemovedCount);
+	}
+	
+	
+
+	//***********************************************
+	//    SUBGRAPH FILTERING AND REMOVAL TESTS
+	//***********************************************
 	/**
 	 * Test the functionalities of 
 	 * {@link OWLGraphManipulator#filterSubgraphs(Collection)}.

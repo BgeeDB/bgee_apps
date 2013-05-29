@@ -1,10 +1,11 @@
 package org.bgee.pipeline.uberon;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -638,32 +639,92 @@ public class OWLGraphManipulator
     {
     	log.entry();
     	log.info("Start relation reduction...");
-    	/*
+    	
     	//we will go the hardcore way: iterate each class, 
-    	//and for each class, check all the paths to the root
-    	Set<OWLClass> uberonClasses = this.uberonWrapper.getSourceOntology().getClassesInSignature();
-    	if (LOGGER.isDebugEnabled()) {
-        	LOGGER.debug("Inspecting {} classes...", new Integer(uberonClasses.size()));
-    	}
-    	
-    	for (OWLClass myClass: uberonClasses) {
-    		LOGGER.trace("Start examining all outgoing edges to the root for class {}", 
-		        		myClass);
-    		
-    		//iterate all outgoing edges
-    		for (OWLGraphEdge outgoingEdge: this.uberonWrapper.getOutgoingEdges(myClass)) {
-    		    //start to walk each outgoing edge until the root
-    		    this.recursiveRemoveRedundancy(myClass, outgoingEdge);
+    	//and for each class, check all paths to the root
+    	int relationsRemoved = 0;
+        for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
+    		for (OWLClass iterateClass: ont.getClassesInSignature()) {
+    			
+    			Set<OWLGraphEdge> outgoingEdges = 
+    				this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
+    			for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+    				//check that this relation still exists, it might have been removed 
+    				//from another walk to the root
+    				if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
+    					continue;
+    				}
+
+        			Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
+        			edgesInspected.addFirst(outgoingEdge);
+        			
+        			OWLGraphEdge currentEdge;
+        			while ((currentEdge = edgesInspected.pollFirst()) != null) {
+        				
+        				//get the outgoing edges starting from the target of currentEdge, 
+        				//and compose these relations with currentEdge, 
+        				//trying to get a composed edge with only one relation (one property)
+        				for (OWLGraphEdge nextEdge: 
+        					this.getOwlGraphWrapper().getOutgoingEdges(
+        							currentEdge.getTarget())) {
+        					
+        					OWLGraphEdge combine = 
+        							this.getOwlGraphWrapper().combineEdgePair(
+        									currentEdge.getSource(), currentEdge, nextEdge, 0);
+        					
+        					if (combine != null) {
+        						//in case the relations were not combined, try to combine 
+        						//over super properties
+        						if (combine.getQuantifiedPropertyList().size() == 2) {
+        							OWLQuantifiedProperty combinedQp = 
+        									this.combinePropertyPairOverSuperProperties(
+        											combine.getQuantifiedPropertyList().get(0), 
+        											combine.getQuantifiedPropertyList().get(1));
+        							if (combinedQp != null) {
+        								//successfully combined over super properties, 
+        								//create a combined edge
+        								combine = new OWLGraphEdge(currentEdge.getSource(), 
+        										nextEdge.getTarget(),
+        										Arrays.asList(combinedQp), 
+        										currentEdge.getOntology());
+        							}
+        						}
+        						
+        						//at this point, if the properties have not been combined, 
+        						//there is nothing we can do.
+        						if (combine.getQuantifiedPropertyList().size() == 1) {
+        							
+        							//edges successfully combined into one relation,
+        							//check if this combined relation correspond to 
+        							//one of the primitive outgoingEdges; in that case, 
+        							//this edge is a redundant relation, to be removed
+        							for (OWLGraphEdge checkEdge: outgoingEdges) {
+        								if (checkEdge.equals(combine)) {
+        									//redundant relation identified
+        									if (this.removeEdge(checkEdge)) {
+        										relationsRemoved++;
+        									}
+        								}
+        							}
+        							
+        							//add the combine relation to the stack to continue 
+        							//the walk to the root
+        							edgesInspected.addFirst(combine);
+        							
+        						} else if (combine.getQuantifiedPropertyList().size() > 2) {
+        							//should never be reached
+        							throw new AssertionError("Unexpected number of properties " +
+        									"in edge: " + combine);
+        						}
+        					}
+        				}
+        			}
+    			}
     		}
-    	}
+        }
     	
-    	if (LOGGER.isInfoEnabled()) {
-    	    LOGGER.info("Done removing redundant relations, {} removed.", 
-    	    		new Integer(axiomCount - this.uberonWrapper.getSourceOntology().getAxiomCount()));
-    	}
-    	*/
-    	log.info("Done relation reduction.");
-    	return 0;
+    	log.info("Done relation reduction, {} relations removed.", relationsRemoved);
+    	return log.exit(relationsRemoved);
     }
     
     /**
@@ -701,8 +762,6 @@ public class OWLGraphManipulator
      */
     private OWLQuantifiedProperty combinePropertyPairOverSuperProperties(
             OWLQuantifiedProperty prop1, OWLQuantifiedProperty prop2) 
-            		throws NoSuchMethodException, SecurityException, IllegalAccessException, 
-            		IllegalArgumentException, InvocationTargetException 
     {
     	log.entry(prop1, prop2);
     	log.debug("Searching for common super property to combine {} and {}", 
@@ -718,44 +777,48 @@ public class OWLGraphManipulator
     	
     	//OWLGraphWrapperEdges.combinedQuantifiedPropertyPair should be made public.
     	//here's a hack to use it
-    	Method combineMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
-    			"combinedQuantifiedPropertyPair", 
-				new Class<?>[] {OWLQuantifiedProperty.class, OWLQuantifiedProperty.class});
-    	combineMethod.setAccessible(true);
-    	//OWLGraphWrapperEdges.isExcluded should be made public, or a method to achieve 
-    	//a part of the operations performed in OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers 
-    	//provided (see code below).
-    	//here's a hack to use it
-    	Method excludedMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
-    			"isExcluded", 
-				new Class<?>[] {OWLQuantifiedProperty.class});
-    	excludedMethod.setAccessible(true);
-    	
-		
-    	//search for a common super property
-    	superProps1.retainAll(superProps2);
-    	for (OWLObjectPropertyExpression prop: superProps1) {
+    	try {
+    		Method combineMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
+    				"combinedQuantifiedPropertyPair", 
+    				new Class<?>[] {OWLQuantifiedProperty.class, OWLQuantifiedProperty.class});
+    		combineMethod.setAccessible(true);
+    		//OWLGraphWrapperEdges.isExcluded should be made public, or a method to achieve 
+    		//a part of the operations performed in OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers 
+    		//provided (see code below).
+    		//here's a hack to use it
+    		Method excludedMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
+    				"isExcluded", 
+    				new Class<?>[] {OWLQuantifiedProperty.class});
+    		excludedMethod.setAccessible(true);
 
-    		//code from OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers
-    		if (!prop.equals(
-    				this.getOwlGraphWrapper().getDataFactory().getOWLTopObjectProperty()) && 
 
-    				prop instanceof OWLObjectProperty) {
+    		//search for a common super property
+    		superProps1.retainAll(superProps2);
+    		for (OWLObjectPropertyExpression prop: superProps1) {
 
-    			OWLQuantifiedProperty newQp = 
-    					new OWLQuantifiedProperty(prop, prop1.getQuantifier());
-    			boolean isExcluded = (boolean) excludedMethod.invoke(
-    					this.getOwlGraphWrapper(), new Object[] {newQp});
-    			if (!isExcluded) {
-    				OWLQuantifiedProperty combined = 
-    					(OWLQuantifiedProperty) combineMethod.invoke(this.getOwlGraphWrapper(), 
-    	    			new Object[] {newQp, newQp});
-    				if (combined != null) {
-        				log.debug("Common super property identified, combining {}", newQp);
-    					return log.exit(combined);
+    			//code from OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers
+    			if (!prop.equals(
+    					this.getOwlGraphWrapper().getDataFactory().getOWLTopObjectProperty()) && 
+
+    					prop instanceof OWLObjectProperty) {
+
+    				OWLQuantifiedProperty newQp = 
+    						new OWLQuantifiedProperty(prop, prop1.getQuantifier());
+    				boolean isExcluded = (boolean) excludedMethod.invoke(
+    						this.getOwlGraphWrapper(), new Object[] {newQp});
+    				if (!isExcluded) {
+    					OWLQuantifiedProperty combined = 
+    							(OWLQuantifiedProperty) combineMethod.invoke(this.getOwlGraphWrapper(), 
+    									new Object[] {newQp, newQp});
+    					if (combined != null) {
+    						log.debug("Common super property identified, combining {}", newQp);
+    						return log.exit(combined);
+    					}
     				}
     			}
     		}
+    	} catch (Exception e) {
+    		log.error("Error when combining properties", e);
     	}
     	
     	log.debug("No common super property found to combine.");
@@ -821,13 +884,14 @@ public class OWLGraphManipulator
      * 
      * @param edge 	The <code>OWLGraphEdge</code> corresponding to 
      * 				a <code>OWLSubClassOfAxiom</code> to be removed from the ontology. 
+     * @return 			<code>true</code> if <code>edge</code> was actually present 
+     * 					in the ontology. 
      * @see #removeAxiom(OWLAxiom)
      */
-    public void removeEdge(OWLGraphEdge edge)
+    public boolean removeEdge(OWLGraphEdge edge)
     {
     	log.entry(edge);
-    	this.removeAxiom(this.getAxiom(edge));
-    	log.exit();
+    	return log.exit(this.removeAxiom(this.getAxiom(edge)));
     }
     /**
      * Remove <code>edges</code> from the ontology. 
@@ -842,30 +906,36 @@ public class OWLGraphManipulator
      * 
      * @param edge 	A <code>Collection</code> of <code>OWLGraphEdge</code>s corresponding to 
      * 				<code>OWLSubClassOfAxiom</code>s to be removed from the ontology. 
+     * @return 			An <code>int</code> representing the number of axioms 
+     * 					present in <code>axioms</code> 
+     * 					that were actually found in the ontology.
      * @see #removeEdge(OWLGraphEdge)
      * @see #removeAxioms(Collection)
      */
-    public void removeEdges(Collection<OWLGraphEdge> edges)
+    public int removeEdges(Collection<OWLGraphEdge> edges)
     {
     	log.entry(edges);
+    	
     	Collection<OWLAxiom> axioms = new ArrayList<OWLAxiom>();
     	for (OWLGraphEdge edge: edges) {
     		axioms.add(this.getAxiom(edge));
     	}
-    	this.removeAxioms(axioms);
-    	log.exit();
+    	
+    	return log.exit(this.removeAxioms(axioms));
     }
     /**
      * Remove <code>axiom</code> from the ontology. 
      * 
-     * @param axiom 	The <code>OWLAxiom</code> to remove from the ontology. 
+     * @param axiom 	The <code>OWLAxiom</code> to remove from the ontology.
+     * @return 			<code>true</code> if <code>axiom</code> was actually present 
+     * 					in the ontology. 
      * @see #removeEdge(OWLGraphEdge)
      */
-    private void removeAxiom(OWLAxiom axiom)
+    private boolean removeAxiom(OWLAxiom axiom)
     {
     	log.entry(axiom);
-    	this.removeAxioms(Arrays.asList(axiom));
-    	log.exit();
+    	return log.exit(
+    	    	(this.removeAxioms(Arrays.asList(axiom)) == 1));
     }
     /**
      * Remove <code>axioms</code> from the ontology. 
@@ -877,16 +947,20 @@ public class OWLGraphManipulator
      * 
      * @param axioms 	A <code>Collection</code> of <code>OWLAxiom</code>s 
      * 					to remove from the ontology.
+     * @return 			An <code>int</code> representing the number of axioms 
+     * 					present in <code>axioms</code> 
+     * 					that were actually found in the ontology.
      * @see #removeAxiom(OWLAxiom) 
      * @see #removeEdges(OWLGraphEdge)
      */
-    private void removeAxioms(Collection<OWLAxiom> axioms)
+    private int removeAxioms(Collection<OWLAxiom> axioms)
     {
     	log.entry(axioms);
     	if (axioms.isEmpty()) {
-    		log.exit(); return;
+    		return log.exit(0); 
     	}
 
+    	int axiomRemoved = 0;
     	List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
     	
     	for (OWLOntology ontology: this.getOwlGraphWrapper().getAllOntologies()) {
@@ -894,13 +968,14 @@ public class OWLGraphManipulator
     			if (ontology.containsAxiom(axiom)) {
     				RemoveAxiom remove = new RemoveAxiom(ontology, axiom);
     				changes.add(remove);
+    				axiomRemoved++;
     				log.debug("Relation removed, axiom: {}", axiom);
     			}
     		}
     	}
     	
     	this.applyChanges(changes);
-    	log.exit();
+    	return log.exit(axiomRemoved);
     }
     
     

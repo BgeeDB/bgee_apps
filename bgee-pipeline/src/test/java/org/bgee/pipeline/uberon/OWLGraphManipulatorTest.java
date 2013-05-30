@@ -16,7 +16,10 @@ import org.bgee.model.TestAncestor;
 import org.junit.Before;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -89,9 +92,123 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	 * Test the functionality of {@link OWLGraphManipulator.reduceRelations()}.
 	 */
 	@Test
-	public void shouldReduceRelation()
+	public void shouldReduceRelations()
 	{
-		this.graphManipulator.reduceRelations();
+		//get the original number of axioms
+	    int axiomCountBefore = 
+	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+				
+		int relsRemoved = this.graphManipulator.reduceRelations();
+		
+		//get the number of axioms after removal
+		int axiomCountAfter = 
+				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+				
+		//3 relations should have been removed
+		assertEquals("Incorrect number of relations removed", 3, relsRemoved);
+		//check that it corresponds to the number of axioms removed
+		assertEquals("Returned value does not correspond to the number of axioms removed", 
+				relsRemoved, axiomCountBefore - axiomCountAfter);
+		
+		//Check that the relations removed correspond to the proper relations to remove
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLDataFactory factory = this.graphManipulator.getOwlGraphWrapper().
+				getManager().getOWLDataFactory();
+		OWLClass root = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		OWLObjectProperty overlaps = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("RO:0002131");
+		
+		//FOO:0003 part_of FOO:0001 redundant 
+		//(FOO:0003 in_deep_part_of FOO:0004  part_of FOO:0002 part_of FOO:0001)
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
+		OWLGraphEdge checkEdge = new OWLGraphEdge(source, root, partOf, Quantifier.SOME, ont);
+		OWLAxiom axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
+		
+		//FOO:0004 overlaps FOO:0001 redundant
+		//(FOO:0004 part_of FOO:0002 part_of FOO:0001)
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0004");
+		checkEdge = new OWLGraphEdge(source, root, overlaps, Quantifier.SOME, ont);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
+		
+		//FOO:0014 is_a FOO:0001 redundant
+		//(FOO:0014 is_a FOO:0006 is_a FOO:0001)
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0014");
+		checkEdge = new OWLGraphEdge(source, root);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
+	}
+	/**
+	 * Test the functionality of {@link OWLGraphManipulator.reducePartOfAndSubClassOfRelations()}.
+	 */
+	@Test
+	public void shouldReducePartOfAndSubClassOfRelations()
+	{
+		//get the original number of axioms
+	    int axiomCountBefore = 
+	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+				
+		int relsRemoved = this.graphManipulator.reducePartOfAndSubClassOfRelations();
+		
+		//get the number of axioms after removal
+		int axiomCountAfter = 
+				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+				
+		//3 relations should have been removed
+		assertEquals("Incorrect number of relations removed", 3, relsRemoved);
+		//check that it corresponds to the number of axioms removed
+		assertEquals("Returned value does not correspond to the number of axioms removed", 
+				relsRemoved, axiomCountBefore - axiomCountAfter);
+		
+		//Check that the relations removed correspond to the proper relations to remove
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLDataFactory factory = this.graphManipulator.getOwlGraphWrapper().
+				getManager().getOWLDataFactory();
+		OWLClass root = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		
+		//FOO:0005 is_a FOO:0001 redundant 
+		//(FOO:0005 part_of FOO:0002 part_of FOO:0001)
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0005");
+		OWLGraphEdge checkEdge = new OWLGraphEdge(source, root);
+		OWLAxiom axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
+		
+		//FOO:0014 is_a FOO:0001 redundant
+		//(FOO:0014 is_a FOO:0002 part_of FOO:0001)
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0014");
+		checkEdge = new OWLGraphEdge(source, root);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
+		
+		//FOO:0013 is_a FOO:0001 redundant
+		//(FOO:0013 part_of FOO:0001, equivalent direct outgoing edge)
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0013");
+		checkEdge = new OWLGraphEdge(source, root);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
 	}
 
 	/**
@@ -260,9 +377,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldFilterRelationsWithNonOboId()
 	{
 		//filter relations to keep only is_a and transformation_of relations
-		//11 relations should be removed
+		//13 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
-				true, 12, true);
+				true, 13, true);
 	}	
 	/**
 	 * Test the functionalities of 
@@ -273,9 +390,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldFilterAllRelations()
 	{
 		//filter relations to keep only is_a relations
-		//12 relations should be removed
+		//14 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
-				true, 13, true);
+				true, 14, true);
 	}
 	/**
 	 * Test the functionalities of 
@@ -286,9 +403,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldRemoveRelations()
 	{
 		//remove part_of and develops_from relations
-		//7 relations should be removed
+		//9 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-			false, 8, false);
+			false, 9, false);
 	}
 	/**
 	 * Test the functionalities of 

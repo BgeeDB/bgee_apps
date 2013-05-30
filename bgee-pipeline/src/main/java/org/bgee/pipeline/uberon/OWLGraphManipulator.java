@@ -131,20 +131,20 @@ public class OWLGraphManipulator
 	}
 	/**
 	 * Remove redundant relations by considering is_a (SubClassOf) 
-	 * and part_of relations equivalent. Note that the modified ontology 
-	 * will therefore not be semantically correct, but will be easier to display, 
-	 * thanks to a simplified graph structure. 
+	 * and part_of relations equivalent. This method removes <strong>only</strong> 
+	 * these "fake" redundant relations over is_a and part_of. 
+	 * Note that the modified ontology will therefore not be semantically correct, 
+	 * but will be easier to display, thanks to a simplified graph structure. 
 	 * <p>
-	 * this method is exactly the same than {@link #reduceRelations()}, except is_a and part_of 
-	 * are considered equivalent. 
+	 * This method is similar to {@link #reduceRelations()}, except is_a and part_of 
+	 * are considered equivalent, and that only these "fake" redundant relations are removed. 
 	 * <p>
 	 * <strong>Warning: </strong>if you call both the methods <code>reduceRelations</code> 
-	 * and <code>reducePartOfAndSubClassOfRelations</code> on a same ontology, 
+	 * and <code>reducePartOfAndSubClassOfRelations</code> on the same ontologies, 
 	 * you must call <code>reduceRelations</code> first, 
 	 * as it is a semantically correct reduction.
 	 * <p>
-	 * Besides the examples already provided in {@link #reduceRelations()},  
-	 * here are examples of relations additionally considered redundant by this method:
+	 * Here are examples of relations considered redundant by this method:
 	 * <ul>
 	 * <li>If A is_a B is_a C, then A part_of C is considered redundant
 	 * <li>If A in_deep_part_of B in_deep_part_of C, then A is_a C is considered redundant 
@@ -152,6 +152,8 @@ public class OWLGraphManipulator
 	 * <li>If A part_of B, and A is_a B, then A is_a B is removed (check for redundant 
 	 * direct outgoing edges; in case of redundancy, the is_a relation is removed)
 	 * </ul>
+	 * Note that redundancies such as A is_a B is_a C and A is_a C are not removed by this method, 
+	 * but by {@link #reduceRelations()}.
 	 * 
 	 * @return 	An <code>int</code> representing the number of relations removed. 
 	 * @see #reduceRelations()
@@ -178,7 +180,11 @@ public class OWLGraphManipulator
 	private int reduceRelations(boolean reducePartOfAndSubClassOf)
 	{
 		log.entry(reducePartOfAndSubClassOf);
-		log.info("Start relation reduction...");
+		if (!reducePartOfAndSubClassOf) {
+		    log.info("Start relation reduction...");
+		} else {
+			log.info("Start \"fake\" relation reduction over is_a/part_of...");
+		}
 		
 		//we will go the hardcore way: iterate each class, 
 		//and for each class, check all paths to the root
@@ -281,22 +287,13 @@ public class OWLGraphManipulator
 	    							boolean atLeastOneRemoved = false;
 	    							for (OWLGraphEdge checkOutgoingEdge: outgoingEdges) {
 	    								boolean toRemove = false;
-	    								
-	    								//compare each outgoing edge to the combine relation, 
-	    								//and its parent relations 
-	    								//(to also check if the combine relation is more precise 
-	    								//than the outgoing edge)
-	    								for (OWLGraphEdge combinedRelToCheck: relsToCheck) {
-	    									if (checkOutgoingEdge.equals(combinedRelToCheck)) {
-	    										//redundant relation identified
-	    										toRemove = true;
-												break;
-	    									}
-	    								}
-	    								//if we also want to reduce over is_a and 
+
+	    								//if we want to reduce over is_a and 
 	    								//part_of relations
-	    								if (!toRemove && reducePartOfAndSubClassOf) {
-	    									if (//checkOutgoingEdge is an is_a relation 
+	    								if (reducePartOfAndSubClassOf) {
+	    									if (combine.getTarget().equals(
+	    											checkOutgoingEdge.getTarget()) &&
+	    										//checkOutgoingEdge is an is_a relation 
 	            				    			//and the combined relation is a part_of-like
 	    										(this.isASubClassOfEdge(checkOutgoingEdge) && 
 	    										 this.isAPartOfEdge(combine))              									
@@ -307,6 +304,18 @@ public class OWLGraphManipulator
 	           									 this.isAPartOfEdge(checkOutgoingEdge))) {
 	                                            //remove the outgoing edge
 	    										toRemove = true;
+	    									}
+	    								} else {
+	    									//Otherwise, compare each outgoing edge to 
+	    									//the combined relation, and its parent relations 
+	    									//(to also check if the combine relation 
+	    									//is more precise than the outgoing edge)
+	    									for (OWLGraphEdge combinedRelToCheck: relsToCheck) {
+	    										if (checkOutgoingEdge.equals(combinedRelToCheck)) {
+	    											//redundant relation identified
+	    											toRemove = true;
+	    											break;
+	    										}
 	    									}
 	    								}
 	    								
@@ -348,9 +357,10 @@ public class OWLGraphManipulator
 		log.info("Done relation reduction, {} relations removed.", relationsRemoved);
 		return log.exit(relationsRemoved);
 	}
-	//*********************************
-	//    MANIPULATIONS
-	//*********************************
+	
+	
+	
+	
     /**
      * Keep in the ontology only the subgraphs starting 
      * from the provided <code>OWLClass</code>es, and their ancestors. 

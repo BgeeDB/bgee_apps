@@ -26,6 +26,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 
@@ -58,6 +59,20 @@ public class OWLGraphManipulator
 	 * (relation reductions, edge propagations, ...).
 	 */
 	private OWLGraphWrapper owlGraphWrapper;
+	/**
+	 * A <code>String</code> representing the OBO-style ID of the part_of relation. 
+	 * Used when reducing relations over part_of and is_a relations.
+	 * 
+	 * @see #reduceRelations(boolean)
+	 */
+	private final static String PARTOFID = "BFO:0000050";
+	/**
+	 * A <code>Set</code> of <code>OWLObjectPropertyExpression</code>s that are 
+	 * the sub-properties of the "part_of" property (for instance, "deep_part_of").
+	 * 
+	 * @see #isAPartOfEdge(OWLGraphEdge)
+	 */
+	private Set<OWLObjectPropertyExpression> partOfRels;
 	
 	//*********************************
 	//    CONSTRUCTORS
@@ -84,6 +99,255 @@ public class OWLGraphManipulator
     	this.setOwlGraphWrapper(owlGraphWrapper);
     }
 
+	/**
+	 * Remove redundant relations. A relation is considered redundant 
+	 * when there exists a composed relation between two classes 
+	 * (separated by several relations), that is equivalent to -or more precise than- 
+	 * a direct relation between these classes. The direct relation is considered redundant 
+	 * and is removed. 
+	 * This method returns the number of such direct redundant relations removed. 
+	 * <p>
+	 * When combining the relations, they are also combined over super properties 
+	 * (see {@link #combinePropertyPairOverSuperProperties(OWLQuantifiedProperty, 
+	 * OWLQuantifiedProperty)})
+	 * <p>
+	 * Examples of relations considered redundant by this method:
+	 * <ul>
+	 * <li>If r is transitive, if A r B r C, then A r C is a redundant relation. 
+	 * <li>If r1 is the parent relation of r2, and r1 is transitive, and if 
+	 * A r2 B r1 C, then A r1 C is a redundant relation (check relations composed 
+	 * over super properties).
+	 * <li>If r1 is the parent relation of r2, and r2 is transitive, and if 
+	 * A r2 B r2 C, then A r1 C is a redundant relation (composed relation more precise 
+	 * than the direct one).
+	 * </ul>
+	 * 
+	 * @return 	An <code>int</code> representing the number of relations removed. 
+	 */
+	public int reduceRelations()
+	{
+		log.entry();
+		return log.exit(this.reduceRelations(false));
+	}
+	/**
+	 * Remove redundant relations by considering is_a (SubClassOf) 
+	 * and part_of relations equivalent. Note that the modified ontology 
+	 * will therefore not be semantically correct, but will be easier to display, 
+	 * thanks to a simplified graph structure. 
+	 * <p>
+	 * this method is exactly the same than {@link #reduceRelations()}, except is_a and part_of 
+	 * are considered equivalent. 
+	 * <p>
+	 * <strong>Warning: </strong>if you call both the methods <code>reduceRelations</code> 
+	 * and <code>reducePartOfAndSubClassOfRelations</code> on a same ontology, 
+	 * you must call <code>reduceRelations</code> first, 
+	 * as it is a semantically correct reduction.
+	 * <p>
+	 * Besides the examples already provided in {@link #reduceRelations()},  
+	 * here are examples of relations additionally considered redundant by this method:
+	 * <ul>
+	 * <li>If A is_a B is_a C, then A part_of C is considered redundant
+	 * <li>If A in_deep_part_of B in_deep_part_of C, then A is_a C is considered redundant 
+	 * (check for sub-properties of part_of)
+	 * <li>If A part_of B, and A is_a B, then A is_a B is removed (check for redundant 
+	 * direct outgoing edges; in case of redundancy, the is_a relation is removed)
+	 * </ul>
+	 * 
+	 * @return 	An <code>int</code> representing the number of relations removed. 
+	 * @see #reduceRelations()
+	 */
+	public int reducePartOfAndSubClassOfRelations()
+	{
+		log.entry();
+		return log.exit(this.reduceRelations(true));
+	}
+	/**
+	 * Perform relation reduction, that is either semantically correct, 
+	 * or is also considering is_a (SubClassOf) and part_of relations equivalent, 
+	 * depending on the parameter <code>reducePartOfAndSubClassOf</code>. 
+	 * <p>
+	 * This method is needed to be called by {@link #reduceRelations()} (correct reduction) 
+	 * and {@link #reducePartOfAndSubClassOfRelations()} (is_a/part_of equivalent), 
+	 * as it is almost the same code to run.
+	 *  
+	 * @param reducePartOfAndSubClassOf 	A <code>boolean</code> defining whether 
+	 * 										is_a/part_of relations should be considered 
+	 * 										equivalent. If <code>true</code>, they are.
+	 * @return 		An <code>int</code> representing the number of relations removed. 
+	 */
+	private int reduceRelations(boolean reducePartOfAndSubClassOf)
+	{
+		log.entry(reducePartOfAndSubClassOf);
+		log.info("Start relation reduction...");
+		
+		//we will go the hardcore way: iterate each class, 
+		//and for each class, check all paths to the root
+		int relationsRemoved = 0;
+		
+	    for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
+			for (OWLClass iterateClass: ont.getClassesInSignature()) {
+				log.trace("Start examining class {}...", iterateClass);
+	
+				Set<OWLGraphEdge> outgoingEdges = 
+					this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
+				
+				//if we want to reduce over is_a and part_of, first check 
+				//that we do not have both a part_of and a is_a outgoing edge
+				if (reducePartOfAndSubClassOf) {
+					Collection<OWLGraphEdge> partOfEdges = new ArrayList<OWLGraphEdge>();
+					Collection<OWLGraphEdge> isAEdges    = new ArrayList<OWLGraphEdge>();
+					//identify part_of-like and is_a relations
+					for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+						if (this.isASubClassOfEdge(outgoingEdge)) {
+							isAEdges.add(outgoingEdge);
+						} else if (this.isAPartOfEdge(outgoingEdge)) {
+							partOfEdges.add(outgoingEdge);
+						}
+					}
+					//search for is_a relations to remove
+					for (OWLGraphEdge partOfEdge: partOfEdges) {
+						for (OWLGraphEdge isAEdge: isAEdges) {
+							if (partOfEdge.getTarget().equals(isAEdge.getTarget())) {
+								//remove "redundant" is_a
+								if (this.removeEdge(isAEdge)) {
+									relationsRemoved++;
+									log.debug("Removing \"redundant\" relation from outgoing edges: {}", 
+											isAEdge);
+								}
+							}
+						}
+					}
+				}
+				
+				//if the class has only one outgoing relation, no way to have 
+				//a redundant relation (unless there is a cycle in the ontology :p)
+				int relCount = outgoingEdges.size();
+				if (relCount < 1) {
+					log.trace("Class has {} outgoing edge, cannot have redundancy, skip it", 
+							relCount);
+					continue;
+				}
+				//TODO: try to see from the beginning that there is no way
+				//the outgoing edges generate redundancies 
+				//(for instance, a develops_from outgoing edge and a part_of outgoing edge). 
+				//But maybe it is too dangerous if the chain rules change in the future. 
+				
+				for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+					//check that this relation still exists, it might have been removed 
+					//from another walk to the root
+					if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
+						log.trace("Outgoing edge already removed, skip {}", outgoingEdge);
+						continue;
+					}
+					log.trace("Start a walk to the root");
+	
+	    			Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
+	    			edgesInspected.addFirst(outgoingEdge);
+	    			
+	    			OWLGraphEdge currentEdge;
+	    			while ((currentEdge = edgesInspected.pollFirst()) != null) {
+	    				log.trace("Current edge examined on the walk: {}", currentEdge);
+	    				
+	    				//get the outgoing edges starting from the target of currentEdge, 
+	    				//and compose these relations with currentEdge, 
+	    				//trying to get a composed edge with only one relation (one property)
+	    				for (OWLGraphEdge nextEdge: 
+	    					this.getOwlGraphWrapper().getOutgoingEdges(
+	    							currentEdge.getTarget())) {
+	    					log.trace("Try to combine with outgoing edge from current edge target: {}", 
+	    							nextEdge);
+	    					
+	    					OWLGraphEdge combine = 
+	    							this.combineEdgePairWithSuperProps(currentEdge, nextEdge);
+	    					
+	    					if (combine != null) {
+	    						//at this point, if the properties have not been combined, 
+	    						//there is nothing we can do.
+	    						if (combine.getQuantifiedPropertyList().size() == 1) {
+	    							log.trace("Edges successfully combined into: {}", 
+	    									combine);
+	    							
+	    							//edges successfully combined into one relation,
+	    							//check if this combined relation (or one of its parent 
+	    							//relations) corresponds to one of the primitive 
+	    							//outgoingEdges; in that case, 
+	    							//this outgoingEdge is a redundant relation, to be removed
+									Set<OWLGraphEdge> relsToCheck = 
+											new HashSet<OWLGraphEdge>();
+									relsToCheck.add(combine);
+									relsToCheck.addAll(this.getOwlGraphWrapper().
+											getOWLGraphEdgeSubsumers(combine));
+									
+	    							boolean atLeastOneRemoved = false;
+	    							for (OWLGraphEdge checkOutgoingEdge: outgoingEdges) {
+	    								boolean toRemove = false;
+	    								
+	    								//compare each outgoing edge to the combine relation, 
+	    								//and its parent relations 
+	    								//(to also check if the combine relation is more precise 
+	    								//than the outgoing edge)
+	    								for (OWLGraphEdge combinedRelToCheck: relsToCheck) {
+	    									if (checkOutgoingEdge.equals(combinedRelToCheck)) {
+	    										//redundant relation identified
+	    										toRemove = true;
+												break;
+	    									}
+	    								}
+	    								//if we also want to reduce over is_a and 
+	    								//part_of relations
+	    								if (!toRemove && reducePartOfAndSubClassOf) {
+	    									if (//checkOutgoingEdge is an is_a relation 
+	            				    			//and the combined relation is a part_of-like
+	    										(this.isASubClassOfEdge(checkOutgoingEdge) && 
+	    										 this.isAPartOfEdge(combine))              									
+	          									||
+	           									//checkOutgoingEdge is a part_of-like relation 
+	                    				    	//and the combined relation is a is_a relation
+	            								(this.isASubClassOfEdge(combine) && 
+	           									 this.isAPartOfEdge(checkOutgoingEdge))) {
+	                                            //remove the outgoing edge
+	    										toRemove = true;
+	    									}
+	    								}
+	    								
+	    								if (toRemove && this.removeEdge(checkOutgoingEdge)) {
+											relationsRemoved++;
+											atLeastOneRemoved = true;
+											log.debug("Removing redundant relation: {}", 
+													checkOutgoingEdge);
+										}
+	    							}
+	    							if (!atLeastOneRemoved) {
+	    								log.trace("No redundant relation found for the combined relation");
+	    							}
+	    							
+	    							//add the combined relation to the stack to continue 
+	    							//the walk to the root
+	    							log.trace("Combined relation added to the stack to be walked");
+	    							edgesInspected.addFirst(combine);
+	    							
+	    						} else if (combine.getQuantifiedPropertyList().size() > 2) {
+	    							//should never be reached
+	    							throw new AssertionError("Unexpected number of properties " +
+	    									"in edge: " + combine);
+	    						} else {
+	    							log.trace("Could not combine edges, stop walk here.");
+	    						}
+	    					} else {
+								log.trace("Could not combine edges, stop walk here.");
+							}
+	    				}
+	    				log.trace("Done examining edge: {}", currentEdge);
+	    			}
+	    			log.trace("End of walk from outgoing edge {}", outgoingEdge);
+				}
+				log.trace("Done examining class {}", iterateClass);
+			}
+	    }
+		
+		log.info("Done relation reduction, {} relations removed.", relationsRemoved);
+		return log.exit(relationsRemoved);
+	}
 	//*********************************
 	//    MANIPULATIONS
 	//*********************************
@@ -625,262 +889,6 @@ public class OWLGraphManipulator
     
     
     
-    /**
-     * Remove redundant relations. A relation is considered redundant 
-     * when there exists a composed relation between two classes 
-     * (separated by several relations), equivalent to a direct relation 
-     * between these classes. The direct relation is considered redundant 
-     * and is removed. 
-     * <p>
-     * For instance, for a transitive relation r, if A r B r C, then A r C 
-     * is a redundant relation. Relations are also combined over super properties 
-     * (see {@link #combinePropertyPairOverSuperProperties(OWLQuantifiedProperty, 
-     * OWLQuantifiedProperty)})
-     */
-    public int reduceRelations()
-    {
-    	log.entry();
-    	log.info("Start relation reduction...");
-    	
-    	//we will go the hardcore way: iterate each class, 
-    	//and for each class, check all paths to the root
-    	int relationsRemoved = 0;
-        for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-    		for (OWLClass iterateClass: ont.getClassesInSignature()) {
-    			log.trace("Start examining class {}...", iterateClass);
-    			
-    			Set<OWLGraphEdge> outgoingEdges = 
-    				this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
-    			for (OWLGraphEdge outgoingEdge: outgoingEdges) {
-    				//check that this relation still exists, it might have been removed 
-    				//from another walk to the root
-    				if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
-    					continue;
-    				}
-    				log.trace("Start a walk to the root");
-
-        			Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
-        			edgesInspected.addFirst(outgoingEdge);
-        			
-        			OWLGraphEdge currentEdge;
-        			while ((currentEdge = edgesInspected.pollFirst()) != null) {
-        				log.trace("Current edge examined on the walk: {}", currentEdge);
-        				
-        				//get the outgoing edges starting from the target of currentEdge, 
-        				//and compose these relations with currentEdge, 
-        				//trying to get a composed edge with only one relation (one property)
-        				for (OWLGraphEdge nextEdge: 
-        					this.getOwlGraphWrapper().getOutgoingEdges(
-        							currentEdge.getTarget())) {
-        					log.trace("Try to combine with outgoing edge from current edge target: {}", 
-        							nextEdge);
-        					
-        					OWLGraphEdge combine = 
-        							this.getOwlGraphWrapper().combineEdgePair(
-        									currentEdge.getSource(), currentEdge, nextEdge, 0);
-        					
-        					if (combine != null) {
-        						//in case the relations were not combined, try to combine 
-        						//over super properties
-        						if (combine.getQuantifiedPropertyList().size() == 2) {
-        							OWLQuantifiedProperty combinedQp = 
-        									this.combinePropertyPairOverSuperProperties(
-        											combine.getQuantifiedPropertyList().get(0), 
-        											combine.getQuantifiedPropertyList().get(1));
-        							if (combinedQp != null) {
-        								//successfully combined over super properties, 
-        								//create a combined edge
-        								combine = new OWLGraphEdge(currentEdge.getSource(), 
-        										nextEdge.getTarget(),
-        										Arrays.asList(combinedQp), 
-        										currentEdge.getOntology());
-        							}
-        						}
-        						
-        						//at this point, if the properties have not been combined, 
-        						//there is nothing we can do.
-        						if (combine.getQuantifiedPropertyList().size() == 1) {
-        							log.trace("Edges successfully combined into: {}", 
-        									combine);
-        							
-        							//edges successfully combined into one relation,
-        							//check if this combined relation correspond to 
-        							//one of the primitive outgoingEdges; in that case, 
-        							//this edge is a redundant relation, to be removed
-        							boolean removed = false;
-        							for (OWLGraphEdge checkEdge: outgoingEdges) {
-        								if (checkEdge.equals(combine)) {
-        									//redundant relation identified
-        									if (this.removeEdge(checkEdge)) {
-        										relationsRemoved++;
-        										removed = true;
-        										log.debug("Removing redundant relation: {}", 
-        												checkEdge);
-        									}
-        								}
-        							}
-        							if (!removed) {
-        								log.trace("No redundant relation found for the combined relation");
-        							}
-        							
-        							//add the combine relation to the stack to continue 
-        							//the walk to the root
-        							log.trace("Combined relation added to the stack to be walked");
-        							edgesInspected.addFirst(combine);
-        							
-        						} else if (combine.getQuantifiedPropertyList().size() > 2) {
-        							//should never be reached
-        							throw new AssertionError("Unexpected number of properties " +
-        									"in edge: " + combine);
-        						} else {
-        							log.trace("Could not combine edges.");
-        						}
-        					} else {
-    							log.trace("Could not combine edges.");
-    						}
-        				}
-        				log.trace("Done examining edge: {}", currentEdge);
-        			}
-    			}
-    			log.trace("Done examining class {}", iterateClass);
-    		}
-        }
-    	
-    	log.info("Done relation reduction, {} relations removed.", relationsRemoved);
-    	return log.exit(relationsRemoved);
-    }
-    
-    /**
-     * Perform a combination of a pair of <code>OWLQuantifiedProperty</code>s 
-     * over super properties, unlike the method 
-     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code>. 
-     * <strong>Warning: </strong> note that you should call this method only after 
-     * <code>combinedQuantifiedPropertyPair</code> failed to combine properties. 
-     * <p>
-     * This methods determines if <code>prop1</code> is a super property 
-     * of <code>prop2</code> that can be combined, or <code>prop2</code> a super property 
-     * of <code>prop1</code> that can be combined, 
-     * or if they have a super property in common that can be combined. 
-     * If such a suitable super property is identified, <code>prop1</code> and 
-     * <code>prop2</code> are combined by calling the method 
-     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code> 
-     * on that super property, as a pair (notably to check for transitivity). 
-     * All super properties will be sequentially tested from the more precise one 
-     * to the more general one, trying to find one that can be combined. 
-     * If no combination can be performed, return <code>null</code>.
-     * <p>
-     * For example: 
-     * <ul>
-     * <li>If property r2 is transitive, and is the super property of r1, then 
-     * A r1 B * B r2 C --> A r2 C
-     * <li>If property r3 is transitive, and is the super property of both r1 and r2, then 
-     * A r1 B * B r2 C --> A r3 C 
-     * </ul>
-     * 
-     * @param prop1 	First <code>OWLQuantifiedProperty</code> to combine
-     * @param prop2		Second <code>OWLQuantifiedProperty</code> to combine
-     * @return			A <code>OWLQuantifiedProperty</code> representing a combination 
-     * 					of <code>prop1</code> and <code>prop2</code> over super properties. 
-     * 					<code>null</code> if cannot be combined. 
-     */
-    private OWLQuantifiedProperty combinePropertyPairOverSuperProperties(
-            OWLQuantifiedProperty prop1, OWLQuantifiedProperty prop2) 
-    {
-    	log.entry(prop1, prop2);
-    	log.debug("Searching for common super property to combine {} and {}", 
-    			prop1, prop2);
-    	//local implementation of getSuperPropertyReflexiveClosureOf, to order super properties 
-    	//from the more precise to the more general, with prop as the first element. 
-    	//the first element is the property itself, 
-    	//to check if it is a super property of the other property
-    	LinkedHashSet<OWLObjectPropertyExpression> superProps1 = 
-    			this.getSuperPropertyReflexiveClosureOf(prop1.getProperty());
-    	LinkedHashSet<OWLObjectPropertyExpression> superProps2 = 
-    			this.getSuperPropertyReflexiveClosureOf(prop2.getProperty());
-    	
-    	//OWLGraphWrapperEdges.combinedQuantifiedPropertyPair should be made public.
-    	//here's a hack to use it
-    	try {
-    		Method combineMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
-    				"combinedQuantifiedPropertyPair", 
-    				new Class<?>[] {OWLQuantifiedProperty.class, OWLQuantifiedProperty.class});
-    		combineMethod.setAccessible(true);
-    		//OWLGraphWrapperEdges.isExcluded should be made public, or a method to achieve 
-    		//a part of the operations performed in OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers 
-    		//provided (see code below).
-    		//here's a hack to use it
-    		Method excludedMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
-    				"isExcluded", 
-    				new Class<?>[] {OWLQuantifiedProperty.class});
-    		excludedMethod.setAccessible(true);
-
-
-    		//search for a common super property
-    		superProps1.retainAll(superProps2);
-    		for (OWLObjectPropertyExpression prop: superProps1) {
-
-    			//code from OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers
-    			if (!prop.equals(
-    					this.getOwlGraphWrapper().getDataFactory().getOWLTopObjectProperty()) && 
-
-    					prop instanceof OWLObjectProperty) {
-
-    				OWLQuantifiedProperty newQp = 
-    						new OWLQuantifiedProperty(prop, prop1.getQuantifier());
-    				boolean isExcluded = (boolean) excludedMethod.invoke(
-    						this.getOwlGraphWrapper(), new Object[] {newQp});
-    				if (!isExcluded) {
-    					OWLQuantifiedProperty combined = 
-    							(OWLQuantifiedProperty) combineMethod.invoke(this.getOwlGraphWrapper(), 
-    									new Object[] {newQp, newQp});
-    					if (combined != null) {
-    						log.debug("Common super property identified, combining {}", newQp);
-    						return log.exit(combined);
-    					}
-    				}
-    			}
-    		}
-    	} catch (Exception e) {
-    		log.error("Error when combining properties", e);
-    	}
-    	
-    	log.debug("No common super property found to combine.");
-    	return log.exit(null);
-    }
-    
-    /**
-     * Returns all parent properties of <code>prop</code> in all ontologies, 
-     * and <code>prop</code> itself as the first element (reflexive). 
-     * Unlike the method <code>owltools.graph.OWLGraphWrapperEdges.getSuperPropertyReflexiveClosureOf</code>, 
-     * the returned super properties here are ordered from the more precise to the more general 
-     * (e.g., "in_deep_part_of", then "part_of", then "overlaps"). 
-     * 
-     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
-     * 				the ordered super properties. 
-     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
-     * 				ordered from the more precise to the more general, with <code>prop</code> 
-     * 				as the first element. 
-     */
-    private LinkedHashSet<OWLObjectPropertyExpression> getSuperPropertyReflexiveClosureOf(
-    		OWLObjectPropertyExpression prop) 
-    {
-    	log.entry(prop);
-    	LinkedHashSet<OWLObjectPropertyExpression> superProps = 
-    			new LinkedHashSet<OWLObjectPropertyExpression>();
-    	superProps.add(prop);
-		Stack<OWLObjectPropertyExpression> stack = new Stack<OWLObjectPropertyExpression>();
-		stack.add(prop);
-		while (!stack.isEmpty()) {
-			OWLObjectPropertyExpression nextProp = stack.pop();
-			Set<OWLObjectPropertyExpression> directSupers = 
-					this.getOwlGraphWrapper().getSuperPropertiesOf(nextProp);
-			directSupers.removeAll(superProps);
-			stack.addAll(directSupers);
-			superProps.addAll(directSupers);
-		}
-		return log.exit(superProps);
-	}
-    
     public void removeRelToSubsetIfNonOrphan(Collection<String> subsets)
     {
     	
@@ -1066,6 +1074,309 @@ public class OWLGraphManipulator
     	this.getOwlGraphWrapper().clearCachedEdges();
         this.getOwlGraphWrapper().cacheEdges();
     	log.exit();
+    }
+    
+   	//******************************************************
+   	//    METHODS THAT COULD BE INCLUDED IN OWLGraphWrapper
+   	//******************************************************
+    
+    /**
+	 * Returns the direct child properties of <code>prop</code> in all ontologies.
+	 * @param prop 		The <code>OWLObjectPropertyExpression</code> for which 
+	 * 					we want the direct sub-properties.
+	 * @return 			A <code>Set</code> of <code>OWLObjectPropertyExpression</code>s 
+	 * 					that are the direct sub-properties of <code>prop</code>.
+     * 
+     * @see #getSubPropertyClosureOf(OWLObjectPropertyExpression)
+     * @see #getSubPropertyReflexiveClosureOf(OWLObjectPropertyExpression)
+	 */
+	private Set<OWLObjectPropertyExpression> getSubPropertiesOf(
+			OWLObjectPropertyExpression prop) {
+		log.entry(prop);
+		Set<OWLObjectPropertyExpression> subProps = new HashSet<OWLObjectPropertyExpression>();
+		for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
+			for (OWLSubObjectPropertyOfAxiom axiom : 
+				    ont.getObjectSubPropertyAxiomsForSuperProperty(prop)) {
+				subProps.add(axiom.getSubProperty());
+			}
+		}
+		return log.exit(subProps);
+	}
+	/**
+     * Returns all parent properties of <code>prop</code> in all ontologies,  
+     * ordered from the more general (closer from <code>prop</code>) to the more precise 
+     * (e.g., for the "overlaps" property, return "part_of" then "in_deep_part_of"). 
+     * 
+     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
+     * 				the ordered sub-properties. 
+     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
+     * 				ordered from the more general to the more precise.
+     * 
+     * @see #getSubPropertiesOf(OWLObjectPropertyExpression)
+     * @see #getSubPropertyReflexiveClosureOf(OWLObjectPropertyExpression)
+     */
+	private LinkedHashSet<OWLObjectPropertyExpression> getSubPropertyClosureOf(
+			OWLObjectPropertyExpression prop) {
+		
+		log.entry(prop);
+    	LinkedHashSet<OWLObjectPropertyExpression> subProps = 
+    			new LinkedHashSet<OWLObjectPropertyExpression>();
+		Stack<OWLObjectPropertyExpression> stack = new Stack<OWLObjectPropertyExpression>();
+		stack.add(prop);
+		while (!stack.isEmpty()) {
+			OWLObjectPropertyExpression nextProp = stack.pop();
+			Set<OWLObjectPropertyExpression> directSubs = this.getSubPropertiesOf(nextProp);
+			directSubs.removeAll(subProps);
+			stack.addAll(directSubs);
+			subProps.addAll(directSubs);
+		}
+		return log.exit(subProps);
+	}
+	/**
+     * Returns all sub-properties of <code>prop</code> in all ontologies, 
+     * and <code>prop</code> itself as the first element (reflexive). 
+     * The returned sub-properties are ordered from the more general (the closest 
+     * from <code>prop</code>) to the more precise.
+     * For instance, if <code>prop</code> is "overlaps", the returned properties will be  
+     * "overlaps", then "part_of", then "in_deep_part_of", .... 
+     * 
+     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
+     * 				the ordered sub-properties. 
+     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
+     * 				ordered from the more general to the more precise, with <code>prop</code> 
+     * 				as the first element. 
+     * 
+     * @see #getSubPropertiesOf(OWLObjectPropertyExpression)
+     * @see #getSubPropertyClosureOf(OWLObjectPropertyExpression)
+     */
+	private LinkedHashSet<OWLObjectPropertyExpression> getSubPropertyReflexiveClosureOf(
+			OWLObjectPropertyExpression prop) 
+	{
+		log.entry(prop);
+		
+		LinkedHashSet<OWLObjectPropertyExpression> subProps = 
+				new LinkedHashSet<OWLObjectPropertyExpression>();
+		
+		subProps.add(prop);
+		subProps.addAll(this.getSubPropertyClosureOf(prop));
+		
+		return log.exit(subProps);
+	}
+	
+    /**
+     * Returns all parent properties of <code>prop</code> in all ontologies, 
+     * and <code>prop</code> itself as the first element (reflexive). 
+     * Unlike the method <code>owltools.graph.OWLGraphWrapperEdges.getSuperPropertyReflexiveClosureOf</code>, 
+     * the returned super properties here are ordered from the more precise to the more general 
+     * (e.g., "in_deep_part_of", then "part_of", then "overlaps"). 
+     * 
+     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
+     * 				the ordered super properties. 
+     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
+     * 				ordered from the more precise to the more general, with <code>prop</code> 
+     * 				as the first element. 
+     */
+	//TODO: Remove if OWLGraphWrapper changes its implementation
+    private LinkedHashSet<OWLObjectPropertyExpression> getSuperPropertyReflexiveClosureOf(
+    		OWLObjectPropertyExpression prop) 
+    {
+    	log.entry(prop);
+    	LinkedHashSet<OWLObjectPropertyExpression> superProps = 
+    			new LinkedHashSet<OWLObjectPropertyExpression>();
+    	superProps.add(prop);
+		Stack<OWLObjectPropertyExpression> stack = new Stack<OWLObjectPropertyExpression>();
+		stack.add(prop);
+		while (!stack.isEmpty()) {
+			OWLObjectPropertyExpression nextProp = stack.pop();
+			Set<OWLObjectPropertyExpression> directSupers = 
+					this.getOwlGraphWrapper().getSuperPropertiesOf(nextProp);
+			directSupers.removeAll(superProps);
+			stack.addAll(directSupers);
+			superProps.addAll(directSupers);
+		}
+		return log.exit(superProps);
+	}
+
+    
+    /**
+     * Determine if <code>edge</code> represents an is_a relation.
+     * 
+     * @param edge	The <code>OWLGraphEdge</code> to test.
+     * @return		<code>true</code> if <code>edge</code> is an is_a (SubClassOf) relation.
+     */
+    private boolean isASubClassOfEdge(OWLGraphEdge edge) {
+    	log.entry(edge);
+    	return log.exit((edge.getSingleQuantifiedProperty().getProperty() == null && 
+				edge.getSingleQuantifiedProperty().getQuantifier() == Quantifier.SUBCLASS_OF));
+    }
+    
+    /**
+     * Determine if <code>edge</code> represents a part_of relation or one of its sub-relations 
+     * (e.g., "deep_part_of").
+     * 
+     * @param edge	The <code>OWLGraphEdge</code> to test.
+     * @return		<code>true</code> if <code>edge</code> is a part_of relation, 
+     * 				or one of its sub-relations.
+     */
+    private boolean isAPartOfEdge(OWLGraphEdge edge) {
+    	log.entry(edge);
+    	if (this.partOfRels == null) {
+    		this.partOfRels = this.getSubPropertyReflexiveClosureOf(
+        			this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(PARTOFID));
+    	}
+    	return log.exit(
+    			(partOfRels.contains(edge.getSingleQuantifiedProperty().getProperty())));
+    }
+	
+    
+    /**
+     * Combines <code>firstEdge</code> and <code>secondEdge</code> to create a new edge 
+     * from the source of <code>firstEdge</code> to the target of <code>secondEdge</code>.
+     * <p>
+     * This method is similar to 
+     * <code>owltools.graph.OWLGraphWrapperEdges#combineEdgePair(OWLObject, OWLGraphEdge, 
+     * OWLGraphEdge, int)</code>, 
+     * except it also tries to combine the <code>OWLQuantifiedProperty</code>s of the edges 
+     * over super properties (see {@link #combinePropertyPairOverSuperProperties(
+     * OWLQuantifiedProperty, OWLQuantifiedProperty)}, currently combines over 
+     * 2 properties only). 
+     * 
+     * @param firstEdge		A <code>OWLGraphEdge</code> that is the first edge to combine, 
+     * 						its source will be the source of the new edge
+     * @param secondEdge	A <code>OWLGraphEdge</code> that is the second edge to combine, 
+     * 						its target will be the target of the new edge
+     * @return 				A <code>OWLGraphEdge</code> resulting from the composition of 
+     * 						<code>firstEdge</code> and <code>secondEdge</code>, 
+     * 						with its <code>OWLQuantifiedProperty</code>s composed 
+     * 						in a regular way, but also over super properties. 
+     */
+    private OWLGraphEdge combineEdgePairWithSuperProps(OWLGraphEdge firstEdge, 
+    		OWLGraphEdge secondEdge) 
+    {
+    	log.entry(firstEdge, secondEdge);
+    	OWLGraphEdge combine = 
+				this.getOwlGraphWrapper().combineEdgePair(
+						firstEdge.getSource(), firstEdge, secondEdge, 0);
+		
+		if (combine != null) {
+			//in case the relations were not combined, try to combine 
+			//over super properties
+			//TODO: combine over more than 2 properties
+			if (combine.getQuantifiedPropertyList().size() == 2) {
+				OWLQuantifiedProperty combinedQp = 
+						this.combinePropertyPairOverSuperProperties(
+								combine.getQuantifiedPropertyList().get(0), 
+								combine.getQuantifiedPropertyList().get(1));
+				if (combinedQp != null) {
+					//successfully combined over super properties, 
+					//create a combined edge
+					combine = new OWLGraphEdge(firstEdge.getSource(), 
+							secondEdge.getTarget(),
+							Arrays.asList(combinedQp), 
+							firstEdge.getOntology());
+				}
+			}
+		}
+		
+		return log.exit(combine);
+    }
+    
+    /**
+     * Perform a combination of a pair of <code>OWLQuantifiedProperty</code>s 
+     * over super properties, unlike the method 
+     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code>. 
+     * <strong>Warning: </strong> note that you should call this method only after 
+     * <code>combinedQuantifiedPropertyPair</code> failed to combine properties. 
+     * <p>
+     * This methods determines if <code>prop1</code> is a super property 
+     * of <code>prop2</code> that can be combined, or <code>prop2</code> a super property 
+     * of <code>prop1</code> that can be combined, 
+     * or if they have a super property in common that can be combined. 
+     * If such a suitable super property is identified, <code>prop1</code> and 
+     * <code>prop2</code> are combined by calling the method 
+     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code> 
+     * on that super property, as a pair (notably to check for transitivity). 
+     * All super properties will be sequentially tested from the more precise one 
+     * to the more general one, trying to find one that can be combined. 
+     * If no combination can be performed, return <code>null</code>.
+     * <p>
+     * For example: 
+     * <ul>
+     * <li>If property r2 is transitive, and is the super property of r1, then 
+     * A r1 B * B r2 C --> A r2 C
+     * <li>If property r3 is transitive, and is the super property of both r1 and r2, then 
+     * A r1 B * B r2 C --> A r3 C 
+     * </ul>
+     * 
+     * @param prop1 	First <code>OWLQuantifiedProperty</code> to combine
+     * @param prop2		Second <code>OWLQuantifiedProperty</code> to combine
+     * @return			A <code>OWLQuantifiedProperty</code> representing a combination 
+     * 					of <code>prop1</code> and <code>prop2</code> over super properties. 
+     * 					<code>null</code> if cannot be combined. 
+     */
+    private OWLQuantifiedProperty combinePropertyPairOverSuperProperties(
+            OWLQuantifiedProperty prop1, OWLQuantifiedProperty prop2) 
+    {
+    	log.entry(prop1, prop2);
+    	log.debug("Searching for common super property to combine {} and {}", 
+    			prop1, prop2);
+    	//local implementation of getSuperPropertyReflexiveClosureOf, to order super properties 
+    	//from the more precise to the more general, with prop as the first element. 
+    	//the first element is the property itself, 
+    	//to check if it is a super property of the other property
+    	LinkedHashSet<OWLObjectPropertyExpression> superProps1 = 
+    			this.getSuperPropertyReflexiveClosureOf(prop1.getProperty());
+    	LinkedHashSet<OWLObjectPropertyExpression> superProps2 = 
+    			this.getSuperPropertyReflexiveClosureOf(prop2.getProperty());
+    	
+    	//OWLGraphWrapperEdges.combinedQuantifiedPropertyPair should be made public.
+    	//here's a hack to use it
+    	try {
+    		Method combineMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
+    				"combinedQuantifiedPropertyPair", 
+    				new Class<?>[] {OWLQuantifiedProperty.class, OWLQuantifiedProperty.class});
+    		combineMethod.setAccessible(true);
+    		//OWLGraphWrapperEdges.isExcluded should be made public, or a method to achieve 
+    		//a part of the operations performed in OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers 
+    		//provided (see code below).
+    		//here's a hack to use it
+    		Method excludedMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
+    				"isExcluded", 
+    				new Class<?>[] {OWLQuantifiedProperty.class});
+    		excludedMethod.setAccessible(true);
+
+
+    		//search for a common super property
+    		superProps1.retainAll(superProps2);
+    		for (OWLObjectPropertyExpression prop: superProps1) {
+
+    			//code from OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers
+    			if (!prop.equals(
+    					this.getOwlGraphWrapper().getDataFactory().getOWLTopObjectProperty()) && 
+
+    					prop instanceof OWLObjectProperty) {
+
+    				OWLQuantifiedProperty newQp = 
+    						new OWLQuantifiedProperty(prop, prop1.getQuantifier());
+    				boolean isExcluded = (boolean) excludedMethod.invoke(
+    						this.getOwlGraphWrapper(), new Object[] {newQp});
+    				if (!isExcluded) {
+    					OWLQuantifiedProperty combined = 
+    							(OWLQuantifiedProperty) combineMethod.invoke(this.getOwlGraphWrapper(), 
+    									new Object[] {newQp, newQp});
+    					if (combined != null) {
+    						log.debug("Common super property identified, combining {}", newQp);
+    						return log.exit(combined);
+    					}
+    				}
+    			}
+    		}
+    	} catch (Exception e) {
+    		log.error("Error when combining properties", e);
+    	}
+    	
+    	log.debug("No common super property found to combine.");
+    	return log.exit(null);
     }
     
  

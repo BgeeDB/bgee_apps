@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +18,7 @@ import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
@@ -162,6 +164,61 @@ public class OWLGraphManipulatorTest extends TestAncestor
 				fakeRel1, combine.getProperty());
 	}
 	
+	/**
+	 * Test the functionalities of 
+	 * {@link OWLGraphManipulator#getSubPropertyReflexiveClosureOf(OWLObjectPropertyExpression)}. 
+	 * This will allow to check all the "get sub-properties" method at once.
+	 */
+	@Test
+	public void shouldGetSubPropertyReflexiveClosureOf() throws NoSuchMethodException, 
+	    SecurityException, IllegalAccessException, IllegalArgumentException, 
+	    InvocationTargetException
+	{
+		Method method = this.graphManipulator.getClass().getDeclaredMethod(
+				"getSubPropertyReflexiveClosureOf", 
+				new Class<?>[] {OWLObjectPropertyExpression.class});
+		method.setAccessible(true);
+		
+		//let's try with the fake relations in the test ontology: 
+		OWLObjectProperty fakeRel = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("fake_rel1");
+		
+		@SuppressWarnings("unchecked")
+		//this warning is here only because we use reflection to test a private method
+		LinkedHashSet<OWLObjectPropertyExpression> subPropsReflexive = 
+				(LinkedHashSet<OWLObjectPropertyExpression>) method.invoke(this.graphManipulator, 
+				new Object[] {fakeRel});
+		
+		//we should have 4 relations (fake_rel1 to 4)
+		assertEquals("Incorrect number of sub-properties", 4, subPropsReflexive.size());
+		
+		//now check the order
+		int count = 0;
+		for (OWLObjectPropertyExpression prop: subPropsReflexive) {
+			//first rel should be fake_rel1 (reflexive method)
+			if (count == 0) {
+				assertEquals("Incorrect order of sub-properties, 1st relation", 
+						fakeRel, prop);
+			} else if (count == 1) {
+				OWLObjectProperty fakeRel2 = this.graphManipulator.getOwlGraphWrapper().
+						getOWLObjectPropertyByIdentifier("fake_rel2");
+				assertEquals("Incorrect order of sub-properties, 2nd relation", 
+						fakeRel2, prop);
+			} else if (count == 2 || count == 3) {
+				OWLObjectProperty fakeRel3 = this.graphManipulator.getOwlGraphWrapper().
+						getOWLObjectPropertyByIdentifier("fake_rel3");
+				OWLObjectProperty fakeRel4 = this.graphManipulator.getOwlGraphWrapper().
+						getOWLObjectPropertyByIdentifier("fake_rel4");
+				assertTrue("Incorrect order of sub-properties, 3rd or 4th relation", 
+						(fakeRel3.equals(prop) || fakeRel4.equals(prop)));
+			} else {
+				//should not be reached
+				throw new AssertionError("Incorrect number of sub-properties");
+			}
+			count++;
+		}
+	}
+	
 	
 	//***********************************************
 	//    RELATION FILTERING AND REMOVAL TESTS
@@ -205,7 +262,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		//filter relations to keep only is_a and transformation_of relations
 		//11 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
-				true, 11, true);
+				true, 12, true);
 	}	
 	/**
 	 * Test the functionalities of 
@@ -218,7 +275,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		//filter relations to keep only is_a relations
 		//12 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
-				true, 12, true);
+				true, 13, true);
 	}
 	/**
 	 * Test the functionalities of 
@@ -231,7 +288,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		//remove part_of and develops_from relations
 		//7 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-			false, 7, false);
+			false, 8, false);
 	}
 	/**
 	 * Test the functionalities of 

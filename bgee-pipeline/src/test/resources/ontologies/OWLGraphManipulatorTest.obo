@@ -13,14 +13,14 @@ relationship: part_of FOO:0001 ! root
 [Term]
 id: FOO:0003
 name: B
-comment: the is_a relation to the root should be removed when testing filterSubgraphs(Collection), not the term itself.
-relationship: in_deep_part_of FOO:0002 ! A
+comment: the is_a relation to the root should be removed when testing filterSubgraphs(Collection), not the term itself. Also, part_of relation to the root is redundant and should be removed when calling reduceRelations()
+relationship: in_deep_part_of FOO:0004 ! C
 relationship: part_of FOO:0001 ! root
 
 [Term]
 id: FOO:0004
 name: C
-comment: part_of relation to root is redundant. 
+comment: overlaps relation to root is redundant and should be removed by reduceRelations(). 
 relationship: part_of FOO:0002 ! A
 relationship: overlaps FOO:0001 ! root
 
@@ -58,13 +58,14 @@ relationship: overlaps FOO:0007 ! subgraph2_A
 [Term]
 id: FOO:0010
 name: subgraph2_D
-comment: term part of the subgraph to remove, should be removed
+comment: term part of the subgraph to remove, should be removed. Relations to subgraph2_A should NOT be removed when testing reduceRelations(), as the direct relation is more precise (part_of) than the combined one (overlaps).
 relationship: part_of FOO:0009 ! subgraph2_C
+relationship: part_of FOO:0007 ! subgraph2_A
 
 [Term]
 id: FOO:0011
 name: subgraph2_subgraph1
-comment: term part of both the subgraph to remove, and the subgraph to keep, should NOT be removed
+comment: term part of both the subgraph to remove, and the subgraph to keep, should NOT be removed. Also, no relations should be removed by reduceRelations().
 relationship: part_of FOO:0009 ! subgraph2_C
 is_a: FOO:0002 ! A
 
@@ -83,7 +84,7 @@ is_a: FOO:0001 ! root
 [Term]
 id: FOO:0014
 name: subgraph4_root_subgraph2
-comment: term part of both the subgraph to remove, and a subgraph to keep, should NOT be removed. It is a sibling of the root of the subgraph to be removed, and also one of its descendant. 
+comment: term part of both the subgraph to remove, and a subgraph to keep, should NOT be removed. It is a sibling of the root of the subgraph to be removed, and also one of its descendant. Also, relation is_a to the root is redundant and should be removed by reduceRelations().
 is_a: FOO:0001 ! root
 is_a: FOO:0006 ! subgraph2_root
 is_a: FOO:0002 ! A

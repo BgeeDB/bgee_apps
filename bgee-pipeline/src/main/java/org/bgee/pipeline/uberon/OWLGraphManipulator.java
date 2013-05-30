@@ -466,6 +466,9 @@ public class OWLGraphManipulator
     		for (OWLClass iterateClass: ontology.getClassesInSignature()) {
     			for (OWLGraphEdge edge: 
     				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
+    				//to fix a bug
+    				edge.setOntology(ontology);
+    				
     				//if it is a sub-property that should be mapped to a parent
     				OWLObjectPropertyExpression parentProp;
     				if ((parentProp = subPropToParent.get(
@@ -809,77 +812,6 @@ public class OWLGraphManipulator
     	return log.exit(classesRemoved);
     }
     
-    
-    /**
-     * Remove from the ontology all classes with an OBO-style ID 
-     * listed in <code>classIdsToDel</code>. 
-     * 
-     * @param classIdsToDel 	a <code>Collection</code> of <code>String</code>s 
-     * 							representing the OBO-style IDs of the classes 
-     * 							to be removed from the ontology. 
-     * @return					An <code>int</code> representing the number of classes 
-     * 							actually removed as a result. 
-     */
-    private int removeClasses(Collection<String> classIdsToDel)
-    {
-    	log.entry(classIdsToDel);
-    	
-    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
-    			this.getOwlGraphWrapper().getAllOntologies());
-    	
-    	int classesRemoved = 0;
-    	for (String classId: classIdsToDel) {
-    		OWLClass classToDel = this.getOwlGraphWrapper().getOWLClassByIdentifier(classId);
-    		if (classToDel != null) {
-    			classToDel.accept(remover);
-			    classesRemoved++;
-			    log.debug("Removing OWLClass {}", classId);
-    		}
-    	}
-    	this.applyChanges(remover.getChanges());
-    	
-    	return log.exit(classesRemoved);
-    }
-    /**
-     * Filter from the ontology all classes with an OBO-style ID 
-     * present in <code>classIdsToKeep</code>, and remove all other classes not listed. 
-     * 
-     * @param classIdsToKeep 	a <code>Collection</code> of <code>String</code>s 
-     * 							representing the OBO-style IDs of the classes 
-     * 							to be kept in the ontology. 
-     * @return					An <code>int</code> representing the number of classes removed 
-     * 							as a result. 
-     */
-    private int filterClasses(Collection<String> classIdsToKeep)
-    {
-    	log.entry(classIdsToKeep);
-    	
-    	//getting the remover to remove undesired classes
-    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
-    			this.getOwlGraphWrapper().getAllOntologies());
-    	
-    	int classesRemoved = 0;
-    	//now remove all classes not included in classIdsToKeep
-    	for (OWLOntology o : this.getOwlGraphWrapper().getAllOntologies()) {
-    		for (OWLClass iterateClass: o.getClassesInSignature()) {
-			    String shortFormName = this.getOwlGraphWrapper().getIdentifier(iterateClass);
-			    //in case the IDs were not OBO-style IDs
-			    String iriId = iterateClass.getIRI().toString();
-			    if (!classIdsToKeep.contains(shortFormName) && 
-			    		!classIdsToKeep.contains(iriId)) {
-				    iterateClass.accept(remover);
-				    classesRemoved++;
-				    log.debug("Removing OWLClass {}", shortFormName);
-			    }
-    		}
-    	}
-    	this.applyChanges(remover.getChanges());
-    	
-    	return log.exit(classesRemoved);
-    }
-    
-    
-    
     /**
      * Filter the <code>OWLSubClassOfAxiom</code>s in the ontology to keep only  
      * those that correspond to OBO relations listed in <code>allowedRels</code>, 
@@ -1045,6 +977,76 @@ public class OWLGraphManipulator
     	
     	this.removeEdges(relsToRemove);
     	return log.exit(relsToRemove.size());
+    }
+    
+
+    
+    /**
+     * Remove from the ontology all classes with an OBO-style ID 
+     * listed in <code>classIdsToDel</code>. 
+     * 
+     * @param classIdsToDel 	a <code>Collection</code> of <code>String</code>s 
+     * 							representing the OBO-style IDs of the classes 
+     * 							to be removed from the ontology. 
+     * @return					An <code>int</code> representing the number of classes 
+     * 							actually removed as a result. 
+     */
+    private int removeClasses(Collection<String> classIdsToDel)
+    {
+    	log.entry(classIdsToDel);
+    	
+    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
+    			this.getOwlGraphWrapper().getAllOntologies());
+    	
+    	int classesRemoved = 0;
+    	for (String classId: classIdsToDel) {
+    		OWLClass classToDel = this.getOwlGraphWrapper().getOWLClassByIdentifier(classId);
+    		if (classToDel != null) {
+    			classToDel.accept(remover);
+			    classesRemoved++;
+			    log.debug("Removing OWLClass {}", classId);
+    		}
+    	}
+    	this.applyChanges(remover.getChanges());
+    	
+    	return log.exit(classesRemoved);
+    }
+    /**
+     * Filter from the ontology all classes with an OBO-style ID 
+     * present in <code>classIdsToKeep</code>, and remove all other classes not listed. 
+     * 
+     * @param classIdsToKeep 	a <code>Collection</code> of <code>String</code>s 
+     * 							representing the OBO-style IDs of the classes 
+     * 							to be kept in the ontology. 
+     * @return					An <code>int</code> representing the number of classes removed 
+     * 							as a result. 
+     */
+    private int filterClasses(Collection<String> classIdsToKeep)
+    {
+    	log.entry(classIdsToKeep);
+    	
+    	//getting the remover to remove undesired classes
+    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
+    			this.getOwlGraphWrapper().getAllOntologies());
+    	
+    	int classesRemoved = 0;
+    	//now remove all classes not included in classIdsToKeep
+    	for (OWLOntology o : this.getOwlGraphWrapper().getAllOntologies()) {
+    		for (OWLClass iterateClass: o.getClassesInSignature()) {
+			    String shortFormName = this.getOwlGraphWrapper().getIdentifier(iterateClass);
+			    //in case the IDs were not OBO-style IDs
+			    String iriId = iterateClass.getIRI().toString();
+			    if (!classIdsToKeep.contains(shortFormName) && 
+			    		!classIdsToKeep.contains(iriId)) {
+				    iterateClass.accept(remover);
+				    classesRemoved++;
+				    log.debug("Removing OWLClass {}", shortFormName);
+			    }
+    		}
+    	}
+    	this.applyChanges(remover.getChanges());
+    	
+    	return log.exit(classesRemoved);
     }
     
     

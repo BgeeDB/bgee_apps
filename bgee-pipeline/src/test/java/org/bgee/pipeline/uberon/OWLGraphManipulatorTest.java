@@ -336,13 +336,198 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		}
 	}
 	
+	//***********************************************
+	//    TEST MAPPING RELATIONS TO PARENT
+	//***********************************************
+	/**
+	 * Test the functionalities of 
+	 * {@link OWLGraphManipulator#mapRelationsToParent(Collection)}.
+	 */
+	@Test
+	public void shouldMapRelationsToParent()
+	{
+		//get the original number of axioms
+	    int axiomCountBefore = 
+	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+				
+	    //map sub-relations to part_of and has_developmental_contribution_from
+	    Collection<String> parentRelIds = new ArrayList<String>();
+	    parentRelIds.add("BFO:0000050");
+	    parentRelIds.add("RO:0002254");
+		int relsUpdated = this.graphManipulator.mapRelationsToParent(parentRelIds);
+		
+		//get the number of axioms after removal
+		int axiomCountAfter = 
+				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+				
+		//3 relations should have been updated
+		assertEquals("Incorrect number of relations updated", 3, relsUpdated);
+		//check that the number of axioms is the same 
+		assertEquals("Number of axioms has changed", 0, axiomCountBefore - axiomCountAfter);
+		
+		//Check that the relations updated correspond to the proper relations to update
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLDataFactory factory = this.graphManipulator.getOwlGraphWrapper().
+				getManager().getOWLDataFactory();
+		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		OWLObjectProperty inDeepPartOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("in_deep_part_of");
+		OWLObjectProperty hasDvlptCont = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("RO:0002254");
+		OWLObjectProperty dvlptFrom = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("RO:0002202");
+		OWLObjectProperty transfOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("http://semanticscience.org/resource/SIO_000657");
+		
+		//FOO:0003 in_deep_part_of FOO:0004 updated to 
+		//FOO:0003 part_of FOO:0004
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
+		OWLClass target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0004");
+		
+		OWLGraphEdge checkEdge = new OWLGraphEdge(source, target, inDeepPartOf, 
+				Quantifier.SOME, ont);
+		OWLAxiom oldAxiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		
+		checkEdge = new OWLGraphEdge(source, target, partOf, 
+				Quantifier.SOME, ont);
+		OWLAxiom newAxiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		
+		assertFalse("Relation FOO:0003 in_deep_part_of FOO:0004 was not removed", 
+				ont.containsAxiom(oldAxiom));
+		assertTrue("Relation FOO:0003 part_of FOO:0004 was not added", 
+				ont.containsAxiom(newAxiom));
+		
+		
+		//FOO:0012 transformation_of FOO:0008 updated to 
+		//FOO:0012 has_developmental_contribution_from FOO:0008
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0012");
+		target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0008");
+
+		checkEdge = new OWLGraphEdge(source, target, transfOf, 
+				Quantifier.SOME, ont);
+		oldAxiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+
+		checkEdge = new OWLGraphEdge(source, target, hasDvlptCont, 
+				Quantifier.SOME, ont);
+		newAxiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+
+		assertFalse("Relation FOO:0012 transformation_of FOO:0008 was not removed", 
+				ont.containsAxiom(oldAxiom));
+		assertTrue("Relation FOO:0012 has_developmental_contribution_from FOO:0008 was not added", 
+				ont.containsAxiom(newAxiom));
+
+		
+		//FOO:0008 develops_from FOO:0007 updated to 
+		//FOO:0008 has_developmental_contribution_from FOO:0007
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0008");
+		target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0007");
+
+		checkEdge = new OWLGraphEdge(source, target, dvlptFrom, 
+				Quantifier.SOME, ont);
+		oldAxiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+
+		checkEdge = new OWLGraphEdge(source, target, hasDvlptCont, 
+				Quantifier.SOME, ont);
+		newAxiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+
+		assertFalse("Relation FOO:0008 develops_from FOO:0007 was not removed", 
+				ont.containsAxiom(oldAxiom));
+		assertTrue("Relation FOO:0008 has_developmental_contribution_from FOO:0007 was not added", 
+				ont.containsAxiom(newAxiom));
+	}
+	
+	/**
+	 * Test the functionalities of 
+	 * {@link OWLGraphManipulator#mapRelationsToParent(Collection, Collection)}.
+	 */
+	@Test
+	public void shouldMapRelationsToParentWithRelsExcluded()
+	{
+		//get the original number of axioms
+	    int axiomCountBefore = 
+	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+				
+	    //map sub-relations to part_of and has_developmental_contribution_from
+	    Collection<String> parentRelIds = new ArrayList<String>();
+	    parentRelIds.add("BFO:0000050");
+	    parentRelIds.add("RO:0002254");
+	    //exclude from mapping develops_from (and sub-relations)
+	    Collection<String> relIdsExcluded = new ArrayList<String>();
+	    relIdsExcluded.add("RO:0002202");
+		int relsUpdated = this.graphManipulator.mapRelationsToParent(parentRelIds, relIdsExcluded);
+		
+		//get the number of axioms after removal
+		int axiomCountAfter = 
+				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+				
+		//only 1 relations should have been updated, 
+		//as develops_from is excluded from mapping (and so its sub-relation 
+		//transformation_of as well)
+		assertEquals("Incorrect number of relations updated", 1, relsUpdated);
+		//check that the number of axioms is the same 
+		assertEquals("Number of axioms has changed", 0, axiomCountBefore - axiomCountAfter);
+		
+		//Check that the relations updated correspond to the proper relations to update
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLDataFactory factory = this.graphManipulator.getOwlGraphWrapper().
+				getManager().getOWLDataFactory();
+		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		OWLObjectProperty inDeepPartOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("in_deep_part_of");
+		
+		//FOO:0003 in_deep_part_of FOO:0004 updated to 
+		//FOO:0003 part_of FOO:0004
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
+		OWLClass target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0004");
+		
+		OWLGraphEdge checkEdge = new OWLGraphEdge(source, target, inDeepPartOf, 
+				Quantifier.SOME, ont);
+		OWLAxiom oldAxiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		
+		checkEdge = new OWLGraphEdge(source, target, partOf, 
+				Quantifier.SOME, ont);
+		OWLAxiom newAxiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		
+		assertFalse("Relation FOO:0003 in_deep_part_of FOO:0004 was not removed", 
+				ont.containsAxiom(oldAxiom));
+		assertTrue("Relation FOO:0003 part_of FOO:0004 was not added", 
+				ont.containsAxiom(newAxiom));
+		
+	}
+	
 	
 	//***********************************************
 	//    RELATION FILTERING AND REMOVAL TESTS
 	//***********************************************
 	/**
 	 * Test the functionalities of 
-	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
+	 * {@link OWLGraphManipulator#filterRelations(Collection, boolean)} 
 	 * with the <code>boolean</code> parameters set to <code>false</code>.
 	 */
 	@Test

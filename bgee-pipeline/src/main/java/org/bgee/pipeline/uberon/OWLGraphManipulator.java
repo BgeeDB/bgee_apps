@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.Vector;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1056,9 +1057,124 @@ public class OWLGraphManipulator
     	
     }
     
-    public void removeClassAndPropagateEdges(OWLClass owlClassToRemove)
+    /**
+	 * Remove the <code>OWLClass</code> with the OBO-style ID <code>classToRemoveId</code> 
+	 * from the ontology, and propagate its incoming edges to the targets 
+	 * of its outgoing edges. Each incoming edges are composed with each outgoing edges 
+	 * (see {@link #combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}).
+	 * <p>
+	 * This method returns the number of relations propagated and actually added 
+	 * to the ontology (propagated relations corresponding to a relation already 
+	 * existing in the ontology, or a less precise relation than an already existing one, 
+	 * will not be counted). It returns 0 only when no relations were propagated (or added). 
+	 * Rather than returning 0 when the  <code>OWLClass</code> could not be found or removed, 
+	 * an <code>IllegalArgumentException</code> is thrown. 
+	 * 
+	 * @param classToRemoveId 	A <code>String</code> corresponding to the OBO-style ID 
+	 * 							of the <code>OWLClass</code> to remove. 
+	 * @return 					An <code>int</code> corresponding to the number of relations 
+	 * 							that could be combined, and that were actually added 
+	 * 							to the ontology. 
+	 * @throws IllegalArgumentException	If no <code>OWLClass</code> corresponding to 
+	 * 									<code>classToRemoveId</code> could be found, 
+	 * 									or if the class could not be removed. This is for the sake 
+	 * 									of not returning 0 when such problems appear, but only 
+	 * 									when no relations were propagated. 
+	 */
+    public int removeClassAndPropagateEdges(String classToRemoveId) 
+    		throws IllegalArgumentException
     {
+    	log.entry(classToRemoveId);
     	
+    	OWLClass classToRemove = 
+    			this.getOwlGraphWrapper().getOWLClassByIdentifier(classToRemoveId);
+    	if (classToRemove == null) {
+    		throw new IllegalArgumentException(classToRemoveId + 
+    				" was not found in the ontology");
+    	}
+    	
+    	log.info("Start removing class {} and propagating edges...", classToRemove);
+    	
+    	//propagate the incoming edges to the targets of the outgoing edges.
+    	//start by iterating the incoming edges.
+    	//we need to iterate all ontologies in order to set the ontology 
+    	//of the incoming edges (owltools bug?)
+    	int couldNotCombineWarnings = 0;
+    	//edges to be added for propagating relations
+    	Set<OWLGraphEdge> newEdges = new HashSet<OWLGraphEdge>();
+    	
+    	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
+    		for (OWLGraphEdge incomingEdge: 
+    			    this.getOwlGraphWrapper().getIncomingEdges(classToRemove)) {
+    			//fix bug
+    			incomingEdge.setOntology(ont);
+    			
+    			//now propagate each incoming edge to each outgoing edge
+    			for (OWLGraphEdge outgoingEdge: 
+    				    this.getOwlGraphWrapper().getOutgoingEdges(classToRemove)) {
+    				//fix bug
+    				outgoingEdge.setOntology(ont);
+    				
+    				log.debug("Trying to combine incoming edge {} with outgoing edge {}", 
+    						incomingEdge, outgoingEdge);
+    				//combine edges
+    				OWLGraphEdge combine = 
+							this.combineEdgePairWithSuperProps(incomingEdge, outgoingEdge);
+					//successfully combined
+					if (combine != null && combine.getQuantifiedPropertyList().size() == 1) {
+					    log.debug("Successfully combining edges into: {}", combine);
+					    
+						//now let's see if there is an already existing relation equivalent 
+						//to the combined one, or a more precise one
+						boolean alreadyExist = false;
+						for (OWLGraphEdge testIfExistEdge: 
+							    this.getOWLGraphEdgeSubRelsReflexive(combine)) {
+							if (ont.containsAxiom(this.getAxiom(testIfExistEdge))) {
+								alreadyExist = true;
+								break;
+							}
+						}
+						if (!alreadyExist) {
+						    newEdges.add(combine);
+						    log.debug("Combined relation does not already exist and will be added");
+						} else {
+							log.debug("Equivalent or more precise relation already exist, combined relation not added");
+						}
+					} else {
+						couldNotCombineWarnings++;
+						log.debug("Could not combine edges.");
+					}
+    			}
+    		}
+    	}
+    	//now remove the class
+    	log.debug("Removing class {}", classToRemove);
+    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
+    			this.getOwlGraphWrapper().getAllOntologies());
+    	classToRemove.accept(remover);
+    	
+    	if (this.applyChanges(remover.getChanges()) == 0) {
+    		//if the class was not removed from the ontology, throw an IllegalArgumentException 
+    		//(maybe it was only in the owltools cache for instance?).
+    		//it allows to distinguish the case when this method returns 0 because 
+    		//there was no incoming edge to propagate, from the case when it is because 
+    		//the class was not removed from the ontology
+    		throw new IllegalArgumentException(classToRemove + 
+    				" could not be removed from the ontology");
+    	}
+    	
+    	//now, add the propagated edges to the ontology
+    	int edgesPropagated = this.addEdges(newEdges);
+    	//test that everything went fine
+    	if (edgesPropagated != newEdges.size()) {
+    		throw new AssertionError("Incorrect number of propagated edges added, expected " + 
+    				newEdges.size() + ", but was " + edgesPropagated);
+    	}
+    	
+    	log.info("Done removing class and propagating edges, {} edges propagated, {} could not be propagated", 
+    			edgesPropagated, couldNotCombineWarnings);
+    	
+    	return log.exit(edgesPropagated);
     }
     
     //convenient method
@@ -1392,6 +1508,109 @@ public class OWLGraphManipulator
     	return log.exit(
     			(partOfRels.contains(edge.getSingleQuantifiedProperty().getProperty())));
     }
+    
+    /**
+	 * Get the sub-relations of <code>edge</code>. This method returns 
+	 * <code>OWLGraphEdge</code>s with their <code>OWLQuantifiedProperty</code>s 
+	 * corresponding to the sub-properties of the ones in <code>edge</code> 
+	 * (even indirect sub-properties), ordered from the more general relations 
+	 * (the closest to <code>edge</code>) to the more precise relations. 
+	 * The first <code>OWLGraphEdge</code> in the returned <code>Set</code> 
+	 * is <code>edge</code> (reflexive method).
+	 * <p>
+	 * This is the opposite method of 
+	 * <code>owltools.graph.OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers(OWLGraphEdge)</code>.
+	 * 
+	 * @param edge	A <code>OWLGraphEdge</code> for which all sub-relations 
+	 * 				should be obtained.
+	 * @return 		A <code>Set</code> of <code>OWLGraphEdge</code>s representing 
+	 * 				the sub-relations of <code>edge</code> ordered from the more general 
+	 * 				to the more precise relation, with <code>edge</code> as the first element. 
+	 * 				An empty <code>Set</code> if the <code>OWLQuantifiedProperty</code>s 
+	 * 				of <code>edge</code> have no sub-properties.
+	 */
+	public LinkedHashSet<OWLGraphEdge> getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge edge) 
+	{
+		log.entry(edge);
+		return log.exit(this.getOWLGraphEdgeSubRelsReflexive(edge, 0));
+	}
+	
+	/**
+	 * Similar to {@link getOWLGraphEdgeSubRels(OWLGraphEdge)}, 
+	 * except the <code>OWLQuantifiedProperty</code>s of <code>edge</code> are analyzed 
+	 * starting from the index <code>propIndex</code>.
+	 * 
+	 * @param edge 		A <code>OWLGraphEdge</code> for which sub-relations 
+	 * 					should be obtained, with properties analyzed from index 
+	 * 					<code>propIndex</code>
+	 * @param propIndex	An <code>int</code> representing the index of the 
+	 * 					<code>OWLQuantifiedProperty</code> of <code>edge</code> 
+	 * 					to start the analysis with.
+	 * @return 		A <code>Set</code> of <code>OWLGraphEdge</code>s representing 
+	 * 				the sub-relations of <code>edge</code> ordered from the more general 
+	 * 				to the more precise relation, with <code>edge</code> as the first element, 
+	 * 				and with only <code>OWLQuantifiedProperty</code> starting at index 
+	 * 				<code>propIndex</code>. An empty <code>Set</code> 
+	 * 				if the <code>OWLQuantifiedProperty</code>s of <code>edge</code> 
+	 * 				have no sub-properties.
+	 */
+	private LinkedHashSet<OWLGraphEdge> getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge edge, 
+			int propIndex) 
+	{
+		log.entry(edge, propIndex);
+		//OWLGraphWrapperEdges.isExcluded should be made public, or a method to achieve 
+		//a part of the operations performed in OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers 
+		//provided (see code below).
+		//here's a hack to use it
+		LinkedHashSet<OWLGraphEdge> subRels = new LinkedHashSet<OWLGraphEdge>();
+		try {
+			Method excludedMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
+					"isExcluded", new Class<?>[] {OWLQuantifiedProperty.class});
+			excludedMethod.setAccessible(true);
+
+			if (propIndex >= edge.getQuantifiedPropertyList().size()) {
+				subRels.add(new OWLGraphEdge(edge.getSource(), edge.getTarget(), 
+						new Vector<OWLQuantifiedProperty>(), null));
+				return subRels;
+			}
+			OWLQuantifiedProperty quantProp = edge.getQuantifiedPropertyList().get(propIndex);
+			LinkedHashSet<OWLQuantifiedProperty> subQuantProps = 
+					new LinkedHashSet<OWLQuantifiedProperty>();
+			subQuantProps.add(quantProp);
+			OWLObjectProperty prop = quantProp.getProperty();
+			if (prop != null) {
+				for (OWLObjectPropertyExpression propExp : this.getSubPropertyClosureOf(prop)) {
+					if (propExp.equals(this.getOwlGraphWrapper().getDataFactory().
+							getOWLTopObjectProperty()))
+						continue;
+					if (propExp instanceof OWLObjectProperty) {
+						OWLQuantifiedProperty newQp = 
+								new OWLQuantifiedProperty(propExp, quantProp.getQuantifier());
+						boolean isExcluded = (boolean) excludedMethod.invoke(
+								this.getOwlGraphWrapper(), new Object[] {newQp});
+						if (!isExcluded) {
+							subQuantProps.add(newQp);
+						}
+					}
+				}
+			}
+			for (OWLQuantifiedProperty subQuantProp : subQuantProps) {
+				for (OWLGraphEdge nextPropEdge : this.getOWLGraphEdgeSubRelsReflexive(edge, 
+						propIndex+1)) {
+					List<OWLQuantifiedProperty> quantProps = new Vector<OWLQuantifiedProperty>();
+					quantProps.add(subQuantProp);
+					quantProps.addAll(nextPropEdge.getQuantifiedPropertyList());
+
+					subRels.add(new OWLGraphEdge(edge.getSource(),edge.getTarget(),
+							quantProps, edge.getOntology()));
+				}
+			}
+		} catch (Exception e) {
+			log.error("Error due to hack to use owltools private methods", e);
+		}
+
+		return log.exit(subRels);
+	}
 	
     
     /**

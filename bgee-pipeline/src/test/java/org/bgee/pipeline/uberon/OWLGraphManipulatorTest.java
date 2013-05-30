@@ -523,6 +523,72 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	
 	
 	//***********************************************
+	//    REMOVE CLASS AND PROPAGATE EDGE TESTS
+	//***********************************************
+	/**
+	 * Test the functionalities of 
+	 * {@link OWLGraphManipulator#removeClassAndPropagateEdges(String)}.
+	 */
+	@Test
+	public void shouldRemoveClassAndPropagateEdges()
+	{
+		//remove 
+		int relsPropagated = this.graphManipulator.removeClassAndPropagateEdges("FOO:0007");
+	}
+	
+	/**
+	 * Test the functionalities of 
+	 * {@link OWLGraphManipulator#getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge)}.
+	 */
+	@Test
+	public void shouldGetOWLGraphEdgeSubRelsReflexive()
+	{
+		//get an edge to perform test on it
+		//test with the fake relations of the test ontology
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
+		OWLClass target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		OWLObjectProperty fakeRel1 = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("fake_rel1");
+		
+		OWLGraphEdge testEdge = new OWLGraphEdge(source, target, fakeRel1, Quantifier.SOME, ont);
+		
+		int subRelRank = 0;
+		for (OWLGraphEdge subRel: this.graphManipulator.getOWLGraphEdgeSubRelsReflexive(testEdge)) {
+			if (subRelRank == 0) {
+				//first relation should be fake_rel1 (reflexive method)
+				assertEquals("Incorrect order of sub-properties, 1st relation", 
+						fakeRel1, subRel.getSingleQuantifiedProperty().getProperty());
+			} else if (subRelRank == 1) {
+				//then fake_rel2
+				OWLObjectProperty fakeRel2 = this.graphManipulator.getOwlGraphWrapper().
+						getOWLObjectPropertyByIdentifier("fake_rel2");
+				assertEquals("Incorrect order of sub-properties, 2nd relation", 
+						fakeRel2, subRel.getSingleQuantifiedProperty().getProperty());
+			} else if (subRelRank == 2 || subRelRank == 3) {
+				//next relation should be either fake_rel3, or fake_rel4
+				OWLObjectProperty fakeRel3 = this.graphManipulator.getOwlGraphWrapper().
+						getOWLObjectPropertyByIdentifier("fake_rel3");
+				OWLObjectProperty fakeRel4 = this.graphManipulator.getOwlGraphWrapper().
+						getOWLObjectPropertyByIdentifier("fake_rel4");
+				assertTrue("Incorrect order of sub-properties, 3rd or 4th relation", 
+					(fakeRel3.equals(subRel.getSingleQuantifiedProperty().getProperty()) || 
+					fakeRel4.equals(subRel.getSingleQuantifiedProperty().getProperty())));
+			} else {
+				//should not be reached
+				throw new AssertionError("Incorrect number of sub-relations");
+			}
+			subRelRank++;
+		}
+		
+		//check that they were 4 sub-relations
+		assertEquals("Incorrect number of sub-relations", 4, subRelRank);
+	}
+	
+	
+	//***********************************************
 	//    RELATION FILTERING AND REMOVAL TESTS
 	//***********************************************
 	/**

@@ -364,6 +364,143 @@ public class OWLGraphManipulator
 	
 	
 	
+
+    /**
+     * Replace the sub-relations of <code>parentRelations</code> by these parent relations. 
+     * <code>parentRelations</code> contains the OBO-style IDs of the parent relations 
+     * (for instance, "BFO:0000050"). All their sub-relations will be replaced by 
+     * these parent relations. 
+     * <p>
+     * For instance, if <code>parentRelations</code> contains "RO:0002202" ("develops_from" ID), 
+     * all sub-relations will be replaced: "transformation_of" relations will be replaced 
+     * by "develops_from", "immediate_transformation_of" will be replaced by "develops_from", ...
+     * 
+     * @param parentRelations 	A <code>Collection</code> of <code>String</code>s containing 
+     * 							the OBO-style IDs of the parent relations, that should replace 
+     * 							all their sub-relations.
+     * @return					An <code>int</code> that is the number of relations replaced.
+     * 
+     * @see #mapRelationsToParent(Collection, Collection)
+     */
+    public int mapRelationsToParent(Collection<String> parentRelations)
+    {
+    	log.entry(parentRelations);
+    	return log.exit(this.mapRelationsToParent(parentRelations, null));
+    }
+    /**
+     * Replace the sub-relations of <code>parentRelations</code> by these parent relations. 
+     * <code>parentRelations</code> contains the OBO-style IDs of the parent relations 
+     * (for instance, "BFO:0000050"). All their sub-relations will be replaced by 
+     * these parent relations. 
+     * <p>
+     * For instance, if <code>parentRelations</code> contains "RO:0002202" ("develops_from" ID), 
+     * all sub-relations will be replaced: "transformation_of" relations will be replaced 
+     * by "develops_from", "immediate_transformation_of" will be replaced by "develops_from", ...
+     * <p>
+     * If a sub-relation of a relation in <code>parentRelations</code> should not be mapped, 
+     * its OBO-style ID should be added to <code>relsExcluded</code>. In the previous example, 
+     * if <code>relsExcluded</code> contained "SIO:000658" "immediate_transformation_of", 
+     * this relation would not be replaced by "develops_from". All sub-relations 
+     * of <code>relsExcluded</code> are excluded from replacement. 
+     * 
+     * @param parentRelations 	A <code>Collection</code> of <code>String</code>s containing 
+     * 							the OBO-style IDs of the parent relations, that should replace 
+     * 							all their sub-relations, except those in <code>relsExcluded</code>.
+     * @param relsExcluded		A <code>Collection</code> of <code>String</code>s containing 
+     * 							the OBO-style IDs of the relations excluded from replacement. 
+     * 							All their sub-relations will be also be excluded.
+     * @return					An <code>int</code> that is the number of relations replaced.
+     * 
+     * @see #mapRelationsToParent(Collection)
+     */
+    public int mapRelationsToParent(Collection<String> parentRelations, 
+    		Collection<String> relsExcluded)
+    {
+    	log.entry(parentRelations, relsExcluded);
+    	log.info("Replacing relations by their parent relation: {} - except relations: {}", 
+    			parentRelations, relsExcluded);
+    	
+    	//first, get the properties corresponding to the excluded relations, 
+    	//and their sub-relations, not to be mapped to their parent
+    	Set<OWLObjectPropertyExpression> relExclProps = 
+    			new HashSet<OWLObjectPropertyExpression>();
+    	if (relsExcluded != null) {
+    		for (String relExclId: relsExcluded) {
+    			OWLObjectProperty relExclProp = 
+    					this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(relExclId);
+    			if (relExclProp != null) {
+    				relExclProps.add(relExclProp);
+    				relExclProps.addAll(this.getSubPropertyClosureOf(relExclProp));
+    				log.trace("Relation {} and its children will not be replaced", relExclProp);
+    			}
+    		}
+    		log.trace("List of relations excluded: {}", relExclProps);
+    	}
+    	
+    	//get the properties corresponding to the parent relations, 
+    	//and create a map where their sub-properties are associated to it, 
+    	//except the excluded properties
+    	Map<OWLObjectPropertyExpression, OWLObjectPropertyExpression> subPropToParent = 
+    			new HashMap<OWLObjectPropertyExpression, OWLObjectPropertyExpression>();
+    	
+    	for (String parentRelId: parentRelations) {
+    		OWLObjectProperty parentProp = 
+    				this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(parentRelId);
+    		if (parentProp != null) {
+    			for (OWLObjectPropertyExpression subProp: 
+    				        this.getSubPropertyClosureOf(parentProp)) {
+    				//put in the map only the sub-properties that actually need to be mapped 
+    				//(properties not excluded)
+    				if (!relExclProps.contains(subProp)) {
+    				    subPropToParent.put(subProp, parentProp);
+    				    log.trace("Relation {} will be replaced by {}", subProp, parentProp);
+    				}
+    			}
+    		}
+    	}
+    	
+    	//now, check each outgoing edge of each OWL class of each ontology
+    	Set<OWLGraphEdge> edgesToRemove = new HashSet<OWLGraphEdge>();
+    	Set<OWLGraphEdge> edgesToAdd    = new HashSet<OWLGraphEdge>();
+    	for (OWLOntology ontology: this.getOwlGraphWrapper().getAllOntologies()) {
+    		for (OWLClass iterateClass: ontology.getClassesInSignature()) {
+    			for (OWLGraphEdge edge: 
+    				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
+    				//if it is a sub-property that should be mapped to a parent
+    				OWLObjectPropertyExpression parentProp;
+    				if ((parentProp = subPropToParent.get(
+    						edge.getSingleQuantifiedProperty().getProperty())) != null) {
+    					
+    					//store the edge to remove and to add, to perform all modifications 
+    					//at once (more efficient)
+    					edgesToRemove.add(edge);
+    					OWLGraphEdge newEdge = 
+    							new OWLGraphEdge(edge.getSource(), edge.getTarget(), 
+    							parentProp, edge.getSingleQuantifiedProperty().getQuantifier(), 
+    							ontology);
+    					edgesToAdd.add(newEdge);
+    					log.debug("Replacing relation {} by {}", edge, newEdge);
+    				} else {
+    					log.trace("Relation not replaced: {}", edge);
+    				}
+    			}
+    		}
+    	}
+    	
+    	int removeCount = this.removeEdges(edgesToRemove);
+    	int addCount    = this.addEdges(edgesToAdd);
+    	if (removeCount == addCount) {
+    		log.info("Done replacing relations by their parent relation, {} relations replaced", 
+    				removeCount);
+    	    return log.exit(removeCount);
+    	}
+    	
+    	throw new AssertionError("Inconsistent number of relations removed and added " +
+    			"when trying to replace relations with their parent relations");
+    }
+	
+	
+	
 	
     /**
      * Keep in the ontologies only the subgraphs starting 
@@ -920,48 +1057,6 @@ public class OWLGraphManipulator
     public void removeClassAndPropagateEdges(OWLClass owlClassToRemove)
     {
     	
-    }
-    
-    public void mapRelationsToParents(Collection<String> parentRelations, 
-    		Collection<String> relsExcluded)
-    {
-    	//first, get the properties corresponding to the excluded relations, 
-    	//not to be mapped to their parent
-    	Set<OWLObjectPropertyExpression> relExclProps = 
-    			new HashSet<OWLObjectPropertyExpression>();
-    	for (String relExclId: relsExcluded) {
-    		OWLObjectProperty relExclProp = 
-    				this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(relExclId);
-    		if (relExclProp != null) {
-    			relExclProps.add(relExclProp);
-    		}
-    	}
-    	
-    	//get the properties corresponding to the parent relations, 
-    	//and create a map where their sub-properties are associated to it, 
-    	//except the excluded properties
-    	Map<OWLObjectPropertyExpression, OWLObjectPropertyExpression> subPropToParent = 
-    			new HashMap<OWLObjectPropertyExpression, OWLObjectPropertyExpression>();
-    	
-    	for (String parentRelId: parentRelations) {
-    		OWLObjectProperty parentProp = 
-    				this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(parentRelId);
-    		if (parentProp != null) {
-    			for (OWLObjectPropertyExpression subProp: 
-    				        this.getSubPropertyClosureOf(parentProp)) {
-    				//put in the map only the sub-properties that actually need to be mapped 
-    				//(properties not excluded)
-    				if (!relExclProps.contains(subProp)) {
-    				    subPropToParent.put(subProp, parentProp);
-    				}
-    			}
-    		}
-    	}
-    	
-    	//now, check each outgoing edge of each OWL class of each ontology
-    	for (OWLOntology ontology: this.getOwlGraphWrapper().getAllOntologies()) {
-    		//for (OWLClass iterateClass: ontology.getcl)
-    	}
     }
     
     //convenient method

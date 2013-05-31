@@ -1122,6 +1122,8 @@ public class OWLGraphManipulator
 							this.combineEdgePairWithSuperProps(incomingEdge, outgoingEdge);
 					//successfully combined
 					if (combine != null && combine.getQuantifiedPropertyList().size() == 1) {
+	    				//fix bug
+	    				combine.setOntology(ont);
 					    log.debug("Successfully combining edges into: {}", combine);
 					    
 						//now let's see if there is an already existing relation equivalent 

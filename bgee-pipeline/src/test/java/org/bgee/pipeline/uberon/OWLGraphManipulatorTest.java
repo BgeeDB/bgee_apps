@@ -532,8 +532,85 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	@Test
 	public void shouldRemoveClassAndPropagateEdges()
 	{
-		//remove 
-		int relsPropagated = this.graphManipulator.removeClassAndPropagateEdges("FOO:0007");
+		//remove FOO:0004, which has 2 outgoing edges: 
+		//FOO:0004 part_of FOO:0002 and FOO:0004 overlaps FOO:0001
+		//and two incoming edges: 
+		//FOO:0015 is_a FOO:0004 and FOO:0003 in_deep_part_of FOO:0004
+		//Of note, FOO:0003 has also a relation part_of to FOO:0001.
+		int relsPropagated = this.graphManipulator.removeClassAndPropagateEdges("FOO:0004");
+		//3 edges should have been propagated
+		assertEquals("Incorrect number of edges propagated", 3, relsPropagated);
+		//check that the class was indeed removed
+		assertNull("Class FOO:0004 was not removed", 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0004"));
+		
+		//check the actual relations
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLDataFactory factory = this.graphManipulator.getOwlGraphWrapper().
+				getManager().getOWLDataFactory();
+		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		OWLObjectProperty overlaps = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("RO:0002131");
+		
+		//all outgoing edges of FOO:0004 should have been propagated to FOO:0015 
+		//(because FOO:0015 is_a FOO:0004). The resulting new edge are: 
+		//FOO:0015 overlaps FOO:0001 and FOO:0015 part_of FOO:0002
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0015");
+		OWLClass target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		
+		OWLGraphEdge checkEdge = new OWLGraphEdge(source, target, overlaps, 
+				Quantifier.SOME, ont);
+		OWLAxiom axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertTrue("Relation FOO:0015 overlaps FOO:0001 was not correctly created", 
+				ont.containsAxiom(axiom));
+		
+		target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0002");
+		
+		checkEdge = new OWLGraphEdge(source, target, partOf, 
+				Quantifier.SOME, ont);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertTrue("Relation FOO:0015 part_of FOO:0002 was not correctly created", 
+				ont.containsAxiom(axiom));
+		
+		//Propagation from FOO:0003: FOO:0003 in_deep_part_of FOO:0004
+		//only one resulting new edge, FOO:0003 part_of FOO:0002 (as FOO:0004 part_of FOO:0002).
+		//the other outgoing edge should not be combined: FOO:0004 overlaps FOO:0001 results 
+		//in a combined relation FOO:0003 overlaps FOO:0001, but a more precise relation 
+		//already exists (FOO:0003 part_of FOO:0001)
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
+		target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0002");
+		
+		checkEdge = new OWLGraphEdge(source, target, partOf, 
+				Quantifier.SOME, ont);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertTrue("Relation FOO:0003 part_of FOO:0002 was not correctly created", 
+				ont.containsAxiom(axiom));
+		
+		//check that FOO:0003 overlaps FOO:0001 was not incorrectly added
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
+		target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		
+		checkEdge = new OWLGraphEdge(source, target, overlaps, 
+				Quantifier.SOME, ont);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Relation FOO:0003 overlaps FOO:0001 was incorrectly added", 
+				ont.containsAxiom(axiom));
 	}
 	
 	/**

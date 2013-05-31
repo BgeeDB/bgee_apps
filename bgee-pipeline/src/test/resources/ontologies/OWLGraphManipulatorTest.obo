@@ -13,7 +13,7 @@ relationship: part_of FOO:0001 ! root
 [Term]
 id: FOO:0003
 name: B
-comment: the is_a relation to the root should be removed when testing filterSubgraphs(Collection), not the term itself. Also, part_of relation to the root is redundant and should be removed when calling reduceRelations()
+comment: the is_a relation to the root should be removed when testing filterSubgraphs(Collection), not the term itself. Also, part_of relation to the root is redundant and should be removed when calling reduceRelations(). It is also use for a propagation test when using removeClassAndPropagateEdges(String) on FOO:0004.
 relationship: in_deep_part_of FOO:0004 ! C
 relationship: part_of FOO:0001 ! root
 
@@ -89,6 +89,12 @@ comment: term part of both the subgraph to remove, and a subgraph to keep, shoul
 is_a: FOO:0001 ! root
 is_a: FOO:0006 ! subgraph2_root
 is_a: FOO:0002 ! A
+
+[Term]
+id: FOO:0015
+name: E
+comment: test of propagation when using removeClassAndPropagateEdges(String) on FOO:0004.
+is_a: FOO:0004 ! C
 
 [Typedef]
 id: overlaps

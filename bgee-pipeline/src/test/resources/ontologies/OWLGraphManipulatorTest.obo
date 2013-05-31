@@ -93,8 +93,9 @@ is_a: FOO:0002 ! A
 [Term]
 id: FOO:0015
 name: E
-comment: test of propagation when using removeClassAndPropagateEdges(String) on FOO:0004.
+comment: test of propagation when using removeClassAndPropagateEdges(String) on FOO:0004. Also, the relation part_of FOO:0001 is redundant and should be removed by reduceRelations()
 is_a: FOO:0004 ! C
+relationship: part_of FOO:0001 ! root
 
 [Typedef]
 id: overlaps

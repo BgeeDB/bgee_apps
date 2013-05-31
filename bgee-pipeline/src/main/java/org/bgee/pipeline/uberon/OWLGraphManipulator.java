@@ -363,7 +363,129 @@ public class OWLGraphManipulator
 		return log.exit(relationsRemoved);
 	}
 	
-	
+
+    
+    /**
+	 * Remove the <code>OWLClass</code> with the OBO-style ID <code>classToRemoveId</code> 
+	 * from the ontology, and propagate its incoming edges to the targets 
+	 * of its outgoing edges. Each incoming edges are composed with each outgoing edges 
+	 * (see {@link #combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}).
+	 * <p>
+	 * This method returns the number of relations propagated and actually added 
+	 * to the ontology (propagated relations corresponding to a relation already 
+	 * existing in the ontology, or a less precise relation than an already existing one, 
+	 * will not be counted). It returns 0 only when no relations were propagated (or added). 
+	 * Rather than returning 0 when the  <code>OWLClass</code> could not be found or removed, 
+	 * an <code>IllegalArgumentException</code> is thrown. 
+	 * 
+	 * @param classToRemoveId 	A <code>String</code> corresponding to the OBO-style ID 
+	 * 							of the <code>OWLClass</code> to remove. 
+	 * @return 					An <code>int</code> corresponding to the number of relations 
+	 * 							that could be combined, and that were actually added 
+	 * 							to the ontology. 
+	 * @throws IllegalArgumentException	If no <code>OWLClass</code> corresponding to 
+	 * 									<code>classToRemoveId</code> could be found, 
+	 * 									or if the class could not be removed. This is for the sake 
+	 * 									of not returning 0 when such problems appear, but only 
+	 * 									when no relations were propagated. 
+	 */
+    public int removeClassAndPropagateEdges(String classToRemoveId) 
+    		throws IllegalArgumentException
+    {
+    	log.entry(classToRemoveId);
+    	
+    	OWLClass classToRemove = 
+    			this.getOwlGraphWrapper().getOWLClassByIdentifier(classToRemoveId);
+    	if (classToRemove == null) {
+    		throw new IllegalArgumentException(classToRemoveId + 
+    				" was not found in the ontology");
+    	}
+    	
+    	log.info("Start removing class {} and propagating edges...", classToRemove);
+    	
+    	//propagate the incoming edges to the targets of the outgoing edges.
+    	//start by iterating the incoming edges.
+    	//we need to iterate all ontologies in order to set the ontology 
+    	//of the incoming edges (owltools bug?)
+    	int couldNotCombineWarnings = 0;
+    	//edges to be added for propagating relations
+    	Set<OWLGraphEdge> newEdges = new HashSet<OWLGraphEdge>();
+    	
+    	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
+    		for (OWLGraphEdge incomingEdge: 
+    			    this.getOwlGraphWrapper().getIncomingEdges(classToRemove)) {
+    			//fix bug
+    			incomingEdge.setOntology(ont);
+    			
+    			//now propagate each incoming edge to each outgoing edge
+    			for (OWLGraphEdge outgoingEdge: 
+    				    this.getOwlGraphWrapper().getOutgoingEdges(classToRemove)) {
+    				//fix bug
+    				outgoingEdge.setOntology(ont);
+    				
+    				log.debug("Trying to combine incoming edge {} with outgoing edge {}", 
+    						incomingEdge, outgoingEdge);
+    				//combine edges
+    				OWLGraphEdge combine = 
+							this.combineEdgePairWithSuperProps(incomingEdge, outgoingEdge);
+					//successfully combined
+					if (combine != null && combine.getQuantifiedPropertyList().size() == 1) {
+	    				//fix bug
+	    				combine.setOntology(ont);
+					    log.debug("Successfully combining edges into: {}", combine);
+					    
+						//now let's see if there is an already existing relation equivalent 
+						//to the combined one, or a more precise one
+						boolean alreadyExist = false;
+						for (OWLGraphEdge testIfExistEdge: 
+							    this.getOWLGraphEdgeSubRelsReflexive(combine)) {
+							if (ont.containsAxiom(this.getAxiom(testIfExistEdge))) {
+								alreadyExist = true;
+								break;
+							}
+						}
+						if (!alreadyExist) {
+						    newEdges.add(combine);
+						    log.debug("Combined relation does not already exist and will be added");
+						} else {
+							log.debug("Equivalent or more precise relation already exist, combined relation not added");
+						}
+					} else {
+						couldNotCombineWarnings++;
+						log.debug("Could not combine edges.");
+					}
+    			}
+    		}
+    	}
+    	//now remove the class
+    	log.debug("Removing class {}", classToRemove);
+    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
+    			this.getOwlGraphWrapper().getAllOntologies());
+    	classToRemove.accept(remover);
+    	
+    	if (this.applyChanges(remover.getChanges()) == 0) {
+    		//if the class was not removed from the ontology, throw an IllegalArgumentException 
+    		//(maybe it was only in the owltools cache for instance?).
+    		//it allows to distinguish the case when this method returns 0 because 
+    		//there was no incoming edge to propagate, from the case when it is because 
+    		//the class was not removed from the ontology
+    		throw new IllegalArgumentException(classToRemove + 
+    				" could not be removed from the ontology");
+    	}
+    	
+    	//now, add the propagated edges to the ontology
+    	int edgesPropagated = this.addEdges(newEdges);
+    	//test that everything went fine
+    	if (edgesPropagated != newEdges.size()) {
+    		throw new AssertionError("Incorrect number of propagated edges added, expected " + 
+    				newEdges.size() + ", but was " + edgesPropagated);
+    	}
+    	
+    	log.info("Done removing class and propagating edges, {} edges propagated, {} could not be propagated", 
+    			edgesPropagated, couldNotCombineWarnings);
+    	
+    	return log.exit(edgesPropagated);
+    }
 	
 
     /**
@@ -1057,128 +1179,6 @@ public class OWLGraphManipulator
     	
     }
     
-    /**
-	 * Remove the <code>OWLClass</code> with the OBO-style ID <code>classToRemoveId</code> 
-	 * from the ontology, and propagate its incoming edges to the targets 
-	 * of its outgoing edges. Each incoming edges are composed with each outgoing edges 
-	 * (see {@link #combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}).
-	 * <p>
-	 * This method returns the number of relations propagated and actually added 
-	 * to the ontology (propagated relations corresponding to a relation already 
-	 * existing in the ontology, or a less precise relation than an already existing one, 
-	 * will not be counted). It returns 0 only when no relations were propagated (or added). 
-	 * Rather than returning 0 when the  <code>OWLClass</code> could not be found or removed, 
-	 * an <code>IllegalArgumentException</code> is thrown. 
-	 * 
-	 * @param classToRemoveId 	A <code>String</code> corresponding to the OBO-style ID 
-	 * 							of the <code>OWLClass</code> to remove. 
-	 * @return 					An <code>int</code> corresponding to the number of relations 
-	 * 							that could be combined, and that were actually added 
-	 * 							to the ontology. 
-	 * @throws IllegalArgumentException	If no <code>OWLClass</code> corresponding to 
-	 * 									<code>classToRemoveId</code> could be found, 
-	 * 									or if the class could not be removed. This is for the sake 
-	 * 									of not returning 0 when such problems appear, but only 
-	 * 									when no relations were propagated. 
-	 */
-    public int removeClassAndPropagateEdges(String classToRemoveId) 
-    		throws IllegalArgumentException
-    {
-    	log.entry(classToRemoveId);
-    	
-    	OWLClass classToRemove = 
-    			this.getOwlGraphWrapper().getOWLClassByIdentifier(classToRemoveId);
-    	if (classToRemove == null) {
-    		throw new IllegalArgumentException(classToRemoveId + 
-    				" was not found in the ontology");
-    	}
-    	
-    	log.info("Start removing class {} and propagating edges...", classToRemove);
-    	
-    	//propagate the incoming edges to the targets of the outgoing edges.
-    	//start by iterating the incoming edges.
-    	//we need to iterate all ontologies in order to set the ontology 
-    	//of the incoming edges (owltools bug?)
-    	int couldNotCombineWarnings = 0;
-    	//edges to be added for propagating relations
-    	Set<OWLGraphEdge> newEdges = new HashSet<OWLGraphEdge>();
-    	
-    	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-    		for (OWLGraphEdge incomingEdge: 
-    			    this.getOwlGraphWrapper().getIncomingEdges(classToRemove)) {
-    			//fix bug
-    			incomingEdge.setOntology(ont);
-    			
-    			//now propagate each incoming edge to each outgoing edge
-    			for (OWLGraphEdge outgoingEdge: 
-    				    this.getOwlGraphWrapper().getOutgoingEdges(classToRemove)) {
-    				//fix bug
-    				outgoingEdge.setOntology(ont);
-    				
-    				log.debug("Trying to combine incoming edge {} with outgoing edge {}", 
-    						incomingEdge, outgoingEdge);
-    				//combine edges
-    				OWLGraphEdge combine = 
-							this.combineEdgePairWithSuperProps(incomingEdge, outgoingEdge);
-					//successfully combined
-					if (combine != null && combine.getQuantifiedPropertyList().size() == 1) {
-	    				//fix bug
-	    				combine.setOntology(ont);
-					    log.debug("Successfully combining edges into: {}", combine);
-					    
-						//now let's see if there is an already existing relation equivalent 
-						//to the combined one, or a more precise one
-						boolean alreadyExist = false;
-						for (OWLGraphEdge testIfExistEdge: 
-							    this.getOWLGraphEdgeSubRelsReflexive(combine)) {
-							if (ont.containsAxiom(this.getAxiom(testIfExistEdge))) {
-								alreadyExist = true;
-								break;
-							}
-						}
-						if (!alreadyExist) {
-						    newEdges.add(combine);
-						    log.debug("Combined relation does not already exist and will be added");
-						} else {
-							log.debug("Equivalent or more precise relation already exist, combined relation not added");
-						}
-					} else {
-						couldNotCombineWarnings++;
-						log.debug("Could not combine edges.");
-					}
-    			}
-    		}
-    	}
-    	//now remove the class
-    	log.debug("Removing class {}", classToRemove);
-    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
-    			this.getOwlGraphWrapper().getAllOntologies());
-    	classToRemove.accept(remover);
-    	
-    	if (this.applyChanges(remover.getChanges()) == 0) {
-    		//if the class was not removed from the ontology, throw an IllegalArgumentException 
-    		//(maybe it was only in the owltools cache for instance?).
-    		//it allows to distinguish the case when this method returns 0 because 
-    		//there was no incoming edge to propagate, from the case when it is because 
-    		//the class was not removed from the ontology
-    		throw new IllegalArgumentException(classToRemove + 
-    				" could not be removed from the ontology");
-    	}
-    	
-    	//now, add the propagated edges to the ontology
-    	int edgesPropagated = this.addEdges(newEdges);
-    	//test that everything went fine
-    	if (edgesPropagated != newEdges.size()) {
-    		throw new AssertionError("Incorrect number of propagated edges added, expected " + 
-    				newEdges.size() + ", but was " + edgesPropagated);
-    	}
-    	
-    	log.info("Done removing class and propagating edges, {} edges propagated, {} could not be propagated", 
-    			edgesPropagated, couldNotCombineWarnings);
-    	
-    	return log.exit(edgesPropagated);
-    }
-    
     //convenient method
     public void simplify(Collection<String> allowedRel, Map<String, String> replaceRel, 
     		Collection<String> targetRel, Collection<String> subsets)
@@ -1734,6 +1734,7 @@ public class OWLGraphManipulator
 
     		//search for a common super property
     		superProps1.retainAll(superProps2);
+    		log.trace("Common properties: {}", superProps1);
     		for (OWLObjectPropertyExpression prop: superProps1) {
 
     			//code from OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers
@@ -1741,12 +1742,13 @@ public class OWLGraphManipulator
     					this.getOwlGraphWrapper().getDataFactory().getOWLTopObjectProperty()) && 
 
     					prop instanceof OWLObjectProperty) {
-
+    				log.trace("{} is a valid property", prop);
     				OWLQuantifiedProperty newQp = 
     						new OWLQuantifiedProperty(prop, prop1.getQuantifier());
     				boolean isExcluded = (boolean) excludedMethod.invoke(
     						this.getOwlGraphWrapper(), new Object[] {newQp});
     				if (!isExcluded) {
+        				log.trace("And {} is not excluded", newQp);
     					OWLQuantifiedProperty combined = 
     							(OWLQuantifiedProperty) combineMethod.invoke(this.getOwlGraphWrapper(), 
     									new Object[] {newQp, newQp});
@@ -1754,6 +1756,7 @@ public class OWLGraphManipulator
     						log.debug("Common super property identified, combining {}", newQp);
     						return log.exit(combined);
     					}
+						log.trace("But could not combine over {}, likely not transitive", newQp);
     				}
     			}
     		}

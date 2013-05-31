@@ -104,8 +104,8 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		int axiomCountAfter = 
 				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
 				
-		//3 relations should have been removed
-		assertEquals("Incorrect number of relations removed", 3, relsRemoved);
+		//4 relations should have been removed
+		assertEquals("Incorrect number of relations removed", 4, relsRemoved);
 		//check that it corresponds to the number of axioms removed
 		assertEquals("Returned value does not correspond to the number of axioms removed", 
 				relsRemoved, axiomCountBefore - axiomCountAfter);
@@ -146,6 +146,16 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		source = 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0014");
 		checkEdge = new OWLGraphEdge(source, root);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
+		
+		//FOO:0015 part_of FOO:0001 redundant
+		//(FOO:0014 is_a FOO:0004 part_of FOO:0002 part_of FOO:0001)
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0015");
+		checkEdge = new OWLGraphEdge(source, root, partOf, Quantifier.SOME, ont);
 		axiom = factory.getOWLSubClassOfAxiom(source, 
 				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
 				edgeToTargetExpression(checkEdge));
@@ -538,8 +548,8 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		//FOO:0015 is_a FOO:0004 and FOO:0003 in_deep_part_of FOO:0004
 		//Of note, FOO:0003 has also a relation part_of to FOO:0001.
 		int relsPropagated = this.graphManipulator.removeClassAndPropagateEdges("FOO:0004");
-		//3 edges should have been propagated
-		assertEquals("Incorrect number of edges propagated", 3, relsPropagated);
+		//2 edges should have been propagated
+		assertEquals("Incorrect number of edges propagated", 2, relsPropagated);
 		//check that the class was indeed removed
 		assertNull("Class FOO:0004 was not removed", 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0004"));
@@ -554,37 +564,39 @@ public class OWLGraphManipulatorTest extends TestAncestor
 				getOWLObjectPropertyByIdentifier("RO:0002131");
 		
 		//all outgoing edges of FOO:0004 should have been propagated to FOO:0015 
-		//(because FOO:0015 is_a FOO:0004). The resulting new edge are: 
-		//FOO:0015 overlaps FOO:0001 and FOO:0015 part_of FOO:0002
+		//(because FOO:0015 is_a FOO:0004), but a more precise relation 
+		//already exists. The resulting new edge is: FOO:0015 part_of FOO:0002.
+		//FOO:0015 overlaps FOO:0001 is not added, as it already exists a relation 
+		//FOO:0015 part_of FOO:0001
 		OWLClass source = 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0015");
 		OWLClass target = 
-				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
-		
-		OWLGraphEdge checkEdge = new OWLGraphEdge(source, target, overlaps, 
-				Quantifier.SOME, ont);
-		OWLAxiom axiom = factory.getOWLSubClassOfAxiom(source, 
-				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
-				edgeToTargetExpression(checkEdge));
-		assertTrue("Relation FOO:0015 overlaps FOO:0001 was not correctly created", 
-				ont.containsAxiom(axiom));
-		
-		target = 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0002");
 		
-		checkEdge = new OWLGraphEdge(source, target, partOf, 
+		OWLGraphEdge checkEdge = new OWLGraphEdge(source, target, partOf, 
 				Quantifier.SOME, ont);
-		axiom = factory.getOWLSubClassOfAxiom(source, 
+		OWLAxiom axiom = factory.getOWLSubClassOfAxiom(source, 
 				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
 				edgeToTargetExpression(checkEdge));
 		assertTrue("Relation FOO:0015 part_of FOO:0002 was not correctly created", 
 				ont.containsAxiom(axiom));
 		
+		//check that the relation overlaps FOO:0001 was not incorrectly created
+		target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		
+		checkEdge = new OWLGraphEdge(source, target, overlaps, 
+				Quantifier.SOME, ont);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		assertFalse("Relation FOO:0015 overlaps FOO:0001 was incorrectly created", 
+				ont.containsAxiom(axiom));
+		
 		//Propagation from FOO:0003: FOO:0003 in_deep_part_of FOO:0004
 		//only one resulting new edge, FOO:0003 part_of FOO:0002 (as FOO:0004 part_of FOO:0002).
-		//the other outgoing edge should not be combined: FOO:0004 overlaps FOO:0001 results 
-		//in a combined relation FOO:0003 overlaps FOO:0001, but a more precise relation 
-		//already exists (FOO:0003 part_of FOO:0001)
+		//the other outgoing edge (FOO:0004 overlaps FOO:0001) cannot be combined 
+		//because overlaps is not transitive
 		source = 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
 		target = 
@@ -705,9 +717,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldFilterRelationsWithNonOboId()
 	{
 		//filter relations to keep only is_a and transformation_of relations
-		//13 relations should be removed
+		//14 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
-				true, 13, true);
+				true, 14, true);
 	}	
 	/**
 	 * Test the functionalities of 
@@ -718,9 +730,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldFilterAllRelations()
 	{
 		//filter relations to keep only is_a relations
-		//14 relations should be removed
+		//15 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
-				true, 14, true);
+				true, 15, true);
 	}
 	/**
 	 * Test the functionalities of 
@@ -731,9 +743,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldRemoveRelations()
 	{
 		//remove part_of and develops_from relations
-		//9 relations should be removed
+		//10 relations should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-			false, 9, false);
+			false, 10, false);
 	}
 	/**
 	 * Test the functionalities of 

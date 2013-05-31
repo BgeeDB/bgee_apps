@@ -676,6 +676,97 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		assertEquals("Incorrect number of sub-relations", 4, subRelRank);
 	}
 	
+	//***********************************************
+	//    RREMOVE RELS TO SUBSETS IF NON ORPHAN TESTS
+	//***********************************************
+	/**
+	 * Test the functionalities of 
+	 * {@link OWLGraphManipulator#delPartOfSubClassOfRelsToSubsetsIfNonOrphan(Collection)}. 
+	 */
+	@Test
+	public void shouldDelPartOfSubClassOfRelsToSubsetsIfNonOrphan()
+	{
+		//remove rels to subsets test_subset1 and test_subset2. Here is the configuration: 
+		//FOO:0006 and FOO:0007 are part of test_subset1
+		//FOO:0009 is part of test_subset2. 
+		
+		//FOO:0006 has 2 incoming edges: FOO:0014 is_a FOO:0006
+		//and FOO:0007 has_developmental_contribution_from FOO:0006. 
+		//The relation FOO:0014 is_a FOO:0006 should be removed, as FOO:0014 
+		//has other is_a relations to classes not in the targeted subsets.
+		//The has_developmental_contribution_from relation should not be removed.
+		
+		//FOO:0007 has 2 incoming edges: FOO:0010 part_of FOO:0007 and 
+		//FOO:0009 overlaps FOO:0007. 
+		//FOO:0010 part_of FOO:0007 should not be removed, because the only other 
+		//is_a/part_of relation of FOO:0010 goes to a class in a targeted subset 
+		//(FOO:0010 part_of FOO:0009)
+		//FOO:0009 overlaps FOO:0007 should not be removed as it is not a part_of relation, 
+		//nor a part_of sub-relation.
+		//(so no incoming edges should be removed for FOO:0007)
+		
+		//FOO:0009 has 2 incoming edges: FOO:0010 part_of FOO:0009 and 
+		//FOO:0011 part_of FOO:0009.
+		//FOO:0010 part_of FOO:0009 should not be removed, because the only other 
+		//is_a/part_of relation of FOO:0010 goes to a class in a targeted subset 
+		//(FOO:0010 part_of FOO:0007). 
+		//FOO:0011 part_of FOO:0009 should be removed, because it exists a relation 
+		//FOO:0011 is_a FOO:0002, and FOO:0002 does not belong to a targeted subset.
+		
+		Collection<String> subsets = new ArrayList<String>();
+		subsets.add("test_subset1");
+		subsets.add("test_subset2");
+		//get the original number of axioms
+		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
+				.getSourceOntology().getAxiomCount();
+		int relsRemoved = 
+				this.graphManipulator.delPartOfSubClassOfRelsToSubsetsIfNonOrphan(subsets);
+		//number of axioms after modification
+		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
+				.getSourceOntology().getAxiomCount();
+		
+		//2 relations should have been removed
+		assertEquals("Incorrect number of relations removed", 2, relsRemoved);
+		//check it corresponds to the number of axioms removed
+		assertEquals("The method did not return the correct number of relations removed", 
+				relsRemoved, axiomCountBefore - axiomCountAfter);
+		
+		//check that the correct relations were removed
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLDataFactory factory = this.graphManipulator.getOwlGraphWrapper().
+				getManager().getOWLDataFactory();
+		
+		//FOO:0014 is_a FOO:0006 should have been removed
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0014");
+		OWLClass target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0006");
+		
+		OWLGraphEdge checkEdge = new OWLGraphEdge(source, target);
+		OWLAxiom axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		
+		assertFalse("Relation FOO:0014 is_a FOO:0006 was not removed", 
+				ont.containsAxiom(axiom));
+		
+		//FOO:0011 part_of FOO:0009 should have been removed
+		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0011");
+		target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0009");
+		
+		checkEdge = new OWLGraphEdge(source, target, partOf, Quantifier.SOME, ont);
+		axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		
+		assertFalse("Relation FOO:0011 part_of FOO:0009 was not removed", 
+				ont.containsAxiom(axiom));
+	}
+	
 	
 	//***********************************************
 	//    RELATION FILTERING AND REMOVAL TESTS
@@ -968,5 +1059,15 @@ public class OWLGraphManipulatorTest extends TestAncestor
 				.getSourceOntology().getClassesInSignature().size();
 		assertEquals("removeSubgraph did not return the correct number of classes removed", 
 				classCount - newClassCount, countRemoved);
+	}
+	
+	/**
+	 * Not a unit test, just for the fun, run 
+	 * {@link OWLGraphManipulator#makeBasicOntology()}, which runs several methods 
+	 * that are all unit tested here.
+	 */
+	public void shouldMakeBasicOntology()
+	{
+		this.graphManipulator.makeBasicOntology();
 	}
 }

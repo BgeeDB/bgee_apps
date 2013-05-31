@@ -1,5 +1,7 @@
 format-version: 1.2
 ontology: foo
+subsetdef: test_subset1 "used to test method delPartOfSubClassOfRelsToSubsetsIfNonOrphan"
+subsetdef: test_subset2 "used to test method delPartOfSubClassOfRelsToSubsetsIfNonOrphan"
 
 [Term]
 id: FOO:0001
@@ -34,13 +36,15 @@ is_a: FOO:0001 ! root
 [Term]
 id: FOO:0006
 name: subgraph2_root
-comment: term root of a subgraph to remove to test OWLGraphManipulator.filterSubgraphs(Collection<String>) and OWLGraphManipulator.removeSubgraphs(Collection<String>)
+comment: term root of a subgraph to remove to test OWLGraphManipulator.filterSubgraphs(Collection<String>) and OWLGraphManipulator.removeSubgraphs(Collection<String>). Also, used to test delPartOfSubClassOfRelsToSubsetsIfNonOrphan.
+subset: test_subset1 
 is_a: FOO:0001 ! root
 
 [Term]
 id: FOO:0007
 name: subgraph2_A
-comment: term part of the subgraph to remove, should be removed
+comment: term part of the subgraph to remove, should be removed. Also, used to test delPartOfSubClassOfRelsToSubsetsIfNonOrphan.
+subset: test_subset1 
 relationship: has_developmental_contribution_from FOO:0006 ! subgraph2_root
 
 [Term]
@@ -52,7 +56,8 @@ relationship: develops_from FOO:0007 ! subgraph2_A
 [Term]
 id: FOO:0009
 name: subgraph2_C
-comment: term part of the subgraph to remove, should be removed
+comment: term part of the subgraph to remove, should be removed. Also, used to test delPartOfSubClassOfRelsToSubsetsIfNonOrphan.
+subset: test_subset2 
 relationship: overlaps FOO:0007 ! subgraph2_A
 
 [Term]

@@ -249,8 +249,14 @@ public class OWLGraphManipulator
 		int relationsRemoved = 0;
 		
 	    for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-			for (OWLClass iterateClass: ont.getClassesInSignature()) {
-				log.debug("Start examining class {}...", iterateClass);
+	    	Set<OWLClass> classes = ont.getClassesInSignature();
+	    	int classCount = classes.size();
+	    	int classIndex = 0;
+	    	log.debug("Start examining {} classes for current ontology", classCount);
+			for (OWLClass iterateClass: classes) {
+				classIndex++;
+				log.debug("Start examining class {}/{} {}...", classIndex, classCount, 
+						iterateClass);
 	
 				Set<OWLGraphEdge> outgoingEdges = 
 					this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
@@ -459,7 +465,7 @@ public class OWLGraphManipulator
 				}
 				log.debug("Done examining class {}", iterateClass);
 			}
-			//end ontologies
+			log.debug("Done examining current ontology");
 	    }
 		
 		log.info("Done relation reduction, {} relations removed.", relationsRemoved);
@@ -554,9 +560,7 @@ public class OWLGraphManipulator
 							}
 						}
 						if (!alreadyExist) {
-							if (!this.setContains(combine, newEdges)) {
-						        newEdges.add(combine);
-							}
+							newEdges.add(combine);
 						    log.debug("Combined relation does not already exist and will be added");
 						} else {
 							log.debug("Equivalent or more precise relation already exist, combined relation not added");
@@ -717,9 +721,7 @@ public class OWLGraphManipulator
     					
     					//store the edge to remove and to add, to perform all modifications 
     					//at once (more efficient)
-    					if (!this.setContains(edge, edgesToRemove)) {
-    					    edgesToRemove.add(edge);
-    					}
+    					edgesToRemove.add(edge);
     					OWLGraphEdge newEdge = 
     							new OWLGraphEdge(edge.getSource(), edge.getTarget(), 
     							parentProp, edge.getSingleQuantifiedProperty().getQuantifier(), 
@@ -727,9 +729,7 @@ public class OWLGraphManipulator
     					//check that the new edge does not already exists 
     					//(redundancy in the ontology?)
     					if (!ontology.containsAxiom(this.getAxiom(newEdge))) {
-    						if (!this.setContains(newEdge, edgesToAdd)) {
-    					        edgesToAdd.add(newEdge);
-    						}
+    						edgesToAdd.add(newEdge);
     					    log.debug("Replacing relation {} by {}", edge, newEdge);
     					} else {
     						log.debug("Removing {}, but {} already exists, will not be added", 
@@ -886,9 +886,7 @@ public class OWLGraphManipulator
     							!ancestorIds.contains(descentId) && 
     							!ancestorIds.contains(iriId) ) {
 
-    						if (!this.setContains(incomingEdge, edgesToRemove)) {
-    						    edgesToRemove.add(incomingEdge);
-    						}
+    						edgesToRemove.add(incomingEdge);
     						log.debug("Undesired subgraph, relation between {} and {} removed", 
     								ancestorId, descentId);
     					}
@@ -1242,9 +1240,7 @@ public class OWLGraphManipulator
     				}
     				//remove rel if not allowed
     				if (!allowed) {
-    					if (!this.setContains(outgoingEdge, relsToRemove)) {
-    					    relsToRemove.add(outgoingEdge);
-    					}
+    					relsToRemove.add(outgoingEdge);
     				}
     			}
     		}
@@ -1382,7 +1378,7 @@ public class OWLGraphManipulator
 					//remove all its is_a/part_of outgoing edges to targets in subsets
 					if (!edgesNotToSubset.isEmpty()) {
 						log.debug("Relations to remove: {}", edgesToSubset);
-						this.addAllToSet(edgesToSubset, edgesToRemove);
+						edgesToRemove.addAll(edgesToSubset);
 					} else {
 						log.trace("Incoming edge's source would be orphan, no relations removed");
 					}
@@ -1651,69 +1647,6 @@ public class OWLGraphManipulator
    	//******************************************************
    	//    METHODS THAT COULD BE INCLUDED IN OWLGraphWrapper
    	//******************************************************
-    /**
-     * Test if <code>edge</code> is present in <code>edgeSet</code>. 
-     * This method is needed because the implementation of the <code>hashCode</code> 
-     * method is broken in <code>OWLGraphEdge</code>, such that a <code>Set</code> 
-     * of <code>OWLGraphEdge</code>s can contain equal elements. 
-     * For two identical <code>OWLGraphEdge</code>s o1 and o2 contained 
-     * in a <code>Set</code>, o1.equals(o2) returns <code>true</code>, 
-     * but (o1.hashCode == o2.hashCode) returns <code>false</code>. 
-     * <p>
-     * This method thus iterates each <code>OWLGraphEdge</code> of <code>edgeSet</code>, 
-     * and call their <code>equals</code> method with <code>edge</code> as a parameter. 
-     * This is a poor solution to a sad bug :/
-     * 
-     * @param edge 		The <code>OWLGraphEdge</code> for which we want to know 
-     * 					if it is contained in <code>edgeSet</code>
-     * @param edgeSet	A <code>Set</code> of <code>OWLGraphEdge</code>s to be checked 
-     * 					for presence of <code>edge</code>.
-     * @return 			<code>true</code> if <code>edgeSet</code> contains an element e 
-     * 					such as <code>e.equals(edge)</code> returns <code>true</code>, 
-     * 					<code>false</code> otherwise.
-     */
-    private boolean setContains(OWLGraphEdge edge, Set<OWLGraphEdge> edgeSet)
-    {
-    	log.entry(edge, edgeSet);
-    	for (OWLGraphEdge edgeToTest: edgeSet) {
-    		if (edgeToTest.equals(edge)) {
-    			return log.exit(true);
-    		}
-    	}
-    	return log.exit(false);
-    }
-    
-    /**
-     * Adds all of the elements of <code>edgesToAdd</code> to the <code>Set</code> 
-     * of <code>OWLGraphEdge</code>s <code>edgeSetToModify</code> 
-     * if they're not already present (optional operation).
-     * <p>
-     * This method is needed because the implementation of the <code>hashCode</code> 
-     * method is broken in <code>OWLGraphEdge</code>, see 
-     * {@link #setContains(OWLGraphEdge, Set)} for more details.
-     * 
-     * @param edgesToAdd 		A <code>Collection</code> of <code>OWLGraphEdge</code>s 
-     * 							to be added to <code>edgeSetToModify</code>.
-     * @param edgeSetToModify	the <code>Set</code> of <code>OWLGraphEdge</code>s which 
-     * 							<code>edgesToAdd</code> should be added to.
-     * @return					<code>true</code> if <code>edgeSetToModify</code> changed 
-     * 							as a result of the call
-     */
-    private boolean addAllToSet(Collection<OWLGraphEdge> edgesToAdd, 
-    		Set<OWLGraphEdge> edgeSetToModify)
-    {
-    	log.entry(edgesToAdd, edgeSetToModify);
-    	
-    	boolean modified = false;
-    	for (OWLGraphEdge edge: edgesToAdd) {
-    		if (!this.setContains(edge, edgeSetToModify)) {
-    			edgeSetToModify.add(edge);
-    			modified = true;
-    		}
-    	}
-    	return log.exit(modified);
-    }
-    
     /**
      * Determine if <code>testObject</code> belongs to at least one of the subsets 
      * in <code>subsets</code>. 

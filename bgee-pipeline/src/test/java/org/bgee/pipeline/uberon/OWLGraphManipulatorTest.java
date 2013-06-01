@@ -16,6 +16,8 @@ import org.bgee.model.TestAncestor;
 import org.junit.Before;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -24,6 +26,9 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -1069,5 +1074,50 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	public void shouldMakeBasicOntology()
 	{
 		this.graphManipulator.makeBasicOntology();
+	}
+	
+	/**
+	 * Test {@link owltools.graph.OWLGraphEdge#hashCode()}. 
+	 * There used to be a problem that two equal <code>OWLGraphEdge<code> could have 
+	 * different hashcodes, leading to the the possibility to have several identical 
+	 * <code>OWLGraphEdge</code>s in a <code>Set</code>.
+	 */
+	@Test
+	public void testOWLGraphEdgeHashCode()
+	{
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
+		OWLClass target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		OWLGraphEdge edge1 = new OWLGraphEdge(source, target, partOf, Quantifier.SOME, ont);
+		OWLGraphEdge edge2 = new OWLGraphEdge(source, target, partOf, Quantifier.SOME, ont);
+		assertTrue("Two OWLGraphEdges are equal but have different hashcodes.", 
+				edge1.equals(edge2) && edge1.hashCode() == edge2.hashCode());
+	}
+	
+	/**
+	 * Test that two <code>OWLClass</code>es that are equal have a same hashcode, 
+	 * because the OWLGraphEdge bug get me paranoid. 
+	 */
+	@Test
+	public void testOWLClassHashCode()
+	{
+		 OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+		 OWLDataFactory factory = manager.getOWLDataFactory(); 
+		 IRI iri = IRI.create("http://www.foo.org/#A");
+		 OWLClass class1 = factory.getOWLClass(iri);
+		 //get the class by another way, even if if I suspect the two references 
+		 //will point to the same object
+		 PrefixManager pm = new DefaultPrefixManager("http://www.foo.org/#"); 
+		 OWLClass class2 = factory.getOWLClass(":A", pm);
+		 
+		 assertTrue("The two references point to different OWLClass objects", 
+				 class1 == class2);
+		 //then of course the hashcodes will be the same...
+		 assertTrue("Two OWLClasses are equal but have different hashcode", 
+				 class1.equals(class2) && class1.hashCode() == class2.hashCode());
 	}
 }

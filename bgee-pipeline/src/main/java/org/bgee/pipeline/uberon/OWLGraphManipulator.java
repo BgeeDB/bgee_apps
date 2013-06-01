@@ -250,7 +250,7 @@ public class OWLGraphManipulator
 		
 	    for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
 			for (OWLClass iterateClass: ont.getClassesInSignature()) {
-				log.trace("Start examining class {}...", iterateClass);
+				log.debug("Start examining class {}...", iterateClass);
 	
 				Set<OWLGraphEdge> outgoingEdges = 
 					this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
@@ -287,137 +287,172 @@ public class OWLGraphManipulator
 					}
 				}
 				
-				//if the class has only one outgoing relation, no way to have 
-				//a redundant relation (unless there is a cycle in the ontology :p)
-				int relCount = outgoingEdges.size();
-				if (relCount < 1) {
-					log.trace("Class has {} outgoing edge, cannot have redundancy, skip it", 
-							relCount);
-					continue;
-				}
 				//TODO: try to see from the beginning that there is no way
 				//the outgoing edges generate redundancies 
 				//(for instance, a develops_from outgoing edge and a part_of outgoing edge). 
 				//But maybe it is too dangerous if the chain rules change in the future. 
 				
-				for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+				//now for each outgoing edge, try to see if it is redundant by walking 
+				//the other outgoing edges to the root, if they have the target 
+				//of the tested outgoing edge on their path
+				for (OWLGraphEdge outgoingEdgeToTest: outgoingEdges) {
 					//check that this relation still exists, it might have been removed 
 					//from another walk to the root
-					if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
-						log.trace("Outgoing edge already removed, skip {}", outgoingEdge);
+					if (!ont.containsAxiom(this.getAxiom(outgoingEdgeToTest))) {
+						log.trace("Outgoing edge to test already removed, skip {}", outgoingEdgeToTest);
 						continue;
 					}
-					outgoingEdge.setOntology(ont);
-					log.trace("Start a walk to the root");
-	
-	    			Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
-	    			edgesInspected.addFirst(outgoingEdge);
-	    			
-	    			OWLGraphEdge currentEdge;
-	    			while ((currentEdge = edgesInspected.pollFirst()) != null) {
-	    				log.trace("Current edge examined on the walk: {}", currentEdge);
-	    				
-	    				//get the outgoing edges starting from the target of currentEdge, 
-	    				//and compose these relations with currentEdge, 
-	    				//trying to get a composed edge with only one relation (one property)
-	    				for (OWLGraphEdge nextEdge: 
-	    					this.getOwlGraphWrapper().getOutgoingEdges(
-	    							currentEdge.getTarget())) {
-	    					log.trace("Try to combine with outgoing edge from current edge target: {}", 
-	    							nextEdge);
-	    					
-	    					OWLGraphEdge combine = 
-	    							this.combineEdgePairWithSuperProps(currentEdge, nextEdge);
-	    					
-	    					if (combine != null) {
-	    						//at this point, if the properties have not been combined, 
-	    						//there is nothing we can do.
-	    						if (combine.getQuantifiedPropertyList().size() == 1) {
-	    							log.trace("Edges successfully combined into: {}", 
-	    									combine);
-	    							
-	    							//edges successfully combined into one relation,
-	    							//check if this combined relation (or one of its parent 
-	    							//relations) corresponds to one of the primitive 
-	    							//outgoingEdges; in that case, 
-	    							//this outgoingEdge is a redundant relation, to be removed
-									Set<OWLGraphEdge> relsToCheck = 
-											new HashSet<OWLGraphEdge>();
-									relsToCheck.add(combine);
-									relsToCheck.addAll(this.getOwlGraphWrapper().
-											getOWLGraphEdgeSubsumers(combine));
-									
-	    							boolean atLeastOneRemoved = false;
-	    							for (OWLGraphEdge checkOutgoingEdge: outgoingEdges) {
-	    								if (!ont.containsAxiom(this.getAxiom(checkOutgoingEdge))) {
-	    									continue;
-	    								}
-	    								boolean toRemove = false;
-
-	    								//if we want to reduce over is_a and 
-	    								//part_of relations
-	    								if (reducePartOfAndSubClassOf) {
-	    									if (combine.getTarget().equals(
-	    											checkOutgoingEdge.getTarget()) &&
-	    										//checkOutgoingEdge is an is_a relation 
-	            				    			//and the combined relation is a part_of-like
-	    										(this.isASubClassOfEdge(checkOutgoingEdge) && 
-	    										 this.isAPartOfEdge(combine))              									
-	          									||
-	           									//checkOutgoingEdge is a part_of-like relation 
-	                    				    	//and the combined relation is a is_a relation
-	            								(this.isASubClassOfEdge(combine) && 
-	           									 this.isAPartOfEdge(checkOutgoingEdge))) {
-	                                            //remove the outgoing edge
-	    										toRemove = true;
-	    									}
-	    								} else {
-	    									//Otherwise, compare each outgoing edge to 
-	    									//the combined relation, and its parent relations 
-	    									//(to also check if the combine relation 
-	    									//is more precise than the outgoing edge)
-	    									for (OWLGraphEdge combinedRelToCheck: relsToCheck) {
-	    										if (checkOutgoingEdge.equals(combinedRelToCheck)) {
-	    											//redundant relation identified
-	    											toRemove = true;
-	    											break;
-	    										}
-	    									}
-	    								}
-	    								
-	    								if (toRemove && this.removeEdge(checkOutgoingEdge)) {
-											relationsRemoved++;
-											atLeastOneRemoved = true;
-											log.debug("Removing redundant relation: {}", 
-													checkOutgoingEdge);
-										}
-	    							}
-	    							if (!atLeastOneRemoved) {
-	    								log.trace("No redundant relation found for the combined relation");
-	    							}
-	    							
-	    							//add the combined relation to the stack to continue 
-	    							//the walk to the root
-	    							log.trace("Combined relation added to the stack to be walked");
-	    							edgesInspected.addFirst(combine);
-	    							
-	    						} else if (combine.getQuantifiedPropertyList().size() > 2) {
-	    							//should never be reached
-	    							throw new AssertionError("Unexpected number of properties " +
-	    									"in edge: " + combine);
-	    						} else {
-	    							log.trace("Could not combine edges, stop walk here.");
-	    						}
-	    					} else {
-								log.trace("Could not combine edges, stop walk here.");
+					outgoingEdgeToTest.setOntology(ont);
+					log.trace("Start testing edge for redundancy: {}", outgoingEdgeToTest);
+					boolean isRedundant = false;
+					
+					outgoingEdgeToWalk: for (OWLGraphEdge outgoingEdgeToWalk: outgoingEdges) {
+						if (outgoingEdgeToWalk.equals(outgoingEdgeToTest)) {
+							continue;
+						}
+						if (!ont.containsAxiom(this.getAxiom(outgoingEdgeToWalk))) {
+							log.trace("Outgoing edge to walk already removed, skip {}", 
+									outgoingEdgeToWalk);
+							continue;
+						}
+						outgoingEdgeToWalk.setOntology(ont);
+						
+						//check that outgoingEdgeToWalk has the target of the outgoingEdgeToTest
+						//on his path
+						boolean targetOnPath = false;
+						for (OWLObject ancestor: this.getOwlGraphWrapper().getAncestorsReflexive(
+								outgoingEdgeToWalk.getTarget())) {
+							//as I suspect that the hashCode implementation is broken, 
+							//I don't try to use contains on the set of ancestors, 
+							//I iterate each of them
+							if (ancestor.equals(outgoingEdgeToTest.getTarget())) {
+								targetOnPath = true;
+								break;
 							}
-	    				}
-	    				log.trace("Done examining edge: {}", currentEdge);
-	    			}
-	    			log.trace("End of walk from outgoing edge {}", outgoingEdge);
+						}
+						if (!targetOnPath) {
+							continue outgoingEdgeToWalk;
+						}
+						
+					    log.trace("Edge with a target on path, start a walk to the root");
+	
+	    			    Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
+	    			    edgesInspected.addFirst(outgoingEdgeToWalk);
+	    			
+	    			    OWLGraphEdge currentEdge;
+	    			    while ((currentEdge = edgesInspected.pollFirst()) != null) {
+	    			    	log.trace("Current edge examined on the walk: {}", currentEdge);
+
+	    			    	//get the outgoing edges starting from the target of currentEdge, 
+	    			    	//and compose these relations with currentEdge, 
+	    			    	//trying to get a composed edge with only one relation (one property)
+	    			    	for (OWLGraphEdge nextEdge: 
+	    			    		this.getOwlGraphWrapper().getOutgoingEdges(
+	    			    				currentEdge.getTarget())) {
+	    			    		log.trace("Try to combine with outgoing edge from current edge target: {}", 
+	    			    				nextEdge);
+
+	    			    		OWLGraphEdge combine = 
+	    			    				this.combineEdgePairWithSuperProps(currentEdge, nextEdge);
+
+	    			    		if (combine != null) {
+	    			    			//at this point, if the properties have not been combined, 
+	    			    			//there is nothing we can do.
+	    			    			if (combine.getQuantifiedPropertyList().size() == 1) {
+	    			    				log.trace("Edges successfully combined into: {}", 
+	    			    						combine);
+
+	    			    				//edges successfully combined into one relation,
+	    			    				//check if this combined relation (or one of its parent 
+	    			    				//relations) corresponds to outgoingEdgeToTest; 
+	    			    				//in that case, it is redundant and should be removed
+
+	    			    				//if we want to reduce over is_a and 
+	    			    				//part_of relations
+	    			    				if (reducePartOfAndSubClassOf) {
+	    			    					if (combine.getTarget().equals(
+	    			    						outgoingEdgeToTest.getTarget()) &&
+	    			    						//checkOutgoingEdge is an is_a relation 
+	    			    						//and the combined relation is a part_of-like
+	    			    						(this.isASubClassOfEdge(outgoingEdgeToTest) && 
+	    			    								this.isAPartOfEdge(combine))              									
+	    			    						||
+	    			    						//checkOutgoingEdge is a part_of-like relation 
+	    			    						//and the combined relation is a is_a relation
+	    			    						(this.isASubClassOfEdge(combine) && 
+	    			    							this.isAPartOfEdge(outgoingEdgeToTest))) {
+	    			    						isRedundant = true;
+	    			    					}
+	    			    				} else {
+	    			    					//Otherwise, compare each outgoing edge to 
+	    			    					//the combined relation, and its parent relations 
+	    			    					//(to also check if the combine relation 
+	    			    					//is more precise than the outgoing edge)
+		    			    				Set<OWLGraphEdge> relsToCheck = 
+		    			    						new HashSet<OWLGraphEdge>();
+		    			    				relsToCheck.add(combine);
+		    			    				relsToCheck.addAll(this.getOwlGraphWrapper().
+		    			    						getOWLGraphEdgeSubsumers(combine));
+		    			    				
+	    			    					for (OWLGraphEdge combinedRelToCheck: relsToCheck) {
+	    			    						if (outgoingEdgeToTest.equals(
+	    			    								combinedRelToCheck)) {
+	    			    							isRedundant = true;
+	    			    							break;
+	    			    						}
+	    			    					}
+	    			    				}
+	    			    				if (isRedundant) {
+	    			    					//no need to continue the walk to the root 
+    			    						//for any of the others outgoing edges, 
+    			    						//the tested outgoing edge is redundant
+	    			    					log.trace("outgoing edge tested is redundant, stop all walks to the root");
+    			    						break outgoingEdgeToWalk;
+	    			    				}
+
+	    			    				//add the combined relation to the stack to continue 
+	    			    				//the walk to the root, only if we haven't met the target 
+	    			    				//of the tested edge yet
+	    			    				if (!combine.getTarget().equals(
+	    			    						outgoingEdgeToTest.getTarget())) {
+	    			    				    log.trace("Combined relation not redundant, continue the walk");
+	    			    				    edgesInspected.addFirst(combine);
+	    			    				} else {
+	    			    					log.trace("Target of the edge to test reached, stop this walk here");
+	    			    				}
+
+	    			    			} else if (combine.getQuantifiedPropertyList().size() > 2) {
+	    			    				//should never be reached
+	    			    				throw new AssertionError("Unexpected number of properties " +
+	    			    						"in edge: " + combine);
+	    			    			} else {
+	    			    				log.trace("Could not combine edges, stop this walk here.");
+	    			    			}
+	    			    		} else {
+	    			    			log.trace("Could not combine edges, stop this walk here.");
+	    			    		}
+	    			    	}
+	    			    	log.trace("Done examining edge: {}", currentEdge);
+	    			    }
+	    			    log.trace("End of walk from outgoing edge {}, no redundancy identified for this walk", 
+	    			    		outgoingEdgeToWalk);
+					}
+					if (isRedundant) {
+						if (this.removeEdge(outgoingEdgeToTest)) {
+						    relationsRemoved++;
+						    log.debug("Tested edge is redundant and will be removed: {}", 
+								outgoingEdgeToTest);
+						} else {
+							throw new AssertionError("Expected to remove a relation, removal failed");
+						}
+					} else {
+						log.trace("Done testing edge for redundancy, not redundant: {}", 
+								outgoingEdgeToTest);
+					}
 				}
-				log.trace("Done examining class {}", iterateClass);
+				log.debug("Done examining class {}", iterateClass);
 			}
+			//end ontologies
 	    }
 		
 		log.info("Done relation reduction, {} relations removed.", relationsRemoved);
@@ -1154,7 +1189,6 @@ public class OWLGraphManipulator
     				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
     				//to fix a bug
     				if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
-    					log.info("YE {}", outgoingEdge);
     					continue;
     				} 
     				outgoingEdge.setOntology(ont);
@@ -2038,7 +2072,7 @@ public class OWLGraphManipulator
             OWLQuantifiedProperty prop1, OWLQuantifiedProperty prop2) 
     {
     	log.entry(prop1, prop2);
-    	log.debug("Searching for common super property to combine {} and {}", 
+    	log.trace("Searching for common super property to combine {} and {}", 
     			prop1, prop2);
     	//local implementation of getSuperPropertyReflexiveClosureOf, to order super properties 
     	//from the more precise to the more general, with prop as the first element. 
@@ -2087,7 +2121,7 @@ public class OWLGraphManipulator
     							(OWLQuantifiedProperty) combineMethod.invoke(this.getOwlGraphWrapper(), 
     									new Object[] {newQp, newQp});
     					if (combined != null) {
-    						log.debug("Common super property identified, combining {}", newQp);
+    						log.trace("Common super property identified, combining {}", newQp);
     						return log.exit(combined);
     					}
 						log.trace("But could not combine over {}, likely not transitive", newQp);
@@ -2098,7 +2132,7 @@ public class OWLGraphManipulator
     		log.error("Error when combining properties", e);
     	}
     	
-    	log.debug("No common super property found to combine.");
+    	log.trace("No common super property found to combine.");
     	return log.exit(null);
     }
     

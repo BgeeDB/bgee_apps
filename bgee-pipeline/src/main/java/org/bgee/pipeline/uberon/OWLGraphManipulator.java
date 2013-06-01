@@ -245,7 +245,7 @@ public class OWLGraphManipulator
 		}
 		
 		//we will go the hardcore way: iterate each class, 
-		//and for each class, check all paths to the root
+		//and for each class, check each outgoing edges
 		int relationsRemoved = 0;
 		
 	    for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
@@ -256,7 +256,7 @@ public class OWLGraphManipulator
 					this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
 				
 				//if we want to reduce over is_a and part_of, first check 
-				//that we do not have both a part_of and a is_a outgoing edge
+				//that we do not have both part_of and is_a direct outgoing edges
 				if (reducePartOfAndSubClassOf) {
 					Collection<OWLGraphEdge> partOfEdges = new ArrayList<OWLGraphEdge>();
 					Collection<OWLGraphEdge> isAEdges    = new ArrayList<OWLGraphEdge>();
@@ -293,9 +293,15 @@ public class OWLGraphManipulator
 				//But maybe it is too dangerous if the chain rules change in the future. 
 				
 				//now for each outgoing edge, try to see if it is redundant by walking 
-				//the other outgoing edges to the root, if they have the target 
-				//of the tested outgoing edge on their path
+				//the other outgoing edges to the top, if they have the target 
+				//of the tested outgoing edge on their path. The walk stops 
+				//when the target is reached
 				for (OWLGraphEdge outgoingEdgeToTest: outgoingEdges) {
+					if (reducePartOfAndSubClassOf && 
+							!this.isAPartOfEdge(outgoingEdgeToTest) && 
+							!this.isASubClassOfEdge(outgoingEdgeToTest)) {
+						continue;
+					}
 					//check that this relation still exists, it might have been removed 
 					//from another walk to the root
 					if (!ont.containsAxiom(this.getAxiom(outgoingEdgeToTest))) {
@@ -303,6 +309,7 @@ public class OWLGraphManipulator
 						continue;
 					}
 					outgoingEdgeToTest.setOntology(ont);
+					
 					log.trace("Start testing edge for redundancy: {}", outgoingEdgeToTest);
 					boolean isRedundant = false;
 					
@@ -334,7 +341,7 @@ public class OWLGraphManipulator
 							continue outgoingEdgeToWalk;
 						}
 						
-					    log.trace("Edge with a target on path, start a walk to the root");
+					    log.trace("Edge with a target on path, start a walk to the top");
 	
 	    			    Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
 	    			    edgesInspected.addFirst(outgoingEdgeToWalk);
@@ -347,7 +354,7 @@ public class OWLGraphManipulator
 	    			    	//and compose these relations with currentEdge, 
 	    			    	//trying to get a composed edge with only one relation (one property)
 	    			    	for (OWLGraphEdge nextEdge: 
-	    			    		this.getOwlGraphWrapper().getOutgoingEdges(
+	    			    		    this.getOwlGraphWrapper().getOutgoingEdges(
 	    			    				currentEdge.getTarget())) {
 	    			    		log.trace("Try to combine with outgoing edge from current edge target: {}", 
 	    			    				nextEdge);
@@ -372,12 +379,12 @@ public class OWLGraphManipulator
 	    			    				if (reducePartOfAndSubClassOf) {
 	    			    					if (combine.getTarget().equals(
 	    			    						outgoingEdgeToTest.getTarget()) &&
-	    			    						//checkOutgoingEdge is an is_a relation 
+	    			    						//outgoingEdgeToTest is an is_a relation 
 	    			    						//and the combined relation is a part_of-like
 	    			    						(this.isASubClassOfEdge(outgoingEdgeToTest) && 
 	    			    								this.isAPartOfEdge(combine))              									
 	    			    						||
-	    			    						//checkOutgoingEdge is a part_of-like relation 
+	    			    						//outgoingEdgeToTest is a part_of-like relation 
 	    			    						//and the combined relation is a is_a relation
 	    			    						(this.isASubClassOfEdge(combine) && 
 	    			    							this.isAPartOfEdge(outgoingEdgeToTest))) {
@@ -403,10 +410,10 @@ public class OWLGraphManipulator
 	    			    					}
 	    			    				}
 	    			    				if (isRedundant) {
-	    			    					//no need to continue the walk to the root 
+	    			    					//no need to continue the walk to the top 
     			    						//for any of the others outgoing edges, 
     			    						//the tested outgoing edge is redundant
-	    			    					log.trace("outgoing edge tested is redundant, stop all walks to the root");
+	    			    					log.trace("outgoing edge tested is redundant, stop all walks to the top");
     			    						break outgoingEdgeToWalk;
 	    			    				}
 

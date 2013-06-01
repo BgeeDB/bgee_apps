@@ -246,6 +246,8 @@ public class OWLGraphManipulator
 		
 		//we will go the hardcore way: iterate each class, 
 		//and for each class, check each outgoing edges
+		//TODO: everything could be done in one single walk from bottom nodes 
+		//to top nodes, this would be much faster
 		int relationsRemoved = 0;
 		
 	    for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
@@ -260,6 +262,7 @@ public class OWLGraphManipulator
 	
 				Set<OWLGraphEdge> outgoingEdges = 
 					this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
+				int outgoingEdgesCount = outgoingEdges.size();
 				
 				//if we want to reduce over is_a and part_of, first check 
 				//that we do not have both part_of and is_a direct outgoing edges
@@ -302,21 +305,26 @@ public class OWLGraphManipulator
 				//the other outgoing edges to the top, if they have the target 
 				//of the tested outgoing edge on their path. The walk stops 
 				//when the target is reached
+				int edgeIndex = 0;
 				for (OWLGraphEdge outgoingEdgeToTest: outgoingEdges) {
+					edgeIndex++;
+					log.debug("Start testing edge for redundancy {}/{} {}", 
+							edgeIndex, outgoingEdgesCount, outgoingEdgeToTest);
+					
 					if (reducePartOfAndSubClassOf && 
 							!this.isAPartOfEdge(outgoingEdgeToTest) && 
 							!this.isASubClassOfEdge(outgoingEdgeToTest)) {
+						log.debug("Not a is_a/part_of relationship, skip");
 						continue;
 					}
 					//check that this relation still exists, it might have been removed 
 					//from another walk to the root
 					if (!ont.containsAxiom(this.getAxiom(outgoingEdgeToTest))) {
-						log.trace("Outgoing edge to test already removed, skip {}", outgoingEdgeToTest);
+						log.debug("Outgoing edge to test already removed, skip");
 						continue;
 					}
 					outgoingEdgeToTest.setOntology(ont);
 					
-					log.trace("Start testing edge for redundancy: {}", outgoingEdgeToTest);
 					boolean isRedundant = false;
 					
 					outgoingEdgeToWalk: for (OWLGraphEdge outgoingEdgeToWalk: outgoingEdges) {
@@ -347,7 +355,8 @@ public class OWLGraphManipulator
 							continue outgoingEdgeToWalk;
 						}
 						
-					    log.trace("Edge with a target on path, start a walk to the top");
+					    log.trace("Edge with a target on path, start a walk to the top: {}", 
+					    		outgoingEdgeToWalk);
 	
 	    			    Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
 	    			    edgesInspected.addFirst(outgoingEdgeToWalk);
@@ -459,7 +468,7 @@ public class OWLGraphManipulator
 							throw new AssertionError("Expected to remove a relation, removal failed");
 						}
 					} else {
-						log.trace("Done testing edge for redundancy, not redundant: {}", 
+						log.debug("Done testing edge for redundancy, not redundant: {}", 
 								outgoingEdgeToTest);
 					}
 				}

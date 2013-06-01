@@ -27,7 +27,7 @@ import sbc.orthoxml.io.OrthoXMLReader;
 /**
  * This class parses the orthoxml file which contains all the data of the
  * hierarchical orthologus groups obtained from OMA. It retrieves all the data
- * pertaining to the orthologus genes
+ * pertaining to the orthologus genes.
  * 
  * @author Komal Sanjeev
  * 
@@ -39,6 +39,19 @@ public class ParseOrthoXML {
 
 	private final static Logger log = LogManager.getLogger(ParseOrthoXML.class
 			.getName());
+
+	private String orthoXmlFile;
+
+	public void deriveOrthologusGroups() {
+		
+		ParseOrthoXML parser = new ParseOrthoXML();
+
+		parser.setOrthoXmlFile(this.getClass()
+				.getResource("/orthoxml/HierarchicalGroups.orthoxml")
+				.toString());
+
+		// Get the orthoXML file.
+	}
 
 	/**
 	 * Performs the complete task of reading the Hierarchical Groups orthoxml
@@ -71,16 +84,11 @@ public class ParseOrthoXML {
 
 		log.entry();
 
-		// Get the orthoXML file.
-		String orthoXmlFile = this.getClass()
-				.getResource("/orthoxml/HierarchicalGroups.orthoxml")
-				.toString();
-
 		if (log.isDebugEnabled()) {
-			log.debug("Hierarchical Groups OrthoXML File: {}", orthoXmlFile);
+			log.debug("Hierarchical Groups OrthoXML File: {}", this.getOrthoXmlFile());
 		}
 
-		File file = new File(orthoXmlFile);
+		File file = new File(this.getOrthoXmlFile());
 
 		OrthoXMLReader reader = new OrthoXMLReader(file);
 
@@ -101,7 +109,7 @@ public class ParseOrthoXML {
 				log.info("Building Tree..");
 			}
 			// Build the tree of the current group
-			this.buildTree(group, rootNode);
+			ParseOrthoXML.buildTree(group, rootNode);
 
 			if (log.isInfoEnabled()) {
 				log.info("Building Nested Set Model..");
@@ -146,7 +154,7 @@ public class ParseOrthoXML {
 	 *            is to be built
 	 * 
 	 */
-	public void buildTree(Group group, Node node) {
+	public static void buildTree(Group group, Node node) {
 
 		log.entry(group, node);
 
@@ -262,7 +270,7 @@ public class ParseOrthoXML {
 		log.entry(group, node);
 
 		BgeeProperties props = BgeeProperties.getBgeeProperties();
-		
+
 		BgeeDataSource source = BgeeDataSource.getBgeeDataSource();
 		BgeeConnection connection = source.getConnection();
 
@@ -270,7 +278,8 @@ public class ParseOrthoXML {
 				+ "ncbiTaxonomyId, ncbiGeneId)" + " VALUES (?, ?, ?, ?, ?, ?)";
 
 		try {
-			BgeePreparedStatement bgeePreparedStatement = connection.prepareStatement(sql);
+			BgeePreparedStatement bgeePreparedStatement = connection
+					.prepareStatement(sql);
 			bgeePreparedStatement.setLong(1, node.getHierarchicalGroupId());
 			bgeePreparedStatement.setString(2, group.getId());
 			bgeePreparedStatement.setLong(3, node.getHierarchicalLeftBound());
@@ -329,7 +338,7 @@ public class ParseOrthoXML {
 		if (node.getGeneID() != null) {
 
 			String[] geneIds = node.getGeneID().split("; ");
-			
+
 			Connection connection = DriverManager.getConnection(
 					"jdbc:mysql://localhost:3306/db", "user", "pass");
 
@@ -394,6 +403,21 @@ public class ParseOrthoXML {
 		}
 
 		return log.exit(speciesIds);
+	}
+
+	/**
+	 * @return the orthoXmlFile
+	 */
+	public String getOrthoXmlFile() {
+		return this.orthoXmlFile;
+	}
+
+	/**
+	 * @param orthoXmlFile
+	 *            the orthoXmlFile to set
+	 */
+	public void setOrthoXmlFile(String orthoXmlFile) {
+		this.orthoXmlFile = orthoXmlFile;
 	}
 
 }

@@ -19,9 +19,8 @@ public class MysqlHierarchicalGroupDAOTest {
 		MysqlHierarchicalGroupDAO query = new MysqlHierarchicalGroupDAO();
 
 		assertArrayEquals(requiredOrthologusGenes, query
-				.getHierarchicalOrthologusGenes("ENSG00000186470", "Tetrapoda")
+				.getHierarchicalOrthologusGenes("ENSG00000186470", "")
 				.toArray());
-
 	}
 
 }

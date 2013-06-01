@@ -35,5 +35,8 @@ public interface HierarchicalGroupDAO {
 
 	public ArrayList<String> getHierarchicalOrthologusGenes(String queryGene,
 			String ncbiTaxonomyId) throws SQLException;
+	
+	public ArrayList<String> getHierarchicalOrthologusGenesForSpecies(String queryGene,
+			String ncbiTaxonomyId, ArrayList<Long> speciesIds) throws SQLException;
 
 }

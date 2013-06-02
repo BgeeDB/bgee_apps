@@ -49,6 +49,25 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * <p>
  * <strong>Warning: </strong>these operations must be performed on an ontology 
  * already reasoned.  
+ * <p>
+ * This class allows to perform:
+ * <ul>
+ * <li><u>relation reduction</u> using regular composition rules, and composition over 
+ * super properties, see {@link #reduceRelations()}. 
+ * <li><u>relation reduction semantically incorrect</u> over relations is_a (SubClassOf) 
+ * and part_of (or sub-relations), see {@link #reducePartOfAndSubClassOfRelations()}. 
+ * <li><u>class removal and relation propagation</u>, using regular composition rules, 
+ * and composition over super properties, see {@link #removeClassAndPropagateEdges(String)}.
+ * <li><u>relation mapping to parent relations</u>, see {@link #mapRelationsToParent(Collection)} 
+ * and {@link #mapRelationsToParent(Collection, Collection)}
+ * <li><u>relation filtering or removal</u>, see {@link #filterRelations(Collection, boolean)} 
+ * and {@link #removeRelations(Collection, boolean)}. 
+ * <li><u>subgraph filtering or removal</u>, see {@link #filterSubgraphs(Collection)} and 
+ * {@link #removeSubgraphs(Collection, boolean)}. 
+ * relation removal to subset if non orphan, see 
+ * {@link #delPartOfSubClassOfRelsToSubsetsIfNonOrphan(Collection)}
+ * <li>a combination of these methods to <u>generate a basic ontology</u>, see 
+ * {@link #makeBasicOntology()}.
  * 
  * @author Frederic Bastian
  * @version May 2013
@@ -790,7 +809,7 @@ public class OWLGraphManipulator
      * 								in the ontology. Their ancestors will be kept as well.
      * @return 						An <code>int</code> representing the number of 
      * 								<code>OWLClass</code>es removed.
-     * @see #removeSubgraphs(Collection)
+     * @see #removeSubgraphs(Collection, boolean)
      */
     public int filterSubgraphs(Collection<String> allowedSubgraphRoots)
     {
@@ -1428,8 +1447,8 @@ public class OWLGraphManipulator
 	 * only one update of the <code>OWLOntology</code> triggered, 
 	 * and only one update of the <code>OWLGraphWrapper</code> cache.
 	 * 
-	 * @param edge 	A <code>Collection</code> of <code>OWLGraphEdge</code>s 
-	 * 				to be removed from their ontology. 
+	 * @param edges 	A <code>Collection</code> of <code>OWLGraphEdge</code>s 
+	 * 					to be removed from their ontology. 
 	 * @return 			An <code>int</code> representing the number of <code>OWLGraphEdge</code>s 
 	 * 					that were actually removed 
 	 * @see #removeEdge(OWLGraphEdge)
@@ -1472,8 +1491,8 @@ public class OWLGraphManipulator
 	 * only one update of the <code>OWLOntology</code> triggered, 
 	 * and only one update of the <code>OWLGraphWrapper</code> cache.
 	 * 
-	 * @param edge 	A <code>Set</code> of <code>OWLGraphEdge</code>s 
-	 * 				to be added to their ontology. 
+	 * @param edges		A <code>Set</code> of <code>OWLGraphEdge</code>s 
+	 * 					to be added to their ontology. 
 	 * @return 			An <code>int</code> representing the number of <code>OWLGraphEdge</code>s 
 	 * 					that were actually added 
 	 * @see #addEdge(OWLGraphEdge)
@@ -1617,7 +1636,7 @@ public class OWLGraphManipulator
      * 
      * @param change 	The <code>OWLOntologyChange</code> to be applied to the ontology. 
      * @eturn 			<code>true</code> if the change was actually applied. 
-     * @see #applyChanges(List<OWLOntologyChange>)
+     * @see #applyChanges(List)
      */
     private boolean applyChange(OWLOntologyChange change)
     {

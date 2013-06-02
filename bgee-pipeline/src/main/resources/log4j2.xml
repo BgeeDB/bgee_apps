@@ -9,7 +9,7 @@
     <root level="off">
       <appender-ref ref="Console"/>
     </root>  
-    <logger name="org.bgee.pipeline" level="debug" additivity="false">
+    <logger name="org.bgee.pipeline" level="trace" additivity="false">
       <appender-ref ref="Console">
           <MarkerFilter marker="FLOW" onMatch="DENY" onMismatch="NEUTRAL" />
       </appender-ref>

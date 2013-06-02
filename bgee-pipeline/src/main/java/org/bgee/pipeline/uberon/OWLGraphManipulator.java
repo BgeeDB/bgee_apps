@@ -340,18 +340,9 @@ public class OWLGraphManipulator
 						
 						//check that outgoingEdgeToWalk has the target of the outgoingEdgeToTest
 						//on his path
-						boolean targetOnPath = false;
-						for (OWLObject ancestor: this.getOwlGraphWrapper().getAncestorsReflexive(
-								outgoingEdgeToWalk.getTarget())) {
-							//as I suspect that the hashCode implementation is broken, 
-							//I don't try to use contains on the set of ancestors, 
-							//I iterate each of them
-							if (ancestor.equals(outgoingEdgeToTest.getTarget())) {
-								targetOnPath = true;
-								break;
-							}
-						}
-						if (!targetOnPath) {
+						if (!this.getOwlGraphWrapper().
+								getAncestorsReflexive(outgoingEdgeToWalk.getTarget()).
+								contains(outgoingEdgeToTest.getTarget())) {
 							continue outgoingEdgeToWalk;
 						}
 						

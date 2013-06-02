@@ -968,6 +968,29 @@ public class OWLGraphManipulator
     			classesCount += o.getClassesInSignature().size();
     		}
     	}
+    	
+    	//roots of the ontology not in subgraphRoots and not ancestors of subgraphRoots 
+    	//are considered as roots of subgraphs to keep, in case we want to keep shared classes.
+    	//So, we store the IDs of the roots of the ontology, then for each class 
+    	//in subgraphRoots, we'll remove it and its ancestors from this list of valid root IDs.
+    	Collection<String> ontRootIds = new ArrayList<String>();
+    	if (keepSharedClasses) {
+    		//in case we want to keep shared classes, we first need to identify 
+    		//roots of the ontology that are not in subgraphRoots
+    		for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
+    			for (OWLClass testClass: ont.getClassesInSignature()) {
+    				//it's a root
+    				if (this.getOwlGraphWrapper().getOutgoingEdges(testClass).isEmpty()) {
+    					String rootId = 
+        						this.getOwlGraphWrapper().getIdentifier(testClass);
+
+        				log.debug("Ontology root identified: {}", rootId);
+    					ontRootIds.add(rootId);
+    				}
+    			}
+    		}
+    	}
+    	
     	int classesRemoved = 0;
     	rootLoop: for (String rootId: subgraphRoots) {
     		OWLClass root = 
@@ -1019,6 +1042,7 @@ public class OWLGraphManipulator
         	//nor this root itself. 
         	//These descendants will be considered as roots of subgraphs to be kept. 
     	    Set<String> toKeep = new HashSet<String>();
+    	    
     	    //First we need all the ancestors of this subgraph root
 		    Set<String> ancestorIds = new HashSet<String>();
 
@@ -1028,6 +1052,31 @@ public class OWLGraphManipulator
     						this.getOwlGraphWrapper().getIdentifier(ancestor);
     				toKeep.add(shortFormName);
     				ancestorIds.add(shortFormName);
+    			}
+    		}
+    		
+    		//now, each root of the ontology, not in subgraphRoots, and not in ancestorIds, 
+    		//is considered as root of a subgraph to be kept, all its descendants should be kept
+    		for (String ontRootId: ontRootIds) {
+    			OWLClass ontRoot = this.getOwlGraphWrapper().getOWLClassByIdentifier(ontRootId);
+				//just in case the rootId was not an OBO-style ID
+				String iriId = ontRoot.getIRI().toString();
+				//valid ontology root, get all its descendants to be kept
+    			if (!rootId.equals(ontRootId) && !rootId.equals(iriId) && 
+    					!ancestorIds.contains(ontRootId)) {
+    				toKeep.add(ontRootId);
+    				log.debug("Allowed ontology root: {}", ontRootId);
+					for (OWLObject descendant: 
+						this.getOwlGraphWrapper().getDescendants(ontRoot)) {
+
+						if (descendant instanceof OWLClass) {
+							String descShortFormName = 
+									this.getOwlGraphWrapper().getIdentifier(descendant);
+							toKeep.add(descShortFormName);
+							log.debug("Allowed class of an allowed ontology root: {}", 
+									descShortFormName);
+						}
+					}
     			}
     		}
     	

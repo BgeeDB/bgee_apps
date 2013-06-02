@@ -8,6 +8,11 @@ id: FOO:0001
 name: root
 
 [Term]
+id: FOO:0100
+comment: test for the method removeSubgraphs, this root should not be renoved. 
+name: root2
+
+[Term]
 id: FOO:0002
 name: A
 relationship: part_of FOO:0001 ! root

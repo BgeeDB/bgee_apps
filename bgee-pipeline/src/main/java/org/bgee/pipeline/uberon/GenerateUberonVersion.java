@@ -18,20 +18,20 @@ public class GenerateUberonVersion
 	public static void main(String[] args) throws OWLOntologyCreationException, OBOFormatParserException, IOException 
 	{
 		ParserWrapper parserWrapper = new ParserWrapper();
-        OWLOntology ont = parserWrapper.parse("/Users/admin/Desktop/uberon.owl");
+        OWLOntology ont = parserWrapper.parse("/Users/admin/Desktop/uberon.obo.1");
     	OWLGraphManipulator graphManipulator = 
     			new OWLGraphManipulator(new OWLGraphWrapper(ont));
     	
-    	graphManipulator.makeBasicOntology();
+    	//graphManipulator.makeBasicOntology();
     	graphManipulator.delPartOfSubClassOfRelsToSubsetsIfNonOrphan(Arrays.asList("upper_level"));
-    	graphManipulator.removeSubgraphs(Arrays.asList("UBERON:0000015"), true);
-    	graphManipulator.removeClassAndPropagateEdges("UBERON:0001459");
-    	graphManipulator.reducePartOfAndSubClassOfRelations();
+    	graphManipulator.removeSubgraphs(Arrays.asList("UBERON:0000481"), true);
+    	//graphManipulator.removeClassAndPropagateEdges("UBERON:0001459");
+    	//graphManipulator.reducePartOfAndSubClassOfRelations();
     	
     	Owl2Obo converter = new Owl2Obo();
     	OBODoc oboOntology = converter.convert(
     			graphManipulator.getOwlGraphWrapper().getSourceOntology());
     	OBOFormatWriter writer = new OBOFormatWriter();
-    	writer.write(oboOntology, "/Users/admin/Desktop/uberon_test.obo");
+    	writer.write(oboOntology, "/Users/admin/Desktop/uberon_test2.obo");
 	}
 }

@@ -950,8 +950,8 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		toKeep.add("FOO:0014");
 		int countRemoved = this.graphManipulator.filterSubgraphs(toKeep);
 		
-		//The test ontology is designed so that 5 classes should have been removed
-		assertEquals("Incorrect number of classes removed", 5, countRemoved);
+		//The test ontology is designed so that 6 classes should have been removed
+		assertEquals("Incorrect number of classes removed", 6, countRemoved);
 		
 		//test that these classes were actually removed from the ontology
 		int newClassCount = this.graphManipulator.getOwlGraphWrapper()

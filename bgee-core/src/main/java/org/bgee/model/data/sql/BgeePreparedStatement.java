@@ -121,7 +121,7 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
     @Override
     public void close() throws SQLException {
         this.clearParameters();
-        this.getBgeeConnection().addToPrStPool(this);
+        this.getBgeeConnection().addToPrepStatPool(this);
     }	
 
 

@@ -189,7 +189,7 @@ public class BgeeProperties
      * @see org.bgee.model.data.sql.BgeeConnection
      * 
      * */
-    private static final int prStPoolMaxSize;  
+    private static final int prepStatPoolMaxSize;  
     /**
      * An <code>int</code> containing the maximum cumulated size 
      * allowed for a all <code>PreparedStatement</code> pools
@@ -200,7 +200,7 @@ public class BgeeProperties
      * @see org.bgee.model.data.sql.BgeeConnection
      * 
      * */
-    private static final int prStPoolsMaxTotalSize;  
+    private static final int prepStatPoolsMaxTotalSize;  
     /**
      * A <code>boolean</code> defining whether static factories should be used when available.
      * See {@link org.bgee.model.EntityFactoryProvider EntityFactoryProvider} for more details.
@@ -259,19 +259,19 @@ public class BgeeProperties
     /**
      * An <code>int</code> containing the maximum size 
      * allowed for a <code>PreparedStatement</code> Pool. Initialized at instantiation 
-     * from {@link #prStPoolMaxSize}
-     * @see #prStPoolMaxSize
+     * from {@link #prepStatPoolMaxSize}
+     * @see #prepStatPoolMaxSize
      */
-    private int localPrStPoolMaxSize;
+    private int localPrepStatPoolMaxSize;
     /**
      * An <code>int</code> containing the maximum cumulated size 
      * allowed for a all <code>PreparedStatement</code> pools in the application
      * Initialized at instantiation
-     * from {@link #prStPoolsMaxTotalSize}
-     * @see #prStPoolsMaxTotalSize
+     * from {@link #prepStatPoolsMaxTotalSize}
+     * @see #prepStatPoolsMaxTotalSize
      * 
      * */
-    private int localPrStPoolsMaxTotalSize;
+    private int localPrepStatPoolsMaxTotalSize;
 
 
     //*********************************
@@ -330,15 +330,11 @@ public class BgeeProperties
         dataSourceResourceName   = getStringOption(sysProps, fileProps, 
                 "bgee.jdbc.pool.DataSource.resourceName","java:comp/env/jdbc/bgeedatasource");
         
-        prStPoolMaxSize = Integer.valueOf(getStringOption(sysProps,
+        prepStatPoolMaxSize = Integer.valueOf(getStringOption(sysProps,
                 fileProps, "bgee.jdbc.preparedStatementPoolMaxSize","1000"));
-        
-        log.debug("Set prStPoolMaxSize to {}",prStPoolMaxSize);
-        
-        prStPoolsMaxTotalSize = Integer.valueOf(getStringOption(sysProps,
-                fileProps, "bgee.jdbc.preparedStatementPoolsMaxTotalSize","10000"));
-
-        log.debug("Set prStPoolsMaxTotalSize to {}",prStPoolsMaxTotalSize);
+                
+        prepStatPoolsMaxTotalSize = getIntegerOption(sysProps,
+                fileProps, "bgee.jdbc.preparedStatementPoolsMaxTotalSize",10000);
         
         log.info("Initialization done.");
         log.exit();
@@ -426,13 +422,52 @@ public class BgeeProperties
             boolean defaultValue)
     {
         log.entry(fileProps, sysProps, key, defaultValue);
-
+    
         String propValue = getStringOption(sysProps, fileProps, key, null);
         boolean val = defaultValue;
         if (propValue != null) {
             val= "true".equals(propValue) ||
                     "yes".equals(propValue) || 
                     "on".equals(propValue);
+        }
+    
+        return log.exit(val);
+    }
+
+
+
+    /**
+     * Try to retrieve the property corresponding to <code>key</code>, 
+     * first from the System properties (<code>sysProps</code>), 
+     * then, if undefined or empty, from properties retrieved from the Bgee property file 
+     * (<code>fileProps</code>), and cast it into a <code>int</code> value.
+     * If the property is undefined or empty in both <code>fileProps</code> 
+     * and <code>sysProps</code>, return <code>defaultValue</code>.
+     *
+     * @param sysProps 		<code>java.sql.Properties</code> retrieved from System properties, 
+     * 						where <code>key</code> is first searched in.
+     * @param fileProps	 	<code>java.sql.Properties</code> retrieved 
+     * 						from the Bgee properties file, 
+     * 						where <code>key</code> is searched in if the property 
+     * 						was undefined or empty in <code>sysProps</code>. 
+     * 						Can be <code>null</code> if no properties file was found.
+     * @param defaultValue	default value that will be returned if the property 
+     * 						is undefined or empty in both <code>Properties</code>.
+     *
+     * @return 			An <code>int</code> corresponding to the value
+     * 					for that property key.
+     * 					Or <code>defaultValue</code> if not defined or empty.
+     */
+    private static int getIntegerOption(java.util.Properties sysProps, 
+            java.util.Properties fileProps, String key, 
+            int defaultValue)
+    {
+        log.entry(fileProps, sysProps, key, defaultValue);
+
+        String propValue = getStringOption(sysProps, fileProps, key, null);
+        int val = defaultValue;
+        if (propValue != null) {
+            val= Integer.valueOf(propValue);
         }
 
         return log.exit(val);
@@ -536,8 +571,8 @@ public class BgeeProperties
         this.setJdbcUsername(jdbcUsername);
         this.setJdbcPassword(jdbcPassword);
         this.setDataSourceResourceName(dataSourceResourceName);
-        this.setPrStPoolMaxSize(prStPoolMaxSize);
-        this.setPrStPoolsMaxTotalSize(prStPoolsMaxTotalSize);
+        this.setPrepStatPoolMaxSize(prepStatPoolMaxSize);
+        this.setPrepStatPoolsMaxTotalSize(prepStatPoolsMaxTotalSize);
         
     }
 
@@ -658,31 +693,31 @@ public class BgeeProperties
      * Returns the maximum allowed size for a single <code>PreparedStatement</code> pool.
      * @return an <code>int</code> representing the maximum size of the pool.
      */
-    public int getPrStPoolMaxSize() {
-        return this.localPrStPoolMaxSize;
+    public int getPrepStatPoolMaxSize() {
+        return this.localPrepStatPoolMaxSize;
     } 
     /**
      * Returns the maximum allowed cumulated size for all <code>PreparedStatement</code> pools.
      * @return an <code>int</code> representing the maximum cumulated size allowed for pools.
      */
-    public int getPrStPoolsMaxTotalSize() {
-        return localPrStPoolsMaxTotalSize;
+    public int getPrepStatPoolsMaxTotalSize() {
+        return localPrepStatPoolsMaxTotalSize;
     } 
     /**
      * Sets the maximum allowed size for a single <code>PreparedStatement</code> pool.
-     * @param prStPoolMaxSize an <code>int</code> representing
+     * @param prepStatPoolMaxSize an <code>int</code> representing
      * the maximum size of the pool.
      */
-    public void setPrStPoolMaxSize(int prStPoolMaxSize) {
-        this.localPrStPoolMaxSize = prStPoolMaxSize;
+    public void setPrepStatPoolMaxSize(int prepStatPoolMaxSize) {
+        this.localPrepStatPoolMaxSize = prepStatPoolMaxSize;
     }   
     /**
      * Sets the maximum allowed cumulated size for all <code>PreparedStatement</code> pools.
-     * @param prStPoolsMaxTotalSize an <code>int</code> representing
+     * @param prepStatPoolsMaxTotalSize an <code>int</code> representing
      * the maximum cumulated size allowed for pools.
      */
-    public void setPrStPoolsMaxTotalSize(int prStPoolsMaxTotalSize) {
-        this.localPrStPoolsMaxTotalSize = prStPoolsMaxTotalSize;
+    public void setPrepStatPoolsMaxTotalSize(int prepStatPoolsMaxTotalSize) {
+        this.localPrepStatPoolsMaxTotalSize = prepStatPoolsMaxTotalSize;
     }    
 
     /**

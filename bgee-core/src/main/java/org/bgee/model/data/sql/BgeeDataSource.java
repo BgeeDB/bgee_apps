@@ -122,16 +122,14 @@ public class BgeeDataSource implements AutoCloseable
     /**
      * An <code>AtomicInteger</code> that keep count of all pooled 
      * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     *  of every instanced <code>BgeeDatasource</code>
+     *  of every instantiated <code>BgeeDatasource</code>
      */
-    private static AtomicInteger bgeePrStPoolsTotalSize ;
+    private final static AtomicInteger totalPrepStatPooled = new AtomicInteger();
     /**
-     * A <code>ConcurrentHashMap</code> that contains the <code>BgeeDataSource</code>
-     * which has the most pooled <code>BgeePreparedStatement</code> and the number of it.
-     * It uses the <code>BgeeDataSource</code> as key and the number as entry
+     * The <code>BgeeDataSource</code>
+     * with the most pooled <code>BgeePreparedStatement</code> in it
      */
-    private static ConcurrentHashMap<BgeeDataSource,Integer>
-    bgeeDataSourceWithMaxPrStPooled;
+    private static BgeeDataSource dataSourceWithMaxPrepStatPooled;
 
 
     //****************************
@@ -149,15 +147,13 @@ public class BgeeDataSource implements AutoCloseable
      * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
      *  of the current <code>BgeeDatasource</code>
      */
-    private AtomicInteger bgeePrStPoolsDataSourceSize;    
+    private AtomicInteger totalPrepStatPooledInDataSource;    
 
     /**
-     * A <code>ConcurrentHashMap</code> that contains the <code>BgeeConnection</code>
-     * which has the most pooled <code>BgeePreparedStatement</code>
-     * for the current <code>BgeeDatasource</code>  and the number of it.
-     * It uses the <code>BgeeConnection</code> as key and the number as entry
+     * The <code>BgeeConnection</code> with the most pooled
+     * <code>BgeePreparedStatement</code> in it
      */
-    private ConcurrentHashMap<BgeeConnection,Integer> bgeeConnWithMaxPrStPooled ;
+    private BgeeConnection connWithMaxPrepStatPooled ;
 
 
     //****************************
@@ -174,9 +170,7 @@ public class BgeeDataSource implements AutoCloseable
         dataSourcesClosed.set(false);
 
         // Inits the variables that keep count of the global prepared statement pooling
-        BgeeDataSource.bgeeDataSourceWithMaxPrStPooled = 
-                new ConcurrentHashMap<BgeeDataSource,Integer>();
-        BgeeDataSource.bgeePrStPoolsTotalSize = new AtomicInteger(0);
+        BgeeDataSource.dataSourceWithMaxPrepStatPooled = null;
 
         DataSource dataSourceTemp = null;
         BgeeProperties props = BgeeProperties.getBgeeProperties();
@@ -258,8 +252,8 @@ public class BgeeDataSource implements AutoCloseable
 
             // Inits the variables that keep count 
             // of the prepared statement pooling for this BgeeDataSource
-            source.bgeeConnWithMaxPrStPooled = new ConcurrentHashMap<BgeeConnection, Integer>();
-            source.bgeePrStPoolsDataSourceSize = new AtomicInteger(0);
+            source.connWithMaxPrepStatPooled = null;
+            source.totalPrepStatPooledInDataSource = new AtomicInteger(0);
             //we don't use putifAbsent, as the thread object make sure 
             //there won't be any multi-threading key collision
             bgeeDataSources.put(currentThread, source);
@@ -307,73 +301,107 @@ public class BgeeDataSource implements AutoCloseable
     /**
      * @return An <code>AtomicInteger</code> that keep count of all pooled 
      * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     * of every instanced <code>BgeeDatasource</code>
+     * of every instantiated <code>BgeeDatasource</code>
      */
-    protected static AtomicInteger getBgeePrStPoolsTotalSize(){
-        return BgeeDataSource.bgeePrStPoolsTotalSize;
+    private static AtomicInteger getPrepStatPoolsTotalSize(){
+        return BgeeDataSource.totalPrepStatPooled;
     }
 
     /**
-     * @return A <code>ConcurrentHashMap</code> that contains the <code>BgeeDataSource</code>
-     * which has the most pooled <code>BgeePreparedStatement</code> and the number of it.
-     * It uses the <code>BgeeDataSource</code> as key and the number as entry
+     * @return The <code>BgeeDataSource</code>
+     * with the most pooled <code>BgeePreparedStatement</code> in it
      */
-    protected static ConcurrentHashMap<BgeeDataSource,Integer> 
-    getBgeeDataSourceWithMaxPrStPooled(){
-        return BgeeDataSource.bgeeDataSourceWithMaxPrStPooled;
+    private static BgeeDataSource getDataSourceWithMaxPrepStatPooled(){
+        return BgeeDataSource.dataSourceWithMaxPrepStatPooled;
     }
 
     /**
-     * Sets an <code>AtomicInteger</code> that keep count of all pooled 
-     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     * of every instanced <code>BgeeDatasource</code>
+     * Sets the <code>BgeeDataSource</code>
+     * with the most pooled <code>BgeePreparedStatement</code> in it
      * 
-     * @param size An <code>int</code> that is the number of pooled 
-     * <code>BgeePreparedStatement</code>
-     * 
-     */
-    protected static void setBgeePrStPoolsTotalSize(int size){
-        BgeeDataSource.bgeePrStPoolsTotalSize = new AtomicInteger(size);
-    }
-
-    /**
-     * Sets a <code>ConcurrentHashMap</code> that contains the <code>BgeeDataSource</code>
-     * which has the most pooled <code>BgeePreparedStatement</code> and the number of it.
-     * It uses the <code>BgeeDataSource</code> as key and the number as entry
-     * 
-     * @param ds    A <code>BgeeDataSource</code> which is the one with the most pooled 
-     *              <code>BgeePreparedStatement</code>
-     * @param size  An <code>Integer</code> which is the number of 
-     *              <code>BgeePreparedStatement</code>
+     * @param ds    The <code>BgeeDataSource</code> 
+     *              with the most pooled <code>BgeePreparedStatement</code> in it
      * 
      */
-    protected static void setBgeeDataSourceWithMaxPrStPooled(BgeeDataSource ds,Integer size){
-        BgeeDataSource.bgeeDataSourceWithMaxPrStPooled.clear();
-        BgeeDataSource.bgeeDataSourceWithMaxPrStPooled.put(ds, size);
+    private static void setDataSourceWithMaxPrepStatPooled(BgeeDataSource ds){
+        BgeeDataSource.dataSourceWithMaxPrepStatPooled = ds;
     }    
-    
+
     /**
      * Checks if the maximum of <code>BgeePreparedStatement</code> allowed is reached, and
-     * if it is the case, retrieves the <code>BgeeConnection</code> among all available 
-     * which has the most pooled <code>BgeePreparedStatement</code>
-     * and call its pool cleaning method
-     * @see BgeeConnection
+     * if it is the case, retrieves the <code>BgeeDatasource</code> 
+     * which has the most pooled
+     * <code>BgeePreparedStatement</code> to call its own pool cleaning method
      */
-    protected static void checkAndCleanBgeePsStPools(){
-        
+    private synchronized static void checkAndCleanPrepStatPools(){
+
         log.entry();
 
-        if(BgeeDataSource.getBgeePrStPoolsTotalSize().intValue() <  
-                BgeeProperties.getBgeeProperties().getPrStPoolsMaxTotalSize()){
+        if(BgeeDataSource.getPrepStatPoolsTotalSize().intValue() >=  
+                BgeeProperties.getBgeeProperties().getPrepStatPoolsMaxTotalSize()){
+            log.info("Too many prepared statement pooled among all datasources");
+            BgeeDataSource.dataSourceWithMaxPrepStatPooled.cleanPrepStatPools();
         }
-        else {
-            log.info("Too many prepared statement among all datasources");
-            BgeeDataSource.bgeeDataSourceWithMaxPrStPooled.keys().nextElement()
-            .bgeeConnWithMaxPrStPooled.keys().nextElement().makeRoomInThePrStPool();
-        }
-        
+
         log.exit();
-        
+
+    }
+    /**
+     * Update the total number of pooled <code>BgeePreparedStatement</code>
+     * It also registers the given <code>BgeeDataSource</code> as the one with
+     * the most pooled <code>BgeePreparedStatement</code> if this is the case.
+     * 
+     *  @param deltaPrepStatNumber      An <code>int</code> which represents the change
+     *                                  in the <code>BgeePreparedStatement</code> number
+     *            
+     *                                                        
+     *  @param dataSource               The <code>BgeeDataSource</code> from which the
+     *                                  report came
+     *                                                                       
+     */    
+    private static void reportPoolState(int deltaPrepStatNumber,
+            BgeeDataSource dataSource){
+
+        log.entry(deltaPrepStatNumber,dataSource);
+
+        // Update the number of PreparedStatment pooled, 
+        // at the global level
+        // No need to synchronize as it is an atomic integer
+        BgeeDataSource.getPrepStatPoolsTotalSize().addAndGet(deltaPrepStatNumber);
+
+        // Update the datasource which has the most prep stat pooled, if needed
+        // Has to be in a synchronized block 
+        BgeeDataSource.registerDataSourceWithMaxPrepStatPooled(dataSource);
+
+        log.exit();
+
+    }
+    /**
+     * This method contains the <code>synchronized</code> part of the report of the 
+     * prepared statement pool state.
+     * It registers the given <code>BgeeDataSource</code> as the one with
+     * the most pooled <code>BgeePreparedStatement</code> if this is the case.
+     *          
+     *                                                        
+     *  @param dataSource               The <code>BgeeDataSource</code> from which the
+     *                                  report came
+     *                                  
+     *  @see #reportPoolState       
+     *                                                                       
+     */    
+    private static synchronized void registerDataSourceWithMaxPrepStatPooled(
+            BgeeDataSource dataSource){
+        // Update the datasource which has the most prep stat pooled, if needed
+        if(BgeeDataSource.getDataSourceWithMaxPrepStatPooled() == null || 
+                BgeeDataSource.getDataSourceWithMaxPrepStatPooled()
+                .getTotalPrepStatPooledInDataSource().intValue() <
+                dataSource.getTotalPrepStatPooledInDataSource().intValue()){
+
+            BgeeDataSource.setDataSourceWithMaxPrepStatPooled(dataSource);
+
+            log.debug("Register the following datasource as the one with the most prepared statements pooled : {} with {} items",
+                    dataSource,dataSource.getTotalPrepStatPooledInDataSource().intValue()); 
+        }
     }
 
     //****************************
@@ -597,6 +625,75 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
+     * Retrieves the <code>BgeeConnection</code> which has the most pooled
+     * <code>BgeePreparedStatement</code> to call its own pool cleaning method
+     */
+    private void cleanPrepStatPools(){
+
+        log.entry();
+
+        this.getConnWithMaxPrepStatPooled().cleanPrepStatPools();
+
+        log.exit();
+
+    }    
+
+    /**
+     * This method simply passes the call to the corresponding method at the static level
+     * which will check if the global maximum of <code>BgeePreparedStatement</code>
+     * allowed is reached and starts the cleaning process.
+     * @see #checkAndCleanPrepStatPools
+     */
+    protected void checkPrepStatPools(){
+        log.entry();
+        BgeeDataSource.checkAndCleanPrepStatPools();
+        log.exit();
+    }
+
+    /**
+     * Update the number of pooled <code>BgeePreparedStatement</code> for the current
+     * <code>BgeeDataSource</code>
+     * It also registers the given <code>BgeeConnection</code> as the one with
+     * the most pooled <code>BgeePreparedStatement</code> if this is the case.
+     * Finally, it follows the request at the global level by calling the corresponding
+     * method at the static level
+     * 
+     *  @param deltaPrepStatNumber      An <code>int</code> which represents the change
+     *                                  in the <code>BgeePreparedStatement</code> number
+     *  
+     *  @param con                      The <code>BgeeConnection</code> from which the
+     *                                  report initially originated            
+     *                                                        
+     *  @see #reportPoolState
+     *                                                                       
+     */    
+    protected void reportPoolState(int deltaPrepStatNumber,BgeeConnection con){
+
+        log.entry(deltaPrepStatNumber,con);
+
+        // Update the number of PreparedStatment pooled, 
+        // at the DataSource level
+        this.getTotalPrepStatPooledInDataSource().addAndGet(deltaPrepStatNumber);
+
+        // Update the connection which has the most prep st pooled, if needed
+        if(this.getConnWithMaxPrepStatPooled() == null || 
+                this.getConnWithMaxPrepStatPooled()
+                .getPreparedStatementPool().size() < con.getPreparedStatementPool().size()){
+
+            this.setConnWithMaxPrepStatPooled(con);
+
+            log.debug("Register the following connection as the one with the most prepared statements pooled : {} with {} items, for datasource {}",
+                    con,con.getPreparedStatementPool().size(),this); 
+        }
+
+        BgeeDataSource.reportPoolState(deltaPrepStatNumber,this);
+
+        log.exit();
+
+    }
+
+
+    /**
      * @param openConnections A <code>Map<String,BgeeConnection></code> to set {@link #openConnections} 
      */
     private void setOpenConnections(Map<String, BgeeConnection> openConnections) {
@@ -654,50 +751,30 @@ public class BgeeDataSource implements AutoCloseable
 
     /**
      * @return an <code>AtomicInteger</code> that keep count of all pooled 
-     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     *  of the current <code>BgeeDatasource</code>
+     *          <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
+     *          of the current <code>BgeeDatasource</code>
      */
-    protected AtomicInteger getPrStPoolsDataSourceSize(){
-        return this.bgeePrStPoolsDataSourceSize;
+    private AtomicInteger getTotalPrepStatPooledInDataSource(){
+        return this.totalPrepStatPooledInDataSource;
     }
 
     /**
-     * Sets an <code>AtomicInteger</code> that keep count of all pooled 
-     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     * of the current <code>BgeeDatasource</code>
-     * 
-     * @param size An <code>int<code> that contains the number of pooled 
-     *        <code>BgeePreparedStatement</code>
-     *  
+     * @return  The <code>BgeeConnection</code> with the most pooled
+     *          <code>BgeePreparedStatement</code> in it
      */
-    protected void setPrStPoolsDataSourceSize(int size){
-        this.bgeePrStPoolsDataSourceSize = new AtomicInteger(size) ;
-    }    
-
-    /**
-     * @return A <code>ConcurrentHashMap</code> that contains the <code>BgeeConnection</code>
-     * which has the most pooled <code>BgeePreparedStatement</code> 
-     * for the current <code>BgeeDatasource</code> and the number of it.
-     * It uses the <code>BgeeConnection</code> as key and the number as entry
-     */
-    protected ConcurrentHashMap<BgeeConnection,Integer> getBgeeConnWithMaxPrStPooled(){
-        return this.bgeeConnWithMaxPrStPooled;
+    private BgeeConnection getConnWithMaxPrepStatPooled(){
+        return this.connWithMaxPrepStatPooled;
     }
 
     /**
-     * Sets a <code>ConcurrentHashMap</code> that contains the <code>BgeeConnection</code>
-     * which has the most pooled <code>BgeePreparedStatement</code> 
-     * for the current <code>BgeeDatasource</code>  and the number of it.
-     * It uses the <code>BgeeConnection</code> as key and the number as entry
-     * 
-     * @param bgc    A <code>BgeeConnection</code> which is the one with the most pooled 
-     *              <code>BgeePreparedStatement</code>
-     * @param size  An <code>Integer</code> which is the number of 
-     *              <code>BgeePreparedStatement</code>
+     * Sets the <code>BgeeConnection</code> with the most pooled
+     *          <code>BgeePreparedStatement</code> in it
+     *
+     * @param con    The <code>BgeeConnection</code> with the most pooled
+     *          <code>BgeePreparedStatement</code> in it
      */
-    protected void setBgeeConnWithMaxPrStPooled(BgeeConnection bgc,Integer size){
-        this.bgeeConnWithMaxPrStPooled.clear();
-        this.bgeeConnWithMaxPrStPooled.put(bgc, size);
+    private void setConnWithMaxPrepStatPooled(BgeeConnection con){
+        this.connWithMaxPrepStatPooled = con;
     }
 
 }

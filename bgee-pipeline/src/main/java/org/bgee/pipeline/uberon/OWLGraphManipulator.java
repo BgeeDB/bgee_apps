@@ -397,18 +397,25 @@ public class OWLGraphManipulator
 	    			    Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
 	    			    edgesInspected.addFirst(outgoingEdgeToWalk);
 	    			    //to check that there is no cycle in the ontology:
-	    			    List<OWLGraphEdge> edgesAlreadyWalked = new ArrayList<OWLGraphEdge>();
+	    			    List<OWLGraphEdge> composedWalk = new ArrayList<OWLGraphEdge>();
+	    			    //to check that there is no cycle in the ontology:
+	    			    List<OWLGraphEdge> regularWalk = new ArrayList<OWLGraphEdge>();
+	    			    regularWalk.add(outgoingEdgeToWalk);
 	    			
 	    			    OWLGraphEdge currentEdge;
 	    			    while ((currentEdge = edgesInspected.pollFirst()) != null) {
 	    			    	//check there is no cycle: 
-	    			    	if (edgesAlreadyWalked.contains(currentEdge)) {
+	    			    	if (composedWalk.contains(currentEdge)) {
+	    			    		//add the edge anyway to see it in the logs
+	    			    		composedWalk.add(currentEdge);
 	    			    		log.warn("Edge already seen! Is there a cycle? " +
-	    			    			"Edge from which the walk started: {} - edges walked: {}", 
-	    			    			outgoingEdgeToWalk, edgesAlreadyWalked);
+	    			    			"Edge from which the walk started: {}", outgoingEdgeToWalk);
+	    			    		log.warn("Composed walk: {}", composedWalk);
+	    			    		log.warn("Regular walk: {}",  regularWalk);
+	    			    		continue outgoingEdgeToWalk;
 	    			    	}
 	    			    	log.trace("Current edge examined on the walk: {}", currentEdge);
-	    			    	edgesAlreadyWalked.add(currentEdge);
+	    			    	composedWalk.add(currentEdge);
 
 	    			    	//get the outgoing edges starting from the target of currentEdge, 
 	    			    	//and compose these relations with currentEdge, 
@@ -483,7 +490,8 @@ public class OWLGraphManipulator
 	    			    				if (!combine.getTarget().equals(
 	    			    						outgoingEdgeToTest.getTarget())) {
 	    			    				    log.trace("Combined relation not redundant, continue the walk");
-	    			    				    edgesInspected.addFirst(combine);
+	    			    				    edgesInspected.addFirst(combine);PROBLEME ICI, ON NE FAIT PAS UN CHEMIN A LA FOIS, MAIS TOUS EN MEME TEMPS
+	    		    			    		regularWalk.add(nextEdge);
 	    			    				} else {
 	    			    					log.trace("Target of the edge to test reached, stop this walk here");
 	    			    				}

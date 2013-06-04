@@ -19,6 +19,7 @@ import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLAxiomChange;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -28,6 +29,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import owltools.graph.OWLGraphEdge;
@@ -1119,5 +1121,80 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		 //then of course the hashcodes will be the same...
 		 assertTrue("Two OWLClasses are equal but have different hashcode", 
 				 class1.equals(class2) && class1.hashCode() == class2.hashCode());
+	}/**
+	 * Test that two <code>OWLClass</code>es that are equal have a same hashcode, 
+	 * because the OWLGraphEdge bug get me paranoid. 
+	 */
+	@Test
+	public void testOWLOntologyChangeHashCode()
+	{
+    	
+		OWLOntology ont = this.graphManipulator.getOwlGraphWrapper().getSourceOntology();
+		OWLDataFactory factory = this.graphManipulator.getOwlGraphWrapper().
+				getManager().getOWLDataFactory();
+		OWLClass source = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0005");
+		OWLClass target = 
+				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+		
+		OWLGraphEdge checkEdge = new OWLGraphEdge(source, target, ont);
+		OWLAxiom axiom = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge));
+		OWLAxiomChange rm1 = new RemoveAxiom(ont, axiom);
+		
+		OWLGraphEdge checkEdge2 = new OWLGraphEdge(source, target, ont);
+		OWLAxiom axiom2 = factory.getOWLSubClassOfAxiom(source, 
+				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				edgeToTargetExpression(checkEdge2));
+		OWLAxiomChange rm2 = new RemoveAxiom(ont, axiom2);
+		
+		assertTrue("The two OWLAxiomChange objects are equal", 
+				 rm1.equals(rm2));
+		 //then of course the hashcodes will be the same...
+		 assertTrue("Two OWLAxiomChange are equal but have different hashcode", 
+				 rm1.equals(rm2) && rm1.hashCode() == rm2.hashCode());
+		 
+		 
+		 
+		 source = 
+				 this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0014");
+		 target = 
+				 this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+
+		 checkEdge = new OWLGraphEdge(source, target, ont);
+		 axiom = factory.getOWLSubClassOfAxiom(source, 
+				 (OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
+				 edgeToTargetExpression(checkEdge));
+		 OWLAxiomChange rm3 = new RemoveAxiom(ont, axiom);
+
+		 assertFalse("Different OWLAxiomChange objects are equal", 
+				 rm1.equals(rm3));
+		 //then of course the hashcodes will be the same...
+		 assertFalse("Different OWLAxiomChanges have same hashcode", 
+				 rm1.hashCode() == rm3.hashCode());
+	}
+	
+	/**
+	 * Test <code>hashCode</code> method and <code>equals</code> method 
+	 * of {@link owltools.graph.OWLQuantifiedProperty}. 
+	 */
+	@Test
+	public void testOWLQuantifiedPropertyHashCode()
+	{
+		OWLObjectProperty prop1 = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		OWLObjectProperty prop2 = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		
+		assertTrue("Two OWLQuantifiedProperty are equal but have different hashcodes.", 
+				prop1.equals(prop2) && prop1.hashCode() == prop2.hashCode());
+		
+		OWLObjectProperty prop3 = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("RO:0002202");
+		
+		assertFalse("Two different OWLQuantifiedProperty are equal", prop1.equals(prop3));
+		assertFalse("Two different OWLQuantifiedProperty have same hashcode", 
+				prop1.hashCode() == prop3.hashCode());
 	}
 }

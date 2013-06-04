@@ -593,11 +593,8 @@ public class OWLGraphManipulator
     	}
     	//now remove the class
     	log.debug("Removing class {}", classToRemove);
-    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
-    			this.getOwlGraphWrapper().getAllOntologies());
-    	classToRemove.accept(remover);
     	
-    	if (this.applyChanges(remover.getChanges()) == 0) {
+    	if (!this.removeClass(classToRemove)) {
     		//if the class was not removed from the ontology, throw an IllegalArgumentException 
     		//(maybe it was only in the owltools cache for instance?).
     		//it allows to distinguish the case when this method returns 0 because 
@@ -788,11 +785,8 @@ public class OWLGraphManipulator
     /**
      * Keep in the ontologies only the subgraphs starting 
      * from the provided <code>OWLClass</code>es, and their ancestors. 
-     * <code>allowedSubgraphRoots</code> contains the OBO-style IDs 
-     * of these subgraph roots as <code>String</code>s 
-     * (they will be converted to <code>OWLClass</code>es by calling the method 
-     * {@link owltools.graph.OWLGraphWrapperExtended#getOWLClassByIdentifier(String) 
-     * getOWLClassByIdentifier(String)}).
+     * <code>allowedSubgraphRootIds</code> contains the OBO-style IDs 
+     * of these subgraph roots as <code>String</code>s.
      * <p>
      * All classes not part of these subgraphs, and not ancestors of these allowed roots, 
      * will be removed from the ontology. Also, any direct relation between an ancestor 
@@ -803,62 +797,56 @@ public class OWLGraphManipulator
      * <p>
      * This is the opposite method of <code>removeSubgraphs(Collection<String>)</code>.
      * 
-     * @param allowedSubgraphRoots 	A <code>Collection</code> of <code>String</code>s 
-     * 								representing the OBO-style IDs of the <code>OWLClass</code>es 
-     * 								that are the roots of the subgraphs that will be kept 
-     * 								in the ontology. Their ancestors will be kept as well.
+     * @param allowedSubgraphRootIds 	A <code>Collection</code> of <code>String</code>s 
+     * 									representing the OBO-style IDs of the 
+     * 									<code>OWLClass</code>es that are the roots of the 
+     * 									subgraphs that will be kept in the ontology. 
+     * 									Their ancestors will be kept as well.
      * @return 						An <code>int</code> representing the number of 
      * 								<code>OWLClass</code>es removed.
      * @see #removeSubgraphs(Collection, boolean)
      */
-    public int filterSubgraphs(Collection<String> allowedSubgraphRoots)
+    public int filterSubgraphs(Collection<String> allowedSubgraphRootIds)
     {
-    	log.entry(allowedSubgraphRoots);
-    	log.info("Start filtering subgraphs of allowed roots: {}", allowedSubgraphRoots);
+    	log.entry(allowedSubgraphRootIds);
+    	log.info("Start filtering subgraphs of allowed roots: {}", allowedSubgraphRootIds);
 
-		int classesCount   = 0;
+		int classCount   = 0;
     	if (log.isInfoEnabled()) {
-    		for (OWLOntology o : this.getOwlGraphWrapper().getAllOntologies()) {
-    			classesCount += o.getClassesInSignature().size();
-    		}
+    		classCount = this.getAllClasses().size();
     	}
-    	
+
+    	Set<OWLClass> allowedSubgraphRoots = new HashSet<OWLClass>();
     	//first, we get all OWLObjects descendants and ancestors of the allowed roots, 
     	//to define which OWLObjects should be kept in the ontology. 
     	//We store the ancestors in another collection to check 
     	//for undesired relations after class removals (see end of the method). 
-    	Set<String> toKeep      = new HashSet<String>();
-    	Set<String> ancestorIds = new HashSet<String>();
-    	for (String allowedRootId: allowedSubgraphRoots) {
+    	Set<OWLClass> toKeep               = new HashSet<OWLClass>();
+    	Set<OWLClass> ancestors            = new HashSet<OWLClass>();
+    	for (String allowedRootId: allowedSubgraphRootIds) {
     		OWLClass allowedRoot = 
     				this.getOwlGraphWrapper().getOWLClassByIdentifier(allowedRootId);
     		
     		if (allowedRoot != null) {
-    			toKeep.add(allowedRootId);
-    			log.debug("Allowed root class: {}", allowedRootId);
+    			toKeep.add(allowedRoot);
+    			allowedSubgraphRoots.add(allowedRoot);
+    			log.debug("Allowed root class: {}", allowedRoot);
     			
     			//get all its descendants and ancestors
     			//fill the Collection toKeep and ancestorsIds
-    			//(code factorization?)
     			for (OWLObject descendant: 
     				    this.getOwlGraphWrapper().getDescendants(allowedRoot)) {
-    				
     				if (descendant instanceof OWLClass) {
-    				    String shortFormName = 
-    							this.getOwlGraphWrapper().getIdentifier(descendant);
-    				    toKeep.add(shortFormName);
-    				    log.debug("Allowed descent class: {}", shortFormName);
+    				    toKeep.add((OWLClass) descendant);
+    				    log.debug("Allowed descent class: {}", descendant);
     				}
     			}
     			for (OWLObject ancestor: 
 				    this.getOwlGraphWrapper().getAncestors(allowedRoot)) {
-				
     				if (ancestor instanceof OWLClass) {
-    					String shortFormName = 
-    							this.getOwlGraphWrapper().getIdentifier(ancestor);
-    					toKeep.add(shortFormName);
-    					ancestorIds.add(shortFormName);
-    					log.debug("Allowed ancestor class: {}", shortFormName);
+    					toKeep.add((OWLClass) ancestor);
+    					ancestors.add((OWLClass) ancestor);
+    					log.debug("Allowed ancestor class: {}", ancestor);
     				}
 			    }
     		} else {
@@ -869,23 +857,21 @@ public class OWLGraphManipulator
     	//remove unwanted classes
     	int classesRemoved = this.filterClasses(toKeep);
     	
-    	
     	//remove any relation between an ancestor of an allowed root and one of its descendants, 
     	//as it would represent an undesired subgraph. 
     	Set<OWLGraphEdge> edgesToRemove = new HashSet<OWLGraphEdge>();
-    	ancestor: for (String ancestorId: ancestorIds) {
+    	ancestor: for (OWLClass ancestor: ancestors) {
     		//if this ancestor is also an allowed root, 
     		//all relations to it are allowed
-    		if (allowedSubgraphRoots.contains(ancestorId)) {
+    		if (allowedSubgraphRoots.contains(ancestor)) {
     			continue ancestor;
     		}
     		
     		//get direct descendants of the ancestor
-    		OWLClass ancestor = 
-    				this.getOwlGraphWrapper().getOWLClassByIdentifier(ancestorId);
+    		//iterate each ontology to fix a bug
     		for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
     			for (OWLGraphEdge incomingEdge: 
-    				this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
+    				    this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
                     //to fix a bug: 
     				if (!ont.containsAxiom(this.getAxiom(incomingEdge))) {
     					continue;
@@ -894,20 +880,14 @@ public class OWLGraphManipulator
     				
     				OWLObject directDescendant = incomingEdge.getSource(); 
     				if (directDescendant instanceof OWLClass) { 
-    					String descentId = 
-    							this.getOwlGraphWrapper().getIdentifier(directDescendant);
-    					//just in case the allowedSubgraphRoots were not OBO-style IDs
-    					String iriId = ((OWLClass) directDescendant).getIRI().toString();
     					//if the descendant is not an allowed root, nor an ancestor 
     					//of an allowed root, then the relation should be removed.
-    					if (!allowedSubgraphRoots.contains(descentId) && 
-    							!allowedSubgraphRoots.contains(iriId) && 
-    							!ancestorIds.contains(descentId) && 
-    							!ancestorIds.contains(iriId) ) {
+    					if (!allowedSubgraphRoots.contains(directDescendant) && 
+    							!ancestors.contains(directDescendant)) {
 
     						edgesToRemove.add(incomingEdge);
     						log.debug("Undesired subgraph, relation between {} and {} removed", 
-    								ancestorId, descentId);
+    								ancestor, directDescendant);
     					}
     				} 
     			}
@@ -921,18 +901,15 @@ public class OWLGraphManipulator
     	}
     	
     	log.info("Done filtering subgraphs of allowed roots, {} classes removed over {} classes total, {} undesired relations removed.", 
-    	   		classesRemoved, classesCount, edgesRemoved);
+    	   		classesRemoved, classCount, edgesRemoved);
     	
     	return log.exit(classesRemoved);
     }
     /**
      * Remove from the ontology the subgraphs starting 
-     * from the <code>OWLClass</code>es in <code>subgraphRoots</code>. 
-     * <code>subgraphRoots</code> contains the OBO-style IDs 
-     * of these subgraph roots as <code>String</code>s 
-     * (they will be converted to <code>OWLClass</code>es by calling the method 
-     * {@link owltools.graph.OWLGraphWrapperExtended#getOWLClassByIdentifier(String) 
-     * getOWLClassByIdentifier(String)}).
+     * from the <code>OWLClass</code>es with their ID in <code>subgraphRootIds</code>. 
+     * <code>subgraphRootIds</code> contains the OBO-style IDs 
+     * of these subgraph roots as <code>String</code>s.
      * <p>
      * If a class is part of a subgraph to remove, but also of a subgraph not to be removed, 
      * it will be kept in the ontology if <code>keepSharedClasses</code> is <code>true</code>, 
@@ -944,7 +921,7 @@ public class OWLGraphManipulator
      * <p>
      * This is the opposite method of <code>filterSubgraphs(Collection<String>)</code>.
      * 
-     * @param subgraphRoots 		A <code>Collection</code> of <code>String</code>s 
+     * @param subgraphRootIds 		A <code>Collection</code> of <code>String</code>s 
      * 								representing the OBO-style IDs of the <code>OWLClass</code>es 
      * 								that are the roots of the subgraphs to be removed. 
      * @param keepSharedClasses 	A <code>boolean</code> defining whether classes part both of 
@@ -955,68 +932,44 @@ public class OWLGraphManipulator
      * 								<code>OWLClass</code>es removed.
      * @see #filterSubgraphs(Collection)
      */
-    public int removeSubgraphs(Collection<String> subgraphRoots, boolean keepSharedClasses)
+    public int removeSubgraphs(Collection<String> subgraphRootIds, boolean keepSharedClasses)
     {
-    	log.entry(subgraphRoots, keepSharedClasses);
-    	log.info("Start removing subgraphs of undesired roots: {}", subgraphRoots);
+    	log.entry(subgraphRootIds, keepSharedClasses);
+    	log.info("Start removing subgraphs of undesired roots: {}", subgraphRootIds);
     	
-    	
-    	
-    	int classesCount   = 0;
+    	int classCount   = 0;
     	if (log.isInfoEnabled()) {
-    		for (OWLOntology o : this.getOwlGraphWrapper().getAllOntologies()) {
-    			classesCount += o.getClassesInSignature().size();
-    		}
+    		classCount = this.getAllClasses().size();
     	}
     	
     	//roots of the ontology not in subgraphRoots and not ancestors of subgraphRoots 
     	//are considered as roots of subgraphs to keep, in case we want to keep shared classes.
-    	//So, we store the IDs of the roots of the ontology, then for each class 
+    	//So, we store the roots of the ontology, then for each class 
     	//in subgraphRoots, we'll remove it and its ancestors from this list of valid root IDs.
-    	Collection<String> ontRootIds = new ArrayList<String>();
+    	Collection<OWLClass> ontRoots = new ArrayList<OWLClass>();
     	if (keepSharedClasses) {
-    		//in case we want to keep shared classes, we first need to identify 
-    		//roots of the ontology that are not in subgraphRoots
-    		for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-    			for (OWLClass testClass: ont.getClassesInSignature()) {
-    				//it's a root
-    				if (this.getOwlGraphWrapper().getOutgoingEdges(testClass).isEmpty()) {
-    					String rootId = 
-        						this.getOwlGraphWrapper().getIdentifier(testClass);
-
-        				log.debug("Ontology root identified: {}", rootId);
-    					ontRootIds.add(rootId);
-    				}
-    			}
-    		}
+    		ontRoots = this.getOntologyRoots();
     	}
     	
     	int classesRemoved = 0;
-    	rootLoop: for (String rootId: subgraphRoots) {
-    		OWLClass root = 
+    	rootLoop: for (String rootId: subgraphRootIds) {
+    		OWLClass subgraphRoot = 
     				this.getOwlGraphWrapper().getOWLClassByIdentifier(rootId);
-    		if (root == null) {
+    		if (subgraphRoot == null) {
     			log.debug("Discarded root class: {}", rootId);
     			continue rootLoop;
     		}
+    		log.debug("Examining subgraph from root: {}", subgraphRoot);
         	
         	if (!keepSharedClasses) {
         		//this part is easy, simply remove all descendants of subgraphRoots 
-        		Collection<String> classIdsToDel = new HashSet<String>();
-        		classIdsToDel.add(rootId);
-        		
-        		for (OWLObject descendant: 
-					this.getOwlGraphWrapper().getDescendants(root)) {
-
-					if (descendant instanceof OWLClass) {
-						String descShortFormName = 
-								this.getOwlGraphWrapper().getIdentifier(descendant);
-						classIdsToDel.add(descShortFormName);
-						log.debug("Subgraph being deleting, class to remove: {}", 
-								descShortFormName);
-					}
-        		}
-        		classesRemoved += this.removeClasses(classIdsToDel);
+        		Set<OWLClass> classesToDel = new HashSet<OWLClass>();
+        		classesToDel.add(subgraphRoot);
+        		Set<OWLClass> descendants = this.getOWLClassDescendants(subgraphRoot);
+        		classesToDel.addAll(descendants);
+        		log.debug("Subgraph being deleted, descendants of subgraph root to remove: {}", 
+						descendants);
+        		classesRemoved += this.removeClasses(classesToDel);
         		continue rootLoop;
         	}
     		
@@ -1041,98 +994,58 @@ public class OWLGraphManipulator
         	//that are not ancestors of the current root analyzed, 
         	//nor this root itself. 
         	//These descendants will be considered as roots of subgraphs to be kept. 
-    	    Set<String> toKeep = new HashSet<String>();
+    	    Set<OWLClass> toKeep = new HashSet<OWLClass>();
     	    
     	    //First we need all the ancestors of this subgraph root
-		    Set<String> ancestorIds = new HashSet<String>();
-
-    		for (OWLObject ancestor: this.getOwlGraphWrapper().getAncestors(root)) {
-    			if (ancestor instanceof OWLClass) {
-    				String shortFormName = 
-    						this.getOwlGraphWrapper().getIdentifier(ancestor);
-    				toKeep.add(shortFormName);
-    				ancestorIds.add(shortFormName);
-    			}
-    		}
+		    Set<OWLClass> ancestors = this.getOWLClassAncestors(subgraphRoot);
     		
-    		//now, each root of the ontology, not in subgraphRoots, and not in ancestorIds, 
+    		//now, each root of the ontology, not in subgraphRoots, and not in ancestors, 
     		//is considered as root of a subgraph to be kept, all its descendants should be kept
-    		for (String ontRootId: ontRootIds) {
-    			OWLClass ontRoot = this.getOwlGraphWrapper().getOWLClassByIdentifier(ontRootId);
-				//just in case the rootId was not an OBO-style ID
-				String iriId = ontRoot.getIRI().toString();
+    		for (OWLClass ontRoot: ontRoots) {
 				//valid ontology root, get all its descendants to be kept
-    			if (!rootId.equals(ontRootId) && !rootId.equals(iriId) && 
-    					!ancestorIds.contains(ontRootId)) {
-    				toKeep.add(ontRootId);
-    				log.debug("Allowed ontology root: {}", ontRootId);
-					for (OWLObject descendant: 
-						this.getOwlGraphWrapper().getDescendants(ontRoot)) {
-
-						if (descendant instanceof OWLClass) {
-							String descShortFormName = 
-									this.getOwlGraphWrapper().getIdentifier(descendant);
-							toKeep.add(descShortFormName);
-							log.debug("Allowed class of an allowed ontology root: {}", 
-									descShortFormName);
-						}
-					}
+    			if (!subgraphRoot.equals(ontRoot) && !ancestors.contains(ontRoot)) {
+    				toKeep.add(ontRoot);
+    				log.debug("Allowed ontology root: {}", ontRoot);
+    				Set<OWLClass> descendants = this.getOWLClassDescendants(ontRoot);
+            		toKeep.addAll(descendants);
+            		log.debug("Allowed classes of an allowed ontology root: {}", 
+    						descendants);
     			}
     		}
     	
     		//now, we try to identify the roots of the subgraphs not to be removed, 
     		//which are direct descendants of the ancestors we just identified
-    		for (String ancestorId: ancestorIds) {
+    		for (OWLClass ancestor: ancestors) {
+                log.debug("Examining ancestor to identify roots of allowed subgraph: {}", 
+                		ancestor);
+                //ancestor of the root of the subgraph to remove are always allowed
+                toKeep.add(ancestor);
+                
+    			//check direct descendants of the ancestor
+    			for (OWLClass directDescendant: this.getOWLClassDirectDescendants(ancestor)) {
+    				if (!ancestors.contains(directDescendant) && 
+							!subgraphRoot.equals(directDescendant)) {
+    					
+    					log.debug("Descendant root of an allowed subgraph to keep: {}", 
+    							directDescendant);
+						//at this point, why not just calling filterSubgraphs 
+						//on these allowed roots, could you ask.
+						//Well, first, because we also need to keep the ancestors 
+						//stored in ancestorIds, as some of them might not be ancestor 
+						//of these allowed roots. Second, because we do not need to check 
+						//for relations that would represent undesired subgraphs, 
+						//as in filterSubgraphs (see end of that method).
 
-    			//get direct descendants of the ancestor
-    			OWLClass ancestor = 
-    					this.getOwlGraphWrapper().getOWLClassByIdentifier(ancestorId);
-    			for (OWLGraphEdge incomingEdge: 
-    				this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
-
-    				OWLObject directDescendant = incomingEdge.getSource();
-
-    				if (directDescendant instanceof OWLClass) { 
-        				String shortFormName = 
-        						this.getOwlGraphWrapper().getIdentifier(directDescendant);
-        				//just in case the rootId was not an OBO-style ID
-        				String iriId = ((OWLClass) directDescendant).getIRI().toString();
-
-        				//if it is not an ancestor of the subgraph root,  
-        				//nor the subgraph root itself,
-        				//it means it is part of another subgraph, to be kept
-    					if (!ancestorIds.contains(shortFormName) && 
-    							!rootId.equals(shortFormName) && 
-    							!rootId.equals(iriId)) {
-
-    						log.debug("Descendant root of an allowed subgraph to keep: {}", 
-    								shortFormName);
-    						//at this point, why not just calling filterSubgraphs 
-    						//on these allowed roots, could you ask.
-    						//Well, first, because we also need to keep the ancestors 
-    						//stored in ancestorIds, as some of them might not be ancestor 
-    						//of these allowed roots. Second, because we do not need to check 
-    						//for relations that would represent undesired subgraphs, 
-    						//as in filterSubgraphs (see end of that method).
-
-    						toKeep.add(shortFormName);
-    						//get all descendants of this alternative subgraph root, to be kept
-    						for (OWLObject descendant: 
-    							this.getOwlGraphWrapper().getDescendants(directDescendant)) {
-
-    							if (descendant instanceof OWLClass) {
-    								String descShortFormName = 
-    										this.getOwlGraphWrapper().getIdentifier(descendant);
-    								toKeep.add(descShortFormName);
-    								log.debug("Allowed class of an allowed subgraph: {}", 
-    										descShortFormName);
-    							}
-    						}
-    					} else {
-        					log.debug("Descendant NOT root of an allowed subgraph to keep: {}", 
-        							shortFormName);
-        				}
-    				} 
+						toKeep.add(directDescendant);
+						Set<OWLClass> allowedDescendants = 
+								this.getOWLClassDescendants(directDescendant);
+						toKeep.addAll(allowedDescendants);
+						log.debug("Allowed classes of an allowed subgraph: {}", 
+								allowedDescendants);
+					} else {
+    					log.debug("Descendant NOT root of an allowed subgraph to keep: {}", 
+    							directDescendant);
+    				}
     			}
     		}
 
@@ -1140,7 +1053,7 @@ public class OWLGraphManipulator
     	}
     	
     	log.info("Done removing subgraphs of undesired roots, {} classes removed over {} classes total.", 
-    	    		new Integer(classesRemoved), new Integer(classesCount));
+    	    		classesRemoved, classCount);
     	
     	return log.exit(classesRemoved);
     }
@@ -1474,7 +1387,8 @@ public class OWLGraphManipulator
 	/**
 	 * Remove <code>edge</code> from its ontology. 
 	 * This method transforms the <code>OWLGraphEdge</code> <code>edge</code> 
-	 * into an <code>OWLSubClassOfAxiom</code>, then remove it. 
+	 * into an <code>OWLSubClassOfAxiom</code>, then remove it, 
+	 * and trigger a wrapper update. 
 	 * 
 	 * @param edge 	The <code>OWLGraphEdge</code> to be removed from the ontology. 
 	 * @return 			<code>true</code> if <code>edge</code> was actually present 
@@ -1483,18 +1397,15 @@ public class OWLGraphManipulator
 	public boolean removeEdge(OWLGraphEdge edge)
 	{
 		log.entry(edge);
-		RemoveAxiom remove = new RemoveAxiom(edge.getOntology(), this.getAxiom(edge));
-		return log.exit(this.applyChange(remove));
+		Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
+		edges.add(edge);
+		return log.exit(this.removeEdges(edges) > 0);
 	}
 	/**
 	 * Remove <code>edges</code> from their related ontology. 
 	 * This method transforms the <code>OWLGraphEdge</code>s in <code>edge</code>s 
-	 * into <code>OWLSubClassOfAxiom</code>s, then remove them. 
-	 * <p>
-	 * By using this method rather than {@link #removeEdge(OWLGraphEdge)} 
-	 * on each individual <code>OWLGraphEdge</code>, you ensure that there will be 
-	 * only one update of the <code>OWLOntology</code> triggered, 
-	 * and only one update of the <code>OWLGraphWrapper</code> cache.
+	 * into <code>OWLSubClassOfAxiom</code>s, then remove them, and trigger 
+	 * a wrapper update. 
 	 * 
 	 * @param edges 	A <code>Collection</code> of <code>OWLGraphEdge</code>s 
 	 * 					to be removed from their ontology. 
@@ -1504,41 +1415,49 @@ public class OWLGraphManipulator
 	 */
 	public int removeEdges(Collection<OWLGraphEdge> edges)
 	{
-		log.entry(edges);
+        log.entry(edges);
 		
-		List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
+		int edgeCount = 0;
 		for (OWLGraphEdge edge: edges) {
+    		//we use the remover one edge at a time, to check 
+	    	//that it is actually removed
 			RemoveAxiom remove = new RemoveAxiom(edge.getOntology(), this.getAxiom(edge));
-			changes.add(remove);
+			if (this.applyChange(remove)) {
+				edgeCount++;
+				log.trace("Edge removed: {}", edge);
+			} else {
+				log.trace("Edge NOT removed: {}", edge);
+			}
 		}
 		
-		return log.exit(this.applyChanges(changes));
+		if (edgeCount != 0) {
+			this.triggerWrapperUpdate();
+		}
+		return log.exit(edgeCount);
 	}
 	/**
 	 * Add <code>edge</code> to its related ontology. 
 	 * This method transforms the <code>OWLGraphEdge</code> <code>edge</code> 
 	 * into an <code>OWLSubClassOfAxiom</code>, 
-	 * then add it to the ontology. 
+	 * then add it to the ontology   
+     * and update the <code>OWLGraphWrapper</code> container. 
 	 * 
-	 * @param edge 	The <code>OWLGraphEdge</code> to be added to its related ontology. 
+	 * @param edge 		The <code>OWLGraphEdge</code> to be added to its related ontology. 
 	 * @return 			<code>true</code> if <code>edge</code> was actually added 
 	 * 					to the ontology. 
 	 */
 	public boolean addEdge(OWLGraphEdge edge)
 	{
 		log.entry(edge);
-		AddAxiom addAx = new AddAxiom(edge.getOntology(), this.getAxiom(edge));
-		return log.exit(this.applyChange(addAx));
+		Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
+		edges.add(edge);
+		return log.exit(this.addEdges(edges) > 0);
 	}
 	/**
 	 * Add <code>edges</code> to their related ontology. 
 	 * This method transforms the <code>OWLGraphEdge</code>s in <code>edge</code>s 
-	 * into <code>OWLSubClassOfAxiom</code>s, then add them to the ontology. 
-	 * <p>
-	 * By using this method rather than {@link #addEdge(OWLGraphEdge)} 
-	 * on each individual <code>OWLGraphEdge</code>, you ensure that there will be 
-	 * only one update of the <code>OWLOntology</code> triggered, 
-	 * and only one update of the <code>OWLGraphWrapper</code> cache.
+	 * into <code>OWLSubClassOfAxiom</code>s, then add them to the ontology,   
+     * and update the <code>OWLGraphWrapper</code> container. 
 	 * 
 	 * @param edges		A <code>Set</code> of <code>OWLGraphEdge</code>s 
 	 * 					to be added to their ontology. 
@@ -1550,81 +1469,112 @@ public class OWLGraphManipulator
 	{
 		log.entry(edges);
 		
-		List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
-		
+		int edgeCount = 0;
 		for (OWLGraphEdge edge: edges) {
+    		//we use the addaxiom one edge at a time, to check 
+	    	//that it is actually removed
 			AddAxiom addAx = new AddAxiom(edge.getOntology(), this.getAxiom(edge));
-			changes.add(addAx);
+			if (this.applyChange(addAx)) {
+				edgeCount++;
+				log.trace("Edge added: {}", edge);
+			} else {
+				log.trace("Edge NOT added: {}", edge);
+			}
 		}
 		
-		return log.exit(this.applyChanges(changes));
+		if (edgeCount != 0) {
+			this.triggerWrapperUpdate();
+		}
+		return log.exit(edgeCount);
 	}
 	/**
-     * Remove from the ontology all classes with an OBO-style ID 
-     * listed in <code>classIdsToDel</code>. 
+     * Remove from all ontologies the <code>OWLClass</code> <code>classToDel</code>,   
+     * and then update the <code>OWLGraphWrapper</code> container. 
      * 
-     * @param classIdsToDel 	a <code>Collection</code> of <code>String</code>s 
-     * 							representing the OBO-style IDs of the classes 
-     * 							to be removed from the ontology. 
+     * @param classesToDel	 	an <code>OWLClass</code> to be removed 
+     * 							from the ontologies. 
+	 * @return 					<code>true</code> if <code>classToDel</code> was actually 
+	 * 							removed from the ontology. 
+     */
+    private boolean removeClass(OWLClass classToDel)
+    {
+    	log.entry(classToDel);
+    	Set<OWLClass> classes = new HashSet<OWLClass>();
+		classes.add(classToDel);
+		return log.exit(this.removeClasses(classes) > 0);
+    }
+	/**
+     * Remove from all ontologies all <code>OWLClass</code>es 
+     * present in <code>classesToDel</code>,   
+     * and then update the <code>OWLGraphWrapper</code> container. 
+     * 
+     * @param classesToDel	 	a <code>Set</code> of <code>OWLClass</code>es 
+     * 							to be removed from the ontologies. 
      * @return					An <code>int</code> representing the number of classes 
      * 							actually removed as a result. 
      */
-    private int removeClasses(Collection<String> classIdsToDel)
+    private int removeClasses(Set<OWLClass> classesToDel)
     {
-    	log.entry(classIdsToDel);
+    	log.entry(classesToDel);
     	
-    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
-    			this.getOwlGraphWrapper().getAllOntologies());
-    	
-    	int classesRemoved = 0;
-    	for (String classId: classIdsToDel) {
-    		OWLClass classToDel = this.getOwlGraphWrapper().getOWLClassByIdentifier(classId);
-    		if (classToDel != null) {
-    			classToDel.accept(remover);
-			    classesRemoved++;
-			    log.debug("Removing OWLClass {}", classId);
-    		}
+    	int classCount = 0;
+    	for (OWLClass classToDel: classesToDel) {
+    		//we use the remover one class at a time, to check 
+	    	//that it is actually removed
+	    	OWLEntityRemover remover = new OWLEntityRemover(
+	    			this.getOwlGraphWrapper().getManager(), 
+	    			this.getOwlGraphWrapper().getAllOntologies());
+    		classToDel.accept(remover);
+		    if (this.applyChanges(remover.getChanges())) {
+		        log.debug("Removing OWLClass {}", classToDel);
+		        classCount++;
+		    } else {
+		    	log.debug("Fail removing OWLClass {}", classToDel);
+		    }
     	}
-    	this.applyChanges(remover.getChanges());
-    	
-    	return log.exit(classesRemoved);
+    	if (classCount != 0) {
+    	    this.triggerWrapperUpdate();
+    	}
+    	return log.exit(classCount);
     }
     /**
-     * Filter from the ontology all classes with an OBO-style ID 
-     * present in <code>classIdsToKeep</code>, and remove all other classes not listed. 
+     * Filter from the ontologyies all <code>OWLClass</code>es 
+     * present in <code>classesToKeep</code>,  
+     * and then update the <code>OWLGraphWrapper</code> container. 
      * 
-     * @param classIdsToKeep 	a <code>Collection</code> of <code>String</code>s 
-     * 							representing the OBO-style IDs of the classes 
-     * 							to be kept in the ontology. 
-     * @return					An <code>int</code> representing the number of classes removed 
-     * 							as a result. 
+     * @param classesToKeep 	a <code>Set</code> of <code>OWLClass</code>s 
+     * 							that are classes to be kept in the ontology. 
+     * @return					An <code>int</code> representing the number of classes 
+     * 							actually removed as a result. 
      */
-    private int filterClasses(Collection<String> classIdsToKeep)
+    private int filterClasses(Set<OWLClass> classesToKeep)
     {
-    	log.entry(classIdsToKeep);
+    	log.entry(classesToKeep);
     	
-    	//getting the remover to remove undesired classes
-    	OWLEntityRemover remover = new OWLEntityRemover(this.getOwlGraphWrapper().getManager(), 
-    			this.getOwlGraphWrapper().getAllOntologies());
-    	
-    	int classesRemoved = 0;
     	//now remove all classes not included in classIdsToKeep
+    	int classCount = 0;
     	for (OWLOntology o : this.getOwlGraphWrapper().getAllOntologies()) {
     		for (OWLClass iterateClass: o.getClassesInSignature()) {
-			    String shortFormName = this.getOwlGraphWrapper().getIdentifier(iterateClass);
-			    //in case the IDs were not OBO-style IDs
-			    String iriId = iterateClass.getIRI().toString();
-			    if (!classIdsToKeep.contains(shortFormName) && 
-			    		!classIdsToKeep.contains(iriId)) {
+			    if (!classesToKeep.contains(iterateClass)) {
+			    	//we use the remover one class at a time, to check 
+			    	//that it is actually removed
+			    	OWLEntityRemover remover = new OWLEntityRemover(
+			    			this.getOwlGraphWrapper().getManager(), 
+			    			this.getOwlGraphWrapper().getAllOntologies());
 				    iterateClass.accept(remover);
-				    classesRemoved++;
-				    log.debug("Removing OWLClass {}", shortFormName);
+				    if (this.applyChanges(remover.getChanges())) {
+				        log.debug("Removing OWLClass {}", iterateClass);
+				        classCount++;
+				    } else {
+				    	log.debug("Fail removing OWLClass {}", iterateClass);
+				    }
 			    }
     		}
     	}
-    	this.applyChanges(remover.getChanges());
-    	
-    	return log.exit(classesRemoved);
+    	if (classCount != 0) {
+    	    this.triggerWrapperUpdate();
+    	}
+    	return log.exit(classCount);
     }
     
  
@@ -1652,36 +1602,35 @@ public class OWLGraphManipulator
 	}
 	
     /**
-     * Convenient method to apply <code>changes</code> to the ontology  
-     * and then update the <code>OWLGraphWrapper</code> container.
+     * Convenient method to apply <code>changes</code> to the ontology.
      * 
      * @param changes 	The <code>List</code> of <code>OWLOntologyChange</code>s 
      * 					to be applied to the ontology. 
-     * @return 			An <code>int</code> representing the number of changes 
-     * 					actually applied.
+     * @return 			<code>true</code> if all changes were applied, 
+     * 					<code>false</code> otherwise. 
      * @see #applyChange(OWLOntologyChange)
      */
-    private int applyChanges(List<OWLOntologyChange> changes)
+    private boolean applyChanges(List<OWLOntologyChange> changes)
     {
     	log.entry(changes);
-    	int changesCount = 0;
+    	
     	List<OWLOntologyChange> changesMade = 
     			this.getOwlGraphWrapper().getManager().applyChanges(changes);
     	if (changesMade != null) {
-    		changesCount = changesMade.size();
-    		if (log.isTraceEnabled() && changesCount != changes.size()) {
-        		changes.retainAll(changesMade);
-		    	log.trace("Changes not made: {}", changes);
-		    	log.trace("Changes made: {}", changesMade);
-    		}
+        	changes.removeAll(changesMade);
+        	if (changes.isEmpty()) {
+        		return log.exit(true);
+        	}
+        	log.trace("Changes not made: {}", changes);
+        	log.trace("Changes made: {}", changesMade);
+    	} else {
+    	    log.trace("No changes made, original changes requested: {}", changes);
     	}
     		
-    	this.triggerWrapperUpdate();
-    	return log.exit(changesCount);
+    	return log.exit(false);
     }
     /**
-     * Convenient method to apply <code>change</code> to the ontology 
-     * and then update the <code>OWLGraphWrapper</code> container.
+     * Convenient method to apply <code>change</code> to the ontology.
      * 
      * @param change 	The <code>OWLOntologyChange</code> to be applied to the ontology. 
      * @eturn 			<code>true</code> if the change was actually applied. 
@@ -1690,15 +1639,10 @@ public class OWLGraphManipulator
     private boolean applyChange(OWLOntologyChange change)
     {
     	log.entry(change);
-    	int changesCount = 0;
-    	List<OWLOntologyChange> changesMade = 
-    			this.getOwlGraphWrapper().getManager().applyChange(change);
-    	if (changesMade != null) {
-    		changesCount = changesMade.size();
-    	}
-    	//update the Uberon wrapper
-    	this.triggerWrapperUpdate();
-    	return log.exit((changesCount > 0));
+    	List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
+    	changes.add(change);
+    	return log.exit(
+    			this.applyChanges(changes));
     }
     /**
      * Convenient method to trigger an update of the <code>OWLGraphWrapper</code> 
@@ -1712,6 +1656,125 @@ public class OWLGraphManipulator
     	log.exit();
     }
     
+    /**
+     * Get all <code>OWLClass</code>es from all ontologies.
+     * 
+     * @return 	a <code>Set</code> of <code>OWLClass</code>es that contains 
+     * 			all <code>OWLClass</code>es from all ontologies.
+     */
+    private Set<OWLClass> getAllClasses()
+    {
+    	log.entry();
+    	//maybe classes can be shared between ontologies?
+    	//use a Set to check
+    	Set<OWLClass> allClasses = new HashSet<OWLClass>();
+    	for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
+			for (OWLClass iterateClass: ont.getClassesInSignature()) {
+				allClasses.add(iterateClass);
+			}
+		}
+    	return log.exit(allClasses);
+    }
+    
+    /**
+     * Return the <code>OWLClass</code>es root of any ontology 
+     * (<code>OWLClass</code>es with no parent)
+     * 
+     * @return	A <code>Set</code> of <code>OWLClass</code>es that are 
+     * 			the roots of any ontology.
+     */
+    private Set<OWLClass> getOntologyRoots()
+    {
+    	log.entry();
+    	Set<OWLClass> ontRoots = new HashSet<OWLClass>();
+    	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
+			for (OWLClass testClass: ont.getClassesInSignature()) {
+				if (this.getOwlGraphWrapper().getOutgoingEdges(testClass).isEmpty()) {
+    				log.debug("Ontology root identified: {}", testClass);
+					ontRoots.add(testClass);
+				}
+			}
+		}
+    	return log.exit(ontRoots);
+    }
+    
+    /**
+     * Return the <code>OWLClass</code>es descendant of <code>parentClass</code>.
+     * This method is the same than 
+     * <code>owltools.graph.OWLGraphWrapperEdges.getDescendants(OWLObject)</code>, 
+     * except it returns only the descendant <code>OWLClass</code>es, not 
+     * other <code>OWLObject</code>s.
+     * 
+     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the descendants 
+     * 			of <code>parentClass</code>.
+     */
+    private Set<OWLClass> getOWLClassDescendants(OWLClass parentClass)
+    {
+    	log.entry(parentClass);
+    	
+    	Set<OWLClass> descendants = new HashSet<OWLClass>();
+		for (OWLObject descendant: 
+			    this.getOwlGraphWrapper().getDescendants(parentClass)) {
+			if (descendant instanceof OWLClass) {
+				descendants.add((OWLClass) descendant);
+				log.trace("OWLClass descendant: {}", descendant);
+			}
+		}
+		
+		return log.exit(descendants);
+    }
+    /**
+     * Return the <code>OWLClass</code>es directly descendant of <code>parentClass</code>.
+     * This method returns all sources of all edges incoming to <code>parentClass</code>, 
+     * that are <code>OWLClass</code>es.
+     * 
+     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the direct descendants 
+     * 			of <code>parentClass</code>.
+     * @see owltools.graph.OWLGraphWrapperEdges#getIncomingEdges(OWLObject)
+     */
+    private Set<OWLClass> getOWLClassDirectDescendants(OWLClass parentClass)
+    {
+    	log.entry(parentClass);
+    	
+    	Set<OWLClass> directDescendants = new HashSet<OWLClass>();
+    	for (OWLGraphEdge incomingEdge: 
+    		    this.getOwlGraphWrapper().getIncomingEdges(parentClass)) {
+
+    		OWLObject directDescendant = incomingEdge.getSource();
+    		if (directDescendant instanceof OWLClass) { 
+    			directDescendants.add((OWLClass) directDescendant);
+    		}
+    	}
+		
+		return log.exit(directDescendants);
+    }
+    
+    
+    /**
+     * Return the <code>OWLClass</code>es ancestor of <code>sourceClass</code>.
+     * This method is the same than 
+     * <code>owltools.graph.OWLGraphWrapperEdges.getAncestors(OWLObject)</code>, 
+     * except it returns only the ancestor <code>OWLClass</code>es, not 
+     * other <code>OWLObject</code>s.
+     * 
+     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the ancestors 
+     * 			of <code>sourceClass</code>.
+     */
+    private Set<OWLClass> getOWLClassAncestors(OWLClass sourceClass)
+    {
+    	log.entry(sourceClass);
+    	
+    	Set<OWLClass> ancestors = new HashSet<OWLClass>();
+		for (OWLObject ancestor: 
+			    this.getOwlGraphWrapper().getAncestors(sourceClass)) {
+			if (ancestor instanceof OWLClass) {
+				ancestors.add((OWLClass) ancestor);
+				log.trace("OWLClass ancestor: {}", ancestor);
+			}
+		}
+		
+		return log.exit(ancestors);
+    }
    	//******************************************************
    	//    METHODS THAT COULD BE INCLUDED IN OWLGraphWrapper
    	//******************************************************

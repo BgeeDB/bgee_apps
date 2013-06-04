@@ -96,6 +96,28 @@ public class OWLGraphManipulator
 	 */
 	private Set<OWLObjectPropertyExpression> partOfRels;
 	
+	/**
+	 * A cache for super properties relations. Each <code>OWLObjectPropertyExpression</code> 
+	 * is associated in the <code>Map</code> to a <code>LinkedHashSet</code> of 
+	 * <code>OWLObjectPropertyExpression</code>s, that contains its super properties, 
+	 * ordered from the more specific to the more general 
+	 * (for instance, "in_deep_part_of", then "part_of", then "overlaps").
+	 * @see #getSuperPropertyReflexiveClosureOf(OWLObjectPropertyExpression)
+	 */
+	private Map<OWLObjectPropertyExpression, LinkedHashSet<OWLObjectPropertyExpression>>
+	    superPropertyCache;
+	
+	/**
+	 * A cache for sub-properties relations. Each <code>OWLObjectPropertyExpression</code> 
+	 * is associated in the <code>Map</code> to a <code>LinkedHashSet</code> of 
+	 * <code>OWLObjectPropertyExpression</code>s, that contains its sub-properties, 
+	 * ordered from the more general to the more specific 
+	 * (for instance, "overlaps", then "part_of", then "in_deep_part_of").
+	 * @see #getSubPropertyClosureOf(OWLObjectPropertyExpression)
+	 */
+	private Map<OWLObjectPropertyExpression, LinkedHashSet<OWLObjectPropertyExpression>>
+	    subPropertyCache;
+	
 	//*********************************
 	//    CONSTRUCTORS
 	//*********************************
@@ -119,6 +141,10 @@ public class OWLGraphManipulator
     public OWLGraphManipulator(OWLGraphWrapper owlGraphWrapper)
     {
     	this.setOwlGraphWrapper(owlGraphWrapper);
+    	this.subPropertyCache = new HashMap<OWLObjectPropertyExpression, 
+    			LinkedHashSet<OWLObjectPropertyExpression>>();
+    	this.superPropertyCache = new HashMap<OWLObjectPropertyExpression, 
+    			LinkedHashSet<OWLObjectPropertyExpression>>();
     }
     
     /**
@@ -370,10 +396,19 @@ public class OWLGraphManipulator
 	
 	    			    Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
 	    			    edgesInspected.addFirst(outgoingEdgeToWalk);
+	    			    //to check that there is no cycle in the ontology:
+	    			    List<OWLGraphEdge> edgesAlreadyWalked = new ArrayList<OWLGraphEdge>();
 	    			
 	    			    OWLGraphEdge currentEdge;
 	    			    while ((currentEdge = edgesInspected.pollFirst()) != null) {
+	    			    	//check there is no cycle: 
+	    			    	if (edgesAlreadyWalked.contains(currentEdge)) {
+	    			    		log.warn("Edge already seen! Is there a cycle? " +
+	    			    			"Edge from which the walk started: {} - edges walked: {}", 
+	    			    			outgoingEdgeToWalk, edgesAlreadyWalked);
+	    			    	}
 	    			    	log.trace("Current edge examined on the walk: {}", currentEdge);
+	    			    	edgesAlreadyWalked.add(currentEdge);
 
 	    			    	//get the outgoing edges starting from the target of currentEdge, 
 	    			    	//and compose these relations with currentEdge, 
@@ -1841,8 +1876,17 @@ public class OWLGraphManipulator
 			OWLObjectPropertyExpression prop) {
 		
 		log.entry(prop);
-    	LinkedHashSet<OWLObjectPropertyExpression> subProps = 
-    			new LinkedHashSet<OWLObjectPropertyExpression>();
+		//try to get the sub-properties from the cache
+		LinkedHashSet<OWLObjectPropertyExpression> subProps = 
+				this.subPropertyCache.get(prop);
+		if (subProps != null) {
+			log.trace("Sub-properties of {} retrieved from cache: {}", 
+					prop, subProps);
+			return log.exit(subProps);
+		}
+		log.trace("Sub-properties of {} not retrieved from cache, acquiring them", 
+				prop);
+    	subProps = new LinkedHashSet<OWLObjectPropertyExpression>();
 		Stack<OWLObjectPropertyExpression> stack = new Stack<OWLObjectPropertyExpression>();
 		stack.add(prop);
 		while (!stack.isEmpty()) {
@@ -1852,6 +1896,9 @@ public class OWLGraphManipulator
 			stack.addAll(directSubs);
 			subProps.addAll(directSubs);
 		}
+		//put the sub-properties in cache
+		this.subPropertyCache.put(prop, subProps);
+		
 		return log.exit(subProps);
 	}
 	/**
@@ -1903,20 +1950,40 @@ public class OWLGraphManipulator
     		OWLObjectPropertyExpression prop) 
     {
     	log.entry(prop);
+    	
+    	//try to get the super properties from the cache
     	LinkedHashSet<OWLObjectPropertyExpression> superProps = 
+    			this.superPropertyCache.get(prop);
+    	if (superProps != null) {
+    		log.trace("Super properties of {} retrieved from cache: {}", 
+    				prop, superProps);
+    	} else {
+    		log.trace("Super properties of {} not retrieved from cache, acquiring them", 
+    				prop);
+
+    		superProps = new LinkedHashSet<OWLObjectPropertyExpression>();
+    		Stack<OWLObjectPropertyExpression> stack = 
+    				new Stack<OWLObjectPropertyExpression>();
+    		stack.add(prop);
+    		while (!stack.isEmpty()) {
+    			OWLObjectPropertyExpression nextProp = stack.pop();
+    			Set<OWLObjectPropertyExpression> directSupers = 
+    					this.getOwlGraphWrapper().getSuperPropertiesOf(nextProp);
+    			directSupers.removeAll(superProps);
+    			directSupers.remove(prop);
+    			stack.addAll(directSupers);
+    			superProps.addAll(directSupers);
+    		}
+    		//put superProps in cache
+    		this.superPropertyCache.put(prop, superProps);
+    	}
+
+    	
+    	LinkedHashSet<OWLObjectPropertyExpression> superPropsReflexive = 
     			new LinkedHashSet<OWLObjectPropertyExpression>();
-    	superProps.add(prop);
-		Stack<OWLObjectPropertyExpression> stack = new Stack<OWLObjectPropertyExpression>();
-		stack.add(prop);
-		while (!stack.isEmpty()) {
-			OWLObjectPropertyExpression nextProp = stack.pop();
-			Set<OWLObjectPropertyExpression> directSupers = 
-					this.getOwlGraphWrapper().getSuperPropertiesOf(nextProp);
-			directSupers.removeAll(superProps);
-			stack.addAll(directSupers);
-			superProps.addAll(directSupers);
-		}
-		return log.exit(superProps);
+    	superPropsReflexive.add(prop);
+		superPropsReflexive.addAll(superProps);
+		return log.exit(superPropsReflexive);
 	}
 
     

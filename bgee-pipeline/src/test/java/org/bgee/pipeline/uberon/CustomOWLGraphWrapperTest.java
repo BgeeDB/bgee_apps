@@ -25,6 +25,12 @@ import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.io.ParserWrapper;
 
+/**
+ * Test of {@link CustomOWLGraphWrapper}.
+ * @author Frederic Bastian
+ * @version June 2013
+ *
+ */
 public class CustomOWLGraphWrapperTest extends TestAncestor
 {
     private final static Logger log = 

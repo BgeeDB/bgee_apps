@@ -33,7 +33,6 @@ import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import owltools.graph.OWLGraphEdge;
-import owltools.graph.OWLGraphWrapper;
 import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.io.ParserWrapper;
@@ -69,7 +68,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	
 	/**
 	 * Load the (really basic) ontology <code>/ontologies/OWLGraphManipulatorTest.obo</code> 
-	 * into {@link #graphWrapper}.
+	 * into {@link #graphManipulator}.
 	 * It is loaded before the execution of each test, so that a test can modify it 
 	 * without impacting another test.
 	 *  
@@ -77,7 +76,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	 * @throws OBOFormatParserException
 	 * @throws IOException
 	 * 
-	 * @see #graphWrapper
+	 * @see #graphManipulator
 	 */
 	@Before
 	public void loadTestOntology() 
@@ -87,7 +86,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		ParserWrapper parserWrapper = new ParserWrapper();
         OWLOntology ont = parserWrapper.parse(
         		this.getClass().getResource("/ontologies/OWLGraphManipulatorTest.obo").getFile());
-    	this.graphManipulator = new OWLGraphManipulator(new OWLGraphWrapper(ont));
+    	this.graphManipulator = new OWLGraphManipulator(new CustomOWLGraphWrapper(ont));
 		log.debug("Done wrapping test ontology into OWLGraphManipulator.");
 	}
 	
@@ -654,7 +653,8 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		OWLGraphEdge testEdge = new OWLGraphEdge(source, target, fakeRel1, Quantifier.SOME, ont);
 		
 		int subRelRank = 0;
-		for (OWLGraphEdge subRel: this.graphManipulator.getOWLGraphEdgeSubRelsReflexive(testEdge)) {
+		for (OWLGraphEdge subRel: this.graphManipulator.getOwlGraphWrapper().
+				getOWLGraphEdgeSubRelsReflexive(testEdge)) {
 			if (subRelRank == 0) {
 				//first relation should be fake_rel1 (reflexive method)
 				assertEquals("Incorrect order of sub-properties, 1st relation", 

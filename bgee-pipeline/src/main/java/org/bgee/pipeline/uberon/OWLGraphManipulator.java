@@ -1,19 +1,14 @@
 package org.bgee.pipeline.uberon;
 
-import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
-import java.util.Vector;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,13 +23,10 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 
 import owltools.graph.OWLGraphEdge;
-import owltools.graph.OWLGraphWrapper;
-import owltools.graph.OWLGraphWrapperEdges;
 import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
@@ -70,7 +62,7 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * {@link #makeBasicOntology()}.
  * 
  * @author Frederic Bastian
- * @version May 2013
+ * @version June 2013
  */
 public class OWLGraphManipulator 
 {
@@ -79,7 +71,14 @@ public class OWLGraphManipulator
 	 * The <code>OWLGraphWrapper</code> on which the operations will be performed 
 	 * (relation reductions, edge propagations, ...).
 	 */
-	private OWLGraphWrapper owlGraphWrapper;
+	private CustomOWLGraphWrapper owlGraphWrapper;
+	/**
+	 * A <code>Set</code> of <code>OWLObjectPropertyExpression</code>s that are 
+	 * the sub-properties of the "part_of" property (for instance, "deep_part_of").
+	 * 
+	 * @see #isAPartOfEdge(OWLGraphEdge)
+	 */
+	private Set<OWLObjectPropertyExpression> partOfRels;
 	/**
 	 * A <code>String</code> representing the OBO-style ID of the part_of relation. 
 	 */
@@ -88,35 +87,6 @@ public class OWLGraphManipulator
 	 * A <code>String</code> representing the OBO-style ID of the develops_from relation. 
 	 */
 	private final static String DVLPTFROMID = "RO:0002202";
-	/**
-	 * A <code>Set</code> of <code>OWLObjectPropertyExpression</code>s that are 
-	 * the sub-properties of the "part_of" property (for instance, "deep_part_of").
-	 * 
-	 * @see #isAPartOfEdge(OWLGraphEdge)
-	 */
-	private Set<OWLObjectPropertyExpression> partOfRels;
-	
-	/**
-	 * A cache for super properties relations. Each <code>OWLObjectPropertyExpression</code> 
-	 * is associated in the <code>Map</code> to a <code>LinkedHashSet</code> of 
-	 * <code>OWLObjectPropertyExpression</code>s, that contains its super properties, 
-	 * ordered from the more specific to the more general 
-	 * (for instance, "in_deep_part_of", then "part_of", then "overlaps").
-	 * @see #getSuperPropertyReflexiveClosureOf(OWLObjectPropertyExpression)
-	 */
-	private Map<OWLObjectPropertyExpression, LinkedHashSet<OWLObjectPropertyExpression>>
-	    superPropertyCache;
-	
-	/**
-	 * A cache for sub-properties relations. Each <code>OWLObjectPropertyExpression</code> 
-	 * is associated in the <code>Map</code> to a <code>LinkedHashSet</code> of 
-	 * <code>OWLObjectPropertyExpression</code>s, that contains its sub-properties, 
-	 * ordered from the more general to the more specific 
-	 * (for instance, "overlaps", then "part_of", then "in_deep_part_of").
-	 * @see #getSubPropertyClosureOf(OWLObjectPropertyExpression)
-	 */
-	private Map<OWLObjectPropertyExpression, LinkedHashSet<OWLObjectPropertyExpression>>
-	    subPropertyCache;
 	
 	//*********************************
 	//    CONSTRUCTORS
@@ -138,13 +108,9 @@ public class OWLGraphManipulator
 	 * @param owlGraphWrapper 	The <code>OWLGraphWrapper</code> on which the operations 
 	 * 							will be performed.
 	 */
-    public OWLGraphManipulator(OWLGraphWrapper owlGraphWrapper)
+    public OWLGraphManipulator(CustomOWLGraphWrapper owlGraphWrapper)
     {
     	this.setOwlGraphWrapper(owlGraphWrapper);
-    	this.subPropertyCache = new HashMap<OWLObjectPropertyExpression, 
-    			LinkedHashSet<OWLObjectPropertyExpression>>();
-    	this.superPropertyCache = new HashMap<OWLObjectPropertyExpression, 
-    			LinkedHashSet<OWLObjectPropertyExpression>>();
     }
     
     /**
@@ -481,7 +447,8 @@ public class OWLGraphManipulator
 	    		log.trace("Try to combine with outgoing edge from current edge target: {}", 
 	    				nextEdge);
 	    		OWLGraphEdge combine = 
-	    				this.combineEdgePairWithSuperProps(currentEdge, nextEdge);
+	    				this.getOwlGraphWrapper().combineEdgePairWithSuperProps(
+	    						currentEdge, nextEdge);
 
 	    		//if there is a cycle in the ontology: 
 	    		if (iteratedWalk.contains(combine)) {
@@ -611,7 +578,8 @@ public class OWLGraphManipulator
     						incomingEdge, outgoingEdge);
     				//combine edges
     				OWLGraphEdge combine = 
-							this.combineEdgePairWithSuperProps(incomingEdge, outgoingEdge);
+							this.getOwlGraphWrapper().combineEdgePairWithSuperProps(
+									incomingEdge, outgoingEdge);
 					//successfully combined
 					if (combine != null && combine.getQuantifiedPropertyList().size() == 1) {
 	    				//fix bug
@@ -621,8 +589,8 @@ public class OWLGraphManipulator
 						//now let's see if there is an already existing relation equivalent 
 						//to the combined one, or a more precise one
 						boolean alreadyExist = false;
-						for (OWLGraphEdge testIfExistEdge: 
-							    this.getOWLGraphEdgeSubRelsReflexive(combine)) {
+						for (OWLGraphEdge testIfExistEdge: this.getOwlGraphWrapper().
+								getOWLGraphEdgeSubRelsReflexive(combine)) {
 							if (ont.containsAxiom(this.getAxiom(testIfExistEdge))) {
 								alreadyExist = true;
 								break;
@@ -738,7 +706,8 @@ public class OWLGraphManipulator
     					this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(relExclId);
     			if (relExclProp != null) {
     				relExclProps.add(relExclProp);
-    				relExclProps.addAll(this.getSubPropertyClosureOf(relExclProp));
+    				relExclProps.addAll(
+    						this.getOwlGraphWrapper().getSubPropertyClosureOf(relExclProp));
     				log.trace("Relation {} and its children will not be replaced", relExclProp);
     			}
     		}
@@ -756,7 +725,7 @@ public class OWLGraphManipulator
     				this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(parentRelId);
     		if (parentProp != null) {
     			for (OWLObjectPropertyExpression subProp: 
-    				        this.getSubPropertyClosureOf(parentProp)) {
+    				        this.getOwlGraphWrapper().getSubPropertyClosureOf(parentProp)) {
     				//put in the map only the sub-properties that actually need to be mapped 
     				//(properties not excluded)
     				if (!relExclProps.contains(subProp)) {
@@ -863,7 +832,7 @@ public class OWLGraphManipulator
 
 		int classCount   = 0;
     	if (log.isInfoEnabled()) {
-    		classCount = this.getAllClasses().size();
+    		classCount = this.getOwlGraphWrapper().getAllOWLClasses().size();
     	}
 
     	Set<OWLClass> allowedSubgraphRoots = new HashSet<OWLClass>();
@@ -989,7 +958,7 @@ public class OWLGraphManipulator
     	
     	int classCount   = 0;
     	if (log.isInfoEnabled()) {
-    		classCount = this.getAllClasses().size();
+    		classCount = this.getOwlGraphWrapper().getAllOWLClasses().size();
     	}
     	
     	//roots of the ontology not in subgraphRoots and not ancestors of subgraphRoots 
@@ -998,7 +967,7 @@ public class OWLGraphManipulator
     	//in subgraphRoots, we'll remove it and its ancestors from this list of valid root IDs.
     	Collection<OWLClass> ontRoots = new ArrayList<OWLClass>();
     	if (keepSharedClasses) {
-    		ontRoots = this.getOntologyRoots();
+    		ontRoots = this.getOwlGraphWrapper().getOntologyRoots();
     	}
     	
     	int classesRemoved = 0;
@@ -1015,7 +984,8 @@ public class OWLGraphManipulator
         		//this part is easy, simply remove all descendants of subgraphRoots 
         		Set<OWLClass> classesToDel = new HashSet<OWLClass>();
         		classesToDel.add(subgraphRoot);
-        		Set<OWLClass> descendants = this.getOWLClassDescendants(subgraphRoot);
+        		Set<OWLClass> descendants = 
+        				this.getOwlGraphWrapper().getOWLClassDescendants(subgraphRoot);
         		classesToDel.addAll(descendants);
         		log.debug("Subgraph being deleted, descendants of subgraph root to remove: {}", 
 						descendants);
@@ -1047,7 +1017,8 @@ public class OWLGraphManipulator
     	    Set<OWLClass> toKeep = new HashSet<OWLClass>();
     	    
     	    //First we need all the ancestors of this subgraph root
-		    Set<OWLClass> ancestors = this.getOWLClassAncestors(subgraphRoot);
+		    Set<OWLClass> ancestors = 
+		    		this.getOwlGraphWrapper().getOWLClassAncestors(subgraphRoot);
     		
     		//now, each root of the ontology, not in subgraphRoots, and not in ancestors, 
     		//is considered as root of a subgraph to be kept, all its descendants should be kept
@@ -1056,7 +1027,8 @@ public class OWLGraphManipulator
     			if (!subgraphRoot.equals(ontRoot) && !ancestors.contains(ontRoot)) {
     				toKeep.add(ontRoot);
     				log.debug("Allowed ontology root: {}", ontRoot);
-    				Set<OWLClass> descendants = this.getOWLClassDescendants(ontRoot);
+    				Set<OWLClass> descendants = 
+    						this.getOwlGraphWrapper().getOWLClassDescendants(ontRoot);
             		toKeep.addAll(descendants);
             		log.debug("Allowed classes of an allowed ontology root: {}", 
     						descendants);
@@ -1072,7 +1044,8 @@ public class OWLGraphManipulator
                 toKeep.add(ancestor);
                 
     			//check direct descendants of the ancestor
-    			for (OWLClass directDescendant: this.getOWLClassDirectDescendants(ancestor)) {
+    			for (OWLClass directDescendant: 
+    				    this.getOwlGraphWrapper().getOWLClassDirectDescendants(ancestor)) {
     				if (!ancestors.contains(directDescendant) && 
 							!subgraphRoot.equals(directDescendant)) {
     					
@@ -1088,7 +1061,7 @@ public class OWLGraphManipulator
 
 						toKeep.add(directDescendant);
 						Set<OWLClass> allowedDescendants = 
-								this.getOWLClassDescendants(directDescendant);
+							this.getOwlGraphWrapper().getOWLClassDescendants(directDescendant);
 						toKeep.addAll(allowedDescendants);
 						log.debug("Allowed classes of an allowed subgraph: {}", 
 								allowedDescendants);
@@ -1368,7 +1341,8 @@ public class OWLGraphManipulator
 				}
 				if (sourceObject instanceof OWLClass) {
 					//do nothing if the source class is itself in subsets
-					if (this.isOWLObjectInSubsets(sourceObject, subsets)) {
+					if (this.getOwlGraphWrapper().isOWLObjectInSubsets(
+							sourceObject, subsets)) {
 						log.trace("Source of incoming edge also in subsets, skip it");
 						continue;
 					}
@@ -1392,7 +1366,8 @@ public class OWLGraphManipulator
 						}
 						OWLObject targetObject = outgoingEdge.getTarget();
 						if (targetObject instanceof OWLClass) {
-							if (this.isOWLObjectInSubsets(targetObject, subsets)) {
+							if (this.getOwlGraphWrapper().isOWLObjectInSubsets(
+									targetObject, subsets)) {
 								edgesToSubset.add(outgoingEdge);
 								log.trace("Incoming edge's source has an outgoing edge to a target in subsets: {}", 
 										outgoingEdge);
@@ -1627,6 +1602,35 @@ public class OWLGraphManipulator
     	return log.exit(classCount);
     }
     
+    /**
+     * Determine if <code>edge</code> represents an is_a relation.
+     * 
+     * @param edge	The <code>OWLGraphEdge</code> to test.
+     * @return		<code>true</code> if <code>edge</code> is an is_a (SubClassOf) relation.
+     */
+    private boolean isASubClassOfEdge(OWLGraphEdge edge) {
+    	log.entry(edge);
+    	return log.exit((edge.getSingleQuantifiedProperty().getProperty() == null && 
+				edge.getSingleQuantifiedProperty().getQuantifier() == Quantifier.SUBCLASS_OF));
+    }
+    
+    /**
+     * Determine if <code>edge</code> represents a part_of relation or one of its sub-relations 
+     * (e.g., "deep_part_of").
+     * 
+     * @param edge	The <code>OWLGraphEdge</code> to test.
+     * @return		<code>true</code> if <code>edge</code> is a part_of relation, 
+     * 				or one of its sub-relations.
+     */
+    private boolean isAPartOfEdge(OWLGraphEdge edge) {
+    	log.entry(edge);
+    	if (this.partOfRels == null) {
+    		this.partOfRels = this.getOwlGraphWrapper().getSubPropertyReflexiveClosureOf(
+        			this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(PARTOFID));
+    	}
+    	return log.exit(
+    			(partOfRels.contains(edge.getSingleQuantifiedProperty().getProperty())));
+    }
  
    
     /**
@@ -1706,588 +1710,7 @@ public class OWLGraphManipulator
     	log.exit();
     }
     
-    /**
-     * Get all <code>OWLClass</code>es from all ontologies.
-     * 
-     * @return 	a <code>Set</code> of <code>OWLClass</code>es that contains 
-     * 			all <code>OWLClass</code>es from all ontologies.
-     */
-    private Set<OWLClass> getAllClasses()
-    {
-    	log.entry();
-    	//maybe classes can be shared between ontologies?
-    	//use a Set to check
-    	Set<OWLClass> allClasses = new HashSet<OWLClass>();
-    	for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
-			for (OWLClass iterateClass: ont.getClassesInSignature()) {
-				allClasses.add(iterateClass);
-			}
-		}
-    	return log.exit(allClasses);
-    }
     
-    /**
-     * Return the <code>OWLClass</code>es root of any ontology 
-     * (<code>OWLClass</code>es with no parent)
-     * 
-     * @return	A <code>Set</code> of <code>OWLClass</code>es that are 
-     * 			the roots of any ontology.
-     */
-    private Set<OWLClass> getOntologyRoots()
-    {
-    	log.entry();
-    	Set<OWLClass> ontRoots = new HashSet<OWLClass>();
-    	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-			for (OWLClass testClass: ont.getClassesInSignature()) {
-				if (this.getOwlGraphWrapper().getOutgoingEdges(testClass).isEmpty()) {
-    				log.debug("Ontology root identified: {}", testClass);
-					ontRoots.add(testClass);
-				}
-			}
-		}
-    	return log.exit(ontRoots);
-    }
-    
-    /**
-     * Return the <code>OWLClass</code>es descendant of <code>parentClass</code>.
-     * This method is the same than 
-     * <code>owltools.graph.OWLGraphWrapperEdges.getDescendants(OWLObject)</code>, 
-     * except it returns only the descendant <code>OWLClass</code>es, not 
-     * other <code>OWLObject</code>s.
-     * 
-     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the descendants 
-     * 			of <code>parentClass</code>.
-     */
-    private Set<OWLClass> getOWLClassDescendants(OWLClass parentClass)
-    {
-    	log.entry(parentClass);
-    	
-    	Set<OWLClass> descendants = new HashSet<OWLClass>();
-		for (OWLObject descendant: 
-			    this.getOwlGraphWrapper().getDescendants(parentClass)) {
-			if (descendant instanceof OWLClass) {
-				descendants.add((OWLClass) descendant);
-				log.trace("OWLClass descendant: {}", descendant);
-			}
-		}
-		
-		return log.exit(descendants);
-    }
-    /**
-     * Return the <code>OWLClass</code>es directly descendant of <code>parentClass</code>.
-     * This method returns all sources of all edges incoming to <code>parentClass</code>, 
-     * that are <code>OWLClass</code>es.
-     * 
-     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the direct descendants 
-     * 			of <code>parentClass</code>.
-     * @see owltools.graph.OWLGraphWrapperEdges#getIncomingEdges(OWLObject)
-     */
-    private Set<OWLClass> getOWLClassDirectDescendants(OWLClass parentClass)
-    {
-    	log.entry(parentClass);
-    	
-    	Set<OWLClass> directDescendants = new HashSet<OWLClass>();
-    	for (OWLGraphEdge incomingEdge: 
-    		    this.getOwlGraphWrapper().getIncomingEdges(parentClass)) {
-
-    		OWLObject directDescendant = incomingEdge.getSource();
-    		if (directDescendant instanceof OWLClass) { 
-    			directDescendants.add((OWLClass) directDescendant);
-    		}
-    	}
-		
-		return log.exit(directDescendants);
-    }
-    
-    
-    /**
-     * Return the <code>OWLClass</code>es ancestor of <code>sourceClass</code>.
-     * This method is the same than 
-     * <code>owltools.graph.OWLGraphWrapperEdges.getAncestors(OWLObject)</code>, 
-     * except it returns only the ancestor <code>OWLClass</code>es, not 
-     * other <code>OWLObject</code>s.
-     * 
-     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the ancestors 
-     * 			of <code>sourceClass</code>.
-     */
-    private Set<OWLClass> getOWLClassAncestors(OWLClass sourceClass)
-    {
-    	log.entry(sourceClass);
-    	
-    	Set<OWLClass> ancestors = new HashSet<OWLClass>();
-		for (OWLObject ancestor: 
-			    this.getOwlGraphWrapper().getAncestors(sourceClass)) {
-			if (ancestor instanceof OWLClass) {
-				ancestors.add((OWLClass) ancestor);
-				log.trace("OWLClass ancestor: {}", ancestor);
-			}
-		}
-		
-		return log.exit(ancestors);
-    }
-   	//******************************************************
-   	//    METHODS THAT COULD BE INCLUDED IN OWLGraphWrapper
-   	//******************************************************
-    /**
-     * Determine if <code>testObject</code> belongs to at least one of the subsets 
-     * in <code>subsets</code>. 
-     * 
-     * @param testObject	A <code>OWLObject</code> for which we want to know if it belongs 
-     * 						to a subset in <code>subsets</code>.
-     * @param subsetIds		A <code>Collection</code> of <code>String</code>s that are 
-     * 						the names of the subsets for which we want to check belonging 
-     * 						of <code>testObject</code>.
-     * @return				<code>true</code> if <code>testObject</code> belongs to a subset 
-     * 						in <code>subsets</code>, <code>false</code> otherwise.
-     */
-    private boolean isOWLObjectInSubsets(OWLObject testObject, Collection<String> subsets)
-    {
-    	log.entry(testObject, subsets);
-    	
-    	Collection<String> testSubsets = this.getOwlGraphWrapper().getSubsets(testObject);
-    	testSubsets.retainAll(subsets);
-		if (!testSubsets.isEmpty()) {
-			return log.exit(true);
-		}
-		return log.exit(false);
-    }
-    
-    /**
-	 * Returns the direct child properties of <code>prop</code> in all ontologies.
-	 * @param prop 		The <code>OWLObjectPropertyExpression</code> for which 
-	 * 					we want the direct sub-properties.
-	 * @return 			A <code>Set</code> of <code>OWLObjectPropertyExpression</code>s 
-	 * 					that are the direct sub-properties of <code>prop</code>.
-     * 
-     * @see #getSubPropertyClosureOf(OWLObjectPropertyExpression)
-     * @see #getSubPropertyReflexiveClosureOf(OWLObjectPropertyExpression)
-	 */
-	private Set<OWLObjectPropertyExpression> getSubPropertiesOf(
-			OWLObjectPropertyExpression prop) {
-		log.entry(prop);
-		Set<OWLObjectPropertyExpression> subProps = new HashSet<OWLObjectPropertyExpression>();
-		for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
-			for (OWLSubObjectPropertyOfAxiom axiom : 
-				    ont.getObjectSubPropertyAxiomsForSuperProperty(prop)) {
-				subProps.add(axiom.getSubProperty());
-			}
-		}
-		return log.exit(subProps);
-	}
-	/**
-     * Returns all parent properties of <code>prop</code> in all ontologies,  
-     * ordered from the more general (closer from <code>prop</code>) to the more precise 
-     * (e.g., for the "overlaps" property, return "part_of" then "in_deep_part_of"). 
-     * 
-     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
-     * 				the ordered sub-properties. 
-     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
-     * 				ordered from the more general to the more precise.
-     * 
-     * @see #getSubPropertiesOf(OWLObjectPropertyExpression)
-     * @see #getSubPropertyReflexiveClosureOf(OWLObjectPropertyExpression)
-     */
-	private LinkedHashSet<OWLObjectPropertyExpression> getSubPropertyClosureOf(
-			OWLObjectPropertyExpression prop) {
-		
-		log.entry(prop);
-		//try to get the sub-properties from the cache
-		LinkedHashSet<OWLObjectPropertyExpression> subProps = 
-				this.subPropertyCache.get(prop);
-		if (subProps != null) {
-			log.trace("Sub-properties of {} retrieved from cache: {}", 
-					prop, subProps);
-			return log.exit(subProps);
-		}
-		log.trace("Sub-properties of {} not retrieved from cache, acquiring them", 
-				prop);
-    	subProps = new LinkedHashSet<OWLObjectPropertyExpression>();
-		Stack<OWLObjectPropertyExpression> stack = new Stack<OWLObjectPropertyExpression>();
-		stack.add(prop);
-		while (!stack.isEmpty()) {
-			OWLObjectPropertyExpression nextProp = stack.pop();
-			Set<OWLObjectPropertyExpression> directSubs = this.getSubPropertiesOf(nextProp);
-			directSubs.removeAll(subProps);
-			stack.addAll(directSubs);
-			subProps.addAll(directSubs);
-		}
-		//put the sub-properties in cache
-		this.subPropertyCache.put(prop, subProps);
-		
-		return log.exit(subProps);
-	}
-	/**
-     * Returns all sub-properties of <code>prop</code> in all ontologies, 
-     * and <code>prop</code> itself as the first element (reflexive). 
-     * The returned sub-properties are ordered from the more general (the closest 
-     * from <code>prop</code>) to the more precise.
-     * For instance, if <code>prop</code> is "overlaps", the returned properties will be  
-     * "overlaps", then "part_of", then "in_deep_part_of", .... 
-     * 
-     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
-     * 				the ordered sub-properties. 
-     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
-     * 				ordered from the more general to the more precise, with <code>prop</code> 
-     * 				as the first element. 
-     * 
-     * @see #getSubPropertiesOf(OWLObjectPropertyExpression)
-     * @see #getSubPropertyClosureOf(OWLObjectPropertyExpression)
-     */
-	private LinkedHashSet<OWLObjectPropertyExpression> getSubPropertyReflexiveClosureOf(
-			OWLObjectPropertyExpression prop) 
-	{
-		log.entry(prop);
-		
-		LinkedHashSet<OWLObjectPropertyExpression> subProps = 
-				new LinkedHashSet<OWLObjectPropertyExpression>();
-		
-		subProps.add(prop);
-		subProps.addAll(this.getSubPropertyClosureOf(prop));
-		
-		return log.exit(subProps);
-	}
-	
-    /**
-     * Returns all parent properties of <code>prop</code> in all ontologies, 
-     * and <code>prop</code> itself as the first element (reflexive). 
-     * Unlike the method <code>owltools.graph.OWLGraphWrapperEdges.getSuperPropertyReflexiveClosureOf</code>, 
-     * the returned super properties here are ordered from the more precise to the more general 
-     * (e.g., "in_deep_part_of", then "part_of", then "overlaps"). 
-     * 
-     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
-     * 				the ordered super properties. 
-     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
-     * 				ordered from the more precise to the more general, with <code>prop</code> 
-     * 				as the first element. 
-     */
-	//TODO: Remove if OWLGraphWrapper changes its implementation
-    private LinkedHashSet<OWLObjectPropertyExpression> getSuperPropertyReflexiveClosureOf(
-    		OWLObjectPropertyExpression prop) 
-    {
-    	log.entry(prop);
-    	
-    	//try to get the super properties from the cache
-    	LinkedHashSet<OWLObjectPropertyExpression> superProps = 
-    			this.superPropertyCache.get(prop);
-    	if (superProps != null) {
-    		log.trace("Super properties of {} retrieved from cache: {}", 
-    				prop, superProps);
-    	} else {
-    		log.trace("Super properties of {} not retrieved from cache, acquiring them", 
-    				prop);
-
-    		superProps = new LinkedHashSet<OWLObjectPropertyExpression>();
-    		Stack<OWLObjectPropertyExpression> stack = 
-    				new Stack<OWLObjectPropertyExpression>();
-    		stack.add(prop);
-    		while (!stack.isEmpty()) {
-    			OWLObjectPropertyExpression nextProp = stack.pop();
-    			Set<OWLObjectPropertyExpression> directSupers = 
-    					this.getOwlGraphWrapper().getSuperPropertiesOf(nextProp);
-    			directSupers.removeAll(superProps);
-    			directSupers.remove(prop);
-    			stack.addAll(directSupers);
-    			superProps.addAll(directSupers);
-    		}
-    		//put superProps in cache
-    		this.superPropertyCache.put(prop, superProps);
-    	}
-
-    	
-    	LinkedHashSet<OWLObjectPropertyExpression> superPropsReflexive = 
-    			new LinkedHashSet<OWLObjectPropertyExpression>();
-    	superPropsReflexive.add(prop);
-		superPropsReflexive.addAll(superProps);
-		return log.exit(superPropsReflexive);
-	}
-
-    
-    /**
-     * Determine if <code>edge</code> represents an is_a relation.
-     * 
-     * @param edge	The <code>OWLGraphEdge</code> to test.
-     * @return		<code>true</code> if <code>edge</code> is an is_a (SubClassOf) relation.
-     */
-    private boolean isASubClassOfEdge(OWLGraphEdge edge) {
-    	log.entry(edge);
-    	return log.exit((edge.getSingleQuantifiedProperty().getProperty() == null && 
-				edge.getSingleQuantifiedProperty().getQuantifier() == Quantifier.SUBCLASS_OF));
-    }
-    
-    /**
-     * Determine if <code>edge</code> represents a part_of relation or one of its sub-relations 
-     * (e.g., "deep_part_of").
-     * 
-     * @param edge	The <code>OWLGraphEdge</code> to test.
-     * @return		<code>true</code> if <code>edge</code> is a part_of relation, 
-     * 				or one of its sub-relations.
-     */
-    private boolean isAPartOfEdge(OWLGraphEdge edge) {
-    	log.entry(edge);
-    	if (this.partOfRels == null) {
-    		this.partOfRels = this.getSubPropertyReflexiveClosureOf(
-        			this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(PARTOFID));
-    	}
-    	return log.exit(
-    			(partOfRels.contains(edge.getSingleQuantifiedProperty().getProperty())));
-    }
-    
-    /**
-	 * Get the sub-relations of <code>edge</code>. This method returns 
-	 * <code>OWLGraphEdge</code>s with their <code>OWLQuantifiedProperty</code>s 
-	 * corresponding to the sub-properties of the ones in <code>edge</code> 
-	 * (even indirect sub-properties), ordered from the more general relations 
-	 * (the closest to <code>edge</code>) to the more precise relations. 
-	 * The first <code>OWLGraphEdge</code> in the returned <code>Set</code> 
-	 * is <code>edge</code> (reflexive method).
-	 * <p>
-	 * This is the opposite method of 
-	 * <code>owltools.graph.OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers(OWLGraphEdge)</code>.
-	 * 
-	 * @param edge	A <code>OWLGraphEdge</code> for which all sub-relations 
-	 * 				should be obtained.
-	 * @return 		A <code>Set</code> of <code>OWLGraphEdge</code>s representing 
-	 * 				the sub-relations of <code>edge</code> ordered from the more general 
-	 * 				to the more precise relation, with <code>edge</code> as the first element. 
-	 * 				An empty <code>Set</code> if the <code>OWLQuantifiedProperty</code>s 
-	 * 				of <code>edge</code> have no sub-properties.
-	 */
-	public LinkedHashSet<OWLGraphEdge> getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge edge) 
-	{
-		log.entry(edge);
-		return log.exit(this.getOWLGraphEdgeSubRelsReflexive(edge, 0));
-	}
-	
-	/**
-	 * Similar to {@link getOWLGraphEdgeSubRels(OWLGraphEdge)}, 
-	 * except the <code>OWLQuantifiedProperty</code>s of <code>edge</code> are analyzed 
-	 * starting from the index <code>propIndex</code>.
-	 * 
-	 * @param edge 		A <code>OWLGraphEdge</code> for which sub-relations 
-	 * 					should be obtained, with properties analyzed from index 
-	 * 					<code>propIndex</code>
-	 * @param propIndex	An <code>int</code> representing the index of the 
-	 * 					<code>OWLQuantifiedProperty</code> of <code>edge</code> 
-	 * 					to start the analysis with.
-	 * @return 		A <code>Set</code> of <code>OWLGraphEdge</code>s representing 
-	 * 				the sub-relations of <code>edge</code> ordered from the more general 
-	 * 				to the more precise relation, with <code>edge</code> as the first element, 
-	 * 				and with only <code>OWLQuantifiedProperty</code> starting at index 
-	 * 				<code>propIndex</code>. An empty <code>Set</code> 
-	 * 				if the <code>OWLQuantifiedProperty</code>s of <code>edge</code> 
-	 * 				have no sub-properties.
-	 */
-	private LinkedHashSet<OWLGraphEdge> getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge edge, 
-			int propIndex) 
-	{
-		log.entry(edge, propIndex);
-		//OWLGraphWrapperEdges.isExcluded should be made public, or a method to achieve 
-		//a part of the operations performed in OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers 
-		//provided (see code below).
-		//here's a hack to use it
-		LinkedHashSet<OWLGraphEdge> subRels = new LinkedHashSet<OWLGraphEdge>();
-		try {
-			Method excludedMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
-					"isExcluded", new Class<?>[] {OWLQuantifiedProperty.class});
-			excludedMethod.setAccessible(true);
-
-			if (propIndex >= edge.getQuantifiedPropertyList().size()) {
-				subRels.add(new OWLGraphEdge(edge.getSource(), edge.getTarget(), 
-						new Vector<OWLQuantifiedProperty>(), null));
-				return subRels;
-			}
-			OWLQuantifiedProperty quantProp = edge.getQuantifiedPropertyList().get(propIndex);
-			LinkedHashSet<OWLQuantifiedProperty> subQuantProps = 
-					new LinkedHashSet<OWLQuantifiedProperty>();
-			subQuantProps.add(quantProp);
-			OWLObjectProperty prop = quantProp.getProperty();
-			if (prop != null) {
-				for (OWLObjectPropertyExpression propExp : this.getSubPropertyClosureOf(prop)) {
-					if (propExp.equals(this.getOwlGraphWrapper().getDataFactory().
-							getOWLTopObjectProperty()))
-						continue;
-					if (propExp instanceof OWLObjectProperty) {
-						OWLQuantifiedProperty newQp = 
-								new OWLQuantifiedProperty(propExp, quantProp.getQuantifier());
-						boolean isExcluded = (boolean) excludedMethod.invoke(
-								this.getOwlGraphWrapper(), new Object[] {newQp});
-						if (!isExcluded) {
-							subQuantProps.add(newQp);
-						}
-					}
-				}
-			}
-			for (OWLQuantifiedProperty subQuantProp : subQuantProps) {
-				for (OWLGraphEdge nextPropEdge : this.getOWLGraphEdgeSubRelsReflexive(edge, 
-						propIndex+1)) {
-					List<OWLQuantifiedProperty> quantProps = new Vector<OWLQuantifiedProperty>();
-					quantProps.add(subQuantProp);
-					quantProps.addAll(nextPropEdge.getQuantifiedPropertyList());
-
-					subRels.add(new OWLGraphEdge(edge.getSource(),edge.getTarget(),
-							quantProps, edge.getOntology()));
-				}
-			}
-		} catch (Exception e) {
-			log.error("Error due to hack to use owltools private methods", e);
-		}
-
-		return log.exit(subRels);
-	}
-	
-    
-    /**
-     * Combines <code>firstEdge</code> and <code>secondEdge</code> to create a new edge 
-     * from the source of <code>firstEdge</code> to the target of <code>secondEdge</code>.
-     * <p>
-     * This method is similar to 
-     * <code>owltools.graph.OWLGraphWrapperEdges#combineEdgePair(OWLObject, OWLGraphEdge, 
-     * OWLGraphEdge, int)</code>, 
-     * except it also tries to combine the <code>OWLQuantifiedProperty</code>s of the edges 
-     * over super properties (see {@link #combinePropertyPairOverSuperProperties(
-     * OWLQuantifiedProperty, OWLQuantifiedProperty)}, currently combines over 
-     * 2 properties only). 
-     * 
-     * @param firstEdge		A <code>OWLGraphEdge</code> that is the first edge to combine, 
-     * 						its source will be the source of the new edge
-     * @param secondEdge	A <code>OWLGraphEdge</code> that is the second edge to combine, 
-     * 						its target will be the target of the new edge
-     * @return 				A <code>OWLGraphEdge</code> resulting from the composition of 
-     * 						<code>firstEdge</code> and <code>secondEdge</code>, 
-     * 						with its <code>OWLQuantifiedProperty</code>s composed 
-     * 						in a regular way, but also over super properties. 
-     */
-    private OWLGraphEdge combineEdgePairWithSuperProps(OWLGraphEdge firstEdge, 
-    		OWLGraphEdge secondEdge) 
-    {
-    	log.entry(firstEdge, secondEdge);
-    	OWLGraphEdge combine = 
-				this.getOwlGraphWrapper().combineEdgePair(
-						firstEdge.getSource(), firstEdge, secondEdge, 0);
-		
-		if (combine != null) {
-			//in case the relations were not combined, try to combine 
-			//over super properties
-			//TODO: combine over more than 2 properties
-			if (combine.getQuantifiedPropertyList().size() == 2) {
-				OWLQuantifiedProperty combinedQp = 
-						this.combinePropertyPairOverSuperProperties(
-								combine.getQuantifiedPropertyList().get(0), 
-								combine.getQuantifiedPropertyList().get(1));
-				if (combinedQp != null) {
-					//successfully combined over super properties, 
-					//create a combined edge
-					combine = new OWLGraphEdge(firstEdge.getSource(), 
-							secondEdge.getTarget(),
-							Arrays.asList(combinedQp), 
-							firstEdge.getOntology());
-				}
-			}
-		}
-		
-		return log.exit(combine);
-    }
-    
-    /**
-     * Perform a combination of a pair of <code>OWLQuantifiedProperty</code>s 
-     * over super properties, unlike the method 
-     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code>. 
-     * <strong>Warning: </strong> note that you should call this method only after 
-     * <code>combinedQuantifiedPropertyPair</code> failed to combine properties. 
-     * <p>
-     * This methods determines if <code>prop1</code> is a super property 
-     * of <code>prop2</code> that can be combined, or <code>prop2</code> a super property 
-     * of <code>prop1</code> that can be combined, 
-     * or if they have a super property in common that can be combined. 
-     * If such a suitable super property is identified, <code>prop1</code> and 
-     * <code>prop2</code> are combined by calling the method 
-     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code> 
-     * on that super property, as a pair (notably to check for transitivity). 
-     * All super properties will be sequentially tested from the more precise one 
-     * to the more general one, trying to find one that can be combined. 
-     * If no combination can be performed, return <code>null</code>.
-     * <p>
-     * For example: 
-     * <ul>
-     * <li>If property r2 is transitive, and is the super property of r1, then 
-     * A r1 B * B r2 C --> A r2 C
-     * <li>If property r3 is transitive, and is the super property of both r1 and r2, then 
-     * A r1 B * B r2 C --> A r3 C 
-     * </ul>
-     * 
-     * @param prop1 	First <code>OWLQuantifiedProperty</code> to combine
-     * @param prop2		Second <code>OWLQuantifiedProperty</code> to combine
-     * @return			A <code>OWLQuantifiedProperty</code> representing a combination 
-     * 					of <code>prop1</code> and <code>prop2</code> over super properties. 
-     * 					<code>null</code> if cannot be combined. 
-     */
-    private OWLQuantifiedProperty combinePropertyPairOverSuperProperties(
-            OWLQuantifiedProperty prop1, OWLQuantifiedProperty prop2) 
-    {
-    	log.entry(prop1, prop2);
-    	log.trace("Searching for common super property to combine {} and {}", 
-    			prop1, prop2);
-    	//local implementation of getSuperPropertyReflexiveClosureOf, to order super properties 
-    	//from the more precise to the more general, with prop as the first element. 
-    	//the first element is the property itself, 
-    	//to check if it is a super property of the other property
-    	LinkedHashSet<OWLObjectPropertyExpression> superProps1 = 
-    			this.getSuperPropertyReflexiveClosureOf(prop1.getProperty());
-    	LinkedHashSet<OWLObjectPropertyExpression> superProps2 = 
-    			this.getSuperPropertyReflexiveClosureOf(prop2.getProperty());
-    	
-    	//OWLGraphWrapperEdges.combinedQuantifiedPropertyPair should be made public.
-    	//here's a hack to use it
-    	try {
-    		Method combineMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
-    				"combinedQuantifiedPropertyPair", 
-    				new Class<?>[] {OWLQuantifiedProperty.class, OWLQuantifiedProperty.class});
-    		combineMethod.setAccessible(true);
-    		//OWLGraphWrapperEdges.isExcluded should be made public, or a method to achieve 
-    		//a part of the operations performed in OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers 
-    		//provided (see code below).
-    		//here's a hack to use it
-    		Method excludedMethod = OWLGraphWrapperEdges.class.getDeclaredMethod(
-    				"isExcluded", 
-    				new Class<?>[] {OWLQuantifiedProperty.class});
-    		excludedMethod.setAccessible(true);
-
-
-    		//search for a common super property
-    		superProps1.retainAll(superProps2);
-    		log.trace("Common properties: {}", superProps1);
-    		for (OWLObjectPropertyExpression prop: superProps1) {
-
-    			//code from OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers
-    			if (!prop.equals(
-    					this.getOwlGraphWrapper().getDataFactory().getOWLTopObjectProperty()) && 
-
-    					prop instanceof OWLObjectProperty) {
-    				log.trace("{} is a valid property", prop);
-    				OWLQuantifiedProperty newQp = 
-    						new OWLQuantifiedProperty(prop, prop1.getQuantifier());
-    				boolean isExcluded = (boolean) excludedMethod.invoke(
-    						this.getOwlGraphWrapper(), new Object[] {newQp});
-    				if (!isExcluded) {
-        				log.trace("And {} is not excluded", newQp);
-    					OWLQuantifiedProperty combined = 
-    							(OWLQuantifiedProperty) combineMethod.invoke(this.getOwlGraphWrapper(), 
-    									new Object[] {newQp, newQp});
-    					if (combined != null) {
-    						log.trace("Common super property identified, combining {}", newQp);
-    						return log.exit(combined);
-    					}
-						log.trace("But could not combine over {}, likely not transitive", newQp);
-    				}
-    			}
-    		}
-    	} catch (Exception e) {
-    		log.error("Error when combining properties", e);
-    	}
-    	
-    	log.trace("No common super property found to combine.");
-    	return log.exit(null);
-    }
     
  
 	//*********************************
@@ -2299,14 +1722,14 @@ public class OWLGraphManipulator
 	 * 
 	 * @return the  <code>OWLGraphWrapper</code> wrapped by this class.
 	 */
-	public OWLGraphWrapper getOwlGraphWrapper() {
+	public CustomOWLGraphWrapper getOwlGraphWrapper() {
 		return this.owlGraphWrapper;
 	}
 	/**
 	 * @param owlGraphWrapper the <code>owlGraphWrapper</code> that this class manipulates.
 	 * @see #owlGraphWrapper
 	 */
-	private void setOwlGraphWrapper(OWLGraphWrapper owlGraphWrapper) {
+	private void setOwlGraphWrapper(CustomOWLGraphWrapper owlGraphWrapper) {
 		this.owlGraphWrapper = owlGraphWrapper;
 	}
 }

@@ -12,7 +12,6 @@ import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
-import owltools.graph.OWLGraphWrapper;
 import owltools.io.ParserWrapper;
 
 public class GenerateUberonVersion 
@@ -22,16 +21,16 @@ public class GenerateUberonVersion
 		ParserWrapper parserWrapper = new ParserWrapper();
         OWLOntology ont = parserWrapper.parse("/Users/admin/Desktop/uberon.obo.1");
     	OWLGraphManipulator graphManipulator = 
-    			new OWLGraphManipulator(new OWLGraphWrapper(ont));
+    			new OWLGraphManipulator(new CustomOWLGraphWrapper(ont));
     	
-    	//graphManipulator.makeBasicOntology();
-    	//map all sub-relations of part_of and develops_from to these relations
+    	graphManipulator.makeBasicOntology();
+    	/*//map all sub-relations of part_of and develops_from to these relations
     	Collection<String> relIds = new ArrayList<String>();
     	relIds.add("BFO:0000050");
     	relIds.add("RO:0002202");
     	int relsMapped = graphManipulator.mapRelationsToParent(relIds);
     	//keep only is_a, part_of and develops_from relations
-    	int relsRemoved = graphManipulator.filterRelations(relIds, true);
+    	int relsRemoved = graphManipulator.filterRelations(relIds, true);*/
     	
     	graphManipulator.delPartOfSubClassOfRelsToSubsetsIfNonOrphan(Arrays.asList("upper_level"));
     	graphManipulator.removeSubgraphs(Arrays.asList("UBERON:0000481"), true);

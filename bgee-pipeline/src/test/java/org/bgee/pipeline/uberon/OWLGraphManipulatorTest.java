@@ -3,12 +3,9 @@ package org.bgee.pipeline.uberon;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +21,6 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -33,7 +29,6 @@ import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import owltools.graph.OWLGraphEdge;
-import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.io.ParserWrapper;
 
@@ -227,131 +222,6 @@ public class OWLGraphManipulatorTest extends TestAncestor
 				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
 				edgeToTargetExpression(checkEdge));
 		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
-	}
-
-	/**
-	 * Test the functionalities of
-	 * {@link OWLGraphManipulator#combinedPropertyPairOverSuperProperties(OWLQuantifiedProperty, OWLQuantifiedProperty)}.
-	 */
-	@Test
-	public void shouldCombinedPropertyPairOverSuperProperties() 
-			throws NoSuchMethodException, SecurityException, IllegalAccessException, 
-			IllegalArgumentException, InvocationTargetException
-	{
-		//try to combine a has_developmental_contribution_from 
-		//and a transformation_of relation (one is a super property of the other, 
-		//2 levels higher, interesting unit test)
-		OWLObjectProperty transf = this.graphManipulator.getOwlGraphWrapper().
-				getOWLObjectPropertyByIdentifier("http://semanticscience.org/resource/SIO_000657");
-		OWLQuantifiedProperty transfQp = 
-				new OWLQuantifiedProperty(transf, Quantifier.SOME);
-		OWLObjectProperty devCont = this.graphManipulator.getOwlGraphWrapper().
-				getOWLObjectPropertyByIdentifier("RO:0002254");
-		OWLQuantifiedProperty devContQp = 
-				new OWLQuantifiedProperty(devCont, Quantifier.SOME);
-		
-		//method to test is private, yet we want to unit test it
-		Method method = this.graphManipulator.getClass().getDeclaredMethod(
-				"combinePropertyPairOverSuperProperties", 
-				new Class<?>[] {OWLQuantifiedProperty.class, OWLQuantifiedProperty.class});
-		method.setAccessible(true);
-		
-		OWLQuantifiedProperty combine =  
-				(OWLQuantifiedProperty) method.invoke(this.graphManipulator, 
-						new Object[] {transfQp, devContQp});
-		assertEquals("relations SIO:000657 and RO:0002254 were not properly combined " +
-				"into RO:0002254", devContQp, combine);
-		//combine in the opposite direction, just to be sure :p
-		combine =  
-				(OWLQuantifiedProperty) method.invoke(this.graphManipulator, 
-						new Object[] {devContQp, transfQp});
-		assertEquals("Reversing relations in method call generated an error", 
-				devContQp, combine);
-		
-		//another test case: two properties where none is parent of the other one, 
-		//sharing several common parents, only the more general one is transitive. 
-		//as I couldn't find any suitable example, fake relations were created
-		//in the test ontology: 
-		//fake_rel3 and fake_rel4 are both sub-properties of fake_rel2, 
-		//which is not transitive, but has the super-property fake_rel1 
-		//which is transitive. fake_rel3 and fake_rel4 should be combined into fake_rel1.
-		OWLObjectProperty fakeRel3 = this.graphManipulator.getOwlGraphWrapper().
-				getOWLObjectPropertyByIdentifier("fake_rel3");
-		OWLQuantifiedProperty fakeRel3Qp = 
-				new OWLQuantifiedProperty(fakeRel3, Quantifier.SOME);
-		OWLObjectProperty fakeRel4 = this.graphManipulator.getOwlGraphWrapper().
-				getOWLObjectPropertyByIdentifier("fake_rel4");
-		OWLQuantifiedProperty fakeRel4Qp = 
-				new OWLQuantifiedProperty(fakeRel4, Quantifier.SOME);
-		
-		combine =  
-				(OWLQuantifiedProperty) method.invoke(this.graphManipulator, 
-						new Object[] {fakeRel3Qp, fakeRel4Qp});
-		OWLObjectProperty fakeRel1 = this.graphManipulator.getOwlGraphWrapper().
-				getOWLObjectPropertyByIdentifier("fake_rel1");
-		assertEquals("relations fake_rel3 and fake_rel4 were not properly combined " +
-				"into fake_rel1", fakeRel1, combine.getProperty());
-		//combine in the opposite direction, just to be sure :p
-		combine =  
-				(OWLQuantifiedProperty) method.invoke(this.graphManipulator, 
-						new Object[] {fakeRel4Qp, fakeRel3Qp});
-		assertEquals("Reversing relations in method call generated an error", 
-				fakeRel1, combine.getProperty());
-	}
-	
-	/**
-	 * Test the functionalities of 
-	 * {@link OWLGraphManipulator#getSubPropertyReflexiveClosureOf(OWLObjectPropertyExpression)}. 
-	 * This will allow to check all the "get sub-properties" method at once.
-	 */
-	@Test
-	public void shouldGetSubPropertyReflexiveClosureOf() throws NoSuchMethodException, 
-	    SecurityException, IllegalAccessException, IllegalArgumentException, 
-	    InvocationTargetException
-	{
-		Method method = this.graphManipulator.getClass().getDeclaredMethod(
-				"getSubPropertyReflexiveClosureOf", 
-				new Class<?>[] {OWLObjectPropertyExpression.class});
-		method.setAccessible(true);
-		
-		//let's try with the fake relations in the test ontology: 
-		OWLObjectProperty fakeRel = this.graphManipulator.getOwlGraphWrapper().
-				getOWLObjectPropertyByIdentifier("fake_rel1");
-		
-		@SuppressWarnings("unchecked")
-		//this warning is here only because we use reflection to test a private method
-		LinkedHashSet<OWLObjectPropertyExpression> subPropsReflexive = 
-				(LinkedHashSet<OWLObjectPropertyExpression>) method.invoke(this.graphManipulator, 
-				new Object[] {fakeRel});
-		
-		//we should have 4 relations (fake_rel1 to 4)
-		assertEquals("Incorrect number of sub-properties", 4, subPropsReflexive.size());
-		
-		//now check the order
-		int count = 0;
-		for (OWLObjectPropertyExpression prop: subPropsReflexive) {
-			//first rel should be fake_rel1 (reflexive method)
-			if (count == 0) {
-				assertEquals("Incorrect order of sub-properties, 1st relation", 
-						fakeRel, prop);
-			} else if (count == 1) {
-				OWLObjectProperty fakeRel2 = this.graphManipulator.getOwlGraphWrapper().
-						getOWLObjectPropertyByIdentifier("fake_rel2");
-				assertEquals("Incorrect order of sub-properties, 2nd relation", 
-						fakeRel2, prop);
-			} else if (count == 2 || count == 3) {
-				OWLObjectProperty fakeRel3 = this.graphManipulator.getOwlGraphWrapper().
-						getOWLObjectPropertyByIdentifier("fake_rel3");
-				OWLObjectProperty fakeRel4 = this.graphManipulator.getOwlGraphWrapper().
-						getOWLObjectPropertyByIdentifier("fake_rel4");
-				assertTrue("Incorrect order of sub-properties, 3rd or 4th relation", 
-						(fakeRel3.equals(prop) || fakeRel4.equals(prop)));
-			} else {
-				//should not be reached
-				throw new AssertionError("Incorrect number of sub-properties");
-			}
-			count++;
-		}
 	}
 	
 	//***********************************************

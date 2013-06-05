@@ -3,6 +3,8 @@ package org.bgee.pipeline.uberon;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -22,6 +24,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import owltools.graph.OWLGraphEdge;
+import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.io.ParserWrapper;
 
@@ -219,6 +222,72 @@ public class CustomOWLGraphWrapperTest extends TestAncestor
 			edgeIndex++;
 		}
 		assertTrue("No sub-relations returned", edgeIndex > 0);
+	}
+	
+	/**
+	 * Test {@link CustomOWLGraphWrapper#combinePropertyPairOverSuperProperties(
+	 * OWLQuantifiedProperty, OWLQuantifiedProperty)}.
+	 */
+	@Test
+	public void shouldCombinePropertyPairOverSuperProperties() 
+			throws NoSuchMethodException, SecurityException, IllegalAccessException, 
+			IllegalArgumentException, InvocationTargetException
+	{
+		//try to combine a has_developmental_contribution_from 
+		//and a transformation_of relation (one is a super property of the other, 
+		//2 levels higher, interesting unit test)
+		OWLObjectProperty transf = wrapper.getOWLObjectPropertyByIdentifier(
+				"http://semanticscience.org/resource/SIO_000657");
+		OWLQuantifiedProperty transfQp = 
+				new OWLQuantifiedProperty(transf, Quantifier.SOME);
+		OWLObjectProperty devCont = wrapper.getOWLObjectPropertyByIdentifier("RO:0002254");
+		OWLQuantifiedProperty devContQp = 
+				new OWLQuantifiedProperty(devCont, Quantifier.SOME);
+		
+		//method to test is private, yet we want to unit test it
+		Method method = wrapper.getClass().getDeclaredMethod(
+				"combinePropertyPairOverSuperProperties", 
+				new Class<?>[] {OWLQuantifiedProperty.class, OWLQuantifiedProperty.class});
+		method.setAccessible(true);
+		
+		OWLQuantifiedProperty combine =  
+				(OWLQuantifiedProperty) method.invoke(wrapper, 
+						new Object[] {transfQp, devContQp});
+		assertEquals("relations SIO:000657 and RO:0002254 were not properly combined " +
+				"into RO:0002254", devContQp, combine);
+		//combine in the opposite direction, just to be sure :p
+		combine =  
+				(OWLQuantifiedProperty) method.invoke(wrapper, 
+						new Object[] {devContQp, transfQp});
+		assertEquals("Reversing relations in method call generated an error", 
+				devContQp, combine);
+		
+		//another test case: two properties where none is parent of the other one, 
+		//sharing several common parents, only the more general one is transitive. 
+		//as I couldn't find any suitable example, fake relations were created
+		//in the test ontology: 
+		//fake_rel3 and fake_rel4 are both sub-properties of fake_rel2, 
+		//which is not transitive, but has the super-property fake_rel1 
+		//which is transitive. fake_rel3 and fake_rel4 should be combined into fake_rel1.
+		OWLObjectProperty fakeRel3 = wrapper.getOWLObjectPropertyByIdentifier("fake_rel3");
+		OWLQuantifiedProperty fakeRel3Qp = 
+				new OWLQuantifiedProperty(fakeRel3, Quantifier.SOME);
+		OWLObjectProperty fakeRel4 = wrapper.getOWLObjectPropertyByIdentifier("fake_rel4");
+		OWLQuantifiedProperty fakeRel4Qp = 
+				new OWLQuantifiedProperty(fakeRel4, Quantifier.SOME);
+		
+		combine =  
+				(OWLQuantifiedProperty) method.invoke(wrapper, 
+						new Object[] {fakeRel3Qp, fakeRel4Qp});
+		OWLObjectProperty fakeRel1 = wrapper.getOWLObjectPropertyByIdentifier("fake_rel1");
+		assertEquals("relations fake_rel3 and fake_rel4 were not properly combined " +
+				"into fake_rel1", fakeRel1, combine.getProperty());
+		//combine in the opposite direction, just to be sure :p
+		combine =  
+				(OWLQuantifiedProperty) method.invoke(wrapper, 
+						new Object[] {fakeRel4Qp, fakeRel3Qp});
+		assertEquals("Reversing relations in method call generated an error", 
+				fakeRel1, combine.getProperty());
 	}
 	
 	/**

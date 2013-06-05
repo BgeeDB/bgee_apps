@@ -235,7 +235,8 @@ public class OWLGraphManipulator
 	/**
 	 * Remove redundant relations by considering is_a (SubClassOf) 
 	 * and part_of relations equivalent. This method removes <strong>only</strong> 
-	 * these "fake" redundant relations over is_a and part_of. 
+	 * these "fake" redundant relations over is_a and part_of, 
+	 * and not the real redundant relations over, for instance, is_a relations only. 
 	 * Note that the modified ontology will therefore not be semantically correct, 
 	 * but will be easier to display, thanks to a simplified graph structure. 
 	 * <p>
@@ -252,8 +253,8 @@ public class OWLGraphManipulator
 	 * <li>If A is_a B is_a C, then A part_of C is considered redundant
 	 * <li>If A in_deep_part_of B in_deep_part_of C, then A is_a C is considered redundant 
 	 * (check for sub-properties of part_of)
-	 * <li>If A part_of B, and A is_a B, then A is_a B is removed (check for redundant 
-	 * direct outgoing edges; in case of redundancy, the is_a relation is removed)
+	 * <li>If A part_of B, and A is_a B, then A part_of B is removed (check for redundant 
+	 * direct outgoing edges; in case of redundancy, the part_of relation is removed)
 	 * </ul>
 	 * Note that redundancies such as A is_a B is_a C and A is_a C are not removed by this method, 
 	 * but by {@link #reduceRelations()}.
@@ -279,6 +280,8 @@ public class OWLGraphManipulator
 	 * 										is_a/part_of relations should be considered 
 	 * 										equivalent. If <code>true</code>, they are.
 	 * @return 		An <code>int</code> representing the number of relations removed. 
+	 * @see #reduceRelations()
+	 * @see #reducePartOfAndSubClassOfRelations()
 	 */
 	private int reduceRelations(boolean reducePartOfAndSubClassOf)
 	{
@@ -294,7 +297,6 @@ public class OWLGraphManipulator
 		//TODO: everything could be done in one single walk from bottom nodes 
 		//to top nodes, this would be much faster
 		int relationsRemoved = 0;
-		
 	    for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
 	    	Set<OWLClass> classes = ont.getClassesInSignature();
 	    	int classCount = classes.size();
@@ -308,60 +310,13 @@ public class OWLGraphManipulator
 				Set<OWLGraphEdge> outgoingEdges = 
 					this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
 				int outgoingEdgesCount = outgoingEdges.size();
-				
-				//if we want to reduce over is_a and part_of, first check 
-				//that we do not have both part_of and is_a direct outgoing edges
-				if (reducePartOfAndSubClassOf) {
-					Collection<OWLGraphEdge> partOfEdges = new ArrayList<OWLGraphEdge>();
-					Collection<OWLGraphEdge> isAEdges    = new ArrayList<OWLGraphEdge>();
-					//identify part_of-like and is_a relations
-					for (OWLGraphEdge outgoingEdge: outgoingEdges) {
-						if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
-							continue;
-						}
-						outgoingEdge.setOntology(ont);
-						if (this.isASubClassOfEdge(outgoingEdge)) {
-							isAEdges.add(outgoingEdge);
-						} else if (this.isAPartOfEdge(outgoingEdge)) {
-							partOfEdges.add(outgoingEdge);
-						}
-					}
-					//search for is_a relations to remove
-					for (OWLGraphEdge partOfEdge: partOfEdges) {
-						for (OWLGraphEdge isAEdge: isAEdges) {
-							if (partOfEdge.getTarget().equals(isAEdge.getTarget())) {
-								//remove "redundant" is_a
-								if (this.removeEdge(isAEdge)) {
-									relationsRemoved++;
-									log.debug("Removing \"redundant\" relation from outgoing edges: {}", 
-											isAEdge);
-								}
-							}
-						}
-					}
-				}
-				
-				//TODO: try to see from the beginning that there is no way
-				//the outgoing edges generate redundancies 
-				//(for instance, a develops_from outgoing edge and a part_of outgoing edge). 
-				//But maybe it is too dangerous if the chain rules change in the future. 
-				
-				//now for each outgoing edge, try to see if it is redundant by walking 
-				//the other outgoing edges to the top, if they have the target 
-				//of the tested outgoing edge on their path. The walk stops 
-				//when the target is reached
+				//now for each outgoing edge, try to see if it is redundant 
+				//to another outgoing edge
 				int edgeIndex = 0;
 				for (OWLGraphEdge outgoingEdgeToTest: outgoingEdges) {
 					edgeIndex++;
 					log.debug("Start testing edge for redundancy {}/{} {}", 
 							edgeIndex, outgoingEdgesCount, outgoingEdgeToTest);
-					
-					if (reducePartOfAndSubClassOf && 
-							!this.isAPartOfEdge(outgoingEdgeToTest) && 
-							!this.isASubClassOfEdge(outgoingEdgeToTest)) {
-						log.debug("Not a is_a/part_of relationship, skip");
-						continue;
-					}
 					//check that this relation still exists, it might have been removed 
 					//from another walk to the root
 					if (!ont.containsAxiom(this.getAxiom(outgoingEdgeToTest))) {
@@ -371,19 +326,22 @@ public class OWLGraphManipulator
 					outgoingEdgeToTest.setOntology(ont);
 					
 					boolean isRedundant = false;
-					
 					outgoingEdgeToWalk: for (OWLGraphEdge outgoingEdgeToWalk: outgoingEdges) {
 						if (outgoingEdgeToWalk.equals(outgoingEdgeToTest)) {
-							continue;
+							continue outgoingEdgeToWalk;
 						}
 						if (!ont.containsAxiom(this.getAxiom(outgoingEdgeToWalk))) {
 							log.trace("Outgoing edge to walk already removed, skip {}", 
 									outgoingEdgeToWalk);
-							continue;
+							continue outgoingEdgeToWalk;
 						}
 						outgoingEdgeToWalk.setOntology(ont);
 						
-						fsdsf
+						isRedundant = this.areEdgesRedudant(outgoingEdgeToTest, 
+								outgoingEdgeToWalk, reducePartOfAndSubClassOf);
+						if (isRedundant) {
+							break outgoingEdgeToWalk;
+						}
 					}
 					if (isRedundant) {
 						if (this.removeEdge(outgoingEdgeToTest)) {
@@ -407,15 +365,85 @@ public class OWLGraphManipulator
 		return log.exit(relationsRemoved);
 	}
 	
+	/**
+	 * Check, for two <code>OWLGraphEdge</code>s <code>edgeToTest</code> and 
+	 * <code>edgeToWalk</code> outgoing from a same source, if a composed relation 
+	 * equivalent to <code>edgeToTest</code> can be obtained by walking 
+	 * <code>edgeToWalk</code> to the top of the ontology (meaning, following 
+	 * the edges outgoing from the target of <code>edgeToWalk</code>). 
+	 * <p>
+	 * In that case, <code>edgeToTest</code> is considered redundant, 
+	 * and this method returns <code>true</code>. 
+	 * if <code>reducePartOfAndSubClassOf</code> is <code>true</code>, 
+	 * only if a relation is a part_of relation on the one hand, an is_a relation 
+	 * on the other hand, will they be considered equivalent. 
+	 * <p>
+	 * <code>edgeToTest</code> and <code>edgeToWalk</code> will also be considered redundant 
+	 * if <code>edgeToWalk</code> and <code>edgeToTest</code> have the same target, and 
+	 * <code>edgeToWalk</code> is a sub-relation of <code>edgeToTest</code> 
+	 * (or, when <code>reducePartOfAndSubClassOf</code> is <code>true</code>, 
+	 * if <code>edgeToTest</code> is a part_of-like relation, and <code>edgeToWalk</code> 
+	 * a is_a relation (because we prefer to keep the is_a relation)).
+	 * <p>
+	 * Note that relations are also combined over super properties (see 
+	 * {@link #combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}.
+	 * 
+	 * @param edgeToTest				The <code>OWLGraphEdge</code> to be checked 
+	 * 									for redundancy. 
+	 * @param edgeToWalk				The <code>OWLGraphEdge</code> that could potentially 
+	 * 									lead to a relation equivalent to <code>edgeToTest</code>.
+	 * @param reducePartOfAndSubClassOf	A <code>boolean</code> defining whether 
+	 * 									is_a/part_of relations should be considered 
+	 * 									equivalent. If <code>true</code>, they are.
+	 * @return		<code>true</code> if <code>edgeToTest</code> is redundant as compared 
+	 * 				to a relation obtained from <code>edgeToWalk</code>.
+	 * @throws IllegalArgumentException If <code>edgeToTest</code> and <code>edgeToWalk</code>
+	 * 									are equal, or if they are not outgoing from a same source.
+	 * @see #reduceRelations(boolean)
+	 */
 	public boolean areEdgesRedudant(OWLGraphEdge edgeToTest, OWLGraphEdge edgeToWalk, 
-			boolean reducePartOfAndSubClassOf)
+			boolean reducePartOfAndSubClassOf) throws IllegalArgumentException
 	{
+		log.entry(edgeToTest, edgeToWalk, reducePartOfAndSubClassOf);
+		//TODO: try to see from the beginning that there is no way 
+		//edgeToTest and edgeToWalk are redundant. 
+		//But maybe it is too dangerous if the chain rules change in the future 
+		//(or it should be based on the current chain rules, not hardcoded). 
 		if (edgeToTest.equals(edgeToWalk) || 
 				!edgeToTest.getSource().equals(edgeToWalk.getSource())) {
 			throw new IllegalArgumentException("edgeToTest and edgeToWalk must be " +
 					"different edges outgoing from a same OWLObject: " + 
 					edgeToTest + " - " + edgeToWalk);
 		}
+		//if we want to reduce over is_a/part_of relations, and 
+		//edgeToTest is not itself a is_a or part_of-like relation, 
+		//no way to have a part_of/is_a redundancy
+		if (reducePartOfAndSubClassOf && 
+			!this.isAPartOfEdge(edgeToTest) && 
+			!this.isASubClassOfEdge(edgeToTest)) {
+			log.debug("Edge to test is not a is_a/part_of relation, cannot be redundant: {}", 
+					edgeToTest);
+			return log.exit(false);
+		}
+		
+		//then, check that the edges are not themselves redundant
+		if (edgeToTest.getTarget().equals(edgeToWalk.getTarget())) {
+			//if we want to reduce over is_a/part_of relations
+			if (reducePartOfAndSubClassOf) {
+				//then, we will consider edgeToTest redundant 
+				//only if edgeToTest is a part_of-like relation, 
+				//and edgeToWalk a is_a relation (because we prefer to keep the is_a relation)
+				if (this.isAPartOfEdge(edgeToTest) && this.isASubClassOfEdge(edgeToWalk)) {
+					return log.exit(true);
+				}
+			//otherwise, check that edgeToWalk is not a sub-relation of edgeToTest
+			} else if (this.getOwlGraphWrapper().
+						getOWLGraphEdgeSubsumers(edgeToWalk).contains(edgeToTest)) {
+				return log.exit(true);
+			}
+		}
+		
+		//--------OK, real stuff starts here----------
 		
 	    //For each walk, we would need to store each step to check for cycles in the ontology.
 	    //Rather than using a recursive function, we use a List of OWLGraphEdges, 
@@ -429,7 +457,7 @@ public class OWLGraphManipulator
 	
 	    List<OWLGraphEdge> iteratedWalk;
 	    while ((iteratedWalk = allWalks.pollFirst()) != null) {
-	    	//iteratedWalk should never be empty
+	    	//iteratedWalk should never be empty, get the last composed relation walked
 	    	OWLGraphEdge currentEdge = iteratedWalk.get(iteratedWalk.size()-1);
 
 		    log.trace("Current edge walked: {}", currentEdge);
@@ -455,6 +483,16 @@ public class OWLGraphManipulator
 	    		OWLGraphEdge combine = 
 	    				this.combineEdgePairWithSuperProps(currentEdge, nextEdge);
 
+	    		//if there is a cycle in the ontology: 
+	    		if (iteratedWalk.contains(combine)) {
+	    			//add the edge anyway to see it in the logs
+	    			iteratedWalk.add(combine);
+	    			log.warn("Edge already seen! Is there a cycle? Edge from which the walk started: {} - " +
+	    					"List of all relations composed on the walk: {}", 
+	    					edgeToWalk, iteratedWalk);
+	    			continue nextEdge;
+	    		}
+
     			//at this point, if the properties have not been combined, 
     			//there is nothing we can do.
 	    		if (combine == null || combine.getQuantifiedPropertyList().size() != 1) {
@@ -468,47 +506,24 @@ public class OWLGraphManipulator
 	    		//check if this combined relation (or one of its parent relations) 
 	    		//corresponds to edgeToTest; 
 	    		//in that case, it is redundant and should be removed
-
-	    		//if we want to reduce over is_a and part_of relations
-	    		if (reducePartOfAndSubClassOf) {
-	    			if (combine.getTarget().equals(edgeToTest.getTarget()) &&
-	    				//edgeToTest is an is_a relation 
-	    				//and the combined relation is a part_of-like
-	    				( (this.isASubClassOfEdge(edgeToTest) && this.isAPartOfEdge(combine))         									
-	    				||
-	    				//edgeToTest is a part_of-like relation 
-	    				//and the combined relation is a is_a relation
-	    				(this.isASubClassOfEdge(combine) && this.isAPartOfEdge(edgeToTest)) )
-	    				) {
-
-	    				return log.exit(true);
-	    			}
-	    		} else {
-	    			//Otherwise, compare each outgoing edge to the combined relation 
-	    			//(and its parent relations, to also check if the combined relation 
-	    			//is more precise than the outgoing edge)
-	    			if (edgeToTest.equals(combine)) {
-	    				return log.exit(true);
-	    			}
-	    			if (this.getOwlGraphWrapper().
-	    					getOWLGraphEdgeSubsumers(combine).contains(edgeToTest)) {
-	    				return log.exit(true);
-	    			}
-	    		}
-	    		
-	    		//if we met the target of the tested edge, stop walk here
 	    		if (combine.getTarget().equals(edgeToTest.getTarget())) {
+	    			//if we want to reduce over is_a and part_of relations
+	    			if (reducePartOfAndSubClassOf) {
+	    				//part_of/is_a redundancy
+	    				if ((this.isASubClassOfEdge(edgeToTest) && this.isAPartOfEdge(combine)) ||  
+	    					(this.isASubClassOfEdge(combine)    && this.isAPartOfEdge(edgeToTest))) {
+	    					
+	    					return log.exit(true);
+	    				}
+	    			} else if (edgeToTest.equals(combine) || 
+	    					   this.getOwlGraphWrapper().
+	    						    getOWLGraphEdgeSubsumers(combine).contains(edgeToTest)) {
+	    				return log.exit(true);
+	    			}
+	    			
+		    		//otherwise, as we met the target of the tested edge, 
+	    			//we can stop this walk here
 	    			log.trace("Target of the edge to test reached, stop this walk here");
-	    			continue nextEdge;
-	    		}
-
-	    		//if there is a cycle in the ontology: 
-	    		if (iteratedWalk.contains(combine)) {
-	    			//add the edge anyway to see it in the logs
-	    			iteratedWalk.add(combine);
-	    			log.warn("Edge already seen! Is there a cycle? Edge from which the walk started: {} - " +
-	    					"List of all relations composed on the walk: {}", 
-	    					edgeToWalk, iteratedWalk);
 	    			continue nextEdge;
 	    		}
 
@@ -522,7 +537,7 @@ public class OWLGraphManipulator
 	    	log.trace("Done examining edge: {}", currentEdge);
 	    }
 	    
-	    log.trace("End of walk from outgoing edge {}, no redundancy identified for this walk", 
+	    log.trace("End of walk from edge {}, no redundancy identified for this walk", 
 	    		edgeToWalk);
 	    return log.exit(false);
 	}

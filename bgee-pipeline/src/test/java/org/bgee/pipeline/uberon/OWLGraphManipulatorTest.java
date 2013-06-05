@@ -221,7 +221,9 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		//(FOO:0013 part_of FOO:0001, equivalent direct outgoing edge)
 		source = 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0013");
-		checkEdge = new OWLGraphEdge(source, root);
+		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+				getOWLObjectPropertyByIdentifier("BFO:0000050");
+		checkEdge = new OWLGraphEdge(source, root, partOf, Quantifier.SOME, ont);
 		axiom = factory.getOWLSubClassOfAxiom(source, 
 				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
 				edgeToTargetExpression(checkEdge));

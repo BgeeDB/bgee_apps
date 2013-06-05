@@ -32,10 +32,10 @@ public class GenerateUberonVersion
     	//keep only is_a, part_of and develops_from relations
     	int relsRemoved = graphManipulator.filterRelations(relIds, true);*/
     	
-    	graphManipulator.delPartOfSubClassOfRelsToSubsetsIfNonOrphan(Arrays.asList("upper_level"));
+    	graphManipulator.removeRelsToSubsets(Arrays.asList("upper_level"));
     	graphManipulator.removeSubgraphs(Arrays.asList("UBERON:0000481"), true);
     	graphManipulator.removeClassAndPropagateEdges("UBERON:0001459");
-    	graphManipulator.reducePartOfAndSubClassOfRelations();
+    	graphManipulator.reducePartOfIsARelations();
     	
     	Owl2Obo converter = new Owl2Obo();
     	OBODoc oboOntology = converter.convert(

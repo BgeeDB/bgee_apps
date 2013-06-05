@@ -90,7 +90,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	//    RELATION REDUCTION AND RELATED TESTS
 	//***********************************************
 	/**
-	 * Test the functionality of {@link OWLGraphManipulator.reduceRelations()}.
+	 * Test the functionality of {@link OWLGraphManipulator#reduceRelations()}.
 	 */
 	@Test
 	public void shouldReduceRelations()
@@ -163,16 +163,16 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
 	}
 	/**
-	 * Test the functionality of {@link OWLGraphManipulator.reducePartOfAndSubClassOfRelations()}.
+	 * Test the functionality of {@link OWLGraphManipulator#reducePartOfIsARelations()}.
 	 */
 	@Test
-	public void shouldReducePartOfAndSubClassOfRelations()
+	public void shouldReducePartOfIsARelations()
 	{
 		//get the original number of axioms
 	    int axiomCountBefore = 
 	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
 				
-		int relsRemoved = this.graphManipulator.reducePartOfAndSubClassOfRelations();
+		int relsRemoved = this.graphManipulator.reducePartOfIsARelations();
 		
 		//get the number of axioms after removal
 		int axiomCountAfter = 
@@ -505,7 +505,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	
 	/**
 	 * Test the functionalities of 
-	 * {@link OWLGraphManipulator#getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge)}.
+	 * {@link CustomOWLGraphWrapper#getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge)}.
 	 */
 	@Test
 	public void shouldGetOWLGraphEdgeSubRelsReflexive()
@@ -560,10 +560,10 @@ public class OWLGraphManipulatorTest extends TestAncestor
 	//***********************************************
 	/**
 	 * Test the functionalities of 
-	 * {@link OWLGraphManipulator#delPartOfSubClassOfRelsToSubsetsIfNonOrphan(Collection)}. 
+	 * {@link OWLGraphManipulator#removeRelsToSubsets(Collection)}. 
 	 */
 	@Test
-	public void shouldDelPartOfSubClassOfRelsToSubsetsIfNonOrphan()
+	public void shouldRemoveRelsToSubsets()
 	{
 		//remove rels to subsets test_subset1 and test_subset2. Here is the configuration: 
 		//FOO:0006 and FOO:0007 are part of test_subset1
@@ -599,7 +599,7 @@ public class OWLGraphManipulatorTest extends TestAncestor
 		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
 				.getSourceOntology().getAxiomCount();
 		int relsRemoved = 
-				this.graphManipulator.delPartOfSubClassOfRelsToSubsetsIfNonOrphan(subsets);
+				this.graphManipulator.removeRelsToSubsets(subsets);
 		//number of axioms after modification
 		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
 				.getSourceOntology().getAxiomCount();

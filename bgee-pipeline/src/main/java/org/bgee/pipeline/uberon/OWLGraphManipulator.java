@@ -47,7 +47,7 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * <li><u>relation reduction</u> using regular composition rules, and composition over 
  * super properties, see {@link #reduceRelations()}. 
  * <li><u>relation reduction semantically incorrect</u> over relations is_a (SubClassOf) 
- * and part_of (or sub-relations), see {@link #reducePartOfAndSubClassOfRelations()}. 
+ * and part_of (or sub-relations), see {@link #reducePartOfIsARelations()}. 
  * <li><u>class removal and relation propagation</u>, using regular composition rules, 
  * and composition over super properties, see {@link #removeClassAndPropagateEdges(String)}.
  * <li><u>relation mapping to parent relations</u>, see {@link #mapRelationsToParent(Collection)} 
@@ -56,8 +56,8 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * and {@link #removeRelations(Collection, boolean)}. 
  * <li><u>subgraph filtering or removal</u>, see {@link #filterSubgraphs(Collection)} and 
  * {@link #removeSubgraphs(Collection, boolean)}. 
- * relation removal to subset if non orphan, see 
- * {@link #delPartOfSubClassOfRelsToSubsetsIfNonOrphan(Collection)}
+ * <li><u>relation removal to subsets</u> if non orphan, see 
+ * {@link #removeRelsToSubsets(Collection)}
  * <li>a combination of these methods to <u>generate a basic ontology</u>, see 
  * {@link #makeBasicOntology()}.
  * 
@@ -176,9 +176,8 @@ public class OWLGraphManipulator
 	 * and is removed. 
 	 * This method returns the number of such direct redundant relations removed. 
 	 * <p>
-	 * When combining the relations, they are also combined over super properties 
-	 * (see {@link #combinePropertyPairOverSuperProperties(OWLQuantifiedProperty, 
-	 * OWLQuantifiedProperty)})
+	 * When combining the relations, they are also combined over super properties (see 
+	 * {@link CustomOWLGraphWrapper#combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)})
 	 * <p>
 	 * Examples of relations considered redundant by this method:
 	 * <ul>
@@ -210,7 +209,7 @@ public class OWLGraphManipulator
 	 * are considered equivalent, and that only these "fake" redundant relations are removed. 
 	 * <p>
 	 * <strong>Warning: </strong>if you call both the methods <code>reduceRelations</code> 
-	 * and <code>reducePartOfAndSubClassOfRelations</code> on the same ontologies, 
+	 * and <code>reducePartOfIsARelations</code> on the same ontologies, 
 	 * you must call <code>reduceRelations</code> first, 
 	 * as it is a semantically correct reduction.
 	 * <p>
@@ -228,7 +227,7 @@ public class OWLGraphManipulator
 	 * @return 	An <code>int</code> representing the number of relations removed. 
 	 * @see #reduceRelations()
 	 */
-	public int reducePartOfAndSubClassOfRelations()
+	public int reducePartOfIsARelations()
 	{
 		log.entry();
 		return log.exit(this.reduceRelations(true));
@@ -236,23 +235,23 @@ public class OWLGraphManipulator
 	/**
 	 * Perform relation reduction, that is either semantically correct, 
 	 * or is also considering is_a (SubClassOf) and part_of relations equivalent, 
-	 * depending on the parameter <code>reducePartOfAndSubClassOf</code>. 
+	 * depending on the parameter <code>reducePartOfAndIsA</code>. 
 	 * <p>
 	 * This method is needed to be called by {@link #reduceRelations()} (correct reduction) 
-	 * and {@link #reducePartOfAndSubClassOfRelations()} (is_a/part_of equivalent), 
+	 * and {@link #reducePartOfIsARelations()} (is_a/part_of equivalent), 
 	 * as it is almost the same code to run.
 	 *  
-	 * @param reducePartOfAndSubClassOf 	A <code>boolean</code> defining whether 
+	 * @param reducePartOfAndIsA 	A <code>boolean</code> defining whether 
 	 * 										is_a/part_of relations should be considered 
 	 * 										equivalent. If <code>true</code>, they are.
 	 * @return 		An <code>int</code> representing the number of relations removed. 
 	 * @see #reduceRelations()
-	 * @see #reducePartOfAndSubClassOfRelations()
+	 * @see #reducePartOfIsARelations()
 	 */
-	private int reduceRelations(boolean reducePartOfAndSubClassOf)
+	private int reduceRelations(boolean reducePartOfAndIsA)
 	{
-		log.entry(reducePartOfAndSubClassOf);
-		if (!reducePartOfAndSubClassOf) {
+		log.entry(reducePartOfAndIsA);
+		if (!reducePartOfAndIsA) {
 		    log.info("Start relation reduction...");
 		} else {
 			log.info("Start \"fake\" relation reduction over is_a/part_of...");
@@ -304,7 +303,7 @@ public class OWLGraphManipulator
 						outgoingEdgeToWalk.setOntology(ont);
 						
 						isRedundant = this.areEdgesRedudant(outgoingEdgeToTest, 
-								outgoingEdgeToWalk, reducePartOfAndSubClassOf);
+								outgoingEdgeToWalk, reducePartOfAndIsA);
 						if (isRedundant) {
 							break outgoingEdgeToWalk;
 						}
@@ -333,44 +332,45 @@ public class OWLGraphManipulator
 	
 	/**
 	 * Check, for two <code>OWLGraphEdge</code>s <code>edgeToTest</code> and 
-	 * <code>edgeToWalk</code> outgoing from a same source, if a composed relation 
-	 * equivalent to <code>edgeToTest</code> can be obtained by walking 
-	 * <code>edgeToWalk</code> to the top of the ontology (meaning, following 
-	 * the edges outgoing from the target of <code>edgeToWalk</code>). 
+	 * <code>edgeToWalk</code>, outgoing from a same source, if a composed relation 
+	 * equivalent to <code>edgeToTest</code> can be obtained by a walk starting from  
+	 * <code>edgeToWalk</code>, to the top of the ontology (at any distance). 
 	 * <p>
 	 * In that case, <code>edgeToTest</code> is considered redundant, 
 	 * and this method returns <code>true</code>. 
-	 * if <code>reducePartOfAndSubClassOf</code> is <code>true</code>, 
+	 * if <code>reducePartOfAndIsA</code> is <code>true</code>, 
 	 * only if a relation is a part_of relation on the one hand, an is_a relation 
 	 * on the other hand, will they be considered equivalent. 
 	 * <p>
 	 * <code>edgeToTest</code> and <code>edgeToWalk</code> will also be considered redundant 
-	 * if <code>edgeToWalk</code> and <code>edgeToTest</code> have the same target, and 
-	 * <code>edgeToWalk</code> is a sub-relation of <code>edgeToTest</code> 
-	 * (or, when <code>reducePartOfAndSubClassOf</code> is <code>true</code>, 
-	 * if <code>edgeToTest</code> is a part_of-like relation, and <code>edgeToWalk</code> 
+	 * if they have the same target, and <code>edgeToWalk</code> is a sub-relation of 
+	 * <code>edgeToTest</code> (or, if <code>reducePartOfAndIsA</code> is <code>true</code>, 
+	 * when <code>edgeToTest</code> is a part_of-like relation and <code>edgeToWalk</code> 
 	 * a is_a relation (because we prefer to keep the is_a relation)).
 	 * <p>
 	 * Note that relations are also combined over super properties (see 
-	 * {@link #combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}.
+	 * {@link CustomOWLGraphWrapper#combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}.
 	 * 
 	 * @param edgeToTest				The <code>OWLGraphEdge</code> to be checked 
 	 * 									for redundancy. 
 	 * @param edgeToWalk				The <code>OWLGraphEdge</code> that could potentially 
-	 * 									lead to a relation equivalent to <code>edgeToTest</code>.
-	 * @param reducePartOfAndSubClassOf	A <code>boolean</code> defining whether 
+	 * 									lead to a relation equivalent to <code>edgeToTest</code>, 
+	 * 									by combining each relation walked to the top 
+	 * 									of the ontology.
+	 * @param reducePartOfAndIsA		A <code>boolean</code> defining whether 
 	 * 									is_a/part_of relations should be considered 
 	 * 									equivalent. If <code>true</code>, they are.
 	 * @return		<code>true</code> if <code>edgeToTest</code> is redundant as compared 
 	 * 				to a relation obtained from <code>edgeToWalk</code>.
 	 * @throws IllegalArgumentException If <code>edgeToTest</code> and <code>edgeToWalk</code>
 	 * 									are equal, or if they are not outgoing from a same source.
-	 * @see #reduceRelations(boolean)
+	 * @see #reduceRelations()
+	 * @see #reducePartOfIsARelations()
 	 */
-	public boolean areEdgesRedudant(OWLGraphEdge edgeToTest, OWLGraphEdge edgeToWalk, 
-			boolean reducePartOfAndSubClassOf) throws IllegalArgumentException
+	private boolean areEdgesRedudant(OWLGraphEdge edgeToTest, OWLGraphEdge edgeToWalk, 
+			boolean reducePartOfAndIsA) throws IllegalArgumentException
 	{
-		log.entry(edgeToTest, edgeToWalk, reducePartOfAndSubClassOf);
+		log.entry(edgeToTest, edgeToWalk, reducePartOfAndIsA);
 		//TODO: try to see from the beginning that there is no way 
 		//edgeToTest and edgeToWalk are redundant. 
 		//But maybe it is too dangerous if the chain rules change in the future 
@@ -384,7 +384,7 @@ public class OWLGraphManipulator
 		//if we want to reduce over is_a/part_of relations, and 
 		//edgeToTest is not itself a is_a or part_of-like relation, 
 		//no way to have a part_of/is_a redundancy
-		if (reducePartOfAndSubClassOf && 
+		if (reducePartOfAndIsA && 
 			!this.isAPartOfEdge(edgeToTest) && 
 			!this.isASubClassOfEdge(edgeToTest)) {
 			log.debug("Edge to test is not a is_a/part_of relation, cannot be redundant: {}", 
@@ -395,7 +395,7 @@ public class OWLGraphManipulator
 		//then, check that the edges are not themselves redundant
 		if (edgeToTest.getTarget().equals(edgeToWalk.getTarget())) {
 			//if we want to reduce over is_a/part_of relations
-			if (reducePartOfAndSubClassOf) {
+			if (reducePartOfAndIsA) {
 				//then, we will consider edgeToTest redundant 
 				//only if edgeToTest is a part_of-like relation, 
 				//and edgeToWalk a is_a relation (because we prefer to keep the is_a relation)
@@ -475,7 +475,7 @@ public class OWLGraphManipulator
 	    		//in that case, it is redundant and should be removed
 	    		if (combine.getTarget().equals(edgeToTest.getTarget())) {
 	    			//if we want to reduce over is_a and part_of relations
-	    			if (reducePartOfAndSubClassOf) {
+	    			if (reducePartOfAndIsA) {
 	    				//part_of/is_a redundancy
 	    				if ((this.isASubClassOfEdge(edgeToTest) && this.isAPartOfEdge(combine)) ||  
 	    					(this.isASubClassOfEdge(combine)    && this.isAPartOfEdge(edgeToTest))) {
@@ -513,8 +513,8 @@ public class OWLGraphManipulator
     /**
 	 * Remove the <code>OWLClass</code> with the OBO-style ID <code>classToRemoveId</code> 
 	 * from the ontology, and propagate its incoming edges to the targets 
-	 * of its outgoing edges. Each incoming edges are composed with each outgoing edges 
-	 * (see {@link #combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}).
+	 * of its outgoing edges. Each incoming edges are composed with each outgoing edges (see 
+	 * {@link CustomOWLGraphWrapper#combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}).
 	 * <p>
 	 * This method returns the number of relations propagated and actually added 
 	 * to the ontology (propagated relations corresponding to a relation already 
@@ -646,11 +646,15 @@ public class OWLGraphManipulator
      * For instance, if <code>parentRelations</code> contains "RO:0002202" ("develops_from" ID), 
      * all sub-relations will be replaced: "transformation_of" relations will be replaced 
      * by "develops_from", "immediate_transformation_of" will be replaced by "develops_from", ...
+     * <p>
+     * Note that if mapping a relation to its parent produces an already existing relation, 
+     * the sub-relation will then be simply removed.
      * 
      * @param parentRelations 	A <code>Collection</code> of <code>String</code>s containing 
      * 							the OBO-style IDs of the parent relations, that should replace 
      * 							all their sub-relations.
-     * @return					An <code>int</code> that is the number of relations replaced.
+     * @return					An <code>int</code> that is the number of relations replaced 
+     * 							or removed.
      * 
      * @see #mapRelationsToParent(Collection, Collection)
      */
@@ -660,10 +664,12 @@ public class OWLGraphManipulator
     	return log.exit(this.mapRelationsToParent(parentRelations, null));
     }
     /**
-     * Replace the sub-relations of <code>parentRelations</code> by these parent relations. 
-     * <code>parentRelations</code> contains the OBO-style IDs of the parent relations 
-     * (for instance, "BFO:0000050"). All their sub-relations will be replaced by 
-     * these parent relations, or removed if the parent relations already exists. 
+     * Replace the sub-relations of <code>parentRelations</code> by these parent relations, 
+     * except the sub-relations listed in <code>relsExcluded</code>. 
+     * <code>parentRelations</code> and <code>relsExcluded</code> contain the OBO-style IDs 
+     * of the relations (for instance, "BFO:0000050"). All their sub-relations 
+     * will be replaced by these parent relations, or removed if the parent relations 
+     * already exists, except the sub-relations in code>relsExcluded</code>. 
      * <p>
      * For instance, if <code>parentRelations</code> contains "RO:0002202" ("develops_from" ID), 
      * all sub-relations will be replaced: "transformation_of" relations will be replaced 
@@ -674,6 +680,9 @@ public class OWLGraphManipulator
      * if <code>relsExcluded</code> contained "SIO:000658" "immediate_transformation_of", 
      * this relation would not be replaced by "develops_from". All sub-relations 
      * of <code>relsExcluded</code> are excluded from replacement. 
+     * <p>
+     * Note that if mapping a relation to its parent produces an already existing relation, 
+     * the sub-relation will then be simply removed.
      * 
      * @param parentRelations 	A <code>Collection</code> of <code>String</code>s containing 
      * 							the OBO-style IDs of the parent relations, that should replace 
@@ -1268,7 +1277,7 @@ public class OWLGraphManipulator
 	 * <p>
 	 * <strong>Warning:</strong> please note that the resulting ontology will not be 
 	 * semantically correct. It is the same kind of modifications made by 
-	 * {@link #reducePartOfAndSubClassOfRelations()}, considering is_a (SubClassOf) 
+	 * {@link #reducePartOfIsARelations()}, considering is_a (SubClassOf) 
 	 * and part_of relations (or sub-relations, for instance, "in_deep_part_of") equivalent, 
 	 * and that result in a simplified graph structure for display, but an incorrect ontology.
 	 * <p>
@@ -1290,7 +1299,7 @@ public class OWLGraphManipulator
 	 * @return			An <code>int</code> that is the number of is_a/part_of 
 	 * 					relations (or sub-relations) removed.
 	 */
-	public int delPartOfSubClassOfRelsToSubsetsIfNonOrphan(Collection<String> subsets)
+	public int removeRelsToSubsets(Collection<String> subsets)
 	{
 		log.entry(subsets);
 		log.info("Start removing is_a/part_of relations to subsets if non orphan: {}", 

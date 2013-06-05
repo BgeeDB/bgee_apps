@@ -63,6 +63,12 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 	private Map<OWLObjectPropertyExpression, LinkedHashSet<OWLObjectPropertyExpression>>
 	    subPropertyCache;
 
+	/**
+	 * Default constructor. 
+	 * @param ontology 		The <code>OWLOntology</code> that this object wraps.
+	 * @throws UnknownOWLOntologyException 	
+	 * @throws OWLOntologyCreationException
+	 */
 	public CustomOWLGraphWrapper(OWLOntology ontology)
 			throws UnknownOWLOntologyException, OWLOntologyCreationException {
 		super(ontology);
@@ -79,7 +85,7 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
      * 
      * @param testObject	An <code>OWLObject</code> for which we want to know if it belongs 
      * 						to a subset in <code>subsets</code>.
-     * @param subsetIds		A <code>Collection</code> of <code>String</code>s that are 
+     * @param subsets		A <code>Collection</code> of <code>String</code>s that are 
      * 						the names of the subsets for which we want to check belonging 
      * 						of <code>testObject</code>.
      * @return				<code>true</code> if <code>testObject</code> belongs to a subset 
@@ -345,7 +351,8 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
     
     /**
      * Combines <code>firstEdge</code> and <code>secondEdge</code> to create a new edge 
-     * from the source of <code>firstEdge</code> to the target of <code>secondEdge</code>.
+     * from the source of <code>firstEdge</code> to the target of <code>secondEdge</code>, 
+     * with properties combined in a regular way, and over super properties.
      * <p>
      * This method is similar to 
      * <code>owltools.graph.OWLGraphWrapperEdges#combineEdgePair(OWLObject, OWLGraphEdge, 

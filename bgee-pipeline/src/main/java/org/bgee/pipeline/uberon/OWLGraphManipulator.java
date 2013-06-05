@@ -383,134 +383,7 @@ public class OWLGraphManipulator
 						}
 						outgoingEdgeToWalk.setOntology(ont);
 						
-						//check that outgoingEdgeToWalk has the target of the outgoingEdgeToTest
-						//on his path
-						if (!this.getOwlGraphWrapper().
-								getAncestorsReflexive(outgoingEdgeToWalk.getTarget()).
-								contains(outgoingEdgeToTest.getTarget())) {
-							continue outgoingEdgeToWalk;
-						}
-						
-					    log.trace("Edge with a target on path, start a walk to the top: {}", 
-					    		outgoingEdgeToWalk);
-	
-	    			    Deque<OWLGraphEdge> edgesInspected = new ArrayDeque<OWLGraphEdge>();
-	    			    edgesInspected.addFirst(outgoingEdgeToWalk);
-	    			    //to check that there is no cycle in the ontology:
-	    			    List<OWLGraphEdge> composedWalk = new ArrayList<OWLGraphEdge>();
-	    			    //to check that there is no cycle in the ontology:
-	    			    List<OWLGraphEdge> regularWalk = new ArrayList<OWLGraphEdge>();
-	    			    regularWalk.add(outgoingEdgeToWalk);
-	    			
-	    			    OWLGraphEdge currentEdge;
-	    			    while ((currentEdge = edgesInspected.pollFirst()) != null) {
-	    			    	//check there is no cycle: 
-	    			    	if (composedWalk.contains(currentEdge)) {
-	    			    		//add the edge anyway to see it in the logs
-	    			    		composedWalk.add(currentEdge);
-	    			    		log.warn("Edge already seen! Is there a cycle? " +
-	    			    			"Edge from which the walk started: {}", outgoingEdgeToWalk);
-	    			    		log.warn("Composed walk: {}", composedWalk);
-	    			    		log.warn("Regular walk: {}",  regularWalk);
-	    			    		continue outgoingEdgeToWalk;
-	    			    	}
-	    			    	log.trace("Current edge examined on the walk: {}", currentEdge);
-	    			    	composedWalk.add(currentEdge);
-
-	    			    	//get the outgoing edges starting from the target of currentEdge, 
-	    			    	//and compose these relations with currentEdge, 
-	    			    	//trying to get a composed edge with only one relation (one property)
-	    			    	for (OWLGraphEdge nextEdge: 
-	    			    		    this.getOwlGraphWrapper().getOutgoingEdges(
-	    			    				currentEdge.getTarget())) {
-	    			    		log.trace("Try to combine with outgoing edge from current edge target: {}", 
-	    			    				nextEdge);
-
-	    			    		OWLGraphEdge combine = 
-	    			    				this.combineEdgePairWithSuperProps(currentEdge, nextEdge);
-
-	    			    		if (combine != null) {
-	    			    			//at this point, if the properties have not been combined, 
-	    			    			//there is nothing we can do.
-	    			    			if (combine.getQuantifiedPropertyList().size() == 1) {
-	    			    				log.trace("Edges successfully combined into: {}", 
-	    			    						combine);
-
-	    			    				//edges successfully combined into one relation,
-	    			    				//check if this combined relation (or one of its parent 
-	    			    				//relations) corresponds to outgoingEdgeToTest; 
-	    			    				//in that case, it is redundant and should be removed
-
-	    			    				//if we want to reduce over is_a and 
-	    			    				//part_of relations
-	    			    				if (reducePartOfAndSubClassOf) {
-	    			    					if (combine.getTarget().equals(
-	    			    						outgoingEdgeToTest.getTarget()) &&
-	    			    						//outgoingEdgeToTest is an is_a relation 
-	    			    						//and the combined relation is a part_of-like
-	    			    						(this.isASubClassOfEdge(outgoingEdgeToTest) && 
-	    			    								this.isAPartOfEdge(combine))              									
-	    			    						||
-	    			    						//outgoingEdgeToTest is a part_of-like relation 
-	    			    						//and the combined relation is a is_a relation
-	    			    						(this.isASubClassOfEdge(combine) && 
-	    			    							this.isAPartOfEdge(outgoingEdgeToTest))) {
-	    			    						isRedundant = true;
-	    			    					}
-	    			    				} else {
-	    			    					//Otherwise, compare each outgoing edge to 
-	    			    					//the combined relation, and its parent relations 
-	    			    					//(to also check if the combine relation 
-	    			    					//is more precise than the outgoing edge)
-		    			    				Set<OWLGraphEdge> relsToCheck = 
-		    			    						new HashSet<OWLGraphEdge>();
-		    			    				relsToCheck.add(combine);
-		    			    				relsToCheck.addAll(this.getOwlGraphWrapper().
-		    			    						getOWLGraphEdgeSubsumers(combine));
-		    			    				
-	    			    					for (OWLGraphEdge combinedRelToCheck: relsToCheck) {
-	    			    						if (outgoingEdgeToTest.equals(
-	    			    								combinedRelToCheck)) {
-	    			    							isRedundant = true;
-	    			    							break;
-	    			    						}
-	    			    					}
-	    			    				}
-	    			    				if (isRedundant) {
-	    			    					//no need to continue the walk to the top 
-    			    						//for any of the others outgoing edges, 
-    			    						//the tested outgoing edge is redundant
-	    			    					log.trace("outgoing edge tested is redundant, stop all walks to the top");
-    			    						break outgoingEdgeToWalk;
-	    			    				}
-
-	    			    				//add the combined relation to the stack to continue 
-	    			    				//the walk to the root, only if we haven't met the target 
-	    			    				//of the tested edge yet
-	    			    				if (!combine.getTarget().equals(
-	    			    						outgoingEdgeToTest.getTarget())) {
-	    			    				    log.trace("Combined relation not redundant, continue the walk");
-	    			    				    edgesInspected.addFirst(combine);PROBLEME ICI, ON NE FAIT PAS UN CHEMIN A LA FOIS, MAIS TOUS EN MEME TEMPS
-	    		    			    		regularWalk.add(nextEdge);
-	    			    				} else {
-	    			    					log.trace("Target of the edge to test reached, stop this walk here");
-	    			    				}
-
-	    			    			} else if (combine.getQuantifiedPropertyList().size() > 2) {
-	    			    				//should never be reached
-	    			    				throw new AssertionError("Unexpected number of properties " +
-	    			    						"in edge: " + combine);
-	    			    			} else {
-	    			    				log.trace("Could not combine edges, stop this walk here.");
-	    			    			}
-	    			    		} else {
-	    			    			log.trace("Could not combine edges, stop this walk here.");
-	    			    		}
-	    			    	}
-	    			    	log.trace("Done examining edge: {}", currentEdge);
-	    			    }
-	    			    log.trace("End of walk from outgoing edge {}, no redundancy identified for this walk", 
-	    			    		outgoingEdgeToWalk);
+						fsdsf
 					}
 					if (isRedundant) {
 						if (this.removeEdge(outgoingEdgeToTest)) {
@@ -534,6 +407,125 @@ public class OWLGraphManipulator
 		return log.exit(relationsRemoved);
 	}
 	
+	public boolean areEdgesRedudant(OWLGraphEdge edgeToTest, OWLGraphEdge edgeToWalk, 
+			boolean reducePartOfAndSubClassOf)
+	{
+		if (edgeToTest.equals(edgeToWalk) || 
+				!edgeToTest.getSource().equals(edgeToWalk.getSource())) {
+			throw new IllegalArgumentException("edgeToTest and edgeToWalk must be " +
+					"different edges outgoing from a same OWLObject: " + 
+					edgeToTest + " - " + edgeToWalk);
+		}
+		
+	    //For each walk, we would need to store each step to check for cycles in the ontology.
+	    //Rather than using a recursive function, we use a List of OWLGraphEdges, 
+	    //where the current composed edge walked is the last element, 
+	    //and the previous composed relations are the previous elements.
+	    List<OWLGraphEdge> startWalk = new ArrayList<OWLGraphEdge>();
+	    startWalk.add(edgeToWalk);
+	    //now, create a Deque to store all the independent walks
+	    Deque<List<OWLGraphEdge>> allWalks = new ArrayDeque<List<OWLGraphEdge>>();
+	    allWalks.addFirst(startWalk);
+	
+	    List<OWLGraphEdge> iteratedWalk;
+	    while ((iteratedWalk = allWalks.pollFirst()) != null) {
+	    	//iteratedWalk should never be empty
+	    	OWLGraphEdge currentEdge = iteratedWalk.get(iteratedWalk.size()-1);
+
+		    log.trace("Current edge walked: {}", currentEdge);
+
+	    	//get the outgoing edges starting from the target of currentEdge, 
+	    	//and compose these relations with currentEdge, 
+	    	//trying to get a composed edge with only one relation (one property)
+	    	nextEdge: for (OWLGraphEdge nextEdge: this.getOwlGraphWrapper().getOutgoingEdges(
+	    				currentEdge.getTarget())) {
+
+				//check that nextEdge has the target of edgeToTest
+				//on its path, otherwise stop this walk here
+				if (!this.getOwlGraphWrapper().getAncestorsReflexive(nextEdge.getTarget()).
+						contains(edgeToTest.getTarget())) {
+		    		log.trace("Target of the edge to test not on path, " +
+		    				"outgoing edge from current edge not walked: {}", 
+		    				nextEdge);
+					continue nextEdge;
+				}
+			    
+	    		log.trace("Try to combine with outgoing edge from current edge target: {}", 
+	    				nextEdge);
+	    		OWLGraphEdge combine = 
+	    				this.combineEdgePairWithSuperProps(currentEdge, nextEdge);
+
+    			//at this point, if the properties have not been combined, 
+    			//there is nothing we can do.
+	    		if (combine == null || combine.getQuantifiedPropertyList().size() != 1) {
+	    			log.trace("Could not combine edges, stop this walk here.");
+	    			continue nextEdge;
+	    		}
+
+	    		log.trace("Edges successfully combined into: {}", combine);
+
+	    		//edges successfully combined into one relation,
+	    		//check if this combined relation (or one of its parent relations) 
+	    		//corresponds to edgeToTest; 
+	    		//in that case, it is redundant and should be removed
+
+	    		//if we want to reduce over is_a and part_of relations
+	    		if (reducePartOfAndSubClassOf) {
+	    			if (combine.getTarget().equals(edgeToTest.getTarget()) &&
+	    				//edgeToTest is an is_a relation 
+	    				//and the combined relation is a part_of-like
+	    				( (this.isASubClassOfEdge(edgeToTest) && this.isAPartOfEdge(combine))         									
+	    				||
+	    				//edgeToTest is a part_of-like relation 
+	    				//and the combined relation is a is_a relation
+	    				(this.isASubClassOfEdge(combine) && this.isAPartOfEdge(edgeToTest)) )
+	    				) {
+
+	    				return log.exit(true);
+	    			}
+	    		} else {
+	    			//Otherwise, compare each outgoing edge to the combined relation 
+	    			//(and its parent relations, to also check if the combined relation 
+	    			//is more precise than the outgoing edge)
+	    			if (edgeToTest.equals(combine)) {
+	    				return log.exit(true);
+	    			}
+	    			if (this.getOwlGraphWrapper().
+	    					getOWLGraphEdgeSubsumers(combine).contains(edgeToTest)) {
+	    				return log.exit(true);
+	    			}
+	    		}
+	    		
+	    		//if we met the target of the tested edge, stop walk here
+	    		if (combine.getTarget().equals(edgeToTest.getTarget())) {
+	    			log.trace("Target of the edge to test reached, stop this walk here");
+	    			continue nextEdge;
+	    		}
+
+	    		//if there is a cycle in the ontology: 
+	    		if (iteratedWalk.contains(combine)) {
+	    			//add the edge anyway to see it in the logs
+	    			iteratedWalk.add(combine);
+	    			log.warn("Edge already seen! Is there a cycle? Edge from which the walk started: {} - " +
+	    					"List of all relations composed on the walk: {}", 
+	    					edgeToWalk, iteratedWalk);
+	    			continue nextEdge;
+	    		}
+
+	    		//continue the walk for this combined edge
+	    		log.trace("Combined relation not redundant, continue the walk");
+	    		List<OWLGraphEdge> newIndependentWalk = 
+	    				new ArrayList<OWLGraphEdge>(iteratedWalk);
+	    		newIndependentWalk.add(combine);
+	    		allWalks.addFirst(newIndependentWalk);
+	    	}
+	    	log.trace("Done examining edge: {}", currentEdge);
+	    }
+	    
+	    log.trace("End of walk from outgoing edge {}, no redundancy identified for this walk", 
+	    		edgeToWalk);
+	    return log.exit(false);
+	}
 
     
     /**

@@ -94,9 +94,8 @@ public class BgeeDataSource implements AutoCloseable
      * or when a thread performing monitoring of another thread want to interrupt it.
      * <p>
      * A <code>BgeeDataSource</code> is removed from this <code>Map</code> for a thread
-     * when the method {@link #release()} is called from this thread, 
-     * or when the method  {@link #release(long)} is called with the ID of the thread 
-     * provided as argument, from any other thread. 
+     * when the method {@link #close()} is called from this thread, 
+     * or when the method  {@link #closeAll()} is called. 
      * All <code>BgeeDataSource</code> are removed when {@link #releaseAll()} is called.
      */
     private static final ConcurrentMap<Thread, BgeeDataSource> bgeeDataSources = 

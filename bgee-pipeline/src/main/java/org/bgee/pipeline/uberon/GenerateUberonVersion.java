@@ -35,7 +35,7 @@ public class GenerateUberonVersion
     	graphManipulator.removeRelsToSubsets(Arrays.asList("upper_level"));
     	graphManipulator.removeSubgraphs(Arrays.asList("UBERON:0000481"), true);
     	graphManipulator.removeClassAndPropagateEdges("UBERON:0001459");
-    	graphManipulator.reducePartOfIsARelations();
+    	//graphManipulator.reducePartOfIsARelations();
     	
     	Owl2Obo converter = new Owl2Obo();
     	OBODoc oboOntology = converter.convert(

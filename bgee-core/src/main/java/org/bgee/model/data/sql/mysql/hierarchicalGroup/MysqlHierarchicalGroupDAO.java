@@ -1,15 +1,22 @@
 package org.bgee.model.data.sql.mysql.hierarchicalGroup;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import java.util.ArrayList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.bgee.model.data.common.hierarchicalGroup.HierarchicalGroupDAO;
+import org.bgee.model.data.sql.*;
 
 public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
+
+	BgeeConnection connection;
+
+	private final static Logger log = LogManager
+			.getLogger(MysqlHierarchicalGroupDAO.class.getName());
 
 	/**
 	 * Retrieves all the orthologus genes corresponding to the queried gene at
@@ -31,22 +38,15 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 	 * @return A <code>Collection</code> of <code>String</code> containing all
 	 *         the orthologus genes of the query gene corresponding to the
 	 *         taxonomy level queried.
-	 *         
+	 * 
 	 * @throws SQLException
 	 */
 	public ArrayList<String> getHierarchicalOrthologusGenes(String queryGene,
 			String ncbiTaxonomyId) throws SQLException {
 
+		log.entry();
+
 		ArrayList<String> orthologusGenes = new ArrayList<String>();
-
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-		} catch (ClassNotFoundException e) {
-			System.out.println(e.toString());
-		}
-
-		Connection connection = DriverManager.getConnection(
-				"jdbc:mysql://localhost:3306/db", "user", "pass");
 
 		String sql = "SELECT t5.* FROM gene AS t1 "
 				+ "INNER JOIN hierarchicalGroup AS t2 ON t1.hierarchicalGroupId = t2.hierarchicalGroupId "
@@ -61,8 +61,12 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 				+ "INNER JOIN gene AS t5 ON t5.hierarchicalGroupId = t4.hierarchicalGroupId "
 				+ "WHERE t1.geneId =? and t3.ncbiTaxonomyId=? ;";
 
+		if (log.isDebugEnabled()) {
+			log.debug("QUERY: {}", sql);
+		}
+
 		try {
-			PreparedStatement preparedStatement = connection
+			BgeePreparedStatement preparedStatement = connection
 					.prepareStatement(sql);
 			preparedStatement.setString(1, queryGene);
 			preparedStatement.setString(2, ncbiTaxonomyId);
@@ -78,7 +82,7 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 			connection.close();
 		}
 
-		return orthologusGenes;
+		return log.exit(orthologusGenes);
 	}
 
 	/**
@@ -115,18 +119,11 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 			String queryGene, String ncbiTaxonomyId, ArrayList<Long> speciesIds)
 			throws SQLException {
 
+		log.entry();
+
 		ArrayList<String> orthologusGenes = new ArrayList<String>();
 
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-		} catch (ClassNotFoundException e) {
-			System.out.println(e.toString());
-		}
-
 		for (long speciesId : speciesIds) {
-
-			Connection connection = DriverManager.getConnection(
-					"jdbc:mysql://localhost:3306/omaBgee", "user", "pass");
 
 			String sql = "SELECT t5.* FROM gene AS t1 "
 					+ "INNER JOIN hierarchicalGroup AS t2 ON t1.hierarchicalGroupId = t2.hierarchicalGroupId "
@@ -141,8 +138,12 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 					+ "INNER JOIN gene AS t5 ON t5.hierarchicalGroupId = t4.hierarchicalGroupId "
 					+ "WHERE t1.geneId =? and t3.ncbiTaxonomyId=? and t5.speciesId=? ;";
 
+			if (log.isDebugEnabled()) {
+				log.debug("QUERY: {}", sql);
+			}
+
 			try {
-				PreparedStatement preparedStatement = connection
+				BgeePreparedStatement preparedStatement = connection
 						.prepareStatement(sql);
 				preparedStatement.setString(1, queryGene);
 				preparedStatement.setString(2, ncbiTaxonomyId);
@@ -160,7 +161,7 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 			}
 		}
 
-		return orthologusGenes;
+		return log.exit(orthologusGenes);
 	}
 
 	/**
@@ -185,28 +186,41 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 	public ArrayList<String> getWithinSpeciesParalogs(String queryGene)
 			throws SQLException {
 
-		ArrayList<String> orthologusGenes = new ArrayList<String>();
+		log.entry();
 
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-		} catch (ClassNotFoundException e) {
-			System.out.println(e.toString());
+		ArrayList<String> paralogusGenes = new ArrayList<String>();
+
+		String sql = "SELECT t6.* FROM gene AS t6"
+				+ "INNER JOIN hierarchicalGroup AS t5 "
+				+ " ON t6.hierarchicalGroupId = t5.hierarchicalGroupId "
+				+ " INNER JOIN hierarchicalGroup AS t4"
+				+ " ON t4.hierarchicalGroupId = ( "
+				+ " 	SELECT t3.hierarchicalGroupId FROM gene AS t1 "
+				+ " 	INNER JOIN hierarchicalGroup AS t2  "
+				+ " 	ON t1.hierarchicalGroupId = t2.hierarchicalGroupId  "
+				+ " 	INNER JOIN hierarchicalGroup AS t3  "
+				+ " 	ON t2.orthologousGroupId = t3.orthologousGroupId "
+				+ " 	AND  t3.hierarchicalGroupLeftBound < t2.hierarchicalGroupLeftBound "
+				+ " 	AND  t3.hierarchicalGroupRightBound > t2.hierarchicalGroupRightBound "
+				+ " 	WHERE t1.geneId = 'ENSXETG00000028037' AND t3.ncbiTaxonomyId='null'  "
+				+ " 	ORDER BY t3.hierarchicalGroupLeftBound DESC LIMIT 1 "
+				+ " )AND t5.orthologousGroupId=t4.orthologousGroupId "
+				+ " AND  t5.hierarchicalGroupLeftBound > t4.hierarchicalGroupLeftBound "
+				+ " AND  t5.hierarchicalGroupRightBound < t4.hierarchicalGroupRightBound; ";
+
+		if (log.isDebugEnabled()) {
+			log.debug("QUERY: {}", sql);
 		}
 
-		Connection connection = DriverManager.getConnection(
-				"jdbc:mysql://localhost:3306/omaBgee", "user", "pass");
-
-		String sql = null; // TODO
-
 		try {
-			PreparedStatement preparedStatement = connection
+			BgeePreparedStatement preparedStatement = connection
 					.prepareStatement(sql);
 			preparedStatement.setString(1, queryGene);
 
 			ResultSet resultSet = preparedStatement.executeQuery();
 
 			while (resultSet.next()) {
-				orthologusGenes.add(resultSet.getString("geneId"));
+				paralogusGenes.add(resultSet.getString("geneId"));
 			}
 
 		} catch (SQLException e) {
@@ -215,7 +229,7 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 			connection.close();
 		}
 
-		return orthologusGenes;
+		return log.exit(paralogusGenes);
 	}
 
 	/**
@@ -240,21 +254,18 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 	public ArrayList<String> getOrthologsInClosestSpecies(String queryGene)
 			throws SQLException {
 
+		log.entry();
+
 		ArrayList<String> orthologusGenes = new ArrayList<String>();
-
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-		} catch (ClassNotFoundException e) {
-			System.out.println(e.toString());
-		}
-
-		Connection connection = DriverManager.getConnection(
-				"jdbc:mysql://localhost:3306/omaBgee", "user", "pass");
 
 		String sql = null; // TODO
 
+		if (log.isDebugEnabled()) {
+			log.debug("QUERY: {}", sql);
+		}
+
 		try {
-			PreparedStatement preparedStatement = connection
+			BgeePreparedStatement preparedStatement = connection
 					.prepareStatement(sql);
 			preparedStatement.setString(1, queryGene);
 
@@ -264,14 +275,18 @@ public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
 				orthologusGenes.add(resultSet.getString("geneId"));
 			}
 
+			if (log.isDebugEnabled()) {
+
+			}
+
 		} catch (SQLException e) {
 			System.out.println(e.toString());
 		} finally {
 			connection.close();
 		}
 
-		return orthologusGenes;
-		
+		return log.exit(orthologusGenes);
+
 	}
 
 }

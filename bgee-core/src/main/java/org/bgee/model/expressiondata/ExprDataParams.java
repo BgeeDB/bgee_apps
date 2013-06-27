@@ -1,5 +1,7 @@
 package org.bgee.model.expressiondata;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -66,6 +68,17 @@ public class ExprDataParams {
     }
     
     /**
+     * Default constructor for instantiating a <code>ExprDataParams</code> corresponding 
+     * to standard expression calls with any quality and any data type.
+     */
+    public ExprDataParams() {
+    	this.setCallType(ExprDataCallType.EXPRESSION);
+    	this.setDataTypes(new HashMap<DataType, DataQuality>());
+    	//in case the call type is later set to OVEREXPRESSION or UNDEREXPRESSION
+    	this.setDiffExprParams(new DiffExprParams());
+    }
+    
+    /**
      * A <code>ExprDataCallType</code> defining the type of call to use. 
      * <p>
      * If this <code>ExprDataCallType</code> is <code>ExprDataCallType.OVEREXPRESSION</code> 
@@ -85,7 +98,7 @@ public class ExprDataParams {
      * A <code>Map</code> with <code>DataType</code>s as key defining the data types to use, 
      * the associated value being a <code>DataQuality</code> defining 
      * the <strong>minimum</strong> quality level to use for this data type. 
-     * If the <code>Collection</code> is <code>null</code> or empty, 
+     * If this <code>Collection</code> is empty, 
      * any data type can be used, with any data quality (minimum quality threshold set to 
      * <code>DataQuality.LOW</code>).
      */
@@ -115,9 +128,33 @@ public class ExprDataParams {
      * <code>DiffExprParams</code> will be used (see {@link DiffExprParams#DiffExprParams()}).
      * 
 	 * @param callType A <code>ExprDataCallType</code> to define the type of call to use.
+	 * @throws IllegalArgumentException If data types have already been provided (see 
+	 * 									{@link #addDataType(DataType, DataQuality)} and 
+	 * 									{@link #addDataType(DataType)}), and are not compatible 
+	 * 									with the <code>ExprDataCallType</code> set (for instance, 
+	 * 									no-expression calls based on EST data are not available)
 	 * @see #getCallType()
 	 */
 	public void setCallType(ExprDataCallType callType) {
+		if (!this.getDataTypes().isEmpty()) {
+		    switch(callType) {
+		    case OVEREXPRESSION: 
+		    case UNDEREXPRESSION:
+		    	if (this.getDataTypes().contains(DataType.EST) || 
+		    			this.getDataTypes().contains(DataType.INSITU)) {
+		    		throw new IllegalArgumentException("EST data and in situ data " +
+		    				"cannot be used for differential expression calls");
+		    	}
+		    	break;
+		    case NOEXPRESSION: 
+		    case RELAXEDNOEXPRESSION:
+		    	if (this.getDataTypes().contains(DataType.EST)) {
+		    		throw new IllegalArgumentException("EST data " +
+		    				"cannot be used for no-expression calls");
+		    	}
+		    	break;
+		    }
+		}
 		this.callType = callType;
 	}
 	/**
@@ -144,6 +181,18 @@ public class ExprDataParams {
 	}
     
 	/**
+	 * @param dataTypes the {@link #dataTypes} to set.
+	 */
+	private void setDataTypes(Map<DataType, DataQuality> dataTypes) {
+		this.dataTypes = dataTypes;
+	}
+	public Map<DataType, DataQuality> getDataTypesWithQualities() {
+		return this.dataTypes;
+	}
+	public Collection<DataType> getDataTypes() {
+		return this.getDataTypesWithQualities().keySet();
+	}
+	/**
 	 * Add <code>dataType</code> to the list of data types to use, 
 	 * and use <code>dataQuality</code> to define the minimum data quality to use 
 	 * for this data type. 
@@ -153,10 +202,35 @@ public class ExprDataParams {
 	 * @param dataType 		A <code>DataType</code> to be added to the allowed data types.
 	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
 	 * 						to use for this data type.
+	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
+	 * 									{@link #setCallType(ExprDataCallType)}), 
+	 * 									and the <code>DataType</code> added is not compatible 
+	 * 									(for instance, no-expression calls based on EST data 
+	 * 									are not available)
 	 * @see #addDataType(DataType)
 	 */
 	public void addDataType(DataType dataType, DataQuality dataQuality)
 	{
+		switch (this.getCallType()) {
+		case OVEREXPRESSION: 
+		case UNDEREXPRESSION: 
+			if (dataType == DataType.EST) {
+				throw new IllegalArgumentException("EST data cannot be used for " +
+						"differential expression data");
+			}
+			if (dataType == DataType.INSITU) {
+				throw new IllegalArgumentException("In situ data cannot be used for " +
+						"differential expression data");
+			}
+			break;
+	    case NOEXPRESSION: 
+	    case RELAXEDNOEXPRESSION:
+	    	if (dataType == DataType.EST) {
+				throw new IllegalArgumentException("EST data cannot be used for " +
+						"no-expression data");
+			}
+	    	break;
+		}
 		this.dataTypes.put(dataType, dataQuality);
 	}
 	/**
@@ -169,10 +243,15 @@ public class ExprDataParams {
 	 * @param dataType 		A <code>DataType</code> to be added to the allowed data types.
 	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
 	 * 						to use for this data type.
+	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
+	 * 									{@link #setCallType(ExprDataCallType)}), 
+	 * 									and the <code>DataType</code> added is not compatible 
+	 * 									(for instance, no-expression calls based on EST data 
+	 * 									are not available)
 	 * @see #addDataType(DataType, DataQuality)
 	 */
 	public void addDataType(DataType dataType)
 	{
-		this.dataTypes.put(dataType, DataQuality.LOW);
+		this.addDataType(dataType, DataQuality.LOW);
 	}
 }

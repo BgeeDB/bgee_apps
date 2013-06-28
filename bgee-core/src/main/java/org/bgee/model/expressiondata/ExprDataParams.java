@@ -35,7 +35,7 @@ public class ExprDataParams {
      * @version Bgee 13
      * @since Bgee 13
 	 */
-    public enum ExprDataCallType {
+    public enum CallType {
     	EXPRESSION, OVEREXPRESSION, UNDEREXPRESSION, NOEXPRESSION, RELAXEDNOEXPRESSION;
     }
     /**
@@ -72,26 +72,26 @@ public class ExprDataParams {
      * to standard expression calls with any quality and any data type.
      */
     public ExprDataParams() {
-    	this.setCallType(ExprDataCallType.EXPRESSION);
+    	this.setCallType(CallType.EXPRESSION);
     	this.setDataTypes(new HashMap<DataType, DataQuality>());
     	//in case the call type is later set to OVEREXPRESSION or UNDEREXPRESSION
     	this.setDiffExprParams(new DiffExprParams());
     }
     
     /**
-     * A <code>ExprDataCallType</code> defining the type of call to use. 
+     * A <code>CallType</code> defining the type of call to use. 
      * <p>
-     * If this <code>ExprDataCallType</code> is <code>ExprDataCallType.OVEREXPRESSION</code> 
-     * or <code>ExprDataCallType.UNDEREXPRESSION</code>, 
+     * If this <code>CallType</code> is <code>CallType.OVEREXPRESSION</code> 
+     * or <code>CallType.UNDEREXPRESSION</code>, 
      * then a <code>DiffExprParams</code> might be provided to {@link #diffExprParams}, 
      * otherwise, a default <code>DiffExprParams</code> will be used (see 
      * {@link DiffExprParams#DiffExprParams()}).
      */
-    private ExprDataCallType callType;
+    private CallType callType;
     /**
      * A <code>DiffExprParams</code> storing parameters for differential expression 
-     * in case {@link #callType} is equal to <code>ExprDataCallType.OVEREXPRESSION</code> 
-     * or <code>ExprDataCallType.UNDEREXPRESSION</code>.
+     * in case {@link #callType} is equal to <code>CallType.OVEREXPRESSION</code> 
+     * or <code>CallType.UNDEREXPRESSION</code>.
      */
     private DiffExprParams diffExprParams;
     /**
@@ -105,37 +105,37 @@ public class ExprDataParams {
     private Map<DataType, DataQuality> dataTypes;
     
 	/**
-	 * Get the <code>ExprDataCallType</code> being the type of call to use.
+	 * Get the <code>CallType</code> being the type of call to use.
      * <p>
-     * If this <code>ExprDataCallType</code> is <code>ExprDataCallType.OVEREXPRESSION</code> 
-     * or <code>ExprDataCallType.UNDEREXPRESSION</code>, 
+     * If this <code>CallType</code> is <code>CallType.OVEREXPRESSION</code> 
+     * or <code>CallType.UNDEREXPRESSION</code>, 
      * then a <code>DiffExprParams</code> should be obtained by calling 
      * {@link #getDiffExprParams()}.
      * 
-	 * @return the <code>ExprDataCallType</code> being the type of call to use.
-	 * @see #setCallType(ExprDataCallType)
+	 * @return the <code>CallType</code> being the type of call to use.
+	 * @see #setCallType(CallType)
 	 */
-	public ExprDataCallType getCallType() {
+	public CallType getCallType() {
 		return callType;
 	}
 	/**
-	 * Set the <code>ExprDataCallType</code> being the type of call to use.
+	 * Set the <code>CallType</code> being the type of call to use.
      * <p>
-     * If this <code>ExprDataCallType</code> is <code>ExprDataCallType.OVEREXPRESSION</code> 
-     * or <code>ExprDataCallType.UNDEREXPRESSION</code>, 
+     * If this <code>CallType</code> is <code>CallType.OVEREXPRESSION</code> 
+     * or <code>CallType.UNDEREXPRESSION</code>, 
      * then a <code>DiffExprParams</code> might be provided by calling 
      * {@link #setDiffExprParams(DiffExprParams)}. Otherwise, a default 
      * <code>DiffExprParams</code> will be used (see {@link DiffExprParams#DiffExprParams()}).
      * 
-	 * @param callType A <code>ExprDataCallType</code> to define the type of call to use.
+	 * @param callType A <code>CallType</code> to define the type of call to use.
 	 * @throws IllegalArgumentException If data types have already been provided (see 
 	 * 									{@link #addDataType(DataType, DataQuality)} and 
 	 * 									{@link #addDataType(DataType)}), and are not compatible 
-	 * 									with the <code>ExprDataCallType</code> set (for instance, 
+	 * 									with the <code>CallType</code> set (for instance, 
 	 * 									no-expression calls based on EST data are not available)
 	 * @see #getCallType()
 	 */
-	public void setCallType(ExprDataCallType callType) {
+	public void setCallType(CallType callType) {
 		if (!this.getDataTypes().isEmpty()) {
 		    switch(callType) {
 		    case OVEREXPRESSION: 
@@ -160,8 +160,8 @@ public class ExprDataParams {
 	/**
 	 * @return 	the <code>DiffExprParams</code> storing parameters for differential expression 
      * 			in case the requested expression call type is 
-     * 			<code>ExprDataCallType.OVEREXPRESSION</code> 
-     * 			or <code>ExprDataCallType.UNDEREXPRESSION</code> (see {@link #getCallType()}).
+     * 			<code>CallType.OVEREXPRESSION</code> 
+     * 			or <code>CallType.UNDEREXPRESSION</code> (see {@link #getCallType()}).
      * @see #setDiffExprParams(DiffExprParams)
 	 */
 	public DiffExprParams getDiffExprParams() {
@@ -171,9 +171,9 @@ public class ExprDataParams {
 	 * @param diffExprParams 	the <code>DiffExprParams</code> storing parameters 
 	 * 							for differential expression in case the requested 
 	 * 							expression call type is 
-	 * 							<code>ExprDataCallType.OVEREXPRESSION</code> 
-     * 							or <code>ExprDataCallType.UNDEREXPRESSION</code> (see 
-	 * 							{@link #setCallType(ExprDataCallType)}).
+	 * 							<code>CallType.OVEREXPRESSION</code> 
+     * 							or <code>CallType.UNDEREXPRESSION</code> (see 
+	 * 							{@link #setCallType(CallType)}).
 	 * @see #getDiffExprParams()
 	 */
 	public void setDiffExprParams(DiffExprParams diffExprParams) {
@@ -203,7 +203,7 @@ public class ExprDataParams {
 	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
 	 * 						to use for this data type.
 	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
-	 * 									{@link #setCallType(ExprDataCallType)}), 
+	 * 									{@link #setCallType(CallType)}), 
 	 * 									and the <code>DataType</code> added is not compatible 
 	 * 									(for instance, no-expression calls based on EST data 
 	 * 									are not available)
@@ -244,7 +244,7 @@ public class ExprDataParams {
 	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
 	 * 						to use for this data type.
 	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
-	 * 									{@link #setCallType(ExprDataCallType)}), 
+	 * 									{@link #setCallType(CallType)}), 
 	 * 									and the <code>DataType</code> added is not compatible 
 	 * 									(for instance, no-expression calls based on EST data 
 	 * 									are not available)

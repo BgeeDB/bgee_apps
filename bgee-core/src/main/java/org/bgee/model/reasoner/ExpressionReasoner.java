@@ -2,8 +2,9 @@ package org.bgee.model.reasoner;
 
 import java.util.Collection;
 
-import org.bgee.model.expressiondata.ExprDataParams.ExprDataCallType;
+import org.bgee.model.expressiondata.ExprDataParams.CallType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.reasoner.DataRequirementSet.DataRequirement;
 
 public class ExpressionReasoner 
 {
@@ -14,20 +15,19 @@ public class ExpressionReasoner
 	 * <li><code>STANDARD</code>: for an <code>OntologyElement</code> to be validated, 
 	 * all requested genes must have data calls in that <code>OntologyElement</code>. 
 	 * Any expression data call is accepted (expression, over-expression, no-expression, etc, 
-	 * see {@link org.bgee.model.expressiondata.ExprDataParams.ExprDataCallType 
-	 * ExprDataCallType}).
+	 * see {@link org.bgee.model.expressiondata.ExprDataParams.CallType 
+	 * CallType}).
 	 * <li><code>CONSERVATION</code>: for an <code>OntologyElement</code> to be validated, 
 	 * all requested genes must have data calls in agreement: either all genes with  
-	 * expression/differential expression calls (<code>ExprDataCallType.EXPRESSION</code>, 
-	 * <code>ExprDataCallType.OVEREXPRESSION</code>, 
-	 * <code>ExprDataCallType.UNDEREXPRESSION</code>), or all genes with no-expression calls 
-	 * (<code>ExprDataCallType.NOEXPRESSION</code>, 
-	 * <code>ExprDataCallType.RELAXEDNOEXPRESSION</code>)
+	 * expression/differential expression calls (<code>CallType.EXPRESSION</code>,  
+	 * <code>CallType.OVEREXPRESSION</code>, or 
+	 * <code>CallType.UNDEREXPRESSION</code>), or all genes with no-expression calls 
+	 * (<code>CallType.NOEXPRESSION</code> or <code>CallType.RELAXEDNOEXPRESSION</code>).
 	 * <li><code>DIVERGENCE</code>: for an <code>OntologyElement</code> to be validated, 
 	 * at least one gene must have data calls different from the other genes, for instance, 
 	 * one gene with absence of expression while other genes are expressed. 
 	 * <li><code>CUSTOM</code>: expression data calls required are set on a per gene 
-	 * or per gene group basis, using {@link ValidationGroup}.
+	 * or per gene group basis, using {@link DataRequirementSet}s.
 	 * </ul>
 	 * 
 	 * @author Frederic Bastian
@@ -38,39 +38,7 @@ public class ExpressionReasoner
     	STANDARD, CONSERVATION, DIVERGENCE, CUSTOM;
     }
     
-    /**
-     * Define a custom requirement for an <code>OntologyElement</code> 
-     * to be validated when performing an expression reasoning on an <code>Ontology</code>. 
-     * If any of the <code>Gene</code>s contained in this group, have any data 
-     * in the <code>OntologyElement</code> corresponding to any 
-     * <code>ExprDataCallType</code>s listed in this group, 
-     * then the requirement is satisfied (like a <code>OR</code> condition both on genes and 
-     * expression data). 
-     * <p>
-     * Note that several <code>ValidationGroup</code>s can be used together to define 
-     * several requirements to satisfy. 
-     * 
-	 * @author Frederic Bastian
-	 * @version Bgee 13
-	 * @since Bgee 13
-     *
-     */
-    public class ValidationGroup {
-    	/**
-    	 * A <code>Collection</code> of <code>Gene</code>s for which at least one 
-    	 * must have an expression data listed in {@link #callTypes} 
-    	 * in the <code>OntologyElement</code> for the requirement to be satisfied. 
-    	 */
-    	private Collection<Gene> genes;
-    	/**
-    	 * A <code>Collection</code> of <code>ExprDataCallType</code>s listing 
-    	 * the allowed expression data calls, that at least one of the <code>Gene</code>s 
-    	 * listed in {@link #genes} must exhibit in an <code>OntologyElement</code>, 
-    	 * for the element to be validated. Any of these <code>ExprDataCallType</code>s 
-    	 * allows the validation.
-    	 */
-    	private Collection<ExprDataCallType> callTypes;
-    }
+    
     
     /**
      * A <code>ValidationType</code> defining the method used to validate 
@@ -103,5 +71,5 @@ public class ExpressionReasoner
      * for each requested gene individually, with no data call type specified, meaning that 
      * all gene must have data calls, any type accepted.
      */
-    private Collection<ValidationGroup> customValidation;
+    private Collection<DataRequirement> customValidation;
 }

@@ -1,5 +1,7 @@
 package org.bgee.model.reasoner;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.bgee.model.expressiondata.ExprDataParams.CallType;
@@ -45,7 +47,10 @@ public class DataRequirementSet {
      * <code>CallType</code>s, then the requirement is satisfied 
      * (like a <code>OR</code> condition both on genes and expression data). 
      * Whether all <code>Gene</code>s must have at least some expression data in any case 
-     * can be set by calling {@link #setAllGenesWithData(boolean)}.
+     * can be set by calling {@link #setAllGenesWithData(boolean)}. 
+     * If no <code>CallType</code>s are specified, then any expression data call type 
+     * is accepted (so the requirement is simply that at least one of the <code>Gene</code>s 
+     * must have some expression data). 
      * <p>
      * For instance, if a <code>DataRequirement</code> contains a gene A and a gene B, 
      * and two <code>CallType</code>s, <code>EXPRESSION</code> and 
@@ -90,6 +95,10 @@ public class DataRequirementSet {
     	 * listed in {@link #genes} must exhibit in an <code>OntologyElement</code>, 
     	 * for the element to be validated. Any of these <code>CallType</code>s 
     	 * allows the validation.
+    	 * <p>
+    	 * If no <code>CallType</code>s are specified, then any expression data call type 
+    	 * is accepted (so the requirement is simply that at least one 
+    	 * of the <code>Gene</code>s in <code>genes</code> must have some expression data)
     	 */
     	private Collection<CallType> callTypes;
     	/**
@@ -112,14 +121,137 @@ public class DataRequirementSet {
     	 * Default constructor. 
     	 */
     	public DataRequirement() {
-    		
+    		this(null);
     	}
+    	/**
+    	 * Instantiate a <code>DataRequirement</code> for one <code>Gene</code>, 
+    	 * with no <code>CallType</code> specified. It means that this <code>Gene</code>
+    	 * must exhibit any expression data call in the <code>OntologyElement</code>, 
+    	 * for it to be validated. 
+    	 * 
+    	 * @param gene 		The <code>Gene</code> which this <code>DataRequirement</code> 
+    	 * 					is related to.
+    	 * 					Any expression data call type will be accepted. 
+    	 */
+    	public DataRequirement(Gene gene) {
+    		this(gene, (Collection<CallType>) null);
+    	}
+    	/**
+    	 * Instantiate a <code>DataRequirement</code> for one <code>Gene</code> 
+    	 * and one <code>CallType</code>. It means that this <code>Gene</code> 
+    	 * must absolutely have an expression data call of this <code>CallType</code> 
+    	 * in an <code>OntologyElement</code>, for it to be validated. 
+    	 * 
+    	 * @param gene 		The <code>Gene</code> which this <code>DataRequirement</code> 
+    	 * 					is related to.
+    	 * @param callType	The <code>CallType</code> the <code>gene</code> must exhibit. 
+    	 */
+    	public DataRequirement(Gene gene, CallType callType) {
+    		this(gene, new ArrayList<CallType>(Arrays.asList(callType)));
+    	}
+    	/**
+    	 * Instantiate a <code>DataRequirement</code> for one <code>Gene</code>, 
+    	 * with several <code>CallType</code>s. It means that this <code>Gene</code> 
+    	 * must exhibit an expression data call of any of these <code>CallType</code>s 
+    	 * in an <code>OntologyElement</code>, for it to be validated. 
+    	 * 
+    	 * @param gene 		The <code>Gene</code> which this <code>DataRequirement</code> 
+    	 * 					is related to.
+    	 * @param callTypes	A <code>Collection</code> of <code>CallType</code>s,  
+    	 * 					<code>gene</code> must exhibit at least one of them. 
+    	 */
+    	public DataRequirement(Gene gene, Collection<CallType> callTypes) {
+    		this(new ArrayList<Gene>(Arrays.asList(gene)), callTypes, false);
+    	}
+    	/**
+    	 * Instantiate a <code>DataRequirement</code> for a <code>Collection</code> of 
+    	 * <code>Gene</code>s, with no <code>CallType</code> specified. It means that 
+    	 * at least one of the <code>Gene</code>s must exhibit any expression data call 
+    	 * in the <code>OntologyElement</code>, for it to be validated. 
+    	 * Besides, if <code>allGenesWithData</code> 
+    	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
+    	 * must at least have some expression data, of any call type, in any case.
+    	 * 
+    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
+    	 * 					which this <code>DataRequirement</code> is related to. 
+    	 * 					Any expression data call type will be accepted. 
+    	 * @param allGenesWithData	A <code>boolean</code> defining whether 
+    	 * 							all <code>Gene</code>s should have at least some 
+    	 * 							expression data in any case. If <code>true</code>, 
+    	 * 							they should.
+    	 */
+    	public DataRequirement(Collection<Gene> genes, boolean allGenesWithData) {
+    		this(genes, (Collection<CallType>) null, allGenesWithData);
+    	}
+    	/**
+    	 * Instantiate a <code>DataRequirement</code> for a <code>Collection</code> of 
+    	 * <code>Gene</code>s, and one <code>CallType</code>. It means that 
+    	 * at least one of the <code>Gene</code>s must exhibit an expression data call 
+    	 * of this <code>CallType</code> in the <code>OntologyElement</code>, 
+    	 * for it to be validated. Besides, if <code>allGenesWithData</code> 
+    	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
+    	 * must at least have some expression data, of any call type, in any case.
+    	 * 
+    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
+    	 * 					which this <code>DataRequirement</code> is related to.
+    	 * @param callType	The <code>CallType</code> at lest one of the <code>Gene</code>s 
+    	 * 					in <code>genes</code> must exhibit. 
+    	 * @param allGenesWithData	A <code>boolean</code> defining whether 
+    	 * 							all <code>Gene</code>s should have at least some 
+    	 * 							expression data in any case. If <code>true</code>, 
+    	 * 							they should.
+    	 */
+    	public DataRequirement(Collection<Gene> genes, CallType callType, 
+    			boolean allGenesWithData) {
+    		
+    		this(genes, new ArrayList<CallType>(Arrays.asList(callType)), 
+    				allGenesWithData);
+    	}
+    	/**
+    	 * Instantiate a <code>DataRequirement</code> for a <code>Collection</code> of 
+    	 * <code>Gene</code>s, with several <code>CallType</code>s. It means that  
+    	 * at least one of the <code>Gene</code>s must exhibit an expression data call 
+    	 * of any of these <code>CallType</code>s in the <code>OntologyElement</code>, 
+    	 * for it to be validated. Besides, if <code>allGenesWithData</code> 
+    	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
+    	 * must at least have some expression data, of any call type, in any case.
+    	 * 
+    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
+    	 * 					which this <code>DataRequirement</code> is related to.
+    	 * @param callTypes	A <code>Collection</code> of <code>CallType</code>s,  
+    	 * 					at least one <code>Gene</code> in <code>genes</code> 
+    	 * 					must exhibit at least one of them. 
+    	 * @param allGenesWithData	A <code>boolean</code> defining whether 
+    	 * 							all <code>Gene</code>s should have at least some 
+    	 * 							expression data in any case. If <code>true</code>, 
+    	 * 							they should.
+    	 */
+    	public DataRequirement(Collection<Gene> genes, Collection<CallType> callTypes, 
+    			boolean allGenesWithData) {
+    		if (genes != null) {
+    			this.setGenes(genes);
+    		} else {
+    			this.setGenes(new ArrayList<Gene>());
+    		}
+    		if (callTypes != null) {
+    			this.setCallTypes(callTypes);
+    		} else {
+    			this.setCallTypes(new ArrayList<CallType>());
+    		}
+    		this.setAllGenesWithData(allGenesWithData);
+    	}
+    	
+    	
+    	
+    	
     	
     	/**
     	 * Return the <code>Collection</code> of <code>Gene</code>s part of 
     	 * this <code>DataRequirement</code>. At least one of them must have 
     	 * an expression data <code>CallType</code> corresponding to one of those returned by  
-    	 * {@link #getCallTypes()}, for the requirement to be satisfied.
+    	 * {@link #getCallTypes()}, for the requirement to be satisfied 
+    	 * (or any expression data if <code>getCallTypes</code> returns an empty 
+    	 * <code>Collection</code>).
     	 * 
     	 * @return 	the <code>Collection</code> of <code>Gene</code>s part of 
     	 * 			this <code>DataRequirement</code>.
@@ -141,7 +273,9 @@ public class DataRequirementSet {
     	 * Add a <code>Gene</code> to this <code>DataRequirement</code>. 
     	 * At least one of the <code>Gene</code>s part of this <code>DataRequirement</code> 
     	 * must have an expression data <code>CallType</code> corresponding to one 
-    	 * of those returned by {@link #getCallTypes()}, for the requirement to be satisfied.
+    	 * of those returned by {@link #getCallTypes()}, for the requirement to be satisfied 
+    	 * (or any expression data if <code>getCallTypes</code> returns an empty 
+    	 * <code>Collection</code>).
     	 * 
     	 * @param gene 	A <code>Gene</code> to be added to this <code>DataRequirement</code>.
     	 * @see #getGenes()
@@ -156,6 +290,11 @@ public class DataRequirementSet {
     	 * returned by {@link #getGenes()} must exhibit in an <code>OntologyElement</code>, 
     	 * for the element to be validated. Any of these <code>CallType</code>s 
     	 * allows the validation.
+    	 * <p>
+    	 * If the returned <code>Collection</code> is empty, then any expression data 
+    	 * call type is accepted (so the requirement is simply that at least one 
+    	 * of the <code>Gene</code>s returned by <code>getGenes</code> must have 
+    	 * some expression data)
     	 * 
 		 * @return 	the <code>Collection</code> of <code>CallType</code>s defining 
 		 * 			which expression data calls allow to validate 

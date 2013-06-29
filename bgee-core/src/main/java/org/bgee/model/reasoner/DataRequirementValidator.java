@@ -8,37 +8,39 @@ import org.bgee.model.expressiondata.ExprDataParams.CallType;
 import org.bgee.model.gene.Gene;
 
 /**
- * Define a list of custom conditions that must all be satisfied, 
- * for an <code>OntologyElement</code> to be validated, when performing 
- * an expression reasoning on an <code>Ontology</code>, 
- * using an {@link ExpressionReasoner}. These conditions define which genes 
- * should have which types of expression call in an <code>OntologyElement</code>, 
- * for instance, "Validate OntologyElements where gene A is expressed, 
- * gene B not expressed, and gene C over-expressed". 
+ * List and allow to validate custom conditions on gene expression data 
+ * of an <code>OntologyElement</code>, when performing an expression reasoning 
+ * on an <code>Ontology</code>, using an {@link ExpressionReasoner}. These conditions 
+ * define which genes should have which types of expression call 
+ * in an <code>OntologyElement</code>, for instance: "Validate OntologyElements 
+ * where gene A is expressed, gene B not expressed, and gene C over-expressed". 
  * <p>
- * Each condition is described by a 
- * {@link DataRequirement}. The <code>DataRequirement</code>s part of 
- * this <code>DataRequirementSet</code> must all be satisfied 
- * for an <code>OntologyElement</code> to be validated. 
+ * Each condition is described by a {@link DataRequirement}. 
+ * The <code>DataRequirement</code>s part of this <code>DataRequirementValidator</code> 
+ * must all be satisfied for an <code>OntologyElement</code> to be validated. 
+ * <p>
+ * The methods allowing to validate an <code>OntologyElement</code> are 
+ * {@link #validate(OntologyElement)} and {@link #validate(Collection)}.
  * <p>
  * Note that an <code>ExpressionReasoner</code> can use several 
- * <code>DataRequirementSet</code>s, offering different ways of validating 
+ * <code>DataRequirementValidator</code>s, offering different ways of validating 
  * an <code>OntologyElement</code>. Nevertheless, for one of these 
- * <code>DataRequirementSet</code>s to be satisfied, all its <code>DataRequirement</code>s 
- * must be satisfied.
+ * <code>DataRequirementValidator</code>s to validate an <code>OntologyElement</code>, 
+ * all its <code>DataRequirement</code>s must be satisfied.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  *
  */
-public class DataRequirementSet {
+public class DataRequirementValidator {
 
 	/**
      * Define a custom condition for an <code>OntologyElement</code> 
-     * to be validated, when performing an expression reasoning on an <code>Ontology</code>, 
+     * to be validated, regarding its gene expression data, when performing 
+     * an expression reasoning on an <code>Ontology</code>, 
      * using an {@link ExpressionReasoner}. 
-     * A <code>DataRequirement</code> is always part of a {@link DataRequirementSet}, 
+     * A <code>DataRequirement</code> is always part of a {@link DataRequirementValidator}, 
      * listing all the necessary conditions that an <code>OntologyElement</code> 
      * must satisfied at the same time to be validated.
      * <p>
@@ -47,10 +49,14 @@ public class DataRequirementSet {
      * <code>CallType</code>s, then the requirement is satisfied 
      * (like a <code>OR</code> condition both on genes and expression data). 
      * Whether all <code>Gene</code>s must have at least some expression data in any case 
-     * can be set by calling {@link #setAllGenesWithData(boolean)}. 
+     * can be set by calling {@link #setAllGenesWithData(boolean)} 
+     * (understand, some expression data calls amongst the call types that were allowed 
+     * by the <code>ExpressionReasoner</code> for a given <code>Gene</code>, not amongst 
+     * all the call types available for that <code>Gene</code>). 
      * If no <code>CallType</code>s are specified, then any expression data call type 
      * is accepted (so the requirement is simply that at least one of the <code>Gene</code>s 
-     * must have some expression data). 
+     * must have some expression data, amongst the call types that were allowed 
+     * by the <code>ExpressionReasoner</code> for a given <code>Gene</code>). 
      * <p>
      * For instance, if a <code>DataRequirement</code> contains a gene A and a gene B, 
      * and two <code>CallType</code>s, <code>EXPRESSION</code> and 
@@ -65,7 +71,7 @@ public class DataRequirementSet {
      * for gene B. To validate a condition only if all genes have some data, call 
      * the method {@link #setAllGenesWithData(boolean)} with the parameter <code>true</code>. 
      * This is equivalent to adding one <code>DataRequirement</code> for each 
-     * individual gene, as part of a same <code>DataRequirementSet</code>, 
+     * individual gene, as part of a same <code>DataRequirementValidator</code>, 
      * to specify that each gene must have some data in any case.
      * <p>
      * As another example, you could consider the <code>STANDARD</code> 
@@ -73,11 +79,11 @@ public class DataRequirementSet {
      * equivalent to have a <code>DataRequirement</code> containing all <code>Gene</code>s 
      * compared, with the method <code>setAllGenesWithData</code> called with <code>true</code>.
      * Or to have one <code>DataRequirement</code> for each gene individually, 
-     * part of a same <code>DataRequirementSet</code>, meaning that all genes must have 
+     * part of a same <code>DataRequirementValidator</code>, meaning that all genes must have 
      * at least some data. 
      * 
 	 * @author Frederic Bastian
-	 * @see DataRequirementSet
+	 * @see DataRequirementValidator
 	 * @version Bgee 13
 	 * @since Bgee 13
      *
@@ -98,7 +104,9 @@ public class DataRequirementSet {
     	 * <p>
     	 * If no <code>CallType</code>s are specified, then any expression data call type 
     	 * is accepted (so the requirement is simply that at least one 
-    	 * of the <code>Gene</code>s in <code>genes</code> must have some expression data)
+    	 * of the <code>Gene</code>s in <code>genes</code> must have some expression data, 
+    	 * amongst the call types that were allowed 
+         * by the <code>ExpressionReasoner</code> for that <code>Gene</code>)
     	 */
     	private Collection<CallType> callTypes;
     	/**
@@ -106,7 +114,10 @@ public class DataRequirementSet {
     	 * contains several <code>Gene</code>s, all of them must have at least 
     	 * some data in the tested <code>OntologyElement</code>, for the requirement 
     	 * to be satisfied, whatever the requested <code>CallType</code>s 
-    	 * listed in {@link #callTypes} are.
+    	 * listed in {@link #callTypes} are (understand, some data  
+    	 * amongst the call types that were allowed by the <code>ExpressionReasoner</code> 
+    	 * for a given <code>Gene</code>, not amongst all the call types available 
+    	 * in the database for that <code>Gene</code>). 
     	 * <p>
     	 * For instance, if a <code>DataRequirement</code> contains a gene A and a gene B, 
          * and the <code>CallType</code> <code>EXPRESSION</code>, it means that 
@@ -167,10 +178,13 @@ public class DataRequirementSet {
     	 * Instantiate a <code>DataRequirement</code> for a <code>Collection</code> of 
     	 * <code>Gene</code>s, with no <code>CallType</code> specified. It means that 
     	 * at least one of the <code>Gene</code>s must exhibit any expression data call 
-    	 * in the <code>OntologyElement</code>, for it to be validated. 
-    	 * Besides, if <code>allGenesWithData</code> 
+    	 * in the <code>OntologyElement</code>, for it to be validated, 
+    	 * amongst the call types that were allowed by the <code>ExpressionReasoner</code> 
+    	 * for that <code>Gene</code>. Besides, if <code>allGenesWithData</code> 
     	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
-    	 * must at least have some expression data, of any call type, in any case.
+    	 * must at least have some expression data, of any call type, in any case, 
+    	 * amongst the call types that were allowed by the <code>ExpressionReasoner</code> 
+    	 * for those <code>Gene</code>s.
     	 * 
     	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
     	 * 					which this <code>DataRequirement</code> is related to. 
@@ -188,9 +202,13 @@ public class DataRequirementSet {
     	 * <code>Gene</code>s, and one <code>CallType</code>. It means that 
     	 * at least one of the <code>Gene</code>s must exhibit an expression data call 
     	 * of this <code>CallType</code> in the <code>OntologyElement</code>, 
-    	 * for it to be validated. Besides, if <code>allGenesWithData</code> 
+    	 * for it to be validated, amongst the call types that were allowed 
+    	 * by the <code>ExpressionReasoner</code> for that <code>Gene</code>. 
+    	 * Besides, if <code>allGenesWithData</code> 
     	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
-    	 * must at least have some expression data, of any call type, in any case.
+    	 * must at least have some expression data, of any call type, in any case, 
+    	 * amongst the call types that were allowed by the <code>ExpressionReasoner</code> 
+    	 * for those <code>Gene</code>s. 
     	 * 
     	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
     	 * 					which this <code>DataRequirement</code> is related to.
@@ -212,9 +230,13 @@ public class DataRequirementSet {
     	 * <code>Gene</code>s, with several <code>CallType</code>s. It means that  
     	 * at least one of the <code>Gene</code>s must exhibit an expression data call 
     	 * of any of these <code>CallType</code>s in the <code>OntologyElement</code>, 
-    	 * for it to be validated. Besides, if <code>allGenesWithData</code> 
-    	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
-    	 * must at least have some expression data, of any call type, in any case.
+    	 * for it to be validated, amongst the call types that were allowed 
+    	 * by the <code>ExpressionReasoner</code> for that <code>Gene</code>. 
+    	 * Besides, if <code>allGenesWithData</code> is <code>true</code>, 
+    	 * then another requirement is that all <code>Gene</code>s 
+    	 * must at least have some expression data, of any call type, in any case, 
+    	 * amongst the call types that were allowed by the <code>ExpressionReasoner</code> 
+    	 * for those <code>Gene</code>s.
     	 * 
     	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
     	 * 					which this <code>DataRequirement</code> is related to.
@@ -332,7 +354,9 @@ public class DataRequirementSet {
 		 * returns several <code>Gene</code>s, all of them must have at least 
     	 * some data in the tested <code>OntologyElement</code>, for the requirement 
     	 * to be satisfied, whatever the requested <code>CallType</code>s 
-    	 * returned by {@link #getCallTypes()} are.
+    	 * returned by {@link #getCallTypes()} are (understand, some data amongst 
+    	 * the call types that were allowed by the <code>ExpressionReasoner</code> 
+    	 * for those <code>Gene</code>s).
     	 * <p>
     	 * For instance, if a <code>DataRequirement</code> contains a gene A and a gene B, 
          * and the <code>CallType</code> <code>EXPRESSION</code>, it means that 
@@ -356,7 +380,9 @@ public class DataRequirementSet {
 		 * returns several <code>Gene</code>s, all of them must have at least 
     	 * some data in the tested <code>OntologyElement</code>, for the requirement 
     	 * to be satisfied, whatever the requested <code>CallType</code>s 
-    	 * returned by {@link #getCallTypes()} are.
+    	 * returned by {@link #getCallTypes()} are (understand, some data amongst 
+    	 * the call types that were allowed by the <code>ExpressionReasoner</code> 
+    	 * for those <code>Gene</code>s).
     	 * <p>
     	 * See {@link #isAllGenesWithData()} for more details.
          * 
@@ -370,5 +396,13 @@ public class DataRequirementSet {
 		public void setAllGenesWithData(boolean allGenesWithData) {
 			this.allGenesWithData = allGenesWithData;
 		}
+    }
+    
+    public boolean validate(OntologyElement e) {
+    	
+    }
+    
+    public Collection<OntologyElement> validate(Collection<OntologyElement> elements) {
+    	
     }
 }

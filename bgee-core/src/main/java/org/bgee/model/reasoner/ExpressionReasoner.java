@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.bgee.model.expressiondata.ExprDataParams.CallType;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.reasoner.DataRequirementSet.DataRequirement;
+import org.bgee.model.reasoner.DataRequirementValidator.DataRequirement;
 
 public class ExpressionReasoner 
 {
@@ -27,7 +27,7 @@ public class ExpressionReasoner
 	 * at least one gene must have data calls different from the other genes, for instance, 
 	 * one gene with absence of expression while other genes are expressed. 
 	 * <li><code>CUSTOM</code>: expression data calls required are set on a per gene 
-	 * or per gene group basis, using {@link DataRequirementSet}s.
+	 * or per gene group basis, using {@link DataRequirementValidator}s.
 	 * </ul>
 	 * 
 	 * @author Frederic Bastian

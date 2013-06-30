@@ -1,8 +1,11 @@
 package org.bgee.model.expressiondata;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class stores parameters of expression data, that can then be used, for instance,  
@@ -12,6 +15,9 @@ import java.util.Map;
  * @version Bgee 13
  */
 public class ExprDataParams {
+	//**********************************************
+	//   INNER CLASSES
+	//**********************************************
 	/**
 	 * Define the different types of expression data calls.
 	 * <ul>
@@ -20,15 +26,6 @@ public class ExprDataParams {
 	 * <li><code>UNDEREXPRESSION</code>: under-expression calls.
 	 * <li><code>NOEXPRESSION</code>: no-expression calls (absence of expression 
 	 * explicitly reported).
-	 * <li><code>RELAXEDNOEXPRESSION</code>: use no-expression calls, as well as inference of  
-	 * absence of expression based on <em>in situ</em> hybridizations data: the inference 
-	 * considers expression patterns described by <em>in situ</em> data as complete. 
-	 * It is indeed usual for authors of <em>in situ</em> hybridizations to report 
-	 * only localizations of expression, implicitly stating absence of expression 
-	 * in all other tissues. When <em>in situ</em> data are available for a gene, 
-	 * we considered that absence of expression is assumed in any organ existing 
-	 * at the developmental stage studied in the <em>in situ</em>, with no report of 
-	 * expression by any data type, in the organ itself, or any substructure. 
 	 * </ul>
 	 * 
      * @author Frederic Bastian
@@ -36,14 +33,23 @@ public class ExprDataParams {
      * @since Bgee 13
 	 */
     public enum CallType {
-    	EXPRESSION, OVEREXPRESSION, UNDEREXPRESSION, NOEXPRESSION, RELAXEDNOEXPRESSION;
+    	EXPRESSION, OVEREXPRESSION, UNDEREXPRESSION, NOEXPRESSION;
     }
     /**
      * Define the different expression data types used in Bgee.
      * <ul>
-     * <li><code>EST</code>: Expressed Sequence Tag.
      * <li><code>AFFYMETRIX</code>: microarray Affymetrix.
+     * <li><code>EST</code>: Expressed Sequence Tag.
      * <li><code>INSITU</code>: <em>in situ</em> hybridization data.
+     * <li><code>RELAXEDINSITU</code>: use of <em>in situ</em> hybridization data 
+     * to infer absence of expression: the inference 
+	 * considers expression patterns described by <em>in situ</em> data as complete. 
+	 * It is indeed usual for authors of <em>in situ</em> hybridizations to report 
+	 * only localizations of expression, implicitly stating absence of expression 
+	 * in all other tissues. When <em>in situ</em> data are available for a gene, 
+	 * we considered that absence of expression is assumed in any organ existing 
+	 * at the developmental stage studied in the <em>in situ</em>, with no report of 
+	 * expression by any data type, in the organ itself, or any substructure. 
      * <li><code>RNASEQ</code>: RNA-Seq data.
      * </ul>
 	 * 
@@ -52,7 +58,7 @@ public class ExprDataParams {
      * @since Bgee 13
      */
     public enum DataType {
-    	EST, AFFYMETRIX, INSITU, RNASEQ;
+    	AFFYMETRIX, EST, INSITU, RELAXEDINSITU, RNASEQ;
     }
     /**
      * Define the different confidence level in expression data. 
@@ -66,6 +72,59 @@ public class ExprDataParams {
     public enum DataQuality {
     	LOW, HIGH;
     }
+
+	//**********************************************
+	//   STATIC CLASS ATTRIBUTES AND METHODS
+	//**********************************************
+    /**
+     * A <code>Map</code> associating each <code>CallType</code> in the key set  
+     * to a <code>Set</code> of the <code>DataType</code>s allowing to generate 
+     * that <code>CallType</code>. 
+     */
+    private static final Map<CallType, Set<DataType>> allowedDataTypes = 
+    		loadAllowedDataTypes();
+    private static Map<CallType, Set<DataType>> loadAllowedDataTypes () {
+    	
+    	Map<CallType, Set<DataType>> types = 
+    			new HashMap<CallType, Set<DataType>>();
+    	//data types generating expression calls
+    	types.put(CallType.EXPRESSION, new HashSet<DataType>());
+    	types.get(CallType.EXPRESSION).add(DataType.AFFYMETRIX);
+    	types.get(CallType.EXPRESSION).add(DataType.EST);
+    	types.get(CallType.EXPRESSION).add(DataType.INSITU);
+    	types.get(CallType.EXPRESSION).add(DataType.RNASEQ);
+    	//data types generating over-expression calls
+    	types.put(CallType.OVEREXPRESSION, new HashSet<DataType>());
+    	types.get(CallType.OVEREXPRESSION).add(DataType.AFFYMETRIX);
+    	types.get(CallType.OVEREXPRESSION).add(DataType.RNASEQ);
+    	//data types generating under-expression calls
+    	types.put(CallType.UNDEREXPRESSION, new HashSet<DataType>());
+    	types.get(CallType.UNDEREXPRESSION).add(DataType.AFFYMETRIX);
+    	types.get(CallType.UNDEREXPRESSION).add(DataType.RNASEQ);
+    	//data types generating no-expression calls
+    	types.put(CallType.NOEXPRESSION, new HashSet<DataType>());
+    	types.get(CallType.NOEXPRESSION).add(DataType.AFFYMETRIX);
+    	types.get(CallType.NOEXPRESSION).add(DataType.INSITU);
+    	types.get(CallType.NOEXPRESSION).add(DataType.RELAXEDINSITU);
+    	types.get(CallType.NOEXPRESSION).add(DataType.RNASEQ);
+    	
+    	return types;
+    }
+    /**
+     * Return a <code>Map</code> associating each <code>CallType</code> in the key set  
+     * to a <code>Set</code> containing the <code>DataType</code>s allowing to generate 
+     * that <code>CallType</code>. 
+     * 
+     * @return 	a <code>Map</code> providing the allowed <code>DataType</code>s 
+     * 			for each <code>CallType</code>.
+     */
+    public static Map<CallType, Set<DataType>> getAllowedDataTypes() {
+    	return allowedDataTypes;
+    }
+
+	//**********************************************
+	//   INSTANCE ATTRIBUTES AND METHODS
+	//**********************************************
     
     /**
      * Default constructor for instantiating a <code>ExprDataParams</code> corresponding 
@@ -103,6 +162,19 @@ public class ExprDataParams {
      * <code>DataQuality.LOW</code>).
      */
     private Map<DataType, DataQuality> dataTypes;
+    /**
+     * A <code>boolean</code> defining whether, when <code>dataTypes</code> contains 
+     * several <code>DataType</code>s, the data should be retrieved using any of them, 
+     * or based on the agreement of all of them. The recommended value is <code>false</code>.
+     * <p>
+     * For instance, if <code>callType</code> is equal to <code>Expression</code>, 
+     * and <code>dataTypes</code> contains <code>AFFYMETRIX</code> and <code>RNA-Seq</code>: 
+     * if <code>allDataTypes</code> is <code>false</code>, then expression data 
+     * will be retrieved from expression calls generated by Affymetrix or Rna-Seq data 
+     * indifferently; if <code>true</code>, data will be retrieved from expression calls 
+     * generated by <strong>both</code> Affymetrix and RNA-Seq data.
+     */
+    private boolean allDataTypes;
     
 	/**
 	 * Get the <code>CallType</code> being the type of call to use.
@@ -194,6 +266,27 @@ public class ExprDataParams {
 	}
 	/**
 	 * Add <code>dataType</code> to the list of data types to use, 
+	 * allowing any quality threshold for this data type. 
+	 * <p>
+	 * If this <code>DataType</code> was already set, replace the previous 
+	 * <code>DataQuality</code> minimum quality threshold  for this data type 
+	 * by <code>DataQuality.LOW</code>.
+	 * @param dataType 		A <code>DataType</code> to be added to the allowed data types.
+	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
+	 * 						to use for this data type.
+	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
+	 * 									{@link #setCallType(CallType)}), 
+	 * 									and the <code>DataType</code> added is not compatible 
+	 * 									(for instance, no-expression calls based on EST data 
+	 * 									are not available)
+	 * @see #addDataType(DataType, DataQuality)
+	 */
+	public void addDataType(DataType dataType)
+	{
+		this.addDataType(dataType, DataQuality.LOW);
+	}
+	/**
+	 * Add <code>dataType</code> to the list of data types to use, 
 	 * and use <code>dataQuality</code> to define the minimum data quality to use 
 	 * for this data type. 
 	 * <p>
@@ -234,24 +327,49 @@ public class ExprDataParams {
 		this.dataTypes.put(dataType, dataQuality);
 	}
 	/**
-	 * Add <code>dataType</code> to the list of data types to use, 
-	 * allowing any quality threshold for this data type. 
-	 * <p>
-	 * If this <code>DataType</code> was already set, replace the previous 
-	 * <code>DataQuality</code> minimum quality threshold  for this data type 
-	 * by <code>DataQuality.LOW</code>.
-	 * @param dataType 		A <code>DataType</code> to be added to the allowed data types.
-	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
-	 * 						to use for this data type.
-	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
-	 * 									{@link #setCallType(CallType)}), 
-	 * 									and the <code>DataType</code> added is not compatible 
-	 * 									(for instance, no-expression calls based on EST data 
-	 * 									are not available)
-	 * @see #addDataType(DataType, DataQuality)
+     * Return the <code>boolean</code> defining whether, when {@link #getDataTypes()}
+     * returns several <code>DataType</code>s, data should be retrieved using any of them, 
+     * or based on the agreement of all of them. 
+     * <p>
+     * For instance, if {@link #getCallType()} returns <code>Expression</code>, 
+     * and {@link #getDataTypes()} returns <code>AFFYMETRIX</code> and <code>RNA-Seq</code>: 
+     * if this method returns <code>false</code>, then expression data 
+     * will be retrieved from expression calls generated by Affymetrix or Rna-Seq data 
+     * indifferently; if returns <code>true</code>, data will be retrieved from 
+     * expression calls generated by <strong>both</code> Affymetrix and RNA-Seq data.
+     * <p>
+     * The retrieval of data from each <code>DataType</code> takes of course always
+     * into account the <code>DataQuality</code> associated to it (see 
+     * {@link #getDataTypesWithQualities()}).
+     *
+	 * @return 	the <code>boolean</code> defining whether data should be retrieved 
+	 * 			based on agreement of all <code>DataType</code>s, or only at least 
+	 * 			one of them.
 	 */
-	public void addDataType(DataType dataType)
-	{
-		this.addDataType(dataType, DataQuality.LOW);
+	public boolean isAllDataTypes() {
+		return this.allDataTypes;
+	}
+	/**
+	 * Set the <code>boolean</code> defining whether, when {@link #getDataTypes()}
+     * returns several <code>DataType</code>s, data should be retrieved using any of them, 
+     * or based on the agreement of all of them. The recommended value is <code>false</code>.
+     * <p>
+     * For instance, if {@link #getCallType()} returns <code>Expression</code>, 
+     * and {@link #getDataTypes()} returns <code>AFFYMETRIX</code> and <code>RNA-Seq</code>: 
+     * if this method returns <code>false</code>, then expression data 
+     * will be retrieved from expression calls generated by Affymetrix or Rna-Seq data 
+     * indifferently; if returns <code>true</code>, data will be retrieved from 
+     * expression calls generated by <strong>both</code> Affymetrix and RNA-Seq data.
+     * <p>
+     * The retrieval of data from each <code>DataType</code> takes of course always
+     * into account the <code>DataQuality</code> associated to it (see 
+     * {@link #getDataTypesWithQualities()}).
+     *
+	 * @param allDataTypes 	the <code>boolean</code> defining whether data should 
+	 * 						be retrieved based on agreement of all <code>DataType</code>s, 
+	 * 						or only at least one of them. 
+	 */
+	public void setAllDataTypes(boolean allDataTypes) {
+		this.allDataTypes = allDataTypes;
 	}
 }

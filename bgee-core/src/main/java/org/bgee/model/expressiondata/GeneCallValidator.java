@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 import org.bgee.model.expressiondata.ExprDataParams.CallType;
 import org.bgee.model.gene.Gene;
@@ -127,6 +128,45 @@ public class GeneCallValidator {
          * (expression, no-expression, ...) the condition will be satisfied. 
     	 */
     	private boolean allGenesWithData;
+    	
+    	/**
+    	 * A <code>Map</code> associating each <code>Gene</code> in the key set, 
+    	 * to a <code>Collection</code> of <code>ExprDataParams</code>s. 
+    	 * The <code>ExprDataParams</code>s define for each gene the expression data  
+    	 * to retrieve for it. 
+    	 * <p>
+    	 * Whether all expression data requirements for a <code>Gene</code> 
+    	 * must be satisfied, or only at least one, is defined by {@link #satisfyAllParams}. 
+    	 * <p>
+    	 * Whether all <code>Genes</code> must have their data requirements satisfied 
+    	 * for this <code>GeneCallRequirement</code>, or only at least one, 
+    	 * or a custom threshold, is defined by {@link #geneValidationType}. 
+    	 * <p>
+    	 * See {@link #satisfyAllParams} and {@link #geneValidationType} 
+    	 * for more information.
+    	 * 
+    	 * @see #satisfyAllParams
+    	 * @see #geneValidationType
+    	 */
+    	private Map<Gene, Collection<ExprDataParams>> genesWithDataParams;
+    	public enum GeneValidationType {
+    		ALL, ANY, GENETHRESHOLD, SPECIESTHRESHOLD;
+    	}
+    	private GeneValidationType geneValidationType;
+    	private int validationThreshold;
+    	/**
+    	 * A <code>boolean</code> defining whether, when a <code>Gene</code> 
+    	 * in <code>genesWithDataParams</code> is associated to several 
+    	 * <code>ExprDataParams</code>, all of them must be satisfied for 
+    	 * the <code>Gene</code> to be validated, or only at least one of them.
+    	 * <p>
+    	 * The recommended value is <code>false</code>. Setting this attribute 
+    	 * to <code>true</code> should be useful only in specific cases, 
+    	 * such as, to investigate contradictions between data types; for instance, 
+    	 * by requesting <code>EXPRESSION</code> data from <code>AFFYMETRIX</code>, 
+    	 * and at the same time, <code>NOEXPRESSION</code> data from <code>RNA-Seq</code>.
+    	 */
+    	private boolean satisfyAllParams;
     	
     	/**
     	 * Default constructor. 

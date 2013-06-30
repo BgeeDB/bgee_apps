@@ -1,12 +1,18 @@
-package org.bgee.model.reasoner;
+package org.bgee.model.expressiondata;
 
 import java.util.Collection;
 
-import org.bgee.model.expressiondata.ExprDataParams.CallType;
-import org.bgee.model.gene.Gene;
-import org.bgee.model.reasoner.DataRequirementValidator.DataRequirement;
+import org.bgee.model.expressiondata.GeneCallValidator.GeneCallRequirement;
 
-public class ExpressionReasoner 
+/**
+ * This class allows to retrieve <code>AnatomicalEntity</code>s and 
+ * <code>DevelopmentalStage</code>s based on their gene expression data. 
+ * 
+ * @author Frederic Bastian
+ * @version Bgee 13
+ * @since Bgee 13
+ */
+public class AnatDevExpressionQuery 
 {
 	/**
 	 * List the different methods to validate an <code>OntologyElement</code> 
@@ -27,7 +33,7 @@ public class ExpressionReasoner
 	 * at least one gene must have data calls different from the other genes, for instance, 
 	 * one gene with absence of expression while other genes are expressed. 
 	 * <li><code>CUSTOM</code>: expression data calls required are set on a per gene 
-	 * or per gene group basis, using {@link DataRequirementValidator}s.
+	 * or per gene group basis, using {@link GeneCallValidator}s.
 	 * </ul>
 	 * 
 	 * @author Frederic Bastian
@@ -71,5 +77,5 @@ public class ExpressionReasoner
      * for each requested gene individually, with no data call type specified, meaning that 
      * all gene must have data calls, any type accepted.
      */
-    private Collection<DataRequirement> customValidation;
+    private Collection<GeneCallRequirement> customValidation;
 }

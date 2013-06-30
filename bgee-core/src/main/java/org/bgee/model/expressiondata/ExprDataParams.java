@@ -7,12 +7,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.data.sql.BgeeConnection;
+
 /**
- * This class stores parameters of expression data, that can then be used, for instance,  
- * to specify which expression data should be retrieved when performing a query. 
+ * This class stores parameters of expression data, allowing to specify 
+ * which expression data should be used when performing a query. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
+ * @since Bgee 01
  */
 public class ExprDataParams {
 	//**********************************************
@@ -77,6 +82,10 @@ public class ExprDataParams {
 	//   STATIC CLASS ATTRIBUTES AND METHODS
 	//**********************************************
     /**
+     * <code>Logger</code> of the class. 
+     */
+    private final static Logger log = LogManager.getLogger(BgeeConnection.class.getName());
+    /**
      * A <code>Map</code> associating each <code>CallType</code> in the key set  
      * to a <code>Set</code> of the <code>DataType</code>s allowing to generate 
      * that <code>CallType</code>. 
@@ -117,24 +126,98 @@ public class ExprDataParams {
      * 
      * @return 	a <code>Map</code> providing the allowed <code>DataType</code>s 
      * 			for each <code>CallType</code>.
+     * @see #checkCallTypeDataType(CallType, DataType);
+     * @see #checkCallTypeDataTypes(CallType, Collection);
      */
     public static Map<CallType, Set<DataType>> getAllowedDataTypes() {
     	return allowedDataTypes;
     }
+	/**
+	 * Check if <code>DataType</code> is compatible with <code>callType</code> 
+	 * (see {@link #getAllowedDataTypes()}). 
+	 * An <code>IllegalArgumentException</code> is thrown if an incompatibility 
+	 * is detected,
+	 * 
+	 * @param callType 		The <code>CallType</code> to check against 
+	 * 						<code>dataTypes</code>
+	 * @param dataType		A <code>DataType</code> to check against 
+	 * 						<code>callType</code>.
+	 * @throws IllegalArgumentException 	If an incompatibility is detected.
+	 */
+	private static void checkCallTypeDataType(CallType callType, DataType dataType) 
+	    throws IllegalArgumentException {
+		checkCallTypeDataTypes(callType, Arrays.asList(dataType));
+	}
+	/**
+	 * Check if all <code>DataType</code>s in <code>dataTypes</code> are compatible 
+	 * with <code>callType</code> (see {@link #getAllowedDataTypes()}). 
+	 * An <code>IllegalArgumentException</code> is thrown if an incompatibility 
+	 * is detected,
+	 * 
+	 * @param callType 		The <code>CallType</code> to check against 
+	 * 						<code>dataTypes</code>
+	 * @param dataTypes		A <code>Collection</code> of <code>DataType</code>s to check 
+	 * 						against <code>callType</code>.
+	 * @throws IllegalArgumentException 	If an incompatibility is detected.
+	 */
+	private static void checkCallTypeDataTypes(CallType callType, Collection<DataType> dataTypes) 
+	    throws IllegalArgumentException {
+		log.entry(callType, dataTypes);
+		
+		String exceptionMessage = "";
+		Set<DataType> allowedTypes = getAllowedDataTypes().get(callType);
+		for (DataType dataType: dataTypes) {
+			if (!allowedTypes.contains(dataType)) {
+				exceptionMessage += dataType + " does not allow to generate " + 
+			        callType + " calls. ";
+			}
+		}
+		
+		if (!"".equals(exceptionMessage)) {
+			throw log.throwing(new IllegalArgumentException(exceptionMessage));
+		}
+		
+		log.exit();
+	}
 
 	//**********************************************
 	//   INSTANCE ATTRIBUTES AND METHODS
 	//**********************************************
     
     /**
-     * Default constructor for instantiating a <code>ExprDataParams</code> corresponding 
-     * to standard expression calls with any quality and any data type.
+     * Default constructor not public. At least a <code>CallType</code> 
+     * should be provided, see {@link #ExprDataParams(CallType)}.
      */
-    public ExprDataParams() {
-    	this.setCallType(CallType.EXPRESSION);
+    //Default constructor not public on purpose, suppress warning
+    @SuppressWarnings("unused")
+	private ExprDataParams() {
+    	this(CallType.EXPRESSION);
+    }
+    /**
+     * Constructor for instantiating an <code>ExprDataParams</code> for 
+     * a type of calls corresponding to <code>callType</code>, 
+     * based on any data type at any quality.
+     * <p>
+     * If this <code>CallType</code> is <code>CallType.OVEREXPRESSION</code> 
+     * or <code>CallType.UNDEREXPRESSION</code>, 
+     * then a <code>DiffExprParams</code> might be provided by calling 
+     * {@link #setDiffExprParams(DiffExprParams)}. Otherwise, a default 
+     * <code>DiffExprParams</code> will be used (see 
+     * {@link DiffExprParams#DiffExprParams()}).
+     * 
+     * @param callType	The <code>CallType</code> which expression data retrieval 
+     * 					will be based on.
+     */
+    public ExprDataParams(CallType callType) {
+    	log.entry(callType);
+    	
+    	this.setCallType(callType);
     	this.setDataTypes(new HashMap<DataType, DataQuality>());
     	//in case the call type is later set to OVEREXPRESSION or UNDEREXPRESSION
     	this.setDiffExprParams(new DiffExprParams());
+    	this.setAllDataTypes(false);
+    	
+    	log.exit();
     }
     
     /**
@@ -164,7 +247,8 @@ public class ExprDataParams {
     private Map<DataType, DataQuality> dataTypes;
     /**
      * A <code>boolean</code> defining whether, when <code>dataTypes</code> contains 
-     * several <code>DataType</code>s, the data should be retrieved using any of them, 
+     * several <code>DataType</code>s (or none, meaning all data types should be used), 
+     * the data should be retrieved using any of them, 
      * or based on the agreement of all of them. The recommended value is <code>false</code>.
      * <p>
      * For instance, if <code>callType</code> is equal to <code>Expression</code>, 
@@ -208,27 +292,13 @@ public class ExprDataParams {
 	 * @see #getCallType()
 	 */
 	public void setCallType(CallType callType) {
-		if (!this.getDataTypes().isEmpty()) {
-		    switch(callType) {
-		    case OVEREXPRESSION: 
-		    case UNDEREXPRESSION:
-		    	if (this.getDataTypes().contains(DataType.EST) || 
-		    			this.getDataTypes().contains(DataType.INSITU)) {
-		    		throw new IllegalArgumentException("EST data and in situ data " +
-		    				"cannot be used for differential expression calls");
-		    	}
-		    	break;
-		    case NOEXPRESSION: 
-		    case RELAXEDNOEXPRESSION:
-		    	if (this.getDataTypes().contains(DataType.EST)) {
-		    		throw new IllegalArgumentException("EST data " +
-		    				"cannot be used for no-expression calls");
-		    	}
-		    	break;
-		    }
-		}
+		log.entry(callType);
+        checkCallTypeDataTypes(callType, this.getDataTypes());
 		this.callType = callType;
+		log.exit();
 	}
+	
+	
 	/**
 	 * @return 	the <code>DiffExprParams</code> storing parameters for differential expression 
      * 			in case the requested expression call type is 
@@ -249,41 +319,54 @@ public class ExprDataParams {
 	 * @see #getDiffExprParams()
 	 */
 	public void setDiffExprParams(DiffExprParams diffExprParams) {
+		log.entry(diffExprParams);
 		this.diffExprParams = diffExprParams;
+		log.exit();
 	}
     
+	
 	/**
 	 * @param dataTypes the {@link #dataTypes} to set.
 	 */
 	private void setDataTypes(Map<DataType, DataQuality> dataTypes) {
 		this.dataTypes = dataTypes;
 	}
+	/**
+	 * Return a <code>Map</code> with <code>DataType</code>s as key defining 
+	 * the data types to use, the associated value being a <code>DataQuality</code> 
+	 * defining the <strong>minimum</strong> quality level to use for this data type. 
+     * If this <code>Collection</code> is empty, any data type can be used, 
+     * with any data quality (minimum quality threshold set to 
+     * <code>DataQuality.LOW</code>).
+     * <p>
+     * Whether data retrieved should be based on the agreement of all 
+     * <code>DataType</code>s (taking into account their associated 
+     * <code>DataQuality</code>), or only at least one of them, is based on 
+     * the value returned by {@link #isAllDataTypes()}.
+     * 
+	 * @return 	The <code>Map</code> of allowed <code>DataType</code>s 
+	 * 			associated to a <code>DataQuality</code>.
+	 * @see #getDataTypes()
+	 */
 	public Map<DataType, DataQuality> getDataTypesWithQualities() {
 		return this.dataTypes;
 	}
+	/**
+	 * Return a <code>Collection</code> of <code>DataType</code>s, being 
+	 * the data types to use. The <code>DataType</code>s are returned 
+	 * without their associated <code>DataQuality</code>, 
+	 * see {@link #getDataTypesWithQualities()}. 
+     * <p>
+     * Whether data retrieved should be based on the agreement of all 
+     * <code>DataType</code>s (taking into account their associated 
+     * <code>DataQuality</code>), or only at least one of them, is based on 
+     * the value returned by {@link #isAllDataTypes()}.
+     * 
+	 * @return 	A <code>Collection</code> of the allowed <code>DataType</code>s.
+	 * @see #getDataTypesWithQualities()
+	 */
 	public Collection<DataType> getDataTypes() {
 		return this.getDataTypesWithQualities().keySet();
-	}
-	/**
-	 * Add <code>dataType</code> to the list of data types to use, 
-	 * allowing any quality threshold for this data type. 
-	 * <p>
-	 * If this <code>DataType</code> was already set, replace the previous 
-	 * <code>DataQuality</code> minimum quality threshold  for this data type 
-	 * by <code>DataQuality.LOW</code>.
-	 * @param dataType 		A <code>DataType</code> to be added to the allowed data types.
-	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
-	 * 						to use for this data type.
-	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
-	 * 									{@link #setCallType(CallType)}), 
-	 * 									and the <code>DataType</code> added is not compatible 
-	 * 									(for instance, no-expression calls based on EST data 
-	 * 									are not available)
-	 * @see #addDataType(DataType, DataQuality)
-	 */
-	public void addDataType(DataType dataType)
-	{
-		this.addDataType(dataType, DataQuality.LOW);
 	}
 	/**
 	 * Add <code>dataType</code> to the list of data types to use, 
@@ -296,39 +379,103 @@ public class ExprDataParams {
 	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
 	 * 						to use for this data type.
 	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
-	 * 									{@link #setCallType(CallType)}), 
+	 * 									{@link #getCallType()}), 
 	 * 									and the <code>DataType</code> added is not compatible 
 	 * 									(for instance, no-expression calls based on EST data 
 	 * 									are not available)
 	 * @see #addDataType(DataType)
+	 * @see #addDataTypes(Collection)
+	 * @see #addDataTypes(Collection, DataQuality)
 	 */
 	public void addDataType(DataType dataType, DataQuality dataQuality)
 	{
-		switch (this.getCallType()) {
-		case OVEREXPRESSION: 
-		case UNDEREXPRESSION: 
-			if (dataType == DataType.EST) {
-				throw new IllegalArgumentException("EST data cannot be used for " +
-						"differential expression data");
-			}
-			if (dataType == DataType.INSITU) {
-				throw new IllegalArgumentException("In situ data cannot be used for " +
-						"differential expression data");
-			}
-			break;
-	    case NOEXPRESSION: 
-	    case RELAXEDNOEXPRESSION:
-	    	if (dataType == DataType.EST) {
-				throw new IllegalArgumentException("EST data cannot be used for " +
-						"no-expression data");
-			}
-	    	break;
-		}
+		log.entry(dataType, dataQuality);
+        checkCallTypeDataType(this.getCallType(), dataType);
 		this.dataTypes.put(dataType, dataQuality);
+		log.exit();
+	}
+	/**
+	 * Add <code>dataType</code> to the list of data types to use, 
+	 * with any quality threshold allowed for this data type. 
+	 * <p>
+	 * If this <code>DataType</code> was already set, replace the previous 
+	 * <code>DataQuality</code> minimum quality threshold  for this data type 
+	 * by <code>DataQuality.LOW</code>.
+	 * @param dataType 		A <code>DataType</code> to be added to the allowed data types.
+	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
+	 * 									{@link #getCallType()}), 
+	 * 									and the <code>DataType</code> added is not compatible 
+	 * 									(for instance, no-expression calls based on EST data 
+	 * 									are not available)
+	 * @see #addDataType(DataType, DataQuality)
+	 * @see #addDataTypes(Collection)
+	 * @see #addDataTypes(Collection, DataQuality)
+	 */
+	public void addDataType(DataType dataType)
+	{
+		log.entry(dataType);
+		this.addDataType(dataType, DataQuality.LOW);
+		log.exit();
+	}
+	/**
+	 * Add <code>dataType</code>s to the list of data types to use, 
+	 * with any quality threshold allowed for this data type. 
+	 * <p>
+	 * If one of these <code>DataType</code>s was already set, replace the previous 
+	 * <code>DataQuality</code> minimum quality threshold  for this data type 
+	 * by <code>DataQuality.LOW</code>.
+	 * 
+	 * @param dataTypes 	A <code>Collection</code> of <code>DataType</code>s 
+	 * 						to be added to the allowed data types.
+	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
+	 * 									{@link #getCallType()}), 
+	 * 									and the <code>DataType</code> added is not compatible 
+	 * 									(for instance, no-expression calls based on EST data 
+	 * 									are not available)
+	 * @see #addDataType(DataType)
+	 * @see #addDataType(DataType, DataQuality)
+	 * @see #addDataTypes(Collection, DataQuality)
+	 */
+	public void addDataTypes(Collection<DataType> dataTypes)
+	{
+		log.entry(dataTypes);
+		this.addDataTypes(dataTypes, DataQuality.LOW);
+		log.exit();
+	}
+	/**
+	 * Add <code>dataType</code>s to the list of data types to use, 
+	 * and use <code>dataQuality</code> to define the minimum data quality to use 
+	 * for all of them. 
+	 * <p>
+	 * If one of these <code>DataType</code>s was already set, replace the previous 
+	 * <code>DataQuality</code> value set.
+	 * 
+	 * @param dataTypes 	A <code>Collection</code> of <code>DataType</code>s 
+	 * 						to be added to the allowed data types.
+	 * @param dataQuality	A <code>DataQuality</code> being the minimum quality threshold 
+	 * 						to use for all these data types.
+	 * @throws IllegalArgumentException If the type of call requested has already been set (see 
+	 * 									{@link #getCallType()}), 
+	 * 									and some <code>DataType</code>s added are not compatible 
+	 * 									(for instance, no-expression calls based on EST data 
+	 * 									are not available)
+	 * @see #addDataType(DataType)
+	 * @see #addDataType(DataType, DataQuality)
+	 * @see #addDataTypes(Collection)
+	 */
+	public void addDataTypes(Collection<DataType> dataTypes, DataQuality dataQuality)
+	{
+		log.entry(dataTypes, dataQuality);
+        checkCallTypeDataTypes(this.getCallType(), dataTypes);
+        for (DataType dataType: dataTypes) {
+        	this.addDataType(dataType, dataQuality);
+        }
+        log.exit();
 	}
 	/**
      * Return the <code>boolean</code> defining whether, when {@link #getDataTypes()}
-     * returns several <code>DataType</code>s, data should be retrieved using any of them, 
+     * returns several <code>DataType</code>s (or none, meaning all data types should 
+     * be used), data should be retrieved using any of them, 
      * or based on the agreement of all of them. 
      * <p>
      * For instance, if {@link #getCallType()} returns <code>Expression</code>, 
@@ -345,13 +492,16 @@ public class ExprDataParams {
 	 * @return 	the <code>boolean</code> defining whether data should be retrieved 
 	 * 			based on agreement of all <code>DataType</code>s, or only at least 
 	 * 			one of them.
+	 * @see #setAllDataTypes(boolean)
+	 * @see #getCallTypes()
 	 */
 	public boolean isAllDataTypes() {
 		return this.allDataTypes;
 	}
 	/**
 	 * Set the <code>boolean</code> defining whether, when {@link #getDataTypes()}
-     * returns several <code>DataType</code>s, data should be retrieved using any of them, 
+     * returns several <code>DataType</code>s (or none, meaning all data types should 
+     * be used), data should be retrieved using any of them, 
      * or based on the agreement of all of them. The recommended value is <code>false</code>.
      * <p>
      * For instance, if {@link #getCallType()} returns <code>Expression</code>, 
@@ -368,8 +518,13 @@ public class ExprDataParams {
 	 * @param allDataTypes 	the <code>boolean</code> defining whether data should 
 	 * 						be retrieved based on agreement of all <code>DataType</code>s, 
 	 * 						or only at least one of them. 
+	 * @see #isAllDataTypes()
+	 * @see #getCallTypes()
 	 */
 	public void setAllDataTypes(boolean allDataTypes) {
 		this.allDataTypes = allDataTypes;
 	}
+	
+	add anat entity and devlpt stage propagation booleans
+	add unit tests
 }

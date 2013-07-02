@@ -7,6 +7,10 @@ package org.bgee.model.expressiondata;
  * by the <code>ExprDataParams</code> class. 
  * This class stores parameters specific to differential expression data, that are, 
  * the number of conditions compared when generating the differential expression call.
+ * <p>
+ * If you use an instance of this class in a hash-based <code>Collection</code> or 
+ * <code>Map</code>, do not modify any of its fields afterwards, they are used 
+ * in the <code>hashCode</code> method, but are not immutable. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -15,16 +19,35 @@ package org.bgee.model.expressiondata;
 public class DiffExprParams {
     
     /**
-     * Create a default <code>DiffExprParams</code> object with a differential expression type 
-     * set to <code>DiffExprType.OVER</code> and no minimum number of conditions requested 
-     * (but the differential expression analysis pipeline has a minimum threshold on 
-     * the number of conditions anyway, it means that this default threshold will be used).
+     * Create a default <code>DiffExprParams</code> object with no minimum number 
+     * of conditions requested. (but the differential expression analysis pipeline 
+     * has a minimum threshold on the number of conditions anyway, it means that 
+     * this default threshold will be used).
      */
     public DiffExprParams()
     {
     	this.setOverallConditionCount(0);
     	this.setAnatomyConditionCount(0);
     	this.setDevelopmentConditionCount(0);
+    }
+    /**
+     * Create a <code>DiffExprParams</code> object with a minimum number of conditions 
+     * compared requested, over all the conditions. 
+     * <p>
+     * It does not explicitly specify the number of <code>AnatomicalEntity</code>s compared, 
+     * and number of <code>Stage</code>s compared, so for instance, 
+     * if <code>overallCondition</code> is equal to 2, experiments used could have 
+     * 2 <code>AnatomicalEntity</code>s compared at 1 <code>Stage</code>, or 
+     * 2 <code>Stage</code>s compared using 1 <code>AnatomicalEntity</code>, 
+     * or 1 <code>AnatomicalEntity</code> at 1 <code>Stage</code> compared to 
+     * another <code>AnatomicalEntity</code> at another <code>Stage</code> 
+     * (so 2 <code>AnatomicalEntity</code> conditions and 2 <code>Stage</code> conditions).
+     * 
+     * 
+     * @param overallCondition
+     */
+    public DiffExprParams(int overallCondition) {
+    	need to think more about how these parameters interact
     }
     /**
      * An <code>int</code> defining the requested minimum number of anatomical structures 
@@ -92,5 +115,38 @@ public class DiffExprParams {
 	 */
 	public void setOverallConditionCount(int conditionCount) {
 		this.conditionCount = conditionCount;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + anatomyConditionCount;
+		result = prime * result + conditionCount;
+		result = prime * result + developmentConditionCount;
+		return result;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		DiffExprParams other = (DiffExprParams) obj;
+		if (anatomyConditionCount != other.anatomyConditionCount) {
+			return false;
+		}
+		if (conditionCount != other.conditionCount) {
+			return false;
+		}
+		if (developmentConditionCount != other.developmentConditionCount) {
+			return false;
+		}
+		return true;
 	}
 }

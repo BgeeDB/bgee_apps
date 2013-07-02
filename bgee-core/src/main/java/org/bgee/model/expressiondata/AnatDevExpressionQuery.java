@@ -78,4 +78,7 @@ public class AnatDevExpressionQuery
      * all gene must have data calls, any type accepted.
      */
     private Collection<GeneCallRequirement> customValidation;
+    
+    restriction on organs? (e.g., jacknife on HOGs for my analyses): only in organs/never in organs kind of?
+    		useful for all anaylses or only this class?
 }

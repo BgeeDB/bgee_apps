@@ -15,6 +15,10 @@ import org.bgee.model.data.sql.BgeeConnection;
 /**
  * This class stores parameters of expression data, allowing to specify 
  * which expression data should be used when performing a query. 
+ * <p>
+ * If you use an instance of this class in a hash-based <code>Collection</code> or 
+ * <code>Map</code>, do not modify any of its fields afterwards, they are used 
+ * in the <code>hashCode</code> method, but are not immutable. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -638,6 +642,6 @@ public class ExprDataParams {
 		log.exit();
 	}
 	
-	equal hashcode
+	hash
 	
 }

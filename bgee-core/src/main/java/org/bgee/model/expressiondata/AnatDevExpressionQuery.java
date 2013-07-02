@@ -81,4 +81,8 @@ public class AnatDevExpressionQuery
     
     restriction on organs? (e.g., jacknife on HOGs for my analyses): only in organs/never in organs kind of?
     		useful for all anaylses or only this class?
+    				
+    				also, parameters "with mean expression level by experiment", probably useful for all query tools
+    				this could be compute for each gene for an organ query, or for each organ on a gene query
+    			    and maybe we can compute a rank for all organs for each experiment independently, something like that
 }

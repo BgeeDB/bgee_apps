@@ -2,6 +2,7 @@ package org.bgee.model.expressiondata;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -86,12 +87,12 @@ public class ExprDataParams {
      */
     private final static Logger log = LogManager.getLogger(BgeeConnection.class.getName());
     /**
-     * A <code>Map</code> associating each <code>CallType</code> in the key set  
-     * to a <code>Set</code> of the <code>DataType</code>s allowing to generate 
-     * that <code>CallType</code>. 
+     * An unmodifiable <code>Map</code> associating each <code>CallType</code> 
+     * in the key set to a <code>Set</code> of the <code>DataType</code>s 
+     * allowing to generate that <code>CallType</code>. 
      */
     private static final Map<CallType, Set<DataType>> allowedDataTypes = 
-    		loadAllowedDataTypes();
+    		Collections.unmodifiableMap(loadAllowedDataTypes());
     private static Map<CallType, Set<DataType>> loadAllowedDataTypes () {
     	
     	Map<CallType, Set<DataType>> types = 
@@ -120,11 +121,11 @@ public class ExprDataParams {
     	return types;
     }
     /**
-     * Return a <code>Map</code> associating each <code>CallType</code> in the key set  
-     * to a <code>Set</code> containing the <code>DataType</code>s allowing to generate 
-     * that <code>CallType</code>. 
+     * Return an unmodifiable <code>Map</code> associating each <code>CallType</code> 
+     * in the key set to a <code>Set</code> containing the <code>DataType</code>s 
+     * allowing to generate that <code>CallType</code>. 
      * 
-     * @return 	a <code>Map</code> providing the allowed <code>DataType</code>s 
+     * @return 	an unmodifiable <code>Map</code> providing the allowed <code>DataType</code>s 
      * 			for each <code>CallType</code>.
      * @see #checkCallTypeDataType(CallType, DataType);
      * @see #checkCallTypeDataTypes(CallType, Collection);
@@ -260,6 +261,31 @@ public class ExprDataParams {
      */
     private boolean allDataTypes;
     
+    /**
+     * A <code>boolean</code> defining whether expression data should be retrieved 
+     * following the relations {@link 
+     * org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} between {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity}s. 
+     * If <code>true</code>, then <code>EXPRESSION</code> calls 
+     * in an <code>AnatomicalEntity</code> will take into account expression in its children, 
+     * and <code>NOEXPRESSION</code> calls will take into account parents with reported 
+     * absence of expression. <code>OVEREXPRESSION</code> and <code>UNDEREXPRESSION</code> 
+     * calls are never propagated anyway.
+     */
+	private boolean propagateAnatEntities;
+	/**
+     * A <code>boolean</code> defining whether expression data should be retrieved 
+     * following the relations {@link 
+     * org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} between {@link org.bgee.model.anatdev.Stage Stage}s. 
+     * If <code>true</code>, then <code>EXPRESSION</code> calls 
+     * in a <code>Stage</code> will take into account expression in its children, 
+     * and <code>NOEXPRESSION</code> calls will take into account parents with reported 
+     * absence of expression. <code>OVEREXPRESSION</code> and <code>UNDEREXPRESSION</code> 
+     * calls are never propagated anyway.
+     */
+    private boolean propagateStages;
+    
 	/**
 	 * Get the <code>CallType</code> being the type of call to use.
      * <p>
@@ -272,7 +298,7 @@ public class ExprDataParams {
 	 * @see #setCallType(CallType)
 	 */
 	public CallType getCallType() {
-		return callType;
+		return this.callType;
 	}
 	/**
 	 * Set the <code>CallType</code> being the type of call to use.
@@ -307,7 +333,7 @@ public class ExprDataParams {
      * @see #setDiffExprParams(DiffExprParams)
 	 */
 	public DiffExprParams getDiffExprParams() {
-		return diffExprParams;
+		return this.diffExprParams;
 	}
 	/**
 	 * @param diffExprParams 	the <code>DiffExprParams</code> storing parameters 
@@ -522,9 +548,96 @@ public class ExprDataParams {
 	 * @see #getCallTypes()
 	 */
 	public void setAllDataTypes(boolean allDataTypes) {
+		log.entry(allDataTypes);
 		this.allDataTypes = allDataTypes;
+		log.exit();
+	}
+	/**
+     * Return the <code>boolean</code> defining whether expression data 
+     * should be retrieved following the relations {@link 
+     * org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} between {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity}s. 
+     * If <code>true</code>, then <code>EXPRESSION</code> calls 
+     * in an <code>AnatomicalEntity</code> will take into account expression in its children, 
+     * and <code>NOEXPRESSION</code> calls will take into account parents with reported 
+     * absence of expression. <code>OVEREXPRESSION</code> and <code>UNDEREXPRESSION</code> 
+     * calls are never propagated anyway.
+     *
+	 * @return 	a <code>boolean</code>, when <code>true</code>, data are propagated.
+	 * @see #setPropagateAnatEntities(boolean)
+	 * @see #isPropagateStages()
+	 * @see #setPropagateStages(boolean)
+	 */
+	public boolean isPropagateAnatEntities() {
+		return this.propagateAnatEntities;
+	}
+	/**
+     * Set the <code>boolean</code> defining whether expression data 
+     * should be retrieved following the relations {@link 
+     * org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} between {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity}s. 
+     * If <code>true</code>, then <code>EXPRESSION</code> calls 
+     * in an <code>AnatomicalEntity</code> will take into account expression in its children, 
+     * and <code>NOEXPRESSION</code> calls will take into account parents with reported 
+     * absence of expression. <code>OVEREXPRESSION</code> and <code>UNDEREXPRESSION</code> 
+     * calls are never propagated anyway.
+     *
+	 * @param propagateAnatEntities 	a <code>boolean</code> defining the propagation rule 
+	 * 									between <code>AnatomicalEntity</code>s. 
+	 * 									If <code>true</code>, data will be propagated.
+	 * @see #isPropagateAnatEntities()
+	 * @see #isPropagateStages()
+	 * @see #setPropagateStages(boolean)
+	 */
+	public void setPropagateAnatEntities(boolean propagateAnatEntities) {
+		log.entry(propagateAnatEntities);
+		this.propagateAnatEntities = propagateAnatEntities;
+		log.exit();
 	}
 	
-	add anat entity and devlpt stage propagation booleans
-	add unit tests
+	/**
+     * Return the <code>boolean</code> defining whether expression data 
+     * should be retrieved following the relations {@link 
+     * org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} between {@link org.bgee.model.anatdev.Stage Stage}s. 
+     * If <code>true</code>, then <code>EXPRESSION</code> calls 
+     * in a <code>Stage</code> will take into account expression in its children, 
+     * and <code>NOEXPRESSION</code> calls will take into account parents with reported 
+     * absence of expression. <code>OVEREXPRESSION</code> and <code>UNDEREXPRESSION</code> 
+     * calls are never propagated anyway.
+     *
+	 * @return 	a <code>boolean</code>, when <code>true</code> data are propagated.
+	 * @see #setPropagateStages(boolean)
+	 * @see #isPropagateAnatEntities()
+	 * @see #setPropagateAnatEntities(boolean)
+	 */
+	public boolean isPropagateStages() {
+		return this.propagateStages;
+	}
+	/**
+     * Set the <code>boolean</code> defining whether expression data 
+     * should be retrieved following the relations {@link 
+     * org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} between {@link org.bgee.model.anatdev.Stage Stage}s. 
+     * If <code>true</code>, then <code>EXPRESSION</code> calls 
+     * in a <code>Stage</code> will take into account expression in its children, 
+     * and <code>NOEXPRESSION</code> calls will take into account parents with reported 
+     * absence of expression. <code>OVEREXPRESSION</code> and <code>UNDEREXPRESSION</code> 
+     * calls are never propagated anyway. 
+     *
+	 * @param propagateAnatEntities 	a <code>boolean</code> defining the propagation rule 
+	 * 									between <code>Stage</code>s. 
+	 * 									If <code>true</code>, data will be propagated.
+	 * @see #isPropagateStages()
+	 * @see #isPropagateAnatEntities()
+	 * @see #setPropagateAnatEntities(boolean)
+	 */
+	public void setPropagateStages(boolean propagateStages) {
+		log.entry(propagateStages);
+		this.propagateStages = propagateStages;
+		log.exit();
+	}
+	
+	equal hashcode
+	
 }

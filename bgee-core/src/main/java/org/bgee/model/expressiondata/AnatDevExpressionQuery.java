@@ -6,7 +6,7 @@ import org.bgee.model.expressiondata.GeneCallValidator.GeneCallRequirement;
 
 /**
  * This class allows to retrieve <code>AnatomicalEntity</code>s and 
- * <code>DevelopmentalStage</code>s based on their gene expression data. 
+ * <code>Stage</code>s based on their gene expression data. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13

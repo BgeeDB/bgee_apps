@@ -84,5 +84,6 @@ public class AnatDevExpressionQuery
     				
     				also, parameters "with mean expression level by experiment", probably useful for all query tools
     				this could be compute for each gene for an organ query, or for each organ on a gene query
+    				this could be a last view, after data count, raw data: mean expression compared from raw data
     			    and maybe we can compute a rank for all organs for each experiment independently, something like that
 }

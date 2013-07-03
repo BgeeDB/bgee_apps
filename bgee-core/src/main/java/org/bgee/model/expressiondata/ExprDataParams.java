@@ -18,7 +18,7 @@ import org.bgee.model.data.sql.BgeeConnection;
  * <p>
  * If you use an instance of this class in a hash-based <code>Collection</code> or 
  * <code>Map</code>, do not modify any of its fields afterwards, they are used 
- * in the <code>hashCode</code> method, but are not immutable. 
+ * in the <code>hashCode</code> method, but are not immutable. 2
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -32,10 +32,15 @@ public class ExprDataParams {
 	 * Define the different types of expression data calls.
 	 * <ul>
 	 * <li><code>EXPRESSION</code>: standard expression calls.
-	 * <li><code>OVEREXPRESSION</code>: over-expression calls.
-	 * <li><code>UNDEREXPRESSION</code>: under-expression calls.
 	 * <li><code>NOEXPRESSION</code>: no-expression calls (absence of expression 
 	 * explicitly reported).
+	 * <li><code>OVEREXPRESSION</code>: over-expression calls.
+	 * <li><code>UNDEREXPRESSION</code>: under-expression calls.
+	 * <li><code>NODIFFEXPRESSION</code>: means that a gene was studied in 
+	 * a differential expression analysis, but was <strong>not</strong> found to be 
+	 * differentially expressed (neither <code>OVEREXPRESSION</code> nor 
+	 * <code>UNDEREXPRESSION</code> calls). This is different from <code>NOEXPRESSION</code>, 
+	 * as the gene could actually be expressed, but, not differentially. 
 	 * </ul>
 	 * 
      * @author Frederic Bastian
@@ -43,7 +48,7 @@ public class ExprDataParams {
      * @since Bgee 13
 	 */
     public enum CallType {
-    	EXPRESSION, OVEREXPRESSION, UNDEREXPRESSION, NOEXPRESSION;
+    	EXPRESSION, NOEXPRESSION, OVEREXPRESSION, UNDEREXPRESSION, NODIFFEXPRESSION;
     }
     /**
      * Define the different expression data types used in Bgee.

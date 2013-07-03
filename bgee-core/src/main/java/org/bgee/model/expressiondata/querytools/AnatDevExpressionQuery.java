@@ -1,7 +1,8 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.querytools;
 
 import java.util.Collection;
 
+import org.bgee.model.expressiondata.GeneCallValidator;
 import org.bgee.model.expressiondata.GeneCallValidator.GeneCallRequirement;
 
 /**

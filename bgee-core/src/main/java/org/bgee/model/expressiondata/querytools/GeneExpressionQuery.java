@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.querytools;
 
 /**
  * This class allows to retrieve <code>Gene</code>s based on their expression data.

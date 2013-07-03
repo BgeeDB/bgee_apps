@@ -12,9 +12,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.data.sql.BgeeConnection;
 import org.bgee.model.expressiondata.DiffExprParams;
-import org.bgee.model.expressiondata.ExprDataParams.CallType;
-import org.bgee.model.expressiondata.ExprDataParams.DataQuality;
-import org.bgee.model.expressiondata.ExprDataParams.DataType;
+import org.bgee.model.expressiondata.DataParameters.CallType;
+import org.bgee.model.expressiondata.DataParameters.DataQuality;
+import org.bgee.model.expressiondata.DataParameters.DataType;
 
 /**
  * This class stores parameters of expression data, allowing to specify 
@@ -587,4 +587,6 @@ public class BasicCallFilter extends ExprDataFilter {
 			this.propagateStages = propagateStages;
 			log.exit();
 		}
+		
+		hash equals
 }

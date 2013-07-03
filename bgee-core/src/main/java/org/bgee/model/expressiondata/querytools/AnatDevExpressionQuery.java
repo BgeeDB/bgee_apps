@@ -2,8 +2,7 @@ package org.bgee.model.expressiondata.querytools;
 
 import java.util.Collection;
 
-import org.bgee.model.expressiondata.GeneCallValidator;
-import org.bgee.model.expressiondata.GeneCallValidator.GeneCallRequirement;
+import org.bgee.model.expressiondata.querytools.GeneCallValidator.GeneCallRequirement;
 
 /**
  * This class allows to retrieve <code>AnatomicalEntity</code>s and 

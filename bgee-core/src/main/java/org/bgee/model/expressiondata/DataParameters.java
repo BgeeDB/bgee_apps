@@ -1,6 +1,20 @@
 package org.bgee.model.expressiondata;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class DataParameters {
+	//**********************************************
+  	//   INNER ENUM CLASSES
+  	//**********************************************
 	/**
 	 * Define the different types of expression data calls.
 	 * <ul>
@@ -60,4 +74,106 @@ public class DataParameters {
     public enum DataQuality {
     	LOW, HIGH;
     }
+    
+    //**********************************************
+  	//   STATIC CLASS ATTRIBUTES AND METHODS
+  	//**********************************************
+  	/**
+  	 * <code>Logger</code> of the class. 
+  	 */
+  	private final static Logger log = LogManager.getLogger(DataParameters.class.getName());
+  	/**
+  	 * An unmodifiable <code>Map</code> associating each <code>CallType</code> 
+  	 * in the key set to a <code>Set</code> of the <code>DataType</code>s 
+  	 * allowing to generate that <code>CallType</code>. 
+  	 */
+  	private static final Map<CallType, Set<DataType>> allowedDataTypes = 
+  			Collections.unmodifiableMap(loadAllowedDataTypes());
+  	private static Map<CallType, Set<DataType>> loadAllowedDataTypes () {
+
+  		Map<CallType, Set<DataType>> types = 
+  				new HashMap<CallType, Set<DataType>>();
+  		//data types generating expression calls
+  		types.put(CallType.EXPRESSION, new HashSet<DataType>());
+  		types.get(CallType.EXPRESSION).add(DataType.AFFYMETRIX);
+  		types.get(CallType.EXPRESSION).add(DataType.EST);
+  		types.get(CallType.EXPRESSION).add(DataType.INSITU);
+  		types.get(CallType.EXPRESSION).add(DataType.RNASEQ);
+  		//data types generating over-expression calls
+  		types.put(CallType.OVEREXPRESSION, new HashSet<DataType>());
+  		types.get(CallType.OVEREXPRESSION).add(DataType.AFFYMETRIX);
+  		types.get(CallType.OVEREXPRESSION).add(DataType.RNASEQ);
+  		//data types generating under-expression calls
+  		types.put(CallType.UNDEREXPRESSION, new HashSet<DataType>());
+  		types.get(CallType.UNDEREXPRESSION).add(DataType.AFFYMETRIX);
+  		types.get(CallType.UNDEREXPRESSION).add(DataType.RNASEQ);
+  		//data types generating no-expression calls
+  		types.put(CallType.NOEXPRESSION, new HashSet<DataType>());
+  		types.get(CallType.NOEXPRESSION).add(DataType.AFFYMETRIX);
+  		types.get(CallType.NOEXPRESSION).add(DataType.INSITU);
+  		types.get(CallType.NOEXPRESSION).add(DataType.RELAXEDINSITU);
+  		types.get(CallType.NOEXPRESSION).add(DataType.RNASEQ);
+
+  		return types;
+  	}
+  	/**
+  	 * Return an unmodifiable <code>Map</code> associating each <code>CallType</code> 
+  	 * in the key set to a <code>Set</code> containing the <code>DataType</code>s 
+  	 * allowing to generate that <code>CallType</code>. 
+  	 * 
+  	 * @return 	an unmodifiable <code>Map</code> providing the allowed <code>DataType</code>s 
+  	 * 			for each <code>CallType</code>.
+  	 * @see #checkCallTypeDataType(CallType, DataType);
+  	 * @see #checkCallTypeDataTypes(CallType, Collection);
+  	 */
+  	public static Map<CallType, Set<DataType>> getAllowedDataTypes() {
+  		return allowedDataTypes;
+  	}
+  	/**
+  	 * Check if <code>DataType</code> is compatible with <code>callType</code> 
+  	 * (see {@link #getAllowedDataTypes()}). 
+  	 * An <code>IllegalArgumentException</code> is thrown if an incompatibility 
+  	 * is detected,
+  	 * 
+  	 * @param callType 		The <code>CallType</code> to check against 
+  	 * 						<code>dataTypes</code>
+  	 * @param dataType		A <code>DataType</code> to check against 
+  	 * 						<code>callType</code>.
+  	 * @throws IllegalArgumentException 	If an incompatibility is detected.
+  	 */
+  	public static void checkCallTypeDataType(CallType callType, DataType dataType) 
+  			throws IllegalArgumentException {
+  		checkCallTypeDataTypes(callType, Arrays.asList(dataType));
+  	}
+  	/**
+  	 * Check if all <code>DataType</code>s in <code>dataTypes</code> are compatible 
+  	 * with <code>callType</code> (see {@link #getAllowedDataTypes()}). 
+  	 * An <code>IllegalArgumentException</code> is thrown if an incompatibility 
+  	 * is detected,
+  	 * 
+  	 * @param callType 		The <code>CallType</code> to check against 
+  	 * 						<code>dataTypes</code>
+  	 * @param dataTypes		A <code>Collection</code> of <code>DataType</code>s to check 
+  	 * 						against <code>callType</code>.
+  	 * @throws IllegalArgumentException 	If an incompatibility is detected.
+  	 */
+  	private static void checkCallTypeDataTypes(CallType callType, Collection<DataType> dataTypes) 
+  			throws IllegalArgumentException {
+  		log.entry(callType, dataTypes);
+
+  		String exceptionMessage = "";
+  		Set<DataType> allowedTypes = getAllowedDataTypes().get(callType);
+  		for (DataType dataType: dataTypes) {
+  			if (!allowedTypes.contains(dataType)) {
+  				exceptionMessage += dataType + " does not allow to generate " + 
+  						callType + " calls. ";
+  			}
+  		}
+
+  		if (!"".equals(exceptionMessage)) {
+  			throw log.throwing(new IllegalArgumentException(exceptionMessage));
+  		}
+
+  		log.exit();
+  	}
 }

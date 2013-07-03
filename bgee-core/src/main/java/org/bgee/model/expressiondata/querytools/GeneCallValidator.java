@@ -1,11 +1,12 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.querytools;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-import org.bgee.model.expressiondata.ExprDataParams.CallType;
+import org.bgee.model.expressiondata.DataParameters;
+import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.gene.Gene;
 
 /**

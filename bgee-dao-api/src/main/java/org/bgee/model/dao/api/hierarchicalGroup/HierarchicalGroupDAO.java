@@ -1,4 +1,4 @@
-package org.bgee.model.dao.common.hierarchicalGroup;
+package org.bgee.model.dao.api.hierarchicalGroup;
 
 import java.sql.SQLException;
 import java.util.ArrayList;

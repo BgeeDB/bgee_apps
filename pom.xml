@@ -50,6 +50,7 @@
 		<module>bgee-webapp</module>
 		<module>bgee-pipeline</module>
                 <module>bgee-dao-api</module>
+    <module>bgee-dao-sql</module>
   </modules>
 
 	<!-- Dependencies needed for *all* sub-projects -->

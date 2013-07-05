@@ -1,4 +1,4 @@
-package org.bgee.model.dao.common;
+package org.bgee.model.dao.api;
 
 public class TransferObject 
 {

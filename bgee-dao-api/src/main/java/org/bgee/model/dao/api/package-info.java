@@ -12,11 +12,11 @@
  * and a corresponding DAO. 
  * For instance, for the {@link org.bgee.model.gene.GeneFactory GeneFactory} 
  * to provide {@link org.bgee.model.gene.Gene Gene}s, it calls a DAO implementing 
- * the {@link org.bgee.model.dao.common.gene.GeneDAO GeneDAO} interface, 
- * that returns {@link org.bgee.model.dao.common.gene.GeneTO GeneTO}s.
+ * the {@link org.bgee.model.dao.api.gene.GeneDAO GeneDAO} interface, 
+ * that returns {@link org.bgee.model.dao.api.gene.GeneTO GeneTO}s.
  * 
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013
  * @since Bgee 01
  */
-package org.bgee.model.dao.common;
+package org.bgee.model.dao.api;

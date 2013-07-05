@@ -1,4 +1,4 @@
-package org.bgee.model.dao.common.expressiondata.rawdata.affymetrix;
+package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
 /**
  * An <code>interface</code> that must be implemented by all <code>DAO</code>s 

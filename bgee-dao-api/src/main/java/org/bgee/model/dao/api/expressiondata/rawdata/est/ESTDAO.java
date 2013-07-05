@@ -1,4 +1,4 @@
-package org.bgee.model.dao.common.expressiondata.rawdata.est;
+package org.bgee.model.dao.api.expressiondata.rawdata.est;
 
 
 public interface ESTDAO 

@@ -1,4 +1,4 @@
-package org.bgee.model.dao.common.expressiondata.rawdata.rnaseq;
+package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.io.Serializable;
 

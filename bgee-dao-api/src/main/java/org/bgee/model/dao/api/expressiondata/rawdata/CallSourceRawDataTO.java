@@ -1,4 +1,4 @@
-package org.bgee.model.dao.common.expressiondata.rawdata;
+package org.bgee.model.dao.api.expressiondata.rawdata;
 
 import model.data.common.TransferObject;
 

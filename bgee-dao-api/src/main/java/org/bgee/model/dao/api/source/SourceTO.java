@@ -1,4 +1,4 @@
-package org.bgee.model.dao.common.source;
+package org.bgee.model.dao.api.source;
 
 import java.io.Serializable;
 import java.util.Date;

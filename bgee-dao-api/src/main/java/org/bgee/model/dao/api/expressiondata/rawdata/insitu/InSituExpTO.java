@@ -1,4 +1,4 @@
-package org.bgee.model.dao.common.expressiondata.rawdata.insitu;
+package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
 import java.io.Serializable;
 

@@ -1,26 +1,33 @@
-<?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  
   <parent>
     <groupId>org.bgee</groupId>
     <artifactId>bgee-applications</artifactId>
     <version>13</version>
   </parent>
-  <groupId>org.bgee</groupId>
+  
   <artifactId>bgee-dao-sql</artifactId>
-  <version>13</version>
+  <packaging>jar</packaging>
   <name>bgee-dao-sql</name>
-  <url>http://maven.apache.org</url>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+  
   <dependencies>
+  
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
+	  <groupId>commons-codec</groupId>
+	  <artifactId>commons-codec</artifactId>
     </dependency>
+  
+    <dependency>
+      <groupId>org.bgee.log4jdbc-log4j2</groupId>
+      <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
+    </dependency>
+    
   </dependencies>
+  
+  <build>
+      <finalName>bgee-dao-api-${project.version}</finalName>
+  </build>
+  
 </project>

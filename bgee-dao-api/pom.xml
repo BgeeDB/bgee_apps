@@ -10,15 +10,10 @@
   
   <artifactId>bgee-dao-api</artifactId>
   <packaging>jar</packaging>
-  <name>bgee-dao</name>
+  <name>bgee-dao-api</name>
   
   
   <dependencies>
-  
-    <dependency>
-      <groupId>org.bgee.log4jdbc-log4j2</groupId>
-      <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
-    </dependency>
     
   </dependencies>
   

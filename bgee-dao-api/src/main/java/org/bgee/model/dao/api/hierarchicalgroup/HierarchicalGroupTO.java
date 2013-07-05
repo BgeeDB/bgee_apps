@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.hierarchicalGroup;
+package org.bgee.model.dao.api.hierarchicalgroup;
 
 import java.util.ArrayList;
 import java.util.Collection;

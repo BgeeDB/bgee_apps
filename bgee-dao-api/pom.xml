@@ -8,7 +8,7 @@
     <version>13</version>
   </parent>
   
-  <artifactId>bgee-dao</artifactId>
+  <artifactId>bgee-dao-api</artifactId>
   <packaging>jar</packaging>
   <name>bgee-dao</name>
   
@@ -23,7 +23,7 @@
   </dependencies>
   
   <build>
-      <finalName>bgee-dao-${project.version}</finalName>
+      <finalName>bgee-dao-api-${project.version}</finalName>
   </build>
   
 </project>

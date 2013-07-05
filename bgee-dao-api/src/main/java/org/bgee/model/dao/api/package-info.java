@@ -20,14 +20,19 @@
  * specific to a data source.
  * <li><code>TransferObject</code>s, that are used by the concrete implementations 
  * to communicate between the client and the data source.
+ * <li>A <code>DAOParameters</code> class, that allows to communicate parameters 
+ * (for instance, parameters to connect to a database) to the DAOs. The parameters 
+ * expected are defined by the concrete implementations. 
  * <li>A <code>DAOFactory</code>, that: 
  *   <ul>
- *   <li>defines the methods to be implemented by the factory of the concrete implementations, 
- *   to obtain DAOs.
- *   <li>is responsible to identify which concrete factory from which concrete implementation 
- *   should be returned to the client. The client is not aware of which concrete factory 
- *   it obtains, and is only exposed to the abstract factory of this API. 
- *   This follows the <em>Abstract Factory Pattern</em>.
+ *   <li>defines the methods to be implemented by the factory 
+ *   of the concrete implementations, to obtain DAOs.
+ *   <li>is responsible to instantiate and return the requested concrete factory, 
+ *   using information from a <code>DAOParameters</code> object, provided by the client. 
+ *   The client is not aware of which concrete factory it obtains (besides setting 
+ *   the parameters of the <code>DAOParameters</code> object), and is only exposed 
+ *   to the abstract factory and interfaces of this API. The code of the client is thus 
+ *   not dependent of any concrete implementation. This follows the Abstract Factory Pattern.
  *   </ul>
  * </ul>
  * 

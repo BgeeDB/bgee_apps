@@ -20,6 +20,14 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>bgee-core</artifactId>
       <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bgee-dao-sql</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
     </dependency>
   
     <dependency>

@@ -13,7 +13,14 @@
   <name>bgee-dao-sql</name>
   
   <dependencies>
-  
+    
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bgee-dao-api</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    
     <dependency>
 	  <groupId>commons-codec</groupId>
 	  <artifactId>commons-codec</artifactId>
@@ -22,12 +29,13 @@
     <dependency>
       <groupId>org.bgee.log4jdbc-log4j2</groupId>
       <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
+      <scope>runtime</scope>
     </dependency>
     
   </dependencies>
   
   <build>
-      <finalName>bgee-dao-api-${project.version}</finalName>
+      <finalName>bgee-dao-sql-${project.version}</finalName>
   </build>
   
 </project>

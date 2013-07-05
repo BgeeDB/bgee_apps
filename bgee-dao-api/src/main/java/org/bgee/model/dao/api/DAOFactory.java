@@ -1,12 +1,7 @@
 package org.bgee.model.dao.api;
 
-import org.bgee.model.dao.sql.mysql.MySQLDAOFactory;
-
 public abstract class DAOFactory 
 {
-	public enum DataSourceType {
-		MYSQL;
-	}
 	
 	public static synchronized DAOFactory getDAOFactory(DataSourceType type)
 	{

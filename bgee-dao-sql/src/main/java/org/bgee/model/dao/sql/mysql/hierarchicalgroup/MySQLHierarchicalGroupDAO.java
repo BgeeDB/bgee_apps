@@ -1,4 +1,4 @@
-package org.bgee.model.dao.sql.mysql.hierarchicalGroup;
+package org.bgee.model.dao.sql.mysql.hierarchicalgroup;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,12 +11,12 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.common.hierarchicalGroup.HierarchicalGroupDAO;
 import org.bgee.model.dao.sql.*;
 
-public class MysqlHierarchicalGroupDAO implements HierarchicalGroupDAO {
+public class MySQLHierarchicalGroupDAO implements HierarchicalGroupDAO {
 
 	BgeeConnection connection;
 
 	private final static Logger log = LogManager
-			.getLogger(MysqlHierarchicalGroupDAO.class.getName());
+			.getLogger(MySQLHierarchicalGroupDAO.class.getName());
 
 	/**
 	 * Retrieves all the orthologus genes corresponding to the queried gene at

@@ -4,24 +4,25 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.bgee.model.EntityFactory;
 import org.bgee.model.data.common.DAOFactory;
 import org.bgee.model.data.common.TransferObject;
 import org.bgee.model.data.common.source.SourceDAO;
 import org.bgee.model.data.common.source.SourceTO;
 
 /**
- * Factory of <code>DataSource</code> objects.
+ * Factory of <code>Source</code> objects.
  * 
- * This class proposes methods to retrieve a <code>DataSource</code> object, 
- * or a <code>Collection</code> of <code>DataSource</code> objects.
+ * This class proposes methods to retrieve a <code>Source</code> object, 
+ * or a <code>Collection</code> of <code>Source</code> objects.
  * 
  * @author Frederic Bastian
- * @version Bgee11, June 2012
- * @see DataSource
+ * @version Bgee11
+ * @see Source
  * @since Bgee11
  *
  */
-public class SourceFactory 
+public class SourceFactory extends EntityFactory
 {
 	/**
 	 * Default constructor.
@@ -35,108 +36,108 @@ public class SourceFactory
      * Retrieve from the data source (e.g., the Bgee database) 
      * a data source (e.g., ArrayExpress) by its ID.
      * 
-     * @param dataSourceId 	a <code>String</code> representing the ID of the data source to retrieve
-     * @return				a <code>DataSoure</code> corresponding to <code>dataSourceId</code>
+     * @param SourceId 	a <code>String</code> representing the ID of the data source to retrieve
+     * @return				a <code>DataSoure</code> corresponding to <code>SourceId</code>
      */
-    public DataSource getDataSourceById(String dataSourceId)
+    public Source getSourceById(String SourceId)
     {
     	DAOFactory factory = DAOFactory.getDAOFactory();
-    	SourceDAO sourceDAO = factory.getDataSourceDAO();
-    	return this.createDataSource(sourceDAO.getDataSourceById(dataSourceId));
+    	SourceDAO sourceDAO = factory.getSourceDAO();
+    	return this.createSource(sourceDAO.getSourceById(SourceId));
     }
     
     /**
      * Return all the data sources (e.g., ArrayExpress, ZFIN) used in Bgee, 
      * retrieved from a data source (e.g., the Bgee database), 
-     * as a <code>Collection</code> of <code>DataSource</code>.
+     * as a <code>Collection</code> of <code>Source</code>.
      * 
-     * @return 	a <code>Collection</code> of <code>DataSource</code> 
+     * @return 	a <code>Collection</code> of <code>Source</code> 
      * 			representing the data sources used in Bgee.
      */
-    public Collection<DataSource> getAllDataSources()
+    public Collection<Source> getAllSources()
     {
     	DAOFactory factory = DAOFactory.getDAOFactory();
-    	SourceDAO sourceDAO = factory.getDataSourceDAO();
-    	return this.getDataSources(sourceDAO.getAllDataSources());
+    	SourceDAO sourceDAO = factory.getSourceDAO();
+    	return this.getSources(sourceDAO.getAllSources());
     }
 
     /**
      * Return data sources (e.g., ArrayExpress, ZFIN) used in Bgee, that are not used only for xrefs purpose, 
      * but where some Bgee data actually come from, 
-     * as a <code>Collection</code> of <code>DataSource</code> ordered by their category.
+     * as a <code>Collection</code> of <code>Source</code> ordered by their category.
      * This method can be used for instance to display Bgee data origins and version details.
      * 
-     * @return 	a <code>Collection</code> of <code>DataSource</code>,  
+     * @return 	a <code>Collection</code> of <code>Source</code>,  
      * 			ordered by their category, 
      * 			representing the data sources where some Bgee data actually come from.
      */
-	public Collection<DataSource> getDisplayableDataSources() 
+	public Collection<Source> getDisplayableSources() 
 	{
 		DAOFactory factory = DAOFactory.getDAOFactory();
-    	SourceDAO sourceDAO = factory.getDataSourceDAO();
-    	return this.getDataSources(sourceDAO.getDisplayableDataSources());
+    	SourceDAO sourceDAO = factory.getSourceDAO();
+    	return this.getSources(sourceDAO.getDisplayableSources());
 	}
     
     
     /**
-     * Return a <code>Collection</code> of <code>DataSource</code> objects, 
+     * Return a <code>Collection</code> of <code>Source</code> objects, 
      * created using a <code>Collection</code> of <code>TransferObject</code>, 
      * castable to <code>SourceTO</code> objects.
      * <code>SourceTO</code> objects are used to hold values retrieved from the data source, 
-     * related to <code>DataSource</code>. Work as a bridge between the data source and the <code>model</code>.
+     * related to <code>Source</code>. Work as a bridge between the data source and the <code>model</code>.
      * 
-     * @param dataSourceTO 	a <code>Collection</code> of of <code>TransferObject</code>, 
+     * @param SourceTO 	a <code>Collection</code> of of <code>TransferObject</code>, 
      * 						castable to <code>SourceTO</code>, 
      * 						handling values retrieved from a data source, 
-     * 						to populate a <code>Collection</code> of new <code>DataSource</code> objects.
-     * @return 				a <code>Collection</code> of <code>DataSource</code> objects, 
+     * 						to populate a <code>Collection</code> of new <code>Source</code> objects.
+     * @return 				a <code>Collection</code> of <code>Source</code> objects, 
      * 						with arguments populated using the <code>SourceTO</code> objects 
      * 						coming from <code>toCollection</code>. 
      * 						An empty <code>Collection</code> if <code>toCollection</code> was empty.
      */
-    private Collection<DataSource> getDataSources(Collection<TransferObject> toCollection)
+    private Collection<Source> getSources(Collection<TransferObject> toCollection)
     {
-    	Collection<DataSource> dataSourceList = new ArrayList<DataSource>();
+    	Collection<Source> SourceList = new ArrayList<Source>();
         Iterator<TransferObject> iterator = toCollection.iterator();
     	
     	while (iterator.hasNext()) {
-    		dataSourceList.add(this.createDataSource((SourceTO) iterator.next()));
+    		SourceList.add(this.createSource((SourceTO) iterator.next()));
     	}
-    	return dataSourceList;
+    	return SourceList;
     }
     
     /**
-     * Return a <code>DataSource</code> object created using a <code>SourceTO</code> object.
+     * Return a <code>Source</code> object created using a <code>SourceTO</code> object.
      * <code>SourceTO</code> objects are used to hold values retrieved from the data source, 
-     * related to <code>DataSource</code>. Work as a bridge between the data source and the <code>model</code>.
+     * related to <code>Source</code>. Work as a bridge between the data source and the <code>model</code>.
      * 
-     * @param dataSourceTO 	a <code>SourceTO</code>, handling values retrieved from a data source, 
-     * 						to populate a new <code>DataSource</code> object.
-     * @return 				a <code>DataSource</code>, with arguments populated using the <code>SourceTO</code>. 
-     * 						<code>null</code> if <code>dataSourceTO</code> was <code>null</code>.
+     * @param SourceTO 	a <code>SourceTO</code>, handling values retrieved from a data source, 
+     * 						to populate a new <code>Source</code> object.
+     * @return 				a <code>Source</code>, with arguments populated using the <code>SourceTO</code>. 
+     * 						<code>null</code> if <code>SourceTO</code> was <code>null</code>.
      */
-    private DataSource createDataSource(SourceTO sourceTO)
+    private Source createSource(SourceTO sourceTO)
     {
-    	DataSource dataSource = null;
+    	Source Source = null;
     	
     	if (sourceTO != null) {
-    		dataSource = new DataSource();
-    		dataSource.setId(sourceTO.id);
-    		dataSource.setName(sourceTO.name);
-    		dataSource.setDescription(sourceTO.dataSourceDescription);
+    		Source = new Source();
+    		Source.setId(sourceTO.id);
+    		Source.setName(sourceTO.name);
+    		Source.setDescription(sourceTO.SourceDescription);
     		
-    		dataSource.setXRefUrl(sourceTO.xRefUrl);
-    		dataSource.setExperimentUrl(sourceTO.experimentUrl);
-    		dataSource.setEvidenceUrl(sourceTO.evidenceUrl);
-    		dataSource.setBaseUrl(sourceTO.baseUrl);
+    		Source.setXRefUrl(sourceTO.xRefUrl);
+    		Source.setExperimentUrl(sourceTO.experimentUrl);
+    		Source.setEvidenceUrl(sourceTO.evidenceUrl);
+    		Source.setBaseUrl(sourceTO.baseUrl);
     		
-    		dataSource.setReleaseDate(sourceTO.releaseDate);
-    		dataSource.setReleaseVersion(sourceTO.releaseVersion);
+    		Source.setReleaseDate(sourceTO.releaseDate);
+    		Source.setReleaseVersion(sourceTO.releaseVersion);
     		
-    		dataSource.setToDisplay(sourceTO.toDisplay);
-    		dataSource.setCategory(sourceTO.category);
+    		Source.setToDisplay(sourceTO.toDisplay);
+    		Source.setCategory(sourceTO.category);
     	}
     	
-    	return dataSource;
+    	return Source;
     }
 }

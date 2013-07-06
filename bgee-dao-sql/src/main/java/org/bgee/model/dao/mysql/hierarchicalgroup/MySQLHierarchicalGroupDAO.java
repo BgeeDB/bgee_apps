@@ -1,4 +1,4 @@
-package org.bgee.model.dao.sql.mysql.hierarchicalgroup;
+package org.bgee.model.dao.mysql.hierarchicalgroup;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,6 +9,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.bgee.model.dao.common.hierarchicalGroup.HierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.BgeeConnection;
+import org.bgee.model.dao.mysql.BgeePreparedStatement;
 import org.bgee.model.dao.sql.*;
 
 public class MySQLHierarchicalGroupDAO implements HierarchicalGroupDAO {

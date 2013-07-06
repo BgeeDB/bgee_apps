@@ -20,21 +20,29 @@
  * specific to a data source.
  * <li><code>TransferObject</code>s, that are used by the concrete implementations 
  * to communicate between the client and the data source.
- * <li>A <code>DAOParameters</code> class, that allows to communicate parameters 
- * (for instance, parameters to connect to a database) to the DAOs. The parameters 
- * expected are defined by the concrete implementations. 
  * <li>A <code>DAOFactory</code>, that: 
  *   <ul>
  *   <li>defines the methods to be implemented by the factory 
  *   of the concrete implementations, to obtain DAOs.
- *   <li>is responsible to instantiate and return the requested concrete factory, 
- *   using information from a <code>DAOParameters</code> object, provided by the client. 
- *   The client is not aware of which concrete factory it obtains (besides setting 
- *   the parameters of the <code>DAOParameters</code> object), and is only exposed 
- *   to the abstract factory and interfaces of this API. The code of the client is thus 
- *   not dependent of any concrete implementation. This follows the Abstract Factory Pattern.
+ *   <li>is responsible to instantiate and return a concrete factory, using parameters 
+ *   provided by the client, and the <code>Service Provider</code> mechanism (see 
+ *   below). The client is not aware of which concrete factory it obtains (besides  
+ *   providing the parameters), and is only exposed to the abstract factory and interfaces 
+ *   of this API. The code of the client is thus not dependent of any concrete 
+ *   implementation. This follows the Abstract Factory Pattern.
  *   </ul>
  * </ul>
+ * <p>
+ * <h3>Service Provider mechanism</h3>
+ * This API supports the standard {@link 
+ * http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider 
+ * Service Provider} mechanism. Concrete implementations must include the file 
+ * <code>META-INF/services/org.bgee.model.dao.api.DAOFactory</code>. The file must contain 
+ * the name of the implementation of <code>org.bgee.model.dao.api.DAOFactory</code>. 
+ * For example, to load the <code>my.sql.Factory</code> class, 
+ * the <code>META-INF/services/org.bgee.model.dao.api.DAOFactory</code> file 
+ * would contain the entry:
+ * <pre>my.sql.Factory</pre>
  * 
  * @author Frederic Bastian
  * @version Bgee 13

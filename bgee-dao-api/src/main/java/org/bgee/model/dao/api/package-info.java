@@ -20,7 +20,7 @@
  * specific to a data source.
  * <li><code>TransferObject</code>s, that are used by the concrete implementations 
  * to communicate between the client and the data source.
- * <li>A <code>DAOFactory</code>, that: 
+ * <li>A <code>DAOManager</code>, that: 
  *   <ul>
  *   <li>defines the methods to be implemented by the factory 
  *   of the concrete implementations, to obtain DAOs.
@@ -37,10 +37,10 @@
  * This API supports the standard {@link 
  * http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider 
  * Service Provider} mechanism. Concrete implementations must include the file 
- * <code>META-INF/services/org.bgee.model.dao.api.DAOFactory</code>. The file must contain 
- * the name of the implementation of <code>org.bgee.model.dao.api.DAOFactory</code>. 
+ * <code>META-INF/services/org.bgee.model.dao.api.DAOManager</code>. The file must contain 
+ * the name of the implementation of <code>org.bgee.model.dao.api.DAOManager</code>. 
  * For example, to load the <code>my.sql.Factory</code> class, 
- * the <code>META-INF/services/org.bgee.model.dao.api.DAOFactory</code> file 
+ * the <code>META-INF/services/org.bgee.model.dao.api.DAOManager</code> file 
  * would contain the entry:
  * <pre>my.sql.Factory</pre>
  * 

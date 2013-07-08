@@ -1,6 +1,5 @@
 package org.bgee.model.dao.api.hierarchicalgroup;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import org.bgee.model.dao.api.exception.DataAccessException;

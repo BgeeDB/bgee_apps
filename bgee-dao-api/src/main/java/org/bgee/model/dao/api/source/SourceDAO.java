@@ -4,9 +4,10 @@ import java.util.Collection;
 import java.util.List;
 
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.exception.DataAccessException;
 
 /**
- * DAO used to retrieve {@link SourceTO}s. 
+ * DAO defining queries using or retrieving {@link SourceTO}s. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -21,8 +22,9 @@ public interface SourceDAO
      * 
      * @return 	a <code>Collection</code> of <code>SourceTO</code>, 
      * 			representing the sources used in Bgee.
+     * @throws DataAccessException 	If an error occurred when accessing the data source. 
      */
-	public Collection<SourceTO> getAllDataSources();
+	public Collection<SourceTO> getAllDataSources() throws DataAccessException;
 
 	/**
      * Return sources used in Bgee, that are not used only for xrefs purpose, 
@@ -32,8 +34,9 @@ public interface SourceDAO
      * @return 	a <code>Collection</code> of <code>SourceTO</code>,  
      * 			representing the sources where some Bgee data actually come from, 
      * 			order by their <code>categoryId</code>.
+     * @throws DataAccessException 	If an error occurred when accessing the data source.
      */
-	public List<TransferObject> getDisplayableDataSources();
+	public List<TransferObject> getDisplayableDataSources() throws DataAccessException;
 
 	/**
      * Retrieve a data source (e.g., ArrayExpress) by its ID, 
@@ -42,6 +45,7 @@ public interface SourceDAO
      * @param dataSourceId 	a <code>String</code> representing the ID of the data source 
      * 						to retrieve
      * @return				a <code>SourceTO</code>, corresponding to <code>dataSourceId</code>
+     * @throws DataAccessException 	If an error occurred when accessing the data source.
      */
-	public SourceTO getDataSourceById(String dataSourceId);
+	public SourceTO getDataSourceById(String dataSourceId) throws DataAccessException;
 }

@@ -1,9 +1,21 @@
-package model.data.common.expressionData.inSituHybridizationData;
+package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
 import java.io.Serializable;
 
-import model.data.common.expressionData.ExpressionDataLinkedToGeneTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
 
+/**
+ * <code>TransferObject</code> for the class 
+ * {@link org.bgee.model.expressiondata.rawdata.insitu.InSituSpot}.
+ * <p>
+ * For information on this <code>TransferObject</code> and its fields, 
+ * see the corresponding class.
+ * 
+ * @author Frederic Bastian
+ * @version Bgee 13
+ * @see org.bgee.model.expressiondata.rawdata.insitu.InSituSpot
+ * @since Bgee 11
+ */
 public class InSituSpotTO extends CallSourceRawDataTO implements Serializable
 {
 

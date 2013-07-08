@@ -14,13 +14,7 @@
   
   
   <dependencies>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-core</artifactId>
-      <type>javadoc</type>
-      <version>${project.version}</version>
-      <scope>compile</scope>
-    </dependency>
+    
   </dependencies>
   
   <build>

@@ -1,34 +1,28 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
+import org.bgee.model.dao.api.exception.DataAccessException;
+
 /**
- * An <code>interface</code> that must be implemented by all <code>DAO</code>s 
- * related to microarray experiments; 
- * for instance, to retrieve microarray experiments from a data source, 
- * or to update microarray experiments into a data source.
- * <p>
- * The communication between the DAO and the <code>model</code> layer 
- * is achieved through the use of <code>TransferObject</code>s  
- * (in that case, <code>AffymetrixExpTO</code>s).
+ * DAO defining queries using or retrieving {@link AffymetrixExpTO}s. 
  * 
  * @author Frederic Bastian
- * @version Bgee 12
+ * @version Bgee 13
  * @see AffymetrixExpTO
- * @see model.data.sql.mysql.expressionData.affymetrixData.MysqlMicroarrayExperimentDAO
  * @since Bgee 01
- *
  */
 public interface AffymetrixExpDAO 
 {
 	/**
-	 * Retrieve from a data source a <code>AffymetrixExpTO</code>,  
-	 * encapsulating the data related to a microarray experiment, 
-	 * using an experiment ID (<code>microarrayExperimentId</code>).  
+	 * Retrieve from a data source a <code>AffymetrixExpTO</code>, corresponding to 
+	 * an Affymetrix experiment with the ID <code>expId</code>, or <code>null</code> 
+	 * if no corresponding experiment could be found.  
 	 * 
-	 * @param microarrayExperimentId 	A <code>String</code> representing the ID 
-	 * 									of the microarray experiment that needs to be retrieved 
-	 * 									from the data source. 
+	 * @param expId 	A <code>String</code> representing the ID 
+	 * 					of the Affymetrix experiment to retrieve from the data source. 
 	 * @return	A <code>AffymetrixExpTO</code>, encapsulating all the data 
-	 * 			related to the microarray experiment retrieved from the data source. 
+	 * 			related to the Affymetrix experiment, <code>null</code> if none 
+	 * 			could be found.
+     * @throws DataAccessException 	If an error occurred when accessing the data source. 
 	 */
-	public AffymetrixExpTO getExperimentById(String microarrayExperimentId);
+	public AffymetrixExpTO getExperimentById(String expId) throws DataAccessException;
 }

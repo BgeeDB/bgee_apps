@@ -5,17 +5,16 @@ import java.io.Serializable;
 import org.bgee.model.dao.api.TransferObject;
 
 /**
- * A <code>TransferObject</code> used to communicate 
- * information related to RNA-Seq experiments 
- * between the <code>model</code> layer (the business logic layer), 
- * and the <code>model.data</code> layer (the data source layer).
- * It encapsulates the information that could be retrieved from the data source. 
+ * <code>TransferObject</code> for the class 
+ * {@link org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqExp}.
+ * <p>
+ * For information on this <code>TransferObject</code> and its fields, 
+ * see the corresponding class.
  * 
  * @author Frederic Bastian
- * @version Bgee 12
- * @see RNASeqExpDAO
+ * @version Bgee 13
+ * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqExp
  * @since Bgee 12
- *
  */
 public class RNASeqExpTO extends TransferObject implements Serializable
 {

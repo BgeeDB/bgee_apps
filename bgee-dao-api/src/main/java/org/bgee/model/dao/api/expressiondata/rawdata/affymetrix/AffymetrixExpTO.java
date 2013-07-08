@@ -5,17 +5,16 @@ import java.io.Serializable;
 import org.bgee.model.dao.api.TransferObject;
 
 /**
- * A <code>TransferObject</code> used to communicate 
- * information related to microarray experiments 
- * between the <code>model</code> layer (the business logic layer), 
- * and the <code>model.data</code> layer (the data source layer).
- * It encapsulates the information that could be retrieved from the data source. 
+ * <code>TransferObject</code> for the class 
+ * {@link org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixExp}.
+ * <p>
+ * For information on this <code>TransferObject</code> and its fields, 
+ * see the corresponding class.
  * 
  * @author Frederic Bastian
- * @version Bgee 12
- * @see AffymetrixExpDAO
- * @since Bgee 01
- *
+ * @version Bgee 13
+ * @see org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixExp
+ * @since Bgee 11
  */
 public class AffymetrixExpTO extends TransferObject implements Serializable
 {

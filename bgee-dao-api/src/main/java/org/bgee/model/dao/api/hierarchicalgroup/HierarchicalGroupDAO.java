@@ -1,12 +1,18 @@
 package org.bgee.model.dao.api.hierarchicalgroup;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+
+import org.bgee.model.dao.api.exception.DataAccessException;
 
 /**
- * An interface
+ * DAO defining queries using or retrieving {@link HierarchicalGroupTO}s. 
  * 
  * @author Komal Sanjeev
+ * @author Frederic Bastian
+ * @version Bgee 13
+ * @see HierarchicalGroupTO
+ * @since Bgee 13
  */
 public interface HierarchicalGroupDAO {
 
@@ -15,10 +21,10 @@ public interface HierarchicalGroupDAO {
 	 * the taxonomy level specified.
 	 * <p>
 	 * This method takes as parameters a <code>String</code> representing the
-	 * gene ID, and a <code>long</code> representing the NCBI taxonomy ID for
-	 * the taxonomy level queried. Then, the orthologus genes for the submitted
+	 * gene ID, and a <code>String</code> representing the NCBI taxonomy ID for
+	 * the taxonomy level queried. Then, the IDs of orthologus genes for the submitted
 	 * gene ID at the particular taxonomy level are retrieved and returned as a
-	 * <code>Collection</code> of <code>String</code>.
+	 * <code>Collection</code> of <code>String</code>s.
 	 * 
 	 * @param queryGene
 	 *            A <code>String</code> representing the gene ID queried, whose
@@ -27,16 +33,41 @@ public interface HierarchicalGroupDAO {
 	 * @param ncbiTaxonomyId
 	 *            A <code>String</code> representing the NCBI taxonomy ID of the
 	 *            hierarchical level queried.
-	 * @return A <code>Collection</code> of <code>String</code> containing all
-	 *         the orthologus genes of the query gene corresponding to the
+	 * @return A <code>Collection</code> of <code>String</code>s containing 
+	 *         the IDs of orthologus genes of the query gene corresponding to the
 	 *         taxonomy level queried.
-	 * @throws SQLException
+     * @throws DataAccessException 	If an error occurred when accessing the data source.
 	 */
-
-	public ArrayList<String> getHierarchicalOrthologusGenes(String queryGene,
-			String ncbiTaxonomyId) throws SQLException;
+	public Collection<String> getHierarchicalOrthologusGenes(String queryGene,
+			String ncbiTaxonomyId) throws DataAccessException;
 	
-	public ArrayList<String> getHierarchicalOrthologusGenesForSpecies(String queryGene,
-			String ncbiTaxonomyId, ArrayList<Long> speciesIds) throws SQLException;
+	/**
+	 * Retrieves the orthologus genes corresponding to the queried gene at
+	 * the taxonomy level specified, belonging to the species specified.
+	 * <p>
+	 * This method takes as parameters a <code>String</code> representing the
+	 * gene ID, a <code>String</code> representing the NCBI taxonomy ID for
+	 * the taxonomy level queried, and a <code>Collection</code> of <code>String</code>s 
+	 * representing the species the returned genes should belong to. 
+	 * The IDs of orthologus genes are returned as a
+	 * <code>Collection</code> of <code>String</code>s.
+	 * 
+	 * @param queryGene
+	 *            A <code>String</code> representing the gene ID queried, whose
+	 *            orthologus genes are to be retrieved.
+	 * 
+	 * @param ncbiTaxonomyId
+	 *            A <code>String</code> representing the NCBI taxonomy ID of the
+	 *            hierarchical level queried.
+	 * @param speciesIds
+	 * 				A <code>Collection</code> of <code>String</code>s containing 
+	 * 				the IDs of the species the returned genes should belong to.
+	 * @return A <code>Collection</code> of <code>String</code>s containing 
+	 *         the IDs of orthologus genes of the query gene corresponding to the
+	 *         taxonomy level queried.
+     * @throws DataAccessException 	If an error occurred when accessing the data source.
+	 */
+	public Collection<String> getHierarchicalOrthologusGenesForSpecies(String queryGene,
+			String ncbiTaxonomyId, Collection<String> speciesIds) throws DataAccessException;
 
 }

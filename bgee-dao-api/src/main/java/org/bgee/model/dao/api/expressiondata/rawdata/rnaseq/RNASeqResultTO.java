@@ -2,23 +2,19 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.io.Serializable;
 
-import model.data.common.expressionData.ExpressionDataLinkedToGeneTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
 
 /**
- * A <code>TransferObject</code> used to communicate 
- * information related to RNA-Seq results 
- * between the <code>model</code> layer (the business logic layer), 
- * and the <code>model.data</code> layer (the data source layer).
- * It encapsulates the information that could be retrieved from the data source. 
+ * <code>TransferObject</code> for the class 
+ * {@link org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResult}.
  * <p>
- * RNA-Seq results hold expression call for a gene, 
- * so this <code>RNASeqResultTO</code> is a child class of <code>CallSourceRawDataTO</code>.
+ * For information on this <code>TransferObject</code> and its fields, 
+ * see the corresponding class.
  * 
  * @author Frederic Bastian
- * @version Bgee 12
- * @see RNASeqResultDAO
+ * @version Bgee 13
+ * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResult
  * @since Bgee 12
- *
  */
 public class RNASeqResultTO extends CallSourceRawDataTO implements Serializable
 {

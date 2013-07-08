@@ -1,24 +1,20 @@
-package model.data.common.expressionData.affymetrixData;
+package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
 import java.io.Serializable;
 
-import model.data.common.expressionData.ExpressionDataMappedToOntologiesTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 
 /**
- * A <code>TransferObject</code> used to communicate 
- * information related to Affymetrix chips
- * between the <code>model</code> layer (the business logic layer), 
- * and the <code>model.data</code> layer (the data source layer). 
- * It encapsulates the information that could be retrieved from the data source. 
+ * <code>TransferObject</code> for the class 
+ * {@link org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixChip}.
  * <p>
- * Affymetrix chips are mapped to anatomical and developmental ontologies, 
- * so this <code>AffymetrixChipTO</code> is a child class of <code>RawDataAnnotated</code>.
+ * For information on this <code>TransferObject</code> and its fields, 
+ * see the corresponding class.
  * 
  * @author Frederic Bastian
- * @version Bgee 12
- * @see AffymetrixChipDAO
- * @since Bgee 01
- *
+ * @version Bgee 13
+ * @see org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixChip
+ * @since Bgee 11
  */
 public class AffymetrixChipTO extends RawDataAnnotatedTO implements Serializable
 {

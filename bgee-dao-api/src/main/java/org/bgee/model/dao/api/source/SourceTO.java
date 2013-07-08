@@ -15,7 +15,6 @@ import org.bgee.model.dao.api.TransferObject;
  * @version Bgee 13
  * @see org.bgee.model.source.Source
  * @since Bgee 11
- *
  */
 public class SourceTO extends TransferObject implements Serializable
 {

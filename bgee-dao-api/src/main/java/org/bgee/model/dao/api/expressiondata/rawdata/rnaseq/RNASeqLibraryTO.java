@@ -2,23 +2,19 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.io.Serializable;
 
-import model.data.common.expressionData.ExpressionDataMappedToOntologiesTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 
 /**
- * A <code>TransferObject</code> used to communicate 
- * information related to RNA-Seq libraries 
- * between the <code>model</code> layer (the business logic layer), 
- * and the <code>model.data</code> layer (the data source layer).
- * It encapsulates the information that could be retrieved from the data source. 
+ * <code>TransferObject</code> for the class 
+ * {@link org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary}.
  * <p>
- * RNA-Seq libraries are mapped to anatomical and developmental ontologies, 
- * so this <code>RNASeqLibraryTO</code> is a child class of <code>RawDataAnnotated</code>.
+ * For information on this <code>TransferObject</code> and its fields, 
+ * see the corresponding class.
  * 
  * @author Frederic Bastian
- * @version Bgee 12
- * @see RNASeqLibraryDAO
+ * @version Bgee 13
+ * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary
  * @since Bgee 12
- *
  */
 public class RNASeqLibraryTO extends RawDataAnnotatedTO implements Serializable
 {

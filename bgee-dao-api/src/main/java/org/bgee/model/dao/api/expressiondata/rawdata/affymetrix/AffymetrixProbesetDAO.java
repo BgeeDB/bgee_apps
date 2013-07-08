@@ -2,7 +2,7 @@ package model.data.common.expressionData.affymetrixData;
 
 import java.util.Collection;
 
-import model.data.common.TransferObject;
+import org.bgee.model.dao.api.TransferObject;
 import model.data.common.anatomy.MultiSpeciesTO;
 import model.data.common.expressionData.DataTypeTO;
 

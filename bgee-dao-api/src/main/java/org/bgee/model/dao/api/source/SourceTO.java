@@ -3,17 +3,17 @@ package org.bgee.model.dao.api.source;
 import java.io.Serializable;
 import java.util.Date;
 
-import model.data.common.TransferObject;
+import org.bgee.model.dao.api.TransferObject;
 
 /**
- * <code>TransferObject</code> for the class <code>DataSource</code>, 
- * to hold values of the fields retrieved from the data source for this class.
+ * <code>TransferObject</code> for the class {@link org.bgee.model.source.Source}.
  * <p>
- * For information on this <code>TransferObject</code> and its fields, see the corresponding class.
+ * For information on this <code>TransferObject</code> and its fields, 
+ * see the corresponding class.
  * 
  * @author Frederic Bastian
- * @version Bgee 11, June 2012
- * @see model.DataSource
+ * @version Bgee 13
+ * @see org.bgee.model.source.Source
  * @since Bgee 11
  *
  */

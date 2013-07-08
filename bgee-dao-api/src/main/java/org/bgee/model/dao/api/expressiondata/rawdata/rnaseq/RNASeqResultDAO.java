@@ -2,7 +2,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.util.Collection;
 
-import model.data.common.TransferObject;
+import org.bgee.model.dao.api.TransferObject;
 import model.data.common.anatomy.MultiSpeciesTO;
 import model.data.common.expressionData.DataTypeTO;
 

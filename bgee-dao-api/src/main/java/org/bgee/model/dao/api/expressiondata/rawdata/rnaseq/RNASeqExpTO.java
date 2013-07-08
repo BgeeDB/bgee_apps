@@ -2,7 +2,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.io.Serializable;
 
-import model.data.common.TransferObject;
+import org.bgee.model.dao.api.TransferObject;
 
 /**
  * A <code>TransferObject</code> used to communicate 

@@ -1,6 +1,6 @@
 package org.bgee.model.dao.api.expressiondata.rawdata;
 
-import model.data.common.TransferObject;
+import org.bgee.model.dao.api.TransferObject;
 
 public class CallSourceRawDataTO extends TransferObject
 {

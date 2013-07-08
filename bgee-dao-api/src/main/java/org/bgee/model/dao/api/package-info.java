@@ -5,8 +5,9 @@
  * J2EE Data Access Object Patterns}. It notably provides DAO interfaces, 
  * with methods returning or accepting data by means of <code>TransferObject</code>s. 
  * This API can then be used with any concrete implementation acting under the hood, 
- * specific to a data source. As of Bgee 13, an implementation for MySQL is provided, 
- * in the module <code>bgee-api-sql</code>.
+ * specific to a data source, using the <code>Service Provider</code> mechanisms (see below). 
+ * As of Bgee 13, an implementation for MySQL is provided, 
+ * in the module <code>bgee-dao-sql</code>.
  * <p>
  * A client of this <code>bgee-dao-api</code> module is notably 
  * the <code>bgee-core</code> module, that uses it to instantiate <code>Entity</code>s, 
@@ -31,6 +32,7 @@
  *   of this API. The code of the client is thus not dependent of any concrete 
  *   implementation. This follows the Abstract Factory Pattern.
  *   </ul>
+ * <li>Standard <code>Exception</code>s
  * </ul>
  * <p>
  * <h3>Service Provider mechanism</h3>

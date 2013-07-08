@@ -2,7 +2,7 @@ package model.data.common.expressionData.inSituHybridizationData;
 
 import java.io.Serializable;
 
-import model.data.common.TransferObject;
+import org.bgee.model.dao.api.TransferObject;
 
 public class InSituEvidenceTO extends TransferObject implements Serializable
 {

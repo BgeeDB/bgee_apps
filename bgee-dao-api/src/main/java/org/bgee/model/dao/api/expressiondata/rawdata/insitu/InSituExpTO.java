@@ -2,7 +2,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
 import java.io.Serializable;
 
-import model.data.common.TransferObject;
+import org.bgee.model.dao.api.TransferObject;
 
 public class InSituExpTO extends TransferObject implements Serializable
 {

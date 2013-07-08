@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
  * This abstract class list all the methods that must be implemented by concrete managers 
  * extending this class, to obtain and manage DAOs. It also provides 
  * the <code>getDAOManager</code> methods, which allow to obtain a concrete manager 
- * extending this class. And finally, it also provides methods to release the DAOs.
+ * extending this class. And finally, it provides methods to close the DAOs.
  * The point is that the client will not be aware of which concrete 
  * implementation it obtained, so that the client code is not dependent of 
  * any concrete implementation. 
@@ -25,11 +25,11 @@ import org.apache.logging.log4j.Logger;
  * the first time a <code>getDAOManager</code> method is called inside a given thread, 
  * and the same instance is then always returned when calling 
  * a <code>getDAOManager</code> method inside the same thread. 
- * An exception is if you call this method after having called {@link #release()}.
+ * An exception is if you call this method after having called {@link #close()}.
  * In that case, a call to a <code>getDAOManager</code> method from this thread 
  * would return a new <code>DAOManager</code> instance. 
  * <p>
- * {@link #release()} should always be called at the end of the applicative code, 
+ * {@link #close()} should always be called at the end of the applicative code, 
  * otherwise a <code>DAOManager</code> could be improperly reused if this API 
  * is used in an application using thread pooling.  
  * <p>
@@ -49,7 +49,7 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 13
  * @since Bgee 13
  */
-public abstract class DAOManager 
+public abstract class DAOManager implements AutoCloseable
 {
 	//*****************************************
     //  CLASS ATTRIBUTES AND METHODS
@@ -65,7 +65,7 @@ public abstract class DAOManager
     private static final AtomicLong seqNumber = new AtomicLong(1);
     /**
      * A <code>ThreadLocal</code> to obtain one and only one <code>DAOManager</code> ID 
-     * for a given <code>Thread</code>. 
+     * for a given <code>Thread</code> (unless {@link #close()} is called). 
      */
     private static final ThreadLocal <Long> uniqueNumber = 
         new ThreadLocal <Long> () {
@@ -91,18 +91,17 @@ public abstract class DAOManager
      * or when a thread performing monitoring of another thread want to kill it.
      * <p>
      * A <code>DAOManager</code> is removed from this <code>Map</code> for a thread
-     * when the method {@link #release()} is called from this thread, 
+     * when the method {@link #close()} is called from this thread, 
      * or when {@link #kill(long)} is called using the ID assigned to this thread, 
-     * or when the method  {@link #releaseAll()} is called. 
-     * All <code>DAOManager</code>s are removed when {@link #releaseAll()} is called.
+     * or when the method  {@link #closeAll()} is called. 
+     * All <code>DAOManager</code>s are removed when {@link #closeAll()} is called.
      */
 	private static final ConcurrentMap<Long, DAOManager> managers = 
 			new ConcurrentHashMap<Long, DAOManager>(); 
 	
 	/**
 	 * A <code>ServiceLoader</code> to obtain <code>Service providers</code> 
-	 * providing <code>DAOManager</code>s. This <code>ServiceLoader</code> 
-	 * is loaded only once for a given class loader. 
+	 * providing <code>DAOManager</code>s. 
 	 */
 	private static final ServiceLoader<DAOManager> loader = 
 			ServiceLoader.load(DAOManager.class);
@@ -110,18 +109,10 @@ public abstract class DAOManager
 	/**
      * An <code>AtomicBoolean</code> to define if <code>DAOManager</code>s 
      * can still be acquired (using the <code>getDAOManager</code> methods), 
-     * or if it is not possible anymore (meaning that the method {@link #releaseAll()} 
+     * or if it is not possible anymore (meaning that the method {@link #closeAll()} 
      * has been called)
      */
-    private static final AtomicBoolean allReleased = new AtomicBoolean();
-	
-    /**
-     * Every concrete implementation must provide a default constructor 
-     * with no parameters. 
-     */
-	public DAOManager() {
-		
-	}
+    private static final AtomicBoolean allclosed = new AtomicBoolean();
 	
 	/**
 	 * Return a <code>DAOManager</code> instance with its parameters set using 
@@ -129,7 +120,7 @@ public abstract class DAOManager
 	 * of the <code>getDAOManager</code> methods within a given thread, 
 	 * the <code>getDAOManager</code> methods return a newly instantiated 
 	 * <code>DAOManager</code>. Following calls from the same thread will always 
-	 * return the same instance ("per-thread singleton"), unless the <code>release</code> 
+	 * return the same instance ("per-thread singleton"), unless the <code>close</code> 
 	 * method was called. 
 	 * <p>
 	 * If no <code>DAOManager</code> is available for this thread yet, this method 
@@ -147,9 +138,9 @@ public abstract class DAOManager
 	 * are not supported by the current <code>DAOManager</code>. 
 	 * <p>
 	 * If caller wants to use a different <code>Service Provider</code>, accepting 
-	 * different parameters, then <code>release</code> should first be called. 
+	 * different parameters, then <code>close</code> should first be called. 
 	 * <p>
-	 * This method will throw an <code>IllegalStateException</code> if {@link #releaseAll()} 
+	 * This method will throw an <code>IllegalStateException</code> if {@link #closeAll()} 
 	 * was called prior to calling this method. 
 	 * 
 	 * @param parameters 	A <code>Map</code> with keys that are <code>String</code>s 
@@ -160,7 +151,7 @@ public abstract class DAOManager
 	 * @throws IllegalArgumentException	if a  <code>DAOManager</code> is already 
 	 * 									available for this thread, but not accepting 
 	 * 									<code>parameters</code>. 
-	 * @throws IllegalStateException 	if <code>releaseAll</code> was already called, 
+	 * @throws IllegalStateException 	if <code>closeAll</code> was already called, 
 	 * 									so that no <code>DAOManager</code>s can be 
 	 * 									acquired anymore. 
 	 */
@@ -170,11 +161,10 @@ public abstract class DAOManager
 		log.entry(parameters);
 
         long idAssigned = uniqueNumber.get();
-        log.debug("Trying to obtain a DAOManager with ID {}", 
-        		idAssigned);
+        log.debug("Trying to obtain a DAOManager with ID {}", idAssigned);
 
-        if (allReleased.get()) {
-            throw new IllegalStateException("releaseAll() has been already called, " +
+        if (allclosed.get()) {
+            throw new IllegalStateException("closeAll() has been already called, " +
                     "it is not possible to acquire a DAOManager anymore");
         }
 
@@ -220,7 +210,7 @@ public abstract class DAOManager
 	 * of the <code>getDAOManager</code> methods within a given thread, 
 	 * the <code>getDAOManager</code> methods return a newly instantiated 
 	 * <code>DAOManager</code>. Following calls from the same thread will always 
-	 * return the same instance ("per-thread singleton"), unless the <code>release</code> 
+	 * return the same instance ("per-thread singleton"), unless the <code>close</code> 
 	 * method was called. 
 	 * <p>
 	 * If no <code>DAOManager</code> is available for this thread yet, this method 
@@ -232,32 +222,33 @@ public abstract class DAOManager
 	 * If a <code>DAOManager</code> is already available for this thread, 
 	 * then this method will simply return it. 
 	 * <p>
-	 * This method will throw a <code>IllegalStateException</code> if {@link #releaseAll()} 
+	 * This method will throw a <code>IllegalStateException</code> if {@link #closeAll()} 
 	 * was called prior to calling this method. 
 	 * 
-	 * @throws IllegalStateException 	if <code>releaseAll</code> was already called, 
+	 * @throws IllegalStateException 	if <code>closeAll</code> was already called, 
 	 * 									so that no <code>DAOManager</code>s can be 
 	 * 									acquired anymore. 
 	 */
 	public final static DAOManager getDAOManager() throws IllegalStateException {
-		return getDAOManager(null);
+		log.entry();
+		return log.exit(DAOManager.getDAOManager(null));
 	}
 	
 	/**
-     * Call {@link #release()} on all <code>DAOManager</code> instances currently registered,
+     * Call {@link #close()} on all <code>DAOManager</code> instances currently registered,
      * and prevent any new <code>DAOManager</code> instance to be obtained again 
      * (calling a <code>getDAOManager</code> method from any thread 
-     * after having called this method will throw a <code>IllegalStateException</code>). 
+     * after having called this method will throw an <code>IllegalStateException</code>). 
      * <p>
-     * This method returns the number of <code>DAOManager</code>s that were released. 
+     * This method returns the number of <code>DAOManager</code>s that were closed. 
      * <p>
      * This method is called for instance when a <code>ShutdownListener</code> 
      * want to release all resources using a data source.
      * 
      * @return 	An <code>int</code> that is the number of <code>DAOManager</code> instances  
-     * 			that were released.
+     * 			that were closed.
      */
-    public final static int releaseAll()
+    public final static int closeAll()
     {
         log.entry();
 
@@ -265,12 +256,12 @@ public abstract class DAOManager
         //(no new DAOManager can be obtained after this AtomicBoolean is set to true).
         //It's not totally true, but we don't except any major error 
         //if it doesn't act like a lock.
-        allReleased.set(true);
+        allclosed.set(true);
 
         int managerCount = 0;
         for (DAOManager manager: managers.values()) {
         	managerCount++;
-        	manager.release();
+        	manager.close();
         }
 
         return log.exit(managerCount);
@@ -292,8 +283,25 @@ public abstract class DAOManager
     
     //*****************************************
     //  INSTANCE ATTRIBUTES AND METHODS
-    //*****************************************
-
+    //*****************************************	
+    /**
+     * Every concrete implementation must provide a default constructor 
+     * with no parameters. 
+     */
+	public DAOManager() {
+		
+	}
+	
+	/**
+	 * Return the ID associated to this <code>DAOManager</code>. This ID can be used 
+	 * to call {@link #kill(long)}.
+	 * 
+	 * @return 	A <code>long</code> that is the ID of this <code>DAOManager</code>.
+	 */
+	public final long getId() {
+		return uniqueNumber.get();
+	}
+	
 	/**
      * Close all resources managed by this <code>DAOManager</code> instance, 
      * and release it (a call to a <code>getDAOManager</code> method from the thread 
@@ -301,19 +309,22 @@ public abstract class DAOManager
      * <p>
      * Following a call to this method, it is not possible to acquire DAOs 
      * from this <code>DAOManager</code> instance anymore.
+     * <p>
+     * Specified by {@link java.lang.AutoCloseable#close()}.
      */
-    public final void release()
+	@Override
+    public final void close()
     {
         log.entry();
         this.removePromPool();
         //implementation-specific code here
-        this.releaseDAOManager();
+        this.closeDAOManager();
         
         log.exit();
     }
     
     /**
-     * Try to kill immediately all ongoing processes performed by this 
+     * Try to kill immediately all ongoing processes performed by DAOs of this 
      * <code>DAOManager</code>, release all resources it handles, 
      * and release it (a call to a <code>getDAOManager</code> method from the thread 
      * that was holding it will return a new <code>DAOManager</code> instance).
@@ -340,6 +351,11 @@ public abstract class DAOManager
         uniqueNumber.remove();
     }
     
+    
+    //*****************************************
+    //  ABSTRACT METHODS TO IMPLEMENT
+    //*****************************************	
+    
     /**
      * Service providers must implement in this method the operations necessary 
      * to release all resources managed by this <code>DAOManager</code> instance.
@@ -352,10 +368,10 @@ public abstract class DAOManager
      * Implementations should make sure that no DAOs can be obtained from 
      * this <code>DAOManager</code> instance once this method has been called. 
      * <p>
-     * This method is called by {@link #release()} after having remove this 
+     * This method is called by {@link #close()} after having remove this 
      * <code>DAOManager</code> from the pool. 
      */
-    protected abstract void releaseDAOManager();
+    protected abstract void closeDAOManager();
     
     /**
      * Service providers must implement in this method the operations necessary 
@@ -371,7 +387,7 @@ public abstract class DAOManager
      * this <code>DAOManager</code> instance once this method has been called. 
      * <p>
      * This method is called by {@link #kill()} after having remove this 
-     * <code>DAOManager</code> from the pool. Note that {@link #releaseDAOManager()} 
+     * <code>DAOManager</code> from the pool. Note that {@link #closeDAOManager()} 
      * is not called, it is up to the implementation to do it if needed. 
      */
     protected abstract void killDAOManager();
@@ -384,13 +400,13 @@ public abstract class DAOManager
      * Service provider to specify what are the parameters needed. 
      * <p>
      * This method throws an <code>IllegalArgumentException</code> if 
-     * the <code>DAOManager</code> does not accept this parameters. 
+     * the <code>DAOManager</code> does not accept these parameters. 
      * This is the method used to find an appropriate Service provider 
      * when calling {@link #getDAOManager(Map)}.
      * <p>
      * If an <code>IllegalArgumentException</code> is thrown when using this method, 
      * maybe a new <code>DAOManager</code> could be obtained 
-     * from another Service provider, by calling <code>release</code>, 
+     * from another Service provider, by calling <code>close</code>, 
      * then <code>getDAOManager(Map)</code>.
      * 
      * @param parameters	A <code>Map</code> with keys that are <code>String</code>s 

@@ -1,11 +1,11 @@
 package org.bgee.model.dao.api;
 
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +29,10 @@ import org.apache.logging.log4j.Logger;
  * In that case, a call to a <code>getDAOManager</code> method from this thread 
  * would return a new <code>DAOManager</code> instance. 
  * <p>
+ * {@link #release()} should always be called at the end of the applicative code, 
+ * otherwise a <code>DAOManager</code> could be improperly reused if this API 
+ * is used in an application using thread pooling.  
+ * <p>
  * This class supports the standard <a href=
  * 'http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider'> 
  * Service Provider</a> mechanism. Concrete implementations must include the file 
@@ -43,7 +47,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author Frederic Bastian
  * @version Bgee 13
- * @since Bgee 01
+ * @since Bgee 13
  */
 public abstract class DAOManager 
 {
@@ -56,24 +60,39 @@ public abstract class DAOManager
     private final static Logger log = LogManager.getLogger(DAOManager.class.getName());
     
     /**
-     * A <code>ConcurrentMap</code> used to store all <code>DAOManager</code>s, 
-     * associated with the ID of the <code>Thread</code> that requested it. 
+     * An <code>AtomicLong</code> to generate <code>DAOManager</code> IDs. 
+     */
+    private static final AtomicLong seqNumber = new AtomicLong(1);
+    /**
+     * A <code>ThreadLocal</code> to obtain one and only one <code>DAOManager</code> ID 
+     * for a given <code>Thread</code>. 
+     */
+    private static final ThreadLocal <Long> uniqueNumber = 
+        new ThreadLocal <Long> () {
+            @Override protected Long initialValue() {
+                return seqNumber.getAndIncrement();
+        }
+    };
+    /**
+     * A <code>ConcurrentMap</code> used to store <code>DAOManager</code>s, 
+     * associated to their ID as key. 
      * <p>
      * This <code>Map</code> is used to provide a unique and independent 
-     * <code>DAOManager</code> instance to each thread: 
-     * a <code>DAOManager</code> is added to this <code>Map</code> 
-     * when a <code>getDAOManager</code> method is called, if the thread ID is not already 
-     * present in the <code>keySet</code> of the <code>Map</code>. 
+     * <code>DAOManager</code> instance to each thread: a <code>DAOManager</code> is added 
+     * to this <code>Map</code> when a <code>getDAOManager</code> method is called, 
+     * if the ID generated for a thread is not already present in the <code>keySet</code> 
+     * of the <code>Map</code> (see {@link #uniqueNumber} for ID generation). 
      * Otherwise, the already stored <code>DAOManager</code> is returned. 
      * <p>
      * If a <code>ThreadLocal</code> was not used, it is because 
      * this <code>Map</code> is used by other treads, 
      * for instance when a <code>ShutdownListener</code> 
      * want to properly release all <code>DAOManager</code>s; 
-     * or when a thread performing monitoring of another thread want to interrupt it.
+     * or when a thread performing monitoring of another thread want to kill it.
      * <p>
      * A <code>DAOManager</code> is removed from this <code>Map</code> for a thread
      * when the method {@link #release()} is called from this thread, 
+     * or when {@link #kill(long)} is called using the ID assigned to this thread, 
      * or when the method  {@link #releaseAll()} is called. 
      * All <code>DAOManager</code>s are removed when {@link #releaseAll()} is called.
      */
@@ -89,22 +108,6 @@ public abstract class DAOManager
 			ServiceLoader.load(DAOManager.class);
 	
 	/**
-	 * This <code>ThreadLocal</code> allows to know if a <code>DAOManager</code> 
-	 * was ever requested within a given thread. It returns a <code>Boolean</code> 
-	 * <code>false</code> at the first call, and will be set to <code>true</code> 
-	 * as soon as a <code>DAOManager</code> would have been requested from the thread. 
-	 * <p>
-	 * It allows to know if some cleaning in the {@link #managers} attribute is needed 
-	 * when calling a <code>getDAOManager</code> method.
-	 */
-    private static final ThreadLocal<Boolean> managerAcquired =
-        new ThreadLocal<Boolean>() {
-            @Override protected Boolean initialValue() {
-                return new Boolean(false);
-        }
-    };
-	
-	/**
      * An <code>AtomicBoolean</code> to define if <code>DAOManager</code>s 
      * can still be acquired (using the <code>getDAOManager</code> methods), 
      * or if it is not possible anymore (meaning that the method {@link #releaseAll()} 
@@ -112,7 +115,11 @@ public abstract class DAOManager
      */
     private static final AtomicBoolean allReleased = new AtomicBoolean();
 	
-	private DAOManager() {
+    /**
+     * Every concrete implementation must provide a default constructor 
+     * with no parameters. 
+     */
+	public DAOManager() {
 		
 	}
 	
@@ -142,7 +149,7 @@ public abstract class DAOManager
 	 * If caller wants to use a different <code>Service Provider</code>, accepting 
 	 * different parameters, then <code>release</code> should first be called. 
 	 * <p>
-	 * This method will throw a <code>IllegalStateException</code> if {@link #releaseAll()} 
+	 * This method will throw an <code>IllegalStateException</code> if {@link #releaseAll()} 
 	 * was called prior to calling this method. 
 	 * 
 	 * @param parameters 	A <code>Map</code> with keys that are <code>String</code>s 
@@ -162,25 +169,16 @@ public abstract class DAOManager
 	{
 		log.entry(parameters);
 
-        long threadId = Thread.currentThread().getId();
-        log.debug("Trying to obtain a DAOManager instance from Thread {}", 
-        		threadId);
-		//if this is the first attempt to obtain a DAOManager from this thread, 
-		//we clear the managers Map, as we use thread IDs as key, and as a thread ID 
-		//can be re-used. 
-		if (!managerAcquired.get()) {
-			//we do not perform this operations atomically, 
-			//as they both are specific to one Thread
-			managers.remove(threadId);
-			managerAcquired.set(true);
-		}
+        long idAssigned = uniqueNumber.get();
+        log.debug("Trying to obtain a DAOManager with ID {}", 
+        		idAssigned);
 
         if (allReleased.get()) {
             throw new IllegalStateException("releaseAll() has been already called, " +
                     "it is not possible to acquire a DAOManager anymore");
         }
 
-        DAOManager manager = managers.get(threadId);
+        DAOManager manager = managers.get(idAssigned);
         if (manager == null) {
             //obtain a DAOManager from a Service Provider accepting the parameters
         	log.debug("Trying to acquire a DAOManager from a Service provider");
@@ -204,9 +202,9 @@ public abstract class DAOManager
         		return null;
         	}
         	
-            //we don't use putifAbsent, as the threadId make sure 
+            //we don't use putifAbsent, as idAssigned make sure 
             //there won't be any multi-threading key collision
-            managers.put(threadId, manager);
+            managers.put(idAssigned, manager);
             log.debug("Return a new DAOManager instance");
         } else {
             log.debug("Return an already existing DAOManager instance");
@@ -245,10 +243,6 @@ public abstract class DAOManager
 		return getDAOManager(null);
 	}
 	
-	public final static DAOManager getDAOManager(long threadId) {
-		
-	}
-	
 	/**
      * Call {@link #release()} on all <code>DAOManager</code> instances currently registered,
      * and prevent any new <code>DAOManager</code> instance to be obtained again 
@@ -268,10 +262,10 @@ public abstract class DAOManager
         log.entry();
 
         //this AtomicBoolean will act more or less like a lock 
-        //(no new BgeeDataSource can be obtained after this AtomicBoolean is set to true).
+        //(no new DAOManager can be obtained after this AtomicBoolean is set to true).
         //It's not totally true, but we don't except any major error 
         //if it doesn't act like a lock.
-        dataSourcesClosed.set(true);
+        allReleased.set(true);
 
         int managerCount = 0;
         for (DAOManager manager: managers.values()) {
@@ -282,40 +276,105 @@ public abstract class DAOManager
         return log.exit(managerCount);
     }
     
-    //*****************************************
-    //  INSTANCE METHODS
-    //*****************************************
-    
     /**
-     * Close all <code>BgeeConnection</code>s that this <code>BgeeDataSource</code> holds, 
-     * and release this <code>BgeeDataSource</code> 
-     * (a call to {@link #getBgeeDataSource()} from the thread that was holding it 
-     * will return a new <code>BgeeDataSource</code> instance).
+     * Call {@link #kill()} on the <code>DAOManager</code> currently registered 
+     * with an ID (returned by {@link #getId()}) equals to <code>managerId</code>.
+     * 
+     * @param managerId 	A <code>long</code> corresponding to the ID of 
+     * 						the <code>DAOManager</code> to kill. 
+     */
+    public final static void kill(long managerId) {
+    	DAOManager manager = managers.get(managerId);
+        if (manager != null) {
+        	manager.kill();
+        }
+    }
+    
+    //*****************************************
+    //  INSTANCE ATTRIBUTES AND METHODS
+    //*****************************************
+
+	/**
+     * Close all resources managed by this <code>DAOManager</code> instance, 
+     * and release it (a call to a <code>getDAOManager</code> method from the thread 
+     * that was holding it will return a new <code>DAOManager</code> instance).
      * <p>
-     * Following a call to this method, it is not possible to acquire new 
-     * <code>BgeeConnection</code>s by a call to {@link #getConnection()} or 
-     * {@link #getConnection(String, String)} on this object 
-     * (it would throw a <code>SQLException</code>). A new instance should be acquired 
-     * by a call to {@link #getBgeeDataSource()}.
+     * Following a call to this method, it is not possible to acquire DAOs 
+     * from this <code>DAOManager</code> instance anymore.
      */
     public final void release()
     {
         log.entry();
-        managers.remove(Thread.currentThread().getId());
+        this.removePromPool();
+        //implementation-specific code here
         this.releaseDAOManager();
+        
         log.exit();
     }
     
     /**
-     * Service providers must performed in this method the operations necessary 
+     * Try to kill immediately all ongoing processes performed by this 
+     * <code>DAOManager</code>, release all resources it handles, 
+     * and release it (a call to a <code>getDAOManager</code> method from the thread 
+     * that was holding it will return a new <code>DAOManager</code> instance).
+     * <p>
+     * Following a call to this method, it is not possible to acquire DAOs 
+     * from this <code>DAOManager</code> instance anymore.
+     */
+    public final void kill() {
+    	log.entry();
+    	this.removePromPool();
+        //implementation-specific code here
+        this.killDAOManager();
+    	
+    	log.exit();
+    }
+    
+    /**
+     * Performs the operations to remove a <code>DAOManager</code> 
+     * from {@link #managers} and to remove the thread-local ID from 
+     * {@link #uniqueNumbers}.
+     */
+    private final void removePromPool() {
+    	managers.remove(uniqueNumber.get());
+        uniqueNumber.remove();
+    }
+    
+    /**
+     * Service providers must implement in this method the operations necessary 
      * to release all resources managed by this <code>DAOManager</code> instance.
      * For instance, if a service provider uses the JDBC API to use a SQL database, 
      * the manager should close all <code>Connection</code>s to the database 
      * hold by its DAOs. Calling this method should not affect other 
      * <code>DAOManager</code> instances (so in our previous example, 
      * <code>Connection</code>s hold by other managers should not be closed).
+     * <p>
+     * Implementations should make sure that no DAOs can be obtained from 
+     * this <code>DAOManager</code> instance once this method has been called. 
+     * <p>
+     * This method is called by {@link #release()} after having remove this 
+     * <code>DAOManager</code> from the pool. 
      */
     protected abstract void releaseDAOManager();
+    
+    /**
+     * Service providers must implement in this method the operations necessary 
+     * to immediately kill all ongoing processes handled by this <code>DAOManager</code>, 
+     * and release all resources. It should not affect other <code>DAOManager</code>s.
+     * <p>
+     * For instance, if a service provider uses the JDBC API to use a SQL database,
+     * the <code>DAOManager</code> should keep track of which <code>Statement</code> 
+     * is currently running, in order to be able to call <code>cancel</code> on it, 
+     * then close all <code>Connection</code>s hold by its DAOs. 
+     * <p>
+     * Implementations should make sure that no DAOs can be obtained from 
+     * this <code>DAOManager</code> instance once this method has been called. 
+     * <p>
+     * This method is called by {@link #kill()} after having remove this 
+     * <code>DAOManager</code> from the pool. Note that {@link #releaseDAOManager()} 
+     * is not called, it is up to the implementation to do it if needed. 
+     */
+    protected abstract void killDAOManager();
     
     /**
      * Set the parameters of this <code>DAOManager</code>. For instance, 

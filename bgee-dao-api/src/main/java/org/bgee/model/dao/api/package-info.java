@@ -45,6 +45,9 @@
  * the <code>META-INF/services/org.bgee.model.dao.api.DAOManager</code> file 
  * would contain the entry:
  * <pre>my.sql.Factory</pre>
+ * <p>
+ * Important note about <code>ServiceLoader</code> and shared <code>ClassLoader</code> 
+ * (like in tomcat): http://stackoverflow.com/a/7220918/1768736
  * 
  * @author Frederic Bastian
  * @version Bgee 13

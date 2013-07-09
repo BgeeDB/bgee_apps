@@ -1,6 +1,8 @@
 package org.bgee.model.dao.api;
 
+import java.util.Iterator;
 import java.util.Map;
+import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -44,6 +46,9 @@ import org.apache.logging.log4j.Logger;
  * <pre>my.sql.Manager</pre>
  * To conform to the <code>Service Provider</code> requirements, the class implementing 
  * <code>DAOManager</code> must provide a default constructor with no arguments. 
+ * <p>
+ * Important note about <code>ServiceLoader</code> and shared <code>ClassLoader</code> 
+ * (like in tomcat): http://stackoverflow.com/a/7220918/1768736
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -141,7 +146,9 @@ public abstract class DAOManager implements AutoCloseable
 	 * different parameters, then <code>close</code> should first be called. 
 	 * <p>
 	 * This method will throw an <code>IllegalStateException</code> if {@link #closeAll()} 
-	 * was called prior to calling this method. 
+	 * was called prior to calling this method, and a <code>ServiceConfigurationError</code> 
+	 * if an error occurred while trying to find a service provider from the 
+	 * <code>ServiceLoader</code>. 
 	 * 
 	 * @param parameters 	A <code>Map</code> with keys that are <code>String</code>s 
 	 * 						representing parameter names, and values that 
@@ -154,6 +161,9 @@ public abstract class DAOManager implements AutoCloseable
 	 * @throws IllegalStateException 	if <code>closeAll</code> was already called, 
 	 * 									so that no <code>DAOManager</code>s can be 
 	 * 									acquired anymore. 
+	 * @throws ServiceConfigurationError	If an error occurred while trying to find 
+	 * 										a <code>DAOManager</code> service provider 
+	 * 										from the <code>ServiceLoader</code>. 
 	 */
 	public final static DAOManager getDAOManager(Map<String, String> parameters) 
 	    throws IllegalArgumentException, IllegalStateException
@@ -172,20 +182,44 @@ public abstract class DAOManager implements AutoCloseable
         if (manager == null) {
             //obtain a DAOManager from a Service Provider accepting the parameters
         	log.debug("Trying to acquire a DAOManager from a Service provider");
-        	for (DAOManager testManager: loader) {
-        		log.trace("Testing {}", testManager);
-        		try {
-        			if (parameters != null) {
-        			    testManager.setParameters(parameters);
+        	Iterator<DAOManager> managerIterator = loader.iterator();
+        	try {
+        		while (managerIterator.hasNext()) {
+        			try {
+        				//need to get a new instance, because as we store 
+        				//in a static attribute the ServiceLoader, it always returns 
+        				//a same instance. 
+        				DAOManager testManager = 
+        						managerIterator.next().getClass().newInstance();
+        				
+        				log.trace("Testing {}", testManager);
+        				if (parameters != null) {
+        					testManager.setParameters(parameters);
+        				}
+        				//parameters accepted, we will use this manager
+        				manager = testManager;
+        				log.debug("DAOManager {} acquired", manager);
+        				break;
+
+        			} catch (InstantiationException | IllegalAccessException e1) {
+        				//this catch block is needed only because of the line 
+        				//managerIterator.next().getClass().newInstance();
+        				//These exceptions should never happen, as service providers 
+        				//must implement a default public constructor with no arguments. 
+        				//If such an exception occurred, it could be seen as 
+        				//a ServiceConfigurationError
+        				throw log.throwing(new ServiceConfigurationError(
+        						"DAOManager service provider instantiation error", e1));
+        			} catch (IllegalArgumentException e2) {
+        				//do nothing, this exception is thrown when calling 
+        				//setParameters to try to find the appropriate service provider. 
         			}
-        			//parameters accepted, we will use this manager
-        			manager = testManager;
-        			log.debug("DAOManager {} acquired", manager);
-        			break;
-        		} catch (IllegalArgumentException e) {
-        			//do nothing, it is only to find a service provider 
-        			//accepting the parameters
         		}
+        	} catch (ServiceConfigurationError e) {
+        		//this catch block is not really necessary, 
+        		//it is just to make clear that using the ServiceLoader Iterator 
+        		//can throw such an Exception
+        		throw log.throwing(e);
         	}
         	if (manager == null) {
         		log.debug("No DAOManager could be acquired");
@@ -202,11 +236,12 @@ public abstract class DAOManager implements AutoCloseable
                 manager.setParameters(parameters);
             }
         }
+        manager.closed = false;
         return log.exit(manager);
 	}
 	
 	/**
-	 * Return a <code>DAOManager</code> instance>. If it is the first call to one 
+	 * Return a <code>DAOManager</code> instance. If it is the first call to one 
 	 * of the <code>getDAOManager</code> methods within a given thread, 
 	 * the <code>getDAOManager</code> methods return a newly instantiated 
 	 * <code>DAOManager</code>. Following calls from the same thread will always 
@@ -223,11 +258,16 @@ public abstract class DAOManager implements AutoCloseable
 	 * then this method will simply return it. 
 	 * <p>
 	 * This method will throw a <code>IllegalStateException</code> if {@link #closeAll()} 
-	 * was called prior to calling this method. 
+	 * was called prior to calling this method, and a <code>ServiceConfigurationError</code> 
+	 * if an error occurred while trying to find a service provider from the 
+	 * <code>ServiceLoader</code>. 
 	 * 
 	 * @throws IllegalStateException 	if <code>closeAll</code> was already called, 
 	 * 									so that no <code>DAOManager</code>s can be 
 	 * 									acquired anymore. 
+	 * @throws ServiceConfigurationError	If an error occurred while trying to find 
+	 * 										a <code>DAOManager</code> service provider 
+	 * 										from the <code>ServiceLoader</code>. 
 	 */
 	public final static DAOManager getDAOManager() throws IllegalStateException {
 		log.entry();
@@ -285,6 +325,11 @@ public abstract class DAOManager implements AutoCloseable
     //  INSTANCE ATTRIBUTES AND METHODS
     //*****************************************	
     /**
+     * A <code>boolean</code> to indicate whether this <code>DAOManager</code> was closed 
+     * (following a call to {@link #close()}, {@link #closeAll()}, or {@link #kill(long)}).
+     */
+    private boolean closed;
+    /**
      * Every concrete implementation must provide a default constructor 
      * with no parameters. 
      */
@@ -316,11 +361,26 @@ public abstract class DAOManager implements AutoCloseable
     public final void close()
     {
         log.entry();
-        this.removePromPool();
-        //implementation-specific code here
-        this.closeDAOManager();
+        if (!this.isClosed()) {
+        	this.removePromPool();
+        	//implementation-specific code here
+        	this.closeDAOManager();
+        }
         
         log.exit();
+    }
+	/**
+     * Determine whether this <code>DAOManager</code> was closed 
+     * (following a call to {@link #close()}, {@link #closeAll()}, 
+     * or {@link #kill(long)}).
+     * 
+     * @return	<code>true</code> if this <code>DAOManager</code> was closed, 
+     * 			<code>false</code> otherwise.
+     */
+    public final boolean isClosed()
+    {
+        log.entry();
+        return log.exit(closed);
     }
     
     /**
@@ -334,9 +394,11 @@ public abstract class DAOManager implements AutoCloseable
      */
     public final void kill() {
     	log.entry();
-    	this.removePromPool();
-        //implementation-specific code here
-        this.killDAOManager();
+    	if (!this.isClosed()) {
+    		this.removePromPool();
+    		//implementation-specific code here
+    		this.killDAOManager();
+    	}
     	
     	log.exit();
     }
@@ -349,6 +411,7 @@ public abstract class DAOManager implements AutoCloseable
     private final void removePromPool() {
     	managers.remove(uniqueNumber.get());
         uniqueNumber.remove();
+        this.closed = true;
     }
     
     
@@ -367,6 +430,7 @@ public abstract class DAOManager implements AutoCloseable
      * <p>
      * Implementations should make sure that no DAOs can be obtained from 
      * this <code>DAOManager</code> instance once this method has been called. 
+     * They can check its status by calling {@link #isClosed()}.
      * <p>
      * This method is called by {@link #close()} after having remove this 
      * <code>DAOManager</code> from the pool. 
@@ -385,6 +449,7 @@ public abstract class DAOManager implements AutoCloseable
      * <p>
      * Implementations should make sure that no DAOs can be obtained from 
      * this <code>DAOManager</code> instance once this method has been called. 
+     * They can check its status by calling {@link #isClosed()}.
      * <p>
      * This method is called by {@link #kill()} after having remove this 
      * <code>DAOManager</code> from the pool. Note that {@link #closeDAOManager()} 

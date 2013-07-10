@@ -1,4 +1,4 @@
-package org.bgee.model;
+package org.bgee.model.dao.api;
 
 import org.apache.logging.log4j.Logger;
 import org.junit.Rule;
@@ -15,6 +15,15 @@ import org.junit.runner.Description;
  */
 public abstract class TestAncestor 
 {
+	/**
+	 * If <code>true</code>, an <code>Error</code> is thrown when the default constructor 
+	 * of <code>org.bgee.model.dao.api.MockDAOManager</code> is called. 
+	 * We cannot store this information in the <code>MockDAOManager</code> class, 
+	 * as it would load the <code>DAOManager</code> to set it, while we need to set 
+	 * this attribute first. 
+	 */
+	protected static boolean thrownInstantiationException = false;
+	
 	/**
 	 * Default Constructor. 
 	 */

@@ -8,7 +8,6 @@ import java.util.concurrent.Exchanger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.DAOManager;
 import org.junit.Test;
 
@@ -23,7 +22,8 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	/**
      * <code>Logger</code> of the class. 
      */
-    private final static Logger log = LogManager.getLogger(ManagerLoadAndReleaseTest.class.getName());
+    private final static Logger log = 
+    		LogManager.getLogger(ManagerLoadAndReleaseTest.class.getName());
 
 	@Override
 	protected Logger getLogger() {
@@ -216,5 +216,17 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		} 
+	}
+	
+	/**
+	 * Test behavior when loading <code>DAOManager</code> providers fail.
+	 */
+	@Test
+	public void shouldFailInitialization() {
+		//first, lets check the behavior when a service provider throws an exception 
+		//when the ServiceLoader tries to instantiate it. The ServiceLoader is used 
+		//during static initialization of the class DAOManager
+		//MockDAOManager.thrownInstantiationException = true;
+		
 	}
 }

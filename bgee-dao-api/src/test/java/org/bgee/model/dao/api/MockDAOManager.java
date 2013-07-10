@@ -19,12 +19,21 @@ import static org.mockito.Mockito.mock;
  */
 public class MockDAOManager extends DAOManager {
 	
-	public final DAOManager mockManager = mock(DAOManager.class);
+	public final DAOManager mockManager;
+	
+	{
+		if (TestAncestor.thrownInstantiationException) {
+			throw new Error("Mocked instantiation error");
+		}
+	}
 	/**
 	 * Default constructor used by the service loader.
 	 */
 	public MockDAOManager() {
-		
+		if (TestAncestor.thrownInstantiationException) {
+			throw new Error("Mocked instantiation error on purpose");
+		}
+		this.mockManager = mock(DAOManager.class);
 	}
 
 	@Override

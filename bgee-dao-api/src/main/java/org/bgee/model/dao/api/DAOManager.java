@@ -128,30 +128,22 @@ public abstract class DAOManager implements AutoCloseable
 	/**
 	 * Get all available providers of the <code>DAOManager</code> service 
 	 * from the <code>ServiceLoader</code>, as an unmodifiable <code>List</code>. 
-	 * <code>null</code> if an error occurred while using the <code>ServiceLoader</code>.
 	 * Empty <code>List</code> if no service providers could be found. 
 	 * 
 	 * @return 	An unmodifiable <code>List</code> of <code>DAOManager</code>s, 
 	 * 			in the same order they were obtained from the <code>ServiceLoader</code>. 
-	 * 			<code>null</code> if an error occurred while using 
-	 * 			the <code>ServiceLoader</code>. Empty <code>List</code> 
-	 * 			if no service providers could be found.
+	 * 			Empty <code>List</code> if no service providers could be found.
 	 */
 	private final static List<DAOManager> getServiceProviders() {
+		log.entry();
 		ServiceLoader<DAOManager> loader = 
 				ServiceLoader.load(DAOManager.class);
 		List<DAOManager> providers = new ArrayList<DAOManager>();
-		try {
-			for (DAOManager provider: loader) {
-				providers.add(provider);
-			}
-		} catch (Throwable e) {
-			//if an error occurred while using the ServiceLoader, 
-			//return null (this method is used during static initialization)
-			log.catching(e);
-			return null;
+		for (DAOManager provider: loader) {
+			providers.add(provider);
+			log.trace("Found provider {}", provider);
 		}
-		return Collections.unmodifiableList(providers);
+		return log.exit(Collections.unmodifiableList(providers));
 	}
 	
 	/**
@@ -175,7 +167,8 @@ public abstract class DAOManager implements AutoCloseable
 	 * will try to obtain from a <code>Service Provider</code> a concrete implementation 
 	 * that accepts its <code>parameters</code> to be set by calling 
 	 * {@link #setParameters(Map)} on it, or will return <code>null</code> 
-	 * if none could be found. If <code>parameters</code> is <code>null</code>, 
+	 * if none could be found, or if no service providers were available at all. 
+	 * If <code>parameters</code> is <code>null</code>, 
 	 * then the first available <code>Service Provider</code> will be used, and 
 	 * {@link #setParameters(Map)} will not be called. 
 	 * <p>
@@ -198,6 +191,8 @@ public abstract class DAOManager implements AutoCloseable
 	 * 						are <code>String</code>s representing parameters values, 
 	 * 						to be passed to the <code>DAOManager</code> instance. 
 	 * @return 				A <code>DAOManager</code> accepting <code>parameters</code>. 
+	 * 						<code>null</code> if none could be found, or 
+	 * 						if no service providers were available at all.
 	 * @throws IllegalArgumentException	if a  <code>DAOManager</code> is already 
 	 * 									available for this thread, but not accepting 
 	 * 									<code>parameters</code>. 
@@ -226,13 +221,6 @@ public abstract class DAOManager implements AutoCloseable
             //obtain a DAOManager from a Service Provider accepting the parameters
         	log.debug("Trying to acquire a DAOManager from a Service provider");
         	
-        	if (DAOManager.serviceProviders == null) {
-        		//if serviceProviders is null, it means that an Error or Exception  
-        		//was thrown by the ServiceLoader when loading the providers. 
-        		//let's re.throw a ServiceConfigurationError
-        		throw log.throwing(new ServiceConfigurationError("An error occurred " +
-        				"while trying to load service providers from the ServiceLoader"));
-        	}
         	Iterator<DAOManager> managerIterator = DAOManager.serviceProviders.iterator();
         	while (managerIterator.hasNext()) {
         		try {
@@ -308,6 +296,8 @@ public abstract class DAOManager implements AutoCloseable
 	 * if an error occurred while trying to find a service provider from the 
 	 * <code>ServiceLoader</code>. 
 	 * 
+	 * @return 				The first <code>DAOManager</code> available,  
+	 * 						<code>null</code> if no service providers were available at all.
 	 * @throws IllegalStateException 	if <code>closeAll</code> was already called, 
 	 * 									so that no <code>DAOManager</code>s can be 
 	 * 									acquired anymore. 

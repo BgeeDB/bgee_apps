@@ -239,7 +239,10 @@ public abstract class DAOManager implements AutoCloseable
         			log.debug("DAOManager {} acquired", manager);
         			break;
 
-        		} catch (InstantiationException | IllegalAccessException e1) {
+        		} catch (IllegalArgumentException e2) {
+        			//do nothing, this exception is thrown when calling 
+        			//setParameters to try to find the appropriate service provider. 
+        		} catch (Exception e1) {
         			//this catch block is needed only because of the line 
         			//managerIterator.next().getClass().newInstance();
         			//These exceptions should never happen, as service providers 
@@ -249,9 +252,6 @@ public abstract class DAOManager implements AutoCloseable
         			throw log.throwing(new ServiceConfigurationError(
         					"DAOManager service provider instantiation error: " +
         					"service provider did not provide a valid constructor", e1));
-        		} catch (IllegalArgumentException e2) {
-        			//do nothing, this exception is thrown when calling 
-        			//setParameters to try to find the appropriate service provider. 
         		}
         	}
         		

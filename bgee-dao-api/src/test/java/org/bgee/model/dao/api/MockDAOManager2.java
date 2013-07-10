@@ -12,12 +12,16 @@ import static org.mockito.Mockito.mock;
  * All methods delegate to the mocked <code>DAOManager</code> stored 
  * in the public attribute {@link mockManager}, which should thus be used to specify 
  * the expected behaviors to mock. 
+ * <p>
+ * This class is the same than {@link MockDAOManager}, but is used to test the behavior 
+ * when the <code>ServiceLoader</code> discovers several service providers. 
+ * This provider should be the second one loaded by the <code>ServiceLoader</code>.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  */
-public class MockDAOManager extends DAOManager {
+public class MockDAOManager2 extends DAOManager {
 	
 	/**
 	 * If <code>true</code>, an <code>Error</code> is thrown when the default constructor 
@@ -30,9 +34,9 @@ public class MockDAOManager extends DAOManager {
 	/**
 	 * Default constructor used by the service loader.
 	 */
-	public MockDAOManager() {
+	public MockDAOManager2() {
 		if (TestAncestor.thrownInstantiationException || 
-				MockDAOManager.thrownInstantiationException) {
+				MockDAOManager2.thrownInstantiationException) {
 			throw new RuntimeException("Mocked instantiation error on purpose");
 		}
 		this.mockManager = mock(DAOManager.class);

@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ServiceConfigurationError;
 import java.util.concurrent.Exchanger;
 
 import org.apache.logging.log4j.LogManager;
@@ -219,14 +220,24 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	}
 	
 	/**
-	 * Test behavior when loading <code>DAOManager</code> providers fail.
+	 * Test behavior when {@link DAOManager#getDAOManager()} fails.
 	 */
 	@Test
-	public void shouldFailInitialization() {
-		//first, lets check the behavior when a service provider throws an exception 
-		//when the ServiceLoader tries to instantiate it. The ServiceLoader is used 
-		//during static initialization of the class DAOManager
-		//MockDAOManager.thrownInstantiationException = true;
+	public void shouldFailGetDAOManager() throws ClassNotFoundException {
+		//call a first time DAOManager to properly load the service providers
+		Class.forName("org.bgee.model.dao.api.DAOManager");
 		
+		//to throw an exception when an instance of the service provider is requested
+		MockDAOManager.thrownInstantiationException = true;
+		//MockDAOManager is the first provider loaded, so calling getDAOManager 
+		//should throw an exception right away
+		try {
+			DAOManager.getDAOManager();
+			//if we reach that point, no ServiceConfigurationError was thrown, 
+			//test failed
+		    throw new AssertionError("A ServiceConfigurationError should have been thrown");
+		} catch (ServiceConfigurationError e) {
+			//test passed
+		}
 	}
 }

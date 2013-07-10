@@ -1,6 +1,9 @@
 package org.bgee.model.dao.api;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
@@ -105,11 +108,51 @@ public abstract class DAOManager implements AutoCloseable
 			new ConcurrentHashMap<Long, DAOManager>(); 
 	
 	/**
-	 * A <code>ServiceLoader</code> to obtain <code>Service providers</code> 
-	 * providing <code>DAOManager</code>s. 
+	 * A unmodifiable <code>List</code> containing all available providers of 
+	 * the <code>DAOManager</code> service, in the order they were obtained 
+	 * from the <code>ServiceLoader</code>. This is needed because we want 
+	 * to load services from the <code>ServiceLoader</code> only once 
+	 * by <code>ClassLoader</code>. So we could have used as attribute  
+	 * a <code>static final ServiceLoader</code>, but <code>ServiceLoader</code> 
+	 * lazyly instantiate service providers and is not thread-safe, so we would 
+	 * have troubles in a multi-threading context. So we load all providers 
+	 * at once, we don't except this pre-loading to require too much memory 
+	 * (very few service providers available, used in very few libraries). 
+	 * <p>
+	 * As this <code>List</code> is unmodifiable and declared <code>final</code>, 
+	 * and the stored <code>DAOManager</code>s will always be cloned before use, 
+	 * this attribute can safely be accessed in a multi-threading context. 
 	 */
-	private static final ServiceLoader<DAOManager> loader = 
-			ServiceLoader.load(DAOManager.class);
+	private static final List<DAOManager> serviceProviders = 
+			DAOManager.getServiceProviders();
+	/**
+	 * Get all available providers of the <code>DAOManager</code> service 
+	 * from the <code>ServiceLoader</code>, as an unmodifiable <code>List</code>. 
+	 * <code>null</code> if an error occurred while using the <code>ServiceLoader</code>.
+	 * Empty <code>List</code> if no service providers could be found. 
+	 * 
+	 * @return 	An unmodifiable <code>List</code> of <code>DAOManager</code>s, 
+	 * 			in the same order they were obtained from the <code>ServiceLoader</code>. 
+	 * 			<code>null</code> if an error occurred while using 
+	 * 			the <code>ServiceLoader</code>. Empty <code>List</code> 
+	 * 			if no service providers could be found.
+	 */
+	private final static List<DAOManager> getServiceProviders() {
+		ServiceLoader<DAOManager> loader = 
+				ServiceLoader.load(DAOManager.class);
+		List<DAOManager> providers = new ArrayList<DAOManager>();
+		try {
+			for (DAOManager provider: loader) {
+				providers.add(provider);
+			}
+		} catch (Throwable e) {
+			//if an error occurred while using the ServiceLoader, 
+			//return null (this method is used during static initialization)
+			log.catching(e);
+			return null;
+		}
+		return Collections.unmodifiableList(providers);
+	}
 	
 	/**
      * An <code>AtomicBoolean</code> to define if <code>DAOManager</code>s 
@@ -183,49 +226,49 @@ public abstract class DAOManager implements AutoCloseable
             //obtain a DAOManager from a Service Provider accepting the parameters
         	log.debug("Trying to acquire a DAOManager from a Service provider");
         	
-        	Instances of this class are not safe for use by multiple concurrent threads. 
-        	I should load all service providers and store them
-        	Iterator<DAOManager> managerIterator = loader.iterator();
-        	try {
-        		while (managerIterator.hasNext()) {
-        			try {
-        				//need to get a new instance, because as we store 
-        				//in a static attribute the ServiceLoader, it always returns 
-        				//a same instance. 
-        				DAOManager testManager = 
-        						managerIterator.next().getClass().newInstance();
-        				
-        				log.trace("Testing {}", testManager);
-        				if (parameters != null) {
-        					testManager.setParameters(parameters);
-        				}
-        				//parameters accepted, we will use this manager
-        				manager = testManager;
-        				log.debug("DAOManager {} acquired", manager);
-        				break;
-
-        			} catch (InstantiationException | IllegalAccessException e1) {
-        				//this catch block is needed only because of the line 
-        				//managerIterator.next().getClass().newInstance();
-        				//These exceptions should never happen, as service providers 
-        				//must implement a default public constructor with no arguments. 
-        				//If such an exception occurred, it could be seen as 
-        				//a ServiceConfigurationError
-        				throw log.throwing(new ServiceConfigurationError(
-        						"DAOManager service provider instantiation error", e1));
-        			} catch (IllegalArgumentException e2) {
-        				//do nothing, this exception is thrown when calling 
-        				//setParameters to try to find the appropriate service provider. 
-        			}
-        		}
-        	} catch (ServiceConfigurationError e) {
-        		//this catch block is not really necessary, 
-        		//it is just to make clear that using the ServiceLoader Iterator 
-        		//can throw such an Exception
-        		throw log.throwing(e);
+        	if (DAOManager.serviceProviders == null) {
+        		//if serviceProviders is null, it means that an Error or Exception  
+        		//was thrown by the ServiceLoader when loading the providers. 
+        		//let's re.throw a ServiceConfigurationError
+        		throw log.throwing(new ServiceConfigurationError("An error occurred " +
+        				"while trying to load service providers from the ServiceLoader"));
         	}
+        	Iterator<DAOManager> managerIterator = DAOManager.serviceProviders.iterator();
+        	while (managerIterator.hasNext()) {
+        		try {
+        			//need to get a new instance, because as we store 
+        			//in a static attribute the providers, it always returns 
+        			//a same instance. 
+        			DAOManager testManager = 
+        					managerIterator.next().getClass().newInstance();
+
+        			log.trace("Testing {}", testManager);
+        			if (parameters != null) {
+        				testManager.setParameters(parameters);
+        			}
+        			//parameters accepted, we will use this manager
+        			manager = testManager;
+        			log.debug("DAOManager {} acquired", manager);
+        			break;
+
+        		} catch (InstantiationException | IllegalAccessException e1) {
+        			//this catch block is needed only because of the line 
+        			//managerIterator.next().getClass().newInstance();
+        			//These exceptions should never happen, as service providers 
+        			//must implement a default public constructor with no arguments. 
+        			//If such an exception occurred, it could be seen as 
+        			//a ServiceConfigurationError
+        			throw log.throwing(new ServiceConfigurationError(
+        					"DAOManager service provider instantiation error: " +
+        					"service provider did not provide a valid constructor", e1));
+        		} catch (IllegalArgumentException e2) {
+        			//do nothing, this exception is thrown when calling 
+        			//setParameters to try to find the appropriate service provider. 
+        		}
+        	}
+        		
         	if (manager == null) {
-        		log.debug("No DAOManager could be acquired");
+        		log.debug("No DAOManager could be found");
         		return null;
         	}
         	

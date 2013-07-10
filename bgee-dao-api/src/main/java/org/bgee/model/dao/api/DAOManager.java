@@ -182,6 +182,9 @@ public abstract class DAOManager implements AutoCloseable
         if (manager == null) {
             //obtain a DAOManager from a Service Provider accepting the parameters
         	log.debug("Trying to acquire a DAOManager from a Service provider");
+        	
+        	Instances of this class are not safe for use by multiple concurrent threads. 
+        	I should load all service providers and store them
         	Iterator<DAOManager> managerIterator = loader.iterator();
         	try {
         		while (managerIterator.hasNext()) {

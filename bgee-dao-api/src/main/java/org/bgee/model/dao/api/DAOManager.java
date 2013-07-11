@@ -135,13 +135,14 @@ public abstract class DAOManager implements AutoCloseable
 	 */
 	private final static List<DAOManager> getServiceProviders() {
 		log.entry();
+		log.info("Loading DAOManager service providers");
 		ServiceLoader<DAOManager> loader = 
 				ServiceLoader.load(DAOManager.class);
 		List<DAOManager> providers = new ArrayList<DAOManager>();
 		for (DAOManager provider: loader) {
 			providers.add(provider);
-			log.trace("Found provider {}", provider);
 		}
+		log.info("Providers found: {}", providers);
 		return log.exit(Collections.unmodifiableList(providers));
 	}
 	
@@ -160,7 +161,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * the <code>getDAOManager</code> methods return a newly instantiated 
 	 * <code>DAOManager</code>. Following calls from the same thread will always 
 	 * return the same instance ("per-thread singleton"), unless the <code>close</code> 
-	 * method was called. 
+	 * or <code>kill</code> method was called. 
 	 * <p>
 	 * If no <code>DAOManager</code> is available for this thread yet, this method 
 	 * will try to obtain from a <code>Service Provider</code> a concrete implementation 
@@ -178,7 +179,8 @@ public abstract class DAOManager implements AutoCloseable
 	 * are not supported by the current <code>DAOManager</code>. 
 	 * <p>
 	 * If caller wants to use a different <code>Service Provider</code>, accepting 
-	 * different parameters, then <code>close</code> should first be called. 
+	 * different parameters, then <code>close</code> or <code>kill</code> 
+	 * should first be called. 
 	 * <p>
 	 * This method will throw an <code>IllegalStateException</code> if {@link #closeAll()} 
 	 * was called prior to calling this method, and a <code>ServiceConfigurationError</code> 
@@ -208,8 +210,9 @@ public abstract class DAOManager implements AutoCloseable
 		log.entry(parameters);
 
         if (DAOManager.allClosed) {
-            throw new IllegalStateException("closeAll() has been already called, " +
-                    "it is not possible to acquire a DAOManager anymore");
+            throw log.throwing(
+            		new IllegalStateException("closeAll() has been already called, " +
+                    "it is not possible to acquire a DAOManager anymore"));
         }
 
 		//this thread-local ID should be release if a DAOManager is not acquired
@@ -220,7 +223,7 @@ public abstract class DAOManager implements AutoCloseable
         Throwable toThrow = null;
         if (manager == null) {
             //obtain a DAOManager from a Service Provider accepting the parameters
-        	log.debug("Trying to acquire a DAOManager from a Service provider");
+        	log.debug("No DAOManager available for this thread, trying to obtain a DAOManager from a Service provider");
         	
         	Iterator<DAOManager> managerIterator = DAOManager.serviceProviders.iterator();
         	providers: while (managerIterator.hasNext()) {
@@ -231,19 +234,19 @@ public abstract class DAOManager implements AutoCloseable
         			DAOManager testManager = 
         					managerIterator.next().getClass().newInstance();
 
-        			log.trace("Testing {}", testManager);
+        			log.trace("Testing: {}", testManager);
         			if (parameters != null) {
         				testManager.setParameters(parameters);
         			}
         			//parameters accepted, we will use this manager
         			manager = testManager;
-        			log.debug("DAOManager {} acquired", manager);
+        			log.debug("Valid DAOManager: {}", manager);
         			break providers;
 
-        		} catch (IllegalArgumentException e2) {
+        		} catch (IllegalArgumentException e) {
         			//do nothing, this exception is thrown when calling 
         			//setParameters to try to find the appropriate service provider. 
-        		} catch (Exception e1) {
+        		} catch (Exception e) {
         			//this catch block is needed only because of the line 
         			//managerIterator.next().getClass().newInstance();
         			//These exceptions should never happen, as service providers 
@@ -252,7 +255,7 @@ public abstract class DAOManager implements AutoCloseable
         			//a ServiceConfigurationError
         			toThrow = new ServiceConfigurationError(
         					"DAOManager service provider instantiation error: " +
-        					"service provider did not provide a valid constructor", e1);
+        					"service provider did not provide a valid constructor", e);
         			break providers;
         		}
         	}	
@@ -262,7 +265,6 @@ public abstract class DAOManager implements AutoCloseable
         		//we don't use putifAbsent, as idAssigned make sure 
         		//there won't be any multi-threading key collision
         		managers.put(idAssigned, manager);
-        		log.debug("Get a new DAOManager instance");
         	}
         } else {
             log.debug("Get an already existing DAOManager instance");
@@ -319,7 +321,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * the <code>getDAOManager</code> methods return a newly instantiated 
 	 * <code>DAOManager</code>. Following calls from the same thread will always 
 	 * return the same instance ("per-thread singleton"), unless the <code>close</code> 
-	 * method was called. 
+	 * or <code>kill</code> method was called. 
 	 * <p>
 	 * If no <code>DAOManager</code> is available for this thread yet, this method 
 	 * will try to obtain a <code>DAOManager</code> from the first Service provider 
@@ -391,10 +393,12 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill()
      */
     public final static void kill(long managerId) {
+    	log.entry(managerId);
     	DAOManager manager = managers.get(managerId);
         if (manager != null) {
         	manager.kill();
         }
+        log.exit();
     }
     
     //*****************************************
@@ -403,7 +407,7 @@ public abstract class DAOManager implements AutoCloseable
     /**
      * A <code>volatile</code> <code>Boolean</code> to indicate whether 
      * this <code>DAOManager</code> was closed (following a call to {@link #close()}, 
-     * {@link #closeAll()}, or {@link #kill(long)}).
+     * {@link #closeAll()}, {@link #kill()}, or {@link #kill(long)}).
      * <p>
      * This attribute is used as a lock to perform some atomic operations. It is also 
      * <code>volatile</code> as it can be read by method not acquiring a lock on it.
@@ -412,10 +416,11 @@ public abstract class DAOManager implements AutoCloseable
     private volatile Boolean closed;
     /**
      * A <code>volatile</code> <code>boolean</code> to indicate whether 
-     * this <code>DAOManager</code> was requested to be killed ({@link #kill(long)}). 
-     * This does not necessarily mean that a query was interrupted, only that 
-     * the <code>DAOManager</code> received a <code>kill</code> command 
-     * (if no query was running when receiving the command, none were killed).
+     * this <code>DAOManager</code> was requested to be killed ({@link #kill()} 
+     * or {@link #kill(long)}). This does not necessarily mean that a query 
+     * was interrupted, only that the <code>DAOManager</code> received 
+     * a <code>kill</code> command (if no query was running when receiving the command, 
+     * none were killed).
      * <p>
      * This attribute is <code>volatile</code> as it can be read and written 
      * from different threads.
@@ -427,8 +432,10 @@ public abstract class DAOManager implements AutoCloseable
      * with no parameters. 
      */
 	public DAOManager() {
+		log.entry();
 		this.setClosed(false);
 		this.setKilled(false);
+		log.exit();
 	}
 	
 	/**
@@ -445,12 +452,13 @@ public abstract class DAOManager implements AutoCloseable
 	 * 			to an ID anymore. 
 	 */
 	public final long getId() {
+		log.entry();
 		//to ensure we don't create a new thread-local ID if it doesn't have one
 		synchronized(this.closed) {
 			if (this.isClosed()) {
-				return -1;
+				return log.exit(-1L);
 			}
-			return uniqueNumber.get();
+			return log.exit(uniqueNumber.get());
 		}
 	}
 	
@@ -463,13 +471,16 @@ public abstract class DAOManager implements AutoCloseable
      * from this <code>DAOManager</code> instance anymore.
      * <p>
      * Specified by {@link java.lang.AutoCloseable#close()}.
+     * 
+     * @see #closeAll()
+     * @see #kill()
+     * @see #kill(long)
      */
 	@Override
     public final void close()
     {
         log.entry();
-        if (!this.isClosed()) {
-            this.atomicCloseAndRemoveFromPool(false);
+        if (this.atomicCloseAndRemoveFromPool(false)) {
         	//implementation-specific code here
         	this.closeDAOManager();
         }
@@ -479,7 +490,7 @@ public abstract class DAOManager implements AutoCloseable
 	/**
      * Determine whether this <code>DAOManager</code> was closed 
      * (following a call to {@link #close()}, {@link #closeAll()}, 
-     * or {@link #kill(long)}).
+     * {@link #kill()}, or {@link #kill(long)}).
      * 
      * @return	<code>true</code> if this <code>DAOManager</code> was closed, 
      * 			<code>false</code> otherwise.
@@ -504,15 +515,14 @@ public abstract class DAOManager implements AutoCloseable
      * <code>DAOManager</code>, and close and release all its resources. 
      * Closing the resources will have the same effects then calling {@link #close()}.
      * If a query was interrupted following a call to this method, the service provider 
-     * should throw a <code>QueryInterruptedException</code> in the thread 
+     * should throw a <code>QueryInterruptedException</code> from the thread 
      * that was interrupted. 
      * 
      * @see #kill(long)
      */
     public final void kill() {
     	log.entry();
-    	if (!this.isClosed()) {
-            this.atomicCloseAndRemoveFromPool(true);
+    	if (this.atomicCloseAndRemoveFromPool(true)) {
     		//implementation-specific code here
     		this.killDAOManager();
     	}
@@ -522,12 +532,12 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Determine whether this <code>DAOManager</code> was killed 
-     * (following a call to {@link #kill(long)}).
+     * (following a call to {@link #kill()} or {@link #kill(long)}).
      * This does not necessarily mean that a query was interrupted, only that 
      * the <code>DAOManager</code> received a <code>kill</code> command 
      * (if no query was running when receiving the command, none were killed).
      * <p>
-     * If a query was actually interrupted following, then the service provider 
+     * If a query was actually interrupted, then the service provider 
      * should have thrown a <code>QueryInterruptedException</code> from the thread 
      * that was interrupted. 
      * <p>
@@ -540,7 +550,8 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill(long)
      */
     public final boolean isKilled() {
-    	return this.killed;
+    	log.entry();
+    	return log.exit(this.killed);
     }
     /**
      * Set {@link #killed}. The only method that should call this one besides constructors 
@@ -556,11 +567,18 @@ public abstract class DAOManager implements AutoCloseable
      * Atomic operation to set {@link #closed} to <code>true</code>, 
      * {@link #killed} to <code>true</code> if the parameter is <code>true</code>,
      * and to call {@link #removePromPool()}. 
+     * This method returns <code>true</code> if the operations were actually performed, 
+     * and <code>false</code> if this <code>DAOManager</code> was actually 
+     * already closed. 
      * 
      * @param killed 	To indicate whether this <code>DAOManager</code> 
      * 					is being closed following a {@link #kill()} command.
+     * @return 			A <code>boolean</code> <code>true</code> if the operations 
+     * 					were actually performed, <code>false</code> if this 
+     * 					<code>DAOManager</code> was already closed. 
      */
-    private final void atomicCloseAndRemoveFromPool(boolean killed) {
+    private final boolean atomicCloseAndRemoveFromPool(boolean killed) {
+    	log.entry(killed);
     	synchronized(this.closed) {
     		if (!this.isClosed()) {
     			this.setClosed(true);
@@ -568,7 +586,9 @@ public abstract class DAOManager implements AutoCloseable
     				this.setKilled(true);
     			}
     			DAOManager.removePromPool();
+    			return log.exit(true);
     		}
+    		return log.exit(false);
     	}
     }
     
@@ -578,8 +598,10 @@ public abstract class DAOManager implements AutoCloseable
      * the thread-local ID from {@link #uniqueNumbers}.
      */
     private final static void removePromPool() {
+    	log.entry();
     	managers.remove(uniqueNumber.get());
         uniqueNumber.remove();
+        log.exit();
     }
     
     

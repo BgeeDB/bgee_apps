@@ -2,6 +2,7 @@ package org.bgee.model.dao.api;
 
 import java.util.ServiceConfigurationError;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
@@ -46,6 +47,7 @@ public class TestServiceLoaderError extends TestAncestor {
 		    throw new AssertionError("A ServiceConfigurationError should have been thrown");
 		} catch (ServiceConfigurationError e) {
 			//test passed
+			log.catching(Level.DEBUG, e);
 		}		
 		
 		//restore setting for other tests

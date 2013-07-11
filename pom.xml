@@ -90,20 +90,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>org.apache.tomcat</groupId>
-			<artifactId>tomcat-jdbc</artifactId>
-			<version>7.0.39</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.sun.messaging.mq</groupId>
-			<artifactId>fscontext</artifactId>
-			<version>4.4</version>
-			<scope>test</scope>
-		</dependency>
-
 	</dependencies>
 
 	<!-- Dependencies needed for some sub-projects -->
@@ -148,6 +134,20 @@
 				<version>1.15</version>
 				<scope>compile</scope>
 			</dependency>
+
+		    <dependency>
+			    <groupId>org.apache.tomcat</groupId>
+			    <artifactId>tomcat-jdbc</artifactId>
+			    <version>7.0.39</version>
+			    <scope>test</scope>
+		    </dependency>
+
+		    <dependency>
+			    <groupId>com.sun.messaging.mq</groupId>
+			    <artifactId>fscontext</artifactId>
+			    <version>4.4</version>
+			    <scope>test</scope>
+		    </dependency>
 
 			<!-- End for the core layer -->
 

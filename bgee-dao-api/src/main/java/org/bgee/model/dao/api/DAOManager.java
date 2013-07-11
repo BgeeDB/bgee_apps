@@ -9,8 +9,10 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -246,6 +248,7 @@ public abstract class DAOManager implements AutoCloseable
         		} catch (IllegalArgumentException e) {
         			//do nothing, this exception is thrown when calling 
         			//setParameters to try to find the appropriate service provider. 
+        			log.catching(Level.TRACE, e);
         		} catch (Exception e) {
         			//this catch block is needed only because of the line 
         			//managerIterator.next().getClass().newInstance();
@@ -296,9 +299,6 @@ public abstract class DAOManager implements AutoCloseable
         		}
         	}
         }
-        
-		//remove thread-local ID from uniqueNumber
-		DAOManager.removePromPool();
 		
 		if (toThrow != null) {
 			if (toThrow instanceof IllegalStateException) {
@@ -312,6 +312,12 @@ public abstract class DAOManager implements AutoCloseable
 						new ServiceConfigurationError("Unexpected error", toThrow));
 			}
 		}
+		//remove thread-local ID from uniqueNumber. We do it only if no exception
+		//were thrown, because if an exception was thrown, it either means that 
+		//the manager was already closed and ID removed, 
+		//or none could be acquired, or it is still valid, just setting the parameters 
+		//failed. 
+		DAOManager.removePromPool();
 		return log.exit(null);
 	}
 	
@@ -405,15 +411,15 @@ public abstract class DAOManager implements AutoCloseable
     //  INSTANCE ATTRIBUTES AND METHODS
     //*****************************************	
     /**
-     * A <code>volatile</code> <code>Boolean</code> to indicate whether 
+     * An <code>AtomicBoolean</code> to indicate whether 
      * this <code>DAOManager</code> was closed (following a call to {@link #close()}, 
      * {@link #closeAll()}, {@link #kill()}, or {@link #kill(long)}).
      * <p>
-     * This attribute is used as a lock to perform some atomic operations. It is also 
-     * <code>volatile</code> as it can be read by method not acquiring a lock on it.
-     * 
+     * This attribute is <code>final</code> because it is used as a lock to perform 
+     * some atomic operations. It is an <code>AtomicBoolean</code> as it can be read 
+     * by method not acquiring a lock on it.
      */
-    private volatile Boolean closed;
+    private final AtomicBoolean closed;
     /**
      * A <code>volatile</code> <code>boolean</code> to indicate whether 
      * this <code>DAOManager</code> was requested to be killed ({@link #kill()} 
@@ -433,7 +439,7 @@ public abstract class DAOManager implements AutoCloseable
      */
 	public DAOManager() {
 		log.entry();
-		this.setClosed(false);
+		this.closed = new AtomicBoolean(false);
 		this.setKilled(false);
 		log.exit();
 	}
@@ -498,7 +504,7 @@ public abstract class DAOManager implements AutoCloseable
     public final boolean isClosed()
     {
         log.entry();
-        return log.exit(closed);
+        return log.exit(closed.get());
     }
     /**
      * Set {@link #closed}. The only method that should call this one besides constructors 
@@ -507,7 +513,7 @@ public abstract class DAOManager implements AutoCloseable
      * @param closed 	a <code>boolean</code> to set {@link #closed}
      */
     private final void setClosed(boolean closed) {
-    	this.closed = closed;
+    	this.closed.set(closed);
     }
     
     /**

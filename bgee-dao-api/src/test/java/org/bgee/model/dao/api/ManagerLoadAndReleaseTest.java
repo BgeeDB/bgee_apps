@@ -7,10 +7,12 @@ import java.util.Map;
 import java.util.ServiceConfigurationError;
 import java.util.concurrent.Exchanger;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.junit.Test;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests testing the loading and closing of {@link DAOManager}.
@@ -249,5 +251,66 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 		
 		//reset parameters so that other tests won't fail
 		MockDAOManager2.thrownInstantiationException = false;
+	}
+	
+	/**
+	 * Test the functionality of {@link DAOManager#setParameters(Map)}, 
+	 * in relation with {@link DAOManager#getDAOManager(Map)}.
+	 */
+	@Test
+	public void shouldSetParameters() {
+		//make the providers to refuse some parameters
+		
+		//MockDAOManager
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put("test.key", "test.value");
+		doThrow(new IllegalArgumentException("Mock exception on purpose")).
+		    when(MockDAOManager.mockManager).setParameters(eq(parameters));
+		
+		//MockDAOManager2
+		Map<String, String> parameters2 = new HashMap<String, String>();
+		parameters2.put("test.key2", "test.value2");
+		doThrow(new IllegalArgumentException("Mock exception on purpose")).
+	        when(MockDAOManager2.mockManager).setParameters(eq(parameters2));
+		
+		//check that we got the second provider when using the parameters 
+		//that the first provider rejects
+		DAOManager manager = DAOManager.getDAOManager(parameters);
+		assertEquals("getDAOManager returned the wrong service provider", 
+			"org.bgee.model.dao.api.MockDAOManager2", manager.getClass().getName());
+		
+		//now, calling getDAOManager again with no parameters should still return 
+		//the same instance of the second provider
+		assertSame("getDAOManager returned a second instance in a same thread", 
+				manager, DAOManager.getDAOManager());
+		
+		//calling getDAOManager with the parameters the current manager rejects 
+		//should throw an IllegalArgumentException
+		try {
+			DAOManager.getDAOManager(parameters2);
+			//if we reach this point, test failed
+		    throw new AssertionError("A IllegalArgumentException should have been thrown");
+		} catch (IllegalArgumentException e) {
+			//test passed
+			log.catching(Level.DEBUG, e);
+		}
+		//but we can still acquire it with no parameters
+		assertSame("getDAOManager returned a second instance in a same thread", 
+				manager, DAOManager.getDAOManager());
+		//or with the proper parameters
+		assertSame("getDAOManager returned a second instance in a same thread", 
+				manager, DAOManager.getDAOManager(parameters));
+		
+		//now if we release it, wa can acquire an instance from the first provider
+		manager.close();
+		manager = DAOManager.getDAOManager(parameters2);
+		assertEquals("getDAOManager returned the wrong service provider", 
+				"org.bgee.model.dao.api.MockDAOManager", manager.getClass().getName());
+		
+		//release the DAOManager without calling closeAll(), 
+		//that would make other test to fail
+		manager.close();
+		reset(MockDAOManager.mockManager);
+		reset(MockDAOManager2.mockManager);
 	}
 }

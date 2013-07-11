@@ -25,7 +25,7 @@ public class MockDAOManager extends DAOManager {
 	 */
 	protected static boolean thrownInstantiationException = false;
 	
-	public final DAOManager mockManager;
+	public static final DAOManager mockManager = mock(DAOManager.class);
 	
 	/**
 	 * Default constructor used by the service loader.
@@ -35,23 +35,22 @@ public class MockDAOManager extends DAOManager {
 				MockDAOManager.thrownInstantiationException) {
 			throw new RuntimeException("Mocked instantiation error on purpose");
 		}
-		this.mockManager = mock(DAOManager.class);
 	}
 
 	@Override
 	protected void closeDAOManager() {
-		this.mockManager.closeDAOManager();
+		MockDAOManager.mockManager.closeDAOManager();
 	}
 
 	@Override
 	protected void killDAOManager() {
-		this.mockManager.killDAOManager();
+		MockDAOManager.mockManager.killDAOManager();
 	}
 
 	@Override
 	public void setParameters(Map<String, String> parameters)
 			throws IllegalArgumentException {
-		this.mockManager.setParameters(parameters);
+		MockDAOManager.mockManager.setParameters(parameters);
 	}
 
 }

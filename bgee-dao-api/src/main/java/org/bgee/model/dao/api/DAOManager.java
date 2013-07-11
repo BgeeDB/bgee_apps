@@ -9,7 +9,6 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
@@ -120,7 +119,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * (very few service providers available, used in very few libraries). 
 	 * <p>
 	 * As this <code>List</code> is unmodifiable and declared <code>final</code>, 
-	 * and the stored <code>DAOManager</code>s will always be cloned before use, 
+	 * and the stored <code>DAOManager</code>s will always be copied before use, 
 	 * this attribute can safely be accessed in a multi-threading context. 
 	 */
 	private static final List<DAOManager> serviceProviders = 
@@ -147,12 +146,12 @@ public abstract class DAOManager implements AutoCloseable
 	}
 	
 	/**
-     * An <code>AtomicBoolean</code> to define if <code>DAOManager</code>s 
+     * A volatile <code>boolean</code> to define if <code>DAOManager</code>s 
      * can still be acquired (using the <code>getDAOManager</code> methods), 
      * or if it is not possible anymore (meaning that the method {@link #closeAll()} 
-     * has been called)
+     * has been called).
      */
-    private static final AtomicBoolean allclosed = new AtomicBoolean();
+    private static volatile boolean allClosed = false;
 	
 	/**
 	 * Return a <code>DAOManager</code> instance with its parameters set using 
@@ -208,10 +207,11 @@ public abstract class DAOManager implements AutoCloseable
 	{
 		log.entry(parameters);
 
+		//this thread-local ID should be release if a DAOManager is not acquired
         long idAssigned = uniqueNumber.get();
         log.debug("Trying to obtain a DAOManager with ID {}", idAssigned);
 
-        if (allclosed.get()) {
+        if (DAOManager.allClosed) {
             throw new IllegalStateException("closeAll() has been already called, " +
                     "it is not possible to acquire a DAOManager anymore");
         }
@@ -249,6 +249,10 @@ public abstract class DAOManager implements AutoCloseable
         			//must implement a default public constructor with no arguments. 
         			//If such an exception occurred, it could be seen as 
         			//a ServiceConfigurationError
+                    
+        			//remove thread-local ID from uniqueNumber
+        			DAOManager.removePromPool();
+        			
         			throw log.throwing(new ServiceConfigurationError(
         					"DAOManager service provider instantiation error: " +
         					"service provider did not provide a valid constructor", e1));
@@ -256,6 +260,8 @@ public abstract class DAOManager implements AutoCloseable
         	}
         		
         	if (manager == null) {
+        		//remove thread-local ID from uniqueNumber
+    			DAOManager.removePromPool();
         		log.debug("No DAOManager could be found");
         		return null;
         	}
@@ -263,15 +269,26 @@ public abstract class DAOManager implements AutoCloseable
             //we don't use putifAbsent, as idAssigned make sure 
             //there won't be any multi-threading key collision
             managers.put(idAssigned, manager);
-            log.debug("Return a new DAOManager instance");
+            log.debug("Get a new DAOManager instance");
         } else {
-            log.debug("Return an already existing DAOManager instance");
+            log.debug("Get an already existing DAOManager instance");
             if (parameters != null) {
                 manager.setParameters(parameters);
             }
         }
-        manager.closed = false;
-        return log.exit(manager);
+        //check that the manager was not closed by another thread while we were 
+        //acquiring it
+        synchronized (manager.closed) {voir ce que je fais si kill close ou pas
+            if (manager.isClosed()) {
+            	//if the manager was closed following a call to closeAll
+            	if (DAOManager.allClosed) {
+                    throw new IllegalStateException("closeAll() has been already called, " +
+                            "it is not possible to acquire a DAOManager anymore");
+                }
+            	//otherwise, it was 
+            }
+            return log.exit(manager);
+        }
 	}
 	
 	/**
@@ -328,11 +345,11 @@ public abstract class DAOManager implements AutoCloseable
     {
         log.entry();
 
-        //this AtomicBoolean will act more or less like a lock 
-        //(no new DAOManager can be obtained after this AtomicBoolean is set to true).
+        //this volatile boolean will act more or less like a lock 
+        //(no new DAOManager can be obtained after this boolean is set to true).
         //It's not totally true, but we don't except any major error 
         //if it doesn't act like a lock.
-        allclosed.set(true);
+        DAOManager.allClosed = true;
 
         int managerCount = 0;
         for (DAOManager manager: managers.values()) {
@@ -361,26 +378,44 @@ public abstract class DAOManager implements AutoCloseable
     //  INSTANCE ATTRIBUTES AND METHODS
     //*****************************************	
     /**
-     * A <code>boolean</code> to indicate whether this <code>DAOManager</code> was closed 
-     * (following a call to {@link #close()}, {@link #closeAll()}, or {@link #kill(long)}).
+     * A <code>volatile</code> <code>Boolean</code> to indicate whether 
+     * this <code>DAOManager</code> was closed (following a call to {@link #close()}, 
+     * {@link #closeAll()}, or {@link #kill(long)}).
+     * <p>
+     * This attribute is used as a lock to perform some atomic operations. It is also 
+     * <code>volatile</code> as it can be read by method not acquiring a lock on it.
+     * 
      */
-    private boolean closed;
+    private volatile Boolean closed;
     /**
      * Every concrete implementation must provide a default constructor 
      * with no parameters. 
      */
 	public DAOManager() {
-		
+		this.setClosed(false);
 	}
 	
 	/**
-	 * Return the ID associated to this <code>DAOManager</code>. This ID can be used 
-	 * to call {@link #kill(long)}.
+	 * Return the thread-local ID associated to this <code>DAOManager</code>. 
+	 * This ID can be used to call {@link #kill(long)}.
+	 * <p>
+	 * If this <code>DAOManager</code> is already closed, the returned value is 
+	 * <code>-1</code>. This avoids to have to call <code>isClosed</code> before 
+	 * this method, in an non-atomic way (as closed <code>DAOManager</code> 
+	 * are not associated to a thread-local ID). 
 	 * 
 	 * @return 	A <code>long</code> that is the ID of this <code>DAOManager</code>.
+	 * 			-1 if this <code>DAOManager</code> is closed, and is not associated 
+	 * 			to an ID anymore. 
 	 */
 	public final long getId() {
-		return uniqueNumber.get();
+		//to ensure we don't create a new thread-local ID if it doesn't have one
+		synchronized(this.closed) {
+			if (this.isClosed()) {
+				return -1;
+			}
+			return uniqueNumber.get();
+		}
 	}
 	
 	/**
@@ -398,7 +433,7 @@ public abstract class DAOManager implements AutoCloseable
     {
         log.entry();
         if (!this.isClosed()) {
-        	this.removePromPool();
+            this.atomicCloseAndRemoveFromPool();
         	//implementation-specific code here
         	this.closeDAOManager();
         }
@@ -418,20 +453,26 @@ public abstract class DAOManager implements AutoCloseable
         log.entry();
         return log.exit(closed);
     }
+    /**
+     * Set {@link #closed}. The only method that should call this one besides constructors 
+     * is {@link #atomicCloseAndRemoveFromPool}. 
+     * 
+     * @param closed 	a <code>boolean</code> to set {@link #closed}
+     */
+    private final void setClosed(boolean closed) {
+    	this.closed = closed;
+    }
     
     /**
      * Try to kill immediately all ongoing processes performed by DAOs of this 
-     * <code>DAOManager</code>, release all resources it handles, 
-     * and release it (a call to a <code>getDAOManager</code> method from the thread 
-     * that was holding it will return a new <code>DAOManager</code> instance).
-     * <p>
-     * Following a call to this method, it is not possible to acquire DAOs 
-     * from this <code>DAOManager</code> instance anymore.
+     * <code>DAOManager</code> in another thread. This <code>DAOManager</code> 
+     * is not closed following a call to this method, as implementations should make sure 
+     * to throw a <code>QueryInterruptedException</code>.
      */
-    public final void kill() {
+    public final void kill() {close ou pas ?
     	log.entry();
     	if (!this.isClosed()) {
-    		this.removePromPool();
+            this.atomicCloseAndRemoveFromPool();
     		//implementation-specific code here
     		this.killDAOManager();
     	}
@@ -440,14 +481,26 @@ public abstract class DAOManager implements AutoCloseable
     }
     
     /**
-     * Performs the operations to remove a <code>DAOManager</code> 
-     * from {@link #managers} and to remove the thread-local ID from 
-     * {@link #uniqueNumbers}.
+     * Atomic operation to set <code>closed</code> to <code>false</code> 
+     * and to call <code>removePromPool</code>. 
      */
-    private final void removePromPool() {
+    private final void atomicCloseAndRemoveFromPool() {
+    	synchronized(this.closed) {
+    		if (!this.isClosed()) {
+    			this.setClosed(true);
+    			DAOManager.removePromPool();
+    		}
+    	}
+    }
+    
+    /**
+     * Performs the operations to remove the <code>DAOManager</code> associated
+     * to this thread from {@link #managers} (optional operation) and to remove 
+     * the thread-local ID from {@link #uniqueNumbers}.
+     */
+    private final static void removePromPool() {
     	managers.remove(uniqueNumber.get());
         uniqueNumber.remove();
-        this.closed = true;
     }
     
     

@@ -239,5 +239,15 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 		} catch (ServiceConfigurationError e) {
 			//test passed
 		}
+		
+		//now we configure the second provider to throw an exception, 
+		//so the first one should be valid and be returned
+		MockDAOManager.thrownInstantiationException = false;
+		MockDAOManager2.thrownInstantiationException = true;
+		assertNotNull("The DAOManager from the first provider was not returned", 
+				DAOManager.getDAOManager());
+		
+		//reset parameters so that other tests won't fail
+		MockDAOManager2.thrownInstantiationException = false;
 	}
 }

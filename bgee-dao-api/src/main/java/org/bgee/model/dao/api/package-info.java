@@ -1,8 +1,8 @@
 /**
  * This package provides the API to access data sources. It is completely independent 
  * from other packages and modules. It implements the 
- * {@link http://www.oracle.com/technetwork/java/dataaccessobject-138824.html 
- * J2EE Data Access Object Patterns}. It notably provides DAO interfaces, 
+ * <a href='http://www.oracle.com/technetwork/java/dataaccessobject-138824.html'>
+ * J2EE Data Access Object Patterns</a>. It notably provides DAO interfaces, 
  * with methods returning or accepting data by means of <code>TransferObject</code>s. 
  * This API can then be used with any concrete implementation acting under the hood, 
  * specific to a data source, using the <code>Service Provider</code> mechanisms (see below). 
@@ -36,9 +36,9 @@
  * </ul>
  * <p>
  * <h3>Service Provider mechanism</h3>
- * This API supports the standard {@link 
- * http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider 
- * Service Provider} mechanism. Concrete implementations must include the file 
+ * This API supports the standard 
+ * <a href='http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider'>
+ * Service Provider</a> mechanism. Concrete implementations must include the file 
  * <code>META-INF/services/org.bgee.model.dao.api.DAOManager</code>. The file must contain 
  * the name of the implementation of <code>org.bgee.model.dao.api.DAOManager</code>. 
  * For example, to load the <code>my.sql.Factory</code> class, 

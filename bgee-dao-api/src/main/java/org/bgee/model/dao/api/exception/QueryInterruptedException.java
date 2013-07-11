@@ -2,7 +2,7 @@ package org.bgee.model.dao.api.exception;
 
 /**
  * An <code>Exception</code> thrown when the query to a data source was interrupted 
- * following a call to {@link DAOManager#kill()}.
+ * following a call to {@link org.bgee.model.dao.api.DAOManager#kill()}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

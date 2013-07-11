@@ -512,8 +512,7 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Try to kill immediately all ongoing processes performed by DAOs of this 
-     * <code>DAOManager</code>, and close and release all its resources. 
-     * Closing the resources will have the same effects then calling {@link #close()}.
+     * <code>DAOManager</code>, and immediately call {@link #close()} on it. 
      * If a query was interrupted following a call to this method, the service provider 
      * should throw a <code>QueryInterruptedException</code> from the thread 
      * that was interrupted. 
@@ -525,6 +524,7 @@ public abstract class DAOManager implements AutoCloseable
     	if (this.atomicCloseAndRemoveFromPool(true)) {
     		//implementation-specific code here
     		this.killDAOManager();
+    		this.closeDAOManager();
     	}
     	
     	log.exit();
@@ -540,9 +540,6 @@ public abstract class DAOManager implements AutoCloseable
      * If a query was actually interrupted, then the service provider 
      * should have thrown a <code>QueryInterruptedException</code> from the thread 
      * that was interrupted. 
-     * <p>
-     * If this method returns <code>true</code>, then a call to {@link #isClosed()} 
-     * will also return <code>true</code>.
      * 
      * @return	<code>true</code> if this <code>DAOManager</code> was killed, 
      * 			<code>false</code> otherwise.
@@ -618,10 +615,6 @@ public abstract class DAOManager implements AutoCloseable
      * <code>DAOManager</code> instances (so in our previous example, 
      * <code>Connection</code>s hold by other managers should not be closed).
      * <p>
-     * Implementations should make sure that no DAOs can be obtained from 
-     * this <code>DAOManager</code> instance once this method has been called. 
-     * They can check its status by calling {@link #isClosed()}.
-     * <p>
      * This method is called by {@link #close()} after having remove this 
      * <code>DAOManager</code> from the pool. 
      */
@@ -629,28 +622,29 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Service providers must implement in this method the operations necessary 
-     * to immediately kill all ongoing processes handled by this <code>DAOManager</code>, 
-     * and release all resources. It should not affect other <code>DAOManager</code>s.
+     * to immediately kill all ongoing processes handled by this <code>DAOManager</code>. 
+     * It should not affect other <code>DAOManager</code>s.
      * <p>
      * If a query was interrupted following a call to this method, the service provider 
-     * should throw a <code>QueryInterruptedException</code> in the thread 
-     * that was interrupted. To help determining if the method <code>kill</code> 
-     * was called, service provider can use {@link #isKilled()}.
+     * should make sure that a <code>QueryInterruptedException</code> will be thrown 
+     * from the thread that was interrupted. To help determining 
+     * if the method <code>kill</code> was called, service provider can use 
+     * {@link #isKilled()}. If no query was running, then nothing should happen.
      * <p>
      * For instance, if a service provider uses the JDBC API to use a SQL database,
      * the <code>DAOManager</code> should keep track of which <code>Statement</code> 
-     * is currently running, in order to be able to call <code>cancel</code> on it, 
-     * then close all <code>Connection</code>s hold by its DAOs. 
-     * <p>
-     * Implementations should make sure that no DAOs can be obtained from 
-     * this <code>DAOManager</code> instance once this method has been called. 
-     * They can check its status by calling {@link #isClosed()}.
+     * is currently running, in order to be able to call <code>cancel</code> on it.
+     * The thread using the <code>Statement</code> should have checked <code>isKilled</code> 
+     * before calling <code>execute</cod>, and after returning from <code>execute</code>, 
+     * should immediately check {@link #isKilled()} to determine if it was interrupted, 
+     * and throw a <code>QueryInterruptedException</code> if it was the case. 
      * <p>
      * This method is called by {@link #kill()} after having remove this 
-     * <code>DAOManager</code> from the pool. Note that {@link #closeDAOManager()} 
-     * is not called, it is up to the implementation to do it if needed, 
-     * as this <code>DAOManager</code> <strong>must</strong> be closed 
-     * following a call to this method. 
+     * <code>DAOManager</code> from the pool. {@link #close()} will be called 
+     * immediately after this method. 
+     * <p>
+     * Note that {@link #closeDAOManager()} will be immediately called after 
+     * this method, by the method {@link #kill()}.
      */
     protected abstract void killDAOManager();
     
@@ -665,11 +659,6 @@ public abstract class DAOManager implements AutoCloseable
      * the <code>DAOManager</code> does not accept these parameters. 
      * This is the method used to find an appropriate Service provider 
      * when calling {@link #getDAOManager(Map)}.
-     * <p>
-     * If an <code>IllegalArgumentException</code> is thrown when using this method, 
-     * maybe a new <code>DAOManager</code> could be obtained 
-     * from another Service provider, by calling <code>close</code>, 
-     * then <code>getDAOManager(Map)</code>.
      * 
      * @param parameters	A <code>Map</code> with keys that are <code>String</code>s 
 	 * 						representing parameter names, and values that 

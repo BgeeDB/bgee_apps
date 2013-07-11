@@ -512,7 +512,8 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Try to kill immediately all ongoing processes performed by DAOs of this 
-     * <code>DAOManager</code>, and immediately call {@link #close()} on it. 
+     * <code>DAOManager</code>, and close and release all its resources. 
+     * Closing the resources will have the same effects then calling {@link #close()}.
      * If a query was interrupted following a call to this method, the service provider 
      * should throw a <code>QueryInterruptedException</code> from the thread 
      * that was interrupted. 
@@ -524,7 +525,6 @@ public abstract class DAOManager implements AutoCloseable
     	if (this.atomicCloseAndRemoveFromPool(true)) {
     		//implementation-specific code here
     		this.killDAOManager();
-    		this.closeDAOManager();
     	}
     	
     	log.exit();
@@ -540,6 +540,9 @@ public abstract class DAOManager implements AutoCloseable
      * If a query was actually interrupted, then the service provider 
      * should have thrown a <code>QueryInterruptedException</code> from the thread 
      * that was interrupted. 
+     * <p>
+     * If this method returns <code>true</code>, then a call to {@link #isClosed()} 
+     * will also return <code>true</code>.
      * 
      * @return	<code>true</code> if this <code>DAOManager</code> was killed, 
      * 			<code>false</code> otherwise.
@@ -622,7 +625,8 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Service providers must implement in this method the operations necessary 
-     * to immediately kill all ongoing processes handled by this <code>DAOManager</code>. 
+     * to immediately kill all ongoing processes handled by this <code>DAOManager</code>, 
+     * and release and close all resources it hold. 
      * It should not affect other <code>DAOManager</code>s.
      * <p>
      * If a query was interrupted following a call to this method, the service provider 
@@ -640,11 +644,11 @@ public abstract class DAOManager implements AutoCloseable
      * and throw a <code>QueryInterruptedException</code> if it was the case. 
      * <p>
      * This method is called by {@link #kill()} after having remove this 
-     * <code>DAOManager</code> from the pool. {@link #close()} will be called 
-     * immediately after this method. 
-     * <p>
-     * Note that {@link #closeDAOManager()} will be immediately called after 
-     * this method, by the method {@link #kill()}.
+     * <code>DAOManager</code> from the pool. Note that {@link #closeDAOManager()} 
+     * is not called, it is up to the implementation to do it when needed, 
+     * because it might require some atomic operations, but this <code>DAOManager</code> 
+     * <strong>must</strong> be closed following a call to this method, 
+     * as if {@link #closeDAOManager()} had been called. 
      */
     protected abstract void killDAOManager();
     

@@ -313,4 +313,106 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 		reset(MockDAOManager.mockManager);
 		reset(MockDAOManager2.mockManager);
 	}
+	
+	/**
+	 * Test the functionality of {@link DAOManager#kill(long)}.
+	 */
+	@Test
+	public void shouldKillManager() throws Exception {
+		/**
+		 * An anonymous class to acquire <code>DAOManager</code>s 
+		 * from a different thread than this one, 
+		 * and to be run alternatively to the main thread 
+		 * (because kill method is usually called from different threads).
+		 */
+		class ThreadTest extends Thread {
+			public volatile DAOManager manager;
+			public volatile Throwable exceptionThrown;
+			/**
+			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 */
+			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
+			
+			@Override
+			public void run() {
+				try {
+					//acquire a DAOManager
+			        manager = DAOManager.getDAOManager();
+			        
+			        //main thread's turn
+			        this.exchanger.exchange(null);
+			        //wait for this thread's turn
+			        this.exchanger.exchange(null);
+			        
+			        //the main thread has called kill on this manager, 
+			        //let's check that we can have another one
+			        manager = DAOManager.getDAOManager();
+			        
+			        //main thread's turn
+			        this.exchanger.exchange(null);
+			        
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				} catch (Exception e) {
+					exceptionThrown = e;
+				} 
+			}
+		}
+		
+		try {
+			//get a DAOManager in the main thread (just to be sure this one
+			//is not killed when we kill the manager in the second thread)
+			DAOManager manager = DAOManager.getDAOManager();
+			//launch a second thread also acquiring DAOManager
+	        ThreadTest test = new ThreadTest();
+	        test.start();
+	        //wait for this thread's turn
+	        test.exchanger.exchange(null);
+	        //check that no exception was thrown in the second thread 
+	        if (test.exceptionThrown != null) {
+	        	throw new Exception("An Exception occurred in the second thread.", 
+	        			test.exceptionThrown);
+	        }
+
+			//test kill
+	        DAOManager.kill(test.manager.getId());
+	        assertTrue("The manager in the second thread was not closed", 
+	        		test.manager.isClosed());
+	        assertTrue("The manager in the second thread was not killed", 
+	        		test.manager.isKilled());
+	        verify(((MockDAOManager) test.manager).instanceMockManager).killDAOManager();
+	        //check there is no effect on this thread
+	        assertFalse("The manager in the main thread was closed", 
+	        		manager.isClosed());
+	        assertFalse("The manager in the main thread was killed", 
+	        		manager.isKilled());
+	        verify(((MockDAOManager) manager).instanceMockManager, never()).killDAOManager();
+	        
+	        //check that the second thread can still acquire a new manager
+	        DAOManager storeManager = test.manager;
+	        test.exchanger.exchange(null);
+	        //wait for this thread's turn
+	        test.exchanger.exchange(null);
+	        //check that no exception was thrown in the second thread 
+	        if (test.exceptionThrown != null) {
+	        	throw new Exception("An Exception occurred in the second thread.", 
+	        			test.exceptionThrown);
+	        }
+	        assertNotNull("The second thread did not acquire a new manager", 
+	        		test.manager);
+	        assertNotSame("The second thread did not acquire a new manager", 
+	        		storeManager, test.manager);
+			
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		} 
+	}
+	
+	/**
+	 * Test the functionality of {@link DAOManager#getId()}
+	 */
+	@Test
+	public void shouldGetId() {
+		
+	}
 }

@@ -29,7 +29,17 @@ public class MockDAOManager2 extends DAOManager {
 	 */
 	protected static boolean thrownInstantiationException = false;
 	
+	/**
+	 * This static mocked <code>DAOManager</code> is needed because we sometimes 
+	 * need to specify mocked behavior before acquiring a instance 
+	 * (notably to test {@link DAOManager#gtDAOManager()}).
+	 */
 	public static final DAOManager mockManager = mock(DAOManager.class);
+	/**
+	 * This mocked <code>DAOManager</code> is needed because we sometimes
+	 * need to specify or verify different behavior from different instances. 
+	 */
+	public final DAOManager instanceMockManager = mock(DAOManager.class);
 	
 	/**
 	 * Default constructor used by the service loader.
@@ -43,12 +53,12 @@ public class MockDAOManager2 extends DAOManager {
 
 	@Override
 	protected void closeDAOManager() {
-		MockDAOManager2.mockManager.closeDAOManager();
+		this.instanceMockManager.closeDAOManager();
 	}
 
 	@Override
 	protected void killDAOManager() {
-		MockDAOManager2.mockManager.killDAOManager();
+		this.instanceMockManager.killDAOManager();
 	}
 
 	@Override

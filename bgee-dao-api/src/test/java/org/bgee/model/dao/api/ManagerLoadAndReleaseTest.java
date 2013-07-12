@@ -407,4 +407,68 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			Thread.currentThread().interrupt();
 		} 
 	}
+	
+	/**
+	 * Test the functionality of {@link DAOManager#hasDAOManager()}.
+	 */
+	@Test
+	public void shouldHaveDAOManager() throws Exception {
+		/**
+		 * An anonymous class to acquire <code>DAOManager</code>s 
+		 * from a different thread than this one, 
+		 * and to be run alternatively to the main thread.
+		 */
+		class ThreadTest extends Thread {
+			public volatile boolean hasAManager;
+			public volatile Throwable exceptionThrown;
+			/**
+			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 */
+			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
+			
+			@Override
+			public void run() {
+				try {
+					//test if requesting a DAOManager in the main thread 
+					//has affected hasDAOManager in this thread
+					hasAManager = DAOManager.hasDAOManager();
+			        
+			        //main thread's turn
+			        this.exchanger.exchange(null);
+			        
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				} catch (Exception e) {
+					exceptionThrown = e;
+				} 
+			}
+		}
+		
+		try {
+			assertFalse("hasDAOManager returned a incorrect value in the main thread", 
+					DAOManager.hasDAOManager());
+			DAOManager manager = DAOManager.getDAOManager();
+			assertTrue("hasDAOManager returned an incorrect value in the main thread", 
+					DAOManager.hasDAOManager());
+			//launch a second thread to see if hasDAOManager is correct in that thread
+	        ThreadTest test = new ThreadTest();
+	        test.start();
+	        //wait for this thread's turn
+	        test.exchanger.exchange(null);
+	        //check that no exception was thrown in the second thread 
+	        if (test.exceptionThrown != null) {
+	        	throw new Exception("An Exception occurred in the second thread.", 
+	        			test.exceptionThrown);
+	        }
+            assertFalse("hasDAOManager returned a incorrect value in the second thread", 
+            		test.hasAManager);
+
+            //test after closing
+            manager.close();	
+            assertFalse("hasDAOManager returned a incorrect value in the main thread", 
+					DAOManager.hasDAOManager());
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		} 
+	}
 }

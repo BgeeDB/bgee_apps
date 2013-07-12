@@ -1,13 +1,13 @@
 /**
- * This package provides the API to access data sources. It is completely independent 
- * from other packages and modules. It implements the 
- * <a href='http://www.oracle.com/technetwork/java/dataaccessobject-138824.html'>
- * J2EE Data Access Object Patterns</a>. It notably provides DAO interfaces, 
- * with methods returning or accepting data by means of <code>TransferObject</code>s. 
- * This API can then be used with any concrete implementation acting under the hood, 
+ * This package provides the API to access data sources. It notably provides 
+ * DAO interfaces, with methods returning or accepting data by means of 
+ * <code>TransferObject</code>s. The entry point to this API is the class 
+ * {@link DAOManager}, see its Javadoc for detailed explanations about its use. 
+ * <p>
+ * This API can be used with any concrete implementation acting under the hood, 
  * specific to a data source, using the <code>Service Provider</code> mechanisms (see below). 
- * As of Bgee 13, an implementation for MySQL is provided, 
- * in the module <code>bgee-dao-sql</code>.
+ * As of Bgee 13, an implementation for MySQL is provided, in the module 
+ * <code>bgee-dao-sql</code>.
  * <p>
  * A client of this <code>bgee-dao-api</code> module is notably 
  * the <code>bgee-core</code> module, that uses it to instantiate <code>Entity</code>s, 
@@ -31,8 +31,9 @@
  *   providing the parameters), and is only exposed to the abstract factory and interfaces 
  *   of this API. The code of the client is thus not dependent of any concrete 
  *   implementation. This follows the Abstract Factory Pattern.
+ *   <li>provides methods to close or kill resources used. 
  *   </ul>
- * <li>Standard <code>Exception</code>s
+ * <li><code>Exception</code>s that can be thrown by the concrete implementations. 
  * </ul>
  * <p>
  * <h3>Service Provider mechanism</h3>

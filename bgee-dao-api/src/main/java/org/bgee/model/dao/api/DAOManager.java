@@ -16,15 +16,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Abstract factory of DAOs, following the abstract factory pattern. 
- * This abstract class list all the methods that must be implemented by concrete managers 
- * extending this class, to obtain and manage DAOs. It also provides 
- * the <code>getDAOManager</code> methods, which allow to obtain a concrete manager 
- * extending this class. And finally, it provides methods to close the DAOs.
- * The point is that the client will not be aware of which concrete 
- * implementation it obtained, so that the client code is not dependent of 
- * any concrete implementation. 
+ * Manager of DAOs, following the abstract factory pattern, to obtain and manage DAOs. 
+ * This abstract class is then implemented by <code>Service Provider</code>s, 
+ * that are automatically discovered and loaded. 
  * <p>
+ * To obtain a DAOManager, clients should call one of the <code>getDAOManager</code> methods.
  * When calling the <code>getDAOManager</code> methods, the <code>DAOManager</code> returned 
  * is a "per-thread singleton": a <code>DAOManager</code> is instantiated 
  * the first time a <code>getDAOManager</code> method is called inside a given thread, 
@@ -34,10 +30,27 @@ import org.apache.logging.log4j.Logger;
  * In that case, a call to a <code>getDAOManager</code> method from this thread 
  * would return a new <code>DAOManager</code> instance. 
  * <p>
+ * At the first call inside a given thread, it is recommended to use 
+ * {@link #getDAOManager(Map)}, which allows to provide parameters to 
+ * the <code>DAOManager</code> (as if {@link #setParameters(Map)} was called), 
+ * and to select only a <code>DAOManager</code> accepting the parameters. 
+ * Then, {@link #getDAOManager()} can be safely called inside the same thread. 
+ * <p>
+ * Parameters provided to the DAOManager (either through {@link #getDAOManager(Map)} 
+ * or {@link #setParameters(Map)}) are specific to the Service Provider used. 
+ * For instance, if this <code>DAOManager</code> was obtained from a Service provider 
+ * using the JDBC API to use a SQL database, then the parameters might contain 
+ * the URL to connect to the database. It is up to each Service provider to specify 
+ * what are the parameters needed. 
+ * <p>
  * Please note that it is extremely important to close <code>DAOManager</code>s 
  * when done using them, otherwise a <code>DAOManager</code> could be improperly 
  * reused if this API is used in an application using thread pooling, or if a thread 
- * re-uses a previously-used ID (which is standard behavior of the JDK).  
+ * re-uses a previously-used ID (which is standard behavior of the JDK). Methods 
+ * available to close <code>DAOManager</code>s are {@link #close()}, {@link #kill()}, 
+ * {@link #closeAll()}, {@link #kill(long)}. This class implements the 
+ * <code>AutoCloseable</code> interface, so that it can be used in a 
+ * <code>try-with-resources</code> statement.
  * <p>
  * This class supports the standard <a href=
  * 'http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider'> 
@@ -341,6 +354,29 @@ public abstract class DAOManager implements AutoCloseable
 	public final static DAOManager getDAOManager() throws IllegalStateException {
 		log.entry();
 		return log.exit(DAOManager.getDAOManager(null));
+	}
+	
+	/**
+	 * Determine whether the <code>Thread</code> calling this method already 
+	 * holds a <code>DAOManager</code>. It is useful for instance when willing 
+	 * to close all resources at the end of an applicative code. For instance, 
+	 * if the thread was not holding a <code>DAOManager</code>, calling 
+	 * <code>DAOManager.getDAOManager().close()</code> would instantiate 
+	 * a <code>DAOManager</code> just for closing it... Applicative code should rather do: 
+	 * <pre>if (DAOManager.hasDAOManager()) {
+	 *     DAOManager.getDAOManager().close();
+	 * }</pre>
+	 * There is a small chance that another thread could interleave to close 
+	 * the <code>DAOManager</code> between the test and the call to <code>close</code>, 
+	 * but it would not have any harmful effect. 
+	 * 
+	 * @return	A <code>boolean</code> <code>true</code> if the <code>Thread</code> 
+	 * 			calling this method currently holds a <code>DAOManager</code>, 
+	 * 			<code>false</code> otherwise. 
+	 */
+	public final static boolean hasDAOManager() {
+		log.entry();
+		return log.exit(managers.containsKey(Thread.currentThread().getId()));
 	}
 	
 	/**

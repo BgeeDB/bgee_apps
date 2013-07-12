@@ -2,13 +2,18 @@ package org.bgee.model.dao.api.exception;
 
 /**
  * An <code>Exception</code> thrown when the query to a data source was interrupted 
- * following a call to {@link org.bgee.model.dao.api.DAOManager#kill()}.
+ * following a call to {@link org.bgee.model.dao.api.DAOManager#kill()} or 
+ * {@link org.bgee.model.dao.api.DAOManager#kill(long)}. This <code>Exception</code> 
+ * should be thrown from the thread that was interrupted, not from the thread 
+ * that call the <code>kill</code> method. It is a <code>RuntimeException</code>, 
+ * as if a query was interrupted, it was on purpose, and the application should not 
+ * recovered from it. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  */
-public class QueryInterruptedException extends Exception {
+public class QueryInterruptedException extends RuntimeException {
 
 	/**
 	 * 

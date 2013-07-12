@@ -1,7 +1,5 @@
 package org.bgee.model.dao.api;
 
-import static org.junit.Assert.*;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceConfigurationError;
@@ -12,6 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -402,7 +402,11 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	        		test.manager);
 	        assertNotSame("The second thread did not acquire a new manager", 
 	        		storeManager, test.manager);
-			
+	        
+	        //release the DAOManager without calling closeAll(), 
+			//that would make other test to fail
+	        test.manager.close();
+	        manager.close();
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		} 

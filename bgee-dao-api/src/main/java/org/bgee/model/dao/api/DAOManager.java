@@ -10,7 +10,6 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -31,13 +30,14 @@ import org.apache.logging.log4j.Logger;
  * the first time a <code>getDAOManager</code> method is called inside a given thread, 
  * and the same instance is then always returned when calling 
  * a <code>getDAOManager</code> method inside the same thread. 
- * An exception is if you call this method after having called {@link #close()}.
+ * An exception is if you call this method after having closed the <code>DAOManager</code>.
  * In that case, a call to a <code>getDAOManager</code> method from this thread 
  * would return a new <code>DAOManager</code> instance. 
  * <p>
- * {@link #close()} should always be called at the end of the applicative code, 
- * otherwise a <code>DAOManager</code> could be improperly reused if this API 
- * is used in an application using thread pooling.  
+ * Please note that it is extremely important to close <code>DAOManager</code>s 
+ * when done using them, otherwise a <code>DAOManager</code> could be improperly 
+ * reused if this API is used in an application using thread pooling, or if a thread 
+ * re-uses a previously-used ID (which is standard behavior of the JDK).  
  * <p>
  * This class supports the standard <a href=
  * 'http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider'> 
@@ -69,29 +69,16 @@ public abstract class DAOManager implements AutoCloseable
     private final static Logger log = LogManager.getLogger(DAOManager.class.getName());
     
     /**
-     * An <code>AtomicLong</code> to generate <code>DAOManager</code> IDs. 
-     */
-    private static final AtomicLong seqNumber = new AtomicLong(1);
-    /**
-     * A <code>ThreadLocal</code> to obtain one and only one <code>DAOManager</code> ID 
-     * for a given <code>Thread</code> (unless {@link #close()} is called). 
-     */
-    private static final ThreadLocal <Long> uniqueNumber = 
-        new ThreadLocal <Long> () {
-            @Override protected Long initialValue() {
-                return seqNumber.getAndIncrement();
-        }
-    };
-    /**
      * A <code>ConcurrentMap</code> used to store <code>DAOManager</code>s, 
-     * associated to their ID as key. 
+     * associated to their ID as key (corresponding to the ID of the thread 
+     * who requested the <code>DAOManager</code>). 
      * <p>
      * This <code>Map</code> is used to provide a unique and independent 
      * <code>DAOManager</code> instance to each thread: a <code>DAOManager</code> is added 
      * to this <code>Map</code> when a <code>getDAOManager</code> method is called, 
-     * if the ID generated for a thread is not already present in the <code>keySet</code> 
-     * of the <code>Map</code> (see {@link #uniqueNumber} for ID generation). 
-     * Otherwise, the already stored <code>DAOManager</code> is returned. 
+     * if the thread ID is not already present in the <code>keySet</code> 
+     * of the <code>Map</code>. Otherwise, the already stored <code>DAOManager</code> 
+     * is returned. 
      * <p>
      * If a <code>ThreadLocal</code> was not used, it is because 
      * this <code>Map</code> is used by other treads, 
@@ -99,10 +86,10 @@ public abstract class DAOManager implements AutoCloseable
      * want to properly release all <code>DAOManager</code>s; 
      * or when a thread performing monitoring of another thread want to kill it.
      * <p>
-     * A <code>DAOManager</code> is removed from this <code>Map</code> for a thread
-     * when the method {@link #close()} is called from this thread, 
+     * A <code>DAOManager</code> is removed from this <code>Map</code> when 
+     * {@link #close()} is called on it, 
      * or when {@link #kill(long)} is called using the ID assigned to this thread, 
-     * or when the method  {@link #closeAll()} is called. 
+     * or when the method {@link #closeAll()} is called. 
      * All <code>DAOManager</code>s are removed when {@link #closeAll()} is called.
      */
 	private static final ConcurrentMap<Long, DAOManager> managers = 
@@ -163,7 +150,8 @@ public abstract class DAOManager implements AutoCloseable
 	 * the <code>getDAOManager</code> methods return a newly instantiated 
 	 * <code>DAOManager</code>. Following calls from the same thread will always 
 	 * return the same instance ("per-thread singleton"), unless the <code>close</code> 
-	 * or <code>kill</code> method was called. 
+	 * or <code>kill</code> method was called. Please note that it is extremely 
+	 * important to close or kill <code>DAOManager</code> when done using it. 
 	 * <p>
 	 * If no <code>DAOManager</code> is available for this thread yet, this method 
 	 * will try to obtain from a <code>Service Provider</code> a concrete implementation 
@@ -217,11 +205,13 @@ public abstract class DAOManager implements AutoCloseable
                     "it is not possible to acquire a DAOManager anymore"));
         }
 
-		//this thread-local ID should be release if a DAOManager is not acquired
-        long idAssigned = uniqueNumber.get();
-        log.debug("Trying to obtain a DAOManager with ID {}", idAssigned);
+		//get Thread ID as key. As Thread IDs can be reused, it is extremely important 
+        //to call close() on a DAOManager after use. We use Thread ID because 
+        //ThreadLocal are source of troubles. 
+        long threadId = Thread.currentThread().getId();
+        log.debug("Trying to obtain a DAOManager with ID {}", threadId);
 
-        DAOManager manager = managers.get(idAssigned);
+        DAOManager manager = managers.get(threadId);
         Throwable toThrow = null;
         if (manager == null) {
             //obtain a DAOManager from a Service Provider accepting the parameters
@@ -242,7 +232,7 @@ public abstract class DAOManager implements AutoCloseable
         			}
         			//parameters accepted, we will use this manager
         			manager = testManager;
-        			manager.setId(idAssigned);
+        			manager.setId(threadId);
         			log.debug("Valid DAOManager: {}", manager);
         			break providers;
 
@@ -268,7 +258,7 @@ public abstract class DAOManager implements AutoCloseable
         	} else {
         		//we don't use putifAbsent, as idAssigned make sure 
         		//there won't be any multi-threading key collision
-        		managers.put(idAssigned, manager);
+        		managers.put(threadId, manager);
         	}
         } else {
             log.debug("Get an already existing DAOManager instance");
@@ -291,7 +281,7 @@ public abstract class DAOManager implements AutoCloseable
         						"closeAll() has been already called, " +
         						"it is not possible to acquire a DAOManager anymore");
         			}
-        			//otherwise, it means it was killed following a call to kill(long)
+        			//otherwise, it means it was killed following a call to kill(long).
         			//we just return the closed DAOManager, this will throw 
         			//an IllegalStateException when trying to acquire a DAO from it
         		}
@@ -313,12 +303,7 @@ public abstract class DAOManager implements AutoCloseable
 						new ServiceConfigurationError("Unexpected error", toThrow));
 			}
 		}
-		//remove thread-local ID from uniqueNumber. We do it only if no exception
-		//were thrown, because if an exception was thrown, it either means that 
-		//the manager was already closed and ID removed, 
-		//or none could be acquired, or it is still valid, just setting the parameters 
-		//failed. 
-		managers.remove(uniqueNumber.get());
+		
 		return log.exit(null);
 	}
 	
@@ -435,8 +420,11 @@ public abstract class DAOManager implements AutoCloseable
      */
     private volatile boolean killed;
     /**
-     * The thread-local ID of this <code>DAOManager</code>, generated by the method 
-     * {@link #getDAOManager(Map)} during instantiation.
+     * The ID of this <code>DAOManager</code>, corresponding to the Thread ID 
+     * who requested it. This is for the sake of avoiding using a <code>ThreadLocal</code> 
+     * to associate a <code>DAOManager</code> to a thread (generates issues 
+     * in a thread pooling context). As Thread IDs can be reused, it is extremely important 
+     * to call close() on a DAOManager after use.
      */
     private volatile long id;
     /**
@@ -451,7 +439,7 @@ public abstract class DAOManager implements AutoCloseable
 	}
 	
 	/**
-	 * Return the thread-local ID associated to this <code>DAOManager</code>. 
+	 * Return the ID associated to this <code>DAOManager</code>. 
 	 * This ID can be used to call {@link #kill(long)}.
 	 * 
 	 * @return 	A <code>long</code> that is the ID of this <code>DAOManager</code>.
@@ -461,10 +449,9 @@ public abstract class DAOManager implements AutoCloseable
 		return log.exit(this.id);
 	}
 	/**
-	 * Set the ID corresponding to the thread-local ID generated by 
-	 * {@link getDAOManager(Map)} at instantiation. 
+	 * Set the ID of this <code>DAOManager</code>. 
 	 * 
-	 * @param id 	the thread-local ID of this <code>DAOManager</code>
+	 * @param id 	the ID of this <code>DAOManager</code>
 	 */
 	private final void setId(long id) {
 		this.id = id;

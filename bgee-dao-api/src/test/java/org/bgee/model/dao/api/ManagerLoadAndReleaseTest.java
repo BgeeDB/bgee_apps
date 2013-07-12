@@ -407,12 +407,4 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			Thread.currentThread().interrupt();
 		} 
 	}
-	
-	/**
-	 * Test the functionality of {@link DAOManager#getId()}
-	 */
-	@Test
-	public void shouldGetId() {
-		
-	}
 }

@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.source.SourceDAO;
 
 /**
  * Manager of DAOs, following the abstract factory pattern, to obtain and manage DAOs. 
@@ -623,6 +624,36 @@ public abstract class DAOManager implements AutoCloseable
     	}
     }
     
+    //*****************************************
+    //  PUBLIC GET DAO METHODS
+    //*****************************************
+    /**
+     * Method used before acquiring a DAO to check if this <code>DAOManager</code> 
+     * is closed. It throws an <code>IllegalStateException</code> with proper message 
+     * if it is closed. 
+     * 
+     * @throws IllegalStateException 	If this <code>DAOManager</code> is closed. 
+     */
+    private void checkClosed() {
+    	if (this.isClosed()) {
+    		throw log.throwing(new IllegalStateException(
+    			"It is not possible to acquire a DAO after the DAOManager has been closed."));
+    	}
+    }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.source.SourceDAO SourceDAO}, 
+     * unless this <code>DAOManager</code> is already closed. 
+     * 
+     * @return 	a new <code>SourceDAO</code>.
+     * @throws IllegalStateException 	If this <code>DAOManager</code> is already closed.
+     * @see org.bgee.model.dao.api.source.SourceDAO SourceDAO
+     */
+    public SourceDAO getSourceDAO() {
+    	log.entry();
+    	this.checkClosed();
+    	return log.exit(this.getNewSourceDAO());
+    }
+    
     
     //*****************************************
     //  ABSTRACT METHODS TO IMPLEMENT
@@ -691,4 +722,13 @@ public abstract class DAOManager implements AutoCloseable
      */
     public abstract void setParameters(Map<String, String> parameters) 
     		throws IllegalArgumentException;
+    
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.source.SourceDAO SourceDAO} instance 
+     * when this method is called. 
+     * 
+     * @return 	A new <code>SourceDAO</code>
+     */
+    protected abstract SourceDAO getNewSourceDAO();
 }

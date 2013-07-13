@@ -475,4 +475,34 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			Thread.currentThread().interrupt();
 		} 
 	}
+	
+	/**
+	 * Test the getXXXDAO() methods.
+	 */
+	@Test
+	public void shouldGetDAOs() {
+		DAOManager manager = DAOManager.getDAOManager();
+		DAOManager mockManager = ((MockDAOManager) manager).instanceMockManager;
+		
+		manager.getSourceDAO();
+		//check that the underlying abstract method was called
+		verify(mockManager, times(1)).getNewSourceDAO();
+		
+		//trying to get a DAO on a closed DAOManager should throw an IllegalStateException
+		manager.close();
+		try {
+			manager.getSourceDAO();
+			//if we reach this point, test failed
+		    throw new AssertionError("An IllegalStateException should have been thrown");
+		} catch (IllegalStateException e) {
+			//test passed
+			log.catching(Level.DEBUG, e);
+			//check that the underling method was indeed not called again
+			verify(mockManager, times(1)).getNewSourceDAO();
+		}
+		
+		//release the DAOManager without calling closeAll(), 
+		//that would make other test to fail
+		manager.close();
+	}
 }

@@ -2,6 +2,8 @@ package org.bgee.model.dao.api;
 
 import java.util.Map;
 
+import org.bgee.model.dao.api.source.SourceDAO;
+
 import static org.mockito.Mockito.mock;
 
 /**
@@ -56,6 +58,11 @@ public class MockDAOManager extends DAOManager {
 	public void setParameters(Map<String, String> parameters)
 			throws IllegalArgumentException {
 		MockDAOManager.mockManager.setParameters(parameters);
+	}
+
+	@Override
+	protected SourceDAO getNewSourceDAO() {
+		return this.instanceMockManager.getNewSourceDAO();
 	}
 
 }

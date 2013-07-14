@@ -49,39 +49,34 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
-		class ThreadTest extends Thread {
-			public volatile DAOManager manager1;
-			public volatile DAOManager manager2;
-			public volatile Throwable exceptionThrown;
+        class ThreadTest implements Callable<Boolean> {
+
+			public DAOManager manager1;
+			public DAOManager manager2;
 			/**
 			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
-			
 			@Override
-			public void run() {
+			public Boolean call() throws Exception {
 				try {
 					Map<String, String> parameters = new HashMap<String, String>();
 					parameters.put("test.key", "test.value");
 					manager1 = DAOManager.getDAOManager();
 					manager2 = DAOManager.getDAOManager();
-			        //main thread's turn
-			        this.exchanger.exchange(null);
 			        
-				} catch (Throwable e) {
-					exceptionThrown = e;
-					//make sure to re-launch the main thread in any case
-					try {
-						this.exchanger.exchange(null);
-					} catch (InterruptedException e1) {
-						Thread.currentThread().interrupt();
-					}
-					if (e instanceof InterruptedException) {
-					    Thread.currentThread().interrupt();
-					}
-				} 
+			        //main thread will be wake up by the finally statement
+			        
+			        return true;
+			        
+				} finally {
+					//whatever happens, make sure to re-launch the main thread, 
+					//as we do not use an Executor that might catch the Exception 
+					//and interrupt the other Thread. 
+					this.exchanger.exchange(null);
+				}
 			}
-		}
+		};
 		
 		try {
 			//get a DAOManager in the main thread
@@ -95,14 +90,16 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 					manager1, DAOManager.getDAOManager(parameters));
 			
 			//launch a second thread also acquiring DAOManager
-	        ThreadTest test = new ThreadTest();
-	        test.start();
+			ThreadTest test = new ThreadTest();
+			ExecutorService executorService = Executors.newFixedThreadPool(1);
+		    Future<Boolean> future = executorService.submit(test);
 	        //wait for this thread's turn
 	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread 
-	        if (test.exceptionThrown != null) {
-	        	throw new Exception("An Exception occurred in the second thread.", 
-	        			test.exceptionThrown);
+	        //check that no exception was thrown in the second thread.
+	        //In that case, it would be completed and calling get would throw 
+	        //the exception. 
+	        if (future.isDone()) {
+	        	future.get();
 	        }
 
 			//the 2 managers in the second thread should be the same
@@ -138,17 +135,16 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
-		class ThreadTest extends Thread {
-			public volatile DAOManager manager1;
-			public volatile DAOManager manager2;
-			public volatile Throwable exceptionThrown;
+		class ThreadTest implements Callable<Boolean> {
+
+			public DAOManager manager1;
+			public DAOManager manager2;
 			/**
 			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
-			
 			@Override
-			public void run() {
+			public Boolean call() throws Exception {
 				try {
 					//acquire a DAOManager
 			        manager1 = DAOManager.getDAOManager();
@@ -162,37 +158,34 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			        //it should not have closed this one, so it should return the same source
 			        manager2 = DAOManager.getDAOManager();
 			        
-			        //main thread's turn
-			        this.exchanger.exchange(null);
+			        //main thread will be wake up by the finally statement
 			        
-				} catch (Throwable e) {
-					exceptionThrown = e;
-					//make sure to re-launch the main thread in any case
-					try {
-						this.exchanger.exchange(null);
-					} catch (InterruptedException e1) {
-						Thread.currentThread().interrupt();
-					}
-					if (e instanceof InterruptedException) {
-					    Thread.currentThread().interrupt();
-					}
-				} 
+			        return true;
+			        
+				} finally {
+					//whatever happens, make sure to re-launch the main thread, 
+					//as we do not use an Executor that might catch the Exception 
+					//and interrupt the other Thread. 
+					this.exchanger.exchange(null);
+				}
 			}
-		}
+		};
 		
 		try {
 			//get a DAOManager in the main thread
 			DAOManager manager1 = DAOManager.getDAOManager();
 
 			//launch a second thread also acquiring DAOManager
-	        ThreadTest test = new ThreadTest();
-	        test.start();
+			ThreadTest test = new ThreadTest();
+			ExecutorService executorService = Executors.newFixedThreadPool(1);
+		    Future<Boolean> future = executorService.submit(test);
 	        //wait for this thread's turn
 	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread 
-	        if (test.exceptionThrown != null) {
-	        	throw new Exception("A Exception occurred in the second thread.", 
-	        			test.exceptionThrown);
+	        //check that no exception was thrown in the second thread.
+	        //In that case, it would be completed and calling get would throw 
+	        //the exception. 
+	        if (future.isDone()) {
+	        	future.get();
 	        }
 			
 			//close it
@@ -206,10 +199,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	        //wait for this thread's turn
 	        test.exchanger.exchange(null);
 	        //check that no exception was thrown in the second thread 
-	        if (test.exceptionThrown != null) {
-	        	throw new Exception("A Exception occurred in the second thread.", 
-	        			test.exceptionThrown);
-	        }
+	        future.get();
 			
 			//acquire a new DAOManager
 			DAOManager manager2 = DAOManager.getDAOManager();
@@ -432,43 +422,37 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	 */
 	@Test
 	public void shouldHaveDAOManager() throws Exception {
+
 		/**
 		 * An anonymous class to acquire <code>DAOManager</code>s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
-		class ThreadTest extends Thread {
-			public volatile boolean hasAManager;
-			public volatile Throwable exceptionThrown;
+		class ThreadTest implements Callable<Boolean> {
+			public boolean hasAManager;
 			/**
 			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
-			
 			@Override
-			public void run() {
+			public Boolean call() throws Exception {
 				try {
 					//test if requesting a DAOManager in the main thread 
 					//has affected hasDAOManager in this thread
 					hasAManager = DAOManager.hasDAOManager();
 			        
-			        //main thread's turn
-			        this.exchanger.exchange(null);
+			        //main thread will be wake up by the finally statement
 			        
-				} catch (Throwable e) {
-					exceptionThrown = e;
-					//make sure to re-launch the main thread in any case
-					try {
-						this.exchanger.exchange(null);
-					} catch (InterruptedException e1) {
-						Thread.currentThread().interrupt();
-					}
-					if (e instanceof InterruptedException) {
-					    Thread.currentThread().interrupt();
-					}
-				} 
+			        return true;
+			        
+				} finally {
+					//whatever happens, make sure to re-launch the main thread, 
+					//as we do not use an Executor that might catch the Exception 
+					//and interrupt the other Thread. 
+					this.exchanger.exchange(null);
+				}
 			}
-		}
+		};
 		
 		try {
 			assertFalse("hasDAOManager returned a incorrect value in the main thread", 
@@ -477,15 +461,16 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			assertTrue("hasDAOManager returned an incorrect value in the main thread", 
 					DAOManager.hasDAOManager());
 			//launch a second thread to see if hasDAOManager is correct in that thread
-	        ThreadTest test = new ThreadTest();
-	        test.start();
+			ThreadTest test = new ThreadTest();
+			ExecutorService executorService = Executors.newFixedThreadPool(1);
+		    Future<Boolean> future = executorService.submit(test);
 	        //wait for this thread's turn
 	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread 
-	        if (test.exceptionThrown != null) {
-	        	throw new Exception("An Exception occurred in the second thread.", 
-	        			test.exceptionThrown);
-	        }
+	        //check that no exception was thrown in the second thread.
+	        //In that case, it would be completed and calling get would throw 
+	        //the exception. 
+	        future.get();
+	        
             assertFalse("hasDAOManager returned a incorrect value in the second thread", 
             		test.hasAManager);
 

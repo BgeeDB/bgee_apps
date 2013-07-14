@@ -26,7 +26,7 @@ public class MultiThreadTest extends TestAncestor {
 	 * way thanks to testNG. Only tests not modifying static attributes are used 
 	 * (so tests that can be run in parallel without affecting other tests running).
 	 */
-	@Test(threadPoolSize = 50, invocationCount = 500,  timeOut = 120000)
+	@Test(threadPoolSize = 30, invocationCount = 300,  timeOut = 180000)
 	public void launchAllTest() throws Exception {
 		ManagerLoadAndReleaseTest test = new ManagerLoadAndReleaseTest();
 		test.shouldCloseDAOManager();

@@ -78,49 +78,45 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			}
 		};
 		
-		try {
-			//get a DAOManager in the main thread
-			DAOManager manager1 = DAOManager.getDAOManager();
-			assertNotNull("Could not acquire a DAOManager", manager1);
-			//calling getDAOManager() a second time from this thread 
-			//should return the same DAOManager instance, even with different parameters
-			Map<String, String> parameters = new HashMap<String, String>();
-			parameters.put("test.key", "test.value");
-			assertSame("A same thread acquired two instances of DAOManager", 
-					manager1, DAOManager.getDAOManager(parameters));
-			
-			//launch a second thread also acquiring DAOManager
-			ThreadTest test = new ThreadTest();
-			ExecutorService executorService = Executors.newFixedThreadPool(1);
-		    Future<Boolean> future = executorService.submit(test);
-	        //wait for this thread's turn
-	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread.
-	        //In that case, it would be completed and calling get would throw 
-	        //the exception. 
-	        if (future.isDone()) {
-	        	future.get();
-	        }
+		//get a DAOManager in the main thread
+		DAOManager manager1 = DAOManager.getDAOManager();
+		assertNotNull("Could not acquire a DAOManager", manager1);
+		//calling getDAOManager() a second time from this thread 
+		//should return the same DAOManager instance, even with different parameters
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put("test.key", "test.value");
+		assertSame("A same thread acquired two instances of DAOManager", 
+				manager1, DAOManager.getDAOManager(parameters));
 
-			//the 2 managers in the second thread should be the same
-	        assertNotNull("Could not acquire a DAOManager", test.manager1);
-			assertSame("A same thread acquired two instances of DAOManager", 
-					test.manager1, test.manager2);
-			//and the managers should be different in the different threads
-			assertNotSame("Two threads acquired a same instance of DAOManager", 
-					manager1, test.manager1);
-			//calling getDAOManager() from the main thread
-			//should still return the same DAOManager instance
-			assertSame("A same thread acquired two instances of DAOManager", 
-					manager1, DAOManager.getDAOManager());
-			
-			//release the DAOManager one by one without calling closeAll(), 
-			//that would make other test to fail
-			DAOManager.getDAOManager().close();
-			test.manager1.close();
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		} 
+		//launch a second thread also acquiring DAOManager
+		ThreadTest test = new ThreadTest();
+		ExecutorService executorService = Executors.newFixedThreadPool(1);
+		Future<Boolean> future = executorService.submit(test);
+		//wait for this thread's turn
+		test.exchanger.exchange(null);
+		//check that no exception was thrown in the second thread.
+		//In that case, it would be completed and calling get would throw 
+		//the exception. 
+		if (future.isDone()) {
+			future.get();
+		}
+
+		//the 2 managers in the second thread should be the same
+		assertNotNull("Could not acquire a DAOManager", test.manager1);
+		assertSame("A same thread acquired two instances of DAOManager", 
+				test.manager1, test.manager2);
+		//and the managers should be different in the different threads
+		assertNotSame("Two threads acquired a same instance of DAOManager", 
+				manager1, test.manager1);
+		//calling getDAOManager() from the main thread
+		//should still return the same DAOManager instance
+		assertSame("A same thread acquired two instances of DAOManager", 
+				manager1, DAOManager.getDAOManager());
+
+		//release the DAOManager one by one without calling closeAll(), 
+		//that would make other test to fail
+		DAOManager.getDAOManager().close();
+		test.manager1.close();
 	}
 	
 	/**
@@ -171,65 +167,61 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			}
 		};
 		
-		try {
-			//get a DAOManager in the main thread
-			DAOManager manager1 = DAOManager.getDAOManager();
+		//get a DAOManager in the main thread
+		DAOManager manager1 = DAOManager.getDAOManager();
 
-			//launch a second thread also acquiring DAOManager
-			ThreadTest test = new ThreadTest();
-			ExecutorService executorService = Executors.newFixedThreadPool(1);
-		    Future<Boolean> future = executorService.submit(test);
-	        //wait for this thread's turn
-	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread.
-	        //In that case, it would be completed and calling get would throw 
-	        //the exception. 
-	        if (future.isDone()) {
-	        	future.get();
-	        }
-			
-			//close it
-			manager1.close();
-			//calling it again should do nothing
-			manager1.close();
-			
-			//relaunch the other thread so that it can acquire a DAOManager again 
-			//(its DAOManager should not have been closed)
-	        test.exchanger.exchange(null);
-	        //wait for this thread's turn
-	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread 
-	        future.get();
-			
-			//acquire a new DAOManager
-			DAOManager manager2 = DAOManager.getDAOManager();
+		//launch a second thread also acquiring DAOManager
+		ThreadTest test = new ThreadTest();
+		ExecutorService executorService = Executors.newFixedThreadPool(1);
+		Future<Boolean> future = executorService.submit(test);
+		//wait for this thread's turn
+		test.exchanger.exchange(null);
+		//check that no exception was thrown in the second thread.
+		//In that case, it would be completed and calling get would throw 
+		//the exception. 
+		if (future.isDone()) {
+			future.get();
+		}
 
-			//the first DAOManager of the main thread should be closed
-	        assertTrue("A DAOManager was not correctly closed in the main thread", 
-					manager1.isClosed());
-	        
-	        //the first DAOManager of the second thread should NOT be closed
-	        assertFalse("close() on a DAOManager in one thread affected another thread", 
-					test.manager1.isClosed());
-	        //and the second DAOManager of the second thread should be identical to the first one 
-	        //(as it was not closed)
-	        assertSame("close() on a DAOManager in one thread affected another thread", 
-	        		test.manager1, test.manager2);
-			
-			//the second DAOManager of the main thread should NOT be closed
-	        assertFalse("A DAOManager should not have been closed in the main thread", 
-					manager2.isClosed());
-	        //and it should not be equals to the first manager of the main thread
-	        assertNotSame("A new DAOManager was not acquired after the first one " +
-	        		"was closed", manager1, manager2);
-			
-			//close the DAOManager one by one without calling closeAll(), 
-			//that would make other test to fail
-			DAOManager.getDAOManager().close();
-			test.manager2.close();
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		} 
+		//close it
+		manager1.close();
+		//calling it again should do nothing
+		manager1.close();
+
+		//relaunch the other thread so that it can acquire a DAOManager again 
+		//(its DAOManager should not have been closed)
+		test.exchanger.exchange(null);
+		//wait for this thread's turn
+		test.exchanger.exchange(null);
+		//check that no exception was thrown in the second thread 
+		future.get();
+
+		//acquire a new DAOManager
+		DAOManager manager2 = DAOManager.getDAOManager();
+
+		//the first DAOManager of the main thread should be closed
+		assertTrue("A DAOManager was not correctly closed in the main thread", 
+				manager1.isClosed());
+
+		//the first DAOManager of the second thread should NOT be closed
+		assertFalse("close() on a DAOManager in one thread affected another thread", 
+				test.manager1.isClosed());
+		//and the second DAOManager of the second thread should be identical to the first one 
+		//(as it was not closed)
+		assertSame("close() on a DAOManager in one thread affected another thread", 
+				test.manager1, test.manager2);
+
+		//the second DAOManager of the main thread should NOT be closed
+		assertFalse("A DAOManager should not have been closed in the main thread", 
+				manager2.isClosed());
+		//and it should not be equals to the first manager of the main thread
+		assertNotSame("A new DAOManager was not acquired after the first one " +
+				"was closed", manager1, manager2);
+
+		//close the DAOManager one by one without calling closeAll(), 
+		//that would make other test to fail
+		DAOManager.getDAOManager().close();
+		test.manager2.close();
 	}
 	
 	/**
@@ -365,56 +357,52 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			}
 		};
 		
-		try {
-			//get a DAOManager in the main thread (just to be sure this one
-			//is not killed when we kill the manager in the second thread)
-			DAOManager manager = DAOManager.getDAOManager();
-			//launch a second thread also acquiring DAOManager
-			ThreadTest test = new ThreadTest();
-			ExecutorService executorService = Executors.newFixedThreadPool(1);
-		    Future<Boolean> future = executorService.submit(test);
-	        //wait for this thread's turn
-	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread.
-	        //In that case, it would be completed and calling get would throw 
-	        //the exception. 
-	        if (future.isDone()) {
-	        	future.get();
-	        }
+		//get a DAOManager in the main thread (just to be sure this one
+		//is not killed when we kill the manager in the second thread)
+		DAOManager manager = DAOManager.getDAOManager();
+		//launch a second thread also acquiring DAOManager
+		ThreadTest test = new ThreadTest();
+		ExecutorService executorService = Executors.newFixedThreadPool(1);
+		Future<Boolean> future = executorService.submit(test);
+		//wait for this thread's turn
+		test.exchanger.exchange(null);
+		//check that no exception was thrown in the second thread.
+		//In that case, it would be completed and calling get would throw 
+		//the exception. 
+		if (future.isDone()) {
+			future.get();
+		}
 
-			//test kill
-	        DAOManager.kill(test.manager.getId());
-	        assertTrue("The manager in the second thread was not closed", 
-	        		test.manager.isClosed());
-	        assertTrue("The manager in the second thread was not killed", 
-	        		test.manager.isKilled());
-	        verify(((MockDAOManager) test.manager).instanceMockManager).killDAOManager();
-	        //check there is no effect on this thread
-	        assertFalse("The manager in the main thread was closed", 
-	        		manager.isClosed());
-	        assertFalse("The manager in the main thread was killed", 
-	        		manager.isKilled());
-	        verify(((MockDAOManager) manager).instanceMockManager, never()).killDAOManager();
-	        
-	        //check that the second thread can still acquire a new manager
-	        DAOManager storeManager = test.manager;
-	        test.exchanger.exchange(null);
-	        //wait for this thread's turn
-	        test.exchanger.exchange(null);
-	        //second thread terminated, check that no exception was thrown
-	        future.get();
-	        assertNotNull("The second thread did not acquire a new manager", 
-	        		test.manager);
-	        assertNotSame("The second thread did not acquire a new manager", 
-	        		storeManager, test.manager);
-	        
-	        //release the DAOManager without calling closeAll(), 
-			//that would make other test to fail
-	        test.manager.close();
-	        manager.close();
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		} 
+		//test kill
+		DAOManager.kill(test.manager.getId());
+		assertTrue("The manager in the second thread was not closed", 
+				test.manager.isClosed());
+		assertTrue("The manager in the second thread was not killed", 
+				test.manager.isKilled());
+		verify(((MockDAOManager) test.manager).instanceMockManager).killDAOManager();
+		//check there is no effect on this thread
+		assertFalse("The manager in the main thread was closed", 
+				manager.isClosed());
+		assertFalse("The manager in the main thread was killed", 
+				manager.isKilled());
+		verify(((MockDAOManager) manager).instanceMockManager, never()).killDAOManager();
+
+		//check that the second thread can still acquire a new manager
+		DAOManager storeManager = test.manager;
+		test.exchanger.exchange(null);
+		//wait for this thread's turn
+		test.exchanger.exchange(null);
+		//second thread terminated, check that no exception was thrown
+		future.get();
+		assertNotNull("The second thread did not acquire a new manager", 
+				test.manager);
+		assertNotSame("The second thread did not acquire a new manager", 
+				storeManager, test.manager);
+
+		//release the DAOManager without calling closeAll(), 
+		//that would make other test to fail
+		test.manager.close();
+		manager.close();
 	}
 	
 	/**
@@ -453,34 +441,30 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 				}
 			}
 		};
-		
-		try {
-			assertFalse("hasDAOManager returned a incorrect value in the main thread", 
-					DAOManager.hasDAOManager());
-			DAOManager manager = DAOManager.getDAOManager();
-			assertTrue("hasDAOManager returned an incorrect value in the main thread", 
-					DAOManager.hasDAOManager());
-			//launch a second thread to see if hasDAOManager is correct in that thread
-			ThreadTest test = new ThreadTest();
-			ExecutorService executorService = Executors.newFixedThreadPool(1);
-		    Future<Boolean> future = executorService.submit(test);
-	        //wait for this thread's turn
-	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread.
-	        //In that case, it would be completed and calling get would throw 
-	        //the exception. 
-	        future.get();
-	        
-            assertFalse("hasDAOManager returned a incorrect value in the second thread", 
-            		test.hasAManager);
 
-            //test after closing
-            manager.close();	
-            assertFalse("hasDAOManager returned a incorrect value in the main thread", 
-					DAOManager.hasDAOManager());
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		} 
+		assertFalse("hasDAOManager returned a incorrect value in the main thread", 
+				DAOManager.hasDAOManager());
+		DAOManager manager = DAOManager.getDAOManager();
+		assertTrue("hasDAOManager returned an incorrect value in the main thread", 
+				DAOManager.hasDAOManager());
+		//launch a second thread to see if hasDAOManager is correct in that thread
+		ThreadTest test = new ThreadTest();
+		ExecutorService executorService = Executors.newFixedThreadPool(1);
+		Future<Boolean> future = executorService.submit(test);
+		//wait for this thread's turn
+		test.exchanger.exchange(null);
+		//check that no exception was thrown in the second thread.
+		//In that case, it would be completed and calling get would throw 
+		//the exception. 
+		future.get();
+
+		assertFalse("hasDAOManager returned a incorrect value in the second thread", 
+				test.hasAManager);
+
+		//test after closing
+		manager.close();	
+		assertFalse("hasDAOManager returned a incorrect value in the main thread", 
+				DAOManager.hasDAOManager());
 	}
 	
 	/**

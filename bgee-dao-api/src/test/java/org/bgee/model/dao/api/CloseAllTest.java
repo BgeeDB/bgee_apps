@@ -83,62 +83,57 @@ public class CloseAllTest extends TestAncestor {
 			}
 		};
 		
-		try {
-			//get a DAOManager in the main thread
-			DAOManager manager = DAOManager.getDAOManager();
-			//launch a second thread also acquiring DAOManager
-			ThreadTest test = new ThreadTest();
-			ExecutorService executorService = Executors.newFixedThreadPool(1);
-		    Future<Boolean> future = executorService.submit(test);
-	        //wait for this thread's turn
-	        test.exchanger.exchange(null);
-	        //check that no exception was thrown in the second thread.
-	        //In that case, it would be completed and calling get would throw 
-	        //the exception. 
-	        if (future.isDone()) {
-	        	future.get();
-	        }
+		//get a DAOManager in the main thread
+		DAOManager manager = DAOManager.getDAOManager();
+		//launch a second thread also acquiring DAOManager
+		ThreadTest test = new ThreadTest();
+		ExecutorService executorService = Executors.newFixedThreadPool(1);
+	    Future<Boolean> future = executorService.submit(test);
+        //wait for this thread's turn
+        test.exchanger.exchange(null);
+        //check that no exception was thrown in the second thread.
+        //In that case, it would be completed and calling get would throw 
+        //the exception. 
+        if (future.isDone()) {
+        	future.get();
+        }
 
-			//test closeAll
-	        assertEquals("closeAll did not return the expected number of managers closed", 
-	        		2, DAOManager.closeAll());
-	        //The managers in both threads should have been closed
-	        assertTrue("DAOManager in main thread was not closed", manager.isClosed());
-	        assertTrue("DAOManager in second thread was not closed", 
-	        		test.manager.isClosed());
-	        
-	        //check that an IllegalStateException is thrown if we try 
-	        //to acquire a new DAOManager.
-	        try {
-	        	DAOManager.getDAOManager();
-	        	//if we reach this point, test failed
-	        	throw new AssertionError("IllegalStateException not thrown in main thread");
-	        } catch (IllegalStateException e) {
-	        	log.catching(Level.DEBUG, e);
-	        }
-	        
-	        //relaunch the other thread so that it can try a DAOManager again 
-			//(it should throw an IllegalStateException)
-	        test.exchanger.exchange(null);
-	        //wait for this thread's turn
-	        test.exchanger.exchange(null);
-	        //check that an IllegalStateException was thrown 
-	        try {
-	        	future.get();
-	        	//if we reach this point, test failed
+		//test closeAll
+        assertEquals("closeAll did not return the expected number of managers closed", 
+        		2, DAOManager.closeAll());
+        //The managers in both threads should have been closed
+        assertTrue("DAOManager in main thread was not closed", manager.isClosed());
+        assertTrue("DAOManager in second thread was not closed", 
+        		test.manager.isClosed());
+        
+        //check that an IllegalStateException is thrown if we try 
+        //to acquire a new DAOManager.
+        try {
+        	DAOManager.getDAOManager();
+        	//if we reach this point, test failed
+        	throw new AssertionError("IllegalStateException not thrown in main thread");
+        } catch (IllegalStateException e) {
+        	log.catching(Level.DEBUG, e);
+        }
+        
+        //relaunch the other thread so that it can try a DAOManager again 
+		//(it should throw an IllegalStateException)
+        test.exchanger.exchange(null);
+        //wait for this thread's turn
+        test.exchanger.exchange(null);
+        //check that an IllegalStateException was thrown 
+        try {
+        	future.get();
+        	//if we reach this point, test failed
+        	throw new AssertionError(
+        			"IllegalStateException not thrown in the second thread");
+        } catch (ExecutionException e) {
+        	if (e.getCause() instanceof IllegalStateException) {
+        	    log.catching(Level.DEBUG, e);
+        	} else {
 	        	throw new AssertionError(
-	        			"IllegalStateException not thrown in the second thread");
-	        } catch (ExecutionException e) {
-	        	if (e.getCause() instanceof IllegalStateException) {
-	        	    log.catching(Level.DEBUG, e);
-	        	} else {
-		        	throw new AssertionError(
-		        		"IllegalStateException not thrown in the second thread");
-	        	}
-	        }
-			
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		} 
+	        		"IllegalStateException not thrown in the second thread");
+        	}
+        }
 	}
 }

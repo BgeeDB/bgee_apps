@@ -2,15 +2,15 @@
  * This package provides classes allowing to filter results of 
  * any expression data query tool. Filters available are: 
  * <ul>
- * <li>{@link DataCallFilter}, the filter that users will likely use most of the time. 
+ * <li>{@link ExpressionCallFilter}, the filter that users will likely use most of the time. 
  * It allows to filter data based on expression data calls (<code>EXPRESSION</code>, 
  * <code>OVEREXPRESSION</code>, <code>NOEXPRESSION</code>, ...), based on data qualities, 
  * data types, etc.
- * <li>{@link AdvancedDiffCallFilter}, a subclass of <code>DataCallFilter</code> 
+ * <li>{@link AdvancedDiffCallFilter}, a subclass of <code>ExpressionCallFilter</code> 
  * providing additional filtering functionalities specific to <code>OVEREXPRESSION</code> 
  * and <code>UNDEREXPRESSION</code> data calls. 
  * <li>{@link RawDataFilter} allowing to filter based on source raw data.
- * <li>{@link CompositeFilter} allowing to use both a <code>DataCallFilter</code> 
+ * <li>{@link CompositeCallFilter} allowing to use both a <code>ExpressionCallFilter</code> 
  * (or an <code>AdvancedDiffCallFilter</code>) and a <code>RawDataFilter</code> 
  * at the same time.
  * </ul>

@@ -28,11 +28,11 @@ import org.bgee.model.expressiondata.DataParameters.DataType;
  * @version Bgee 13
  * @since Bgee 01
  */
-public class DataCallFilter implements CallFilter {
+public class ExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * <code>Logger</code> of the class. 
 	 */
-	private final static Logger log = LogManager.getLogger(DataCallFilter.class.getName());
+	private final static Logger log = LogManager.getLogger(ExpressionCallFilter.class.getName());
 
 	/**
 	 * Default constructor not public. At least a <code>CallType</code> 
@@ -40,7 +40,7 @@ public class DataCallFilter implements CallFilter {
 	 */
 	//Default constructor not public on purpose, suppress warning
 	@SuppressWarnings("unused")
-	private DataCallFilter() {
+	private ExpressionCallFilter() {
 		this(CallType.EXPRESSION);
 	}
 	/**
@@ -58,7 +58,7 @@ public class DataCallFilter implements CallFilter {
 	 * @param callType	The <code>CallType</code> which expression data retrieval 
 	 * 					will be based on.
 	 */
-	public DataCallFilter(CallType callType) {
+	public ExpressionCallFilter(CallType callType) {
 		log.entry(callType);
 
 		this.setCallType(callType);

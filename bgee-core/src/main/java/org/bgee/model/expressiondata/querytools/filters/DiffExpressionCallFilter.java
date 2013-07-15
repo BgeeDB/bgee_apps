@@ -16,7 +16,7 @@ package org.bgee.model.expressiondata.querytools.filters;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class AdvancedDiffCallFilter extends DataCallFilter {
+public class DiffExpressionCallFilter extends BasicCallFilter {
 	/**
      * Create a default <code>DiffExprParams</code> object with no minimum number 
      * of conditions requested. (but the differential expression analysis pipeline 

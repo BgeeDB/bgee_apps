@@ -1,22 +1,22 @@
 package org.bgee.model.expressiondata.querytools.filters;
 
 /**
- * A <code>CompositeFilter</code> allows to use a <code>DataCallFilter</code> 
+ * A <code>CompositeCallFilter</code> allows to use a <code>ExpressionCallFilter</code> 
  * and a <code>RawDataFilter</code> at the same time. It allows to filter 
- * based on expression data calls, as when using a <code>DataCallFilter</code> 
+ * based on expression data calls, as when using a <code>ExpressionCallFilter</code> 
  * (this is why it implements the interface <code>CallFilter</code>), but as if the calls 
  * had been computed from only a subset of the data in Bgee, filtered using 
  * the <code>RawDataFilter</code>. This leads to re-compute on-the-fly 
  * expression data calls summarizing expression data. As this is computationally intensive, 
- * <code>CompositeFilter</code>s can only be used for queries restrained 
+ * <code>CompositeCallFilter</code>s can only be used for queries restrained 
  * to a <code>Gene</code>, or to a list of <code>Gene</code>s (as for instance, an 
  * {@link org.bgee.model.expressiondata.querytools.AnatDevExpressionQuery 
  * AnatDevExpressionQuery}). 
  * <p>
  * This class implements the methods from <code>CallFilter</code>, by delegating 
- * to the <code>DataCallFilter</code> instance it holds. So, calling a method 
+ * to the <code>ExpressionCallFilter</code> instance it holds. So, calling a method 
  * defined by the <code>CallFiler</code> interface, on an instance of this class, 
- * is equivalent to calling them on the <code>DataCallFilter</code> instance it holds.
+ * is equivalent to calling them on the <code>ExpressionCallFilter</code> instance it holds.
  * <p>
  * <h3>Explanations about the computations</h3>
  * Bgee summarizes expression data over several experiments or samples. For instance, 
@@ -29,7 +29,7 @@ package org.bgee.model.expressiondata.querytools.filters;
  * generated (in the previous example, removing the sample showing expression of the gene 
  * would lead to consider it as not expressed with a high confidence...). 
  * <p>
- * So basically, a <code>CompositeFilter</code> will work as a <code>DataCallFilter</code>, 
+ * So basically, a <code>CompositeCallFilter</code> will work as a <code>ExpressionCallFilter</code>, 
  * but as if Bgee was containing only the source raw data filtered 
  * from the <code>RawDataFilter</code>.
  * 
@@ -37,8 +37,8 @@ package org.bgee.model.expressiondata.querytools.filters;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class CompositeFilter implements CallFilter {
+public class CompositeCallFilter implements CallFilter {
 	
-    private DataCallFilter callFilter;
+    private BasicCallFilter callFilter;
     private RawDataFilter rawDataFilter;
 }

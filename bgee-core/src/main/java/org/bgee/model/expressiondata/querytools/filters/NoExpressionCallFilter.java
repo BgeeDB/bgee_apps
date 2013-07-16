@@ -10,7 +10,7 @@ import org.bgee.model.expressiondata.DataParameters.CallType;
  * 
  * @author Frederic Bastian
  * @version Bgee 13
- * @since Bgee 01
+ * @since Bgee 13
  */
 public class NoExpressionCallFilter extends BasicCallFilter {
 	/**

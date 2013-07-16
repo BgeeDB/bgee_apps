@@ -21,28 +21,95 @@ public class DataParameters {
 	 * <li><code>EXPRESSION</code>: standard expression calls.
 	 * <li><code>NOEXPRESSION</code>: no-expression calls (absence of expression 
 	 * explicitly reported).
-	 * <li><code>OVEREXPRESSION</code>: over-expression calls.
-	 * <li><code>UNDEREXPRESSION</code>: under-expression calls.
+	 * <li><code>OVEREXPRESSION</code>: over-expression calls obtained from 
+	 * differential expression analyses.
+	 * <li><code>UNDEREXPRESSION</code>: under-expression calls obtained from 
+	 * differential expression analyses.
 	 * <li><code>NODIFFEXPRESSION</code>: means that a gene was studied in 
 	 * a differential expression analysis, but was <strong>not</strong> found to be 
 	 * differentially expressed (neither <code>OVEREXPRESSION</code> nor 
 	 * <code>UNDEREXPRESSION</code> calls). This is different from <code>NOEXPRESSION</code>, 
 	 * as the gene could actually be expressed, but, not differentially. 
 	 * </ul>
+	 * <p>
+	 * List of <code>CallType</code>s obtained from differential expression analyses 
+	 * can be obtained by calling {@link #getDiffExpressionCalls()}. Whether a given 
+	 * <code>CallType</code> is a differential expression call can be determined 
+	 * by calling {@link #isADiffExpressionCall()}.
 	 * 
      * @author Frederic Bastian
      * @version Bgee 13
      * @since Bgee 13
 	 */
     public enum CallType {
-    	EXPRESSION, NOEXPRESSION, OVEREXPRESSION, UNDEREXPRESSION, NODIFFEXPRESSION;
+    	EXPRESSION(false), NOEXPRESSION(false), 
+    	OVEREXPRESSION(true), UNDEREXPRESSION(true), NODIFFEXPRESSION(true);
+    	
+    	//*********************************************
+    	//   STATIC METHODS AND ATTRIBUTES
+    	//*********************************************
+    	/**
+    	 * Store the <code>CallType</code>s corresponding to differential expression calls. 
+    	 */
+    	private static final Set<CallType> diffCalls = loadDiffExpressionCalls();
+    	/**
+    	 * Load and return the <code>CallType</code>s corresponding to 
+    	 * differential expression calls. Used only once at class loading 
+    	 * to populate {@link #diffCalls}. 
+    	 * 
+    	 * @return	A <code>Set</code> of <code>CallType</code>s corresponding to 
+    	 * 			differential expression calls. 
+    	 * @see #diffCalls
+    	 * @see #isADiffExpressionCall()
+    	 */
+    	public static Set<CallType> loadDiffExpressionCalls() {
+    		Set<CallType> diffCalls = new HashSet<CallType>();
+    		for (CallType type: CallType.values()) {
+    		    if (type.isADiffExpressionCall()) {
+    		    	diffCalls.add(type);
+    		    }
+    	    }
+    		return diffCalls;
+    	}
+    	/**
+    	 * Get the call types obtained from differential expression analyses.
+    	 * @return 	A <code>Set</code> of <code>CallType</code>s corresponding to 
+    	 * 			differential expression calls. 
+    	 */
+    	public static Set<CallType> getDiffExpressionCalls() {
+    		return CallType.diffCalls;
+    	}
+
+    	//*********************************************
+    	//   INSTANCE METHODS AND ATTRIBUTES
+    	//*********************************************
+    	/**
+    	 * A <code>boolean</code> defining whether this <code>CallType</code> 
+    	 * is a differential expression call. 
+    	 */
+    	private final boolean isADiffCall;
+    	/**
+    	 * Default constructor providing the information about whether 
+    	 * this <code>CallType</code> is a differential expression call. 
+    	 * 
+    	 * @param isADiffCall 	If <code>true</code>, this <code>CallType</code> 
+    	 * 						is a differential expression call. 
+    	 * @see #isADiffCall
+    	 */
+    	private CallType(boolean isADiffCall) {
+    		this.isADiffCall = isADiffCall;
+    	}
+    	
+    	/**
+    	 * Determine whether this <code>CallType</code> is obtained from 
+    	 * differential expression analyses. 
+    	 * 
+    	 * @return 	<code>true</code> if this <code>CallType</code> is 
+    	 * 			a differential expression call, <code>false</code> otherwise. 
+    	 * @see #getDiffExpressionCalls()
+    	 */
     	public boolean isADiffExpressionCall() {
-    		log.entry();
-    		if (this == OVEREXPRESSION || this == UNDEREXPRESSION || 
-    				this == NODIFFEXPRESSION) {
-    			return log.exit(true);
-    		}
-    		return log.exit(false);
+    		return this.isADiffCall;
     	}
     }
     /**
@@ -81,6 +148,28 @@ public class DataParameters {
      */
     public enum DataQuality {
     	LOW, HIGH;
+    }
+    
+    /**
+     * Define the different types of differential expression analyses, 
+     * based on the experimental factor studied: 
+     * <ul>
+     * <li>ANATOMY: analyses comparing different anatomical structures at a same 
+     * (broad) developmental stage. The experimental factor is the anatomy, 
+     * these analyses try to identify in which anatomical structures genes are 
+     * differentially expressed. 
+     * <li>DEVELOPMENT: analyses comparing for a same anatomical structure 
+     * different developmental stages. The experimental factor is the developmental time, 
+     * these analyses try to identify for a given anatomical structures at which 
+     * developmental stages genes are differentially expressed. 
+     * </ul>
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public enum DiffExpressionFactor {
+    	ANATOMY, DEVELOPMENT;
     }
     
     //**********************************************

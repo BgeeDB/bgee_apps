@@ -36,6 +36,14 @@ public class DataParameters {
 	 */
     public enum CallType {
     	EXPRESSION, NOEXPRESSION, OVEREXPRESSION, UNDEREXPRESSION, NODIFFEXPRESSION;
+    	public boolean isADiffExpressionCall() {
+    		log.entry();
+    		if (this == OVEREXPRESSION || this == UNDEREXPRESSION || 
+    				this == NODIFFEXPRESSION) {
+    			return log.exit(true);
+    		}
+    		return log.exit(false);
+    	}
     }
     /**
      * Define the different expression data types used in Bgee.

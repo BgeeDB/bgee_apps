@@ -41,4 +41,6 @@ public class CompositeCallFilter implements CallFilter {
 	
     private BasicCallFilter callFilter;
     private RawDataFilter rawDataFilter;
+    //here, or in an expression query tool?
+    private boolean allSamplesAgreement;
 }

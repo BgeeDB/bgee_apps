@@ -29,11 +29,9 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
 	private final static Logger log = LogManager.getLogger(DiffExpressionCallFilter.class.getName());
 
     /**
-     * An <code>int</code> defining the requested minimum number of conditions 
-     * compared when generating the differential expression data. For instance, 
-     * to use analyses having compared at least 3 organs. The minimum number 
-     * of conditions specified by the Bgee pipeline to proceed to a differential 
-     * expression analysis is applicable in any case.  
+     * An <code>int</code> allowing to filter differential expression calls 
+     * based on the number of conditions compared. See {@link #getConditionCount()} 
+     * for important explanations. 
      */
     private int conditionCount;
     /**
@@ -62,6 +60,32 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
     public DiffExpressionCallFilter(CallType callType, DiffExpressionFactor factor) 
         throws IllegalArgumentException
     {
+    	this(callType, factor, 0);
+    }
+	/**
+     * Instantiate a <code>DiffExpressionCallFilter</code> for the given 
+     * <code>callType</code> and <code>factor</code>, with <code>conditionCount</code> 
+     * as the minimum number of conditions compared requested (see 
+     * {@link #getConditionCount()} for important explanations).
+     * <p>
+     * if <code>callType</code> is not applicable to differential expression (see 
+     * {@link org.bgee.model.expressiondata.DataParameters.CallType#isADiffExpressionCall()}), 
+     * an <code>IllegalArgumentException</code> is thrown. 
+     * 
+     * @param callType	A <code>CallType</code> defining the type of differential 
+     * 					expression calls to use. 
+     * @param factor	A <code>DiffExpressionFactor</code> specifying 
+     * 					the experimental factor of the differential expression 
+     * 					analyses that should be used.
+     * @param conditionCount	An <code>int</code> allowing to filter differential 
+     * 							expression calls based on the number of conditions compared. 
+     * 							See {@link #getConditionCount()} for important explanations. 
+     * @throws IllegalArgumentException 	if <code>callType</code> is not a differential 
+     * 										expression call type. 
+     */
+    public DiffExpressionCallFilter(CallType callType, DiffExpressionFactor factor,  
+        int conditionCount) throws IllegalArgumentException
+    {
     	super(callType);
     	log.entry(callType, factor);
     	if (!callType.isADiffExpressionCall()) {
@@ -71,7 +95,7 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
     				"a DiffExpressionCallFilter"));
     	}
     	this.factor = factor;
-    	this.setConditionCount(0);
+    	this.setConditionCount(conditionCount);
     	log.exit();
     }
 
@@ -79,7 +103,7 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
 	 * Return the experimental factor that the differential expression analyses used 
 	 * should be based on. 
 	 * @return 	a <code>DiffExpressionFactor</code> defining which type of 
-	 * 			differential analysis  should be used to retrieve differential 
+	 * 			differential analysis should be used to retrieve differential 
 	 * 			expression calls. 
 	 */
 	public DiffExpressionFactor getFactor() {
@@ -87,19 +111,57 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
 	}
     
 	/**
+	 * Return the threshold to filter differential expression calls 
+     * based on the number of conditions compared. It specifies that only calls 
+     * involving some differential expression analyses with at least that number 
+     * of conditions compared should be retrieved. For instance, to retrieve calls 
+     * involving differential expression analyses having compared at least 5 organs. 
+     * <p>
+     * This minimum number of conditions applies to conditions related 
+     * to the <code>DiffExpressionFactor</code> returned by {@link #getFactor()}. 
+     * For instance, if the value returned by {@link #getFactor()} is 
+     * <code>ANATOMY</code>, this threshold is the minimum number of organs 
+     * compared. Or if equal to <code>DEVELOPMENT</code>, it is the minimum number 
+     * of developmental stages studied.
+     * <p>
+     * Note that the minimum number of conditions specified by the Bgee pipeline 
+     * to proceed to a differential expression analysis is still applicable in any case.
+     * <p>
+     * <strong>Warning: </strong>because Bgee reconciles results obtained from different 
+     * experiments, the calls retrieved can still include analyses with less conditions 
+     * compared. What this parameter specifies, it is that a call should <em>involve</em> 
+     * <em>some</em> analyses with that minimum number of conditions. 
+     * For instance: if an analysis compared 3 organs A, B, and C, at a same 
+     * developmental stage, and generated a call that a gene is under-expressed in A; 
+     * and if another analysis, comparing 5 organs A, B, C, D, and E, at the same 
+     * developmental stage, generated a call that the same gene is over-expressed 
+     * in A; Then Bgee will generate an over-expression call with low confidence from 
+     * these two experiments; using only the experiments with 5 conditions would 
+     * generate a high confidence call. But this is not what you would retrieve 
+     * by setting this parameter to 5; you would still retrieve the low confidence call, 
+     * because data are not re-computed, just filtered.  
+     * <p>
+     * To actually recompute differential expression calls by filtering experiments 
+     * based on the number of conditions compared, use a {@link RawDataFilter} 
+     * as part of a {@link CompositeCallFilter}. Only {@link CompositeCallFilter}s 
+     * can be used to specify to re-compute data on the fly, see methods accepting 
+     * any <code>CallFilter</code>, or specifically <code>CompositeCallFilter</code>s 
+     * only. 
+	 * 
 	 * @return 	An <code>int</code> defining the requested minimum number of conditions 
-     * 			compared when generating the differential expression data. For instance, 
-     * 			one organ compared at three developmental stages would represent 
-     * 			three conditions.
+     * 			compared of analyses involved in generating the calls retrieved. 
 	 */
 	public int getConditionCount() {
 		return this.conditionCount;
 	}
 	/**
-	 * @param conditionCount 	An <code>int</code> defining the requested minimum number 
-	 * 							of conditions compared when generating the differential 
-	 * 							expression data. For instance, one organ compared 
-	 * 							at three developmental stages would represent three conditions.
+	 * Set the <code>int</code> allowing to filter differential expression calls 
+     * based on the number of conditions compared. See {@link #getConditionCount()} 
+     * for important explanations. 
+     * 
+	 * @param conditionCount 	An <code>int</code> defining the requested minimum 
+	 * 							number of conditions compared, of analyses involved 
+	 * 							in generating the calls retrieved. 
 	 */
 	public void setConditionCount(int conditionCount) {
 		this.conditionCount = conditionCount;

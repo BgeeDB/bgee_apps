@@ -17,6 +17,23 @@ import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
  */
 public class RNASeqLibrary extends RawDataAnnotated 
 {
+
+	/**
+	 * An <code>enum</code> listing the different types of RNA-Seq libraries 
+	 * used in Bgee: 
+	 * <ul>
+	 * <li><code>SINGLE</code>: single read libraries.
+	 * <li><code>PAIRED</code>: paired-end read libraries.
+	 * </ul>
+	 * 
+	 * @author Frederic Bastian
+	 * @version Bgee 13
+	 * @since Bgee 13
+	 */
+	public enum RNASeqLibraryType {
+		SINGLE, PAIRED;
+	}
+	
 	/**
 	 * The <code>RNASeqExp</code> this object belongs to.
 	 * It is the "container" used for the methods 

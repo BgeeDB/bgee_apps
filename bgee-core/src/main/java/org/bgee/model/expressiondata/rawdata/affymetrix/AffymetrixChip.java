@@ -18,6 +18,46 @@ import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
 public class AffymetrixChip extends RawDataAnnotated
 {
 	/**
+	 * An <code>enum</code> listing the different methods to generate expression calls 
+	 * on Affymetrix chips: 
+	 * <ul>
+	 * <li><code>MAS5</code>: expression calls from the MAS5 software. Such calls 
+	 * are usually taken from a processed MAS5 file, and imply that the data 
+	 * were also normalizd using MAS5.
+	 * <li><code>SCHUSTER</code>: Wilcoxon test on the signal of probesets 
+	 * against a subset of weakly expressed probesets, to generate expression calls 
+	 * (see <a href="http://www.ncbi.nlm.nih.gov/pubmed/17594492">
+	 * Schuster et al., Genome Biology (2007)</a>). Such calls usually implies 
+	 * that raw data were available, and were normalized using gcRMA. 
+	 * </ul>
+	 * 
+	 * @author Frederic Bastian
+	 * @version Bgee 13
+	 * @since Bgee 01
+	 */
+	public enum AffymetrixDetectionType {
+		MAS5, SCHUSTER;
+	}
+	/**
+	 * An <code>enum</code> listing the different methods used ib Bgee 
+	 * to normalize Affymetrix data: 
+	 * <ul>
+	 * <li><code>MAS5</code>: normalization using the MAS5 software. Using 
+	 * this naormalization usually means that only the processed MAS5 files 
+	 * were available, otherwise another method would be used. 
+	 * <li><code>RMA</code>: normalization by RMA method.
+	 * <li><code>gcRMA</code>: normalization by gcRMA method. This is the default 
+	 * method in Bgee when raw data are available. 
+	 * </ul>
+	 * 
+	 * @author Frederic Bastian
+	 * @version Bgee 13
+	 * @since Bgee 01
+	 */
+	public enum AffymetrixNormalizationType {
+		MAS5, RMA, gcRMA;
+	}
+	/**
 	 * The <code>AffymetrixExp</code> this object belongs to.
 	 * It is the "container" used for the methods 
 	 * <code>#getDataSourceFromContainer()</code> and <code>#getDataSourceIdFromContainer()</code>.

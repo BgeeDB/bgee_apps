@@ -58,8 +58,8 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
      * 										expression call type. 
      */
     public DiffExpressionCallFilter(CallType callType, DiffExpressionFactor factor) 
-        throws IllegalArgumentException
-    {
+        throws IllegalArgumentException {
+    	
     	this(callType, factor, 0);
     }
 	/**
@@ -84,8 +84,8 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
      * 										expression call type. 
      */
     public DiffExpressionCallFilter(CallType callType, DiffExpressionFactor factor,  
-        int conditionCount) throws IllegalArgumentException
-    {
+        int conditionCount) throws IllegalArgumentException {
+    	
     	super(callType);
     	log.entry(callType, factor);
     	if (!callType.isADiffExpressionCall()) {

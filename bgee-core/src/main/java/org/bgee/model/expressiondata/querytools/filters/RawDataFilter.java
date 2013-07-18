@@ -80,7 +80,7 @@ public class RawDataFilter implements Filter {
 	 * 
 	 * @return the IDs of allowed ESTs to used.
 	 */
-	public Set<String> getEstIds() {
+	public Set<String> getESTIds() {
 		return estIds;
 	}
 	/**
@@ -88,9 +88,9 @@ public class RawDataFilter implements Filter {
 	 * defining the IDs of ESTs to use.
 	 * 
 	 * @param estId 	the ID of an allowed EST
-	 * @see #getEstIds()
+	 * @see #getESTIds()
 	 */
-	public void addEstId(String estId) {
+	public void addESTId(String estId) {
 		this.estIds.add(estId);
 	}
 	/**
@@ -98,9 +98,9 @@ public class RawDataFilter implements Filter {
 	 * to the <code>Set</code> of <code>String</code>s defining the IDs of ESTs to use.
 	 * 
 	 * @param estIds 	the IDs of some allowed ESTs
-	 * @see #getEstIds()
+	 * @see #getESTIds()
 	 */
-	public void addEstIds(Collection<String> estIds) {
+	public void addESTIds(Collection<String> estIds) {
 		this.estIds.addAll(estIds);
 	}
 	
@@ -115,7 +115,7 @@ public class RawDataFilter implements Filter {
 	 * 
 	 * @return the IDs of allowed EST libraries to used.
 	 */
-	public Set<String> getEstLibraryIds() {
+	public Set<String> getESTLibraryIds() {
 		return estLibraryIds;
 	}
 	/**
@@ -123,9 +123,9 @@ public class RawDataFilter implements Filter {
 	 * defining the IDs of EST libraries to use.
 	 * 
 	 * @param estLibraryId 	the ID of an allowed EST library
-	 * @see #getEstLibraryIds()
+	 * @see #getESTLibraryIds()
 	 */
-	public void addEstLibraryId(String estLibraryId) {
+	public void addESTLibraryId(String estLibraryId) {
 		this.estLibraryIds.add(estLibraryId);
 	}
 	/**
@@ -134,9 +134,9 @@ public class RawDataFilter implements Filter {
 	 * EST libraries to use.
 	 * 
 	 * @param estLibraryIds 	the IDs of some allowed EST libraries
-	 * @see #getEstLibraryIds()
+	 * @see #getESTLibraryIds()
 	 */
-	public void addEstLibraryIds(Collection<String> estLibraryIds) {
+	public void addESTLibraryIds(Collection<String> estLibraryIds) {
 		this.estLibraryIds.addAll(estLibraryIds);
 	}
 	//**********************************
@@ -298,20 +298,21 @@ public class RawDataFilter implements Filter {
 	 * identified as 'present' by MAS5 on chips to use (a quality score, as 
 	 * {@link #setAffymetrixMinQualScore(float)}). 
 	 * 
-	 * @param affymetrixMinPercentPresent 	a <code>float</code> being the minimum 
+	 * @param minPercentPresent			 	a <code>float</code> being the minimum 
 	 * 										allowed percentage of probesets identified 
 	 * 										as 'present' by MAS5.
 	 * @throws IllegalArgumentException 	If <code>affymetrixMinPercentPresent</code> 
 	 * 										is less than 0 or greater than 1. 
 	 */
-	public void setAffymetrixMinPercentPresent(float affymetrixMinPercentPresent) 
+	public void setAffymetrixMinPercentPresent(float minPercentPresent) 
 		throws IllegalArgumentException {
-		
-		if (affymetrixMinPercentPresent < 0 || affymetrixMinPercentPresent > 1) {
+		log.entry(minPercentPresent);
+		if (minPercentPresent < 0 || minPercentPresent > 1) {
 			throw log.throwing(new IllegalArgumentException(
 						"A percentage must be set to a value between 0 and 1."));
 		}
-		this.affymetrixMinPercentPresent = affymetrixMinPercentPresent;
+		this.affymetrixMinPercentPresent = minPercentPresent;
+		log.exit();
 	}
 	
 	/**
@@ -353,7 +354,7 @@ public class RawDataFilter implements Filter {
 	
 	/**
 	 * A <code>Set</code> of <code>AffymetrixNormalizationType</code>s defining 
-	 * the requested normalization methods (MAS5, gcRMA, ...) of chips to use. 
+	 * the requested normalization methods (MAS5, GCRMA, ...) of chips to use. 
 	 */
 	private final Set<AffymetrixNormalizationType> affymetrixNormalizationTypes;
 	/**

@@ -1,5 +1,8 @@
 package org.bgee.model.expressiondata.rawdata;
 
+import org.bgee.model.anatdev.AnatomicalEntity;
+import org.bgee.model.anatdev.Stage;
+
 
 /**
  * Parent class of all classes related to expression data, and mapped to ontologies 
@@ -23,21 +26,17 @@ package org.bgee.model.expressiondata.rawdata;
 public class RawDataAnnotated extends RawData
 {
 
-    private String organId;
-	private Organ organ;
-	private String stageId;
+	private AnatomicalEntity organ;
 	private Stage stage;
 	
 	/**
 	 * Default constructor. 
 	 */
-	public RawDataAnnotated()
+	public RawDataAnnotated(String id)
     {
-    	super();
+    	super(id);
     	
-    	this.setOrganId("");
     	this.setOrgan(null);
-    	this.setStageId("");
     	this.setStage(null);
     }
 	
@@ -46,7 +45,7 @@ public class RawDataAnnotated extends RawData
 	 * @param org 	the <code>Organ</code> to set.
 	 * @see #organ
 	 */
-	public void setOrgan(Organ org)
+	public void setOrgan(AnatomicalEntity org)
 	{
 		this.organ = org;
 	}
@@ -55,32 +54,9 @@ public class RawDataAnnotated extends RawData
 	 * @return 	the <code>Organ</code> stored in the <code>organ</code> attribute.
 	 * @see #organ
 	 */
-	public Organ getOrgan()
+	public AnatomicalEntity getOrgan()
 	{
 		return this.organ;
-	}
-	/**
-	 * Set the <code>organId</code> attribute.
-	 * @param orgId 	the <code>String</code> to set <code>organId</code>.
-	 * @see #organId
-	 */
-	public void setOrganId(String orgId)
-	{
-		this.organId = orgId;
-	}
-	/**
-	 * Returns either the value of <code>organId</code>, 
-	 * or the of the <code>id</code> of the <code>Organ</code> 
-	 * stored in <code>organ</code>, depending on which one is set. 
-	 * 
-	 * @return 	the ID of the organ for which this object reports expression. 
-	 * @see 	#organId
-	 * @see 	#organ
-	 * @see 	#getIdByEntityOrId(Entity, String)
-	 */
-	public String getOrganId()
-	{
-		return this.getIdByEntityOrId(this.getOrgan(), this.organId);
 	}
 	/**
 	 * Set the <code>stage</code> attribute.
@@ -99,28 +75,5 @@ public class RawDataAnnotated extends RawData
 	public Stage getStage()
 	{
 		return this.stage;
-	}
-	/**
-	 * Set the <code>stageId</code> attribute.
-	 * @param staId 	the <code>String</code> to set <code>stageId</code>.
-	 * @see #stageId
-	 */
-	public void setStageId(String staId)
-	{
-		this.stageId = staId;
-	}
-	/**
-	 * Returns either the value of <code>stageId</code>, 
-	 * or the of the <code>id</code> of the <code>Stage</code> 
-	 * stored in <code>stage</code>, depending on which one is set. 
-	 * 
-	 * @return 	the ID of the stage for which this object reports expression. 
-	 * @see 	#stageId
-	 * @see 	#stage
-	 * @see 	#getIdByEntityOrId(Entity, String)
-	 */
-	public String getStageId()
-	{
-		return this.getIdByEntityOrId(this.getStage(), this.stageId);
 	}
 }

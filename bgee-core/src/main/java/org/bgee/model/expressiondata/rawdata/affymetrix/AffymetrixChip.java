@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata.affymetrix;
 
 import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
+import org.bgee.model.source.Source;
 
 /**
  * Class related to Affymetrix chip. 
@@ -28,7 +29,7 @@ public class AffymetrixChip extends RawDataAnnotated
 	 * against a subset of weakly expressed probesets, to generate expression calls 
 	 * (see <a href="http://www.ncbi.nlm.nih.gov/pubmed/17594492">
 	 * Schuster et al., Genome Biology (2007)</a>). Such calls usually implies 
-	 * that raw data were available, and were normalized using gcRMA. 
+	 * that raw data were available, and were normalized using GCRMA. 
 	 * </ul>
 	 * 
 	 * @author Frederic Bastian
@@ -46,7 +47,7 @@ public class AffymetrixChip extends RawDataAnnotated
 	 * this naormalization usually means that only the processed MAS5 files 
 	 * were available, otherwise another method would be used. 
 	 * <li><code>RMA</code>: normalization by RMA method.
-	 * <li><code>gcRMA</code>: normalization by gcRMA method. This is the default 
+	 * <li><code>GCRMA</code>: normalization by GCRMA method. This is the default 
 	 * method in Bgee when raw data are available. 
 	 * </ul>
 	 * 
@@ -55,7 +56,7 @@ public class AffymetrixChip extends RawDataAnnotated
 	 * @since Bgee 01
 	 */
 	public enum AffymetrixNormalizationType {
-		MAS5, RMA, gcRMA;
+		MAS5, RMA, GCRMA;
 	}
 	/**
 	 * The <code>AffymetrixExp</code> this object belongs to.
@@ -91,9 +92,9 @@ public class AffymetrixChip extends RawDataAnnotated
     /**
      * Default constructor. 
      */
-	public AffymetrixChip()
+	public AffymetrixChip(String  id)
     {
-    	super();
+    	super(id);
     	this.setMicroarrayExperimentId(null);
     	this.setAffymetrixChipId(null);
     	this.setChipType(null);
@@ -114,10 +115,10 @@ public class AffymetrixChip extends RawDataAnnotated
 	 * @see #getDataSource()
 	 */
 	@Override
-	public DataSource getDataSourceFromContainer()
+	public Source getSourceFromContainer()
 	{
 		if (this.getMicroarrayExperiment() != null) {
-	        return this.getMicroarrayExperiment().getDataSource();
+	        return this.getMicroarrayExperiment().getSource();
 		}
 		return null;
 	}
@@ -135,10 +136,10 @@ public class AffymetrixChip extends RawDataAnnotated
 	 * @see #getDataSourceId()
 	 */
 	@Override
-	public String getDataSourceIdFromContainer()
+	public String getSourceIdFromContainer()
 	{
 		if (this.getMicroarrayExperiment() != null) { 
-			return this.getMicroarrayExperiment().getDataSourceId();
+			return this.getMicroarrayExperiment().getSourceId();
 		}
 		return "";
 	}
@@ -174,7 +175,8 @@ public class AffymetrixChip extends RawDataAnnotated
 	 */
 	public String getMicroarrayExperimentId()
 	{
-		return this.getIdByEntityOrId(this.getMicroarrayExperiment(), this.microarrayExperimentId);
+		//return this.getIdByEntityOrId(this.getMicroarrayExperiment(), this.microarrayExperimentId);
+		return null; //TODO
 	}
 	
 	/**

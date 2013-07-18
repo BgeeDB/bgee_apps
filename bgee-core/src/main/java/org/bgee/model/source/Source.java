@@ -2,7 +2,7 @@ package org.bgee.model.source;
 
 import java.util.Date;
 
-import model.EntityDescription;
+import org.bgee.model.Entity;
 
 /**
  * Objects from this class represent data sources used in Bgee, 
@@ -29,8 +29,19 @@ import model.EntityDescription;
  * @since Bgee 11
  *
  */
-public class Source extends EntityDescription
+public class Source extends Entity
 {
+	public Source(String id) throws IllegalArgumentException {
+		super(id);
+    	this.setXRefUrl(null);
+    	this.setExperimentUrl(null);
+    	this.setEvidenceUrl(null);
+    	this.setBaseUrl(null);
+    	this.setReleaseDate(null);
+    	this.setReleaseVersion(null);
+    	this.setToDisplay(false);
+    	this.setCategory(null);
+	}
 	/**
 	 * a <code>String</code> representing the tag used in URLs 
 	 * to be replaced by the <code>id</code> field of a <code>GeneXRef</code>.
@@ -148,23 +159,6 @@ public class Source extends EntityDescription
      * (e.g., 'Ontology', 'Affymetrix data').
      */
     private String category;
-    
-    
-    /**
-     * Default constructor.
-     */
-    public DataSource()
-    {
-    	super();
-    	this.setXRefUrl(null);
-    	this.setExperimentUrl(null);
-    	this.setEvidenceUrl(null);
-    	this.setBaseUrl(null);
-    	this.setReleaseDate(null);
-    	this.setReleaseVersion(null);
-    	this.setToDisplay(false);
-    	this.setCategory(null);
-    }
     
     /**
      * Take the ID in Bgee of an experiment, coming from this <code>DataSource</code>, 

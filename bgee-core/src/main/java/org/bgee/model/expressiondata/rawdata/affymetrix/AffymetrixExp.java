@@ -16,8 +16,8 @@ public class AffymetrixExp extends RawData
 	/**
 	 * Default constructor. 
 	 */
-    public AffymetrixExp()
+    public AffymetrixExp(String id)
     {
-    	super();
+    	super(id);
     }
 }

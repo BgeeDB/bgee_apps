@@ -602,7 +602,7 @@ public class RawDataFilter implements Filter {
 	 * defining the IDs of RNA-Seq runs to use.
 	 * 
 	 * @param runId 	the ID of an allowed RNA-Seq run
-	 * @see #getRnaSeqRunIds()
+	 * @see #getRNASeqRunIds()
 	 */
 	public void addRNASeqRunId(String runId) {
 		this.rnaSeqRunIds.add(runId);
@@ -613,7 +613,7 @@ public class RawDataFilter implements Filter {
 	 * RNA-Seq runs to use.
 	 * 
 	 * @param runIds	the IDs of some allowed RNA-Seq runs
-	 * @see #getRnaSeqRunIds()
+	 * @see #getRNASeqRunIds()
 	 */
 	public void addRNASeqRunIds(Collection<String> runIds) {
 		this.rnaSeqRunIds.addAll(runIds);
@@ -638,7 +638,7 @@ public class RawDataFilter implements Filter {
 	 * defining the IDs of RNA-Seq platforms to use.
 	 * 
 	 * @param platformId 	the ID of an allowed RNA-Seq platform
-	 * @see #getRnaSeqPlatformIds()
+	 * @see #getRNASeqPlatformIds()
 	 */
 	public void addRNASeqPlatformId(String platformId) {
 		this.rnaSeqPlatformIds.add(platformId);
@@ -649,7 +649,7 @@ public class RawDataFilter implements Filter {
 	 * RNA-Seq platforms to use.
 	 * 
 	 * @param platformIds	the IDs of some allowed RNA-Seq platforms
-	 * @see #getRnaSeqPlatformIds()
+	 * @see #getRNASeqPlatformIds()
 	 */
 	public void addRNASeqPlatformIds(Collection<String> platformIds) {
 		this.rnaSeqPlatformIds.addAll(platformIds);
@@ -762,7 +762,7 @@ public class RawDataFilter implements Filter {
 	 * of RNA-Seq libraries to use. 
 	 * 
 	 * @param libraryType 	an allowed RNA-Seq library type
-	 * @see #getRnaSeqLibraryTypes()
+	 * @see #getRNASeqLibraryTypes()
 	 */
 	public void addRNASeqLibraryType(RNASeqLibraryType libraryType) {
 		this.rnaSeqLibraryTypes.add(libraryType);
@@ -773,7 +773,7 @@ public class RawDataFilter implements Filter {
 	 * the requested types of RNA-Seq libraries to use. 
 	 * 
 	 * @param libraryTypes	some allowed RNA-Seq library types.
-	 * @see #getRnaSeqLibraryTypes()
+	 * @see #getRNASeqLibraryTypes()
 	 */
 	public void addRNASeqLibraryTypes(Collection<RNASeqLibraryType> libraryTypes) {
 		this.rnaSeqLibraryTypes.addAll(libraryTypes);
@@ -798,7 +798,7 @@ public class RawDataFilter implements Filter {
 	 * defining the IDs of RNA-Seq libraries to use.
 	 * 
 	 * @param libId 	the ID of an allowed RNA-Seq library
-	 * @see #getRnaSeqLibraryIds()
+	 * @see #getRNASeqLibraryIds()
 	 */
 	public void addRNASeqLibraryId(String libId) {
 		this.rnaSeqLibraryIds.add(libId);
@@ -809,7 +809,7 @@ public class RawDataFilter implements Filter {
 	 * RNA-Seq libraries to use.
 	 * 
 	 * @param libIds	the IDs of some allowed RNA-Seq libraries
-	 * @see #getRnaSeqLibraryIds()
+	 * @see #getRNASeqLibraryIds()
 	 */
 	public void addRNASeqLibraryIds(Collection<String> libIds) {
 		this.rnaSeqLibraryIds.addAll(libIds);
@@ -834,7 +834,7 @@ public class RawDataFilter implements Filter {
 	 * defining the IDs of RNA-Seq experiments to use.
 	 * 
 	 * @param expId 	the ID of an allowed RNA-Seq experiment
-	 * @see #getRnaSeqExpIds()
+	 * @see #getRNASeqExpIds()
 	 */
 	public void addRNASeqExpId(String expId) {
 		this.rnaSeqExpIds.add(expId);
@@ -845,7 +845,7 @@ public class RawDataFilter implements Filter {
 	 * RNA-Seq experiments to use.
 	 * 
 	 * @param expIds	the IDs of some allowed RNA-Seq experiments
-	 * @see #getRnaSeqExpIds()
+	 * @see #getRNASeqExpIds()
 	 */
 	public void addRNASeqExpIds(Collection<String> expIds) {
 		this.rnaSeqExpIds.addAll(expIds);

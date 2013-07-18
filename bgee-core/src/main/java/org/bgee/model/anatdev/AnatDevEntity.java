@@ -1,25 +1,27 @@
 package org.bgee.model.anatdev;
 
+import org.bgee.model.EntityExpressionData;
+
 /**
- * An Uberon anatomical entity. 
+ * Parent class of entities used in anatomical or developmental ontologies.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
- * @since Bgee 01
+ * @since Bgee 13
  */
-public class AnatomicalEntity extends AnatDevEntity {
+public abstract class AnatDevEntity extends EntityExpressionData {
 	/**
-     * Constructor providing the <code>id</code> of this <code>AnatomicalEntity</code>. 
+     * Constructor providing the <code>id</code> of this <code>AnatDevEntity</code>. 
      * This <code>id</code> cannot be <code>null</code>, or empty (""), 
      * or whitespaces only, otherwise an <code>IllegalArgumentException</code> 
      * will be thrown. The ID will also be immutable, see {@link #getId()}.
      * 
      * @param id	A <code>String</code> representing the ID of 
-     * 				this <code>AnatomicalEntity</code>.
+     * 				this <code>AnatDevEntity</code>.
      * @throws IllegalArgumentException 	if <code>id</code> is <code>null</code>,  
      * 										empty, or whitespaces only. 
      */
-    public AnatomicalEntity(String id) {
+    public AnatDevEntity(String id) {
     	super(id);
     }
 }

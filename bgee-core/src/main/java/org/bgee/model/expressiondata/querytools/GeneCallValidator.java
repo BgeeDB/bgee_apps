@@ -11,23 +11,23 @@ import org.bgee.model.gene.Gene;
 
 /**
  * List and allow to validate custom conditions on gene expression data 
- * of an <code>OntologyElement</code>, when performing an expression reasoning 
+ * of an <code>OntologyEntity</code>, when performing an expression reasoning 
  * on an <code>Ontology</code>, using an {@link AnatDevExpressionQuery}. These conditions 
  * define which genes should have which types of expression call 
- * in an <code>OntologyElement</code>, for instance: "Validate OntologyElements 
+ * in an <code>OntologyEntity</code>, for instance: "Validate OntologyElements 
  * where gene A is expressed, gene B not expressed, and gene C over-expressed". 
  * <p>
  * Each condition is described by a {@link GeneCallRequirement}. 
  * The <code>GeneCallRequirement</code>s part of this <code>GeneCallValidator</code> 
- * must all be satisfied for an <code>OntologyElement</code> to be validated. 
+ * must all be satisfied for an <code>OntologyEntity</code> to be validated. 
  * <p>
- * The methods allowing to validate an <code>OntologyElement</code> are 
- * {@link #validate(OntologyElement)} and {@link #validate(Collection)}.
+ * The methods allowing to validate an <code>OntologyEntity</code> are 
+ * {@link #validate(OntologyEntity)} and {@link #validate(Collection)}.
  * <p>
  * Note that an <code>AnatDevExpressionQuery</code> can use several 
  * <code>GeneCallValidator</code>s, offering different ways of validating 
- * an <code>OntologyElement</code>. Nevertheless, for one of these 
- * <code>GeneCallValidator</code>s to validate an <code>OntologyElement</code>, 
+ * an <code>OntologyEntity</code>. Nevertheless, for one of these 
+ * <code>GeneCallValidator</code>s to validate an <code>OntologyEntity</code>, 
  * all its <code>GeneCallRequirement</code>s must be satisfied.
  * 
  * @author Frederic Bastian
@@ -38,16 +38,16 @@ import org.bgee.model.gene.Gene;
 public class GeneCallValidator {
 
 	/**
-     * Define a custom condition for an <code>OntologyElement</code> 
+     * Define a custom condition for an <code>OntologyEntity</code> 
      * to be validated, regarding its gene expression data, when performing 
      * an expression reasoning on an <code>Ontology</code>, 
      * using an {@link AnatDevExpressionQuery}. 
      * A <code>GeneCallRequirement</code> is always part of a {@link GeneCallValidator}, 
-     * listing all the necessary conditions that an <code>OntologyElement</code> 
+     * listing all the necessary conditions that an <code>OntologyEntity</code> 
      * must satisfied at the same time to be validated.
      * <p>
      * If any of the <code>Gene</code>s, contained in a <code>GeneCallRequirement</code>, 
-     * have any data in an <code>OntologyElement</code>, corresponding to one of the requested  
+     * have any data in an <code>OntologyEntity</code>, corresponding to one of the requested  
      * <code>CallType</code>s, then the requirement is satisfied 
      * (like a <code>OR</code> condition both on genes and expression data). 
      * Whether all <code>Gene</code>s must have at least some expression data in any case 
@@ -63,8 +63,8 @@ public class GeneCallValidator {
      * For instance, if a <code>GeneCallRequirement</code> contains a gene A and a gene B, 
      * and two <code>CallType</code>s, <code>EXPRESSION</code> and 
      * <code>NOEXPRESSION</code>, it means that if any of the gene A or B is expressed, 
-     * or not expressed, in a given <code>OntologyElement</code>, then the requirement 
-     * is satisfied for this <code>OntologyElement</code>.
+     * or not expressed, in a given <code>OntologyEntity</code>, then the requirement 
+     * is satisfied for this <code>OntologyEntity</code>.
      * <p>
      * Be careful when using a <code>GeneCallRequirement</code> including several genes: 
      * you will likely want all genes to have at least some data in any case; 
@@ -100,7 +100,7 @@ public class GeneCallValidator {
     	/**
     	 * A <code>Collection</code> of <code>CallType</code>s listing 
     	 * the allowed expression data calls, that at least one of the <code>Gene</code>s 
-    	 * listed in {@link #genes} must exhibit in an <code>OntologyElement</code>, 
+    	 * listed in {@link #genes} must exhibit in an <code>OntologyEntity</code>, 
     	 * for the element to be validated. Any of these <code>CallType</code>s 
     	 * allows the validation.
     	 * <p>
@@ -114,7 +114,7 @@ public class GeneCallValidator {
     	/**
     	 * A <code>boolean</code> defining whether, when the attribute {@link #genes} 
     	 * contains several <code>Gene</code>s, all of them must have at least 
-    	 * some data in the tested <code>OntologyElement</code>, for the requirement 
+    	 * some data in the tested <code>OntologyEntity</code>, for the requirement 
     	 * to be satisfied, whatever the requested <code>CallType</code>s 
     	 * listed in {@link #callTypes} are (understand, some data  
     	 * amongst the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
@@ -178,7 +178,7 @@ public class GeneCallValidator {
     	/**
     	 * Instantiate a <code>GeneCallRequirement</code> for one <code>Gene</code>, 
     	 * with no <code>CallType</code> specified. It means that this <code>Gene</code>
-    	 * must exhibit any expression data call in the <code>OntologyElement</code>, 
+    	 * must exhibit any expression data call in the <code>OntologyEntity</code>, 
     	 * for it to be validated. 
     	 * 
     	 * @param gene 		The <code>Gene</code> which this <code>GeneCallRequirement</code> 
@@ -192,7 +192,7 @@ public class GeneCallValidator {
     	 * Instantiate a <code>GeneCallRequirement</code> for one <code>Gene</code> 
     	 * and one <code>CallType</code>. It means that this <code>Gene</code> 
     	 * must absolutely have an expression data call of this <code>CallType</code> 
-    	 * in an <code>OntologyElement</code>, for it to be validated. 
+    	 * in an <code>OntologyEntity</code>, for it to be validated. 
     	 * 
     	 * @param gene 		The <code>Gene</code> which this <code>GeneCallRequirement</code> 
     	 * 					is related to.
@@ -205,7 +205,7 @@ public class GeneCallValidator {
     	 * Instantiate a <code>GeneCallRequirement</code> for one <code>Gene</code>, 
     	 * with several <code>CallType</code>s. It means that this <code>Gene</code> 
     	 * must exhibit an expression data call of any of these <code>CallType</code>s 
-    	 * in an <code>OntologyElement</code>, for it to be validated. 
+    	 * in an <code>OntologyEntity</code>, for it to be validated. 
     	 * <p>
     	 * If some <code>CallType</code>s are redundant (for instance, 
     	 * <code>EXPRESSION</code> and <code>OVEREXPRESSION</code> are redundant, 
@@ -226,7 +226,7 @@ public class GeneCallValidator {
     	 * Instantiate a <code>GeneCallRequirement</code> for a <code>Collection</code> of 
     	 * <code>Gene</code>s, with no <code>CallType</code> specified. It means that 
     	 * at least one of the <code>Gene</code>s must exhibit any expression data call 
-    	 * in the <code>OntologyElement</code>, for it to be validated, 
+    	 * in the <code>OntologyEntity</code>, for it to be validated, 
     	 * amongst the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
     	 * for that <code>Gene</code>. Besides, if <code>allGenesWithData</code> 
     	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
@@ -249,7 +249,7 @@ public class GeneCallValidator {
     	 * Instantiate a <code>GeneCallRequirement</code> for a <code>Collection</code> of 
     	 * <code>Gene</code>s, and one <code>CallType</code>. It means that 
     	 * at least one of the <code>Gene</code>s must exhibit an expression data call 
-    	 * of this <code>CallType</code> in the <code>OntologyElement</code>, 
+    	 * of this <code>CallType</code> in the <code>OntologyEntity</code>, 
     	 * for it to be validated, amongst the call types that were allowed 
     	 * by the <code>AnatDevExpressionQuery</code> for that <code>Gene</code>. 
     	 * Besides, if <code>allGenesWithData</code> 
@@ -277,7 +277,7 @@ public class GeneCallValidator {
     	 * Instantiate a <code>GeneCallRequirement</code> for a <code>Collection</code> of 
     	 * <code>Gene</code>s, with several <code>CallType</code>s. It means that  
     	 * at least one of the <code>Gene</code>s must exhibit an expression data call 
-    	 * of any of these <code>CallType</code>s in the <code>OntologyElement</code>, 
+    	 * of any of these <code>CallType</code>s in the <code>OntologyEntity</code>, 
     	 * for it to be validated, amongst the call types that were allowed 
     	 * by the <code>AnatDevExpressionQuery</code> for that <code>Gene</code>. 
     	 * Besides, if <code>allGenesWithData</code> is <code>true</code>, 
@@ -383,7 +383,7 @@ public class GeneCallValidator {
 		/**
 		 * Return the <code>Collection</code> of <code>CallType</code>s listing 
     	 * the allowed expression data calls, that at least one of the <code>Gene</code>s 
-    	 * returned by {@link #getGenes()} must exhibit in an <code>OntologyElement</code>, 
+    	 * returned by {@link #getGenes()} must exhibit in an <code>OntologyEntity</code>, 
     	 * for the element to be validated. Any of these <code>CallType</code>s 
     	 * allows the validation.
     	 * <p>
@@ -394,7 +394,7 @@ public class GeneCallValidator {
     	 * 
 		 * @return 	the <code>Collection</code> of <code>CallType</code>s defining 
 		 * 			which expression data calls allow to validate 
-		 * 			an <code>OntologyElement</code>.
+		 * 			an <code>OntologyEntity</code>.
 		 * @see #addCallType(CallType)
 		 */
 		public Collection<CallType> getCallTypes() {
@@ -413,7 +413,7 @@ public class GeneCallValidator {
 		/**
 		 * Add a <code>CallType</code> to the list of allowed expression data calls, 
 		 * that at least one of the <code>Gene</code>s returned by {@link #getGenes()} 
-		 * must exhibit in an <code>OntologyElement</code>, for the element 
+		 * must exhibit in an <code>OntologyEntity</code>, for the element 
 		 * to be validated. 
     	 * <p>
     	 * If some <code>CallType</code>s hold by this <code>GeneCallRequirement</code> 
@@ -442,7 +442,7 @@ public class GeneCallValidator {
 		/**
 		 * Add a <code>Collection</code> of <code>CallType</code>s to the list 
 		 * of allowed expression data calls, that at least one of the <code>Gene</code>s 
-		 * returned by {@link #getGenes()} must exhibit in an <code>OntologyElement</code>, 
+		 * returned by {@link #getGenes()} must exhibit in an <code>OntologyEntity</code>, 
 		 * for the element to be validated. 
     	 * <p>
     	 * If some <code>CallType</code>s hold by this <code>GeneCallRequirement</code> 
@@ -526,7 +526,7 @@ public class GeneCallValidator {
 		/**
 		 * Return the <code>boolean</code> defining whether, when {@link #getGenes()} 
 		 * returns several <code>Gene</code>s, all of them must have at least 
-    	 * some data in the tested <code>OntologyElement</code>, for the requirement 
+    	 * some data in the tested <code>OntologyEntity</code>, for the requirement 
     	 * to be satisfied, whatever the requested <code>CallType</code>s 
     	 * returned by {@link #getCallTypes()} are (understand, some data amongst 
     	 * the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
@@ -552,7 +552,7 @@ public class GeneCallValidator {
 		/**
 		 * Set the <code>boolean</code> defining whether, when {@link #getGenes()} 
 		 * returns several <code>Gene</code>s, all of them must have at least 
-    	 * some data in the tested <code>OntologyElement</code>, for the requirement 
+    	 * some data in the tested <code>OntologyEntity</code>, for the requirement 
     	 * to be satisfied, whatever the requested <code>CallType</code>s 
     	 * returned by {@link #getCallTypes()} are (understand, some data amongst 
     	 * the call types that were allowed by the <code>AnatDevExpressionQuery</code> 

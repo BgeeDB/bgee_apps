@@ -29,7 +29,7 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	 * A <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
 	 * in an <code>AnatomicalEntity</code> will take into account expression in its children.
@@ -39,7 +39,7 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	 * A <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.Stage Stage} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
 	 * in an <code>Stage</code> will take into account expression in its child stages.
@@ -52,7 +52,7 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	 * Return the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
 	 * in an <code>AnatomicalEntity</code> will take into account expression in its children.
@@ -71,7 +71,7 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	 * Set the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
 	 * in an <code>AnatomicalEntity</code> will take into account expression in its children.
@@ -93,7 +93,7 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	 * Return the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.Stage Stage} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
 	 * in a <code>Stage</code> will take into account expression in its child stages.
@@ -112,7 +112,7 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	 * Set the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.Stage Stage} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
 	 * in a <code>Stage</code> will take into account expression in its child stages.

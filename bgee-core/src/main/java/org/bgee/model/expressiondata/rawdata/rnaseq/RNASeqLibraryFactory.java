@@ -5,14 +5,14 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * A <code>EntityFactory</code> responsible for instantiating <code>RNASeqLibrary</code> objects.
+ * A <code>Factory</code> responsible for instantiating <code>RNASeqLibrary</code> objects.
  * 
  * @author Frederic Bastian
  * @version Bgee 12
  * @see RNASeqLibrary
  * @since Bgee 12
  */
-public class RNASeqLibraryFactory extends EntityFactory
+public class RNASeqLibraryFactory extends Factory
 {
 	/**
 	 * A <code>RNASeqLibraryDAO</code> used to query a data source, 
@@ -24,7 +24,7 @@ public class RNASeqLibraryFactory extends EntityFactory
 	 * This <code>RNASeqLibraryDAO</code> is obtained using a <code>DAOFactory</code> 
 	 * returned by the <code>#getDAOFactory()</code> method of the parent class. 
 	 * 
-	 * @see EntityFactory#getDAOFactory()
+	 * @see Factory#getDAOFactory()
 	 */
 	private final RNASeqLibraryDAO dao;
 	

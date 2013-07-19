@@ -5,14 +5,14 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * A <code>EntityFactory</code> responsible for instantiating <code>AffymetrixExp</code> objects.
+ * A <code>Factory</code> responsible for instantiating <code>AffymetrixExp</code> objects.
  * 
  * @author Frederic Bastian
  * @version Bgee 12
  * @see AffymetrixExp
  * @since Bgee 01
  */
-public class AffymetrixExpFactory extends EntityFactory
+public class AffymetrixExpFactory extends Factory
 {
 	/**
 	 * A <code>AffymetrixExpDAO</code> used to query a data source, 
@@ -24,7 +24,7 @@ public class AffymetrixExpFactory extends EntityFactory
 	 * This <code>AffymetrixExpDAO</code> is obtained using a <code>DAOFactory</code> 
 	 * returned by the <code>#getDAOFactory()</code> method of the parent class. 
 	 * 
-	 * @see EntityFactory#getDAOFactory()
+	 * @see Factory#getDAOFactory()
 	 */
 	private final AffymetrixExpDAO dao;
 	

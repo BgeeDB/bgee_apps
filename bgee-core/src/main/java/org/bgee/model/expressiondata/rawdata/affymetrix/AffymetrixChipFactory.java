@@ -6,14 +6,14 @@ import java.util.Iterator;
 
 
 /**
- * A <code>EntityFactory</code> responsible for instantiating <code>AffymetrixChip</code> objects.
+ * A <code>Factory</code> responsible for instantiating <code>AffymetrixChip</code> objects.
  * 
  * @author Frederic Bastian
  * @version Bgee 12
  * @see AffymetrixChip
  * @since Bgee 01
  */
-public class AffymetrixChipFactory extends EntityFactory
+public class AffymetrixChipFactory extends Factory
 {
 	/**
 	 * An <code>AffymetrixChipDAO</code> used to query a data source, 
@@ -25,7 +25,7 @@ public class AffymetrixChipFactory extends EntityFactory
 	 * This <code>AffymetrixChipDAO</code> is obtained using a <code>DAOFactory</code> 
 	 * returned by the <code>#getDAOFactory()</code> method of the parent class. 
 	 * 
-	 * @see EntityFactory#getDAOFactory()
+	 * @see Factory#getDAOFactory()
 	 */
 	private final AffymetrixChipDAO dao;
 	

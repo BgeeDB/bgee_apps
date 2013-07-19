@@ -13,5 +13,10 @@ import org.bgee.model.ontologycommon.Ontology;
  * @param <T> a subclass of <code>AnatDevEntity</code>. 
  */
 public abstract class AnatDevOntology<T extends AnatDevEntity> extends Ontology<T> {
-
+	/**
+	 * Default constructor protected, instances should be obtained using a factory. 
+	 */
+    protected AnatDevOntology() {
+    	super();
+    }
 }

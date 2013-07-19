@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.bgee.model.EntityFactory;
+import org.bgee.model.Factory;
 import org.bgee.model.data.common.DAOFactory;
 import org.bgee.model.data.common.TransferObject;
 import org.bgee.model.data.common.source.SourceDAO;
@@ -22,7 +22,7 @@ import org.bgee.model.data.common.source.SourceTO;
  * @since Bgee11
  *
  */
-public class SourceFactory extends EntityFactory
+public class SourceFactory extends Factory
 {
 	/**
 	 * Default constructor.

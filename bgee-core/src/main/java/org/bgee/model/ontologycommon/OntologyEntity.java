@@ -13,7 +13,7 @@ import org.bgee.model.Entity;
  * @since Bgee 13
  * @param <T>	a subclass of {@link org.bgee.model.Entity Entity}
  */
-public class OntologyEntity<T extends Entity> {
+public abstract class OntologyEntity<T extends Entity> {
 
 	/**
 	 * List the different relation types used in Bgee. 

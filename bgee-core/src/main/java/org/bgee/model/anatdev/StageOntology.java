@@ -8,5 +8,10 @@ package org.bgee.model.anatdev;
  * @since Bgee 13
  */
 public class StageOntology extends AnatDevOntology<Stage> {
-
+	/**
+	 * Default constructor protected, instances should be obtained using a factory. 
+	 */
+    protected StageOntology() {
+    	super();
+    }
 }

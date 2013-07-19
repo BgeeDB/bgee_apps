@@ -1,4 +1,4 @@
-package org.bgee.model.data.sql;
+package org.bgee.model.dao.mysql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
-import org.bgee.model.data.sql.datasource.InitDataSourceTest;
+import org.bgee.model.dao.mysql.datasource.InitDataSourceTest;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -70,8 +70,8 @@ public class BgeeConnectionTest extends TestAncestor
 	
 	/**
 	 * Test the methods 
-	 * {@link org.bgee.model.data.sql.BgeeConnection#close() BgeeConnection#close()} and 
-	 * {@link org.bgee.model.data.sql.BgeeConnection#isClosed() BgeeConnection#isClosed()}
+	 * {@link org.bgee.model.dao.mysql.BgeeConnection#close() BgeeConnection#close()} and 
+	 * {@link org.bgee.model.dao.mysql.BgeeConnection#isClosed() BgeeConnection#isClosed()}
 	 */
 	@Test
 	public void shouldCloseConnection() throws SQLException
@@ -106,7 +106,7 @@ public class BgeeConnectionTest extends TestAncestor
 	}
 	
 	/**
-	 * Test the method {@link org.bgee.model.data.sql.BgeeConnection#prepareStatement(String) 
+	 * Test the method {@link org.bgee.model.dao.mysql.BgeeConnection#prepareStatement(String) 
 	 * BgeeConnection#prepareStatement(String)}
 	 * @throws SQLException 
 	 */

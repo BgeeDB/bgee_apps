@@ -1,8 +1,8 @@
-package org.bgee.model.data.sql.mysql.hierarchicalGroup;
+package org.bgee.model.dao.mysql.hierarchicalGroup;
 
 import java.sql.SQLException;
 
-import org.bgee.model.data.sql.mysql.hierarchicalGroup.MysqlHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.hierarchicalgroup.MySQLHierarchicalGroupDAO;
 
 import static org.junit.Assert.*;
 
@@ -16,7 +16,7 @@ public class MysqlHierarchicalGroupDAOTest {
 				"ENSXETG00000013072", "ENSXETG00000025123",
 				"ENSXETG00000031931", "ENSXETG00000032302" };
 
-		MysqlHierarchicalGroupDAO query = new MysqlHierarchicalGroupDAO();
+		MySQLHierarchicalGroupDAO query = new MySQLHierarchicalGroupDAO();
 
 		assertArrayEquals(requiredOrthologusGenes, query
 				.getHierarchicalOrthologusGenes("ENSG00000186470", "")

@@ -1,4 +1,4 @@
-package org.bgee.model.data.sql;
+package org.bgee.model.dao.mysql;
 
 import java.sql.Connection;
 import java.sql.Driver;

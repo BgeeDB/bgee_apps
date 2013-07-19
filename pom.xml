@@ -128,11 +128,28 @@
 				<scope>compile</scope>
 			</dependency>
 
+			<!-- End for the core layer -->
+			
+			<!-- Needed for the dao-api layer -->
+			
+			<dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>6.8.5</version>
+                <scope>test</scope>
+            </dependency>
+            
+			<!-- End for the dao-api layer -->
+			
+			
+
+			<!-- Needed for the dao-sql layer -->
+			
 			<dependency>
 				<groupId>org.bgee.log4jdbc-log4j2</groupId>
 				<artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
 				<version>1.15</version>
-				<scope>compile</scope>
+				<scope>runtime</scope>
 			</dependency>
 
 		    <dependency>
@@ -148,19 +165,8 @@
 			    <version>4.4</version>
 			    <scope>test</scope>
 		    </dependency>
-
-			<!-- End for the core layer -->
-			
-			<!-- Needed for the dao-api layer -->
-			
-			<dependency>
-                <groupId>org.testng</groupId>
-                <artifactId>testng</artifactId>
-                <version>6.8.5</version>
-                <scope>test</scope>
-            </dependency>
-            
-			<!-- End for the dao-api layer -->
+		    
+			<!-- End for the dao-sql layer -->
 
 		</dependencies>
 	</dependencyManagement>

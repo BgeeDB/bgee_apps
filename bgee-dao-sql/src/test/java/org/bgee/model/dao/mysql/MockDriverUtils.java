@@ -1,4 +1,4 @@
-package org.bgee.model.data.sql;
+package org.bgee.model.dao.mysql;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;

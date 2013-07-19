@@ -1,4 +1,4 @@
-package org.bgee.model.data.sql.datasource;
+package org.bgee.model.dao.mysql.datasource;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.data.sql.BgeeDataSource;
+import org.bgee.model.dao.mysql.BgeeDataSource;
 import org.junit.Test;
 
 

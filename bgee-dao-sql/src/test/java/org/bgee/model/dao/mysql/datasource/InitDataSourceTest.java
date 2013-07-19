@@ -1,4 +1,4 @@
-package org.bgee.model.data.sql.datasource;
+package org.bgee.model.dao.mysql.datasource;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -9,8 +9,8 @@ import javax.naming.StringRefAddr;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.DataSourceFactory;
 import org.bgee.model.BgeeProperties;
-import org.bgee.model.data.sql.DriverTestImpl;
-import org.bgee.model.data.sql.MockDriverUtils;
+import org.bgee.model.dao.mysql.DriverTestImpl;
+import org.bgee.model.dao.mysql.MockDriverUtils;
 
 import com.sun.jndi.fscontext.RefFSContextFactory;
 

@@ -15,7 +15,7 @@
  * See its javadoc for more details.
  * 
  * @author Frederic Bastian
- * @version Bgee 13, Mar 2013
+ * @version Bgee 13
  * @since Bgee 01
  */
 package org.bgee.model;

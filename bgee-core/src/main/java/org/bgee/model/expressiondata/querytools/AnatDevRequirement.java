@@ -13,60 +13,68 @@ import org.bgee.model.expressiondata.querytools.filters.CallFilter;
 import org.bgee.model.gene.Gene;
 
 /**
- * List and allow to validate custom conditions on gene expression data 
- * of an <code>OntologyEntity</code>, when performing an expression reasoning 
- * on an <code>Ontology</code>, using an {@link AnatDevExpressionQuery}. These conditions 
- * define which genes should have which types of expression call 
- * in an <code>OntologyEntity</code>, for instance: "Validate OntologyElements 
- * where gene A is expressed, gene B not expressed, and gene C over-expressed". 
+ * List and allow to validate conditions on gene expression data 
+ * for {@link org.bgee.model.anatdev.AnatDevEntity AnatDevEntity}s, 
+ * when performing an expression reasoning using an {@link AnatDevExpressionQuery}. 
+ * These conditions define which genes should have which types of expression data, 
+ * for instance: "Validate anatomical structures where gene A is expressed, 
+ * gene B not expressed, and gene C over-expressed". 
  * <p>
  * Each condition is described by a {@link GeneCallRequirement}. 
- * The <code>GeneCallRequirement</code>s part of this <code>GeneCallValidator</code> 
- * must all be satisfied for an <code>OntologyEntity</code> to be validated. 
- * <p>
- * The methods allowing to validate an <code>OntologyEntity</code> are 
- * {@link #validate(OntologyEntity)} and {@link #validate(Collection)}.
+ * How this <code>GeneCallRequirement</code>s are used to validate this 
+ * <code>AnatDevRequirement</code> is defined by the value returned by 
+ * {@link #getValidationType()}.
  * <p>
  * Note that an <code>AnatDevExpressionQuery</code> can use several 
- * <code>GeneCallValidator</code>s, offering different ways of validating 
- * an <code>OntologyEntity</code>. Nevertheless, for one of these 
- * <code>GeneCallValidator</code>s to validate an <code>OntologyEntity</code>, 
- * all its <code>GeneCallRequirement</code>s must be satisfied.
+ * <code>AnatDevRequirement</code>s, offering different ways of validating 
+ * an <code>AnatDevEntity</code>. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  *
  */
-public class GeneCallValidator {
+public class AnatDevRequirement {
 	/**
-	 * An <code>enum</code> to define how this <code>GeneCallValidator</code> 
+	 * An <code>enum</code> to define how this <code>AnatDevRequirement</code> 
 	 * should be validated: 
 	 * <ul>
 	 * <li><code>ALL</code>: all <code>GeneCallRequirement</code>s must be validated.
-	 * <li><code>GENETHRESHOLD</code>: the <code>GeneCallValidator</code> 
+	 * <li><code>CONSERVATION</code>: all <code>Gene</code>s part of the 
+	 * <code>GeneCallRequirement</code>s must have the same <code>CallType</code> 
+	 * in a given <code>AnatDevEntity</code> for it to be validated. This allows 
+	 * for instance to request for both <code>EXPRESSION</code> and <code>NOEXPRESSION</code> 
+	 * data, but to get only <code>AnatDevEntity</code>s where <code>Gene</code>s 
+	 * are similarly expressed. 
+	 * <li><code>DIVERGENCE</code>: at least on of the <code>Gene</code>s part of the 
+	 * <code>GeneCallRequirement</code>s must have a <code>CallType</code> different  
+	 * from the other in a given <code>AnatDevEntity</code>, for it to be validated. 
+	 * This allows for instance to request for both <code>EXPRESSION</code> and 
+	 * <code>NOEXPRESSION</code> data, but to get only <code>AnatDevEntity</code>s 
+	 * where gene expression is divergent. 
+	 * <li><code>GENETHRESHOLD</code>: the <code>AnatDevRequirement</code> 
 	 * will be validated based on the number of <code>Gene</code>s (defined 
-	 * using {@link GeneCallValidator#setValidationThreshold(int)}), 
+	 * using {@link AnatDevRequirement#setValidationThreshold(int)}), 
 	 * amongst all the <code>Gene</code>s present in the <code>GeneCallRequirement</code>s, 
 	 * that exhibit the reference <code>CallType</code> (defined using 
-	 * {@link GeneCallValidator#setReferenceCallType(CallType)}).
-	 * <li><code>SPECIESTHRESHOLD</code>: the <code>GeneCallValidator</code> 
+	 * {@link AnatDevRequirement#setReferenceCallType(CallType)}).
+	 * <li><code>SPECIESTHRESHOLD</code>: the <code>AnatDevRequirement</code> 
 	 * will be validated based on the number of <code>Species</code>s (defined 
-	 * using {@link GeneCallValidator#setValidationThreshold(int)}), 
+	 * using {@link AnatDevRequirement#setValidationThreshold(int)}), 
 	 * amongst all the <code>Species</code>s represented by the <code>Gene</code>s 
 	 * in the <code>GeneCallRequirement</code>s, that exhibit the reference 
 	 * <code>CallType</code> (set using 
-	 * {@link GeneCallValidator#setReferenceCallType(CallType)}).
+	 * {@link AnatDevRequirement#setReferenceCallType(CallType)}).
 	 * </ul>
 	 * 
 	 * @author Frederic Bastian
 	 * @version Bgee 13
-	 * @see GeneCallValidator
+	 * @see AnatDevRequirement
 	 * @see GeneCallRequirement
 	 * @since Bgee 13
 	 */
 	public enum ValidationType {
-		ALL, GENETHRESHOLD, SPECIESTHRESHOLD;
+		ALL, CONSERVATION, DIVERGENCE, GENETHRESHOLD, SPECIESTHRESHOLD;
 	}
 	
 	/**
@@ -77,7 +85,7 @@ public class GeneCallValidator {
 	 */
 	private final Collection<GeneCallRequirement> requirements;
 	/**
-	 * A <code>ValidationType</code> to define how this <code>GeneCallValidator</code> 
+	 * A <code>ValidationType</code> to define how this <code>AnatDevRequirement</code> 
 	 * should be validated.
 	 * 
 	 * @see #validationThreshold
@@ -86,7 +94,7 @@ public class GeneCallValidator {
 	private ValidationType validationType;
 	/**
 	 * An <code>int</code> defining a threshold to validate this 
-	 * <code>GeneCallValidator</code>, regarding the number of <code>Gene</code>s 
+	 * <code>AnatDevRequirement</code>, regarding the number of <code>Gene</code>s 
 	 * or of <code>Species</code>s (depending on {@link #validationType}), 
 	 * that must exhibit the reference <code>CallType</code> of {@link #referenceCall}.
 	 * If {@link #validationType} is equal to <code>ALL</code>, 
@@ -98,7 +106,7 @@ public class GeneCallValidator {
 	private int validationThreshold;
 	/**
 	 * A <code>CallType</code> that must be exhibited by a defined number of 
-	 * <code>Gene</code> or <code>Species</code>s, for this <code>GeneCallValidator</code> 
+	 * <code>Gene</code> or <code>Species</code>s, for this <code>AnatDevRequirement</code> 
 	 * to be validated. {@link #validationThreshold} defines the number, 
 	 * {@link #validationType} defines whether <code>Gene</code> or <code>Species</code>s 
 	 * should be used. If {@link #validationType} is equal to <code>ALL</code>, 
@@ -109,16 +117,16 @@ public class GeneCallValidator {
 	 */
 	private CallType referenceCall;
 	
-	public GeneCallValidator() {
+	public AnatDevRequirement() {
 		this.requirements = new ArrayList<GeneCallRequirement>();
 	}
 
 	/**
 	 * Return the <code>ValidationType</code> defining how this 
-	 * <code>GeneCallValidator</code> should be validated.
+	 * <code>AnatDevRequirement</code> should be validated.
 	 * 
 	 * @return 	the <code>ValidationType</code> to validate 
-	 * 			this <code>GeneCallValidator</code>.
+	 * 			this <code>AnatDevRequirement</code>.
 	 * @see #getValidationThreshold()
 	 * @see #getReferenceCall()
 	 */
@@ -127,14 +135,14 @@ public class GeneCallValidator {
 	}
 	/**
 	 * Set the <code>ValidationType</code> defining how this 
-	 * <code>GeneCallValidator</code> should be validated. 
+	 * <code>AnatDevRequirement</code> should be validated. 
 	 * If <code>validationType</code> is equal to <code>GENETHRESHOLD</code> 
 	 * or <code>SPECIESTHRESHOLD</code>, then a threshold must be set using 
 	 * {@link #setValidationThreshold(int)} and a reference <code>CallType</code> 
 	 * using {@link #setReferenceCall(CallType)}.
 	 * 
 	 * @param validationType 	A <code>ValidationType</code> defining how this 
-	 * 							<code>GeneCallValidator</code> should be validated. 
+	 * 							<code>AnatDevRequirement</code> should be validated. 
 	 * @see #setValidationThreshold(int)
 	 * @see #setReferenceCall(CallType) 
 	 */
@@ -144,14 +152,16 @@ public class GeneCallValidator {
 
 	/**
 	 * Get the <code>int</code> defining the threshold to validate this 
-	 * <code>GeneCallValidator</code>, regarding the number of <code>Gene</code>s 
+	 * <code>AnatDevRequirement</code>, regarding the number of <code>Gene</code>s 
 	 * or of <code>Species</code>s (depending on the value returned by 
 	 * {@link #getValidationType()}), that must exhibit the reference <code>CallType</code> 
 	 * (that can be obtained using {@link #getReferenceCall()}.
-	 * If {@link #getValidationType()} returns <code>ALL</code>, this parameter is not used. 
+	 * If the value returned by {@link #getValidationType()} is not equal to 
+	 * <code>GENETHRESHOLD</code> nor <code>SPECIESTHRESHOLD</code>, 
+	 * this parameter is not used. 
 	 * 
 	 * @return 	the <code>int</code> defining the threshold to validate this 
-	 *			<code>GeneCallValidator</code>
+	 *			<code>AnatDevRequirement</code>
 	 * @see #getValidationType()
 	 * @see #getReferenceCall()
 	 */
@@ -160,14 +170,16 @@ public class GeneCallValidator {
 	}
 	/**
 	 * Set the <code>int</code> defining the threshold to validate this 
-	 * <code>GeneCallValidator</code>, regarding the number of <code>Gene</code>s 
+	 * <code>AnatDevRequirement</code>, regarding the number of <code>Gene</code>s 
 	 * or of <code>Species</code>s (depending on the value returned by 
 	 * {@link #getValidationType()}), that must exhibit the reference <code>CallType</code> 
 	 * (that can be obtained using {@link #getReferenceCall()}.
-	 * If {@link #getValidationType()} returns <code>ALL</code>, this parameter is not used.
+	 * If the value returned by {@link #getValidationType()} is not equal to 
+	 * <code>GENETHRESHOLD</code> nor <code>SPECIESTHRESHOLD</code>, 
+	 * this parameter is not used. 
 	 * 
 	 * @param threshold 	A <code>int</code> to define the threshold to validate 
-	 * 						this <code>GeneCallValidator</code>.
+	 * 						this <code>AnatDevRequirement</code>.
 	 * @see #setValidationType(ValidationType)
 	 * @see #setReferenceCall(CallType)
 	 */
@@ -177,11 +189,13 @@ public class GeneCallValidator {
 
 	/**
 	 * Get the <code>CallType</code> that must be exhibited by a defined number of 
-	 * <code>Gene</code>s or <code>Species</code>s, for this <code>GeneCallValidator</code> 
+	 * <code>Gene</code>s or <code>Species</code>s, for this <code>AnatDevRequirement</code> 
 	 * to be validated. The value returned by {@link #getValidationThreshold()} 
 	 * defines the number, {@link #getValidationType()} defines whether <code>Gene</code>s 
-	 * or <code>Species</code>s should be used. If {@link #getValidationType()} 
-	 * returns <code>ALL</code>, this parameter is not used.
+	 * or <code>Species</code>s should be used. 
+	 * If the value returned by {@link #getValidationType()} is not equal to 
+	 * <code>GENETHRESHOLD</code> nor <code>SPECIESTHRESHOLD</code>, 
+	 * this parameter is not used. 
 	 * 
 	 * @return 	the reference <code>CallType</code>, used depending on the value 
 	 * 			returned by {@link #getValidationType()}
@@ -193,11 +207,13 @@ public class GeneCallValidator {
 	}
 	/**
 	 * Set the <code>CallType</code> that must be exhibited by a defined number of 
-	 * <code>Gene</code>s or <code>Species</code>s, for this <code>GeneCallValidator</code> 
+	 * <code>Gene</code>s or <code>Species</code>s, for this <code>AnatDevRequirement</code> 
 	 * to be validated. The value returned by {@link #getValidationThreshold()} 
 	 * defines the number, {@link #getValidationType()} defines whether <code>Gene</code>s 
-	 * or <code>Species</code>s should be used. If {@link #getValidationType()} 
-	 * returns <code>ALL</code>, this parameter is not used.
+	 * or <code>Species</code>s should be used. 
+	 * If the value returned by {@link #getValidationType()} is not equal to 
+	 * <code>GENETHRESHOLD</code> nor <code>SPECIESTHRESHOLD</code>, 
+	 * this parameter is not used. 
 	 * 
 	 * @return 	the reference <code>CallType</code>, used depending on the value 
 	 * 			returned by {@link #getValidationType()}
@@ -218,19 +234,19 @@ public class GeneCallValidator {
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
 	 * 
 	 * @return 	the <code>Collection</code> of <code>GeneCallRequirement</code>s
-	 * 			associated to this <code>GeneCallValidator</code>. 
+	 * 			associated to this <code>AnatDevRequirement</code>. 
 	 */
 	public Collection<GeneCallRequirement> getRequirements() {
 		return this.requirements;
 	}
 	/**
-	 * Add a <code>GeneCallRequirement</code> to this <code>GeneCallValidator</code>, 
+	 * Add a <code>GeneCallRequirement</code> to this <code>AnatDevRequirement</code>, 
 	 * defining gene expression data to retrieve and conditions to satisfy 
 	 * for a  <code>AnatDevEntity</code> to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
      * 
 	 * @param requirement	A <code>GeneCallRequirement</code> to be added 
-	 * 						to this <code>GeneCallValidator</code>.
+	 * 						to this <code>AnatDevRequirement</code>.
 	 * @see #addRequirements(Collection)
 	 * @see #setValidationType(ValidationType)
 	 */
@@ -238,13 +254,13 @@ public class GeneCallValidator {
 		this.requirements.add(requirement);
 	}
 	/**
-	 * Add <code>GeneCallRequirement</code>s to this <code>GeneCallValidator</code>, 
+	 * Add <code>GeneCallRequirement</code>s to this <code>AnatDevRequirement</code>, 
 	 * defining gene expression data to retrieve and conditions to satisfy 
 	 * for a  <code>AnatDevEntity</code> to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
      * 
 	 * @param requirements	A <code>Collection</code> of <code>GeneCallRequirement</code>s 
-	 * 						to be added to this <code>GeneCallValidator</code>.
+	 * 						to be added to this <code>AnatDevRequirement</code>.
 	 * @see #addRequirement(GeneCallRequirement)
 	 * @see #setValidationType(ValidationType)
 	 */
@@ -256,7 +272,7 @@ public class GeneCallValidator {
      * Define custom conditions for an <code>AnatDevEntity</code> 
      * to be validated, regarding its gene expression data, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}. 
-     * A <code>GeneCallRequirement</code> is always part of a {@link GeneCallValidator}, 
+     * A <code>GeneCallRequirement</code> is always part of a {@link AnatDevRequirement}, 
      * listing all the necessary conditions that an <code>AnatDevEntity</code> 
      * must satisfied at the same time to be validated.
      * <p>
@@ -276,7 +292,7 @@ public class GeneCallValidator {
      * <code>GeneCallRequirement</code> to be validated. 
      * 
 	 * @author Frederic Bastian
-	 * @see GeneCallValidator
+	 * @see AnatDevRequirement
 	 * @version Bgee 13
 	 * @since Bgee 13
      *
@@ -347,7 +363,7 @@ public class GeneCallValidator {
 			this.setSatisfyAllCallFilters(false);
     	}
     	/**
-    	 * Instantiate a <code>GeneCallValidator</code> with requirements 
+    	 * Instantiate a <code>AnatDevRequirement</code> with requirements 
     	 * on one <code>Gene</code>, associated to one <code>CallFilter</code>. 
     	 * This is equivalent to calling: 
     	 * <ul>
@@ -363,7 +379,7 @@ public class GeneCallValidator {
 			this.addGene(gene, filter);
     	}
     	/**
-    	 * Instantiate a <code>GeneCallValidator</code> with requirements 
+    	 * Instantiate a <code>AnatDevRequirement</code> with requirements 
     	 * on several <code>Gene</code>s (with the condition of validating all of them), 
     	 * with each of them associated to a same <code>Collection</code> 
     	 * of <code>CallFilter</code>s (with the condition of validating any of them). 

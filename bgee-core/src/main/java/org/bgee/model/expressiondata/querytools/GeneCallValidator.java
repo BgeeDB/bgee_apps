@@ -1,6 +1,5 @@
 package org.bgee.model.expressiondata.querytools;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -8,8 +7,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.bgee.model.expressiondata.DataParameters;
-import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.expressiondata.querytools.filters.CallFilter;
 import org.bgee.model.gene.Gene;
 
@@ -87,7 +84,7 @@ public class GeneCallValidator {
     	 * must be satisfied, or only at least one, is defined 
     	 * by {@link #satisfyAllCallFilters}. 
     	 * <p>
-    	 * Whether all <code>Genes</code> must have their data requirements satisfied 
+    	 * Whether all <code>Gene</code>s must have their data requirements satisfied 
     	 * for this <code>GeneCallRequirement</code>, or only at least one of them, 
     	 * is defined by {@link #satisfyAllGenes}. 
     	 * <p>
@@ -119,7 +116,7 @@ public class GeneCallValidator {
     	/**
     	 * A <code>boolean</code> defining whether, when several <code>Genes</code> 
     	 * are present in <code>genesWithParameters</code>, all of them 
-    	 * must be satisfied for this <code>GeneCallRequirements</code> to be validated, 
+    	 * must be satisfied for this <code>GeneCallRequirement</code> to be validated, 
     	 * or only at least one of them. Whether the requirements are satisfied 
     	 * for a given <code>Gene</code> is defined by its associated 
     	 * <code>CallFilter</code>s in <code>genesWithParameters</code> and the value of 
@@ -142,6 +139,22 @@ public class GeneCallValidator {
     	}
     	/**
     	 * Instantiate a <code>GeneCallValidator</code> with requirements 
+    	 * on one <code>Gene</code>, associated to one <code>CallFilter</code>. 
+    	 * This is equivalent to calling: 
+    	 * <ul>
+    	 * <li><code>addGene(gene, filter)</code>
+    	 * </ul>
+    	 * 
+    	 * @param gene		A <code>Gene</code> to be part of
+    	 * 					this <code>GeneCallRequirement</code>. 
+    	 * @param filter	A <code>CallFilter</code> to be associated to <code>gene</code>.
+    	 */
+    	public GeneCallRequirement(Gene gene, CallFilter filter) {
+			this();
+			this.addGene(gene, filter);
+    	}
+    	/**
+    	 * Instantiate a <code>GeneCallValidator</code> with requirements 
     	 * on several <code>Gene</code>s (with the condition of validating all of them), 
     	 * with each of them associated to a same <code>Collection</code> 
     	 * of <code>CallFilter</code>s (with the condition of validating any of them). 
@@ -156,7 +169,7 @@ public class GeneCallValidator {
     	 * 					this <code>GeneCallRequirement</code>. They must all 
     	 * 					be validated for this <code>GeneCallRequirement</code> 
     	 * 					to be satisfied. 
-    	 * @param callTypes	A <code>Collection</code> of <code>CallFilter</code>s,  
+    	 * @param filters	A <code>Collection</code> of <code>CallFilter</code>s,  
     	 * 					that are the requirements associated to each <code>Gene</code>.
     	 * 					Any of them must be satisfied for a <code>Gene</code> 
     	 * 					to be validated.  
@@ -180,7 +193,7 @@ public class GeneCallValidator {
     	 * <p>
     	 * When there are several <code>Genes</code> in the key set, the value 
     	 * returned by {@link isSatisfyAllGenes()} determines whether all of them 
-    	 * must be satisfied for this <code>GeneCallRequirements</code> to be validated, 
+    	 * must be satisfied for this <code>GeneCallRequirement</code> to be validated, 
     	 * or only at least one of them.
     	 * 
     	 * @return 	a <code>Map</code> where each <code>Gene</code> in the key set 
@@ -207,7 +220,7 @@ public class GeneCallValidator {
     	/**
     	 * Return the <code>CallFilter</code>s associated to <code>gene</code>. 
     	 * Return <code>null</code> if this <code>gene</code> is not part of 
-    	 * this <code>GeneCallRequirements</code>, an empty <code>Collection</code> 
+    	 * this <code>GeneCallRequirement</code>, an empty <code>Collection</code> 
     	 * if no <code>CallFilter</code> is associated to it yet. 
     	 * <p>
     	 * If <code>gene</code> is associated to several <code>CallFilter</code>s, 
@@ -216,16 +229,16 @@ public class GeneCallValidator {
     	 * at least one of them.
     	 * 
     	 * @param gene	A <code>Gene</code> for which the associated <code>CallFilter</code>s 
-    	 * 				in this <code>GeneCallRequirements</code> should be returned. 
+    	 * 				in this <code>GeneCallRequirement</code> should be returned. 
     	 * @return		A <code>Collection</code> of <code>CallFilter</code>s 
     	 * 				associated to <code>gene</code>. <code>null</code> if 
     	 * 				<code>gene</code> is not part of this 
-    	 * 				<code>GeneCallRequirements</code>, an empty <code>Collection</code> 
+    	 * 				<code>GeneCallRequirement</code>, an empty <code>Collection</code> 
     	 * 				if no <code>CallFilter</code> is associated to it yet.
     	 * @see #getGenesWithParameters()
     	 * @see #getGenes()
     	 */
-    	public Collection<CallFilter> getCallFilter(Gene gene) {
+    	public Collection<CallFilter> getCallFilters(Gene gene) {
     		return this.genesWithParameters.get(gene);
     	}
     	

@@ -8,8 +8,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.expressiondata.querytools.filters.CallFilter;
+import org.bgee.model.expressiondata.querytools.filters.RawDataFilter;
 import org.bgee.model.gene.Gene;
 
 /**
@@ -35,6 +38,11 @@ import org.bgee.model.gene.Gene;
  *
  */
 public class AnatDevRequirement {
+	/**
+	 * <code>Logger</code> of the class. 
+	 */
+	//private final static Logger log = LogManager.getLogger(AnatDevRequirement.class.getName());
+	
 	/**
 	 * An <code>enum</code> to define how this <code>AnatDevRequirement</code> 
 	 * should be validated: 

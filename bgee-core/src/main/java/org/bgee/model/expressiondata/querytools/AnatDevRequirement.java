@@ -13,8 +13,8 @@ import org.bgee.model.expressiondata.querytools.filters.CallFilter;
 import org.bgee.model.gene.Gene;
 
 /**
- * List and allow to validate conditions on gene expression data 
- * for {@link org.bgee.model.anatdev.AnatDevEntity AnatDevEntity}s, 
+ * List and allow to validate conditions of gene expression data 
+ * on {@link org.bgee.model.anatdev.AnatDevEntity AnatDevEntity}s, 
  * when performing an expression reasoning using an {@link AnatDevExpressionQuery}. 
  * These conditions define which genes should have which types of expression data, 
  * for instance: "Validate anatomical structures where gene A is expressed, 
@@ -97,8 +97,8 @@ public class AnatDevRequirement {
 	 * <code>AnatDevRequirement</code>, regarding the number of <code>Gene</code>s 
 	 * or of <code>Species</code>s (depending on {@link #validationType}), 
 	 * that must exhibit the reference <code>CallType</code> of {@link #referenceCall}.
-	 * If {@link #validationType} is equal to <code>ALL</code>, 
-	 * this attribute is not used. 
+	 * If {@link #validationType} is not equal to <code>GENETHRESHOLD</code> or 
+	 * <code>SPECIESTHRESHOLD</code>, this attribute is not used. 
 	 * 
 	 * @see #validationType
 	 * @see #referenceCall
@@ -109,14 +109,18 @@ public class AnatDevRequirement {
 	 * <code>Gene</code> or <code>Species</code>s, for this <code>AnatDevRequirement</code> 
 	 * to be validated. {@link #validationThreshold} defines the number, 
 	 * {@link #validationType} defines whether <code>Gene</code> or <code>Species</code>s 
-	 * should be used. If {@link #validationType} is equal to <code>ALL</code>, 
-	 * this attribute is not used.
+	 * should be used. If {@link #validationType} is not equal to 
+	 * <code>GENETHRESHOLD</code> or <code>SPECIESTHRESHOLD</code>, this attribute 
+	 * is not used.
 	 *  
 	 * @see #validationType
 	 * @see #validationThreshold
 	 */
 	private CallType referenceCall;
 	
+	/**
+	 * Default constructor. 
+	 */
 	public AnatDevRequirement() {
 		this.requirements = new ArrayList<GeneCallRequirement>();
 	}

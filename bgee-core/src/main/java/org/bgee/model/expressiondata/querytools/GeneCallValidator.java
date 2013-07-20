@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata.querytools;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -46,51 +47,27 @@ public class GeneCallValidator {
 	private int validationThreshold;
 
 	/**
-     * Define a custom condition for an <code>OntologyEntity</code> 
+     * Define custom conditions for an <code>AnatDevEntity</code> 
      * to be validated, regarding its gene expression data, when performing 
-     * an expression reasoning on an <code>Ontology</code>, 
-     * using an {@link AnatDevExpressionQuery}. 
+     * an expression reasoning using an {@link AnatDevExpressionQuery}. 
      * A <code>GeneCallRequirement</code> is always part of a {@link GeneCallValidator}, 
-     * listing all the necessary conditions that an <code>OntologyEntity</code> 
+     * listing all the necessary conditions that an <code>AnatDevEntity</code> 
      * must satisfied at the same time to be validated.
      * <p>
-     * If any of the <code>Gene</code>s, contained in a <code>GeneCallRequirement</code>, 
-     * have any data in an <code>OntologyEntity</code>, corresponding to one of the requested  
-     * <code>CallType</code>s, then the requirement is satisfied 
-     * (like a <code>OR</code> condition both on genes and expression data). 
-     * Whether all <code>Gene</code>s must have at least some expression data in any case 
-     * can be set by calling {@link #setAllGenesWithData(boolean)} 
-     * (understand, some expression data calls amongst the call types that were allowed 
-     * by the <code>AnatDevExpressionQuery</code> for a given <code>Gene</code>, not amongst 
-     * all the call types available for that <code>Gene</code>). 
-     * If no <code>CallType</code>s are specified, then any expression data call type 
-     * is accepted (so the requirement is simply that at least one of the <code>Gene</code>s 
-     * must have some expression data, amongst the call types that were allowed 
-     * by the <code>AnatDevExpressionQuery</code> for a given <code>Gene</code>). 
+     * A <code>GeneCallRequirement</code> lists <code>Gene</code>s, associated to 
+     * <code>CallFilter</code>s, to define which <code>Gene</code>s should have 
+     * what kind of expression data for an <code>AnatDevEntity</code> to be validated. 
+     * For instance, using <code>GeneCallRequirement</code>s, it is possible 
+     * to query for <code>AnatDevEntity</code>s exhibiting expression of a gene A, 
+     * expression or absence of expression of a gene B, and over-expression of a gene C, 
+     * etc.
      * <p>
-     * For instance, if a <code>GeneCallRequirement</code> contains a gene A and a gene B, 
-     * and two <code>CallType</code>s, <code>EXPRESSION</code> and 
-     * <code>NOEXPRESSION</code>, it means that if any of the gene A or B is expressed, 
-     * or not expressed, in a given <code>OntologyEntity</code>, then the requirement 
-     * is satisfied for this <code>OntologyEntity</code>.
-     * <p>
-     * Be careful when using a <code>GeneCallRequirement</code> including several genes: 
-     * you will likely want all genes to have at least some data in any case; 
-     * in the previous example, if gene A is expressed, 
-     * the condition will be satisfied even if there are no data available at all 
-     * for gene B. To validate a condition only if all genes have some data, call 
-     * the method {@link #setAllGenesWithData(boolean)} with the parameter <code>true</code>. 
-     * This is equivalent to adding one <code>GeneCallRequirement</code> for each 
-     * individual gene, as part of a same <code>GeneCallValidator</code>, 
-     * to specify that each gene must have some data in any case.
-     * <p>
-     * As another example, you could consider the <code>STANDARD</code> 
-     * {@link org.bgee.model.expressiondata.AnatDevExpressionQuery.ValidationType ValidationType} 
-     * equivalent to have a <code>GeneCallRequirement</code> containing all <code>Gene</code>s 
-     * compared, with the method <code>setAllGenesWithData</code> called with <code>true</code>.
-     * Or to have one <code>GeneCallRequirement</code> for each gene individually, 
-     * part of a same <code>GeneCallValidator</code>, meaning that all genes must have 
-     * at least some data. 
+     * It can include several <code>Gene</code>s, or only one, and a <code>Gene</code> 
+     * can be associated to several <code>CallFilter</code>s, or only one. 
+     * It is possible to define whether all <code>CallFilter</code>s should be satisfied 
+     * at the same time for a <code>Gene</code> to be validated, and whether 
+     * all <code>Gene</code>s should be validated, or only once, for a 
+     * <code>GeneCallRequirement</code> to be validated. 
      * 
 	 * @author Frederic Bastian
 	 * @see GeneCallValidator
@@ -103,21 +80,22 @@ public class GeneCallValidator {
     	/**
     	 * A <code>Map</code> associating each <code>Gene</code> in the key set, 
     	 * to a <code>Collection</code> of <code>CallFilter</code>s. 
-    	 * The <code>CallFilter</code>s define for each gene the expression data  
-    	 * to retrieve for it. 
+    	 * The <code>CallFilter</code>s define for each <code>Gene</code> 
+    	 * the expression data to retrieve for it. 
     	 * <p>
     	 * Whether all expression data requirements for a <code>Gene</code> 
-    	 * must be satisfied, or only at least one, is defined by {@link #satisfyAllParams}. 
+    	 * must be satisfied, or only at least one, is defined 
+    	 * by {@link #satisfyAllCallFilters}. 
     	 * <p>
     	 * Whether all <code>Genes</code> must have their data requirements satisfied 
-    	 * for this <code>GeneCallRequirement</code>, or only at least one, 
-    	 * or a custom threshold, is defined by {@link #geneValidationType}. 
+    	 * for this <code>GeneCallRequirement</code>, or only at least one of them, 
+    	 * is defined by {@link #satisfyAllGenes}. 
     	 * <p>
-    	 * See {@link #satisfyAllParams} and {@link #geneValidationType} 
+    	 * See {@link #satisfyAllCallFilters} and {@link #satisfyAllGenes} 
     	 * for more information.
     	 * 
-    	 * @see #satisfyAllParams
-    	 * @see #geneValidationType
+    	 * @see #satisfyAllCallFilters
+    	 * @see #satisfyAllGenes
     	 */
     	private final Map<Gene, Collection<CallFilter>> genesWithParameters;
     	
@@ -132,6 +110,9 @@ public class GeneCallValidator {
     	 * such as, to investigate contradictions between data types; for instance, 
     	 * by requesting <code>EXPRESSION</code> data from <code>AFFYMETRIX</code>, 
     	 * and at the same time, <code>NOEXPRESSION</code> data from <code>RNA-Seq</code>.
+    	 * 
+    	 * @see #genesWithParameters
+    	 * @see #satisfyAllGenes
     	 */
     	private boolean satisfyAllCallFilters;
 
@@ -142,9 +123,12 @@ public class GeneCallValidator {
     	 * or only at least one of them. Whether the requirements are satisfied 
     	 * for a given <code>Gene</code> is defined by its associated 
     	 * <code>CallFilter</code>s in <code>genesWithParameters</code> and the value of 
-    	 * <code>satisfyAllParams</code>. 
+    	 * <code>satisfyAllCallFilters</code>. 
     	 * <p>
-    	 * The recommended value is <code>true</code>..
+    	 * The recommended value is <code>true</code>.
+    	 * 
+    	 * @see #genesWithParameters
+    	 * @see #satisfyAllCallFilters
     	 */
     	private boolean satisfyAllGenes;
     	
@@ -152,149 +136,37 @@ public class GeneCallValidator {
     	 * Default constructor. 
     	 */
     	public GeneCallRequirement() {
-    		this(null);
+    		this.genesWithParameters = new HashMap<Gene, Collection<CallFilter>>();
+			this.setSatisfyAllGenes(false);
+			this.setSatisfyAllCallFilters(false);
     	}
     	/**
-    	 * Instantiate a <code>GeneCallRequirement</code> for one <code>Gene</code>, 
-    	 * with no <code>CallType</code> specified. It means that this <code>Gene</code>
-    	 * must exhibit any expression data call in the <code>OntologyEntity</code>, 
-    	 * for it to be validated. 
+    	 * Instantiate a <code>GeneCallValidator</code> with requirements 
+    	 * on several <code>Gene</code>s (with the condition of validating all of them), 
+    	 * with each of them associated to a same <code>Collection</code> 
+    	 * of <code>CallFilter</code>s (with the condition of validating any of them). 
+    	 * This is equivalent to calling: 
+    	 * <ul>
+    	 * <li><code>addGenes(genes, filters)</code>
+    	 * <li><code>setSatisfyAllGenes(true)</code>
+    	 * <li><code>setSatisfyAllCallFilters(false)</code>
+    	 * </ul>
     	 * 
-    	 * @param gene 		The <code>Gene</code> which this <code>GeneCallRequirement</code> 
-    	 * 					is related to.
-    	 * 					Any expression data call type will be accepted. 
+    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s to be part of
+    	 * 					this <code>GeneCallRequirement</code>. They must all 
+    	 * 					be validated for this <code>GeneCallRequirement</code> 
+    	 * 					to be satisfied. 
+    	 * @param callTypes	A <code>Collection</code> of <code>CallFilter</code>s,  
+    	 * 					that are the requirements associated to each <code>Gene</code>.
+    	 * 					Any of them must be satisfied for a <code>Gene</code> 
+    	 * 					to be validated.  
     	 */
-    	public GeneCallRequirement(Gene gene) {
-    		this(gene, (Collection<CallType>) null);
+    	public GeneCallRequirement(Collection<Gene> genes, Collection<CallFilter> filters) {
+			this();
+			this.addGenes(genes, filters);
+			this.setSatisfyAllGenes(true);
+			this.setSatisfyAllCallFilters(false);
     	}
-    	/**
-    	 * Instantiate a <code>GeneCallRequirement</code> for one <code>Gene</code> 
-    	 * and one <code>CallType</code>. It means that this <code>Gene</code> 
-    	 * must absolutely have an expression data call of this <code>CallType</code> 
-    	 * in an <code>OntologyEntity</code>, for it to be validated. 
-    	 * 
-    	 * @param gene 		The <code>Gene</code> which this <code>GeneCallRequirement</code> 
-    	 * 					is related to.
-    	 * @param callType	The <code>CallType</code> the <code>gene</code> must exhibit. 
-    	 */
-    	public GeneCallRequirement(Gene gene, CallType callType) {
-    		this(gene, new ArrayList<CallType>(Arrays.asList(callType)));
-    	}
-    	/**
-    	 * Instantiate a <code>GeneCallRequirement</code> for one <code>Gene</code>, 
-    	 * with several <code>CallType</code>s. It means that this <code>Gene</code> 
-    	 * must exhibit an expression data call of any of these <code>CallType</code>s 
-    	 * in an <code>OntologyEntity</code>, for it to be validated. 
-    	 * <p>
-    	 * If some <code>CallType</code>s are redundant (for instance, 
-    	 * <code>EXPRESSION</code> and <code>OVEREXPRESSION</code> are redundant, 
-    	 * all genes with over-expression are expressed), 
-    	 * an <code>IllegalArgumentException</code> is thrown. This is for the sake of 
-    	 * educating users :) This would actually not change the result of the query.
-    	 * 
-    	 * @param gene 		The <code>Gene</code> which this <code>GeneCallRequirement</code> 
-    	 * 					is related to.
-    	 * @param callTypes	A <code>Collection</code> of <code>CallType</code>s,  
-    	 * 					<code>gene</code> must exhibit at least one of them. 
-    	 * @throws IllegalArgumentException 	If some <code>CallType</code>s are redundant.
-    	 */
-    	public GeneCallRequirement(Gene gene, Collection<CallType> callTypes) {
-    		this(new ArrayList<Gene>(Arrays.asList(gene)), callTypes, false);
-    	}
-    	/**
-    	 * Instantiate a <code>GeneCallRequirement</code> for a <code>Collection</code> of 
-    	 * <code>Gene</code>s, with no <code>CallType</code> specified. It means that 
-    	 * at least one of the <code>Gene</code>s must exhibit any expression data call 
-    	 * in the <code>OntologyEntity</code>, for it to be validated, 
-    	 * amongst the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
-    	 * for that <code>Gene</code>. Besides, if <code>allGenesWithData</code> 
-    	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
-    	 * must at least have some expression data, of any call type, in any case, 
-    	 * amongst the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
-    	 * for those <code>Gene</code>s.
-    	 * 
-    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
-    	 * 					which this <code>GeneCallRequirement</code> is related to. 
-    	 * 					Any expression data call type will be accepted. 
-    	 * @param allGenesWithData	A <code>boolean</code> defining whether 
-    	 * 							all <code>Gene</code>s should have at least some 
-    	 * 							expression data in any case. If <code>true</code>, 
-    	 * 							they should.
-    	 */
-    	public GeneCallRequirement(Collection<Gene> genes, boolean allGenesWithData) {
-    		this(genes, (Collection<CallType>) null, allGenesWithData);
-    	}
-    	/**
-    	 * Instantiate a <code>GeneCallRequirement</code> for a <code>Collection</code> of 
-    	 * <code>Gene</code>s, and one <code>CallType</code>. It means that 
-    	 * at least one of the <code>Gene</code>s must exhibit an expression data call 
-    	 * of this <code>CallType</code> in the <code>OntologyEntity</code>, 
-    	 * for it to be validated, amongst the call types that were allowed 
-    	 * by the <code>AnatDevExpressionQuery</code> for that <code>Gene</code>. 
-    	 * Besides, if <code>allGenesWithData</code> 
-    	 * is <code>true</code>, then another requirement is that all <code>Gene</code>s 
-    	 * must at least have some expression data, of any call type, in any case, 
-    	 * amongst the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
-    	 * for those <code>Gene</code>s. 
-    	 * 
-    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
-    	 * 					which this <code>GeneCallRequirement</code> is related to.
-    	 * @param callType	The <code>CallType</code> at lest one of the <code>Gene</code>s 
-    	 * 					in <code>genes</code> must exhibit. 
-    	 * @param allGenesWithData	A <code>boolean</code> defining whether 
-    	 * 							all <code>Gene</code>s should have at least some 
-    	 * 							expression data in any case. If <code>true</code>, 
-    	 * 							they should.
-    	 */
-    	public GeneCallRequirement(Collection<Gene> genes, CallType callType, 
-    			boolean allGenesWithData) {
-    		
-    		this(genes, new ArrayList<CallType>(Arrays.asList(callType)), 
-    				allGenesWithData);
-    	}
-    	/**
-    	 * Instantiate a <code>GeneCallRequirement</code> for a <code>Collection</code> of 
-    	 * <code>Gene</code>s, with several <code>CallType</code>s. It means that  
-    	 * at least one of the <code>Gene</code>s must exhibit an expression data call 
-    	 * of any of these <code>CallType</code>s in the <code>OntologyEntity</code>, 
-    	 * for it to be validated, amongst the call types that were allowed 
-    	 * by the <code>AnatDevExpressionQuery</code> for that <code>Gene</code>. 
-    	 * Besides, if <code>allGenesWithData</code> is <code>true</code>, 
-    	 * then another requirement is that all <code>Gene</code>s 
-    	 * must at least have some expression data, of any call type, in any case, 
-    	 * amongst the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
-    	 * for those <code>Gene</code>s.
-    	 * <p>
-    	 * If some <code>CallType</code>s are redundant (for instance, 
-    	 * <code>EXPRESSION</code> and <code>OVEREXPRESSION</code> are redundant, 
-    	 * all genes with over-expression are expressed), 
-    	 * an <code>IllegalArgumentException</code> is thrown. This is for the sake of 
-    	 * educating users :) This would actually not change the result of the query.
-    	 * 
-    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
-    	 * 					which this <code>GeneCallRequirement</code> is related to.
-    	 * @param callTypes	A <code>Collection</code> of <code>CallType</code>s,  
-    	 * 					at least one <code>Gene</code> in <code>genes</code> 
-    	 * 					must exhibit at least one of them. 
-    	 * @param allGenesWithData	A <code>boolean</code> defining whether 
-    	 * 							all <code>Gene</code>s should have at least some 
-    	 * 							expression data in any case. If <code>true</code>, 
-    	 * 							they should.
-    	 * @throws IllegalArgumentException 	If some <code>CallType</code>s are redundant.
-    	 */
-    	public GeneCallRequirement(Collection<Gene> genes, Collection<CallType> callTypes, 
-    			boolean allGenesWithData) {
-    		
-			this.setGenes(new ArrayList<Gene>());
-			this.setCallTypes(new ArrayList<CallType>());
-    		this.addGenes(genes);
-    		this.addCallTypes(callTypes);
-    		this.setAllGenesWithData(allGenesWithData);
-    	}
-    	
-    	
-    	
-    	
     	
     	/**
     	 * Return the <code>Map</code> associating <code>Gene</code>s to 
@@ -442,104 +314,82 @@ public class GeneCallValidator {
     	}
 		
 		/**
-		 * Check if the <code>CallType</code>s hold by this <code>GeneCallRequirement</code> 
-    	 * would have some redundancy, or forbidden contradiction, 
-    	 * if the <code>CallType</code>s in <code>callTypes</code> were added. 
-    	 * For instance, <code>EXPRESSION</code> and <code>OVEREXPRESSION</code> 
-    	 * are redundant, as all genes with over-expression are expressed.
-    	 * This method throws an <code>IllegalArgumentException</code> if a redundancy 
-    	 * or forbidden contradiction is detected, with detailed message. 
+    	 * Return the <code>boolean</code> defining whether, when a <code>Gene</code> 
+    	 * is associated to several <code>CallFilter</code>s (in the <code>Map</code> 
+    	 * returned by {@link getGenesWithParameters()}), all of them must be satisfied 
+    	 * for the <code>Gene</code> to be validated, or only at least one of them.
     	 * 
-		 * @param callTypes 	A <code>Collection</code> of <code>CallType</code>s 
-		 * 						to check if they would generate a redundancy or contradiction 
-		 * 						if they were added to this <code>GeneCallRequirement</code>.
-		 * @throws IllegalArgumentException 	If a redundancy or contradiction 
-		 * 										would be generated 
-		 * 										if <code>callTypes</code> were added 
-		 * 										to this <code>GeneCallRequirement</code>. 
+		 * @return 	the <code>boolean</code> defining whether all <code>CallFilter</code>s 
+		 * 			associated to a given <code>Gene</code> must be satisfied. 
+		 * @see #setSatisfyAllCallFilters(boolean)
+    	 * @see #getGenesWithParameters()
+    	 * @see #isSatisfyAllGenes()
 		 */
-		private void checkCallTypes(Collection<CallType> callTypes) 
-		    throws IllegalArgumentException {
-			
-			Collection<CallType> callTypesTemp = new ArrayList<CallType>();
-			callTypesTemp.addAll(this.getCallTypes());
-			callTypesTemp.addAll(callTypes);
-			
-			//redundancy expression / differential expression
-			String exceptionMsg = null;
-			if (callTypesTemp.contains(CallType.EXPRESSION)) {
-			    if (callTypesTemp.contains(CallType.OVEREXPRESSION)) {
-				    exceptionMsg = "A gene over-expressed has to be expressed, " +
-					    "CallType.EXPRESSION && CallType.OVEREXPRESSION redundant.";
-				} else if (callTypesTemp.contains(CallType.UNDEREXPRESSION)) {
-				    exceptionMsg = "A gene under-expressed has to be expressed, " +
-					    "CallType.EXPRESSION && CallType.UNDEREXPRESSION redundant.";
-			    }
-			}
-			//redundancy between absence of expression types
-			//check only if there is not already an error
-			if (exceptionMsg == null && callTypesTemp.contains(CallType.NOEXPRESSION) && 
-					callTypesTemp.contains(CallType.RELAXEDNOEXPRESSION)) {
-				exceptionMsg = "Relaxed no-expression calls include no-expression calls, " +
-						"CallType.NOEXPRESSION and CallType.RELAXEDNOEXPRESSION redundant.";
-			}
-			//we do not check for contradiction, such as CallType.OVEREXPRESSION and 
-			//CallType.UNDEREXPRESSION, because it lets opened the possibility 
-			//to request for data contradiction between data types, for instance, 
-			//requesting over-expression detected by Affymetrix, under-expression 
-			//detected by RNA-Seq, and identifying structures where the data 
-			//are contradicting
-			if (exceptionMsg != null) {
-				throw new IllegalArgumentException(exceptionMsg);
-			}
+		public boolean isSatisfyAllCallFilters() {
+			return this.satisfyAllCallFilters;
 		}
-
 		/**
-		 * Return the <code>boolean</code> defining whether, when {@link #getGenes()} 
-		 * returns several <code>Gene</code>s, all of them must have at least 
-    	 * some data in the tested <code>OntologyEntity</code>, for the requirement 
-    	 * to be satisfied, whatever the requested <code>CallType</code>s 
-    	 * returned by {@link #getCallTypes()} are (understand, some data amongst 
-    	 * the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
-    	 * for those <code>Gene</code>s).
+		 * Set the <code>boolean</code> defining whether, when a <code>Gene</code> 
+    	 * is associated to several <code>CallFilter</code>s (in the <code>Map</code> 
+    	 * returned by {@link getGenesWithParameters()}), all of them must be satisfied 
+    	 * for the <code>Gene</code> to be validated, or only at least one of them.
     	 * <p>
-    	 * For instance, if a <code>GeneCallRequirement</code> contains a gene A and a gene B, 
-         * and the <code>CallType</code> <code>EXPRESSION</code>, it means that 
-         * if gene A is expressed, the condition will be satisfied even if there are no data 
-         * available at all for gene B. To avoid this problem, this <code>boolean</code> 
-         * must be set to <code>true</code>: only if there are also data available for gene B 
-         * (expression, no-expression, ...) the condition will be satisfied. 
-         * 
-		 * @return 	the <code>boolean</code> defining whether all <code>Gene</code>s 
-		 * 			must have at least some expression data for the requirement 
-		 * 			to be satisfied. If <code>true</code>, all <code>Gene</code>s 
-		 * 			must have expression data.
+    	 * The recommended value is <code>false</code>. Setting this parameter 
+    	 * to <code>true</code> should be useful only in specific cases, 
+    	 * such as, to investigate contradictions between data types; for instance, 
+    	 * by requesting <code>EXPRESSION</code> data from <code>AFFYMETRIX</code>, 
+    	 * and at the same time, <code>NOEXPRESSION</code> data from <code>RNA-Seq</code>.
+    	 * 
+		 * @param satisfyAll	A <code>boolean</code> defining whether all
+		 * 						<code>CallFilter</code>s associated to a given 
+		 * 						<code>Gene</code> must be satisfied. 
+		 * @see #isSatisfyAllCallFilters()
+    	 * @see #getGenesWithParameters()
+    	 * @see #isSatisfyAllGenes()
+		 */
+		public void setSatisfyAllCallFilters(boolean satisfyAll) {
+			this.satisfyAllCallFilters = satisfyAll;
+		}
+		
+		/**
+		 * Return the <code>boolean</code> defining whether, when this 
+		 * <code>GeneCallRequirement</code> has conditions on several <code>Gene</code>s, 
+    	 * the requirements for all of them must be satisfied, or only 
+    	 * for at least one of them. Whether the requirements of a given <code>Gene</code> 
+    	 * are satisfied is defined by its associated <code>CallFilter</code>s 
+    	 * (in the <code>Map</code> returned by {@link getGenesWithParameters()}, 
+    	 * and the value returned by {@link #isSatisfyAllCallFilters()}. 
+    	 * 
+		 * @return 	the <code>boolean</code> defining whether the requirements 
+		 * 			for all <code>Gene</code>s must be satisfied, or only for 
+		 * 			at least one of them. 
+    	 * @see #setSatisfyAllGenes(boolean)
+    	 * @see #getGenesWithParameters()
+    	 * @see #isSatisfyAllCallFilters()
+		 */
+		public boolean isSatisfyAllGenes() {
+			return this.satisfyAllGenes;
+		}
+		/**
+		 * Set the <code>boolean</code> defining whether, when this 
+		 * <code>GeneCallRequirement</code> has conditions on several <code>Gene</code>s, 
+    	 * the requirements for all of them must be satisfied, or only 
+    	 * for at least one of them. Whether the requirements for a given <code>Gene</code> 
+    	 * are satisfied is defined by its associated <code>CallFilter</code>s 
+    	 * (in the <code>Map</code> returned by {@link getGenesWithParameters()}, 
+    	 * and the value returned by {@link #isSatisfyAllCallFilters()}. 
+    	 * <p>
+    	 * The recommended value of this parameter is <code>true</code>.
 		 * 
-		 * @see #setAllGenesWithData(boolean)
+		 * @param satisfyAll 	A <code>boolean</code> defining whether the requirements 
+		 * 						for all <code>Gene</code>s must be satisfied, or only for 
+		 * 						at least one of them. 
+    	 * @see #isSatisfyAllGenes()
+    	 * @see #getGenesWithParameters()
+    	 * @see #isSatisfyAllCallFilters()
 		 */
-		public boolean isAllGenesWithData() {
-			return this.allGenesWithData;
-		}
-		/**
-		 * Set the <code>boolean</code> defining whether, when {@link #getGenes()} 
-		 * returns several <code>Gene</code>s, all of them must have at least 
-    	 * some data in the tested <code>OntologyEntity</code>, for the requirement 
-    	 * to be satisfied, whatever the requested <code>CallType</code>s 
-    	 * returned by {@link #getCallTypes()} are (understand, some data amongst 
-    	 * the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
-    	 * for those <code>Gene</code>s).
-    	 * <p>
-    	 * See {@link #isAllGenesWithData()} for more details.
-         * 
-		 * @param allGenesWithData 	the <code>boolean</code> defining whether 
-		 * 							all <code>Gene</code>s must have at least 
-		 * 							some expression data for the requirement 
-		 * 							to be satisfied. If <code>true</code>, all 
-		 * 							<code>Gene</code>s must have expression data. 
-		 * @see #isAllGenesWithData()
-		 */
-		public void setAllGenesWithData(boolean allGenesWithData) {
-			this.allGenesWithData = allGenesWithData;
+		public void setSatisfyAllGenes(boolean satisfyAll) {
+			this.satisfyAllGenes = satisfyAll;
 		}
     }
     

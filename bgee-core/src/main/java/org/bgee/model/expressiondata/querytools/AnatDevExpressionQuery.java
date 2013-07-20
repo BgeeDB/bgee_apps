@@ -44,8 +44,6 @@ public class AnatDevExpressionQuery
     	STANDARD, CONSERVATION, DIVERGENCE, CUSTOM;
     }
     
-    
-    
     /**
      * A <code>ValidationType</code> defining the method used to validate 
      * an <code>OntologyEntity</code> when performing an expression reasoning 
@@ -55,29 +53,6 @@ public class AnatDevExpressionQuery
 	 * or per gene group basis, using {@ #customValidation}.
      */
     private ValidationType validationType;
-    
-    /**
-     * A <code>Collection</code> of <code>ValidationGroup</code>s, listing 
-     * all the requirements an <code>OntologyEntity</code> must satisfied to be validated, 
-     * when performing an expression reasoning on an <code>Ontology</code>, 
-     * and that {@link #validationType} is equal to <code>ValidationType.CUSTOM</code>. 
-     * <p>
-     * Be careful when adding a <code>ValidationGroup</code> including several genes, 
-     * you will likely also need to add <code>ValidationGroup</code>s for each individual genes; 
-     * for instance, if a gene A and a gene B are part of a same <code>ValidationGroup</code>, 
-     * with a requested call type <code>EXPRESSION</code>, it means 
-     * that an <code>OntologyEntity</code> will be validated as soon as any of the gene A 
-     * or the gene B has expression in it, even if the other gene has no expression data at all 
-     * in it. So you might want to add a <code>ValidationGroup</code> for gene A, 
-     * and a <code>ValidationGroup</code> for gene B, with no data call type specified, 
-     * meaning that any data will be sufficient, but necessary, for both genes. 
-     * <p>
-     * As another example, you can consider the <code>STANDARD</code> 
-     * <code>ValidationType</code> equivalent to have a <code>ValidationGroup</code> 
-     * for each requested gene individually, with no data call type specified, meaning that 
-     * all gene must have data calls, any type accepted.
-     */
-    private Collection<GeneCallRequirement> customValidation;
     
     restriction on organs? (e.g., jacknife on HOGs for my analyses): only in organs/never in organs kind of?
     		useful for all anaylses or only this class?

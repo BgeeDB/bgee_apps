@@ -3,10 +3,13 @@ package org.bgee.model.expressiondata.querytools;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.bgee.model.expressiondata.DataParameters;
 import org.bgee.model.expressiondata.DataParameters.CallType;
+import org.bgee.model.expressiondata.querytools.filters.CallFilter;
 import org.bgee.model.gene.Gene;
 
 /**
@@ -36,6 +39,11 @@ import org.bgee.model.gene.Gene;
  *
  */
 public class GeneCallValidator {
+	public enum GeneValidationType {
+		ALL, ANY, GENETHRESHOLD, SPECIESTHRESHOLD;
+	}
+	private GeneValidationType geneValidationType;
+	private int validationThreshold;
 
 	/**
      * Define a custom condition for an <code>OntologyEntity</code> 
@@ -91,49 +99,11 @@ public class GeneCallValidator {
      *
      */
     public class GeneCallRequirement {
-    	/**
-    	 * A <code>Collection</code> of <code>Gene</code>s for which at least one of them 
-    	 * must have an expression data call listed in {@link #callTypes} 
-    	 * for the requirement to be satisfied. 
-    	 */
-    	private Collection<Gene> genes;
-    	/**
-    	 * A <code>Collection</code> of <code>CallType</code>s listing 
-    	 * the allowed expression data calls, that at least one of the <code>Gene</code>s 
-    	 * listed in {@link #genes} must exhibit in an <code>OntologyEntity</code>, 
-    	 * for the element to be validated. Any of these <code>CallType</code>s 
-    	 * allows the validation.
-    	 * <p>
-    	 * If no <code>CallType</code>s are specified, then any expression data call type 
-    	 * is accepted (so the requirement is simply that at least one 
-    	 * of the <code>Gene</code>s in <code>genes</code> must have some expression data, 
-    	 * amongst the call types that were allowed 
-         * by the <code>AnatDevExpressionQuery</code> for that <code>Gene</code>)
-    	 */
-    	private Collection<CallType> callTypes;
-    	/**
-    	 * A <code>boolean</code> defining whether, when the attribute {@link #genes} 
-    	 * contains several <code>Gene</code>s, all of them must have at least 
-    	 * some data in the tested <code>OntologyEntity</code>, for the requirement 
-    	 * to be satisfied, whatever the requested <code>CallType</code>s 
-    	 * listed in {@link #callTypes} are (understand, some data  
-    	 * amongst the call types that were allowed by the <code>AnatDevExpressionQuery</code> 
-    	 * for a given <code>Gene</code>, not amongst all the call types available 
-    	 * in the database for that <code>Gene</code>). 
-    	 * <p>
-    	 * For instance, if a <code>GeneCallRequirement</code> contains a gene A and a gene B, 
-         * and the <code>CallType</code> <code>EXPRESSION</code>, it means that 
-         * if gene A is expressed, the condition will be satisfied even if there are no data 
-         * available at all for gene B. To avoid this problem, this <code>boolean</code> 
-         * must be set to <code>true</code>: only of there are also data available for gene B 
-         * (expression, no-expression, ...) the condition will be satisfied. 
-    	 */
-    	private boolean allGenesWithData;
     	
     	/**
     	 * A <code>Map</code> associating each <code>Gene</code> in the key set, 
-    	 * to a <code>Collection</code> of <code>ExprDataParams</code>s. 
-    	 * The <code>ExprDataParams</code>s define for each gene the expression data  
+    	 * to a <code>Collection</code> of <code>CallFilter</code>s. 
+    	 * The <code>CallFilter</code>s define for each gene the expression data  
     	 * to retrieve for it. 
     	 * <p>
     	 * Whether all expression data requirements for a <code>Gene</code> 
@@ -149,16 +119,12 @@ public class GeneCallValidator {
     	 * @see #satisfyAllParams
     	 * @see #geneValidationType
     	 */
-    	private Map<Gene, Collection<ExprDataParams>> genesWithDataParams;
-    	public enum GeneValidationType {
-    		ALL, ANY, GENETHRESHOLD, SPECIESTHRESHOLD;
-    	}
-    	private GeneValidationType geneValidationType;
-    	private int validationThreshold;
+    	private final Map<Gene, Collection<CallFilter>> genesWithParameters;
+    	
     	/**
     	 * A <code>boolean</code> defining whether, when a <code>Gene</code> 
-    	 * in <code>genesWithDataParams</code> is associated to several 
-    	 * <code>ExprDataParams</code>, all of them must be satisfied for 
+    	 * in <code>genesWithParameters</code> is associated to several 
+    	 * <code>CallFilter</code>s, all of them must be satisfied for 
     	 * the <code>Gene</code> to be validated, or only at least one of them.
     	 * <p>
     	 * The recommended value is <code>false</code>. Setting this attribute 
@@ -167,7 +133,20 @@ public class GeneCallValidator {
     	 * by requesting <code>EXPRESSION</code> data from <code>AFFYMETRIX</code>, 
     	 * and at the same time, <code>NOEXPRESSION</code> data from <code>RNA-Seq</code>.
     	 */
-    	private boolean satisfyAllParams;
+    	private boolean satisfyAllCallFilters;
+
+    	/**
+    	 * A <code>boolean</code> defining whether, when several <code>Genes</code> 
+    	 * are present in <code>genesWithParameters</code>, all of them 
+    	 * must be satisfied for this <code>GeneCallRequirements</code> to be validated, 
+    	 * or only at least one of them. Whether the requirements are satisfied 
+    	 * for a given <code>Gene</code> is defined by its associated 
+    	 * <code>CallFilter</code>s in <code>genesWithParameters</code> and the value of 
+    	 * <code>satisfyAllParams</code>. 
+    	 * <p>
+    	 * The recommended value is <code>true</code>..
+    	 */
+    	private boolean satisfyAllGenes;
     	
     	/**
     	 * Default constructor. 
@@ -318,157 +297,149 @@ public class GeneCallValidator {
     	
     	
     	/**
-    	 * Return the <code>Collection</code> of <code>Gene</code>s part of 
-    	 * this <code>GeneCallRequirement</code>. At least one of them must have 
-    	 * an expression data <code>CallType</code> corresponding to one of those returned by  
-    	 * {@link #getCallTypes()}, for the requirement to be satisfied 
-    	 * (or any expression data if <code>getCallTypes</code> returns an empty 
-    	 * <code>Collection</code>).
+    	 * Return the <code>Map</code> associating <code>Gene</code>s to 
+    	 * <code>Collection</code>s of <code>CallFilter</code>s. It defines for each 
+    	 * <code>Gene</code> what are the data requirements for it. 
+    	 * <p>
+    	 * When a <code>Gene</code> is associated to several <code>CallFilter</code>s, 
+    	 * the value returned by {@link isSatisfyAllCallFilters()} determines whether 
+    	 * all of them must be satisfied for the <code>Gene</code> to be validated, 
+    	 * or only at least one of them.
+    	 * <p>
+    	 * When there are several <code>Genes</code> in the key set, the value 
+    	 * returned by {@link isSatisfyAllGenes()} determines whether all of them 
+    	 * must be satisfied for this <code>GeneCallRequirements</code> to be validated, 
+    	 * or only at least one of them.
     	 * 
-    	 * @return 	the <code>Collection</code> of <code>Gene</code>s part of 
+    	 * @return 	a <code>Map</code> where each <code>Gene</code> in the key set 
+    	 * 			is associated to a <code>Collection</code> of <code>CallFilter</code>s 
+    	 * 			as value. 
+    	 * @see #getGenes()
+    	 * @see #getCallFilter(Gene)
+    	 */
+    	public Map<Gene, Collection<CallFilter>> getGenesWithParameters() {
+    		return this.genesWithParameters;
+    	}
+    	/**
+    	 * Return the <code>Set</code> of <code>Gene</code>s part of 
+    	 * this <code>GeneCallRequirement</code>. 
+    	 * 
+    	 * @return 	the <code>Set</code> of <code>Gene</code>s part of 
     	 * 			this <code>GeneCallRequirement</code>.
-    	 * @see #addGene(Gene)
+    	 * @see #getGenesWithParameters()
+    	 * @see #getCallFilter(Gene)
     	 */
-    	public Collection<Gene> getGenes() {
-    		return this.genes;
+    	public Set<Gene> getGenes() {
+    		return this.genesWithParameters.keySet();
     	}
     	/**
-    	 * @param genes		a <code>Collection</code> of <code>Gene</code>s to set 
-    	 * 					{@link #genes}.
-    	 * @see #addGene(Gene)
-    	 * @see #getGenes()
-    	 */
-    	private void setGenes(Collection<Gene> genes) {
-    		this.genes = genes;
-    	}
-    	/**
-    	 * Add a <code>Gene</code> to this <code>GeneCallRequirement</code>. 
-    	 * At least one of the <code>Gene</code>s part of this <code>GeneCallRequirement</code> 
-    	 * must have an expression data <code>CallType</code> corresponding to one 
-    	 * of those returned by {@link #getCallTypes()}, for the requirement to be satisfied 
-    	 * (or any expression data if <code>getCallTypes</code> returns an empty 
-    	 * <code>Collection</code>).
+    	 * Return the <code>CallFilter</code>s associated to <code>gene</code>. 
+    	 * Return <code>null</code> if this <code>gene</code> is not part of 
+    	 * this <code>GeneCallRequirements</code>, an empty <code>Collection</code> 
+    	 * if no <code>CallFilter</code> is associated to it yet. 
+    	 * <p>
+    	 * If <code>gene</code> is associated to several <code>CallFilter</code>s, 
+    	 * the value returned by {@link isSatisfyAllCallFilters()} determines whether 
+    	 * all of them must be satisfied for it to be validated, or only 
+    	 * at least one of them.
     	 * 
-    	 * @param gene 	A <code>Gene</code> to be added to this <code>GeneCallRequirement</code>.
+    	 * @param gene	A <code>Gene</code> for which the associated <code>CallFilter</code>s 
+    	 * 				in this <code>GeneCallRequirements</code> should be returned. 
+    	 * @return		A <code>Collection</code> of <code>CallFilter</code>s 
+    	 * 				associated to <code>gene</code>. <code>null</code> if 
+    	 * 				<code>gene</code> is not part of this 
+    	 * 				<code>GeneCallRequirements</code>, an empty <code>Collection</code> 
+    	 * 				if no <code>CallFilter</code> is associated to it yet.
+    	 * @see #getGenesWithParameters()
     	 * @see #getGenes()
-    	 * @see #addGenes(Collection)
     	 */
-    	public void addGene(Gene gene) {
-    		if (gene == null) {
-				return;
-			}
-    		this.genes.add(gene);
+    	public Collection<CallFilter> getCallFilter(Gene gene) {
+    		return this.genesWithParameters.get(gene);
+    	}
+    	
+    	/**
+    	 * Add a <code>Gene</code> to this <code>GeneCallRequirement</code>, 
+    	 * associated to a <code>CallFilter</code>. If <code>gene</code> is already 
+    	 * part of this <code>GeneCallRequirement</code>, add <code>filter</code> 
+    	 * to its associated <code>CallFilter</code>s.
+    	 * 
+    	 * @param gene 		A <code>Gene</code> to be associated to 
+    	 * 					<code>filter</code> in this <code>GeneCallRequirement</code>.
+    	 * @param filter	A <code>CallFilter</code> to be associated with <code>gene</code> 
+    	 * 					in this <code>GeneCallRequirement</code>.
+    	 * @see #addGene(Gene, Collection)
+    	 * @see #addGenes(Collection, CallFilter)
+    	 * @see #addGenes(Collection, Collection)
+    	 */
+    	public void addGene(Gene gene, CallFilter filter) {
+    		this.addGenes(Arrays.asList(gene), Arrays.asList(filter));
+    	}
+    	/**
+    	 * Add a <code>Gene</code>s to this <code>GeneCallRequirement</code>, 
+    	 * associated to a <code>Collection</code> of <code>CallFilter</code>s. 
+    	 * If <code>gene</code> is already part of this <code>GeneCallRequirement</code>, 
+    	 * then <code>filters</code>  will be added to its associated 
+    	 * <code>CallFilter</code>s.
+    	 * 
+    	 * @param gene 		A <code>Gene</code> to be associated to 
+    	 * 					<code>filters</code> in this <code>GeneCallRequirement</code>.
+    	 * @param filters	A <code>Collection</code> of <code>CallFilter</code>s 
+    	 * 					to be associated to <code>gene</code> 
+    	 * 					in this <code>GeneCallRequirement</code>.
+    	 * @see #addGene(Gene, CallFilter)
+    	 * @see #addGenes(Collection, CallFilter)
+    	 * @see #addGenes(Collection, Collection)
+    	 */
+    	public void addGene(Gene gene, Collection<CallFilter> filters) {
+    		this.addGenes(Arrays.asList(gene), filters);
     	}
     	/**
     	 * Add a <code>Collection</code> of <code>Gene</code>s to 
-    	 * this <code>GeneCallRequirement</code>. 
-    	 * At least one of the <code>Gene</code>s part of this <code>GeneCallRequirement</code> 
-    	 * must have an expression data <code>CallType</code> corresponding to one 
-    	 * of those returned by {@link #getCallTypes()}, for the requirement to be satisfied 
-    	 * (or any expression data if <code>getCallTypes</code> returns an empty 
-    	 * <code>Collection</code>).
+    	 * this <code>GeneCallRequirement</code>, with each of them associated to 
+    	 * <code>filter</code>. If a <code>Gene</code> in <code>genes</code> is already 
+    	 * part of this <code>GeneCallRequirement</code>, then <code>filter</code> 
+    	 * will be added to its associated <code>CallFilter</code>s. 
     	 * 
-    	 * @param genes 	A <code>Collection</code> of <code>Gene</code>s 
-    	 * 					to be added to this <code>GeneCallRequirement</code>.
-    	 * @see #getGenes()
-    	 * @see #addGene(Gene)
+    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
+    	 * 					to be associated to <code>filter</code>, 
+    	 * 					in this <code>GeneCallRequirement</code>.
+    	 * @param filter	A <code>CallFilter</code> to be associated to each 
+    	 * 					of the <code>Gene</code> in <code>genes</code>, 
+    	 * 					in this <code>GeneCallRequirement</code>.
+    	 * @see #addGene(Gene, CallFilter)
+    	 * @see #addGenes(Gene, Collection)
+    	 * @see #addGenes(Collection, Collection)
     	 */
-    	public void addGenes(Collection<Gene> genes) {
-    		if (genes == null) {
-				return;
-			}
-    		this.genes.addAll(genes);
+    	public void addGenes(Collection<Gene> genes, CallFilter filter) {
+    		this.addGenes(genes, Arrays.asList(filter));
     	}
-
-		/**
-		 * Return the <code>Collection</code> of <code>CallType</code>s listing 
-    	 * the allowed expression data calls, that at least one of the <code>Gene</code>s 
-    	 * returned by {@link #getGenes()} must exhibit in an <code>OntologyEntity</code>, 
-    	 * for the element to be validated. Any of these <code>CallType</code>s 
-    	 * allows the validation.
-    	 * <p>
-    	 * If the returned <code>Collection</code> is empty, then any expression data 
-    	 * call type is accepted (so the requirement is simply that at least one 
-    	 * of the <code>Gene</code>s returned by <code>getGenes</code> must have 
-    	 * some expression data)
+    	/**
+    	 * Add a <code>Collection</code> of <code>Gene</code>s to 
+    	 * this <code>GeneCallRequirement</code>, with each of them associated to 
+    	 * a same <code>Collection</code> of <code>CallFilter</code>s. 
+    	 * If a <code>Gene</code> in <code>genes</code> is already 
+    	 * part of this <code>GeneCallRequirement</code>, then <code>filters</code> 
+    	 * will be added to its associated <code>CallFilter</code>s.
     	 * 
-		 * @return 	the <code>Collection</code> of <code>CallType</code>s defining 
-		 * 			which expression data calls allow to validate 
-		 * 			an <code>OntologyEntity</code>.
-		 * @see #addCallType(CallType)
-		 */
-		public Collection<CallType> getCallTypes() {
-			return callTypes;
-		}
-		/**
-		 * @param callTypes A <code>Collection</code> of <code>CallType</code>s 
-		 * 					to set {@link #callTypes} 
-		 * @see #addCallType(CallType)
-		 * @see #addCallTypes(Collection)
-		 * @see #getCallTypes()
-		 */
-		private void setCallTypes(Collection<CallType> callTypes) {
-			this.callTypes = callTypes;
-		}
-		/**
-		 * Add a <code>CallType</code> to the list of allowed expression data calls, 
-		 * that at least one of the <code>Gene</code>s returned by {@link #getGenes()} 
-		 * must exhibit in an <code>OntologyEntity</code>, for the element 
-		 * to be validated. 
-    	 * <p>
-    	 * If some <code>CallType</code>s hold by this <code>GeneCallRequirement</code> 
-    	 * would be redundant following a call to this method (for instance, 
-    	 * <code>EXPRESSION</code> and <code>OVEREXPRESSION</code> are redundant, 
-    	 * all genes with over-expression are expressed), 
-    	 * an <code>IllegalArgumentException</code> is thrown and the operation 
-    	 * is not performed. This is for the sake of educating users :) 
-    	 * This would actually not change the result of the query.
-		 * 
-		 * @param callType	A <code>CallType</code> to be added to 
-		 * 					this <code>GeneCallRequirement</code>.
-    	 * @throws IllegalArgumentException 	If some <code>CallType</code>s hold 
-    	 * 										by this <code>GeneCallRequirement</code> 
-    	 * 										would be redundant following a call 
-    	 * 										to this method.
-		 * @see #getCallTypes()
-		 * @see #addCallTypes(Collection)
-		 */
-		public void addCallType(CallType callType) {
-			if (callType == null) {
-				return;
-			}
-			this.addCallTypes(Arrays.asList(callType));
-		}
-		/**
-		 * Add a <code>Collection</code> of <code>CallType</code>s to the list 
-		 * of allowed expression data calls, that at least one of the <code>Gene</code>s 
-		 * returned by {@link #getGenes()} must exhibit in an <code>OntologyEntity</code>, 
-		 * for the element to be validated. 
-    	 * <p>
-    	 * If some <code>CallType</code>s hold by this <code>GeneCallRequirement</code> 
-    	 * would be redundant following a call to this method (for instance, 
-    	 * <code>EXPRESSION</code> and <code>OVEREXPRESSION</code> are redundant, 
-    	 * all genes with over-expression are expressed), 
-    	 * an <code>IllegalArgumentException</code> is thrown and the operation 
-    	 * is not performed. This is for the sake of educating users :) 
-    	 * This would actually not change the result of the query.
-		 * 
-		 * @param callTypes	A <code>Collection</code> of <code>CallType</code>s 
-		 * 					to be added to this <code>GeneCallRequirement</code>.
-    	 * @throws IllegalArgumentException 	If some <code>CallType</code>s hold 
-    	 * 										by this <code>GeneCallRequirement</code> 
-    	 * 										wuld be redundant following a call 
-    	 * 										to this method.
-		 * @see #getCallTypes()
-		 * @see #addCallType(CallType)
-		 */
-		public void addCallTypes(Collection<CallType> callTypes) {
-			if (callTypes == null) {
-				return;
-			}
-			this.checkCallTypes(callTypes);
-			this.callTypes.addAll(callTypes);
-		}
+    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
+    	 * 					to be associated to the <code>CallFilter</code>s 
+    	 * 					in <code>filters</code>, in this <code>GeneCallRequirement</code>.
+    	 * @param filters	A <code>Collection</code> of <code>CallFilter</code>s 
+    	 * 					to be associated to each of the <code>Gene</code> 
+    	 * 					in <code>genes</code> in this <code>GeneCallRequirement</code>.
+    	 * @see #getGenes()
+    	 * @see #addGenes(Collection)
+    	 */
+    	public void addGenes(Collection<Gene> genes, Collection<CallFilter> filters) {
+    		for (Gene gene: genes) {
+    			Collection<CallFilter> geneFilters = this.genesWithParameters.get(gene);
+    			if (geneFilters == null) {
+    				geneFilters = new HashSet<CallFilter>();
+    				this.genesWithParameters.put(gene, geneFilters);
+    			}
+    			this.genesWithParameters.get(gene).addAll(filters);
+    		}
+    	}
 		
 		/**
 		 * Check if the <code>CallType</code>s hold by this <code>GeneCallRequirement</code> 
@@ -571,4 +542,5 @@ public class GeneCallValidator {
 			this.allGenesWithData = allGenesWithData;
 		}
     }
+    
 }

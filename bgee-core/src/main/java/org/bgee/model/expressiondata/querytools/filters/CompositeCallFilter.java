@@ -1,9 +1,9 @@
 package org.bgee.model.expressiondata.querytools.filters;
 
 /**
- * A <code>CompositeCallFilter</code> allows to use a <code>ExpressionCallFilter</code> 
+ * A <code>CompositeCallFilter</code> allows to use a <code>BasicCallFilter</code> 
  * and a <code>RawDataFilter</code> at the same time. It allows to filter 
- * based on expression data calls, as when using a <code>ExpressionCallFilter</code> 
+ * based on expression data calls, as when using a <code>BasicCallFilter</code> 
  * (this is why it implements the interface <code>CallFilter</code>), but as if the calls 
  * had been computed from only a subset of the data in Bgee, filtered using 
  * the <code>RawDataFilter</code>. This leads to re-compute on-the-fly 
@@ -14,9 +14,9 @@ package org.bgee.model.expressiondata.querytools.filters;
  * AnatDevExpressionQuery}). 
  * <p>
  * This class implements the methods from <code>CallFilter</code>, by delegating 
- * to the <code>ExpressionCallFilter</code> instance it holds. So, calling a method 
+ * to the <code>BasicCallFilter</code> instance it holds. So, calling a method 
  * defined by the <code>CallFiler</code> interface, on an instance of this class, 
- * is equivalent to calling them on the <code>ExpressionCallFilter</code> instance it holds.
+ * is equivalent to calling them on the <code>BasicCallFilter</code> instance it holds.
  * <p>
  * <h3>Explanations about the computations</h3>
  * Bgee summarizes expression data over several experiments or samples. For instance, 
@@ -29,9 +29,9 @@ package org.bgee.model.expressiondata.querytools.filters;
  * generated (in the previous example, removing the sample showing expression of the gene 
  * would lead to consider it as not expressed with a high confidence...). 
  * <p>
- * So basically, a <code>CompositeCallFilter</code> will work as a <code>ExpressionCallFilter</code>, 
- * but as if Bgee was containing only the source raw data filtered 
- * from the <code>RawDataFilter</code>.
+ * So basically, a <code>CompositeCallFilter</code> will work as 
+ * a <code>BasicCallFilter</code>, but as if Bgee was containing only the source raw data 
+ * filtered from the <code>RawDataFilter</code>.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

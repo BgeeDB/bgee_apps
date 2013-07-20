@@ -5,21 +5,39 @@ package org.bgee.model.expressiondata.querytools.filters;
  * an expression data query (see classes allowing to perform queries 
  * in package {@link org.bgee.model.expressiondata.querytools querytools}). 
  * <p>
- * Users will likely use the <code>ExpressionCallFilter</code> implementation most of the time. 
- * It allows to filter data based on expression data calls (<code>EXPRESSION</code>, 
- * <code>OVEREXPRESSION</code>, <code>NOEXPRESSION</code>, ...), based on data qualities, 
- * data types, etc.
+ * There are then two types of <code>Filter</code>s: {@link RawDataFilter} and 
+ * {@link CallFilter}. <code>CallFilter</code>s include {@link BasicCallFilter} 
+ * and {@link CompositeFilter}. <code>BasicCallFilter</code>s are then provided 
+ * with different implementations depending on the possibilities 
+ * offered by the <code>CallType</code> used: {@link ExpressionCallFilter}, 
+ * {@link NoExpressionCallFilter}, and {@link DiffExpressionCallFilter}.
  * <p>
- * The <code>AdvancedDiffCallFilter</code> is a subclass of <code>ExpressionCallFilter</code>, 
- * only applicable to <code>OVEREXPRESSION</code> and <code>UNDEREXPRESSION</code> 
- * data calls, and offering additional filtering functionalities specific to these kind of data.
+ * Overall summary: 
+ * <ul>
+ * <li>{@link Filter}: any filter.
+ *   <ul>
+ *   <li>{@link RawDataFilter}: filtering of source raw data.
+ *   <li>{@link CallFilter}: filter based on expression data calls.
+ *     <ul>
+ *     <li>{@link BasicCallFiler}: simple filter based on expression data calls. 
+ *     There are different implementations depending on the possibilities offered 
+ *     by the given <code>CallType</code>.
+ *       <ul>
+ *       <li>{@link ExpressionCallFilter}: filter for <code>EXPRESSION</code> calls.
+ *       <li>{@link NoExpressionCallFilter}: filter for <code>NOEXPRESSION</code> calls.
+ *       <li>{@link DiffExpressionCallFilter}: filter for differential expression calls 
+ *       (<code>OVEREXPRESSION</code>, <code>UNDEREXPRESSION</code>, 
+ *       <code>NODIFFEXPRESSION</code>).
+ *       </ul>
+ *     <li>{@link CompositeCallFilter}: a filter using at the same time 
+ *     a <code>BasicCallFiler</code> and a <code>RawDataFilter</code>, allowing 
+ *     to recompute on the fly expression data calls by filtering source raw data.
+ *     </ul>
+ *   </ul>
+ * </ul>
  * <p>
- * The <code>RawDataFilter</code> allows to filter source raw data, for instance 
- * to retrieve only results from specific experiments, or specific probesets, etc.
- * <p>
- * Finally, the <code>CompositeCallFilter</code> allows to use both 
- * a <code>ExpressionCallFilter</code> (or an <code>AdvancedDiffCallFilter</code>) and 
- * a <code>RawDataFilter</code> at the same time. 
+ * Users will likely use a <code>BasicCallFilter</code> or a <code>RawDataFilter</code> 
+ * most of the time.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

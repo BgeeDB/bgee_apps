@@ -1,24 +1,39 @@
 /**
  * This package provides classes allowing to filter results of 
- * any expression data query tool. Filters available are: 
+ * any expression data query tool. All filters implement the {@link Filter} interface.
+ * There are then two types of <code>Filter</code>s: {@link RawDataFilter} and 
+ * {@link CallFilter}. <code>CallFilter</code>s include {@link BasicCallFilter} 
+ * and {@link CompositeFilter}. <code>BasicCallFilter</code>s are then provided 
+ * with different implementations depending on the possibilities 
+ * offered by the <code>CallType</code> used: {@link ExpressionCallFilter}, 
+ * {@link NoExpressionCallFilter}, and {@link DiffExpressionCallFilter}.
+ * <p>
+ * Overall summary: 
  * <ul>
- * <li>{@link ExpressionCallFilter}, the filter that users will likely use most of the time. 
- * It allows to filter data based on expression data calls (<code>EXPRESSION</code>, 
- * <code>OVEREXPRESSION</code>, <code>NOEXPRESSION</code>, ...), based on data qualities, 
- * data types, etc.
- * <li>{@link AdvancedDiffCallFilter}, a subclass of <code>ExpressionCallFilter</code> 
- * providing additional filtering functionalities specific to <code>OVEREXPRESSION</code> 
- * and <code>UNDEREXPRESSION</code> data calls. 
- * <li>{@link RawDataFilter} allowing to filter based on source raw data.
- * <li>{@link CompositeCallFilter} allowing to use both a <code>ExpressionCallFilter</code> 
- * (or an <code>AdvancedDiffCallFilter</code>) and a <code>RawDataFilter</code> 
- * at the same time.
+ * <li>{@link Filter}: any filter.
+ *   <ul>
+ *   <li>{@link RawDataFilter}: filtering of source raw data.
+ *   <li>{@link CallFilter}: filter based on expression data calls.
+ *     <ul>
+ *     <li>{@link BasicCallFiler}: simple filter based on expression data calls. 
+ *     There are different implementations depending on the possibilities offered 
+ *     by the given <code>CallType</code>.
+ *       <ul>
+ *       <li>{@link ExpressionCallFilter}: filter for <code>EXPRESSION</code> calls.
+ *       <li>{@link NoExpressionCallFilter}: filter for <code>NOEXPRESSION</code> calls.
+ *       <li>{@link DiffExpressionCallFilter}: filter for differential expression calls 
+ *       (<code>OVEREXPRESSION</code>, <code>UNDEREXPRESSION</code>, 
+ *       <code>NODIFFEXPRESSION</code>).
+ *       </ul>
+ *     <li>{@link CompositeCallFilter}: a filter using at the same time 
+ *     a <code>BasicCallFiler</code> and a <code>RawDataFilter</code>, allowing 
+ *     to recompute on the fly expression data calls by filtering source raw data.
+ *     </ul>
+ *   </ul>
  * </ul>
  * <p>
- * All these filters extend the {@link Filter} abstract class, which allows 
- * to use any of them indifferently when performing queries. <code>Filter</code> 
- * is an abstract class rather than an interface, because all filters also have 
- * common attributes or functionalities, such as listing all available data types. 
+ * Users will likely use a <code>BasicCallFilter</code> or a <code>RawDataFilter</code> 
+ * most of the time.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

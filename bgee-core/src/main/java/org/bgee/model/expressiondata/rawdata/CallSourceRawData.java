@@ -17,6 +17,7 @@ import org.bgee.model.gene.Gene;
  * @see model.expressionData.rnaSeqData.RnaSeqResult
  * @since Bgee 09
  */
+@Deprecated
 public class CallSourceRawData extends RawData
 {
 

@@ -1,6 +1,6 @@
 package org.bgee.model.anatdev;
 
-import org.bgee.model.EntityExpressionData;
+import org.bgee.model.expressiondata.rawdata.RawDataHolder;
 
 /**
  * Parent class of entities used in anatomical or developmental ontologies.
@@ -9,7 +9,7 @@ import org.bgee.model.EntityExpressionData;
  * @version Bgee 13
  * @since Bgee 13
  */
-public abstract class AnatDevEntity extends EntityExpressionData {
+public abstract class AnatDevEntity extends RawDataHolder {
 	/**
      * Constructor providing the <code>id</code> of this <code>AnatDevEntity</code>. 
      * This <code>id</code> cannot be <code>null</code>, or empty (""), 

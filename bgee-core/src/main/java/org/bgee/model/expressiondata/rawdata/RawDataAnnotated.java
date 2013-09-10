@@ -23,6 +23,7 @@ import org.bgee.model.anatdev.Stage;
  * @see model.expressionData.rnaSeqData.RnaSeqLibrary
  * @since Bgee 09
  */
+@Deprecated
 public class RawDataAnnotated extends RawData
 {
 

@@ -30,7 +30,7 @@ import org.bgee.model.source.SourceFactory;
  * <p>
  * As these methods are "chained", an object can retrieve these attributes even from an indirect container 
  * (meaning, an <code>AffymetrixProbeset</code> can obtain the information 
- * from a <code>microarrayExperiment</code>, thanks to the chaining through <code>AffymetrixChip</code>).
+ * from a <code>AffymetrixExp</code>, thanks to the chaining through <code>AffymetrixChip</code>).
  * <p>
  * Also, note that <code>#loadSource()</code> will retrieve the data source from a <code>DAO</code> 
  * only if none of its containers (direct or indirect) hold this data source. 
@@ -52,6 +52,7 @@ import org.bgee.model.source.SourceFactory;
  * @since Bgee 11
  *
  */
+@Deprecated
 public abstract class RawData extends Entity
 {
 	/**

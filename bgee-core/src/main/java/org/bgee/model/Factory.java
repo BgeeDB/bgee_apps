@@ -10,13 +10,13 @@ import org.bgee.model.dao.api.DAOManager;
  * For instance, the methods of a <code>StageLoader</code> 
  * return a <code>Stage</code>, or a <code>Collection</code> of <code>Stage</code>s.
  * <p>
- * This class is responsible for obtaining 
+ * This parent class is responsible for obtaining 
  * a {@link org.bgee.model.dao.api.DAOManager DAOManager}, that will then be used 
  * by each factory to obtain an appropriate <code>DAO</code>. Each factory instance 
  * will use its own DAO instance. 
  * <p> 
- * This class also provides the static methods to obtain factories. Some factories have 
- * two implementations, a regular one, using a <code>DAO</code> at each method call, 
+ * This parent class also provides the static methods to obtain factories. Some factories 
+ * have two implementations, a regular one, using a <code>DAO</code> at each method call, 
  * and a "static" one, pre-loading all the data into memory, and retrieving 
  * the data from this memory at each method call (see for instance 
  * {@link org.bgee.model.anatdev.AnatEntityFactory} and 

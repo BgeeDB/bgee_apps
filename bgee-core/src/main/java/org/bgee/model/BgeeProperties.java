@@ -495,7 +495,8 @@ public class BgeeProperties
      * if <code>releaseAll()</code> has been previously called.
      *  
      * @return	A <code>BgeeProperties</code> object, instantiated at the first call 
-     * 			of this method. Subsequent calls will return the same object. 
+     * 			of this method. Subsequent calls in any given thread will return 
+     * 			the same object. 
      * @throws IllegalStateException If no <code>BgeeProperties</code> could be obtained anymore. 
      */
     public static BgeeProperties getBgeeProperties() throws IllegalStateException

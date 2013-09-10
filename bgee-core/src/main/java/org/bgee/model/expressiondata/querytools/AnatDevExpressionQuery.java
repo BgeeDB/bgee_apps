@@ -6,7 +6,8 @@ import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequi
 
 /**
  * This class allows to retrieve <code>AnatomicalEntity</code>s and 
- * <code>Stage</code>s based on their gene expression data. 
+ * <code>Stage</code>s based on their gene expression data, and on their position 
+ * in their <code>AnatDevOntology</code>. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13

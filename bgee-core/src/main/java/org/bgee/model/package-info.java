@@ -6,14 +6,6 @@
  * a <code>Factory</code> to obtain objects of this class (for instance, 
  * a <code>GeneFactory</code>, a <code>SpeciesFactory</code>). 
  * 
- * <h3>Data access layer</h3>
- * Beside the several packages of this core layer, organizing the "entity" classes, 
- * a layer is specifically used to access data sources: 
- * the {@link org.bgee.model.data} package. This package is completely independent 
- * from other packages (it never uses classes from other packages). 
- * It has the same packages organization than the "entity" packages.
- * See its javadoc for more details.
- * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 01

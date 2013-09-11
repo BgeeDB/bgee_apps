@@ -57,7 +57,7 @@ public class Call implements GlobalRawDataHolder {
 	//Default constructor not public on purpose, suppress warning
 	@SuppressWarnings("unused")
 	private Call() {
-		this(CallType.EXPRESSION);
+		this(CallType.Expression.EXPRESSED);
 	}
 
 	/**

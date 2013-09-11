@@ -5,11 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataParameters.CallType;
 
 /**
- * A <code>BasicCallFilter</code> for <code>NOEXPRESSION</code> call type. 
+ * A <code>BasicCallFilter</code> for <code>NOTEXPRESSED</code> call type. 
  * Provides methods specific to this call type. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
+ * @see ExpressionCallFilter
+ * @see DiffExpressionCallFilter
  * @since Bgee 13
  */
 public class NoExpressionCallFilter extends BasicCallFilter {
@@ -22,7 +24,7 @@ public class NoExpressionCallFilter extends BasicCallFilter {
 	 * Default constructor. 
 	 */
 	public NoExpressionCallFilter() {
-		super(CallType.NOEXPRESSION);
+		super(CallType.Expression.NOTEXPRESSED);
 	}
 
 	/**

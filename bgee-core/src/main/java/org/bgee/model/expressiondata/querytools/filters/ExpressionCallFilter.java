@@ -5,11 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataParameters.CallType;
 
 /**
- * A <code>BasicCallFilter</code> for <code>EXPRESSION</code> call type. 
+ * A <code>BasicCallFilter</code> for <code>EXPRESSED</code> call type. 
  * Provides methods specific to this call type. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
+ * @see NoExpressionCallFilter
+ * @see DiffExpressionCallFilter
  * @since Bgee 01
  */
 public class ExpressionCallFilter extends BasicCallFilter {
@@ -22,7 +24,7 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	 * Default constructor. 
 	 */
 	public ExpressionCallFilter() {
-		super(CallType.EXPRESSION);
+		super(CallType.Expression.EXPRESSED);
 	}
 
 	/**

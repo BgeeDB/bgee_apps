@@ -57,7 +57,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	//Default constructor not public on purpose, suppress warning
 	@SuppressWarnings("unused")
 	private BasicCallFilter() {
-		this(CallType.EXPRESSION);
+		this(CallType.Expression.EXPRESSED);
 	}
 
 	/**

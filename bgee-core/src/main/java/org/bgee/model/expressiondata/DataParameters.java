@@ -16,102 +16,78 @@ public class DataParameters {
   	//   INNER ENUM CLASSES
   	//**********************************************
 	/**
-	 * Define the different types of expression data calls.
+	 * An interface representing expression data calls. It includes two nested 
+	 * <code>enum</code> types: 
 	 * <ul>
-	 * <li><code>EXPRESSION</code>: standard expression calls.
-	 * <li><code>NOEXPRESSION</code>: no-expression calls (absence of expression 
-	 * explicitly reported).
-	 * <li><code>OVEREXPRESSION</code>: over-expression calls obtained from 
-	 * differential expression analyses.
-	 * <li><code>UNDEREXPRESSION</code>: under-expression calls obtained from 
-	 * differential expression analyses.
-	 * <li><code>NODIFFEXPRESSION</code>: means that a gene was studied in 
-	 * a differential expression analysis, but was <strong>not</strong> found to be 
-	 * differentially expressed (neither <code>OVEREXPRESSION</code> nor 
-	 * <code>UNDEREXPRESSION</code> calls). This is different from <code>NOEXPRESSION</code>, 
-	 * as the gene could actually be expressed, but, not differentially. 
+	 * <li>{@link CallType.Expression}: standard expression calls. Includes two values: 
+	 *   <ul>
+	 *   <li><code>EXPRESSED</code>: standard expression calls.
+	 *   <li><code>NOTEXPRESSED</code>: no-expression calls (absence of expression 
+	 *   explicitly reported).
+	 *   </ul>
+	 * <li>{@link CallType.DiffExpression}: differential expression calls obtained 
+	 * from differential expression analyzes. Includes three values: 
+	 *   <ul>
+	 *   <li><code>OVEREXPRESSED</code>: over-expression calls obtained from 
+	 *   differential expression analyses.
+	 *   <li><code>UNDEREXPRESSED</code>: under-expression calls obtained from 
+	 *   differential expression analyses.
+	 *   <li><code>NOTDIFFEXPRESSED</code>: means that a gene was studied in 
+	 *   a differential expression analysis, but was <strong>not</strong> found to be 
+	 *   differentially expressed (neither <code>OVEREXPRESSED</code> nor 
+	 *   <code>UNDEREXPRESSED</code> calls). This is different from 
+	 *   <code>NOTEXPRESSED</code>, as the gene could actually be expressed, but, 
+	 *   not differentially. 
+	 *   </ul>
 	 * </ul>
-	 * <p>
-	 * List of <code>CallType</code>s obtained from differential expression analyses 
-	 * can be obtained by calling {@link #getDiffExpressionCalls()}. Whether a given 
-	 * <code>CallType</code> is a differential expression call can be determined 
-	 * by calling {@link #isADiffExpressionCall()}.
 	 * 
-     * @author Frederic Bastian
+	 * @author Frederic Bastian
      * @version Bgee 13
      * @since Bgee 13
 	 */
-    public enum CallType {
-    	EXPRESSION(false), NOEXPRESSION(false), 
-    	OVEREXPRESSION(true), UNDEREXPRESSION(true), NODIFFEXPRESSION(true);
-    	
-    	//*********************************************
-    	//   STATIC METHODS AND ATTRIBUTES
-    	//*********************************************
-    	/**
-    	 * Store the <code>CallType</code>s corresponding to differential expression calls. 
-    	 */
-    	private static final Set<CallType> diffCalls = loadDiffExpressionCalls();
-    	/**
-    	 * Load and return the <code>CallType</code>s corresponding to 
-    	 * differential expression calls. Used only once at class loading 
-    	 * to populate {@link #diffCalls}. 
-    	 * 
-    	 * @return	A <code>Set</code> of <code>CallType</code>s corresponding to 
-    	 * 			differential expression calls. 
-    	 * @see #diffCalls
-    	 * @see #isADiffExpressionCall()
-    	 */
-    	public static Set<CallType> loadDiffExpressionCalls() {
-    		Set<CallType> diffCalls = new HashSet<CallType>();
-    		for (CallType type: CallType.values()) {
-    		    if (type.isADiffExpressionCall()) {
-    		    	diffCalls.add(type);
-    		    }
-    	    }
-    		return diffCalls;
-    	}
-    	/**
-    	 * Get the call types obtained from differential expression analyses.
-    	 * @return 	A <code>Set</code> of <code>CallType</code>s corresponding to 
-    	 * 			differential expression calls. 
-    	 */
-    	public static Set<CallType> getDiffExpressionCalls() {
-    		return CallType.diffCalls;
-    	}
-
-    	//*********************************************
-    	//   INSTANCE METHODS AND ATTRIBUTES
-    	//*********************************************
-    	/**
-    	 * A <code>boolean</code> defining whether this <code>CallType</code> 
-    	 * is a differential expression call. 
-    	 */
-    	private final boolean isADiffCall;
-    	/**
-    	 * Default constructor providing the information about whether 
-    	 * this <code>CallType</code> is a differential expression call. 
-    	 * 
-    	 * @param isADiffCall 	If <code>true</code>, this <code>CallType</code> 
-    	 * 						is a differential expression call. 
-    	 * @see #isADiffCall
-    	 */
-    	private CallType(boolean isADiffCall) {
-    		this.isADiffCall = isADiffCall;
-    	}
-    	
-    	/**
-    	 * Determine whether this <code>CallType</code> is obtained from 
-    	 * differential expression analyses. 
-    	 * 
-    	 * @return 	<code>true</code> if this <code>CallType</code> is 
-    	 * 			a differential expression call, <code>false</code> otherwise. 
-    	 * @see #getDiffExpressionCalls()
-    	 */
-    	public boolean isADiffExpressionCall() {
-    		return this.isADiffCall;
-    	}
-    }
+	public interface CallType {
+		/**
+		 * Represents standard expression calls: 
+	     * <ul>
+	     * <li><code>EXPRESSED</code>: standard expression calls.
+	     * <li><code>NOTEXPRESSED</code>: no-expression calls (absence of expression 
+	     * explicitly reported).
+	     * </ul>
+	     * 
+	     * @author Frederic Bastian
+         * @version Bgee 13
+	     * @see DiffExpression
+         * @since Bgee 13
+		 */
+		public enum Expression implements CallType {
+			EXPRESSED, NOTEXPRESSED;
+		}
+		/**
+		 * Represents differential expression calls obtained 
+		 * from differential expression analyzes: 
+		 * <ul>
+		 * <li><code>OVEREXPRESSED</code>: over-expression calls obtained from 
+		 * differential expression analyses.
+		 * <li><code>UNDEREXPRESSED</code>: under-expression calls obtained from 
+		 * differential expression analyses.
+		 * <li><code>NOTDIFFEXPRESSED</code>: means that a gene was studied in 
+		 * a differential expression analysis, but was <strong>not</strong> found to be 
+		 * differentially expressed (neither <code>OVEREXPRESSED</code> nor 
+		 * <code>UNDEREXPRESSED</code> calls). This is different from 
+		 * <code>NOTEXPRESSED</code>, as the gene could actually be expressed, but, 
+		 * not differentially. 
+		 * </ul>
+		 * 
+		 * @author Frederic Bastian
+         * @version Bgee 13
+	     * @see Expression
+         * @since Bgee 13
+		 */
+		public enum DiffExpression implements CallType {
+			OVEREXPRESSED, UNDEREXPRESSED, NOTDIFFEXPRESSED;
+		}
+	}
+    
     /**
      * Define the different expression data types used in Bgee.
      * <ul>
@@ -191,25 +167,29 @@ public class DataParameters {
   		Map<CallType, Set<DataType>> types = 
   				new HashMap<CallType, Set<DataType>>();
   		//data types generating expression calls
-  		types.put(CallType.EXPRESSION, new HashSet<DataType>());
-  		types.get(CallType.EXPRESSION).add(DataType.AFFYMETRIX);
-  		types.get(CallType.EXPRESSION).add(DataType.EST);
-  		types.get(CallType.EXPRESSION).add(DataType.INSITU);
-  		types.get(CallType.EXPRESSION).add(DataType.RNASEQ);
-  		//data types generating over-expression calls
-  		types.put(CallType.OVEREXPRESSION, new HashSet<DataType>());
-  		types.get(CallType.OVEREXPRESSION).add(DataType.AFFYMETRIX);
-  		types.get(CallType.OVEREXPRESSION).add(DataType.RNASEQ);
-  		//data types generating under-expression calls
-  		types.put(CallType.UNDEREXPRESSION, new HashSet<DataType>());
-  		types.get(CallType.UNDEREXPRESSION).add(DataType.AFFYMETRIX);
-  		types.get(CallType.UNDEREXPRESSION).add(DataType.RNASEQ);
+  		types.put(CallType.Expression.EXPRESSED, new HashSet<DataType>());
+  		types.get(CallType.Expression.EXPRESSED).add(DataType.AFFYMETRIX);
+  		types.get(CallType.Expression.EXPRESSED).add(DataType.EST);
+  		types.get(CallType.Expression.EXPRESSED).add(DataType.INSITU);
+  		types.get(CallType.Expression.EXPRESSED).add(DataType.RNASEQ);
   		//data types generating no-expression calls
-  		types.put(CallType.NOEXPRESSION, new HashSet<DataType>());
-  		types.get(CallType.NOEXPRESSION).add(DataType.AFFYMETRIX);
-  		types.get(CallType.NOEXPRESSION).add(DataType.INSITU);
-  		types.get(CallType.NOEXPRESSION).add(DataType.RELAXEDINSITU);
-  		types.get(CallType.NOEXPRESSION).add(DataType.RNASEQ);
+  		types.put(CallType.Expression.NOTEXPRESSED, new HashSet<DataType>());
+  		types.get(CallType.Expression.NOTEXPRESSED).add(DataType.AFFYMETRIX);
+  		types.get(CallType.Expression.NOTEXPRESSED).add(DataType.INSITU);
+  		types.get(CallType.Expression.NOTEXPRESSED).add(DataType.RELAXEDINSITU);
+  		types.get(CallType.Expression.NOTEXPRESSED).add(DataType.RNASEQ);
+  		//data types generating over-expression calls
+  		types.put(CallType.DiffExpression.OVEREXPRESSED, new HashSet<DataType>());
+  		types.get(CallType.DiffExpression.OVEREXPRESSED).add(DataType.AFFYMETRIX);
+  		types.get(CallType.DiffExpression.OVEREXPRESSED).add(DataType.RNASEQ);
+  		//data types generating under-expression calls
+  		types.put(CallType.DiffExpression.UNDEREXPRESSED, new HashSet<DataType>());
+  		types.get(CallType.DiffExpression.UNDEREXPRESSED).add(DataType.AFFYMETRIX);
+  		types.get(CallType.DiffExpression.UNDEREXPRESSED).add(DataType.RNASEQ);
+  		//data types generating not-differentially-expressed calls
+  		types.put(CallType.DiffExpression.NOTDIFFEXPRESSED, new HashSet<DataType>());
+  		types.get(CallType.DiffExpression.NOTDIFFEXPRESSED).add(DataType.AFFYMETRIX);
+  		types.get(CallType.DiffExpression.NOTDIFFEXPRESSED).add(DataType.RNASEQ);
 
   		return types;
   	}

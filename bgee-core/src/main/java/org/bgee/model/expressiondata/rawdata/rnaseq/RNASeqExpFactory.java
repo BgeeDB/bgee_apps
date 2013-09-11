@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.bgee.model.Factory;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExpDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExpTO;
+
 /**
  * A <code>Factory</code> responsible for instantiating <code>RNASeqExp</code> objects.
  * 

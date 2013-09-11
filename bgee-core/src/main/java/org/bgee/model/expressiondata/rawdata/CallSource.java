@@ -1,12 +1,13 @@
 package org.bgee.model.expressiondata.rawdata;
 
 import org.bgee.model.Entity;
+import org.bgee.model.expressiondata.Call;
 
 /**
  * Represents a source of gene expression data calls, for instance, 
  * an Affymetrix probeset, an EST, a value of RPKM for a gene in a RNA-Seq library.
  * <p>
- * <code>CallSource</code>s are always produced by {@link ExperimentalObject}s. 
+ * <code>CallSource</code>s are always produced by {@link SampleAssay}s. 
  * The precise type of the <code>ExperimentObject</code> is provided by the <code>T</code> 
  * generic parameter.
  * 
@@ -17,23 +18,24 @@ import org.bgee.model.Entity;
  * @param <T>	The precise type of <code>ExperimentObject</code> that produced this 
  * 				<code>CallSource</code>
  */
-public abstract class CallSource<T extends ExperimentalObject> extends Entity {
+public abstract class CallSource<T extends SampleAssay> extends Entity {
 	
 	/**
 	 * A <code>String</code> corresponding to the ID 
-	 * of the {@link ExperimentalObject} that produced this <code>CallSource</code>. 
-	 * It can be used to load the {@link #experimentalObject} attribute after obtaining 
+	 * of the {@link SampleAssay} that produced this <code>CallSource</code>. 
+	 * It can be used to load the {@link #sampleAssay} attribute after obtaining 
 	 * this <code>CallSource</code>. 
-	 * @see #experimentalObject
+	 * @see #sampleAssay
 	 */
-    private String experimentalObjectId;
+    private String sampleAssayId;
     /**
-     * The {@link ExperimentalObject} that produced this <code>CallSource</code>.
-     * @see #experimentalObjectId
+     * The {@link SampleAssay} that produced this <code>CallSource</code>.
+     * @see #sampleAssayId
      */
-    private T experimentalObject;
+    private T sampleAssay;
     
     //TODO
+    plutot, juste stoker un CallType et une DataQuality. La classe Call represente d'avantage un résumé global
     private Call callGenerated;
 	
 	/**
@@ -51,57 +53,57 @@ public abstract class CallSource<T extends ExperimentalObject> extends Entity {
 	}
 	
 	/**
-	 * Load the {@link ExperimentalObject} that produced this <code>CallSource</code>, 
+	 * Load the {@link SampleAssay} that produced this <code>CallSource</code>, 
 	 * by obtaining it from a <code>DAO</code>, only if not already loaded 
-	 * ({@link #getExperimentalObject()} returning <code>null</code>).
+	 * ({@link #getSampleAssay()} returning <code>null</code>).
 	 * 
-	 * @see #getExperimentalObject()
-	 * @see #getExperimentalObjectId()
+	 * @see #getSampleAssay()
+	 * @see #getSampleAssayId()
 	 */
-	public abstract void loadExperimentalObject();
+	public abstract void loadSampleAssay();
 	
 	/**
-	 * Get the ID of the {@link ExperimentalObject} that produced this <code>CallSource</code>.
+	 * Get the ID of the {@link SampleAssay} that produced this <code>CallSource</code>.
 	 * 
-	 * @return 	a <code>String</code> corresponding to the <code>ExperimentalObject</code> ID.
-	 * @see #getExperimentalObject()
+	 * @return 	a <code>String</code> corresponding to the <code>SampleAssay</code> ID.
+	 * @see #getSampleAssay()
 	 */
-	public String getExperimentalObjectId() {
-		if (this.getExperimentalObject() != null) {
-			return this.getExperimentalObject().getId();
+	public String getSampleAssayId() {
+		if (this.getSampleAssay() != null) {
+			return this.getSampleAssay().getId();
 		} 
-		return this.experimentalObjectId;
+		return this.sampleAssayId;
 	}
 
 	/**
-	 * Set the ID of the {@link ExperimentalObject} that produced this <code>CallSource</code>. 
+	 * Set the ID of the {@link SampleAssay} that produced this <code>CallSource</code>. 
 	 * This is useful when retrieving this <code>CallSource</code> 
-	 * from a <code>DAO</code>, before loading the actual <code>ExperimentalObject</code>.
+	 * from a <code>DAO</code>, before loading the actual <code>SampleAssay</code>.
 	 * 
-	 * @param 	A <code>String</code> that is the ID of the <code>ExperimentalObject</code> 
+	 * @param 	A <code>String</code> that is the ID of the <code>SampleAssay</code> 
 	 * 			that produced this <code>CallSource</code>
 	 */
-	public void setExperimentalObjectId(String experimentalObjectId) {
-		this.experimentalObjectId = experimentalObjectId;
+	public void setSampleAssayId(String sampleAssayId) {
+		this.sampleAssayId = sampleAssayId;
 	}
 
 	/**
-	 * Get the {@link ExperimentalObject} that produced this <code>CallSource</code>. 
+	 * Get the {@link SampleAssay} that produced this <code>CallSource</code>. 
 	 * Should return <code>null</code> if it has not yet been loaded 
-	 * (using {@link #loadExperimentalObject()}), or set (using 
-	 * {@link setExperimentalObject(ExperimentalObject)})
+	 * (using {@link #loadSampleAssay()}), or set (using 
+	 * {@link setSampleAssay(SampleAssay)})
 	 * 
-	 * @return	the <code>ExperimentalObject</code> that produced this <code>CallSource</code>.
+	 * @return	the <code>SampleAssay</code> that produced this <code>CallSource</code>.
 	 */
-	public T getExperimentalObject() {
-		return this.experimentalObject;
+	public T getSampleAssay() {
+		return this.sampleAssay;
 	}
 
 	/**
-	 * Set the {@link ExperimentalObject} that produced this <code>CallSource</code>. 
-	 * @param 	experimentalObject The <code>ExperimentalObject</code> to set.
+	 * Set the {@link SampleAssay} that produced this <code>CallSource</code>. 
+	 * @param 	sampleAssay The <code>SampleAssay</code> to set.
 	 */
-	public void setExperimentalObject(T experimentalObject) {
-		this.experimentalObject = experimentalObject;
+	public void setSampleAssay(T sampleAssay) {
+		this.sampleAssay = sampleAssay;
 	}
 }

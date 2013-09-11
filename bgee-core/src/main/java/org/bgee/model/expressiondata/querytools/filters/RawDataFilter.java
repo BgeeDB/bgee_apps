@@ -24,7 +24,9 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary.RNASeqLibraryT
  * the source raw data in Bgee, filtered thanks to a <code>RawDataFilter</code>. 
  * <p>
  * The parameters of this class are more coupled with the data in the data source 
- * than with the classes of this application.
+ * than with the classes of this application. This is why it is so closed to 
+ * {@link org.bgee.model.expressiondata.rawdata.AnyRawDataHolder}, yet different, 
+ * so that a different class is needed.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

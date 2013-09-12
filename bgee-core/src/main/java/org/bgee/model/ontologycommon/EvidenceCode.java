@@ -25,7 +25,7 @@ public class EvidenceCode extends Entity {
      * Default constructor protected, instances should be obtained using a factory.
      * 
      * @param id	A <code>String</code> representing the ID of 
-     * 				this <code>AnatDevEntity</code>.
+     * 				this <code>Entity</code>.
      * @throws IllegalArgumentException 	if <code>id</code> is <code>null</code>,  
      * 										empty, or whitespace only. 
      */

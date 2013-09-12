@@ -6,7 +6,7 @@ import java.util.Set;
 import org.bgee.model.anatdev.AnatDevEntity;
 import org.bgee.model.species.Taxon;
 
-public class AnatDevGroup<T extends AnatDevEntity> {
+public class AnatDevEvoGroup<T extends AnatDevEntity> {
 	/**
 	 * Represents the different type of evolutionary transitive relations. 
 	 * They are taken from the 
@@ -21,7 +21,7 @@ public class AnatDevGroup<T extends AnatDevEntity> {
     public enum TransRelationType {
     	HOMOLOGY, HOMOPLASY;
     }
-    to continue, constructors (all attributes final, or provide setters?), and class javadoc
+    //to continue, constructors (all attributes final, or provide setters?), and class javadoc
     /**
      * A <code>Set</code> of <code>T</code>, representing the {@link AnatDevEntity}s 
      * related by an evolutionary relation. 

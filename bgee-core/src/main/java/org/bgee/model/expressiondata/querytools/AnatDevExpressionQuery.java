@@ -1,11 +1,15 @@
 package org.bgee.model.expressiondata.querytools;
 
 import java.util.Collection;
+import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.anatdev.AnatDevEntity;
 import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequirement;
 
 /**
- * This class allows to retrieve <code>AnatomicalEntity</code>s and 
+ * This class allows to retrieve <code>AnatomicalEntity</code>s and/or 
  * <code>Stage</code>s based on their gene expression data, and on their position 
  * in their <code>AnatDevOntology</code>. 
  * 
@@ -13,8 +17,31 @@ import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequi
  * @version Bgee 13
  * @since Bgee 13
  */
-public class AnatDevExpressionQuery 
-{
+public class AnatDevExpressionQuery {
+	/**
+     * <code>Logger/code> of this class.
+     */
+    private final static Logger log = 
+    		LogManager.getLogger(AnatDevExpressionQuery.class.getName());
+    
+	public enum QueryType {
+		ANATOMY, DEVELOPMENT, ANATDEV;
+	}
+	
+	public enum Filering {
+		FROMTOP, FROMBOTTOM, NONE;
+	}
+	
+	private boolean withTopEntities;
+	private int targetNumberTopEntities;
+	private int levelCountToWalk;
+	private Set<AnatDevEntity> rootEntites;
+	private Collection<AnatDevRequirement> requirements;
+	private Set<AnatDevEntity> filteringEntities;
+	private boolean acceptFilteringEntities;
+	
+	private EvoTransRelation evoRelation; ou EvoGroup ?
+	
     
     
     restriction on organs? (e.g., jacknife on HOGs for my analyses): only in organs/never in organs kind of?

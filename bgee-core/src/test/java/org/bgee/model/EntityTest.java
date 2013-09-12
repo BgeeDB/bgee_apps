@@ -26,13 +26,19 @@ public class EntityTest extends TestAncestor {
     
     /**
      * Test the overridden implementations {@link Entity#hashCode()} and 
-     * {@link Entity#equals(Object)}.
+     * {@link Entity#equals(Object)}, that is solely based on Entities' ID.
      */
     @Test
     public void testEqualsHashCode() {
     	//Create a private class extending the abstract class Entity
     	class MyEntity extends Entity {
 			public MyEntity(String id) throws IllegalArgumentException {
+				super(id);
+			}
+    	}
+    	//And another one to test the equals method.
+    	class MyEntity2 extends Entity {
+			public MyEntity2(String id) throws IllegalArgumentException {
 				super(id);
 			}
     	}
@@ -54,5 +60,13 @@ public class EntityTest extends TestAncestor {
     	assertFalse("Two entities with different IDs were equal", entity2.equals(entity1));
     	//of note, it is not mandatory for non-equal Objects to have different hashCodes, 
     	//only the opposite is true. So here, we do not test hashCodes.
+    	
+    	MyEntity2 entity3 = new MyEntity2("ID1");
+    	//entity1 and entity3 have a same ID so their hashcode should be equal, 
+    	//but the equals method should return false
+    	assertEquals("Two entities from different class but with same ID have " +
+    			"different hashCodes", entity1.hashCode(), entity3.hashCode());
+    	assertFalse("Two entities from different class were equal", 
+    			entity1.equals(entity3));
     }
 }

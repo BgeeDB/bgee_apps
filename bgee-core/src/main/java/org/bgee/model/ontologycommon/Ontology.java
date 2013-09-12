@@ -25,7 +25,7 @@ public abstract class Ontology<T extends Entity> {
 	 */
     private final Map<String, OntologyEntity<T>> allElements;
     /**
-     * A <code>Set</code> of <code>OntologyEntity</code> that are the roots 
+     * A <code>Set</code> of <code>OntologyEntity</code>s that are the roots 
      * of this <code>Ontology</code> (they have no parents 
      * by {@link OntologyEntity.RelationType ISA_PARTOF} relations)
      */

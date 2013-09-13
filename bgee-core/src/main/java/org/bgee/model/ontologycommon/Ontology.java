@@ -19,6 +19,24 @@ import org.bgee.model.Entity;
  */
 public abstract class Ontology<T extends Entity> {
 	/**
+	 * List the different relation types used in Bgee. 
+	 * Bgee makes no distinction between is_a and part_of relations, so they are merged 
+	 * into one single enum type. Enum types available: 
+	 * <ul>
+	 * <li><code>ISA_PARTOF</code>
+	 * <li><code>DEVELOPSFROM</code>
+	 * <li><code>TRANSFORMATIONOF</code>
+	 * </ul>
+	 * 
+	 * @author Frederic Bastian
+	 * @version Bgee 13
+	 * @since Bgee 13
+	 */
+	public enum RelationType {
+		ISA_PARTOF, DEVELOPSFROM, TRANSFORMATIONOF;
+	}
+	
+	/**
 	 * A <code>Map</code> associating <code>OntologyEntity</code>s as values 
 	 * to the <code>id</code> of the <code>Entity</code> they wrap as keys 
 	 * (<code>id</code> returned by {@link org.bgee.model.Entity#getId()}).

@@ -20,10 +20,8 @@ import org.bgee.model.expressiondata.rawdata.GlobalRawDataHolder;
  * <p>
  * A <code>Call</code> can hold the raw data, or count of raw data, used to generate it, 
  * this is why it implements the <code>GlobalRawDataHolder</code> interface. 
- * Internally, it uses a {@link org.bgee.model.expressiondata.rawdata.AnyRawDataHolder 
- * AnyRawDataHolder}, and delegates method calls to it. But it also checks that 
- * the requested raw data are compatible with its <code>CallType</code>, an returns 
- * <code>null</code> if they does not. It is the pattern "use composition over inheritance".
+ * It will check that these interface methods are compatible with its <code>CallType</code>, 
+ * an return <code>null</code> when they does not. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13

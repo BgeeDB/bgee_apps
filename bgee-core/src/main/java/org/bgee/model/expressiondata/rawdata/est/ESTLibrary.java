@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata.rawdata.est;
 
+import org.bgee.model.expressiondata.rawdata.DataAnnotated;
 import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
 
 /**
@@ -13,7 +14,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
  * @see EST
  * @since Bgee 01
  */
-public class ESTLibrary extends RawDataAnnotated
+public class ESTLibrary extends RawDataAnnotated implements DataAnnotated
 {
 	/**
      * Default constructor.

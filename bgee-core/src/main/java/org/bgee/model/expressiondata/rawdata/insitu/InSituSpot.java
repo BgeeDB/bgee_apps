@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata.insitu;
 
-import org.bgee.model.expressiondata.rawdata.CallSourceRawData;
+import org.bgee.model.expressiondata.rawdata.CallSource;
+import org.bgee.model.expressiondata.rawdata.DataAnnotated;
 
 /**
  * Class related to in situ spots. 
@@ -18,7 +19,7 @@ import org.bgee.model.expressiondata.rawdata.CallSourceRawData;
  * @see model.data.expressionData.ExpressionDataMappedToOntology
  * @since Bgee 01
  */
-public class InSituSpot extends CallSourceRawData
+public class InSituSpot extends CallSource implements DataAnnotated
 {
     /**
 	 * The <code>InSituEvidence</code> this object belongs to.

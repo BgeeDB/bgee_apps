@@ -1,6 +1,8 @@
 package org.bgee.model.expressiondata.rawdata.affymetrix;
 
+import org.bgee.model.expressiondata.rawdata.DataAnnotated;
 import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
+import org.bgee.model.expressiondata.rawdata.SampleAssay;
 import org.bgee.model.source.Source;
 
 /**
@@ -16,7 +18,7 @@ import org.bgee.model.source.Source;
  * @see AffymetrixExp
  * @since Bgee 01
  */
-public class AffymetrixChip extends RawDataAnnotated
+public class AffymetrixChip extends SampleAssay implements DataAnnotated
 {
 	/**
 	 * An <code>enum</code> listing the different methods to generate expression calls 

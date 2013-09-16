@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata.rnaseq;
 
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
+import org.bgee.model.expressiondata.rawdata.DataAnnotated;
+import org.bgee.model.expressiondata.rawdata.SampleAssay;
 
 /**
  * Class related to RNA-Seq library. 
@@ -15,7 +16,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
  * @see RNASeqResult
  * @since Bgee 12
  */
-public class RNASeqLibrary extends RawDataAnnotated 
+public class RNASeqLibrary extends SampleAssay implements DataAnnotated 
 {
 
 	/**

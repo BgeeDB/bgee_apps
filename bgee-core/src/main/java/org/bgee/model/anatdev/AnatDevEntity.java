@@ -8,6 +8,10 @@ import org.bgee.model.ontologycommon.BaseOntologyElement;
  * <code>AnatDevElement</code>s, they correspond to "real" entities 
  * (for instance, an {@link AnatomicalEntity}), rather than to entities that were merged 
  * (see for instance {@link org.bgee.model.anatdev.evogrouping.AnatDevEvoGroup}).
+ * <p>
+ * For a matter of fact, this is why they are named "entity" (as they extend the class 
+ * <code>Entity</code>), as opposed to <code>AnatDevElement</code>s, which do not 
+ * provide methods such as, for instance, <code>getId</code>. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13

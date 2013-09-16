@@ -15,6 +15,13 @@ import org.bgee.model.ontologycommon.OntologyElement;
  * These two types of classes implement this common interface because they are used 
  * in many tools in common (for instance, 
  * {@link org.bgee.model.expressiondata.querytools.AnatDevExpressionQuery}).
+ * <p>
+ * For a matter of fact, this class is named an "element", because it does not specify 
+ * methods such as <code>getId</code> (because merged elements will not have any really), 
+ * as opposed to an <code>AnatDevEntity</code>, which does extend the 
+ * {@link org.bgee.model.Entity Entity} class, and provides method such as 
+ * <code>getId</code>.
+ * 
  * 
  * @author Frederic Bastian
  * @version Bgee 13

@@ -13,7 +13,7 @@ package org.bgee.model.expressiondata.rawdata;
 public interface RawDataHolder {
 	/**
 	 * Indicate whether this <code>RawDataHolder</code> currently holds some data 
-	 * (for instance, an <code>AffymetrixChip</code>, or a <code>RNASeqExp</code>)
+	 * (for instance, an <code>Experiment</code>)
 	 * 
 	 * @return 	<code>true</code> if this <code>RawDataHolder</code> currently holds 
 	 * 			some data.
@@ -21,8 +21,7 @@ public interface RawDataHolder {
     public boolean hasData();
     /**
 	 * Indicate whether this <code>RawDataHolder</code> currently holds some data count
-	 * (for instance, a count of Affymetrix chips used, or a count of RNA-Seq 
-	 * experiment used).
+	 * (for instance, a count of the number of experiments used).
 	 * 
 	 * @return 	<code>true</code> if this <code>RawDataHolder</code> currently holds 
 	 * 			any data count.

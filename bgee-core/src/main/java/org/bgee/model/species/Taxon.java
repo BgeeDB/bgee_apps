@@ -1,6 +1,6 @@
 package org.bgee.model.species;
 
-import org.bgee.model.ontologycommon.OntologyEntity;
+import org.bgee.model.ontologycommon.OntologyElement;
 
 /**
  * Represents a taxon in a taxonomy. A {@link Species} is not considered 
@@ -10,7 +10,7 @@ import org.bgee.model.ontologycommon.OntologyEntity;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class Taxon extends OntologyEntity<Taxon> {
+public class Taxon extends OntologyElement<Taxon> {
 
 	/**
      * Constructor providing the <code>id</code> of this <code>Taxon</code>. 

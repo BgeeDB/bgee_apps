@@ -31,7 +31,7 @@ public class NoExpressionCallFilter extends BasicCallFilter {
 	 * A <code>boolean</code> defining whether <code>NOEXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} children 
-	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>NOEXPRESSION</code> calls 
 	 * in an <code>AnatomicalEntity</code> will take into account absence of expression 
@@ -45,7 +45,7 @@ public class NoExpressionCallFilter extends BasicCallFilter {
 	 * Return the <code>boolean</code> defining whether <code>NOEXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} children 
-	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>NOEXPRESSION</code> calls 
 	 * in an <code>AnatomicalEntity</code> will take into account absence of expression 
@@ -63,7 +63,7 @@ public class NoExpressionCallFilter extends BasicCallFilter {
 	 * Set the <code>boolean</code> defining whether <code>NOEXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} children 
-	 * following {@link org.bgee.model.ontologycommon.OntologyEntity.RelationType 
+	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>NOEXPRESSION</code> calls 
 	 * in an <code>AnatomicalEntity</code> will take into account absence of expression 

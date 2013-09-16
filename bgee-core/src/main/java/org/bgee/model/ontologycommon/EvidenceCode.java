@@ -7,7 +7,7 @@ import org.bgee.model.Entity;
  * to provide information about the evidences supporting an assertion.
  * <p>
  * Although evidence codes are part of an ontology, this class does not extend 
- * {@link OntologyEntity}, as we never use their ontology capabilities in the application, 
+ * {@link OntologyElement}, as we never use their ontology capabilities in the application, 
  * only for retrieving them from a <code>DAO</code> (for instance, "retrieve evidence codes 
  * children of this one").
  * 

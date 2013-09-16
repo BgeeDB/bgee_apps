@@ -9,7 +9,7 @@ import org.bgee.model.Entity;
  * to provide information about the confidence in an assertion.
  * <p>
  * Although confidence information is part of an ontology, this class does not extend 
- * {@link OntologyEntity}, as we never use its ontology capabilities in the application, 
+ * {@link OntologyElement}, as we never use its ontology capabilities in the application, 
  * only for retrieving it from a <code>DAO</code> (for instance, "retrieve confidences  
  * children of this one").
  * 

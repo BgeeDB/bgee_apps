@@ -1,4 +1,4 @@
-package org.bgee.model.anatdev.evolution;
+package org.bgee.model.anatdev.evogrouping;
 
 import java.util.ArrayList;
 import java.util.Collection;

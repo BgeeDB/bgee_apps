@@ -1,8 +1,9 @@
-package org.bgee.model.anatdev.evolution;
+package org.bgee.model.anatdev.evogrouping;
 
 import java.util.Collection;
 import java.util.Set;
 
+import org.bgee.model.anatdev.AnatDevElement;
 import org.bgee.model.anatdev.AnatDevEntity;
 import org.bgee.model.species.Taxon;
 
@@ -61,20 +62,24 @@ import org.bgee.model.species.Taxon;
  * @param <T>	The type of <code>AnatDevEntity</code> that this 
  * 				<code>AnatDevEvoGroup</code> contains.
  */
-public class AnatDevEvoGroup<T extends AnatDevEntity> {
+public class AnatDevEvoGroup<T extends AnatDevEntity> implements AnatDevElement {
 	/**
 	 * Represents the different type of evolutionary transitive relations. 
 	 * They are taken from the 
 	 * <a href='http://www.obofoundry.org/cgi-bin/detail.cgi?id=homology_ontology'>
 	 * HOM ontology</a>, but as long as we do not use more concepts, we will 
 	 * simply used this <code>enum</code>.
+	 * <ul>
+	 * <li><code>HOMOLOGY</code>: historical homology.
+	 * <li><code>FUNCTIONEQUIVALENCE</code>: functional equivalence.
+	 * </ul>
 	 * 
 	 * @author Frederic Bastian
 	 * @version Bgee 13
      * @since Bgee 13
 	 */
     public enum TransRelationType {
-    	HOMOLOGY, HOMOPLASY;
+    	HOMOLOGY, FUNCTIONEQUIVALENCE;
     }
     
     /**

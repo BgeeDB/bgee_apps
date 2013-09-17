@@ -1,5 +1,7 @@
 package org.bgee.model.anatdev.core;
 
+import org.bgee.model.anatdev.AnatElement;
+
 /**
  * An Uberon anatomical entity. 
  * 
@@ -7,7 +9,7 @@ package org.bgee.model.anatdev.core;
  * @version Bgee 13
  * @since Bgee 01
  */
-public class AnatEntity extends AnatDevEntity {
+public class AnatEntity extends AnatDevEntity implements AnatElement {
 	/**
      * Constructor providing the <code>id</code> of this <code>AnatEntity</code>. 
      * This <code>id</code> cannot be <code>null</code>, or empty (""), 

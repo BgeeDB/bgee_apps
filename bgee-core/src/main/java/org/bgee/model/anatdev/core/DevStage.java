@@ -1,5 +1,7 @@
 package org.bgee.model.anatdev.core;
 
+import org.bgee.model.anatdev.DevElement;
+
 /**
  * An Uberon developmental stage. 
  * 
@@ -7,7 +9,7 @@ package org.bgee.model.anatdev.core;
  * @version Bgee 13
  * @since Bgee 01
  */
-public class DevStage extends AnatDevEntity {
+public class DevStage extends AnatDevEntity implements DevElement {
 	/**
      * Constructor providing the <code>id</code> of this <code>DevStage</code>. 
      * This <code>id</code> cannot be <code>null</code>, or empty (""), 

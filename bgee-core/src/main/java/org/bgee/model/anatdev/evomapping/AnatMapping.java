@@ -1,5 +1,7 @@
 package org.bgee.model.anatdev.evomapping;
 
-public class AnatMapping {
+import org.bgee.model.anatdev.AnatElement;
+
+public class AnatMapping extends AnatDevMapping implements AnatElement {
 
 }

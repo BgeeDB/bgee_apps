@@ -1,14 +1,14 @@
 package org.bgee.model.expressiondata.rawdata;
 
-import org.bgee.model.anatdev.core.AnatomicalEntity;
-import org.bgee.model.anatdev.core.Stage;
+import org.bgee.model.anatdev.core.AnatEntity;
+import org.bgee.model.anatdev.core.DevStage;
 
 
 /**
  * Parent class of all classes related to expression data, and mapped to ontologies 
  * (see 'see also' section). 
  * Indeed, expression data are mapped to anatomical and developmental ontologies, 
- * they are then mapped to an <code>Organ</code> and to a <code>Stage</code>. 
+ * they are then mapped to an <code>Organ</code> and to a <code>DevStage</code>. 
  * This class is the parent of the classes that hold this mapping, 
  * and is intended to hold methods and attributes related to this mapping.  
  * <p>
@@ -27,8 +27,8 @@ import org.bgee.model.anatdev.core.Stage;
 public class RawDataAnnotated extends RawData
 {
 
-	private AnatomicalEntity organ;
-	private Stage stage;
+	private AnatEntity organ;
+	private DevStage devStage;
 	
 	/**
 	 * Default constructor. 
@@ -46,7 +46,7 @@ public class RawDataAnnotated extends RawData
 	 * @param org 	the <code>Organ</code> to set.
 	 * @see #organ
 	 */
-	public void setOrgan(AnatomicalEntity org)
+	public void setOrgan(AnatEntity org)
 	{
 		this.organ = org;
 	}
@@ -55,26 +55,26 @@ public class RawDataAnnotated extends RawData
 	 * @return 	the <code>Organ</code> stored in the <code>organ</code> attribute.
 	 * @see #organ
 	 */
-	public AnatomicalEntity getOrgan()
+	public AnatEntity getOrgan()
 	{
 		return this.organ;
 	}
 	/**
-	 * Set the <code>stage</code> attribute.
-	 * @param sta 	the <code>Stage</code> to set.
-	 * @see #stage
+	 * Set the <code>devStage</code> attribute.
+	 * @param sta 	the <code>DevStage</code> to set.
+	 * @see #devStage
 	 */
-	public void setStage(Stage sta)
+	public void setStage(DevStage sta)
 	{
-		this.stage = sta;
+		this.devStage = sta;
 	}
 	/**
-	 * Get the <code>stage</code> attribute.
-	 * @return 	the <code>Stage</code> stored in the <code>stage</code> attribute.
-	 * @see #stage
+	 * Get the <code>devStage</code> attribute.
+	 * @return 	the <code>DevStage</code> stored in the <code>devStage</code> attribute.
+	 * @see #devStage
 	 */
-	public Stage getStage()
+	public DevStage getStage()
 	{
-		return this.stage;
+		return this.devStage;
 	}
 }

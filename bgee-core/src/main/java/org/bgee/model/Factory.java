@@ -1,14 +1,14 @@
 package org.bgee.model;
 
-import org.bgee.model.anatdev.core.StageFactory;
-import org.bgee.model.anatdev.core.StageStaticFactory;
+import org.bgee.model.anatdev.core.DevStageFactory;
+import org.bgee.model.anatdev.core.DevStageStaticFactory;
 import org.bgee.model.dao.api.DAOManager;
 
 /**
  * Parent class of all factories used in Bgee. 
  * Factories are designed to instantiate objects from one specific class. 
  * For instance, the methods of a <code>StageLoader</code> 
- * return a <code>Stage</code>, or a <code>Collection</code> of <code>Stage</code>s.
+ * return a <code>DevStage</code>, or a <code>Collection</code> of <code>DevStage</code>s.
  * <p>
  * This parent class is responsible for obtaining 
  * a {@link org.bgee.model.dao.api.DAOManager DAOManager}, that will then be used 
@@ -62,10 +62,10 @@ public abstract class Factory
     //*********************************************
     //   STATIC METHODS TO OBTAIN FACTORIES
     //*********************************************
-    public static StageFactory getStageFactory() {
+    public static DevStageFactory getStageFactory() {
     	if (BgeeProperties.getBgeeProperties().useStaticFactories()) {
-    		return new StageStaticFactory();
+    		return new DevStageStaticFactory();
     	}
-    	return new StageFactory();
+    	return new DevStageFactory();
     }
 }

@@ -8,7 +8,7 @@ import org.bgee.model.ontologycommon.OntologyElement;
  * and that they can be used as part of an {@link AnatDevOntology}. 
  * <p>
  * This interface can be implemented by two types of classes: classes 
- * corresponding to "real" entities (for instance, {@link AnatomicalEntity}), 
+ * corresponding to "real" entities (for instance, {@link AnatEntity}), 
  * or classes used to *group* real entities (for instance, 
  * {@link org.bgee.model.anatdev.evomapping.AnatDevMapping}). They implement 
  * this common interface because they performed many operations in the exact same way. 

@@ -30,21 +30,21 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * A <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} parents 
+	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in an <code>AnatomicalEntity</code> will take into account expression in its children.
+	 * in an <code>AnatEntity</code> will take into account expression in its children.
 	 */
 	private boolean propagateAnatEntities;
 	/**
 	 * A <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.Stage Stage} parents 
+	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in an <code>Stage</code> will take into account expression in its child stages.
+	 * in an <code>DevStage</code> will take into account expression in its child stages.
 	 */
 	private boolean propagateStages;
 
@@ -53,15 +53,15 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * Return the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} parents 
+	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in an <code>AnatomicalEntity</code> will take into account expression in its children.
+	 * in an <code>AnatEntity</code> will take into account expression in its children.
 	 *
 	 * @return 	a <code>boolean</code>, when <code>true</code>, 
 	 * 			<code>EXPRESSION</code> calls data are propagated to 
-	 * 			<code>AnatomicalEntity</code> parents.
+	 * 			<code>AnatEntity</code> parents.
 	 * @see #setPropagateAnatEntities(boolean)
 	 * @see #isPropagateStages()
 	 * @see #setPropagateStages(boolean)
@@ -72,14 +72,14 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * Set the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} parents 
+	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in an <code>AnatomicalEntity</code> will take into account expression in its children.
+	 * in an <code>AnatEntity</code> will take into account expression in its children.
 	 *
 	 * @param propagate 	a <code>boolean</code> defining the propagation rule 
-	 * 						between <code>AnatomicalEntity</code>s. 
+	 * 						between <code>AnatEntity</code>s. 
 	 * 						If <code>true</code>, data will be propagated to parents.
 	 * @see #isPropagateAnatEntities()
 	 * @see #isPropagateStages()
@@ -94,15 +94,15 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * Return the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.Stage Stage} parents 
+	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in a <code>Stage</code> will take into account expression in its child stages.
+	 * in a <code>DevStage</code> will take into account expression in its child stages.
 	 *
 	 * @return 	a <code>boolean</code>, when <code>true</code>, 
 	 * 			<code>EXPRESSION</code> calls data are propagated to 
-	 * 			<code>Stage</code> parents.
+	 * 			<code>DevStage</code> parents.
 	 * @see #setPropagateStages(boolean)
 	 * @see #isPropagateAnatEntities()
 	 * @see #setPropagateAnatEntities(boolean)
@@ -113,14 +113,14 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * Set the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.Stage Stage} parents 
+	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
 	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in a <code>Stage</code> will take into account expression in its child stages.
+	 * in a <code>DevStage</code> will take into account expression in its child stages.
 	 *
 	 * @param propagate	a <code>boolean</code> defining the propagation rule 
-	 * 					between <code>Stage</code>s. 
+	 * 					between <code>DevStage</code>s. 
 	 * 					If <code>true</code>, data will be propagated to parents.
 	 * @see #isPropagateStages()
 	 * @see #isPropagateAnatEntities()

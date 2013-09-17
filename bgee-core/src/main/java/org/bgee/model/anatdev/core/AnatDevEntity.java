@@ -7,7 +7,7 @@ import org.bgee.model.ontologycommon.BaseOntologyElement;
 /**
  * Parent class of anatomical or developmental {@link Entity}s. Unlike some other 
  * <code>AnatDevElement</code>s, they correspond to "real" entities 
- * (for instance, an {@link AnatomicalEntity}), rather than to entities that were merged 
+ * (for instance, an {@link AnatEntity}), rather than to entities that were merged 
  * (see for instance {@link org.bgee.model.anatdev.evomapping.AnatDevMapping}).
  * <p>
  * For a matter of fact, this is why they are named "entity" (as they extend the class 

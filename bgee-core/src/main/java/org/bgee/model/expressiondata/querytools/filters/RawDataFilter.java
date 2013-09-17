@@ -18,7 +18,7 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary.RNASeqLibraryT
  * This <code>Filter</code> can either be used alone, completely disconnected 
  * from the expression data calls generated (for instance to retrieve the 
  * <code>Gene</code>s present on a specific <code>AffymetrixChip</code>, 
- * or the <code>AnatomicalEntity</code>s studied in a specific <code>RNASeqExp</code>); 
+ * or the <code>AnatEntity</code>s studied in a specific <code>RNASeqExp</code>); 
  * or it can be used as part of a {@link CompositeCallFilter}, 
  * allowing to re-compute expression data calls using only a subset of 
  * the source raw data in Bgee, filtered thanks to a <code>RawDataFilter</code>. 

@@ -42,7 +42,7 @@ public class InSituSpot extends CallSource implements DataAnnotated
     private String organId;
 	private Organ organ;
 	private String stageId;
-	private Stage stage;
+	private DevStage devStage;
 	private String detectionFlag;
 	
 	public InSituSpot()
@@ -159,13 +159,13 @@ public class InSituSpot extends CallSource implements DataAnnotated
 		return this.getIdByEntityOrId(this.getOrgan(), this.organId);
 	}
 	
-	public void setStage(Stage sta)
+	public void setStage(DevStage sta)
 	{
-		this.stage = sta;
+		this.devStage = sta;
 	}
-	public Stage getStage()
+	public DevStage getStage()
 	{
-		return this.stage;
+		return this.devStage;
 	}
 	public void setStageId(String staId)
 	{
@@ -173,12 +173,12 @@ public class InSituSpot extends CallSource implements DataAnnotated
 	}
 	/**
 	 * Returns either the value of <code>stageId</code>, 
-	 * or the of the <code>id</code> of the <code>Stage</code> 
-	 * stored in <code>stage</code>, depending on which one is set. 
+	 * or the of the <code>id</code> of the <code>DevStage</code> 
+	 * stored in <code>devStage</code>, depending on which one is set. 
 	 * 
-	 * @return 	the ID of the stage for which this spot reports expression. 
+	 * @return 	the ID of the devStage for which this spot reports expression. 
 	 * @see 	#stageId
-	 * @see 	#stage
+	 * @see 	#devStage
 	 * @see 	#getIdByEntityOrId(Entity, String)
 	 */
 	public String getStageId()

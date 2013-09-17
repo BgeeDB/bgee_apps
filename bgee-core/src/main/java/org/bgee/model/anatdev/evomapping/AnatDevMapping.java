@@ -20,17 +20,17 @@ import org.bgee.model.species.Taxon;
  * <p>
  * Most of the time, an <code>AnatDevMapping</code> will contain only one 
  * main <code>AnatDevEntity</code> (see {@link #getMainEntites()}); for instance, 
- * the {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} "cranium" 
+ * the {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} "cranium" 
  * has a <code>TransRelationType</code> <code>HOMOLOGY</code>, standing in the 
  * <code>Taxon</code> "Craniata", meaning that "cranium" first evolved in 
  * the taxon "Craniata". This <code>AnatDevMapping</code> would then only contain 
- * one main <code>AnatomicalEntity</code>, "cranium".
+ * one main <code>AnatEntity</code>, "cranium".
  * <p>
  * But as another example, in the case of the homology between "lung" and 
- * "swim bladder", it does not exist any <code>AnatomicalEntity</code> 
+ * "swim bladder", it does not exist any <code>AnatEntity</code> 
  * in the <code>AnatomicalOntology</code>, representing the common ancestral 
  * structure which these organs originated from. So the <code>AnatDevMapping</code> 
- * would contain these two <code>AnatomicalEntity</code>s as main entities.
+ * would contain these two <code>AnatEntity</code>s as main entities.
  * <p>
  * This class also allows to store related <code>AnatDevEntity</code>s (see 
  * {@link #getRelatedEnties()}): these are <code>AnatDevEntity</code>s that should 
@@ -44,7 +44,7 @@ import org.bgee.model.species.Taxon;
  * so that expression comparison could be made on it as well.
  * <p>
  * Of note, as expressed by the generic type, an <code>AnatDevMapping</code> can also 
- * contain {@link org.bgee.model.anatdev.Stage Stage}s. This is because broad stages, 
+ * contain {@link org.bgee.model.anatdev.Stage DevStage}s. This is because broad stages, 
  * such as "embryo", are considered homologous for the sake of performing expression 
  * comparisons in different species using developmental time too. 
  * <p>
@@ -87,12 +87,12 @@ public class AnatDevMapping<T extends AnatDevEntity> implements AnatDevElement {
      * grouped by an evolutionary relation. 
      * <p>
      * Most of the time, it will contain only one <code>AnatDevEntity</code>; 
-     * for instance, the <code>AnatomicalEntity</code> "cranium" has a {@link #relationType} 
+     * for instance, the <code>AnatEntity</code> "cranium" has a {@link #relationType} 
      * <code>HOMOLOGY</code>, standing in the {@link #taxon} "Craniata"; 
      * this <code>Set</code> would then contain only one entry.
      * <p>
      * But as another example, in the case of the homology between "lung" and 
-     * "swim bladder", it does not exist any <code>AnatomicalEntity</code> 
+     * "swim bladder", it does not exist any <code>AnatEntity</code> 
      * in the <code>AnatomicalOntology</code> representing the common ancestral 
      * structure which these organs originated from. So this <code>Set</code> 
      * would then contain these two entries.
@@ -102,7 +102,7 @@ public class AnatDevMapping<T extends AnatDevEntity> implements AnatDevElement {
      * for more details.
      * <p>
      * Of note, as expressed by the generic type, this <code>Set</code> can also 
-     * contain <code>Stage</code>s. This is because broad stages, such as "embryo", 
+     * contain <code>DevStage</code>s. This is because broad stages, such as "embryo", 
      * are considered homologous for the sake of performing expression comparisons 
      * in different species using developmental time too. 
      * 

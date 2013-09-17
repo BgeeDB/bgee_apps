@@ -9,8 +9,8 @@ import org.bgee.model.anatdev.core.AnatDevEntity;
 import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequirement;
 
 /**
- * This class allows to retrieve <code>AnatomicalEntity</code>s and/or 
- * <code>Stage</code>s based on their gene expression data, and on their position 
+ * This class allows to retrieve <code>AnatEntity</code>s and/or 
+ * <code>DevStage</code>s based on their gene expression data, and on their position 
  * in their <code>AnatDevOntology</code>. 
  * 
  * @author Frederic Bastian

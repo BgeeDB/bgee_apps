@@ -1,5 +1,7 @@
 package org.bgee.model.anatdev;
 
+import org.bgee.model.anatdev.core.AnatomicalEntity;
+
 /**
  * An anatomical ontology, holding {@link AnatomicalEntity} elements. 
  * 

@@ -1,4 +1,4 @@
-package org.bgee.model.anatdev;
+package org.bgee.model.anatdev.core;
 
 /**
  * A static {@link StageFactory}, preloading results into memory. 

@@ -1,7 +1,7 @@
 package org.bgee.model;
 
-import org.bgee.model.anatdev.StageFactory;
-import org.bgee.model.anatdev.StageStaticFactory;
+import org.bgee.model.anatdev.core.StageFactory;
+import org.bgee.model.anatdev.core.StageStaticFactory;
 import org.bgee.model.dao.api.DAOManager;
 
 /**

@@ -1,4 +1,4 @@
-package org.bgee.model.anatdev.evogrouping;
+package org.bgee.model.anatdev.evomapping;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,7 +16,7 @@ import org.bgee.model.ontologycommon.EvidenceCode;
  * a {@link org.bgee.model.ontologycommon.Confidence Confidence}, one or several 
  * {@link References}, and a supporting text.
  * <p>
- * It can be used as part of a {@link AnatDevEvoGroup}, that groups <code>AnatDevEntity</code>s 
+ * It can be used as part of a {@link AnatDevMapping}, that groups <code>AnatDevEntity</code>s 
  * related by an evolutionary relation.
  * 
  * @author Frederic Bastian

@@ -1,15 +1,15 @@
-package org.bgee.model.anatdev;
+package org.bgee.model.anatdev.core;
 
 /**
- * An Uberon developmental stage. 
+ * An Uberon anatomical entity. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 01
  */
-public class Stage extends AnatDevEntity {
+public class AnatomicalEntity extends AnatDevEntity {
 	/**
-     * Constructor providing the <code>id</code> of this <code>Stage</code>. 
+     * Constructor providing the <code>id</code> of this <code>AnatomicalEntity</code>. 
      * This <code>id</code> cannot be <code>null</code>, or empty (""), 
      * or whitespaces only, otherwise an <code>IllegalArgumentException</code> 
      * will be thrown. The ID will also be immutable, see {@link #getId()}.
@@ -17,11 +17,11 @@ public class Stage extends AnatDevEntity {
      * Default constructor protected, instances should be obtained using a factory.
      * 
      * @param id	A <code>String</code> representing the ID of 
-     * 				this <code>Stage</code>.
+     * 				this <code>AnatomicalEntity</code>.
      * @throws IllegalArgumentException 	if <code>id</code> is <code>null</code>,  
      * 										empty, or whitespaces only. 
      */
-    protected Stage(String id) {
+    protected AnatomicalEntity(String id) {
     	super(id);
     }
 }

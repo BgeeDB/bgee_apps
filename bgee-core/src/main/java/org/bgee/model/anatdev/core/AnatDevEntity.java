@@ -1,13 +1,14 @@
-package org.bgee.model.anatdev;
+package org.bgee.model.anatdev.core;
 
 import org.bgee.model.Entity;
+import org.bgee.model.anatdev.AnatDevElement;
 import org.bgee.model.ontologycommon.BaseOntologyElement;
 
 /**
  * Parent class of anatomical or developmental {@link Entity}s. Unlike some other 
  * <code>AnatDevElement</code>s, they correspond to "real" entities 
  * (for instance, an {@link AnatomicalEntity}), rather than to entities that were merged 
- * (see for instance {@link org.bgee.model.anatdev.evogrouping.AnatDevEvoGroup}).
+ * (see for instance {@link org.bgee.model.anatdev.evomapping.AnatDevMapping}).
  * <p>
  * For a matter of fact, this is why they are named "entity" (as they extend the class 
  * <code>Entity</code>), as opposed to <code>AnatDevElement</code>s, which do not 

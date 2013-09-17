@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.anatdev.AnatDevEntity;
+import org.bgee.model.anatdev.core.AnatDevEntity;
 import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequirement;
 
 /**

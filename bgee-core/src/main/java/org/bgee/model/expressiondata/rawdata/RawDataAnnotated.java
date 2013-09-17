@@ -1,7 +1,7 @@
 package org.bgee.model.expressiondata.rawdata;
 
-import org.bgee.model.anatdev.AnatomicalEntity;
-import org.bgee.model.anatdev.Stage;
+import org.bgee.model.anatdev.core.AnatomicalEntity;
+import org.bgee.model.anatdev.core.Stage;
 
 
 /**

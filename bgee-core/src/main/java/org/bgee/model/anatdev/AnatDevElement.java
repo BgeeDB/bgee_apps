@@ -10,17 +10,16 @@ import org.bgee.model.ontologycommon.OntologyElement;
  * This interface can be implemented by two types of classes: classes 
  * corresponding to "real" entities (for instance, {@link AnatomicalEntity}), 
  * or classes used to *group* real entities (for instance, 
- * {@link org.bgee.model.anatdev.evogrouping.AnatDevEvoGroup}). The latter 
- * will most likely delegate implementation to the real underlying grouped entities. 
- * These two types of classes implement this common interface because they are used 
- * in many tools in common (for instance, 
- * {@link org.bgee.model.expressiondata.querytools.AnatDevExpressionQuery}).
+ * {@link org.bgee.model.anatdev.evomapping.AnatDevMapping}). They implement 
+ * this common interface because they performed many operations in the exact same way. 
+ * But they cannot simply inherit from a same class, the inheritance graph 
+ * is too complex. Also, some operations are implemented slightly differently.
  * <p>
  * For a matter of fact, this class is named an "element", because it does not specify 
- * methods such as <code>getId</code> (because merged elements will not have any really), 
+ * methods such as <code>getName</code> (because merged elements will not have any), 
  * as opposed to an <code>AnatDevEntity</code>, which does extend the 
  * {@link org.bgee.model.Entity Entity} class, and provides method such as 
- * <code>getId</code>.
+ * <code>getName</code>.
  * 
  * 
  * @author Frederic Bastian

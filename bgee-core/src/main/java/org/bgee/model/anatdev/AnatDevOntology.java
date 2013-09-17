@@ -1,5 +1,6 @@
 package org.bgee.model.anatdev;
 
+import org.bgee.model.anatdev.core.AnatDevEntity;
 import org.bgee.model.ontologycommon.Ontology;
 
 /**

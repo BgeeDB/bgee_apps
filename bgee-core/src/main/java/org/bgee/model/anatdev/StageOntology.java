@@ -1,5 +1,7 @@
 package org.bgee.model.anatdev;
 
+import org.bgee.model.anatdev.core.Stage;
+
 /**
  * A developmental stage ontology, holding {@link Stage} elements. 
  * 

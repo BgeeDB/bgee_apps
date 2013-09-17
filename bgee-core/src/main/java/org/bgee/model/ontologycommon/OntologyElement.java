@@ -10,7 +10,7 @@ package org.bgee.model.ontologycommon;
  * It does not specify methods such as <code>getId</code>, as one could expect 
  * from an element belonging to an ontology. This is because, in Bgee, several 
  * <code>OntologyElement</code>s can sometimes be merged into a single one 
- * (see for instance {@link org.bgee.model.anatdev.evogrouping.AnatDevEvoGroup}). 
+ * (see for instance {@link org.bgee.model.anatdev.evomapping.AnatDevMapping}). 
  * These merged elements would then not correspond to only one ID, but several 
  * (see for instance {@link #registerWithId(String)}). Of note, this is why this interface 
  * is called an <code>OntologyElement</code>, rather than an <code>OntologyEntity</code>, 
@@ -29,7 +29,7 @@ public interface OntologyElement {
 	 * in the <code>Ontology</code> should then return this instance. 
 	 * A same <code>OntologyElement</code> can be registered with several IDs, 
 	 * which is useful when merging several <code>OntologyElement</code>s into one 
-	 * (see for instance {@link org.bgee.model.anatdev.evogrouping.AnatDevEvoGroup}).
+	 * (see for instance {@link org.bgee.model.anatdev.evomapping.AnatDevMapping}).
 	 * 
 	 * @param id	A <code>String</code> to use to register this <code>OntologyElement</code>
 	 * 				to its <code>Ontology</code>.

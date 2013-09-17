@@ -1,10 +1,10 @@
-package org.bgee.model.anatdev.evogrouping;
+package org.bgee.model.anatdev.evomapping;
 
 import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.anatdev.AnatDevElement;
-import org.bgee.model.anatdev.AnatDevEntity;
+import org.bgee.model.anatdev.core.AnatDevEntity;
 import org.bgee.model.species.Taxon;
 
 /**
@@ -18,24 +18,24 @@ import org.bgee.model.species.Taxon;
  * It also allows to store related entities (see below, and 
  * {@link #getRelatedEntities()}).
  * <p>
- * Most of the time, an <code>AnatDevEvoGroup</code> will contain only one 
+ * Most of the time, an <code>AnatDevMapping</code> will contain only one 
  * main <code>AnatDevEntity</code> (see {@link #getMainEntites()}); for instance, 
  * the {@link org.bgee.model.anatdev.AnatomicalEntity AnatomicalEntity} "cranium" 
  * has a <code>TransRelationType</code> <code>HOMOLOGY</code>, standing in the 
  * <code>Taxon</code> "Craniata", meaning that "cranium" first evolved in 
- * the taxon "Craniata". This <code>AnatDevEvoGroup</code> would then only contain 
+ * the taxon "Craniata". This <code>AnatDevMapping</code> would then only contain 
  * one main <code>AnatomicalEntity</code>, "cranium".
  * <p>
  * But as another example, in the case of the homology between "lung" and 
  * "swim bladder", it does not exist any <code>AnatomicalEntity</code> 
  * in the <code>AnatomicalOntology</code>, representing the common ancestral 
- * structure which these organs originated from. So the <code>AnatDevEvoGroup</code> 
+ * structure which these organs originated from. So the <code>AnatDevMapping</code> 
  * would contain these two <code>AnatomicalEntity</code>s as main entities.
  * <p>
  * This class also allows to store related <code>AnatDevEntity</code>s (see 
  * {@link #getRelatedEnties()}): these are <code>AnatDevEntity</code>s that should 
  * be grouped along with the main <code>AnatDevEntity</code>s, but are not annotated 
- * as such. Consider for instance an <code>AnatDevEvoGroup</code> representing 
+ * as such. Consider for instance an <code>AnatDevMapping</code> representing 
  * the homology of "brain" in the taxon "Chordata". The term "future brain" is not 
  * annotated as homologous in "Chordata" in Bgee, only the term "brain" is, but it would 
  * be good to consider it as well. In that case, the "future brain" will be retrieved 
@@ -43,12 +43,12 @@ import org.bgee.model.species.Taxon;
  * relation between "brain" and "future brain", and will be stored as a related entity, 
  * so that expression comparison could be made on it as well.
  * <p>
- * Of note, as expressed by the generic type, an <code>AnatDevEvoGroup</code> can also 
+ * Of note, as expressed by the generic type, an <code>AnatDevMapping</code> can also 
  * contain {@link org.bgee.model.anatdev.Stage Stage}s. This is because broad stages, 
  * such as "embryo", are considered homologous for the sake of performing expression 
  * comparisons in different species using developmental time too. 
  * <p>
- * Also, a fully "formed" <code>AnatDevEvoGroup</code> should always contain a 
+ * Also, a fully "formed" <code>AnatDevMapping</code> should always contain a 
  * <code>TransRelationType</code>, a <code>Taxon</code>, and some 
  * <code>AssertionSupport</code>s. But we leave opened the possibility to only specify 
  * the main <code>AnatDevEntity</code>s, to be able to create "fake" groupings, 
@@ -60,9 +60,9 @@ import org.bgee.model.species.Taxon;
  * @since Bgee 13
  *
  * @param <T>	The type of <code>AnatDevEntity</code> that this 
- * 				<code>AnatDevEvoGroup</code> contains.
+ * 				<code>AnatDevMapping</code> contains.
  */
-public class AnatDevEvoGroup<T extends AnatDevEntity> implements AnatDevElement {
+public class AnatDevMapping<T extends AnatDevEntity> implements AnatDevElement {
 	/**
 	 * Represents the different type of evolutionary transitive relations. 
 	 * They are taken from the 
@@ -115,7 +115,7 @@ public class AnatDevEvoGroup<T extends AnatDevEntity> implements AnatDevElement 
     /**
      * A <code>Set</code> of <code>T</code>, representing the {@link AnatDevEntity}s 
      * that should be grouped along with {@link #mainEntities}, but are not annotated 
-     * as such. Consider for instance an <code>AnatDevEvoGroup</code> representing 
+     * as such. Consider for instance an <code>AnatDevMapping</code> representing 
      * the homology of "brain" in the taxon "Chordata". The term "future brain" is not 
      * annotated as homologous in "Chordata" in Bgee, only the term "brain" is, but it would 
      * be good to consider it as well. In that case, the "future brain" will be retrieved 

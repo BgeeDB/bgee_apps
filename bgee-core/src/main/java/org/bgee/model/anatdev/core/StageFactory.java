@@ -1,4 +1,4 @@
-package org.bgee.model.anatdev;
+package org.bgee.model.anatdev.core;
 
 import org.bgee.model.Factory;
 

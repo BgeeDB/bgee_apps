@@ -33,7 +33,17 @@ public class AnatDevExpressionQuery {
 	}
 	
 	public void launchQuery() {
-		
+		try {
+			
+		} catch (InterruptedException e) {
+			//long-running queries can be interrupted by the TaskManager, so we need 
+			//to be prepared to catch an interruption.
+			//TODO: clean up to do here?
+			//propagate the interruption, keep the interruption status
+			Thread.currentThread().interrupt();
+		} finally {
+			//TODO: clean up to do here?
+		}
 	}
 	
 	private boolean withTopEntities;

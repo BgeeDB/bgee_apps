@@ -97,7 +97,8 @@ public class TaskManager {
 					"a new TaskManager with a Thread already holding a TaskManager"));
 		}
 		
-		log.info("New TaskManager with ID {} registered", id);
+		log.info("New TaskManager with ID {} for Thread {} registered", id, 
+				Thread.currentThread().getId());
 		log.exit();
 	}
 	
@@ -124,9 +125,11 @@ public class TaskManager {
 		return managers.get(id);
 	}
 	
-	//************************************
+	//**********************************************************************
 	// INSTANCE METHODS AND VARIABLES
-	//************************************
+	// ALL ATTRIBUTES ARE EITHER FINAL OR VOLATILE, BECAUSE THEY ARE MEANT 
+	// TO BE READ AND WRITTEN BY DIFFERENT THREADS
+	//**********************************************************************
 	/**
 	 * A <code>long</code> that is the ID of this <code>TaskManager</code>. 
 	 * It is different from the {@link #executor} <code>Thread</code> ID, 
@@ -143,6 +146,45 @@ public class TaskManager {
 	private final Thread executor;
 	
 	/**
+	 * A <code>boolean</code> indicating whether the task is terminated (successfully 
+	 * or not). Whether it was successfully completed is stored in the attribute 
+	 * {@link #successful}.
+	 * @see #successful
+	 */
+	private volatile boolean terminated;
+
+	/**
+	 * A <code>boolean</code> to indicate, if the task is completed, whether it was 
+	 * successfully completed. As long as the task is not completed ({@link 
+	 * #terminated} is <code>false</code>), this attribute is <code>false</code> 
+	 * in any case. 
+	 * @see #taskTerminated
+	 */
+	private volatile boolean successful;
+	
+	/**
+	 * A <code>String</code> representing the name of the task.
+	 */
+	private volatile String taskName;
+	/**
+	 * An <code>int</code> representing the total number of sub-tasks (meaning, 
+	 * "big steps" of the task) that the managed task will involve. 
+	 * @see #currentSubTaskIndex
+	 */
+	private volatile int totalSubTaskCount;
+	/**
+	 * An <code>int</code> that is the index of the current sub-task 
+	 * (see {@link #totalSubTaskCount}). First sub-task has an index of 0.
+	 * @see #totalSubTaskCount
+	 */
+	private volatile int currentSubTaskIndex;
+	/**
+	 * A <code>String</code> representing the title of the current sub-task 
+	 * (meaning, of the current "big step" in the task process)
+	 */
+	private volatile String currentSubTaskName;
+	
+	/**
 	 * Constructor private, instances should be obtained using 
 	 * {@link #getTaskManager()} or {@link #getTaskManager(long)}, after having called 
 	 * {@link #registerTaskManager(long)}.
@@ -151,10 +193,137 @@ public class TaskManager {
 	 * 							<code>TaskManager</code> will be associated with.
 	 */
 	private TaskManager(long id) {
-		this.id = id;
+		this.id       = id;
 		this.executor = Thread.currentThread();
+		
+		this.terminated = false;
+		this.successful = false;
+		
+		this.setTaskName("");
+		this.setTotalSubTaskCount(0);
+		this.setCurrentSubTaskIndex(0);
+		this.setCurrentSubTaskName("");
 	}
 	
+
+	/**
+	 * Method called to indicate that the task was completed with success. 
+	 * Following calls to {@link #isTerminated()} and {@link #isSuccessful()} 
+	 * will return <code>true</code>. 
+	 * @see #isTerminated()
+	 * @see #isSuccessful()
+	 */
+	public void taskCompletedWithSuccess() {
+		this.terminated = true;
+		this.successful = true;
+	}
+	/**
+	 * Method called to indicate that the task was terminated, either because of 
+	 * an error, or because it was interrupted. Following calls to 
+	 * {@link #isTerminated()} will return <code>true</code>, and calls to 
+	 * {@link #isSuccessful()} will return <code>false</code>. 
+	 * @see #isTerminated()
+	 * @see #isSuccessful()
+	 */
+	public void taskNotCompleted() {
+		this.terminated = true;
+		this.successful = false;
+	}
+	/**
+	 * @return 	A <code>boolean</code> indicating whether the task is terminated 
+	 * 			(successfully or not). Whether it was successfully completed is 
+	 * 			returned by {@link #isSuccessful()}.
+	 * @see #isSuccessful()
+	 */
+	public boolean isTerminated() {
+		return this.terminated;
+	}
+	/**
+	 * @return 	A <code>boolean</code> to indicate, if the task is completed, 
+	 * 			whether it was successfully completed. As long as the task is not 
+	 * 			completed ({@link #isTerminated()} returns <code>false</code>), 
+	 * 			this method returns <code>false</code> in any case.
+	 * @see #isTerminated()
+	 */
+	public boolean isSuccessful() {
+		return this.successful;
+	}
+	
+	/**
+	 * @return A <code>String</code> representing the name of the task.
+	 * @see #setTaskName(String)
+	 */
+	public String getTaskName() {
+		return taskName;
+	}
+	/**
+	 * @param taskName The <code>String</code> representing the name of the task.
+	 * @see #getTaskName()
+	 */
+	public void setTaskName(String taskName) {
+		this.taskName = taskName;
+	}
+
+	/**
+	 * @return 	An <code>int</code> representing the total number of sub-tasks (meaning, 
+	 * 			"big steps" of the task) that the managed task will involve. 
+	 * @see #getCurrentSubTaskIndex()
+	 * @see #setTotalSubTaskCount(int)
+	 */
+	public int getTotalSubTaskCount() {
+		return totalSubTaskCount;
+	}
+	/**
+	 * @param totalSubTaskCount An <code>int</code> representing the total number 
+	 * 							of sub-tasks (meaning, "big steps" of the task) 
+	 * 							that the managed task will involve. 
+	 * @see #setCurrentSubTaskIndex(int)
+	 * @see #getTotalSubTaskCount()
+	 */
+	public void setTotalSubTaskCount(int totalSubTaskCount) {
+		this.totalSubTaskCount = totalSubTaskCount;
+	}
+
+	/**
+	 * @return 	An <code>int</code> that is the index of the current sub-task 
+	 * 			(see {@link #getTotalSubTaskCount()}). First sub-task has an index of 0.
+	 * @see #getTotalSubTaskCount()
+	 * @see #setCurrentSubTaskIndex(int)
+	 */
+	public int getCurrentSubTaskIndex() {
+		return currentSubTaskIndex;
+	}
+	/**
+	 * @param currentSubTaskIndex 	An <code>int</code> that is the index 
+	 * 								of the current sub-task (see {@link 
+	 * 								#getTotalSubTaskCount()}). First sub-task 
+	 * 								has an index of 0.
+	 * @see #setTotalSubTaskCount(int)
+	 * @see #getCurrentSubTaskIndex()
+	 */
+	public void setCurrentSubTaskIndex(int currentSubTaskIndex) {
+		this.currentSubTaskIndex = currentSubTaskIndex;
+	}
+
+	/**
+	 * @return 	A <code>String</code> representing the title of the current sub-task 
+	 * 			(meaning, of the current "big step" in the task process)
+	 * @see #setCurrentSubTaskName(String)
+	 */
+	public String getCurrentSubTaskName() {
+		return currentSubTaskName;
+	}
+
+	/**
+	 * @param currentSubTaskName 	A <code>String</code> representing the title 
+	 * 								of the current sub-task (meaning, of the current 
+	 * 								"big step" in the task process)
+	 * @see #getCurrentSubTaskName()
+	 */
+	public void setCurrentSubTaskName(String currentSubTaskName) {
+		this.currentSubTaskName = currentSubTaskName;
+	}
+
 	/**
 	 * Interrupt the task associated with this <code>TaskManager</code>. 
 	 * This method first interrupt any running DAO calls requested by 

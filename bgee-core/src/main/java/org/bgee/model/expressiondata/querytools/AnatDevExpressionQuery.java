@@ -28,8 +28,12 @@ public class AnatDevExpressionQuery {
 		ANATOMY, DEVELOPMENT, ANATDEV;
 	}
 	
-	public enum Filering {
+	public enum Filtering {
 		FROMTOP, FROMBOTTOM, NONE;
+	}
+	
+	public void launchQuery() {
+		
 	}
 	
 	private boolean withTopEntities;

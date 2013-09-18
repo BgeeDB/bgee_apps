@@ -367,7 +367,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * <pre>if (DAOManager.hasDAOManager()) {
 	 *     DAOManager.getDAOManager().close();
 	 * }</pre>
-	 * There is a small chance that another thread could interleave to close 
+	 * There is a risk that another thread could interleave to close 
 	 * the <code>DAOManager</code> between the test and the call to <code>close</code>, 
 	 * but it would not have any harmful effect. 
 	 * 
@@ -427,6 +427,22 @@ public abstract class DAOManager implements AutoCloseable
         if (manager != null) {
         	manager.kill();
         }
+        log.exit();
+    }
+    /**
+     * Call {@link #kill()} on the <code>DAOManager</code> currently associated 
+     * with <code>thread</code>.
+     * 
+     * @param thread 	A <code>Thread</code> associated with a <code>DAOManager</code>. 
+     * @see #kill()
+     */
+    /*
+     * This method is used to hide the implementation detail that the ID associated 
+     * to a DAOManager is its holder Thread ID.
+     */
+    public final static void kill(Thread thread) {
+    	log.entry(thread);
+    	DAOManager.kill(thread.getId());
         log.exit();
     }
     

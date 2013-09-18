@@ -14,7 +14,7 @@ import org.bgee.model.gene.Gene;
 
 /**
  * List and allow to validate conditions of gene expression data 
- * on {@link org.bgee.model.anatdev.AnatDevEntity AnatDevEntity}s, 
+ * on {@link org.bgee.model.anatdev.AnatDevElement AnatDevElement}s, 
  * when performing an expression reasoning using an {@link AnatDevExpressionQuery}. 
  * These conditions define which genes should have which types of expression data, 
  * for instance: "Validate anatomical structures where gene A is expressed, 
@@ -27,7 +27,7 @@ import org.bgee.model.gene.Gene;
  * <p>
  * Note that an <code>AnatDevExpressionQuery</code> can use several 
  * <code>AnatDevRequirement</code>s, offering different ways of validating 
- * an <code>AnatDevEntity</code>. 
+ * an <code>AnatDevElement</code>. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -44,15 +44,15 @@ public class AnatDevRequirement {
 	 * <li><code>ALL</code>: all <code>GeneCallRequirement</code>s must be validated.
 	 * <li><code>CONSERVATION</code>: all <code>Gene</code>s part of the 
 	 * <code>GeneCallRequirement</code>s must have the same <code>CallType</code> 
-	 * in a given <code>AnatDevEntity</code> for it to be validated. This allows 
+	 * in a given <code>AnatDevElement</code> for it to be validated. This allows 
 	 * for instance to request for both <code>EXPRESSION</code> and <code>NOEXPRESSION</code> 
-	 * data, but to get only <code>AnatDevEntity</code>s where <code>Gene</code>s 
+	 * data, but to get only <code>AnatDevElement</code>s where <code>Gene</code>s 
 	 * are similarly expressed. 
 	 * <li><code>DIVERGENCE</code>: at least on of the <code>Gene</code>s part of the 
 	 * <code>GeneCallRequirement</code>s must have a <code>CallType</code> different  
-	 * from the other in a given <code>AnatDevEntity</code>, for it to be validated. 
+	 * from the others in a given <code>AnatDevElement</code>, for it to be validated. 
 	 * This allows for instance to request for both <code>EXPRESSION</code> and 
-	 * <code>NOEXPRESSION</code> data, but to get only <code>AnatDevEntity</code>s 
+	 * <code>NOEXPRESSION</code> data, but to get only <code>AnatDevElement</code>s 
 	 * where gene expression is divergent. 
 	 * <li><code>GENETHRESHOLD</code>: the <code>AnatDevRequirement</code> 
 	 * will be validated based on the number of <code>Gene</code>s (defined 
@@ -82,7 +82,7 @@ public class AnatDevRequirement {
 	/**
 	 * A <code>Collection</code> of <code>GeneCallRequirement</code>s 
 	 * defining gene expression data to retrieve and conditions to satisfy 
-	 * for a  <code>AnatDevEntity</code> to be validated, when performing 
+	 * for a  <code>AnatDevElement</code> to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
 	 */
 	private final Collection<GeneCallRequirement> requirements;
@@ -236,7 +236,7 @@ public class AnatDevRequirement {
 	/**
 	 * Get the <code>Collection</code> of <code>GeneCallRequirement</code>s, 
 	 * defining gene expression data to retrieve and conditions to satisfy 
-	 * for a  <code>AnatDevEntity</code> to be validated, when performing 
+	 * for a  <code>AnatDevElement</code> to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
 	 * 
 	 * @return 	the <code>Collection</code> of <code>GeneCallRequirement</code>s
@@ -248,7 +248,7 @@ public class AnatDevRequirement {
 	/**
 	 * Add a <code>GeneCallRequirement</code> to this <code>AnatDevRequirement</code>, 
 	 * defining gene expression data to retrieve and conditions to satisfy 
-	 * for a  <code>AnatDevEntity</code> to be validated, when performing 
+	 * for a  <code>AnatDevElement</code> to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
      * 
 	 * @param requirement	A <code>GeneCallRequirement</code> to be added 
@@ -262,7 +262,7 @@ public class AnatDevRequirement {
 	/**
 	 * Add <code>GeneCallRequirement</code>s to this <code>AnatDevRequirement</code>, 
 	 * defining gene expression data to retrieve and conditions to satisfy 
-	 * for a  <code>AnatDevEntity</code> to be validated, when performing 
+	 * for a  <code>AnatDevElement</code> to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
      * 
 	 * @param requirements	A <code>Collection</code> of <code>GeneCallRequirement</code>s 
@@ -275,18 +275,18 @@ public class AnatDevRequirement {
 	}
 
 	/**
-     * Define custom conditions for an <code>AnatDevEntity</code> 
+     * Define custom conditions for an <code>AnatDevElement</code> 
      * to be validated, regarding its gene expression data, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}. 
      * A <code>GeneCallRequirement</code> is always part of a {@link AnatDevRequirement}, 
-     * listing all the necessary conditions that an <code>AnatDevEntity</code> 
+     * listing all the necessary conditions that an <code>AnatDevElement</code> 
      * must satisfied at the same time to be validated.
      * <p>
      * A <code>GeneCallRequirement</code> lists <code>Gene</code>s, associated to 
      * <code>CallFilter</code>s, to define which <code>Gene</code>s should have 
-     * what kind of expression data for an <code>AnatDevEntity</code> to be validated. 
+     * what kind of expression data for an <code>AnatDevElement</code> to be validated. 
      * For instance, using <code>GeneCallRequirement</code>s, it is possible 
-     * to query for <code>AnatDevEntity</code>s exhibiting expression of a gene A, 
+     * to query for <code>AnatDevElement</code>s exhibiting expression of a gene A, 
      * expression or absence of expression of a gene B, and over-expression of a gene C, 
      * etc.
      * <p>

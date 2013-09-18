@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata.querytools;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
@@ -18,6 +19,13 @@ import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequi
  * @since Bgee 13
  */
 public class AnatDevExpressionQuery extends QueryTool {
+	public enum QueryType {
+		ANATOMY, DEVELOPMENT, ANATDEV;
+	}
+	public enum Filtering {
+		FROMTOP, FROMBOTTOM, NONE;
+	}
+	
 	/**
      * <code>Logger/code> of this class.
      */
@@ -27,19 +35,35 @@ public class AnatDevExpressionQuery extends QueryTool {
     protected Logger getLogger() {
     	return log;
     }
-    
-	public enum QueryType {
-		ANATOMY, DEVELOPMENT, ANATDEV;
+
+    /**
+     * A <code>Collection</code> of {@link AnatDevRequirement}s defining which 
+     * expression data to retrieve for which <code>Gene</code>s, and what are 
+     * the requirements for an <code>AnatDevElement</code> to be validated. 
+     */
+	private final Collection<AnatDevRequirement> requirements;
+	
+	/**
+	 * Default constructor. 
+	 */
+	public AnatDevExpressionQuery() {
+		this.requirements = new ArrayList<AnatDevRequirement>();
 	}
 	
-	public enum Filtering {
-		FROMTOP, FROMBOTTOM, NONE;
-	}
+	//*********************************
+    // QUERY METHODS
+	//*********************************
 	
 	public void launchQuery() {
+		log.entry();
+		//in order to know if the query was successfully completed
+		boolean queryCompleted = false;
+		
 		try {
 			this.startQuery("Querying blabla", 1, "");//TODO
 			
+			
+			queryCompleted = true;
 		} catch (InterruptedException e) {
 			//long-running queries can be interrupted by the TaskManager, so we need 
 			//to be prepared to catch an interruption.
@@ -47,16 +71,63 @@ public class AnatDevExpressionQuery extends QueryTool {
 			//propagate the interruption, keep the interruption status
 			Thread.currentThread().interrupt();
 		} finally {
-			//TODO: clean up to do here?
+			this.endQuery(queryCompleted);
 		}
+		log.exit();
 	}
+	
+	
+	//*********************************
+	// GETTERS AND SETTERS
+	//*********************************
+	
+	/**
+	 * Add an {@link AnatDevRequirement} to the <code>Collection</code> of 
+	 * <code>AnatDevRequirement</code>s defining expression data to retrieve, 
+	 * for which <code>Gene</code>s, and how to validate the <code>AnatDevElement</code> 
+	 * to keep. 
+	 * 
+	 * @param requirement	an <code>AnatDevRequirement</code> to be added to 
+	 * 						this <code>AnatDevExpressionQuery</code>
+	 * @see #getRequirements()
+	 * @see #addAllRequirements(Collection)
+	 */
+	public void addRequirement(AnatDevRequirement requirement) {
+		this.requirements.add(requirement);
+	}
+	/**
+	 * Add a <code>Collection</code> of {@link AnatDevRequirement}s to 
+	 * the <code>Collection</code> of <code>AnatDevRequirement</code>s defining 
+	 * expression data to retrieve, for which <code>Gene</code>s, and how 
+	 * to validate the <code>AnatDevElement</code> to keep. 
+	 * 
+	 * @param requirement	a <code>Collection</code> of <code>AnatDevRequirement</code>s 
+	 * 						to be added to this <code>AnatDevExpressionQuery</code>.
+	 * @see #getRequirements()
+	 * @see #addRequirement(AnatDevRequirement)
+	 */
+	public void addAllRequirements(Collection<AnatDevRequirement> requirements) {
+		this.requirements.addAll(requirements);
+	}
+	/**
+	 * Return a <code>Collection</code> of {@link AnatDevRequirement}s defining which 
+     * expression data to retrieve for which <code>Gene</code>s, and what are 
+     * the requirements for an <code>AnatDevElement</code> to be validated. 
+     * 
+	 * @return	a <code>Collection</code> of <code>AnatDevRequirement</code>s
+	 * @see #addRequirement(AnatDevRequirement)
+	 * @see #addAllRequirements(Collection)
+	 */
+	public Collection<AnatDevRequirement> getRequirements() {
+		return this.requirements;
+	}
+	
 	
 	private boolean reconcileDataTypeCalls;//or: noDataTypeContradiction?
 	private boolean withTopEntities;
 	private int targetNumberTopEntities;
 	private int levelCountToWalk;
 	private Set<AnatDevEntity> rootEntites;
-	private Collection<AnatDevRequirement> requirements;
 	private Set<AnatDevEntity> filteringEntities;
 	private boolean acceptFilteringEntities;
 	

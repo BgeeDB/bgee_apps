@@ -4,7 +4,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.TaskManager;
 
 /**
- * Parent class of all query tools, notably performing task relative 
+ * Parent class of all query tools, notably performing tasks relative 
  * to the {@link org.bgee.model.TaskManager TaskManager}.
  * 
  * @author Frederic Bastian
@@ -19,6 +19,18 @@ public abstract class QueryTool {
 	 * (see {@link org.bgee.model.TaskManager#registerTaskManager(long)}).
 	 */
 	private TaskManager manager;
+	
+	/**
+	 * A <code>String</code> representing the name of the main task of this query 
+	 * (same concept than {@link org.bgee.model.TaskManager#getTaskName()}).
+	 */
+	private String taskName;
+	/**
+	 * A <code>String</code> representing the name of the sub-task currently  
+	 * being performed (same concept than 
+	 * {@link org.bgee.model.TaskManager#getCurrentSubTaskName()}).
+	 */
+	private String currentSubTaskName;
 	
 	/**
 	 * Default constructor.
@@ -47,7 +59,7 @@ public abstract class QueryTool {
     }
     
     /**
-     * Call at the start of a query, by providing the name of the task, 
+     * Called at the start of a query, by providing the name of the task, 
      * and the total number of sub-tasks (meaning, "big steps") that it will involve, 
      * as well as the name of the first sub-task (not mandatory). See {@link 
      * org.bgee.model.TaskManager to get a definition of tasks and sub-tasks}.
@@ -66,6 +78,8 @@ public abstract class QueryTool {
     	//acquire the task manager. If not registered at this point, we will not try 
     	//to acquire it afterwards.
     	this.manager = TaskManager.getTaskManager();
+    	this.taskName = taskName;
+    	this.currentSubTaskName = firstSubTaskName;
     	
     	if (this.getTaskManager() != null) {
     		this.getTaskManager().setTaskName(taskName);
@@ -77,5 +91,61 @@ public abstract class QueryTool {
     			taskName, firstSubTaskName);
     }
     
+    /**
+     * Called when a <code>QueryTool</code> ends its current sub-task
+     * (same concept than {@link org.bgee.model.TaskManager#getCurrentSubTaskName()}), 
+     * to notify a <code>TaskManager</code>, and for logging purpose.
+     */
+    protected void endSubTask() {
+    	//TODO: use a Log4j2 Message. I'm just lazy here
+    	if (this.getLogger().isDebugEnabled()) {
+    		//the memory usage is useful in unit testing using a single Thread
+    		Runtime runTime = Runtime.getRuntime();
+    		this.getLogger().debug(
+    				"Ending sub-task {} - Total memory: {} kb - Free memory: {} kb", 
+    				this.currentSubTaskName, runTime.totalMemory()/1000, 
+    				runTime.freeMemory()/1000);
+    	}
+    }
+    /**
+     * Called when the <code>QueryTool</code> starts its next sub-task
+     * (same concept than {@link org.bgee.model.TaskManager#getCurrentSubTaskName()}), 
+     * to notify a <code>TaskManager</code>, and for logging purpose.
+     * 
+     * @param subTaskName	A <code>String</code> that is the name of the next 
+     * 						sub-task starting.
+     */
+    protected void nextSubTask(String subTaskName) {
+    	if (this.getTaskManager() != null) {
+    		this.getTaskManager().incrementCurrentSubTaskIndex();
+    		this.getTaskManager().setCurrentSubTaskName(subTaskName);
+    	}
+    	this.currentSubTaskName = subTaskName;
+    	
+    	this.getLogger().debug("Starting new sub-task {}", subTaskName);
+    }
     
+    /**
+     * Called when a <code>QueryTool</code> ends its overall task, to notify 
+     * a <code>TaskManager</code>, and for logging purpose. This method should
+     * be called by the <code>QueryTool</code> within a <code>finally</code> block.
+     * 
+     * @param success	<code>true</code> if the task was completed with success, 
+     * 					<code>false</code> if an error occurred or the task was 
+     * 					interrupted. 
+     */
+    protected void endQuery(boolean success) {
+    	if (success) {
+    		this.getLogger().info("Query {} completed with success", this.taskName);
+    		if (this.getTaskManager() != null) {
+    			this.getTaskManager().taskCompletedWithSuccess();
+    		}
+    	} else {
+    		this.getLogger().info("Query {} interrupted or termintated with errors", 
+    				this.taskName);
+    		if (this.getTaskManager() != null) {
+    			this.getTaskManager().taskNotCompleted();
+    		}
+    	}
+    }
 }

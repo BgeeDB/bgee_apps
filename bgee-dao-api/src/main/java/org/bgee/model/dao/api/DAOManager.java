@@ -429,6 +429,22 @@ public abstract class DAOManager implements AutoCloseable
         }
         log.exit();
     }
+    /**
+     * Call {@link #kill()} on the <code>DAOManager</code> currently associated 
+     * with <code>thread</code>.
+     * 
+     * @param thread 	A <code>Thread</code> associated with a <code>DAOManager</code>. 
+     * @see #kill()
+     */
+    /*
+     * This method is used to hide the implementation detail that the ID associated 
+     * to a DAOManager is its holder Thread ID.
+     */
+    public final static void kill(Thread thread) {
+    	log.entry(thread);
+    	DAOManager.kill(thread.getId());
+        log.exit();
+    }
     
     //*****************************************
     //  INSTANCE ATTRIBUTES AND METHODS

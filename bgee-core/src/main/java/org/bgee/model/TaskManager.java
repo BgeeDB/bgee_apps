@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAOManager;
 
 /**
  * This class allows to keep track of the advancement of log-running tasks, 
@@ -155,13 +156,20 @@ public class TaskManager {
 	}
 	
 	/**
-	 * Interrupt the current task. This method calls <code>interrupt</code> 
-	 * on the <code>Thread</code> running the task. It is then the responsibility 
-	 * of the applicative code running the task to deal with the 
-	 * <code>InterruptedException</code>.
+	 * Interrupt the task associated with this <code>TaskManager</code>. 
+	 * This method first interrupt any running DAO calls requested by 
+	 * the <code>Thread</code> running the task, by calling {@link 
+	 * org.bgee.model.dao.api.DAOManager.kill(Thread)}. This method then calls 
+	 * <code>interrupt</code> on the <code>Thread</code> running the task. 
+	 * It is then the responsibility of the applicative code running the task 
+	 * to deal with the <code>InterruptedException</code>.
 	 */
 	public void interrupt() {
-		this.executor.interrupt();
+		try {
+		    DAOManager.kill(this.executor);
+		} finally {
+		    this.executor.interrupt();
+		}
 	}
 	/**
 	 * Release this <code>TaskManager</code> so that no reference to it 

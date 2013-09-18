@@ -173,5 +173,6 @@ public class TaskManager {
     	//an illegal state.
     	managers.remove(this.id);
     	threadIdsToManagers.remove(this.executor.getId());
+    	//this.executor = null;
     }
 }

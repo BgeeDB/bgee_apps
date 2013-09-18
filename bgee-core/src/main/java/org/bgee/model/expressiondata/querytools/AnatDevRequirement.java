@@ -253,7 +253,7 @@ public class AnatDevRequirement {
      * 
 	 * @param requirement	A <code>GeneCallRequirement</code> to be added 
 	 * 						to this <code>AnatDevRequirement</code>.
-	 * @see #addRequirements(Collection)
+	 * @see #addAllRequirements(Collection)
 	 * @see #setValidationType(ValidationType)
 	 */
 	public void addRequirement(GeneCallRequirement requirement) {
@@ -270,7 +270,7 @@ public class AnatDevRequirement {
 	 * @see #addRequirement(GeneCallRequirement)
 	 * @see #setValidationType(ValidationType)
 	 */
-	public void addRequirements(Collection<GeneCallRequirement> requirements) {
+	public void addAllRequirements(Collection<GeneCallRequirement> requirements) {
 		this.requirements.addAll(requirements);
 	}
 

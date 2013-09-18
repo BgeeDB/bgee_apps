@@ -62,6 +62,7 @@ public class AnatDevExpressionQuery extends QueryTool {
 		try {
 			this.startQuery("Querying blabla", 1, "");//TODO
 			
+			this.aggregateCallFilters();
 			
 			queryCompleted = true;
 		} catch (InterruptedException e) {
@@ -74,6 +75,27 @@ public class AnatDevExpressionQuery extends QueryTool {
 			this.endQuery(queryCompleted);
 		}
 		log.exit();
+	}
+	
+	/**
+	 * Retrieves all {@link Call}s required in all <code>AnatDevRequirement</code>s 
+	 * (returned by {@link #getRequirements()}), for all <code>Gene</code>s, 
+	 * and aggregates them. The aim is to be able afterwards to obtain the data 
+	 * from a <code>DAO</code> as easily as possible. This methods: 
+	 * <ul>
+	 * <li>first retrieves all {@link CallFilter}s for all <code>Gene</code>s 
+	 * in all <code>AnatDevRequirement</code>s.
+	 * <li>then tries, for each <code>Gene</code>, to merge as much as possible 
+	 * all its related {@link CallFiler}s.
+	 * <li>finally, tries to merge equivalent <code>CallFiler</code>s of different 
+	 * <code>Gene</code>s, so that a same <code>CallFiler</code> could be associated 
+	 * to several <code>Gene</code>s.
+	 * </ul>  
+	 * After these operations, the query sent to the <code>DAO</code> should be 
+	 * as simplified as possible. 
+	 */
+	private void aggregateCallFilters() {
+		
 	}
 	
 	

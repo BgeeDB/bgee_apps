@@ -48,22 +48,33 @@ public abstract class QueryTool {
     
     /**
      * Call at the start of a query, by providing the name of the task, 
-     * and the total number of sub-tasks (meaning, "big steps") that it will involve. 
+     * and the total number of sub-tasks (meaning, "big steps") that it will involve, 
+     * as well as the name of the first sub-task (not mandatory). See {@link 
+     * org.bgee.model.TaskManager to get a definition of tasks and sub-tasks}.
+     * <p>
      * If a <code>TaskManager</code> is used, it needs to be registered prior to calling 
      * this method (see {@link org.bgee.model.TaskManager#registerTaskManager(long)}). 
      * 
      * @param taskName				a <code>String</code> representing the name of the task.
      * @param totalSubTaskCount		an <code>int</code> defining the total number of sub-tasks 
      * 								(meaning, "big steps") that this task will involve.
+     * @param firstSubTaskName		a <code>String</code> that is the name of the first 
+     * 								sub-task. Can be <code>null</code> or empty.
      */
-    protected void startQuery(String taskName, int totalSubTaskCount) {
-    	//acquire the task manager. It will be tried only once.
+    protected void startQuery(String taskName, int totalSubTaskCount, 
+    		String firstSubTaskName) {
+    	//acquire the task manager. If not registered at this point, we will not try 
+    	//to acquire it afterwards.
     	this.manager = TaskManager.getTaskManager();
+    	
     	if (this.getTaskManager() != null) {
     		this.getTaskManager().setTaskName(taskName);
     		this.getTaskManager().setTotalSubTaskCount(totalSubTaskCount);
+    		this.getTaskManager().setCurrentSubTaskIndex(0);
+    		this.getTaskManager().setCurrentSubTaskName(firstSubTaskName);
     	}
-    	this.getLogger().info("Start of the query: {}", taskName);
+    	this.getLogger().info("Start of the query: {} - first sub-task: {}", 
+    			taskName, firstSubTaskName);
     }
     
     

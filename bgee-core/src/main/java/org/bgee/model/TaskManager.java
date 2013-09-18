@@ -34,7 +34,7 @@ public class TaskManager {
    private final static Logger log = LogManager.getLogger(TaskManager.class.getName());
 	/**
 	 * A <code>ConcurrentMap</code> storing the living <code>TaskManager</code>s 
-	 * associated with the value returned {@link #getId()}. This <code>Map</code> 
+	 * associated with the value returned by {@link #getId()}. This <code>Map</code> 
 	 * is used to retrieve a <code>TaskManager</code> from different <code>Thread</code>s 
 	 * (see {@link #getTaskManager(long)}).
 	 * <p>
@@ -61,22 +61,22 @@ public class TaskManager {
 	/**
 	 * Instantiate a new <code>TaskManager</code> that will hold the caller <code>Thread</code> 
 	 * (so that it can be interrupted from another <code>Thread</code>), 
-	 * and map it to <code>id</code>, so that the <code>Task</code> can then 
+	 * and map it to <code>id</code>, so that the <code>TaskManager</code> can then 
 	 * be retrieved by a call to {@link #getTaskManager(long)}, from any <code>Thread</code>. 
 	 * <p>
 	 * Any following call from the caller <code>Thread</code> to {@link #getTaskManager()} 
 	 * will return the same <code>TaskManager</code> instance, unless {@link #release()} 
 	 * was called on it. 
 	 * <p>
-	 * If the caller <code>Thread</code> was already holding when calling this method, 
-	 * an <code>IllegalStateException</code> is thrown.If there is already a 
+	 * If the caller <code>Thread</code> was already held when calling this method, 
+	 * an <code>IllegalStateException</code> is thrown. If there is already a 
 	 * <code>TaskManager</code> associated with <code>id</code>, 
 	 * an <code>IllegalArgumentException</code> is thrown. 
 	 *  
 	 * @param id	an <code>long</code> that will be the ID of the 
 	 * 				<code>TaskManager</code> associated with the caller <code>Thread</code>.
 	 * @throws IllegalStateException	If the caller <code>Thread</code> is already 
-	 * 									holding a <code>TaskManager</code>.
+	 * 									held by a <code>TaskManager</code>.
 	 * @throws IllegalArgumentException	If there is already a <code>TaskManager</code> 
 	 * 									registered with <code>id</code>.
 	 */
@@ -200,9 +200,10 @@ public class TaskManager {
 		this.successful = false;
 		
 		this.setTaskName("");
-		this.setTotalSubTaskCount(0);
-		this.setCurrentSubTaskIndex(0);
 		this.setCurrentSubTaskName("");
+		//We do not use the setters here, they would throw an IllegalArgumentException
+		this.totalSubTaskCount   = 0;
+		this.currentSubTaskIndex = 0;
 	}
 	
 
@@ -277,10 +278,17 @@ public class TaskManager {
 	 * @param totalSubTaskCount An <code>int</code> representing the total number 
 	 * 							of sub-tasks (meaning, "big steps" of the task) 
 	 * 							that the managed task will involve. 
+	 * @throws IllegalArgumentException	If <code>totalSubTaskCount</code> is not greater 
+	 * 									than 0.
 	 * @see #setCurrentSubTaskIndex(int)
 	 * @see #getTotalSubTaskCount()
 	 */
 	public void setTotalSubTaskCount(int totalSubTaskCount) {
+		if (totalSubTaskCount <= 0) {
+			throw log.throwing(new IllegalArgumentException(
+					"Incorrect value for totalSubTaskCount: " + totalSubTaskCount + 
+					". Should be greater than 0."));
+		}
 		this.totalSubTaskCount = totalSubTaskCount;
 	}
 
@@ -298,11 +306,33 @@ public class TaskManager {
 	 * 								of the current sub-task (see {@link 
 	 * 								#getTotalSubTaskCount()}). First sub-task 
 	 * 								has an index of 0.
+	 * @throws IllegalArgumentException	If <code>currentSubTaskIndex</code> is equal to 
+	 * 									or greater than the value returned by 
+	 * 									{@link #getTotalSubTaskCount()}, or less than 0.
 	 * @see #setTotalSubTaskCount(int)
 	 * @see #getCurrentSubTaskIndex()
 	 */
 	public void setCurrentSubTaskIndex(int currentSubTaskIndex) {
+		if (currentSubTaskIndex < 0 || currentSubTaskIndex >= this.getTotalSubTaskCount()) {
+			throw log.throwing(new IllegalArgumentException(
+					"Incorrect value for currentSubTaskIndex: " + currentSubTaskIndex + 
+					". Should not be negative, nor above or equal to totalSubTaskCount (" + 
+					this.getTotalSubTaskCount() + ")"));
+		}
 		this.currentSubTaskIndex = currentSubTaskIndex;
+	}
+	/**
+	 * Increment by 1 the index of the current sub-task (see {@link 
+	 * #getCurrentSubTaskIndex()}), only if it will not be equal to or greater than 
+	 * the total number of sub-tasks returned by {@link #getTotalSubTaskCount()}.
+	 */
+	public void incrementCurrentSubTaskIndex() {
+		try {
+			this.setCurrentSubTaskIndex(this.getCurrentSubTaskIndex() + 1);
+		} catch (IllegalArgumentException e) {
+			//nothing here, this method only increments the index if it is in the range 
+			//of the total number of sub-tasks, it does not throw any exception
+		}
 	}
 
 	/**

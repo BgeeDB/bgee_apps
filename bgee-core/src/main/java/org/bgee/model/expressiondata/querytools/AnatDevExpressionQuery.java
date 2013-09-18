@@ -17,12 +17,16 @@ import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequi
  * @version Bgee 13
  * @since Bgee 13
  */
-public class AnatDevExpressionQuery {
+public class AnatDevExpressionQuery extends QueryTool {
 	/**
      * <code>Logger/code> of this class.
      */
     private final static Logger log = 
     		LogManager.getLogger(AnatDevExpressionQuery.class.getName());
+    @Override
+    protected Logger getLogger() {
+    	return log;
+    }
     
 	public enum QueryType {
 		ANATOMY, DEVELOPMENT, ANATDEV;
@@ -34,6 +38,7 @@ public class AnatDevExpressionQuery {
 	
 	public void launchQuery() {
 		try {
+			this.startQuery("Querying blabla", 1, "");//TODO
 			
 		} catch (InterruptedException e) {
 			//long-running queries can be interrupted by the TaskManager, so we need 
@@ -46,6 +51,7 @@ public class AnatDevExpressionQuery {
 		}
 	}
 	
+	private boolean reconcileDataTypeCalls;//or: noDataTypeContradiction?
 	private boolean withTopEntities;
 	private int targetNumberTopEntities;
 	private int levelCountToWalk;

@@ -11,7 +11,7 @@ import org.bgee.model.TaskManager;
  * @version Bgee 13
  * @since Bgee 13
  */
-public abstract class QueryTool {
+abstract class QueryTool {
 	
 	/**
 	 * A <code>TaskManager</code> to be notified of the advancement of the query. 

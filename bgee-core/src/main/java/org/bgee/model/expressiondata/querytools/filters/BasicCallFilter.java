@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.querytools.filters;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,6 +78,51 @@ public abstract class BasicCallFilter implements CallFilter {
 	}
 	
 	/**
+	 * Behaves as the method {@link CallFilter#mergeSameGeneCallFilter(CallFilter)}, 
+	 * except that the newly created <code>BasicCallFilter</code> resulting 
+	 * from the merging is provided to this method, rather than being created by it. 
+	 * This is because this abstract class could not instantiate an instance 
+	 * of itself, to return a newly merged <code>BasicCallFilter</code>. 
+	 * <p>
+	 * This method is needed so that child classes do not have to take care 
+	 * of the merging of the attributes held by this class. 
+	 */
+	protected void mergeSameGeneCallFilter(BasicCallFilter callToMerge, 
+			BasicCallFilter newResultingCall) {
+		log.entry(callToMerge, newResultingCall);
+		
+		TO CONTINUE
+		
+		log.exit();
+	}
+	
+	/**
+	 * Defines whether this <code>BasicCallFilter</code> and <code>call</code> can be 
+	 * merged, as far as only the attributes of this abstract class are concerned. 
+	 * This method should be used by subclasses implemented the {@link 
+	 * mergeSameGeneCallFilter(CallFilter)} method, so that they do not need 
+	 * to deal with attributes owned by this class. It means that even if this method 
+	 * returns <code>true</code>, there is no guarantee that the child class 
+	 * will accept the merging, regarding it own attributes. 
+	 * 
+	 * @param call	A <code>BasicCallFilter</code> that is tried to be merged 
+	 * 				with this <code>BasicCallFilter</code>.
+	 * @return		<code>true</code> if they could be merged, only according 
+	 * 				to the attributes of this class. 
+	 */
+	protected boolean canMergeSameGeneCallFilter(BasicCallFilter call) {
+		log.entry(call);
+		if (this.isAllDataTypes() == call.isAllDataTypes()) {
+			return log.exit(true);
+		}
+		return log.exit(false);
+	}
+	
+	//************************************
+	// GETTERS / SETTERS
+	//************************************
+	
+	/**
 	 * Get the <code>CallType</code> defining the type of call to use 
 	 * when retrieving expression data.
 	 * 
@@ -122,7 +168,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * @see #getDataTypesWithQualities()
 	 */
 	public Set<DataType> getDataTypes() {
-		return this.getDataTypesQualities().keySet();
+		return this.referenceCall.getDataTypes();
 	}
 	/**
 	 * Add <code>dataType</code> to the list of data types to use, 
@@ -142,6 +188,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * @see #addDataType(DataType)
 	 * @see #addDataTypes(Collection)
 	 * @see #addDataTypes(Collection, DataQuality)
+	 * @see #addDataTypes(Map)
 	 */
 	public void addDataType(DataType dataType, DataQuality dataQuality) 
 	    throws IllegalArgumentException
@@ -166,6 +213,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * @see #addDataType(DataType, DataQuality)
 	 * @see #addDataTypes(Collection)
 	 * @see #addDataTypes(Collection, DataQuality)
+	 * @see #addDataTypes(Map)
 	 */
 	public void addDataType(DataType dataType) 
 		    throws IllegalArgumentException
@@ -192,6 +240,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * @see #addDataType(DataType)
 	 * @see #addDataType(DataType, DataQuality)
 	 * @see #addDataTypes(Collection, DataQuality)
+	 * @see #addDataTypes(Map)
 	 */
 	public void addDataTypes(Collection<DataType> dataTypes) 
 		    throws IllegalArgumentException
@@ -220,12 +269,42 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * @see #addDataType(DataType)
 	 * @see #addDataType(DataType, DataQuality)
 	 * @see #addDataTypes(Collection)
+	 * @see #addDataTypes(Map)
 	 */
 	public void addDataTypes(Collection<DataType> dataTypes, DataQuality dataQuality) 
 		    throws IllegalArgumentException
 	{
 		log.entry(dataTypes, dataQuality);
 		this.referenceCall.addDataTypes(dataTypes, dataQuality);
+		log.exit();
+	}
+	
+	/**
+	 * Add <code>dataType</code>s to the list of data types to use, associated with
+	 * a <code>dataQuality</code> to define the minimum data quality to use 
+	 * for each of them. 
+	 * <p>
+	 * If one of these <code>DataType</code>s was already set, replace the previous 
+	 * <code>DataQuality</code> value set.
+	 * 
+	 * @param dataTypes 	A <code>Map</code> associating <code>DataType</code>s 
+	 * 						with a <code>dataQuality</code>, to be added to the allowed 
+	 * 						data types.
+	 * @throws IllegalArgumentException If the type of call requested 
+	 * 									(see {@link #getCallType()}), 
+	 * 									and some <code>DataType</code>s added are not compatible ,  
+	 * 									see {@link org.bgee.model.expressiondata.DataParameters#
+	 * 									checkCallTypeDataType(CallType, DataType)}
+	 * @see #addDataType(DataType)
+	 * @see #addDataType(DataType, DataQuality)
+	 * @see #addDataTypes(Collection)
+	 * @see #addDataTypes(Collection, DataQuality)
+	 */
+	public void addDataTypes(Map<DataType, DataQuality> dataTypes) 
+		    throws IllegalArgumentException
+	{
+		log.entry(dataTypes);
+		this.referenceCall.addDataTypes(dataTypes);
 		log.exit();
 	}
 

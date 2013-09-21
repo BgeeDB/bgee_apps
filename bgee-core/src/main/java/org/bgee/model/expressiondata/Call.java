@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -162,6 +163,34 @@ public class Call implements GlobalRawDataHolder {
 		log.entry(dataTypes, dataQuality);
 		for (DataType dataType: dataTypes) {
 			this.addDataType(dataType, dataQuality);
+		}
+		log.exit();
+	}
+	/**
+	 * Add <code>dataTypes</code> to the list of data types that allowed to generate  
+	 * this <code>Call</code>. Each <code>DataType</code> in the <code>Map</code> 
+	 * is associated with a <code>dataQuality</code>, defining the confidence which 
+	 * this <code>Call</code> was generated with, by these data types.
+	 * <p>
+	 * If one of these <code>DataType</code>s was already set, replace the previous 
+	 * <code>DataQuality</code> value set.
+	 * 
+	 * @param dataTypes 	A <code>Map</code> associating <code>DataType</code>s 
+	 * 						with a <code>dataQuality</code>, defining the data that allowed 
+	 * 						to generate this <code>Call</code>.
+	 * @throws IllegalArgumentException If the <code>CallType</code> of this <code>Call</code> 
+	 * 									(returned by {@link #getCallType()}), 
+	 * 									and the <code>DataType</code>s added are not compatible, 
+	 * 									see {@link DataParameters#checkCallTypeDataType(
+	 * 									CallType, DataType)}
+	 * @see #addDataType(DataType, DataQuality)
+	 */
+	public void addDataTypes(Map<DataType, DataQuality> dataTypes) 
+		    throws IllegalArgumentException
+	{
+		log.entry(dataTypes);
+		for (Entry<DataType, DataQuality> entry: dataTypes.entrySet()) {
+			this.addDataType(entry.getKey(), entry.getValue());
 		}
 		log.exit();
 	}

@@ -18,7 +18,7 @@ import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequi
  * @version Bgee 13
  * @since Bgee 13
  */
-public class AnatDevExpressionQuery extends QueryTool {
+public class AnatDevExpressionQuery extends ExpressionQuery {
 	public enum QueryType {
 		ANATOMY, DEVELOPMENT, ANATDEV;
 	}

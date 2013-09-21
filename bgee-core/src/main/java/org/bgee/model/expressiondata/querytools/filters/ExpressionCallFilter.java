@@ -21,13 +21,6 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	private final static Logger log = LogManager.getLogger(ExpressionCallFilter.class.getName());
 
 	/**
-	 * Default constructor. 
-	 */
-	public ExpressionCallFilter() {
-		super(CallType.Expression.EXPRESSED);
-	}
-
-	/**
 	 * A <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
@@ -48,8 +41,44 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	 */
 	private boolean propagateStages;
 
+	/**
+	 * Default constructor. 
+	 */
+	public ExpressionCallFilter() {
+		super(CallType.Expression.EXPRESSED);
+	}
 
+	@Override
+	public CallFilter mergeSameGeneCallFilter(CallFilter callToMerge) {
+		log.entry(callToMerge);
+		//first, determine whether we can merge the CallFilters
+		if (!(callToMerge instanceof ExpressionCallFilter)) {
+			return log.exit(null);
+		}
+		ExpressionCallFilter otherCall = (ExpressionCallFilter) callToMerge;
+		if (!this.canMergeSameGeneCallFilter(otherCall)) {
+			return log.exit(null);
+		}
+		TO CONTINUE
+		
+		//OK, let's proceed to the merging
+		ExpressionCallFilter mergedCall = new ExpressionCallFilter();
+		this.mergeSameGeneCallFilter(otherCall, mergedCall);
+		TO CONTINUE
+		
+		
+		return log.exit();
+	}
+	@Override
+	public CallFilter mergeDifferentGeneCallFilter(CallFilter callToMerge) {
+        log.entry(callToMerge);
+		
+		return log.exit(null);
+	}
 	
+	//************************************
+	//  GETTERS/SETTERS
+	//************************************
 	/**
 	 * Return the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
 	 * should be propagated to 

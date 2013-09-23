@@ -21,6 +21,13 @@ import org.bgee.model.expressiondata.DataParameters.DiffExpressionFactor;
  * @see NoExpressionCallFilter
  * @since Bgee 13
  */
+/*
+* (non-javadoc)
+* If you add attributes to this class, you might need to modify the methods 
+* <code>mergeSameEntityCallFilter</code>, <code>canMergeSameEntityCallFilter</code>, 
+* <code>mergeDiffEntitiesCallFilter</code>, and 
+* <code>canMergeDiffEntitiesCallFilter</code>
+*/
 public class DiffExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * <code>Logger</code> of the class. 

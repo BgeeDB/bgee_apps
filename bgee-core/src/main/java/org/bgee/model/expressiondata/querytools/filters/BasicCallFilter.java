@@ -1,8 +1,8 @@
 package org.bgee.model.expressiondata.querytools.filters;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +15,11 @@ import org.bgee.model.expressiondata.DataParameters.DataType;
 /**
  * A <code>CallFilter</code> specifying conditions to retrieve expression data, 
  * based on the overall expression data calls generated in Bgee. 
+ * 
+ * {@internal If you add attributes to this class, you might need to modify the methods 
+ * <code>mergeSameEntityCallFilter</code>, <code>canMergeSameEntityCallFilter</code>, 
+ * <code>mergeDiffEntitiesCallFilter</code>, 
+ * and <code>canMergeDiffEntitiesCallFilter</code>.}
  * 
  * @author Frederic Bastian
  * @Version Bgee 13
@@ -86,18 +91,64 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * <p>
 	 * This method is needed so that child classes do not have to take care 
 	 * of the merging of the attributes held by this class. 
+	 * <p>
+	 * If <code>callToMerge</code> cannot be merged with this <code>BasicCallFilter</code>, 
+	 * an <code>IllegalArgumentException</code> is thrown. This verification is achieved 
+	 * by calling {@link #canMergeSameEntityCallFilter(BasicCallFilter)}. This latter 
+	 * method only checks compatibility for attributes held by this abstract class.
+	 * A child class can still decide that the merging is not possible, according 
+	 * to its own attributes. 
+	 * 
+	 * @throws IllegalArgumentException	If <code>callToMerge</code> should not be merged 
+	 * 									with this <code>BasicCallFilter</code>.
 	 */
-	protected void mergeSameGeneCallFilter(BasicCallFilter callToMerge, 
-			BasicCallFilter newResultingCall) {
+	protected void mergeSameEntityCallFilter(BasicCallFilter callToMerge, 
+			BasicCallFilter newResultingCall) throws IllegalArgumentException {
 		log.entry(callToMerge, newResultingCall);
 		
-		TO CONTINUE
+		if (!this.canMergeSameEntityCallFilter(callToMerge)) {
+			throw log.throwing(new IllegalArgumentException("The BasicCallFilter provided " +
+					"to be merged is not compatible with the main BasicCallFilter that " +
+					"this method was called on. Merging not possible."));
+		}
+		
+		//this value could just be set, as no merging is possible if these values 
+		//are different. But we let this decision to the method canMergeSameEntityCallFilter, 
+		//and we just perform the merging blindly here
+		newResultingCall.setAllDataTypes(
+				(this.isAllDataTypes() || callToMerge.isAllDataTypes()));
+		
+		//here starts the actual merging
+		for (Entry<DataType, DataQuality> entry: this.getDataTypesQualities().entrySet()) {
+			DataQuality qualToMerge = callToMerge.getDataTypesQualities().get(entry.getKey());
+			
+			if (qualToMerge == null) {
+				//if not present in callToMerge, just add the entry to newResutingCall
+				newResultingCall.addDataType(entry.getKey(), entry.getValue());
+			} else {
+				//otherwise, merge the qualities by keeping the lowest one
+				DataQuality mergedQual = qualToMerge;
+				if (entry.getValue().compareTo(qualToMerge) <= 0) {
+					mergedQual = entry.getValue();
+				} 
+				newResultingCall.addDataType(entry.getKey(), mergedQual);
+			}
+		}
+		//now we add the data types present in callToMerge but not present 
+		//in this BasicCallFilter.
+		for (Entry<DataType, DataQuality> entry: 
+			    callToMerge.getDataTypesQualities().entrySet()) {
+			if (!this.getDataTypes().contains(entry.getKey())) {
+				newResultingCall.addDataType(entry.getKey(), entry.getValue());
+			}
+		}
+		
 		
 		log.exit();
 	}
 	
 	/**
-	 * Defines whether this <code>BasicCallFilter</code> and <code>call</code> can be 
+	 * Defines whether this <code>BasicCallFilter</code> and <code>callToMerge</code> can be 
 	 * merged, as far as only the attributes of this abstract class are concerned. 
 	 * This method should be used by subclasses implemented the {@link 
 	 * mergeSameGeneCallFilter(CallFilter)} method, so that they do not need 
@@ -105,17 +156,17 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * returns <code>true</code>, there is no guarantee that the child class 
 	 * will accept the merging, regarding it own attributes. 
 	 * 
-	 * @param call	A <code>BasicCallFilter</code> that is tried to be merged 
-	 * 				with this <code>BasicCallFilter</code>.
+	 * @param callToMerge	A <code>BasicCallFilter</code> that is tried to be merged 
+	 * 						with this <code>BasicCallFilter</code>.
 	 * @return		<code>true</code> if they could be merged, only according 
 	 * 				to the attributes of this class. 
 	 */
-	protected boolean canMergeSameGeneCallFilter(BasicCallFilter call) {
-		log.entry(call);
-		if (this.isAllDataTypes() == call.isAllDataTypes()) {
-			return log.exit(true);
+	protected boolean canMergeSameEntityCallFilter(BasicCallFilter callToMerge) {
+		log.entry(callToMerge);
+		if (this.isAllDataTypes() != callToMerge.isAllDataTypes()) {
+			return log.exit(false);
 		}
-		return log.exit(false);
+		return log.exit(true);
 	}
 	
 	//************************************

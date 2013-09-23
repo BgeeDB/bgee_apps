@@ -123,6 +123,9 @@ public class DataParameters {
      * @since Bgee 13
      */
     public enum DataQuality {
+    	//WARNING: these Enums must be declared in order, from the lowest quality 
+    	//to the highest quality. This is because the compareTo implementation 
+    	//of the Enum class will be used.
     	LOW, HIGH;
     }
     

@@ -8,6 +8,11 @@ import org.bgee.model.expressiondata.DataParameters.CallType;
  * A <code>BasicCallFilter</code> for <code>EXPRESSED</code> call type. 
  * Provides methods specific to this call type. 
  * 
+ * {@internal If you add attributes to this class, you might need to modify the methods 
+ * <code>mergeSameEntityCallFilter</code>, <code>canMergeSameEntityCallFilter</code>, 
+ * <code>mergeDiffEntitiesCallFilter</code>, and 
+ * <code>canMergeDiffEntitiesCallFilter</code>.}
+ * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @see NoExpressionCallFilter
@@ -49,28 +54,67 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	}
 
 	@Override
-	public CallFilter mergeSameGeneCallFilter(CallFilter callToMerge) {
+	public CallFilter mergeSameEntityCallFilter(CallFilter callToMerge) {
 		log.entry(callToMerge);
 		//first, determine whether we can merge the CallFilters
 		if (!(callToMerge instanceof ExpressionCallFilter)) {
 			return log.exit(null);
 		}
 		ExpressionCallFilter otherCall = (ExpressionCallFilter) callToMerge;
-		if (!this.canMergeSameGeneCallFilter(otherCall)) {
+		if (!this.canMergeSameEntityCallFilter(otherCall)) {
 			return log.exit(null);
 		}
-		TO CONTINUE
 		
 		//OK, let's proceed to the merging
 		ExpressionCallFilter mergedCall = new ExpressionCallFilter();
-		this.mergeSameGeneCallFilter(otherCall, mergedCall);
-		TO CONTINUE
+		//merge attributes of superclass
+		this.mergeSameEntityCallFilter(otherCall, mergedCall);
+		//merge attributes of this class (actually, these attributes should be the same 
+		//to merge the ExpressionCallFilters, but we let this decision 
+		//to the method canMergeSameEntityCallFilter, and blindly perform the merging here)
+		mergedCall.setPropagateAnatEntities(
+				(this.isPropagateAnatEntities() || otherCall.isPropagateAnatEntities()));
+		mergedCall.setPropagateStages(
+				(this.isPropagateStages() || otherCall.isPropagateStages()));
 		
+		return log.exit(mergedCall);
+	}
+	/**
+	 * Checks whether this <code>ExpressionCallFilter</code> and <code>callToMerge</code>
+	 * are compatible can be merged, provided that they are related to 
+	 * a same <code>Entity</code>. 
+	 * 
+	 * @param callToMerge	An <code>ExpressionCallFilter</code> that is tried to be merged 
+	 * 						with this <code>ExpressionCallFilter</code>.
+	 * @return		<code>true</code> if they could be merged. 
+	 */
+	private boolean canMergeSameEntityCallFilter(ExpressionCallFilter callToMerge) {
+		log.entry(callToMerge);
+		if (!super.canMergeSameEntityCallFilter(callToMerge)) {
+			return log.exit(false);
+		}
 		
-		return log.exit();
+		//ExpressionCallFilters with different expression propagation rules 
+		//are not merged, because expression calls using propagation would use 
+		//the best data qualities over all sub-structures/sub-stages. As a result, 
+		//it would not be possible to retrieve data qualities when no propagation is used, 
+		//and so, not possible to check for the data quality conditions held 
+		//by an ExpressionCallFilter not using propagation.
+		//An exception is that, if an ExpressionCallFilter not using propagation 
+		//was not requesting any specific quality, it could be merged with 
+		//an ExpressionCallFilter using propagation. But it would be a nightmare to deal 
+		//with all these specific cases in other parts of the code...
+		//So, we simply do not merge in that case.
+		if (this.isPropagateAnatEntities() != callToMerge.isPropagateAnatEntities() || 
+			    this.isPropagateStages() != callToMerge.isPropagateStages()) {
+			return log.exit(false);
+		}
+		
+		return log.exit(true);
+		
 	}
 	@Override
-	public CallFilter mergeDifferentGeneCallFilter(CallFilter callToMerge) {
+	public CallFilter mergeDiffEntitiesCallFilter(CallFilter callToMerge) {
         log.entry(callToMerge);
 		
 		return log.exit(null);

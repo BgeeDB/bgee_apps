@@ -62,7 +62,27 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 		try {
 			this.startQuery("Querying blabla", 1, "");//TODO
 			
-			this.aggregateCallFilters();
+			//calls need to be manually propagated. 
+			//otherwise, it would not be possible, for instance, to know the exact quality 
+			//of a call without propagation (global expression calls retrieved from the database 
+			//would only stored the best quality retrieved from any substructure). 
+			//So if there is a GeneCallRequirement requesting high quality call without propagation, 
+			//and another GeneCallRequirement requesting calls with propagation, we might infer 
+			//that a non-propagated call was high quality, while it was not.
+			//If all GeneCallRequirements were requesting propagation, or all of them requesting 
+			//absence of propagation, then we could manage. But we also have the same problem
+			//with stages, and moreover, there is no global expression table for stages. 
+			//So, we just propagate manually expression calls in every cases. 
+			
+			//As a conclusion, you should keep in mind that the global expression tables 
+			//generated in the Bgee database are useful to retrieve sets of Genes 
+			//with specific expression patterns, not to retrieve expression patterns 
+			//of a given set of Genes. 
+			
+			//so we need to reset the propagation parameter of the CallFilters to query the calls, 
+			//then propagate manually when needed. 
+			
+			this.analyzeRequirements();
 			
 			queryCompleted = true;
 		} catch (InterruptedException e) {
@@ -75,6 +95,10 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 			this.endQuery(queryCompleted);
 		}
 		log.exit();
+	}
+	
+	private void analyzeRequirements() {
+		
 	}
 	
 	/**

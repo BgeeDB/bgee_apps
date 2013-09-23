@@ -128,12 +128,16 @@ public abstract class BasicCallFilter implements CallFilter {
 					"this method was called on. Merging not possible."));
 		}
 		
-		//here we just perform the merging blindly, it is the responsibility of 
+		//now we just perform the merging blindly, it is the responsibility of 
 		//the method canMerge to decide whether it is appropriate
-		newResultingCall.setAllDataTypes(
-				(this.isAllDataTypes() || callToMerge.isAllDataTypes()));
 		
-		//here starts the actual merging
+		//merge allDataTypes. When allDataTypes is true, we apply it to the merged filter 
+		//only if there is more than 1 data type set, otherwise it is equivalent to false.
+		if ((this.isAllDataTypes() && this.getDataTypes().size() != 1) || 
+				(callToMerge.isAllDataTypes() && callToMerge.getDataTypes().size() != 1)) {
+		    newResultingCall.setAllDataTypes(true);
+		}
+		//merge data types and qualities 
 		for (Entry<DataType, DataQuality> entry: this.getDataTypesQualities().entrySet()) {
 			DataQuality qualToMerge = callToMerge.getDataTypesQualities().get(entry.getKey());
 			
@@ -156,8 +160,7 @@ public abstract class BasicCallFilter implements CallFilter {
 			if (!this.getDataTypes().contains(entry.getKey())) {
 				newResultingCall.addDataType(entry.getKey(), entry.getValue());
 			}
-		}
-		
+		}	
 		
 		log.exit();
 	}
@@ -173,7 +176,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * <p>
 	 * This method should be used by subclasses implementing the methods 
 	 * {@link CallFilter#mergeSameEntityCallFilter(CallFilter)} and {@link 
-	 * CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}, so torhat they do not need 
+	 * CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}, so that they do not need 
 	 * to deal with attributes owned by this class. It means that even if this method 
 	 * returns <code>true</code>, there is no guarantee that the child class 
 	 * will accept the merging, regarding it own attributes. 
@@ -192,16 +195,23 @@ public abstract class BasicCallFilter implements CallFilter {
 			//if the BasicCallFilter having isAllDataTypes returning true 
 			//have only one data type, then it is equivalent to having 
 			//isAllDataTypes returning false
-			if (! ((this.isAllDataTypes() && this.getDataTypes().size() == 1) || 
-				(callToMerge.isAllDataTypes() && callToMerge.getDataTypes().size() == 1))) {
+			if ((this.isAllDataTypes() && this.getDataTypes().size() != 1) || 
+				(callToMerge.isAllDataTypes() && callToMerge.getDataTypes().size() != 1)) {
 			    return log.exit(false);
 			}
-		} else if (this.isAllDataTypes() && !this.haveSameDataTypesQualities(callToMerge)) {
+		} else if (this.isAllDataTypes()) {
 			//if both this BasicCallFilter and callToMerge have isAllDataTypes 
-			//returning true, then they should have exactly the same data types and qualities
-			return log.exit(false);
+			//returning true, either they both have only one data type (which is 
+			//equivalent to having isAllDataTypes returning false), 
+			//or they should have exactly the same data types and qualities
+			if ((this.getDataTypes().size() != 1 || callToMerge.getDataTypes().size() != 1) && 
+					!this.haveSameDataTypesQualities(callToMerge)) {
+			    return log.exit(false);
+			}
 		}
-		//if they are BasicCallFilters related to a same Entity, we can stop here
+		//if they are BasicCallFilters related to a same Entity, we can stop here, 
+		//it is possible to merge BasicCallFilters with different data types and qualities 
+		//in this case.
 		if (sameEntity) {
 		    return log.exit(true);
 		}

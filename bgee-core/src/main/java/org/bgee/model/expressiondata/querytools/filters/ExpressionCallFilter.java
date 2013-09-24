@@ -90,11 +90,12 @@ public class ExpressionCallFilter extends BasicCallFilter {
         }
 
         //OK, let's proceed to the merging
-        ExpressionCallFilter otherCall = (ExpressionCallFilter) callToMerge;
-        ExpressionCallFilter mergedCall = new ExpressionCallFilter();
         //we blindly perform the merging, it is the responsibility of the method 
         //canMerge to determine whether it is appropriate.
+        ExpressionCallFilter otherCall = (ExpressionCallFilter) callToMerge;
+        ExpressionCallFilter mergedCall = new ExpressionCallFilter();
         super.merge(otherCall, mergedCall, sameEntity);
+        
         mergedCall.setPropagateAnatEntities(
         		(this.isPropagateAnatEntities() || otherCall.isPropagateAnatEntities()));
         mergedCall.setPropagateStages(

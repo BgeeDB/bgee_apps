@@ -23,9 +23,7 @@ import org.bgee.model.expressiondata.DataParameters.DataType;
 /*
  * (non-javadoc)
  * If you add attributes to this class, you might need to modify the methods 
- * <code>mergeSameEntityCallFilter</code>, <code>canMergeSameEntityCallFilter</code>, 
- * <code>mergeDiffEntitiesCallFilter</code>, 
- * and <code>canMergeDiffEntitiesCallFilter</code>
+ * <code>merge</code> and <code>canMerge</code>.
  */
 public abstract class BasicCallFilter implements CallFilter {
 	/**
@@ -84,6 +82,37 @@ public abstract class BasicCallFilter implements CallFilter {
 		log.exit();
 	}
 	
+	@Override
+    public CallFilter mergeSameEntityCallFilter(CallFilter callToMerge) {
+        log.entry(callToMerge);
+        return log.exit(this.merge(callToMerge, true));
+    }
+    @Override
+    public CallFilter mergeDiffEntitiesCallFilter(CallFilter callToMerge) {
+        log.entry(callToMerge);
+        return log.exit(this.merge(callToMerge, false));
+    }
+    
+    /**
+     * Merges this <code>BasicCallFilter</code> with <code>callToMerge</code>, 
+     * and returns the resulting merged new <code>BasicCallFilter</code>.
+     * If <code>callToMerge</code> cannot be merged with this <code>BasicCallFilter</code>, 
+     * this method returns <code>null</code>
+     * <p>
+     * If <code>sameEntity</code> is <code>true</code>, this method should correspond to 
+     * {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}, otherwise, to 
+     * {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}.
+     * 
+     * @param callToMerge       a <code>CallFilter</code> to be merged with this one.
+     * @param sameEntity        a <code>boolean</code> defining whether 
+     *                          <code>callToMerge</code> and this <code>BasicCallFilter</code>
+     *                          are related to a same <code>Entity</code>, or different ones. 
+     * @return  A newly instantiated <code>BasicCallFilter</code> corresponding to 
+     *          the merging of this <code>BasicCallFilter</code> and of 
+     *          <code>callToMerge</code>, or <code>null</code> if they could not be merged. 
+     */
+    protected abstract BasicCallFilter merge(CallFilter callToMerge, boolean sameEntity);
+    
 	/**
 	 * Merges attributes of this <code>BasicCallFilter</code> with <code>callToMerge</code>, 
 	 * by storing the merged attributes into <code>newResultingCall</code>. 

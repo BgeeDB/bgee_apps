@@ -17,22 +17,13 @@ import org.bgee.model.expressiondata.DataParameters.CallType;
 /*
 * (non-javadoc)
 * If you add attributes to this class, you might need to modify the methods 
-* <code>mergeSameEntityCallFilter</code>, <code>canMergeSameEntityCallFilter</code>, 
-* <code>mergeDiffEntitiesCallFilter</code>, and 
-* <code>canMergeDiffEntitiesCallFilter</code>
+ * <code>merge</code> and <code>canMerge</code>.
 */
 public class NoExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * <code>Logger</code> of the class. 
 	 */
 	private final static Logger log = LogManager.getLogger(NoExpressionCallFilter.class.getName());
-
-	/**
-	 * Default constructor. 
-	 */
-	public NoExpressionCallFilter() {
-		super(CallType.Expression.NOTEXPRESSED);
-	}
 
 	/**
 	 * A <code>boolean</code> defining whether <code>NOEXPRESSION</code> calls 
@@ -46,6 +37,86 @@ public class NoExpressionCallFilter extends BasicCallFilter {
 	 */
 	private boolean propagateAnatEntities;
 
+    /**
+     * Default constructor. 
+     */
+    public NoExpressionCallFilter() {
+        super(CallType.Expression.NOTEXPRESSED);
+    }
+
+    /**
+     * @see #canMerge(CallFilter, boolean)
+     */
+    @Override
+    protected NoExpressionCallFilter merge(CallFilter callToMerge, boolean sameEntity) {
+        log.entry(callToMerge, sameEntity);
+        //first, determine whether we can merge the CallFilters
+        if (!this.canMerge(callToMerge, sameEntity)) {
+            return log.exit(null);
+        }
+
+        //OK, let's proceed to the merging
+        //we blindly perform the merging, it is the responsibility of the method 
+        //canMerge to determine whether it is appropriate.
+        NoExpressionCallFilter otherCall  = (NoExpressionCallFilter) callToMerge;
+        NoExpressionCallFilter mergedCall = new NoExpressionCallFilter();
+        super.merge(otherCall, mergedCall, sameEntity);
+        
+        mergedCall.setPropagateAnatEntities(
+                (this.isPropagateAnatEntities() || otherCall.isPropagateAnatEntities()));
+
+        return log.exit(mergedCall);
+    }
+
+    /**
+     * Determines whether this <code>NoExpressionCallFilter</code> and 
+     * <code>callToMerge</code> can be merged. 
+     * <p>
+     * If <code>sameEntity</code> is <code>true</code>, it means that <code>callToMerge</code> 
+     * and this <code>NoExpressionCallFilter</code> are related to a same <code>Entity</code> 
+     * (see {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}), otherwise, to different 
+     * <code>Entity</code>s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
+     * 
+     * @param callToMerge   A <code>CallFilter</code> that is tried to be merged 
+     *                      with this <code>NoExpressionCallFilter</code>.
+     * @param sameEntity    a <code>boolean</code> defining whether <code>callToMerge</code> 
+     *                      and this <code>NoExpressionCallFilter</code> are related to a same 
+     *                      <code>Entity</code>, or different ones. 
+     * @return              <code>true</code> if they could be merged. 
+     */
+    private boolean canMerge(CallFilter callToMerge, boolean sameEntity) {
+        log.entry(callToMerge, sameEntity);
+        
+        if (!(callToMerge instanceof NoExpressionCallFilter)) {
+            return log.exit(false);
+        }
+        NoExpressionCallFilter otherCall = (NoExpressionCallFilter) callToMerge;
+        
+        if (!super.canMerge(otherCall, sameEntity)) {
+            return log.exit(false);
+        }
+        
+        //NoExpressionCallFilters with different expression propagation rules 
+        //are not merged, because no-expression calls using propagation would use 
+        //the best data qualities over all parent structures. As a result, 
+        //it would not be possible to retrieve data qualities when no propagation is used, 
+        //and so, not possible to check for the data quality conditions held 
+        //by an NoExpressionCallFilter not using propagation.
+        //An exception is that, if an NoExpressionCallFilter not using propagation 
+        //was not requesting any specific quality, it could be merged with 
+        //a NoExpressionCallFilter using propagation. But it would be a nightmare to deal 
+        //with all these specific cases in other parts of the code...
+        //So, we simply do not merge in that case.
+        if (this.isPropagateAnatEntities() != otherCall.isPropagateAnatEntities()) {
+            return log.exit(false);
+        }
+        
+        return log.exit(true);
+    }
+    
+    //************************************
+    //  GETTERS/SETTERS
+    //************************************
 
 	
 	/**

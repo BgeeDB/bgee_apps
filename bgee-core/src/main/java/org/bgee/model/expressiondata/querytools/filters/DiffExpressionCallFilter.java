@@ -24,15 +24,14 @@ import org.bgee.model.expressiondata.DataParameters.DiffExpressionFactor;
 /*
 * (non-javadoc)
 * If you add attributes to this class, you might need to modify the methods 
-* <code>mergeSameEntityCallFilter</code>, <code>canMergeSameEntityCallFilter</code>, 
-* <code>mergeDiffEntitiesCallFilter</code>, and 
-* <code>canMergeDiffEntitiesCallFilter</code>
+ * <code>merge</code> and <code>canMerge</code>.
 */
 public class DiffExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * <code>Logger</code> of the class. 
 	 */
-	private final static Logger log = LogManager.getLogger(DiffExpressionCallFilter.class.getName());
+	private final static Logger log = 
+	        LogManager.getLogger(DiffExpressionCallFilter.class.getName());
 
     /**
      * An <code>int</code> allowing to filter differential expression calls 
@@ -87,8 +86,97 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
     	this.factor = factor;
     	this.setConditionCount(conditionCount);
     	log.exit();
+    }/**
+     * Instantiate a <code>DiffExpressionCallFilter</code> for the given 
+     * <code>callType</code> and <code>factor</code>, with <code>conditionCount</code> 
+     * as the minimum number of conditions compared requested (see 
+     * {@link #getConditionCount()} for important explanations).
+     * 
+     * @param callType  A <code>DiffExpression</code> <code>CallType</code> defining 
+     *                  the type of differential expression calls to use. 
+     * @param factor    A <code>DiffExpressionFactor</code> specifying 
+     *                  the experimental factor of the differential expression 
+     *                  analyses that should be used.
+     * @param conditionCount    An <code>int</code> allowing to filter differential 
+     *                          expression calls based on the number of conditions compared. 
+     *                          See {@link #getConditionCount()} for important explanations.
+     */
+    public DiffExpressionCallFilter(DiffExpressionCallFilter callFilter) {
+        
+        super(callType);
+        log.entry(callType, factor);
+        this.factor = factor;
+        this.setConditionCount(conditionCount);
+        log.exit();
     }
 
+    
+    /**
+     * @see #canMerge(CallFilter, boolean)
+     */
+    @Override
+    protected DiffExpressionCallFilter merge(CallFilter callToMerge, boolean sameEntity) {
+        log.entry(callToMerge, sameEntity);
+        //first, determine whether we can merge the CallFilters
+        if (!this.canMerge(callToMerge, sameEntity)) {
+            return log.exit(null);
+        }
+
+        //OK, let's proceed to the merging
+        //we blindly perform the merging, it is the responsibility of the method 
+        //canMerge to determine whether it is appropriate.
+        DiffExpressionCallFilter otherCall = (DiffExpressionCallFilter) callToMerge;
+        DiffExpressionCallFilter mergedCall = new DiffExpressionCallFilter();
+        super.merge(otherCall, mergedCall, sameEntity);
+        
+        mergedCall.setPropagateAnatEntities(
+                (this.isPropagateAnatEntities() || otherCall.isPropagateAnatEntities()));
+        mergedCall.setPropagateStages(
+                (this.isPropagateStages() || otherCall.isPropagateStages()));
+
+        return log.exit(mergedCall);
+    }
+
+    /**
+     * Determines whether this <code>ExpressionCallFilter</code> and 
+     * <code>callToMerge</code> can be merged. 
+     * <p>
+     * If <code>sameEntity</code> is <code>true</code>, it means that <code>callToMerge</code> 
+     * and this <code>ExpressionCallFilter</code> are related to a same <code>Entity</code> 
+     * (see {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}), otherwise, to different 
+     * <code>Entity</code>s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
+     * 
+     * @param callToMerge   A <code>CallFilter</code> that is tried to be merged 
+     *                      with this <code>ExpressionCallFilter</code>.
+     * @param sameEntity    a <code>boolean</code> defining whether <code>callToMerge</code> 
+     *                      and this <code>ExpressionCallFilter</code> are related to a same 
+     *                      <code>Entity</code>, or different ones. 
+     * @return              <code>true</code> if they could be merged. 
+     */
+    private boolean canMerge(CallFilter callToMerge, boolean sameEntity) {
+        log.entry(callToMerge, sameEntity);
+        
+        if (!(callToMerge instanceof DiffExpressionCallFilter)) {
+            return log.exit(false);
+        }
+        DiffExpressionCallFilter otherCall = (DiffExpressionCallFilter) callToMerge;
+        
+        if (!super.canMerge(otherCall, sameEntity)) {
+            return log.exit(false);
+        }
+        
+        if (!this.getCallType().equals(otherCall.getCallType()) || 
+                !this.getFactor().equals(otherCall.getFactor())) {
+            return log.exit(false);
+        }
+        
+        return log.exit(true);
+    }
+    
+    //************************************
+    //  GETTERS/SETTERS
+    //************************************
+    
 	/**
 	 * Return the experimental factor that the differential expression analyses used 
 	 * should be based on. 

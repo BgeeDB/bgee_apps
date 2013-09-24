@@ -17,9 +17,7 @@ import org.bgee.model.expressiondata.DataParameters.CallType;
 /*
  * (non-javadoc)
  * If you add attributes to this class, you might need to modify the methods 
- * <code>mergeSameEntityCallFilter</code>, <code>canMergeSameEntityCallFilter</code>, 
- * <code>mergeDiffEntitiesCallFilter</code>, and 
- * <code>canMergeDiffEntitiesCallFilter</code>
+ * <code>merge</code> and <code>canMerge</code>.
  */
 public class ExpressionCallFilter extends BasicCallFilter {
 	/**
@@ -54,35 +52,12 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	public ExpressionCallFilter() {
 		super(CallType.Expression.EXPRESSED);
 	}
-
-	@Override
-	public CallFilter mergeSameEntityCallFilter(CallFilter callToMerge) {
-		log.entry(callToMerge);
-		return log.exit(this.merge(callToMerge, true));
-	}
-	@Override
-	public CallFilter mergeDiffEntitiesCallFilter(CallFilter callToMerge) {
-		log.entry(callToMerge);
-		return log.exit(this.merge(callToMerge, false));
-	}
 	
 	/**
-	 * Merges this <code>ExpressionCallFilter</code> with <code>callToMerge</code>, 
-	 * and returns the resulting merged new <code>ExpressionCallFilter</code>.
-	 * If <code>callToMerge</code> cannot be merged with this <code>BasicCallFilter</code>, 
-	 * this method returns <code>null</code>
-	 * <p>
-	 * If <code>sameEntity</code> is <code>true</code>, this method corresponds to 
-	 * {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}, otherwise, to 
-	 * {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}.
-	 * 
-	 * @param callToMerge		a <code>CallFilter</code> to be merged with this one.
-	 * @param sameEntity		a <code>boolean</code> defining whether <code>callToMerge</code> 
-	 * 							and this <code>ExpressionCallFilter</code> are related to a same 
-	 * 							<code>Entity</code>, or different ones. 
-	 * @see {@link #canMerge(CallFilter, boolean)}
-	 */
-	private ExpressionCallFilter merge(CallFilter callToMerge, boolean sameEntity) {
+     * @see #canMerge(CallFilter, boolean)
+     */
+    @Override
+	protected ExpressionCallFilter merge(CallFilter callToMerge, boolean sameEntity) {
 		log.entry(callToMerge, sameEntity);
         //first, determine whether we can merge the CallFilters
         if (!this.canMerge(callToMerge, sameEntity)) {

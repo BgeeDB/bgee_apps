@@ -4,9 +4,9 @@ import org.bgee.model.expressiondata.rawdata.CallSourceRawData;
 
 /**
  * Class related to RNA-Seq result for a gene. 
- * Is contained by a <code>RNASeqLibrary</code>. 
+ * Is contained by a {@code RNASeqLibrary}. 
  * Hold expression call for a gene 
- * (child class of <code>CallSourceRawData</code>). 
+ * (child class of {@code CallSourceRawData}). 
  * 
  * @author Frederic Bastian
  * @version Bgee 12
@@ -16,24 +16,24 @@ import org.bgee.model.expressiondata.rawdata.CallSourceRawData;
 public class RNASeqResult extends CallSourceRawData
 {
 	/**
-	 * The <code>RNASeqLibrary</code> this object belongs to.
+	 * The {@code RNASeqLibrary} this object belongs to.
 	 * It is the "container" used for the methods 
-	 * <code>#getDataSourceFromContainer()</code> and <code>#getDataSourceIdFromContainer()</code>.
+	 * {@code #getDataSourceFromContainer()} and {@code #getDataSourceIdFromContainer()}.
 	 * @see #getDataSourceFromContainer()
 	 * @see #getDataSourceIdFromContainer()
 	 */
 	private RNASeqLibrary rNASeqLibrary;
 	/**
-	 * A <code>String</code> corresponding to the ID 
+	 * A {@code String} corresponding to the ID 
 	 * of the RNA-Seq library this result belongs to. 
-	 * This attribute is useful when the <code>rNASeqLibrary</code> is not set. 
-	 * When both are set, this <code>rnaSeqLibraryId</code> matches 
-	 * the <code>id</code> attribute of the <code>RNASeqLibrary</code>. 
+	 * This attribute is useful when the {@code rNASeqLibrary} is not set. 
+	 * When both are set, this {@code rnaSeqLibraryId} matches 
+	 * the {@code id} attribute of the {@code RNASeqLibrary}. 
 	 * @see microarrayExperiment
 	 */
 	private String rnaSeqLibraryId;
 	/**
-	 * A <code>float</code> representing the log2 RPK 
+	 * A {@code float} representing the log2 RPK 
 	 * (Reads Per Kilobase) for this gene in this library.
 	 */
 	private float log2RPK;
@@ -43,7 +43,7 @@ public class RNASeqResult extends CallSourceRawData
 	 */
 	private int readsCount;
 	/**
-	 * A <code>String</code> representing the expression call for this gene 
+	 * A {@code String} representing the expression call for this gene 
 	 * in this library ('undefined', 'present', 'absent').
 	 * @TODO change this for an Enum.
 	 */
@@ -65,15 +65,15 @@ public class RNASeqResult extends CallSourceRawData
     
     
     /**
-	 * Try to obtain the <code>DataSource</code> object where these expression data come from, 
-	 * from the <code>RNASeqLibrary</code> container of this <code>RNASeqResult</code>, 
+	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+	 * from the {@code RNASeqLibrary} container of this {@code RNASeqResult}, 
 	 * and eventually from its own container, etc.
-	 * See <code>getDataSource()</code> for more details.
+	 * See {@code getDataSource()} for more details.
 	 * 
-	 * @return 	a <code>DataSource</code> object where these expression data come from, 
-	 * 			obtained from the <code>RNASeqLibrary</code> container of this <code>RNASeqResult</code>. 
-	 * 			<code>null</code> if it was not possible to retrieve a <code>DataSource</code> object  
-	 * 			from the <code>RNASeqLibrary</code> container.
+	 * @return 	a {@code DataSource} object where these expression data come from, 
+	 * 			obtained from the {@code RNASeqLibrary} container of this {@code RNASeqResult}. 
+	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+	 * 			from the {@code RNASeqLibrary} container.
 	 * @see #rNASeqLibrary
 	 * @see #getDataSource()
 	 */
@@ -88,12 +88,12 @@ public class RNASeqResult extends CallSourceRawData
 	
 	/**
 	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the <code>RNASeqLibrary</code> "container". 
+	 * from the {@code RNASeqLibrary} "container". 
 	 * 
-	 * @return 	a <code>String</code> corresponding to the ID of the data source 
+	 * @return 	a {@code String} corresponding to the ID of the data source 
 	 * 			where these expression data come from, 
-	 * 			obtained from the <code>RNASeqLibrary</code> "container". 
-	 * 			Empty <code>String</code> if it was not possible to retrieve the ID 
+	 * 			obtained from the {@code RNASeqLibrary} "container". 
+	 * 			Empty {@code String} if it was not possible to retrieve the ID 
 	 * 			from the container.
 	 * @see #rNASeqLibrary
 	 * @see #getDataSourceId()
@@ -109,8 +109,8 @@ public class RNASeqResult extends CallSourceRawData
     
 	
     /**
-     * Retrieve the <code>RNASeqLibrary</code> this <code>RNASeqResult</code> belongs to, 
-     * by using the ID provided by <code>#getRnaSeqLibraryId()</code>, 
+     * Retrieve the {@code RNASeqLibrary} this {@code RNASeqResult} belongs to, 
+     * by using the ID provided by {@code #getRnaSeqLibraryId()}, 
      * and store it by using <code>#setRnaSeqLibrary(RNASeqLibrary)<code>.
      */
 	public void loadRnaSeqLibrary() 
@@ -136,9 +136,9 @@ public class RNASeqResult extends CallSourceRawData
 	}
 
 	/**
-	 * Returns either the value of <code>rnaSeqLibraryId</code>, 
-	 * or the of the <code>id</code> of the <code>RNASeqLibrary</code> 
-	 * stored in <code>rNASeqLibrary</code>, depending on which one is set. 
+	 * Returns either the value of {@code rnaSeqLibraryId}, 
+	 * or the of the {@code id} of the {@code RNASeqLibrary} 
+	 * stored in {@code rNASeqLibrary}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the RNA-Seq library this result belongs to. 
 	 * @see 	#rnaSeqLibraryId

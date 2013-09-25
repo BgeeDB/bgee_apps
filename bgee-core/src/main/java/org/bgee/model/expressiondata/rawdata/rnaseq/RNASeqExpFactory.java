@@ -9,7 +9,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExpDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExpTO;
 
 /**
- * A <code>Factory</code> responsible for instantiating <code>RNASeqExp</code> objects.
+ * A {@code Factory} responsible for instantiating {@code RNASeqExp} objects.
  * 
  * @author Frederic Bastian
  * @version Bgee 12
@@ -19,14 +19,14 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExpTO;
 public class RNASeqExpFactory extends Factory
 {
 	/**
-	 * A <code>RNASeqExpDAO</code> used to query a data source, 
-	 * to obtain <code>RNASeqExpTO</code> objects, 
-	 * used to instantiate and populate <code>RNASeqExp</code> objects 
-	 * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer). 
+	 * A {@code RNASeqExpDAO} used to query a data source, 
+	 * to obtain {@code RNASeqExpTO} objects, 
+	 * used to instantiate and populate {@code RNASeqExp} objects 
+	 * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer). 
 	 * <p>
-	 * This <code>RNASeqExpDAO</code> is obtained using a <code>DAOFactory</code> 
-	 * returned by the <code>#getDAOFactory()</code> method of the parent class. 
+	 * This {@code RNASeqExpDAO} is obtained using a {@code DAOFactory} 
+	 * returned by the {@code #getDAOFactory()} method of the parent class. 
 	 * 
 	 * @see Factory#getDAOFactory()
 	 */
@@ -42,12 +42,12 @@ public class RNASeqExpFactory extends Factory
     }
 
 	/**
-	 * Get a <code>RNASeqExp</code> retrieved by its ID.
+	 * Get a {@code RNASeqExp} retrieved by its ID.
 	 * 
-	 * @param experimentId 	A <code>String</code> representing the ID 
+	 * @param experimentId 	A {@code String} representing the ID 
 	 * 						of the RNA-Seq experiment to retrieve.
-	 * @return 				A <code>RNASeqExp</code> object, 
-	 * 						corresponding to the <code>experimentId</code>.
+	 * @return 				A {@code RNASeqExp} object, 
+	 * 						corresponding to the {@code experimentId}.
 	 */
 	public RNASeqExp getExperimentById(String experimentId) 
 	{
@@ -55,17 +55,17 @@ public class RNASeqExpFactory extends Factory
 	}
     
 	/**
-	 * Create a <code>Collection</code> of <code>RNASeqExp</code> objects, 
-	 * using a <code>Collection</code> of <code>TransferObject</code> objects 
-	 * that must be castable to <code>RNASeqExpTO</code> objects. 
-	 * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer). 
+	 * Create a {@code Collection} of {@code RNASeqExp} objects, 
+	 * using a {@code Collection} of {@code TransferObject} objects 
+	 * that must be castable to {@code RNASeqExpTO} objects. 
+	 * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer). 
 	 * 
-	 * @param toCollection 	A <code>Collection</code> of <code>TransferObject</code> objects 
-	 * 						castable to <code>RNASeqExpTO</code> objects, 
+	 * @param toCollection 	A {@code Collection} of {@code TransferObject} objects 
+	 * 						castable to {@code RNASeqExpTO} objects, 
 	 * 						obtained from a data source.
-	 * @return 				A <code>Collection</code> of <code>RNASeqExp</code> objects 	
-	 * 						corresponding to the provided <code>TransferObject</code>s.
+	 * @return 				A {@code Collection} of {@code RNASeqExp} objects 	
+	 * 						corresponding to the provided {@code TransferObject}s.
 	 */
     private Collection<RNASeqExp> getRnaSeqExperiments(Collection<TransferObject> toCollection)
     {
@@ -79,15 +79,15 @@ public class RNASeqExpFactory extends Factory
     }
     
     /**
-     * Instantiate and populate the attribute of a <code>RNASeqExp</code> object, 
-     * using a <code>RNASeqExpTO</code> object, retrieved from a data source 
-     * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer).
+     * Instantiate and populate the attribute of a {@code RNASeqExp} object, 
+     * using a {@code RNASeqExpTO} object, retrieved from a data source 
+     * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer).
 	 * 
-     * @param expTO 	A <code>RNASeqExpTO</code> retrieved from a data source, 
-     * 					used to populate the attributes of a <code>RNASeqExp</code> object.
-     * @return			A <code>RNASeqExp</code> object newly instantiated, 
-     * 					with attributes set using the <code>RNASeqExpTO</code> object. 
+     * @param expTO 	A {@code RNASeqExpTO} retrieved from a data source, 
+     * 					used to populate the attributes of a {@code RNASeqExp} object.
+     * @return			A {@code RNASeqExp} object newly instantiated, 
+     * 					with attributes set using the {@code RNASeqExpTO} object. 
      */
     private RNASeqExp createRnaSeqExperiment(RNASeqExpTO expTO)
     {

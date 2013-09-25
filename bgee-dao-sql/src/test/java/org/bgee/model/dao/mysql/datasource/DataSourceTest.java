@@ -92,7 +92,7 @@ public class DataSourceTest extends TestAncestor
 	public void shouldGetBgeeDataSource() throws SQLException 
 	{
 		/**
-		 * An anonymous class to acquire <code>BgeeDataSource</code>s 
+		 * An anonymous class to acquire {@code BgeeDataSource}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
@@ -101,7 +101,7 @@ public class DataSourceTest extends TestAncestor
 			public volatile BgeeDataSource source2;
 			public volatile boolean exceptionThrown = false;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			
@@ -170,7 +170,7 @@ public class DataSourceTest extends TestAncestor
 	public void shouldCloseBgeeDataSource() throws SQLException 
 	{
 		/**
-		 * An anonymous class to acquire <code>BgeeDataSource</code>s 
+		 * An anonymous class to acquire {@code BgeeDataSource}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
@@ -179,7 +179,7 @@ public class DataSourceTest extends TestAncestor
 			public volatile BgeeDataSource source2;
 			public volatile boolean exceptionThrown = false;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			
@@ -276,7 +276,7 @@ public class DataSourceTest extends TestAncestor
 	public void shouldGetAndReleaseConnections() throws SQLException 
 	{
 		/**
-		 * An anonymous class to acquire <code>BgeeDataSource</code>s 
+		 * An anonymous class to acquire {@code BgeeDataSource}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
@@ -286,7 +286,7 @@ public class DataSourceTest extends TestAncestor
 			public volatile BgeeConnection conn2;
 			public volatile boolean exceptionThrown = false;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			

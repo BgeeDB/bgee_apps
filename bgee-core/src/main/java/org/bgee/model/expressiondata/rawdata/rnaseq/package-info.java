@@ -8,9 +8,9 @@
  * <li>The class extending {@link org.bgee.model.expressiondata.rawdata.CallSource 
  * CallSource} is {@link RNASeqResult}. 
  * <p>
- * As of Bgee 13, RNA-Seq data are used to generate calls <code>EXPRESSION</code>, 
- * <code>NOEXPRESSION</code>, <code>OVEREXPRESSION</code>, <code>UNDEREXPRESSION</code>, 
- * <code>NODIFFEXPRESSION</code>.
+ * As of Bgee 13, RNA-Seq data are used to generate calls {@code EXPRESSION}, 
+ * {@code NOEXPRESSION}, {@code OVEREXPRESSION}, {@code UNDEREXPRESSION}, 
+ * {@code NODIFFEXPRESSION}.
  * <p>
  * As RNA-Seq data can be used for differential expression analyses, classes from this package 
  * are used in the package {@link org.bgee.model.expressiondata.rawdata.diffexpression.rnaseq}

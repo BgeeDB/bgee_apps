@@ -1,7 +1,7 @@
 package org.bgee.model.dao.api;
 
 /**
- * Parent class of all <code>TransferObject</code>s, with attributes common 
+ * Parent class of all {@code TransferObject}s, with attributes common 
  * to almost all entities returned. 
  * 
  * @author Frederic Bastian

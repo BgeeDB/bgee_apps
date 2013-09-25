@@ -6,9 +6,9 @@ import java.util.Date;
 import org.bgee.model.dao.api.TransferObject;
 
 /**
- * <code>TransferObject</code> for the class {@link org.bgee.model.source.Source}.
+ * {@code TransferObject} for the class {@link org.bgee.model.source.Source}.
  * <p>
- * For information on this <code>TransferObject</code> and its fields, 
+ * For information on this {@code TransferObject} and its fields, 
  * see the corresponding class.
  * 
  * @author Frederic Bastian

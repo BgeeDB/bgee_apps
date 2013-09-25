@@ -5,8 +5,8 @@ import org.bgee.model.gene.Gene;
 /**
  * Parent class of all classes holding expression data result of a gene 
  * (see 'see also' section).
- * This class holds methods and attributes related to this <code>Gene</code>. 
- * It also stores the <code>expressionId</code> and <code>expressionConfidence</code> 
+ * This class holds methods and attributes related to this {@code Gene}. 
+ * It also stores the {@code expressionId} and {@code expressionConfidence} 
  * of this expression result. 
  * 
  * @author Frederic Bastian
@@ -82,9 +82,9 @@ public class CallSourceRawData extends RawData
 	}
 	
 	/**
-	 * Returns either the value of <code>geneId</code>, 
-	 * or the of the <code>id</code> of the <code>Gene</code> 
-	 * stored in <code>gene</code>, depending on which one is set. 
+	 * Returns either the value of {@code geneId}, 
+	 * or the of the {@code id} of the {@code Gene} 
+	 * stored in {@code gene}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the gene for which this object reports expression. 
 	 * @see 	#geneId

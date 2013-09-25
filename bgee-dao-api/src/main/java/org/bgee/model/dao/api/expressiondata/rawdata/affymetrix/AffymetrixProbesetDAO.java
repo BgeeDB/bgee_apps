@@ -16,17 +16,17 @@ public interface AffymetrixProbesetDAO
 {
 
 	/**
-	 * Return a <code>Collection</code> of <code>String</code>s  
+	 * Return a {@code Collection} of {@code String}s  
 	 * corresponding to Affymetrix probeset Ids, 
-	 * subset of those passed as a parameter (<code>probesetIds</code>), 
+	 * subset of those passed as a parameter ({@code probesetIds}), 
 	 * that were not found in the data source.
-	 * @param probesetIds	a <code>Collection</code> of <code>String</code>s 
+	 * @param probesetIds	a {@code Collection} of {@code String}s 
 	 * 						to be checked for presence in the data source.
-	 * @return 				a <code>Collection</code> of <code>String</code>s that 
+	 * @return 				a {@code Collection} of {@code String}s that 
 	 * 						could not be found in the list of probeset IDs 
-	 * 						in the data source. An empty <code>Collection</code> 
+	 * 						in the data source. An empty {@code Collection} 
 	 * 						if all IDs were found in the database, 
-	 * 						or if <code>probesetIds</code> was empty.
+	 * 						or if {@code probesetIds} was empty.
      * @throws DataAccessException 	If an error occurred when accessing the data source.
 	 */
 	public Collection<String> getNonMatchingProbesetIds(Collection<String> probesetIds) 

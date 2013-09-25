@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * This class basically defines a tree data structure. This data structure
  * projects the complete data of an orthologus group in the form of a tree.
- * Every <code>Node</code> object contains information about each node of the
+ * Every {@code Node} object contains information about each node of the
  * tree. The data of each orthologus group is stored as a nested set model
  * 
  * @author Komal Sanjeev
@@ -16,37 +16,37 @@ import java.util.List;
 public class Node {
 
 	/**
-	 * An <code>long</code> representing a unique ID for every entry node.
+	 * An {@code long} representing a unique ID for every entry node.
 	 */
 	private long hierarchicalGroupId;
 
 	/**
-	 * A <code>List</code> of <code>Node</code> objects representing the all the
-	 * children <code>Node</code>s of the current <code>Node</code>.
+	 * A {@code List} of {@code Node} objects representing the all the
+	 * children {@code Node}s of the current {@code Node}.
 	 */
 	private List<Node> childNodes;
 
 	/**
-	 * An <code>long</code> representing a unique Hierarchical Left Bound ID for
-	 * every <code>Node</code> in a particular group of orthologus genes, when
+	 * An {@code long} representing a unique Hierarchical Left Bound ID for
+	 * every {@code Node} in a particular group of orthologus genes, when
 	 * ordered according to the nested set model.
 	 */
 	private long hierarchicalLeftBound;
 
 	/**
-	 * A <code>long</code> representing a unique Hierarchical Right Bound ID for
-	 * every <code>Node</code> in a particular group of orthologus genes, when
+	 * A {@code long} representing a unique Hierarchical Right Bound ID for
+	 * every {@code Node} in a particular group of orthologus genes, when
 	 * ordered according to the nested set model.
 	 */
 	private long hierarchicalRightBound;
 
 	/**
-	 * A <code>String</code> representing the ENSEMBL gene ID of the gene.
+	 * A {@code String} representing the ENSEMBL gene ID of the gene.
 	 */
 	private String GeneID;
 
 	/**
-	 * An <code>long</code> representing a unique ID for every entry node.
+	 * An {@code long} representing a unique ID for every entry node.
 	 */
 	private String ncbiTaxonomyId;
 

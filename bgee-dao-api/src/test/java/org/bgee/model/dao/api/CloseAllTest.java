@@ -17,9 +17,9 @@ import org.junit.Test;
 /**
  * A class to test the functionality of {@link DAOManager#closeAll()}.
  * Following a call to this method, it is not possible to acquire 
- * new <code>DAOManager</code>s from the same <code>ClassLoader</code>. 
- * So we configured the project to use a different <code>ClassLoader</code> 
- * for each test class, and we put the test of <code>closeAll</code> 
+ * new {@code DAOManager}s from the same {@code ClassLoader}. 
+ * So we configured the project to use a different {@code ClassLoader} 
+ * for each test class, and we put the test of {@code closeAll} 
  * in a separate class.
  *  
  * @author Frederic Bastian
@@ -28,7 +28,7 @@ import org.junit.Test;
  */
 public class CloseAllTest extends TestAncestor {
 	/**
-     * <code>Logger</code> of the class. 
+     * {@code Logger} of the class. 
      */
     private final static Logger log = 
     		LogManager.getLogger(CloseAllTest.class.getName());
@@ -45,14 +45,14 @@ public class CloseAllTest extends TestAncestor {
 	public void shouldCloseAll() throws Exception {
 
 		/**
-		 * An anonymous class to acquire <code>DAOManager</code>s 
+		 * An anonymous class to acquire {@code DAOManager}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
 		class ThreadTest implements Callable<Boolean> {
 			public volatile DAOManager manager;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			@Override

@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * A <code>Factory</code> responsible for instantiating <code>AffymetrixProbeset</code> objects.
+ * A {@code Factory} responsible for instantiating {@code AffymetrixProbeset} objects.
  * 
  * @author Frederic Bastian
  * @version Bgee 12
@@ -15,14 +15,14 @@ import java.util.Iterator;
 public class AffymetrixProbesetFactory extends Factory
 {
 	/**
-	 * An <code>AffymetrixProbesetDAO</code> used to query a data source, 
-	 * to obtain <code>AffymetrixProbesetTO</code> objects, 
-	 * used to instantiate and populate <code>AffymetrixProbeset</code> objects 
-	 * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer). 
+	 * An {@code AffymetrixProbesetDAO} used to query a data source, 
+	 * to obtain {@code AffymetrixProbesetTO} objects, 
+	 * used to instantiate and populate {@code AffymetrixProbeset} objects 
+	 * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer). 
 	 * <p>
-	 * This <code>AffymetrixProbesetDAO</code> is obtained using a <code>DAOFactory</code> 
-	 * returned by the <code>#getDAOFactory()</code> method of the parent class. 
+	 * This {@code AffymetrixProbesetDAO} is obtained using a {@code DAOFactory} 
+	 * returned by the {@code #getDAOFactory()} method of the parent class. 
 	 * 
 	 * @see Factory#getDAOFactory()
 	 */
@@ -38,16 +38,16 @@ public class AffymetrixProbesetFactory extends Factory
     }
 
     /**
-	 * Obtain a <code>Collection</code> of <code>AffymetrixProbeset</code>s, 
+	 * Obtain a {@code Collection} of {@code AffymetrixProbeset}s, 
 	 * retrieved from an expression query. 
 	 * 
-	 * @param expressionParam 	A <code>DataTypeTO</code> used to define the expression parameters 
+	 * @param expressionParam 	A {@code DataTypeTO} used to define the expression parameters 
 	 * 							(choice of data type, data quality, etc.).
-	 * @param multiSpeciesTO 	A <code>MultiSpeciesTO</code> storing the parameters of the expression query 
+	 * @param multiSpeciesTO 	A {@code MultiSpeciesTO} storing the parameters of the expression query 
 	 * 							related to the species, the organs, the stages. 
-	 * @return 					A <code>Collection</code> of <code>AffymetrixProbeset</code>s, 
+	 * @return 					A {@code Collection} of {@code AffymetrixProbeset}s, 
 	 * 							retrieved thanks to an expression query parameterized using 
-	 * 							<code>expressionParam</code> and <code>multiSpeciesTO</code>.
+	 * 							{@code expressionParam} and {@code multiSpeciesTO}.
 	 */
 	public Collection<AffymetrixProbeset> getProbesetsByExpression(DataTypeTO expressionParam,
 			MultiSpeciesTO multiSpeciesTO) 
@@ -57,17 +57,17 @@ public class AffymetrixProbesetFactory extends Factory
 	}
     
 	/**
-	 * Create a <code>Collection</code> of <code>AffymetrixProbeset</code> objects, 
-	 * using a <code>Collection</code> of <code>TransferObject</code> objects 
-	 * that must be castable to <code>AffymetrixProbesetTO</code> objects. 
-	 * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer). 
+	 * Create a {@code Collection} of {@code AffymetrixProbeset} objects, 
+	 * using a {@code Collection} of {@code TransferObject} objects 
+	 * that must be castable to {@code AffymetrixProbesetTO} objects. 
+	 * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer). 
 	 * 
-	 * @param toCollection 	A <code>Collection</code> of <code>TransferObject</code> objects 
-	 * 						castable to <code>AffymetrixProbesetTO</code> objects, 
+	 * @param toCollection 	A {@code Collection} of {@code TransferObject} objects 
+	 * 						castable to {@code AffymetrixProbesetTO} objects, 
 	 * 						obtained from a data source.
-	 * @return 				A <code>Collection</code> of <code>AffymetrixProbeset</code> objects 	
-	 * 						corresponding to the provided <code>TransferObject</code>s.
+	 * @return 				A {@code Collection} of {@code AffymetrixProbeset} objects 	
+	 * 						corresponding to the provided {@code TransferObject}s.
 	 */
     private Collection<AffymetrixProbeset> getAffymetrixProbesets(Collection<TransferObject> toCollection)
     {
@@ -81,15 +81,15 @@ public class AffymetrixProbesetFactory extends Factory
     }
     
     /**
-     * Instantiate and populate the attributes of a <code>AffymetrixProbeset</code> object, 
-     * using a <code>AffymetrixProbesetTO</code> object, retrieved from a data source 
-     * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer).
+     * Instantiate and populate the attributes of a {@code AffymetrixProbeset} object, 
+     * using a {@code AffymetrixProbesetTO} object, retrieved from a data source 
+     * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer).
 	 * 
-     * @param libraryTO A <code>AffymetrixProbesetTO</code> retrieved from a data source, 
-     * 					used to populate the attributes of a <code>AffymetrixProbeset</code> object.
-     * @return			A <code>AffymetrixProbeset</code> object newly instantiated, 
-     * 					with attributes set using the <code>AffymetrixProbesetTO</code> object. 
+     * @param libraryTO A {@code AffymetrixProbesetTO} retrieved from a data source, 
+     * 					used to populate the attributes of a {@code AffymetrixProbeset} object.
+     * @return			A {@code AffymetrixProbeset} object newly instantiated, 
+     * 					with attributes set using the {@code AffymetrixProbesetTO} object. 
      */
     private AffymetrixProbeset createAffymetrixProbeset(AffymetrixProbesetTO probesetTO)
     {

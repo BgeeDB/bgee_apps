@@ -11,7 +11,7 @@ package org.bgee.model.expressiondata.rawdata;
  * inherit from a common superclass; and ii), because these classes will use 
  * composition over inheritance, by delegating methods from this interface to 
  * the class {@link Annotation}; it is not actually needed for all these classes 
- * to be of the same type (they could just delegate to <code>Annotation</code>, 
+ * to be of the same type (they could just delegate to {@code Annotation}, 
  * nothing more), but this is to ensure that any modifications in the future 
  * to the annotation process (for instance, annotating experimental conditions 
  * as well) will be transmitted to classes representing data annotated. 

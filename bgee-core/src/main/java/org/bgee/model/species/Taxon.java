@@ -4,7 +4,7 @@ import org.bgee.model.ontologycommon.OntologyElement;
 
 /**
  * Represents a taxon in a taxonomy. A {@link Species} is not considered 
- * a <code>Taxon</code>. As of Bgee 13, taxa are taken from the NCBI taxonomy.
+ * a {@code Taxon}. As of Bgee 13, taxa are taken from the NCBI taxonomy.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -13,13 +13,13 @@ import org.bgee.model.ontologycommon.OntologyElement;
 public class Taxon extends OntologyElement<Taxon> {
 
 	/**
-     * Constructor providing the <code>id</code> of this <code>Taxon</code>. 
-     * This <code>id</code> cannot be <code>null</code>, or empty (""), 
-     * or whitespace only, otherwise an <code>IllegalArgumentException</code> 
+     * Constructor providing the {@code id} of this {@code Taxon}. 
+     * This {@code id} cannot be {@code null}, or empty (""), 
+     * or whitespace only, otherwise an {@code IllegalArgumentException} 
      * will be thrown. The ID will also be immutable, see {@link #getId()}.
      * 
-     * @param id	A <code>String</code> representing the ID of this object.
-     * @throws IllegalArgumentException 	if <code>id</code> is <code>null</code>,  
+     * @param id	A {@code String} representing the ID of this object.
+     * @throws IllegalArgumentException 	if {@code id} is {@code null},  
      * 										empty, or whitespace only. 
      */
 	public Taxon(String id) throws IllegalArgumentException {

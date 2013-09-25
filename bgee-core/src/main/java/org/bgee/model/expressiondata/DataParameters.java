@@ -17,26 +17,26 @@ public class DataParameters {
   	//**********************************************
 	/**
 	 * An interface representing expression data calls. It includes two nested 
-	 * <code>enum</code> types: 
+	 * {@code enum} types: 
 	 * <ul>
 	 * <li>{@link CallType.Expression}: standard expression calls. Includes two values: 
 	 *   <ul>
-	 *   <li><code>EXPRESSED</code>: standard expression calls.
-	 *   <li><code>NOTEXPRESSED</code>: no-expression calls (absence of expression 
+	 *   <li>{@code EXPRESSED}: standard expression calls.
+	 *   <li>{@code NOTEXPRESSED}: no-expression calls (absence of expression 
 	 *   explicitly reported).
 	 *   </ul>
 	 * <li>{@link CallType.DiffExpression}: differential expression calls obtained 
 	 * from differential expression analyzes. Includes three values: 
 	 *   <ul>
-	 *   <li><code>OVEREXPRESSED</code>: over-expression calls obtained from 
+	 *   <li>{@code OVEREXPRESSED}: over-expression calls obtained from 
 	 *   differential expression analyses.
-	 *   <li><code>UNDEREXPRESSED</code>: under-expression calls obtained from 
+	 *   <li>{@code UNDEREXPRESSED}: under-expression calls obtained from 
 	 *   differential expression analyses.
-	 *   <li><code>NOTDIFFEXPRESSED</code>: means that a gene was studied in 
+	 *   <li>{@code NOTDIFFEXPRESSED}: means that a gene was studied in 
 	 *   a differential expression analysis, but was <strong>not</strong> found to be 
-	 *   differentially expressed (neither <code>OVEREXPRESSED</code> nor 
-	 *   <code>UNDEREXPRESSED</code> calls). This is different from 
-	 *   <code>NOTEXPRESSED</code>, as the gene could actually be expressed, but, 
+	 *   differentially expressed (neither {@code OVEREXPRESSED} nor 
+	 *   {@code UNDEREXPRESSED} calls). This is different from 
+	 *   {@code NOTEXPRESSED}, as the gene could actually be expressed, but, 
 	 *   not differentially. 
 	 *   </ul>
 	 * </ul>
@@ -49,8 +49,8 @@ public class DataParameters {
 		/**
 		 * Represents standard expression calls: 
 	     * <ul>
-	     * <li><code>EXPRESSED</code>: standard expression calls.
-	     * <li><code>NOTEXPRESSED</code>: no-expression calls (absence of expression 
+	     * <li>{@code EXPRESSED}: standard expression calls.
+	     * <li>{@code NOTEXPRESSED}: no-expression calls (absence of expression 
 	     * explicitly reported).
 	     * </ul>
 	     * 
@@ -66,15 +66,15 @@ public class DataParameters {
 		 * Represents differential expression calls obtained 
 		 * from differential expression analyzes: 
 		 * <ul>
-		 * <li><code>OVEREXPRESSED</code>: over-expression calls obtained from 
+		 * <li>{@code OVEREXPRESSED}: over-expression calls obtained from 
 		 * differential expression analyses.
-		 * <li><code>UNDEREXPRESSED</code>: under-expression calls obtained from 
+		 * <li>{@code UNDEREXPRESSED}: under-expression calls obtained from 
 		 * differential expression analyses.
-		 * <li><code>NOTDIFFEXPRESSED</code>: means that a gene was studied in 
+		 * <li>{@code NOTDIFFEXPRESSED}: means that a gene was studied in 
 		 * a differential expression analysis, but was <strong>not</strong> found to be 
-		 * differentially expressed (neither <code>OVEREXPRESSED</code> nor 
-		 * <code>UNDEREXPRESSED</code> calls). This is different from 
-		 * <code>NOTEXPRESSED</code>, as the gene could actually be expressed, but, 
+		 * differentially expressed (neither {@code OVEREXPRESSED} nor 
+		 * {@code UNDEREXPRESSED} calls). This is different from 
+		 * {@code NOTEXPRESSED}, as the gene could actually be expressed, but, 
 		 * not differentially. 
 		 * </ul>
 		 * 
@@ -91,10 +91,10 @@ public class DataParameters {
     /**
      * Define the different expression data types used in Bgee.
      * <ul>
-     * <li><code>AFFYMETRIX</code>: microarray Affymetrix.
-     * <li><code>EST</code>: Expressed Sequence Tag.
-     * <li><code>INSITU</code>: <em>in situ</em> hybridization data.
-     * <li><code>RELAXEDINSITU</code>: use of <em>in situ</em> hybridization data 
+     * <li>{@code AFFYMETRIX}: microarray Affymetrix.
+     * <li>{@code EST}: Expressed Sequence Tag.
+     * <li>{@code INSITU}: <em>in situ</em> hybridization data.
+     * <li>{@code RELAXEDINSITU}: use of <em>in situ</em> hybridization data 
      * to infer absence of expression: the inference 
 	 * considers expression patterns described by <em>in situ</em> data as complete. 
 	 * It is indeed usual for authors of <em>in situ</em> hybridizations to report 
@@ -103,7 +103,7 @@ public class DataParameters {
 	 * we considered that absence of expression is assumed in any organ existing 
 	 * at the developmental stage studied in the <em>in situ</em>, with no report of 
 	 * expression by any data type, in the organ itself, or any substructure. 
-     * <li><code>RNASEQ</code>: RNA-Seq data.
+     * <li>{@code RNASEQ}: RNA-Seq data.
      * </ul>
 	 * 
      * @author Frederic Bastian
@@ -155,13 +155,13 @@ public class DataParameters {
   	//   STATIC CLASS ATTRIBUTES AND METHODS
   	//**********************************************
   	/**
-  	 * <code>Logger</code> of the class. 
+  	 * {@code Logger} of the class. 
   	 */
   	private final static Logger log = LogManager.getLogger(DataParameters.class.getName());
   	/**
-  	 * An unmodifiable <code>Map</code> associating each <code>CallType</code> 
-  	 * in the key set to a <code>Set</code> of the <code>DataType</code>s 
-  	 * allowing to generate that <code>CallType</code>. 
+  	 * An unmodifiable {@code Map} associating each {@code CallType} 
+  	 * in the key set to a {@code Set} of the {@code DataType}s 
+  	 * allowing to generate that {@code CallType}. 
   	 */
   	private static final Map<CallType, Set<DataType>> allowedDataTypes = 
   			Collections.unmodifiableMap(loadAllowedDataTypes());
@@ -197,12 +197,12 @@ public class DataParameters {
   		return types;
   	}
   	/**
-  	 * Return an unmodifiable <code>Map</code> associating each <code>CallType</code> 
-  	 * in the key set to a <code>Set</code> containing the <code>DataType</code>s 
-  	 * allowing to generate that <code>CallType</code>. 
+  	 * Return an unmodifiable {@code Map} associating each {@code CallType} 
+  	 * in the key set to a {@code Set} containing the {@code DataType}s 
+  	 * allowing to generate that {@code CallType}. 
   	 * 
-  	 * @return 	an unmodifiable <code>Map</code> providing the allowed <code>DataType</code>s 
-  	 * 			for each <code>CallType</code>.
+  	 * @return 	an unmodifiable {@code Map} providing the allowed {@code DataType}s 
+  	 * 			for each {@code CallType}.
   	 * @see #checkCallTypeDataType(CallType, DataType);
   	 * @see #checkCallTypeDataTypes(CallType, Collection);
   	 */
@@ -210,15 +210,15 @@ public class DataParameters {
   		return allowedDataTypes;
   	}
   	/**
-  	 * Check if <code>DataType</code> is compatible with <code>callType</code> 
+  	 * Check if {@code DataType} is compatible with {@code callType} 
   	 * (see {@link #getAllowedDataTypes()}). 
-  	 * An <code>IllegalArgumentException</code> is thrown if an incompatibility 
+  	 * An {@code IllegalArgumentException} is thrown if an incompatibility 
   	 * is detected,
   	 * 
-  	 * @param callType 		The <code>CallType</code> to check against 
-  	 * 						<code>dataTypes</code>
-  	 * @param dataType		A <code>DataType</code> to check against 
-  	 * 						<code>callType</code>.
+  	 * @param callType 		The {@code CallType} to check against 
+  	 * 						{@code dataTypes}
+  	 * @param dataType		A {@code DataType} to check against 
+  	 * 						{@code callType}.
   	 * @throws IllegalArgumentException 	If an incompatibility is detected.
   	 */
   	public static void checkCallTypeDataType(CallType callType, DataType dataType) 
@@ -226,15 +226,15 @@ public class DataParameters {
   		checkCallTypeDataTypes(callType, Arrays.asList(dataType));
   	}
   	/**
-  	 * Check if all <code>DataType</code>s in <code>dataTypes</code> are compatible 
-  	 * with <code>callType</code> (see {@link #getAllowedDataTypes()}). 
-  	 * An <code>IllegalArgumentException</code> is thrown if an incompatibility 
+  	 * Check if all {@code DataType}s in {@code dataTypes} are compatible 
+  	 * with {@code callType} (see {@link #getAllowedDataTypes()}). 
+  	 * An {@code IllegalArgumentException} is thrown if an incompatibility 
   	 * is detected,
   	 * 
-  	 * @param callType 		The <code>CallType</code> to check against 
-  	 * 						<code>dataTypes</code>
-  	 * @param dataTypes		A <code>Collection</code> of <code>DataType</code>s to check 
-  	 * 						against <code>callType</code>.
+  	 * @param callType 		The {@code CallType} to check against 
+  	 * 						{@code dataTypes}
+  	 * @param dataTypes		A {@code Collection} of {@code DataType}s to check 
+  	 * 						against {@code callType}.
   	 * @throws IllegalArgumentException 	If an incompatibility is detected.
   	 */
   	private static void checkCallTypeDataTypes(CallType callType, Collection<DataType> dataTypes) 

@@ -16,10 +16,10 @@ import org.bgee.model.ontologycommon.OntologyElement;
  * is too complex. Also, some operations are implemented slightly differently.
  * <p>
  * For a matter of fact, this class is named an "element", because it does not specify 
- * methods such as <code>getName</code> (because merged elements will not have any), 
- * as opposed to an <code>AnatDevEntity</code>, which does extend the 
+ * methods such as {@code getName} (because merged elements will not have any), 
+ * as opposed to an {@code AnatDevEntity}, which does extend the 
  * {@link org.bgee.model.Entity Entity} class, and provides method such as 
- * <code>getName</code>.
+ * {@code getName}.
  * 
  * 
  * @author Frederic Bastian

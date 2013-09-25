@@ -4,8 +4,8 @@ import org.bgee.model.expressiondata.rawdata.RawData;
 
 /**
  * Class related to in situ evidences. 
- * Is contained by an <code>InSituExp</code> 
- * and is the container of <code>InSituSpot</code>s. 
+ * Is contained by an {@code InSituExp} 
+ * and is the container of {@code InSituSpot}s. 
  * 
  * @author Frederic Bastian
  * @version Bgee 11
@@ -16,19 +16,19 @@ import org.bgee.model.expressiondata.rawdata.RawData;
 public class InSituEvidence extends RawData
 {
     /**
-	 * The <code>InSituExp</code> this object belongs to.
+	 * The {@code InSituExp} this object belongs to.
 	 * It is the "container" used for the methods 
-	 * <code>#getDataSourceFromContainer()</code> and <code>#getDataSourceIdFromContainer()</code>.
+	 * {@code #getDataSourceFromContainer()} and {@code #getDataSourceIdFromContainer()}.
 	 * @see #getDataSourceFromContainer()
 	 * @see #getDataSourceIdFromContainer()
 	 */
     private InSituExp inSituExp;
 	/**
-	 * A <code>String</code> corresponding to the ID 
+	 * A {@code String} corresponding to the ID 
 	 * of the in situ experiment this evidence belongs to. 
-	 * This attribute is useful when the <code>inSituExp</code> is not set. 
-	 * When both are set, this <code>inSituExperimentId</code> matches 
-	 * the <code>id</code> attribute of the <code>InSituExp</code>. 
+	 * This attribute is useful when the {@code inSituExp} is not set. 
+	 * When both are set, this {@code inSituExperimentId} matches 
+	 * the {@code id} attribute of the {@code InSituExp}. 
 	 * @see inSituExp
 	 */
     private String inSituExperimentId;
@@ -42,15 +42,15 @@ public class InSituEvidence extends RawData
     }
 	
 	/**
-	 * Try to obtain the <code>DataSource</code> object where these expression data come from, 
-	 * from the <code>InSituExp</code> container of this <code>InSituEvidence</code>, 
+	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+	 * from the {@code InSituExp} container of this {@code InSituEvidence}, 
 	 * and eventually from its own container, etc.
-	 * See <code>getDataSource()</code> for more details.
+	 * See {@code getDataSource()} for more details.
 	 * 
-	 * @return 	a <code>DataSource</code> object where these expression data come from, 
-	 * 			obtained from the <code>InSituExp</code> container of this <code>InSituEvidence</code>. 
-	 * 			<code>null</code> if it was not possible to retrieve a <code>DataSource</code> object  
-	 * 			from the <code>InSituExp</code> container.
+	 * @return 	a {@code DataSource} object where these expression data come from, 
+	 * 			obtained from the {@code InSituExp} container of this {@code InSituEvidence}. 
+	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+	 * 			from the {@code InSituExp} container.
 	 * @see #inSituExp
 	 * @see #getDataSource()
 	 */
@@ -65,12 +65,12 @@ public class InSituEvidence extends RawData
 	
 	/**
 	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the <code>InSituExp</code> "container". 
+	 * from the {@code InSituExp} "container". 
 	 * 
-	 * @return 	a <code>String</code> corresponding to the ID of the data source 
+	 * @return 	a {@code String} corresponding to the ID of the data source 
 	 * 			where these expression data come from, 
-	 * 			obtained from the <code>InSituExp</code> "container". 
-	 * 			Empty <code>String</code> if it was not possible to retrieve the ID 
+	 * 			obtained from the {@code InSituExp} "container". 
+	 * 			Empty {@code String} if it was not possible to retrieve the ID 
 	 * 			from the container.
 	 * @see #inSituExp
 	 * @see #getDataSourceId()
@@ -85,8 +85,8 @@ public class InSituEvidence extends RawData
 	}
 
 	/**
-     * Retrieve the <code>InSituExp</code> this <code>InSituEvidence</code> belongs to, 
-     * by using the ID provided by <code>#getInSituExperimentId()</code>, 
+     * Retrieve the {@code InSituExp} this {@code InSituEvidence} belongs to, 
+     * by using the ID provided by {@code #getInSituExperimentId()}, 
      * and store it by using <code>#setInSituExperiment(InSituExp)<code>.
      */
 	public void loadInSituExperiment() 
@@ -108,9 +108,9 @@ public class InSituEvidence extends RawData
 		this.inSituExperimentId = expId;
 	}
 	/**
-	 * Returns either the value of <code>inSituExperimentId</code>, 
-	 * or the of the <code>id</code> of the <code>InSituExp</code> 
-	 * stored in <code>inSituExp</code>, depending on which one is set. 
+	 * Returns either the value of {@code inSituExperimentId}, 
+	 * or the of the {@code id} of the {@code InSituExp} 
+	 * stored in {@code inSituExp}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the in situ experiment this evidence belongs to. 
 	 * @see 	#inSituExperimentId

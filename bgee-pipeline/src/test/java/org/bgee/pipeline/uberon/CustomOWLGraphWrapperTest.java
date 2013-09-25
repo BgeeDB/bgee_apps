@@ -53,7 +53,7 @@ public class CustomOWLGraphWrapperTest extends TestAncestor
 	}
 	
 	/**
-	 * Load the (really basic) ontology <code>/ontologies/OWLGraphManipulatorTest.obo</code> 
+	 * Load the (really basic) ontology {@code /ontologies/OWLGraphManipulatorTest.obo} 
 	 * into {@link #wrapper}.
 	 * It is loaded before the execution of each test, so that a test can modify it 
 	 * without impacting another test.

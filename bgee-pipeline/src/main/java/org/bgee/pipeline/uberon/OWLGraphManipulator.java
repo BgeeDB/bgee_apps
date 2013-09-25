@@ -68,23 +68,23 @@ public class OWLGraphManipulator
 {
 	private final static Logger log = LogManager.getLogger(OWLGraphManipulator.class.getName());
 	/**
-	 * The <code>OWLGraphWrapper</code> on which the operations will be performed 
+	 * The {@code OWLGraphWrapper} on which the operations will be performed 
 	 * (relation reductions, edge propagations, ...).
 	 */
 	private CustomOWLGraphWrapper owlGraphWrapper;
 	/**
-	 * A <code>Set</code> of <code>OWLObjectPropertyExpression</code>s that are 
+	 * A {@code Set} of {@code OWLObjectPropertyExpression}s that are 
 	 * the sub-properties of the "part_of" property (for instance, "deep_part_of").
 	 * 
 	 * @see #isAPartOfEdge(OWLGraphEdge)
 	 */
 	private Set<OWLObjectPropertyExpression> partOfRels;
 	/**
-	 * A <code>String</code> representing the OBO-style ID of the part_of relation. 
+	 * A {@code String} representing the OBO-style ID of the part_of relation. 
 	 */
 	private final static String PARTOFID    = "BFO:0000050";
 	/**
-	 * A <code>String</code> representing the OBO-style ID of the develops_from relation. 
+	 * A {@code String} representing the OBO-style ID of the develops_from relation. 
 	 */
 	private final static String DVLPTFROMID = "RO:0002202";
 	
@@ -93,7 +93,7 @@ public class OWLGraphManipulator
 	//*********************************
 	/**
 	 * Default constructor. This class should be instantiated only through 
-	 * the constructor <code>OWLGraphManipulator(OWLGraphWrapper)</code>.
+	 * the constructor {@code OWLGraphManipulator(OWLGraphWrapper)}.
 	 * @see #OWLGraphManipulator(OWLGraphWrapper)
 	 */
 	@SuppressWarnings("unused")
@@ -102,10 +102,10 @@ public class OWLGraphManipulator
     	this(null);
     }
 	/**
-	 * Constructor of the class, providing the <code>OWLGraphWrapper</code> 
+	 * Constructor of the class, providing the {@code OWLGraphWrapper} 
 	 * wrapping the ontology on which modifications will be performed. 
 	 * 
-	 * @param owlGraphWrapper 	The <code>OWLGraphWrapper</code> on which the operations 
+	 * @param owlGraphWrapper 	The {@code OWLGraphWrapper} on which the operations 
 	 * 							will be performed.
 	 */
     public OWLGraphManipulator(CustomOWLGraphWrapper owlGraphWrapper)
@@ -132,15 +132,15 @@ public class OWLGraphManipulator
      * </ul>
      * <p>
      * This method returns the number of relations that were removed as a result 
-     * of the filtering of the relations (<code>filterRelations</code> method) 
-     * and the removal of redundant relations (<code>reduceRelations</code> method). 
+     * of the filtering of the relations ({@code filterRelations} method) 
+     * and the removal of redundant relations ({@code reduceRelations} method). 
      * The number of relations updated to be mapped to their parent relations 
-     * (<code>mapRelationsToParent</code> method) is not returned. 
+     * ({@code mapRelationsToParent} method) is not returned. 
      * <p>
      * Note that this class includes several other methods to tweak 
      * an ontology in different ways. 
      * 
-     * @return 	An <code>int</code> that is the number of relations removed by this method.
+     * @return 	An {@code int} that is the number of relations removed by this method.
      * 
      * @see #mapRelationsToParent(Collection)
      * @see #filterRelations(Collection, boolean)
@@ -196,7 +196,7 @@ public class OWLGraphManipulator
 	 * than the direct one).
 	 * </ul>
 	 * 
-	 * @return 	An <code>int</code> representing the number of relations removed. 
+	 * @return 	An {@code int} representing the number of relations removed. 
 	 */
 	public int reduceRelations()
 	{
@@ -214,9 +214,9 @@ public class OWLGraphManipulator
 	 * This method is similar to {@link #reduceRelations()}, except is_a and part_of 
 	 * are considered equivalent, and that only these "fake" redundant relations are removed. 
 	 * <p>
-	 * <strong>Warning: </strong>if you call both the methods <code>reduceRelations</code> 
-	 * and <code>reducePartOfIsARelations</code> on the same ontologies, 
-	 * you must call <code>reduceRelations</code> first, 
+	 * <strong>Warning: </strong>if you call both the methods {@code reduceRelations} 
+	 * and {@code reducePartOfIsARelations} on the same ontologies, 
+	 * you must call {@code reduceRelations} first, 
 	 * as it is a semantically correct reduction.
 	 * <p>
 	 * Here are examples of relations considered redundant by this method:
@@ -230,7 +230,7 @@ public class OWLGraphManipulator
 	 * Note that redundancies such as A is_a B is_a C and A is_a C are not removed by this method, 
 	 * but by {@link #reduceRelations()}.
 	 * 
-	 * @return 	An <code>int</code> representing the number of relations removed. 
+	 * @return 	An {@code int} representing the number of relations removed. 
 	 * @see #reduceRelations()
 	 */
 	public int reducePartOfIsARelations()
@@ -241,16 +241,16 @@ public class OWLGraphManipulator
 	/**
 	 * Perform relation reduction, that is either semantically correct, 
 	 * or is also considering is_a (SubClassOf) and part_of relations equivalent, 
-	 * depending on the parameter <code>reducePartOfAndIsA</code>. 
+	 * depending on the parameter {@code reducePartOfAndIsA}. 
 	 * <p>
 	 * This method is needed to be called by {@link #reduceRelations()} (correct reduction) 
 	 * and {@link #reducePartOfIsARelations()} (is_a/part_of equivalent), 
 	 * as it is almost the same code to run.
 	 *  
-	 * @param reducePartOfAndIsA 	A <code>boolean</code> defining whether 
+	 * @param reducePartOfAndIsA 	A {@code boolean} defining whether 
 	 * 										is_a/part_of relations should be considered 
-	 * 										equivalent. If <code>true</code>, they are.
-	 * @return 		An <code>int</code> representing the number of relations removed. 
+	 * 										equivalent. If {@code true}, they are.
+	 * @return 		An {@code int} representing the number of relations removed. 
 	 * @see #reduceRelations()
 	 * @see #reducePartOfIsARelations()
 	 */
@@ -341,38 +341,38 @@ public class OWLGraphManipulator
 	}
 	
 	/**
-	 * Check, for two <code>OWLGraphEdge</code>s <code>edgeToTest</code> and 
-	 * <code>edgeToWalk</code>, outgoing from a same source, if a composed relation 
-	 * equivalent to <code>edgeToTest</code> can be obtained by a walk starting from  
-	 * <code>edgeToWalk</code>, to the top of the ontology (at any distance). 
+	 * Check, for two {@code OWLGraphEdge}s {@code edgeToTest} and 
+	 * {@code edgeToWalk}, outgoing from a same source, if a composed relation 
+	 * equivalent to {@code edgeToTest} can be obtained by a walk starting from  
+	 * {@code edgeToWalk}, to the top of the ontology (at any distance). 
 	 * <p>
-	 * In that case, <code>edgeToTest</code> is considered redundant, 
-	 * and this method returns <code>true</code>. 
-	 * if <code>reducePartOfAndIsA</code> is <code>true</code>, 
+	 * In that case, {@code edgeToTest} is considered redundant, 
+	 * and this method returns {@code true}. 
+	 * if {@code reducePartOfAndIsA} is {@code true}, 
 	 * only if a relation is a part_of relation on the one hand, an is_a relation 
 	 * on the other hand, will they be considered equivalent. 
 	 * <p>
-	 * <code>edgeToTest</code> and <code>edgeToWalk</code> will also be considered redundant 
-	 * if they have the same target, and <code>edgeToWalk</code> is a sub-relation of 
-	 * <code>edgeToTest</code> (or, if <code>reducePartOfAndIsA</code> is <code>true</code>, 
-	 * when <code>edgeToTest</code> is a part_of-like relation and <code>edgeToWalk</code> 
+	 * {@code edgeToTest} and {@code edgeToWalk} will also be considered redundant 
+	 * if they have the same target, and {@code edgeToWalk} is a sub-relation of 
+	 * {@code edgeToTest} (or, if {@code reducePartOfAndIsA} is {@code true}, 
+	 * when {@code edgeToTest} is a part_of-like relation and {@code edgeToWalk} 
 	 * a is_a relation (because we prefer to keep the is_a relation)).
 	 * <p>
 	 * Note that relations are also combined over super properties (see 
 	 * {@link CustomOWLGraphWrapper#combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}.
 	 * 
-	 * @param edgeToTest				The <code>OWLGraphEdge</code> to be checked 
+	 * @param edgeToTest				The {@code OWLGraphEdge} to be checked 
 	 * 									for redundancy. 
-	 * @param edgeToWalk				The <code>OWLGraphEdge</code> that could potentially 
-	 * 									lead to a relation equivalent to <code>edgeToTest</code>, 
+	 * @param edgeToWalk				The {@code OWLGraphEdge} that could potentially 
+	 * 									lead to a relation equivalent to {@code edgeToTest}, 
 	 * 									by combining each relation walked to the top 
 	 * 									of the ontology.
-	 * @param reducePartOfAndIsA		A <code>boolean</code> defining whether 
+	 * @param reducePartOfAndIsA		A {@code boolean} defining whether 
 	 * 									is_a/part_of relations should be considered 
-	 * 									equivalent. If <code>true</code>, they are.
-	 * @return		<code>true</code> if <code>edgeToTest</code> is redundant as compared 
-	 * 				to a relation obtained from <code>edgeToWalk</code>.
-	 * @throws IllegalArgumentException If <code>edgeToTest</code> and <code>edgeToWalk</code>
+	 * 									equivalent. If {@code true}, they are.
+	 * @return		{@code true} if {@code edgeToTest} is redundant as compared 
+	 * 				to a relation obtained from {@code edgeToWalk}.
+	 * @throws IllegalArgumentException If {@code edgeToTest} and {@code edgeToWalk}
 	 * 									are equal, or if they are not outgoing from a same source.
 	 * @see #reduceRelations()
 	 * @see #reducePartOfIsARelations()
@@ -522,7 +522,7 @@ public class OWLGraphManipulator
 	//*********************************
     
     /**
-	 * Remove the <code>OWLClass</code> with the OBO-style ID <code>classToRemoveId</code> 
+	 * Remove the {@code OWLClass} with the OBO-style ID {@code classToRemoveId} 
 	 * from the ontology, and propagate its incoming edges to the targets 
 	 * of its outgoing edges. Each incoming edges are composed with each outgoing edges (see 
 	 * {@link CustomOWLGraphWrapper#combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}).
@@ -531,16 +531,16 @@ public class OWLGraphManipulator
 	 * to the ontology (propagated relations corresponding to a relation already 
 	 * existing in the ontology, or a less precise relation than an already existing one, 
 	 * will not be counted). It returns 0 only when no relations were propagated (or added). 
-	 * Rather than returning 0 when the  <code>OWLClass</code> could not be found or removed, 
-	 * an <code>IllegalArgumentException</code> is thrown. 
+	 * Rather than returning 0 when the  {@code OWLClass} could not be found or removed, 
+	 * an {@code IllegalArgumentException} is thrown. 
 	 * 
-	 * @param classToRemoveId 	A <code>String</code> corresponding to the OBO-style ID 
-	 * 							of the <code>OWLClass</code> to remove. 
-	 * @return 					An <code>int</code> corresponding to the number of relations 
+	 * @param classToRemoveId 	A {@code String} corresponding to the OBO-style ID 
+	 * 							of the {@code OWLClass} to remove. 
+	 * @return 					An {@code int} corresponding to the number of relations 
 	 * 							that could be combined, and that were actually added 
 	 * 							to the ontology. 
-	 * @throws IllegalArgumentException	If no <code>OWLClass</code> corresponding to 
-	 * 									<code>classToRemoveId</code> could be found, 
+	 * @throws IllegalArgumentException	If no {@code OWLClass} corresponding to 
+	 * 									{@code classToRemoveId} could be found, 
 	 * 									or if the class could not be removed. This is for the sake 
 	 * 									of not returning 0 when such problems appear, but only 
 	 * 									when no relations were propagated. 
@@ -653,22 +653,22 @@ public class OWLGraphManipulator
 	//*********************************
 
     /**
-     * Replace the sub-relations of <code>parentRelations</code> by these parent relations. 
-     * <code>parentRelations</code> contains the OBO-style IDs of the parent relations 
+     * Replace the sub-relations of {@code parentRelations} by these parent relations. 
+     * {@code parentRelations} contains the OBO-style IDs of the parent relations 
      * (for instance, "BFO:0000050"). All their sub-relations will be replaced by 
      * these parent relations. 
      * <p>
-     * For instance, if <code>parentRelations</code> contains "RO:0002202" ("develops_from" ID), 
+     * For instance, if {@code parentRelations} contains "RO:0002202" ("develops_from" ID), 
      * all sub-relations will be replaced: "transformation_of" relations will be replaced 
      * by "develops_from", "immediate_transformation_of" will be replaced by "develops_from", ...
      * <p>
      * Note that if mapping a relation to its parent produces an already existing relation, 
      * the sub-relation will then be simply removed.
      * 
-     * @param parentRelations 	A <code>Collection</code> of <code>String</code>s containing 
+     * @param parentRelations 	A {@code Collection} of {@code String}s containing 
      * 							the OBO-style IDs of the parent relations, that should replace 
      * 							all their sub-relations.
-     * @return					An <code>int</code> that is the number of relations replaced 
+     * @return					An {@code int} that is the number of relations replaced 
      * 							or removed.
      * 
      * @see #mapRelationsToParent(Collection, Collection)
@@ -679,33 +679,33 @@ public class OWLGraphManipulator
     	return log.exit(this.mapRelationsToParent(parentRelations, null));
     }
     /**
-     * Replace the sub-relations of <code>parentRelations</code> by these parent relations, 
-     * except the sub-relations listed in <code>relsExcluded</code>. 
-     * <code>parentRelations</code> and <code>relsExcluded</code> contain the OBO-style IDs 
+     * Replace the sub-relations of {@code parentRelations} by these parent relations, 
+     * except the sub-relations listed in {@code relsExcluded}. 
+     * {@code parentRelations} and {@code relsExcluded} contain the OBO-style IDs 
      * of the relations (for instance, "BFO:0000050"). All their sub-relations 
      * will be replaced by these parent relations, or removed if the parent relations 
      * already exists, except the sub-relations in code>relsExcluded</code>. 
      * <p>
-     * For instance, if <code>parentRelations</code> contains "RO:0002202" ("develops_from" ID), 
+     * For instance, if {@code parentRelations} contains "RO:0002202" ("develops_from" ID), 
      * all sub-relations will be replaced: "transformation_of" relations will be replaced 
      * by "develops_from", "immediate_transformation_of" will be replaced by "develops_from", ...
      * <p>
-     * If a sub-relation of a relation in <code>parentRelations</code> should not be mapped, 
-     * its OBO-style ID should be added to <code>relsExcluded</code>. In the previous example, 
-     * if <code>relsExcluded</code> contained "SIO:000658" "immediate_transformation_of", 
+     * If a sub-relation of a relation in {@code parentRelations} should not be mapped, 
+     * its OBO-style ID should be added to {@code relsExcluded}. In the previous example, 
+     * if {@code relsExcluded} contained "SIO:000658" "immediate_transformation_of", 
      * this relation would not be replaced by "develops_from". All sub-relations 
-     * of <code>relsExcluded</code> are excluded from replacement. 
+     * of {@code relsExcluded} are excluded from replacement. 
      * <p>
      * Note that if mapping a relation to its parent produces an already existing relation, 
      * the sub-relation will then be simply removed.
      * 
-     * @param parentRelations 	A <code>Collection</code> of <code>String</code>s containing 
+     * @param parentRelations 	A {@code Collection} of {@code String}s containing 
      * 							the OBO-style IDs of the parent relations, that should replace 
-     * 							all their sub-relations, except those in <code>relsExcluded</code>.
-     * @param relsExcluded		A <code>Collection</code> of <code>String</code>s containing 
+     * 							all their sub-relations, except those in {@code relsExcluded}.
+     * @param relsExcluded		A {@code Collection} of {@code String}s containing 
      * 							the OBO-style IDs of the relations excluded from replacement. 
      * 							All their sub-relations will be also be excluded.
-     * @return					An <code>int</code> that is the number of relations replaced 
+     * @return					An {@code int} that is the number of relations replaced 
      * 							or removed.
      * 
      * @see #mapRelationsToParent(Collection)
@@ -827,26 +827,26 @@ public class OWLGraphManipulator
 	
     /**
      * Keep in the ontologies only the subgraphs starting 
-     * from the provided <code>OWLClass</code>es, and their ancestors. 
-     * <code>allowedSubgraphRootIds</code> contains the OBO-style IDs 
-     * of these subgraph roots as <code>String</code>s.
+     * from the provided {@code OWLClass}es, and their ancestors. 
+     * {@code allowedSubgraphRootIds} contains the OBO-style IDs 
+     * of these subgraph roots as {@code String}s.
      * <p>
      * All classes not part of these subgraphs, and not ancestors of these allowed roots, 
      * will be removed from the ontology. Also, any direct relation between an ancestor 
      * of a subgraph root and one of its descendants will be removed, 
      * as this would represent an undesired subgraph. 
      * <p>
-     * This method returns the number of <code>OWLClass</code>es removed as a result.
+     * This method returns the number of {@code OWLClass}es removed as a result.
      * <p>
-     * This is the opposite method of <code>removeSubgraphs(Collection<String>)</code>.
+     * This is the opposite method of {@code removeSubgraphs(Collection<String>)}.
      * 
-     * @param allowedSubgraphRootIds 	A <code>Collection</code> of <code>String</code>s 
+     * @param allowedSubgraphRootIds 	A {@code Collection} of {@code String}s 
      * 									representing the OBO-style IDs of the 
-     * 									<code>OWLClass</code>es that are the roots of the 
+     * 									{@code OWLClass}es that are the roots of the 
      * 									subgraphs that will be kept in the ontology. 
      * 									Their ancestors will be kept as well.
-     * @return 						An <code>int</code> representing the number of 
-     * 								<code>OWLClass</code>es removed.
+     * @return 						An {@code int} representing the number of 
+     * 								{@code OWLClass}es removed.
      * @see #removeSubgraphs(Collection, boolean)
      */
     public int filterSubgraphs(Collection<String> allowedSubgraphRootIds)
@@ -944,29 +944,29 @@ public class OWLGraphManipulator
     }
     /**
      * Remove from the ontology the subgraphs starting 
-     * from the <code>OWLClass</code>es with their ID in <code>subgraphRootIds</code>. 
-     * <code>subgraphRootIds</code> contains the OBO-style IDs 
-     * of these subgraph roots as <code>String</code>s.
+     * from the {@code OWLClass}es with their ID in {@code subgraphRootIds}. 
+     * {@code subgraphRootIds} contains the OBO-style IDs 
+     * of these subgraph roots as {@code String}s.
      * <p>
      * If a class is part of a subgraph to remove, but also of a subgraph not to be removed, 
-     * it will be kept in the ontology if <code>keepSharedClasses</code> is <code>true</code>, 
+     * it will be kept in the ontology if {@code keepSharedClasses} is {@code true}, 
      * and only classes that are solely part of the subgraphs to remove 
-     * will be deleted. If <code>keepSharedClasses</code> is <code>false</code>, 
+     * will be deleted. If {@code keepSharedClasses} is {@code false}, 
      * all classes part of a subgraph to remove will be removed.
      * <p>
-     * This method returns the number of <code>OWLClass</code>es removed as a result.
+     * This method returns the number of {@code OWLClass}es removed as a result.
      * <p>
-     * This is the opposite method of <code>filterSubgraphs(Collection<String>)</code>.
+     * This is the opposite method of {@code filterSubgraphs(Collection<String>)}.
      * 
-     * @param subgraphRootIds 		A <code>Collection</code> of <code>String</code>s 
-     * 								representing the OBO-style IDs of the <code>OWLClass</code>es 
+     * @param subgraphRootIds 		A {@code Collection} of {@code String}s 
+     * 								representing the OBO-style IDs of the {@code OWLClass}es 
      * 								that are the roots of the subgraphs to be removed. 
-     * @param keepSharedClasses 	A <code>boolean</code> defining whether classes part both of 
+     * @param keepSharedClasses 	A {@code boolean} defining whether classes part both of 
      * 								a subgraph to remove and a subgraph not to be removed,  
-     * 								should be deleted. If <code>true</code>, they will be kept, 
+     * 								should be deleted. If {@code true}, they will be kept, 
      * 								otherwise, they will be deleted. 
-     * @return 						An <code>int</code> representing the number of 
-     * 								<code>OWLClass</code>es removed.
+     * @return 						An {@code int} representing the number of 
+     * 								{@code OWLClass}es removed.
      * @see #filterSubgraphs(Collection)
      */
     public int removeSubgraphs(Collection<String> subgraphRootIds, boolean keepSharedClasses)
@@ -1103,22 +1103,22 @@ public class OWLGraphManipulator
 	//*********************************
     
     /**
-     * Filter the <code>OWLSubClassOfAxiom</code>s in the ontology to keep only  
-     * those that correspond to OBO relations listed in <code>allowedRels</code>, 
-     * as OBO-style IDs. <code>SubClassOf</code>/<code>is_a</code> relations 
-     * will not be removed, whatever the content of <code>allowedRels</code>. 
+     * Filter the {@code OWLSubClassOfAxiom}s in the ontology to keep only  
+     * those that correspond to OBO relations listed in {@code allowedRels}, 
+     * as OBO-style IDs. {@code SubClassOf}/{@code is_a} relations 
+     * will not be removed, whatever the content of {@code allowedRels}. 
      * <p>
-     * If <code>allowSubRels</code> is <code>true</code>, then the relations 
+     * If {@code allowSubRels} is {@code true}, then the relations 
      * that are subproperties of the allowed relations are also kept 
-     * (e.g., if RO:0002131 "overlaps" is allowed, and <code>allowSubRels</code> 
-     * is <code>true</code>, then RO:0002151 "partially_overlaps" is also allowed). 
+     * (e.g., if RO:0002131 "overlaps" is allowed, and {@code allowSubRels} 
+     * is {@code true}, then RO:0002151 "partially_overlaps" is also allowed). 
      * 
-     * @param allowedRels 		A <code>Collection</code> of <code>String</code>s 
+     * @param allowedRels 		A {@code Collection} of {@code String}s 
      * 							representing the OBO-style IDs of the relations 
      * 							to keep in the ontology, e.g. "BFO:0000050". 
-     * @param allowSubRels		A <code>boolean</code> defining whether sub-relations 
+     * @param allowSubRels		A {@code boolean} defining whether sub-relations 
      * 							of the allowed relations should also be kept. 
-     * @return 					An <code>int</code> representing the number of relations 
+     * @return 					An {@code int} representing the number of relations 
      * 							removed as a result. 
      */
     public int filterRelations(Collection<String> allowedRels, boolean allowSubRels)
@@ -1132,22 +1132,22 @@ public class OWLGraphManipulator
     	return log.exit(relsRemoved);
     }
     /**
-     * Remove the <code>OWLSubClassOfAxiom</code>s in the ontology  
-     * corresponding to the to OBO relations listed in <code>forbiddenRels</code>, 
-     * as OBO-style IDs. <code>SubClassOf</code>/<code>is_a</code> relations 
-     * will not be removed, whatever the content of <code>forbiddenRels</code>. 
+     * Remove the {@code OWLSubClassOfAxiom}s in the ontology  
+     * corresponding to the to OBO relations listed in {@code forbiddenRels}, 
+     * as OBO-style IDs. {@code SubClassOf}/{@code is_a} relations 
+     * will not be removed, whatever the content of {@code forbiddenRels}. 
      * <p>
-     * If <code>forbidSubRels</code> is <code>true</code>, then the relations 
+     * If {@code forbidSubRels} is {@code true}, then the relations 
      * that are subproperties of the relations to remove are also removed 
-     * (e.g., if RO:0002131 "overlaps" should be removed, and <code>forbidSubRels</code> 
-     * is <code>true</code>, then RO:0002151 "partially_overlaps" is also removed). 
+     * (e.g., if RO:0002131 "overlaps" should be removed, and {@code forbidSubRels} 
+     * is {@code true}, then RO:0002151 "partially_overlaps" is also removed). 
      * 
-     * @param forbiddenRels 	A <code>Collection</code> of <code>String</code>s 
+     * @param forbiddenRels 	A {@code Collection} of {@code String}s 
      * 							representing the OBO-style IDs of the relations 
      * 							to remove from the ontology, e.g. "BFO:0000050". 
-     * @param forbidSubRels		A <code>boolean</code> defining whether sub-relations 
+     * @param forbidSubRels		A {@code boolean} defining whether sub-relations 
      * 							of the relations to remove should also be removed. 
-     * @return 					An <code>int</code> representing the number of relations 
+     * @return 					An {@code int} representing the number of relations 
      * 							removed as a result. 
      */
     public int removeRelations(Collection<String> forbiddenRels, boolean forbidSubRels)
@@ -1161,40 +1161,40 @@ public class OWLGraphManipulator
     	return log.exit(relsRemoved);
     }
     /**
-     * Filter the <code>OWLSubClassOfAxiom</code>s in the ontology to keep or remove 
-     * (depending on the <code>filter</code> parameter)  
-     * those that correspond to OBO relations listed in <code>rels</code>, 
-     * as OBO-style IDs. <code>SubClassOf</code>/<code>is_a</code> relations 
-     * will not be removed, whatever the content of <code>rels</code>. 
+     * Filter the {@code OWLSubClassOfAxiom}s in the ontology to keep or remove 
+     * (depending on the {@code filter} parameter)  
+     * those that correspond to OBO relations listed in {@code rels}, 
+     * as OBO-style IDs. {@code SubClassOf}/{@code is_a} relations 
+     * will not be removed, whatever the content of {@code rels}. 
      * <p>
-     * If <code>filter</code> is <code>true</code>, then the relations listed 
-     * in <code>rels</code> should be kept, and all others removed. 
-     * If <code>filter</code> is <code>false</code>, relations in <code>rels</code> 
+     * If {@code filter} is {@code true}, then the relations listed 
+     * in {@code rels} should be kept, and all others removed. 
+     * If {@code filter} is {@code false}, relations in {@code rels} 
      * should be removed, and all others conserved. This methods is needed and called by 
      * {@link #filterRelations(Collection, boolean)} and 
      * {@link #removeRelations(Collection, boolean)}, because it is almost 
      * the same code to write in both scenarios.
      * <p>
-     * If <code>subRels</code> is <code>true</code>, then the relations 
-     * that are subproperties of the relations in <code>rels</code> are also kept or removed, 
-     * depending on the <code>filter</code> parameter
-     * (e.g., if <code>filter</code> is <code>true</code>, and if <code>rels</code> 
+     * If {@code subRels} is {@code true}, then the relations 
+     * that are subproperties of the relations in {@code rels} are also kept or removed, 
+     * depending on the {@code filter} parameter
+     * (e.g., if {@code filter} is {@code true}, and if {@code rels} 
      * contains the RO:0002131 "overlaps" relation, 
-     * and if <code>subRels</code> is <code>true</code>, 
+     * and if {@code subRels} is {@code true}, 
      * then the relation RO:0002151 "partially_overlaps" will also be kept in the ontology). 
      * 
-     * @param rels		A <code>Collection</code> of <code>String</code>s 
+     * @param rels		A {@code Collection} of {@code String}s 
      * 					representing the OBO-style IDs of the relations 
      * 					to keep or to remove (depending on 
-     * 					the <code>filter</code> parameter), e.g. "BFO:0000050". 
-     * @param subRels	A <code>boolean</code> defining whether sub-relations 
-     * 					of the relations listed in <code>rels</code> should also 
+     * 					the {@code filter} parameter), e.g. "BFO:0000050". 
+     * @param subRels	A {@code boolean} defining whether sub-relations 
+     * 					of the relations listed in {@code rels} should also 
      * 					be examined for removal or conservation. 
-     * @param filter	A <code>boolean</code> defining whether relations listed 
-     * 					in <code>rels</code> (and their sub-relations if <code>subRels</code> 
-     * 					is <code>true</code>) should be kept, or removed. 
-     * 					If <code>true</code>, they will be kept, otherwise they will be removed.
-     * @return 			An <code>int</code> representing the number of relations 
+     * @param filter	A {@code boolean} defining whether relations listed 
+     * 					in {@code rels} (and their sub-relations if {@code subRels} 
+     * 					is {@code true}) should be kept, or removed. 
+     * 					If {@code true}, they will be kept, otherwise they will be removed.
+     * @return 			An {@code int} representing the number of relations 
      * 					removed as a result. 
      * 
      * @see #filterRelations(Collection, boolean)
@@ -1279,10 +1279,10 @@ public class OWLGraphManipulator
 	//*********************************
     
     /**
-	 * Remove is_a and part_of incoming edges to <code>OWLClass</code>es 
-	 * in <code>subsets</code>, only if the source of the incoming edge 
-	 * will not be left orphan of other is_a/part_of relations to <code>OWLClass</code>es 
-	 * not in <code>subsets</code>. 
+	 * Remove is_a and part_of incoming edges to {@code OWLClass}es 
+	 * in {@code subsets}, only if the source of the incoming edge 
+	 * will not be left orphan of other is_a/part_of relations to {@code OWLClass}es 
+	 * not in {@code subsets}. 
 	 * <p>
 	 * <strong>Warning:</strong> please note that the resulting ontology will not be 
 	 * semantically correct. It is the same kind of modifications made by 
@@ -1301,11 +1301,11 @@ public class OWLGraphManipulator
 	 * then no relation will be removed, as A would have no is_a/part_of relation 
 	 * to a class not in a targeted subset. 
 	 * </ul>
-	 * @param subsets 	A <code>Collection</code> of <code>String</code>s representing 
+	 * @param subsets 	A {@code Collection} of {@code String}s representing 
 	 * 					the names of the targeted subsets, for which 
-	 * 					member <code>OWLClasses</code> should have their is_a/part_of 
+	 * 					member {@code OWLClasses} should have their is_a/part_of 
 	 * 					incoming edges removed.
-	 * @return			An <code>int</code> that is the number of is_a/part_of 
+	 * @return			An {@code int} that is the number of is_a/part_of 
 	 * 					relations (or sub-relations) removed.
 	 */
 	public int removeRelsToSubsets(Collection<String> subsets)
@@ -1431,13 +1431,13 @@ public class OWLGraphManipulator
 	//    UTILS
 	//*********************************
 	/**
-	 * Remove <code>edge</code> from its ontology. 
-	 * This method transforms the <code>OWLGraphEdge</code> <code>edge</code> 
-	 * into an <code>OWLSubClassOfAxiom</code>, then remove it, 
+	 * Remove {@code edge} from its ontology. 
+	 * This method transforms the {@code OWLGraphEdge} {@code edge} 
+	 * into an {@code OWLSubClassOfAxiom}, then remove it, 
 	 * and trigger a wrapper update. 
 	 * 
-	 * @param edge 	The <code>OWLGraphEdge</code> to be removed from the ontology. 
-	 * @return 			<code>true</code> if <code>edge</code> was actually present 
+	 * @param edge 	The {@code OWLGraphEdge} to be removed from the ontology. 
+	 * @return 			{@code true} if {@code edge} was actually present 
 	 * 					in the ontology and removed. 
 	 */
 	public boolean removeEdge(OWLGraphEdge edge)
@@ -1448,14 +1448,14 @@ public class OWLGraphManipulator
 		return log.exit(this.removeEdges(edges) > 0);
 	}
 	/**
-	 * Remove <code>edges</code> from their related ontology. 
-	 * This method transforms the <code>OWLGraphEdge</code>s in <code>edge</code>s 
-	 * into <code>OWLSubClassOfAxiom</code>s, then remove them, and trigger 
+	 * Remove {@code edges} from their related ontology. 
+	 * This method transforms the {@code OWLGraphEdge}s in {@code edge}s 
+	 * into {@code OWLSubClassOfAxiom}s, then remove them, and trigger 
 	 * a wrapper update. 
 	 * 
-	 * @param edges 	A <code>Collection</code> of <code>OWLGraphEdge</code>s 
+	 * @param edges 	A {@code Collection} of {@code OWLGraphEdge}s 
 	 * 					to be removed from their ontology. 
-	 * @return 			An <code>int</code> representing the number of <code>OWLGraphEdge</code>s 
+	 * @return 			An {@code int} representing the number of {@code OWLGraphEdge}s 
 	 * 					that were actually removed 
 	 * @see #removeEdge(OWLGraphEdge)
 	 */
@@ -1482,14 +1482,14 @@ public class OWLGraphManipulator
 		return log.exit(edgeCount);
 	}
 	/**
-	 * Add <code>edge</code> to its related ontology. 
-	 * This method transforms the <code>OWLGraphEdge</code> <code>edge</code> 
-	 * into an <code>OWLSubClassOfAxiom</code>, 
+	 * Add {@code edge} to its related ontology. 
+	 * This method transforms the {@code OWLGraphEdge} {@code edge} 
+	 * into an {@code OWLSubClassOfAxiom}, 
 	 * then add it to the ontology   
-     * and update the <code>OWLGraphWrapper</code> container. 
+     * and update the {@code OWLGraphWrapper} container. 
 	 * 
-	 * @param edge 		The <code>OWLGraphEdge</code> to be added to its related ontology. 
-	 * @return 			<code>true</code> if <code>edge</code> was actually added 
+	 * @param edge 		The {@code OWLGraphEdge} to be added to its related ontology. 
+	 * @return 			{@code true} if {@code edge} was actually added 
 	 * 					to the ontology. 
 	 */
 	public boolean addEdge(OWLGraphEdge edge)
@@ -1500,14 +1500,14 @@ public class OWLGraphManipulator
 		return log.exit(this.addEdges(edges) > 0);
 	}
 	/**
-	 * Add <code>edges</code> to their related ontology. 
-	 * This method transforms the <code>OWLGraphEdge</code>s in <code>edge</code>s 
-	 * into <code>OWLSubClassOfAxiom</code>s, then add them to the ontology,   
-     * and update the <code>OWLGraphWrapper</code> container. 
+	 * Add {@code edges} to their related ontology. 
+	 * This method transforms the {@code OWLGraphEdge}s in {@code edge}s 
+	 * into {@code OWLSubClassOfAxiom}s, then add them to the ontology,   
+     * and update the {@code OWLGraphWrapper} container. 
 	 * 
-	 * @param edges		A <code>Set</code> of <code>OWLGraphEdge</code>s 
+	 * @param edges		A {@code Set} of {@code OWLGraphEdge}s 
 	 * 					to be added to their ontology. 
-	 * @return 			An <code>int</code> representing the number of <code>OWLGraphEdge</code>s 
+	 * @return 			An {@code int} representing the number of {@code OWLGraphEdge}s 
 	 * 					that were actually added 
 	 * @see #addEdge(OWLGraphEdge)
 	 */
@@ -1534,12 +1534,12 @@ public class OWLGraphManipulator
 		return log.exit(edgeCount);
 	}
 	/**
-     * Remove from all ontologies the <code>OWLClass</code> <code>classToDel</code>,   
-     * and then update the <code>OWLGraphWrapper</code> container. 
+     * Remove from all ontologies the {@code OWLClass} {@code classToDel},   
+     * and then update the {@code OWLGraphWrapper} container. 
      * 
-     * @param classesToDel	 	an <code>OWLClass</code> to be removed 
+     * @param classesToDel	 	an {@code OWLClass} to be removed 
      * 							from the ontologies. 
-	 * @return 					<code>true</code> if <code>classToDel</code> was actually 
+	 * @return 					{@code true} if {@code classToDel} was actually 
 	 * 							removed from the ontology. 
      */
     private boolean removeClass(OWLClass classToDel)
@@ -1550,13 +1550,13 @@ public class OWLGraphManipulator
 		return log.exit(this.removeClasses(classes) > 0);
     }
 	/**
-     * Remove from all ontologies all <code>OWLClass</code>es 
-     * present in <code>classesToDel</code>,   
-     * and then update the <code>OWLGraphWrapper</code> container. 
+     * Remove from all ontologies all {@code OWLClass}es 
+     * present in {@code classesToDel},   
+     * and then update the {@code OWLGraphWrapper} container. 
      * 
-     * @param classesToDel	 	a <code>Set</code> of <code>OWLClass</code>es 
+     * @param classesToDel	 	a {@code Set} of {@code OWLClass}es 
      * 							to be removed from the ontologies. 
-     * @return					An <code>int</code> representing the number of classes 
+     * @return					An {@code int} representing the number of classes 
      * 							actually removed as a result. 
      */
     private int removeClasses(Set<OWLClass> classesToDel)
@@ -1584,13 +1584,13 @@ public class OWLGraphManipulator
     	return log.exit(classCount);
     }
     /**
-     * Filter from the ontologyies all <code>OWLClass</code>es 
-     * present in <code>classesToKeep</code>,  
-     * and then update the <code>OWLGraphWrapper</code> container. 
+     * Filter from the ontologyies all {@code OWLClass}es 
+     * present in {@code classesToKeep},  
+     * and then update the {@code OWLGraphWrapper} container. 
      * 
-     * @param classesToKeep 	a <code>Set</code> of <code>OWLClass</code>s 
+     * @param classesToKeep 	a {@code Set} of {@code OWLClass}s 
      * 							that are classes to be kept in the ontology. 
-     * @return					An <code>int</code> representing the number of classes 
+     * @return					An {@code int} representing the number of classes 
      * 							actually removed as a result. 
      */
     private int filterClasses(Set<OWLClass> classesToKeep)
@@ -1624,10 +1624,10 @@ public class OWLGraphManipulator
     }
     
     /**
-     * Determine if <code>edge</code> represents an is_a relation.
+     * Determine if {@code edge} represents an is_a relation.
      * 
-     * @param edge	The <code>OWLGraphEdge</code> to test.
-     * @return		<code>true</code> if <code>edge</code> is an is_a (SubClassOf) relation.
+     * @param edge	The {@code OWLGraphEdge} to test.
+     * @return		{@code true} if {@code edge} is an is_a (SubClassOf) relation.
      */
     private boolean isASubClassOfEdge(OWLGraphEdge edge) {
     	log.entry(edge);
@@ -1636,11 +1636,11 @@ public class OWLGraphManipulator
     }
     
     /**
-     * Determine if <code>edge</code> represents a part_of relation or one of its sub-relations 
+     * Determine if {@code edge} represents a part_of relation or one of its sub-relations 
      * (e.g., "deep_part_of").
      * 
-     * @param edge	The <code>OWLGraphEdge</code> to test.
-     * @return		<code>true</code> if <code>edge</code> is a part_of relation, 
+     * @param edge	The {@code OWLGraphEdge} to test.
+     * @return		{@code true} if {@code edge} is a part_of relation, 
      * 				or one of its sub-relations.
      */
     private boolean isAPartOfEdge(OWLGraphEdge edge) {
@@ -1655,13 +1655,13 @@ public class OWLGraphManipulator
  
    
     /**
-	 * Convenient method to get a <code>OWLSubClassOfAxiom</code> corresponding to 
-	 * the provided <code>OWLGraphEdge</code>.
+	 * Convenient method to get a {@code OWLSubClassOfAxiom} corresponding to 
+	 * the provided {@code OWLGraphEdge}.
 	 * 
-	 * @param OWLGraphEdge 			An <code>OWLGraphEdge</code> to transform 
-	 * 								into a <code>OWLSubClassOfAxiom</code>
-	 * @return OWLSubClassOfAxiom 	The <code>OWLSubClassOfAxiom</code> corresponding 
-	 * 								to <code>OWLGraphEdge</code>.
+	 * @param OWLGraphEdge 			An {@code OWLGraphEdge} to transform 
+	 * 								into a {@code OWLSubClassOfAxiom}
+	 * @return OWLSubClassOfAxiom 	The {@code OWLSubClassOfAxiom} corresponding 
+	 * 								to {@code OWLGraphEdge}.
 	 */
 	private OWLSubClassOfAxiom getAxiom(OWLGraphEdge edge) 
 	{
@@ -1677,12 +1677,12 @@ public class OWLGraphManipulator
 	}
 	
     /**
-     * Convenient method to apply <code>changes</code> to the ontology.
+     * Convenient method to apply {@code changes} to the ontology.
      * 
-     * @param changes 	The <code>List</code> of <code>OWLOntologyChange</code>s 
+     * @param changes 	The {@code List} of {@code OWLOntologyChange}s 
      * 					to be applied to the ontology. 
-     * @return 			<code>true</code> if all changes were applied, 
-     * 					<code>false</code> otherwise. 
+     * @return 			{@code true} if all changes were applied, 
+     * 					{@code false} otherwise. 
      * @see #applyChange(OWLOntologyChange)
      */
     private boolean applyChanges(List<OWLOntologyChange> changes)
@@ -1705,10 +1705,10 @@ public class OWLGraphManipulator
     	return log.exit(false);
     }
     /**
-     * Convenient method to apply <code>change</code> to the ontology.
+     * Convenient method to apply {@code change} to the ontology.
      * 
-     * @param change 	The <code>OWLOntologyChange</code> to be applied to the ontology. 
-     * @eturn 			<code>true</code> if the change was actually applied. 
+     * @param change 	The {@code OWLOntologyChange} to be applied to the ontology. 
+     * @eturn 			{@code true} if the change was actually applied. 
      * @see #applyChanges(List)
      */
     private boolean applyChange(OWLOntologyChange change)
@@ -1720,7 +1720,7 @@ public class OWLGraphManipulator
     			this.applyChanges(changes));
     }
     /**
-     * Convenient method to trigger an update of the <code>OWLGraphWrapper</code> 
+     * Convenient method to trigger an update of the {@code OWLGraphWrapper} 
      * on which modifications are performed.
      */
     private void triggerWrapperUpdate()
@@ -1736,16 +1736,16 @@ public class OWLGraphManipulator
 	//    GETTERS/SETTERS
 	//*********************************
 	/**
-	 * Get the <code>OWLGraphWrapper</code> on which modifications 
+	 * Get the {@code OWLGraphWrapper} on which modifications 
 	 * are performed.
 	 * 
-	 * @return the  <code>OWLGraphWrapper</code> wrapped by this class.
+	 * @return the  {@code OWLGraphWrapper} wrapped by this class.
 	 */
 	public CustomOWLGraphWrapper getOwlGraphWrapper() {
 		return this.owlGraphWrapper;
 	}
 	/**
-	 * @param owlGraphWrapper the <code>owlGraphWrapper</code> that this class manipulates.
+	 * @param owlGraphWrapper the {@code owlGraphWrapper} that this class manipulates.
 	 * @see #owlGraphWrapper
 	 */
 	private void setOwlGraphWrapper(CustomOWLGraphWrapper owlGraphWrapper) {

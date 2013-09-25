@@ -21,13 +21,13 @@ import org.bgee.model.gene.Gene;
  * gene B not expressed, and gene C over-expressed". 
  * <p>
  * Each condition is described by a {@link GeneCallRequirement}. 
- * How this <code>GeneCallRequirement</code>s are used to validate this 
- * <code>AnatDevRequirement</code> is defined by the value returned by 
+ * How this {@code GeneCallRequirement}s are used to validate this 
+ * {@code AnatDevRequirement} is defined by the value returned by 
  * {@link #getValidationType()}.
  * <p>
- * Note that an <code>AnatDevExpressionQuery</code> can use several 
- * <code>AnatDevRequirement</code>s, offering different ways of validating 
- * an <code>AnatDevElement</code>. 
+ * Note that an {@code AnatDevExpressionQuery} can use several 
+ * {@code AnatDevRequirement}s, offering different ways of validating 
+ * an {@code AnatDevElement}. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -38,34 +38,34 @@ public class AnatDevRequirement {
 	//No logger used, these classes basically only have getters/setters.
 	
 	/**
-	 * An <code>enum</code> to define how this <code>AnatDevRequirement</code> 
+	 * An {@code enum} to define how this {@code AnatDevRequirement} 
 	 * should be validated: 
 	 * <ul>
-	 * <li><code>ALL</code>: all <code>GeneCallRequirement</code>s must be validated.
-	 * <li><code>CONSERVATION</code>: all <code>Gene</code>s part of the 
-	 * <code>GeneCallRequirement</code>s must have the same <code>CallType</code> 
-	 * in a given <code>AnatDevElement</code> for it to be validated. This allows 
-	 * for instance to request for both <code>EXPRESSION</code> and <code>NOEXPRESSION</code> 
-	 * data, but to get only <code>AnatDevElement</code>s where <code>Gene</code>s 
+	 * <li>{@code ALL}: all {@code GeneCallRequirement}s must be validated.
+	 * <li>{@code CONSERVATION}: all {@code Gene}s part of the 
+	 * {@code GeneCallRequirement}s must have the same {@code CallType} 
+	 * in a given {@code AnatDevElement} for it to be validated. This allows 
+	 * for instance to request for both {@code EXPRESSION} and {@code NOEXPRESSION} 
+	 * data, but to get only {@code AnatDevElement}s where {@code Gene}s 
 	 * are similarly expressed. 
-	 * <li><code>DIVERGENCE</code>: at least on of the <code>Gene</code>s part of the 
-	 * <code>GeneCallRequirement</code>s must have a <code>CallType</code> different  
-	 * from the others in a given <code>AnatDevElement</code>, for it to be validated. 
-	 * This allows for instance to request for both <code>EXPRESSION</code> and 
-	 * <code>NOEXPRESSION</code> data, but to get only <code>AnatDevElement</code>s 
+	 * <li>{@code DIVERGENCE}: at least on of the {@code Gene}s part of the 
+	 * {@code GeneCallRequirement}s must have a {@code CallType} different  
+	 * from the others in a given {@code AnatDevElement}, for it to be validated. 
+	 * This allows for instance to request for both {@code EXPRESSION} and 
+	 * {@code NOEXPRESSION} data, but to get only {@code AnatDevElement}s 
 	 * where gene expression is divergent. 
-	 * <li><code>GENETHRESHOLD</code>: the <code>AnatDevRequirement</code> 
-	 * will be validated based on the number of <code>Gene</code>s (defined 
+	 * <li>{@code GENETHRESHOLD}: the {@code AnatDevRequirement} 
+	 * will be validated based on the number of {@code Gene}s (defined 
 	 * using {@link AnatDevRequirement#setValidationThreshold(int)}), 
-	 * amongst all the <code>Gene</code>s present in the <code>GeneCallRequirement</code>s, 
-	 * that exhibit the reference <code>CallType</code> (defined using 
+	 * amongst all the {@code Gene}s present in the {@code GeneCallRequirement}s, 
+	 * that exhibit the reference {@code CallType} (defined using 
 	 * {@link AnatDevRequirement#setReferenceCallType(CallType)}).
-	 * <li><code>SPECIESTHRESHOLD</code>: the <code>AnatDevRequirement</code> 
-	 * will be validated based on the number of <code>Species</code>s (defined 
+	 * <li>{@code SPECIESTHRESHOLD}: the {@code AnatDevRequirement} 
+	 * will be validated based on the number of {@code Species}s (defined 
 	 * using {@link AnatDevRequirement#setValidationThreshold(int)}), 
-	 * amongst all the <code>Species</code>s represented by the <code>Gene</code>s 
-	 * in the <code>GeneCallRequirement</code>s, that exhibit the reference 
-	 * <code>CallType</code> (set using 
+	 * amongst all the {@code Species}s represented by the {@code Gene}s 
+	 * in the {@code GeneCallRequirement}s, that exhibit the reference 
+	 * {@code CallType} (set using 
 	 * {@link AnatDevRequirement#setReferenceCallType(CallType)}).
 	 * </ul>
 	 * 
@@ -80,14 +80,14 @@ public class AnatDevRequirement {
 	}
 	
 	/**
-	 * A <code>Collection</code> of <code>GeneCallRequirement</code>s 
+	 * A {@code Collection} of {@code GeneCallRequirement}s 
 	 * defining gene expression data to retrieve and conditions to satisfy 
-	 * for a  <code>AnatDevElement</code> to be validated, when performing 
+	 * for a  {@code AnatDevElement} to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
 	 */
 	private final Collection<GeneCallRequirement> requirements;
 	/**
-	 * A <code>ValidationType</code> to define how this <code>AnatDevRequirement</code> 
+	 * A {@code ValidationType} to define how this {@code AnatDevRequirement} 
 	 * should be validated.
 	 * 
 	 * @see #validationThreshold
@@ -95,24 +95,24 @@ public class AnatDevRequirement {
 	 */
 	private ValidationType validationType;
 	/**
-	 * An <code>int</code> defining a threshold to validate this 
-	 * <code>AnatDevRequirement</code>, regarding the number of <code>Gene</code>s 
-	 * or of <code>Species</code>s (depending on {@link #validationType}), 
-	 * that must exhibit the reference <code>CallType</code> of {@link #referenceCall}.
-	 * If {@link #validationType} is not equal to <code>GENETHRESHOLD</code> or 
-	 * <code>SPECIESTHRESHOLD</code>, this attribute is not used. 
+	 * An {@code int} defining a threshold to validate this 
+	 * {@code AnatDevRequirement}, regarding the number of {@code Gene}s 
+	 * or of {@code Species}s (depending on {@link #validationType}), 
+	 * that must exhibit the reference {@code CallType} of {@link #referenceCall}.
+	 * If {@link #validationType} is not equal to {@code GENETHRESHOLD} or 
+	 * {@code SPECIESTHRESHOLD}, this attribute is not used. 
 	 * 
 	 * @see #validationType
 	 * @see #referenceCall
 	 */
 	private int validationThreshold;
 	/**
-	 * A <code>CallType</code> that must be exhibited by a defined number of 
-	 * <code>Gene</code> or <code>Species</code>s, for this <code>AnatDevRequirement</code> 
+	 * A {@code CallType} that must be exhibited by a defined number of 
+	 * {@code Gene} or {@code Species}s, for this {@code AnatDevRequirement} 
 	 * to be validated. {@link #validationThreshold} defines the number, 
-	 * {@link #validationType} defines whether <code>Gene</code> or <code>Species</code>s 
+	 * {@link #validationType} defines whether {@code Gene} or {@code Species}s 
 	 * should be used. If {@link #validationType} is not equal to 
-	 * <code>GENETHRESHOLD</code> or <code>SPECIESTHRESHOLD</code>, this attribute 
+	 * {@code GENETHRESHOLD} or {@code SPECIESTHRESHOLD}, this attribute 
 	 * is not used.
 	 *  
 	 * @see #validationType
@@ -128,11 +128,11 @@ public class AnatDevRequirement {
 	}
 
 	/**
-	 * Return the <code>ValidationType</code> defining how this 
-	 * <code>AnatDevRequirement</code> should be validated.
+	 * Return the {@code ValidationType} defining how this 
+	 * {@code AnatDevRequirement} should be validated.
 	 * 
-	 * @return 	the <code>ValidationType</code> to validate 
-	 * 			this <code>AnatDevRequirement</code>.
+	 * @return 	the {@code ValidationType} to validate 
+	 * 			this {@code AnatDevRequirement}.
 	 * @see #getValidationThreshold()
 	 * @see #getReferenceCall()
 	 */
@@ -140,15 +140,15 @@ public class AnatDevRequirement {
 		return this.validationType;
 	}
 	/**
-	 * Set the <code>ValidationType</code> defining how this 
-	 * <code>AnatDevRequirement</code> should be validated. 
-	 * If <code>validationType</code> is equal to <code>GENETHRESHOLD</code> 
-	 * or <code>SPECIESTHRESHOLD</code>, then a threshold must be set using 
-	 * {@link #setValidationThreshold(int)} and a reference <code>CallType</code> 
+	 * Set the {@code ValidationType} defining how this 
+	 * {@code AnatDevRequirement} should be validated. 
+	 * If {@code validationType} is equal to {@code GENETHRESHOLD} 
+	 * or {@code SPECIESTHRESHOLD}, then a threshold must be set using 
+	 * {@link #setValidationThreshold(int)} and a reference {@code CallType} 
 	 * using {@link #setReferenceCall(CallType)}.
 	 * 
-	 * @param validationType 	A <code>ValidationType</code> defining how this 
-	 * 							<code>AnatDevRequirement</code> should be validated. 
+	 * @param validationType 	A {@code ValidationType} defining how this 
+	 * 							{@code AnatDevRequirement} should be validated. 
 	 * @see #setValidationThreshold(int)
 	 * @see #setReferenceCall(CallType) 
 	 */
@@ -157,17 +157,17 @@ public class AnatDevRequirement {
 	}
 
 	/**
-	 * Get the <code>int</code> defining the threshold to validate this 
-	 * <code>AnatDevRequirement</code>, regarding the number of <code>Gene</code>s 
-	 * or of <code>Species</code>s (depending on the value returned by 
-	 * {@link #getValidationType()}), that must exhibit the reference <code>CallType</code> 
+	 * Get the {@code int} defining the threshold to validate this 
+	 * {@code AnatDevRequirement}, regarding the number of {@code Gene}s 
+	 * or of {@code Species}s (depending on the value returned by 
+	 * {@link #getValidationType()}), that must exhibit the reference {@code CallType} 
 	 * (that can be obtained using {@link #getReferenceCall()}.
 	 * If the value returned by {@link #getValidationType()} is not equal to 
-	 * <code>GENETHRESHOLD</code> nor <code>SPECIESTHRESHOLD</code>, 
+	 * {@code GENETHRESHOLD} nor {@code SPECIESTHRESHOLD}, 
 	 * this parameter is not used. 
 	 * 
-	 * @return 	the <code>int</code> defining the threshold to validate this 
-	 *			<code>AnatDevRequirement</code>
+	 * @return 	the {@code int} defining the threshold to validate this 
+	 *			{@code AnatDevRequirement}
 	 * @see #getValidationType()
 	 * @see #getReferenceCall()
 	 */
@@ -175,17 +175,17 @@ public class AnatDevRequirement {
 		return this.validationThreshold;
 	}
 	/**
-	 * Set the <code>int</code> defining the threshold to validate this 
-	 * <code>AnatDevRequirement</code>, regarding the number of <code>Gene</code>s 
-	 * or of <code>Species</code>s (depending on the value returned by 
-	 * {@link #getValidationType()}), that must exhibit the reference <code>CallType</code> 
+	 * Set the {@code int} defining the threshold to validate this 
+	 * {@code AnatDevRequirement}, regarding the number of {@code Gene}s 
+	 * or of {@code Species}s (depending on the value returned by 
+	 * {@link #getValidationType()}), that must exhibit the reference {@code CallType} 
 	 * (that can be obtained using {@link #getReferenceCall()}.
 	 * If the value returned by {@link #getValidationType()} is not equal to 
-	 * <code>GENETHRESHOLD</code> nor <code>SPECIESTHRESHOLD</code>, 
+	 * {@code GENETHRESHOLD} nor {@code SPECIESTHRESHOLD}, 
 	 * this parameter is not used. 
 	 * 
-	 * @param threshold 	A <code>int</code> to define the threshold to validate 
-	 * 						this <code>AnatDevRequirement</code>.
+	 * @param threshold 	A {@code int} to define the threshold to validate 
+	 * 						this {@code AnatDevRequirement}.
 	 * @see #setValidationType(ValidationType)
 	 * @see #setReferenceCall(CallType)
 	 */
@@ -194,16 +194,16 @@ public class AnatDevRequirement {
 	}
 
 	/**
-	 * Get the <code>CallType</code> that must be exhibited by a defined number of 
-	 * <code>Gene</code>s or <code>Species</code>s, for this <code>AnatDevRequirement</code> 
+	 * Get the {@code CallType} that must be exhibited by a defined number of 
+	 * {@code Gene}s or {@code Species}s, for this {@code AnatDevRequirement} 
 	 * to be validated. The value returned by {@link #getValidationThreshold()} 
-	 * defines the number, {@link #getValidationType()} defines whether <code>Gene</code>s 
-	 * or <code>Species</code>s should be used. 
+	 * defines the number, {@link #getValidationType()} defines whether {@code Gene}s 
+	 * or {@code Species}s should be used. 
 	 * If the value returned by {@link #getValidationType()} is not equal to 
-	 * <code>GENETHRESHOLD</code> nor <code>SPECIESTHRESHOLD</code>, 
+	 * {@code GENETHRESHOLD} nor {@code SPECIESTHRESHOLD}, 
 	 * this parameter is not used. 
 	 * 
-	 * @return 	the reference <code>CallType</code>, used depending on the value 
+	 * @return 	the reference {@code CallType}, used depending on the value 
 	 * 			returned by {@link #getValidationType()}
 	 * @see #getValidationType()
 	 * @see #getValidationThreshold()
@@ -212,19 +212,19 @@ public class AnatDevRequirement {
 		return this.referenceCall;
 	}
 	/**
-	 * Set the <code>CallType</code> that must be exhibited by a defined number of 
-	 * <code>Gene</code>s or <code>Species</code>s, for this <code>AnatDevRequirement</code> 
+	 * Set the {@code CallType} that must be exhibited by a defined number of 
+	 * {@code Gene}s or {@code Species}s, for this {@code AnatDevRequirement} 
 	 * to be validated. The value returned by {@link #getValidationThreshold()} 
-	 * defines the number, {@link #getValidationType()} defines whether <code>Gene</code>s 
-	 * or <code>Species</code>s should be used. 
+	 * defines the number, {@link #getValidationType()} defines whether {@code Gene}s 
+	 * or {@code Species}s should be used. 
 	 * If the value returned by {@link #getValidationType()} is not equal to 
-	 * <code>GENETHRESHOLD</code> nor <code>SPECIESTHRESHOLD</code>, 
+	 * {@code GENETHRESHOLD} nor {@code SPECIESTHRESHOLD}, 
 	 * this parameter is not used. 
 	 * 
-	 * @return 	the reference <code>CallType</code>, used depending on the value 
+	 * @return 	the reference {@code CallType}, used depending on the value 
 	 * 			returned by {@link #getValidationType()}
 	 * 
-	 * @param referenceCall the reference <code>CallType</code>, that will be used 
+	 * @param referenceCall the reference {@code CallType}, that will be used 
 	 * 						depending on the value returned by {@link #getValidationType()}.
 	 * @see #setValidationType(ValidationType)
 	 * @see #setValidationThreshold(int)
@@ -234,25 +234,25 @@ public class AnatDevRequirement {
 	}
 
 	/**
-	 * Get the <code>Collection</code> of <code>GeneCallRequirement</code>s, 
+	 * Get the {@code Collection} of {@code GeneCallRequirement}s, 
 	 * defining gene expression data to retrieve and conditions to satisfy 
-	 * for a  <code>AnatDevElement</code> to be validated, when performing 
+	 * for a  {@code AnatDevElement} to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
 	 * 
-	 * @return 	the <code>Collection</code> of <code>GeneCallRequirement</code>s
-	 * 			associated to this <code>AnatDevRequirement</code>. 
+	 * @return 	the {@code Collection} of {@code GeneCallRequirement}s
+	 * 			associated to this {@code AnatDevRequirement}. 
 	 */
 	public Collection<GeneCallRequirement> getRequirements() {
 		return this.requirements;
 	}
 	/**
-	 * Add a <code>GeneCallRequirement</code> to this <code>AnatDevRequirement</code>, 
+	 * Add a {@code GeneCallRequirement} to this {@code AnatDevRequirement}, 
 	 * defining gene expression data to retrieve and conditions to satisfy 
-	 * for a  <code>AnatDevElement</code> to be validated, when performing 
+	 * for a  {@code AnatDevElement} to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
      * 
-	 * @param requirement	A <code>GeneCallRequirement</code> to be added 
-	 * 						to this <code>AnatDevRequirement</code>.
+	 * @param requirement	A {@code GeneCallRequirement} to be added 
+	 * 						to this {@code AnatDevRequirement}.
 	 * @see #addAllRequirements(Collection)
 	 * @see #setValidationType(ValidationType)
 	 */
@@ -260,13 +260,13 @@ public class AnatDevRequirement {
 		this.requirements.add(requirement);
 	}
 	/**
-	 * Add <code>GeneCallRequirement</code>s to this <code>AnatDevRequirement</code>, 
+	 * Add {@code GeneCallRequirement}s to this {@code AnatDevRequirement}, 
 	 * defining gene expression data to retrieve and conditions to satisfy 
-	 * for a  <code>AnatDevElement</code> to be validated, when performing 
+	 * for a  {@code AnatDevElement} to be validated, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}.
      * 
-	 * @param requirements	A <code>Collection</code> of <code>GeneCallRequirement</code>s 
-	 * 						to be added to this <code>AnatDevRequirement</code>.
+	 * @param requirements	A {@code Collection} of {@code GeneCallRequirement}s 
+	 * 						to be added to this {@code AnatDevRequirement}.
 	 * @see #addRequirement(GeneCallRequirement)
 	 * @see #setValidationType(ValidationType)
 	 */
@@ -275,27 +275,27 @@ public class AnatDevRequirement {
 	}
 
 	/**
-     * Define custom conditions for an <code>AnatDevElement</code> 
+     * Define custom conditions for an {@code AnatDevElement} 
      * to be validated, regarding its gene expression data, when performing 
      * an expression reasoning using an {@link AnatDevExpressionQuery}. 
-     * A <code>GeneCallRequirement</code> is always part of a {@link AnatDevRequirement}, 
-     * listing all the necessary conditions that an <code>AnatDevElement</code> 
+     * A {@code GeneCallRequirement} is always part of a {@link AnatDevRequirement}, 
+     * listing all the necessary conditions that an {@code AnatDevElement} 
      * must satisfied at the same time to be validated.
      * <p>
-     * A <code>GeneCallRequirement</code> lists <code>Gene</code>s, associated to 
-     * <code>CallFilter</code>s, to define which <code>Gene</code>s should have 
-     * what kind of expression data for an <code>AnatDevElement</code> to be validated. 
-     * For instance, using <code>GeneCallRequirement</code>s, it is possible 
-     * to query for <code>AnatDevElement</code>s exhibiting expression of a gene A, 
+     * A {@code GeneCallRequirement} lists {@code Gene}s, associated to 
+     * {@code CallFilter}s, to define which {@code Gene}s should have 
+     * what kind of expression data for an {@code AnatDevElement} to be validated. 
+     * For instance, using {@code GeneCallRequirement}s, it is possible 
+     * to query for {@code AnatDevElement}s exhibiting expression of a gene A, 
      * expression or absence of expression of a gene B, and over-expression of a gene C, 
      * etc.
      * <p>
-     * It can include several <code>Gene</code>s, or only one, and a <code>Gene</code> 
-     * can be associated to several <code>CallFilter</code>s, or only one. 
-     * It is possible to define whether all <code>CallFilter</code>s should be satisfied 
-     * at the same time for a <code>Gene</code> to be validated, and whether 
-     * all <code>Gene</code>s should be validated, or only once, for a 
-     * <code>GeneCallRequirement</code> to be validated. 
+     * It can include several {@code Gene}s, or only one, and a {@code Gene} 
+     * can be associated to several {@code CallFilter}s, or only one. 
+     * It is possible to define whether all {@code CallFilter}s should be satisfied 
+     * at the same time for a {@code Gene} to be validated, and whether 
+     * all {@code Gene}s should be validated, or only once, for a 
+     * {@code GeneCallRequirement} to be validated. 
      * 
 	 * @author Frederic Bastian
 	 * @see AnatDevRequirement
@@ -306,17 +306,17 @@ public class AnatDevRequirement {
     public class GeneCallRequirement {
     	
     	/**
-    	 * A <code>Map</code> associating each <code>Gene</code> in the key set, 
-    	 * to a <code>Collection</code> of <code>CallFilter</code>s. 
-    	 * The <code>CallFilter</code>s define for each <code>Gene</code> 
+    	 * A {@code Map} associating each {@code Gene} in the key set, 
+    	 * to a {@code Collection} of {@code CallFilter}s. 
+    	 * The {@code CallFilter}s define for each {@code Gene} 
     	 * the expression data to retrieve for it. 
     	 * <p>
-    	 * Whether all expression data requirements for a <code>Gene</code> 
+    	 * Whether all expression data requirements for a {@code Gene} 
     	 * must be satisfied, or only at least one, is defined 
     	 * by {@link #satisfyAllCallFilters}. 
     	 * <p>
-    	 * Whether all <code>Gene</code>s must have their data requirements satisfied 
-    	 * for this <code>GeneCallRequirement</code>, or only at least one of them, 
+    	 * Whether all {@code Gene}s must have their data requirements satisfied 
+    	 * for this {@code GeneCallRequirement}, or only at least one of them, 
     	 * is defined by {@link #satisfyAllGenes}. 
     	 * <p>
     	 * See {@link #satisfyAllCallFilters} and {@link #satisfyAllGenes} 
@@ -328,16 +328,16 @@ public class AnatDevRequirement {
     	private final Map<Gene, Collection<CallFilter>> genesWithParameters;
     	
     	/**
-    	 * A <code>boolean</code> defining whether, when a <code>Gene</code> 
-    	 * in <code>genesWithParameters</code> is associated to several 
-    	 * <code>CallFilter</code>s, all of them must be satisfied for 
-    	 * the <code>Gene</code> to be validated, or only at least one of them.
+    	 * A {@code boolean} defining whether, when a {@code Gene} 
+    	 * in {@code genesWithParameters} is associated to several 
+    	 * {@code CallFilter}s, all of them must be satisfied for 
+    	 * the {@code Gene} to be validated, or only at least one of them.
     	 * <p>
-    	 * The recommended value is <code>false</code>. Setting this attribute 
-    	 * to <code>true</code> should be useful only in specific cases, 
+    	 * The recommended value is {@code false}. Setting this attribute 
+    	 * to {@code true} should be useful only in specific cases, 
     	 * such as, to investigate contradictions between data types; for instance, 
-    	 * by requesting <code>EXPRESSION</code> data from <code>AFFYMETRIX</code>, 
-    	 * and at the same time, <code>NOEXPRESSION</code> data from <code>RNA-Seq</code>.
+    	 * by requesting {@code EXPRESSION} data from {@code AFFYMETRIX}, 
+    	 * and at the same time, {@code NOEXPRESSION} data from {@code RNA-Seq}.
     	 * 
     	 * @see #genesWithParameters
     	 * @see #satisfyAllGenes
@@ -345,15 +345,15 @@ public class AnatDevRequirement {
     	private boolean satisfyAllCallFilters;
 
     	/**
-    	 * A <code>boolean</code> defining whether, when several <code>Genes</code> 
-    	 * are present in <code>genesWithParameters</code>, all of them 
-    	 * must be satisfied for this <code>GeneCallRequirement</code> to be validated, 
+    	 * A {@code boolean} defining whether, when several {@code Genes} 
+    	 * are present in {@code genesWithParameters}, all of them 
+    	 * must be satisfied for this {@code GeneCallRequirement} to be validated, 
     	 * or only at least one of them. Whether the requirements are satisfied 
-    	 * for a given <code>Gene</code> is defined by its associated 
-    	 * <code>CallFilter</code>s in <code>genesWithParameters</code> and the value of 
-    	 * <code>satisfyAllCallFilters</code>. 
+    	 * for a given {@code Gene} is defined by its associated 
+    	 * {@code CallFilter}s in {@code genesWithParameters} and the value of 
+    	 * {@code satisfyAllCallFilters}. 
     	 * <p>
-    	 * The recommended value is <code>true</code>.
+    	 * The recommended value is {@code true}.
     	 * 
     	 * @see #genesWithParameters
     	 * @see #satisfyAllCallFilters
@@ -369,42 +369,42 @@ public class AnatDevRequirement {
 			this.setSatisfyAllCallFilters(false);
     	}
     	/**
-    	 * Instantiate a <code>AnatDevRequirement</code> with requirements 
-    	 * on one <code>Gene</code>, associated to one <code>CallFilter</code>. 
+    	 * Instantiate a {@code AnatDevRequirement} with requirements 
+    	 * on one {@code Gene}, associated to one {@code CallFilter}. 
     	 * This is equivalent to calling: 
     	 * <ul>
-    	 * <li><code>addGene(gene, filter)</code>
+    	 * <li>{@code addGene(gene, filter)}
     	 * </ul>
     	 * 
-    	 * @param gene		A <code>Gene</code> to be part of
-    	 * 					this <code>GeneCallRequirement</code>. 
-    	 * @param filter	A <code>CallFilter</code> to be associated to <code>gene</code>.
+    	 * @param gene		A {@code Gene} to be part of
+    	 * 					this {@code GeneCallRequirement}. 
+    	 * @param filter	A {@code CallFilter} to be associated to {@code gene}.
     	 */
     	public GeneCallRequirement(Gene gene, CallFilter filter) {
 			this();
 			this.addGene(gene, filter);
     	}
     	/**
-    	 * Instantiate a <code>AnatDevRequirement</code> with requirements 
-    	 * on several <code>Gene</code>s (with the condition of validating all of them), 
-    	 * with each of them associated to a same <code>Collection</code> 
-    	 * of <code>CallFilter</code>s (with the condition of validating any of them). 
+    	 * Instantiate a {@code AnatDevRequirement} with requirements 
+    	 * on several {@code Gene}s (with the condition of validating all of them), 
+    	 * with each of them associated to a same {@code Collection} 
+    	 * of {@code CallFilter}s (with the condition of validating any of them). 
     	 * This is equivalent to calling: 
     	 * <ul>
-    	 * <li><code>addGenes(genes, filters)</code>
-    	 * <li><code>setSatisfyAllGenes(true)</code>
-    	 * <li><code>setSatisfyAllCallFilters(false)</code>
+    	 * <li>{@code addGenes(genes, filters)}
+    	 * <li>{@code setSatisfyAllGenes(true)}
+    	 * <li>{@code setSatisfyAllCallFilters(false)}
     	 * </ul>
-    	 * Whether all <code>Gene</code> conditions and/or all <code>CallFilter</code> 
+    	 * Whether all {@code Gene} conditions and/or all {@code CallFilter} 
     	 * conditions must be satisfied can be set afterwards.
     	 * 
-    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s to be part of
-    	 * 					this <code>GeneCallRequirement</code>. They must all 
-    	 * 					be validated for this <code>GeneCallRequirement</code> 
+    	 * @param genes		A {@code Collection} of {@code Gene}s to be part of
+    	 * 					this {@code GeneCallRequirement}. They must all 
+    	 * 					be validated for this {@code GeneCallRequirement} 
     	 * 					to be satisfied. 
-    	 * @param filters	A <code>Collection</code> of <code>CallFilter</code>s,  
-    	 * 					that are the requirements associated to each <code>Gene</code>.
-    	 * 					Any of them must be satisfied for a <code>Gene</code> 
+    	 * @param filters	A {@code Collection} of {@code CallFilter}s,  
+    	 * 					that are the requirements associated to each {@code Gene}.
+    	 * 					Any of them must be satisfied for a {@code Gene} 
     	 * 					to be validated.  
     	 */
     	public GeneCallRequirement(Collection<Gene> genes, Collection<CallFilter> filters) {
@@ -415,22 +415,22 @@ public class AnatDevRequirement {
     	}
     	
     	/**
-    	 * Return the <code>Map</code> associating <code>Gene</code>s to 
-    	 * <code>Collection</code>s of <code>CallFilter</code>s. It defines for each 
-    	 * <code>Gene</code> what are the data requirements for it. 
+    	 * Return the {@code Map} associating {@code Gene}s to 
+    	 * {@code Collection}s of {@code CallFilter}s. It defines for each 
+    	 * {@code Gene} what are the data requirements for it. 
     	 * <p>
-    	 * When a <code>Gene</code> is associated to several <code>CallFilter</code>s, 
+    	 * When a {@code Gene} is associated to several {@code CallFilter}s, 
     	 * the value returned by {@link isSatisfyAllCallFilters()} determines whether 
-    	 * all of them must be satisfied for the <code>Gene</code> to be validated, 
+    	 * all of them must be satisfied for the {@code Gene} to be validated, 
     	 * or only at least one of them.
     	 * <p>
-    	 * When there are several <code>Genes</code> in the key set, the value 
+    	 * When there are several {@code Genes} in the key set, the value 
     	 * returned by {@link isSatisfyAllGenes()} determines whether all of them 
-    	 * must be satisfied for this <code>GeneCallRequirement</code> to be validated, 
+    	 * must be satisfied for this {@code GeneCallRequirement} to be validated, 
     	 * or only at least one of them.
     	 * 
-    	 * @return 	a <code>Map</code> where each <code>Gene</code> in the key set 
-    	 * 			is associated to a <code>Collection</code> of <code>CallFilter</code>s 
+    	 * @return 	a {@code Map} where each {@code Gene} in the key set 
+    	 * 			is associated to a {@code Collection} of {@code CallFilter}s 
     	 * 			as value. 
     	 * @see #getGenes()
     	 * @see #getCallFilter(Gene)
@@ -439,11 +439,11 @@ public class AnatDevRequirement {
     		return this.genesWithParameters;
     	}
     	/**
-    	 * Return the <code>Set</code> of <code>Gene</code>s part of 
-    	 * this <code>GeneCallRequirement</code>. 
+    	 * Return the {@code Set} of {@code Gene}s part of 
+    	 * this {@code GeneCallRequirement}. 
     	 * 
-    	 * @return 	the <code>Set</code> of <code>Gene</code>s part of 
-    	 * 			this <code>GeneCallRequirement</code>.
+    	 * @return 	the {@code Set} of {@code Gene}s part of 
+    	 * 			this {@code GeneCallRequirement}.
     	 * @see #getGenesWithParameters()
     	 * @see #getCallFilter(Gene)
     	 */
@@ -451,23 +451,23 @@ public class AnatDevRequirement {
     		return this.genesWithParameters.keySet();
     	}
     	/**
-    	 * Return the <code>CallFilter</code>s associated to <code>gene</code>. 
-    	 * Return <code>null</code> if this <code>gene</code> is not part of 
-    	 * this <code>GeneCallRequirement</code>, an empty <code>Collection</code> 
-    	 * if no <code>CallFilter</code> is associated to it yet. 
+    	 * Return the {@code CallFilter}s associated to {@code gene}. 
+    	 * Return {@code null} if this {@code gene} is not part of 
+    	 * this {@code GeneCallRequirement}, an empty {@code Collection} 
+    	 * if no {@code CallFilter} is associated to it yet. 
     	 * <p>
-    	 * If <code>gene</code> is associated to several <code>CallFilter</code>s, 
+    	 * If {@code gene} is associated to several {@code CallFilter}s, 
     	 * the value returned by {@link isSatisfyAllCallFilters()} determines whether 
     	 * all of them must be satisfied for it to be validated, or only 
     	 * at least one of them.
     	 * 
-    	 * @param gene	A <code>Gene</code> for which the associated <code>CallFilter</code>s 
-    	 * 				in this <code>GeneCallRequirement</code> should be returned. 
-    	 * @return		A <code>Collection</code> of <code>CallFilter</code>s 
-    	 * 				associated to <code>gene</code>. <code>null</code> if 
-    	 * 				<code>gene</code> is not part of this 
-    	 * 				<code>GeneCallRequirement</code>, an empty <code>Collection</code> 
-    	 * 				if no <code>CallFilter</code> is associated to it yet.
+    	 * @param gene	A {@code Gene} for which the associated {@code CallFilter}s 
+    	 * 				in this {@code GeneCallRequirement} should be returned. 
+    	 * @return		A {@code Collection} of {@code CallFilter}s 
+    	 * 				associated to {@code gene}. {@code null} if 
+    	 * 				{@code gene} is not part of this 
+    	 * 				{@code GeneCallRequirement}, an empty {@code Collection} 
+    	 * 				if no {@code CallFilter} is associated to it yet.
     	 * @see #getGenesWithParameters()
     	 * @see #getGenes()
     	 */
@@ -476,15 +476,15 @@ public class AnatDevRequirement {
     	}
     	
     	/**
-    	 * Add a <code>Gene</code> to this <code>GeneCallRequirement</code>, 
-    	 * associated to a <code>CallFilter</code>. If <code>gene</code> is already 
-    	 * part of this <code>GeneCallRequirement</code>, add <code>filter</code> 
-    	 * to its associated <code>CallFilter</code>s.
+    	 * Add a {@code Gene} to this {@code GeneCallRequirement}, 
+    	 * associated to a {@code CallFilter}. If {@code gene} is already 
+    	 * part of this {@code GeneCallRequirement}, add {@code filter} 
+    	 * to its associated {@code CallFilter}s.
     	 * 
-    	 * @param gene 		A <code>Gene</code> to be associated to 
-    	 * 					<code>filter</code> in this <code>GeneCallRequirement</code>.
-    	 * @param filter	A <code>CallFilter</code> to be associated with <code>gene</code> 
-    	 * 					in this <code>GeneCallRequirement</code>.
+    	 * @param gene 		A {@code Gene} to be associated to 
+    	 * 					{@code filter} in this {@code GeneCallRequirement}.
+    	 * @param filter	A {@code CallFilter} to be associated with {@code gene} 
+    	 * 					in this {@code GeneCallRequirement}.
     	 * @see #addGene(Gene, Collection)
     	 * @see #addGenes(Collection, CallFilter)
     	 * @see #addGenes(Collection, Collection)
@@ -493,17 +493,17 @@ public class AnatDevRequirement {
     		this.addGenes(Arrays.asList(gene), Arrays.asList(filter));
     	}
     	/**
-    	 * Add a <code>Gene</code>s to this <code>GeneCallRequirement</code>, 
-    	 * associated to a <code>Collection</code> of <code>CallFilter</code>s. 
-    	 * If <code>gene</code> is already part of this <code>GeneCallRequirement</code>, 
-    	 * then <code>filters</code>  will be added to its associated 
-    	 * <code>CallFilter</code>s.
+    	 * Add a {@code Gene}s to this {@code GeneCallRequirement}, 
+    	 * associated to a {@code Collection} of {@code CallFilter}s. 
+    	 * If {@code gene} is already part of this {@code GeneCallRequirement}, 
+    	 * then {@code filters}  will be added to its associated 
+    	 * {@code CallFilter}s.
     	 * 
-    	 * @param gene 		A <code>Gene</code> to be associated to 
-    	 * 					<code>filters</code> in this <code>GeneCallRequirement</code>.
-    	 * @param filters	A <code>Collection</code> of <code>CallFilter</code>s 
-    	 * 					to be associated to <code>gene</code> 
-    	 * 					in this <code>GeneCallRequirement</code>.
+    	 * @param gene 		A {@code Gene} to be associated to 
+    	 * 					{@code filters} in this {@code GeneCallRequirement}.
+    	 * @param filters	A {@code Collection} of {@code CallFilter}s 
+    	 * 					to be associated to {@code gene} 
+    	 * 					in this {@code GeneCallRequirement}.
     	 * @see #addGene(Gene, CallFilter)
     	 * @see #addGenes(Collection, CallFilter)
     	 * @see #addGenes(Collection, Collection)
@@ -512,18 +512,18 @@ public class AnatDevRequirement {
     		this.addGenes(Arrays.asList(gene), filters);
     	}
     	/**
-    	 * Add a <code>Collection</code> of <code>Gene</code>s to 
-    	 * this <code>GeneCallRequirement</code>, with each of them associated to 
-    	 * <code>filter</code>. If a <code>Gene</code> in <code>genes</code> is already 
-    	 * part of this <code>GeneCallRequirement</code>, then <code>filter</code> 
-    	 * will be added to its associated <code>CallFilter</code>s. 
+    	 * Add a {@code Collection} of {@code Gene}s to 
+    	 * this {@code GeneCallRequirement}, with each of them associated to 
+    	 * {@code filter}. If a {@code Gene} in {@code genes} is already 
+    	 * part of this {@code GeneCallRequirement}, then {@code filter} 
+    	 * will be added to its associated {@code CallFilter}s. 
     	 * 
-    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
-    	 * 					to be associated to <code>filter</code>, 
-    	 * 					in this <code>GeneCallRequirement</code>.
-    	 * @param filter	A <code>CallFilter</code> to be associated to each 
-    	 * 					of the <code>Gene</code> in <code>genes</code>, 
-    	 * 					in this <code>GeneCallRequirement</code>.
+    	 * @param genes		A {@code Collection} of {@code Gene}s 
+    	 * 					to be associated to {@code filter}, 
+    	 * 					in this {@code GeneCallRequirement}.
+    	 * @param filter	A {@code CallFilter} to be associated to each 
+    	 * 					of the {@code Gene} in {@code genes}, 
+    	 * 					in this {@code GeneCallRequirement}.
     	 * @see #addGene(Gene, CallFilter)
     	 * @see #addGenes(Gene, Collection)
     	 * @see #addGenes(Collection, Collection)
@@ -532,19 +532,19 @@ public class AnatDevRequirement {
     		this.addGenes(genes, Arrays.asList(filter));
     	}
     	/**
-    	 * Add a <code>Collection</code> of <code>Gene</code>s to 
-    	 * this <code>GeneCallRequirement</code>, with each of them associated to 
-    	 * a same <code>Collection</code> of <code>CallFilter</code>s. 
-    	 * If a <code>Gene</code> in <code>genes</code> is already 
-    	 * part of this <code>GeneCallRequirement</code>, then <code>filters</code> 
-    	 * will be added to its associated <code>CallFilter</code>s.
+    	 * Add a {@code Collection} of {@code Gene}s to 
+    	 * this {@code GeneCallRequirement}, with each of them associated to 
+    	 * a same {@code Collection} of {@code CallFilter}s. 
+    	 * If a {@code Gene} in {@code genes} is already 
+    	 * part of this {@code GeneCallRequirement}, then {@code filters} 
+    	 * will be added to its associated {@code CallFilter}s.
     	 * 
-    	 * @param genes		A <code>Collection</code> of <code>Gene</code>s 
-    	 * 					to be associated to the <code>CallFilter</code>s 
-    	 * 					in <code>filters</code>, in this <code>GeneCallRequirement</code>.
-    	 * @param filters	A <code>Collection</code> of <code>CallFilter</code>s 
-    	 * 					to be associated to each of the <code>Gene</code> 
-    	 * 					in <code>genes</code> in this <code>GeneCallRequirement</code>.
+    	 * @param genes		A {@code Collection} of {@code Gene}s 
+    	 * 					to be associated to the {@code CallFilter}s 
+    	 * 					in {@code filters}, in this {@code GeneCallRequirement}.
+    	 * @param filters	A {@code Collection} of {@code CallFilter}s 
+    	 * 					to be associated to each of the {@code Gene} 
+    	 * 					in {@code genes} in this {@code GeneCallRequirement}.
     	 * @see #getGenes()
     	 * @see #addGenes(Collection)
     	 */
@@ -560,13 +560,13 @@ public class AnatDevRequirement {
     	}
 		
 		/**
-    	 * Return the <code>boolean</code> defining whether, when a <code>Gene</code> 
-    	 * is associated to several <code>CallFilter</code>s (in the <code>Map</code> 
+    	 * Return the {@code boolean} defining whether, when a {@code Gene} 
+    	 * is associated to several {@code CallFilter}s (in the {@code Map} 
     	 * returned by {@link getGenesWithParameters()}), all of them must be satisfied 
-    	 * for the <code>Gene</code> to be validated, or only at least one of them.
+    	 * for the {@code Gene} to be validated, or only at least one of them.
     	 * 
-		 * @return 	the <code>boolean</code> defining whether all <code>CallFilter</code>s 
-		 * 			associated to a given <code>Gene</code> must be satisfied. 
+		 * @return 	the {@code boolean} defining whether all {@code CallFilter}s 
+		 * 			associated to a given {@code Gene} must be satisfied. 
 		 * @see #setSatisfyAllCallFilters(boolean)
     	 * @see #getGenesWithParameters()
     	 * @see #isSatisfyAllGenes()
@@ -575,20 +575,20 @@ public class AnatDevRequirement {
 			return this.satisfyAllCallFilters;
 		}
 		/**
-		 * Set the <code>boolean</code> defining whether, when a <code>Gene</code> 
-    	 * is associated to several <code>CallFilter</code>s (in the <code>Map</code> 
+		 * Set the {@code boolean} defining whether, when a {@code Gene} 
+    	 * is associated to several {@code CallFilter}s (in the {@code Map} 
     	 * returned by {@link getGenesWithParameters()}), all of them must be satisfied 
-    	 * for the <code>Gene</code> to be validated, or only at least one of them.
+    	 * for the {@code Gene} to be validated, or only at least one of them.
     	 * <p>
-    	 * The recommended value is <code>false</code>. Setting this parameter 
-    	 * to <code>true</code> should be useful only in specific cases, 
+    	 * The recommended value is {@code false}. Setting this parameter 
+    	 * to {@code true} should be useful only in specific cases, 
     	 * such as, to investigate contradictions between data types; for instance, 
-    	 * by requesting <code>EXPRESSION</code> data from <code>AFFYMETRIX</code>, 
-    	 * and at the same time, <code>NOEXPRESSION</code> data from <code>RNA-Seq</code>.
+    	 * by requesting {@code EXPRESSION} data from {@code AFFYMETRIX}, 
+    	 * and at the same time, {@code NOEXPRESSION} data from {@code RNA-Seq}.
     	 * 
-		 * @param satisfyAll	A <code>boolean</code> defining whether all
-		 * 						<code>CallFilter</code>s associated to a given 
-		 * 						<code>Gene</code> must be satisfied. 
+		 * @param satisfyAll	A {@code boolean} defining whether all
+		 * 						{@code CallFilter}s associated to a given 
+		 * 						{@code Gene} must be satisfied. 
 		 * @see #isSatisfyAllCallFilters()
     	 * @see #getGenesWithParameters()
     	 * @see #isSatisfyAllGenes()
@@ -598,16 +598,16 @@ public class AnatDevRequirement {
 		}
 		
 		/**
-		 * Return the <code>boolean</code> defining whether, when this 
-		 * <code>GeneCallRequirement</code> has conditions on several <code>Gene</code>s, 
+		 * Return the {@code boolean} defining whether, when this 
+		 * {@code GeneCallRequirement} has conditions on several {@code Gene}s, 
     	 * the requirements for all of them must be satisfied, or only 
-    	 * for at least one of them. Whether the requirements of a given <code>Gene</code> 
-    	 * are satisfied is defined by its associated <code>CallFilter</code>s 
-    	 * (in the <code>Map</code> returned by {@link getGenesWithParameters()}, 
+    	 * for at least one of them. Whether the requirements of a given {@code Gene} 
+    	 * are satisfied is defined by its associated {@code CallFilter}s 
+    	 * (in the {@code Map} returned by {@link getGenesWithParameters()}, 
     	 * and the value returned by {@link #isSatisfyAllCallFilters()}. 
     	 * 
-		 * @return 	the <code>boolean</code> defining whether the requirements 
-		 * 			for all <code>Gene</code>s must be satisfied, or only for 
+		 * @return 	the {@code boolean} defining whether the requirements 
+		 * 			for all {@code Gene}s must be satisfied, or only for 
 		 * 			at least one of them. 
     	 * @see #setSatisfyAllGenes(boolean)
     	 * @see #getGenesWithParameters()
@@ -617,18 +617,18 @@ public class AnatDevRequirement {
 			return this.satisfyAllGenes;
 		}
 		/**
-		 * Set the <code>boolean</code> defining whether, when this 
-		 * <code>GeneCallRequirement</code> has conditions on several <code>Gene</code>s, 
+		 * Set the {@code boolean} defining whether, when this 
+		 * {@code GeneCallRequirement} has conditions on several {@code Gene}s, 
     	 * the requirements for all of them must be satisfied, or only 
-    	 * for at least one of them. Whether the requirements for a given <code>Gene</code> 
-    	 * are satisfied is defined by its associated <code>CallFilter</code>s 
-    	 * (in the <code>Map</code> returned by {@link getGenesWithParameters()}, 
+    	 * for at least one of them. Whether the requirements for a given {@code Gene} 
+    	 * are satisfied is defined by its associated {@code CallFilter}s 
+    	 * (in the {@code Map} returned by {@link getGenesWithParameters()}, 
     	 * and the value returned by {@link #isSatisfyAllCallFilters()}. 
     	 * <p>
-    	 * The recommended value of this parameter is <code>true</code>.
+    	 * The recommended value of this parameter is {@code true}.
 		 * 
-		 * @param satisfyAll 	A <code>boolean</code> defining whether the requirements 
-		 * 						for all <code>Gene</code>s must be satisfied, or only for 
+		 * @param satisfyAll 	A {@code boolean} defining whether the requirements 
+		 * 						for all {@code Gene}s must be satisfied, or only for 
 		 * 						at least one of them. 
     	 * @see #isSatisfyAllGenes()
     	 * @see #getGenesWithParameters()

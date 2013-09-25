@@ -8,11 +8,11 @@
  * <li>The class extending {@link org.bgee.model.expressiondata.rawdata.CallSource 
  * CallSource} is {@link InSituSpot}. 
  * <p>
- * As of Bgee 13, <em>in situ</em> data are used to generate calls <code>EXPRESSION</code>, 
- * <code>NOEXPRESSION</code>.
+ * As of Bgee 13, <em>in situ</em> data are used to generate calls {@code EXPRESSION}, 
+ * {@code NOEXPRESSION}.
  * <p>
  * The {@link org.bgee.model.expressiondata.DataParameters.DataType} 
- * <code>RELAXEDINSITU</code> is a specific use of these <em>in situ</em> data.
+ * {@code RELAXEDINSITU} is a specific use of these <em>in situ</em> data.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

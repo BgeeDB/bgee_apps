@@ -5,10 +5,10 @@ import java.io.Serializable;
 import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
 
 /**
- * <code>TransferObject</code> for the class 
+ * {@code TransferObject} for the class 
  * {@link org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResult}.
  * <p>
- * For information on this <code>TransferObject</code> and its fields, 
+ * For information on this {@code TransferObject} and its fields, 
  * see the corresponding class.
  * 
  * @author Frederic Bastian
@@ -21,12 +21,12 @@ public class RNASeqResultTO extends CallSourceRawDataTO implements Serializable
     private static final long serialVersionUID = 9192921864601490175L;
     
     /**
-	 * A <code>String</code> corresponding to the ID 
+	 * A {@code String} corresponding to the ID 
 	 * of the RNA-Seq library this result belongs to. 
 	 */
 	public String rnaSeqLibraryId;
 	/**
-	 * A <code>float</code> representing the log2 RPK 
+	 * A {@code float} representing the log2 RPK 
 	 * (Reads Per Kilobase) for this gene in this library.
 	 */
 	public float log2RPK;
@@ -36,7 +36,7 @@ public class RNASeqResultTO extends CallSourceRawDataTO implements Serializable
 	 */
 	public int readsCount;
 	/**
-	 * A <code>String</code> representing the expression call for this gene 
+	 * A {@code String} representing the expression call for this gene 
 	 * in this library ('undefined', 'present', 'absent').
 	 * @TODO change this for an Enum.
 	 */

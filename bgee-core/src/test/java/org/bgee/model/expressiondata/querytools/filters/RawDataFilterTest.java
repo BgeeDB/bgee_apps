@@ -186,7 +186,7 @@ public class RawDataFilterTest extends TestAncestor {
 	/**
 	 * Test that {@link RawDataFilter#setAffymetrixMinPercentPresent(short)} and 
 	 * {@link RawDataFilter.setRNASeqMinPercentPresent(short)} correctly throw 
-	 * an <code>IllegalArgumentException</code> when assigned a <code>short</code> 
+	 * an {@code IllegalArgumentException} when assigned a {@code short} 
 	 * less than 0 or greater than 1 (meaning, not a percentage).
 	 */
 	@Test

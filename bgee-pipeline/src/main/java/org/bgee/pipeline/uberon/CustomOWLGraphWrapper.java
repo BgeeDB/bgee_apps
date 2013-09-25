@@ -31,7 +31,7 @@ import owltools.graph.OWLQuantifiedProperty;
 
 /**
  * This class groups methods that could be modified, or added 
- * to <code>OWLGraphWrapper</code> and parent classes.
+ * to {@code OWLGraphWrapper} and parent classes.
  * 
  * @author Frederic Bastian
  * @version June 2013
@@ -42,9 +42,9 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 	private final static Logger log = LogManager.getLogger(CustomOWLGraphWrapper.class.getName());
 	
 	/**
-	 * A cache for super properties relations. Each <code>OWLObjectPropertyExpression</code> 
-	 * is associated in the <code>Map</code> to a <code>LinkedHashSet</code> of 
-	 * <code>OWLObjectPropertyExpression</code>s, that contains its super properties, 
+	 * A cache for super properties relations. Each {@code OWLObjectPropertyExpression} 
+	 * is associated in the {@code Map} to a {@code LinkedHashSet} of 
+	 * {@code OWLObjectPropertyExpression}s, that contains its super properties, 
 	 * ordered from the more specific to the more general 
 	 * (for instance, "in_deep_part_of", then "part_of", then "overlaps").
 	 * @see #getSuperPropertyReflexiveClosureOf(OWLObjectPropertyExpression)
@@ -53,9 +53,9 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 	    superPropertyCache;
 	
 	/**
-	 * A cache for sub-properties relations. Each <code>OWLObjectPropertyExpression</code> 
-	 * is associated in the <code>Map</code> to a <code>LinkedHashSet</code> of 
-	 * <code>OWLObjectPropertyExpression</code>s, that contains its sub-properties, 
+	 * A cache for sub-properties relations. Each {@code OWLObjectPropertyExpression} 
+	 * is associated in the {@code Map} to a {@code LinkedHashSet} of 
+	 * {@code OWLObjectPropertyExpression}s, that contains its sub-properties, 
 	 * ordered from the more general to the more specific 
 	 * (for instance, "overlaps", then "part_of", then "in_deep_part_of").
 	 * @see #getSubPropertyClosureOf(OWLObjectPropertyExpression)
@@ -65,7 +65,7 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 
 	/**
 	 * Default constructor. 
-	 * @param ontology 		The <code>OWLOntology</code> that this object wraps.
+	 * @param ontology 		The {@code OWLOntology} that this object wraps.
 	 * @throws UnknownOWLOntologyException 	
 	 * @throws OWLOntologyCreationException
 	 */
@@ -80,16 +80,16 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 	
    	
     /**
-     * Determine if <code>testObject</code> belongs to at least one of the subsets 
-     * in <code>subsets</code>. 
+     * Determine if {@code testObject} belongs to at least one of the subsets 
+     * in {@code subsets}. 
      * 
-     * @param testObject	An <code>OWLObject</code> for which we want to know if it belongs 
-     * 						to a subset in <code>subsets</code>.
-     * @param subsets		A <code>Collection</code> of <code>String</code>s that are 
+     * @param testObject	An {@code OWLObject} for which we want to know if it belongs 
+     * 						to a subset in {@code subsets}.
+     * @param subsets		A {@code Collection} of {@code String}s that are 
      * 						the names of the subsets for which we want to check belonging 
-     * 						of <code>testObject</code>.
-     * @return				<code>true</code> if <code>testObject</code> belongs to a subset 
-     * 						in <code>subsets</code>, <code>false</code> otherwise.
+     * 						of {@code testObject}.
+     * @return				{@code true} if {@code testObject} belongs to a subset 
+     * 						in {@code subsets}, {@code false} otherwise.
      */
     public boolean isOWLObjectInSubsets(OWLObject testObject, Collection<String> subsets)
     {
@@ -99,11 +99,11 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
     }
     
     /**
-	 * Returns the direct child properties of <code>prop</code> in all ontologies.
-	 * @param prop 		The <code>OWLObjectPropertyExpression</code> for which 
+	 * Returns the direct child properties of {@code prop} in all ontologies.
+	 * @param prop 		The {@code OWLObjectPropertyExpression} for which 
 	 * 					we want the direct sub-properties.
-	 * @return 			A <code>Set</code> of <code>OWLObjectPropertyExpression</code>s 
-	 * 					that are the direct sub-properties of <code>prop</code>.
+	 * @return 			A {@code Set} of {@code OWLObjectPropertyExpression}s 
+	 * 					that are the direct sub-properties of {@code prop}.
      * 
      * @see #getSubPropertyClosureOf(OWLObjectPropertyExpression)
      * @see #getSubPropertyReflexiveClosureOf(OWLObjectPropertyExpression)
@@ -121,13 +121,13 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 		return log.exit(subProps);
 	}
 	/**
-     * Returns all child properties of <code>prop</code> in all ontologies,  
-     * ordered from the more general (closer from <code>prop</code>) to the more precise 
+     * Returns all child properties of {@code prop} in all ontologies,  
+     * ordered from the more general (closer from {@code prop}) to the more precise 
      * (e.g., for the "overlaps" property, return "part_of" then "in_deep_part_of"). 
      * 
-     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
+     * @param prop 	the {@code OWLObjectPropertyExpression} for which we want 
      * 				the ordered sub-properties. 
-     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
+     * @return		A {@code LinkedHashSet} of {@code OWLObjectPropertyExpression}s 
      * 				ordered from the more general to the more precise.
      * 
      * @see #getSubPropertiesOf(OWLObjectPropertyExpression)
@@ -163,17 +163,17 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 		return log.exit(subProps);
 	}
 	/**
-     * Returns all sub-properties of <code>prop</code> in all ontologies, 
-     * and <code>prop</code> itself as the first element (reflexive). 
+     * Returns all sub-properties of {@code prop} in all ontologies, 
+     * and {@code prop} itself as the first element (reflexive). 
      * The returned sub-properties are ordered from the more general (the closest 
-     * from <code>prop</code>) to the more precise.
-     * For instance, if <code>prop</code> is "overlaps", the returned properties will be  
+     * from {@code prop}) to the more precise.
+     * For instance, if {@code prop} is "overlaps", the returned properties will be  
      * "overlaps", then "part_of", then "in_deep_part_of", .... 
      * 
-     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
+     * @param prop 	the {@code OWLObjectPropertyExpression} for which we want 
      * 				the ordered sub-properties. 
-     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
-     * 				ordered from the more general to the more precise, with <code>prop</code> 
+     * @return		A {@code LinkedHashSet} of {@code OWLObjectPropertyExpression}s 
+     * 				ordered from the more general to the more precise, with {@code prop} 
      * 				as the first element. 
      * 
      * @see #getSubPropertiesOf(OWLObjectPropertyExpression)
@@ -194,16 +194,16 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 	}
 	
     /**
-     * Returns all parent properties of <code>prop</code> in all ontologies, 
-     * and <code>prop</code> itself as the first element (reflexive). 
-     * Unlike the method <code>owltools.graph.OWLGraphWrapperEdges.getSuperPropertyReflexiveClosureOf</code>, 
+     * Returns all parent properties of {@code prop} in all ontologies, 
+     * and {@code prop} itself as the first element (reflexive). 
+     * Unlike the method {@code owltools.graph.OWLGraphWrapperEdges.getSuperPropertyReflexiveClosureOf}, 
      * the returned super properties here are ordered from the more precise to the more general 
      * (e.g., "in_deep_part_of", then "part_of", then "overlaps"). 
      * 
-     * @param prop 	the <code>OWLObjectPropertyExpression</code> for which we want 
+     * @param prop 	the {@code OWLObjectPropertyExpression} for which we want 
      * 				the ordered super properties. 
-     * @return		A <code>LinkedHashSet</code> of <code>OWLObjectPropertyExpression</code>s 
-     * 				ordered from the more precise to the more general, with <code>prop</code> 
+     * @return		A {@code LinkedHashSet} of {@code OWLObjectPropertyExpression}s 
+     * 				ordered from the more precise to the more general, with {@code prop} 
      * 				as the first element. 
      */
 	//TODO: Remove if OWLGraphWrapper changes its implementation
@@ -248,25 +248,25 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 	}
     
     /**
-	 * Get the sub-relations of <code>edge</code>. This method returns 
-	 * <code>OWLGraphEdge</code>s with their <code>OWLQuantifiedProperty</code>s 
-	 * corresponding to the sub-properties of the properties of <code>edge</code> 
+	 * Get the sub-relations of {@code edge}. This method returns 
+	 * {@code OWLGraphEdge}s with their {@code OWLQuantifiedProperty}s 
+	 * corresponding to the sub-properties of the properties of {@code edge} 
 	 * (even indirect sub-properties), ordered from the more general relations 
-	 * (the closest to <code>edge</code>) to the more precise relations. 
-	 * The first <code>OWLGraphEdge</code> in the returned <code>Set</code> 
-	 * is <code>edge</code> (reflexive method).
+	 * (the closest to {@code edge}) to the more precise relations. 
+	 * The first {@code OWLGraphEdge} in the returned {@code Set} 
+	 * is {@code edge} (reflexive method).
 	 * <p>
 	 * This is the opposite method of 
-	 * <code>owltools.graph.OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers(OWLGraphEdge)</code>, 
+	 * {@code owltools.graph.OWLGraphWrapperEdges.getOWLGraphEdgeSubsumers(OWLGraphEdge)}, 
 	 * with reflexivity added.
 	 * 
-	 * @param edge	A <code>OWLGraphEdge</code> for which all sub-relations 
+	 * @param edge	A {@code OWLGraphEdge} for which all sub-relations 
 	 * 				should be obtained.
-	 * @return 		A <code>Set</code> of <code>OWLGraphEdge</code>s representing 
-	 * 				the sub-relations of <code>edge</code> ordered from the more general 
-	 * 				to the more precise relation, with <code>edge</code> as the first element. 
-	 * 				An empty <code>Set</code> if the <code>OWLQuantifiedProperty</code>s 
-	 * 				of <code>edge</code> have no sub-properties.
+	 * @return 		A {@code Set} of {@code OWLGraphEdge}s representing 
+	 * 				the sub-relations of {@code edge} ordered from the more general 
+	 * 				to the more precise relation, with {@code edge} as the first element. 
+	 * 				An empty {@code Set} if the {@code OWLQuantifiedProperty}s 
+	 * 				of {@code edge} have no sub-properties.
 	 */
 	public LinkedHashSet<OWLGraphEdge> getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge edge) 
 	{
@@ -276,21 +276,21 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 	
 	/**
 	 * Similar to {@link getOWLGraphEdgeSubRels(OWLGraphEdge)}, 
-	 * except the <code>OWLQuantifiedProperty</code>s of <code>edge</code> are analyzed 
-	 * starting from the index <code>propIndex</code>.
+	 * except the {@code OWLQuantifiedProperty}s of {@code edge} are analyzed 
+	 * starting from the index {@code propIndex}.
 	 * 
-	 * @param edge 		A <code>OWLGraphEdge</code> for which sub-relations 
+	 * @param edge 		A {@code OWLGraphEdge} for which sub-relations 
 	 * 					should be obtained, with properties analyzed from index 
-	 * 					<code>propIndex</code>
-	 * @param propIndex	An <code>int</code> representing the index of the 
-	 * 					<code>OWLQuantifiedProperty</code> of <code>edge</code> 
+	 * 					{@code propIndex}
+	 * @param propIndex	An {@code int} representing the index of the 
+	 * 					{@code OWLQuantifiedProperty} of {@code edge} 
 	 * 					to start the analysis with.
-	 * @return 		A <code>Set</code> of <code>OWLGraphEdge</code>s representing 
-	 * 				the sub-relations of <code>edge</code> ordered from the more general 
-	 * 				to the more precise relation, with <code>edge</code> as the first element, 
-	 * 				and with only <code>OWLQuantifiedProperty</code> starting at index 
-	 * 				<code>propIndex</code>. An empty <code>Set</code> 
-	 * 				if the <code>OWLQuantifiedProperty</code>s of <code>edge</code> 
+	 * @return 		A {@code Set} of {@code OWLGraphEdge}s representing 
+	 * 				the sub-relations of {@code edge} ordered from the more general 
+	 * 				to the more precise relation, with {@code edge} as the first element, 
+	 * 				and with only {@code OWLQuantifiedProperty} starting at index 
+	 * 				{@code propIndex}. An empty {@code Set} 
+	 * 				if the {@code OWLQuantifiedProperty}s of {@code edge} 
 	 * 				have no sub-properties.
 	 */
 	private LinkedHashSet<OWLGraphEdge> getOWLGraphEdgeSubRelsReflexive(OWLGraphEdge edge, 
@@ -350,25 +350,25 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 	
     
     /**
-     * Combines <code>firstEdge</code> and <code>secondEdge</code> to create a new edge 
-     * from the source of <code>firstEdge</code> to the target of <code>secondEdge</code>, 
+     * Combines {@code firstEdge} and {@code secondEdge} to create a new edge 
+     * from the source of {@code firstEdge} to the target of {@code secondEdge}, 
      * with properties combined in a regular way, and over super properties.
      * <p>
      * This method is similar to 
      * <code>owltools.graph.OWLGraphWrapperEdges#combineEdgePair(OWLObject, OWLGraphEdge, 
      * OWLGraphEdge, int)</code>, 
-     * except it also tries to combine the <code>OWLQuantifiedProperty</code>s of the edges 
+     * except it also tries to combine the {@code OWLQuantifiedProperty}s of the edges 
      * over super properties (see {@link #combinePropertyPairOverSuperProperties(
      * OWLQuantifiedProperty, OWLQuantifiedProperty)}, currently combines over 
      * 2 properties only). 
      * 
-     * @param firstEdge		A <code>OWLGraphEdge</code> that is the first edge to combine, 
+     * @param firstEdge		A {@code OWLGraphEdge} that is the first edge to combine, 
      * 						its source will be the source of the new edge
-     * @param secondEdge	A <code>OWLGraphEdge</code> that is the second edge to combine, 
+     * @param secondEdge	A {@code OWLGraphEdge} that is the second edge to combine, 
      * 						its target will be the target of the new edge
-     * @return 				A <code>OWLGraphEdge</code> resulting from the composition of 
-     * 						<code>firstEdge</code> and <code>secondEdge</code>, 
-     * 						with its <code>OWLQuantifiedProperty</code>s composed 
+     * @return 				A {@code OWLGraphEdge} resulting from the composition of 
+     * 						{@code firstEdge} and {@code secondEdge}, 
+     * 						with its {@code OWLQuantifiedProperty}s composed 
      * 						in a regular way, but also over super properties. 
      */
     public OWLGraphEdge combineEdgePairWithSuperProps(OWLGraphEdge firstEdge, 
@@ -403,23 +403,23 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
     }
     
     /**
-     * Perform a combination of a pair of <code>OWLQuantifiedProperty</code>s 
+     * Perform a combination of a pair of {@code OWLQuantifiedProperty}s 
      * over super properties, unlike the method 
-     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code>. 
+     * {@code owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair}. 
      * <strong>Warning: </strong> note that you should call this method only after 
-     * <code>combinedQuantifiedPropertyPair</code> failed to combine properties. 
+     * {@code combinedQuantifiedPropertyPair} failed to combine properties. 
      * <p>
-     * This methods determines if <code>prop1</code> is a super property 
-     * of <code>prop2</code> that can be combined, or <code>prop2</code> a super property 
-     * of <code>prop1</code> that can be combined, 
+     * This methods determines if {@code prop1} is a super property 
+     * of {@code prop2} that can be combined, or {@code prop2} a super property 
+     * of {@code prop1} that can be combined, 
      * or if they have a super property in common that can be combined. 
-     * If such a suitable super property is identified, <code>prop1</code> and 
-     * <code>prop2</code> are combined by calling the method 
-     * <code>owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair</code> 
+     * If such a suitable super property is identified, {@code prop1} and 
+     * {@code prop2} are combined by calling the method 
+     * {@code owltools.graph.OWLGraphWrapperEdges.combinedQuantifiedPropertyPair} 
      * on that super property, as a pair (notably to check for transitivity). 
      * All super properties will be sequentially tested from the more precise one 
      * to the more general one, trying to find one that can be combined. 
-     * If no combination can be performed, return <code>null</code>.
+     * If no combination can be performed, return {@code null}.
      * <p>
      * For example: 
      * <ul>
@@ -429,11 +429,11 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
      * A r1 B * B r2 C --> A r3 C 
      * </ul>
      * 
-     * @param prop1 	First <code>OWLQuantifiedProperty</code> to combine
-     * @param prop2		Second <code>OWLQuantifiedProperty</code> to combine
-     * @return			A <code>OWLQuantifiedProperty</code> representing a combination 
-     * 					of <code>prop1</code> and <code>prop2</code> over super properties. 
-     * 					<code>null</code> if cannot be combined. 
+     * @param prop1 	First {@code OWLQuantifiedProperty} to combine
+     * @param prop2		Second {@code OWLQuantifiedProperty} to combine
+     * @return			A {@code OWLQuantifiedProperty} representing a combination 
+     * 					of {@code prop1} and {@code prop2} over super properties. 
+     * 					{@code null} if cannot be combined. 
      */
     private OWLQuantifiedProperty combinePropertyPairOverSuperProperties(
             OWLQuantifiedProperty prop1, OWLQuantifiedProperty prop2) 
@@ -501,10 +501,10 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
     }
 
 	/**
-     * Get all <code>OWLClass</code>es from all ontologies.
+     * Get all {@code OWLClass}es from all ontologies.
      * 
-     * @return 	a <code>Set</code> of <code>OWLClass</code>es that contains 
-     * 			all <code>OWLClass</code>es from all ontologies.
+     * @return 	a {@code Set} of {@code OWLClass}es that contains 
+     * 			all {@code OWLClass}es from all ontologies.
      */
     public Set<OWLClass> getAllOWLClasses()
     {
@@ -521,10 +521,10 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
     }
     
     /**
-     * Return the <code>OWLClass</code>es root of any ontology 
-     * (<code>OWLClass</code>es with no parent)
+     * Return the {@code OWLClass}es root of any ontology 
+     * ({@code OWLClass}es with no parent)
      * 
-     * @return	A <code>Set</code> of <code>OWLClass</code>es that are 
+     * @return	A {@code Set} of {@code OWLClass}es that are 
      * 			the roots of any ontology.
      */
     public Set<OWLClass> getOntologyRoots()
@@ -543,14 +543,14 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
     }
     
     /**
-     * Return the <code>OWLClass</code>es descendant of <code>parentClass</code>.
+     * Return the {@code OWLClass}es descendant of {@code parentClass}.
      * This method is the same than 
-     * <code>owltools.graph.OWLGraphWrapperEdges.getDescendants(OWLObject)</code>, 
-     * except it returns only the descendant <code>OWLClass</code>es, not 
-     * other <code>OWLObject</code>s.
+     * {@code owltools.graph.OWLGraphWrapperEdges.getDescendants(OWLObject)}, 
+     * except it returns only the descendant {@code OWLClass}es, not 
+     * other {@code OWLObject}s.
      * 
-     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the descendants 
-     * 			of <code>parentClass</code>.
+     * @return 	A {@code Set} of {@code OWLClass}es being the descendants 
+     * 			of {@code parentClass}.
      */
     public Set<OWLClass> getOWLClassDescendants(OWLClass parentClass)
     {
@@ -568,12 +568,12 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
 		return log.exit(descendants);
     }
     /**
-     * Return the <code>OWLClass</code>es directly descendant of <code>parentClass</code>.
-     * This method returns all sources of all edges incoming to <code>parentClass</code>, 
-     * that are <code>OWLClass</code>es.
+     * Return the {@code OWLClass}es directly descendant of {@code parentClass}.
+     * This method returns all sources of all edges incoming to {@code parentClass}, 
+     * that are {@code OWLClass}es.
      * 
-     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the direct descendants 
-     * 			of <code>parentClass</code>.
+     * @return 	A {@code Set} of {@code OWLClass}es being the direct descendants 
+     * 			of {@code parentClass}.
      * @see owltools.graph.OWLGraphWrapperEdges#getIncomingEdges(OWLObject)
      */
     public Set<OWLClass> getOWLClassDirectDescendants(OWLClass parentClass)
@@ -595,14 +595,14 @@ public class CustomOWLGraphWrapper extends OWLGraphWrapper
     
     
     /**
-     * Return the <code>OWLClass</code>es ancestor of <code>sourceClass</code>.
+     * Return the {@code OWLClass}es ancestor of {@code sourceClass}.
      * This method is the same than 
-     * <code>owltools.graph.OWLGraphWrapperEdges.getAncestors(OWLObject)</code>, 
-     * except it returns only the ancestor <code>OWLClass</code>es, not 
-     * other <code>OWLObject</code>s.
+     * {@code owltools.graph.OWLGraphWrapperEdges.getAncestors(OWLObject)}, 
+     * except it returns only the ancestor {@code OWLClass}es, not 
+     * other {@code OWLObject}s.
      * 
-     * @return 	A <code>Set</code> of <code>OWLClass</code>es being the ancestors 
-     * 			of <code>sourceClass</code>.
+     * @return 	A {@code Set} of {@code OWLClass}es being the ancestors 
+     * 			of {@code sourceClass}.
      */
     public Set<OWLClass> getOWLClassAncestors(OWLClass sourceClass)
     {

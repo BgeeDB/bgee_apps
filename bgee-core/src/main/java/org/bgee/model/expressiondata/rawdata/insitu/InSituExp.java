@@ -4,7 +4,7 @@ import org.bgee.model.expressiondata.rawdata.RawData;
 
 /**
  * Class related to in situ experiment. 
- * Is the container of <code>InSituEvidence</code>s.
+ * Is the container of {@code InSituEvidence}s.
  * 
  * @author Frederic Bastian
  * @version Bgee 11

@@ -12,10 +12,10 @@ import org.junit.Test;
  * Class testing the functionalities of 
  * {@link org.bgee.model.BgeeProperties BgeeProperties}. 
  * <p>
- * Test the behavior when loading the <code>Properties</code> from a properties file.
+ * Test the behavior when loading the {@code Properties} from a properties file.
  * It has to be done in a different class than when testing loading from System 
  * properties, as the properties are read only once at class loading, so only once 
- * for a given <code>ClassLoader</code>.
+ * for a given {@code ClassLoader}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013

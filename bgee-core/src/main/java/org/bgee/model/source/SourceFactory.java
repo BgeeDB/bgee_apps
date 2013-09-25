@@ -11,10 +11,10 @@ import org.bgee.model.data.common.source.SourceDAO;
 import org.bgee.model.data.common.source.SourceTO;
 
 /**
- * Factory of <code>Source</code> objects.
+ * Factory of {@code Source} objects.
  * 
- * This class proposes methods to retrieve a <code>Source</code> object, 
- * or a <code>Collection</code> of <code>Source</code> objects.
+ * This class proposes methods to retrieve a {@code Source} object, 
+ * or a {@code Collection} of {@code Source} objects.
  * 
  * @author Frederic Bastian
  * @version Bgee11
@@ -36,8 +36,8 @@ public class SourceFactory extends Factory
      * Retrieve from the data source (e.g., the Bgee database) 
      * a data source (e.g., ArrayExpress) by its ID.
      * 
-     * @param SourceId 	a <code>String</code> representing the ID of the data source to retrieve
-     * @return				a <code>DataSoure</code> corresponding to <code>SourceId</code>
+     * @param SourceId 	a {@code String} representing the ID of the data source to retrieve
+     * @return				a {@code DataSoure} corresponding to {@code SourceId}
      */
     public Source getSourceById(String SourceId)
     {
@@ -49,9 +49,9 @@ public class SourceFactory extends Factory
     /**
      * Return all the data sources (e.g., ArrayExpress, ZFIN) used in Bgee, 
      * retrieved from a data source (e.g., the Bgee database), 
-     * as a <code>Collection</code> of <code>Source</code>.
+     * as a {@code Collection} of {@code Source}.
      * 
-     * @return 	a <code>Collection</code> of <code>Source</code> 
+     * @return 	a {@code Collection} of {@code Source} 
      * 			representing the data sources used in Bgee.
      */
     public Collection<Source> getAllSources()
@@ -64,10 +64,10 @@ public class SourceFactory extends Factory
     /**
      * Return data sources (e.g., ArrayExpress, ZFIN) used in Bgee, that are not used only for xrefs purpose, 
      * but where some Bgee data actually come from, 
-     * as a <code>Collection</code> of <code>Source</code> ordered by their category.
+     * as a {@code Collection} of {@code Source} ordered by their category.
      * This method can be used for instance to display Bgee data origins and version details.
      * 
-     * @return 	a <code>Collection</code> of <code>Source</code>,  
+     * @return 	a {@code Collection} of {@code Source},  
      * 			ordered by their category, 
      * 			representing the data sources where some Bgee data actually come from.
      */
@@ -80,20 +80,20 @@ public class SourceFactory extends Factory
     
     
     /**
-     * Return a <code>Collection</code> of <code>Source</code> objects, 
-     * created using a <code>Collection</code> of <code>TransferObject</code>, 
-     * castable to <code>SourceTO</code> objects.
-     * <code>SourceTO</code> objects are used to hold values retrieved from the data source, 
-     * related to <code>Source</code>. Work as a bridge between the data source and the <code>model</code>.
+     * Return a {@code Collection} of {@code Source} objects, 
+     * created using a {@code Collection} of {@code TransferObject}, 
+     * castable to {@code SourceTO} objects.
+     * {@code SourceTO} objects are used to hold values retrieved from the data source, 
+     * related to {@code Source}. Work as a bridge between the data source and the {@code model}.
      * 
-     * @param SourceTO 	a <code>Collection</code> of of <code>TransferObject</code>, 
-     * 						castable to <code>SourceTO</code>, 
+     * @param SourceTO 	a {@code Collection} of of {@code TransferObject}, 
+     * 						castable to {@code SourceTO}, 
      * 						handling values retrieved from a data source, 
-     * 						to populate a <code>Collection</code> of new <code>Source</code> objects.
-     * @return 				a <code>Collection</code> of <code>Source</code> objects, 
-     * 						with arguments populated using the <code>SourceTO</code> objects 
-     * 						coming from <code>toCollection</code>. 
-     * 						An empty <code>Collection</code> if <code>toCollection</code> was empty.
+     * 						to populate a {@code Collection} of new {@code Source} objects.
+     * @return 				a {@code Collection} of {@code Source} objects, 
+     * 						with arguments populated using the {@code SourceTO} objects 
+     * 						coming from {@code toCollection}. 
+     * 						An empty {@code Collection} if {@code toCollection} was empty.
      */
     private Collection<Source> getSources(Collection<TransferObject> toCollection)
     {
@@ -107,14 +107,14 @@ public class SourceFactory extends Factory
     }
     
     /**
-     * Return a <code>Source</code> object created using a <code>SourceTO</code> object.
-     * <code>SourceTO</code> objects are used to hold values retrieved from the data source, 
-     * related to <code>Source</code>. Work as a bridge between the data source and the <code>model</code>.
+     * Return a {@code Source} object created using a {@code SourceTO} object.
+     * {@code SourceTO} objects are used to hold values retrieved from the data source, 
+     * related to {@code Source}. Work as a bridge between the data source and the {@code model}.
      * 
-     * @param SourceTO 	a <code>SourceTO</code>, handling values retrieved from a data source, 
-     * 						to populate a new <code>Source</code> object.
-     * @return 				a <code>Source</code>, with arguments populated using the <code>SourceTO</code>. 
-     * 						<code>null</code> if <code>SourceTO</code> was <code>null</code>.
+     * @param SourceTO 	a {@code SourceTO}, handling values retrieved from a data source, 
+     * 						to populate a new {@code Source} object.
+     * @return 				a {@code Source}, with arguments populated using the {@code SourceTO}. 
+     * 						{@code null} if {@code SourceTO} was {@code null}.
      */
     private Source createSource(SourceTO sourceTO)
     {

@@ -8,8 +8,8 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
 /**
  * This class can hold any raw data used in Bgee to generate data calls
  * (see {@link org.bgee.model.expressiondata.DataParameters.CallType} for a list 
- * of data calls available). Basically, it can hold all other <code>RawDataHolder</code>s 
- * specific to a data type (for instance, an <code>AffymetrixDataHolder</code>).
+ * of data calls available). Basically, it can hold all other {@code RawDataHolder}s 
+ * specific to a data type (for instance, an {@code AffymetrixDataHolder}).
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -18,19 +18,19 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
 public class AnyRawDataHolder implements GlobalRawDataHolder {
 	
 	/**
-	 * <code>ESTDataHolder</code> to hold EST-related data.
+	 * {@code ESTDataHolder} to hold EST-related data.
 	 */
 	private ESTDataHolder estDataHolder;
 	/**
-	 * <code>ESTDataHolder</code> to hold Affymetrix-related data.
+	 * {@code ESTDataHolder} to hold Affymetrix-related data.
 	 */
 	private AffymetrixDataHolder affyDataHolder;
 	/**
-	 * <code>ESTDataHolder</code> to hold <em>in situ</em>-related data.
+	 * {@code ESTDataHolder} to hold <em>in situ</em>-related data.
 	 */
 	private InSituDataHolder inSituDataHolder;
 	/**
-	 * <code>RNASeqDataHolder</code> to hold RNA-Seq-related data.
+	 * {@code RNASeqDataHolder} to hold RNA-Seq-related data.
 	 */
 	private RNASeqDataHolder rnaSeqDataHolder;
 	

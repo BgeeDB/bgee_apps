@@ -4,22 +4,22 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * A <code>CompositeCallFilter</code> allows to use a <code>BasicCallFilter</code> 
- * and a <code>RawDataFilter</code> at the same time. It allows to filter 
- * based on expression data calls, as when using a <code>BasicCallFilter</code> 
- * (this is why it implements the interface <code>CallFilter</code>), but as if the calls 
+ * A {@code CompositeCallFilter} allows to use a {@code BasicCallFilter} 
+ * and a {@code RawDataFilter} at the same time. It allows to filter 
+ * based on expression data calls, as when using a {@code BasicCallFilter} 
+ * (this is why it implements the interface {@code CallFilter}), but as if the calls 
  * had been computed from only a subset of the data in Bgee, filtered using 
- * the <code>RawDataFilter</code>. This leads to re-compute on-the-fly 
+ * the {@code RawDataFilter}. This leads to re-compute on-the-fly 
  * expression data calls summarizing expression data. As this is computationally intensive, 
- * <code>CompositeCallFilter</code>s can only be used for queries restrained 
- * to a <code>Gene</code>, or to a list of <code>Gene</code>s (as for instance, an 
+ * {@code CompositeCallFilter}s can only be used for queries restrained 
+ * to a {@code Gene}, or to a list of {@code Gene}s (as for instance, an 
  * {@link org.bgee.model.expressiondata.querytools.AnatDevExpressionQuery 
  * AnatDevExpressionQuery}). 
  * <p>
- * This class implements the methods from <code>CallFilter</code>, by delegating 
- * to the <code>BasicCallFilter</code> instance it holds. So, calling a method 
- * defined by the <code>CallFiler</code> interface, on an instance of this class, 
- * is equivalent to calling them on the <code>BasicCallFilter</code> instance it holds.
+ * This class implements the methods from {@code CallFilter}, by delegating 
+ * to the {@code BasicCallFilter} instance it holds. So, calling a method 
+ * defined by the {@code CallFiler} interface, on an instance of this class, 
+ * is equivalent to calling them on the {@code BasicCallFilter} instance it holds.
  * <p>
  * <h3>Explanations about the computations</h3>
  * Bgee summarizes expression data over several experiments or samples. For instance, 
@@ -32,9 +32,9 @@ import org.apache.logging.log4j.Logger;
  * generated (in the previous example, removing the sample showing expression of the gene 
  * would lead to consider it as not expressed with a high confidence...). 
  * <p>
- * So basically, a <code>CompositeCallFilter</code> will work as 
- * a <code>BasicCallFilter</code>, but as if Bgee was containing only the source raw data 
- * filtered from the <code>RawDataFilter</code>.
+ * So basically, a {@code CompositeCallFilter} will work as 
+ * a {@code BasicCallFilter}, but as if Bgee was containing only the source raw data 
+ * filtered from the {@code RawDataFilter}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -42,17 +42,17 @@ import org.apache.logging.log4j.Logger;
  */
 public class CompositeCallFilter implements CallFilter {
     /**
-     * <code>Logger</code> of the class. 
+     * {@code Logger} of the class. 
      */
     private final static Logger log = 
             LogManager.getLogger(CompositeCallFilter.class.getName());
 	/**
-	 * The <code>BasicCallFilter</code> used to specify the expression data calls 
+	 * The {@code BasicCallFilter} used to specify the expression data calls 
 	 * that should be generated and retrieved.
 	 */
     private final BasicCallFilter callFilter;
     /**
-     * The <code>RawDataFilter</code> specifying the raw data that should be used 
+     * The {@code RawDataFilter} specifying the raw data that should be used 
      * to generate the expression data calls. 
      */
     private final RawDataFilter rawDataFilter;
@@ -63,10 +63,10 @@ public class CompositeCallFilter implements CallFilter {
     /**
      * Default constructor. 
      * 
-     * @param callFilter        the <code>BasicCallFilter</code> used to specify 
+     * @param callFilter        the {@code BasicCallFilter} used to specify 
      *                          the expression data calls that should be generated 
      *                          and retrieved. 
-     * @param rawDataFilter     the <code>RawDataFilter</code> specifying the raw data 
+     * @param rawDataFilter     the {@code RawDataFilter} specifying the raw data 
      *                          that should be used to generate the expression data calls.
      */
     public CompositeCallFilter(BasicCallFilter callFilter, RawDataFilter rawDataFilter) {
@@ -86,23 +86,23 @@ public class CompositeCallFilter implements CallFilter {
         return log.exit(this.merge(filterToMerge, false));
     }
     /**
-     * Merges this <code>CompositeCallFilter</code> with <code>filterToMerge</code>, 
-     * and returns the resulting merged new <code>CompositeCallFilter</code>.
-     * If <code>filterToMerge</code> cannot be merged with this 
-     * <code>CompositeCallFilter</code>, this method returns <code>null</code>
+     * Merges this {@code CompositeCallFilter} with {@code filterToMerge}, 
+     * and returns the resulting merged new {@code CompositeCallFilter}.
+     * If {@code filterToMerge} cannot be merged with this 
+     * {@code CompositeCallFilter}, this method returns {@code null}
      * <p>
-     * If <code>sameEntity</code> is <code>true</code>, this method should correspond to 
+     * If {@code sameEntity} is {@code true}, this method should correspond to 
      * {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}, otherwise, to 
      * {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}.
      * 
-     * @param filterToMerge       a <code>CallFilter</code> to be merged with this one.
-     * @param sameEntity        a <code>boolean</code> defining whether 
-     *                          <code>filterToMerge</code> and this 
-     *                          <code>CompositeCallFilter</code> are related to a same 
-     *                          <code>Entity</code>, or different ones. 
-     * @return  A newly instantiated <code>CompositeCallFilter</code> corresponding to 
-     *          the merging of this <code>CompositeCallFilter</code> and of 
-     *          <code>filterToMerge</code>, or <code>null</code> if they could not be merged. 
+     * @param filterToMerge       a {@code CallFilter} to be merged with this one.
+     * @param sameEntity        a {@code boolean} defining whether 
+     *                          {@code filterToMerge} and this 
+     *                          {@code CompositeCallFilter} are related to a same 
+     *                          {@code Entity}, or different ones. 
+     * @return  A newly instantiated {@code CompositeCallFilter} corresponding to 
+     *          the merging of this {@code CompositeCallFilter} and of 
+     *          {@code filterToMerge}, or {@code null} if they could not be merged. 
      */
     protected CompositeCallFilter merge(CallFilter filterToMerge, boolean sameEntity) {
         log.entry(filterToMerge, sameEntity);
@@ -133,14 +133,14 @@ public class CompositeCallFilter implements CallFilter {
     //  GETTERS/SETTERS
     //************************************
     /**
-     * @return  the <code>BasicCallFilter</code> used to specify the expression data calls 
+     * @return  the {@code BasicCallFilter} used to specify the expression data calls 
      *          that should be generated and retrieved.
      */
     public BasicCallFilter getCallFilter() {
         return this.callFilter;
     }
     /**
-     * @return  the <code>RawDataFilter</code> specifying the raw data that should be used 
+     * @return  the {@code RawDataFilter} specifying the raw data that should be used 
      *          to generate the expression data calls.
      */
     public RawDataFilter getRawDataFilter() {

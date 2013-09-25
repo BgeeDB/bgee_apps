@@ -13,15 +13,15 @@ import org.bgee.model.dao.api.exception.DataAccessException;
 public interface AffymetrixChipDAO 
 {
 	/**
-	 * Retrieve from a data source a <code>AffymetrixChipTO</code>, corresponding to 
-	 * the Affymetrix chip, with the Bgee chip ID <code>bgeeAffymetrixChipId</code>, 
-	 * <code>null</code> if no corresponding chip was found.  
+	 * Retrieve from a data source a {@code AffymetrixChipTO}, corresponding to 
+	 * the Affymetrix chip, with the Bgee chip ID {@code bgeeAffymetrixChipId}, 
+	 * {@code null} if no corresponding chip was found.  
 	 * 
-	 * @param bgeeAffymetrixChipId	 	A <code>String</code> representing the ID 
+	 * @param bgeeAffymetrixChipId	 	A {@code String} representing the ID 
 	 * 									in the Bgee database of the Affymetrix chip 
 	 * 									that needs to be retrieved from the data source. 
-	 * @return	An <code>AffymetrixChipTO</code>, encapsulating all the data 
-	 * 			related to the Affymetrix chip, <code>null</code> if none could be found. 
+	 * @return	An {@code AffymetrixChipTO}, encapsulating all the data 
+	 * 			related to the Affymetrix chip, {@code null} if none could be found. 
      * @throws DataAccessException 	If an error occurred when accessing the data source.
 	 */
 	public AffymetrixChipTO getAffymetrixChipById(String bgeeAffymetrixChipId) 

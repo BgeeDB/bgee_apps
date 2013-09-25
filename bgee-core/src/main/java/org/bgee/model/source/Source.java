@@ -17,7 +17,7 @@ import org.bgee.model.Entity;
  * in order to replace those tags with the appropriate values 
  * (in that case, the gene ID for which we want to generate a link).
  * <p>
- * This class is manly used by the <code>view</code> for display purpose.
+ * This class is manly used by the {@code view} for display purpose.
  * 
  * @author Frederic Bastian
  * @version Bgee 11, June 2012
@@ -43,33 +43,33 @@ public class Source extends Entity
     	this.setCategory(null);
 	}
 	/**
-	 * a <code>String</code> representing the tag used in URLs 
-	 * to be replaced by the <code>id</code> field of a <code>GeneXRef</code>.
+	 * a {@code String} representing the tag used in URLs 
+	 * to be replaced by the {@code id} field of a {@code GeneXRef}.
 	 * 
 	 * @see #xRefUrl
 	 */
 	public static final String XREFIDTAG = "[xref_id]";
 	/**
-	 * a <code>String</code> representing the tag used in URLs 
-	 * to be replaced by the <code>id</code> field of a <code>Gene</code>.
+	 * a {@code String} representing the tag used in URLs 
+	 * to be replaced by the {@code id} field of a {@code Gene}.
 	 * 
 	 * @see #xRefUrl
 	 */
 	public static final String GENEIDTAG = "[gene_id]";
 	/**
-	 * a <code>String</code> representing the tag used in URLs 
-	 * to be replaced by the value returned by the <code>getSpeciesEnsembLink()</code> method 
-	 * of a <code>Species</code> object (e.g., Drosophila_melanogaster, Homo_sapiens, ...).
+	 * a {@code String} representing the tag used in URLs 
+	 * to be replaced by the value returned by the {@code getSpeciesEnsembLink()} method 
+	 * of a {@code Species} object (e.g., Drosophila_melanogaster, Homo_sapiens, ...).
 	 * 
 	 * @see #xRefUrl
 	 * @see model.anatomy.Species#getSpeciesEnsembLink()
 	 */
 	public static final String SPECIESENSEMBLLINKTAG = "[species_ensembl_link]";
 	/**
-	 * a <code>String</code> representing the tag used in URLs 
-	 * to be replaced by the <code>id</code> field of an experiment 
-	 * (<code>AffymetrixExp</code>, <code>ESTLibrary</code>, 
-	 * <code>InSituExp</code>, <code>RNASeqExp</code>).
+	 * a {@code String} representing the tag used in URLs 
+	 * to be replaced by the {@code id} field of an experiment 
+	 * ({@code AffymetrixExp}, {@code ESTLibrary}, 
+	 * {@code InSituExp}, {@code RNASeqExp}).
 	 * 
 	 * @see #experimentUrl
 	 * @see model.expressionData.affymetrixData.MicroarrayExperiment
@@ -79,10 +79,10 @@ public class Source extends Entity
 	 */
 	public static final String EXPERIMENTIDTAG = "[experiment_id]";
 	/**
-	 * a <code>String</code> representing the tag used in URLs 
-	 * to be replaced by the <code>id</code> field of a evidence 
-	 * (<code>RNASeqLibrary, </code><code>AffymetrixChip</code>, <code>InSituEvidence</code>, 
-	 * <code>EST</code>).
+	 * a {@code String} representing the tag used in URLs 
+	 * to be replaced by the {@code id} field of a evidence 
+	 * ({@code RNASeqLibrary, }{@code AffymetrixChip}, {@code InSituEvidence}, 
+	 * {@code EST}).
 	 * 
 	 * @see #evidenceUrl
 	 * @see model.expressionData.affymetrixData.AffymetrixChip
@@ -93,14 +93,14 @@ public class Source extends Entity
 	public static final String EVIDENCEIDTAG = "[evidence_id]";
 	
 	/**
-	 * a <code>String</code> used to generate a XRef link for a gene 
-	 * to this <code>DataSource</code>, 
+	 * a {@code String} used to generate a XRef link for a gene 
+	 * to this {@code DataSource}, 
 	 * that includes "tags" to be replaced with appropriate parameters. 
 	 * Allowed tags in this URL: 
 	 * <ul>
-	 * <li><code>XREFIDTAG</code>
-	 * <li><code>GENEIDTAG</code>
-	 * <li><code>SPECIESENSEMBLLINKTAG</code>
+	 * <li>{@code XREFIDTAG}
+	 * <li>{@code GENEIDTAG}
+	 * <li>{@code SPECIESENSEMBLLINKTAG}
 	 * </ul>
 	 * 
 	 * @see #XREFIDTAG
@@ -109,59 +109,59 @@ public class Source extends Entity
 	 */
     private String xRefUrl;
     /**
-	 * a <code>String</code> used to generate a link for an experiment (EST, Affymetrix, in situ, or RNA-Seq) 
-	 * to this <code>DataSource</code>, 
+	 * a {@code String} used to generate a link for an experiment (EST, Affymetrix, in situ, or RNA-Seq) 
+	 * to this {@code DataSource}, 
 	 * that includes "tags" to be replaced with appropriate parameters. 
 	 * Allowed tags in this URL: 
 	 * <ul>
-	 * <li><code>EXPERIMENTIDTAG</code>
+	 * <li>{@code EXPERIMENTIDTAG}
 	 * </ul>
 	 * 
 	 * @see #EXPERIMENTIDTAG
 	 */
     private String experimentUrl;
     /**
-	 * a <code>String</code> used to generate a link for an evidence (EST, Affymetrix, in situ, or RNA-Seq) 
-	 * to this <code>DataSource</code>, 
+	 * a {@code String} used to generate a link for an evidence (EST, Affymetrix, in situ, or RNA-Seq) 
+	 * to this {@code DataSource}, 
 	 * that includes "tags" to be replaced with appropriate parameters. 
 	 * Allowed tags in this URL: 
 	 * <ul>
-	 * <li><code>EVIDENCEIDTAG</code>
+	 * <li>{@code EVIDENCEIDTAG}
 	 * </ul>
 	 * 
 	 * @see #EVIDENCEIDTAG
 	 */
     private String evidenceUrl;
     /**
-     * a <code>String</code> representing the URL to the "home page" 
+     * a {@code String} representing the URL to the "home page" 
      * of the resource, to provide general link to it.
      */
     private String baseUrl;
     
     /**
-     * a <code>Date</code> representing the date of the release used in Bgee 
-     * for this <code>DataSource</code>.
+     * a {@code Date} representing the date of the release used in Bgee 
+     * for this {@code DataSource}.
      */
     private Date releaseDate;  
     /**
-     * a <code>String</code> giving details on the release used in Bgee 
-     * for this <code>DataSource</code> (e.g., 'Ensembl release 67', 'CVS version x.xx').
+     * a {@code String} giving details on the release used in Bgee 
+     * for this {@code DataSource} (e.g., 'Ensembl release 67', 'CVS version x.xx').
      */
     private String releaseVersion;
     
     /**
-     * a <code>boolean</code> defining whether this <code>DataSource</code> should be displayed 
+     * a {@code boolean} defining whether this {@code DataSource} should be displayed 
      * when listing data used in Bgee (some are used only for xref).
      */
     private boolean toDisplay;
     /**
-     * a <code>String</code> representing the category of this <code>DataSource</code> 
+     * a {@code String} representing the category of this {@code DataSource} 
      * (e.g., 'Ontology', 'Affymetrix data').
      */
     private String category;
     
     /**
-     * Take the ID in Bgee of an experiment, coming from this <code>DataSource</code>, 
+     * Take the ID in Bgee of an experiment, coming from this {@code DataSource}, 
      * to be filtered to be prepared for use in XRef URLs. For instance, sometimes a prefix is added by Bgee 
      * to the ID used in the source database. This method would remove it.
      * 
@@ -179,7 +179,7 @@ public class Source extends Entity
     }
     
     /**
-     * Take the ID in Bgee of an evidence, coming from this <code>DataSource</code>, 
+     * Take the ID in Bgee of an evidence, coming from this {@code DataSource}, 
      * to be filtered to be prepared for use in XRef URLs. For instance, sometimes a prefix is added by Bgee 
      * to the ID used in the source database. This method would remove it.
      * 

@@ -5,10 +5,10 @@ import java.io.Serializable;
 import org.bgee.model.dao.api.TransferObject;
 
 /**
- * <code>TransferObject</code> for the class 
+ * {@code TransferObject} for the class 
  * {@link org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixExp}.
  * <p>
- * For information on this <code>TransferObject</code> and its fields, 
+ * For information on this {@code TransferObject} and its fields, 
  * see the corresponding class.
  * 
  * @author Frederic Bastian
@@ -25,11 +25,11 @@ public class AffymetrixExpTO extends TransferObject implements Serializable
 	private static final long serialVersionUID = 17567457L;
 	
 	/**
-	 * A <code>String</code> containing the description of the microarray experiment. 
+	 * A {@code String} containing the description of the microarray experiment. 
 	 */
 	public String description;
 	/**
-	 * A <code>String</code> representing the ID of the data source 
+	 * A {@code String} representing the ID of the data source 
 	 * where this microarray experiment comes from. 
 	 */
 	public String dataSourceId;

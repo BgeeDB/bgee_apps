@@ -7,16 +7,16 @@ import org.bgee.model.dao.api.DAOManager;
 /**
  * Parent class of all factories used in Bgee. 
  * Factories are designed to instantiate objects from one specific class. 
- * For instance, the methods of a <code>StageLoader</code> 
- * return a <code>DevStage</code>, or a <code>Collection</code> of <code>DevStage</code>s.
+ * For instance, the methods of a {@code StageLoader} 
+ * return a {@code DevStage}, or a {@code Collection} of {@code DevStage}s.
  * <p>
  * This parent class is responsible for obtaining 
  * a {@link org.bgee.model.dao.api.DAOManager DAOManager}, that will then be used 
- * by each factory to obtain an appropriate <code>DAO</code>. Each factory instance 
+ * by each factory to obtain an appropriate {@code DAO}. Each factory instance 
  * will use its own DAO instance. 
  * <p> 
  * This parent class also provides the static methods to obtain factories. Some factories 
- * have two implementations, a regular one, using a <code>DAO</code> at each method call, 
+ * have two implementations, a regular one, using a {@code DAO} at each method call, 
  * and a "static" one, pre-loading all the data into memory, and retrieving 
  * the data from this memory at each method call (see for instance 
  * {@link org.bgee.model.anatdev.AnatEntityFactory} and 
@@ -38,7 +38,7 @@ import org.bgee.model.dao.api.DAOManager;
 public abstract class Factory 
 {
 	/**
-	 * A <code>DAOManager</code>, used to obtain DAOs.
+	 * A {@code DAOManager}, used to obtain DAOs.
 	 */
 	private final DAOManager daoManager;
 	
@@ -49,10 +49,10 @@ public abstract class Factory
     }
     
     /**
-     * Return the default <code>DAOManager</code> obtained 
+     * Return the default {@code DAOManager} obtained 
      * at the instantiation of this class. 
      * 
-     * @return 	The default <code>DAOManager</code>, used to obtain DAOs
+     * @return 	The default {@code DAOManager}, used to obtain DAOs
      */
     protected DAOManager getDAOFactory()
     {

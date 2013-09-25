@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
  */
 public class ManagerLoadAndReleaseTest extends TestAncestor {
 	/**
-     * <code>Logger</code> of the class. 
+     * {@code Logger} of the class. 
      */
     private final static Logger log = 
     		LogManager.getLogger(ManagerLoadAndReleaseTest.class.getName());
@@ -45,7 +45,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	public void shouldGetDAOManager() throws Exception 
 	{
 		/**
-		 * An anonymous class to acquire <code>DAOManager</code>s 
+		 * An anonymous class to acquire {@code DAOManager}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
@@ -54,7 +54,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			public DAOManager manager1;
 			public DAOManager manager2;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			@Override
@@ -127,7 +127,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	public void shouldCloseDAOManager() throws Exception 
 	{
 		/**
-		 * An anonymous class to acquire <code>DAOManager</code>s 
+		 * An anonymous class to acquire {@code DAOManager}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
@@ -136,7 +136,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			public DAOManager manager1;
 			public DAOManager manager2;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			@Override
@@ -326,7 +326,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			
 			public DAOManager manager;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			@Override
@@ -412,14 +412,14 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	public void shouldHaveDAOManager() throws Exception {
 
 		/**
-		 * An anonymous class to acquire <code>DAOManager</code>s 
+		 * An anonymous class to acquire {@code DAOManager}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
 		class ThreadTest implements Callable<Boolean> {
 			public boolean hasAManager;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			@Override

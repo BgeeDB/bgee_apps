@@ -12,18 +12,18 @@ package org.bgee.model.expressiondata.rawdata;
  */
 public interface RawDataHolder {
 	/**
-	 * Indicate whether this <code>RawDataHolder</code> currently holds some data 
-	 * (for instance, an <code>Experiment</code>)
+	 * Indicate whether this {@code RawDataHolder} currently holds some data 
+	 * (for instance, an {@code Experiment})
 	 * 
-	 * @return 	<code>true</code> if this <code>RawDataHolder</code> currently holds 
+	 * @return 	{@code true} if this {@code RawDataHolder} currently holds 
 	 * 			some data.
 	 */
     public boolean hasData();
     /**
-	 * Indicate whether this <code>RawDataHolder</code> currently holds some data count
+	 * Indicate whether this {@code RawDataHolder} currently holds some data count
 	 * (for instance, a count of the number of experiments used).
 	 * 
-	 * @return 	<code>true</code> if this <code>RawDataHolder</code> currently holds 
+	 * @return 	{@code true} if this {@code RawDataHolder} currently holds 
 	 * 			any data count.
 	 */
     public boolean hasDataCount();

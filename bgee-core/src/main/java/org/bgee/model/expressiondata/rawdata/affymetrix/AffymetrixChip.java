@@ -7,10 +7,10 @@ import org.bgee.model.source.Source;
 
 /**
  * Class related to Affymetrix chip. 
- * Is contained by a <code>AffymetrixExp</code> 
- * and is the container of <code>AffymetrixProbeset</code>s. 
+ * Is contained by a {@code AffymetrixExp} 
+ * and is the container of {@code AffymetrixProbeset}s. 
  * Is mapped to anatomical and developmental ontologies 
- * (child class of <code>RawDataAnnotated</code>).
+ * (child class of {@code RawDataAnnotated}).
  * 
  * @author Frederic Bastian
  * @version Bgee 11
@@ -21,13 +21,13 @@ import org.bgee.model.source.Source;
 public class AffymetrixChip extends SampleAssay implements DataAnnotated
 {
 	/**
-	 * An <code>enum</code> listing the different methods to generate expression calls 
+	 * An {@code enum} listing the different methods to generate expression calls 
 	 * on Affymetrix chips: 
 	 * <ul>
-	 * <li><code>MAS5</code>: expression calls from the MAS5 software. Such calls 
+	 * <li>{@code MAS5}: expression calls from the MAS5 software. Such calls 
 	 * are usually taken from a processed MAS5 file, and imply that the data 
 	 * were also normalizd using MAS5.
-	 * <li><code>SCHUSTER</code>: Wilcoxon test on the signal of probesets 
+	 * <li>{@code SCHUSTER}: Wilcoxon test on the signal of probesets 
 	 * against a subset of weakly expressed probesets, to generate expression calls 
 	 * (see <a href="http://www.ncbi.nlm.nih.gov/pubmed/17594492">
 	 * Schuster et al., Genome Biology (2007)</a>). Such calls usually implies 
@@ -42,14 +42,14 @@ public class AffymetrixChip extends SampleAssay implements DataAnnotated
 		MAS5, SCHUSTER;
 	}
 	/**
-	 * An <code>enum</code> listing the different methods used ib Bgee 
+	 * An {@code enum} listing the different methods used ib Bgee 
 	 * to normalize Affymetrix data: 
 	 * <ul>
-	 * <li><code>MAS5</code>: normalization using the MAS5 software. Using 
+	 * <li>{@code MAS5}: normalization using the MAS5 software. Using 
 	 * this naormalization usually means that only the processed MAS5 files 
 	 * were available, otherwise another method would be used. 
-	 * <li><code>RMA</code>: normalization by RMA method.
-	 * <li><code>GCRMA</code>: normalization by GCRMA method. This is the default 
+	 * <li>{@code RMA}: normalization by RMA method.
+	 * <li>{@code GCRMA}: normalization by GCRMA method. This is the default 
 	 * method in Bgee when raw data are available. 
 	 * </ul>
 	 * 
@@ -61,27 +61,27 @@ public class AffymetrixChip extends SampleAssay implements DataAnnotated
 		MAS5, RMA, GCRMA;
 	}
 	/**
-	 * The <code>AffymetrixExp</code> this object belongs to.
+	 * The {@code AffymetrixExp} this object belongs to.
 	 * It is the "container" used for the methods 
-	 * <code>#getDataSourceFromContainer()</code> and <code>#getDataSourceIdFromContainer()</code>.
+	 * {@code #getDataSourceFromContainer()} and {@code #getDataSourceIdFromContainer()}.
 	 * @see #getDataSourceFromContainer()
 	 * @see #getDataSourceIdFromContainer()
 	 */
     private AffymetrixExp affymetrixExp;
     /**
-	 * A <code>String</code> corresponding to the ID 
+	 * A {@code String} corresponding to the ID 
 	 * of the microarray experiment this chip belongs to. 
-	 * This attribute is useful when the <code>affymetrixExp</code> is not set. 
-	 * When both are set, this <code>microarrayExperimentId</code> matches 
-	 * the <code>id</code> attribute of the <code>AffymetrixExp</code>. 
+	 * This attribute is useful when the {@code affymetrixExp} is not set. 
+	 * When both are set, this {@code microarrayExperimentId} matches 
+	 * the {@code id} attribute of the {@code AffymetrixExp}. 
 	 * @see affymetrixExp
 	 */
     private String microarrayExperimentId;
     /**
-     * A <code>String</code> representing the affymetrixChipId, 
+     * A {@code String} representing the affymetrixChipId, 
      * meaning the ID of the chip in the source database 
      * (the ID in the bgee database is different, and is stored in the 
-     * <code>id</code> attribute of this object).
+     * {@code id} attribute of this object).
      * The couple microarrayExperimentId - affymetrixChipId is unique 
      * in the database, affymetrixChipId alone is not.
      */
@@ -104,15 +104,15 @@ public class AffymetrixChip extends SampleAssay implements DataAnnotated
     }
 	
 	/**
-	 * Try to obtain the <code>DataSource</code> object where these expression data come from, 
-	 * from the <code>AffymetrixExp</code> container of this <code>AffymetrixChip</code>, 
+	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+	 * from the {@code AffymetrixExp} container of this {@code AffymetrixChip}, 
 	 * and eventually from its own container, etc.
-	 * See <code>getDataSource()</code> for more details.
+	 * See {@code getDataSource()} for more details.
 	 * 
-	 * @return 	a <code>DataSource</code> object where these expression data come from, 
-	 * 			obtained from the <code>AffymetrixExp</code> container of this <code>AffymetrixChip</code>. 
-	 * 			<code>null</code> if it was not possible to retrieve a <code>DataSource</code> object  
-	 * 			from the <code>AffymetrixExp</code> container.
+	 * @return 	a {@code DataSource} object where these expression data come from, 
+	 * 			obtained from the {@code AffymetrixExp} container of this {@code AffymetrixChip}. 
+	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+	 * 			from the {@code AffymetrixExp} container.
 	 * @see #affymetrixExp
 	 * @see #getDataSource()
 	 */
@@ -127,12 +127,12 @@ public class AffymetrixChip extends SampleAssay implements DataAnnotated
 	
 	/**
 	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the <code>AffymetrixExp</code> "container". 
+	 * from the {@code AffymetrixExp} "container". 
 	 * 
-	 * @return 	a <code>String</code> corresponding to the ID of the data source 
+	 * @return 	a {@code String} corresponding to the ID of the data source 
 	 * 			where these expression data come from, 
-	 * 			obtained from the <code>AffymetrixExp</code> "container". 
-	 * 			Empty <code>String</code> if it was not possible to retrieve the ID 
+	 * 			obtained from the {@code AffymetrixExp} "container". 
+	 * 			Empty {@code String} if it was not possible to retrieve the ID 
 	 * 			from the container.
 	 * @see #affymetrixExp
 	 * @see #getDataSourceId()
@@ -166,9 +166,9 @@ public class AffymetrixChip extends SampleAssay implements DataAnnotated
 		this.microarrayExperimentId = expId;
 	}
 	/**
-	 * Returns either the value of <code>microarrayExperimentId</code>, 
-	 * or the of the <code>id</code> of the <code>AffymetrixExp</code> 
-	 * stored in <code>affymetrixExp</code>, depending on which one is set. 
+	 * Returns either the value of {@code microarrayExperimentId}, 
+	 * or the of the {@code id} of the {@code AffymetrixExp} 
+	 * stored in {@code affymetrixExp}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the microarray experiment this chip belongs to. 
 	 * @see 	#microarrayExperimentId

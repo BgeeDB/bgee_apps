@@ -18,54 +18,54 @@ import org.bgee.model.dao.api.source.SourceDAO;
 
 /**
  * Manager of DAOs, following the abstract factory pattern, to obtain and manage DAOs. 
- * This abstract class is then implemented by <code>Service Provider</code>s, 
+ * This abstract class is then implemented by {@code Service Provider}s, 
  * that are automatically discovered and loaded. 
  * <p>
- * To obtain a DAOManager, clients should call one of the <code>getDAOManager</code> methods.
- * When calling the <code>getDAOManager</code> methods, the <code>DAOManager</code> returned 
- * is a "per-thread singleton": a <code>DAOManager</code> is instantiated 
- * the first time a <code>getDAOManager</code> method is called inside a given thread, 
+ * To obtain a DAOManager, clients should call one of the {@code getDAOManager} methods.
+ * When calling the {@code getDAOManager} methods, the {@code DAOManager} returned 
+ * is a "per-thread singleton": a {@code DAOManager} is instantiated 
+ * the first time a {@code getDAOManager} method is called inside a given thread, 
  * and the same instance is then always returned when calling 
- * a <code>getDAOManager</code> method inside the same thread. 
- * An exception is if you call this method after having closed the <code>DAOManager</code>.
- * In that case, a call to a <code>getDAOManager</code> method from this thread 
- * would return a new <code>DAOManager</code> instance. 
+ * a {@code getDAOManager} method inside the same thread. 
+ * An exception is if you call this method after having closed the {@code DAOManager}.
+ * In that case, a call to a {@code getDAOManager} method from this thread 
+ * would return a new {@code DAOManager} instance. 
  * <p>
  * At the first call inside a given thread, it is recommended to use 
  * {@link #getDAOManager(Map)}, which allows to provide parameters to 
- * the <code>DAOManager</code> (as if {@link #setParameters(Map)} was called), 
- * and to select only a <code>DAOManager</code> accepting the parameters. 
+ * the {@code DAOManager} (as if {@link #setParameters(Map)} was called), 
+ * and to select only a {@code DAOManager} accepting the parameters. 
  * Then, {@link #getDAOManager()} can be safely called inside the same thread. 
  * <p>
  * Parameters provided to the DAOManager (either through {@link #getDAOManager(Map)} 
  * or {@link #setParameters(Map)}) are specific to the Service Provider used. 
- * For instance, if this <code>DAOManager</code> was obtained from a Service provider 
+ * For instance, if this {@code DAOManager} was obtained from a Service provider 
  * using the JDBC API to use a SQL database, then the parameters might contain 
  * the URL to connect to the database. It is up to each Service provider to specify 
  * what are the parameters needed. 
  * <p>
- * Please note that it is extremely important to close <code>DAOManager</code>s 
- * when done using them, otherwise a <code>DAOManager</code> could be improperly 
+ * Please note that it is extremely important to close {@code DAOManager}s 
+ * when done using them, otherwise a {@code DAOManager} could be improperly 
  * reused if this API is used in an application using thread pooling, or if a thread 
  * re-uses a previously-used ID (which is standard behavior of the JDK). Methods 
- * available to close <code>DAOManager</code>s are {@link #close()}, {@link #kill()}, 
+ * available to close {@code DAOManager}s are {@link #close()}, {@link #kill()}, 
  * {@link #closeAll()}, {@link #kill(long)}. This class implements the 
- * <code>AutoCloseable</code> interface, so that it can be used in a 
- * <code>try-with-resources</code> statement.
+ * {@code AutoCloseable} interface, so that it can be used in a 
+ * {@code try-with-resources} statement.
  * <p>
  * This class supports the standard <a href=
  * 'http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider'> 
  * Service Provider</a> mechanism. Concrete implementations must include the file 
- * <code>META-INF/services/org.bgee.model.dao.api.DAOManager</code>. The file must contain 
- * the name of the implementation of <code>DAOManager</code>. For example, 
- * to load the <code>my.sql.Manager</code> class, 
- * the <code>META-INF/services/org.bgee.model.dao.api.DAOManager</code> file 
+ * {@code META-INF/services/org.bgee.model.dao.api.DAOManager}. The file must contain 
+ * the name of the implementation of {@code DAOManager}. For example, 
+ * to load the {@code my.sql.Manager} class, 
+ * the {@code META-INF/services/org.bgee.model.dao.api.DAOManager} file 
  * would contain the entry:
  * <pre>my.sql.Manager</pre>
- * To conform to the <code>Service Provider</code> requirements, the class implementing 
- * <code>DAOManager</code> must provide a default constructor with no arguments. 
+ * To conform to the {@code Service Provider} requirements, the class implementing 
+ * {@code DAOManager} must provide a default constructor with no arguments. 
  * <p>
- * Important note about <code>ServiceLoader</code> and shared <code>ClassLoader</code> 
+ * Important note about {@code ServiceLoader} and shared {@code ClassLoader} 
  * (like in tomcat): http://stackoverflow.com/a/7220918/1768736
  * 
  * @author Frederic Bastian
@@ -78,63 +78,63 @@ public abstract class DAOManager implements AutoCloseable
     //  CLASS ATTRIBUTES AND METHODS
     //*****************************************
 	/**
-     * <code>Logger</code> of the class. 
+     * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(DAOManager.class.getName());
     
     /**
-     * A <code>ConcurrentMap</code> used to store <code>DAOManager</code>s, 
+     * A {@code ConcurrentMap} used to store {@code DAOManager}s, 
      * associated to their ID as key (corresponding to the ID of the thread 
-     * who requested the <code>DAOManager</code>). 
+     * who requested the {@code DAOManager}). 
      * <p>
-     * This <code>Map</code> is used to provide a unique and independent 
-     * <code>DAOManager</code> instance to each thread: a <code>DAOManager</code> is added 
-     * to this <code>Map</code> when a <code>getDAOManager</code> method is called, 
-     * if the thread ID is not already present in the <code>keySet</code> 
-     * of the <code>Map</code>. Otherwise, the already stored <code>DAOManager</code> 
+     * This {@code Map} is used to provide a unique and independent 
+     * {@code DAOManager} instance to each thread: a {@code DAOManager} is added 
+     * to this {@code Map} when a {@code getDAOManager} method is called, 
+     * if the thread ID is not already present in the {@code keySet} 
+     * of the {@code Map}. Otherwise, the already stored {@code DAOManager} 
      * is returned. 
      * <p>
-     * If a <code>ThreadLocal</code> was not used, it is because 
-     * this <code>Map</code> is used by other treads, 
-     * for instance when a <code>ShutdownListener</code> 
-     * want to properly release all <code>DAOManager</code>s; 
+     * If a {@code ThreadLocal} was not used, it is because 
+     * this {@code Map} is used by other treads, 
+     * for instance when a {@code ShutdownListener} 
+     * want to properly release all {@code DAOManager}s; 
      * or when a thread performing monitoring of another thread want to kill it.
      * <p>
-     * A <code>DAOManager</code> is removed from this <code>Map</code> when 
+     * A {@code DAOManager} is removed from this {@code Map} when 
      * {@link #close()} is called on it, 
      * or when {@link #kill(long)} is called using the ID assigned to this thread, 
      * or when the method {@link #closeAll()} is called. 
-     * All <code>DAOManager</code>s are removed when {@link #closeAll()} is called.
+     * All {@code DAOManager}s are removed when {@link #closeAll()} is called.
      */
 	private static final ConcurrentMap<Long, DAOManager> managers = 
 			new ConcurrentHashMap<Long, DAOManager>(); 
 	
 	/**
-	 * A unmodifiable <code>List</code> containing all available providers of 
-	 * the <code>DAOManager</code> service, in the order they were obtained 
-	 * from the <code>ServiceLoader</code>. This is needed because we want 
-	 * to load services from the <code>ServiceLoader</code> only once 
-	 * by <code>ClassLoader</code>. So we could have used as attribute  
-	 * a <code>static final ServiceLoader</code>, but <code>ServiceLoader</code> 
+	 * A unmodifiable {@code List} containing all available providers of 
+	 * the {@code DAOManager} service, in the order they were obtained 
+	 * from the {@code ServiceLoader}. This is needed because we want 
+	 * to load services from the {@code ServiceLoader} only once 
+	 * by {@code ClassLoader}. So we could have used as attribute  
+	 * a {@code static final ServiceLoader}, but {@code ServiceLoader} 
 	 * lazyly instantiate service providers and is not thread-safe, so we would 
 	 * have troubles in a multi-threading context. So we load all providers 
 	 * at once, we don't except this pre-loading to require too much memory 
 	 * (very few service providers available, used in very few libraries). 
 	 * <p>
-	 * As this <code>List</code> is unmodifiable and declared <code>final</code>, 
-	 * and the stored <code>DAOManager</code>s will always be copied before use, 
+	 * As this {@code List} is unmodifiable and declared {@code final}, 
+	 * and the stored {@code DAOManager}s will always be copied before use, 
 	 * this attribute can safely be accessed in a multi-threading context. 
 	 */
 	private static final List<DAOManager> serviceProviders = 
 			DAOManager.getServiceProviders();
 	/**
-	 * Get all available providers of the <code>DAOManager</code> service 
-	 * from the <code>ServiceLoader</code>, as an unmodifiable <code>List</code>. 
-	 * Empty <code>List</code> if no service providers could be found. 
+	 * Get all available providers of the {@code DAOManager} service 
+	 * from the {@code ServiceLoader}, as an unmodifiable {@code List}. 
+	 * Empty {@code List} if no service providers could be found. 
 	 * 
-	 * @return 	An unmodifiable <code>List</code> of <code>DAOManager</code>s, 
-	 * 			in the same order they were obtained from the <code>ServiceLoader</code>. 
-	 * 			Empty <code>List</code> if no service providers could be found.
+	 * @return 	An unmodifiable {@code List} of {@code DAOManager}s, 
+	 * 			in the same order they were obtained from the {@code ServiceLoader}. 
+	 * 			Empty {@code List} if no service providers could be found.
 	 */
 	private final static List<DAOManager> getServiceProviders() {
 		log.entry();
@@ -150,63 +150,63 @@ public abstract class DAOManager implements AutoCloseable
 	}
 	
 	/**
-     * A volatile <code>boolean</code> to define if <code>DAOManager</code>s 
-     * can still be acquired (using the <code>getDAOManager</code> methods), 
+     * A volatile {@code boolean} to define if {@code DAOManager}s 
+     * can still be acquired (using the {@code getDAOManager} methods), 
      * or if it is not possible anymore (meaning that the method {@link #closeAll()} 
      * has been called).
      */
     private static volatile boolean allClosed = false;
 	
 	/**
-	 * Return a <code>DAOManager</code> instance with its parameters set using 
-	 * the provided <code>Map</code>. If it is the first call to one 
-	 * of the <code>getDAOManager</code> methods within a given thread, 
-	 * the <code>getDAOManager</code> methods return a newly instantiated 
-	 * <code>DAOManager</code>. Following calls from the same thread will always 
-	 * return the same instance ("per-thread singleton"), unless the <code>close</code> 
-	 * or <code>kill</code> method was called. Please note that it is extremely 
-	 * important to close or kill <code>DAOManager</code> when done using it. 
+	 * Return a {@code DAOManager} instance with its parameters set using 
+	 * the provided {@code Map}. If it is the first call to one 
+	 * of the {@code getDAOManager} methods within a given thread, 
+	 * the {@code getDAOManager} methods return a newly instantiated 
+	 * {@code DAOManager}. Following calls from the same thread will always 
+	 * return the same instance ("per-thread singleton"), unless the {@code close} 
+	 * or {@code kill} method was called. Please note that it is extremely 
+	 * important to close or kill {@code DAOManager} when done using it. 
 	 * <p>
-	 * If no <code>DAOManager</code> is available for this thread yet, this method 
-	 * will try to obtain from a <code>Service Provider</code> a concrete implementation 
-	 * that accepts its <code>parameters</code> to be set by calling 
-	 * {@link #setParameters(Map)} on it, or will return <code>null</code> 
+	 * If no {@code DAOManager} is available for this thread yet, this method 
+	 * will try to obtain from a {@code Service Provider} a concrete implementation 
+	 * that accepts its {@code parameters} to be set by calling 
+	 * {@link #setParameters(Map)} on it, or will return {@code null} 
 	 * if none could be found, or if no service providers were available at all. 
-	 * If <code>parameters</code> is <code>null</code>, 
-	 * then the first available <code>Service Provider</code> will be used, and 
+	 * If {@code parameters} is {@code null}, 
+	 * then the first available {@code Service Provider} will be used, and 
 	 * {@link #setParameters(Map)} will not be called. 
 	 * <p>
-	 * If a <code>DAOManager</code> is already available for this thread, 
+	 * If a {@code DAOManager} is already available for this thread, 
 	 * then this method will simply return it after having called {@link #setParameters(Map)} 
-	 * on it (unless <code>parameters</code> is <code>null</code>). This operation 
-	 * could throw an <code>IllegalArgumentException</code> if <code>parameters</code> 
-	 * are not supported by the current <code>DAOManager</code>. 
+	 * on it (unless {@code parameters} is {@code null}). This operation 
+	 * could throw an {@code IllegalArgumentException} if {@code parameters} 
+	 * are not supported by the current {@code DAOManager}. 
 	 * <p>
-	 * If caller wants to use a different <code>Service Provider</code>, accepting 
-	 * different parameters, then <code>close</code> or <code>kill</code> 
+	 * If caller wants to use a different {@code Service Provider}, accepting 
+	 * different parameters, then {@code close} or {@code kill} 
 	 * should first be called. 
 	 * <p>
-	 * This method will throw an <code>IllegalStateException</code> if {@link #closeAll()} 
-	 * was called prior to calling this method, and a <code>ServiceConfigurationError</code> 
+	 * This method will throw an {@code IllegalStateException} if {@link #closeAll()} 
+	 * was called prior to calling this method, and a {@code ServiceConfigurationError} 
 	 * if an error occurred while trying to find a service provider from the 
-	 * <code>ServiceLoader</code>. 
+	 * {@code ServiceLoader}. 
 	 * 
-	 * @param parameters 	A <code>Map</code> with keys that are <code>String</code>s 
+	 * @param parameters 	A {@code Map} with keys that are {@code String}s 
 	 * 						representing parameter names, and values that 
-	 * 						are <code>String</code>s representing parameters values, 
-	 * 						to be passed to the <code>DAOManager</code> instance. 
-	 * @return 				A <code>DAOManager</code> accepting <code>parameters</code>. 
-	 * 						<code>null</code> if none could be found, or 
+	 * 						are {@code String}s representing parameters values, 
+	 * 						to be passed to the {@code DAOManager} instance. 
+	 * @return 				A {@code DAOManager} accepting {@code parameters}. 
+	 * 						{@code null} if none could be found, or 
 	 * 						if no service providers were available at all.
-	 * @throws IllegalArgumentException	if a  <code>DAOManager</code> is already 
+	 * @throws IllegalArgumentException	if a  {@code DAOManager} is already 
 	 * 									available for this thread, but not accepting 
-	 * 									<code>parameters</code>. 
-	 * @throws IllegalStateException 	if <code>closeAll</code> was already called, 
-	 * 									so that no <code>DAOManager</code>s can be 
+	 * 									{@code parameters}. 
+	 * @throws IllegalStateException 	if {@code closeAll} was already called, 
+	 * 									so that no {@code DAOManager}s can be 
 	 * 									acquired anymore. 
 	 * @throws ServiceConfigurationError	If an error occurred while trying to find 
-	 * 										a <code>DAOManager</code> service provider 
-	 * 										from the <code>ServiceLoader</code>. 
+	 * 										a {@code DAOManager} service provider 
+	 * 										from the {@code ServiceLoader}. 
 	 */
 	public final static DAOManager getDAOManager(Map<String, String> parameters) 
 	    throws IllegalArgumentException, IllegalStateException
@@ -322,35 +322,35 @@ public abstract class DAOManager implements AutoCloseable
 	}
 	
 	/**
-	 * Return a <code>DAOManager</code> instance. If it is the first call to one 
-	 * of the <code>getDAOManager</code> methods within a given thread, 
-	 * the <code>getDAOManager</code> methods return a newly instantiated 
-	 * <code>DAOManager</code>. Following calls from the same thread will always 
-	 * return the same instance ("per-thread singleton"), unless the <code>close</code> 
-	 * or <code>kill</code> method was called. 
+	 * Return a {@code DAOManager} instance. If it is the first call to one 
+	 * of the {@code getDAOManager} methods within a given thread, 
+	 * the {@code getDAOManager} methods return a newly instantiated 
+	 * {@code DAOManager}. Following calls from the same thread will always 
+	 * return the same instance ("per-thread singleton"), unless the {@code close} 
+	 * or {@code kill} method was called. 
 	 * <p>
-	 * If no <code>DAOManager</code> is available for this thread yet, this method 
-	 * will try to obtain a <code>DAOManager</code> from the first Service provider 
-	 * available, or will return <code>null</code> if no appropriate Service provider 
+	 * If no {@code DAOManager} is available for this thread yet, this method 
+	 * will try to obtain a {@code DAOManager} from the first Service provider 
+	 * available, or will return {@code null} if no appropriate Service provider 
 	 * could be found. If the caller needs more control on the Service provider used, 
 	 * {@link #getDAOManager(Map)} could be used. 
 	 * <p>
-	 * If a <code>DAOManager</code> is already available for this thread, 
+	 * If a {@code DAOManager} is already available for this thread, 
 	 * then this method will simply return it. 
 	 * <p>
-	 * This method will throw a <code>IllegalStateException</code> if {@link #closeAll()} 
-	 * was called prior to calling this method, and a <code>ServiceConfigurationError</code> 
+	 * This method will throw a {@code IllegalStateException} if {@link #closeAll()} 
+	 * was called prior to calling this method, and a {@code ServiceConfigurationError} 
 	 * if an error occurred while trying to find a service provider from the 
-	 * <code>ServiceLoader</code>. 
+	 * {@code ServiceLoader}. 
 	 * 
-	 * @return 				The first <code>DAOManager</code> available,  
-	 * 						<code>null</code> if no service providers were available at all.
-	 * @throws IllegalStateException 	if <code>closeAll</code> was already called, 
-	 * 									so that no <code>DAOManager</code>s can be 
+	 * @return 				The first {@code DAOManager} available,  
+	 * 						{@code null} if no service providers were available at all.
+	 * @throws IllegalStateException 	if {@code closeAll} was already called, 
+	 * 									so that no {@code DAOManager}s can be 
 	 * 									acquired anymore. 
 	 * @throws ServiceConfigurationError	If an error occurred while trying to find 
-	 * 										a <code>DAOManager</code> service provider 
-	 * 										from the <code>ServiceLoader</code>. 
+	 * 										a {@code DAOManager} service provider 
+	 * 										from the {@code ServiceLoader}. 
 	 */
 	public final static DAOManager getDAOManager() throws IllegalStateException {
 		log.entry();
@@ -358,22 +358,22 @@ public abstract class DAOManager implements AutoCloseable
 	}
 	
 	/**
-	 * Determine whether the <code>Thread</code> calling this method already 
-	 * holds a <code>DAOManager</code>. It is useful for instance when willing 
+	 * Determine whether the {@code Thread} calling this method already 
+	 * holds a {@code DAOManager}. It is useful for instance when willing 
 	 * to close all resources at the end of an applicative code. For instance, 
-	 * if the thread was not holding a <code>DAOManager</code>, calling 
-	 * <code>DAOManager.getDAOManager().close()</code> would instantiate 
-	 * a <code>DAOManager</code> just for closing it... Applicative code should rather do: 
+	 * if the thread was not holding a {@code DAOManager}, calling 
+	 * {@code DAOManager.getDAOManager().close()} would instantiate 
+	 * a {@code DAOManager} just for closing it... Applicative code should rather do: 
 	 * <pre>if (DAOManager.hasDAOManager()) {
 	 *     DAOManager.getDAOManager().close();
 	 * }</pre>
 	 * There is a risk that another thread could interleave to close 
-	 * the <code>DAOManager</code> between the test and the call to <code>close</code>, 
+	 * the {@code DAOManager} between the test and the call to {@code close}, 
 	 * but it would not have any harmful effect. 
 	 * 
-	 * @return	A <code>boolean</code> <code>true</code> if the <code>Thread</code> 
-	 * 			calling this method currently holds a <code>DAOManager</code>, 
-	 * 			<code>false</code> otherwise. 
+	 * @return	A {@code boolean} {@code true} if the {@code Thread} 
+	 * 			calling this method currently holds a {@code DAOManager}, 
+	 * 			{@code false} otherwise. 
 	 */
 	public final static boolean hasDAOManager() {
 		log.entry();
@@ -381,17 +381,17 @@ public abstract class DAOManager implements AutoCloseable
 	}
 	
 	/**
-     * Call {@link #close()} on all <code>DAOManager</code> instances currently registered,
-     * and prevent any new <code>DAOManager</code> instance to be obtained again 
-     * (calling a <code>getDAOManager</code> method from any thread 
-     * after having called this method will throw an <code>IllegalStateException</code>). 
+     * Call {@link #close()} on all {@code DAOManager} instances currently registered,
+     * and prevent any new {@code DAOManager} instance to be obtained again 
+     * (calling a {@code getDAOManager} method from any thread 
+     * after having called this method will throw an {@code IllegalStateException}). 
      * <p>
-     * This method returns the number of <code>DAOManager</code>s that were closed. 
+     * This method returns the number of {@code DAOManager}s that were closed. 
      * <p>
-     * This method is called for instance when a <code>ShutdownListener</code> 
+     * This method is called for instance when a {@code ShutdownListener} 
      * want to release all resources using a data source.
      * 
-     * @return 	An <code>int</code> that is the number of <code>DAOManager</code> instances  
+     * @return 	An {@code int} that is the number of {@code DAOManager} instances  
      * 			that were closed.
      */
     public final static int closeAll()
@@ -414,11 +414,11 @@ public abstract class DAOManager implements AutoCloseable
     }
     
     /**
-     * Call {@link #kill()} on the <code>DAOManager</code> currently registered 
-     * with an ID (returned by {@link #getId()}) equals to <code>managerId</code>.
+     * Call {@link #kill()} on the {@code DAOManager} currently registered 
+     * with an ID (returned by {@link #getId()}) equals to {@code managerId}.
      * 
-     * @param managerId 	A <code>long</code> corresponding to the ID of 
-     * 						the <code>DAOManager</code> to kill. 
+     * @param managerId 	A {@code long} corresponding to the ID of 
+     * 						the {@code DAOManager} to kill. 
      * @see #kill()
      */
     public final static void kill(long managerId) {
@@ -430,10 +430,10 @@ public abstract class DAOManager implements AutoCloseable
         log.exit();
     }
     /**
-     * Call {@link #kill()} on the <code>DAOManager</code> currently associated 
-     * with <code>thread</code>.
+     * Call {@link #kill()} on the {@code DAOManager} currently associated 
+     * with {@code thread}.
      * 
-     * @param thread 	A <code>Thread</code> associated with a <code>DAOManager</code>. 
+     * @param thread 	A {@code Thread} associated with a {@code DAOManager}. 
      * @see #kill()
      */
     /*
@@ -450,32 +450,32 @@ public abstract class DAOManager implements AutoCloseable
     //  INSTANCE ATTRIBUTES AND METHODS
     //*****************************************	
     /**
-     * An <code>AtomicBoolean</code> to indicate whether 
-     * this <code>DAOManager</code> was closed (following a call to {@link #close()}, 
+     * An {@code AtomicBoolean} to indicate whether 
+     * this {@code DAOManager} was closed (following a call to {@link #close()}, 
      * {@link #closeAll()}, {@link #kill()}, or {@link #kill(long)}).
      * <p>
-     * This attribute is <code>final</code> because it is used as a lock to perform 
-     * some atomic operations. It is an <code>AtomicBoolean</code> as it can be read 
+     * This attribute is {@code final} because it is used as a lock to perform 
+     * some atomic operations. It is an {@code AtomicBoolean} as it can be read 
      * by method not acquiring a lock on it.
      */
     private final AtomicBoolean closed;
     /**
-     * A <code>volatile</code> <code>boolean</code> to indicate whether 
-     * this <code>DAOManager</code> was requested to be killed ({@link #kill()} 
+     * A {@code volatile} {@code boolean} to indicate whether 
+     * this {@code DAOManager} was requested to be killed ({@link #kill()} 
      * or {@link #kill(long)}). This does not necessarily mean that a query 
-     * was interrupted, only that the <code>DAOManager</code> received 
-     * a <code>kill</code> command (if no query was running when receiving the command, 
+     * was interrupted, only that the {@code DAOManager} received 
+     * a {@code kill} command (if no query was running when receiving the command, 
      * none were killed).
      * <p>
-     * This attribute is <code>volatile</code> as it can be read and written 
+     * This attribute is {@code volatile} as it can be read and written 
      * from different threads.
      * 
      */
     private volatile boolean killed;
     /**
-     * The ID of this <code>DAOManager</code>, corresponding to the Thread ID 
-     * who requested it. This is for the sake of avoiding using a <code>ThreadLocal</code> 
-     * to associate a <code>DAOManager</code> to a thread (generates issues 
+     * The ID of this {@code DAOManager}, corresponding to the Thread ID 
+     * who requested it. This is for the sake of avoiding using a {@code ThreadLocal} 
+     * to associate a {@code DAOManager} to a thread (generates issues 
      * in a thread pooling context). As Thread IDs can be reused, it is extremely important 
      * to call close() on a DAOManager after use.
      */
@@ -492,31 +492,31 @@ public abstract class DAOManager implements AutoCloseable
 	}
 	
 	/**
-	 * Return the ID associated to this <code>DAOManager</code>. 
+	 * Return the ID associated to this {@code DAOManager}. 
 	 * This ID can be used to call {@link #kill(long)}.
 	 * 
-	 * @return 	A <code>long</code> that is the ID of this <code>DAOManager</code>.
+	 * @return 	A {@code long} that is the ID of this {@code DAOManager}.
 	 */
 	public final long getId() {
 		log.entry();
 		return log.exit(this.id);
 	}
 	/**
-	 * Set the ID of this <code>DAOManager</code>. 
+	 * Set the ID of this {@code DAOManager}. 
 	 * 
-	 * @param id 	the ID of this <code>DAOManager</code>
+	 * @param id 	the ID of this {@code DAOManager}
 	 */
 	private final void setId(long id) {
 		this.id = id;
 	}
 	
 	/**
-     * Close all resources managed by this <code>DAOManager</code> instance, 
-     * and release it (a call to a <code>getDAOManager</code> method from the thread 
-     * that was holding it will return a new <code>DAOManager</code> instance).
+     * Close all resources managed by this {@code DAOManager} instance, 
+     * and release it (a call to a {@code getDAOManager} method from the thread 
+     * that was holding it will return a new {@code DAOManager} instance).
      * <p>
      * Following a call to this method, it is not possible to acquire DAOs 
-     * from this <code>DAOManager</code> instance anymore.
+     * from this {@code DAOManager} instance anymore.
      * <p>
      * Specified by {@link java.lang.AutoCloseable#close()}.
      * 
@@ -536,12 +536,12 @@ public abstract class DAOManager implements AutoCloseable
         log.exit();
     }
 	/**
-     * Determine whether this <code>DAOManager</code> was closed 
+     * Determine whether this {@code DAOManager} was closed 
      * (following a call to {@link #close()}, {@link #closeAll()}, 
      * {@link #kill()}, or {@link #kill(long)}).
      * 
-     * @return	<code>true</code> if this <code>DAOManager</code> was closed, 
-     * 			<code>false</code> otherwise.
+     * @return	{@code true} if this {@code DAOManager} was closed, 
+     * 			{@code false} otherwise.
      */
     public final boolean isClosed()
     {
@@ -552,7 +552,7 @@ public abstract class DAOManager implements AutoCloseable
      * Set {@link #closed}. The only method that should call this one besides constructors 
      * is {@link #atomicCloseAndRemoveFromPool(boolean)}. 
      * 
-     * @param closed 	a <code>boolean</code> to set {@link #closed}
+     * @param closed 	a {@code boolean} to set {@link #closed}
      */
     private final void setClosed(boolean closed) {
     	this.closed.set(closed);
@@ -560,10 +560,10 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Try to kill immediately all ongoing processes performed by DAOs of this 
-     * <code>DAOManager</code>, and close and release all its resources. 
+     * {@code DAOManager}, and close and release all its resources. 
      * Closing the resources will have the same effects then calling {@link #close()}.
      * If a query was interrupted following a call to this method, the service provider 
-     * should throw a <code>QueryInterruptedException</code> from the thread 
+     * should throw a {@code QueryInterruptedException} from the thread 
      * that was interrupted. 
      * 
      * @see #kill(long)
@@ -579,21 +579,21 @@ public abstract class DAOManager implements AutoCloseable
     }
     
     /**
-     * Determine whether this <code>DAOManager</code> was killed 
+     * Determine whether this {@code DAOManager} was killed 
      * (following a call to {@link #kill()} or {@link #kill(long)}).
      * This does not necessarily mean that a query was interrupted, only that 
-     * the <code>DAOManager</code> received a <code>kill</code> command 
+     * the {@code DAOManager} received a {@code kill} command 
      * (if no query was running when receiving the command, none were killed).
      * <p>
      * If a query was actually interrupted, then the service provider 
-     * should have thrown a <code>QueryInterruptedException</code> from the thread 
+     * should have thrown a {@code QueryInterruptedException} from the thread 
      * that was interrupted. 
      * <p>
-     * If this method returns <code>true</code>, then a call to {@link #isClosed()} 
-     * will also return <code>true</code>.
+     * If this method returns {@code true}, then a call to {@link #isClosed()} 
+     * will also return {@code true}.
      * 
-     * @return	<code>true</code> if this <code>DAOManager</code> was killed, 
-     * 			<code>false</code> otherwise.
+     * @return	{@code true} if this {@code DAOManager} was killed, 
+     * 			{@code false} otherwise.
      * @see #kill()
      * @see #kill(long)
      */
@@ -605,25 +605,25 @@ public abstract class DAOManager implements AutoCloseable
      * Set {@link #killed}. The only method that should call this one besides constructors 
      * is {@link #atomicCloseAndRemoveFromPool(boolean)}. 
      * 
-     * @param killed 	a <code>boolean</code> to set {@link #killed}
+     * @param killed 	a {@code boolean} to set {@link #killed}
      */
     private final void setKilled(boolean killed) {
     	this.killed = killed;
     }
     
     /**
-     * Atomic operation to set {@link #closed} to <code>true</code>, 
-     * {@link #killed} to <code>true</code> if the parameter is <code>true</code>,
+     * Atomic operation to set {@link #closed} to {@code true}, 
+     * {@link #killed} to {@code true} if the parameter is {@code true},
      * and to call {@link #removePromPool()}. 
-     * This method returns <code>true</code> if the operations were actually performed, 
-     * and <code>false</code> if this <code>DAOManager</code> was actually 
+     * This method returns {@code true} if the operations were actually performed, 
+     * and {@code false} if this {@code DAOManager} was actually 
      * already closed. 
      * 
-     * @param killed 	To indicate whether this <code>DAOManager</code> 
+     * @param killed 	To indicate whether this {@code DAOManager} 
      * 					is being closed following a {@link #kill()} command.
-     * @return 			A <code>boolean</code> <code>true</code> if the operations 
-     * 					were actually performed, <code>false</code> if this 
-     * 					<code>DAOManager</code> was already closed. 
+     * @return 			A {@code boolean} {@code true} if the operations 
+     * 					were actually performed, {@code false} if this 
+     * 					{@code DAOManager} was already closed. 
      */
     private final boolean atomicCloseAndRemoveFromPool(boolean killed) {
     	log.entry(killed);
@@ -644,11 +644,11 @@ public abstract class DAOManager implements AutoCloseable
     //  PUBLIC GET DAO METHODS
     //*****************************************
     /**
-     * Method used before acquiring a DAO to check if this <code>DAOManager</code> 
-     * is closed. It throws an <code>IllegalStateException</code> with proper message 
+     * Method used before acquiring a DAO to check if this {@code DAOManager} 
+     * is closed. It throws an {@code IllegalStateException} with proper message 
      * if it is closed. 
      * 
-     * @throws IllegalStateException 	If this <code>DAOManager</code> is closed. 
+     * @throws IllegalStateException 	If this {@code DAOManager} is closed. 
      */
     private void checkClosed() {
     	if (this.isClosed()) {
@@ -658,10 +658,10 @@ public abstract class DAOManager implements AutoCloseable
     }
     /**
      * Get a new {@link org.bgee.model.dao.api.source.SourceDAO SourceDAO}, 
-     * unless this <code>DAOManager</code> is already closed. 
+     * unless this {@code DAOManager} is already closed. 
      * 
-     * @return 	a new <code>SourceDAO</code>.
-     * @throws IllegalStateException 	If this <code>DAOManager</code> is already closed.
+     * @return 	a new {@code SourceDAO}.
+     * @throws IllegalStateException 	If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.source.SourceDAO SourceDAO
      */
     public SourceDAO getSourceDAO() {
@@ -677,64 +677,64 @@ public abstract class DAOManager implements AutoCloseable
     
     /**
      * Service providers must implement in this method the operations necessary 
-     * to release all resources managed by this <code>DAOManager</code> instance.
+     * to release all resources managed by this {@code DAOManager} instance.
      * For instance, if a service provider uses the JDBC API to use a SQL database, 
-     * the manager should close all <code>Connection</code>s to the database 
+     * the manager should close all {@code Connection}s to the database 
      * hold by its DAOs. Calling this method should not affect other 
-     * <code>DAOManager</code> instances (so in our previous example, 
-     * <code>Connection</code>s hold by other managers should not be closed).
+     * {@code DAOManager} instances (so in our previous example, 
+     * {@code Connection}s hold by other managers should not be closed).
      * <p>
      * This method is called by {@link #close()} after having remove this 
-     * <code>DAOManager</code> from the pool. 
+     * {@code DAOManager} from the pool. 
      */
     protected abstract void closeDAOManager();
     
     /**
      * Service providers must implement in this method the operations necessary 
-     * to immediately kill all ongoing processes handled by this <code>DAOManager</code>, 
+     * to immediately kill all ongoing processes handled by this {@code DAOManager}, 
      * and release and close all resources it hold. 
-     * It should not affect other <code>DAOManager</code>s.
+     * It should not affect other {@code DAOManager}s.
      * <p>
      * If a query was interrupted following a call to this method, the service provider 
-     * should make sure that a <code>QueryInterruptedException</code> will be thrown 
+     * should make sure that a {@code QueryInterruptedException} will be thrown 
      * from the thread that was interrupted. To help determining 
-     * if the method <code>kill</code> was called, service provider can use 
+     * if the method {@code kill} was called, service provider can use 
      * {@link #isKilled()}. If no query was running, then nothing should happen.
      * <p>
      * For instance, if a service provider uses the JDBC API to use a SQL database,
-     * the <code>DAOManager</code> should keep track of which <code>Statement</code> 
-     * is currently running, in order to be able to call <code>cancel</code> on it.
-     * The thread using the <code>Statement</code> should have checked <code>isKilled</code> 
-     * before calling <code>execute</cod>, and after returning from <code>execute</code>, 
+     * the {@code DAOManager} should keep track of which {@code Statement} 
+     * is currently running, in order to be able to call {@code cancel} on it.
+     * The thread using the {@code Statement} should have checked {@code isKilled} 
+     * before calling {@code execute</cod>, and after returning from <code>execute}, 
      * should immediately check {@link #isKilled()} to determine if it was interrupted, 
-     * and throw a <code>QueryInterruptedException</code> if it was the case. 
+     * and throw a {@code QueryInterruptedException} if it was the case. 
      * <p>
      * This method is called by {@link #kill()} after having remove this 
-     * <code>DAOManager</code> from the pool. Note that {@link #closeDAOManager()} 
+     * {@code DAOManager} from the pool. Note that {@link #closeDAOManager()} 
      * is not called, it is up to the implementation to do it when needed, 
-     * because it might require some atomic operations, but this <code>DAOManager</code> 
+     * because it might require some atomic operations, but this {@code DAOManager} 
      * <strong>must</strong> be closed following a call to this method, 
      * as if {@link #closeDAOManager()} had been called. 
      */
     protected abstract void killDAOManager();
     
     /**
-     * Set the parameters of this <code>DAOManager</code>. For instance, 
-     * if this <code>DAOManager</code> was obtained from a Service provider using 
+     * Set the parameters of this {@code DAOManager}. For instance, 
+     * if this {@code DAOManager} was obtained from a Service provider using 
      * the JDBC API to use a SQL database, then the parameters might contain 
-     * the <code>URL</code> to connect to the database. It is up to each 
+     * the {@code URL} to connect to the database. It is up to each 
      * Service provider to specify what are the parameters needed. 
      * <p>
-     * This method throws an <code>IllegalArgumentException</code> if 
-     * the <code>DAOManager</code> does not accept these parameters. 
+     * This method throws an {@code IllegalArgumentException} if 
+     * the {@code DAOManager} does not accept these parameters. 
      * This is the method used to find an appropriate Service provider 
      * when calling {@link #getDAOManager(Map)}.
      * 
-     * @param parameters	A <code>Map</code> with keys that are <code>String</code>s 
+     * @param parameters	A {@code Map} with keys that are {@code String}s 
 	 * 						representing parameter names, and values that 
-	 * 						are <code>String</code>s representing parameters values. 
-     * @throws IllegalArgumentException 	If this <code>DAOManager</code> does not accept 
-     * 										<code>parameters</code>. 
+	 * 						are {@code String}s representing parameters values. 
+     * @throws IllegalArgumentException 	If this {@code DAOManager} does not accept 
+     * 										{@code parameters}. 
      */
     public abstract void setParameters(Map<String, String> parameters) 
     		throws IllegalArgumentException;
@@ -744,7 +744,7 @@ public abstract class DAOManager implements AutoCloseable
      * {@link org.bgee.model.dao.api.source.SourceDAO SourceDAO} instance 
      * when this method is called. 
      * 
-     * @return 	A new <code>SourceDAO</code>
+     * @return 	A new {@code SourceDAO}
      */
     protected abstract SourceDAO getNewSourceDAO();
 }

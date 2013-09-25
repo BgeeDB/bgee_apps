@@ -7,14 +7,14 @@ import java.util.Set;
 
 /**
  * An ontology holding {@link OntologyElement}s. It can for instance be used to hold 
- * the NCBI taxonomy (<code>Taxon</code> elements), the Uberon anatomical ontology 
- * (<code>AnatDevEntity</code> elements), etc.
+ * the NCBI taxonomy ({@code Taxon} elements), the Uberon anatomical ontology 
+ * ({@code AnatDevEntity} elements), etc.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
- * @param <T>	The specific type implementing <code>OntologyElement</code>, held 
- * 				by this <code>Ontology</code>. 
+ * @param <T>	The specific type implementing {@code OntologyElement}, held 
+ * 				by this {@code Ontology}. 
  */
 public abstract class Ontology<T extends OntologyElement> {
 	/**
@@ -22,9 +22,9 @@ public abstract class Ontology<T extends OntologyElement> {
 	 * Bgee makes no distinction between is_a and part_of relations, so they are merged 
 	 * into one single enum type. Enum types available: 
 	 * <ul>
-	 * <li><code>ISA_PARTOF</code>
-	 * <li><code>DEVELOPSFROM</code>
-	 * <li><code>TRANSFORMATIONOF</code>
+	 * <li>{@code ISA_PARTOF}
+	 * <li>{@code DEVELOPSFROM}
+	 * <li>{@code TRANSFORMATIONOF}
 	 * </ul>
 	 * 
 	 * @author Frederic Bastian
@@ -36,14 +36,14 @@ public abstract class Ontology<T extends OntologyElement> {
 	}
 	
 	/**
-	 * A <code>Map</code> associating <code>OntologyElement</code>s as values 
-	 * to the <code>id</code> of the <code>Entity</code> they wrap as keys 
-	 * (<code>id</code> returned by {@link org.bgee.model.Entity#getId()}).
+	 * A {@code Map} associating {@code OntologyElement}s as values 
+	 * to the {@code id} of the {@code Entity} they wrap as keys 
+	 * ({@code id} returned by {@link org.bgee.model.Entity#getId()}).
 	 */
     private final Map<String, T> allElements;
     /**
-     * A <code>Set</code> of <code>OntologyElement</code>s that are the roots 
-     * of this <code>Ontology</code> (they have no parents 
+     * A {@code Set} of {@code OntologyElement}s that are the roots 
+     * of this {@code Ontology} (they have no parents 
      * by {@link OntologyElement.RelationType ISA_PARTOF} relations)
      */
     private final Set<T> roots;
@@ -58,13 +58,13 @@ public abstract class Ontology<T extends OntologyElement> {
     
     /**
      * Return the element having its ID corresponding to the provided parameter, 
-     * or <code>null</code> if this <code>Ontology</code> contains no element 
+     * or {@code null} if this {@code Ontology} contains no element 
      * with such ID. 
      * 
-     * @param id	A <code>String</code> corresponding to the ID of an element
-     * 				present in this <code>Ontology</code>. 
-     * @return		The <T> corresponding to <code>id</code>, 
-     * 				present in this <code>Ontology</code>. <code>null</code> if none 
+     * @param id	A {@code String} corresponding to the ID of an element
+     * 				present in this {@code Ontology}. 
+     * @return		The <T> corresponding to {@code id}, 
+     * 				present in this {@code Ontology}. {@code null} if none 
      * 				could be found. 
      */
     public T getElement(String id) {

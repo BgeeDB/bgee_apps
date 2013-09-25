@@ -3,7 +3,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 import org.bgee.model.dao.api.exception.DataAccessException;
 
 /**
- * <code>DAO</code> related to RNA-Seq experiments, using {@link RNASeqExpTO}s 
+ * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqExpTO}s 
  * to communicate with the client.
  * 
  * @author Frederic Bastian
@@ -14,16 +14,16 @@ import org.bgee.model.dao.api.exception.DataAccessException;
 public interface RNASeqExpDAO 
 {
 	/**
-	 * Retrieve from the data source a <code>RNASeqExpTO</code>,  
-	 * corresponding to the RNA-Seq experiment with the ID <code>expId</code>, 
-	 * <code>null</code> if none could be found.  
+	 * Retrieve from the data source a {@code RNASeqExpTO},  
+	 * corresponding to the RNA-Seq experiment with the ID {@code expId}, 
+	 * {@code null} if none could be found.  
 	 * 
-	 * @param expId 		A <code>String</code> representing the ID 
+	 * @param expId 		A {@code String} representing the ID 
 	 * 						of the RNA-Seq experiment to retrieved 
 	 * 						from the data source. 
-	 * @return	A <code>RNASeqExpTO</code>, encapsulating all the data 
+	 * @return	A {@code RNASeqExpTO}, encapsulating all the data 
 	 * 			related to the RNA-Seq experiment retrieved from the data source, 
-	 * 			or <code>null</code> if none could be found. 
+	 * 			or {@code null} if none could be found. 
      * @throws DataAccessException 	If an error occurred when accessing the data source.
 	 */
 	public RNASeqExpTO getExperimentById(String expId) throws DataAccessException;

@@ -5,10 +5,10 @@ import java.io.Serializable;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 
 /**
- * <code>TransferObject</code> for the class 
+ * {@code TransferObject} for the class 
  * {@link org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixChip}.
  * <p>
- * For information on this <code>TransferObject</code> and its fields, 
+ * For information on this {@code TransferObject} and its fields, 
  * see the corresponding class.
  * 
  * @author Frederic Bastian

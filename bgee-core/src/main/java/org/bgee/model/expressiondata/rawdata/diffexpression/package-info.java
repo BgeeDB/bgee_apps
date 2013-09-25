@@ -6,13 +6,13 @@
  * by a group of several {@link org.bgee.model.expressiondata.rawdata.SampleAssay}s,  
  * studying this condition (see {@link SampleAssayGroup}). Equivalent 
  * {@link org.bgee.model.expressiondata.rawdata.CallSource}s in a same 
- * <code>SampleAssayGroup</code> are grouped as a {@link CallSourceGroup} 
+ * {@code SampleAssayGroup} are grouped as a {@link CallSourceGroup} 
  * (for instance, a same Affymetrix probeset on several chips of a same type, 
  * studying a given condition; or a RNA-Seq result of RPKM value for a same gene, 
  * in different libraries studying a given condition). 
  * <p>
- * A <code>DiffExpressionAnalysis</code> then consists in the comparison of equivalent 
- * <code>CallSourceGroup</code>s between its different <code>SampleAssayGroup</code>s, 
+ * A {@code DiffExpressionAnalysis} then consists in the comparison of equivalent 
+ * {@code CallSourceGroup}s between its different {@code SampleAssayGroup}s, 
  * in order to generate fold changes, and p-values of likeliness of differential expression 
  * of a gene. For instance, a multiple comparison to the mean of same probesets, 
  * on several chips of the same type, studying different conditions, with replicates 

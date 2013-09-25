@@ -15,10 +15,10 @@ import org.bgee.model.dao.mysql.MockDriverUtils;
 import com.sun.jndi.fscontext.RefFSContextFactory;
 
 /**
- * This class provides methods to run for test classes using a <code>BgeeDataSource</code>: 
+ * This class provides methods to run for test classes using a {@code BgeeDataSource}: 
  * methods to be called before and after running all tests, 
- * before and after each test. They allow to use a mocked <code>Driver</code>, 
- * to obtain mocked <code>Connection</code>.
+ * before and after each test. They allow to use a mocked {@code Driver}, 
+ * to obtain mocked {@code Connection}.
  * 
  * @author Frederic Bastian
  * @author Mathieu Seppey
@@ -28,14 +28,14 @@ import com.sun.jndi.fscontext.RefFSContextFactory;
 public class InitDataSourceTest 
 {
     /**
-     * The <code>MockDriverUtils</code> providing mocked <code>Driver</code> 
-     * and mocked <code>Connection</code>s.
+     * The {@code MockDriverUtils} providing mocked {@code Driver} 
+     * and mocked {@code Connection}s.
      */
     private static volatile MockDriverUtils mockDriverUtils;
 
     /**
      * Change the System properties 
-     * in order to automatically acquire mocked <code>Driver</code>.
+     * in order to automatically acquire mocked {@code Driver}.
      */
     public static void initClass()
     { 
@@ -74,7 +74,7 @@ public class InitDataSourceTest
     } 
     /**
      * Reset the System properties that were changed 
-     * in order to automatically acquire mocked <code>Driver</code>.
+     * in order to automatically acquire mocked {@code Driver}.
      */
     public static void unloadClass()
     {
@@ -85,9 +85,9 @@ public class InitDataSourceTest
     }
 
     /**
-     * Obtain a <code>MockDriverUtils</code>, loading a mocked <code>Driver</code> 
-     * that will registered itself to the <code>DriverManager</code>, allowing to provide 
-     * mocked <code>Connection</code>s. 
+     * Obtain a {@code MockDriverUtils}, loading a mocked {@code Driver} 
+     * that will registered itself to the {@code DriverManager}, allowing to provide 
+     * mocked {@code Connection}s. 
      * @see #unload()
      */
     public static void init()
@@ -95,7 +95,7 @@ public class InitDataSourceTest
         mockDriverUtils = new MockDriverUtils();
     }
     /**
-     * Deregister the mocked <code>Driver</code>.
+     * Deregister the mocked {@code Driver}.
      * @see #init()
      */
     public static void unload()

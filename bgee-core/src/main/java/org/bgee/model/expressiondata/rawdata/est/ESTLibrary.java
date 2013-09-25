@@ -5,9 +5,9 @@ import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
 
 /**
  * Class related to EST libraries. 
- * Is the container of <code>EST</code>s. 
+ * Is the container of {@code EST}s. 
  * Is mapped to anatomical and developmental ontologies 
- * (child class of <code>RawDataAnnotated</code>).
+ * (child class of {@code RawDataAnnotated}).
  * 
  * @author Frederic Bastian
  * @version Bgee 11

@@ -14,10 +14,10 @@ import org.junit.Test;
 
 /**
  * Test the loading of {@link org.bgee.mode.data.BgeeDataSource BgeeDataSource} 
- * when using a <code>DriverManager</code> to acquire a <code>Connection</code>. 
- * The loading when using a <code>DataSource</code> is tested in a separated class: 
- * <code>BgeeDataSource</code> parameters are set only once at class loading, 
- * so only once for a given <code>ClassLoader</code>, so it has to be done 
+ * when using a {@code DriverManager} to acquire a {@code Connection}. 
+ * The loading when using a {@code DataSource} is tested in a separated class: 
+ * {@code BgeeDataSource} parameters are set only once at class loading, 
+ * so only once for a given {@code ClassLoader}, so it has to be done 
  * in different classes. See {@link JNDIDataSourceIntegrationTest}.
  * 
  * @author Frederic Bastian
@@ -79,8 +79,8 @@ public class DataSourceDriverManagerTest extends TestAncestor
 	}
 	
 	/**
-	 * Test the acquisition of a <code>BgeeDataSource</code> and 
-	 * of a <code>BgeeConnection</code>.
+	 * Test the acquisition of a {@code BgeeDataSource} and 
+	 * of a {@code BgeeConnection}.
 	 * 
 	 * @throws SQLException
 	 */

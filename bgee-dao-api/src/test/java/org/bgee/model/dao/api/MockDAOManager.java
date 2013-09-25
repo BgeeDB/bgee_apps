@@ -8,8 +8,8 @@ import static org.mockito.Mockito.mock;
 
 /**
  * A class to simulate an implementation of {@link DAOManager}, that is discovered 
- * by the <code>Service Loader</code> thanks to the test file 
- * <code>META-INF/services/org.bgee.model.dao.api.DAOManager</code>. 
+ * by the {@code Service Loader} thanks to the test file 
+ * {@code META-INF/services/org.bgee.model.dao.api.DAOManager}. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -18,18 +18,18 @@ import static org.mockito.Mockito.mock;
 public class MockDAOManager extends DAOManager {
 	
 	/**
-	 * If <code>true</code>, an <code>Error</code> is thrown when the default constructor 
+	 * If {@code true}, an {@code Error} is thrown when the default constructor 
 	 * is called. 
 	 */
 	protected static boolean thrownInstantiationException = false;
 	/**
-	 * This static mocked <code>DAOManager</code> is needed because we sometimes 
+	 * This static mocked {@code DAOManager} is needed because we sometimes 
 	 * need to specify mocked behavior before acquiring a instance 
 	 * (notably to test {@link DAOManager#gtDAOManager()}).
 	 */
 	public static final DAOManager mockManager = mock(DAOManager.class);
 	/**
-	 * This mocked <code>DAOManager</code> is needed because we sometimes
+	 * This mocked {@code DAOManager} is needed because we sometimes
 	 * need to specify or verify different behavior from different instances. 
 	 */
 	public final DAOManager instanceMockManager = mock(DAOManager.class);

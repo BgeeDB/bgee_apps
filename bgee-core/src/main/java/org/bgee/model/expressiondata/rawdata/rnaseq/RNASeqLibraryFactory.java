@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * A <code>Factory</code> responsible for instantiating <code>RNASeqLibrary</code> objects.
+ * A {@code Factory} responsible for instantiating {@code RNASeqLibrary} objects.
  * 
  * @author Frederic Bastian
  * @version Bgee 12
@@ -15,14 +15,14 @@ import java.util.Iterator;
 public class RNASeqLibraryFactory extends Factory
 {
 	/**
-	 * A <code>RNASeqLibraryDAO</code> used to query a data source, 
-	 * to obtain <code>RNASeqLibraryTO</code> objects, 
-	 * used to instantiate and populate <code>RNASeqLibrary</code> objects 
-	 * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer). 
+	 * A {@code RNASeqLibraryDAO} used to query a data source, 
+	 * to obtain {@code RNASeqLibraryTO} objects, 
+	 * used to instantiate and populate {@code RNASeqLibrary} objects 
+	 * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer). 
 	 * <p>
-	 * This <code>RNASeqLibraryDAO</code> is obtained using a <code>DAOFactory</code> 
-	 * returned by the <code>#getDAOFactory()</code> method of the parent class. 
+	 * This {@code RNASeqLibraryDAO} is obtained using a {@code DAOFactory} 
+	 * returned by the {@code #getDAOFactory()} method of the parent class. 
 	 * 
 	 * @see Factory#getDAOFactory()
 	 */
@@ -38,12 +38,12 @@ public class RNASeqLibraryFactory extends Factory
     }
     
     /**
-	 * Get a <code>RNASeqLibrary</code> retrieved by its ID.
+	 * Get a {@code RNASeqLibrary} retrieved by its ID.
 	 * 
-	 * @param rnaSeqLibraryId 	A <code>String</code> representing the ID 
+	 * @param rnaSeqLibraryId 	A {@code String} representing the ID 
 	 * 							of the RNA-Seq library to retrieve.
-	 * @return 					A <code>RNASeqLibrary</code> object, 
-	 * 							corresponding to the <code>rnaSeqlibraryId</code>.
+	 * @return 					A {@code RNASeqLibrary} object, 
+	 * 							corresponding to the {@code rnaSeqlibraryId}.
 	 */
 	public RNASeqLibrary getRnaSeqLibraryById(String rnaSeqLibraryId) 
 	{
@@ -51,17 +51,17 @@ public class RNASeqLibraryFactory extends Factory
 	}
     
     /**
-	 * Create a <code>Collection</code> of <code>RNASeqLibrary</code> objects, 
-	 * using a <code>Collection</code> of <code>TransferObject</code> objects 
-	 * that must be castable to <code>RNASeqLibraryTO</code> objects. 
-	 * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer). 
+	 * Create a {@code Collection} of {@code RNASeqLibrary} objects, 
+	 * using a {@code Collection} of {@code TransferObject} objects 
+	 * that must be castable to {@code RNASeqLibraryTO} objects. 
+	 * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer). 
 	 * 
-	 * @param toCollection 	A <code>Collection</code> of <code>TransferObject</code> objects 
-	 * 						castable to <code>RNASeqLibraryTO</code> objects, 
+	 * @param toCollection 	A {@code Collection} of {@code TransferObject} objects 
+	 * 						castable to {@code RNASeqLibraryTO} objects, 
 	 * 						obtained from a data source.
-	 * @return 				A <code>Collection</code> of <code>RNASeqLibrary</code> objects 	
-	 * 						corresponding to the provided <code>TransferObject</code>s.
+	 * @return 				A {@code Collection} of {@code RNASeqLibrary} objects 	
+	 * 						corresponding to the provided {@code TransferObject}s.
 	 */
     private Collection<RNASeqLibrary> getRnaSeqLibraries(Collection<TransferObject> toCollection)
     {
@@ -75,15 +75,15 @@ public class RNASeqLibraryFactory extends Factory
     }
     
     /**
-     * Instantiate and populate the attributes of a <code>RNASeqLibrary</code> object, 
-     * using a <code>RNASeqLibraryTO</code> object, retrieved from a data source 
-     * (<code>TransferObject</code>s are used to communicate between the <code>model</code> layer 
-	 * and the <code>model.data</code> layer).
+     * Instantiate and populate the attributes of a {@code RNASeqLibrary} object, 
+     * using a {@code RNASeqLibraryTO} object, retrieved from a data source 
+     * ({@code TransferObject}s are used to communicate between the {@code model} layer 
+	 * and the {@code model.data} layer).
 	 * 
-     * @param libraryTO A <code>RNASeqLibraryTO</code> retrieved from a data source, 
-     * 					used to populate the attributes of a <code>RNASeqLibrary</code> object.
-     * @return			A <code>RNASeqLibrary</code> object newly instantiated, 
-     * 					with attributes set using the <code>RNASeqLibraryTO</code> object. 
+     * @param libraryTO A {@code RNASeqLibraryTO} retrieved from a data source, 
+     * 					used to populate the attributes of a {@code RNASeqLibrary} object.
+     * @return			A {@code RNASeqLibrary} object newly instantiated, 
+     * 					with attributes set using the {@code RNASeqLibraryTO} object. 
      */
     private RNASeqLibrary createRnaSeqLibrary(RNASeqLibraryTO libraryTO)
     {

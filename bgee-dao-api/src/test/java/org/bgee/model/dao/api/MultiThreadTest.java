@@ -11,7 +11,7 @@ import org.testng.annotations.*;
 
 public class MultiThreadTest extends TestAncestor {
 	/**
-     * <code>Logger</code> of the class. 
+     * {@code Logger} of the class. 
      */
     private final static Logger log = 
     		LogManager.getLogger(MultiThreadTest.class.getName());
@@ -37,8 +37,8 @@ public class MultiThreadTest extends TestAncestor {
 	}
 	
 	/**
-	 * Check that there is no <code>DAOManager</code> left in the pool 
-	 * after all tests. A <code>AfterClass</code> is not supposed to be used 
+	 * Check that there is no {@code DAOManager} left in the pool 
+	 * after all tests. A {@code AfterClass} is not supposed to be used 
 	 * for that purpose, but that will be good enough. 
 	 */
 	@SuppressWarnings("unchecked")

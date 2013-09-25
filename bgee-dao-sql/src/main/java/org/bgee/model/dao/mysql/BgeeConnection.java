@@ -11,13 +11,13 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 
 /**
- * Abstraction layer to use a <code>java.sql.Connection</code>. 
+ * Abstraction layer to use a {@code java.sql.Connection}. 
  * This class is used to connect to the Bgee database. 
- * It provides only the functionalities of the <code>java.sql.Connection</code> interface 
+ * It provides only the functionalities of the {@code java.sql.Connection} interface 
  * that are used in the Bgee project. So it does not implement the actual interface.
  * <p>
- * It implements the <code>AutoCloseable</code> interface so that it can be used in a 
- * <code>try-with-resources</code> statement.
+ * It implements the {@code AutoCloseable} interface so that it can be used in a 
+ * {@code try-with-resources} statement.
  * 
  * @author Frederic Bastian
  * @author Mathieu Seppey
@@ -27,32 +27,32 @@ import org.bgee.model.BgeeProperties;
 public class BgeeConnection implements AutoCloseable
 {
     /**
-     * <code>Logger</code> of the class. 
+     * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(BgeeConnection.class.getName());
     /**
-     * The <code>BgeeDataSource</code> used to obtain this <code>BgeeConnection</code>. 
+     * The {@code BgeeDataSource} used to obtain this {@code BgeeConnection}. 
      * Used for notifications purpose. 
      */
     private final BgeeDataSource bgeeDataSource;
     /**
-     * The real <code>java.sql.Connection</code> that this class wraps.
+     * The real {@code java.sql.Connection} that this class wraps.
      */
     private final Connection realConnection;
     /**
-     * A <code>String</code> representing an identifier 
-     * for this <code>BgeeConnection</code> object. It is used for the connection 
-     * to be tracked by the container <code>BgeeDataSource</code> object 
-     * (the <code>BgeeDataSource</code> that instantiated this <code>BgeeConnection</code>).
+     * A {@code String} representing an identifier 
+     * for this {@code BgeeConnection} object. It is used for the connection 
+     * to be tracked by the container {@code BgeeDataSource} object 
+     * (the {@code BgeeDataSource} that instantiated this {@code BgeeConnection}).
      */
     private final String id;
     /**
-     * A <code>Map</code> which contains every already existing and available
-     * <code>BgeePreparedStatement</code>
-     * related to this <code>BgeeConnection</code>.
+     * A {@code Map} which contains every already existing and available
+     * {@code BgeePreparedStatement}
+     * related to this {@code BgeeConnection}.
      * Its size is maintained to a maximum defined in the properties
-     * <code>preparedStatmentPoolSize</code> in 
-     * <code>BgeeProperties</code>, using
+     * {@code preparedStatmentPoolSize} in 
+     * {@code BgeeProperties}, using
      * a LRU exclusion algorithm.
      * @see BgeeProperties
      */
@@ -63,9 +63,9 @@ public class BgeeConnection implements AutoCloseable
         private static final long serialVersionUID = 6122694567906790867L;
 
         /**
-         * Return <code>true</code> if the maximum capacity of the <code>LinkedHashMap</code>
+         * Return {@code true} if the maximum capacity of the {@code LinkedHashMap}
          * is reached. It is meant to be only automatically called by the
-         * <code>PreparedStatementPool put()</code> method to define if an item has 
+         * {@code PreparedStatementPool put()} method to define if an item has 
          * to be dropped to keep the list at the limit size.
          */
         @Override
@@ -89,26 +89,26 @@ public class BgeeConnection implements AutoCloseable
     /**
      * Default constructor, should not be used. 
      * Constructor protected, so that only a {@link BgeeDataSource} can provide 
-     * a <code>BgeeConnection</code>.
+     * a {@code BgeeConnection}.
      */
     protected BgeeConnection()
     {
         this(null, null, null);
     }
     /**
-     * Constructor providing the <code>BgeeDataSource</code> object used to instantiate 
-     * this connection (for notifications purpose), the real <code>java.sql.Connection</code> 
-     * that this class wraps, and the <code>id</code> to use to identify and track this connection.
+     * Constructor providing the {@code BgeeDataSource} object used to instantiate 
+     * this connection (for notifications purpose), the real {@code java.sql.Connection} 
+     * that this class wraps, and the {@code id} to use to identify and track this connection.
      * 
      * Constructor protected, so that only a {@link BgeeDataSource} can instantiate 
-     * a <code>BgeeConnection</code>.
-     * @param dataSource 		The <code>BgeeDataSource</code> used to obtain 
+     * a {@code BgeeConnection}.
+     * @param dataSource 		The {@code BgeeDataSource} used to obtain 
      * 							this connection. Is used for notifications purpose 
-     * 							(notably when <code>close()</code> is called 
-     * 							on this <code>BgeeConnection</code>).
-     * @param realConnection 	The <code>java.sql.Connection</code> that this class wraps
-     * @param id 				A <code>String</code> representing the ID of this 
-     * 							<code>BgeeConnection</code>, used by <code>dataSource</code> 
+     * 							(notably when {@code close()} is called 
+     * 							on this {@code BgeeConnection}).
+     * @param realConnection 	The {@code java.sql.Connection} that this class wraps
+     * @param id 				A {@code String} representing the ID of this 
+     * 							{@code BgeeConnection}, used by {@code dataSource} 
      * 							to track the connection.
      */
     protected BgeeConnection(BgeeDataSource dataSource, Connection realConnection, 
@@ -126,18 +126,18 @@ public class BgeeConnection implements AutoCloseable
     }
 
     /**
-     * Provide a <code>BgeePreparedStatement</code> for the requested sql.
+     * Provide a {@code BgeePreparedStatement} for the requested sql.
      * <p>
-     * It is fetched in the <code>BgeePreparedStatement</code> pool if 
+     * It is fetched in the {@code BgeePreparedStatement} pool if 
      * any is available for the requested sql. Else create and return a new one.
      * <p>
-     * When an existing <code>BgeePreparedStatement</code> is returned, it is
+     * When an existing {@code BgeePreparedStatement} is returned, it is
      * removed from the pool making it unavailable.
      * <p>
-     * It hashes the sql <code>String</code> to use it as pool key
+     * It hashes the sql {@code String} to use it as pool key
      * 
-     * @param   sql a <code>String</code> with contains the PreparedStatement sql
-     * @return  a <code>BgeePreparedStatement</code> which already existed or newly created
+     * @param   sql a {@code String} with contains the PreparedStatement sql
+     * @return  a {@code BgeePreparedStatement} which already existed or newly created
      *  
      * @throws SQLException if a database error occurred or if the method is called on
      * a closed connection
@@ -191,11 +191,11 @@ public class BgeeConnection implements AutoCloseable
     }
 
     /**
-     * Add a <code>BgeePreparedStatement</code> to the <code>preparedStatementPool</code>
+     * Add a {@code BgeePreparedStatement} to the {@code preparedStatementPool}
      * 
      * @param ps   a BgeePreparedStatement to be added to the pool
      * @throws SQLException     If an error occurred while trying to obtain the connection, 
-     *                          of if this <code>BgeeDataSource</code> was closed.
+     *                          of if this {@code BgeeDataSource} was closed.
      * 
      */
     protected void addToPrepStatPool(BgeePreparedStatement ps) throws SQLException{
@@ -212,12 +212,12 @@ public class BgeeConnection implements AutoCloseable
         log.exit();
     }
     /**
-     * Close the real <code>Connection</code> that this class wraps, 
-     * and notify of the closing the <code>BgeeDataSource</code> used to obtain 
-     * this <code>BgeeConnection</code>.
+     * Close the real {@code Connection} that this class wraps, 
+     * and notify of the closing the {@code BgeeDataSource} used to obtain 
+     * this {@code BgeeConnection}.
      * 
-     * @throws SQLException 	If the real <code>Connection</code> that this class wraps
-     * 							throws a <code>SQLException</code> when closing.  
+     * @throws SQLException 	If the real {@code Connection} that this class wraps
+     * 							throws a {@code SQLException} when closing.  
      */
     @Override
     public void close() throws SQLException {
@@ -230,7 +230,7 @@ public class BgeeConnection implements AutoCloseable
         }
     }
     /**
-     * Remove the last recent used item in the <code>PreparedStatementPool</code>
+     * Remove the last recent used item in the {@code PreparedStatementPool}
      */
     protected void cleanPrepStatPools(){
 
@@ -250,12 +250,12 @@ public class BgeeConnection implements AutoCloseable
 
     }     
     /**
-     * Retrieves whether this <code>BgeeConnection</code> object has been closed. 
-     * A <code>BgeeConnection</code> is closed if the method {@link #close()} 
-     * has been called on it, or on its container <code>BgeeDataSource</code>.
+     * Retrieves whether this {@code BgeeConnection} object has been closed. 
+     * A {@code BgeeConnection} is closed if the method {@link #close()} 
+     * has been called on it, or on its container {@code BgeeDataSource}.
      *  
-     * @return 	<code>true</code> if this <code>BgeeConnection</code> object is closed; 
-     * 			<code>false</code> if it is still open.
+     * @return 	{@code true} if this {@code BgeeConnection} object is closed; 
+     * 			{@code false} if it is still open.
      * @throws SQLException		if a database access error occurs
      */
     public boolean isClosed() throws SQLException
@@ -263,11 +263,11 @@ public class BgeeConnection implements AutoCloseable
         return this.getRealConnection().isClosed();
     }
     /**
-     * Reports the updated number of pooled <code>BgeePreparedStatement</code>
-     * to the related <code>BgeeDataSource</code>
+     * Reports the updated number of pooled {@code BgeePreparedStatement}
+     * to the related {@code BgeeDataSource}
      * 
-     * @param deltaPrepStatNumber  An <code>int</code> which represents the change
-     *                             in the <code>BgeePreparedStatement</code> number
+     * @param deltaPrepStatNumber  An {@code int} which represents the change
+     *                             in the {@code BgeePreparedStatement} number
      *                                           
      */    
     private void reportPoolState(int deltaPrepStatNumber) {

@@ -60,7 +60,7 @@ public class ParseOrthoXML {
 	 * This method reads the Hierarchical Groups OrthoXML file, and adds all the
 	 * data required to the database. It first iterates through all the
 	 * orthologus groups present in the file and builds a tree like model with
-	 * <code>Node</code>s. It then iterates through this tree to build a nested
+	 * {@code Node}s. It then iterates through this tree to build a nested
 	 * set model.
 	 * <p>
 	 * After the data required to store the groups as a nested set model is
@@ -138,19 +138,19 @@ public class ParseOrthoXML {
 	}
 
 	/**
-	 * Builds a <code>Tree</code> of the <code>Group</code> passed as a
+	 * Builds a {@code Tree} of the {@code Group} passed as a
 	 * parameter.
 	 * <p>
-	 * This method builds a tree of the current <code>Group</code> with the root
-	 * <code>Node</code> which is passed at a parameter. It recursively iterates
+	 * This method builds a tree of the current {@code Group} with the root
+	 * {@code Node} which is passed at a parameter. It recursively iterates
 	 * through all the sub-groups at all the taxonomic levels of the group and
 	 * builds a
 	 * 
 	 * @param group
-	 *            the <code>Group</code> object of the current orthologus group
+	 *            the {@code Group} object of the current orthologus group
 	 *            whose tree is to be built
 	 * @param node
-	 *            the root <code>Node</code> of the <code>Tree</code> whose tree
+	 *            the root {@code Node} of the {@code Tree} whose tree
 	 *            is to be built
 	 * 
 	 */
@@ -162,7 +162,7 @@ public class ParseOrthoXML {
 		node.setNcbiTaxonomyId(group.getProperty("TaxRange"));
 
 		// For all the leaves, i.e, the genes, create a node for each of
-		// them add data about their GeneIDs to the <code>Node</code>
+		// them add data about their GeneIDs to the {@code Node}
 		// object.
 		for (Gene gene : group.getGenes()) {
 			Node leaf = new Node();
@@ -189,19 +189,19 @@ public class ParseOrthoXML {
 	}
 
 	/**
-	 * Build the nested set model for the current <code>Group</code> whose root
-	 * <code>Node</code> is passed as a parameter.
+	 * Build the nested set model for the current {@code Group} whose root
+	 * {@code Node} is passed as a parameter.
 	 * <p>
 	 * This method assign the hierarchical left and right bounds to all the
-	 * nodes in the current <code>Group</code> (tree) whose root
-	 * <code>Node</code> is passed as a parameter.
+	 * nodes in the current {@code Group} (tree) whose root
+	 * {@code Node} is passed as a parameter.
 	 * <p>
 	 * The right bound can be calculated using this formula:
 	 * <p>
 	 * rightBound = leftBound + 2(number of child nodes) + 1
 	 * 
 	 * @param node
-	 *            the root <code>Node</code> of the tree whose nested set model
+	 *            the root {@code Node} of the tree whose nested set model
 	 *            is to be built.
 	 */
 	public void buildNestedSet(Node node) {
@@ -226,13 +226,13 @@ public class ParseOrthoXML {
 	 * Counts the number of nodes of the current tree/subtree.
 	 * <p>
 	 * This method recursively iterates through all the nodes of the tree whose
-	 * root <code>Node</code> is passed as a parameter and returns the total
+	 * root {@code Node} is passed as a parameter and returns the total
 	 * number of nodes in the tree (including the root node).
 	 * 
 	 * @param node
-	 *            the <code>Node</code> object of the tree/subtree whose total
+	 *            the {@code Node} object of the tree/subtree whose total
 	 *            number of children nodes are to be counted
-	 * @return an <code>int</code> giving the total number of nodes in the
+	 * @return an {@code int} giving the total number of nodes in the
 	 *         tree/subtree
 	 */
 	public static int count(Node node) {
@@ -245,20 +245,20 @@ public class ParseOrthoXML {
 	}
 
 	/**
-	 * Add data of the <code>Group</code> whose root <code>Node</code> is being
+	 * Add data of the {@code Group} whose root {@code Node} is being
 	 * passed as a parameter.
 	 * <p>
-	 * This method recursively iterates through the <code>Node</code>s of the
-	 * <code>Group</code> whose root <code>Node</code> is passed as a parameter,
+	 * This method recursively iterates through the {@code Node}s of the
+	 * {@code Group} whose root {@code Node} is passed as a parameter,
 	 * and adds the data pertaining to every node into the hierarchicalGroup
 	 * table. The data includes the hierarchicalGroupId, orthologusGroupId,
 	 * hierarchicalLeftBound, hierarchicalRightBound, and the ncbiTaxonomyId.
 	 * 
 	 * @param group
-	 *            the orthologus group ID of the current <code>Group</code>
+	 *            the orthologus group ID of the current {@code Group}
 	 *            whose data is being added into the database.
 	 * @param root
-	 *            the root node of the <code>Group</code> whose data is being
+	 *            the root node of the {@code Group} whose data is being
 	 *            added into the database
 	 * @throws SQLException
 	 *             if there is an error establishing a connection to the
@@ -306,19 +306,19 @@ public class ParseOrthoXML {
 	}
 
 	/**
-	 * Add data of the <code>Group</code> whose root <code>Node</code> is being
+	 * Add data of the {@code Group} whose root {@code Node} is being
 	 * passed as a parameter.
 	 * <p>
-	 * This method recursively iterates through the <code>Node</code>s of the
-	 * <code>Group</code> whose root <code>Node</code> is passed as a parameter,
+	 * This method recursively iterates through the {@code Node}s of the
+	 * {@code Group} whose root {@code Node} is passed as a parameter,
 	 * and adds the data pertaining to every node into the gene table. The data
 	 * includes the hierarchicalGroupId corresponding to the geneId.
 	 * 
 	 * @param group
-	 *            the orthologus group ID of the current <code>Group</code>
+	 *            the orthologus group ID of the current {@code Group}
 	 *            whose data is being added into the database.
 	 * @param root
-	 *            the root node of the <code>Group</code> whose data is being
+	 *            the root node of the {@code Group} whose data is being
 	 *            added into the database
 	 * @throws SQLException
 	 *             if there is an error establishing a connection to the

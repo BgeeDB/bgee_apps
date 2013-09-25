@@ -17,32 +17,32 @@ import org.bgee.model.source.SourceFactory;
 public abstract class Experiment extends Entity {
 
 	/**
-	 * Log4j2 <code>Logger</code> of this class.
+	 * Log4j2 {@code Logger} of this class.
 	 */
 	private final static Logger log = LogManager.getLogger(Experiment.class.getName());
 	
 	/**
-	 * A <code>String</code> corresponding to the ID 
-	 * of the {@link org.bgee.model.source.Source Source} of this <code>Experiment</code>. 
+	 * A {@code String} corresponding to the ID 
+	 * of the {@link org.bgee.model.source.Source Source} of this {@code Experiment}. 
 	 * It can be used to load the {@link #source} attribute after obtaining 
-	 * this <code>Experiment</code>. 
+	 * this {@code Experiment}. 
 	 * @see #source
 	 */
     private String sourceId;
     /**
-     * The <code>Source</code> of this <code>Experiment</code>.
+     * The {@code Source} of this {@code Experiment}.
      * @see #dataSourceId
      */
     private Source source;
     
 	/**
-     * Constructor providing the <code>id</code> of this <code>Experiment</code>. 
-     * This <code>id</code> cannot be <code>null</code>, or empty (""), 
-     * or whitespace only, otherwise an <code>IllegalArgumentException</code> 
+     * Constructor providing the {@code id} of this {@code Experiment}. 
+     * This {@code id} cannot be {@code null}, or empty (""), 
+     * or whitespace only, otherwise an {@code IllegalArgumentException} 
      * will be thrown. The ID will also be immutable, see {@link #getId()}.
      * 
-     * @param id	A <code>String</code> representing the ID of this object.
-     * @throws IllegalArgumentException 	if <code>id</code> is <code>null</code>,  
+     * @param id	A {@code String} representing the ID of this object.
+     * @throws IllegalArgumentException 	if {@code id} is {@code null},  
      * 										empty, or whitespace only. 
      */
 	public Experiment(String id) throws IllegalArgumentException {
@@ -52,9 +52,9 @@ public abstract class Experiment extends Entity {
 	}
 
 	/**
-	 * Load the {@link org.bgee.model.source.Source Source} of this <code>Experiment</code>, 
-	 * by obtaining it from a <code>DAO</code>, only if not already loaded 
-	 * ({@link #getSource()} returning <code>null</code>).
+	 * Load the {@link org.bgee.model.source.Source Source} of this {@code Experiment}, 
+	 * by obtaining it from a {@code DAO}, only if not already loaded 
+	 * ({@link #getSource()} returning {@code null}).
 	 * 
 	 * @see #getSource()
 	 * @see #getSourceId()
@@ -74,14 +74,14 @@ public abstract class Experiment extends Entity {
 	
 	/**
 	 * A helper to get the name of the {@link org.bgee.model.source.Source Source} 
-	 * of this <code>Experiment</code>, if has been already loaded 
+	 * of this {@code Experiment}, if has been already loaded 
 	 * (using {@link #loadSource()}) or set (using 
 	 * {@link setSource(org.bgee.model.source.Source)}).
-	 * Return an empty <code>String</code> if no the source was not found.
+	 * Return an empty {@code String} if no the source was not found.
 	 * 
-	 * @return 	a <code>String</code> corresponding to the value returned by a call to 
-	 * 			<code>getName()</code> of the <code>Source</code> of 
-	 * 			this <code>Experiment/code>. Return an empty <code>String</code> 
+	 * @return 	a {@code String} corresponding to the value returned by a call to 
+	 * 			{@code getName()} of the {@code Source} of 
+	 * 			this {@code Experiment/code>. Return an empty <code>String} 
 	 * 			if the source was not set.
 	 * @see #getSource()
 	 */
@@ -95,9 +95,9 @@ public abstract class Experiment extends Entity {
 	
 	/**
 	 * Get the ID of the {@link org.bgee.model.source.Source Source} 
-	 * of this <code>Experiment</code>.
+	 * of this {@code Experiment}.
 	 * 
-	 * @return 	a <code>String</code> corresponding to the <code>Source</code> ID.
+	 * @return 	a {@code String} corresponding to the {@code Source} ID.
 	 * @see #getSource()
 	 */
 	public String getSourceId() {
@@ -109,32 +109,32 @@ public abstract class Experiment extends Entity {
 
 	/**
 	 * Set the ID of the {@link org.bgee.model.source.Source Source} 
-	 * of this <code>Experiment</code>. This is useful when retrieving 
-	 * this <code>Experiment</code> from a <code>DAO</code>, before loading 
-	 * the actual <code>Source</code>.
+	 * of this {@code Experiment}. This is useful when retrieving 
+	 * this {@code Experiment} from a {@code DAO}, before loading 
+	 * the actual {@code Source}.
 	 * 
-	 * @param 	A <code>String</code> that is the ID of the <code>Source</code> 
-	 * 			of this <code>Experiment</code>
+	 * @param 	A {@code String} that is the ID of the {@code Source} 
+	 * 			of this {@code Experiment}
 	 */
 	public void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
 	}
 
 	/**
-	 * Get the {@link org.bgee.model.source.Source Source} of this <code>Experiment</code>. 
-	 * Should return <code>null</code> if it has not yet been loaded 
+	 * Get the {@link org.bgee.model.source.Source Source} of this {@code Experiment}. 
+	 * Should return {@code null} if it has not yet been loaded 
 	 * (using {@link #loadSource()}), or set (using 
 	 * {@link setSource(org.bgee.model.source.Source)})
 	 * 
-	 * @return	the <code>Source</code> of this <code>Experiment</code>.
+	 * @return	the {@code Source} of this {@code Experiment}.
 	 */
 	public Source getSource() {
 		return this.source;
 	}
 
 	/**
-	 * Set the {@link org.bgee.model.source.Source Source} of this <code>Experiment</code>. 
-	 * @param 	dataSource The <code>Source</code> to set.
+	 * Set the {@link org.bgee.model.source.Source Source} of this {@code Experiment}. 
+	 * @param 	dataSource The {@code Source} to set.
 	 */
 	public void setSource(Source source) {
 		this.source = source;

@@ -14,7 +14,7 @@ import org.junit.Test;
 
 
 /**
- * This class allows to test the <code>PreparedStatement</code> pool functionality of 
+ * This class allows to test the {@code PreparedStatement} pool functionality of 
  * {@link org.bgee.mode.data.BgeeConnection BgeeConnection}. 
  *
  * @author Mathieu Seppey
@@ -40,8 +40,8 @@ public class PreparedStatementPoolIntegrationTest extends DataSourceDriverManage
         return log;
     }
     /**
-     * This method tests the <code>PreparedStatement</code> pool by 
-     * creating situations where the returned <code>PreparedStatement</code> 
+     * This method tests the {@code PreparedStatement} pool by 
+     * creating situations where the returned {@code PreparedStatement} 
      * has to be a new one and other cases where it has to be fetched in the pool.
      * 
      * @throws SQLException

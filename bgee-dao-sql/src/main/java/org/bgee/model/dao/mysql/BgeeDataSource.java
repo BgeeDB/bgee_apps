@@ -25,43 +25,43 @@ import org.bgee.model.BgeeProperties;
 /**
  * Abstraction layer to obtain {@link BgeeConnection}s. 
  * <p>
- * This class first tries to load a <code>DataSource</code> 
- * from an <code>InitialContext</code> (most likely provided by Tomcat 
- * when this application is used in a webapp context), to obtain <code>Connection</code>s from. 
- * If the <code>DataSource</code> cannot be obtained, it means that the application 
- * is most likely used in a standalone context, and a classic <code>DriverManager</code> 
- * approach is used to obtain <code>Connection</code>s. 
+ * This class first tries to load a {@code DataSource} 
+ * from an {@code InitialContext} (most likely provided by Tomcat 
+ * when this application is used in a webapp context), to obtain {@code Connection}s from. 
+ * If the {@code DataSource} cannot be obtained, it means that the application 
+ * is most likely used in a standalone context, and a classic {@code DriverManager} 
+ * approach is used to obtain {@code Connection}s. 
  * In the standalone context, the parameters to establish a connection are retrieved from 
  * the {@link org.bgee.model.BgeeProperties BgeeProperties}.
  * <p>
  * Any call, <b>inside a thread</b>, to the method {@link #getBgeeDataSource()}, 
- * will always return the same <code>BgeeDataSource</code> instance. 
+ * will always return the same {@code BgeeDataSource} instance. 
  * An exception is if you call this method 
  * after having called {@link #close()} or {@link #closeAll()}.
- * In that case, a call <code>getBgeeDataSource()</code> from this thread 
- * would return a new <code>BgeeDataSource</code> instance. 
+ * In that case, a call {@code getBgeeDataSource()} from this thread 
+ * would return a new {@code BgeeDataSource} instance. 
  * <p>
- * Following the first call <b>on a given <code>BgeeDataSource</code> instance</b> 
+ * Following the first call <b>on a given {@code BgeeDataSource} instance</b> 
  * to a method to obtain a connection, 
- * with a given <code>username</code> and a given <code>password</code>,
+ * with a given {@code username} and a given {@code password},
  * (meaning, using {@link #getConnection()} or {@link #getConnection(String, String)}), 
- * this class obtains a <code>Connection</code>, either from a <code>DataSource</code> 
- * or the <code>DriverManager</code>, depending on the context, and return it. 
- * This <code>BgeeDataSource</code> object stores these <code>BgeeConnection</code>s, 
- * so that any consecutive call to obtain a <code>Connection</code> 
- * with the same <code>username</code> and <code>password</code>, 
- * will return the same <code>BgeeConnection</code> object, 
- * without trying to obtain a new <code>Connection</code> from a <code>DataSource</code> 
- * or a <code>DriverManager</code>. 
+ * this class obtains a {@code Connection}, either from a {@code DataSource} 
+ * or the {@code DriverManager}, depending on the context, and return it. 
+ * This {@code BgeeDataSource} object stores these {@code BgeeConnection}s, 
+ * so that any consecutive call to obtain a {@code Connection} 
+ * with the same {@code username} and {@code password}, 
+ * will return the same {@code BgeeConnection} object, 
+ * without trying to obtain a new {@code Connection} from a {@code DataSource} 
+ * or a {@code DriverManager}. 
  * <p>
- * An exception is that, when a <code>BgeeConnection</code> is closed 
- * (by calling {@link BgeeConnection#close()}), this <code>BgeeDataSource</code> release it, 
- * so that a consecutive call to obtain a <code>Connection</code> 
- * with the same <code>username</code> and <code>password</code>, 
- * will obtain a new <code>Connection</code> from a <code>DataSource</code> 
- * or a <code>DriverManager</code> again.
+ * An exception is that, when a {@code BgeeConnection} is closed 
+ * (by calling {@link BgeeConnection#close()}), this {@code BgeeDataSource} release it, 
+ * so that a consecutive call to obtain a {@code Connection} 
+ * with the same {@code username} and {@code password}, 
+ * will obtain a new {@code Connection} from a {@code DataSource} 
+ * or a {@code DriverManager} again.
  * <p>
- * You should always call <code>BgeeDataSource.getBgeeDataSource().close()</code> 
+ * You should always call {@code BgeeDataSource.getBgeeDataSource().close()} 
  * at the end of the execution of a thread, 
  * and {@link #closeAll()} in multi-threads context (for instance, in a webapp context 
  * when the webapp is shutdown). 
@@ -77,56 +77,56 @@ public class BgeeDataSource implements AutoCloseable
     // CLASS ATTRIBUTES
     //****************************
     /**
-     * A <code>ConcurrentMap</code> used to store all <code>BgeeDataSource</code>s, 
-     * associated with the <code>Thread</code> object that requested it. 
+     * A {@code ConcurrentMap} used to store all {@code BgeeDataSource}s, 
+     * associated with the {@code Thread} object that requested it. 
      * <p>
-     * This <code>Map</code> is used to provide a unique and independent 
-     * <code>BgeeDataSource</code> instance to each thread: 
-     * a <code>BgeeDataSource</code> is added to this <code>Map</code> 
+     * This {@code Map} is used to provide a unique and independent 
+     * {@code BgeeDataSource} instance to each thread: 
+     * a {@code BgeeDataSource} is added to this {@code Map} 
      * when {@link #getBgeeDataSource()} is called, if the thread ID is not already 
-     * present in the <code>keySet</code> of the <code>Map</code>. 
-     * Otherwise, the already stored <code>BgeeDataSource</code> is returned. 
+     * present in the {@code keySet} of the {@code Map}. 
+     * Otherwise, the already stored {@code BgeeDataSource} is returned. 
      * <p>
-     * If a <code>ThreadLocal</code> was not used, it is because 
-     * this <code>Map</code> is used by other treads, 
-     * for instance when a <code>ShutdownListener</code> 
-     * want to properly close all <code>BgeeDataSource</code>s; 
+     * If a {@code ThreadLocal} was not used, it is because 
+     * this {@code Map} is used by other treads, 
+     * for instance when a {@code ShutdownListener} 
+     * want to properly close all {@code BgeeDataSource}s; 
      * or when a thread performing monitoring of another thread want to interrupt it.
      * <p>
-     * A <code>BgeeDataSource</code> is removed from this <code>Map</code> for a thread
+     * A {@code BgeeDataSource} is removed from this {@code Map} for a thread
      * when the method {@link #close()} is called from this thread, 
      * or when the method  {@link #closeAll()} is called. 
-     * All <code>BgeeDataSource</code> are removed when {@link #releaseAll()} is called.
+     * All {@code BgeeDataSource} are removed when {@link #releaseAll()} is called.
      */
     private static final ConcurrentMap<Thread, BgeeDataSource> bgeeDataSources = 
             new ConcurrentHashMap<Thread, BgeeDataSource>();
     /**
-     * An <code>AtomicBoolean</code> to define if <code>BgeeDataSource</code>s 
+     * An {@code AtomicBoolean} to define if {@code BgeeDataSource}s 
      * can still be acquired (using {@link #getBgeeDataSource()}), 
      * or if it is not possible anymore (meaning that the method {@link #closeAll()} 
      * has been called)
      */
     private static final AtomicBoolean dataSourcesClosed = new AtomicBoolean();
     /**
-     * The real <code>DataSource</code> that this class wraps. 
-     * <code>null</code> if no <code>DataSource</code> could be obtained 
-     * from <code>InitialContext</code> (see static initializer).
+     * The real {@code DataSource} that this class wraps. 
+     * {@code null} if no {@code DataSource} could be obtained 
+     * from {@code InitialContext} (see static initializer).
      */
     private static final DataSource realDataSource;
     /**
-     * <code>Logger</code> of the class. 
+     * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(BgeeDataSource.class.getName());
 
     /**
-     * An <code>AtomicInteger</code> that keep count of all pooled 
-     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     *  of every instantiated <code>BgeeDatasource</code>
+     * An {@code AtomicInteger} that keep count of all pooled 
+     * {@code BgeePreparedStatement} by every {@code BgeeConnection}
+     *  of every instantiated {@code BgeeDatasource}
      */
     private final static AtomicInteger totalPrepStatPooled = new AtomicInteger();
     /**
-     * The <code>BgeeDataSource</code>
-     * with the most pooled <code>BgeePreparedStatement</code> in it
+     * The {@code BgeeDataSource}
+     * with the most pooled {@code BgeePreparedStatement} in it
      */
     private static BgeeDataSource dataSourceWithMaxPrepStatPooled;
 
@@ -135,22 +135,22 @@ public class BgeeDataSource implements AutoCloseable
     // INSTANCE ATTRIBUTES
     //****************************
     /**
-     * A <code>Map</code> to store the opened <code>BgeeConnection</code>s 
-     * provided by this <code>BgeeDataSource</code>, associated to their <code>ID</code> 
+     * A {@code Map} to store the opened {@code BgeeConnection}s 
+     * provided by this {@code BgeeDataSource}, associated to their {@code ID} 
      * (see {@link BgeeConnection#getId()}). 
      */
     private Map<String, BgeeConnection> openConnections;
 
     /**
-     * An <code>AtomicInteger</code> that keep count of all pooled 
-     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     *  of the current <code>BgeeDatasource</code>
+     * An {@code AtomicInteger} that keep count of all pooled 
+     * {@code BgeePreparedStatement} by every {@code BgeeConnection}
+     *  of the current {@code BgeeDatasource}
      */
     private AtomicInteger totalPrepStatPooledInDataSource;    
 
     /**
-     * The <code>BgeeConnection</code> with the most pooled
-     * <code>BgeePreparedStatement</code> in it
+     * The {@code BgeeConnection} with the most pooled
+     * {@code BgeePreparedStatement} in it
      */
     private BgeeConnection connWithMaxPrepStatPooled ;
 
@@ -160,7 +160,7 @@ public class BgeeDataSource implements AutoCloseable
     //****************************
     /**
      * Static initializer, initialize {@link realDataSource}, 
-     * or try to register a <code>Driver</code>.
+     * or try to register a {@code Driver}.
      */
     static {
         log.entry();
@@ -208,28 +208,28 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Return a <code>BgeeDataSource</code> object. At the first call of this method 
-     * inside a given thread, a new <code>BgeeDataSource</code> will be instantiated 
+     * Return a {@code BgeeDataSource} object. At the first call of this method 
+     * inside a given thread, a new {@code BgeeDataSource} will be instantiated 
      * and returned. Then all subsequent calls to this method inside the same thread 
-     * will return the same <code>BgeeDataSource</code> object. 
+     * will return the same {@code BgeeDataSource} object. 
      * <p>
      * This is to ensure that each thread uses one and only one 
-     * <code>BgeeDataSource</code> instance, 
+     * {@code BgeeDataSource} instance, 
      * independent from other threads ("per-thread singleton").
      * <p>
      * An exception is if you call this method from a thread
      * after having called {@link #release()} from this thread, 
      * or {@link #release(long)} by providing the ID of the thread as a parameter.
-     * In that case, this method would return a new <code>BgeeDataSource</code> instance 
+     * In that case, this method would return a new {@code BgeeDataSource} instance 
      * when called from this thread. 
      * <p>
-     * Note that after having called {@link #releaseAll()}, no <code>BgeeDataSource</code> 
-     * can be obtained anymore. This method will throw a <code>SQLException</code> 
-     * if <code>releaseAll()</code> has been previously called.
+     * Note that after having called {@link #releaseAll()}, no {@code BgeeDataSource} 
+     * can be obtained anymore. This method will throw a {@code SQLException} 
+     * if {@code releaseAll()} has been previously called.
      *  
-     * @return	A <code>BgeeDataSource</code> object, instantiated at the first call 
+     * @return	A {@code BgeeDataSource} object, instantiated at the first call 
      * 			of this method. Subsequent calls will return the same object. 
-     * @throws SQLException 	If no <code>BgeeDataSource</code> can be obtained anymore. 
+     * @throws SQLException 	If no {@code BgeeDataSource} can be obtained anymore. 
      */
     public static BgeeDataSource getBgeeDataSource() throws SQLException
     {
@@ -264,19 +264,19 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Call {@link #close()} on all <code>BgeeDataSource</code>s currently registered 
+     * Call {@link #close()} on all {@code BgeeDataSource}s currently registered 
      * (so it also closes all opened connections that they hold),
-     * and prevent any new <code>BgeeDataSource</code> to be obtained again 
+     * and prevent any new {@code BgeeDataSource} to be obtained again 
      * (calling {@link #getBgeeDataSource()} from any thread 
-     * after having called this method will throw a <code>SQLException</code>). 
+     * after having called this method will throw a {@code SQLException}). 
      * <p>
-     * This method returns the number of <code>BgeeDataSource</code>s that were released. 
+     * This method returns the number of {@code BgeeDataSource}s that were released. 
      * <p>
-     * This method is called for instance when a <code>ShutdownListener</code> 
-     * want to close all <code>Connection</code>s and release all 
-     * <code>BgeeDataSource</code>s.
+     * This method is called for instance when a {@code ShutdownListener} 
+     * want to close all {@code Connection}s and release all 
+     * {@code BgeeDataSource}s.
      * 
-     * @return 	An <code>int</code> that is the number of <code>BgeeDataSource</code>s 
+     * @return 	An {@code int} that is the number of {@code BgeeDataSource}s 
      * 			that were closed
      */
     public static int closeAll()
@@ -298,28 +298,28 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * @return An <code>AtomicInteger</code> that keep count of all pooled 
-     * <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     * of every instantiated <code>BgeeDatasource</code>
+     * @return An {@code AtomicInteger} that keep count of all pooled 
+     * {@code BgeePreparedStatement} by every {@code BgeeConnection}
+     * of every instantiated {@code BgeeDatasource}
      */
     private static AtomicInteger getPrepStatPoolsTotalSize(){
         return BgeeDataSource.totalPrepStatPooled;
     }
 
     /**
-     * @return The <code>BgeeDataSource</code>
-     * with the most pooled <code>BgeePreparedStatement</code> in it
+     * @return The {@code BgeeDataSource}
+     * with the most pooled {@code BgeePreparedStatement} in it
      */
     private static BgeeDataSource getDataSourceWithMaxPrepStatPooled(){
         return BgeeDataSource.dataSourceWithMaxPrepStatPooled;
     }
 
     /**
-     * Sets the <code>BgeeDataSource</code>
-     * with the most pooled <code>BgeePreparedStatement</code> in it
+     * Sets the {@code BgeeDataSource}
+     * with the most pooled {@code BgeePreparedStatement} in it
      * 
-     * @param ds    The <code>BgeeDataSource</code> 
-     *              with the most pooled <code>BgeePreparedStatement</code> in it
+     * @param ds    The {@code BgeeDataSource} 
+     *              with the most pooled {@code BgeePreparedStatement} in it
      * 
      */
     private static void setDataSourceWithMaxPrepStatPooled(BgeeDataSource ds){
@@ -327,10 +327,10 @@ public class BgeeDataSource implements AutoCloseable
     }    
 
     /**
-     * Checks if the maximum of <code>BgeePreparedStatement</code> allowed is reached, and
-     * if it is the case, retrieves the <code>BgeeDatasource</code> 
+     * Checks if the maximum of {@code BgeePreparedStatement} allowed is reached, and
+     * if it is the case, retrieves the {@code BgeeDatasource} 
      * which has the most pooled
-     * <code>BgeePreparedStatement</code> to call its own pool cleaning method
+     * {@code BgeePreparedStatement} to call its own pool cleaning method
      */
     private synchronized static void checkAndCleanPrepStatPools(){
 
@@ -346,15 +346,15 @@ public class BgeeDataSource implements AutoCloseable
 
     }
     /**
-     * Update the total number of pooled <code>BgeePreparedStatement</code>
-     * It also registers the given <code>BgeeDataSource</code> as the one with
-     * the most pooled <code>BgeePreparedStatement</code> if this is the case.
+     * Update the total number of pooled {@code BgeePreparedStatement}
+     * It also registers the given {@code BgeeDataSource} as the one with
+     * the most pooled {@code BgeePreparedStatement} if this is the case.
      * 
-     *  @param deltaPrepStatNumber      An <code>int</code> which represents the change
-     *                                  in the <code>BgeePreparedStatement</code> number
+     *  @param deltaPrepStatNumber      An {@code int} which represents the change
+     *                                  in the {@code BgeePreparedStatement} number
      *            
      *                                                        
-     *  @param dataSource               The <code>BgeeDataSource</code> from which the
+     *  @param dataSource               The {@code BgeeDataSource} from which the
      *                                  report came
      *                                                                       
      */    
@@ -376,13 +376,13 @@ public class BgeeDataSource implements AutoCloseable
 
     }
     /**
-     * This method contains the <code>synchronized</code> part of the report of the 
+     * This method contains the {@code synchronized} part of the report of the 
      * prepared statement pool state.
-     * It registers the given <code>BgeeDataSource</code> as the one with
-     * the most pooled <code>BgeePreparedStatement</code> if this is the case.
+     * It registers the given {@code BgeeDataSource} as the one with
+     * the most pooled {@code BgeePreparedStatement} if this is the case.
      *          
      *                                                        
-     *  @param dataSource               The <code>BgeeDataSource</code> from which the
+     *  @param dataSource               The {@code BgeeDataSource} from which the
      *                                  report came
      *                                  
      *  @see #reportPoolState       
@@ -408,7 +408,7 @@ public class BgeeDataSource implements AutoCloseable
     //****************************
     /**
      * Private constructor. Instances of this class can only be obtained 
-     * through the <code>static</code> method {@link getBgeeDataSource()}. 
+     * through the {@code static} method {@link getBgeeDataSource()}. 
      * This is to ensure that a thread will use its own and only one instance of this class.
      */
     private BgeeDataSource()
@@ -419,23 +419,23 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Attempt to establish a connection, either from a <code>DataSource</code> 
-     * if one was provided using JNDI, or from a JDBC <code>Driver</code> 
-     * obtained thanks to the <code>BgeeProperties</code>. 
+     * Attempt to establish a connection, either from a {@code DataSource} 
+     * if one was provided using JNDI, or from a JDBC {@code Driver} 
+     * obtained thanks to the {@code BgeeProperties}. 
      * Default username and password are used. 
      * <p>
-     * If a <code>BgeeConnection</code> with the same parameters is already hold 
-     * by this <code>BgeeDataSource</code>, then return it without creating a new one. 
-     * This <code>BgeeDataSource</code> will hold a <code>BgeeConnection</code> 
+     * If a {@code BgeeConnection} with the same parameters is already hold 
+     * by this {@code BgeeDataSource}, then return it without creating a new one. 
+     * This {@code BgeeDataSource} will hold a {@code BgeeConnection} 
      * as long as it is not closed (by a call to {@link BgeeConnection#close()}). 
      * <p>
-     * If this <code>BgeeDataSource</code> was closed ({@link #isClosed()} 
-     * returns <code>true</code>), following a call to {@link #close()} or 
-     * {@link #closeAll()}, this method will throw a <code>SQLException</code>.
+     * If this {@code BgeeDataSource} was closed ({@link #isClosed()} 
+     * returns {@code true}), following a call to {@link #close()} or 
+     * {@link #closeAll()}, this method will throw a {@code SQLException}.
      * 
-     * @return	A <code>BgeeConnection</code> opened to the data source. 
+     * @return	A {@code BgeeConnection} opened to the data source. 
      * @throws SQLException 	If an error occurred while trying to obtain the connection, 
-     * 							of if this <code>BgeeDataSource</code> was closed.
+     * 							of if this {@code BgeeDataSource} was closed.
      * @see #getConnection(String, String)
      */
     public BgeeConnection getConnection() throws SQLException
@@ -462,30 +462,30 @@ public class BgeeDataSource implements AutoCloseable
         return log.exit(this.getConnection(username, password));
     }
     /**
-     * Attempt to establish a connection, either from a <code>DataSource</code> 
-     * if one was provided using JNDI, or from a JDBC <code>Driver</code> 
-     * obtained thanks to the <code>BgeeProperties</code>, using the provided 
-     * <code>username</code> and <code>password</code>. 
-     * If a <code>DataSource</code> is provided, 
-     * and if <code>username</code> and <code>password</code> are <code>null</code>, 
-     * then return the value returned by <code>DataSource.getConnection()</code>. 
+     * Attempt to establish a connection, either from a {@code DataSource} 
+     * if one was provided using JNDI, or from a JDBC {@code Driver} 
+     * obtained thanks to the {@code BgeeProperties}, using the provided 
+     * {@code username} and {@code password}. 
+     * If a {@code DataSource} is provided, 
+     * and if {@code username} and {@code password} are {@code null}, 
+     * then return the value returned by {@code DataSource.getConnection()}. 
      * <p>
-     * If a <code>BgeeConnection</code> with the same parameters is already hold 
-     * by this <code>BgeeDataSource</code>, then return it without creating a new one. 
-     * This <code>BgeeDataSource</code> will hold a <code>BgeeConnection</code> 
+     * If a {@code BgeeConnection} with the same parameters is already hold 
+     * by this {@code BgeeDataSource}, then return it without creating a new one. 
+     * This {@code BgeeDataSource} will hold a {@code BgeeConnection} 
      * as long as it is not closed (by a call to {@link BgeeConnection#close()}). 
      * <p>
-     * If this <code>BgeeDataSource</code> was closed ({@link #isClosed()} 
-     * returns <code>true</code>), following a call to {@link #close()} or 
-     * {@link #closeAll()}, this method will throw a <code>SQLException</code>.
+     * If this {@code BgeeDataSource} was closed ({@link #isClosed()} 
+     * returns {@code true}), following a call to {@link #close()} or 
+     * {@link #closeAll()}, this method will throw a {@code SQLException}.
      * 
-     * @param username 	A <code>String</code> defining the username to use 
+     * @param username 	A {@code String} defining the username to use 
      * 					to open the connection.
-     * @param password 	A <code>String</code> defining the password to use 
+     * @param password 	A {@code String} defining the password to use 
      * 					to open the connection.
-     * @return			A <code>BgeeConnection</code> opened to the data source. 
+     * @return			A {@code BgeeConnection} opened to the data source. 
      * @throws SQLException 	If an error occurred while trying to obtain the connection, 
-     * 							of if this <code>BgeeDataSource</code> was closed.
+     * 							of if this {@code BgeeDataSource} was closed.
      * @see #getConnection()
      */
     public BgeeConnection getConnection(String username, String password) throws SQLException
@@ -538,15 +538,15 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Close all <code>BgeeConnection</code>s that this <code>BgeeDataSource</code> holds, 
-     * and release this <code>BgeeDataSource</code> 
+     * Close all {@code BgeeConnection}s that this {@code BgeeDataSource} holds, 
+     * and release this {@code BgeeDataSource} 
      * (a call to {@link #getBgeeDataSource()} from the thread that was holding it 
-     * will return a new <code>BgeeDataSource</code> instance).
+     * will return a new {@code BgeeDataSource} instance).
      * <p>
      * Following a call to this method, it is not possible to acquire new 
-     * <code>BgeeConnection</code>s by a call to {@link #getConnection()} or 
+     * {@code BgeeConnection}s by a call to {@link #getConnection()} or 
      * {@link #getConnection(String, String)} on this object 
-     * (it would throw a <code>SQLException</code>). A new instance should be acquired 
+     * (it would throw a {@code SQLException}). A new instance should be acquired 
      * by a call to {@link #getBgeeDataSource()}.
      */
     public void close()
@@ -562,11 +562,11 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Close all <code>BgeeConnection</code>s that this <code>BgeeDataSource</code> holds.
-     * Return the number of <code>BgeeConnection</code>s 
+     * Close all {@code BgeeConnection}s that this {@code BgeeDataSource} holds.
+     * Return the number of {@code BgeeConnection}s 
      * that were closed following a call to this method.
      * 
-     * @return 	An <code>int</code> that is the number of <code>BgeeConnection</code>s 
+     * @return 	An {@code int} that is the number of {@code BgeeConnection}s 
      * 			that were closed following a call to this method.
      */
     private int closeConnections()
@@ -591,11 +591,11 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Determine whether this <code>BgeeDataSource</code> was closed 
+     * Determine whether this {@code BgeeDataSource} was closed 
      * (following a call to {@link #close()} or {@link #closeAll()}).
      * 
-     * @return	<code>true</code> if this <code>BgeeDataSource</code> was closed, 
-     * 			<code>false</code> otherwise.
+     * @return	{@code true} if this {@code BgeeDataSource} was closed, 
+     * 			{@code false} otherwise.
      */
     public boolean isClosed()
     {
@@ -605,15 +605,15 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Notification that a <code>BgeeConnection</code>, with an <code>ID</code> 
-     * equals to <code>connectionId</code>, holds by this <code>BgeeDataSource</code>, 
+     * Notification that a {@code BgeeConnection}, with an {@code ID} 
+     * equals to {@code connectionId}, holds by this {@code BgeeDataSource}, 
      * has been closed. 
      * <p>
      * This method will thus removed from {@link #openConnections} 
-     * the <code>BgeeConnection</code> with the corresponding key. 
+     * the {@code BgeeConnection} with the corresponding key. 
      * 
-     * @param connectionId 	A <code>String</code> representing the <code>ID</code> 
-     * 						of the <code>BgeeConnection</code> that was closed. 
+     * @param connectionId 	A {@code String} representing the {@code ID} 
+     * 						of the {@code BgeeConnection} that was closed. 
      */
     protected void connectionClosed(String connectionId)
     {
@@ -624,8 +624,8 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Retrieves the <code>BgeeConnection</code> which has the most pooled
-     * <code>BgeePreparedStatement</code> to call its own pool cleaning method
+     * Retrieves the {@code BgeeConnection} which has the most pooled
+     * {@code BgeePreparedStatement} to call its own pool cleaning method
      */
     private void cleanPrepStatPools(){
 
@@ -639,7 +639,7 @@ public class BgeeDataSource implements AutoCloseable
 
     /**
      * This method simply passes the call to the corresponding method at the static level
-     * which will check if the global maximum of <code>BgeePreparedStatement</code>
+     * which will check if the global maximum of {@code BgeePreparedStatement}
      * allowed is reached and starts the cleaning process.
      * @see #checkAndCleanPrepStatPools
      */
@@ -650,17 +650,17 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * Update the number of pooled <code>BgeePreparedStatement</code> for the current
-     * <code>BgeeDataSource</code>
-     * It also registers the given <code>BgeeConnection</code> as the one with
-     * the most pooled <code>BgeePreparedStatement</code> if this is the case.
+     * Update the number of pooled {@code BgeePreparedStatement} for the current
+     * {@code BgeeDataSource}
+     * It also registers the given {@code BgeeConnection} as the one with
+     * the most pooled {@code BgeePreparedStatement} if this is the case.
      * Finally, it follows the request at the global level by calling the corresponding
      * method at the static level
      * 
-     *  @param deltaPrepStatNumber      An <code>int</code> which represents the change
-     *                                  in the <code>BgeePreparedStatement</code> number
+     *  @param deltaPrepStatNumber      An {@code int} which represents the change
+     *                                  in the {@code BgeePreparedStatement} number
      *  
-     *  @param con                      The <code>BgeeConnection</code> from which the
+     *  @param con                      The {@code BgeeConnection} from which the
      *                                  report initially originated            
      *                                                        
      *  @see #reportPoolState
@@ -693,28 +693,28 @@ public class BgeeDataSource implements AutoCloseable
 
 
     /**
-     * @param openConnections A <code>Map<String,BgeeConnection></code> to set {@link #openConnections} 
+     * @param openConnections A {@code Map<String,BgeeConnection>} to set {@link #openConnections} 
      */
     private void setOpenConnections(Map<String, BgeeConnection> openConnections) {
         this.openConnections = openConnections;
     }
     /**
-     * Store <code>connection</code> in the <code>Map</code> {@link #openConnections}, 
-     * associated to the key provided by a call on <code>connection</code>  
-     * to the method <code>getId()</code>.
+     * Store {@code connection} in the {@code Map} {@link #openConnections}, 
+     * associated to the key provided by a call on {@code connection}  
+     * to the method {@code getId()}.
      * 
-     * @param connection 	A <code>BgeeConnection</code> that is opened, to be stored. 
+     * @param connection 	A {@code BgeeConnection} that is opened, to be stored. 
      */
     private void storeOpenConnection(BgeeConnection connection)
     {
         this.openConnections.put(connection.getId(), connection);
     }
     /**
-     * Remove from {@link #openConnections} the <code>BgeeConnection</code> 
-     * mapped to the key <code>key</code>. 
+     * Remove from {@link #openConnections} the {@code BgeeConnection} 
+     * mapped to the key {@code key}. 
      * 
-     * @param key 	A <code>String</code> representing the key of the 
-     * 				<code>BgeeConnection</code> to be removed from <code>openConnections</code>.
+     * @param key 	A {@code String} representing the key of the 
+     * 				{@code BgeeConnection} to be removed from {@code openConnections}.
      */
     private void removeFromOpenConnection(String key)
     {
@@ -727,18 +727,18 @@ public class BgeeDataSource implements AutoCloseable
         return this.openConnections;
     }
     /**
-     * Generate an ID to uniquely identify the <code>BgeeConnection</code>s 
-     * holded by this <code>BgeeDataSource</code>. It is based on  
-     * <code>jdbcUrl</code>, <code>username</code>, and <code>password</code>. 
+     * Generate an ID to uniquely identify the {@code BgeeConnection}s 
+     * holded by this {@code BgeeDataSource}. It is based on  
+     * {@code jdbcUrl}, {@code username}, and {@code password}. 
      * 
-     * @param jdbcUrl 	A <code>String</code> defining the JDBC URL used to open 
+     * @param jdbcUrl 	A {@code String} defining the JDBC URL used to open 
      * 					the connection. Will be used to generate the ID.
-     * @param username 	A <code>String</code> defining the username used to open 
+     * @param username 	A {@code String} defining the username used to open 
      * 					the connection. Will be used to generate the ID.
-     * @param password	A <code>String</code> defining the password used to open 
+     * @param password	A {@code String} defining the password used to open 
      * 					the connection. Will be used to generate the ID.
-     * @return 			A <code>String</code> representing an ID generated from 
-     * 					the JDBC URL, <code>username</code>, and <code>password</code>.
+     * @return 			A {@code String} representing an ID generated from 
+     * 					the JDBC URL, {@code username}, and {@code password}.
      */
     private String generateConnectionId(String jdbcUrl, String username, String password)
     {
@@ -749,28 +749,28 @@ public class BgeeDataSource implements AutoCloseable
     }
 
     /**
-     * @return an <code>AtomicInteger</code> that keep count of all pooled 
-     *          <code>BgeePreparedStatement</code> by every <code>BgeeConnection</code>
-     *          of the current <code>BgeeDatasource</code>
+     * @return an {@code AtomicInteger} that keep count of all pooled 
+     *          {@code BgeePreparedStatement} by every {@code BgeeConnection}
+     *          of the current {@code BgeeDatasource}
      */
     private AtomicInteger getTotalPrepStatPooledInDataSource(){
         return this.totalPrepStatPooledInDataSource;
     }
 
     /**
-     * @return  The <code>BgeeConnection</code> with the most pooled
-     *          <code>BgeePreparedStatement</code> in it
+     * @return  The {@code BgeeConnection} with the most pooled
+     *          {@code BgeePreparedStatement} in it
      */
     private BgeeConnection getConnWithMaxPrepStatPooled(){
         return this.connWithMaxPrepStatPooled;
     }
 
     /**
-     * Sets the <code>BgeeConnection</code> with the most pooled
-     *          <code>BgeePreparedStatement</code> in it
+     * Sets the {@code BgeeConnection} with the most pooled
+     *          {@code BgeePreparedStatement} in it
      *
-     * @param con    The <code>BgeeConnection</code> with the most pooled
-     *          <code>BgeePreparedStatement</code> in it
+     * @param con    The {@code BgeeConnection} with the most pooled
+     *          {@code BgeePreparedStatement} in it
      */
     private void setConnWithMaxPrepStatPooled(BgeeConnection con){
         this.connWithMaxPrepStatPooled = con;

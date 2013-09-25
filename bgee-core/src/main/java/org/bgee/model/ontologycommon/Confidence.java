@@ -10,7 +10,7 @@ import org.bgee.model.Entity;
  * <p>
  * Although confidence information is part of an ontology, this class does not extend 
  * {@link OntologyElement}, as we never use its ontology capabilities in the application, 
- * only for retrieving it from a <code>DAO</code> (for instance, "retrieve confidences  
+ * only for retrieving it from a {@code DAO} (for instance, "retrieve confidences  
  * children of this one").
  * 
  * @author Frederic Bastian
@@ -19,16 +19,16 @@ import org.bgee.model.Entity;
  */
 public class Confidence extends Entity {
 	/**
-     * Constructor providing the <code>id</code> of this <code>Confidence</code>. 
-     * This <code>id</code> cannot be <code>null</code>, or empty (""), 
-     * or whitespace only, otherwise an <code>IllegalArgumentException</code> 
+     * Constructor providing the {@code id} of this {@code Confidence}. 
+     * This {@code id} cannot be {@code null}, or empty (""), 
+     * or whitespace only, otherwise an {@code IllegalArgumentException} 
      * will be thrown. The ID will also be immutable, see {@link #getId()}.
      * <p>
      * Default constructor protected, instances should be obtained using a factory.
      * 
-     * @param id	A <code>String</code> representing the ID of 
-     * 				this <code>AnatDevEntity</code>.
-     * @throws IllegalArgumentException 	if <code>id</code> is <code>null</code>,  
+     * @param id	A {@code String} representing the ID of 
+     * 				this {@code AnatDevEntity}.
+     * @throws IllegalArgumentException 	if {@code id} is {@code null},  
      * 										empty, or whitespace only. 
      */
     protected Confidence(String id) {

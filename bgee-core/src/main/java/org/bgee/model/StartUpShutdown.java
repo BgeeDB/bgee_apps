@@ -4,7 +4,7 @@ import org.bgee.model.dao.api.DAOManager;
 
 /**
  * This class provides methods to load the resources needed at application start-up, 
- * or to release resources hold by a <code>Thread</code> when it is terminated, 
+ * or to release resources hold by a {@code Thread} when it is terminated, 
  * or to release all resources at application shutdown.
  * 
  * @author Frederic Bastian
@@ -30,12 +30,12 @@ public class StartUpShutdown {
     }
     
     /**
-     * Release all resources hold by the current <code>Thread</code>. For instance, 
-     * if the current <code>Thread</code> was holding a connection to a database, 
+     * Release all resources hold by the current {@code Thread}. For instance, 
+     * if the current {@code Thread} was holding a connection to a database, 
      * this connection is closed. 
      * <p>
      * This method should always be called just before the end of the execution 
-     * of a <code>Thread</code>, for instance by calling it in a <code>finally</code> 
+     * of a {@code Thread}, for instance by calling it in a {@code finally} 
      * block. 
      */
     public static void threadTerminated() {

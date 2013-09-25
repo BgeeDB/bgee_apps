@@ -11,7 +11,7 @@ import org.bgee.model.ontologycommon.Ontology;
  * @version Bgee 13
  * @since Bgee 13
  *
- * @param <T> a subclass of <code>AnatDevEntity</code>. 
+ * @param <T> a subclass of {@code AnatDevEntity}. 
  */
 public abstract class AnatDevOntology<T extends AnatDevEntity> extends Ontology<T> {
 	/**

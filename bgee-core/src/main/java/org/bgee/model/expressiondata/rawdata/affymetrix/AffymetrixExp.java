@@ -4,7 +4,7 @@ import org.bgee.model.expressiondata.rawdata.RawData;
 
 /**
  * Class related to microarray experiment. 
- * Is the container of <code>AffymetrixChip</code>s.
+ * Is the container of {@code AffymetrixChip}s.
  * 
  * @author Frederic Bastian
  * @version Bgee 11

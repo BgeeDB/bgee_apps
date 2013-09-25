@@ -8,16 +8,16 @@ import static org.mockito.Mockito.mock;
 
 /**
  * A class to simulate an implementation of {@link DAOManager}, that is discovered 
- * by the <code>Service Loader</code> thanks to the test file 
- * <code>META-INF/services/org.bgee.model.dao.api.DAOManager</code>. 
+ * by the {@code Service Loader} thanks to the test file 
+ * {@code META-INF/services/org.bgee.model.dao.api.DAOManager}. 
  * <p>
- * All methods delegate to the mocked <code>DAOManager</code> stored 
+ * All methods delegate to the mocked {@code DAOManager} stored 
  * in the public attribute {@link mockManager}, which should thus be used to specify 
  * the expected behaviors to mock. 
  * <p>
  * This class is the same than {@link MockDAOManager}, but is used to test the behavior 
- * when the <code>ServiceLoader</code> discovers several service providers. 
- * This provider should be the second one loaded by the <code>ServiceLoader</code>.
+ * when the {@code ServiceLoader} discovers several service providers. 
+ * This provider should be the second one loaded by the {@code ServiceLoader}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -26,19 +26,19 @@ import static org.mockito.Mockito.mock;
 public class MockDAOManager2 extends DAOManager {
 	
 	/**
-	 * If <code>true</code>, an <code>Error</code> is thrown when the default constructor 
+	 * If {@code true}, an {@code Error} is thrown when the default constructor 
 	 * is called. 
 	 */
 	protected static boolean thrownInstantiationException = false;
 	
 	/**
-	 * This static mocked <code>DAOManager</code> is needed because we sometimes 
+	 * This static mocked {@code DAOManager} is needed because we sometimes 
 	 * need to specify mocked behavior before acquiring a instance 
 	 * (notably to test {@link DAOManager#gtDAOManager()}).
 	 */
 	public static final DAOManager mockManager = mock(DAOManager.class);
 	/**
-	 * This mocked <code>DAOManager</code> is needed because we sometimes
+	 * This mocked {@code DAOManager} is needed because we sometimes
 	 * need to specify or verify different behavior from different instances. 
 	 */
 	public final DAOManager instanceMockManager = mock(DAOManager.class);

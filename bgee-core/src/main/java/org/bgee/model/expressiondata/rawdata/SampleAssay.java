@@ -8,7 +8,7 @@ import org.bgee.model.Entity;
  * Such objects: 
  * <ul>
  * <li>are always part of an {@link Experiment}. The precise type of the 
- * <code>Experiment</code> is provided by the <code>T</code> generic parameter.
+ * {@code Experiment} is provided by the {@code T} generic parameter.
  * <li>are always sources of {@link CallSource}s. 
  * </ul>
  * 
@@ -17,32 +17,32 @@ import org.bgee.model.Entity;
  * @since Bgee 13
  *
  * @param <T>	the precise type of the {@link Experiment} that contains 
- * 				this <code>SampleAssay</code>.
+ * 				this {@code SampleAssay}.
  */
 public abstract class SampleAssay<T extends Experiment> extends Entity {
 	
 	/**
-	 * A <code>String</code> corresponding to the ID 
-	 * of the {@link Experiment} containing this <code>SampleAssay</code>. 
+	 * A {@code String} corresponding to the ID 
+	 * of the {@link Experiment} containing this {@code SampleAssay}. 
 	 * It can be used to load the {@link #experiment} attribute after obtaining 
-	 * this <code>SampleAssay</code>. 
+	 * this {@code SampleAssay}. 
 	 * @see #experiment
 	 */
     private String experimentId;
     /**
-     * The {@link Experiment} containing this <code>SampleAssay</code>.
+     * The {@link Experiment} containing this {@code SampleAssay}.
      * @see #experimentId
      */
     private T experiment;
 	
 	/**
-     * Constructor providing the <code>id</code> of this <code>SampleAssay</code>. 
-     * This <code>id</code> cannot be <code>null</code>, or empty (""), 
-     * or whitespace only, otherwise an <code>IllegalArgumentException</code> 
+     * Constructor providing the {@code id} of this {@code SampleAssay}. 
+     * This {@code id} cannot be {@code null}, or empty (""), 
+     * or whitespace only, otherwise an {@code IllegalArgumentException} 
      * will be thrown. The ID will also be immutable, see {@link #getId()}.
      * 
-     * @param id	A <code>String</code> representing the ID of this object.
-     * @throws IllegalArgumentException 	if <code>id</code> is <code>null</code>,  
+     * @param id	A {@code String} representing the ID of this object.
+     * @throws IllegalArgumentException 	if {@code id} is {@code null},  
      * 										empty, or whitespace only. 
      */
 	public SampleAssay(String id) throws IllegalArgumentException {
@@ -52,9 +52,9 @@ public abstract class SampleAssay<T extends Experiment> extends Entity {
 	}
 	
 	/**
-	 * Load the {@link Experiment} containing this <code>SampleAssay</code>, 
-	 * by obtaining it from a <code>DAO</code>, only if not already loaded 
-	 * ({@link #getExperiment()} returning <code>null</code>).
+	 * Load the {@link Experiment} containing this {@code SampleAssay}, 
+	 * by obtaining it from a {@code DAO}, only if not already loaded 
+	 * ({@link #getExperiment()} returning {@code null}).
 	 * 
 	 * @see #getExperiment()
 	 * @see #getExperimentId()
@@ -62,9 +62,9 @@ public abstract class SampleAssay<T extends Experiment> extends Entity {
 	public abstract void loadExperiment();
 	
 	/**
-	 * Get the ID of the {@link Experiment} containing this <code>SampleAssay</code>.
+	 * Get the ID of the {@link Experiment} containing this {@code SampleAssay}.
 	 * 
-	 * @return 	a <code>String</code> corresponding to the <code>Experiment</code> ID.
+	 * @return 	a {@code String} corresponding to the {@code Experiment} ID.
 	 * @see #getExperiment()
 	 */
 	public String getExperimentId() {
@@ -75,32 +75,32 @@ public abstract class SampleAssay<T extends Experiment> extends Entity {
 	}
 
 	/**
-	 * Set the ID of the {@link Experiment} containing this <code>SampleAssay</code>. 
-	 * This is useful when retrieving this <code>SampleAssay</code> 
-	 * from a <code>DAO</code>, before loading the actual <code>Experiment</code>.
+	 * Set the ID of the {@link Experiment} containing this {@code SampleAssay}. 
+	 * This is useful when retrieving this {@code SampleAssay} 
+	 * from a {@code DAO}, before loading the actual {@code Experiment}.
 	 * 
-	 * @param 	A <code>String</code> that is the ID of the <code>Experiment</code> 
-	 * 			containing this <code>SampleAssay</code>
+	 * @param 	A {@code String} that is the ID of the {@code Experiment} 
+	 * 			containing this {@code SampleAssay}
 	 */
 	public void setExperimentId(String experimentId) {
 		this.experimentId = experimentId;
 	}
 
 	/**
-	 * Get the {@link Experiment} containing this <code>SampleAssay</code>. 
-	 * Should return <code>null</code> if it has not yet been loaded 
+	 * Get the {@link Experiment} containing this {@code SampleAssay}. 
+	 * Should return {@code null} if it has not yet been loaded 
 	 * (using {@link #loadExperiment()}), or set (using 
 	 * {@link setExperiment(Experiment)})
 	 * 
-	 * @return	the <code>Experiment</code> containing this <code>SampleAssay</code>.
+	 * @return	the {@code Experiment} containing this {@code SampleAssay}.
 	 */
 	public T getExperiment() {
 		return this.experiment;
 	}
 
 	/**
-	 * Set the {@link Experiment} containing this <code>SampleAssay</code>. 
-	 * @param 	experiment The <code>Experiment</code> to set.
+	 * Set the {@link Experiment} containing this {@code SampleAssay}. 
+	 * @param 	experiment The {@code Experiment} to set.
 	 */
 	public void setExperiment(T experiment) {
 		this.experiment = experiment;

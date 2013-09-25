@@ -5,13 +5,13 @@ import org.bgee.model.expressiondata.rawdata.DataAnnotated;
 
 /**
  * Class related to in situ spots. 
- * Is contained by a <code>InSituEvidence</code>. 
+ * Is contained by a {@code InSituEvidence}. 
  * Hold expression data for a gene 
- * (child class of <code>CallSourceRawData</code>). 
+ * (child class of {@code CallSourceRawData}). 
  * In situ spots are also mapped to anatomical and developmental ontologies, 
- * so that this class could also be a subclass of <code>ExpressionDataMappedToOntology</code>, 
+ * so that this class could also be a subclass of {@code ExpressionDataMappedToOntology}, 
  * but we had to choose. This class then reimplement methods and attributes 
- * of <code>ExpressionDataMappedToOntology</code>.
+ * of {@code ExpressionDataMappedToOntology}.
  * 
  * @author Frederic Bastian
  * @version Bgee 11
@@ -22,19 +22,19 @@ import org.bgee.model.expressiondata.rawdata.DataAnnotated;
 public class InSituSpot extends CallSource implements DataAnnotated
 {
     /**
-	 * The <code>InSituEvidence</code> this object belongs to.
+	 * The {@code InSituEvidence} this object belongs to.
 	 * It is the "container" used for the methods 
-	 * <code>#getDataSourceFromContainer()</code> and <code>#getDataSourceIdFromContainer()</code>.
+	 * {@code #getDataSourceFromContainer()} and {@code #getDataSourceIdFromContainer()}.
 	 * @see #getDataSourceFromContainer()
 	 * @see #getDataSourceIdFromContainer()
 	 */
     private InSituEvidence inSituEvidence;
 	/**
-	 * A <code>String</code> corresponding to the ID 
+	 * A {@code String} corresponding to the ID 
 	 * of the in situ evidence this spot belongs to. 
-	 * This attribute is useful when the <code>inSituEvidence</code> is not set. 
-	 * When both are set, this <code>inSituEvidenceId</code> matches 
-	 * the <code>id</code> attribute of the <code>InSituEvidence</code>. 
+	 * This attribute is useful when the {@code inSituEvidence} is not set. 
+	 * When both are set, this {@code inSituEvidenceId} matches 
+	 * the {@code id} attribute of the {@code InSituEvidence}. 
 	 * @see microarrayExperiment
 	 */
     private String inSituEvidenceId;
@@ -52,15 +52,15 @@ public class InSituSpot extends CallSource implements DataAnnotated
     }
 	
 	/**
-	 * Try to obtain the <code>DataSource</code> object where these expression data come from, 
-	 * from the <code>InSituEvidence</code> container of this <code>InSituSpot</code>, 
+	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+	 * from the {@code InSituEvidence} container of this {@code InSituSpot}, 
 	 * and eventually from its own container, etc.
-	 * See <code>getDataSource()</code> for more details.
+	 * See {@code getDataSource()} for more details.
 	 * 
-	 * @return 	a <code>DataSource</code> object where these expression data come from, 
-	 * 			obtained from the <code>InSituEvidence</code> container of this <code>InSituSpot</code>. 
-	 * 			<code>null</code> if it was not possible to retrieve a <code>DataSource</code> object  
-	 * 			from the <code>InSituEvidence</code> container.
+	 * @return 	a {@code DataSource} object where these expression data come from, 
+	 * 			obtained from the {@code InSituEvidence} container of this {@code InSituSpot}. 
+	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+	 * 			from the {@code InSituEvidence} container.
 	 * @see #inSituEvidence
 	 * @see #getDataSource()
 	 */
@@ -75,12 +75,12 @@ public class InSituSpot extends CallSource implements DataAnnotated
 	
 	/**
 	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the <code>InSituEvidence</code> "container". 
+	 * from the {@code InSituEvidence} "container". 
 	 * 
-	 * @return 	a <code>String</code> corresponding to the ID of the data source 
+	 * @return 	a {@code String} corresponding to the ID of the data source 
 	 * 			where these expression data come from, 
-	 * 			obtained from the <code>InSituEvidence</code> "container". 
-	 * 			Empty <code>String</code> if it was not possible to retrieve the ID 
+	 * 			obtained from the {@code InSituEvidence} "container". 
+	 * 			Empty {@code String} if it was not possible to retrieve the ID 
 	 * 			from the container.
 	 * @see #inSituEvidence
 	 * @see #getDataSourceId()
@@ -95,8 +95,8 @@ public class InSituSpot extends CallSource implements DataAnnotated
 	}
 
 	/**
-     * Retrieve the <code>InSituEvidence</code> this <code>InSituSpot</code> belongs to, 
-     * by using the ID provided by <code>#getInSituEvidenceId()</code>, 
+     * Retrieve the {@code InSituEvidence} this {@code InSituSpot} belongs to, 
+     * by using the ID provided by {@code #getInSituEvidenceId()}, 
      * and store it by using <code>#setInSituEvidence(InSituEvidence)<code>.
      */
 	public void loadInSituEvidence() 
@@ -118,9 +118,9 @@ public class InSituSpot extends CallSource implements DataAnnotated
 		this.inSituEvidenceId = evidenceId;
 	}
 	/**
-	 * Returns either the value of <code>inSituEvidenceId</code>, 
-	 * or the of the <code>id</code> of the <code>InSituEvidence</code> 
-	 * stored in <code>inSituEvidence</code>, depending on which one is set. 
+	 * Returns either the value of {@code inSituEvidenceId}, 
+	 * or the of the {@code id} of the {@code InSituEvidence} 
+	 * stored in {@code inSituEvidence}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the in situ experiment this evidence belongs to. 
 	 * @see 	#inSituEvidenceId
@@ -145,9 +145,9 @@ public class InSituSpot extends CallSource implements DataAnnotated
 		this.organId = orgId;
 	}
 	/**
-	 * Returns either the value of <code>organId</code>, 
-	 * or the of the <code>id</code> of the <code>Organ</code> 
-	 * stored in <code>organ</code>, depending on which one is set. 
+	 * Returns either the value of {@code organId}, 
+	 * or the of the {@code id} of the {@code Organ} 
+	 * stored in {@code organ}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the organ for which this spot reports expression. 
 	 * @see 	#organId
@@ -172,9 +172,9 @@ public class InSituSpot extends CallSource implements DataAnnotated
 		this.stageId = staId;
 	}
 	/**
-	 * Returns either the value of <code>stageId</code>, 
-	 * or the of the <code>id</code> of the <code>DevStage</code> 
-	 * stored in <code>devStage</code>, depending on which one is set. 
+	 * Returns either the value of {@code stageId}, 
+	 * or the of the {@code id} of the {@code DevStage} 
+	 * stored in {@code devStage}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the devStage for which this spot reports expression. 
 	 * @see 	#stageId

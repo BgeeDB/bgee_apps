@@ -13,11 +13,11 @@ import org.junit.Test;
 
 /**
  * Test the loading of {@link org.bgee.mode.data.BgeeDataSource BgeeDataSource} 
- * when using a <code>DataSource</code> loaded using JNDI
- * to acquire a <code>Connection</code>. 
- * The loading when using a <code>DriverManager</code> is tested in a separated class: 
- * <code>BgeeDataSource</code> parameters are set only once at class loading, 
- * so only once for a given <code>ClassLoader</code>, so it has to be done 
+ * when using a {@code DataSource} loaded using JNDI
+ * to acquire a {@code Connection}. 
+ * The loading when using a {@code DriverManager} is tested in a separated class: 
+ * {@code BgeeDataSource} parameters are set only once at class loading, 
+ * so only once for a given {@code ClassLoader}, so it has to be done 
  * in different classes. See {@link DataSourceDriverManagerTest}.
  * 
  * @author Frederic Bastian
@@ -44,7 +44,7 @@ public class JNDIDataSourceIntegrationTest extends DataSourceDriverManagerTest
     }
     @Test
     /**
-     * Check if a <code>DataSource</code> can be obtained
+     * Check if a {@code DataSource} can be obtained
      */
     public void newDataSource() throws NoSuchFieldException, SecurityException,
                     IllegalArgumentException, IllegalAccessException, SQLException{
@@ -58,7 +58,7 @@ public class JNDIDataSourceIntegrationTest extends DataSourceDriverManagerTest
     }
     @Test
     /**
-     * Check if a <code>Connection</code> can be obtained from the DataSource
+     * Check if a {@code Connection} can be obtained from the DataSource
      */
     public void getConnection() throws SQLException {
 

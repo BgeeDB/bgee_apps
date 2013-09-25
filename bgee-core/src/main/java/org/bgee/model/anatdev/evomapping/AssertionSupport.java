@@ -16,7 +16,7 @@ import org.bgee.model.ontologycommon.EvidenceCode;
  * a {@link org.bgee.model.ontologycommon.Confidence Confidence}, one or several 
  * {@link References}, and a supporting text.
  * <p>
- * It can be used as part of a {@link AnatDevMapping}, that groups <code>AnatDevEntity</code>s 
+ * It can be used as part of a {@link AnatDevMapping}, that groups {@code AnatDevEntity}s 
  * related by an evolutionary relation.
  * 
  * @author Frederic Bastian
@@ -41,19 +41,19 @@ public class AssertionSupport {
 	protected class Reference extends Entity {
 
 		/**
-	     * Constructor providing the <code>id</code> of this <code>Reference</code>. 
-	     * This <code>id</code> cannot be <code>null</code>, or empty (""), 
-	     * or whitespace only, otherwise an <code>IllegalArgumentException</code> 
+	     * Constructor providing the {@code id} of this {@code Reference}. 
+	     * This {@code id} cannot be {@code null}, or empty (""), 
+	     * or whitespace only, otherwise an {@code IllegalArgumentException} 
 	     * will be thrown. The ID will also be immutable, see {@link #getId()}.
 	     * <p>
-	     * In the case of a <code>Reference</code>, this <code>id</code> is a DOI, 
-	     * or an ISBN, or a Pubmed ID, otherwise, an <code>IllegalArgumentException</code> 
+	     * In the case of a {@code Reference}, this {@code id} is a DOI, 
+	     * or an ISBN, or a Pubmed ID, otherwise, an {@code IllegalArgumentException} 
 	     * is thrown. It is recommended to provide the tile as name 
 	     * (using {@link #setName(String)}).
 	     * 
-	     * @param id	A <code>String</code> representing the ID of 
-	     * 				this <code>Reference</code>.
-	     * @throws IllegalArgumentException 	if <code>id</code> is <code>null</code>,  
+	     * @param id	A {@code String} representing the ID of 
+	     * 				this {@code Reference}.
+	     * @throws IllegalArgumentException 	if {@code id} is {@code null},  
 	     * 										empty, whitespace only, or is not a DOI, 
 	     * 										an ISBN, nor a Pubmed ID. 
 	     */
@@ -67,21 +67,21 @@ public class AssertionSupport {
 		}
 		
 		/**
-		 * @return 	<code>true</code> if the ID of this <code>Reference</code> 
+		 * @return 	{@code true} if the ID of this {@code Reference} 
 		 * 			(returned by {@link #getId()}) is a DOI.
 		 */
 		public boolean isDOI() {
 			return this.getId().toLowerCase().startsWith("doi");
 		}
 		/**
-		 * @return 	<code>true</code> if the ID of this <code>Reference</code> 
+		 * @return 	{@code true} if the ID of this {@code Reference} 
 		 * 			(returned by {@link #getId()}) is an ISBN.
 		 */
 		public boolean isISBN() {
 			return this.getId().toLowerCase().startsWith("isbn");
 		}
 		/**
-		 * @return 	<code>true</code> if the ID of this <code>Reference</code> 
+		 * @return 	{@code true} if the ID of this {@code Reference} 
 		 * 			(returned by {@link #getId()}) is a Pubmed ID.
 		 */
 		public boolean isPMID() {
@@ -91,26 +91,26 @@ public class AssertionSupport {
 	
 
 	/**
-     * The <code>EvidenceCode</code> supporting this assertion. 
+     * The {@code EvidenceCode} supporting this assertion. 
      */
     private final EvidenceCode evidenceCode;
     /**
-     * The <code>Confidence</code> representing confidence in this assertion.
+     * The {@code Confidence} representing confidence in this assertion.
      */
     private final Confidence confidence;
     /**
-     * A <code>String</code> that is a text supporting this assertion.
+     * A {@code String} that is a text supporting this assertion.
      */
     private final String supportingText;
     /**
-     * A <code>Collection</code> of <code>Reference</code>s 
+     * A {@code Collection} of {@code Reference}s 
      * where information about this assertion comes from.
      */
     private final Collection<Reference> references;
 	
 	/**
-	 * Constructor private, at least an <code>EvidenceCode</code>, 
-	 * a <code>Confidence</code>, a <code>Reference</code>, and a 
+	 * Constructor private, at least an {@code EvidenceCode}, 
+	 * a {@code Confidence}, a {@code Reference}, and a 
 	 * supporting text must be provided.
 	 */
 	@SuppressWarnings("unused")
@@ -119,16 +119,16 @@ public class AssertionSupport {
 	}
 	
 	/**
-	 * When instantiating an <code>AssertionSupport</code>, at least an 
-	 * <code>EvidenceCode</code>, a <code>Confidence</code>, a <code>Reference</code>,  
+	 * When instantiating an {@code AssertionSupport}, at least an 
+	 * {@code EvidenceCode}, a {@code Confidence}, a {@code Reference},  
 	 * and a supporting text must be provided. 
 	 * 
-	 * @param evidenceCode		The <code>EvidenceCode</code> supporting this assertion.
-	 * @param confidence		The <code>Confidence</code> representing confidence 
+	 * @param evidenceCode		The {@code EvidenceCode} supporting this assertion.
+	 * @param confidence		The {@code Confidence} representing confidence 
 	 * 							in this assertion.
-	 * @param supportingText	A <code>String</code> that is the supporting text 
+	 * @param supportingText	A {@code String} that is the supporting text 
 	 * 							for this assertion.
-	 * @param reference			a <code>Reference</code> where information about 
+	 * @param reference			a {@code Reference} where information about 
 	 * 							this assertion comes from.
 	 */
 	public AssertionSupport(EvidenceCode evidenceCode, Confidence confidence, 
@@ -137,16 +137,16 @@ public class AssertionSupport {
 				Collections.singletonList(reference));
 	}
 	/**
-	 * When instantiating an <code>AssertionSupport</code>, at least an 
-	 * <code>EvidenceCode</code>, a <code>Confidence</code>, a <code>Reference</code>,  
+	 * When instantiating an {@code AssertionSupport}, at least an 
+	 * {@code EvidenceCode}, a {@code Confidence}, a {@code Reference},  
 	 * and a supporting text must be provided. 
 	 * 
-	 * @param evidenceCode		The <code>EvidenceCode</code> supporting this assertion.
-	 * @param confidence		The <code>Confidence</code> representing confidence 
+	 * @param evidenceCode		The {@code EvidenceCode} supporting this assertion.
+	 * @param confidence		The {@code Confidence} representing confidence 
 	 * 							in this assertion.
-	 * @param supportingText	A <code>String</code> that is the supporting text 
+	 * @param supportingText	A {@code String} that is the supporting text 
 	 * 							for this assertion.
-	 * @param references		a <code>Collection</code> of <code>Reference</code>s 
+	 * @param references		a {@code Collection} of {@code Reference}s 
 	 * 							where information about this assertion comes from.
 	 */
 	public AssertionSupport(EvidenceCode evidenceCode, Confidence confidence, 
@@ -159,26 +159,26 @@ public class AssertionSupport {
 	}
 
 	/**
-	 * @return The <code>EvidenceCode</code> supporting this assertion. 
+	 * @return The {@code EvidenceCode} supporting this assertion. 
 	 */
 	public EvidenceCode getEvidenceCode() {
 		return evidenceCode;
 	}
 	/**
-	 * @return The <code>Confidence</code> representing confidence in this assertion.
+	 * @return The {@code Confidence} representing confidence in this assertion.
 	 */
 	public Confidence getConfidence() {
 		return confidence;
 	}
 	/**
-	 * @return	A <code>Collection</code> of <code>Reference</code>s 
+	 * @return	A {@code Collection} of {@code Reference}s 
      * 			where information about this assertion comes from.
 	 */
 	public Collection<Reference> getReferences() {
 		return references;
 	}
 	/**
-	 * @return A <code>String</code> that is the supporting text for this assertion.
+	 * @return A {@code String} that is the supporting text for this assertion.
 	 */
 	public String getSupportingText() {
 		return supportingText;

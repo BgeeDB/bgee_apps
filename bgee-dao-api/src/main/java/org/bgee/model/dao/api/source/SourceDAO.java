@@ -17,10 +17,10 @@ import org.bgee.model.dao.api.exception.DataAccessException;
 public interface SourceDAO 
 {
 	/**
-     * Return all sources used in Bgee as a <code>Collection</code> 
-     * of <code>SourceTO</code>s, retrieved from the data source.
+     * Return all sources used in Bgee as a {@code Collection} 
+     * of {@code SourceTO}s, retrieved from the data source.
      * 
-     * @return 	a <code>Collection</code> of <code>SourceTO</code>, 
+     * @return 	a {@code Collection} of {@code SourceTO}, 
      * 			representing the sources used in Bgee.
      * @throws DataAccessException 	If an error occurred when accessing the data source. 
      */
@@ -28,23 +28,23 @@ public interface SourceDAO
 
 	/**
      * Return sources used in Bgee, that are not used only for xrefs purpose, 
-     * but where some Bgee data actually come from, as a <code>Collection</code> 
-     * of <code>SourceTO</code>s ordered by their <code>categoryId</code>.
+     * but where some Bgee data actually come from, as a {@code Collection} 
+     * of {@code SourceTO}s ordered by their {@code categoryId}.
      * 
-     * @return 	a <code>Collection</code> of <code>SourceTO</code>,  
+     * @return 	a {@code Collection} of {@code SourceTO},  
      * 			representing the sources where some Bgee data actually come from, 
-     * 			order by their <code>categoryId</code>.
+     * 			order by their {@code categoryId}.
      * @throws DataAccessException 	If an error occurred when accessing the data source.
      */
 	public List<TransferObject> getDisplayableDataSources() throws DataAccessException;
 
 	/**
      * Retrieve a data source (e.g., ArrayExpress) by its ID, 
-     * and return it as a <code>SourceTO</code> object.
+     * and return it as a {@code SourceTO} object.
      * 
-     * @param dataSourceId 	a <code>String</code> representing the ID of the data source 
+     * @param dataSourceId 	a {@code String} representing the ID of the data source 
      * 						to retrieve
-     * @return				a <code>SourceTO</code>, corresponding to <code>dataSourceId</code>
+     * @return				a {@code SourceTO}, corresponding to {@code dataSourceId}
      * @throws DataAccessException 	If an error occurred when accessing the data source.
      */
 	public SourceTO getDataSourceById(String dataSourceId) throws DataAccessException;

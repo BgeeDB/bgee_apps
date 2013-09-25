@@ -14,15 +14,15 @@ import org.junit.Test;
  * Class testing the functionalities of 
  * {@link org.bgee.model.BgeeProperties BgeeProperties}. 
  * <p>
- * The test about <b>the loading</b> of <code>BgeeProperties</code> 
+ * The test about <b>the loading</b> of {@code BgeeProperties} 
  * are performed in {@link PropertiesFromFileTest}, {@link PropertiesFromSystemTest}, 
  * and {@link PropertiesMixLoadingTest}.
  * It has to be done in different classes, 
  * as the properties are read only once at class loading, so only once 
- * for a given <code>ClassLoader</code>.
+ * for a given {@code ClassLoader}.
  * <p>
  * This class does not test the loading behavior, it test the actual functionalities 
- * of <code>BgeeProperties</code>. 
+ * of {@code BgeeProperties}. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013
@@ -53,7 +53,7 @@ public class BgeePropertiesTest extends TestAncestor
 	public void shouldGetBgeeProperties() 
 	{
 		/**
-		 * An anonymous class to acquire <code>BgeeProperties</code>s 
+		 * An anonymous class to acquire {@code BgeeProperties}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
@@ -61,7 +61,7 @@ public class BgeePropertiesTest extends TestAncestor
 			public volatile BgeeProperties prop1;
 			public volatile BgeeProperties prop2;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			
@@ -124,7 +124,7 @@ public class BgeePropertiesTest extends TestAncestor
 	public void shouldReleaseBgeeProperties() 
 	{
 		/**
-		 * An anonymous class to acquire <code>BgeeProperties</code>s 
+		 * An anonymous class to acquire {@code BgeeProperties}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
@@ -134,7 +134,7 @@ public class BgeePropertiesTest extends TestAncestor
 			public volatile boolean firstReleaseReturn;
 			public volatile boolean secondReleaseReturn;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			
@@ -210,7 +210,7 @@ public class BgeePropertiesTest extends TestAncestor
 	}
 	
 	/**
-	 * A really simple test of the setters of <code>BgeeProperties</code>.
+	 * A really simple test of the setters of {@code BgeeProperties}.
 	 */
 	@Test
 	public void shouldUseSetters()

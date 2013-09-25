@@ -16,12 +16,12 @@ import org.bgee.model.expressiondata.querytools.filters.CallFilter;
 
 /**
  * This class is extended by query tools, and is responsible for retrieving 
- * raw expression calls using <code>DAO</code>s. The reason why this class 
- * is <code>package-private</code>, and is not a query tool on its own, 
- * is that it will return <code>TransferObject</code>s from the <code>bgee-dao-api</code> 
+ * raw expression calls using {@code DAO}s. The reason why this class 
+ * is {@code package-private}, and is not a query tool on its own, 
+ * is that it will return {@code TransferObject}s from the {@code bgee-dao-api} 
  * modules, and we do not want to expose such classes to the public API. These 
- * <code>TransferObject</code>s will be processed by the child classes, and only 
- * processed results using classes from the <code>bgee-core</code> module 
+ * {@code TransferObject}s will be processed by the child classes, and only 
+ * processed results using classes from the {@code bgee-core} module 
  * will be exposed. 
  * 
  * @author Frederic Bastian
@@ -44,21 +44,21 @@ abstract class ExpressionQuery extends QueryTool {
     
     /**
 	 * Aggregates as much as possible the {@link CallFilter}s associated with 
-	 * the <code>Entity</code>s. It tries to merge all <code>CallFilter</code>s, 
-	 * whether they are associated with a same <code>Entity</code>, or different 
-	 * <code>Entity</code>s. The result will be that a <code>CallFilter</code> 
-	 * could be associated with several <code>Entity</code>s. This methods returns 
-	 * a <code>Map</code> where keys are <code>CallFilter</code>s merged as much 
-	 * as possible, and associated values are <code>Collection</code>s of 
-	 * <code>Entity</code>s. The aim is to be able afterwards to obtain the data 
-	 * from a <code>DAO</code> as easily as possible. 
+	 * the {@code Entity}s. It tries to merge all {@code CallFilter}s, 
+	 * whether they are associated with a same {@code Entity}, or different 
+	 * {@code Entity}s. The result will be that a {@code CallFilter} 
+	 * could be associated with several {@code Entity}s. This methods returns 
+	 * a {@code Map} where keys are {@code CallFilter}s merged as much 
+	 * as possible, and associated values are {@code Collection}s of 
+	 * {@code Entity}s. The aim is to be able afterwards to obtain the data 
+	 * from a {@code DAO} as easily as possible. 
 	 * 
-	 * @param entitiesWithFilters  a <code>Map</code> associating <code>Entity</code>s 
-	 *                             to a <code>Collection</code> of <code>CallFilter</code>s.
-	 * @return     A <code>Map</code> where keys are <code>CallFilter</code>s that 
+	 * @param entitiesWithFilters  a {@code Map} associating {@code Entity}s 
+	 *                             to a {@code Collection} of {@code CallFilter}s.
+	 * @return     A {@code Map} where keys are {@code CallFilter}s that 
 	 *             were merged as much as possible, associated with their related 
-	 *             <code>Entity</code>s.
-	 * @param T    The precise type of <code>Entity</code> used.
+	 *             {@code Entity}s.
+	 * @param T    The precise type of {@code Entity} used.
 	 */
 	protected <T extends Entity> Map<CallFilter, Set<T>> aggregateCallFilters(
 	        Map<T, Collection<CallFilter>> entitiesWithFilters) {

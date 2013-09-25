@@ -8,7 +8,7 @@
  * <li>The class extending {@link org.bgee.model.expressiondata.rawdata.CallSource 
  * CallSource} is {@link EST}. 
  * <p>
- * As of Bgee 13, EST data are used to generate calls <code>EXPRESSION</code> only.
+ * As of Bgee 13, EST data are used to generate calls {@code EXPRESSION} only.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

@@ -24,11 +24,11 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 
 /**
- * Abstraction layer to use a <code>java.sql.PreparedStatement</code>. 
+ * Abstraction layer to use a {@code java.sql.PreparedStatement}. 
  * <p>
  * This abstraction is needed to implement, for instance, 
  * methods defined by the JDBC 4.1 interfaces, but not yet implemented 
- * in the <code>Driver</code> used. 
+ * in the {@code Driver} used. 
  * 
  * @author Frederic Bastian
  * @author Mathieu Seppey
@@ -38,24 +38,24 @@ import java.util.Calendar;
 public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
 {
     /**
-     * The <code>BgeeConnection</code> that was used 
-     * to obtain this <code>BgeePreparedStatement</code>.
+     * The {@code BgeeConnection} that was used 
+     * to obtain this {@code BgeePreparedStatement}.
      * Used for notification purpose. 
      */
     private final BgeeConnection bgeeConnection;
     /**
-     * The real <code>java.sql.PreparedStatement</code> that this class wraps.
+     * The real {@code java.sql.PreparedStatement} that this class wraps.
      */
     private final PreparedStatement realPreparedStatement;
     /**
-     * A <code>String</code> that represents the unique 
-     * <code>BgeePreparedStatement</code> identification
+     * A {@code String} that represents the unique 
+     * {@code BgeePreparedStatement} identification
      */
     private final String id;
     /**
      * Default constructor, should not be used. 
      * Constructor protected, so that only a {@link BgeeConnection} can provide 
-     * a <code>BgeePreparedStatement</code>.
+     * a {@code BgeePreparedStatement}.
      * @throws SQLException 
      */
     protected BgeePreparedStatement() throws SQLException 
@@ -63,22 +63,22 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
         this(null, null,null);
     }
     /**
-     * Constructor used to provide the real <code>java.sql.PreparedStatement</code> 
-     * that this class wraps, and the <code>BgeeConnection</code> used to obtain 
-     * this <code>BgeePreparedStatement</code>, for notification purpose.
+     * Constructor used to provide the real {@code java.sql.PreparedStatement} 
+     * that this class wraps, and the {@code BgeeConnection} used to obtain 
+     * this {@code BgeePreparedStatement}, for notification purpose.
      * <p>
      * Constructor protected, so that only a {@link BgeeConnection} can provide 
-     * a <code>BgeePreparedStatement</code>.
+     * a {@code BgeePreparedStatement}.
      *  
-     * @param id                        A <code>String</code> that represent the unique id
-     *                                  of the <code>BgeePreparedStatement</code>. It has
+     * @param id                        A {@code String} that represent the unique id
+     *                                  of the {@code BgeePreparedStatement}. It has
      *                                  to be the hashed sql passed to the real
-     *                                  <code>PreparedStatement</code>
+     *                                  {@code PreparedStatement}
      * 
-     * @param connection				The <code>BgeeConnection</code> that was used 
-     * 									to obtain this <code>BgeePreparedStatement</code>.
+     * @param connection				The {@code BgeeConnection} that was used 
+     * 									to obtain this {@code BgeePreparedStatement}.
      *
-     * @param realPreparedStatement     The <code>java.sql.PreparedStatement</code> 
+     * @param realPreparedStatement     The {@code java.sql.PreparedStatement} 
      *                                  that this class wraps
      *                                                         
      */
@@ -103,16 +103,16 @@ public class BgeePreparedStatement implements PreparedStatement, AutoCloseable
         return realPreparedStatement;
     }
     /**
-     * @return A <code>String</code> that represents the unique 
-     * <code>BgeePreparedStatement</code> identification
+     * @return A {@code String} that represents the unique 
+     * {@code BgeePreparedStatement} identification
      */
     protected String getId(){
         return this.id;
     }
     /**
-     * This method put back the <code>BgeePreparedStatement</code>
+     * This method put back the {@code BgeePreparedStatement}
      * in the PreparedStatement Pool
-     * instead of actually closing it and the underlying real <code>PreparedStatement</code>.
+     * instead of actually closing it and the underlying real {@code PreparedStatement}.
      * 
      * It clears the parameters of the statement before, 
      * 

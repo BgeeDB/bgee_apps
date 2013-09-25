@@ -15,7 +15,7 @@ import org.junit.Test;
  * {@link org.bgee.model.BgeeProperties#releaseAll() BgeeProperties.releaseAll()}.
  * <p>
  * The reason why this test should go into a dedicated class is that after a call 
- * to <code>releaseAll</code>, no BgeeProperties could be obtained anymore for other tests.
+ * to {@code releaseAll}, no BgeeProperties could be obtained anymore for other tests.
  * 
  * @author Frederic Bastian
  * @version Bgee 13, Mar 2013
@@ -46,7 +46,7 @@ public class ReleaseAllTest extends TestAncestor
 	public void shouldReleaseAllBgeeProperties() 
 	{
 		/**
-		 * An anonymous class to acquire <code>BgeeProperties</code>s 
+		 * An anonymous class to acquire {@code BgeeProperties}s 
 		 * from a different thread than this one, 
 		 * and to be run alternatively to the main thread.
 		 */
@@ -54,7 +54,7 @@ public class ReleaseAllTest extends TestAncestor
 			public BgeeProperties prop1;
 			public boolean exceptionThrown = false;
 			/**
-			 * An <code>Exchanger</code> that will be used to run threads alternatively. 
+			 * An {@code Exchanger} that will be used to run threads alternatively. 
 			 */
 			public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
 			

@@ -15,26 +15,26 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary.RNASeqLibraryT
  * This class allows to perform filtering of query results based on 
  * source raw data, such as RNA-Seq experiment IDs, or Affymetrix chip IDs, 
  * or Affymetrix chip quality scores, or RNA-Seq platform IDs, ... 
- * This <code>Filter</code> can either be used alone, completely disconnected 
+ * This {@code Filter} can either be used alone, completely disconnected 
  * from the expression data calls generated (for instance to retrieve the 
- * <code>Gene</code>s present on a specific <code>AffymetrixChip</code>, 
- * or the <code>AnatEntity</code>s studied in a specific <code>RNASeqExp</code>); 
+ * {@code Gene}s present on a specific {@code AffymetrixChip}, 
+ * or the {@code AnatEntity}s studied in a specific {@code RNASeqExp}); 
  * or it can be used as part of a {@link CompositeCallFilter}, 
  * allowing to re-compute expression data calls using only a subset of 
- * the source raw data in Bgee, filtered thanks to a <code>RawDataFilter</code>. 
+ * the source raw data in Bgee, filtered thanks to a {@code RawDataFilter}. 
  * <p>
  * The parameters of this class are more coupled with the data in the data source 
  * than with the classes of this application. This is why it is so closed to 
  * {@link org.bgee.model.expressiondata.rawdata.AnyRawDataHolder}, yet different, 
  * so that a different class is needed.
  * <p>
- * Of note, this class implements the methods <code>equals</code> and 
- * <code>hashCode</code> for convenience, but as its attributes are not <code>final</code> 
+ * Of note, this class implements the methods {@code equals} and 
+ * {@code hashCode} for convenience, but as its attributes are not {@code final} 
  * and are modifiable, extra care should be taken if using this class 
- * in a <code>Set</code>. Notably, no modifications should be made to the attributes 
- * of an instance of this class if it is contained in a <code>Set</code> 
- * (or as key in a <code>Map</code>, anything relying on <code>equals</code> and 
- * <code>hashCode</code>).
+ * in a {@code Set}. Notably, no modifications should be made to the attributes 
+ * of an instance of this class if it is contained in a {@code Set} 
+ * (or as key in a {@code Map}, anything relying on {@code equals} and 
+ * {@code hashCode}).
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -47,7 +47,7 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary.RNASeqLibraryT
  */
 public class RawDataFilter implements Filter {
 	/**
-	 * <code>Logger</code> of the class. 
+	 * {@code Logger} of the class. 
 	 */
 	private final static Logger log = LogManager.getLogger(RawDataFilter.class.getName());
 	
@@ -309,11 +309,11 @@ public class RawDataFilter implements Filter {
 	//  EST DATA
 	//**********************************
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter ESTs based on their IDs.
+	 * A {@code Set} of {@code String}s to filter ESTs based on their IDs.
 	 */
 	private final Set<String> estIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of ESTs to use.
+	 * Get the {@code Set} of {@code String}s defining the IDs of ESTs to use.
 	 * 
 	 * @return the IDs of allowed ESTs to used.
 	 */
@@ -321,7 +321,7 @@ public class RawDataFilter implements Filter {
 		return estIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of ESTs to use.
 	 * 
 	 * @param estId 	the ID of an allowed EST
@@ -331,8 +331,8 @@ public class RawDataFilter implements Filter {
 		this.estIds.add(estId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of ESTs to use.
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of ESTs to use.
 	 * 
 	 * @param estIds 	the IDs of some allowed ESTs
 	 * @see #getESTIds()
@@ -342,12 +342,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter EST libraries 
+	 * A {@code Set} of {@code String}s to filter EST libraries 
 	 * based on their IDs.
 	 */
 	private final Set<String> estLibraryIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * EST libraries to use.
 	 * 
 	 * @return the IDs of allowed EST libraries to used.
@@ -356,7 +356,7 @@ public class RawDataFilter implements Filter {
 		return estLibraryIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of EST libraries to use.
 	 * 
 	 * @param estLibraryId 	the ID of an allowed EST library
@@ -366,8 +366,8 @@ public class RawDataFilter implements Filter {
 		this.estLibraryIds.add(estLibraryId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * EST libraries to use.
 	 * 
 	 * @param estLibraryIds 	the IDs of some allowed EST libraries
@@ -380,11 +380,11 @@ public class RawDataFilter implements Filter {
 	//  AFFYMETRIX DATA
 	//**********************************
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter probesets based on their IDs.
+	 * A {@code Set} of {@code String}s to filter probesets based on their IDs.
 	 */
 	private final Set<String> affymetrixProbesetIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * Affymetrix probesets to use.
 	 * 
 	 * @return the IDs of allowed Affymetrix probesets to used.
@@ -393,7 +393,7 @@ public class RawDataFilter implements Filter {
 		return this.affymetrixProbesetIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of Affymetrix probesets to use.
 	 * 
 	 * @param affymetrixProbesetId 	the ID of an allowed Affymetrix probeset
@@ -403,8 +403,8 @@ public class RawDataFilter implements Filter {
 		this.affymetrixProbesetIds.add(affymetrixProbesetId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * Affymetrix probesets to use.
 	 * 
 	 * @param affymetrixProbesetIds	the IDs of some allowed Affymetrix probesets
@@ -415,13 +415,13 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s defining the chip type IDs (for instance, 
+	 * A {@code Set} of {@code String}s defining the chip type IDs (for instance, 
 	 * 'A-AFFY-15') of chips to use. There is no corresponding class in the application.
 	 * Each chip type ID corresponds to one CDF name (see {@link #affymetrixCdfNames}).
 	 */
 	private final Set<String> affymetrixChipTypeIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * Affymetrix chip types to use (for instance, 'A-AFFY-15').
 	 * 
 	 * @return the IDs of allowed Affymetrix chip types to used.
@@ -430,7 +430,7 @@ public class RawDataFilter implements Filter {
 		return this.affymetrixChipTypeIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of Affymetrix chip types to use.
 	 * 
 	 * @param chipTypeId 	the ID of an allowed Affymetrix chip type
@@ -440,8 +440,8 @@ public class RawDataFilter implements Filter {
 		this.affymetrixChipTypeIds.add(chipTypeId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * Affymetrix chip types to use.
 	 * 
 	 * @param chipTypeIds	the IDs of some allowed Affymetrix chip types
@@ -452,13 +452,13 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s defining the CDF names (for instance, 
+	 * A {@code Set} of {@code String}s defining the CDF names (for instance, 
 	 * 'HG_U95Av2') of chips to use. There is no corresponding class in the application. 
 	 * Each CDF name corresponds to one chip type ID (see {@link #affymetrixChipTypeIds}).
 	 */
 	private final Set<String> affymetrixCdfNames;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the allowed 
+	 * Get the {@code Set} of {@code String}s defining the allowed 
 	 * CDF names of Affymetrix chips to use (for instance, 'HG_U95Av2').
 	 * 
 	 * @return the allowed CDF names of Affymetrix chips to used.
@@ -467,7 +467,7 @@ public class RawDataFilter implements Filter {
 		return this.affymetrixCdfNames;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the allowed CDF names of Affymetrix chips to use.
 	 * 
 	 * @param cdfName 	an allowed CDF name of Affymetrix chips to use
@@ -477,8 +477,8 @@ public class RawDataFilter implements Filter {
 		this.affymetrixCdfNames.add(cdfName);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the allowed CDF names  
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the allowed CDF names  
 	 * of Affymetrix chips to use.
 	 * 
 	 * @param cdfNames	some allowed CDF names of Affymetrix chips to use
@@ -489,24 +489,24 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>float</code> defining the minimum arIQR score of chips to use. 
+	 * A {@code float} defining the minimum arIQR score of chips to use. 
 	 * See also {@link #affymetrixMinPercentPresent} for another quality score. 
 	 */
 	private float affymetrixMinQualScore;
 	/**
-	 * Get the <code>float</code> defining the minimum arIQR score of chips to use. 
+	 * Get the {@code float} defining the minimum arIQR score of chips to use. 
 	 * See also {@link #getAffymetrixMinPercentPresent()} for another quality score. 
 	 *
-	 * @return a <code>float</code> being the minimum allowed arIQR score.
+	 * @return a {@code float} being the minimum allowed arIQR score.
 	 */
 	public float getAffymetrixMinQualScore() {
 		return this.affymetrixMinQualScore;
 	}
 	/**
-	 * Set the <code>float</code> defining the minimum arIQR score of chips to use. 
+	 * Set the {@code float} defining the minimum arIQR score of chips to use. 
 	 * See also {@link #setAffymetrixMinPercentPresent(float)} for another quality score. 
 	 * 
-	 * @param affymetrixMinQualScore 	the <code>float</code> being the minimum allowed 
+	 * @param affymetrixMinQualScore 	the {@code float} being the minimum allowed 
 	 * 									arIQR score.
 	 */
 	public void setAffymetrixMinQualScore(float affymetrixMinQualScore) {
@@ -514,31 +514,31 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>float</code> defining the minimum percentage of probesets identified 
+	 * A {@code float} defining the minimum percentage of probesets identified 
 	 * as 'present' by MAS5 on chips to use (a quality score, as 
 	 * {@link #affymetrixMinQualScore}). 
 	 */
 	private float affymetrixMinPercentPresent;
 	/**
-	 * Get the <code>float</code> defining the minimum percentage of probesets 
+	 * Get the {@code float} defining the minimum percentage of probesets 
 	 * identified as 'present' by MAS5 on chips to use (a quality score, as 
 	 * {@link #getAffymetrixMinQualScore()}). 
 	 * 
-	 * @return 	a <code>float</code> being the minimum allowed percentage of probesets 
+	 * @return 	a {@code float} being the minimum allowed percentage of probesets 
 	 * 			identified as 'present' by MAS5.
 	 */
 	public float getAffymetrixMinPercentPresent() {
 		return affymetrixMinPercentPresent;
 	}
 	/**
-	 * Set the <code>float</code> defining the minimum percentage of probesets 
+	 * Set the {@code float} defining the minimum percentage of probesets 
 	 * identified as 'present' by MAS5 on chips to use (a quality score, as 
 	 * {@link #setAffymetrixMinQualScore(float)}). 
 	 * 
-	 * @param minPercentPresent			 	a <code>float</code> being the minimum 
+	 * @param minPercentPresent			 	a {@code float} being the minimum 
 	 * 										allowed percentage of probesets identified 
 	 * 										as 'present' by MAS5.
-	 * @throws IllegalArgumentException 	If <code>affymetrixMinPercentPresent</code> 
+	 * @throws IllegalArgumentException 	If {@code affymetrixMinPercentPresent} 
 	 * 										is less than 0 or greater than 1. 
 	 */
 	public void setAffymetrixMinPercentPresent(float minPercentPresent) 
@@ -553,12 +553,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>AffymetrixDetectionType</code>s defining 
+	 * A {@code Set} of {@code AffymetrixDetectionType}s defining 
 	 * the requested detection types (MAS5, Schuster method, ...) of chips to use. 
 	 */
 	private final Set<AffymetrixDetectionType> affymetrixDetectionTypes;
 	/**
-	 * Get the <code>Set</code> of <code>AffymetrixDetectionType</code>s defining 
+	 * Get the {@code Set} of {@code AffymetrixDetectionType}s defining 
 	 * the requested detection types of Affymetrix chips to use. 
 	 * 
 	 * @return the requested Affymetrix detection types to used.
@@ -567,8 +567,8 @@ public class RawDataFilter implements Filter {
 		return this.affymetrixDetectionTypes;
 	}
 	/**
-	 * Add a <code>AffymetrixDetectionType</code> to the <code>Set</code> of 
-	 * <code>AffymetrixDetectionType</code>s defining the requested detection types 
+	 * Add a {@code AffymetrixDetectionType} to the {@code Set} of 
+	 * {@code AffymetrixDetectionType}s defining the requested detection types 
 	 * of Affymetrix chips to use. 
 	 * 
 	 * @param chipType 	an allowed Affymetrix detection type
@@ -578,8 +578,8 @@ public class RawDataFilter implements Filter {
 		this.affymetrixDetectionTypes.add(chipType);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>AffymetrixDetectionType</code>s 
-	 * to the <code>Set</code> of <code>AffymetrixDetectionType</code>s defining 
+	 * Add a {@code Collection} of {@code AffymetrixDetectionType}s 
+	 * to the {@code Set} of {@code AffymetrixDetectionType}s defining 
 	 * the requested detection types of Affymetrix chips to use. 
 	 * 
 	 * @param chipTypes	some allowed Affymetrix detection types.
@@ -590,12 +590,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>AffymetrixNormalizationType</code>s defining 
+	 * A {@code Set} of {@code AffymetrixNormalizationType}s defining 
 	 * the requested normalization methods (MAS5, GCRMA, ...) of chips to use. 
 	 */
 	private final Set<AffymetrixNormalizationType> affymetrixNormalizationTypes;
 	/**
-	 * Get the <code>Set</code> of <code>AffymetrixNormalizationType</code>s defining 
+	 * Get the {@code Set} of {@code AffymetrixNormalizationType}s defining 
 	 * the requested normalization types of Affymetrix chips to use. 
 	 * 
 	 * @return the requested Affymetrix normalization types to used.
@@ -604,8 +604,8 @@ public class RawDataFilter implements Filter {
 		return this.affymetrixNormalizationTypes;
 	}
 	/**
-	 * Add a <code>AffymetrixNormalizationType</code> to the <code>Set</code> of 
-	 * <code>AffymetrixNormalizationType</code>s defining the requested normalization types 
+	 * Add a {@code AffymetrixNormalizationType} to the {@code Set} of 
+	 * {@code AffymetrixNormalizationType}s defining the requested normalization types 
 	 * of Affymetrix chips to use. 
 	 * 
 	 * @param normalizationType 	an allowed Affymetrix normalization type
@@ -615,8 +615,8 @@ public class RawDataFilter implements Filter {
 		this.affymetrixNormalizationTypes.add(normalizationType);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>AffymetrixNormalizationType</code>s 
-	 * to the <code>Set</code> of <code>AffymetrixNormalizationType</code>s defining 
+	 * Add a {@code Collection} of {@code AffymetrixNormalizationType}s 
+	 * to the {@code Set} of {@code AffymetrixNormalizationType}s defining 
 	 * the requested normalization types of Affymetrix chips to use. 
 	 * 
 	 * @param normalizationTypes	some allowed Affymetrix normalization types.
@@ -628,12 +628,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter Affymetrix chips 
+	 * A {@code Set} of {@code String}s to filter Affymetrix chips 
 	 * based on their IDs.
 	 */
 	private final Set<String> affymetrixChipIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * Affymetrix chips to use. Note that these IDs are not unique over 
 	 * different Affymetrix experiments, so you should also set restrictions 
 	 * on Affymetrix experiment IDs (see {@link #getAffymetrixExpIds()}).
@@ -644,7 +644,7 @@ public class RawDataFilter implements Filter {
 		return this.affymetrixChipIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of Affymetrix chips to use. 
 	 * Note that these IDs are not unique over 
 	 * different Affymetrix experiments, so you should also set restrictions 
@@ -657,8 +657,8 @@ public class RawDataFilter implements Filter {
 		this.affymetrixChipIds.add(chipId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * the Affymetrix chips to use. Note that these IDs are not unique over 
 	 * different Affymetrix experiments, so you should also set restrictions 
 	 * on Affymetrix experiment IDs (see {@link #addAffymetrixExpIds(Collection)}).
@@ -671,12 +671,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter Affymetrix experiments 
+	 * A {@code Set} of {@code String}s to filter Affymetrix experiments 
 	 * based on their IDs.
 	 */
 	private final Set<String> affymetrixExpIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * Affymetrix experiments to use.
 	 * 
 	 * @return the IDs of the allowed Affymetrix experiments to used.
@@ -685,7 +685,7 @@ public class RawDataFilter implements Filter {
 		return this.affymetrixExpIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of Affymetrix experiments to use.
 	 * 
 	 * @param expId 	the ID of an allowed Affymetrix experiment
@@ -695,8 +695,8 @@ public class RawDataFilter implements Filter {
 		this.affymetrixExpIds.add(expId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * Affymetrix experiments to use.
 	 * 
 	 * @param expIds	the IDs of some allowed Affymetrix experiments
@@ -710,12 +710,12 @@ public class RawDataFilter implements Filter {
 	//  IN SITU DATA
 	//**********************************
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter in situ spots 
+	 * A {@code Set} of {@code String}s to filter in situ spots 
 	 * based on their IDs.
 	 */
 	private final Set<String> inSituSpotIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * in situ spots to use.
 	 * 
 	 * @return the IDs of the allowed in situ spots to used.
@@ -724,7 +724,7 @@ public class RawDataFilter implements Filter {
 		return this.inSituSpotIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of in situ spots to use.
 	 * 
 	 * @param spotId 	the ID of an allowed in situ spot
@@ -734,8 +734,8 @@ public class RawDataFilter implements Filter {
 		this.inSituSpotIds.add(spotId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * in situ spots to use.
 	 * 
 	 * @param spotIds	the IDs of some allowed in situ spots
@@ -746,12 +746,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter in situ evidences 
+	 * A {@code Set} of {@code String}s to filter in situ evidences 
 	 * based on their IDs.
 	 */
 	private final Set<String> inSituEvidenceIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * in situ evidences to use.
 	 * 
 	 * @return the IDs of the allowed in situ evidences to used.
@@ -760,7 +760,7 @@ public class RawDataFilter implements Filter {
 		return this.inSituEvidenceIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of in situ evidences to use.
 	 * 
 	 * @param evidenceId 	the ID of an allowed in situ evidence
@@ -770,8 +770,8 @@ public class RawDataFilter implements Filter {
 		this.inSituEvidenceIds.add(evidenceId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * in situ evidences to use.
 	 * 
 	 * @param evidenceIds	the IDs of some allowed in situ evidences
@@ -782,12 +782,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter in situ experiments 
+	 * A {@code Set} of {@code String}s to filter in situ experiments 
 	 * based on their IDs.
 	 */
 	private final Set<String> inSituExpIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * in situ experiments to use.
 	 * 
 	 * @return the IDs of the allowed in situ experiments to used.
@@ -796,7 +796,7 @@ public class RawDataFilter implements Filter {
 		return this.inSituExpIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of in situ experiments to use.
 	 * 
 	 * @param expId 	the ID of an allowed in situ experiment
@@ -806,8 +806,8 @@ public class RawDataFilter implements Filter {
 		this.inSituExpIds.add(expId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * in situ experiments to use.
 	 * 
 	 * @param expIds	the IDs of some allowed in situ experiments
@@ -821,12 +821,12 @@ public class RawDataFilter implements Filter {
 	//  RNA-SEQ DATA
 	//**********************************
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter data based on 
+	 * A {@code Set} of {@code String}s to filter data based on 
 	 * the RNA-Seq run IDs. There is no corresponding class in this application.
 	 */
 	private final Set<String> rnaSeqRunIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * RNA-Seq runs to use.
 	 * 
 	 * @return the IDs of the allowed RNA-Seq runs to used.
@@ -835,7 +835,7 @@ public class RawDataFilter implements Filter {
 		return this.rnaSeqRunIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of RNA-Seq runs to use.
 	 * 
 	 * @param runId 	the ID of an allowed RNA-Seq run
@@ -845,8 +845,8 @@ public class RawDataFilter implements Filter {
 		this.rnaSeqRunIds.add(runId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * RNA-Seq runs to use.
 	 * 
 	 * @param runIds	the IDs of some allowed RNA-Seq runs
@@ -857,12 +857,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s defining the RNA-Seq platform IDs 
+	 * A {@code Set} of {@code String}s defining the RNA-Seq platform IDs 
 	 * of data to use. There is no corresponding class in this application.
 	 */
 	private final Set<String> rnaSeqPlatformIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * RNA-Seq platforms to use.
 	 * 
 	 * @return the IDs of the allowed RNA-Seq platforms to used.
@@ -871,7 +871,7 @@ public class RawDataFilter implements Filter {
 		return this.rnaSeqPlatformIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of RNA-Seq platforms to use.
 	 * 
 	 * @param platformId 	the ID of an allowed RNA-Seq platform
@@ -881,8 +881,8 @@ public class RawDataFilter implements Filter {
 		this.rnaSeqPlatformIds.add(platformId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * RNA-Seq platforms to use.
 	 * 
 	 * @param platformIds	the IDs of some allowed RNA-Seq platforms
@@ -893,29 +893,29 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>float</code> defining the minimum percentage of genes identified 
+	 * A {@code float} defining the minimum percentage of genes identified 
 	 * as 'expressed' in RNA-Seq libraries to use (amongst all genes: 
 	 * protein-coding, etc).
 	 */
 	private float rnaSeqMinPercentPresent;
 	/**
-	 * Get the <code>float</code> defining the minimum percentage of genes identified 
+	 * Get the {@code float} defining the minimum percentage of genes identified 
 	 * as 'present' in RNA-Seq libraries to use (amongst all genes: protein-coding, etc).
 	 * 
-	 * @return 	a <code>float</code> being the minimum allowed percentage of genes identified 
+	 * @return 	a {@code float} being the minimum allowed percentage of genes identified 
 	 * 			as 'expressed' in RNA-Seq libraries to use.
 	 */
 	public float getRNASeqMinPercentPresent() {
 		return rnaSeqMinPercentPresent;
 	}
 	/**
-	 * Set the <code>float</code> defining the minimum percentage of genes identified 
+	 * Set the {@code float} defining the minimum percentage of genes identified 
 	 * as 'present' in RNA-Seq libraries to use (amongst all genes: protein-coding, etc).
 	 * 
-	 * @param rnaSeqMinPercentPresent 	a <code>float</code> being the minimum allowed 
+	 * @param rnaSeqMinPercentPresent 	a {@code float} being the minimum allowed 
 	 * 									percentage of genes identified as 'expressed' 
 	 * 									in RNA-Seq libraries to use.
-	 * @throws IllegalArgumentException 	If <code>rnaSeqMinPercentPresent</code> 
+	 * @throws IllegalArgumentException 	If {@code rnaSeqMinPercentPresent} 
 	 * 										is less than 0 or greater than 1. 
 	 */
 	public void setRNASeqMinPercentPresent(float rnaSeqMinPercentPresent) {
@@ -927,25 +927,25 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * An <code>int</code> defining the minimum count of reads aligned 
+	 * An {@code int} defining the minimum count of reads aligned 
 	 * of RNA-Seq libraries to use. 
 	 */
 	private int rnaSeqMinAlignedReadCount;
 	/**
-	 * Get the <code>int</code> defining the minimum count of reads aligned 
+	 * Get the {@code int} defining the minimum count of reads aligned 
 	 * of RNA-Seq libraries to use.
 	 * 
-	 * @return 	an <code>int</code> being the minimum count of reads aligned 
+	 * @return 	an {@code int} being the minimum count of reads aligned 
 	 * 			of RNA-Seq libraries to use.
 	 */
 	public int getRNASeqMinAlignedReadCount() {
 		return rnaSeqMinAlignedReadCount;
 	}
 	/**
-	 * Set the <code>int</code> defining the minimum count of reads aligned 
+	 * Set the {@code int} defining the minimum count of reads aligned 
 	 * of RNA-Seq libraries to use.
 	 * 
-	 * @param minAlignedReadCount 	An <code>int</code> being the minimum 
+	 * @param minAlignedReadCount 	An {@code int} being the minimum 
 	 * 								count of reads aligned of RNA-Seq libraries 
 	 * 								to use.
 	 */
@@ -954,25 +954,25 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * An <code>int</code> defining the minimum length of reads 
+	 * An {@code int} defining the minimum length of reads 
 	 * of RNA-Seq libraries to use. 
 	 */
 	private int rnaSeqMinReadLength;
 	/**
-	 * Get the <code>int</code> defining the minimum read length of RNA-Seq libraries 
+	 * Get the {@code int} defining the minimum read length of RNA-Seq libraries 
 	 * to use. 
 	 * 
-	 * @return 	the <code>int</code> being the minimum read length of RNA-Seq 
+	 * @return 	the {@code int} being the minimum read length of RNA-Seq 
 	 * 			libraries to use.
 	 */
 	public int getRNASeqMinReadLength() {
 		return rnaSeqMinReadLength;
 	}
 	/**
-	 * Set the <code>int</code> defining the minimum read length of RNA-Seq libraries 
+	 * Set the {@code int} defining the minimum read length of RNA-Seq libraries 
 	 * to use.
 	 * 
-	 * @param rnaSeqMinReadLength 	the <code>int</code> being the minimum read length 
+	 * @param rnaSeqMinReadLength 	the {@code int} being the minimum read length 
 	 * 								of RNA-Seq libraries to use.
 	 */
 	public void setRNASeqMinReadLength(int rnaSeqMinReadLength) {
@@ -980,12 +980,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>RNASeqLibraryType</code>s defining 
+	 * A {@code Set} of {@code RNASeqLibraryType}s defining 
 	 * the allowed types of RNA-Seq libraries to use. 
 	 */
 	private final Set<RNASeqLibraryType> rnaSeqLibraryTypes;
 	/**
-	 * Get the <code>Set</code> of <code>RNASeqLibraryType</code>s defining 
+	 * Get the {@code Set} of {@code RNASeqLibraryType}s defining 
 	 * the requested types of RNA-Seq libraries to use. 
 	 * 
 	 * @return the requested RNA-Seq library types to used.
@@ -994,8 +994,8 @@ public class RawDataFilter implements Filter {
 		return this.rnaSeqLibraryTypes;
 	}
 	/**
-	 * Add a <code>RNASeqLibraryType</code> to the <code>Set</code> of 
-	 * <code>RNASeqLibraryType</code>s defining the requested types 
+	 * Add a {@code RNASeqLibraryType} to the {@code Set} of 
+	 * {@code RNASeqLibraryType}s defining the requested types 
 	 * of RNA-Seq libraries to use. 
 	 * 
 	 * @param libraryType 	an allowed RNA-Seq library type
@@ -1005,8 +1005,8 @@ public class RawDataFilter implements Filter {
 		this.rnaSeqLibraryTypes.add(libraryType);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>RNASeqLibraryType</code>s 
-	 * to the <code>Set</code> of <code>RNASeqLibraryType</code>s defining 
+	 * Add a {@code Collection} of {@code RNASeqLibraryType}s 
+	 * to the {@code Set} of {@code RNASeqLibraryType}s defining 
 	 * the requested types of RNA-Seq libraries to use. 
 	 * 
 	 * @param libraryTypes	some allowed RNA-Seq library types.
@@ -1017,12 +1017,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter RNA-Seq libraries 
+	 * A {@code Set} of {@code String}s to filter RNA-Seq libraries 
 	 * based on their IDs.
 	 */
 	private final Set<String> rnaSeqLibraryIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * RNA-Seq libraries to use.
 	 * 
 	 * @return the IDs of the allowed RNA-Seq libraries to used.
@@ -1031,7 +1031,7 @@ public class RawDataFilter implements Filter {
 		return this.rnaSeqLibraryIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of RNA-Seq libraries to use.
 	 * 
 	 * @param libId 	the ID of an allowed RNA-Seq library
@@ -1041,8 +1041,8 @@ public class RawDataFilter implements Filter {
 		this.rnaSeqLibraryIds.add(libId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * RNA-Seq libraries to use.
 	 * 
 	 * @param libIds	the IDs of some allowed RNA-Seq libraries
@@ -1053,12 +1053,12 @@ public class RawDataFilter implements Filter {
 	}
 	
 	/**
-	 * A <code>Set</code> of <code>String</code>s to filter RNA-Seq experiments 
+	 * A {@code Set} of {@code String}s to filter RNA-Seq experiments 
 	 * based on their IDs.
 	 */
 	private final Set<String> rnaSeqExpIds;
 	/**
-	 * Get the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Get the {@code Set} of {@code String}s defining the IDs of 
 	 * RNA-Seq experiments to use.
 	 * 
 	 * @return the IDs of the allowed RNA-Seq experiments to used.
@@ -1067,7 +1067,7 @@ public class RawDataFilter implements Filter {
 		return this.rnaSeqExpIds;
 	}
 	/**
-	 * Add a <code>String</code> to the <code>Set</code> of <code>String</code>s 
+	 * Add a {@code String} to the {@code Set} of {@code String}s 
 	 * defining the IDs of RNA-Seq experiments to use.
 	 * 
 	 * @param expId 	the ID of an allowed RNA-Seq experiment
@@ -1077,8 +1077,8 @@ public class RawDataFilter implements Filter {
 		this.rnaSeqExpIds.add(expId);
 	}
 	/**
-	 * Add a <code>Collection</code> of <code>String</code>s 
-	 * to the <code>Set</code> of <code>String</code>s defining the IDs of 
+	 * Add a {@code Collection} of {@code String}s 
+	 * to the {@code Set} of {@code String}s defining the IDs of 
 	 * RNA-Seq experiments to use.
 	 * 
 	 * @param expIds	the IDs of some allowed RNA-Seq experiments

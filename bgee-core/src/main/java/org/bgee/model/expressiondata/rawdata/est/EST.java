@@ -5,9 +5,9 @@ import org.bgee.model.expressiondata.rawdata.CallSourceRawData;
 
 /**
  * Class related to expressed sequence tags. 
- * Is contained by a <code>ESTLibrary</code>. 
+ * Is contained by a {@code ESTLibrary}. 
  * Hold expression data for a gene 
- * (child class of <code>CallSourceRawData</code>). 
+ * (child class of {@code CallSourceRawData}). 
  * 
  * @author Frederic Bastian
  * @version Bgee 11
@@ -17,19 +17,19 @@ import org.bgee.model.expressiondata.rawdata.CallSourceRawData;
 public class EST extends CallSourceRawData
 {
 	/**
-	 * The <code>ESTLibrary</code> this object belongs to.
+	 * The {@code ESTLibrary} this object belongs to.
 	 * It is the "container" used for the methods 
-	 * <code>#getDataSourceFromContainer()</code> and <code>#getDataSourceIdFromContainer()</code>.
+	 * {@code #getDataSourceFromContainer()} and {@code #getDataSourceIdFromContainer()}.
 	 * @see #getDataSourceFromContainer()
 	 * @see #getDataSourceIdFromContainer()
 	 */
 	private ESTLibrary eSTLibrary;
 	/**
-	 * A <code>String</code> corresponding to the ID 
+	 * A {@code String} corresponding to the ID 
 	 * of the EST library this EST belongs to. 
-	 * This attribute is useful when the <code>eSTLibrary</code> is not set. 
-	 * When both are set, this <code>estLibraryId</code> matches 
-	 * the <code>id</code> attribute of the <code>ESTLibrary</code>. 
+	 * This attribute is useful when the {@code eSTLibrary} is not set. 
+	 * When both are set, this {@code estLibraryId} matches 
+	 * the {@code id} attribute of the {@code ESTLibrary}. 
 	 * @see microarrayExperiment
 	 */
 	private String estLibraryId;
@@ -53,15 +53,15 @@ public class EST extends CallSourceRawData
 	}
 	
 	/**
-	 * Try to obtain the <code>DataSource</code> object where these expression data come from, 
-	 * from the <code>ESTLibrary</code> container of this <code>EST</code>, 
+	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+	 * from the {@code ESTLibrary} container of this {@code EST}, 
 	 * and eventually from its own container, etc.
-	 * See <code>getDataSource()</code> for more details.
+	 * See {@code getDataSource()} for more details.
 	 * 
-	 * @return 	a <code>DataSource</code> object where these expression data come from, 
-	 * 			obtained from the <code>ESTLibrary</code> container of this <code>EST</code>. 
-	 * 			<code>null</code> if it was not possible to retrieve a <code>DataSource</code> object  
-	 * 			from the <code>ESTLibrary</code> container.
+	 * @return 	a {@code DataSource} object where these expression data come from, 
+	 * 			obtained from the {@code ESTLibrary} container of this {@code EST}. 
+	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+	 * 			from the {@code ESTLibrary} container.
 	 * @see #eSTLibrary
 	 * @see #getDataSource()
 	 */
@@ -76,12 +76,12 @@ public class EST extends CallSourceRawData
 	
 	/**
 	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the <code>AffymetrixChip</code> "container". 
+	 * from the {@code AffymetrixChip} "container". 
 	 * 
-	 * @return 	a <code>String</code> corresponding to the ID of the data source 
+	 * @return 	a {@code String} corresponding to the ID of the data source 
 	 * 			where these expression data come from, 
-	 * 			obtained from the <code>AffymetrixChip</code> "container". 
-	 * 			Empty <code>String</code> if it was not possible to retrieve the ID 
+	 * 			obtained from the {@code AffymetrixChip} "container". 
+	 * 			Empty {@code String} if it was not possible to retrieve the ID 
 	 * 			from the container.
 	 * @see #eSTLibrary
 	 * @see #getDataSourceId()
@@ -116,7 +116,7 @@ public class EST extends CallSourceRawData
 	/**
 	 * Get the second ID of this EST.
 	 * 
-	 * @return id2		the <code>String</code> corresponding to the second ID of this EST.
+	 * @return id2		the {@code String} corresponding to the second ID of this EST.
 	 */
 	public String getId2()
 	{
@@ -124,9 +124,9 @@ public class EST extends CallSourceRawData
 	}
     //---------------------------------
 	/**
-	 * Define the <code>ESTLibrary</code> that contains this EST.
+	 * Define the {@code ESTLibrary} that contains this EST.
 	 * 
-	 * @param eSTLibrary 	the <code>ESTLibrary</code> that contains this EST.
+	 * @param eSTLibrary 	the {@code ESTLibrary} that contains this EST.
 	 * @see ESTLibrary
 	 */
 	public void setEstLibrary(ESTLibrary eSTLibrary)
@@ -134,9 +134,9 @@ public class EST extends CallSourceRawData
 		this.eSTLibrary = eSTLibrary;
 	}
 	/**
-	 * Get the <code>ESTLibrary</code> that contains this EST.
+	 * Get the {@code ESTLibrary} that contains this EST.
 	 * 
-	 * @return 		the <code>ESTLibrary</code> that contains this EST.
+	 * @return 		the {@code ESTLibrary} that contains this EST.
 	 * @see ESTLibrary
 	 */
 	public ESTLibrary getEstLibrary()
@@ -145,9 +145,9 @@ public class EST extends CallSourceRawData
 	}
     //---------------------------------
 	/**
-	 * Set the ID of the <code>ESTLibrary</code> that contains this EST.
+	 * Set the ID of the {@code ESTLibrary} that contains this EST.
 	 * 
-	 * @param estLibraryId 		the String corresponding to the ID of the <code>ESTLibrary</code> that contains this EST.
+	 * @param estLibraryId 		the String corresponding to the ID of the {@code ESTLibrary} that contains this EST.
 	 * @see ESTLibrary
 	 */
 	public void setEstLibraryId(String estLibraryId)
@@ -155,9 +155,9 @@ public class EST extends CallSourceRawData
 		this.estLibraryId = estLibraryId;
 	}
 	/**
-	 * Returns either the value of <code>estLibraryId</code>, 
-	 * or the of the <code>id</code> of the <code>ESTLibrary</code> 
-	 * stored in <code>eSTLibrary</code>, depending on which one is set. 
+	 * Returns either the value of {@code estLibraryId}, 
+	 * or the of the {@code id} of the {@code ESTLibrary} 
+	 * stored in {@code eSTLibrary}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the EST library this EST belongs to. 
 	 * @see 	#estLibraryId

@@ -4,7 +4,7 @@ import org.bgee.model.expressiondata.rawdata.RawData;
 
 /**
  * Class related to RNA-Seq experiment. 
- * Is the container of <code>RNASeqLibrary</code>s.
+ * Is the container of {@code RNASeqLibrary}s.
  * 
  * @author Frederic Bastian
  * @version Bgee 12

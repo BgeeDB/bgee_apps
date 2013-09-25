@@ -23,7 +23,7 @@ public abstract class TestAncestor
 		
 	}
 	/**
-	 * A <code>TestWatcher</code> to log starting, succeeded and failed tests. 
+	 * A {@code TestWatcher} to log starting, succeeded and failed tests. 
 	 */
 	@Rule
 	public TestWatcher watchman = new TestWatcher() {
@@ -45,7 +45,7 @@ public abstract class TestAncestor
 	
 	/**
 	 * Return the logger of the class. 
-	 * @return 	A <code>Logger</code>
+	 * @return 	A {@code Logger}
 	 */
 	protected abstract Logger getLogger();
 }

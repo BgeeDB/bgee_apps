@@ -8,12 +8,12 @@ import org.bgee.model.anatdev.core.DevStage;
  * Parent class of all classes related to expression data, and mapped to ontologies 
  * (see 'see also' section). 
  * Indeed, expression data are mapped to anatomical and developmental ontologies, 
- * they are then mapped to an <code>Organ</code> and to a <code>DevStage</code>. 
+ * they are then mapped to an {@code Organ} and to a {@code DevStage}. 
  * This class is the parent of the classes that hold this mapping, 
  * and is intended to hold methods and attributes related to this mapping.  
  * <p>
- * Note that <code>InSituSpot</code>s are mapped to ontologies, but as they are also 
- * mapped to genes, this class is the subclass of <code>CallSourceRawData</code>.
+ * Note that {@code InSituSpot}s are mapped to ontologies, but as they are also 
+ * mapped to genes, this class is the subclass of {@code CallSourceRawData}.
  * 
  * @author Frederic Bastian
  * @version Bgee 11
@@ -42,8 +42,8 @@ public class RawDataAnnotated extends RawData
     }
 	
 	/**
-	 * Set the <code>organ</code> attribute.
-	 * @param org 	the <code>Organ</code> to set.
+	 * Set the {@code organ} attribute.
+	 * @param org 	the {@code Organ} to set.
 	 * @see #organ
 	 */
 	public void setOrgan(AnatEntity org)
@@ -51,8 +51,8 @@ public class RawDataAnnotated extends RawData
 		this.organ = org;
 	}
 	/**
-	 * Get the <code>organ</code> attribute.
-	 * @return 	the <code>Organ</code> stored in the <code>organ</code> attribute.
+	 * Get the {@code organ} attribute.
+	 * @return 	the {@code Organ} stored in the {@code organ} attribute.
 	 * @see #organ
 	 */
 	public AnatEntity getOrgan()
@@ -60,8 +60,8 @@ public class RawDataAnnotated extends RawData
 		return this.organ;
 	}
 	/**
-	 * Set the <code>devStage</code> attribute.
-	 * @param sta 	the <code>DevStage</code> to set.
+	 * Set the {@code devStage} attribute.
+	 * @param sta 	the {@code DevStage} to set.
 	 * @see #devStage
 	 */
 	public void setStage(DevStage sta)
@@ -69,8 +69,8 @@ public class RawDataAnnotated extends RawData
 		this.devStage = sta;
 	}
 	/**
-	 * Get the <code>devStage</code> attribute.
-	 * @return 	the <code>DevStage</code> stored in the <code>devStage</code> attribute.
+	 * Get the {@code devStage} attribute.
+	 * @return 	the {@code DevStage} stored in the {@code devStage} attribute.
 	 * @see #devStage
 	 */
 	public DevStage getStage()

@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataParameters.CallType;
 
 /**
- * A <code>BasicCallFilter</code> for <code>EXPRESSED</code> call type. 
+ * A {@code BasicCallFilter} for {@code EXPRESSED} call type. 
  * Provides methods specific to this call type. 
  * 
  * @author Frederic Bastian
@@ -17,33 +17,33 @@ import org.bgee.model.expressiondata.DataParameters.CallType;
 /*
  * (non-javadoc)
  * If you add attributes to this class, you might need to modify the methods 
- * <code>merge</code> and <code>canMerge</code>.
+ * {@code merge} and {@code canMerge}.
  */
 public class ExpressionCallFilter extends BasicCallFilter {
 	/**
-	 * <code>Logger</code> of the class. 
+	 * {@code Logger} of the class. 
 	 */
 	private final static Logger log = 
 	        LogManager.getLogger(ExpressionCallFilter.class.getName());
 
 	/**
-	 * A <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
+	 * A {@code boolean} defining whether {@code EXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in an <code>AnatEntity</code> will take into account expression in its children.
+	 * If {@code true}, it means that {@code EXPRESSION} calls 
+	 * in an {@code AnatEntity} will take into account expression in its children.
 	 */
 	private boolean propagateAnatEntities;
 	/**
-	 * A <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
+	 * A {@code boolean} defining whether {@code EXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in an <code>DevStage</code> will take into account expression in its child stages.
+	 * If {@code true}, it means that {@code EXPRESSION} calls 
+	 * in an {@code DevStage} will take into account expression in its child stages.
 	 */
 	private boolean propagateStages;
 
@@ -81,20 +81,20 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	}
 
 	/**
-	 * Determines whether this <code>ExpressionCallFilter</code> and 
-	 * <code>filterToMerge</code> can be merged. 
+	 * Determines whether this {@code ExpressionCallFilter} and 
+	 * {@code filterToMerge} can be merged. 
 	 * <p>
-	 * If <code>sameEntity</code> is <code>true</code>, it means that <code>filterToMerge</code> 
-	 * and this <code>ExpressionCallFilter</code> are related to a same <code>Entity</code> 
+	 * If {@code sameEntity} is {@code true}, it means that {@code filterToMerge} 
+	 * and this {@code ExpressionCallFilter} are related to a same {@code Entity} 
 	 * (see {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}), otherwise, to different 
-	 * <code>Entity</code>s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
+	 * {@code Entity}s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
 	 * 
-	 * @param filterToMerge	A <code>CallFilter</code> that is tried to be merged 
-	 * 						with this <code>ExpressionCallFilter</code>.
-	 * @param sameEntity	a <code>boolean</code> defining whether <code>filterToMerge</code> 
-	 * 						and this <code>ExpressionCallFilter</code> are related to a same 
-	 * 						<code>Entity</code>, or different ones. 
-	 * @return				<code>true</code> if they could be merged. 
+	 * @param filterToMerge	A {@code CallFilter} that is tried to be merged 
+	 * 						with this {@code ExpressionCallFilter}.
+	 * @param sameEntity	a {@code boolean} defining whether {@code filterToMerge} 
+	 * 						and this {@code ExpressionCallFilter} are related to a same 
+	 * 						{@code Entity}, or different ones. 
+	 * @return				{@code true} if they could be merged. 
 	 */
 	private boolean canMerge(CallFilter filterToMerge, boolean sameEntity) {
 		log.entry(filterToMerge, sameEntity);
@@ -131,17 +131,17 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	//  GETTERS/SETTERS
 	//************************************
 	/**
-	 * Return the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
+	 * Return the {@code boolean} defining whether {@code EXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in an <code>AnatEntity</code> will take into account expression in its children.
+	 * If {@code true}, it means that {@code EXPRESSION} calls 
+	 * in an {@code AnatEntity} will take into account expression in its children.
 	 *
-	 * @return 	a <code>boolean</code>, when <code>true</code>, 
-	 * 			<code>EXPRESSION</code> calls data are propagated to 
-	 * 			<code>AnatEntity</code> parents.
+	 * @return 	a {@code boolean}, when {@code true}, 
+	 * 			{@code EXPRESSION} calls data are propagated to 
+	 * 			{@code AnatEntity} parents.
 	 * @see #setPropagateAnatEntities(boolean)
 	 * @see #isPropagateStages()
 	 * @see #setPropagateStages(boolean)
@@ -150,17 +150,17 @@ public class ExpressionCallFilter extends BasicCallFilter {
 		return this.propagateAnatEntities;
 	}
 	/**
-	 * Set the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
+	 * Set the {@code boolean} defining whether {@code EXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in an <code>AnatEntity</code> will take into account expression in its children.
+	 * If {@code true}, it means that {@code EXPRESSION} calls 
+	 * in an {@code AnatEntity} will take into account expression in its children.
 	 *
-	 * @param propagate 	a <code>boolean</code> defining the propagation rule 
-	 * 						between <code>AnatEntity</code>s. 
-	 * 						If <code>true</code>, data will be propagated to parents.
+	 * @param propagate 	a {@code boolean} defining the propagation rule 
+	 * 						between {@code AnatEntity}s. 
+	 * 						If {@code true}, data will be propagated to parents.
 	 * @see #isPropagateAnatEntities()
 	 * @see #isPropagateStages()
 	 * @see #setPropagateStages(boolean)
@@ -172,17 +172,17 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	}
 
 	/**
-	 * Return the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
+	 * Return the {@code boolean} defining whether {@code EXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in a <code>DevStage</code> will take into account expression in its child stages.
+	 * If {@code true}, it means that {@code EXPRESSION} calls 
+	 * in a {@code DevStage} will take into account expression in its child stages.
 	 *
-	 * @return 	a <code>boolean</code>, when <code>true</code>, 
-	 * 			<code>EXPRESSION</code> calls data are propagated to 
-	 * 			<code>DevStage</code> parents.
+	 * @return 	a {@code boolean}, when {@code true}, 
+	 * 			{@code EXPRESSION} calls data are propagated to 
+	 * 			{@code DevStage} parents.
 	 * @see #setPropagateStages(boolean)
 	 * @see #isPropagateAnatEntities()
 	 * @see #setPropagateAnatEntities(boolean)
@@ -191,17 +191,17 @@ public class ExpressionCallFilter extends BasicCallFilter {
 		return this.propagateStages;
 	}
 	/**
-	 * Set the <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
+	 * Set the {@code boolean} defining whether {@code EXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>EXPRESSION</code> calls 
-	 * in a <code>DevStage</code> will take into account expression in its child stages.
+	 * If {@code true}, it means that {@code EXPRESSION} calls 
+	 * in a {@code DevStage} will take into account expression in its child stages.
 	 *
-	 * @param propagate	a <code>boolean</code> defining the propagation rule 
-	 * 					between <code>DevStage</code>s. 
-	 * 					If <code>true</code>, data will be propagated to parents.
+	 * @param propagate	a {@code boolean} defining the propagation rule 
+	 * 					between {@code DevStage}s. 
+	 * 					If {@code true}, data will be propagated to parents.
 	 * @see #isPropagateStages()
 	 * @see #isPropagateAnatEntities()
 	 * @see #setPropagateAnatEntities(boolean)

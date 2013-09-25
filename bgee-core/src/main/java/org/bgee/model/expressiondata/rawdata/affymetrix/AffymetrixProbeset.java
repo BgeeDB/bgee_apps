@@ -4,9 +4,9 @@ import org.bgee.model.expressiondata.rawdata.CallSourceRawData;
 
 /**
  * Class related to Affymetrix probesets. 
- * Is contained by an <code>AffymetrixChip</code>. 
+ * Is contained by an {@code AffymetrixChip}. 
  * Hold expression data for a gene 
- * (child class of <code>CallSourceRawData</code>). 
+ * (child class of {@code CallSourceRawData}). 
  * 
  * @author Frederic Bastian
  * @version Bgee 11
@@ -16,9 +16,9 @@ import org.bgee.model.expressiondata.rawdata.CallSourceRawData;
 public class AffymetrixProbeset extends CallSourceRawData
 {
 	/**
-	 * The <code>AffymetrixChip</code> this object belongs to.
+	 * The {@code AffymetrixChip} this object belongs to.
 	 * It is the "container" used for the methods 
-	 * <code>#getDataSourceFromContainer()</code> and <code>#getDataSourceIdFromContainer()</code>.
+	 * {@code #getDataSourceFromContainer()} and {@code #getDataSourceIdFromContainer()}.
 	 * @see #getDataSourceFromContainer()
 	 * @see #getDataSourceIdFromContainer()
 	 */
@@ -28,12 +28,12 @@ public class AffymetrixProbeset extends CallSourceRawData
      * (ID in the Bgee database is different from the ID in the source database: 
      * bgeeAffymetrixChipId is unique in Bgee, while affymetrixChipId (ID from source database) 
      * is not (the couple microarrayExperimentId - affymetrixChipId is). 
-     * In <code>AffymetrixChip</code> objects, bgeeAffymetrixChipId is stored 
-     * in the <code>id</code> attribute, and affymetrixChipId in the <code>affymetrixChipId</code>attribute).
+     * In {@code AffymetrixChip} objects, bgeeAffymetrixChipId is stored 
+     * in the {@code id} attribute, and affymetrixChipId in the {@code affymetrixChipId}attribute).
      * <p>
-     * This attribute is useful when the <code>affymetrixChip</code> is not set. 
-	 * When both are set, this <code>bgeeAffymetrixChipId</code> matches 
-	 * the <code>id</code> attribute of the <code>AffymetrixChip</code>
+     * This attribute is useful when the {@code affymetrixChip} is not set. 
+	 * When both are set, this {@code bgeeAffymetrixChipId} matches 
+	 * the {@code id} attribute of the {@code AffymetrixChip}
      * 
      * @see AffymetrixChip#id
      */
@@ -55,15 +55,15 @@ public class AffymetrixProbeset extends CallSourceRawData
     }
 	
 	/**
-	 * Try to obtain the <code>DataSource</code> object where these expression data come from, 
-	 * from the <code>AffymetrixChip</code> container of this <code>AffymetrixProbeset</code>, 
+	 * Try to obtain the {@code DataSource} object where these expression data come from, 
+	 * from the {@code AffymetrixChip} container of this {@code AffymetrixProbeset}, 
 	 * and eventually from its own container, etc.
-	 * See <code>getDataSource()</code> for more details.
+	 * See {@code getDataSource()} for more details.
 	 * 
-	 * @return 	a <code>DataSource</code> object where these expression data come from, 
-	 * 			obtained from the <code>AffymetrixChip</code> container of this <code>AffymetrixProbeset</code>. 
-	 * 			<code>null</code> if it was not possible to retrieve a <code>DataSource</code> object  
-	 * 			from the <code>AffymetrixChip</code> container.
+	 * @return 	a {@code DataSource} object where these expression data come from, 
+	 * 			obtained from the {@code AffymetrixChip} container of this {@code AffymetrixProbeset}. 
+	 * 			{@code null} if it was not possible to retrieve a {@code DataSource} object  
+	 * 			from the {@code AffymetrixChip} container.
 	 * @see #affymetrixChip
 	 * @see #getDataSource()
 	 */
@@ -78,12 +78,12 @@ public class AffymetrixProbeset extends CallSourceRawData
 	
 	/**
 	 * Try to obtain the ID of the data source where these expression data come from, 
-	 * from the <code>AffymetrixChip</code> "container". 
+	 * from the {@code AffymetrixChip} "container". 
 	 * 
-	 * @return 	a <code>String</code> corresponding to the ID of the data source 
+	 * @return 	a {@code String} corresponding to the ID of the data source 
 	 * 			where these expression data come from, 
-	 * 			obtained from the <code>AffymetrixChip</code> "container". 
-	 * 			Empty <code>String</code> if it was not possible to retrieve the ID 
+	 * 			obtained from the {@code AffymetrixChip} "container". 
+	 * 			Empty {@code String} if it was not possible to retrieve the ID 
 	 * 			from the container.
 	 * @see #affymetrixChip
 	 * @see #getDataSourceId()
@@ -123,9 +123,9 @@ public class AffymetrixProbeset extends CallSourceRawData
 		this.bgeeAffymetrixChipId = bgeeAffyChipId;
 	}
 	/**
-	 * Returns either the value of <code>bgeeAffymetrixChipId</code>, 
-	 * or the of the <code>id</code> of the <code>AffymetrixChip</code> 
-	 * stored in <code>affymetrixChip</code>, depending on which one is set. 
+	 * Returns either the value of {@code bgeeAffymetrixChipId}, 
+	 * or the of the {@code id} of the {@code AffymetrixChip} 
+	 * stored in {@code affymetrixChip}, depending on which one is set. 
 	 * 
 	 * @return 	the ID of the affymetrix chip this probeset belongs to. 
 	 * @see 	#bgeeAffymetrixChipId

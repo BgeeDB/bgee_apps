@@ -17,7 +17,7 @@ package org.bgee.model.anatdev;
  * entity exists. In the same way, a {@link DevElement} can hold several 
  * {@link AnatElement}s, that could represent anatomical entities existing 
  * during a specific stage. Programatically, this is easily achieved by maintaining 
- * a <code>Collection</code> of a generic type extending {@link AnatDevElement}; 
+ * a {@code Collection} of a generic type extending {@link AnatDevElement}; 
  * But still, we need distinct method names, as these two situations are conceptually 
  * very different, and as a result, we do not want a common obscure method name 
  * such as "getEncapsulatedAnatDevElements". Such obscure method names will exist 

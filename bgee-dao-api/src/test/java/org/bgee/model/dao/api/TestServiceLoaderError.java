@@ -9,10 +9,10 @@ import org.junit.Test;
 
 /**
  * Test the behavior when a service provider throws an exception 
- * when the ServiceLoader tries to instantiate it. The <code>ServiceLoader</code> 
- * is used during static initialization of the class <code>DAOManager</code>.
+ * when the ServiceLoader tries to instantiate it. The {@code ServiceLoader} 
+ * is used during static initialization of the class {@code DAOManager}.
  * <p>
- * This test will be valid only if a new <code>ClassLoader</code> is used for each 
+ * This test will be valid only if a new {@code ClassLoader} is used for each 
  * unit test class. 
  * 
  * @author Frederic Bastian
@@ -21,7 +21,7 @@ import org.junit.Test;
  */
 public class TestServiceLoaderError extends TestAncestor {
 	/**
-     * <code>Logger</code> of the class. 
+     * {@code Logger} of the class. 
      */
     private final static Logger log = 
     		LogManager.getLogger(TestServiceLoaderError.class.getName());
@@ -32,7 +32,7 @@ public class TestServiceLoaderError extends TestAncestor {
 	}
 	
 	/**
-	 * Test behavior when an error occurs while using the <code>ServiceLoader</code>.
+	 * Test behavior when an error occurs while using the {@code ServiceLoader}.
 	 */
 	@Test
 	public void shouldFailInitialization() throws ClassNotFoundException {

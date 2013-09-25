@@ -4,7 +4,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataHolder;
 
 /**
  * This class can hold any Affymetrix-related data, and count of data, used in Bgee. 
- * This <code>DiffAffyDataHolder</code> should likely be itself hold by 
+ * This {@code DiffAffyDataHolder} should likely be itself hold by 
  * a {@link org.bgee.model.expressiondata.rawdata.AnyRawDataHolder}.
  * <p>
  * For AFfymetrix data specifically used to generate differential expression calls, 

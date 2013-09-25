@@ -24,20 +24,20 @@ public class MySQLHierarchicalGroupDAO implements HierarchicalGroupDAO {
 	 * Retrieves all the orthologus genes corresponding to the queried gene at
 	 * the taxonomy level specified.
 	 * <p>
-	 * This method takes as parameters a <code>String</code> representing the
-	 * gene ID, and a <code>long</code> representing the NCBI taxonomy ID for
+	 * This method takes as parameters a {@code String} representing the
+	 * gene ID, and a {@code long} representing the NCBI taxonomy ID for
 	 * the taxonomy level queried. Then, the orthologus genes for the submitted
 	 * gene ID at the particular taxonomy level are retrieved and returned as a
-	 * <code>Collection</code> of <code>String</code>.
+	 * {@code Collection} of {@code String}.
 	 * 
 	 * @param queryGene
-	 *            A <code>String</code> representing the gene ID queried, whose
+	 *            A {@code String} representing the gene ID queried, whose
 	 *            orthologus genes are to be retrieved.
 	 * 
 	 * @param ncbiTaxonomyId
-	 *            A <code>long</code> representing the NCBI taxonomy ID of the
+	 *            A {@code long} representing the NCBI taxonomy ID of the
 	 *            hierarchical level queried.
-	 * @return A <code>Collection</code> of <code>String</code> containing all
+	 * @return A {@code Collection} of {@code String} containing all
 	 *         the orthologus genes of the query gene corresponding to the
 	 *         taxonomy level queried.
 	 * 
@@ -91,26 +91,26 @@ public class MySQLHierarchicalGroupDAO implements HierarchicalGroupDAO {
 	 * Retrieves all the orthologus genes corresponding to the queried gene at
 	 * the taxonomy level specified, belonging to a list of species.
 	 * <p>
-	 * This method takes as parameters a <code>String</code> representing the
-	 * gene ID, a <code>long</code> representing the NCBI taxonomy ID for the
-	 * taxonomy level queried, and an <code>ArrayList</code> representing the
+	 * This method takes as parameters a {@code String} representing the
+	 * gene ID, a {@code long} representing the NCBI taxonomy ID for the
+	 * taxonomy level queried, and an {@code ArrayList} representing the
 	 * list of species whose genes are required. Then, the orthologus genes for
 	 * the submitted gene ID at the particular taxonomy level, belonging to each
 	 * of the species submitted are retrieved and returned as a
-	 * <code>Collection</code> of <code>String</code>.
+	 * {@code Collection} of {@code String}.
 	 * 
 	 * @param queryGene
-	 *            A <code>String</code> representing the gene ID queried, whose
+	 *            A {@code String} representing the gene ID queried, whose
 	 *            orthologus genes are to be retrieved.
 	 * 
 	 * @param ncbiTaxonomyId
-	 *            A <code>long</code> representing the NCBI taxonomy ID of the
+	 *            A {@code long} representing the NCBI taxonomy ID of the
 	 *            hierarchical level queried.
 	 * @param speciesIds
-	 *            An <code>ArrayList</code> representing the list of species
+	 *            An {@code ArrayList} representing the list of species
 	 *            whose genes are required
 	 * 
-	 * @return A <code>Collection</code> of <code>String</code> containing all
+	 * @return A {@code Collection} of {@code String} containing all
 	 *         the orthologus genes of the query gene corresponding to the
 	 *         taxonomy level queried.
 	 * 
@@ -170,16 +170,16 @@ public class MySQLHierarchicalGroupDAO implements HierarchicalGroupDAO {
 	 * 
 	 * Retrieves all the within species paralogs of the queried gene.
 	 * <p>
-	 * This method takes as parameters a <code>String</code> representing the
+	 * This method takes as parameters a {@code String} representing the
 	 * gene ID. Then, all the within species paralogs of the the submitted gene
-	 * ID are retrieved and returned as a <code>Collection</code> of
-	 * <code>String</code>.
+	 * ID are retrieved and returned as a {@code Collection} of
+	 * {@code String}.
 	 * 
 	 * @param queryGene
-	 *            A <code>String</code> representing the gene ID queried, whose
+	 *            A {@code String} representing the gene ID queried, whose
 	 *            within species paralogs are to be retrieved.
 	 * 
-	 * @return A <code>Collection</code> of <code>String</code> containing all
+	 * @return A {@code Collection} of {@code String} containing all
 	 *         the within species paralogs genes of the query gene.
 	 * 
 	 * @throws SQLException
@@ -239,16 +239,16 @@ public class MySQLHierarchicalGroupDAO implements HierarchicalGroupDAO {
 	 * Retrieves all the orthologus genes corresponding to the queried gene in
 	 * the closest species.
 	 * <p>
-	 * This method takes as parameters a <code>String</code> representing the
+	 * This method takes as parameters a {@code String} representing the
 	 * gene ID. Then, the orthologus genes for the submitted gene ID belonging
-	 * closest species are retrieved and returned as a <code>Collection</code>
-	 * of <code>String</code>.
+	 * closest species are retrieved and returned as a {@code Collection}
+	 * of {@code String}.
 	 * 
 	 * @param queryGene
-	 *            A <code>String</code> representing the gene ID queried, whose
+	 *            A {@code String} representing the gene ID queried, whose
 	 *            orthologus genes in it's closest species are to be retrieved.
 	 * 
-	 * @return A <code>Collection</code> of <code>String</code> containing all
+	 * @return A {@code Collection} of {@code String} containing all
 	 *         the orthologus genes of the query gene in the closest species.
 	 * 
 	 * @throws SQLException
@@ -312,21 +312,21 @@ public class MySQLHierarchicalGroupDAO implements HierarchicalGroupDAO {
 	 * Retrieves all the orthologus genes corresponding to the queried gene in a
 	 * list of species.
 	 * <p>
-	 * This method takes as parameters a <code>String</code> representing the
-	 * gene ID, and an <code>ArrayList</code> representing the list of species
+	 * This method takes as parameters a {@code String} representing the
+	 * gene ID, and an {@code ArrayList} representing the list of species
 	 * representing the list of species IDs. Then, the orthologus genes for the
 	 * submitted gene ID belonging to these species are retrieved and returned
-	 * as a <code>Collection</code> of <code>String</code>.
+	 * as a {@code Collection} of {@code String}.
 	 * 
 	 * @param queryGene
-	 *            A <code>String</code> representing the gene ID queried, whose
+	 *            A {@code String} representing the gene ID queried, whose
 	 *            orthologus genes in it's closest species are to be retrieved.
 	 * 
 	 * @param speciesIds
-	 *            An <code>ArrayList</code> representing the list of species
+	 *            An {@code ArrayList} representing the list of species
 	 *            whose genes are required
 	 * 
-	 * @return A <code>Collection</code> of <code>String</code> containing all
+	 * @return A {@code Collection} of {@code String} containing all
 	 *         the orthologus genes of the query gene in the closest species.
 	 * 
 	 * @throws SQLException

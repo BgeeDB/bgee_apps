@@ -13,14 +13,14 @@ import org.bgee.model.dao.api.exception.DataAccessException;
 public interface AffymetrixExpDAO 
 {
 	/**
-	 * Retrieve from a data source a <code>AffymetrixExpTO</code>, corresponding to 
-	 * an Affymetrix experiment with the ID <code>expId</code>, or <code>null</code> 
+	 * Retrieve from a data source a {@code AffymetrixExpTO}, corresponding to 
+	 * an Affymetrix experiment with the ID {@code expId}, or {@code null} 
 	 * if no corresponding experiment could be found.  
 	 * 
-	 * @param expId 	A <code>String</code> representing the ID 
+	 * @param expId 	A {@code String} representing the ID 
 	 * 					of the Affymetrix experiment to retrieve from the data source. 
-	 * @return	A <code>AffymetrixExpTO</code>, encapsulating all the data 
-	 * 			related to the Affymetrix experiment, <code>null</code> if none 
+	 * @return	A {@code AffymetrixExpTO}, encapsulating all the data 
+	 * 			related to the Affymetrix experiment, {@code null} if none 
 	 * 			could be found.
      * @throws DataAccessException 	If an error occurred when accessing the data source. 
 	 */

@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataParameters.CallType;
 
 /**
- * A <code>BasicCallFilter</code> for <code>NOTEXPRESSED</code> call type. 
+ * A {@code BasicCallFilter} for {@code NOTEXPRESSED} call type. 
  * Provides methods specific to this call type. 
  * 
  * @author Frederic Bastian
@@ -17,22 +17,22 @@ import org.bgee.model.expressiondata.DataParameters.CallType;
 /*
 * (non-javadoc)
 * If you add attributes to this class, you might need to modify the methods 
- * <code>merge</code> and <code>canMerge</code>.
+ * {@code merge} and {@code canMerge}.
 */
 public class NoExpressionCallFilter extends BasicCallFilter {
 	/**
-	 * <code>Logger</code> of the class. 
+	 * {@code Logger} of the class. 
 	 */
 	private final static Logger log = LogManager.getLogger(NoExpressionCallFilter.class.getName());
 
 	/**
-	 * A <code>boolean</code> defining whether <code>NOEXPRESSION</code> calls 
+	 * A {@code boolean} defining whether {@code NOEXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} children 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>NOEXPRESSION</code> calls 
-	 * in an <code>AnatEntity</code> will take into account absence of expression 
+	 * If {@code true}, it means that {@code NOEXPRESSION} calls 
+	 * in an {@code AnatEntity} will take into account absence of expression 
 	 * reported in its parents.
 	 */
 	private boolean propagateAnatEntities;
@@ -69,20 +69,20 @@ public class NoExpressionCallFilter extends BasicCallFilter {
     }
 
     /**
-     * Determines whether this <code>NoExpressionCallFilter</code> and 
-     * <code>filterToMerge</code> can be merged. 
+     * Determines whether this {@code NoExpressionCallFilter} and 
+     * {@code filterToMerge} can be merged. 
      * <p>
-     * If <code>sameEntity</code> is <code>true</code>, it means that <code>filterToMerge</code> 
-     * and this <code>NoExpressionCallFilter</code> are related to a same <code>Entity</code> 
+     * If {@code sameEntity} is {@code true}, it means that {@code filterToMerge} 
+     * and this {@code NoExpressionCallFilter} are related to a same {@code Entity} 
      * (see {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}), otherwise, to different 
-     * <code>Entity</code>s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
+     * {@code Entity}s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
      * 
-     * @param filterToMerge   A <code>CallFilter</code> that is tried to be merged 
-     *                      with this <code>NoExpressionCallFilter</code>.
-     * @param sameEntity    a <code>boolean</code> defining whether <code>filterToMerge</code> 
-     *                      and this <code>NoExpressionCallFilter</code> are related to a same 
-     *                      <code>Entity</code>, or different ones. 
-     * @return              <code>true</code> if they could be merged. 
+     * @param filterToMerge   A {@code CallFilter} that is tried to be merged 
+     *                      with this {@code NoExpressionCallFilter}.
+     * @param sameEntity    a {@code boolean} defining whether {@code filterToMerge} 
+     *                      and this {@code NoExpressionCallFilter} are related to a same 
+     *                      {@code Entity}, or different ones. 
+     * @return              {@code true} if they could be merged. 
      */
     private boolean canMerge(CallFilter filterToMerge, boolean sameEntity) {
         log.entry(filterToMerge, sameEntity);
@@ -120,36 +120,36 @@ public class NoExpressionCallFilter extends BasicCallFilter {
 
 	
 	/**
-	 * Return the <code>boolean</code> defining whether <code>NOEXPRESSION</code> calls 
+	 * Return the {@code boolean} defining whether {@code NOEXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} children 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>NOEXPRESSION</code> calls 
-	 * in an <code>AnatEntity</code> will take into account absence of expression 
+	 * If {@code true}, it means that {@code NOEXPRESSION} calls 
+	 * in an {@code AnatEntity} will take into account absence of expression 
 	 * reported in its parents.
 	 *
-	 * @return 	a <code>boolean</code>, when <code>true</code>, 
-	 * 			<code>NOEXPRESSION</code> calls data are propagated to 
-	 * 			<code>AnatEntity</code> children.
+	 * @return 	a {@code boolean}, when {@code true}, 
+	 * 			{@code NOEXPRESSION} calls data are propagated to 
+	 * 			{@code AnatEntity} children.
 	 * @see #setPropagateAnatEntities(boolean)
 	 */
 	public boolean isPropagateAnatEntities() {
 		return this.propagateAnatEntities;
 	}
 	/**
-	 * Set the <code>boolean</code> defining whether <code>NOEXPRESSION</code> calls 
+	 * Set the {@code boolean} defining whether {@code NOEXPRESSION} calls 
 	 * should be propagated to 
 	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} children 
 	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If <code>true</code>, it means that <code>NOEXPRESSION</code> calls 
-	 * in an <code>AnatEntity</code> will take into account absence of expression 
+	 * If {@code true}, it means that {@code NOEXPRESSION} calls 
+	 * in an {@code AnatEntity} will take into account absence of expression 
 	 * reported in its parents.
 	 *
-	 * @param propagate 	a <code>boolean</code> defining the propagation rule 
-	 * 						between <code>AnatEntity</code>s. 
-	 * 						If <code>true</code>, data will be propagated to children.
+	 * @param propagate 	a {@code boolean} defining the propagation rule 
+	 * 						between {@code AnatEntity}s. 
+	 * 						If {@code true}, data will be propagated to children.
 	 * @see #isPropagateAnatEntities()
 	 */
 	public void setPropagateAnatEntities(boolean propagate) {

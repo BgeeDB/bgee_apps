@@ -3,7 +3,7 @@ package org.bgee.model.anatdev;
 import org.bgee.model.Factory;
 
 /**
- * An <code>Factory</code> for {@link AnatomicalOntology}s. 
+ * An {@code Factory} for {@link AnatomicalOntology}s. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13

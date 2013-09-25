@@ -1,7 +1,7 @@
 package org.bgee.model.dao.api.exception;
 
 /**
- * <code>Exception</code> thrown when an error occurs while accessing the data source. 
+ * {@code Exception} thrown when an error occurs while accessing the data source. 
  *  
  * @author Frederic Bastian
  * @version Bgee 13
@@ -10,7 +10,7 @@ package org.bgee.model.dao.api.exception;
 public class DataAccessException extends Exception {
 
 	/**
-	 * Because <code>Exception</code>s are serializable. 
+	 * Because {@code Exception}s are serializable. 
 	 */
 	private static final long serialVersionUID = 773137615240568541L;
 	

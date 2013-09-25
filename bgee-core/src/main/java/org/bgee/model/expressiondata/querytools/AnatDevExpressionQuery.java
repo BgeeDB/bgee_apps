@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.core.AnatDevEntity;
 import org.bgee.model.anatdev.evomapping.AnatDevMapping;
 import org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType;
+import org.bgee.model.anatdev.evomapping.EvoMappingSelector;
 import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequirement;
 import org.bgee.model.ontologycommon.Confidence;
 import org.bgee.model.ontologycommon.EvidenceCode;
@@ -38,21 +39,21 @@ import org.bgee.model.species.Taxon;
  * the {@code AnatDevElement}s will be 
  * {@link org.bgee.model.anatdev.evomapping.AnatDevMapping}s, allowing to define 
  * what are the anatomical entities/developmental stages comparable between species, 
- * according to different criteria (see for instance {@link 
- * org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType TransRelationType}). 
- * In no additional information is provided, the default {@code TransRelationType} 
- * used will be {@code HOMOLOGY}, for structures homologous in the youngest parent taxon 
- * common to all {@code Species} used, as well as in ancestor taxa. A different 
- * {@code TransRelationType} and taxon scoping can be provided (see 
- * {@link #setEvoRelationType(TransRelationType)}, {@link #setTaxonScoping(Taxon)}, 
- * and {@link setUseAncestralTaxa(boolean)}).
- * <p>
+ * according to several criteria. By default, the {@code AnatDevMapping}s will be based 
+ * on {@link org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType HOMOLOGY}, 
+ * selecting {@code AnatDevElement}s that derived from a common ancestral structure, 
+ * existing in the closest parent taxon common to all {@code Species} used, as well as 
+ * in its ancestor taxa. Alternatively, users can select different {@code AnatDevMapping}s 
+ * by providing their own {@link org.bgee.model.anatdev.evomapping.EvoMappingSelector 
+ * EvoMappingSelector} (see {@link setEvoMappingSelector(EvoMappingSelector)}), 
+ * or can even provide their own mappings not relying on those defined by Bgee 
+ * (see {@link #setCustomMappings(Collection)}).
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  */
-public class AnatDevExpressionQuery extends ExpressionQuery {javadoc
+public class AnatDevExpressionQuery extends ExpressionQuery {
     /**
      * An {@code enum} defining the different types of query that 
      * an {@link AnatDevExpressionQuery} can perform: 
@@ -130,6 +131,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {javadoc
 	 * {@code AnatDevExpressionQuery} should perform.
 	 */
 	private final QueryType queryType;
+	
+	//-------- RENDERING AND RELATED ATTRIBUTES ----------
     /**
      * The {@code DataRendering} defining how {@code AnatDevElement}s 
      * should be selected and organized after they were validated by 
@@ -146,6 +149,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {javadoc
      * to this value as possible.
      */
     private int elementsByGroup;
+    
+    //---------------------------------------------------
     /**
      * A {@code Collection} of {@link AnatDevRequirement}s defining which 
      * expression data to retrieve for which {@code Gene}s, and what are 
@@ -153,71 +158,45 @@ public class AnatDevExpressionQuery extends ExpressionQuery {javadoc
      */
     private final Collection<AnatDevRequirement> requirements;
 	
+    //-------- SELECTION OF ANATDEVMAPPINGS -----------
     /**
-     * A {@code TransRelationType} defining how {@link 
+     * An {@code EvoMappingSelector} defining how {@link 
      * org.bgee.model.anatdev.evomapping.AnatDevMapping}s should be defined, 
      * when the {@code Gene}s used in the {@link #requirements} belong to 
-     * several {@code Species}. This allows to define what are the anatomical 
-     * entities/developmental stages comparable between species, according to 
-     * different criteria, such as {@code HOMOLOGY}.
+     * several {@code Species}.
      * <p>
-     * The {@code Taxon} for which the {@code TransRelationType} should hold 
-     * is defined by {@link #taxonScoping}. Whether its ancestral taxa should also  
-     * be considered is defined by {@link #useAncestralTaxa}.
+     * The default {@code EvoMappingSelector} will select mappings using a 
+     * {@link org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType 
+     * HOMOLOGY} relation, valid for the most recent ancestor taxon common 
+     * to all {@code Species} involved, and also the ancestor taxa of this taxon.
+     * <p>
+     * Users can bypass this behavior either by providing their own 
+     * {@code EvoMappingSelector}, or by providing their own custom {@code 
+     * AnatDevMapping}s (see {@link #customMappings}).
      * <p>
      * If the {@code Gene}s used in the {@link #requirements} do <strong>not</strong> 
-     * belong to several {@code Species}, this attribute is of no use.
+     * belong to several {@code Species}, this attribute is not used.
      * 
-     * @see #taxonScoping
-     * @see #useAncestralTaxa
+     * @see #customMappings
      */
-    private TransRelationType evoRelationType;
-	/**
-	 * The {@code Taxon} to use in relation with the {@link #evoRelationType},  
-	 * when the {@code Gene}s used in the {@link #requirements} belong to several 
-	 * {@code Species}. This {@code Taxon} is the "taxon scoping", defining 
-	 * in which {@Taxon} a {@code TransRelationType} should hold, in order to build 
-	 * the {@link org.bgee.model.anatdev.evomapping.AnatDevMapping}s. This allows 
-	 * to defined what are the anatomical entities/developmental stages that are 
-	 * comparable and that should be used in this {@code AnatDevExpressionQuery}.
-	 * <p>
-	 * By default, this {@code Taxon} will be the most recent ancestral taxon common to 
-	 * all {@code Species} involved. And, also by default, ancestors of this 
-	 * taxon will also be considered ({@link #useAncestralTaxa} equals to {@code true}). 
-     * <p>
-     * If the {@code Gene}s used in the {@link #requirements} do <strong>not</strong> 
-     * belong to several {@code Species}, this attribute is of no use.
-	 * 
-	 * @see #evoRelationType
-	 * @see #useAncestralTaxa
-	 */
-	private Taxon taxonScoping;
-	/**
-	 * A {@code boolean} defining whether ancestral taxa of {@link #taxonScoping} 
-	 * should also be considered, when the {@code Gene}s used in the {@link #requirements} 
-	 * belong to several {@code Species}. See {@link #taxonScoping} for more details.
-	 * Default value is {@code true}.
-     * <p>
-     * If the {@code Gene}s used in the {@link #requirements} do <strong>not</strong> 
-     * belong to several {@code Species}, this attribute is of no use.
-	 * 
-     * @see #evoRelationType
-	 * @see #taxonScoping
-	 */
-	private boolean useAncestralTaxa;
-	private Collection<Confidence> allowedConfidences;
-	private Collection<EvidenceCode> allowedEvidences;
+    private EvoMappingSelector evoMappingSelector;
 	/**
 	 * A {@code Collection} of {@code AnatDevMapping}s, allowing to provide 
 	 * custom mappings defining what are the anatomical entities/developmental stages 
 	 * that can be compared between species. This attribute can be used when 
 	 * the {@code Gene}s used in the {@link #requirements} belong to several 
-	 * {@code Species}, and if the user does not want to use the mappings provided 
-	 * by Bgee (selected by using {@link #evoRelationType}, {@link #taxonScoping}, 
-	 * {@link #useAncestralTaxa}, {@link #}
+	 * {@code Species}, and if users do not want to use the mappings provided 
+	 * by Bgee (selected by using {@link #evoMappingSelector}).
+	 * <p>
+	 * This {@code Collection} can contain both {@link 
+	 * org.bgee.model.anatdev.evomapping.AnatMapping AnatMapping} and {@link 
+	 * org.bgee.model.anatdev.evomapping.DevMapping DevMapping} at the same time.
+	 * If the {@code Gene}s used in the {@link #requirements} do <strong>not</strong> 
+     * belong to several {@code Species}, this attribute is not used.
 	 */
-	private Collection<AnatDevMapping> customMappings;continue javadoc
+	private Collection<AnatDevMapping> customMappings;
 	
+    //---------------------------------------------------
 	
 	/**
 	 * Constructor defining the type of query that this {@code AnatDevExpressionQuery} 
@@ -233,6 +212,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {javadoc
 	 */
 	public AnatDevExpressionQuery(QueryType queryType, DataRendering rendering) 
 	    throws IllegalArgumentException {
+	    super();
 	    if ((queryType.equals(QueryType.ANATWITHDEV) || 
 	        queryType.equals(QueryType.DEVWITHANAT)) && 
 	       (rendering.equals(DataRendering.ONTOLOGY) || 
@@ -241,6 +221,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {javadoc
 	        		queryType + ") is incompatible with the DataRendering provided (" +
 	        		rendering + ")"));
 	    }
+	    
 	    this.queryType = queryType;
 	    this.rendering = rendering;
 		this.requirements = new ArrayList<AnatDevRequirement>();
@@ -370,8 +351,6 @@ public class AnatDevExpressionQuery extends ExpressionQuery {javadoc
 	private Set<AnatDevEntity> rootEntites;
 	private Set<AnatDevEntity> filteringEntities;
 	private boolean acceptFilteringEntities;
-	
-	private EvoTransRelation evoRelation; ou EvoGroup ?
 	
     
     

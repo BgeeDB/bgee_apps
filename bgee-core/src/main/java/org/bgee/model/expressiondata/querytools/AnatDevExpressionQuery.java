@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.anatdev.AnatDevElement;
 import org.bgee.model.anatdev.core.AnatDevEntity;
 import org.bgee.model.anatdev.evomapping.AnatDevMapping;
 import org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType;
@@ -125,6 +126,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
     	return log;
     }
 
+    //**************************************
+    // INSTANCE ATTRIBUTES
+    //**************************************
 	
 	/**
 	 * A {@code QueryType} defining what is the query that this 
@@ -138,7 +142,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * should be selected and organized after they were validated by 
      * the {@link #requirements}.
      */
-    private DataRendering rendering;
+    private final DataRendering rendering;
     /**
      * An {@code int} defining what is the wished number of 
      * {@code AnatDevElement}s by group. This value is applicable when 
@@ -150,7 +154,14 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      */
     private int elementsByGroup;
     
-    //---------------------------------------------------
+    /**
+     * If 
+     */
+    private AnatDevElement rootElement; continue here
+    
+    private int levelCountToWalk;
+    
+    //--------------- REQUIREMENTS-----------------
     /**
      * A {@code Collection} of {@link AnatDevRequirement}s defining which 
      * expression data to retrieve for which {@code Gene}s, and what are 
@@ -198,6 +209,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	
     //---------------------------------------------------
 	
+	//************************************
+	// CONSTRUCTOR
+	//************************************
 	/**
 	 * Constructor defining the type of query that this {@code AnatDevExpressionQuery} 
 	 * should perform, and the way data should be rendered.
@@ -239,6 +253,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 		try {
 			this.startQuery("Querying blabla", 1, "");//TODO
 			
+			this.checkState();
+			
 			//calls need to be manually propagated. => really true for AnatEntities?
 			//the new CallFilter merging does not merge CallFilters with 
 			//different propagation rules...
@@ -272,6 +288,10 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 			this.endQuery(queryCompleted);
 		}
 		log.exit();
+	}
+	
+	private void checkState() {
+	    rootElement / DataRendering.ONTOLOGY
 	}
 	
 	private void analyzeRequirements() {
@@ -347,8 +367,6 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	
 	//---------------------------------------------
 	private boolean reconcileDataTypeCalls;//or: noDataTypeContradiction?
-	private int levelCountToWalk;
-	private Set<AnatDevEntity> rootEntites;
 	private Set<AnatDevEntity> filteringEntities;
 	private boolean acceptFilteringEntities;
 	

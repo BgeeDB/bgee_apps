@@ -1,5 +1,8 @@
 package org.bgee.model.expressiondata.querytools.filters;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * A <code>CompositeCallFilter</code> allows to use a <code>BasicCallFilter</code> 
  * and a <code>RawDataFilter</code> at the same time. It allows to filter 
@@ -38,9 +41,109 @@ package org.bgee.model.expressiondata.querytools.filters;
  * @since Bgee 13
  */
 public class CompositeCallFilter implements CallFilter {
-	
-    private BasicCallFilter callFilter;
-    private RawDataFilter rawDataFilter;
-    //here, or in an expression query tool?
+    /**
+     * <code>Logger</code> of the class. 
+     */
+    private final static Logger log = 
+            LogManager.getLogger(CompositeCallFilter.class.getName());
+	/**
+	 * The <code>BasicCallFilter</code> used to specify the expression data calls 
+	 * that should be generated and retrieved.
+	 */
+    private final BasicCallFilter callFilter;
+    /**
+     * The <code>RawDataFilter</code> specifying the raw data that should be used 
+     * to generate the expression data calls. 
+     */
+    private final RawDataFilter rawDataFilter;
+    
+    //TODO: here, or in an expression query tool?
     private boolean allSamplesAgreement;
+    
+    /**
+     * Default constructor. 
+     * 
+     * @param callFilter        the <code>BasicCallFilter</code> used to specify 
+     *                          the expression data calls that should be generated 
+     *                          and retrieved. 
+     * @param rawDataFilter     the <code>RawDataFilter</code> specifying the raw data 
+     *                          that should be used to generate the expression data calls.
+     */
+    public CompositeCallFilter(BasicCallFilter callFilter, RawDataFilter rawDataFilter) {
+        this.callFilter = callFilter;
+        this.rawDataFilter = rawDataFilter;
+    }
+    
+    
+    @Override
+    public CallFilter mergeSameEntityCallFilter(CallFilter filterToMerge) {
+        log.entry(filterToMerge);
+        return log.exit(this.merge(filterToMerge, true));
+    }
+    @Override
+    public CallFilter mergeDiffEntitiesCallFilter(CallFilter filterToMerge) {
+        log.entry(filterToMerge);
+        return log.exit(this.merge(filterToMerge, false));
+    }
+    /**
+     * Merges this <code>CompositeCallFilter</code> with <code>filterToMerge</code>, 
+     * and returns the resulting merged new <code>CompositeCallFilter</code>.
+     * If <code>filterToMerge</code> cannot be merged with this 
+     * <code>CompositeCallFilter</code>, this method returns <code>null</code>
+     * <p>
+     * If <code>sameEntity</code> is <code>true</code>, this method should correspond to 
+     * {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}, otherwise, to 
+     * {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}.
+     * 
+     * @param filterToMerge       a <code>CallFilter</code> to be merged with this one.
+     * @param sameEntity        a <code>boolean</code> defining whether 
+     *                          <code>filterToMerge</code> and this 
+     *                          <code>CompositeCallFilter</code> are related to a same 
+     *                          <code>Entity</code>, or different ones. 
+     * @return  A newly instantiated <code>CompositeCallFilter</code> corresponding to 
+     *          the merging of this <code>CompositeCallFilter</code> and of 
+     *          <code>filterToMerge</code>, or <code>null</code> if they could not be merged. 
+     */
+    protected CompositeCallFilter merge(CallFilter filterToMerge, boolean sameEntity) {
+        log.entry(filterToMerge, sameEntity);
+        if (!(filterToMerge instanceof CompositeCallFilter)) {
+            return log.exit(null);
+        }
+        CompositeCallFilter otherFilter = (CompositeCallFilter) filterToMerge;
+        //to be merged, the rawDataFilters of these CallFilters should be equals, 
+        //whether they are related to a same Entity, or different ones
+        if (!this.getRawDataFilter().equals(otherFilter.getRawDataFilter())) {
+            return log.exit(null);
+        }
+        //now we try to merge the BasicCallFilters
+        BasicCallFilter mergedFilter = null;
+        if (sameEntity) {
+            mergedFilter = this.getCallFilter().mergeSameEntityCallFilter(
+                    otherFilter.getCallFilter());
+        } else {
+            mergedFilter = this.getCallFilter().mergeDiffEntitiesCallFilter(
+                    otherFilter.getCallFilter());
+        }
+        if (mergedFilter == null) {
+            return log.exit(null);
+        }
+        return log.exit(new CompositeCallFilter(mergedFilter, this.getRawDataFilter()));
+    }
+    //************************************
+    //  GETTERS/SETTERS
+    //************************************
+    /**
+     * @return  the <code>BasicCallFilter</code> used to specify the expression data calls 
+     *          that should be generated and retrieved.
+     */
+    public BasicCallFilter getCallFilter() {
+        return this.callFilter;
+    }
+    /**
+     * @return  the <code>RawDataFilter</code> specifying the raw data that should be used 
+     *          to generate the expression data calls.
+     */
+    public RawDataFilter getRawDataFilter() {
+        return this.rawDataFilter;
+    }
 }

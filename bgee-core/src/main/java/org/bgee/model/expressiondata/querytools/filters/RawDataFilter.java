@@ -27,10 +27,23 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary.RNASeqLibraryT
  * than with the classes of this application. This is why it is so closed to 
  * {@link org.bgee.model.expressiondata.rawdata.AnyRawDataHolder}, yet different, 
  * so that a different class is needed.
+ * <p>
+ * Of note, this class implements the methods <code>equals</code> and 
+ * <code>hashCode</code> for convenience, but as its attributes are not <code>final</code> 
+ * and are modifiable, extra care should be taken if using this class 
+ * in a <code>Set</code>. Notably, no modifications should be made to the attributes 
+ * of an instance of this class if it is contained in a <code>Set</code> 
+ * (or as key in a <code>Map</code>, anything relying on <code>equals</code> and 
+ * <code>hashCode</code>).
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
+ */
+/*
+ * (non-javadoc)
+ * Do not forget to regenerate the equals and hashCode methods if you add attributes 
+ * to this class. 
  */
 public class RawDataFilter implements Filter {
 	/**
@@ -70,7 +83,229 @@ public class RawDataFilter implements Filter {
 		this.rnaSeqLibraryIds             = new HashSet<String>();
 		this.rnaSeqExpIds                 = new HashSet<String>();
 	}
-	//**********************************
+	
+	
+	@Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime
+                * result
+                + ((affymetrixCdfNames == null) ? 0 : affymetrixCdfNames
+                        .hashCode());
+        result = prime
+                * result
+                + ((affymetrixChipIds == null) ? 0 : affymetrixChipIds
+                        .hashCode());
+        result = prime
+                * result
+                + ((affymetrixChipTypeIds == null) ? 0 : affymetrixChipTypeIds
+                        .hashCode());
+        result = prime
+                * result
+                + ((affymetrixDetectionTypes == null) ? 0
+                        : affymetrixDetectionTypes.hashCode());
+        result = prime
+                * result
+                + ((affymetrixExpIds == null) ? 0 : affymetrixExpIds.hashCode());
+        result = prime * result
+                + Float.floatToIntBits(affymetrixMinPercentPresent);
+        result = prime * result + Float.floatToIntBits(affymetrixMinQualScore);
+        result = prime
+                * result
+                + ((affymetrixNormalizationTypes == null) ? 0
+                        : affymetrixNormalizationTypes.hashCode());
+        result = prime
+                * result
+                + ((affymetrixProbesetIds == null) ? 0 : affymetrixProbesetIds
+                        .hashCode());
+        result = prime * result + ((estIds == null) ? 0 : estIds.hashCode());
+        result = prime * result
+                + ((estLibraryIds == null) ? 0 : estLibraryIds.hashCode());
+        result = prime
+                * result
+                + ((inSituEvidenceIds == null) ? 0 : inSituEvidenceIds
+                        .hashCode());
+        result = prime * result
+                + ((inSituExpIds == null) ? 0 : inSituExpIds.hashCode());
+        result = prime * result
+                + ((inSituSpotIds == null) ? 0 : inSituSpotIds.hashCode());
+        result = prime * result
+                + ((rnaSeqExpIds == null) ? 0 : rnaSeqExpIds.hashCode());
+        result = prime
+                * result
+                + ((rnaSeqLibraryIds == null) ? 0 : rnaSeqLibraryIds.hashCode());
+        result = prime
+                * result
+                + ((rnaSeqLibraryTypes == null) ? 0 : rnaSeqLibraryTypes
+                        .hashCode());
+        result = prime * result + rnaSeqMinAlignedReadCount;
+        result = prime * result + Float.floatToIntBits(rnaSeqMinPercentPresent);
+        result = prime * result + rnaSeqMinReadLength;
+        result = prime
+                * result
+                + ((rnaSeqPlatformIds == null) ? 0 : rnaSeqPlatformIds
+                        .hashCode());
+        result = prime * result
+                + ((rnaSeqRunIds == null) ? 0 : rnaSeqRunIds.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof RawDataFilter)) {
+            return false;
+        }
+        RawDataFilter other = (RawDataFilter) obj;
+        if (affymetrixCdfNames == null) {
+            if (other.affymetrixCdfNames != null) {
+                return false;
+            }
+        } else if (!affymetrixCdfNames.equals(other.affymetrixCdfNames)) {
+            return false;
+        }
+        if (affymetrixChipIds == null) {
+            if (other.affymetrixChipIds != null) {
+                return false;
+            }
+        } else if (!affymetrixChipIds.equals(other.affymetrixChipIds)) {
+            return false;
+        }
+        if (affymetrixChipTypeIds == null) {
+            if (other.affymetrixChipTypeIds != null) {
+                return false;
+            }
+        } else if (!affymetrixChipTypeIds.equals(other.affymetrixChipTypeIds)) {
+            return false;
+        }
+        if (affymetrixDetectionTypes == null) {
+            if (other.affymetrixDetectionTypes != null) {
+                return false;
+            }
+        } else if (!affymetrixDetectionTypes
+                .equals(other.affymetrixDetectionTypes)) {
+            return false;
+        }
+        if (affymetrixExpIds == null) {
+            if (other.affymetrixExpIds != null) {
+                return false;
+            }
+        } else if (!affymetrixExpIds.equals(other.affymetrixExpIds)) {
+            return false;
+        }
+        if (Float.floatToIntBits(affymetrixMinPercentPresent) != Float
+                .floatToIntBits(other.affymetrixMinPercentPresent)) {
+            return false;
+        }
+        if (Float.floatToIntBits(affymetrixMinQualScore) != Float
+                .floatToIntBits(other.affymetrixMinQualScore)) {
+            return false;
+        }
+        if (affymetrixNormalizationTypes == null) {
+            if (other.affymetrixNormalizationTypes != null) {
+                return false;
+            }
+        } else if (!affymetrixNormalizationTypes
+                .equals(other.affymetrixNormalizationTypes)) {
+            return false;
+        }
+        if (affymetrixProbesetIds == null) {
+            if (other.affymetrixProbesetIds != null) {
+                return false;
+            }
+        } else if (!affymetrixProbesetIds.equals(other.affymetrixProbesetIds)) {
+            return false;
+        }
+        if (estIds == null) {
+            if (other.estIds != null) {
+                return false;
+            }
+        } else if (!estIds.equals(other.estIds)) {
+            return false;
+        }
+        if (estLibraryIds == null) {
+            if (other.estLibraryIds != null) {
+                return false;
+            }
+        } else if (!estLibraryIds.equals(other.estLibraryIds)) {
+            return false;
+        }
+        if (inSituEvidenceIds == null) {
+            if (other.inSituEvidenceIds != null) {
+                return false;
+            }
+        } else if (!inSituEvidenceIds.equals(other.inSituEvidenceIds)) {
+            return false;
+        }
+        if (inSituExpIds == null) {
+            if (other.inSituExpIds != null) {
+                return false;
+            }
+        } else if (!inSituExpIds.equals(other.inSituExpIds)) {
+            return false;
+        }
+        if (inSituSpotIds == null) {
+            if (other.inSituSpotIds != null) {
+                return false;
+            }
+        } else if (!inSituSpotIds.equals(other.inSituSpotIds)) {
+            return false;
+        }
+        if (rnaSeqExpIds == null) {
+            if (other.rnaSeqExpIds != null) {
+                return false;
+            }
+        } else if (!rnaSeqExpIds.equals(other.rnaSeqExpIds)) {
+            return false;
+        }
+        if (rnaSeqLibraryIds == null) {
+            if (other.rnaSeqLibraryIds != null) {
+                return false;
+            }
+        } else if (!rnaSeqLibraryIds.equals(other.rnaSeqLibraryIds)) {
+            return false;
+        }
+        if (rnaSeqLibraryTypes == null) {
+            if (other.rnaSeqLibraryTypes != null) {
+                return false;
+            }
+        } else if (!rnaSeqLibraryTypes.equals(other.rnaSeqLibraryTypes)) {
+            return false;
+        }
+        if (rnaSeqMinAlignedReadCount != other.rnaSeqMinAlignedReadCount) {
+            return false;
+        }
+        if (Float.floatToIntBits(rnaSeqMinPercentPresent) != Float
+                .floatToIntBits(other.rnaSeqMinPercentPresent)) {
+            return false;
+        }
+        if (rnaSeqMinReadLength != other.rnaSeqMinReadLength) {
+            return false;
+        }
+        if (rnaSeqPlatformIds == null) {
+            if (other.rnaSeqPlatformIds != null) {
+                return false;
+            }
+        } else if (!rnaSeqPlatformIds.equals(other.rnaSeqPlatformIds)) {
+            return false;
+        }
+        if (rnaSeqRunIds == null) {
+            if (other.rnaSeqRunIds != null) {
+                return false;
+            }
+        } else if (!rnaSeqRunIds.equals(other.rnaSeqRunIds)) {
+            return false;
+        }
+        return true;
+    }
+
+
+    //**********************************
 	//  EST DATA
 	//**********************************
 	/**

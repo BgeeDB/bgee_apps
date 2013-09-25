@@ -9,12 +9,12 @@ package org.bgee.model.expressiondata.querytools.filters;
  */
 public interface CallFilter extends Filter {
 	/**
-	 * Tries to merge this <code>CallFilter</code> with <code>callToMerge</code>, 
+	 * Tries to merge this <code>CallFilter</code> with <code>filterToMerge</code>, 
 	 * by considering that they both define conditions on expression data 
 	 * for a same <code>Entity</code> (for instance, a same <code>Gene</code>).
 	 * <p>
 	 * For instance, if this <code>CallFilter</code> defines a minimum quality 
-	 * threshold for a given data type, and if <code>callToMerge</code> defines  
+	 * threshold for a given data type, and if <code>filterToMerge</code> defines  
 	 * for the same data type the quality threshold just below, then it is possible  
 	 * to keep only the lowest threshold and merge the two <code>CallFilter</code>s. 
 	 * As they are related to the same <code>Entity</code>, we would retrieve the exact 
@@ -25,17 +25,17 @@ public interface CallFilter extends Filter {
 	 * This method returns <code>null</code> if the <code>CallFilter</code>s could not 
 	 * be merged. Otherwise, it returns the newly merged <code>CallFilter</code>. 
 	 * This method is reflexive, so that it is equivalent to call this method 
-	 * on this <code>CallFilter</code> with <code>callToMerge</code> as parameter, 
-	 * or on <code>callToMerge</code> with this <code>CallFilter</code> as parameter. 
+	 * on this <code>CallFilter</code> with <code>filterToMerge</code> as parameter, 
+	 * or on <code>filterToMerge</code> with this <code>CallFilter</code> as parameter. 
 	 *  
-	 * @param callToMerge	The <code>CallFilter</code> to be merged with this one.
+	 * @param filterToMerge	The <code>CallFilter</code> to be merged with this one.
 	 * @return				The newly instantiated merged <code>CallFilter</code>, 
 	 * 						or <code>null</code> if no merging could be done. 
 	 * @see #mergeDiffEntitiesCallFilter(CallFilter)
 	 */
-    public CallFilter mergeSameEntityCallFilter(CallFilter callToMerge);
+    public CallFilter mergeSameEntityCallFilter(CallFilter filterToMerge);
     /**
-     * Tries to merge this <code>CallFilter</code> with <code>callToMerge</code>, 
+     * Tries to merge this <code>CallFilter</code> with <code>filterToMerge</code>, 
      * by considering that they define conditions on expression data for different 
      * <code>Entity</code>s (for instance, different <code>Gene</code>s).
      * <p>
@@ -63,12 +63,12 @@ public interface CallFilter extends Filter {
      * This method returns <code>null</code> if the <code>CallFilter</code>s could not 
      * be merged. Otherwise, it returns the newly merged <code>CallFilter</code>. 
      * This method is reflexive, so that it is equivalent to call this method 
-     * on this <code>CallFilter</code> with <code>callToMerge</code> as parameter, 
-     * or on <code>callToMerge</code> with this <code>CallFilter</code> as parameter. 
+     * on this <code>CallFilter</code> with <code>filterToMerge</code> as parameter, 
+     * or on <code>filterToMerge</code> with this <code>CallFilter</code> as parameter. 
      *  
-     * @param callToMerge   The <code>CallFilter</code> to be merged with this one.
+     * @param filterToMerge   The <code>CallFilter</code> to be merged with this one.
      * @return              The newly instantiated merged <code>CallFilter</code>, 
      *                      or <code>null</code> if no merging could be done. 
      */
-    public CallFilter mergeDiffEntitiesCallFilter(CallFilter callToMerge);
+    public CallFilter mergeDiffEntitiesCallFilter(CallFilter filterToMerge);
 }

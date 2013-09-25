@@ -83,38 +83,38 @@ public abstract class BasicCallFilter implements CallFilter {
 	}
 	
 	@Override
-    public CallFilter mergeSameEntityCallFilter(CallFilter callToMerge) {
-        log.entry(callToMerge);
-        return log.exit(this.merge(callToMerge, true));
+    public BasicCallFilter mergeSameEntityCallFilter(CallFilter filterToMerge) {
+        log.entry(filterToMerge);
+        return log.exit(this.merge(filterToMerge, true));
     }
     @Override
-    public CallFilter mergeDiffEntitiesCallFilter(CallFilter callToMerge) {
-        log.entry(callToMerge);
-        return log.exit(this.merge(callToMerge, false));
+    public BasicCallFilter mergeDiffEntitiesCallFilter(CallFilter filterToMerge) {
+        log.entry(filterToMerge);
+        return log.exit(this.merge(filterToMerge, false));
     }
     
     /**
-     * Merges this <code>BasicCallFilter</code> with <code>callToMerge</code>, 
+     * Merges this <code>BasicCallFilter</code> with <code>filterToMerge</code>, 
      * and returns the resulting merged new <code>BasicCallFilter</code>.
-     * If <code>callToMerge</code> cannot be merged with this <code>BasicCallFilter</code>, 
+     * If <code>filterToMerge</code> cannot be merged with this <code>BasicCallFilter</code>, 
      * this method returns <code>null</code>
      * <p>
      * If <code>sameEntity</code> is <code>true</code>, this method should correspond to 
      * {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}, otherwise, to 
      * {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}.
      * 
-     * @param callToMerge       a <code>CallFilter</code> to be merged with this one.
+     * @param filterToMerge       a <code>CallFilter</code> to be merged with this one.
      * @param sameEntity        a <code>boolean</code> defining whether 
-     *                          <code>callToMerge</code> and this <code>BasicCallFilter</code>
+     *                          <code>filterToMerge</code> and this <code>BasicCallFilter</code>
      *                          are related to a same <code>Entity</code>, or different ones. 
      * @return  A newly instantiated <code>BasicCallFilter</code> corresponding to 
      *          the merging of this <code>BasicCallFilter</code> and of 
-     *          <code>callToMerge</code>, or <code>null</code> if they could not be merged. 
+     *          <code>filterToMerge</code>, or <code>null</code> if they could not be merged. 
      */
-    protected abstract BasicCallFilter merge(CallFilter callToMerge, boolean sameEntity);
+    protected abstract BasicCallFilter merge(CallFilter filterToMerge, boolean sameEntity);
     
 	/**
-	 * Merges attributes of this <code>BasicCallFilter</code> with <code>callToMerge</code>, 
+	 * Merges attributes of this <code>BasicCallFilter</code> with <code>filterToMerge</code>, 
 	 * by storing the merged attributes into <code>newResultingCall</code>. 
 	 * It behaves as the methods {@link CallFilter#mergeSameEntityCallFilter(CallFilter)} 
 	 * or {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}, 
@@ -130,28 +130,28 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * This method is needed so that child classes do not have to take care 
 	 * of the merging of the attributes held by this class. 
 	 * <p>
-	 * If <code>callToMerge</code> cannot be merged with this <code>BasicCallFilter</code>, 
+	 * If <code>filterToMerge</code> cannot be merged with this <code>BasicCallFilter</code>, 
 	 * an <code>IllegalArgumentException</code> is thrown. This verification is achieved 
 	 * by calling {@link #canMerge(BasicCallFilter, boolean)}. This latter 
 	 * method only checks compatibility for attributes held by this abstract class.
 	 * A child class can still decide that the merging is not possible, according 
 	 * to its own attributes. 
 	 * 
-	 * @param callToMerge		a <code>BasicCallFilter</code> to be merged with this one.
+	 * @param filterToMerge		a <code>BasicCallFilter</code> to be merged with this one.
 	 * @param newResultingCall	the <code>BasicCallFilter</code> resulting from the merging, 
 	 * 							into which merged attributes will be loaded.
-	 * @param sameEntity		a <code>boolean</code> defining whether <code>callToMerge</code> 
+	 * @param sameEntity		a <code>boolean</code> defining whether <code>filterToMerge</code> 
 	 * 							and this <code>BasicCallFilter</code> are related to a same 
 	 * 							<code>Entity</code>, or different ones. 
-	 * @throws IllegalArgumentException	If <code>callToMerge</code> should not be merged 
+	 * @throws IllegalArgumentException	If <code>filterToMerge</code> should not be merged 
 	 * 									with this <code>BasicCallFilter</code>.
 	 * @see {@link #canMerge(BasicCallFilter, boolean)}
 	 */
-	protected void merge(BasicCallFilter callToMerge, BasicCallFilter newResultingCall, 
+	protected void merge(BasicCallFilter filterToMerge, BasicCallFilter newResultingCall, 
 			boolean sameEntity) throws IllegalArgumentException {
-		log.entry(callToMerge, newResultingCall, sameEntity);
+		log.entry(filterToMerge, newResultingCall, sameEntity);
 		
-		if (!this.canMerge(callToMerge, sameEntity)) {
+		if (!this.canMerge(filterToMerge, sameEntity)) {
 			throw log.throwing(new IllegalArgumentException("The BasicCallFilter provided " +
 					"to be merged is not compatible with the main BasicCallFilter that " +
 					"this method was called on. Merging not possible."));
@@ -163,15 +163,15 @@ public abstract class BasicCallFilter implements CallFilter {
 		//merge allDataTypes. When allDataTypes is true, we apply it to the merged filter 
 		//only if there is more than 1 data type set, otherwise it is equivalent to false.
 		if ((this.isAllDataTypes() && this.getDataTypes().size() != 1) || 
-				(callToMerge.isAllDataTypes() && callToMerge.getDataTypes().size() != 1)) {
+				(filterToMerge.isAllDataTypes() && filterToMerge.getDataTypes().size() != 1)) {
 		    newResultingCall.setAllDataTypes(true);
 		}
 		//merge data types and qualities 
 		for (Entry<DataType, DataQuality> entry: this.getDataTypesQualities().entrySet()) {
-			DataQuality qualToMerge = callToMerge.getDataTypesQualities().get(entry.getKey());
+			DataQuality qualToMerge = filterToMerge.getDataTypesQualities().get(entry.getKey());
 			
 			if (qualToMerge == null) {
-				//if not present in callToMerge, just add the entry to newResutingCall
+				//if not present in filterToMerge, just add the entry to newResutingCall
 				newResultingCall.addDataType(entry.getKey(), entry.getValue());
 			} else {
 				//otherwise, merge the qualities by keeping the lowest one
@@ -182,10 +182,10 @@ public abstract class BasicCallFilter implements CallFilter {
 				newResultingCall.addDataType(entry.getKey(), mergedQual);
 			}
 		}
-		//now we add the data types present in callToMerge but not present 
+		//now we add the data types present in filterToMerge but not present 
 		//in this BasicCallFilter.
 		for (Entry<DataType, DataQuality> entry: 
-			    callToMerge.getDataTypesQualities().entrySet()) {
+			    filterToMerge.getDataTypesQualities().entrySet()) {
 			if (!this.getDataTypes().contains(entry.getKey())) {
 				newResultingCall.addDataType(entry.getKey(), entry.getValue());
 			}
@@ -195,10 +195,10 @@ public abstract class BasicCallFilter implements CallFilter {
 	}
 	
 	/**
-	 * Defines whether this <code>BasicCallFilter</code> and <code>callToMerge</code> can be 
+	 * Defines whether this <code>BasicCallFilter</code> and <code>filterToMerge</code> can be 
 	 * merged, as far as only the attributes of this abstract class are concerned. 
 	 * <p>
-	 * If <code>sameEntity</code> is <code>true</code>, it means that <code>callToMerge</code> 
+	 * If <code>sameEntity</code> is <code>true</code>, it means that <code>filterToMerge</code> 
 	 * and this <code>BasicCallFilter</code> are related to a same <code>Entity</code> 
 	 * (see {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}), otherwise, to different 
 	 * <code>Entity</code>s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
@@ -210,31 +210,31 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * returns <code>true</code>, there is no guarantee that the child class 
 	 * will accept the merging, regarding it own attributes. 
 	 * 
-	 * @param callToMerge	A <code>BasicCallFilter</code> that is tried to be merged 
+	 * @param filterToMerge	A <code>BasicCallFilter</code> that is tried to be merged 
 	 * 						with this <code>BasicCallFilter</code>.
-	 * @param sameEntity	a <code>boolean</code> defining whether <code>callToMerge</code> 
+	 * @param sameEntity	a <code>boolean</code> defining whether <code>filterToMerge</code> 
 	 * 						and this <code>BasicCallFilter</code> are related to a same 
 	 * 						<code>Entity</code>, or different ones. 
 	 * @return		<code>true</code> if they could be merged, only according 
 	 * 				to the attributes of this class. 
 	 */
-	protected boolean canMerge(BasicCallFilter callToMerge, boolean sameEntity) {
-		log.entry(callToMerge);
-		if (this.isAllDataTypes() != callToMerge.isAllDataTypes()) {
+	protected boolean canMerge(BasicCallFilter filterToMerge, boolean sameEntity) {
+		log.entry(filterToMerge);
+		if (this.isAllDataTypes() != filterToMerge.isAllDataTypes()) {
 			//if the BasicCallFilter having isAllDataTypes returning true 
 			//have only one data type, then it is equivalent to having 
 			//isAllDataTypes returning false
 			if ((this.isAllDataTypes() && this.getDataTypes().size() != 1) || 
-				(callToMerge.isAllDataTypes() && callToMerge.getDataTypes().size() != 1)) {
+				(filterToMerge.isAllDataTypes() && filterToMerge.getDataTypes().size() != 1)) {
 			    return log.exit(false);
 			}
 		} else if (this.isAllDataTypes()) {
-			//if both this BasicCallFilter and callToMerge have isAllDataTypes 
+			//if both this BasicCallFilter and filterToMerge have isAllDataTypes 
 			//returning true, either they both have only one data type (which is 
 			//equivalent to having isAllDataTypes returning false), 
 			//or they should have exactly the same data types and qualities
-			if ((this.getDataTypes().size() != 1 || callToMerge.getDataTypes().size() != 1) && 
-					!this.haveSameDataTypesQualities(callToMerge)) {
+			if ((this.getDataTypes().size() != 1 || filterToMerge.getDataTypes().size() != 1) && 
+					!this.haveSameDataTypesQualities(filterToMerge)) {
 			    return log.exit(false);
 			}
 		}
@@ -246,7 +246,7 @@ public abstract class BasicCallFilter implements CallFilter {
 		}
 		//otherwise, if they are related to different Entities, they must have exactly 
 		//the same data types and qualities
-		return log.exit(this.haveSameDataTypesQualities(callToMerge));
+		return log.exit(this.haveSameDataTypesQualities(filterToMerge));
 	}
 	
 	/**
@@ -283,11 +283,11 @@ public abstract class BasicCallFilter implements CallFilter {
 	//************************************
 	
 	/**
-	 * Get the <code>CallType</code> defining the type of call to use 
-	 * when retrieving expression data.
-	 * 
-	 * @return the <code>CallType</code> defining the type of call to use.
-	 */
+     * Returns the <code>CallType</code> defining the type of call of the expression 
+     * data to retrieve.
+     * 
+     * @return the <code>CallType</code> defining the type of call to use.
+     */
 	public CallType getCallType() {
 		return this.referenceCall.getCallType();
 	}

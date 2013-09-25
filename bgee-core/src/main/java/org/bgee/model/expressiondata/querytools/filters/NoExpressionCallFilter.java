@@ -48,51 +48,51 @@ public class NoExpressionCallFilter extends BasicCallFilter {
      * @see #canMerge(CallFilter, boolean)
      */
     @Override
-    protected NoExpressionCallFilter merge(CallFilter callToMerge, boolean sameEntity) {
-        log.entry(callToMerge, sameEntity);
+    protected NoExpressionCallFilter merge(CallFilter filterToMerge, boolean sameEntity) {
+        log.entry(filterToMerge, sameEntity);
         //first, determine whether we can merge the CallFilters
-        if (!this.canMerge(callToMerge, sameEntity)) {
+        if (!this.canMerge(filterToMerge, sameEntity)) {
             return log.exit(null);
         }
 
         //OK, let's proceed to the merging
         //we blindly perform the merging, it is the responsibility of the method 
         //canMerge to determine whether it is appropriate.
-        NoExpressionCallFilter otherCall  = (NoExpressionCallFilter) callToMerge;
+        NoExpressionCallFilter otherFilter  = (NoExpressionCallFilter) filterToMerge;
         NoExpressionCallFilter mergedCall = new NoExpressionCallFilter();
-        super.merge(otherCall, mergedCall, sameEntity);
+        super.merge(otherFilter, mergedCall, sameEntity);
         
         mergedCall.setPropagateAnatEntities(
-                (this.isPropagateAnatEntities() || otherCall.isPropagateAnatEntities()));
+                (this.isPropagateAnatEntities() || otherFilter.isPropagateAnatEntities()));
 
         return log.exit(mergedCall);
     }
 
     /**
      * Determines whether this <code>NoExpressionCallFilter</code> and 
-     * <code>callToMerge</code> can be merged. 
+     * <code>filterToMerge</code> can be merged. 
      * <p>
-     * If <code>sameEntity</code> is <code>true</code>, it means that <code>callToMerge</code> 
+     * If <code>sameEntity</code> is <code>true</code>, it means that <code>filterToMerge</code> 
      * and this <code>NoExpressionCallFilter</code> are related to a same <code>Entity</code> 
      * (see {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}), otherwise, to different 
      * <code>Entity</code>s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
      * 
-     * @param callToMerge   A <code>CallFilter</code> that is tried to be merged 
+     * @param filterToMerge   A <code>CallFilter</code> that is tried to be merged 
      *                      with this <code>NoExpressionCallFilter</code>.
-     * @param sameEntity    a <code>boolean</code> defining whether <code>callToMerge</code> 
+     * @param sameEntity    a <code>boolean</code> defining whether <code>filterToMerge</code> 
      *                      and this <code>NoExpressionCallFilter</code> are related to a same 
      *                      <code>Entity</code>, or different ones. 
      * @return              <code>true</code> if they could be merged. 
      */
-    private boolean canMerge(CallFilter callToMerge, boolean sameEntity) {
-        log.entry(callToMerge, sameEntity);
+    private boolean canMerge(CallFilter filterToMerge, boolean sameEntity) {
+        log.entry(filterToMerge, sameEntity);
         
-        if (!(callToMerge instanceof NoExpressionCallFilter)) {
+        if (!(filterToMerge instanceof NoExpressionCallFilter)) {
             return log.exit(false);
         }
-        NoExpressionCallFilter otherCall = (NoExpressionCallFilter) callToMerge;
+        NoExpressionCallFilter otherFilter = (NoExpressionCallFilter) filterToMerge;
         
-        if (!super.canMerge(otherCall, sameEntity)) {
+        if (!super.canMerge(otherFilter, sameEntity)) {
             return log.exit(false);
         }
         
@@ -107,7 +107,7 @@ public class NoExpressionCallFilter extends BasicCallFilter {
         //a NoExpressionCallFilter using propagation. But it would be a nightmare to deal 
         //with all these specific cases in other parts of the code...
         //So, we simply do not merge in that case.
-        if (this.isPropagateAnatEntities() != otherCall.isPropagateAnatEntities()) {
+        if (this.isPropagateAnatEntities() != otherFilter.isPropagateAnatEntities()) {
             return log.exit(false);
         }
         

@@ -23,7 +23,8 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	/**
 	 * <code>Logger</code> of the class. 
 	 */
-	private final static Logger log = LogManager.getLogger(ExpressionCallFilter.class.getName());
+	private final static Logger log = 
+	        LogManager.getLogger(ExpressionCallFilter.class.getName());
 
 	/**
 	 * A <code>boolean</code> defining whether <code>EXPRESSION</code> calls 
@@ -57,53 +58,53 @@ public class ExpressionCallFilter extends BasicCallFilter {
      * @see #canMerge(CallFilter, boolean)
      */
     @Override
-	protected ExpressionCallFilter merge(CallFilter callToMerge, boolean sameEntity) {
-		log.entry(callToMerge, sameEntity);
+	protected ExpressionCallFilter merge(CallFilter filterToMerge, boolean sameEntity) {
+		log.entry(filterToMerge, sameEntity);
         //first, determine whether we can merge the CallFilters
-        if (!this.canMerge(callToMerge, sameEntity)) {
+        if (!this.canMerge(filterToMerge, sameEntity)) {
         	return log.exit(null);
         }
 
         //OK, let's proceed to the merging
         //we blindly perform the merging, it is the responsibility of the method 
         //canMerge to determine whether it is appropriate.
-        ExpressionCallFilter otherCall = (ExpressionCallFilter) callToMerge;
+        ExpressionCallFilter otherFilter = (ExpressionCallFilter) filterToMerge;
         ExpressionCallFilter mergedCall = new ExpressionCallFilter();
-        super.merge(otherCall, mergedCall, sameEntity);
+        super.merge(otherFilter, mergedCall, sameEntity);
         
         mergedCall.setPropagateAnatEntities(
-        		(this.isPropagateAnatEntities() || otherCall.isPropagateAnatEntities()));
+        		(this.isPropagateAnatEntities() || otherFilter.isPropagateAnatEntities()));
         mergedCall.setPropagateStages(
-        		(this.isPropagateStages() || otherCall.isPropagateStages()));
+        		(this.isPropagateStages() || otherFilter.isPropagateStages()));
 
         return log.exit(mergedCall);
 	}
 
 	/**
 	 * Determines whether this <code>ExpressionCallFilter</code> and 
-	 * <code>callToMerge</code> can be merged. 
+	 * <code>filterToMerge</code> can be merged. 
 	 * <p>
-	 * If <code>sameEntity</code> is <code>true</code>, it means that <code>callToMerge</code> 
+	 * If <code>sameEntity</code> is <code>true</code>, it means that <code>filterToMerge</code> 
 	 * and this <code>ExpressionCallFilter</code> are related to a same <code>Entity</code> 
 	 * (see {@link CallFilter#mergeSameEntityCallFilter(CallFilter)}), otherwise, to different 
 	 * <code>Entity</code>s (see {@link CallFilter#mergeDiffEntitiesCallFilter(CallFilter)}).
 	 * 
-	 * @param callToMerge	A <code>CallFilter</code> that is tried to be merged 
+	 * @param filterToMerge	A <code>CallFilter</code> that is tried to be merged 
 	 * 						with this <code>ExpressionCallFilter</code>.
-	 * @param sameEntity	a <code>boolean</code> defining whether <code>callToMerge</code> 
+	 * @param sameEntity	a <code>boolean</code> defining whether <code>filterToMerge</code> 
 	 * 						and this <code>ExpressionCallFilter</code> are related to a same 
 	 * 						<code>Entity</code>, or different ones. 
 	 * @return				<code>true</code> if they could be merged. 
 	 */
-	private boolean canMerge(CallFilter callToMerge, boolean sameEntity) {
-		log.entry(callToMerge, sameEntity);
+	private boolean canMerge(CallFilter filterToMerge, boolean sameEntity) {
+		log.entry(filterToMerge, sameEntity);
 		
-		if (!(callToMerge instanceof ExpressionCallFilter)) {
+		if (!(filterToMerge instanceof ExpressionCallFilter)) {
         	return log.exit(false);
         }
-        ExpressionCallFilter otherCall = (ExpressionCallFilter) callToMerge;
+        ExpressionCallFilter otherFilter = (ExpressionCallFilter) filterToMerge;
         
-		if (!super.canMerge(otherCall, sameEntity)) {
+		if (!super.canMerge(otherFilter, sameEntity)) {
 			return log.exit(false);
 		}
 		
@@ -118,8 +119,8 @@ public class ExpressionCallFilter extends BasicCallFilter {
 		//an ExpressionCallFilter using propagation. But it would be a nightmare to deal 
 		//with all these specific cases in other parts of the code...
 		//So, we simply do not merge in that case.
-		if (this.isPropagateAnatEntities() != otherCall.isPropagateAnatEntities() || 
-			    this.isPropagateStages() != otherCall.isPropagateStages()) {
+		if (this.isPropagateAnatEntities() != otherFilter.isPropagateAnatEntities() || 
+			    this.isPropagateStages() != otherFilter.isPropagateStages()) {
 			return log.exit(false);
 		}
 		

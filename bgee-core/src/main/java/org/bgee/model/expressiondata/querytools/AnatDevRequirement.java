@@ -376,7 +376,7 @@ public class AnatDevRequirement {
      * @see #setFilterWithDescendants(boolean)
      */
     public void addFilteringElement(AnatDevElement filteringElement) {
-        this.filteringElements.addAll(filteringElements);
+        this.filteringElements.add(filteringElement);
     }
     
     /**

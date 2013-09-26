@@ -205,7 +205,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	 * If the {@code Gene}s used in the {@link #requirements} do <strong>not</strong> 
      * belong to several {@code Species}, this attribute is not used.
 	 */
-	private Collection<AnatDevMapping> customMappings;
+	private Collection<AnatDevMapping<AnatDevEntity>> customMappings;
 	
     //---------------------------------------------------
 	

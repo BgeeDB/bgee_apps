@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.bgee.model.anatdev.AnatDevElement;
 import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.expressiondata.querytools.filters.CallFilter;
 import org.bgee.model.gene.Gene;
@@ -25,6 +26,10 @@ import org.bgee.model.gene.Gene;
  * {@code AnatDevRequirement} is defined by the value returned by 
  * {@link #getValidationType()}.
  * <p>
+ * It is also possible to filter the {@code AnatDevElement}s that will be validated 
+ * by this {@code AnatDevRequirement}, see {@link addFilteringElement(AnatDevElement)}, 
+ * {@link #setFilterAccepted(boolean)}, and {@link #setFilterWithDescendants(boolean)}.
+ * <p>
  * Note that an {@code AnatDevExpressionQuery} can use several 
  * {@code AnatDevRequirement}s, offering different ways of validating 
  * an {@code AnatDevElement}. 
@@ -35,8 +40,6 @@ import org.bgee.model.gene.Gene;
  *
  */
 public class AnatDevRequirement {
-	//No logger used, these classes basically only have getters/setters.
-	
 	/**
 	 * An {@code enum} to define how this {@code AnatDevRequirement} 
 	 * should be validated: 
@@ -79,6 +82,9 @@ public class AnatDevRequirement {
 		ALL, CONSERVATION, DIVERGENCE, GENETHRESHOLD, SPECIESTHRESHOLD;
 	}
 	
+	//***********************************
+    // INSTANCE ATTRIBUTES
+    //***********************************
 	/**
 	 * A {@code Collection} of {@code GeneCallRequirement}s 
 	 * defining gene expression data to retrieve and conditions to satisfy 
@@ -119,7 +125,46 @@ public class AnatDevRequirement {
 	 * @see #validationThreshold
 	 */
 	private CallType referenceCall;
+
+    //---------------- AnatDevElements Filtering --------------------
+    /**
+     * A {@code Set} of {@code AnatDevElement}s allowing to filter 
+     * the {@code AnatDevElement}s that will be validated by this 
+     * {@code AnatDevRequirement}. Whether these {@code AnatDevElement}s should be
+     * the only ones accepted for validation, or never accepted for validation 
+     * is defined by {@link #filterAccepted}. Whether descendants of these 
+     * {@code AnatDevElement}s should also be accepted (or rejected) is defined 
+     * by {@link #filterWithDescendants}.
+     * @see #filterWithDescendants
+     * @see #filterAccepted
+     */
+    private Set<AnatDevElement> filteringElements;
+    /**
+     * A {@code boolean} used when {@link #filteringElements} are provided, 
+     * to define whether descendants of these {@link #filteringElements} should 
+     * also be accepted (or rejected). See {@link #filteringElements} for more details.
+     * <p>
+     * Default value is {@code false}.
+     * @see #filteringElements
+     * @see #filterAccepted
+     */
+    private boolean filterWithDescendants;
+    /**
+     * A {@code boolean} used when {@link #filteringElements} are provided, 
+     * to define whether these {@link #filteringElements} (and their descendants 
+     * if {@link #filterWithDescendants} is {@code true}) should be accepted 
+     * when validated, or systematically rejected. If {@code true}, they will be 
+     * accepted. See {@link #filteringElements} for more details. 
+     * <p>
+     * Default value is {@code true}.
+     * @see #filteringElements
+     * @see #filterWithDescendants
+     */
+    private boolean filterAccepted;
 	
+	//***********************************
+    // CONSTRUCTOR
+    //***********************************
 	/**
 	 * Default constructor. 
 	 */
@@ -127,6 +172,9 @@ public class AnatDevRequirement {
 		this.requirements = new ArrayList<GeneCallRequirement>();
 	}
 
+	//***********************************
+    // GETTERS/SETTERS
+    //***********************************
 	/**
 	 * Return the {@code ValidationType} defining how this 
 	 * {@code AnatDevRequirement} should be validated.
@@ -274,6 +322,148 @@ public class AnatDevRequirement {
 		this.requirements.addAll(requirements);
 	}
 
+    //---------------- AnatDevElements Filtering --------------------
+	/**
+     * Returns the {@code Set} of {@code AnatDevElement}s allowing to filter 
+     * the {@code AnatDevElement}s that will be validated by this 
+     * {@code AnatDevRequirement}. Whether these {@code AnatDevElement}s should be
+     * the only ones accepted for validation, or never accepted for validation 
+     * is defined by {@link #isFilterAccepted()}. Whether descendants of these 
+     * {@code AnatDevElement}s should also be accepted (or rejected) is defined 
+     * by {@link #isFilterWithDescendants()}.
+     * 
+     * @return  the {@code Set} of {@code AnatDevElement}s allowing to filter 
+     *          the {@code AnatDevElement}s that will be validated by this 
+     *          {@link AnatDevRequirement}.
+     * @see #setFilterWithDescendants(boolean)
+     * @see #setFilterAccepted(boolean)
+     */
+    public Set<AnatDevElement> getFilteringElements() {
+        return filteringElements;
+    }
+    /**
+     * Add {@code filteringElements} to the {@code Set} of {@code AnatDevElement}s 
+     * allowing to filter the {@code AnatDevElement}s that will be validated by this 
+     * {@code AnatDevRequirement}. Whether these {@code AnatDevElement}s should be
+     * the only ones accepted for validation, or never accepted for validation 
+     * is defined by calling {@link #setFilterAccepted(boolean)}. Whether descendants 
+     * of these {@code AnatDevElement}s should also be accepted (or rejected) is defined 
+     * by calling {@link #setFilterWithDescendants(boolean)}.
+     * 
+     * @param filteringElements     A {@code Set} of {@code AnatDevElement}s to be 
+     *                              added to the filters of this {@code 
+     *                              AnatDevRequirement}.
+     * @see #addFilteringElement(AnatDevElement)
+     * @see #setFilterAccepted(boolean)
+     * @see #setFilterWithDescendants(boolean)
+     */
+    public void addAllFilteringElements(Collection<AnatDevElement> filteringElements) {
+        this.filteringElements.addAll(filteringElements);
+    }
+    /**
+     * Add {@code filteringElement} to the {@code Set} of {@code AnatDevElement}s 
+     * allowing to filter the {@code AnatDevElement}s that will be validated by this 
+     * {@code AnatDevRequirement}. Whether these {@code AnatDevElement}s should be
+     * the only ones accepted for validation, or never accepted for validation 
+     * is defined by calling {@link #setFilterAccepted(boolean)}. Whether descendants 
+     * of these {@code AnatDevElement}s should also be accepted (or rejected) is defined 
+     * by calling {@link #setFilterWithDescendants(boolean)}.
+     * 
+     * @param filteringElement      An {@code AnatDevElement} to be added to 
+     *                              the filters of this {@code AnatDevRequirement}.
+     * @see #addAllFilteringElements(Collection)
+     * @see #setFilterAccepted(boolean)
+     * @see #setFilterWithDescendants(boolean)
+     */
+    public void addFilteringElement(AnatDevElement filteringElement) {
+        this.filteringElements.addAll(filteringElements);
+    }
+    
+    /**
+     * Return the {@code boolean} used when filtering elements are provided 
+     * (returned by {@link #getFilteringElements()}), to define whether descendants 
+     * of these filtering elements should also be accepted (or rejected, 
+     * depending on {@link #isFilterAccepted()}). See {@link #getFilteringElements()} 
+     * for more details.
+     * <p>
+     * Default value is {@code false}. If equals to {@code true}, descendants 
+     * will be considered. 
+     * 
+     * @return  the {@code boolean} defining whether descendants of the filtering 
+     *          elements should also be considered. 
+     * @see #getFilteringElements()
+     * @see #isFilterAccepted()
+     */
+    public boolean isFilterWithDescendants() {
+        return filterWithDescendants;
+    }
+    /**
+     * Sets the {@code boolean} used when filtering elements are provided 
+     * (returned by {@link #getFilteringElements()}), to define whether descendants 
+     * of these filtering elements should also be accepted (or rejected, 
+     * depending on {@link #isFilterAccepted()}). See {@link #getFilteringElements()} 
+     * for more details.
+     * <p>
+     * Default value is {@code false}. If set to {@code true}, descendants 
+     * will be considered. 
+     * 
+     * @return  the {@code boolean} defining whether descendants of the filtering 
+     *          elements should also be considered. 
+     * 
+     * @param filterWithDescendants     A {@code boolean} defining whether descendants 
+     *                                  of the filtering elements should also be 
+     *                                  considered. 
+     * @see #addFilteringElements(AnatDevElement)
+     * @see #setFilterAccepted(boolean)
+     */
+    public void setFilterWithDescendants(boolean filterWithDescendants) {
+        this.filterWithDescendants = filterWithDescendants;
+    }
+    
+    /**
+     * Returns the {@code boolean} used when filtering elements are provided 
+     * (returned by {@link #getFilteringElements()}), to define whether these 
+     * filtering elements (and their descendants, if {@link #isFilterWithDescendants()} 
+     * returns {@code true}) should be accepted when validated, or systematically 
+     * rejected. If {@code true}, they will be accepted. See {@link 
+     * #getFilteringElements()} for more details. 
+     * <p>
+     * Default value is {@code true}.
+     * 
+     * @return  the {@code boolean} defining whether filtering elements should be 
+     *          accepted when validated, or systematically rejected. 
+     * @see #getFilteringElements()
+     * @see #isFilterWithDescendants()
+     * 
+     */
+    public boolean isFilterAccepted() {
+        return filterAccepted;
+    }
+    /**
+     * Sets the {@code boolean} used when filtering elements are provided 
+     * (returned by {@link #getFilteringElements()}), to define whether these 
+     * filtering elements (and their descendants, if {@link #isFilterWithDescendants()} 
+     * returns {@code true}) should be accepted when validated, or systematically 
+     * rejected. If {@code true}, they will be accepted. See {@link 
+     * #getFilteringElements()} for more details. 
+     * <p>
+     * Default value is {@code true}. If set to {@code false}, {@code AnatDevElement}s  
+     * part of the filter will be systematically rejected. 
+     * 
+     * @param filterAccepted    the {@code boolean} defining whether filtering elements 
+     *                          should be accepted when validated, or systematically 
+     *                          rejected. 
+     * @see #addFilteringElement(AnatDevElement)
+     * @see #setFilterWithDescendants(boolean)
+     */
+    public void setFilterAccepted(boolean filterAccepted) {
+        this.filterAccepted = filterAccepted;
+    }
+	
+	
+	//***********************************
+    // GeneCallRequirement INNER CLASS
+    //***********************************
 	/**
      * Define custom conditions for an {@code AnatDevElement} 
      * to be validated, regarding its gene expression data, when performing 
@@ -304,7 +494,11 @@ public class AnatDevRequirement {
      *
      */
     public class GeneCallRequirement {
-    	
+
+        //***********************************
+        // INSTANCE ATTRIBUTES
+        //***********************************
+        //---------------- Genes and CallFilters --------------------
     	/**
     	 * A {@code Map} associating each {@code Gene} in the key set, 
     	 * to a {@code Collection} of {@code CallFilter}s. 
@@ -360,6 +554,10 @@ public class AnatDevRequirement {
     	 */
     	private boolean satisfyAllGenes;
     	
+    	
+    	//***********************************
+        // CONSTRUCTORS
+        //***********************************
     	/**
     	 * Default constructor. 
     	 */
@@ -414,6 +612,10 @@ public class AnatDevRequirement {
 			this.setSatisfyAllCallFilters(false);
     	}
     	
+    	//***********************************
+    	// GETTERS/SETTERS
+    	//***********************************
+    	//---------------- Genes and CallFilters --------------------
     	/**
     	 * Return the {@code Map} associating {@code Gene}s to 
     	 * {@code Collection}s of {@code CallFilter}s. It defines for each 
@@ -558,7 +760,8 @@ public class AnatDevRequirement {
     			this.genesWithParameters.get(gene).addAll(filters);
     		}
     	}
-		
+
+        //---------------- AnatDevElements Filtering --------------------
 		/**
     	 * Return the {@code boolean} defining whether, when a {@code Gene} 
     	 * is associated to several {@code CallFilter}s (in the {@code Map} 

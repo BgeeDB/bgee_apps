@@ -157,7 +157,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
     /**
      * If 
      */
-    private AnatDevElement rootElement; continue here
+    private AnatDevElement rootElement; continue here => rootElementS ?
     
     private int levelCountToWalk;
     
@@ -291,7 +291,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	}
 	
 	private void checkState() {
-	    rootElement / DataRendering.ONTOLOGY
+	    rootElement / DataRendering.ONTOLOGY / QueryType
+	    if rootElementS, check that they are all of the same type
 	}
 	
 	private void analyzeRequirements() {
@@ -367,14 +368,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	
 	//---------------------------------------------
 	private boolean reconcileDataTypeCalls;//or: noDataTypeContradiction?
-	private Set<AnatDevEntity> filteringEntities;
-	private boolean acceptFilteringEntities;
-	
+    private int summaryCatCount;
     
-    
-    restriction on organs? (e.g., jacknife on HOGs for my analyses): only in organs/never in organs kind of?
-    		useful for all anaylses or only this class?
-    				
     				also, parameters "with mean expression level by experiment", probably useful for all query tools
     				this could be compute for each gene for an organ query, or for each organ on a gene query
     				this could be a last view, after data count, raw data: mean expression compared from raw data

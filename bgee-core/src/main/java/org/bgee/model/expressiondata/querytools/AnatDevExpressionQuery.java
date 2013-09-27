@@ -325,14 +325,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	public AnatDevExpressionQuery(QueryType queryType, DataRendering rendering) 
 	    throws IllegalArgumentException {
 	    super();
-	    if ((queryType.equals(QueryType.ANATWITHDEV) || 
-	        queryType.equals(QueryType.DEVWITHANAT)) && 
-	       (rendering.equals(DataRendering.ONTOLOGY) || 
-	        rendering.equals(DataRendering.SUMMARY))) {
-	        throw log.throwing(new IllegalArgumentException("The QueryType provided (" +
-	        		queryType + ") is incompatible with the DataRendering provided (" +
-	        		rendering + ")"));
-	    }
+	    this.checkQueryTypeDataRendering(queryType, rendering);
 	    
 	    this.queryType = queryType;
 	    this.rendering = rendering;
@@ -353,25 +346,6 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 			
 			this.checkState();
 			
-			//calls need to be manually propagated. => really true for AnatEntities?
-			//the new CallFilter merging does not merge CallFilters with 
-			//different propagation rules...
-			//So it is only a problem if a CompositeCallFilter is used (but that 
-			//could be taken care of by a different class/method), 
-			//and for Stages, that do not have a globalExpression table in the database.
-			
-			//--- Remove following comments based on decision: ---
-			
-			//As a conclusion, you should keep in mind that the global expression tables 
-			//generated in the Bgee database are useful to retrieve sets of Genes 
-			//with specific expression patterns, not to retrieve expression patterns 
-			//of a given set of Genes. 
-			
-			//so we need to reset the propagation parameter of the CallFilters to query the calls, 
-			//then propagate manually when needed. 
-			
-			//---                                              ---
-			
 			this.analyzeRequirements();
 			
 			queryCompleted = true;
@@ -389,8 +363,39 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	}
 	
 	private void checkState() {
+	    this.checkQueryTypeDataRendering(this.get, rendering)
 	    rootElement / DataRendering.ONTOLOGY / QueryType
-	    if rootElementS, check that they are all of the same type
+	    if rootElementS, check that they are all of the same type, and appropriate related to queryType
+	    at least one AnatDevRequirement, with at least one GeneCallRequirement (or calling a chceck method on AnatDevRequirement)
+	}
+	
+	/**
+	 * Checks if {@code queryType} and {@code rendering} are incompatible 
+	 * (see {@link queryType} for more details). Throws an 
+	 * {@code IllegalArgumentException} if thy are incompatible.
+	 * 
+	 * @param queryType    The {@link QueryType} to be checked for compatibility 
+	 *                     with {@code rendering}.
+     * @param rendering    The {@link DataRendering} to be checked for compatibility 
+     *                     with {@code queryType}.
+	 * @throws IllegalArgumentException    if {@code queryType} and {@code rendering} 
+	 *                                     are incompatible.
+	 */
+	private void checkQueryTypeDataRendering(QueryType queryType, DataRendering rendering) 
+	        throws IllegalArgumentException {
+	    log.entry(queryType, rendering);
+	    
+	    if ((queryType.equals(QueryType.ANATWITHDEV) || 
+	         queryType.equals(QueryType.DEVWITHANAT)) && 
+	         
+	        (rendering.equals(DataRendering.ONTOLOGY) || 
+	         rendering.equals(DataRendering.SUMMARY))) {
+	        
+	        throw log.throwing(new IllegalArgumentException("The QueryType provided (" +
+	                queryType + ") is incompatible with the DataRendering provided (" +
+	                rendering + ")"));
+	    }
+	    log.exit();
 	}
 	
 	private void analyzeRequirements() {

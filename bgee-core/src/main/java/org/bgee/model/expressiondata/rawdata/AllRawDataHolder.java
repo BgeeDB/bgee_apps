@@ -68,7 +68,11 @@ public class AllRawDataHolder implements RawDataHolder {
 		    (this.getAffymetrixDataHolder() != null && 
 		        this.getAffymetrixDataHolder().hasData()) || 
 		    (this.getInSituDataHolder() != null && this.getInSituDataHolder().hasData()) || 
-		    (this.getRNASeqDataHolder() != null && this.getRNASeqDataHolder().hasData())) {
+		    (this.getRNASeqDataHolder() != null && this.getRNASeqDataHolder().hasData()) || 
+		    (this.getDiffAffyDataHolder() != null && 
+		        this.getDiffAffyDataHolder().hasData()) || 
+		    (this.getDiffRNASeqDataHolder() != null && 
+		        this.getDiffRNASeqDataHolder().hasData())) {
 			return true;
 		}
 		return false;
@@ -82,7 +86,11 @@ public class AllRawDataHolder implements RawDataHolder {
 	            (this.getInSituDataHolder() != null && 
 	                this.getInSituDataHolder().hasDataCount()) || 
 	            (this.getRNASeqDataHolder() != null && 
-	                this.getRNASeqDataHolder().hasDataCount())) {
+	                this.getRNASeqDataHolder().hasDataCount()) ||
+	            (this.getDiffAffyDataHolder() != null && 
+	                this.getDiffAffyDataHolder().hasDataCount()) || 
+	            (this.getDiffRNASeqDataHolder() != null && 
+	                this.getDiffRNASeqDataHolder().hasDataCount())) {
 	            return true;
 	        }
 	        return false;
@@ -143,7 +151,6 @@ public class AllRawDataHolder implements RawDataHolder {
     //***********************************
     // DIFFERENTIAL EXPRESSION DATA
     //***********************************
-
     /**
      * @return  the {@code RawDataHolder} related to RNA-Seq differential 
      *          expression data.

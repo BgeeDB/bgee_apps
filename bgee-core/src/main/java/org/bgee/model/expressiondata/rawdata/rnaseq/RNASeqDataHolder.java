@@ -5,7 +5,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataHolder;
 /**
  * This class can hold any RNA-Seq-related data, and count of data, used in Bgee. 
  * This {@code RNASeqDataHolder} should likely be itself hold by a 
- * {@link org.bgee.model.expressiondata.rawdata.AnyRawDataHolder}.
+ * {@link org.bgee.model.expressiondata.rawdata.AllRawDataHolder}.
  * <p>
  * For RNA-Seq data specifically used to generate differential expression calls, 
  * see {@link org.bgee.model.expressiondata.rawdata.diffexpression.rnaseq.DiffRNASeqDataHolder}.

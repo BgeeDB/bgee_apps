@@ -46,8 +46,7 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
 
     /**
      * An {@code int} allowing to filter differential expression calls 
-     * based on the number of conditions compared. See {@link #getConditionCount()} 
-     * for important explanations. 
+     * based on the minimum number of conditions compared to generate the call. 
      */
     private int conditionCount;
     /**

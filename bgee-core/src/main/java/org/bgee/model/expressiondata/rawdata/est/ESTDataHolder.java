@@ -5,7 +5,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataHolder;
 /**
  * This class can hold any EST-related data, and count of data, used in Bgee. 
  * This {@code ESTDataHolder} should likely be itself hold by a 
- * {@link org.bgee.model.expressiondata.rawdata.AnyRawDataHolder}.
+ * {@link org.bgee.model.expressiondata.rawdata.AllRawDataHolder}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

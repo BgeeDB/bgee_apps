@@ -25,7 +25,7 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqLibrary.RNASeqLibraryT
  * <p>
  * The parameters of this class are more coupled with the data in the data source 
  * than with the classes of this application. This is why it is so closed to 
- * {@link org.bgee.model.expressiondata.rawdata.AnyRawDataHolder}, yet different, 
+ * {@link org.bgee.model.expressiondata.rawdata.AllRawDataHolder}, yet different, 
  * so that a different class is needed.
  * <p>
  * Of note, this class implements the methods {@code equals} and 

@@ -15,8 +15,7 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class AnyRawDataHolder implements GlobalRawDataHolder {
-	
+public class AllRawDataHolder implements RawDataHolder {
 	/**
 	 * {@code ESTDataHolder} to hold EST-related data.
 	 */
@@ -33,58 +32,88 @@ public class AnyRawDataHolder implements GlobalRawDataHolder {
 	 * {@code RNASeqDataHolder} to hold RNA-Seq-related data.
 	 */
 	private RNASeqDataHolder rnaSeqDataHolder;
+    
+	/**
+	 * Default constructor.
+	 */
+    public AllRawDataHolder() {
+        this.setAffymetrixDataHolder(new AffymetrixDataHolder());
+        this.setESTDataHolder(new ESTDataHolder());
+        this.setInSituDataHolder(new InSituDataHolder());
+        this.setRNASeqDataHolder(new RNASeqDataHolder());
+    }
 	
 	
 	@Override
 	public boolean hasData() {
-		if (this.getESTDataHolder().hasData() || 
-				this.getAffymetrixDataHolder().hasData() || 
-				this.getInSituDataHolder().hasData() || 
-				this.getRNASeqDataHolder().hasData()) {
+		if ((this.getESTDataHolder() != null && this.getESTDataHolder().hasData()) || 
+		    (this.getAffymetrixDataHolder() != null && 
+		        this.getAffymetrixDataHolder().hasData()) || 
+		    (this.getInSituDataHolder() != null && this.getInSituDataHolder().hasData()) || 
+		    (this.getRNASeqDataHolder() != null && this.getRNASeqDataHolder().hasData())) {
 			return true;
 		}
 		return false;
 	}
 	@Override
 	public boolean hasDataCount() {
-		if (this.getESTDataHolder().hasDataCount() || 
-				this.getAffymetrixDataHolder().hasDataCount() || 
-				this.getInSituDataHolder().hasDataCount() || 
-				this.getRNASeqDataHolder().hasDataCount()) {
-			return true;
-		}
-		return false;
+	    if ((this.getESTDataHolder() != null && 
+	                this.getESTDataHolder().hasDataCount()) || 
+	            (this.getAffymetrixDataHolder() != null && 
+	                this.getAffymetrixDataHolder().hasDataCount()) || 
+	            (this.getInSituDataHolder() != null && 
+	                this.getInSituDataHolder().hasDataCount()) || 
+	            (this.getRNASeqDataHolder() != null && 
+	                this.getRNASeqDataHolder().hasDataCount())) {
+	            return true;
+	        }
+	        return false;
 	}
-	
-	@Override
+	/**
+     * @return the {@code RawDataHolder} related to EST data.
+     */
 	public ESTDataHolder getESTDataHolder() {
 		return estDataHolder;
 	}
-	@Override
+	/**
+     * @param holder    the {@code RawDataHolder} related to EST data to set.
+     */
 	public void setESTDataHolder(ESTDataHolder estDataHolder) {
 		this.estDataHolder = estDataHolder;
 	}
-	@Override
+	/**
+     * @return  the {@code RawDataHolder} related to Affymetrix data.
+     */
 	public AffymetrixDataHolder getAffymetrixDataHolder() {
 		return affyDataHolder;
 	}
-	@Override
+	/**
+     * @param holder    the {@code RawDataHolder} related to Affymetrix data to set.
+     */
 	public void setAffymetrixDataHolder(AffymetrixDataHolder affyDataHolder) {
 		this.affyDataHolder = affyDataHolder;
 	}
-	@Override
+	/**
+     * @return  the {@code RawDataHolder} related to <em>in situ</code> data.
+     */
 	public InSituDataHolder getInSituDataHolder() {
 		return inSituDataHolder;
 	}
-	@Override
+	/**
+     * @param holder    the {@code RawDataHolder} related to <em>in situ</em> data to set.
+     */
 	public void setInSituDataHolder(InSituDataHolder inSituDataHolder) {
 		this.inSituDataHolder = inSituDataHolder;
 	}
-	@Override
+	/**
+     * @return  the {@code RawDataHolder} related to <em>RNA-Seq</code> data.
+     */
 	public RNASeqDataHolder getRNASeqDataHolder() {
 		return rnaSeqDataHolder;
 	}
-	@Override
+	/**
+     * @param holder    the {@code RawDataHolder} related to RNA-Seq data to set.
+     */
 	public void setRNASeqDataHolder(RNASeqDataHolder rnaSeqDataHolder) {
 		this.rnaSeqDataHolder = rnaSeqDataHolder;
 	}

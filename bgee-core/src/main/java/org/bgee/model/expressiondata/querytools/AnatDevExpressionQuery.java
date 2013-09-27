@@ -2,6 +2,7 @@ package org.bgee.model.expressiondata.querytools;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -9,12 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatDevElement;
 import org.bgee.model.anatdev.core.AnatDevEntity;
 import org.bgee.model.anatdev.evomapping.AnatDevMapping;
-import org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType;
 import org.bgee.model.anatdev.evomapping.EvoMappingSelector;
-import org.bgee.model.expressiondata.querytools.AnatDevRequirement.GeneCallRequirement;
-import org.bgee.model.ontologycommon.Confidence;
-import org.bgee.model.ontologycommon.EvidenceCode;
-import org.bgee.model.species.Taxon;
 
 /**
  * This class allows to retrieve {@link org.bgee.model.anatdev.AnatDevElement}s based on 
@@ -128,12 +124,14 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 
     /**
      * An {@code int} that is the default value for {@link #elementsByGroup}.
+     * As of Bgee 13, equals to 6.
      */
-    private static final int DEFAULTELEMENTSBYGROUP = 6;
+    public static final int DEFAULTELEMENTSBYGROUP = 6;
     /**
      * An {@code int} that is the default value for {@link #summaryElementCount}.
+     * As of Bgee 13, equals to 10.
      */
-    private static final int DEFAULTSUMMARYELEMENTCOUNT = 10;
+    public static final int DEFAULTSUMMARYELEMENTCOUNT = 10;
     //**************************************
     // INSTANCE ATTRIBUTES
     //**************************************
@@ -166,10 +164,10 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
     private int elementsByGroup;
 
     /**
-     * An {@code int} defining what is the wished number of top {@code AnatDevElement}s, 
+     * An {@code int} defining the wished number of top {@code AnatDevElement}s, 
      * summarizing the expression data of this {@code AnatDevExpressionQuery}, 
      * when {@link #rendering} is equal to {@link DataRendering SUMMARY}.
-     * These top {@code AnatDevElement}s, with their substructures, should contain 
+     * These top {@code AnatDevElement}s, with their children, should contain 
      * all {@code AnatDevElement}s validated, as close as possible to them. 
      * This value is only a wish, this {@code AnatDevExpressionQuery} will make 
      * its best to obtain that number of top {@code AnatDevElement}s.
@@ -189,8 +187,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * (notably depending on {@link #queryType}) will be used by default.
      * <p>
      * If {@link #levelCountToWalk} is equal to 0, then the complete subgraphs 
-     * will be considered. Otherwise, it defines the maximum distance of the children 
-     * of these roots to consider, see {@link #levelCountToWalk} for more details.
+     * will be considered. Otherwise, it defines the maximum distance to these roots 
+     * of the children to consider, see {@link #levelCountToWalk} for more details.
      * <p>
      * This {@code Collection} can contain only one single type of {@code AnatDevElement}s. 
      * If {@link #queryType} is {@code ANATOMY} or {@code ANATWITHDEV}, then these 
@@ -200,10 +198,10 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * respected, then an {@code IllegalStateException} will be thrown when the method 
      * {@link #launchQuery()} is called.
      * 
-     *  @see #levelCountToWalk
-     *  @see #queryType
+     * @see #levelCountToWalk
+     * @see #queryType
      */
-    private Collection<AnatDevElement> rootElements; 
+    private final Set<AnatDevElement> rootElements; 
     /**
      * An {@code int} defining the maximum distance of the {@code AnatDevElement}s 
      * to consider, to {@link #rootElements}, by 
@@ -303,7 +301,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	 * If the {@code Gene}s used in the {@link #requirements} do <strong>not</strong> 
      * belong to several {@code Species}, this attribute is not used.
 	 */
-	private Collection<AnatDevMapping<AnatDevEntity>> customMappings;
+	private final Set<AnatDevMapping<AnatDevEntity>> customMappings;
 	
     //---------------------------------------------------
 	
@@ -330,6 +328,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	    this.queryType = queryType;
 	    this.rendering = rendering;
 		this.requirements = new ArrayList<AnatDevRequirement>();
+		this.rootElements = new HashSet<AnatDevElement>();
+		this.customMappings = new HashSet<AnatDevMapping<AnatDevEntity>>();
 	}
 	
 	//*********************************
@@ -349,24 +349,25 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 			this.analyzeRequirements();
 			
 			queryCompleted = true;
-		} catch (InterruptedException e) {
+		} /*catch (InterruptedException e) {//see http://docs.oracle.com/javase/tutorial/essential/concurrency/interrupt.html
 			//long-running queries can be interrupted by the TaskManager, so we need 
 			//to be prepared to catch an interruption.
 			//TODO: clean up to do here?
 			//propagate the interruption, keep the interruption status
 		    log.catching(e);
 			Thread.currentThread().interrupt();
-		} finally {
+		} */finally {
 			this.endQuery(queryCompleted);
 		}
 		log.exit();
 	}
 	
 	private void checkState() {
-	    this.checkQueryTypeDataRendering(this.get, rendering)
+	    /*this.checkQueryTypeDataRendering(this.get, rendering)
 	    rootElement / DataRendering.ONTOLOGY / QueryType
 	    if rootElementS, check that they are all of the same type, and appropriate related to queryType
 	    at least one AnatDevRequirement, with at least one GeneCallRequirement (or calling a chceck method on AnatDevRequirement)
+	    */
 	}
 	
 	/**
@@ -427,45 +428,506 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	//*********************************
 	// GETTERS AND SETTERS
 	//*********************************
-	
-	/**
-	 * Add an {@link AnatDevRequirement} to the {@code Collection} of 
-	 * {@code AnatDevRequirement}s defining expression data to retrieve, 
-	 * for which {@code Gene}s, and how to validate the {@code AnatDevElement} 
-	 * to keep. 
-	 * 
-	 * @param requirement	an {@code AnatDevRequirement} to be added to 
-	 * 						this {@code AnatDevExpressionQuery}
-	 * @see #getRequirements()
-	 * @see #addAllRequirements(Collection)
-	 */
-	public void addRequirement(AnatDevRequirement requirement) {
-		this.requirements.add(requirement);
-	}
-	/**
-	 * Add a {@code Collection} of {@link AnatDevRequirement}s to 
-	 * the {@code Collection} of {@code AnatDevRequirement}s defining 
-	 * expression data to retrieve, for which {@code Gene}s, and how 
-	 * to validate the {@code AnatDevElement} to keep. 
-	 * 
-	 * @param requirement	a {@code Collection} of {@code AnatDevRequirement}s 
-	 * 						to be added to this {@code AnatDevExpressionQuery}.
-	 * @see #getRequirements()
-	 * @see #addRequirement(AnatDevRequirement)
-	 */
-	public void addAllRequirements(Collection<AnatDevRequirement> requirements) {
-		this.requirements.addAll(requirements);
-	}
-	/**
-	 * Return a {@code Collection} of {@link AnatDevRequirement}s defining which 
-     * expression data to retrieve for which {@code Gene}s, and what are 
-     * the requirements for an {@code AnatDevElement} to be validated. 
+
+    /**
+     * @return  A {@link QueryType} defining what is the query that this 
+     *          {@code AnatDevExpressionQuery} should perform.
+     */
+    public QueryType getQueryType() {
+        return queryType;
+    }
+    
+
+    //-------- RENDERING AND RELATED ATTRIBUTES ----------
+    /**
+     * The {@code DataRendering} defining how {@code AnatDevElement}s should be 
+     * selected and organized after they were validated by the {@code AnatDevRequirement}s 
+     * (see {@link #getRequirements()}).
      * 
-	 * @return	a {@code Collection} of {@code AnatDevRequirement}s
-	 * @see #addRequirement(AnatDevRequirement)
-	 * @see #addAllRequirements(Collection)
-	 */
-	public Collection<AnatDevRequirement> getRequirements() {
-		return this.requirements;
-	}
+     * @return the {@code DataRendering} of this {@code AnatDevExpressionQuery}.
+     */
+    public DataRendering getRendering() {
+        return rendering;
+    }
+    
+    /**
+     * Returns the {@code int} defining what is the wished number of 
+     * {@code AnatDevElement}s by group. This value is applicable when 
+     * the {@link DataRendering} returned by {@link #getRendering()} corresponds to 
+     * a {@link DataRendering} requesting a grouping of the {@code AnatDevElement}s 
+     * retrieved. This value is only a wish, this {@code AnatDevExpressionQuery} 
+     * will make its best to obtain groups with a number of {@code AnatDevElement}s 
+     * as closed to this value as possible.
+     * <p>
+     * Default value is {@link #DEFAULTELEMENTSBYGROUP}.
+     * 
+     * @return  the {@code int} that is the wished number of {@code AnatDevElement}s 
+     *          by group.
+     * @see #getRendering()
+     */
+    public int getElementsByGroup() {
+        return elementsByGroup;
+    }
+    /**
+     * Sets the {@code int} defining what is the wished number of 
+     * {@code AnatDevElement}s by group. This value is applicable when 
+     * the {@link DataRendering} returned by {@link #getRendering()} corresponds to 
+     * a {@link DataRendering} requesting a grouping of the {@code AnatDevElement}s 
+     * retrieved. This value is only a wish, this {@code AnatDevExpressionQuery} 
+     * will make its best to obtain groups with a number of {@code AnatDevElement}s 
+     * as closed to this value as possible.
+     * <p>
+     * Default value is {@link #DEFAULTELEMENTSBYGROUP}.
+     * 
+     * @param elementsByGroup   An <code>int</code> that is the wished number of 
+     *                          {@code AnatDevElement}s by group
+     * @see #getRendering()
+     */
+    public void setElementsByGroup(int elementsByGroup) {
+        this.elementsByGroup = elementsByGroup;
+    }
+
+    /**
+     * Returns the {@code int} defining the wished number of top {@code AnatDevElement}s, 
+     * summarizing the expression data of this {@code AnatDevExpressionQuery}, 
+     * when the {@link DataRendering} is {@code SUMMARY} (see {@link #getRendering()}).
+     * These top {@code AnatDevElement}s, with their children, should contain 
+     * all {@code AnatDevElement}s validated, as close as possible to them. 
+     * This value is only a wish, this {@code AnatDevExpressionQuery} will make 
+     * its best to obtain that number of top {@code AnatDevElement}s.
+     * <p>
+     * Default value is {@link #DEFAULTSUMMARYELEMENTCOUNT}.
+     * 
+     * @return  The {@code int} defining the wished number of top {@code AnatDevElement}s, 
+     *          summarizing all the expression data of this {@code AnatDevExpressionQuery}.
+     * @see #getRendering()
+     */
+    public int getSummaryElementCount() {
+        return summaryElementCount;
+    }
+    /**
+     * Gets the {@code int} defining the wished number of top {@code AnatDevElement}s, 
+     * summarizing the expression data of this {@code AnatDevExpressionQuery}, 
+     * when the {@link DataRendering} is {@code SUMMARY} (see {@link #getRendering()}).
+     * These top {@code AnatDevElement}s, with their children, should contain 
+     * all {@code AnatDevElement}s validated, as close as possible to them. 
+     * This value is only a wish, this {@code AnatDevExpressionQuery} will make 
+     * its best to obtain that number of top {@code AnatDevElement}s.
+     * <p>
+     * Default value is {@link #DEFAULTSUMMARYELEMENTCOUNT}.
+     * 
+     * @return  The {@code int} defining the wished number of top {@code AnatDevElement}s, 
+     *          summarizing all the expression data of this {@code AnatDevExpressionQuery}.
+     * 
+     * @param summaryElementCount   The {@code int} defining the wished number of top 
+     *                              {@code AnatDevElement}s, summarizing all the 
+     *                              expression data of this {@code AnatDevExpressionQuery}.
+     * @see #getRendering()
+     */
+    public void setSummaryElementCount(int summaryElementCount) {
+        this.summaryElementCount = summaryElementCount;
+    }
+
+    /**
+     * Returns the {@code Collection} of {@code AnatDevElement}s defining 
+     * the roots to use when the {@link DataRendering} is {@link ONTOLOGY} 
+     * (see {@link #getRendering()}). It means that the {@code AnatDevElement}s 
+     * to retrieve, based on the {@code AnatDevRequirements} (see {@link 
+     * #getRequirements()}), will be part of the subgraphs defined by these roots.
+     * <p>
+     * If the {@link DataRendering} is {@link ONTOLOGY} and this {@code Collection} 
+     * is empty, then the root of the ontology considered (depending on the 
+     * {@link QueryType}, see below) will be used by default.
+     * <p>
+     * If the number of level to walk is 0 (see {@link #getLevelCountToWalk()}, then 
+     * the complete subgraphs will be considered. Otherwise, it defines the maximum 
+     * distance to these roots of the children to consider, see {@link 
+     * #getLevelCountToWalk()} for more details.
+     * <p>
+     * This {@code Collection} can contain only one single type of {@code AnatDevElement}s. 
+     * If the {@code QueryType} is {@code ANATOMY} or {@code ANATWITHDEV}, then these 
+     * roots must be {@link org.bgee.model.anatdev.AnatElement AnatElement}s; 
+     * if the {@code QueryType} is {@code DEVELOPMENT} or {@code DEVWITHANAT}, 
+     * then these roots must be {@link org.bgee.model.anatdev.DevElement DevElement}s. 
+     * If these conditions are not respected, then an {@code IllegalStateException} 
+     * will be thrown when the method {@link #launchQuery()} is called.
+     * 
+     * @return  A {@code Collection} of {@code AnatDevElement}s that are the roots
+     *          to consider when the {@code DataRendering} is {@code ONTOLOGY}.
+     * @see #getLevelCountToWalk()
+     * @see #getQueryType()
+     * @see #getRendering()
+     */
+    public Collection<AnatDevElement> getRootElements() {
+        return rootElements;
+    }
+    /**
+     * Add {@code roots} to the {@code Collection} of {@code AnatDevElement}s defining 
+     * the roots to use when the {@link DataRendering} is {@link ONTOLOGY} 
+     * (see {@link #getRendering()}). It means that the {@code AnatDevElement}s 
+     * to retrieve, based on the {@code AnatDevRequirements} (see {@link 
+     * #getRequirements()}), will be part of the subgraphs defined by these roots.
+     * <p>
+     * If the {@link DataRendering} is {@link ONTOLOGY} and this {@code Collection} 
+     * is empty, then the root of the ontology considered (depending on the 
+     * {@link QueryType}, see below) will be used by default.
+     * <p>
+     * If the number of level to walk is 0 (see {@link #getLevelCountToWalk()}, then 
+     * the complete subgraphs will be considered. Otherwise, it defines the maximum 
+     * distance to these roots of the children to consider, see {@link 
+     * #getLevelCountToWalk()} for more details.
+     * <p>
+     * This {@code Collection} can contain only one single type of {@code AnatDevElement}s. 
+     * If the {@code QueryType} is {@code ANATOMY} or {@code ANATWITHDEV}, then these 
+     * roots must be {@link org.bgee.model.anatdev.AnatElement AnatElement}s; 
+     * if the {@code QueryType} is {@code DEVELOPMENT} or {@code DEVWITHANAT}, 
+     * then these roots must be {@link org.bgee.model.anatdev.DevElement DevElement}s. 
+     * If these conditions are not respected, then an {@code IllegalStateException} 
+     * will be thrown when the method {@link #launchQuery()} is called.
+     * 
+     * @param roots A {@code Collection} of {@code AnatDevElement}s to add to the roots
+     *              to consider when the {@code DataRendering} is {@code ONTOLOGY}.
+     * @see #getLevelCountToWalk()
+     * @see #getQueryType()
+     * @see #getRendering()
+     */
+    public void addAllRootElements(Collection<AnatDevElement> roots) {
+        this.rootElements.addAll(roots);
+    }
+    /**
+     * Add {@code root} to the {@code Collection} of {@code AnatDevElement}s defining 
+     * the roots to use when the {@link DataRendering} is {@link ONTOLOGY} 
+     * (see {@link #getRendering()}). It means that the {@code AnatDevElement}s 
+     * to retrieve, based on the {@code AnatDevRequirements} (see {@link 
+     * #getRequirements()}), will be part of the subgraphs defined by these roots.
+     * <p>
+     * If the {@link DataRendering} is {@link ONTOLOGY} and this {@code Collection} 
+     * is empty, then the root of the ontology considered (depending on the 
+     * {@link QueryType}, see below) will be used by default.
+     * <p>
+     * If the number of level to walk is 0 (see {@link #getLevelCountToWalk()}, then 
+     * the complete subgraphs will be considered. Otherwise, it defines the maximum 
+     * distance to these roots of the children to consider, see {@link 
+     * #getLevelCountToWalk()} for more details.
+     * <p>
+     * This {@code Collection} can contain only one single type of {@code AnatDevElement}s. 
+     * If the {@code QueryType} is {@code ANATOMY} or {@code ANATWITHDEV}, then these 
+     * roots must be {@link org.bgee.model.anatdev.AnatElement AnatElement}s; 
+     * if the {@code QueryType} is {@code DEVELOPMENT} or {@code DEVWITHANAT}, 
+     * then these roots must be {@link org.bgee.model.anatdev.DevElement DevElement}s. 
+     * If these conditions are not respected, then an {@code IllegalStateException} 
+     * will be thrown when the method {@link #launchQuery()} is called.
+     * 
+     * @param root  An {@code AnatDevElement}s to add to the roots to consider 
+     *              when the {@code DataRendering} is {@code ONTOLOGY}.
+     * @see #getLevelCountToWalk()
+     * @see #getQueryType()
+     * @see #getRendering()
+     */
+    public void addRootElement(AnatDevElement root) {
+        this.rootElements.add(root);
+    }
+
+    /**
+     * Returns the {@code int} defining the maximum distance of the 
+     * {@code AnatDevElement}s to consider, to the root elements returned by 
+     * {@link #getRootElements()}. The distance is computed along the  
+     * {@link org.bgee.model.ontologycommon.Ontology.RelationType ISA_PARTOF} 
+     * relations. If equals to 0, then all children, at any distance, will be 
+     * considered (meaning, all {@code AnatDevElement}s connected to the root elements  
+     * by a direct {@code ISA_PARTOF} relation, or an indirect composed {@code ISA_PARTOF} 
+     * relation). This attribute is applicable only when the {@code DataRendering} 
+     * is {@code ONTOLOGY} (see {@link #getRendering()}).
+     * <p>
+     * for instance, if in an ontology, D part_of C part_of B part_of A, and if A 
+     * is the requested root element; if this attribute is equal to 1, then A and B 
+     * will be considered; if equal to 2, then A, B, and C will be considered; if 
+     * equal to 0, then all elements will be considered. 
+     * <p>
+     * Default is 0.
+     * 
+     * @return  the {@code int} defining the maximum distance to the roots of the 
+     *          {@code AnatDevElement}s to consider.
+     * @see #getRootElements()
+     */
+    public int getLevelCountToWalk() {
+        return levelCountToWalk;
+    }
+    /**
+     * Sets the {@code int} defining the maximum distance of the 
+     * {@code AnatDevElement}s to consider, to the root elements returned by 
+     * {@link #getRootElements()}. The distance is computed along the  
+     * {@link org.bgee.model.ontologycommon.Ontology.RelationType ISA_PARTOF} 
+     * relations. If equals to 0, then all children, at any distance, will be 
+     * considered (meaning, all {@code AnatDevElement}s connected to the root elements  
+     * by a direct {@code ISA_PARTOF} relation, or an indirect composed {@code ISA_PARTOF} 
+     * relation). This attribute is applicable only when the {@code DataRendering} 
+     * is {@code ONTOLOGY} (see {@link #getRendering()}).
+     * <p>
+     * for instance, if in an ontology, D part_of C part_of B part_of A, and if A 
+     * is the requested root element; if this attribute is equal to 1, then A and B 
+     * will be considered; if equal to 2, then A, B, and C will be considered; if 
+     * equal to 0, then all elements will be considered. 
+     * <p>
+     * Default is 0.
+     * 
+     * @param level    the {@code int} defining the maximum distance to the roots 
+     *                  of the {@code AnatDevElement}s to consider.
+     * @see #getRootElements()
+     */
+    public void setLevelCountToWalk(int level) {
+        this.levelCountToWalk = level;
+    }
+
+    //--------------- REQUIREMENTS-----------------
+    /**
+     * Add an {@link AnatDevRequirement} to the {@code Collection} of 
+     * {@code AnatDevRequirement}s defining expression data to retrieve, 
+     * for which {@code Gene}s, and how to validate the {@code AnatDevElement}s 
+     * to keep. 
+     * 
+     * @param requirement   an {@code AnatDevRequirement} to be added to 
+     *                      this {@code AnatDevExpressionQuery}
+     * @see #getRequirements()
+     * @see #addAllRequirements(Collection)
+     */
+    public void addRequirement(AnatDevRequirement requirement) {
+        this.requirements.add(requirement);
+    }
+    /**
+     * Add a {@code Collection} of {@link AnatDevRequirement}s to 
+     * the {@code Collection} of {@code AnatDevRequirement}s defining 
+     * expression data to retrieve, for which {@code Gene}s, and how 
+     * to validate the {@code AnatDevElement}s to keep. 
+     * 
+     * @param requirement   a {@code Collection} of {@code AnatDevRequirement}s 
+     *                      to be added to this {@code AnatDevExpressionQuery}.
+     * @see #getRequirements()
+     * @see #addRequirement(AnatDevRequirement)
+     */
+    public void addAllRequirements(Collection<AnatDevRequirement> requirements) {
+        this.requirements.addAll(requirements);
+    }
+    /**
+     * Return a {@code Collection} of {@link AnatDevRequirement}s defining which 
+     * expression data to retrieve for which {@code Gene}s, and what are 
+     * the requirements for an {@code AnatDevElement}s to be validated. 
+     * 
+     * @return  a {@code Collection} of {@code AnatDevRequirement}s
+     * @see #addRequirement(AnatDevRequirement)
+     * @see #addAllRequirements(Collection)
+     */
+    public Collection<AnatDevRequirement> getRequirements() {
+        return this.requirements;
+    }
+
+    /**
+     * Returns the {@code boolean} defining whether contradicting {@link 
+     * org.bgee.model.expressiondata.Call Call}s generated by different {@link 
+     * org.bgee.model.expressiondata.DataParameters.DataType DataType}s should 
+     * be reconciled in an {@code AnatDevElement}. For instance, 
+     * if a {@code DataType} allowed to generate an {@code ExpressionCall} 
+     * in an {@code AnatDevElement}, and another {@code DataType} 
+     * a {@code NoExpressionCall}, then only the {@code ExpressionCall} will be kept.
+     * <p>
+     * Of note, Bgee already reconciles contradicting {@code Call}s of a same 
+     * {@code DataType} (for instance, contradictions between experiments), 
+     * by taking them into account to infer a global {@code Call}, and a global 
+     * {@link org.bgee.model.expressiondata.DataParameters.DataQuality DataQuality}. 
+     * But contradicting {@code Call}s between different {@code DataType}s are all kept 
+     * by default.
+     * <p>
+     * Default value is {@code false}. If this attribute is {@code true}, then 
+     * reconciliations will take place as following: 
+     * <ul>
+     * <li>{@code ExpressionCall} vs. {@code NoExpressionCall}: only the 
+     * {@code ExpressionCall} is conserved.
+     * <li>any {@code DiffExpressionCall} vs. a {@code NoExpressionCall}: only the 
+     * {@code DiffExpressionCall} is conserved.
+     * <li>{@code DiffExpressionCall} with a {@code CallType} {@code OVEREXPRESSED} 
+     * vs. a {@code DiffExpressionCall} with a {@code CallType} {@code UNDEREXPRESSED}: 
+     * only the {@code OVEREXPRESSED} {@code DiffExpressionCall} will be conserved.
+     * <li>{@code DiffExpressionCall} with a {@code CallType} {@code OVEREXPRESSED} 
+     * or {@code UNDEREXPRESSED} vs. a {@code DiffExpressionCall} with a 
+     * {@code CallType} {@code NOTDIFFEXPRESSED}: the {@code NOTDIFFEXPRESSED} 
+     * {@code DiffExpressionCall} is removed.
+     * <li>Of note, a {@code DiffExpressionCall} vs. an {@code ExpressionCall} 
+     * is not a contradiction, it is a pleonasm.
+     * </ul>
+     * 
+     * @return  the {@code boolean} defining the reconciliation strategy. 
+     *          If {@code true}, contradiction of {@code Call}s in an {@code AnatDevElement} 
+     *          will be resolved. 
+     */
+    public boolean isReconcileDataTypeCalls() {
+        return reconcileDataTypeCalls;
+    }
+
+    /**
+     * Sets the {@code boolean} defining whether contradicting {@link 
+     * org.bgee.model.expressiondata.Call Call}s generated by different {@link 
+     * org.bgee.model.expressiondata.DataParameters.DataType DataType}s should 
+     * be reconciled in an {@code AnatDevElement}. For instance, 
+     * if a {@code DataType} allowed to generate an {@code ExpressionCall} 
+     * in an {@code AnatDevElement}, and another {@code DataType} 
+     * a {@code NoExpressionCall}, then only the {@code ExpressionCall} will be kept.
+     * <p>
+     * Of note, Bgee already reconciles contradicting {@code Call}s of a same 
+     * {@code DataType} (for instance, contradictions between experiments), 
+     * by taking them into account to infer a global {@code Call}, and a global 
+     * {@link org.bgee.model.expressiondata.DataParameters.DataQuality DataQuality}. 
+     * But contradicting {@code Call}s between different {@code DataType}s are all kept 
+     * by default.
+     * <p>
+     * Default value is {@code false}. If this attribute is {@code true}, then 
+     * reconciliations will take place as following: 
+     * <ul>
+     * <li>{@code ExpressionCall} vs. {@code NoExpressionCall}: only the 
+     * {@code ExpressionCall} is conserved.
+     * <li>any {@code DiffExpressionCall} vs. a {@code NoExpressionCall}: only the 
+     * {@code DiffExpressionCall} is conserved.
+     * <li>{@code DiffExpressionCall} with a {@code CallType} {@code OVEREXPRESSED} 
+     * vs. a {@code DiffExpressionCall} with a {@code CallType} {@code UNDEREXPRESSED}: 
+     * only the {@code OVEREXPRESSED} {@code DiffExpressionCall} will be conserved.
+     * <li>{@code DiffExpressionCall} with a {@code CallType} {@code OVEREXPRESSED} 
+     * or {@code UNDEREXPRESSED} vs. a {@code DiffExpressionCall} with a 
+     * {@code CallType} {@code NOTDIFFEXPRESSED}: the {@code NOTDIFFEXPRESSED} 
+     * {@code DiffExpressionCall} is removed.
+     * <li>Of note, a {@code DiffExpressionCall} vs. an {@code ExpressionCall} 
+     * is not a contradiction, it is a pleonasm.
+     * </ul>
+     * 
+     * @return  the {@code boolean} defining the reconciliation strategy. 
+     *          If {@code true}, contradiction of {@code Call}s in an {@code AnatDevElement} 
+     *          will be resolved. 
+     * 
+     * @param reconcile the {@code boolean} defining the reconciliation strategy. 
+     *                  If {@code true}, contradiction of {@code Call}s in an 
+     *                  {@code AnatDevElement} will be resolved.  
+     */
+    public void setReconcileDataTypeCalls(boolean reconcile) {
+        this.reconcileDataTypeCalls = reconcile;
+    }
+
+
+    //-------- SELECTION OF ANATDEVMAPPINGS -----------
+    /**
+     * Gets the {@code EvoMappingSelector} defining how {@link 
+     * org.bgee.model.anatdev.evomapping.AnatDevMapping}s should be defined, 
+     * when the {@code Gene}s used in the {@code AnatDevRequirement}s belong to 
+     * several {@code Species} (see #{@link #getRequirements()}).
+     * <p>
+     * The default {@code EvoMappingSelector} will select mappings using a 
+     * {@link org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType 
+     * HOMOLOGY} relation, valid for the most recent ancestor taxon common 
+     * to all {@code Species} involved, and also the ancestor taxa of this taxon.
+     * <p>
+     * Users can bypass this behavior either by providing their own 
+     * {@code EvoMappingSelector}, or by providing their own custom {@code 
+     * AnatDevMapping}s (see {@link #getCustomMappings()}).
+     * <p>
+     * If the {@code Gene}s used in the {@code AnatDevRequirement}s do <strong>not</strong> 
+     * belong to several {@code Species}, this attribute is not used.
+     * 
+     * @return  The {@code EvoMappingSelector} defining how {@code AnatDevMapping}s 
+     *          should be built.
+     * @see #getCustomMappings()
+     */
+    public EvoMappingSelector getEvoMappingSelector() {
+        return evoMappingSelector;
+    }
+    /**
+     * Sets the {@code EvoMappingSelector} defining how {@link 
+     * org.bgee.model.anatdev.evomapping.AnatDevMapping}s should be defined, 
+     * when the {@code Gene}s used in the {@code AnatDevRequirement}s belong to 
+     * several {@code Species} (see #{@link #getRequirements()}).
+     * <p>
+     * The default {@code EvoMappingSelector} will select mappings using a 
+     * {@link org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType 
+     * HOMOLOGY} relation, valid for the most recent ancestor taxon common 
+     * to all {@code Species} involved, and also the ancestor taxa of this taxon.
+     * <p>
+     * Users can bypass this behavior either by providing their own 
+     * {@code EvoMappingSelector} using this method, or by providing their own 
+     * custom {@code AnatDevMapping}s (see {@link #getCustomMappings()}).
+     * <p>
+     * If the {@code Gene}s used in the {@code AnatDevRequirement}s do <strong>not</strong> 
+     * belong to several {@code Species}, this attribute is not used.
+     * 
+     * @param mappingSelector   The {@code EvoMappingSelector} defining how 
+     *                          {@code AnatDevMapping}s should be built.
+     * @see #addAllCustomMappings(Collection)
+     */
+    public void setEvoMappingSelector(EvoMappingSelector mappingSelector) {
+        this.evoMappingSelector = mappingSelector;
+    }
+
+    /**
+     * Gets the {@code Collection} of {@code AnatDevMapping}s, allowing to provide 
+     * custom mappings defining what are the anatomical entities/developmental stages 
+     * that can be compared between species. This attribute can be used when 
+     * the {@code Gene}s used in the {@code AnatDevRequirement}s (see {@link 
+     * #getRequirements()} belong to several {@code Species}, and if users do not want 
+     * to use the mappings provided by Bgee (selected by using an {@code EvoMappingSelector}, 
+     * see {@link #getEvoMappingSelector()}).
+     * <p>
+     * This {@code Collection} can contain both {@link 
+     * org.bgee.model.anatdev.evomapping.AnatMapping AnatMapping} and {@link 
+     * org.bgee.model.anatdev.evomapping.DevMapping DevMapping} at the same time.
+     * If the {@code Gene}s used in the {@code AnatDevRequirement}s do <strong>not</strong> 
+     * belong to several {@code Species}, this attribute is not used.
+     * 
+     * @return  The {@code Collection} of {@code AnatDevMapping}s allowing to provide 
+     *          custom mappings.
+     * @see #getEvoMappingSelector()
+     */
+    public Collection<AnatDevMapping<AnatDevEntity>> getCustomMappings() {
+        return customMappings;
+    }
+    /**
+     * Add {@code mappings} to the {@code Collection} of {@code AnatDevMapping}s, 
+     * allowing to provide custom mappings defining what are the anatomical 
+     * entities/developmental stages that can be compared between species. 
+     * This attribute can be used when the {@code Gene}s used in the {@code 
+     * AnatDevRequirement}s (see {@link #getRequirements()} belong to several 
+     * {@code Species}, and if users do not want to use the mappings provided 
+     * by Bgee (selected by using an {@code EvoMappingSelector}, see {@link 
+     * #getEvoMappingSelector()}).
+     * <p>
+     * This {@code Collection} can contain both {@link 
+     * org.bgee.model.anatdev.evomapping.AnatMapping AnatMapping}s and {@link 
+     * org.bgee.model.anatdev.evomapping.DevMapping DevMapping}s at the same time.
+     * If the {@code Gene}s used in the {@code AnatDevRequirement}s do <strong>not</strong> 
+     * belong to several {@code Species}, this attribute is not used.
+     * 
+     * @param mappings  a {@code Collection} of {@code AnatDevMapping}s allowing 
+     *                  to provide custom mappings. 
+     * @see #setEvoMappingSelector(EvoMappingSelector)
+     */
+    public void addAllCustomMappings(
+            Collection<AnatDevMapping<AnatDevEntity>> mappings) {
+        this.customMappings.addAll(mappings);
+    }
+    /**
+     * Add {@code mapping} to the {@code Collection} of {@code AnatDevMapping}s, 
+     * allowing to provide custom mappings defining what are the anatomical 
+     * entities/developmental stages that can be compared between species. 
+     * This attribute can be used when the {@code Gene}s used in the {@code 
+     * AnatDevRequirement}s (see {@link #getRequirements()} belong to several 
+     * {@code Species}, and if users do not want to use the mappings provided 
+     * by Bgee (selected by using an {@code EvoMappingSelector}, see {@link 
+     * #getEvoMappingSelector()}).
+     * <p>
+     * This {@code Collection} can contain both {@link 
+     * org.bgee.model.anatdev.evomapping.AnatMapping AnatMapping}s and {@link 
+     * org.bgee.model.anatdev.evomapping.DevMapping DevMapping}s at the same time.
+     * If the {@code Gene}s used in the {@code AnatDevRequirement}s do <strong>not</strong> 
+     * belong to several {@code Species}, this attribute is not used.
+     * 
+     * @param mapping   an {@code AnatDevMapping}s allowing to provide a custom mapping. 
+     * @see #setEvoMappingSelector(EvoMappingSelector)
+     */
+    public void addCustomMapping(AnatDevMapping<AnatDevEntity> mapping) {
+        this.customMappings.add(mapping);
+    }
 }

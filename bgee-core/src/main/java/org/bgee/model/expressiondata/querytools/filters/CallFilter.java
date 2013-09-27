@@ -1,7 +1,8 @@
 package org.bgee.model.expressiondata.querytools.filters;
 
 /**
- * A {@link Filter} to filter or retrieve expression data calls. 
+ * A {@link Filter} to filter or retrieve expression data 
+ * {@link org.bgee.model.expressiondata.Call Call}s. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13

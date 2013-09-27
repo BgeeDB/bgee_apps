@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata.querytools.filters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataParameters.CallType;
+import org.bgee.model.expressiondata.ExpressionCall;
 
 /**
  * A {@code BasicCallFilter} for {@code EXPRESSED} call type. 
@@ -27,33 +28,29 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	        LogManager.getLogger(ExpressionCallFilter.class.getName());
 
 	/**
-	 * A {@code boolean} defining whether {@code EXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
-	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code EXPRESSION} calls 
-	 * in an {@code AnatEntity} will take into account expression in its children.
-	 */
-	private boolean propagateAnatEntities;
-	/**
-	 * A {@code boolean} defining whether {@code EXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
-	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code EXPRESSION} calls 
-	 * in an {@code DevStage} will take into account expression in its child stages.
-	 */
-	private boolean propagateStages;
-
-	/**
 	 * Default constructor. 
 	 */
 	public ExpressionCallFilter() {
-		super(CallType.Expression.EXPRESSED);
+		super(new ExpressionCall());
 	}
-	
+
+    //****************************************
+    // BasicCallFilter METHODS OVERRIDEN
+    //****************************************
+	@Override
+    protected ExpressionCall getReferenceCall() {
+        return (ExpressionCall) super.getReferenceCall();
+    }
+    
+    @Override
+    public CallType.Expression getCallType() {
+        return this.getReferenceCall().getCallType();
+    }
+    
+    //****************************************
+    // MERGE METHODS
+    //****************************************
+    
 	/**
      * @see #canMerge(CallFilter, boolean)
      */

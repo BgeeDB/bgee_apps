@@ -6,31 +6,21 @@ import org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixDataHolder;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
 
 /**
- * This class represents the differential expression call of a {@code Gene}, 
- * obtained from differential expression analyzes (see {@link 
+ * A {@link Call} that is a differential expression call obtained from differential 
+ * expression analyzes (see {@link 
  * org.bgee.model.expressiondata.rawdata.diffexpression.DiffExpressionAnalysis 
- * DiffExpressionAnalysis}). This {@code DiffExpressionCall}, as any {@code Call},  
- * is most of the time hold by a {@code Gene}, an {@code AnatElement}, or 
- * a {@code DevElement}, as this class only manages the expression state part, 
- * not the spatio-temporal location, or gene definition part. It is an overall summary 
- * of the data contained in Bgee (for instance, a reconciliation of the differential 
- * expression states of a gene in several differential analyzes, studying a same 
- * organ at a same stage).
+ * DiffExpressionAnalysis}). 
  * <p>
- * A {@code Call} provides the methods to set and retrieve the {@link 
- * DataParameters.DataType DataType}s that allowed to generate it, and their 
- * associated {@link DataParameters.DataQuality DataQuality}s. These methods 
- * check that the {@code DataType}s provided are consistent with 
- * a {@code DiffExpressionCall}.
+ * The attributes specific to a {@code DiffExpressionCall} are: the minimum number 
+ * of conditions that were compared in the differential expression analyzes that 
+ * generated it (see {@link #getConditionCount()}), and the experimental factor 
+ * along with the comparisons were made (see {@link #getFactor()}).
  * <p>
- * This class also allows to retrieve the minimum number of conditions that were 
- * compared in the differential expression analyzes that generate this call 
- * (see {@link #getConditionCount()}), and the experimental factor along with 
- * the comparisons were made (see {@link #getFactor()}).
- * <p>
- * Finally, this class allows to retrieve the raw data that generated this call, 
- * see {@link #getAffymetrixDataHolder()} and {@link #getRNASeqDataHolder()} 
- * (only those data types allow to generate differential expression calls).
+ * This class, as all {@code Call}s, allows to retrieve the raw data applicable 
+ * to its {@link org.bgee.model.expressiondata.DataParameters.CallType CallType}, 
+ * that allowed to generate it. For this class, see {@link #getAffymetrixDataHolder()} 
+ * and {@link #getRNASeqDataHolder()} (as of Bgee 13, only Affymetrix and RNA-Seq 
+ * are used for differential expression analyzes).
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -60,10 +50,15 @@ public class DiffExpressionCall extends Call {
      *                  the experimental factor of the differential expression 
      *                  analyzes that generated this {@code DiffExpressionCall}.
      */
-    protected DiffExpressionCall(CallType.DiffExpression callType, 
+    public DiffExpressionCall(CallType.DiffExpression callType, 
             DiffExpressionFactor factor) {
         super(callType);
         this.factor = factor;
+    }
+    
+    @Override
+    public CallType.DiffExpression getCallType() {
+        return (CallType.DiffExpression) super.getCallType();
     }
     
     //*****************************************

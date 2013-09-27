@@ -11,10 +11,16 @@ import org.bgee.model.expressiondata.Call;
 import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.expressiondata.DataParameters.DataQuality;
 import org.bgee.model.expressiondata.DataParameters.DataType;
+import org.bgee.model.expressiondata.ExpressionCall;
 
 /**
  * A {@code CallFilter} specifying conditions to retrieve expression data, 
  * based on the overall expression data calls generated in Bgee. 
+ * <p>
+ * This class notably holds a {@link org.bgee.model.expressiondata.Call Call}, 
+ * that will store all parameters of this {@code BasicCallFilter}. See the 
+ * {@link #BasicCallFilter(Call) constructor} and {@link #getReferenceCall()} 
+ * for more details.
  * 
  * @author Frederic Bastian
  * @Version Bgee 13
@@ -25,7 +31,7 @@ import org.bgee.model.expressiondata.DataParameters.DataType;
  * If you add attributes to this class, you might need to modify the methods 
  * {@code merge} and {@code canMerge}.
  */
-public abstract class BasicCallFilter implements CallFilter {
+abstract class BasicCallFilter implements CallFilter {
 	/**
 	 * {@code Logger} of the class. 
 	 */
@@ -33,12 +39,12 @@ public abstract class BasicCallFilter implements CallFilter {
 
 
 	/**
-	 * A {@code Call} that will hold the parameters of this 
-	 * {@code BasicCallFilter}. This is because almost all parameters 
-	 * that can be set for this {@code BasicCallFilter} are retrieved 
-	 * as attributes of the class {@code Call}. Methods of this 
-	 * {@code BasicCallFilter} will simply be delegated to this 
-	 * {@code referenceCall}.
+	 * A {@code Call} that will hold the parameters of this {@code BasicCallFilter}. 
+	 * This is because each {@code BasicCallFilter} corresponds to a type of 
+	 * {@link org.bgee.model.expressiondata.Call Call}, and parameters of a 
+	 * {@code BasicCallFilter} are simply a subset of the attributes of the 
+	 * corresponding {@code Call}. Methods of a {@code BasicCallFilter} are 
+	 * simply delegated to this {@code referenceCall}.
 	 */
 	private final Call referenceCall;
 	/**
@@ -63,20 +69,30 @@ public abstract class BasicCallFilter implements CallFilter {
 	//Default constructor not public on purpose, suppress warning
 	@SuppressWarnings("unused")
 	private BasicCallFilter() {
-		this(CallType.Expression.EXPRESSED);
+		this(new ExpressionCall());
 	}
 
 	/**
-	 * Instantiate a {@code BasicCallFilter} for a type of calls 
-	 * corresponding to {@code callType}, based on any data type and any quality.
+	 * Instantiate a {@code BasicCallFilter} allowing to filter parameters 
+	 * corresponding to the type of {@code Call} of {@code referenceCall}. 
+	 * {@code referenceCall} is the {@code Call} that will hold the parameters 
+	 * of this {@code BasicCallFilter}. This is because each {@code BasicCallFilter} 
+	 * corresponds to a type of {@link org.bgee.model.expressiondata.Call Call}, 
+	 * and parameters of a {@code BasicCallFilter} are simply a subset of the 
+	 * attributes of the corresponding {@code Call}. Methods of a {@code BasicCallFilter} 
+	 * are simply delegated to this {@code referenceCall}.
+	 * <p>
+	 * Subclasses should provide the appropriate {@code Call} corresponding to them, 
+	 * and should override {@link #getReferenceCall()} to cast it to the appropriate 
+	 * type.
 	 * 
 	 * @param callType	The {@code CallType} which expression data retrieval 
 	 * 					will be based on.
 	 */
-	public BasicCallFilter(CallType callType) {
-		log.entry(callType);
+	protected BasicCallFilter(Call referenceCall) {
+		log.entry(referenceCall);
 		
-		this.referenceCall = new Call(callType);
+		this.referenceCall = referenceCall;
 		this.setAllDataTypes(false);
 
 		log.exit();
@@ -283,14 +299,29 @@ public abstract class BasicCallFilter implements CallFilter {
 	//************************************
 	
 	/**
+	 * Return the A {@code Call} that holds the parameters of this {@code BasicCallFilter}. 
+     * This is because each {@code BasicCallFilter} corresponds to a type of 
+     * {@link org.bgee.model.expressiondata.Call Call}, and parameters of a 
+     * {@code BasicCallFilter} are simply a subset of the attributes of the 
+     * corresponding {@code Call}. Methods of a {@code BasicCallFilter} are 
+     * simply delegated to this {@code referenceCall}.
+     * <p>
+     * Subclasses should override this method to cast the {@code Call} to the 
+     * concrete implementation corresponding to their type.
+     * 
+	 * @return The reference {@code Call} which methods of this {@code BasicCallFilter} 
+	 *         will be delegated to.
+	 */
+	protected Call getReferenceCall() {
+	    return this.referenceCall;
+	}
+	/**
      * Returns the {@code CallType} defining the type of call of the expression 
      * data to retrieve.
      * 
      * @return the {@code CallType} defining the type of call to use.
      */
-	public CallType getCallType() {
-		return this.referenceCall.getCallType();
-	}
+	public abstract CallType getCallType();
 	
 	/**
 	 * Return the data types and qualities requested for this filter, as 
@@ -311,7 +342,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * @see #getDataTypes()
 	 */
 	public Map<DataType, DataQuality> getDataTypesQualities() {
-		return this.referenceCall.getDataTypesQualities();
+		return this.getReferenceCall().getDataTypesQualities();
 	}
 	/**
 	 * Return an unmodifiable {@code set} of {@code DataType}s, being 
@@ -328,7 +359,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	 * @see #getDataTypesWithQualities()
 	 */
 	public Set<DataType> getDataTypes() {
-		return this.referenceCall.getDataTypes();
+		return this.getReferenceCall().getDataTypes();
 	}
 	/**
 	 * Add {@code dataType} to the list of data types to use, 
@@ -354,7 +385,7 @@ public abstract class BasicCallFilter implements CallFilter {
 	    throws IllegalArgumentException
 	{
 		log.entry(dataType, dataQuality);
-		this.referenceCall.addDataType(dataType, dataQuality);
+		this.getReferenceCall().addDataType(dataType, dataQuality);
 		log.exit();
 	}
 	/**
@@ -435,7 +466,7 @@ public abstract class BasicCallFilter implements CallFilter {
 		    throws IllegalArgumentException
 	{
 		log.entry(dataTypes, dataQuality);
-		this.referenceCall.addDataTypes(dataTypes, dataQuality);
+		this.getReferenceCall().addDataTypes(dataTypes, dataQuality);
 		log.exit();
 	}
 	
@@ -464,7 +495,7 @@ public abstract class BasicCallFilter implements CallFilter {
 		    throws IllegalArgumentException
 	{
 		log.entry(dataTypes);
-		this.referenceCall.addDataTypes(dataTypes);
+		this.getReferenceCall().addDataTypes(dataTypes);
 		log.exit();
 	}
 

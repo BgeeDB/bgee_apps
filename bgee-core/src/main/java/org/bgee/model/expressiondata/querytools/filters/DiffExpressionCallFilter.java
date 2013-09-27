@@ -3,8 +3,8 @@ package org.bgee.model.expressiondata.querytools.filters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataParameters.CallType;
-import org.bgee.model.expressiondata.DataParameters.CallType.DiffExpression;
 import org.bgee.model.expressiondata.DataParameters.DiffExpressionFactor;
+import org.bgee.model.expressiondata.DiffExpressionCall;
 
 /**
  * A {@code BasicCallFilter} for differential expression calls.
@@ -43,17 +43,6 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
 	 */
 	private final static Logger log = 
 	        LogManager.getLogger(DiffExpressionCallFilter.class.getName());
-
-    /**
-     * An {@code int} allowing to filter differential expression calls 
-     * based on the minimum number of conditions compared to generate the call. 
-     */
-    private int conditionCount;
-    /**
-     * A {@code DiffExpressionFactor} defining which type of differential analysis  
-     * should be used to retrieve differential expression calls. 
-     */
-    private final DiffExpressionFactor factor;
     
 	/**
      * Instantiate a {@code DiffExpressionCallFilter} for the given 
@@ -95,13 +84,26 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
     		DiffExpressionFactor factor, int conditionCount) 
     		throws IllegalArgumentException {
     	
-    	super(callType);
-    	log.entry(callType, factor);
-    	this.factor = factor;
+    	super(new DiffExpressionCall(callType, factor));
     	this.setConditionCount(conditionCount);
-    	log.exit();
     }
 
+    //****************************************
+    // BasicCallFilter METHODS OVERRIDEN
+    //****************************************
+    @Override
+    protected DiffExpressionCall getReferenceCall() {
+        return (DiffExpressionCall) super.getReferenceCall();
+    }
+    
+    @Override
+    public CallType.DiffExpression getCallType() {
+        return this.getReferenceCall().getCallType();
+    }
+
+    //****************************************
+    // MERGE METHODS
+    //****************************************
     
     /**
      * @see #canMerge(CallFilter, boolean)
@@ -183,10 +185,6 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
         return MINCONDITIONCOUNT;
     }
     
-    @Override
-    public CallType.DiffExpression getCallType() {
-        return (DiffExpression) super.getCallType();
-    }
 	/**
 	 * Return the experimental factor that the differential expression analyses used 
 	 * should be based on. 
@@ -195,7 +193,7 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
 	 * 			expression calls. 
 	 */
 	public DiffExpressionFactor getFactor() {
-		return this.factor;
+		return this.getReferenceCall().getFactor();
 	}
     
 	/**
@@ -242,7 +240,7 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
      * 			compared of analyses involved in generating the calls retrieved. 
 	 */
 	public int getConditionCount() {
-		return this.conditionCount;
+		return this.getReferenceCall().getConditionCount();
 	}
 	/**
 	 * Set the {@code int} allowing to filter differential expression calls 
@@ -268,6 +266,6 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
 	                ") cannot be set below the minimum number of conditions used " +
 	                "in the Bgee pipeline (" + getMinConditionCount() + ")"));
 	    }
-		this.conditionCount = conditionCount;
+		this.getReferenceCall().setConditionCount(conditionCount);
 	}
 }

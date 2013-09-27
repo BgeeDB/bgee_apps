@@ -43,7 +43,7 @@ import org.bgee.model.expressiondata.rawdata.AllRawDataHolder;
  * @version Bgee 13
  * @since Bgee 13
  */
-abstract class Call {
+public abstract class Call {
 	/**
 	 * Log4j2 {@code Logger} of the class. 
 	 */
@@ -114,7 +114,7 @@ abstract class Call {
 	 * 
 	 * @return the {@code CallType} defining the type of this {@code Call}.
 	 */
-	public CallType getCallType() {
+	protected CallType getCallType() {
 		return this.callType;
 	}
 	

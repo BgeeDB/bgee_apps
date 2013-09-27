@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata.querytools.filters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataParameters.CallType;
+import org.bgee.model.expressiondata.NoExpressionCall;
 
 /**
  * A {@code BasicCallFilter} for {@code NOTEXPRESSED} call type. 
@@ -25,24 +26,29 @@ public class NoExpressionCallFilter extends BasicCallFilter {
 	 */
 	private final static Logger log = LogManager.getLogger(NoExpressionCallFilter.class.getName());
 
-	/**
-	 * A {@code boolean} defining whether {@code NOEXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} children 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
-	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code NOEXPRESSION} calls 
-	 * in an {@code AnatEntity} will take into account absence of expression 
-	 * reported in its parents.
-	 */
-	private boolean propagateAnatEntities;
-
     /**
      * Default constructor. 
      */
     public NoExpressionCallFilter() {
-        super(CallType.Expression.NOTEXPRESSED);
+        super(new NoExpressionCall());
     }
+
+    //****************************************
+    // BasicCallFilter METHODS OVERRIDEN
+    //****************************************
+    @Override
+    protected NoExpressionCall getReferenceCall() {
+        return (NoExpressionCall) super.getReferenceCall();
+    }
+    
+    @Override
+    public CallType.Expression getCallType() {
+        return this.getReferenceCall().getCallType();
+    }
+    
+    //****************************************
+    // MERGE METHODS
+    //****************************************
 
     /**
      * @see #canMerge(CallFilter, boolean)
@@ -59,13 +65,13 @@ public class NoExpressionCallFilter extends BasicCallFilter {
         //we blindly perform the merging, it is the responsibility of the method 
         //canMerge to determine whether it is appropriate.
         NoExpressionCallFilter otherFilter  = (NoExpressionCallFilter) filterToMerge;
-        NoExpressionCallFilter mergedCall = new NoExpressionCallFilter();
-        super.merge(otherFilter, mergedCall, sameEntity);
+        NoExpressionCallFilter mergedFilter = new NoExpressionCallFilter();
+        super.merge(otherFilter, mergedFilter, sameEntity);
         
-        mergedCall.setPropagateAnatEntities(
-                (this.isPropagateAnatEntities() || otherFilter.isPropagateAnatEntities()));
+        mergedFilter.setIncludeParentStructures(
+                (this.isIncludeParentStructures() || otherFilter.isIncludeParentStructures()));
 
-        return log.exit(mergedCall);
+        return log.exit(mergedFilter);
     }
 
     /**
@@ -107,7 +113,7 @@ public class NoExpressionCallFilter extends BasicCallFilter {
         //a NoExpressionCallFilter using propagation. But it would be a nightmare to deal 
         //with all these specific cases in other parts of the code...
         //So, we simply do not merge in that case.
-        if (this.isPropagateAnatEntities() != otherFilter.isPropagateAnatEntities()) {
+        if (this.isIncludeParentStructures() != otherFilter.isIncludeParentStructures()) {
             return log.exit(false);
         }
         
@@ -118,43 +124,35 @@ public class NoExpressionCallFilter extends BasicCallFilter {
     //  GETTERS/SETTERS
     //************************************
 
-	
-	/**
-	 * Return the {@code boolean} defining whether {@code NOEXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} children 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
-	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code NOEXPRESSION} calls 
-	 * in an {@code AnatEntity} will take into account absence of expression 
-	 * reported in its parents.
-	 *
-	 * @return 	a {@code boolean}, when {@code true}, 
-	 * 			{@code NOEXPRESSION} calls data are propagated to 
-	 * 			{@code AnatEntity} children.
-	 * @see #setPropagateAnatEntities(boolean)
-	 */
-	public boolean isPropagateAnatEntities() {
-		return this.propagateAnatEntities;
-	}
-	/**
-	 * Set the {@code boolean} defining whether {@code NOEXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} children 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
-	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code NOEXPRESSION} calls 
-	 * in an {@code AnatEntity} will take into account absence of expression 
-	 * reported in its parents.
-	 *
-	 * @param propagate 	a {@code boolean} defining the propagation rule 
-	 * 						between {@code AnatEntity}s. 
-	 * 						If {@code true}, data will be propagated to children.
-	 * @see #isPropagateAnatEntities()
-	 */
-	public void setPropagateAnatEntities(boolean propagate) {
-		log.entry(propagate);
-		this.propagateAnatEntities = propagate;
-		log.exit();
-	}
+    /**
+     * Return the {@code boolean} defining whether {@code NoExpressionCall}s  
+     * to retrieve should have been generated using data from an anatomical 
+     * entity alone, or by also using data from all its ancestors 
+     * by {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} relations. 
+     *
+     * @return a {@code boolean} indicating, when {@code true}, that 
+     *         {@code NoExpressionCall}s to retrieve should take into account 
+     *         ancestors of anatomical entities.
+     * @see org.bgee.model.expressiondata.NoExpressionCall#isIncludeParentStructures()
+     */
+    public boolean isIncludeParentStructures() {
+        return this.getReferenceCall().isIncludeParentStructures();
+    }
+    /**
+     * Set the {@code boolean} defining whether {@code NoExpressionCall}s  
+     * to retrieve should have been generated using data from an anatomical 
+     * entity alone, or by also using data from all its ancestors 
+     * by {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} relations. 
+     *
+     * @param includeParents    a {@code boolean} indicating, when {@code true}, 
+     *                          that {@code NoExpressionCall}s to retrieve should 
+     *                          take into account ancestors of anatomical 
+     *                          entities.
+     * @see org.bgee.model.expressiondata.NoExpressionCall#setIncludeParentStructures(boolean)
+     */
+    public void setIncludeParentStructures(boolean includeParents) {
+        this.getReferenceCall().setIncludeParentStructures(includeParents);
+    }
 }

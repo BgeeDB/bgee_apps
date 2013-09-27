@@ -77,7 +77,7 @@ public class NoExpressionCall extends Call {
      *                        that this {@code NoExpressionCall} included parents 
      *                        of an anatomical entity.
      */
-    public void setIncludeSubstructures(boolean includeParents) {
+    public void setIncludeParentStructures(boolean includeParents) {
         this.includeParentStructures = includeParents;
     }
 

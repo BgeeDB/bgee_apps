@@ -120,17 +120,17 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
         //we blindly perform the merging, it is the responsibility of the method 
         //canMerge to determine whether it is appropriate.
         DiffExpressionCallFilter otherFilter = (DiffExpressionCallFilter) filterToMerge;
-        DiffExpressionCallFilter mergedCall = 
+        DiffExpressionCallFilter mergedFilter = 
                 new DiffExpressionCallFilter(this.getCallType(), this.getFactor());
         
-        super.merge(otherFilter, mergedCall, sameEntity);
+        super.merge(otherFilter, mergedFilter, sameEntity);
         //conditionCount of this CallFilter and of otherFilter should be the same, 
         //but it is not the responsibility of this method to decide whether the merging 
         //makes sense, so we use the highest value
-        mergedCall.setConditionCount(Math.max(this.getConditionCount(), 
+        mergedFilter.setConditionCount(Math.max(this.getConditionCount(), 
                 otherFilter.getConditionCount()));
 
-        return log.exit(mergedCall);
+        return log.exit(mergedFilter);
     }
 
     /**

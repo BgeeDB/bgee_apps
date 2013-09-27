@@ -66,15 +66,15 @@ public class ExpressionCallFilter extends BasicCallFilter {
         //we blindly perform the merging, it is the responsibility of the method 
         //canMerge to determine whether it is appropriate.
         ExpressionCallFilter otherFilter = (ExpressionCallFilter) filterToMerge;
-        ExpressionCallFilter mergedCall = new ExpressionCallFilter();
-        super.merge(otherFilter, mergedCall, sameEntity);
+        ExpressionCallFilter mergedFilter = new ExpressionCallFilter();
+        super.merge(otherFilter, mergedFilter, sameEntity);
         
-        mergedCall.setPropagateAnatEntities(
-        		(this.isPropagateAnatEntities() || otherFilter.isPropagateAnatEntities()));
-        mergedCall.setPropagateStages(
-        		(this.isPropagateStages() || otherFilter.isPropagateStages()));
+        mergedFilter.setIncludeSubstructures(
+        		(this.isIncludeSubstructures() || otherFilter.isIncludeSubstructures()));
+        mergedFilter.setIncludeSubStages(
+        		(this.isIncludeSubStages() || otherFilter.isIncludeSubStages()));
 
-        return log.exit(mergedCall);
+        return log.exit(mergedFilter);
 	}
 
 	/**
@@ -116,8 +116,8 @@ public class ExpressionCallFilter extends BasicCallFilter {
 		//an ExpressionCallFilter using propagation. But it would be a nightmare to deal 
 		//with all these specific cases in other parts of the code...
 		//So, we simply do not merge in that case.
-		if (this.isPropagateAnatEntities() != otherFilter.isPropagateAnatEntities() || 
-			    this.isPropagateStages() != otherFilter.isPropagateStages()) {
+		if (this.isIncludeSubstructures() != otherFilter.isIncludeSubstructures() || 
+			    this.isIncludeSubStages() != otherFilter.isIncludeSubStages()) {
 			return log.exit(false);
 		}
 		
@@ -128,84 +128,69 @@ public class ExpressionCallFilter extends BasicCallFilter {
 	//  GETTERS/SETTERS
 	//************************************
 	/**
-	 * Return the {@code boolean} defining whether {@code EXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+	 * Return the {@code boolean} defining whether {@code ExpressionCall}s  
+	 * to retrieve should have been generated using data from an anatomical 
+	 * entity alone, or by also using data from all its substructures 
+	 * by {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
 	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code EXPRESSION} calls 
-	 * in an {@code AnatEntity} will take into account expression in its children.
 	 *
-	 * @return 	a {@code boolean}, when {@code true}, 
-	 * 			{@code EXPRESSION} calls data are propagated to 
-	 * 			{@code AnatEntity} parents.
-	 * @see #setPropagateAnatEntities(boolean)
-	 * @see #isPropagateStages()
-	 * @see #setPropagateStages(boolean)
+	 * @return a {@code boolean} indicating, when {@code true}, that 
+	 *         {@code ExpressionCall}s to retrieve should take into account 
+	 *         substructures of anatomical entities.
+     * @see #isIncludeSubStages()
+	 * @see org.bgee.model.expressiondata.ExpressionCall#isIncludeSubstructures()
 	 */
-	public boolean isPropagateAnatEntities() {
-		return this.propagateAnatEntities;
+	public boolean isIncludeSubstructures() {
+		return this.getReferenceCall().isIncludeSubstructures();
 	}
 	/**
-	 * Set the {@code boolean} defining whether {@code EXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.AnatomicalEntity AnatEntity} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
-	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code EXPRESSION} calls 
-	 * in an {@code AnatEntity} will take into account expression in its children.
+	 * Set the {@code boolean} defining whether {@code ExpressionCall}s  
+     * to retrieve should have been generated using data from an anatomical 
+     * entity alone, or by also using data from all its substructures 
+     * by {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} relations. 
 	 *
-	 * @param propagate 	a {@code boolean} defining the propagation rule 
-	 * 						between {@code AnatEntity}s. 
-	 * 						If {@code true}, data will be propagated to parents.
-	 * @see #isPropagateAnatEntities()
-	 * @see #isPropagateStages()
-	 * @see #setPropagateStages(boolean)
+	 * @param includeSubstructures a {@code boolean} indicating, when {@code true}, 
+	 *                             that {@code ExpressionCall}s to retrieve should 
+	 *                             take into account substructures of anatomical 
+	 *                             entities.
+	 * @see #setIncludeSubStages(boolean)
+     * @see org.bgee.model.expressiondata.ExpressionCall#setIncludeSubstructures(boolean)
 	 */
-	public void setPropagateAnatEntities(boolean propagate) {
-		log.entry(propagate);
-		this.propagateAnatEntities = propagate;
-		log.exit();
+	public void setIncludeSubstructures(boolean includeSubstructures) {
+		this.getReferenceCall().setIncludeSubstructures(includeSubstructures);
 	}
 
 	/**
-	 * Return the {@code boolean} defining whether {@code EXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
-	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code EXPRESSION} calls 
-	 * in a {@code DevStage} will take into account expression in its child stages.
-	 *
-	 * @return 	a {@code boolean}, when {@code true}, 
-	 * 			{@code EXPRESSION} calls data are propagated to 
-	 * 			{@code DevStage} parents.
-	 * @see #setPropagateStages(boolean)
-	 * @see #isPropagateAnatEntities()
-	 * @see #setPropagateAnatEntities(boolean)
-	 */
-	public boolean isPropagateStages() {
-		return this.propagateStages;
+     * Return the {@code boolean} defining whether {@code ExpressionCall}s  
+     * to retrieve should have been generated using data from an developmental 
+     * stage alone, or by also using data from all its sub-stages 
+     * by {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} relations. 
+     *
+     * @return a {@code boolean} indicating, when {@code true}, that 
+     *         {@code ExpressionCall}s to retrieve should take into account 
+     *         sub-stages of developmental stages.
+     * @see #isIncludeSubstructuress()
+     * @see org.bgee.model.expressiondata.ExpressionCall#isIncludeSubStage()
+     */
+	public boolean isIncludeSubStages() {
+		return this.getReferenceCall().isIncludeSubStages();
 	}
 	/**
-	 * Set the {@code boolean} defining whether {@code EXPRESSION} calls 
-	 * should be propagated to 
-	 * {@link org.bgee.model.anatdev.Stage DevStage} parents 
-	 * following {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
-	 * ISA_PARTOF} relations. 
-	 * If {@code true}, it means that {@code EXPRESSION} calls 
-	 * in a {@code DevStage} will take into account expression in its child stages.
-	 *
-	 * @param propagate	a {@code boolean} defining the propagation rule 
-	 * 					between {@code DevStage}s. 
-	 * 					If {@code true}, data will be propagated to parents.
-	 * @see #isPropagateStages()
-	 * @see #isPropagateAnatEntities()
-	 * @see #setPropagateAnatEntities(boolean)
-	 */
-	public void setPropagateStages(boolean propagate) {
-		log.entry(propagate);
-		this.propagateStages = propagate;
-		log.exit();
+     * Set the {@code boolean} defining whether {@code ExpressionCall}s  
+     * to retrieve should have been generated using data from an developmental 
+     * stage alone, or by also using data from all its sub-stages 
+     * by {@link org.bgee.model.ontologycommon.OntologyElement.RelationType 
+     * ISA_PARTOF} relations. 
+     *
+     * @param includeSubStages  a {@code boolean} indicating, when {@code true}, 
+     *                          that {@code ExpressionCall}s to retrieve should 
+     *                          take into account sub-stages of developmental stages.
+     * @see #setIncludeSubstructures(boolean)
+     * @see org.bgee.model.expressiondata.ExpressionCall#setIncludeSubStages(boolean)
+     */
+	public void setIncludeSubStages(boolean includeSubStages) {
+		this.getReferenceCall().setIncludeSubStages(includeSubStages);
 	}
 }

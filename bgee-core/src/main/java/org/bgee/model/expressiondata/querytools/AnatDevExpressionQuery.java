@@ -86,8 +86,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	 * the {@code AnatDevExpressionQuery}.
 	 * <li>{@code SUMMARY}: select a defined number of top {@code AnatDevElement}s 
 	 * in an {@code Ontology}, so that they, and their substructures, include 
-	 * all {@code AnatDevElement}s validated. The number of elements is defined 
-	 * using the {@code AnatDevExpressionQuery}.
+	 * all {@code AnatDevElement}s validated, as close as possible to them. 
+	 * The number of elements is defined using the {@code AnatDevExpressionQuery}.
 	 * <li>{@code: ALL}: all {@code AnatDevElement}s validated are provided without 
 	 * any organization nor filtering.
 	 * <li>{@code: PRECISE}: select only the most precise and independent 
@@ -126,6 +126,14 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
     	return log;
     }
 
+    /**
+     * An {@code int} that is the default value for {@link #elementsByGroup}.
+     */
+    private static final int DEFAULTELEMENTSBYGROUP = 6;
+    /**
+     * An {@code int} that is the default value for {@link #summaryElementCount}.
+     */
+    private static final int DEFAULTSUMMARYELEMENTCOUNT = 10;
     //**************************************
     // INSTANCE ATTRIBUTES
     //**************************************
@@ -143,6 +151,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * the {@link #requirements}.
      */
     private final DataRendering rendering;
+    
     /**
      * An {@code int} defining what is the wished number of 
      * {@code AnatDevElement}s by group. This value is applicable when 
@@ -151,8 +160,23 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * a wish, this {@code AnatDevExpressionQuery} will make its best 
      * to obtain groups with a number of {@code AnatDevElement}s as closed 
      * to this value as possible.
+     * <p>
+     * Default value is {@link #DEFAULTELEMENTSBYGROUP}.
      */
     private int elementsByGroup;
+
+    /**
+     * An {@code int} defining what is the wished number of top {@code AnatDevElement}s, 
+     * summarizing the expression data of this {@code AnatDevExpressionQuery}, 
+     * when {@link #rendering} is equal to {@link DataRendering SUMMARY}.
+     * These top {@code AnatDevElement}s, with their substructures, should contain 
+     * all {@code AnatDevElement}s validated, as close as possible to them. 
+     * This value is only a wish, this {@code AnatDevExpressionQuery} will make 
+     * its best to obtain that number of top {@code AnatDevElement}s.
+     * <p>
+     * Default value is {@link #DEFAULTSUMMARYELEMENTCOUNT}.
+     */
+    private int summaryElementCount;
     
     /**
      * A {@code Collection} of {@code AnatDevElement}s defining the roots to use 
@@ -439,12 +463,4 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	public Collection<AnatDevRequirement> getRequirements() {
 		return this.requirements;
 	}
-	
-	//---------------------------------------------
-    private int summaryCatCount;
-    
-    				also, parameters "with mean expression level by experiment", probably useful for all query tools
-    				this could be compute for each gene for an organ query, or for each organ on a gene query
-    				this could be a last view, after data count, raw data: mean expression compared from raw data
-    			    and maybe we can compute a rank for all organs for each experiment independently, something like that
 }

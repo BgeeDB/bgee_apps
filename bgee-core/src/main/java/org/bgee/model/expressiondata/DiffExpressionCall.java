@@ -2,8 +2,8 @@ package org.bgee.model.expressiondata;
 
 import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.expressiondata.DataParameters.DiffExpressionFactor;
-import org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixDataHolder;
-import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
+import org.bgee.model.expressiondata.rawdata.diffexpression.affymetrix.DiffAffyDataHolder;
+import org.bgee.model.expressiondata.rawdata.diffexpression.rnaseq.DiffRNASeqDataHolder;
 
 /**
  * A {@link Call} that is a differential expression call obtained from differential 
@@ -18,9 +18,9 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
  * <p>
  * This class, as all {@code Call}s, allows to retrieve the raw data applicable 
  * to its {@link org.bgee.model.expressiondata.DataParameters.CallType CallType}, 
- * that allowed to generate it. For this class, see {@link #getAffymetrixDataHolder()} 
- * and {@link #getRNASeqDataHolder()} (as of Bgee 13, only Affymetrix and RNA-Seq 
- * are used for differential expression analyzes).
+ * that allowed to generate it. For this class, see {@link #getDiffAffyDataHolder()} 
+ * and {@link #getDiffRNASeqDataHolder()} (as of Bgee 13, only Affymetrix and 
+ * RNA-Seq are used for differential expression analyzes).
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -96,32 +96,34 @@ public class DiffExpressionCall extends Call {
     // RawDataHolder METHODS EXPOSED
     //*****************************************
     /**
-     * @return  the {@code AffymetrixDataHolder} holding the Affymetrix data 
-     *          related to this {@code DiffExpressionCall}.
+     * @return  the {@code DiffAffyDataHolder} holding the Affymetrix differential 
+     *          expression data related to this {@code DiffExpressionCall}.
      */
-    public AffymetrixDataHolder getAffymetrixDataHolder() {
-        return super.getRawDataHolder().getAffymetrixDataHolder();
+    public DiffAffyDataHolder getDiffAffyDataHolder() {
+        return super.getRawDataHolder().getDiffAffyDataHolder();
     }
     /**
-     * @param holder    the {@code AffymetrixDataHolder} holding the Affymetrix data 
-     *                  related to this {@code DiffExpressionCall}.
+     * @param holder    the {@code DiffAffyDataHolder} holding the Affymetrix 
+     *                  differential expression data related to this 
+     *                  {@code DiffExpressionCall}.
      */
-    public void setAffymetrixDataHolder(AffymetrixDataHolder affyDataHolder) {
-        super.getRawDataHolder().setAffymetrixDataHolder(affyDataHolder);
+    public void setDiffAffyDataHolder(DiffAffyDataHolder holder) {
+        super.getRawDataHolder().setDiffAffyDataHolder(holder);
     }
     
     /**
-     * @return  the {@code RNASeqDataHolder} holding the RNA-Seq data 
-     *          related to this {@code DiffExpressionCall}.
+     * @return  the {@code DiffRNASeqDataHolder} holding the RNA-Seq differential 
+     *          expression data related to this {@code DiffExpressionCall}.
      */
-    public RNASeqDataHolder getRNASeqDataHolder() {
-        return super.getRawDataHolder().getRNASeqDataHolder();
+    public DiffRNASeqDataHolder getDiffRNASeqDataHolder() {
+        return super.getRawDataHolder().getDiffRNASeqDataHolder();
     }
     /**
-     * @param holder    the {@code RNASeqDataHolder} holding the RNA-Seq data 
-     *                  related to this {@code DiffExpressionCall}.
+     * @param holder    the {@code DiffRNASeqDataHolder} holding the RNA-Seq 
+     *                  differential expression data related to this 
+     *                  {@code DiffExpressionCall}.
      */
-    public void setRNASeqDataHolder(RNASeqDataHolder rnaSeqDataHolder) {
-        super.getRawDataHolder().setRNASeqDataHolder(rnaSeqDataHolder);
+    public void setDiffRNASeqDataHolder(DiffRNASeqDataHolder holder) {
+        super.getRawDataHolder().setDiffRNASeqDataHolder(holder);
     }
 }

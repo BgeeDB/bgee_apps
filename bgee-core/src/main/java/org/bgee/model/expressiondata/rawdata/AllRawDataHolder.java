@@ -1,6 +1,8 @@
 package org.bgee.model.expressiondata.rawdata;
 
 import org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixDataHolder;
+import org.bgee.model.expressiondata.rawdata.diffexpression.affymetrix.DiffAffyDataHolder;
+import org.bgee.model.expressiondata.rawdata.diffexpression.rnaseq.DiffRNASeqDataHolder;
 import org.bgee.model.expressiondata.rawdata.est.ESTDataHolder;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituDataHolder;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
@@ -16,6 +18,12 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
  * @since Bgee 13
  */
 public class AllRawDataHolder implements RawDataHolder {
+    
+    also, parameters "with mean expression level by experiment", probably useful for all query tools
+    this could be compute for each gene for an organ query, or for each organ on a gene query
+    this could be a last view, after data count, raw data: mean expression compared from raw data
+    and maybe we can compute a rank for all organs for each experiment independently, something like that
+    
 	/**
 	 * {@code ESTDataHolder} to hold EST-related data.
 	 */
@@ -32,6 +40,14 @@ public class AllRawDataHolder implements RawDataHolder {
 	 * {@code RNASeqDataHolder} to hold RNA-Seq-related data.
 	 */
 	private RNASeqDataHolder rnaSeqDataHolder;
+    /**
+     * {@code DiffAffyDataHolder} to hold differential expression Affymetrix-related data.
+     */
+    private DiffAffyDataHolder diffAffyDataHolder;
+    /**
+     * {@code DiffRNASeqDataHolder} to hold differential expression RNA-Seq-related data.
+     */
+    private DiffRNASeqDataHolder diffRNASeqDataHolder;
     
 	/**
 	 * Default constructor.
@@ -41,6 +57,8 @@ public class AllRawDataHolder implements RawDataHolder {
         this.setESTDataHolder(new ESTDataHolder());
         this.setInSituDataHolder(new InSituDataHolder());
         this.setRNASeqDataHolder(new RNASeqDataHolder());
+        this.setDiffAffyDataHolder(new DiffAffyDataHolder());
+        this.setDiffRNASeqDataHolder(new DiffRNASeqDataHolder());
     }
 	
 	
@@ -69,6 +87,10 @@ public class AllRawDataHolder implements RawDataHolder {
 	        }
 	        return false;
 	}
+	
+	//***********************************
+	// STANDARD EXPRESSION DATA
+	//***********************************
 	/**
      * @return the {@code RawDataHolder} related to EST data.
      */
@@ -117,4 +139,38 @@ public class AllRawDataHolder implements RawDataHolder {
 	public void setRNASeqDataHolder(RNASeqDataHolder rnaSeqDataHolder) {
 		this.rnaSeqDataHolder = rnaSeqDataHolder;
 	}
+
+    //***********************************
+    // DIFFERENTIAL EXPRESSION DATA
+    //***********************************
+
+    /**
+     * @return  the {@code RawDataHolder} related to RNA-Seq differential 
+     *          expression data.
+     */
+    public DiffAffyDataHolder getDiffAffyDataHolder() {
+        return diffAffyDataHolder;
+    }
+    /**
+     * @param holder    the {@code RawDataHolder} to set related to RNA-Seq 
+     *                  differential expression data.
+     */
+    public void setDiffAffyDataHolder(DiffAffyDataHolder holder) {
+        this.diffAffyDataHolder = holder;
+    }
+
+    /**
+     * @return  the {@code RawDataHolder} related to RNA-Seq differential 
+     *          expression data.
+     */
+    public DiffRNASeqDataHolder getDiffRNASeqDataHolder() {
+        return diffRNASeqDataHolder;
+    }
+    /**
+     * @param holder    the {@code RawDataHolder} to set related to RNA-Seq 
+     *                  differential expression data.
+     */
+    public void setDiffRNASeqDataHolder(DiffRNASeqDataHolder holder) {
+        this.diffRNASeqDataHolder = holder;
+    }
 }

@@ -28,6 +28,12 @@ import org.bgee.model.species.TaxonFactory;
  * </ul>
  * Additional parameters are: 
  * <ul>
+ * <li>providing {@code Species} to restrict the {@code AnatDevMapping}s 
+ * to retrieve. If some are provided, all {@code AnatDevMapping}s retrieved will be valid 
+ * for taxa in the lineage of any of those {@code Species}, and they will contain 
+ * only {@code AnatDevEntity}s existing in at least one of those {@code Species}. 
+ * See {@link #addSpeciesRestriction(Species)} and 
+ * {@link #addAllSpeciesRestrictions(Collection)}.
  * <li>whether the taxa ancestors of the {@code Taxon} used for scoping should also 
  * be considered, see {@link #setUseAncestralTaxa(boolean)}.
  * <li>whether the taxa descendants of the {@code Taxon} used for scoping should also 
@@ -36,18 +42,17 @@ import org.bgee.model.species.TaxonFactory;
  * only <strong>some</strong> of the {@code Species} belonging to the {@code Taxon} 
  * used for scoping, and not between <strong>all</strong> of them as it would be 
  * otherwise the case.
- * <li>if descent taxa are considered (see previous point), it is possible to restrain 
- * the descent taxa to consider. It is useful if you want to retrieve mappings involving 
- * some {@code Species} in particular, and not all mappings related to descent taxa. 
- * See {@link #addDescentTaxonRestriction(Taxon)}, 
- * {@link #addAllDescentTaxonRestrictions(Collection)}, 
- * {@link #addDescentSpeciesRestriction(Species)}, and 
- * {@link #addAllDescentSpeciesRestrictions(Collection)}.
  * <li>finally, it is possible to filter the mappings based on the 
  * {@link org.bgee.model.ontologycommon.EvidenceCode}s and {@link 
  * org.bgee.model.ontologycommon.Confidence} supporting them (see {@link 
  * #addConfidence(Confidence)} and {@link #addEvidenceCode(EvidenceCode)}).
  * </ul>
+ * <p>
+ * It is likely that users most of the time will only need to call the constructor 
+ * {@link #EvoMappingSelector(TransRelationType, Collection)}, and to decide whether 
+ * they want to retrieve mappings holding between all provided {@code Species}, or 
+ * between some of the provided {@code Species}, by calling 
+ * {@link #setUseDescentTaxa(boolean)}, or not.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -109,12 +114,8 @@ public class EvoMappingSelector {
      * #evoRelationType}). This will result in selecting mappings defined for 
      * the taxon specifid by {@link #taxonScoping}, but also mappings that are 
      * more restricted, valid only for a subset of the taxa encompassed by 
-     * {@link #taxonScoping} (so, valid only for a subset of the species member 
-     * of {@link #taxonScoping}, not valid for all of them as it is usually the case).
-     * <p>
-     * It is possible to restrict the sub-taxa considered by using {@link 
-     * #descentTaxonRestriction}. It can be easily set by providing {@code Species} 
-     * rather than {@code Taxon}, see its documentation.
+     * {@link #taxonScoping} (so, valid only between some of the species member 
+     * of {@link #taxonScoping}, not valid between all of them as it is usually the case).
      * <p>
      * If an {@code AnatDevElement} is related to different structures at different 
      * taxonomic levels (for instance, a structure with its different states of evolution 
@@ -131,15 +132,15 @@ public class EvoMappingSelector {
      * @see #useAncestralTaxa
      */
     private boolean useDescentTaxa;
+    
     /**
-     * A {@code Collection} of {@code Taxon}s, used when {@link #useDescentTaxa} 
-     * is {@code true}, to restrict the descent taxa considered. Usually, 
-     * when {@link #useDescentTaxa} is {@code true}, additional mappings valid 
-     * in any sub-taxa of {@link #taxonScoping} are considered. But if this 
-     * {@code Collection} is not empty, only the sub-taxa included in it will be 
-     * considered. 
+     * A {@code Set} of {@code Species} used to define restrictions on the 
+     * {@code AnatDevMapping}s to retrieve. If not empty, only the {@code AnatDevMapping}s 
+     * that are valid for a {@code Taxon} in the lineage of one of these {@code Species} 
+     * will be considered, and they will contain only {@code AnatDevEntity}s existing 
+     * in one of these {@code Species}.
      */
-    private final Set<Taxon> descentTaxonRestrictions;
+    private Set<Species> speciesRestrictions;
     /**
      * A {@code Collection} of {@code Confidence}s defining the allowed confidence 
      * information: only mappings involving these {@code Confidence}s will be selected.
@@ -168,7 +169,7 @@ public class EvoMappingSelector {
         this.taxonScoping             = taxonScoping;
         this.setUseAncestralTaxa(true);
         this.setUseDescentTaxa(false);
-        this.descentTaxonRestrictions = new HashSet<Taxon>();
+        this.speciesRestrictions      = new HashSet<Species>();
         
         this.allowedConfidences       = new HashSet<Confidence>();
         this.allowedEvidences         = new HashSet<EvidenceCode>();
@@ -183,10 +184,10 @@ public class EvoMappingSelector {
      * This constructor identifies the most recent ancestor {@link Taxon} common to all  
      * the {@code Species} in {@code speciesInScope}, and use it as the taxon scoping 
      * (see {@link #getTaxonScoping()}). 
-     * It also calls {@link #addAllDescentSpeciesRestrictions(Collection)} using 
-     * {@code speciesInScope}, so that if {@link #setUseDescentTaxa(boolean)} is 
-     * latter called with the argument {@code true}, there will be already descent 
-     * taxon restrictions in place (see {@link #getDescentTaxonRestrictions()}).
+     * It then calls {@link #addAllSpeciesRestrictions(Collection)} using 
+     * {@code speciesInScope}, so that all {@code AnatDevMapping}s retrieved will be valid 
+     * for taxa in the lineage of any of those {@code Species}, and they will contain 
+     * only {@code AnatDevEntity}s existing in at least one of those {@code Species}.
      * 
      * @param relationType      The {@code TransRelationType} that is the relation which 
      *                          the {@link AnatDevMapping}s should be based on.
@@ -197,7 +198,7 @@ public class EvoMappingSelector {
     public EvoMappingSelector(TransRelationType relationType, 
             Collection<Species> speciesInScope) {
         this(relationType, (new TaxonFactory()).getMostRecentCommonTaxon(speciesInScope));
-        this.addAllDescentSpeciesRestrictions(speciesInScope);
+        this.addAllSpeciesRestrictions(speciesInScope);
     }
 
     //**************************************
@@ -311,12 +312,9 @@ public class EvoMappingSelector {
      * defined by {@link #getEvoRelationType()}). This will result in selecting 
      * mappings defined for the taxon specifid by {@link #getTaxonScoping()}, 
      * but also mappings that are more restricted, valid only for a subset 
-     * of the taxa encompassed by the specified taxon (so, valid only for 
-     * a subset of the species member of the specified taxon, not valid for all 
+     * of the taxa encompassed by the specified taxon (so, valid only between 
+     * some of the species member of the specified taxon, not valid between all 
      * of them as it is usually the case).
-     * <p>
-     * It is possible to restrict the sub-taxa considered, see {@link 
-     * #getDescentTaxonRestrictions()}.
      * <p>
      * If an {@code AnatDevElement} is related to different structures at different 
      * taxonomic levels (for instance, a structure with its different states of evolution 
@@ -332,7 +330,6 @@ public class EvoMappingSelector {
      * @return  A {@code boolean} defining whether ancestral taxa of the {@code Taxon} 
      *          returned by {@link #getTaxonScoping()} should also be considered.
      * @see #getTaxonScoping()
-     * @see #getDescentTaxonRestrictions()
      * @see #isUseAncestralTaxa()
      */
     public boolean isUseDescentTaxa() {
@@ -347,12 +344,9 @@ public class EvoMappingSelector {
      * defined by {@link #getEvoRelationType()}). This will result in selecting 
      * mappings defined for the taxon specifid by {@link #getTaxonScoping()}, 
      * but also mappings that are more restricted, valid only for a subset 
-     * of the taxa encompassed by the specified taxon (so, valid only for 
-     * a subset of the species member of the specified taxon, not valid for all 
+     * of the taxa encompassed by the specified taxon (so, valid only between 
+     * some of the species member of the specified taxon, not valid between all 
      * of them as it is usually the case).
-     * <p>
-     * It is possible to restrict the sub-taxa considered, see {@link 
-     * #getDescentTaxonRestrictions()}.
      * <p>
      * If an {@code AnatDevElement} is related to different structures at different 
      * taxonomic levels (for instance, a structure with its different states of evolution 
@@ -369,7 +363,6 @@ public class EvoMappingSelector {
      *                          of the {@code Taxon} returned by {@link #getTaxonScoping()} 
      *                          should also be considered.
      * @see #getTaxonScoping()
-     * @see #getDescentTaxonRestrictions()
      * @see #setUseAncestralTaxa(boolean)
      */
     public void setUseDescentTaxa(boolean useDescentTaxa) {
@@ -377,110 +370,49 @@ public class EvoMappingSelector {
     }
     
     /**
-     * Returns the {@code Collection} of {@code Taxon}s, used when {@link 
-     * #isUseDescentTaxa()} returns {@code true}, to restrict the descent taxa 
-     * considered. Usually, when {@link #isUseDescentTaxa()} is {@code true}, 
-     * additional mappings valid in any sub-taxa of the {@code Taxon} specified by 
-     * {@link #getTaxonScoping()} are considered. But if this {@code Collection} 
-     * is not empty, only the taxa included in it will be considered.
-     * <p>
-     * These taxa can either be provided directly (see {@link 
-     * #addDescentTaxonRestriction(Taxon)} and 
-     * {@link #addAllDescentTaxonRestrictions(Collection)}), or by providing 
-     * {@code Species} (see {@link #addDescentSpeciesRestriction(Species)} and 
-     * {@link #addAllDescentSpeciesRestrictions(Collection)}).
+     * Add {@code speciesRestriction} to the {@code Collection} of {@code Species} 
+     * used to define restrictions on the {@code AnatDevMapping}s to retrieve. 
+     * Only the {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
+     * of one of these {@code Species} will be considered, and they will contain 
+     * only {@code AnatDevEntity}s existing in one of these {@code Species}.
      * 
-     * @return  A {@code Collection} of {@code Taxon}s to limit the sub-taxa considered, 
-     *          when {@link #isUseDescentTaxa()} returns {@code true}.
-     * @see #addDescentTaxonRestriction(Taxon)
-     * @see #addAllDescentTaxonRestrictions(Collection)
-     * @see #addDescentSpeciesRestriction(Species)
-     * @see #addAllDescentSpeciesRestrictions(Collection)
+     * @param speciesRestrictions   A {@code Species} to be added to the {@code Collection}
+     *                              of {@code Species} used to restrain the 
+     *                              {@code AnatDevMapping}s retrieved, 
+     *                              and their contained {@code AnatDevEntity}s.
+     * @see #getSpeciesRestrictions()
      */
-    public Set<Taxon> getDescentTaxonRestrictions() {
-        return this.descentTaxonRestrictions;
+    public void addSpeciesRestriction(Species speciesRestriction) {
+        this.speciesRestrictions.add(speciesRestriction);
     }
     /**
-     * Add {@code taxonRestricted} to the {@code Collection} of {@code Taxon}s, 
-     * used when {@link #isUseDescentTaxa()} returns {@code true}, to restrict 
-     * the descent taxa considered. Usually, when {@link #isUseDescentTaxa()} 
-     * is {@code true}, additional mappings valid in any sub-taxa of the {@code Taxon} 
-     * specified by {@link #getTaxonScoping()} are considered. But if 
-     * {@link #getDescentTaxonRestrictions()} returns a non empty {@code Collection}, 
-     * only the taxa included in it will be considered.
-     * <p>
-     * These taxa can either be provided directly, as by using this method, or 
-     * by providing {@code Species} (see {@link #addDescentSpeciesRestriction(Species)} 
-     * and {@link #addAllDescentSpeciesRestrictions(Collection)}).
+     * Add {@code speciesRestrictions} to the {@code Collection} of {@code Species} 
+     * used to define restrictions on the {@code AnatDevMapping}s to retrieve. 
+     * Only the {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
+     * of one of these {@code Species} will be considered, and they will contain 
+     * only {@code AnatDevEntity}s existing in one of these {@code Species}.
      * 
-     * @param taxonRestricted   A {@code Taxon} to be added to the {@code Collection} of 
-     *                          {@code Taxon}s used to limit the sub-taxa considered, 
-     *                          when {@link #isUseDescentTaxa()} returns {@code true}.
-     * @see #getDescentTaxonRestrictions()
-     * @see #addAllDescentTaxonRestrictions(Collection)
-     * @see #addDescentSpeciesRestriction(Species)
-     * @see #addAllDescentSpeciesRestrictions(Collection)
+     * @param speciesRestrictions   A {@code Collection} of {@code Species} to be added 
+     *                              to the {@code Species} used to restrain the 
+     *                              {@code AnatDevMapping}s retrieved, 
+     *                              and their contained {@code AnatDevEntity}s.
+     * @see #getSpeciesRestrictions()
      */
-    public void addDescentTaxonRestriction(Taxon taxonRestricted) {
-        this.descentTaxonRestrictions.add(taxonRestricted);
+    public void addAllSpeciesRestrictions(Collection<Species> speciesRestrictions) {
+        this.speciesRestrictions.addAll(speciesRestrictions);
     }
     /**
-     * Add {@code taxaRestricted} to the {@code Collection} of {@code Taxon}s, 
-     * used when {@link #isUseDescentTaxa()} returns {@code true}, to restrict 
-     * the descent taxa considered. Usually, when {@link #isUseDescentTaxa()} 
-     * is {@code true}, additional mappings valid in any sub-taxa of the {@code Taxon} 
-     * specified by {@link #getTaxonScoping()} are considered. But if 
-     * {@link #getDescentTaxonRestrictions()} returns a non empty {@code Collection}, 
-     * only the taxa included in it will be considered.
-     * <p>
-     * These taxa can either be provided directly, as by using this method, or 
-     * by providing {@code Species} (see {@link #addDescentSpeciesRestriction(Species)} 
-     * and {@link #addAllDescentSpeciesRestrictions(Collection)}).
+     * Returns the {@code Collection} of {@code Species} used to define restrictions 
+     * on the {@code AnatDevMapping}s to retrieve. If not empty, Only the 
+     * {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
+     * of one of these {@code Species} will be considered, and they will contain 
+     * only {@code AnatDevEntity}s existing in one of these {@code Species}.
      * 
-     * @param taxaRestricted    A {@code Collection} of {@code Taxon}s to be added to 
-     *                          the {@code Collection} of {@code Taxon}s used to limit 
-     *                          the sub-taxa considered, when {@link #isUseDescentTaxa()} 
-     *                          returns {@code true}.
-     * @see #getDescentTaxonRestrictions()
-     * @see #addDescentTaxonRestriction(Taxon)
-     * @see #addDescentSpeciesRestriction(Species)
-     * @see #addAllDescentSpeciesRestrictions(Collection)
+     * @return  the {@code Collection} of {@code Species} used to define restrictions 
+     *          on the {@code AnatDevMapping}s to retrieve.
      */
-    public void addAllDescentTaxonRestrictions(Collection<Taxon> taxaRestricted) {
-        this.descentTaxonRestrictions.addAll(taxaRestricted);
-    }
-    /**
-     * Helper method to provide taxon restrictions when {@link #isUseDescentTaxa()} 
-     * returns {@code true}. This method will retrieve all parent taxa of 
-     * {@code speciesRestriction}, and will pass them to the method 
-     * {@link #addAllDescentTaxonRestrictions(Collection)}. See this latter method 
-     * for more details. 
-     * 
-     * @param speciesRestriction    A {@code Species} used to provide taxon restriction 
-     *                              when {@link #isUseDescentTaxa()} returns {@code true}.
-     * @see #addAllDescentTaxonRestrictions(Collection)
-     * @see #getDescentTaxonRestrictions()
-     */
-    public void addDescentSpeciesRestriction(Species speciesRestriction) {
-        this.addAllDescentTaxonRestrictions(
-                (new TaxonFactory()).getAncestorTaxa(speciesRestriction));
-    }
-    /**
-     * Helper method to provide taxon restrictions when {@link #isUseDescentTaxa()} 
-     * returns {@code true}. This method will retrieve all parent taxa of all 
-     * {@code Species} in {@code speciesRestrictions}, and will pass them to the method 
-     * {@link #addAllDescentTaxonRestrictions(Collection)}. See this latter method 
-     * for more details. 
-     * 
-     * @param speciesRestrictions   A {@code Collection} of {@code Species} used to provide 
-     *                              taxon restriction when {@link #isUseDescentTaxa()} 
-     *                              returns {@code true}.
-     * @see #addAllDescentTaxonRestrictions(Collection)
-     * @see #getDescentTaxonRestrictions()
-     */
-    public void addAllDescentSpeciesRestrictions(Collection<Species> speciesRestrictions) {
-        this.addAllDescentTaxonRestrictions(
-                (new TaxonFactory()).getAncestorTaxa(speciesRestrictions));
+    public Set<Species> getSpeciesRestrictions() {
+        return this.speciesRestrictions;
     }
 
     /**

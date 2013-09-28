@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatDevElement;
 import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.expressiondata.querytools.filters.CallFilter;
@@ -40,6 +42,12 @@ import org.bgee.model.gene.Gene;
  *
  */
 public class AnatDevRequirement {
+    /**
+     * <code>Logger/code> of this class.
+     */
+    private final static Logger log = 
+            LogManager.getLogger(AnatDevExpressionQuery.class.getName());
+    
 	/**
 	 * An {@code enum} to define how this {@code AnatDevRequirement} 
 	 * should be validated: 
@@ -163,13 +171,51 @@ public class AnatDevRequirement {
     private boolean filterAccepted;
 	
 	//***********************************
-    // CONSTRUCTOR
+    // METHODS
     //***********************************
 	/**
 	 * Default constructor. 
 	 */
 	public AnatDevRequirement() {
 		this.requirements = new ArrayList<GeneCallRequirement>();
+	}
+	
+	/**
+	 * Checks that all parameters of this {@code AnatDevRequirement} are consistent. 
+	 * For instance, check that at least one {@code GeneCallRequirement} was provided, 
+	 * or, if a reference call was provided (see {@link #getReferenceCall()}), 
+	 * that at least one {@code GeneCallRequirement} allows to acquire it, etc.
+	 * This methods throw an {@code IllegalArgumentException} if an inconsistency 
+	 * is detected. It is its only purpose. 
+	 * 
+	 * @throws IllegalArgumentException    If an inconsistency in the parameters 
+	 *                                     of this {@code AnatDevRequirement} 
+	 *                                     is detected.
+	 */
+	protected void checkState() throws IllegalArgumentException {
+	    
+	    if (this.getRequirements().isEmpty()) {
+	        throw log.throwing(new IllegalStateException("An AnatDevRequirement " +
+	        		"must include at least one GeneCallRequirement."));
+	    }
+	    
+	    boolean referenceCallSeen = false;
+	    for (GeneCallRequirement requirement: this.getRequirements()) {
+	        //first call the GeneCallRequirement own check
+	        requirement.checkState();
+	        //then perform check related to referenceCall
+	        if (this.getReferenceCall() != null && !referenceCallSeen) {
+	            referenceCallSeen = requirement.hasCallType(this.getReferenceCall());
+	        }
+	    }
+	    if (this.getReferenceCall() != null && !referenceCallSeen) {
+	        throw log.throwing(new IllegalStateException("The reference call " +
+	                this.getReferenceCall() + " was provided, but no GeneCallRequirement " +
+	                "would allow to acquire it, query impossible."));
+	    }
+	    //TODO: check that if the ValidationType is ALL, then there is no inconsistency, 
+	    //such as requesting expression and absence of expression for a same data type 
+	    //and a same gene, etc.
 	}
 
 	//***********************************
@@ -556,7 +602,7 @@ public class AnatDevRequirement {
     	
     	
     	//***********************************
-        // CONSTRUCTORS
+        // METHODS
         //***********************************
     	/**
     	 * Default constructor. 
@@ -611,6 +657,46 @@ public class AnatDevRequirement {
 			this.setSatisfyAllGenes(true);
 			this.setSatisfyAllCallFilters(false);
     	}
+    	
+    	/**
+         * Checks that this {@code GeneCallRequirement} is in an inappropriate state.
+         * Notably, that it holds at least one {@code Gene} with parameters. 
+         * This methods throw an {@code IllegalArgumentException} if an inconsistency 
+         * is detected. It is its only purpose. 
+         * 
+         * @throws IllegalArgumentException    If this object is in an incorrect state.
+         */
+        protected void checkState() throws IllegalArgumentException {
+            if (this.getGenesWithParameters().isEmpty()) {
+                throw log.throwing(new IllegalStateException("An GeneCallRequirement " +
+                        "must include at least one Gene with parameters."));
+            }
+        }
+        
+        /**
+         * Checks that this {@code GeneCallRequirement} holds at least one 
+         * {@code CallFilter} to retrieve {@code Call}s with the same {@code CallType} 
+         * than the {@code callType} parameter. All {@code CallFilter}s associated 
+         * with any {@code Gene} (see {@link #getGenesWithParameters()}) will be 
+         * searched until an appropriate one is found.
+         * 
+         * @param callType  The {@code CallType} for which we want to find 
+         *                  a corresponding {@code CallFilter}.
+         * @return          {@code true} if this {@code GeneCallRequirement} holds 
+         *                  a {@code CallFilter} corresponding to {@code callType}.
+         */
+        protected boolean hasCallType(CallType callType) {
+            log.entry(callType);
+            for (Collection<CallFilter> callFilters: 
+                    this.getGenesWithParameters().values()) {
+                for (CallFilter callFilter: callFilters) {
+                    if (callFilter.getCallType().equals(callType)) {
+                        return log.exit(true);
+                    }
+                }
+            }
+            return log.exit(false);
+        }
     	
     	//***********************************
     	// GETTERS/SETTERS

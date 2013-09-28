@@ -2,6 +2,7 @@ package org.bgee.model.expressiondata.querytools.filters;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.DataParameters.CallType;
 
 /**
  * A {@code CompositeCallFilter} allows to use a {@code BasicCallFilter} 
@@ -145,5 +146,10 @@ public class CompositeCallFilter implements CallFilter {
      */
     public RawDataFilter getRawDataFilter() {
         return this.rawDataFilter;
+    }
+
+    @Override
+    public CallType getCallType() {
+        return this.getCallFilter().getCallType();
     }
 }

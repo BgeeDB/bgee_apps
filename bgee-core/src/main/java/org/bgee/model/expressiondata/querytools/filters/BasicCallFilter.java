@@ -8,7 +8,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.Call;
-import org.bgee.model.expressiondata.DataParameters.CallType;
 import org.bgee.model.expressiondata.DataParameters.DataQuality;
 import org.bgee.model.expressiondata.DataParameters.DataType;
 import org.bgee.model.expressiondata.ExpressionCall;
@@ -315,13 +314,6 @@ abstract class BasicCallFilter implements CallFilter {
 	protected Call getReferenceCall() {
 	    return this.referenceCall;
 	}
-	/**
-     * Returns the {@code CallType} defining the type of call of the expression 
-     * data to retrieve.
-     * 
-     * @return the {@code CallType} defining the type of call to use.
-     */
-	public abstract CallType getCallType();
 	
 	/**
 	 * Return the data types and qualities requested for this filter, as 

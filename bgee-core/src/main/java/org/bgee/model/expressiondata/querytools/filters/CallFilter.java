@@ -1,5 +1,7 @@
 package org.bgee.model.expressiondata.querytools.filters;
 
+import org.bgee.model.expressiondata.DataParameters.CallType;
+
 /**
  * A {@link Filter} to filter or retrieve expression data 
  * {@link org.bgee.model.expressiondata.Call Call}s. 
@@ -9,6 +11,14 @@ package org.bgee.model.expressiondata.querytools.filters;
  * @since Bgee 13
  */
 public interface CallFilter extends Filter {
+    /**
+     * Returns the {@code CallType} defining the type of call of the expression 
+     * data to retrieve.
+     * 
+     * @return the {@code CallType} defining the type of call to use.
+     */
+    public CallType getCallType();
+    
 	/**
 	 * Tries to merge this {@code CallFilter} with {@code filterToMerge}, 
 	 * by considering that they both define conditions on expression data 

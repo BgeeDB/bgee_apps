@@ -8,6 +8,8 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatDevElement;
+import org.bgee.model.anatdev.AnatElement;
+import org.bgee.model.anatdev.DevElement;
 import org.bgee.model.anatdev.core.AnatDevEntity;
 import org.bgee.model.anatdev.evomapping.AnatDevMapping;
 import org.bgee.model.anatdev.evomapping.EvoMappingSelector;
@@ -69,6 +71,27 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      */
 	public enum QueryType {
 		ANATOMY, DEVELOPMENT, ANATWITHDEV, DEVWITHANAT;
+		
+		/**
+		 * @return    {@code true} if this {@code QueryType} is {@code ANATOMY} 
+		 *            or {@code ANATWITHDEV}, {@code false} otherwise.
+		 */
+		public boolean isAnatomyQuery() {
+		    if (this.equals(ANATOMY) || this.equals(ANATWITHDEV)) {
+		        return true;
+		    }
+		    return false;
+		}
+		/**
+         * @return    {@code true} if this {@code QueryType} is {@code DEVELOPMENT} 
+         *            or {@code DEVWITHANAT}, {@code false} otherwise.
+         */
+		public boolean isDevelopmentalQuery() {
+            if (this.equals(DEVELOPMENT) || this.equals(DEVWITHANAT)) {
+                return true;
+            }
+            return false;
+        }
 	}
 	/**
 	 * An {@code enum} defining the different data rendering methods available 
@@ -349,7 +372,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 			this.analyzeRequirements();
 			
 			queryCompleted = true;
-		} /*catch (InterruptedException e) {//see http://docs.oracle.com/javase/tutorial/essential/concurrency/interrupt.html
+		} /*catch (InterruptedException e) {
+		    //TODO: see http://stackoverflow.com/a/11986701/1768736 and Thread interruption here: http://www.ibm.com/developerworks/java/library/j-jtp05236/index.html
 			//long-running queries can be interrupted by the TaskManager, so we need 
 			//to be prepared to catch an interruption.
 			//TODO: clean up to do here?
@@ -362,12 +386,70 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 		log.exit();
 	}
 	
+	/**
+     * Checks that this {@code AnatDevExpressionQuery} is in an appropriate state 
+     * for launching a query. For instance, check that at least one {@code 
+     * AnatDevRequirement} was provided, or that the {@code QueryType} is consistent 
+     * with other parameters, such as root elements provided, etc.
+     * This methods throw an {@code IllegalArgumentException} if an inconsistency 
+     * is detected. It is its only purpose. 
+     * 
+     * @throws IllegalArgumentException    If an inconsistency in the parameters 
+     *                                     of this {@code AnatDevExpressionQuery} 
+     *                                     is detected.
+     */
 	private void checkState() {
-	    /*this.checkQueryTypeDataRendering(this.get, rendering)
-	    rootElement / DataRendering.ONTOLOGY / QueryType
-	    if rootElementS, check that they are all of the same type, and appropriate related to queryType
-	    at least one AnatDevRequirement, with at least one GeneCallRequirement (or calling a chceck method on AnatDevRequirement)
-	    */
+	    log.entry();
+	    
+	    this.checkQueryTypeDataRendering(this.getQueryType(), this.getRendering());
+	    
+	    
+	    //check that we have at least one AnatDevRequirement, and call their 
+	    //checkState method on each of them.
+	    if (this.getRequirements().isEmpty()) {
+	        throw log.throwing(new IllegalStateException("At least one " +
+	        		"AnatDevRequirement must be provided."));
+	    }
+	    for (AnatDevRequirement requirement: this.getRequirements()) {
+	        requirement.checkState();
+	    }
+	    
+	    
+	    //check class consistency of rootElements when the rendering is ONTOLOGY
+	    if (this.getRendering().equals(DataRendering.ONTOLOGY)) {
+	        //check that the roots are of only one single type
+	        Class previousElementClass = null;
+	        for (AnatDevElement element: this.getRootElements()) {
+	            if (previousElementClass != null && 
+	                    !element.getClass().equals(previousElementClass)) {
+	                throw log.throwing(new IllegalStateException("The provided " +
+	                	"root elements must be of a same single type, inconsistency " +
+	                	"found between " + previousElementClass + " and " + 
+	                	element.getClass()));
+	            }
+	            previousElementClass = element.getClass();
+	        }
+	        //now check that this type is appropriate
+	        if (previousElementClass != null) { 
+	            //anatomy query but the roots are not anatomical elements
+	            if (this.getQueryType().isAnatomyQuery() && 
+	                    !AnatElement.class.isAssignableFrom(previousElementClass)) {
+	                throw log.throwing(new IllegalStateException("An anatomy query " +
+	                		"is performed (QueryType " + this.getQueryType() + ") " +
+	                		"but the type of the root elements provided is " +
+	                		"inconsistent (" + previousElementClass + ")"));
+	            } 
+	            if (this.getQueryType().isDevelopmentalQuery() && 
+                        !DevElement.class.isAssignableFrom(previousElementClass)) {
+                    throw log.throwing(new IllegalStateException("A developmental query " +
+                            "is performed (QueryType " + this.getQueryType() + ") " +
+                            "but the type of the root elements provided is " +
+                            "inconsistent (" + previousElementClass + ")"));
+                }
+	        }
+	    }
+	    
+	    log.exit();
 	}
 	
 	/**
@@ -386,15 +468,15 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	        throws IllegalArgumentException {
 	    log.entry(queryType, rendering);
 	    
-	    if ((queryType.equals(QueryType.ANATWITHDEV) || 
-	         queryType.equals(QueryType.DEVWITHANAT)) && 
-	         
-	        (rendering.equals(DataRendering.ONTOLOGY) || 
-	         rendering.equals(DataRendering.SUMMARY))) {
+	    if ((this.getRendering().equals(DataRendering.ONTOLOGY) || 
+	             this.getRendering().equals(DataRendering.SUMMARY)) && 
+	        (this.getQueryType().equals(QueryType.ANATWITHDEV) || 
+	             this.getQueryType().equals(QueryType.DEVWITHANAT))) {
 	        
-	        throw log.throwing(new IllegalArgumentException("The QueryType provided (" +
-	                queryType + ") is incompatible with the DataRendering provided (" +
-	                rendering + ")"));
+	        throw log.throwing(new IllegalStateException("When the DataRendering " +
+	                "is ONTOLOGY or SUMMARY, it is not possible to query AnatElements " +
+	                "and DevElements at the same time (QueryType equals to ANATWITHDEV " +
+	                "or DEVWITHANAT)"));
 	    }
 	    log.exit();
 	}
@@ -477,13 +559,21 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * will make its best to obtain groups with a number of {@code AnatDevElement}s 
      * as closed to this value as possible.
      * <p>
-     * Default value is {@link #DEFAULTELEMENTSBYGROUP}.
+     * Default value is {@link #DEFAULTELEMENTSBYGROUP}. If {@code elementsByGroup} 
+     * is less than 2, and {@code IllegalArgumentException} is thrown (groups 
+     * of one element would make no sense).
      * 
      * @param elementsByGroup   An <code>int</code> that is the wished number of 
      *                          {@code AnatDevElement}s by group
+     * @throws IllegalArgumentException  If {@code elementsByGroup} is less than 2.
      * @see #getRendering()
      */
-    public void setElementsByGroup(int elementsByGroup) {
+    public void setElementsByGroup(int elementsByGroup) throws IllegalArgumentException {
+        if (elementsByGroup < 2) {
+            throw log.throwing(new IllegalArgumentException("elementsByGroup " +
+                    "must be greater than or equal to 2 (groups of only one element " +
+                    "would make no sense)"));
+        }
         this.elementsByGroup = elementsByGroup;
     }
 
@@ -514,7 +604,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * This value is only a wish, this {@code AnatDevExpressionQuery} will make 
      * its best to obtain that number of top {@code AnatDevElement}s.
      * <p>
-     * Default value is {@link #DEFAULTSUMMARYELEMENTCOUNT}.
+     * Default value is {@link #DEFAULTSUMMARYELEMENTCOUNT}. If {@code 
+     * summaryElementCount} is less than 1, an {@code IllegalArgumentException} 
+     * is thrown (at least one element must be selected to have a summary).
      * 
      * @return  The {@code int} defining the wished number of top {@code AnatDevElement}s, 
      *          summarizing all the expression data of this {@code AnatDevExpressionQuery}.
@@ -522,9 +614,15 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * @param summaryElementCount   The {@code int} defining the wished number of top 
      *                              {@code AnatDevElement}s, summarizing all the 
      *                              expression data of this {@code AnatDevExpressionQuery}.
+     * @throws IllegalArgumentException If {@code summaryElementCount} is less than 1.
      * @see #getRendering()
      */
-    public void setSummaryElementCount(int summaryElementCount) {
+    public void setSummaryElementCount(int summaryElementCount) 
+            throws IllegalArgumentException {
+        if (elementsByGroup < 1) {
+            throw log.throwing(new IllegalArgumentException("summaryElementCount " +
+                    "must be greater than or equal to 1"));
+        }
         this.summaryElementCount = summaryElementCount;
     }
 
@@ -669,13 +767,19 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * will be considered; if equal to 2, then A, B, and C will be considered; if 
      * equal to 0, then all elements will be considered. 
      * <p>
-     * Default is 0.
+     * Default is 0. If {@code level} is negative, an {@code IllegalArgumentException} 
+     * is thrown.
      * 
      * @param level    the {@code int} defining the maximum distance to the roots 
      *                  of the {@code AnatDevElement}s to consider.
+     * @throws IllegalArgumentException  if {@code level} is negative.
      * @see #getRootElements()
      */
-    public void setLevelCountToWalk(int level) {
+    public void setLevelCountToWalk(int level) throws IllegalArgumentException {
+        if (level < 0) {
+            throw log.throwing(new IllegalArgumentException("levelCountToWalk " +
+            		"must be greater than or equal to 0"));
+        }
         this.levelCountToWalk = level;
     }
 

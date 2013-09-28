@@ -13,13 +13,41 @@ import org.bgee.model.species.TaxonFactory;
 
 /**
  * This class allows to provide all the parameters available to select 
- * {@link AnatDevMapping}s. The parameters defined the {@link TransRelationType} 
- * to use (see {@link #setRelationType(TransRelationType)}), the taxa for which
- * the relations should hold (see {@link #setTaxonScoping(Taxon)} and {@link 
- * #setUseAncestralTaxa(boolean)}), and finally, allowed to filter the mappings 
- * based on the {org.bgee.model.ontologycommon.EvidenceCode}s and {@link 
- * #org.bgee.model.ontologycommon.Confidence} supporting them (see {@link 
+ * {@link AnatDevMapping}s. The mandatory parameters are: 
+ * <ul>
+ * <li>the {@link TransRelationType} to use. It is provided at instantiation and 
+ * can be obtained by calling {@link #getEvoRelationType()}). It defines what 
+ * evolutionary relation the {@link AnatDevMapping}s to retrieve should be based on.
+ * <li>the {@code Taxon} for which the mappings should hold (see {@link 
+ * #getTaxonScoping()} for more details.) This {@code Taxon} can be either directly 
+ * provided at instantiation (see {@link #EvoMappingSelector(TransRelationType, Taxon)}), 
+ * or can be inferred from a {@code Collection} of {@code Species} provided at 
+ * instantiation (see {@link #EvoMappingSelector(TransRelationType, Collection)}); 
+ * in that case, the {@code Taxon} used for scoping will be the most recent ancestor 
+ * common to all the {@code Species}.
+ * </ul>
+ * Additional parameters are: 
+ * <ul>
+ * <li>whether the taxa ancestors of the {@code Taxon} used for scoping should also 
+ * be considered, see {@link #setUseAncestralTaxa(boolean)}.
+ * <li>whether the taxa descendants of the {@code Taxon} used for scoping should also 
+ * be considered, see {@link #setUseDescentTaxa(boolean)}. In that case, it means 
+ * that the {@link AnatDevMapping}s retrieved will also include mappings valid between  
+ * only <strong>some</strong> of the {@code Species} belonging to the {@code Taxon} 
+ * used for scoping, and not between <strong>all</strong> of them as it would be 
+ * otherwise the case.
+ * <li>if descent taxa are considered (see previous point), it is possible to restrain 
+ * the descent taxa to consider. It is useful if you want to retrieve mappings involving 
+ * some {@code Species} in particular, and not all mappings related to descent taxa. 
+ * See {@link #addDescentTaxonRestriction(Taxon)}, 
+ * {@link #addAllDescentTaxonRestrictions(Collection)}, 
+ * {@link #addDescentSpeciesRestriction(Species)}, and 
+ * {@link #addAllDescentSpeciesRestrictions(Collection)}.
+ * <li>finally, it is possible to filter the mappings based on the 
+ * {@link org.bgee.model.ontologycommon.EvidenceCode}s and {@link 
+ * org.bgee.model.ontologycommon.Confidence} supporting them (see {@link 
  * #addConfidence(Confidence)} and {@link #addEvidenceCode(EvidenceCode)}).
+ * </ul>
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -40,9 +68,12 @@ public class EvoMappingSelector {
      * that will be grouped into an {@code AnatDevMapping}.
      * <p>
      * If ancestors of this {@code Taxon} should also be considered, then 
-     * {@link #useAncestralTaxa} must be set to {@code true}. 
+     * {@link #useAncestralTaxa} must be set to {@code true}. If descendants 
+     * of this {@code Taxon} should also be considered, then {@link #useDescentTaxa} 
+     * must be set to {@code true}. See these attributes for important details.
      * 
      * @see #useAncestralTaxa
+     * @see #useDescentTaxa
      */
     private final Taxon taxonScoping;
     /**
@@ -53,7 +84,7 @@ public class EvoMappingSelector {
      * #evoRelationType}). This will result in selecting mappings defined for 
      * the taxon specifid by {@link #taxonScoping}, but also mappings that encompass 
      * this specified taxon, spanning a wider taxonomical range; it means that 
-     * the mappings will be valid for the specified taxon, but also for other taxa.
+     * the mappings will be valid for the specified taxon, but also for other taxa. 
      * <p>
      * If an {@code AnatDevElement} is related to different structures at different 
      * taxonomic levels (for instance, a structure with its different states of evolution 
@@ -79,7 +110,7 @@ public class EvoMappingSelector {
      * the taxon specifid by {@link #taxonScoping}, but also mappings that are 
      * more restricted, valid only for a subset of the taxa encompassed by 
      * {@link #taxonScoping} (so, valid only for a subset of the species member 
-     * of {@link #taxonScoping}, not all of them).
+     * of {@link #taxonScoping}, not valid for all of them as it is usually the case).
      * <p>
      * It is possible to restrict the sub-taxa considered by using {@link 
      * #descentTaxonRestriction}. It can be easily set by providing {@code Species} 
@@ -193,11 +224,15 @@ public class EvoMappingSelector {
      * <p>
      * If ancestors of this {@code Taxon} should also be considered, then users 
      * must call {@link #setUseAncestralTaxa(boolean)} with the value {@code true}. 
+     * If descendants of this {@code Taxon} should also be considered, then users 
+     * must call {@link #setUseDescentTaxa(boolean)} with the value {@code true}.
+     * See these methods for important details.
      * 
      * @return  the {@code Taxon} for which the {@code TransRelationType} returned 
      *          by {@link #getEvoRelationType()} should hold, in order to build the 
      *          {@link AnatDevMapping}s
      * @see #isUseAncestralTaxa()
+     * @see #isUseDescentTaxa()
      */
     public Taxon getTaxonScoping() {
         return taxonScoping;
@@ -277,7 +312,8 @@ public class EvoMappingSelector {
      * mappings defined for the taxon specifid by {@link #getTaxonScoping()}, 
      * but also mappings that are more restricted, valid only for a subset 
      * of the taxa encompassed by the specified taxon (so, valid only for 
-     * a subset of the species member of the specified taxon, not all of them).
+     * a subset of the species member of the specified taxon, not valid for all 
+     * of them as it is usually the case).
      * <p>
      * It is possible to restrict the sub-taxa considered, see {@link 
      * #getDescentTaxonRestrictions()}.
@@ -312,7 +348,8 @@ public class EvoMappingSelector {
      * mappings defined for the taxon specifid by {@link #getTaxonScoping()}, 
      * but also mappings that are more restricted, valid only for a subset 
      * of the taxa encompassed by the specified taxon (so, valid only for 
-     * a subset of the species member of the specified taxon, not all of them).
+     * a subset of the species member of the specified taxon, not valid for all 
+     * of them as it is usually the case).
      * <p>
      * It is possible to restrict the sub-taxa considered, see {@link 
      * #getDescentTaxonRestrictions()}.

@@ -3,11 +3,12 @@ package org.bgee.model;
 import org.bgee.model.anatdev.core.DevStageFactory;
 import org.bgee.model.anatdev.core.DevStageStaticFactory;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.species.TaxonFactory;
 
 /**
  * Parent class of all factories used in Bgee. 
  * Factories are designed to instantiate objects from one specific class. 
- * For instance, the methods of a {@code StageLoader} 
+ * For instance, the methods of a {@code DevStageFactory} 
  * return a {@code DevStage}, or a {@code Collection} of {@code DevStage}s.
  * <p>
  * This parent class is responsible for obtaining 
@@ -67,5 +68,11 @@ public abstract class Factory
     		return new DevStageStaticFactory();
     	}
     	return new DevStageFactory();
+    }
+    /**
+     * @return  A newly instantiated {@code TaxonFactory}.
+     */
+    public static TaxonFactory getTaxonFactory() {
+        return new TaxonFactory();
     }
 }

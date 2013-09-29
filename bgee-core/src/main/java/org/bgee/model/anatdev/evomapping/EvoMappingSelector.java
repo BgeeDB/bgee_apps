@@ -30,8 +30,10 @@ import org.bgee.model.species.TaxonFactory;
  * <ul>
  * <li>providing {@code Species} to restrict the {@code AnatDevMapping}s 
  * to retrieve. If some are provided, all {@code AnatDevMapping}s retrieved will be valid 
- * for taxa in the lineage of any of those {@code Species}, and they will contain 
- * only {@code AnatDevEntity}s existing in at least one of those {@code Species}. 
+ * for taxa in the lineage of any of those {@code Species} (which is useful when 
+ * {@link isUseDescentTaxa()} is {@code true}), and they will contain 
+ * only {@code AnatDevEntity}s existing in at least one of those {@code Species} 
+ * (which can be useful in any case). 
  * See {@link #addSpeciesRestriction(Species)} and 
  * {@link #addAllSpeciesRestrictions(Collection)}.
  * <li>whether the taxa ancestors of the {@code Taxon} used for scoping should also 
@@ -186,8 +188,10 @@ public class EvoMappingSelector {
      * (see {@link #getTaxonScoping()}). 
      * It then calls {@link #addAllSpeciesRestrictions(Collection)} using 
      * {@code speciesInScope}, so that all {@code AnatDevMapping}s retrieved will be valid 
-     * for taxa in the lineage of any of those {@code Species}, and they will contain 
-     * only {@code AnatDevEntity}s existing in at least one of those {@code Species}.
+     * for taxa in the lineage of any of those {@code Species} (which is useful if you 
+     * latter call {@link setUseDescentTaxa(boolean)} with {@code true}), and 
+     * they will contain only {@code AnatDevEntity}s existing in at least one of 
+     * those {@code Species} (which can be useful in any case).
      * 
      * @param relationType      The {@code TransRelationType} that is the relation which 
      *                          the {@link AnatDevMapping}s should be based on.
@@ -373,8 +377,10 @@ public class EvoMappingSelector {
      * Add {@code speciesRestriction} to the {@code Collection} of {@code Species} 
      * used to define restrictions on the {@code AnatDevMapping}s to retrieve. 
      * Only the {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
-     * of one of these {@code Species} will be considered, and they will contain 
-     * only {@code AnatDevEntity}s existing in one of these {@code Species}.
+     * of one of these {@code Species} will be considered (which is useful when 
+     * {@link isUseDescentTaxa()} is {@code true}), and they will contain 
+     * only {@code AnatDevEntity}s existing in one of these {@code Species} 
+     * (which can be useful in any case).
      * 
      * @param speciesRestrictions   A {@code Species} to be added to the {@code Collection}
      *                              of {@code Species} used to restrain the 
@@ -389,8 +395,10 @@ public class EvoMappingSelector {
      * Add {@code speciesRestrictions} to the {@code Collection} of {@code Species} 
      * used to define restrictions on the {@code AnatDevMapping}s to retrieve. 
      * Only the {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
-     * of one of these {@code Species} will be considered, and they will contain 
-     * only {@code AnatDevEntity}s existing in one of these {@code Species}.
+     * of one of these {@code Species} will be considered (which is useful when 
+     * {@link isUseDescentTaxa()} is {@code true}), and they will contain 
+     * only {@code AnatDevEntity}s existing in one of these {@code Species} 
+     * (which can be useful in any case).
      * 
      * @param speciesRestrictions   A {@code Collection} of {@code Species} to be added 
      *                              to the {@code Species} used to restrain the 
@@ -405,8 +413,10 @@ public class EvoMappingSelector {
      * Returns the {@code Collection} of {@code Species} used to define restrictions 
      * on the {@code AnatDevMapping}s to retrieve. If not empty, Only the 
      * {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
-     * of one of these {@code Species} will be considered, and they will contain 
-     * only {@code AnatDevEntity}s existing in one of these {@code Species}.
+     * of one of these {@code Species} will be considered (which is useful when 
+     * {@link isUseDescentTaxa()} is {@code true}), and they will contain 
+     * only {@code AnatDevEntity}s existing in one of these {@code Species} 
+     * (which can be useful in any case).
      * 
      * @return  the {@code Collection} of {@code Species} used to define restrictions 
      *          on the {@code AnatDevMapping}s to retrieve.

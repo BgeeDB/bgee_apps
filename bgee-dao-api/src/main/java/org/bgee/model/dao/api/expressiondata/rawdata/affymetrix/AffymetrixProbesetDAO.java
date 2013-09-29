@@ -2,7 +2,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
 import java.util.Collection;
 
-import org.bgee.model.dao.api.exception.DataAccessException;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixProbesetTO}s. 
@@ -27,8 +27,8 @@ public interface AffymetrixProbesetDAO
 	 * 						in the data source. An empty {@code Collection} 
 	 * 						if all IDs were found in the database, 
 	 * 						or if {@code probesetIds} was empty.
-     * @throws DataAccessException 	If an error occurred when accessing the data source.
+     * @throws DAOException 	If an error occurred when accessing the data source.
 	 */
 	public Collection<String> getNonMatchingProbesetIds(Collection<String> probesetIds) 
-	    throws DataAccessException;
+	    throws DAOException;
 }

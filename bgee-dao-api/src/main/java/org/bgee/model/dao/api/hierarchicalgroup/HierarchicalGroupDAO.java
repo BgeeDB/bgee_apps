@@ -2,7 +2,7 @@ package org.bgee.model.dao.api.hierarchicalgroup;
 
 import java.util.Collection;
 
-import org.bgee.model.dao.api.exception.DataAccessException;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link HierarchicalGroupTO}s. 
@@ -35,10 +35,10 @@ public interface HierarchicalGroupDAO {
 	 * @return A {@code Collection} of {@code String}s containing 
 	 *         the IDs of orthologus genes of the query gene corresponding to the
 	 *         taxonomy level queried.
-     * @throws DataAccessException 	If an error occurred when accessing the data source.
+     * @throws DAOException 	If an error occurred when accessing the data source.
 	 */
 	public Collection<String> getHierarchicalOrthologusGenes(String queryGene,
-			String ncbiTaxonomyId) throws DataAccessException;
+			String ncbiTaxonomyId) throws DAOException;
 	
 	/**
 	 * Retrieves the orthologus genes corresponding to the queried gene at
@@ -64,9 +64,9 @@ public interface HierarchicalGroupDAO {
 	 * @return A {@code Collection} of {@code String}s containing 
 	 *         the IDs of orthologus genes of the query gene corresponding to the
 	 *         taxonomy level queried.
-     * @throws DataAccessException 	If an error occurred when accessing the data source.
+     * @throws DAOException 	If an error occurred when accessing the data source.
 	 */
 	public Collection<String> getHierarchicalOrthologusGenesForSpecies(String queryGene,
-			String ncbiTaxonomyId, Collection<String> speciesIds) throws DataAccessException;
+			String ncbiTaxonomyId, Collection<String> speciesIds) throws DAOException;
 
 }

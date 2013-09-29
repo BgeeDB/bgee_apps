@@ -1,6 +1,6 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
-import org.bgee.model.dao.api.exception.DataAccessException;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqLibraryTO}s 
@@ -24,7 +24,7 @@ public interface RNASeqLibraryDAO
 	 * @return	A {@code RNASeqLibraryTO}, encapsulating all the data 
 	 * 			related to the RNA-Seq library retrieved from the data source, 
 	 * 			or {@code null} if none could be found. 
-     * @throws DataAccessException 	If an error occurred when accessing the data source.
+     * @throws DAOException 	If an error occurred when accessing the data source.
 	 */
-	public RNASeqLibraryTO getRnaSeqLibraryById(String libraryId) throws DataAccessException;
+	public RNASeqLibraryTO getRnaSeqLibraryById(String libraryId) throws DAOException;
 }

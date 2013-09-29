@@ -1,6 +1,6 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
-import org.bgee.model.dao.api.exception.DataAccessException;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixExpTO}s. 
@@ -22,7 +22,7 @@ public interface AffymetrixExpDAO
 	 * @return	A {@code AffymetrixExpTO}, encapsulating all the data 
 	 * 			related to the Affymetrix experiment, {@code null} if none 
 	 * 			could be found.
-     * @throws DataAccessException 	If an error occurred when accessing the data source. 
+     * @throws DAOException 	If an error occurred when accessing the data source. 
 	 */
-	public AffymetrixExpTO getExperimentById(String expId) throws DataAccessException;
+	public AffymetrixExpTO getExperimentById(String expId) throws DAOException;
 }

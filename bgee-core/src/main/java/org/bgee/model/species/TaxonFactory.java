@@ -41,30 +41,30 @@ public class TaxonFactory extends Factory {
         
     }
     
-    /**
-     * Obtains from a {@code TaxonDAO} all the {@code Taxon}s that are ancestors 
-     * of the specified {@code species}, meaning, the complete lineage of {@code Species}.
-     * 
-     * @param species   The {@code Species} for which we want the complete lineage.
-     * @return          A {@code Collection} of {@code Taxon}s that are all the ancestor 
-     *                  taxa of {@code species}.
-     * @see #getAncestorTaxa(Collection)
-     */
-    public Set<Taxon> getAncestorTaxa(Species species) {
-        return this.getAncestorTaxa(Collections.singleton(species));
-    }
-    /**
-     * Obtains from a {@code TaxonDAO} all the {@code Taxon}s that are ancestors 
-     * of the specified {@code species}, meaning, all the complete lineages of 
-     * all the {@code Species} in the argument.
-     * 
-     * @param species   A {@code Collection} of {@code Species} for which we want 
-     *                  the complete lineages.
-     * @return          A {@code Collection} of {@code Taxon}s that are all the ancestor 
-     *                  taxa of all {@code Species} in {@code species}.
-     * @see #getAncestorTaxa(Species)
-     */
-    public Set<Taxon> getAncestorTaxa(Collection<Species> species) {
-        
-    }
+//    /**
+//     * Obtains from a {@code TaxonDAO} all the {@code Taxon}s that are ancestors 
+//     * of the specified {@code species}, meaning, the complete lineage of {@code Species}.
+//     * 
+//     * @param species   The {@code Species} for which we want the complete lineage.
+//     * @return          A {@code Collection} of {@code Taxon}s that are all the ancestor 
+//     *                  taxa of {@code species}.
+//     * @see #getAncestorTaxa(Collection)
+//     */
+//    public Set<Taxon> getAncestorTaxa(Species species) {
+//        return this.getAncestorTaxa(Collections.singleton(species));
+//    }
+//    /**
+//     * Obtains from a {@code TaxonDAO} all the {@code Taxon}s that are ancestors 
+//     * of the specified {@code species}, meaning, all the complete lineages of 
+//     * all the {@code Species} in the argument.
+//     * 
+//     * @param species   A {@code Collection} of {@code Species} for which we want 
+//     *                  the complete lineages.
+//     * @return          A {@code Collection} of {@code Taxon}s that are all the ancestor 
+//     *                  taxa of all {@code Species} in {@code species}.
+//     * @see #getAncestorTaxa(Species)
+//     */
+//    public Set<Taxon> getAncestorTaxa(Collection<Species> species) {
+//        
+//    }
 }

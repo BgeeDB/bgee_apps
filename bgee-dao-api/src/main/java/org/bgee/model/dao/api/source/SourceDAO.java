@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.bgee.model.dao.api.TransferObject;
-import org.bgee.model.dao.api.exception.DataAccessException;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link SourceTO}s. 
@@ -22,9 +22,9 @@ public interface SourceDAO
      * 
      * @return 	a {@code Collection} of {@code SourceTO}, 
      * 			representing the sources used in Bgee.
-     * @throws DataAccessException 	If an error occurred when accessing the data source. 
+     * @throws DAOException 	If an error occurred when accessing the data source. 
      */
-	public Collection<SourceTO> getAllDataSources() throws DataAccessException;
+	public Collection<SourceTO> getAllDataSources() throws DAOException;
 
 	/**
      * Return sources used in Bgee, that are not used only for xrefs purpose, 
@@ -34,9 +34,9 @@ public interface SourceDAO
      * @return 	a {@code Collection} of {@code SourceTO},  
      * 			representing the sources where some Bgee data actually come from, 
      * 			order by their {@code categoryId}.
-     * @throws DataAccessException 	If an error occurred when accessing the data source.
+     * @throws DAOException 	If an error occurred when accessing the data source.
      */
-	public List<TransferObject> getDisplayableDataSources() throws DataAccessException;
+	public List<TransferObject> getDisplayableDataSources() throws DAOException;
 
 	/**
      * Retrieve a data source (e.g., ArrayExpress) by its ID, 
@@ -45,7 +45,7 @@ public interface SourceDAO
      * @param dataSourceId 	a {@code String} representing the ID of the data source 
      * 						to retrieve
      * @return				a {@code SourceTO}, corresponding to {@code dataSourceId}
-     * @throws DataAccessException 	If an error occurred when accessing the data source.
+     * @throws DAOException 	If an error occurred when accessing the data source.
      */
-	public SourceTO getDataSourceById(String dataSourceId) throws DataAccessException;
+	public SourceTO getDataSourceById(String dataSourceId) throws DAOException;
 }

@@ -1,6 +1,6 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
-import org.bgee.model.dao.api.exception.DataAccessException;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixChipTO}s. 
@@ -22,8 +22,8 @@ public interface AffymetrixChipDAO
 	 * 									that needs to be retrieved from the data source. 
 	 * @return	An {@code AffymetrixChipTO}, encapsulating all the data 
 	 * 			related to the Affymetrix chip, {@code null} if none could be found. 
-     * @throws DataAccessException 	If an error occurred when accessing the data source.
+     * @throws DAOException 	If an error occurred when accessing the data source.
 	 */
 	public AffymetrixChipTO getAffymetrixChipById(String bgeeAffymetrixChipId) 
-			throws DataAccessException;
+			throws DAOException;
 }

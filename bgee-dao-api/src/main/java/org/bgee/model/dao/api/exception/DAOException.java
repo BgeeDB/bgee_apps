@@ -7,7 +7,7 @@ package org.bgee.model.dao.api.exception;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class DataAccessException extends Exception {
+public class DAOException extends Exception {
 
 	/**
 	 * Because {@code Exception}s are serializable. 
@@ -15,10 +15,12 @@ public class DataAccessException extends Exception {
 	private static final long serialVersionUID = 773137615240568541L;
 	
 	/**
-	 * Constructs a new exception with null as its detail message.
+	 * Constructor providing the cause for this {@code Exception} to occur.
+	 * 
+	 * @param cause    A {@code Throwable} that is the cause of this {@code DAOException}.
 	 */
-	public DataAccessException() {
-		super();
+	public DAOException(Throwable cause) {
+		super(cause);
 	}
 
 }

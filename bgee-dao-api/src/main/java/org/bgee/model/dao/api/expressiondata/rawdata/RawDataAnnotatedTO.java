@@ -14,6 +14,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @see org.bgee.model.expressiondata.rawdata.RawDataAnnotated
  * @since Bgee 11
  */
+@Deprecated
 public class RawDataAnnotatedTO extends TransferObject
 {
     public String organId;

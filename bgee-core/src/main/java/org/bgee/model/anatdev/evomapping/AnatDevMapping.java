@@ -64,25 +64,6 @@ import org.bgee.model.species.Taxon;
  */
 public class AnatDevMapping<T extends AnatDevEntity> implements AnatDevElement {
 	/**
-	 * Represents the different type of evolutionary transitive relations. 
-	 * They are taken from the 
-	 * <a href='http://www.obofoundry.org/cgi-bin/detail.cgi?id=homology_ontology'>
-	 * HOM ontology</a>, but as long as we do not use more concepts, we will 
-	 * simply used this {@code enum}.
-	 * <ul>
-	 * <li>{@code HOMOLOGY}: historical homology.
-	 * <li>{@code FUNCTIONEQUIVALENCE}: functional equivalence.
-	 * </ul>
-	 * 
-	 * @author Frederic Bastian
-	 * @version Bgee 13
-     * @since Bgee 13
-	 */
-    public enum TransRelationType {
-    	HOMOLOGY, FUNCTIONEQUIVALENCE;
-    }
-    
-    /**
      * A {@code Set} of {@code T}, representing the {@link AnatDevEntity}s 
      * grouped by an evolutionary relation. 
      * <p>

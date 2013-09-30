@@ -21,8 +21,8 @@ public interface DAO<T extends DAO.Attribute> {
      * 
      * @author Frederic Bastian
      * @version Bgee 13
-     * @see org.bgee.model.dao.api.DAO#setColumns(Collection)
-     * @see org.bgee.model.dao.api.DAO#setColumns(Object[])
+     * @see org.bgee.model.dao.api.DAO#setAttributesToGet(Collection)
+     * @see org.bgee.model.dao.api.DAO#setAttributesToGet(Object[])
      * @since Bgee 13
      */
     public interface Attribute {
@@ -83,8 +83,8 @@ public interface DAO<T extends DAO.Attribute> {
      * or {@link #setColumns(Object[])} to populate only a subset of the attibutes, 
      * and now want to retrieve all of them.
      * 
-     * @see #setColumns(Collection)
-     * @see #setColumns(Object[])
+     * @see #setAttributesToGet(Collection)
+     * @see #setAttributesToGet(Object[])
      */
     public void clearAttributesToGet();
 }

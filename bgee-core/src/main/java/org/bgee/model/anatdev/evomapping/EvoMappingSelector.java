@@ -4,57 +4,43 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.bgee.model.anatdev.evomapping.AnatDevMapping.TransRelationType;
 import org.bgee.model.ontologycommon.Confidence;
 import org.bgee.model.ontologycommon.EvidenceCode;
 import org.bgee.model.species.Species;
-import org.bgee.model.species.Taxon;
-import org.bgee.model.species.TaxonFactory;
 
 /**
- * This class allows to provide all the parameters available to select 
- * {@link AnatDevMapping}s. The mandatory parameters are: 
- * <ul>
- * <li>the {@link TransRelationType} to use. It is provided at instantiation and 
- * can be obtained by calling {@link #getEvoRelationType()}). It defines what 
- * evolutionary relation the {@link AnatDevMapping}s to retrieve should be based on.
- * <li>the {@code Taxon} for which the mappings should hold (see {@link 
- * #getTaxonScoping()} for more details.) This {@code Taxon} can be either directly 
- * provided at instantiation (see {@link #EvoMappingSelector(TransRelationType, Taxon)}), 
- * or can be inferred from a {@code Collection} of {@code Species} provided at 
- * instantiation (see {@link #EvoMappingSelector(TransRelationType, Collection)}); 
- * in that case, the {@code Taxon} used for scoping will be the most recent ancestor 
- * common to all the {@code Species}.
- * </ul>
- * Additional parameters are: 
- * <ul>
- * <li>providing {@code Species} to restrict the {@code AnatDevMapping}s 
- * to retrieve. If some are provided, all {@code AnatDevMapping}s retrieved will be valid 
- * for taxa in the lineage of any of those {@code Species} (which is useful when 
- * {@link isUseDescentTaxa()} is {@code true}), and they will contain 
- * only {@code AnatDevEntity}s existing in at least one of those {@code Species} 
- * (which can be useful in any case). 
- * See {@link #addSpeciesRestriction(Species)} and 
- * {@link #addAllSpeciesRestrictions(Collection)}.
- * <li>whether the taxa ancestors of the {@code Taxon} used for scoping should also 
- * be considered, see {@link #setUseAncestralTaxa(boolean)}.
- * <li>whether the taxa descendants of the {@code Taxon} used for scoping should also 
- * be considered, see {@link #setUseDescentTaxa(boolean)}. In that case, it means 
- * that the {@link AnatDevMapping}s retrieved will also include mappings valid between  
- * only <strong>some</strong> of the {@code Species} belonging to the {@code Taxon} 
- * used for scoping, and not between <strong>all</strong> of them as it would be 
- * otherwise the case.
- * <li>finally, it is possible to filter the mappings based on the 
+ * This class allows to provide parameters to select {@link AnatDevMapping}s 
+ * based on transitive relations, as defined by {@link TransRelationType}. It is 
+ * mandatory to provide a {@code TransRelationType} at instantiation. If this is 
+ * the only parameter provided, then all {@code AnatDevMapping}s based on this 
+ * relation type will be retrieved.
+ * <p>
+ * It is then possible to restrict the scope of the relations, by providing a 
+ * {@code Collection} of {@code Species} (see {@link #addSpecies(Species)} and 
+ * {@link #addAllSpecies(Collection)}). Only the relations defining a mapping 
+ * valid between <strong>all</strong> of the provided {@code Species} will be used. 
+ * For instance, in the case of a {@code HOMOLOGY} relation, this is equivalent 
+ * to retrieving relations defined for the common ancestral taxon of all the provided 
+ * {@code Species}, and all their ancestor taxa. Also, the {@link AnatDevMapping}s 
+ * retrieved will contain only {@code AnatDevEntity}s existing in at least one of 
+ * those {@code Species}.
+ * <p>
+ * It is also possible to filter the mappings based on the 
  * {@link org.bgee.model.ontologycommon.EvidenceCode}s and {@link 
  * org.bgee.model.ontologycommon.Confidence} supporting them (see {@link 
  * #addConfidence(Confidence)} and {@link #addEvidenceCode(EvidenceCode)}).
- * </ul>
  * <p>
- * It is likely that users most of the time will only need to call the constructor 
- * {@link #EvoMappingSelector(TransRelationType, Collection)}, and to decide whether 
- * they want to retrieve mappings holding between all provided {@code Species}, or 
- * between some of the provided {@code Species}, by calling 
- * {@link #setUseDescentTaxa(boolean)}, or not.
+ * It is likely that users most of the time will need to provide some {@code Species}, 
+ * by using {@link #addSpecies(Species)} or {@link #addAllSpecies(Collection)} 
+ * after instantiation.
+ * <p>
+ * Of note, it exists the subclass {@link TaxonEvoMappingSelector}, specific to {@link 
+ * TransRelationType.TaxonBasedRelationType}, that provides additional methods 
+ * to filter relations by using {@code Taxon} objects, besides {@code Species}. 
+ * But this {@code EvoMappingSelector} can also be used to retrieve {@code 
+ * TaxonBasedRelationType} relations in any case, as long as only {@code Species} 
+ * are needed to be used. It is only when users want to use taxon-scoping, for 
+ * greater flexibility, that the {@code TaxonEvoMappingSelector} needs to be used.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -62,87 +48,74 @@ import org.bgee.model.species.TaxonFactory;
  */
 public class EvoMappingSelector {
     /**
+     * Represents the different type of evolutionary transitive relations. 
+     * They are taken from the 
+     * <a href='http://www.obofoundry.org/cgi-bin/detail.cgi?id=homology_ontology'>
+     * HOM ontology</a>, but as long as we do not use more concepts, we will 
+     * simply used these {@code enum}s.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public interface TransRelationType {
+        /**
+         * Represents the type of transitive relations for which the scope is taxon-based: 
+         * these relations hold at the level of a {@code Taxon}. For instance, 
+         * the {@code Taxon} associated to a {@code HOMOLOGY} relation represents 
+         * the ancestral taxon where an ancestral structure first appeared 
+         * (supposedly), from which mapped {@code AnatDevEntity}s derived from.
+         * <p>
+         * It means that it is possible to provide {@code Taxon}s to retrieve 
+         * relations defined at their level.
+         * <p>
+         * Note: as of Bgee 13, {@code HOMOLOGY} is the only {@code TaxonBasedRelationType} 
+         * implemented, but we let open the possibility to add others in later releases.
+         */
+        public enum TaxonBasedRelationType implements TransRelationType {
+            HOMOLOGY;
+        }
+        /**
+         * Represents the type of transitive relations that can hold between different 
+         * {@code Species}, regardless of their taxonomic position. These relations 
+         * are species-based, they are defined between a set of species.
+         * <p>
+         * It means that it is possible to provide a list of {@code Species} to retrieve 
+         * relations holding between all of them.
+         * <p>
+         * Note: as of Bgee 13, functional equivalence is the only {@code GroupRelationType} 
+         * that is planed to be integrated, and will be in a later release. 
+         */
+        public enum SpeciesBasedRelationType implements TransRelationType {
+            FUNCTIONEQUIVALENCE;
+        }
+    }
+    
+    /**
      * A {@code TransRelationType} defining what evolutionary relation 
      * the {@link AnatDevMapping}s should be based on.
      */
     private final TransRelationType evoRelationType;
-    /**
-     * The {@code Taxon} for which the {@link #evoRelationType} should hold, 
-     * in order to build the {@link AnatDevMapping}s.
-     * For instance, if {@link #evoRelationType} is {@code HOMOLOGY}, then 
-     * this {@code Taxon} defines the last common ancestor where an ancestral 
-     * structure existed, and which some homologous structures evolved from, 
-     * that will be grouped into an {@code AnatDevMapping}.
-     * <p>
-     * If ancestors of this {@code Taxon} should also be considered, then 
-     * {@link #useAncestralTaxa} must be set to {@code true}. If descendants 
-     * of this {@code Taxon} should also be considered, then {@link #useDescentTaxa} 
-     * must be set to {@code true}. See these attributes for important details.
-     * 
-     * @see #useAncestralTaxa
-     * @see #useDescentTaxa
-     */
-    private final Taxon taxonScoping;
-    /**
-     * A {@code boolean} defining whether ancestral taxa of {@link #taxonScoping} 
-     * should also be considered. If {@code true}, it will lead to also select 
-     * {@link AnatDevMapping}s based on relations holding for taxa ancestors of 
-     * {@link #taxonScoping} (relations of the type defined by {@link 
-     * #evoRelationType}). This will result in selecting mappings defined for 
-     * the taxon specifid by {@link #taxonScoping}, but also mappings that encompass 
-     * this specified taxon, spanning a wider taxonomical range; it means that 
-     * the mappings will be valid for the specified taxon, but also for other taxa. 
-     * <p>
-     * If an {@code AnatDevElement} is related to different structures at different 
-     * taxonomic levels (for instance, a structure with its different states of evolution 
-     * leading to different homology relations to different species), so that 
-     * it would be part of several {@code AnatDevMapping}s, only the relation 
-     * holding for the oldest ancestor (but still in the scope defined 
-     * by {@link #taxonScoping}) will be considered. A same {@code AnatDevElement} 
-     * will never be part of several {@code AnatDevMapping}s, as defined by a same 
-     * {@code EvoMappingSelector}.
-     * <p>
-     * Default is {@code true}.
-     * 
-     * @see #taxonScoping
-     * @see #useDescentTaxa
-     */
-    private boolean useAncestralTaxa;
-    /**
-     * A {@code boolean} defining whether taxa descendant of {@link #taxonScoping} 
-     * should also be considered. If {@code true}, it will lead to also select 
-     * {@link AnatDevMapping}s based on relations holding for sub-taxa of 
-     * {@link #taxonScoping} (relations of the type defined by {@link 
-     * #evoRelationType}). This will result in selecting mappings defined for 
-     * the taxon specifid by {@link #taxonScoping}, but also mappings that are 
-     * more restricted, valid only for a subset of the taxa encompassed by 
-     * {@link #taxonScoping} (so, valid only between some of the species member 
-     * of {@link #taxonScoping}, not valid between all of them as it is usually the case).
-     * <p>
-     * If an {@code AnatDevElement} is related to different structures at different 
-     * taxonomic levels (for instance, a structure with its different states of evolution 
-     * leading to different homology relations to different species), so that 
-     * it would be part of several {@code AnatDevMapping}s, only the relation 
-     * holding for the oldest ancestor (but still in the scope defined 
-     * by {@link #taxonScoping}) will be considered. A same {@code AnatDevElement} 
-     * will never be part of several {@code AnatDevMapping}s, as defined by a same 
-     * {@code EvoMappingSelector}.
-     * <p>
-     * Default is {@code false}.
-     * 
-     * @see #taxonScoping
-     * @see #useAncestralTaxa
-     */
-    private boolean useDescentTaxa;
     
     /**
-     * A {@code Set} of {@code Species} used to define restrictions on the 
-     * {@code AnatDevMapping}s to retrieve. If not empty, only the {@code AnatDevMapping}s 
-     * that are valid for a {@code Taxon} in the lineage of one of these {@code Species} 
-     * will be considered, and they will contain only {@code AnatDevEntity}s existing 
-     * in one of these {@code Species}.
+     * A {@code Set} of {@code Species} to provide restrictions on 
+     * the {@code AnatDevMapping}s to retrieve, and/or on the {@code AnatDevEntity}s 
+     * they contain. 
+     * <p>
+     * If this {@code Set} is not empty, these {@code Species} are used to select 
+     * the relevant {@code AnatDevMapping}s: they will be based on relations 
+     * holding between <strong>all</strong> of these {@code Species}. For instance, 
+     * if {@code #evoRelationType} is equal to {@code HOMOLOGY}, this would be 
+     * equivalent to using homology relations defined for their closest common 
+     * ancestor {@code Taxon}, and all its ancestor taxa (so, to identify all 
+     * structures in those {@code Species}, derived from structures existing 
+     * in their common ancestor).
+     * <p>
+     * And in any case, the {@code AnatDevMapping}s obtained will only contain 
+     * {@code AnatDevEntity}s existing in at least one of these {@code Species}.
      */
-    private Set<Species> speciesRestrictions;
+    private final Set<Species> species;
+    
     /**
      * A {@code Collection} of {@code Confidence}s defining the allowed confidence 
      * information: only mappings involving these {@code Confidence}s will be selected.
@@ -156,53 +129,20 @@ public class EvoMappingSelector {
     
     /**
      * Constructor providing the {@code TransRelationType} defining what evolutionary 
-     * relation the {@link AnatDevMapping}s should be based on, and the {@code Taxon} 
-     * for which this {@code TransRelationType} should hold.
+     * relation the {@link AnatDevMapping}s should be based on. It is then possible 
+     * to additionally provide {@code Species} to restrict the scope of the relations 
+     * (see {@link #addSpecies(Species)}, and {@link #addAllSpecies(Collection)}).
      * 
      * @param relationType  The {@code TransRelationType} that is the relation which 
      *                      the {@link AnatDevMapping}s should be based on.
-     * @param taxonScoping  The {@code Taxon} which the {@link AnatDevMapping}s 
-     *                      should be defined for.
-     * @see #EvoMappingSelector(TransRelationType, Collection)
      */
-    public EvoMappingSelector(TransRelationType relationType, Taxon taxonScoping) {
+    public EvoMappingSelector(TransRelationType relationType) {
         
-        this.evoRelationType          = relationType;
-        this.taxonScoping             = taxonScoping;
-        this.setUseAncestralTaxa(true);
-        this.setUseDescentTaxa(false);
-        this.speciesRestrictions      = new HashSet<Species>();
+        this.evoRelationType = relationType;
+        this.species         = new HashSet<Species>();
         
-        this.allowedConfidences       = new HashSet<Confidence>();
-        this.allowedEvidences         = new HashSet<EvidenceCode>();
-    }
-    
-    /**
-     * Constructor providing the {@code TransRelationType} defining what evolutionary 
-     * relation the {@link AnatDevMapping}s should be based on, and a {@code Collection} 
-     * of {@code Species} allowing to define the taxon scoping, meaning the {@code Taxon} 
-     * for which this {@code TransRelationType} should hold.
-     * <p>
-     * This constructor identifies the most recent ancestor {@link Taxon} common to all  
-     * the {@code Species} in {@code speciesInScope}, and use it as the taxon scoping 
-     * (see {@link #getTaxonScoping()}). 
-     * It then calls {@link #addAllSpeciesRestrictions(Collection)} using 
-     * {@code speciesInScope}, so that all {@code AnatDevMapping}s retrieved will be valid 
-     * for taxa in the lineage of any of those {@code Species} (which is useful if you 
-     * latter call {@link setUseDescentTaxa(boolean)} with {@code true}), and 
-     * they will contain only {@code AnatDevEntity}s existing in at least one of 
-     * those {@code Species} (which can be useful in any case).
-     * 
-     * @param relationType      The {@code TransRelationType} that is the relation which 
-     *                          the {@link AnatDevMapping}s should be based on.
-     * @param speciesInScope    A {@code Collection} of {@code Species} allowing 
-     *                          to identify the taxon scoping and to provide restrictions 
-     *                          on descent sub-taxa to consider.
-     */
-    public EvoMappingSelector(TransRelationType relationType, 
-            Collection<Species> speciesInScope) {
-        this(relationType, (new TaxonFactory()).getMostRecentCommonTaxon(speciesInScope));
-        this.addAllSpeciesRestrictions(speciesInScope);
+        this.allowedConfidences = new HashSet<Confidence>();
+        this.allowedEvidences   = new HashSet<EvidenceCode>();
     }
 
     //**************************************
@@ -216,189 +156,47 @@ public class EvoMappingSelector {
     public TransRelationType getEvoRelationType() {
         return evoRelationType;
     }
-
-    /**
-     * Returns the {@code Taxon} for which the {@code TransRelationType} returned 
-     * by {@link #getEvoRelationType()} should hold, in order to build the {@link 
-     * AnatDevMapping}s.
-     * <p>
-     * For instance, if {@link #getEvoRelationType()} returns {@code HOMOLOGY}, 
-     * then this {@code Taxon} defines the last common ancestor where an ancestral 
-     * structure existed, and which some homologous structures evolved from, 
-     * that will be grouped into an {@code AnatDevMapping}.
-     * <p>
-     * If ancestors of this {@code Taxon} should also be considered, then users 
-     * must call {@link #setUseAncestralTaxa(boolean)} with the value {@code true}. 
-     * If descendants of this {@code Taxon} should also be considered, then users 
-     * must call {@link #setUseDescentTaxa(boolean)} with the value {@code true}.
-     * See these methods for important details.
-     * 
-     * @return  the {@code Taxon} for which the {@code TransRelationType} returned 
-     *          by {@link #getEvoRelationType()} should hold, in order to build the 
-     *          {@link AnatDevMapping}s
-     * @see #isUseAncestralTaxa()
-     * @see #isUseDescentTaxa()
-     */
-    public Taxon getTaxonScoping() {
-        return taxonScoping;
-    }
-    
-    /**
-     * Returns the {@code boolean} defining whether ancestral taxa of the {@code Taxon} 
-     * returned by {@link #getTaxonScoping()} should also be considered. 
-     * If {@code true}, it will lead to also select {@link AnatDevMapping}s 
-     * based on relations holding for taxa ancestors of the {@code Taxon} 
-     * returned by {@link #getTaxonScoping()} (with relations still of the type 
-     * defined by {@link #getEvoRelationType()}). This will result in selecting 
-     * mappings defined for the taxon specifid by {@link #getTaxonScoping()}, 
-     * but also mappings that encompass this specified taxon, spanning a wider 
-     * taxonomical range; it means that the mappings will be valid for the specified 
-     * taxon, but also for other taxa.
-     * <p>
-     * If an {@code AnatDevElement} is related to different structures at different 
-     * taxonomic levels (for instance, a structure with its different states of evolution 
-     * leading to different homology relations to different species), so that 
-     * it would be part of several {@code AnatDevMapping}s, only the relation 
-     * holding for the oldest ancestor (but still in the scope defined 
-     * by {@link #getTaxonScoping()}) will be considered. A same {@code AnatDevElement} 
-     * will never be part of several {@code AnatDevMapping}s, as defined by a same 
-     * {@code EvoMappingSelector}.
-     * <p>
-     * Default value is {@code true}.
-     * 
-     * @return  A {@code boolean} defining whether ancestral taxa of the {@code Taxon} 
-     *          returned by {@link #getTaxonScoping()} should also be considered.
-     * @see #getTaxonScoping()
-     * @see #isUseDescentTaxa()
-     */
-    public boolean isUseAncestralTaxa() {
-        return useAncestralTaxa;
-    }
-    /**
-     * Set the {@code boolean} defining whether ancestral taxa of the {@code Taxon} 
-     * returned by {@link #getTaxonScoping()} should also be considered. 
-     * If {@code true}, it will lead to also select {@link AnatDevMapping}s 
-     * based on relations holding for taxa ancestors of the {@code Taxon} 
-     * returned by {@link #getTaxonScoping()} (with relations still of the type 
-     * defined by {@link #getEvoRelationType()}). This will result in selecting 
-     * mappings defined for the taxon specifid by {@link #getTaxonScoping()}, 
-     * but also mappings that encompass this specified taxon, spanning a wider 
-     * taxonomical range; it means that the mappings will be valid for the specified 
-     * taxon, but also for other taxa.
-     * <p>
-     * If an {@code AnatDevElement} is related to different structures at different 
-     * taxonomic levels (for instance, a structure with its different states of evolution 
-     * leading to different homology relations to different species), so that 
-     * it would be part of several {@code AnatDevMapping}s, only the relation 
-     * holding for the oldest ancestor (but still in the scope defined 
-     * by {@link #getTaxonScoping()}) will be considered. A same {@code AnatDevElement} 
-     * will never be part of several {@code AnatDevMapping}s, as defined by a same 
-     * {@code EvoMappingSelector}.
-     * <p>
-     * Default value is {@code true}.
-     * 
-     * @param useAncestralTaxa  A {@code boolean} defining whether ancestral taxa 
-     *                          of the {@code Taxon} returned by {@link #getTaxonScoping()} 
-     *                          should also be considered.
-     * @see #getTaxonScoping()
-     * @see #setUseDescentTaxa(boolean)
-     */
-    public void setUseAncestralTaxa(boolean useAncestralTaxa) {
-        this.useAncestralTaxa = useAncestralTaxa;
-    }
-    
-    /**
-     * Returns the {@code boolean} defining whether taxa descendant of the {@code Taxon} 
-     * returned by {@link #getTaxonScoping()} should also be considered. 
-     * If {@code true}, it will lead to also select {@link AnatDevMapping}s 
-     * based on relations holding for sub-taxa of the {@code Taxon} 
-     * returned by {@link #getTaxonScoping()} (with relations still of the type 
-     * defined by {@link #getEvoRelationType()}). This will result in selecting 
-     * mappings defined for the taxon specifid by {@link #getTaxonScoping()}, 
-     * but also mappings that are more restricted, valid only for a subset 
-     * of the taxa encompassed by the specified taxon (so, valid only between 
-     * some of the species member of the specified taxon, not valid between all 
-     * of them as it is usually the case).
-     * <p>
-     * If an {@code AnatDevElement} is related to different structures at different 
-     * taxonomic levels (for instance, a structure with its different states of evolution 
-     * leading to different homology relations to different species), so that 
-     * it would be part of several {@code AnatDevMapping}s, only the relation 
-     * holding for the most recent ancestor (but still in the scope defined 
-     * by {@link #getTaxonScoping()}) will be considered. A same {@code AnatDevElement} 
-     * will never be part of several {@code AnatDevMapping}s, as defined by a same 
-     * {@code EvoMappingSelector}.
-     * <p>
-     * Default value is {@code false}.
-     * 
-     * @return  A {@code boolean} defining whether ancestral taxa of the {@code Taxon} 
-     *          returned by {@link #getTaxonScoping()} should also be considered.
-     * @see #getTaxonScoping()
-     * @see #isUseAncestralTaxa()
-     */
-    public boolean isUseDescentTaxa() {
-        return useDescentTaxa;
-    }
-    /**
-     * Sets the {@code boolean} defining whether taxa descendant of the {@code Taxon} 
-     * returned by {@link #getTaxonScoping()} should also be considered. 
-     * If {@code true}, it will lead to also select {@link AnatDevMapping}s 
-     * based on relations holding for sub-taxa of the {@code Taxon} 
-     * returned by {@link #getTaxonScoping()} (with relations still of the type 
-     * defined by {@link #getEvoRelationType()}). This will result in selecting 
-     * mappings defined for the taxon specifid by {@link #getTaxonScoping()}, 
-     * but also mappings that are more restricted, valid only for a subset 
-     * of the taxa encompassed by the specified taxon (so, valid only between 
-     * some of the species member of the specified taxon, not valid between all 
-     * of them as it is usually the case).
-     * <p>
-     * If an {@code AnatDevElement} is related to different structures at different 
-     * taxonomic levels (for instance, a structure with its different states of evolution 
-     * leading to different homology relations to different species), so that 
-     * it would be part of several {@code AnatDevMapping}s, only the relation 
-     * holding for the most recent ancestor (but still in the scope defined 
-     * by {@link #getTaxonScoping()}) will be considered. A same {@code AnatDevElement} 
-     * will never be part of several {@code AnatDevMapping}s, as defined by a same 
-     * {@code EvoMappingSelector}.
-     * <p>
-     * Default value is {@code false}.
-     * 
-     * @param useDescentTaxa    A {@code boolean} defining whether ancestral taxa 
-     *                          of the {@code Taxon} returned by {@link #getTaxonScoping()} 
-     *                          should also be considered.
-     * @see #getTaxonScoping()
-     * @see #setUseAncestralTaxa(boolean)
-     */
-    public void setUseDescentTaxa(boolean useDescentTaxa) {
-        this.useDescentTaxa = useDescentTaxa;
-    }
     
     /**
      * Add {@code speciesRestriction} to the {@code Collection} of {@code Species} 
-     * used to define restrictions on the {@code AnatDevMapping}s to retrieve. 
-     * Only the {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
-     * of one of these {@code Species} will be considered (which is useful when 
-     * {@link isUseDescentTaxa()} is {@code true}), and they will contain 
-     * only {@code AnatDevEntity}s existing in one of these {@code Species} 
-     * (which can be useful in any case).
+     * used to provide restrictions on the {@code AnatDevMapping}s to retrieve, 
+     * and/or on the {@code AnatDevEntity}s they contain. 
+     * <p>
+     * These {@code Species} are used to select the relevant {@code AnatDevMapping}s: 
+     * they will be based on relations holding between <strong>all</strong> of 
+     * these {@code Species}. For instance, if {@code #getEvoRelationType()} returns 
+     * {@code HOMOLOGY}, this would be equivalent to using homology relations 
+     * defined for their closest common ancestor {@code Taxon}, and all its ancestor 
+     * taxa (so, to identify all structures in those {@code Species}, derived from 
+     * structures existing in their common ancestor).
+     * <p>
+     * And in any case, the {@code AnatDevMapping}s obtained will only contain 
+     * {@code AnatDevEntity}s existing in at least one of these {@code Species}.
      * 
-     * @param speciesRestrictions   A {@code Species} to be added to the {@code Collection}
+     * @param speciesRestriction   A {@code Species} to be added to the {@code Collection}
      *                              of {@code Species} used to restrain the 
      *                              {@code AnatDevMapping}s retrieved, 
      *                              and their contained {@code AnatDevEntity}s.
      * @see #getSpeciesRestrictions()
      */
     public void addSpeciesRestriction(Species speciesRestriction) {
-        this.speciesRestrictions.add(speciesRestriction);
+        this.species.add(speciesRestriction);
     }
     /**
-     * Add {@code speciesRestrictions} to the {@code Collection} of {@code Species} 
-     * used to define restrictions on the {@code AnatDevMapping}s to retrieve. 
-     * Only the {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
-     * of one of these {@code Species} will be considered (which is useful when 
-     * {@link isUseDescentTaxa()} is {@code true}), and they will contain 
-     * only {@code AnatDevEntity}s existing in one of these {@code Species} 
-     * (which can be useful in any case).
+     * Add {@code speciesRestriction} to the {@code Collection} of {@code Species} 
+     * used to provide restrictions on the {@code AnatDevMapping}s to retrieve, 
+     * and/or on the {@code AnatDevEntity}s they contain. 
+     * <p>
+     * These {@code Species} are used to select the relevant {@code AnatDevMapping}s: 
+     * they will be based on relations holding between <strong>all</strong> of 
+     * these {@code Species}. For instance, if {@code #getEvoRelationType()} returns 
+     * {@code HOMOLOGY}, this would be equivalent to using homology relations 
+     * defined for their closest common ancestor {@code Taxon}, and all its ancestor 
+     * taxa (so, to identify all structures in those {@code Species}, derived from 
+     * structures existing in their common ancestor).
+     * <p>
+     * And in any case, the {@code AnatDevMapping}s obtained will only contain 
+     * {@code AnatDevEntity}s existing in at least one of these {@code Species}.
      * 
      * @param speciesRestrictions   A {@code Collection} of {@code Species} to be added 
      *                              to the {@code Species} used to restrain the 
@@ -407,22 +205,30 @@ public class EvoMappingSelector {
      * @see #getSpeciesRestrictions()
      */
     public void addAllSpeciesRestrictions(Collection<Species> speciesRestrictions) {
-        this.speciesRestrictions.addAll(speciesRestrictions);
+        this.species.addAll(speciesRestrictions);
     }
     /**
-     * Returns the {@code Collection} of {@code Species} used to define restrictions 
-     * on the {@code AnatDevMapping}s to retrieve. If not empty, Only the 
-     * {@code AnatDevMapping}s that are valid for a {@code Taxon} in the lineage 
-     * of one of these {@code Species} will be considered (which is useful when 
-     * {@link isUseDescentTaxa()} is {@code true}), and they will contain 
-     * only {@code AnatDevEntity}s existing in one of these {@code Species} 
-     * (which can be useful in any case).
+     * Returns the {@code Set} of {@code Species} used to provide restrictions 
+     * on the {@code AnatDevMapping}s to retrieve, and/or on the {@code AnatDevEntity}s 
+     * they contain. 
+     * <p>
+     * These {@code Species} are used to select the relevant {@code AnatDevMapping}s: 
+     * they will be based on relations holding between <strong>all</strong> of 
+     * these {@code Species}. For instance, if {@code #getEvoRelationType()} returns 
+     * {@code HOMOLOGY}, this would be equivalent to using homology relations 
+     * defined for their closest common ancestor {@code Taxon}, and all its ancestor 
+     * taxa (so, to identify all structures in those {@code Species}, derived from 
+     * structures existing in their common ancestor).
+     * <p>
+     * And in any case, the {@code AnatDevMapping}s obtained will only contain 
+     * {@code AnatDevEntity}s existing in at least one of these {@code Species}.
      * 
      * @return  the {@code Collection} of {@code Species} used to define restrictions 
-     *          on the {@code AnatDevMapping}s to retrieve.
+     *          on the {@code AnatDevMapping}s to retrieve, and their contained 
+     *          {@code AnatDevEntity}s.
      */
-    public Set<Species> getSpeciesRestrictions() {
-        return this.speciesRestrictions;
+    public Set<Species> getSpecies() {
+        return this.species;
     }
 
     /**

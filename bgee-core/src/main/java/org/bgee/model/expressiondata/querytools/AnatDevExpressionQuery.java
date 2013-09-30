@@ -60,9 +60,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * <li>{@code ANATOMY}: query for {@link org.bgee.model.anatdev.AnatElement}s
      * <li>{@code DEVELOPMENT}: query for {@link org.bgee.model.anatdev.DevElement}s
      * <li>{@code ANATDEV}: query for {code AnatElement}s with details of 
-     * {code DevElement}s with expression data for each of them. Note that 
-     * this {@code QueryType} is not compatible with the {@link DataRendering} 
-     * {@code ONTOLOGY} and {@code SUMMARY}.
+     * {code DevElement}s with expression data for each of them.
+     * <li>{@code ANATDEV}: query for {code DevElement}s with details of 
+     * {code AnatElement}s with expression data for each of them.
      * </ul>
      * 
      * @author Frederic Bastian
@@ -102,11 +102,21 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	 * <li>{@code ONTOLOGY}: render the {@code AnatDevElement}s validated organized 
 	 * as an {@code Ontology}. The root elements of this {@code Ontology} and 
 	 * the number of level to walk from these roots are defined using 
-	 * the {@code AnatDevExpressionQuery}.
+	 * the {@code AnatDevExpressionQuery}. Users can provide the roots to use 
+	 * (see {@link #addRootElement(AnatDevElement)} and {@link 
+	 * #addAllRootElement(Collection)}), and the number of level to walk (see 
+	 * {@link #setLevelCountToWalk(int)}). If none are provided, the root will be 
+	 * the common {@code AnatDevElement} ancestor of all validated {@code AnatDevElement}s, 
+	 * the closest to them, and the number of level to walk will be 1.
 	 * <li>{@code SUMMARY}: select a defined number of top {@code AnatDevElement}s 
 	 * in an {@code Ontology}, so that they, and their substructures, include 
 	 * all {@code AnatDevElement}s validated, as close as possible to them. 
-	 * The number of elements is defined using the {@code AnatDevExpressionQuery}.
+	 * The number of top elements is defined using the {@code AnatDevExpressionQuery} 
+	 * (see {@link #setTopElementCount(int)}). These top {@code AnatDevElement}s, 
+	 * with their children, should contain all {@code AnatDevElement}s validated, 
+	 * as close as possible to them. This value is only a wish, this 
+	 * {@code AnatDevExpressionQuery} will do its best to obtain that number 
+	 * of top {@code AnatDevElement}s.
 	 * <li>{@code: ALL}: all {@code AnatDevElement}s validated are provided without 
 	 * any organization nor filtering.
 	 * <li>{@code: PRECISE}: select only the most precise and independent 
@@ -115,16 +125,13 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	 * no {@code AnatDevElement}s selected will be a parent of another one by a 
 	 * {@code ISA_PARTOF} relation ("independent").
 	 * <li>{@code ALLGROUPED}: same as {@code ALL}, except that the validated 
-	 * {@code AnatDevElement}s will tried to be grouped. The grouping is made 
-	 * by defining a wished number of {@code AnatDevElement}s by group, and the groups 
-	 * correspond to selected {@code AnatDevElement}s in the {@code Ontology}, 
-	 * that are the parents by {@code ISA_PARTOF} relations the closest to 
-	 * the validated {@code AnatDevElement}s, and each encompassing a number of 
-	 * {@code AnatDevElement}s the closest to the wished number. The wished number 
-	 * is defined using the {@code AnatDevExpressionQuery}. 
+	 * {@code AnatDevElement}s will be grouped by top elements, allowing an easier 
+	 * browsing of the results. These top elements are defined exactly as when using 
+	 * the {@code DataRendering} {@code SUMMARY}. 
 	 * <li>{@code PRECISEGROUPED}: same as {@code PRECISE}, except that the validated 
-     * {@code AnatDevElement}s will tried to be grouped. This is the same principle 
-     * than {@code ALLGROUPED}, see its description above.
+     * {@code AnatDevElement}s will be grouped by top elements, allowing an easier 
+     * browsing of the results. These top elements are defined exactly as when using 
+     * the {@code DataRendering} {@code SUMMARY}. 
 	 * </ul>
 	 * 
 	 * @author Frederic Bastian
@@ -144,17 +151,11 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
     protected Logger getLogger() {
     	return log;
     }
-
     /**
-     * An {@code int} that is the default value for {@link #elementsByGroup}.
-     * As of Bgee 13, equals to 6.
-     */
-    public static final int DEFAULTELEMENTSBYGROUP = 6;
-    /**
-     * An {@code int} that is the default value for {@link #summaryElementCount}.
+     * An {@code int} that is the default value for {@link #topElementCount}.
      * As of Bgee 13, equals to 10.
      */
-    public static final int DEFAULTSUMMARYELEMENTCOUNT = 10;
+    public static final int DEFAULTTOPELEMENTCOUNT = 10;
     //**************************************
     // INSTANCE ATTRIBUTES
     //**************************************
@@ -172,32 +173,20 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * the {@link #requirements}.
      */
     private final DataRendering rendering;
-    
-    /**
-     * An {@code int} defining what is the wished number of 
-     * {@code AnatDevElement}s by group. This value is applicable when 
-     * {@link #rendering} corresponds to a {@link DataRendering} requesting 
-     * a grouping of the {@code AnatDevElement}s retrieved. This value is only 
-     * a wish, this {@code AnatDevExpressionQuery} will make its best 
-     * to obtain groups with a number of {@code AnatDevElement}s as closed 
-     * to this value as possible.
-     * <p>
-     * Default value is {@link #DEFAULTELEMENTSBYGROUP}.
-     */
-    private int elementsByGroup;
 
     /**
      * An {@code int} defining the wished number of top {@code AnatDevElement}s, 
      * summarizing the expression data of this {@code AnatDevExpressionQuery}, 
-     * when {@link #rendering} is equal to {@link DataRendering SUMMARY}.
+     * when {@link #rendering} is equal to {@link DataRendering SUMMARY}, 
+     * {@link DataRendering ALLGROUPED}, or {@link DataRendering PRECISEGROUPED}.
      * These top {@code AnatDevElement}s, with their children, should contain 
      * all {@code AnatDevElement}s validated, as close as possible to them. 
      * This value is only a wish, this {@code AnatDevExpressionQuery} will make 
      * its best to obtain that number of top {@code AnatDevElement}s.
      * <p>
-     * Default value is {@link #DEFAULTSUMMARYELEMENTCOUNT}.
+     * Default value is {@link #DEFAULTTOPELEMENTCOUNT}.
      */
-    private int summaryElementCount;
+    private int topElementCount;
     
     /**
      * A {@code Collection} of {@code AnatDevElement}s defining the roots to use 
@@ -206,8 +195,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * {@link #requirements}, will be part of the subgraphs defined by these roots.
      * <p>
      * If {@link #rendering} is equal to {@link DataRendering ONTOLOGY} and 
-     * this {@code Collection} is empty, then the root of the ontology considered 
-     * (notably depending on {@link #queryType}) will be used by default.
+     * this {@code Collection} is empty, then the root will be the common 
+     * {@code AnatDevElement} ancestor of all validated {@code AnatDevElement}s, 
+     * the closest to them.
      * <p>
      * If {@link #levelCountToWalk} is equal to 0, then the complete subgraphs 
      * will be considered. Otherwise, it defines the maximum distance to these roots 
@@ -334,19 +324,12 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	/**
 	 * Constructor defining the type of query that this {@code AnatDevExpressionQuery} 
 	 * should perform, and the way data should be rendered.
-	 * <p>
-	 * An {@code IllegalArgumentException} can be thrown if {@code queryType} and 
-	 * {@code rendering} are incompatible (see {@link QueryType} for more details.) 
 	 * 
 	 * @param queryType    A {@code QueryType} defining the type of query to perform.
 	 * @param rendering    A {@code DataRendering} defining the data rendering to perform.
-	 * @throws IllegalArgumentException    if {@code queryType} and {@code rendering} 
-	 *                                     are incompatible
 	 */
-	public AnatDevExpressionQuery(QueryType queryType, DataRendering rendering) 
-	    throws IllegalArgumentException {
+	public AnatDevExpressionQuery(QueryType queryType, DataRendering rendering) {
 	    super();
-	    this.checkQueryTypeDataRendering(queryType, rendering);
 	    
 	    this.queryType = queryType;
 	    this.rendering = rendering;
@@ -389,9 +372,8 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	/**
      * Checks that this {@code AnatDevExpressionQuery} is in an appropriate state 
      * for launching a query. For instance, check that at least one {@code 
-     * AnatDevRequirement} was provided, or that the {@code QueryType} is consistent 
-     * with other parameters, such as root elements provided, etc.
-     * This methods throw an {@code IllegalArgumentException} if an inconsistency 
+     * AnatDevRequirement} was provided, with at least one {@code GeneCallRequirement}, 
+     * etc. This methods throw an {@code IllegalArgumentException} if an inconsistency 
      * is detected. It is its only purpose. 
      * 
      * @throws IllegalArgumentException    If an inconsistency in the parameters 
@@ -400,8 +382,6 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      */
 	private void checkState() {
 	    log.entry();
-	    
-	    this.checkQueryTypeDataRendering(this.getQueryType(), this.getRendering());
 	    
 	    
 	    //check that we have at least one AnatDevRequirement, and call their 
@@ -449,35 +429,6 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	        }
 	    }
 	    
-	    log.exit();
-	}
-	
-	/**
-	 * Checks if {@code queryType} and {@code rendering} are incompatible 
-	 * (see {@link queryType} for more details). Throws an 
-	 * {@code IllegalArgumentException} if thy are incompatible.
-	 * 
-	 * @param queryType    The {@link QueryType} to be checked for compatibility 
-	 *                     with {@code rendering}.
-     * @param rendering    The {@link DataRendering} to be checked for compatibility 
-     *                     with {@code queryType}.
-	 * @throws IllegalArgumentException    if {@code queryType} and {@code rendering} 
-	 *                                     are incompatible.
-	 */
-	private void checkQueryTypeDataRendering(QueryType queryType, DataRendering rendering) 
-	        throws IllegalArgumentException {
-	    log.entry(queryType, rendering);
-	    
-	    if ((this.getRendering().equals(DataRendering.ONTOLOGY) || 
-	             this.getRendering().equals(DataRendering.SUMMARY)) && 
-	        (this.getQueryType().equals(QueryType.ANATWITHDEV) || 
-	             this.getQueryType().equals(QueryType.DEVWITHANAT))) {
-	        
-	        throw log.throwing(new IllegalStateException("When the DataRendering " +
-	                "is ONTOLOGY or SUMMARY, it is not possible to query AnatElements " +
-	                "and DevElements at the same time (QueryType equals to ANATWITHDEV " +
-	                "or DEVWITHANAT)"));
-	    }
 	    log.exit();
 	}
 	
@@ -531,99 +482,53 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
     public DataRendering getRendering() {
         return rendering;
     }
-    
-    /**
-     * Returns the {@code int} defining what is the wished number of 
-     * {@code AnatDevElement}s by group. This value is applicable when 
-     * the {@link DataRendering} returned by {@link #getRendering()} corresponds to 
-     * a {@link DataRendering} requesting a grouping of the {@code AnatDevElement}s 
-     * retrieved. This value is only a wish, this {@code AnatDevExpressionQuery} 
-     * will make its best to obtain groups with a number of {@code AnatDevElement}s 
-     * as closed to this value as possible.
-     * <p>
-     * Default value is {@link #DEFAULTELEMENTSBYGROUP}.
-     * 
-     * @return  the {@code int} that is the wished number of {@code AnatDevElement}s 
-     *          by group.
-     * @see #getRendering()
-     */
-    public int getElementsByGroup() {
-        return elementsByGroup;
-    }
-    /**
-     * Sets the {@code int} defining what is the wished number of 
-     * {@code AnatDevElement}s by group. This value is applicable when 
-     * the {@link DataRendering} returned by {@link #getRendering()} corresponds to 
-     * a {@link DataRendering} requesting a grouping of the {@code AnatDevElement}s 
-     * retrieved. This value is only a wish, this {@code AnatDevExpressionQuery} 
-     * will make its best to obtain groups with a number of {@code AnatDevElement}s 
-     * as closed to this value as possible.
-     * <p>
-     * Default value is {@link #DEFAULTELEMENTSBYGROUP}. If {@code elementsByGroup} 
-     * is less than 2, and {@code IllegalArgumentException} is thrown (groups 
-     * of one element would make no sense).
-     * 
-     * @param elementsByGroup   An <code>int</code> that is the wished number of 
-     *                          {@code AnatDevElement}s by group
-     * @throws IllegalArgumentException  If {@code elementsByGroup} is less than 2.
-     * @see #getRendering()
-     */
-    public void setElementsByGroup(int elementsByGroup) throws IllegalArgumentException {
-        if (elementsByGroup < 2) {
-            throw log.throwing(new IllegalArgumentException("elementsByGroup " +
-                    "must be greater than or equal to 2 (groups of only one element " +
-                    "would make no sense)"));
-        }
-        this.elementsByGroup = elementsByGroup;
-    }
 
     /**
      * Returns the {@code int} defining the wished number of top {@code AnatDevElement}s, 
      * summarizing the expression data of this {@code AnatDevExpressionQuery}, 
-     * when the {@link DataRendering} is {@code SUMMARY} (see {@link #getRendering()}).
+     * when the {@link DataRendering} is {@code SUMMARY}, {@code ALLGROUPED}, or 
+     * {@code PRECISEGROUPED}. (see {@link #getRendering()}).
      * These top {@code AnatDevElement}s, with their children, should contain 
      * all {@code AnatDevElement}s validated, as close as possible to them. 
      * This value is only a wish, this {@code AnatDevExpressionQuery} will make 
      * its best to obtain that number of top {@code AnatDevElement}s.
      * <p>
-     * Default value is {@link #DEFAULTSUMMARYELEMENTCOUNT}.
+     * Default value is {@link #DEFAULTTOPELEMENTCOUNT}.
      * 
      * @return  The {@code int} defining the wished number of top {@code AnatDevElement}s, 
      *          summarizing all the expression data of this {@code AnatDevExpressionQuery}.
      * @see #getRendering()
      */
-    public int getSummaryElementCount() {
-        return summaryElementCount;
+    public int getTopElementCount() {
+        return this.topElementCount;
     }
     /**
      * Gets the {@code int} defining the wished number of top {@code AnatDevElement}s, 
      * summarizing the expression data of this {@code AnatDevExpressionQuery}, 
-     * when the {@link DataRendering} is {@code SUMMARY} (see {@link #getRendering()}).
+     * when the {@link DataRendering} is {@code SUMMARY}, {@code ALLGROUPED}, or 
+     * {@code PRECISEGROUPED} (see {@link #getRendering()}).
      * These top {@code AnatDevElement}s, with their children, should contain 
      * all {@code AnatDevElement}s validated, as close as possible to them. 
      * This value is only a wish, this {@code AnatDevExpressionQuery} will make 
      * its best to obtain that number of top {@code AnatDevElement}s.
      * <p>
-     * Default value is {@link #DEFAULTSUMMARYELEMENTCOUNT}. If {@code 
-     * summaryElementCount} is less than 1, an {@code IllegalArgumentException} 
+     * Default value is {@link #DEFAULTTOPELEMENTCOUNT}. If {@code 
+     * topElementCount} is less than 1, an {@code IllegalArgumentException} 
      * is thrown (at least one element must be selected to have a summary).
      * 
-     * @return  The {@code int} defining the wished number of top {@code AnatDevElement}s, 
-     *          summarizing all the expression data of this {@code AnatDevExpressionQuery}.
-     * 
-     * @param summaryElementCount   The {@code int} defining the wished number of top 
-     *                              {@code AnatDevElement}s, summarizing all the 
-     *                              expression data of this {@code AnatDevExpressionQuery}.
-     * @throws IllegalArgumentException If {@code summaryElementCount} is less than 1.
+     * @param topElementCount   The {@code int} defining the wished number of top 
+     *                          {@code AnatDevElement}s, summarizing all the 
+     *                          expression data of this {@code AnatDevExpressionQuery}.
+     * @throws IllegalArgumentException If {@code topElementCount} is less than 1.
      * @see #getRendering()
      */
-    public void setSummaryElementCount(int summaryElementCount) 
+    public void setTopElementCount(int topElementCount) 
             throws IllegalArgumentException {
-        if (elementsByGroup < 1) {
-            throw log.throwing(new IllegalArgumentException("summaryElementCount " +
+        if (topElementCount < 1) {
+            throw log.throwing(new IllegalArgumentException("topElementCount " +
                     "must be greater than or equal to 1"));
         }
-        this.summaryElementCount = summaryElementCount;
+        this.topElementCount = topElementCount;
     }
 
     /**
@@ -634,8 +539,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * #getRequirements()}), will be part of the subgraphs defined by these roots.
      * <p>
      * If the {@link DataRendering} is {@link ONTOLOGY} and this {@code Collection} 
-     * is empty, then the root of the ontology considered (depending on the 
-     * {@link QueryType}, see below) will be used by default.
+     * is empty, then the root used will be the common 
+     * {@code AnatDevElement} ancestor of all validated {@code AnatDevElement}s, 
+     * the closest to them.
      * <p>
      * If the number of level to walk is 0 (see {@link #getLevelCountToWalk()}, then 
      * the complete subgraphs will be considered. Otherwise, it defines the maximum 
@@ -667,8 +573,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * #getRequirements()}), will be part of the subgraphs defined by these roots.
      * <p>
      * If the {@link DataRendering} is {@link ONTOLOGY} and this {@code Collection} 
-     * is empty, then the root of the ontology considered (depending on the 
-     * {@link QueryType}, see below) will be used by default.
+     * is empty, then the root used will be the common 
+     * {@code AnatDevElement} ancestor of all validated {@code AnatDevElement}s, 
+     * the closest to them.
      * <p>
      * If the number of level to walk is 0 (see {@link #getLevelCountToWalk()}, then 
      * the complete subgraphs will be considered. Otherwise, it defines the maximum 
@@ -700,8 +607,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * #getRequirements()}), will be part of the subgraphs defined by these roots.
      * <p>
      * If the {@link DataRendering} is {@link ONTOLOGY} and this {@code Collection} 
-     * is empty, then the root of the ontology considered (depending on the 
-     * {@link QueryType}, see below) will be used by default.
+     * is empty, then the root used will be the common 
+     * {@code AnatDevElement} ancestor of all validated {@code AnatDevElement}s, 
+     * the closest to them.
      * <p>
      * If the number of level to walk is 0 (see {@link #getLevelCountToWalk()}, then 
      * the complete subgraphs will be considered. Otherwise, it defines the maximum 

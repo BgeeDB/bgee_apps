@@ -12,13 +12,13 @@ import org.bgee.model.dao.api.exception.DAOException;
  * <p>
  * A {@code DAOResultSet} object maintains a cursor pointing to the current result 
  * to retrieve. Initially, the cursor is positioned before the first result. 
- * The {@link next()} method moves the cursor to the next result, and because it returns 
+ * The {@link #next()} method moves the cursor to the next result, and because it returns 
  * {@code false} when there are no more results to retrieve, it can be used in 
  * a while loop to iterate through the result set. When the cursor is positioned 
  * on a result, the method {@link #getTO()} can be called to obtain the result 
  * as a {@code TransferObject}.
  * <p>
- * Clients must call the method {@link close()} when they are done using 
+ * Clients must call the method {@link #close()} when they are done using 
  * a {@code DAOResultSet}.
  * <p>
  * As an example, if the {@code DAO} used is using a SQL database, then each result 

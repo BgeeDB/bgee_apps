@@ -240,7 +240,7 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
      * 			compared of analyses involved in generating the calls retrieved. 
 	 */
 	public int getConditionCount() {
-		return this.getReferenceCall().getConditionCount();
+		return this.getReferenceCall().getMinConditionCount();
 	}
 	/**
 	 * Set the {@code int} allowing to filter differential expression calls 
@@ -266,6 +266,6 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
 	                ") cannot be set below the minimum number of conditions used " +
 	                "in the Bgee pipeline (" + getMinConditionCount() + ")"));
 	    }
-		this.getReferenceCall().setConditionCount(conditionCount);
+		this.getReferenceCall().setMinConditionCount(conditionCount);
 	}
 }

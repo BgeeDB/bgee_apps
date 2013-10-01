@@ -16,6 +16,9 @@ import org.bgee.model.expressiondata.rawdata.diffexpression.rnaseq.DiffRNASeqDat
  * generated it (see {@link #getConditionCount()}), and the experimental factor 
  * along with the comparisons were made (see {@link #getFactor()}).
  * <p>
+ * Of note, there is no data propagation from anatomical entities nor developmental stages 
+ * for differential expression calls.
+ * <p>
  * This class, as all {@code Call}s, allows to retrieve the raw data applicable 
  * to its {@link org.bgee.model.expressiondata.DataParameters.CallType CallType}, 
  * that allowed to generate it. For this class, see {@link #getDiffAffyDataHolder()} 
@@ -29,10 +32,11 @@ import org.bgee.model.expressiondata.rawdata.diffexpression.rnaseq.DiffRNASeqDat
 public class DiffExpressionCall extends Call {
 
     /**
-     * An {@code int} defining the minimum number of conditions that were compared 
-     * to generate this {@code DiffExpressionCall}.
+     * An {@code int} defining the minimum number of conditions that were compared, 
+     * among all the differential expression analyzes that allowed to produce this 
+     * {@code DiffExpressionCall}.
      */
-    private int conditionCount;
+    private int minConditionCount;
     /**
      * A {@code DiffExpressionFactor} defining what was the comparison factor used 
      * during the differential expression analyzes generating 
@@ -69,17 +73,17 @@ public class DiffExpressionCall extends Call {
      *          compared to generate this {@code DiffExpressionCall}, over all 
      *          the differential expression analyzes that allowed to generate it.
      */
-    public int getConditionCount() {
-        return conditionCount;
+    public int getMinConditionCount() {
+        return minConditionCount;
     }
     /**
-     * @param conditionCount    An {@code int} that is the minimum number of conditions 
+     * @param minConditionCount    An {@code int} that is the minimum number of conditions 
      *                          that were compared to generate this {@code 
      *                          DiffExpressionCall}, over all the differential expression 
      *                          analyzes that allowed to generate it.
      */
-    public void setConditionCount(int conditionCount) {
-        this.conditionCount = conditionCount;
+    public void setMinConditionCount(int conditionCount) {
+        this.minConditionCount = conditionCount;
     }
 
     /**

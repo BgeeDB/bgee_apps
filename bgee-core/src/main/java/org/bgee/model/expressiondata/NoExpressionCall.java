@@ -11,6 +11,8 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqDataHolder;
  * The attribute specific to a {@code NoExpressionCall} is whether this call 
  * was generated using data from an anatomical entity alone, or by also using 
  * data from all its parent structures, see {@link #isIncludeParentStructures()}.
+ * Of note, there is no data propagation from developmental stages 
+ * for no-expression calls.
  * <p>
  * This class, as all {@code Call}s, allows to retrieve the raw data applicable 
  * to its {@link org.bgee.model.expressiondata.DataParameters.CallType CallType}, 
@@ -31,7 +33,8 @@ public class NoExpressionCall extends Call {
      * all its parents by {@code ISA_PARTOF} relation, even indirect. 
      * If {@code true}, all its parents were considered. So for instance, 
      * if B is_a A, and absence of expression has been reported in A, 
-     * then B could benefit from this information.
+     * then B could benefit from this information. In other words, when a gene 
+     * is not expressed in a structure, it is expressed nowhere in that structure.
      */
     private boolean includeParentStructures;
     

@@ -10,10 +10,10 @@ import org.bgee.model.dao.api.TransferObject;
  * the data types that allowed to produce it, and with which confidence.
  * <p>
  * For simplicity, a {@code CallTO} can carry the {@link DataState}s associated to 
- * any data type, but the getters to retrieve this information are {@code protected}: 
- * it is the responsibility of subclasses to make public only the getters associated to 
- * the data types allowing to produce their type of call (expression, no-expression, 
- * differential expression; some data types do not allow to produce some types of call).
+ * any data type, despite the fact that specific subclasses might not be associated to 
+ * all of them (some data types do not allow to produce some types of call). But 
+ * in that case, the {@code DataState} of such non-available data types will simply 
+ * be {@code NODATA}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -83,6 +83,20 @@ public abstract class CallTO extends TransferObject {
     private DataState rnaSeqData;
 
 
+    /**
+     * Default constructor.
+     */
+    public CallTO() {
+        super();
+        this.setGeneId(null);
+        this.setAnatEntityId(null);
+        this.setDevStageId(null);
+        this.setAffymetrixData(DataState.NODATA);
+        this.setESTData(DataState.NODATA);
+        this.setInSituData(DataState.NODATA);
+        this.setRNASeqData(DataState.NODATA);
+    }
+    
     //**************************************
     // GETTERS/SETTERS
     //**************************************
@@ -134,7 +148,7 @@ public abstract class CallTO extends TransferObject {
      * @return  the {@code DataState} defining the contribution of Affymetrix data 
      *          to the generation of this call.
      */
-    protected DataState getAffymetrixData() {
+    public DataState getAffymetrixData() {
         return affymetrixData;
     }
     /**
@@ -148,7 +162,7 @@ public abstract class CallTO extends TransferObject {
      * @return  the {@code DataState} defining the contribution of EST data 
      *          to the generation of this call.
      */
-    protected DataState getESTData() {
+    public DataState getESTData() {
         return estData;
     }
     /**
@@ -162,7 +176,7 @@ public abstract class CallTO extends TransferObject {
      * @return  the {@code DataState} defining the contribution of <em>in situ</em> data 
      *          to the generation of this call.
      */
-    protected DataState getInSituData() {
+    public DataState getInSituData() {
         return inSituData;
     }
     /**
@@ -176,14 +190,14 @@ public abstract class CallTO extends TransferObject {
      * @return  the {@code DataState} defining the contribution of RNA-Seq data 
      *          to the generation of this call.
      */
-    protected DataState getRnaSeqData() {
+    public DataState getRNASeqData() {
         return rnaSeqData;
     }
     /**
      * @param rnaSeqData    the {@code DataState} defining the contribution 
      *                      of RNA-Seq data to the generation of this call.
      */
-    void setRnaSeqData(DataState rnaSeqData) {
+    void setRNASeqData(DataState rnaSeqData) {
         this.rnaSeqData = rnaSeqData;
     }
 }

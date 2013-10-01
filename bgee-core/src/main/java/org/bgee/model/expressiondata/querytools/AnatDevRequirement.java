@@ -156,19 +156,7 @@ public class AnatDevRequirement {
      * @see #filteringElements
      * @see #filterAccepted
      */
-    private boolean filterWithDescendants;
-    /**
-     * A {@code boolean} used when {@link #filteringElements} are provided, 
-     * to define whether these {@link #filteringElements} (and their descendants 
-     * if {@link #filterWithDescendants} is {@code true}) should be accepted 
-     * when validated, or systematically rejected. If {@code true}, they will be 
-     * accepted. See {@link #filteringElements} for more details. 
-     * <p>
-     * Default value is {@code true}.
-     * @see #filteringElements
-     * @see #filterWithDescendants
-     */
-    private boolean filterAccepted;
+    private boolean filterWithDescendants;change javadoc, no more possibility to "reject" elements
 	
 	//***********************************
     // METHODS

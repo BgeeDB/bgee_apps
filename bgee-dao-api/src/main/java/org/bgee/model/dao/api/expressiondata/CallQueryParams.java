@@ -1,5 +1,9 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * This class allows to provide the parameters when using a {@link CallDAO}, 
  * to filter the {@link CallTO}s retrieved.
@@ -24,12 +28,59 @@ public abstract class CallQueryParams {
      * and RNA-Seq data.
      */
     private boolean allDataTypes;
+
+    //****************************************
+    // ANATOMICAL ENTITIES FILTERING
+    //****************************************
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of anatomical entities 
+     * allowing to filter the {@code CallTO}s to retrieve. Only {@code CallTO}s 
+     * with {@link CallTO#getAnatEntityId()} equals to one of the ID in this {@code Set} 
+     * will be retrieved. 
+     * <p>
+     * If {@link #anatEntityDesc} is {@code true}, then {@code CallTO}s with 
+     * {@link CallTO#getAnatEntityId()} equals to the ID of one of the descendants, 
+     * by <em>is_a</em> or <em>part_of</em> relations, of the anatomical entities 
+     * with their ID in this {@code Set}, will also be retrieved. Note that this 
+     * latter parameter has nothing to do with data propagation from substructures, 
+     * see its documentation for more details.
+     * 
+     * @see #anatEntityDesc
+     */
+    private final Set<String> anatEntityIds;
+    /**
+     * A {@code boolean} defining whether {@code CallTO}s for descendants of 
+     * {@link #anatEntityIds} should also be retrieved. It is used when {@link 
+     * #anatEntityIds} is not empty, to define whether {@code CallTO}s, with 
+     * {@link CallTO#getAnatEntityId()} equals to the ID of one of their descendants, 
+     * by <em>is_a</em> or <em>part_of</em> relations, should also be retrieved.
+     * <p>
+     * Note that this parameter has nothing to do with the propagation of expression data 
+     * (see {@link ExpressionCallTO#isIncludeSubstructures()} for an example). 
+     * It is only an advanced way of filtering the {@code CallTO}s retrieved, 
+     * whether they were generated using data propagation or not. You will still 
+     * be able to retrieve {@code CallTO}s using data propagation from substructures 
+     * when this parameter is {@code false}.
+     * <p>
+     * It is a way of asking to retrieve calls generated in particular subgraphs 
+     * of the anatomical ontology. Most of the time, users will not need to apply 
+     * such a filtering on entire subgraphs.
+     * <p>
+     * Default value is {@code false}.
+     * 
+     * @see #anatEntityIds
+     */
+    private boolean anatEntityDesc;
+
     
     /**
      * Default constructor.
      */
     protected CallQueryParams() {
         this.setAllDataTypes(false);
+        
+        this.anatEntityIds = new HashSet<String>();
+        this.setAnatEntityDesc(false);
     }
 
     /**
@@ -73,5 +124,127 @@ public abstract class CallQueryParams {
      */
     public void setAllDataTypes(boolean allDataTypes) {
         this.allDataTypes = allDataTypes;
+    }
+    
+
+    //****************************************
+    // ANATOMICAL ENTITIES FILTERING
+    //****************************************
+    /**
+     * Add {@code id} to the {@code Set} of {@code String}s that are the IDs 
+     * of anatomical entities allowing to filter the {@code CallTO}s to retrieve. 
+     * Only {@code CallTO}s with {@link CallTO#getAnatEntityId()} equals to one 
+     * of the ID in this {@code Set} will be retrieved. 
+     * <p>
+     * If {@link #isAnatEntityDesc()} is {@code true}, then {@code CallTO}s with 
+     * {@link CallTO#getAnatEntityId()} equals to the ID of one of the descendants, 
+     * by <em>is_a</em> or <em>part_of</em> relations, of the anatomical entities 
+     * with their ID in this {@code Set}, will also be retrieved. Note that this 
+     * latter parameter has nothing to do with data propagation from substructures, 
+     * see its documentation for more details.
+     * 
+     * @param id    A {@code String} to be added to the IDs of anatomical entities 
+     *              used to filter the {@code CallTO}s to retrieve.
+     * @see #setAnatEntityDesc(boolean)
+     */
+    public void addAnatEntityId(String id) {
+        this.anatEntityIds.add(id);
+    }
+    /**
+     * Add {@code ids} to the {@code Set} of {@code String}s that are the IDs 
+     * of anatomical entities allowing to filter the {@code CallTO}s to retrieve. 
+     * Only {@code CallTO}s with {@link CallTO#getAnatEntityId()} equals to one 
+     * of the ID in this {@code Set} will be retrieved. 
+     * <p>
+     * If {@link #isAnatEntityDesc()} is {@code true}, then {@code CallTO}s with 
+     * {@link CallTO#getAnatEntityId()} equals to the ID of one of the descendants, 
+     * by <em>is_a</em> or <em>part_of</em> relations, of the anatomical entities 
+     * with their ID in this {@code Set}, will also be retrieved. Note that this 
+     * latter parameter has nothing to do with data propagation from substructures, 
+     * see its documentation for more details.
+     * 
+     * @param ids   A {@code Collection} of {@code String}s to be added to the IDs 
+     *              of anatomical entities used to filter the {@code CallTO}s to retrieve.
+     * @see #setAnatEntityDesc(boolean)
+     */
+    public void addAllAnatEntityIds(Collection<String> ids) {
+        this.anatEntityIds.addAll(ids);
+    }
+    /**
+     * Returns the {@code Set} of {@code String}s that are the IDs 
+     * of anatomical entities allowing to filter the {@code CallTO}s to retrieve. 
+     * Only {@code CallTO}s with {@link CallTO#getAnatEntityId()} equals to one 
+     * of the ID in this {@code Set} will be retrieved. 
+     * <p>
+     * If {@link #isAnatEntityDesc()} is {@code true}, then {@code CallTO}s with 
+     * {@link CallTO#getAnatEntityId()} equals to the ID of one of the descendants, 
+     * by <em>is_a</em> or <em>part_of</em> relations, of the anatomical entities 
+     * with their ID in this {@code Set}, will also be retrieved. Note that this 
+     * latter parameter has nothing to do with data propagation from substructures, 
+     * see its documentation for more details.
+     * 
+     * @param ids   A {@code Collection} of {@code String}s that are the IDs 
+     *              of anatomical entities used to filter the {@code CallTO}s to retrieve.
+     * @see #isAnatEntityDesc()
+     */
+    public Set<String> getAnatEntityIds() {
+        return this.anatEntityIds;
+    }
+    /**
+     * Returns the {@code boolean} defining whether {@code CallTO}s for descendants of 
+     * the anatomical entities defined by {@link #getAnatEntityIds()} should also 
+     * be retrieved. It is used when {@link #getAnatEntityIds()} is not empty, 
+     * to define whether {@code CallTO}s, with {@link CallTO#getAnatEntityId()} 
+     * equals to the ID of one of their descendants, by <em>is_a</em> or <em>part_of</em> 
+     * relations, should also be retrieved.
+     * <p>
+     * Note that this parameter has nothing to do with the propagation of expression data 
+     * (see {@link ExpressionCallTO#isIncludeSubstructures()} for an example). 
+     * It is only an advanced way of filtering the {@code CallTO}s retrieved, 
+     * whether they were generated using data propagation or not. You will still 
+     * be able to retrieve {@code CallTO}s using data propagation from substructures 
+     * when this parameter is {@code false}.
+     * <p>
+     * It is a way of asking to retrieve calls generated in particular subgraphs 
+     * of the anatomical ontology. Most of the time, users will not need to apply 
+     * such a filtering on entire subgraphs.
+     * <p>
+     * Default value is {@code false}.
+     * 
+     * @return  a {@code boolean} defining whether calls generated in the descendants 
+     *          of the anatomical entities provided should also be retrieved.
+     * @see #getAnatEntityIds()
+     */
+    public boolean isAnatEntityDesc() {
+        return this.anatEntityDesc;
+    }
+    /**
+     * Sets the {@code boolean} defining whether {@code CallTO}s for descendants of 
+     * the anatomical entities defined by {@link #getAnatEntityIds()} should also 
+     * be retrieved. It is used when {@link #getAnatEntityIds()} is not empty, 
+     * to define whether {@code CallTO}s, with {@link CallTO#getAnatEntityId()} 
+     * equals to the ID of one of their descendants, by <em>is_a</em> or <em>part_of</em> 
+     * relations, should also be retrieved.
+     * <p>
+     * Note that this parameter has nothing to do with the propagation of expression data 
+     * (see {@link ExpressionCallTO#isIncludeSubstructures()} for an example). 
+     * It is only an advanced way of filtering the {@code CallTO}s retrieved, 
+     * whether they were generated using data propagation or not. You will still 
+     * be able to retrieve {@code CallTO}s using data propagation from substructures 
+     * when this parameter is {@code false}.
+     * <p>
+     * It is a way of asking to retrieve calls generated in particular subgraphs 
+     * of the anatomical ontology. Most of the time, users will not need to apply 
+     * such a filtering on entire subgraphs.
+     * <p>
+     * Default value is {@code false}.
+     * 
+     * @param anatEntityDesc    a {@code boolean} defining whether calls generated 
+     *                          in the descendants of the anatomical entities 
+     *                          provided should also be retrieved.
+     * @see #getAnatEntityIds()
+     */
+    public void setAnatEntityDesc(boolean anatEntityDesc) {
+        this.anatEntityDesc = anatEntityDesc;
     }
 }

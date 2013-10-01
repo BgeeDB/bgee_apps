@@ -11,7 +11,7 @@ package org.bgee.model.dao.api.expressiondata;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class ExpressionCallTO extends CallTO {
+public final class ExpressionCallTO extends CallTO {
     /**
      * A {@code boolean} defining whether this expression call was generated 
      * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
@@ -32,7 +32,7 @@ public class ExpressionCallTO extends CallTO {
     /**
      * Default constructor.
      */
-    public ExpressionCallTO() {
+    ExpressionCallTO() {
         super();
         this.setIncludeSubstructures(false);
         this.setIncludeSubStages(false);

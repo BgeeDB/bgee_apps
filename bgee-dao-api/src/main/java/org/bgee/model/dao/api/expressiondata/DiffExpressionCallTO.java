@@ -3,11 +3,12 @@ package org.bgee.model.dao.api.expressiondata;
 /**
  * A {@code CallTO} specific to differential expression calls (comparison of 
  * the expression of a gene in different conditions, as part of a differential 
- * expression analysis). Their specificity is that they are associated to 
- * the minimum number of conditions that were compared among all the differential 
- * expression analyzes that allowed to produce that call; and that they are 
- * associated to a {@link Factor}, defining what was the comparison factor used 
- * during the analyzes generating this call.
+ * expression analysis). Their specificities are that: they can be associated to 
+ * different differential expression call types, see {@link DiffCallType}; 
+ * they are associated to the minimum number of conditions that were compared 
+ * among all the differential expression analyzes that allowed to produce that call; 
+ * and that they are associated to a {@link Factor}, defining what was the comparison 
+ * factor used during the analyzes generating this call.
  * <p>
  * Of note, there is no data propagation from anatomical entities nor developmental stages 
  * for differential expression calls.
@@ -16,7 +17,22 @@ package org.bgee.model.dao.api.expressiondata;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class DiffExpressionCallTO extends CallTO {
+public final class DiffExpressionCallTO extends CallTO {
+    /**
+     * Represents different types of differential expression calls obtained 
+     * from differential expression analyzes: 
+     * <ul>
+     * <li>{@code OVEREXPRESSED}: over-expression calls.
+     * <li>{@code UNDEREXPRESSED}: under-expression calls.
+     * <li>{@code NOTDIFFEXPRESSED}: means that a gene was studied in 
+     * a differential expression analysis, but was <strong>not</strong> found to be 
+     * differentially expressed (neither {@code OVEREXPRESSED} nor 
+     * {@code UNDEREXPRESSED} calls). 
+     * </ul>
+     */
+    public enum DiffCallType {
+        OVEREXPRESSED, UNDEREXPRESSED, NOTDIFFEXPRESSED;
+    }
     /**
      * Define the different types of differential expression analyses, 
      * based on the experimental factor studied: 
@@ -36,40 +52,47 @@ public class DiffExpressionCallTO extends CallTO {
     }
     
     /**
+     * The {@code DiffCallType} that is the type of differential expression of this call.
+     */
+    private final DiffCallType diffCallType;
+    /**
      * An {@code int} defining the minimum number of conditions that were compared, 
      * among all the differential expression analyzes that allowed to produce this call.
      */
-    private int minConditionCount;
+    private final int minConditionCount;
     /**
      * A {@code Factor} defining what was the comparison factor used during 
      * the differential expression analyzes generating this call. 
      */
-    private Factor factor;
+    private final Factor factor;
     
     /**
-     * Default constructor.
+     * Constructor providing the type of differential expression of this call, 
+     * the comparison factor used, and the minimum number of conditions compared.
+     * 
+     * @param diffCallType  The {@code DiffCallType} that is the type of 
+     *                      differential expression of this call.
+     * @param factor        The {@code Factor} defining what was the comparison 
+     *                      factor used during the differential expression analyzes 
+     *                      generating this call.
+     * @param minConditionCount The {@code int} defining the minimum number of 
+     *                          conditions that were compared, among all the differential 
+     *                          expression analyzes that allowed to produce this call.
      */
-    public DiffExpressionCallTO() {
+    DiffExpressionCallTO(DiffCallType diffCallType, Factor factor, int minConditionCount) {
         super();
-        this.setMinConditionCount(0);
-        this.setFactor(null);
+        this.diffCallType      = diffCallType;
+        this.factor            = factor;
+        this.minConditionCount = minConditionCount;
     }
 
+    
     /**
-     * @return  the {@code int} defining the minimum number of conditions that 
-     *          were compared, among all the differential expression analyzes 
-     *          that allowed to produce this call.
+     * @return  the {@code DiffCallType} that is the type of differential expression 
+     *          of this call.
      */
-    public int getMinConditionCount() {
-        return minConditionCount;
-    }
-    /**
-     * @param minConditionCount    the {@code int} defining the minimum number of conditions 
-     *                          that were compared, among all the differential expression 
-     *                          analyzes that allowed to produce this call.
-     */
-    void setMinConditionCount(int conditionCount) {
-        this.minConditionCount = conditionCount;
+    public DiffCallType getDiffCallType() {
+        return this.diffCallType;
     }
 
     /**
@@ -79,12 +102,13 @@ public class DiffExpressionCallTO extends CallTO {
     public Factor getFactor() {
         return factor;
     }
+    
     /**
-     * @param factor    the {@code Factor} defining what was the comparison factor used 
-     *                  during the differential expression analyzes generating this call.
+     * @return  the {@code int} defining the minimum number of conditions that 
+     *          were compared, among all the differential expression analyzes 
+     *          that allowed to produce this call.
      */
-    void setFactor(Factor factor) {
-        this.factor = factor;
+    public int getMinConditionCount() {
+        return minConditionCount;
     }
-
 }

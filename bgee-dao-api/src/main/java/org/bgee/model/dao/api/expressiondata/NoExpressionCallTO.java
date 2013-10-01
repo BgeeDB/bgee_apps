@@ -13,7 +13,7 @@ package org.bgee.model.dao.api.expressiondata;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class NoExpressionCallTO extends CallTO {
+public final class NoExpressionCallTO extends CallTO {
     /**
      * A {@code boolean} defining whether this no-expression call was generated 
      * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
@@ -28,7 +28,7 @@ public class NoExpressionCallTO extends CallTO {
     /**
      * Default constructor.
      */
-    public NoExpressionCallTO() {
+    NoExpressionCallTO() {
         super();
         this.setIncludeParentStructures(false);
     }

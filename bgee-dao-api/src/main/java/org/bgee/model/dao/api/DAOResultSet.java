@@ -25,6 +25,12 @@ import org.bgee.model.dao.api.exception.DAOException;
  * of a {@code DAOResultSet} would correspond to one row in the database. 
  * If the {@code DAO} is using a text file retrieved from a webservice, then each 
  * result would correspond to one line in the file. 
+ * <p>
+ * Of note, the implementation acting under the hood may need to perform several 
+ * queries to respond to the {@code DAO} API call that returned this {@code DAOResultSet}. 
+ * This could result in a "freeze" on a call to {@code next}. But this way, 
+ * the implementation will not need to perform all the queries at once, and to store 
+ * all results in memory. In any case, this is none of the business of the caller.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

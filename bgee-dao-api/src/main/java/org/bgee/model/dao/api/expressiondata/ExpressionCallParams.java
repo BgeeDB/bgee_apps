@@ -19,13 +19,16 @@ import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
 public class ExpressionCallParams extends CallParams {
     /**
      * A expression call that will hold some parameters of this {
-     * @code ExpressionCallParams}. this is because they have some parameters in common, 
+     * @code ExpressionCallParams}. This is because they have some parameters in common, 
      * so the corresponding methods will be delegated to {@code referenceCallTO}.
      * <p>
      * Only the appropriate methods will be exposed.
      */
     private final ExpressionCallTO referenceCallTO;
     
+    /**
+     * Default constructor.
+     */
     public ExpressionCallParams() {
         super();
         this.referenceCallTO = new ExpressionCallTO();
@@ -40,8 +43,9 @@ public class ExpressionCallParams extends CallParams {
      * used should be based on calls generated using data from anatomical 
      * entities, and all of their descendants by <em>is_a</em> and <em>part_of</em> 
      * relations (expression taking into account substructures), or without taking 
-     * into account substructures. If {@code true}, all the descendants will be 
-     * considered.
+     * into account substructures. 
+     * <p>
+     * If {@code true}, all the descendants will be considered. Default is {@code false}.
      * 
      * @return  A {@code boolean} defining whether expression in substructures 
      *          of an anatomical entity should be considered.
@@ -54,8 +58,9 @@ public class ExpressionCallParams extends CallParams {
      * used should be based on calls generated using data from anatomical 
      * entities, and all of their descendants by <em>is_a</em> and <em>part_of</em> 
      * relations (expression taking into account substructures), or without taking 
-     * into account substructures. If {@code true}, all the descendants will be 
-     * considered.
+     * into account substructures. 
+     * <p>
+     * If {@code true}, all the descendants will be considered. Default is {@code false}.
      * 
      * @param include   A {@code boolean} defining whether expression 
      *                  in substructures of an anatomical entity should be considered.
@@ -69,8 +74,9 @@ public class ExpressionCallParams extends CallParams {
      * used should be based on calls generated using data from developmental 
      * stages, and all of their descendants by <em>is_a</em> and <em>part_of</em> 
      * relations (expression taking into account sub-stages), or without taking 
-     * into account sub-stages. If {@code true}, all the sub-stages will be 
-     * considered.
+     * into account sub-stages. 
+     * <p>
+     * If {@code true}, all the sub-stage will be considered. Default is {@code false}.
      * 
      * @return  A {@code boolean} defining whether expression in sub-stages 
      *          of a developmental stage should be considered.
@@ -83,8 +89,9 @@ public class ExpressionCallParams extends CallParams {
      * used should be based on calls generated using data from developmental 
      * stages, and all of their descendants by <em>is_a</em> and <em>part_of</em> 
      * relations (expression taking into account sub-stages), or without taking 
-     * into account sub-stages. If {@code true}, all the sub-stages will be 
-     * considered.
+     * into account sub-stages. 
+     * <p>
+     * If {@code true}, all the sub-stage will be considered. Default is {@code false}.
      * 
      * @param include   A {@code boolean} defining whether expression 
      *                  in sub-stages of a developmental stage should be considered.

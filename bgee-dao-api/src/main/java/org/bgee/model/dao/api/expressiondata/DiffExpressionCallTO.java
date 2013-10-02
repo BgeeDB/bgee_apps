@@ -54,17 +54,17 @@ public final class DiffExpressionCallTO extends CallTO {
     /**
      * The {@code DiffCallType} that is the type of differential expression of this call.
      */
-    private final DiffCallType diffCallType;
+    private DiffCallType diffCallType;
     /**
      * An {@code int} defining the minimum number of conditions that were compared, 
      * among all the differential expression analyzes that allowed to produce this call.
      */
-    private final int minConditionCount;
+    private int minConditionCount;
     /**
      * A {@code Factor} defining what was the comparison factor used during 
      * the differential expression analyzes generating this call. 
      */
-    private final Factor factor;
+    private Factor factor;
     
     /**
      * Constructor providing the type of differential expression of this call, 
@@ -79,11 +79,11 @@ public final class DiffExpressionCallTO extends CallTO {
      *                          conditions that were compared, among all the differential 
      *                          expression analyzes that allowed to produce this call.
      */
-    DiffExpressionCallTO(DiffCallType diffCallType, Factor factor, int minConditionCount) {
+    DiffExpressionCallTO() {
         super();
-        this.diffCallType      = diffCallType;
-        this.factor            = factor;
-        this.minConditionCount = minConditionCount;
+        this.setDiffCallType(null);
+        this.setFactor(null);
+        this.setMinConditionCount(0);
     }
 
     
@@ -94,6 +94,13 @@ public final class DiffExpressionCallTO extends CallTO {
     public DiffCallType getDiffCallType() {
         return this.diffCallType;
     }
+    /**
+     * @param callType  the {@code DiffCallType} that is the type of differential 
+     *                  expression of this call.
+     */
+    void setDiffCallType(DiffCallType callType) {
+        this.diffCallType = callType;
+    }
 
     /**
      * @return  the {@code Factor} defining what was the comparison factor used 
@@ -101,6 +108,14 @@ public final class DiffExpressionCallTO extends CallTO {
      */
     public Factor getFactor() {
         return factor;
+    }
+    /**
+     * @param factor    the {@code Factor} defining what was the comparison 
+     *                  factor used during the differential expression analyzes 
+     *                  generating this call. 
+     */
+    void setFactor(Factor factor) {
+        this.factor = factor;
     }
     
     /**
@@ -110,5 +125,14 @@ public final class DiffExpressionCallTO extends CallTO {
      */
     public int getMinConditionCount() {
         return minConditionCount;
+    }
+    /**
+     * @param conditionCount    the {@code int} defining the minimum number of 
+     *                          conditions that were compared, among all the 
+     *                          differential expression analyzes that allowed 
+     *                          to produce this call.
+     */
+    void setMinConditionCount(int conditionCount) {
+        this.minConditionCount = conditionCount;
     }
 }

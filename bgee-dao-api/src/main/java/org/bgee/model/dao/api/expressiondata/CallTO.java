@@ -77,6 +77,15 @@ public abstract class CallTO extends TransferObject {
      */
     private DataState inSituData;
     /**
+     * The {@code DataState} defining the contribution of "relaxed" <em>in situ</em> 
+     * data to the generation of this call. "Relaxed" <em>in situ</em> data are used 
+     * to infer absence of expression, by considering <em>in situ</em> data as complete: 
+     * absence of expression of a gene is assumed in any organ existing at 
+     * the developmental stage studied by some <em>in situ</em> data, with no report 
+     * of expression.
+     */
+    private DataState relaxedInSituData;
+    /**
      * The {@code DataState} defining the contribution of RNA-Seq data 
      * to the generation of this call.
      */
@@ -94,6 +103,7 @@ public abstract class CallTO extends TransferObject {
         this.setAffymetrixData(DataState.NODATA);
         this.setESTData(DataState.NODATA);
         this.setInSituData(DataState.NODATA);
+        this.setRelaxedInSituData(DataState.NODATA);
         this.setRNASeqData(DataState.NODATA);
     }
     
@@ -185,6 +195,31 @@ public abstract class CallTO extends TransferObject {
      */
     void setInSituData(DataState inSituData) {
         this.inSituData = inSituData;
+    }
+    /**
+     * "Relaxed" <em>in situ</em> data are used to infer absence of expression, 
+     * by considering <em>in situ</em> data as complete: absence of expression 
+     * of a gene is assumed in any organ existing at the developmental stage 
+     * studied by some <em>in situ</em> data, with no report of expression.
+     * 
+     * @return  the {@code DataState} defining the contribution of relaxed 
+     *          <em>in situ</em> data to the generation of this call.
+     */
+    public DataState getRelaxedInSituData() {
+        return relaxedInSituData;
+    }
+    /**
+     * "Relaxed" <em>in situ</em> data are used to infer absence of expression, 
+     * by considering <em>in situ</em> data as complete: absence of expression 
+     * of a gene is assumed in any organ existing at the developmental stage 
+     * studied by some <em>in situ</em> data, with no report of expression.
+     * 
+     * @param inSituData    the {@code DataState} defining the contribution 
+     *                      of relaxed <em>in situ</em> data to the generation 
+     *                      of this call.
+     */
+    void setRelaxedInSituData(DataState inSituData) {
+        this.relaxedInSituData = inSituData;
     }
     /**
      * @return  the {@code DataState} defining the contribution of RNA-Seq data 

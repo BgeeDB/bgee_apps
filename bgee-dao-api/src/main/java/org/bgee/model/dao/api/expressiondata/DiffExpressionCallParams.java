@@ -1,11 +1,13 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.DiffCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
 
 /**
  * This class allows to provide the parameters specific to differential expression 
- * calls, when using a {@link DAO}, to filter the differential expression calls 
+ * calls, when using a {@link DAO}, to params the differential expression calls 
  * used during queries. It allows to define conditions on the data types and 
  * data qualities of the differential expression calls to use, the call type  
  * that they should be based on, the experimental factor compared when generating 
@@ -30,6 +32,11 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
  */
 public class DiffExpressionCallParams extends CallParams {
     /**
+     * {@code Logger} of the class. 
+     */
+    private final static Logger log = 
+            LogManager.getLogger(DiffExpressionCallParams.class.getName());
+    /**
      * An {@code int} defining the minimum number of conditions compared in Bgee 
      * when performing a differential expression analysis. As of Bgee 13, 
      * is equals to 3.
@@ -37,21 +44,81 @@ public class DiffExpressionCallParams extends CallParams {
     public final static int MINCONDITIONCOUNT = 3;
     
     /**
-     * A {@code DiffExpressionCallTO} that will hold some parameters of this 
-     * {@code DiffExpressionCallParams}. This is because they have some parameters 
-     * in common, so the corresponding methods will be delegated to 
-     * {@code referenceCallTO}.
-     * <p>
-     * Only the appropriate methods will be exposed.
-     */
-    private final DiffExpressionCallTO referenceCallTO;
-    
-    /**
      * Default constructor.
      */
     public DiffExpressionCallParams() {
-        super();
-        this.referenceCallTO = new DiffExpressionCallTO();
+        super(new DiffExpressionCallTO());
+    }
+    
+    @Override
+    protected DiffExpressionCallTO getReferenceCallTO() {
+        return (DiffExpressionCallTO) super.getReferenceCallTO();
+    }
+
+    //****************************************
+    // MERGE METHODS
+    //****************************************
+    
+    /**
+     * @see #canMerge(CallParams, boolean)
+     */
+    @Override
+    protected DiffExpressionCallParams merge(CallParams paramsToMerge) {
+        log.entry(paramsToMerge);
+        //first, determine whether we can merge the CallParams
+        if (!this.canMerge(paramsToMerge)) {
+            return log.exit(null);
+        }
+
+        //OK, let's proceed to the merging
+        //we blindly perform the merging here, even if if meaningless, it is the 
+        //responsibility of the method canMerge to determine whether it is appropriate.
+        DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
+        DiffExpressionCallParams mergedParams = new DiffExpressionCallParams();
+        //of note, data types and qualities are merged by super.merge method
+        super.merge(otherParams, mergedParams);
+        //conditionCount of this CallParams and of otherParams should be the same, 
+        //but it is not the responsibility of this method to decide whether the merging 
+        //makes sense, so we use the highest value
+        mergedParams.setMinConditionCount(Math.max(this.getMinConditionCount(), 
+                otherParams.getMinConditionCount()));
+        //Factor and DiffCallType should be the same, but once again...
+        //we just pick up one of them
+        mergedParams.setFactor(this.getFactor());
+        mergedParams.setDiffCallType(this.getDiffCallType());
+
+        return log.exit(mergedParams);
+    }
+
+    /**
+     * Determines whether this {@code DiffExpressionCallParams} and 
+     * {@code paramsToMerge} can be merged. 
+     * 
+     * @param paramsToMerge A {@code CallParams} that is tried to be merged 
+     *                      with this {@code DiffExpressionCallParams}.
+     * @return              {@code true} if they could be merged. 
+     */
+    private boolean canMerge(CallParams paramsToMerge) {
+        log.entry(paramsToMerge);
+        
+        if (!(paramsToMerge instanceof DiffExpressionCallParams)) {
+            return log.exit(false);
+        }
+        DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
+
+        //of note, this method also takes care of the check for data types 
+        //and qualities
+        if (!super.canMerge(otherParams)) {
+            return log.exit(false);
+        }
+        
+        if (!this.getDiffCallType().equals(otherParams.getDiffCallType()) || 
+                !this.getFactor().equals(otherParams.getFactor()) || 
+                this.getMinConditionCount() != otherParams.getMinConditionCount()) {
+            return log.exit(false);
+        }
+        
+        return log.exit(true);
     }
     
 
@@ -67,7 +134,7 @@ public class DiffExpressionCallParams extends CallParams {
      *          expression calls to be used.
      */
     public DiffCallType getDiffCallType() {
-        return this.referenceCallTO.getDiffCallType();
+        return this.getReferenceCallTO().getDiffCallType();
     }
     /**
      * Sets the {@code DiffCallType} defining the type of the differential 
@@ -78,7 +145,7 @@ public class DiffExpressionCallParams extends CallParams {
      *                  expression calls to be used.
      */
     public void setDiffCallType(DiffCallType callType) {
-        this.referenceCallTO.setDiffCallType(callType);
+        this.getReferenceCallTO().setDiffCallType(callType);
     }
 
     /**
@@ -91,7 +158,7 @@ public class DiffExpressionCallParams extends CallParams {
      *          compared of the calls to use.
      */
     public Factor getFactor() {
-        return this.referenceCallTO.getFactor();
+        return this.getReferenceCallTO().getFactor();
     }
     /**
      * Sets the {@code Factor} defining what should be the experimental factor 
@@ -103,11 +170,11 @@ public class DiffExpressionCallParams extends CallParams {
      *                  factor compared of the calls to use.
      */
     public void setFactor(Factor factor) {
-        this.referenceCallTO.setFactor(factor);
+        this.getReferenceCallTO().setFactor(factor);
     }
     
     /**
-     * An {@code int} allowing to filter the differential calls to be used, 
+     * An {@code int} allowing to params the differential calls to be used, 
      * based on the minimum number of conditions that were compared during 
      * the differential expression analyzes that generated them. Default is 
      * {@link #MINCONDITIONCOUNT}. 
@@ -117,10 +184,10 @@ public class DiffExpressionCallParams extends CallParams {
      *          to be used.
      */
     public int getMinConditionCount() {
-        return this.referenceCallTO.getMinConditionCount();
+        return this.getReferenceCallTO().getMinConditionCount();
     }
     /**
-     * An {@code int} allowing to filter the differential calls to be used, 
+     * An {@code int} allowing to params the differential calls to be used, 
      * based on the minimum number of conditions that were compared during 
      * the differential expression analyzes that generated them. Default is 
      * {@link #MINCONDITIONCOUNT}. This methods will throw an {@code 
@@ -133,6 +200,6 @@ public class DiffExpressionCallParams extends CallParams {
      *                                  {@code #MINCONDITIONCOUNT}.
      */
     public void setMinConditionCount(int conditionCount) throws IllegalArgumentException {
-        this.referenceCallTO.setMinConditionCount(conditionCount);
+        this.getReferenceCallTO().setMinConditionCount(conditionCount);
     }
 }

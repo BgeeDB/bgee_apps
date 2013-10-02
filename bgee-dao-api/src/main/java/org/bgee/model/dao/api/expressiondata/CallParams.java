@@ -3,6 +3,11 @@ package org.bgee.model.dao.api.expressiondata;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map.Entry;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
 
 /**
  * This class allows to provide the parameters to filter the calls used, when 
@@ -14,6 +19,20 @@ import java.util.Set;
  * @since Bgee 13
  */
 public abstract class CallParams {
+    /**
+     * {@code Logger} of the class. 
+     */
+    private final static Logger log = 
+            LogManager.getLogger(CallParams.class.getName());
+    /**
+     * A {@code CallTO} that will hold some parameters of this 
+     * {@code CallParams}. This is because they have some parameters 
+     * in common, so the corresponding methods will be delegated to 
+     * {@code referenceCallTO}.
+     * <p>
+     * Only the appropriate methods will be exposed, mainly by subclasses.
+     */
+    private final CallTO referenceCallTO;
     /**
      * A {@code boolean} defining whether, when there are conditions on the data types
      * that should have contributed to the generation of the calls to be used, 
@@ -127,9 +146,18 @@ public abstract class CallParams {
 
     
     /**
-     * Default constructor.
+     * Default constructor providing the reference {@code CallTO} which some methods 
+     * will be delegated to. This is because it some parameters in common with 
+     * a {@code CallParams}, so the corresponding methods will be delegated to 
+     * this reference {@code CallTO}. Subclasses should provide the specific type 
+     * corresponding to them (for instance, a {@code ExpressionCallTO} provided 
+     * by an {@code ExpressionCallParams} extending this class).
+     * 
+     * @param callTO    the {@code CallTO} which some methods will be delegated to.
      */
-    protected CallParams() {
+    protected CallParams(CallTO callTO) {
+        this.referenceCallTO = callTO;
+        
         this.setAllDataTypes(false);
         
         this.anatEntityIds = new HashSet<String>();
@@ -140,7 +168,284 @@ public abstract class CallParams {
         
         this.geneIds      = new HashSet<String>();
     }
+    
+    /**
+     * Returns the {@code CallTO} holding some parameters of this 
+     * {@code CallParams}. This is because they have some parameters 
+     * in common, so the corresponding methods will be delegated to 
+     * this {@code CallTO}.
+     * <p>
+     * Subclasses should override this method to cast the return type 
+     * to the appropriate {@code CallTO} subclass.
+     * 
+     * @return  The {@code CallTO} which some methods are delegated to.
+     */
+    protected CallTO getReferenceCallTO() {
+        return this.referenceCallTO;
+    }
+    
 
+    //****************************************
+    // MERGE METHODS
+    //****************************************
+    /**
+     * Merges this {@code CallParams} with {@code paramsToMerge}, 
+     * and returns the resulting merged new {@code CallParams}.
+     * If {@code paramsToMerge} cannot be merged with this {@code CallParams}, 
+     * this method returns {@code null}.
+     * <p>
+     * Merging {@code CallParams} allow to simplify greatly the queries made 
+     * by a {@code DAO}.
+     * 
+     * @param paramsToMerge a {@code CallParams} to be merged with this one.
+     * @return  A newly instantiated {@code CallParams} corresponding to 
+     *          the merging of this {@code CallParams} and of 
+     *          {@code paramsToMerge}, or {@code null} if they could not be merged. 
+     */
+    protected abstract CallParams merge(CallParams paramsToMerge);
+    
+    /**
+     * Merges attributes of this {@code CallParams} with {@code paramsToMerge}, 
+     * by storing the merged attributes into {@code newResultingParams}. 
+     * It behaves as the method {@link CallParams#merge(CallParams)}, 
+     * except that the newly created {@code CallParams} resulting 
+     * from the merging is provided to this method, rather than being created by it. 
+     * This is because this abstract class could not instantiate an instance 
+     * of itself, to return a newly merged {@code CallParams}. 
+     * <p>
+     * This method is needed so that child classes do not have to take care 
+     * of the merging of the attributes held by this class. 
+     * <p>
+     * If {@code paramsToMerge} cannot be merged with this {@code CallParams}, 
+     * an {@code IllegalArgumentException} is thrown. This verification is achieved 
+     * by calling {@link #canMerge(CallParams)}. This latter method only checks 
+     * compatibility for attributes held by this abstract class.
+     * A child class can still decide that the merging is not possible, according 
+     * to its own attributes. 
+     * 
+     * @param paramsToMerge       a {@code CallParams} to be merged with this one.
+     * @param newResultingParams  the {@code CallParams} resulting from the merging, 
+     *                            into which merged attributes will be loaded.
+     * @throws IllegalArgumentException If {@code paramsToMerge} should not be merged 
+     *                                  with this {@code CallParams}.
+     * @see {@link #canMerge(CallParams)}
+     */
+    protected void merge(CallParams paramsToMerge, CallParams newResultingParams) 
+            throws IllegalArgumentException {
+        log.entry(paramsToMerge, newResultingParams);
+        
+        if (!this.canMerge(paramsToMerge)) {
+            throw log.throwing(new IllegalArgumentException("The CallParams provided " +
+                    "to be merged is not compatible with the main CallParams that " +
+                    "this method was called on. Merging not possible."));
+        }
+
+        //we blindly perform the merging here, even if if meaningless, it is the 
+        //responsibility of the method canMerge to determine whether it is appropriate.
+        
+        //merge allDataTypes. When allDataTypes is true, we apply it to the merged params 
+        //only if there is more than 1 data type set, otherwise it is equivalent to false.
+        if ((this.isAllDataTypes() && this.getDataTypesSetCount() != 1) || 
+                (paramsToMerge.isAllDataTypes() && paramsToMerge.getDataTypesSetCount() != 1)) {
+            newResultingParams.setAllDataTypes(true);
+        }
+        
+        //merge data types and qualities 
+        newResultingParams.getReferenceCallTO().setAffymetrixData(mergeDataState(
+                this.getReferenceCallTO().getAffymetrixData(), 
+                paramsToMerge.getReferenceCallTO().getAffymetrixData()));
+        newResultingParams.getReferenceCallTO().setESTData(mergeDataState(
+                this.getReferenceCallTO().getESTData(), 
+                paramsToMerge.getReferenceCallTO().getESTData()));
+        newResultingParams.getReferenceCallTO().setInSituData(mergeDataState(
+                this.getReferenceCallTO().getInSituData(), 
+                paramsToMerge.getReferenceCallTO().getInSituData()));
+        newResultingParams.getReferenceCallTO().setRelaxedInSituData(mergeDataState(
+                this.getReferenceCallTO().getRelaxedInSituData(), 
+                paramsToMerge.getReferenceCallTO().getRelaxedInSituData()));
+        newResultingParams.getReferenceCallTO().setRNASeqData(mergeDataState(
+                this.getReferenceCallTO().getRNASeqData(), 
+                paramsToMerge.getReferenceCallTO().getRNASeqData()));
+        
+        //merge Sets of anatEntityIds, devStageIds, geneIds, and related parameters
+        newResultingParams.addAllAnatEntityIds(this.getAnatEntityIds());
+        newResultingParams.addAllAnatEntityIds(paramsToMerge.getAnatEntityIds());
+        newResultingParams.setUseAnatDescendants(
+                this.isUseAnatDescendants() || paramsToMerge.isUseAnatDescendants());
+
+        newResultingParams.addAllDevStageIds(this.getDevStageIds());
+        newResultingParams.addAllDevStageIds(paramsToMerge.getDevStageIds());
+        newResultingParams.setUseDevDescendants(
+                this.isUseDevDescendants() || paramsToMerge.isUseDevDescendants());
+
+        newResultingParams.addAllGeneIds(this.getGeneIds());
+        newResultingParams.addAllGeneIds(paramsToMerge.getGeneIds());
+        
+        log.exit();
+    }
+    
+    
+    /**
+     * Defines whether this {@code CallParams} and {@code paramsToMerge} can be 
+     * merged, as far as only the attributes of this abstract class are concerned. 
+     * <p>
+     * This method should be used by subclasses implementing the methods 
+     * {@link CallParams#merge(CallParams)}, so that they do not need 
+     * to deal with attributes owned by this class. It means that even if this method 
+     * returns {@code true}, there is no guarantee that the child class 
+     * will accept the merging, regarding it own attributes. 
+     * 
+     * @param paramsToMerge A {@code CallParams} that is tried to be merged 
+     *                      with this {@code CallParams}.
+     * @return      {@code true} if they could be merged, only according 
+     *              to the attributes of this class. 
+     */
+    protected boolean canMerge(CallParams paramsToMerge) {
+        log.entry(paramsToMerge);
+        //if a CallParams having isAllDataTypes returning true 
+        //have only one data type, then it is equivalent to having 
+        //isAllDataTypes returning false
+        boolean thisAllDataTypes = this.isAllDataTypes() && 
+                this.getDataTypesSetCount() != 1;
+        boolean otherAllDataTypes = paramsToMerge.isAllDataTypes() && 
+                paramsToMerge.getDataTypesSetCount() != 1;
+        
+        if (thisAllDataTypes != otherAllDataTypes) {
+            return log.exit(false);
+        } else if (thisAllDataTypes && !this.haveSameDataStates(paramsToMerge)) {
+            //if both this CallParams and paramsToMerge have isAllDataTypes true,
+            //they should have exactly the same data types and qualities
+            return log.exit(false);
+        }
+        
+    }
+    
+    /**
+     * @return  an {@code int} that is the number of data types that were provided 
+     *          with a {@code DataState} different from {@code NODATA}.
+     */
+    private int getDataTypesSetCount() {
+        log.entry();
+        int count = 0;
+        if (this.getReferenceCallTO().getAffymetrixData() != null && 
+            !this.getReferenceCallTO().getAffymetrixData().equals(DataState.NODATA)) {
+            count++;
+        }
+        if (this.getReferenceCallTO().getESTData() != null && 
+            !this.getReferenceCallTO().getESTData().equals(DataState.NODATA)) {
+            count++;
+        }
+        if (this.getReferenceCallTO().getInSituData() != null && 
+            !this.getReferenceCallTO().getInSituData().equals(DataState.NODATA)) {
+            count++;
+        }
+        if (this.getReferenceCallTO().getRelaxedInSituData() != null && 
+            !this.getReferenceCallTO().getRelaxedInSituData().equals(DataState.NODATA)) {
+            count++;
+        }
+        if (this.getReferenceCallTO().getRNASeqData() != null && 
+            !this.getReferenceCallTO().getRNASeqData().equals(DataState.NODATA)) {
+            count++;
+        }
+        return log.exit(count);
+    }
+    
+    /**
+     * Merges {@code state1} with {@code state2}, and returns the resulting 
+     * merged {@code DataState}. If one of the {@code DataState}s is 
+     * {@code null} or equals to {@code NODATA}, the other one is returned. 
+     * If they are both not {@code null} or different from {@code NODATA}, 
+     * then the {@code DataState} with the lowest cardinality will be returned. 
+     * If both are {@code null}, {@code null} is returned. If both are equal to 
+     * {@code NODATA}, {@code NODATA} is returned.
+     * 
+     * @param otherState    The {@code DataState} that is tried to be merged 
+     *                      with this one.
+     * @return              A {@code DataState} resulting from the merging.
+     */
+    private static DataState mergeDataState(DataState state1, DataState state2) {
+        log.entry(state1, state2);
+        if (state1 == null) {
+            return log.exit(state2);
+        }
+        if (state2 == null) {
+            return log.exit(state1);
+        }
+        if (state1.equals(DataState.NODATA)) {
+            return log.exit(state2);
+        }
+        if (state2.equals(DataState.NODATA)) {
+            return log.exit(state1);
+        }
+        if (state1.compareTo(state2) <= 0) {
+            return log.exit(state1);
+        } 
+        return log.exit(state2);
+    }
+    
+    /**
+     * Determines whether this {@code CallParams} and {@code otherParams} have 
+     * exactly the same {@code DataState} for each data type. A {@code null} 
+     * {@code DataState} or {@code NODATA} will be considered equivalent.
+     * 
+     * @param otherParams   A {@code CallParams} for which we want to compare 
+     *                      the {@code DataState}s with those of this {@code CallParams}.
+     * @return  {@code true} if this {@code CallParams} and {@code otherParams} 
+     *          have the same {@code DataState}s.
+     * @see #equivalent(DataState, DataState)
+     */
+    private boolean haveSameDataStates(CallParams otherParams) {
+        log.entry(otherParams);
+        
+        if (!equivalent(this.getReferenceCallTO().getAffymetrixData(), 
+             otherParams.getReferenceCallTO().getAffymetrixData())) {
+            return log.exit(false);
+        }
+        if (!equivalent(this.getReferenceCallTO().getESTData(), 
+                otherParams.getReferenceCallTO().getESTData())) {
+            return log.exit(false);
+        }
+        if (!equivalent(this.getReferenceCallTO().getInSituData(), 
+                otherParams.getReferenceCallTO().getInSituData())) {
+            return log.exit(false);
+        }
+        if (!equivalent(this.getReferenceCallTO().getRelaxedInSituData(), 
+                otherParams.getReferenceCallTO().getRelaxedInSituData())) {
+            return log.exit(false);
+        }
+        if (!equivalent(this.getReferenceCallTO().getRNASeqData(), 
+                otherParams.getReferenceCallTO().getRNASeqData())) {
+            return log.exit(false);
+        }
+        return log.exit(true);
+    }
+    
+    /**
+     * Check whether {@code state1} and {@code state2} are equivalent. This is 
+     * different from {@code equals}, as {@code DataState}s {@code null} or equals to 
+     * {@code NODATA} will be considered equivalent. Otherwise, they must be equal.
+     * 
+     * @param state1    The first {@code DataState} to be compared
+     * @param state2    The second {@code DataState} to be compared
+     * @return  {@code true} if {@code state1} and {@code state2} are equivalent.
+     */
+    private static boolean equivalent(DataState state1, DataState state2) {
+        log.entry(state1, state2);
+        if (  ( 
+                (state1 == null || state1.equals(DataState.NODATA)) && 
+                (state2 == null || state2.equals(DataState.NODATA))
+              ) 
+              || 
+              (state1 != null && state1.equals(state2))
+           ) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    //****************************************
+    // ALL DATA TYPES GETTER/SETTER
+    //****************************************
     /**
      * Returns the {@code boolean} defining whether, when there are conditions on 
      * the data types that should have contributed to the generation of the calls 

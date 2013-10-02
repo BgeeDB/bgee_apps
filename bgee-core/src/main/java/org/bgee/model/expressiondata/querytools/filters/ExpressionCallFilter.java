@@ -114,7 +114,8 @@ public class ExpressionCallFilter extends BasicCallFilter {
 		//An exception is that, if an ExpressionCallFilter not using propagation 
 		//was not requesting any specific quality, it could be merged with 
 		//an ExpressionCallFilter using propagation. But it would be a nightmare to deal 
-		//with all these specific cases in other parts of the code...
+		//with all these specific cases in other parts of the code, as these calls 
+		//would not be flagged "not taking into account substructures" anymore...
 		//So, we simply do not merge in that case.
 		if (this.isIncludeSubstructures() != otherFilter.isIncludeSubstructures() || 
 			    this.isIncludeSubStages() != otherFilter.isIncludeSubStages()) {

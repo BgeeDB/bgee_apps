@@ -134,7 +134,7 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
     }
 
     /**
-     * Determines whether this {@code ExpressionCallFilter} and 
+     * Determines whether this {@code DiffExpressionCallFilter} and 
      * {@code filterToMerge} can be merged. 
      * <p>
      * If {@code sameEntity} is {@code true}, it means that {@code filterToMerge} 
@@ -145,7 +145,7 @@ public class DiffExpressionCallFilter extends BasicCallFilter {
      * @param filterToMerge   A {@code CallFilter} that is tried to be merged 
      *                      with this {@code ExpressionCallFilter}.
      * @param sameEntity    a {@code boolean} defining whether {@code filterToMerge} 
-     *                      and this {@code ExpressionCallFilter} are related to a same 
+     *                      and this {@code DiffExpressionCallFilter} are related to a same 
      *                      {@code Entity}, or different ones. 
      * @return              {@code true} if they could be merged. 
      */

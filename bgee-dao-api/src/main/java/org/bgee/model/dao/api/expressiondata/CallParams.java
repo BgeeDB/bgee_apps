@@ -2,6 +2,7 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
@@ -569,6 +570,20 @@ public abstract class CallParams {
         if (!this.getGeneIds().equals(otherParams.getGeneIds())) {
             diff++;
         }
+        if ((this.isUseAnatDescendants() && !this.getAnatEntityIds().isEmpty()) != 
+            (otherParams.isUseAnatDescendants() && 
+                    !otherParams.getAnatEntityIds().isEmpty())) {
+            diff++;
+        }
+        if ((this.isUseDevDescendants() && !this.getDevStageIds().isEmpty()) != 
+            (otherParams.isUseDevDescendants() && 
+                    !otherParams.getDevStageIds().isEmpty())) {
+            diff++;
+        }
+        if ((this.isAllDataTypes() && this.getDataTypesSetCount() > 1) != 
+            (otherParams.isAllDataTypes() && otherParams.getDataTypesSetCount() > 1)) {
+            diff++;
+        }
         
         return log.exit(diff);
     }
@@ -855,7 +870,7 @@ public abstract class CallParams {
         this.anatEntityIds.addAll(ids);
     }
     /**
-     * Returns the {@code Set} of {@code String}s that are the IDs 
+     * Returns the unmodifiable {@code Set} of {@code String}s that are the IDs 
      * of anatomical entities allowing to filter the calls to use. 
      * Only calls with an anatomical entity ID equals to one 
      * of the ID in this {@code Set} will be used. 
@@ -867,12 +882,20 @@ public abstract class CallParams {
      * latter parameter has nothing to do with data propagation from substructures, 
      * see its documentation for more details.
      * 
-     * @return      A {@code Collection} of {@code String}s that are the IDs 
+     * @return      An unmodifiable {@code Collection} of {@code String}s that are the IDs 
      *              of anatomical entities used to filter the calls to use.
      * @see #isUseAnatDescendants()
      */
     public Set<String> getAnatEntityIds() {
-        return this.anatEntityIds;
+        return Collections.unmodifiableSet(this.anatEntityIds);
+    }
+    /**
+     * Clears the {@code Set} of {@code String}s that are the IDs 
+     * of anatomical entities allowing to filter the calls to use. 
+     * @see #getAnatEntityIds()
+     */
+    public void clearAnatEntityIds() {
+        this.anatEntityIds.clear();
     }
     /**
      * Returns the {@code boolean} defining whether calls for descendants of 
@@ -976,7 +999,7 @@ public abstract class CallParams {
         this.devStageIds.addAll(ids);
     }
     /**
-     * Returns the {@code Set} of {@code String}s that are the IDs 
+     * Returns the unmodifiable {@code Set} of {@code String}s that are the IDs 
      * of developmental stages allowing to filter the calls to use. 
      * Only calls with a developmental stage ID equals to one 
      * of the ID in this {@code Set} will be used. 
@@ -988,12 +1011,20 @@ public abstract class CallParams {
      * latter parameter has nothing to do with data propagation from sub-stages, 
      * see its documentation for more details.
      * 
-     * @return      A {@code Collection} of {@code String}s that are the IDs 
+     * @return      A unmodifiable {@code Collection} of {@code String}s that are the IDs 
      *              of developmental stages used to filter the calls to use.
      * @see #isUseDevDescendants()
      */
     public Set<String> getDevStageIds() {
-        return this.devStageIds;
+        return Collections.unmodifiableSet(this.devStageIds);
+    }
+    /**
+     * Clears the {@code Set} of {@code String}s that are the IDs 
+     * of developmental stages allowing to filter the calls to use. 
+     * @see #getDevStageIds()
+     */
+    public void clearDevStageIds() {
+        this.devStageIds.clear();
     }
     /**
      * Returns the {@code boolean} defining whether calls for descendants of 
@@ -1081,16 +1112,24 @@ public abstract class CallParams {
         this.geneIds.addAll(ids);
     }
     /**
-     * Returns the {@code Set} of {@code String}s that are the IDs 
+     * Returns the unmodifiable {@code Set} of {@code String}s that are the IDs 
      * of genes allowing to filter the calls to use. 
      * Only calls with a gene ID equals to one 
      * of the ID in this {@code Set} will be used. 
      * 
-     * @return      A {@code Collection} of {@code String}s that are the IDs 
+     * @return      An unmodifiable {@code Collection} of {@code String}s that are the IDs 
      *              of genes used to filter the calls to use.
      */
     public Set<String> getGeneIds() {
-        return this.geneIds;
+        return Collections.unmodifiableSet(this.geneIds);
+    }
+    /**
+     * Clears the {@code Set} of {@code String}s that are the IDs 
+     * of genes allowing to filter the calls to use. 
+     * @see #getGeneIds()
+     */
+    public void clearGeneIds() {
+        this.geneIds.clear();
     }
     
     //****************************************

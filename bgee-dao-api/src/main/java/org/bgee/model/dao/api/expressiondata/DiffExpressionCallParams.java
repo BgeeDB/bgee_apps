@@ -124,6 +124,13 @@ public class DiffExpressionCallParams extends CallParams {
             return log.exit(false);
         }
         DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
+        
+        //if one of the CallParams has no restriction at all (all data retrieved), 
+        //then obviously a merging can occur, as the data retrieved by one CallParams 
+        //will be a subset of the data retrieved by the other one.
+        if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
+            return log.exit(true);
+        }
 
         //here we cannot just keep the greatest condition count, 
         //the summary of differential expression calls are different 

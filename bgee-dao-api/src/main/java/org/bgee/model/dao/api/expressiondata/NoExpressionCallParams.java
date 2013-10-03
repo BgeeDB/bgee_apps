@@ -113,6 +113,13 @@ public class NoExpressionCallParams extends CallParams {
         if (this.isIncludeParentStructures() != otherParams.isIncludeParentStructures()) {
             return log.exit(false);
         }
+        
+        //if one of the CallParams has no restriction at all (all data retrieved), 
+        //then obviously a merging can occur, as the data retrieved by one CallParams 
+        //will be a subset of the data retrieved by the other one.
+        if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
+            return log.exit(true);
+        }
 
         //of note, this method also takes care of the check for data types 
         //and qualities
@@ -141,16 +148,23 @@ public class NoExpressionCallParams extends CallParams {
     @Override
     protected int getDifferentParametersCount(CallParams otherParams) {
         log.entry();
-        //the only parameters specific to this class are not seen as parameters 
-        //restraining the data retrieved, but rather, as parameters about the way 
-        //the data were generated (taking into account substructures or not, etc).
-        //And NoExpressionCallParams with differences for these parameters could not 
-        //be merged (see method canMerge).
-        //
-        //So we do not consider these parameters as relevant for this method call.
-        //We simply delegate to the super class
+        log.entry();
+        int diff = 0;
+        if (otherParams instanceof NoExpressionCallParams) {
+            NoExpressionCallParams params = (NoExpressionCallParams) otherParams;
+            //these parameters do not really restrict data retrieved, but 
+            //for the sake of completeness...
+            //in any case, NoExpressionCallParams with different values for 
+            //these parameters are not mergeable
+            if (this.isIncludeParentStructures() != params.isIncludeParentStructures()) {
+                diff++;
+            }
+        } else {
+            //number of parameters in this class 
+            diff = 1;
+        }
         
-        return log.exit(super.getDifferentParametersCount(otherParams));
+        return log.exit(diff + super.getDifferentParametersCount(otherParams));
     }
     
     //**************************************

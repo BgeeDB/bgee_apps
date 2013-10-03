@@ -1,9 +1,10 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -188,6 +189,80 @@ public abstract class CallParams {
     //****************************************
     // MERGE METHODS
     //****************************************
+    javadoc here, and check everything
+    public static Set<CallParams> merge(Collection<CallParams> allCallParams) {
+        //we try to merge all CallParams provided as much as possible.
+        //We create a Deque containing all CallParams. It will allow to replace 
+        //a CallParams in the deque if it could not be merged with another CallParams, 
+        //to try again to merge it with another CallParams in the deque.
+        Deque<CallParams> paramsToMerge = new ArrayDeque<CallParams>(allCallParams);
+        //store the merged CallParams
+        Set<CallParams> mergedParams = new HashSet<CallParams>();
+        CallParams paramsInspected;
+        while ((paramsInspected = paramsToMerge.pollFirst()) != null) {
+            //we need the size of the deque to know when the current paramsInspected 
+            //will have been compared to all other CallParams. Otherwise, as
+            //CallParams not merged with paramsInspected are replaced at the end of the deque, 
+            //we would try to merge them with paramsInspected again.
+            int size = paramsToMerge.size();
+            log.debug("Start merging for CallParams {}. Number of CallParams to be compared to: {}", 
+                    paramsInspected, size);
+            
+            //and we need to know whether paramsInspected was merged with at least 
+            //another CallParams
+            boolean mergeHappened = false;
+            
+            //compare to all other CallParams
+            for (int i = 0; i < size; i++) {
+                CallParams tryToMerge = paramsToMerge.pollFirst();
+                log.trace("Try to merge with CallParams {}", tryToMerge);
+                //try to merge
+                CallParams merged = paramsInspected.merge(tryToMerge);
+                if (merged != null) {
+                    //if merge successful
+                    //will try to merge even further this merged CallParams
+                    paramsInspected = merged;
+                    mergeHappened = true;
+                    log.trace("Merge successful");
+                } else {
+                    //otherwise, put back tryToMerge in the Deque, so that 
+                    //it can latter be tried to merge it with other CallParams.
+                    paramsToMerge.offerLast(tryToMerge);
+                    log.trace("Merge failed");
+                }
+            }
+            //current paramsInspected have been compared to all other CallParams.
+            //But if at least one merge occurred, we put it back in the deque 
+            //to try to merge it again: the order of the merges matters. 
+            //
+            //For instance, if a 1st CallParams defines a filter on geneId A  
+            //at devStageId A, a 2nd CallParams on geneId B at devStageId A, 
+            //and a 3rd CallParams defines filters both on geneId A and B, 
+            //but at devStageId B.
+            //If we try to merge the 1st CallParams and the 3rd CallParams, 
+            //it will fail: it is not equivalent to query data for gene A at stage A 
+            //in one hand, and for gene A or B at stage B in the other hand.
+            //But we can merge the 1st CallParams and the 2nd CallParams, 
+            //the resulting CallParams will query data for gene A or for gene B 
+            //at stage A. 
+            //This new CallParams can then be merged further with the 3rd CallParams: 
+            //the resulting additional merged CallParams will query data for gene A 
+            //or for gene B, at stage A or at stage B. The resulting query will be 
+            //equivalent to the original three first queries.
+            if (mergeHappened) {
+                paramsToMerge.offerFirst(paramsInspected);
+                log.debug("Current CallParams inspected compared to all others, a merge occured, will try to merge again with remaining CallParams");
+            } else {
+                mergedParams.add(paramsInspected);
+                log.debug("Done merging for CallParams Inspected, resulting CallParams: {} ", 
+                    paramsInspected);
+            }
+        }
+        
+        log.debug("Done merging of all CallParams, resulting merged CallParams: {}", 
+                  mergedParams);
+        return log.exit(mergedParams);
+    }
     /**
      * Merges this {@code CallParams} with {@code paramsToMerge}, 
      * and returns the resulting merged new {@code CallParams}.
@@ -202,7 +277,7 @@ public abstract class CallParams {
      *          the merging of this {@code CallParams} and of 
      *          {@code paramsToMerge}, or {@code null} if they could not be merged. 
      */
-    protected abstract CallParams merge(CallParams paramsToMerge);
+    public abstract CallParams merge(CallParams paramsToMerge);
     
     /**
      * Merges attributes of this {@code CallParams} with {@code paramsToMerge}, 
@@ -216,37 +291,27 @@ public abstract class CallParams {
      * This method is needed so that child classes do not have to take care 
      * of the merging of the attributes held by this class. 
      * <p>
-     * If {@code paramsToMerge} cannot be merged with this {@code CallParams}, 
-     * an {@code IllegalArgumentException} is thrown. This verification is achieved 
-     * by calling {@link #canMerge(CallParams)}. This latter method only checks 
-     * compatibility for attributes held by this abstract class.
-     * A child class can still decide that the merging is not possible, according 
-     * to its own attributes. 
+     * This method must be called only if {@link #canMerge(CallParams)} returns 
+     * {@code true}, otherwise the merging will be meaningless. This methods 
+     * does not do the check itself, to save computations, as {@code canMerge} is 
+     * already called by subclasses prior to calling this method. 
      * 
      * @param paramsToMerge       a {@code CallParams} to be merged with this one.
      * @param newResultingParams  the {@code CallParams} resulting from the merging, 
      *                            into which merged attributes will be loaded.
-     * @throws IllegalArgumentException If {@code paramsToMerge} should not be merged 
-     *                                  with this {@code CallParams}.
      * @see {@link #canMerge(CallParams)}
      */
     protected void merge(CallParams paramsToMerge, CallParams newResultingParams) 
             throws IllegalArgumentException {
         log.entry(paramsToMerge, newResultingParams);
-        
-        if (!this.canMerge(paramsToMerge)) {
-            throw log.throwing(new IllegalArgumentException("The CallParams provided " +
-                    "to be merged is not compatible with the main CallParams that " +
-                    "this method was called on. Merging not possible."));
-        }
 
         //we blindly perform the merging here, even if if meaningless, it is the 
         //responsibility of the method canMerge to determine whether it is appropriate.
         
         //merge allDataTypes. When allDataTypes is true, we apply it to the merged params 
         //only if there is more than 1 data type set, otherwise it is equivalent to false.
-        if ((this.isAllDataTypes() && this.getDataTypesSetCount() != 1) || 
-                (paramsToMerge.isAllDataTypes() && paramsToMerge.getDataTypesSetCount() != 1)) {
+        if ((this.isAllDataTypes() && this.getDataTypesSetCount() > 1) || 
+                (paramsToMerge.isAllDataTypes() && paramsToMerge.getDataTypesSetCount() > 1)) {
             newResultingParams.setAllDataTypes(true);
         }
         
@@ -271,12 +336,16 @@ public abstract class CallParams {
         newResultingParams.addAllAnatEntityIds(this.getAnatEntityIds());
         newResultingParams.addAllAnatEntityIds(paramsToMerge.getAnatEntityIds());
         newResultingParams.setUseAnatDescendants(
-                this.isUseAnatDescendants() || paramsToMerge.isUseAnatDescendants());
+                (this.isUseAnatDescendants() && !this.getAnatEntityIds().isEmpty()) || 
+                (paramsToMerge.isUseAnatDescendants() && 
+                        !paramsToMerge.getAnatEntityIds().isEmpty()));
 
         newResultingParams.addAllDevStageIds(this.getDevStageIds());
         newResultingParams.addAllDevStageIds(paramsToMerge.getDevStageIds());
         newResultingParams.setUseDevDescendants(
-                this.isUseDevDescendants() || paramsToMerge.isUseDevDescendants());
+                (this.isUseDevDescendants() && !this.getDevStageIds().isEmpty()) || 
+                (paramsToMerge.isUseDevDescendants() && 
+                        !paramsToMerge.getDevStageIds().isEmpty()));
 
         newResultingParams.addAllGeneIds(this.getGeneIds());
         newResultingParams.addAllGeneIds(paramsToMerge.getGeneIds());
@@ -306,18 +375,122 @@ public abstract class CallParams {
         //have only one data type, then it is equivalent to having 
         //isAllDataTypes returning false
         boolean thisAllDataTypes = this.isAllDataTypes() && 
-                this.getDataTypesSetCount() != 1;
+                this.getDataTypesSetCount() > 1;
         boolean otherAllDataTypes = paramsToMerge.isAllDataTypes() && 
-                paramsToMerge.getDataTypesSetCount() != 1;
+                paramsToMerge.getDataTypesSetCount() > 1;
+        //compare the DataStates of each data type
+        boolean sameDataStates = this.haveSameDataStates(paramsToMerge);
         
         if (thisAllDataTypes != otherAllDataTypes) {
+            //difference in the parameter isAllDataTypes make them non-mergeable.
             return log.exit(false);
-        } else if (thisAllDataTypes && !this.haveSameDataStates(paramsToMerge)) {
+        } else if (thisAllDataTypes && !sameDataStates) {
             //if both this CallParams and paramsToMerge have isAllDataTypes true,
             //they should have exactly the same data types and qualities
             return log.exit(false);
         }
         
+        //if it is not the same way of filtering anatomical entities or 
+        //developmental stages, cannot be merged
+        if ( 
+             (this.isUseAnatDescendants() && !this.getAnatEntityIds().isEmpty()) != 
+             (paramsToMerge.isUseAnatDescendants() && 
+                 !paramsToMerge.getAnatEntityIds().isEmpty()) || 
+               
+             (this.isUseDevDescendants() && !this.getDevStageIds().isEmpty()) != 
+             (paramsToMerge.isUseDevDescendants() && 
+                 !paramsToMerge.getDevStageIds().isEmpty())
+                 
+           ) {
+            return log.exit(false);
+        }
+        
+        //count the number of filters on IDs that differ 
+        //(geneIds, anatEntityIds, devStageIds)
+        int diffParamCount = this.differentFilterCount(paramsToMerge);
+        //if there is absolutely no difference between the parameters used 
+        //to filter anat entities, dev stages, and genes, then at this point 
+        //these CallParams could be merged, even if their data types and qualities 
+        //are slightly different: they can be merged if the DataStates of all 
+        //their data types are equal, or consecutive (meaning, their ordinal 
+        //is consecutive). For instance LOWQUALITY and HIGHQUALITY, or 
+        //NODATA and LOWQUALITY, but not NODATA and HIGHQUALITY.
+        //
+        //This is because it would be equivalent to do one query to retrieve data 
+        //with a quality >= LOW, and another query to retrieve data with quality >= HIGH, 
+        //or to do only one query to retrieve data with a quality >= LOW. 
+        //But as you can see, if the qualities were not consecutive, it would not 
+        //be equivalent.
+        if (diffParamCount == 0 && this.haveCoherentDataStates(paramsToMerge)) {
+            return log.exit(true);
+        }
+        
+        //otherwise, if only *one* of the filter parameters differ, and if the CallParams 
+        //have exactly the same data types and qualities, and if they provide 
+        //filters for the same IDs, or do not provide filters for the same IDs, 
+        //then they can be merged. 
+        if (!sameDataStates) {
+            return log.exit(false);
+        }
+        //Consider for instance a 1st CallParams defining a filter on geneId A, 
+        //and a 2nd CallParams defining a filter on geneId B, and consider 
+        //they are identical for all other parameters; they can be merged, 
+        //as this simply represents a "OR" condition on geneIds 
+        //("where geneId = A or geneId = B"). 
+        //
+        //But if both the CallParams also had another filter, on different devStageIds 
+        //for instance, then they could not be merged, the query generated would not 
+        //be equivalent to the two distinct queries, it would not be a simple "OR" 
+        //anymore (more than 1 filter different).
+        
+        //Now consider that one of the CallParams define no filter at all, and the other 
+        //CallParams defines a filter on a geneId. They would have only 1 difference, 
+        //so we could think they are mergeable. But in fact they are not:
+        //we cannot build an equivalent query requesting any genes on one hand, 
+        //and a gene in particular on the other hand, at the same time. It is only 
+        //if both the CallParams define a filter on geneIds that they could be merged.
+        if (this.getAnatEntityIds().isEmpty() != paramsToMerge.getAnatEntityIds().isEmpty() || 
+            this.getDevStageIds().isEmpty() != paramsToMerge.getDevStageIds().isEmpty() || 
+            this.getGeneIds().isEmpty() != paramsToMerge.getGeneIds().isEmpty()) {
+            
+            return log.exit(false);
+        }
+        //OK, the CallParams define filters (or not) for the same parameters, 
+        //if they have only one difference they can be merged ("OR" condition).
+        if (diffParamCount == 1 && sameDataStates) {
+            return log.exit(true);
+        }
+        
+        //OK, nothing more to check
+        return log.exit(false);
+    }
+    
+    /**
+     * Returns the number of {@code Collection}s of {@code String}s used for filtering 
+     * that are different between this {@code CallParams} and {@code otherParams}. 
+     * This method compares between the two objects the {@code Set}s {@link 
+     * #getAnatEntityIds()}, {@link #getDevStageIds()}, and {@code #getGeneIds()}, 
+     * and count how many of them differ.
+     * 
+     * @param otherParams   The {@code CallParams} for which we want to compare 
+     *                      with this {@code CallParams} the {@code Collection}s 
+     *                      of IDs used for filtering.
+     * @return  The number of {@code Collection}s of IDs used for filtering that differ.
+     */
+    private int differentFilterCount(CallParams otherParams) {
+        log.entry(otherParams);
+        int diff = 0;
+        if (!this.getAnatEntityIds().equals(otherParams.getAnatEntityIds())) {
+            diff++;
+        }
+        if (!this.getDevStageIds().equals(otherParams.getDevStageIds())) {
+            diff++;
+        }
+        if (!this.getGeneIds().equals(otherParams.getGeneIds())) {
+            diff++;
+        }
+        
+        return log.exit(diff);
     }
     
     /**
@@ -353,29 +526,17 @@ public abstract class CallParams {
     /**
      * Merges {@code state1} with {@code state2}, and returns the resulting 
      * merged {@code DataState}. If one of the {@code DataState}s is 
-     * {@code null} or equals to {@code NODATA}, the other one is returned. 
-     * If they are both not {@code null} or different from {@code NODATA}, 
-     * then the {@code DataState} with the lowest cardinality will be returned. 
-     * If both are {@code null}, {@code null} is returned. If both are equal to 
-     * {@code NODATA}, {@code NODATA} is returned.
+     * {@code null}, then {@code NODATA} is returned. Otherwise, the {@code DataState} 
+     * with the lowest ordinal is returned.
      * 
-     * @param otherState    The {@code DataState} that is tried to be merged 
-     *                      with this one.
-     * @return              A {@code DataState} resulting from the merging.
+     * @param state1    The first {@code DataState} to be merged.
+     * @param state2    The second {@code DataState} to be merged.
+     * @return          A {@code DataState} resulting from the merging.
      */
     private static DataState mergeDataState(DataState state1, DataState state2) {
         log.entry(state1, state2);
-        if (state1 == null) {
-            return log.exit(state2);
-        }
-        if (state2 == null) {
-            return log.exit(state1);
-        }
-        if (state1.equals(DataState.NODATA)) {
-            return log.exit(state2);
-        }
-        if (state2.equals(DataState.NODATA)) {
-            return log.exit(state1);
+        if (state1 == null || state2 == null) {
+            return log.exit(DataState.NODATA);
         }
         if (state1.compareTo(state2) <= 0) {
             return log.exit(state1);
@@ -441,6 +602,86 @@ public abstract class CallParams {
             return log.exit(true);
         }
         return log.exit(false);
+    }
+    
+    /**
+     * Determines whether the {@code DataState}s of {@code CallParams} and of 
+     * {@code otherParams} are equivalent or consecutive, for each data type. 
+     * A {@code null} {@code DataState} will be considered to be a {@code NODATA} 
+     * state. The method used to compare the {@code DataState}s is 
+     * {@link #coherent(DataState, DataState)}.
+     * <p>
+     * Consecutive means: with consecutive ordinal. This is used because 
+     * in some conditions, two {@code CallParams} can be merged even if the 
+     * {@code DataState}s of their data types are different, but only if they 
+     * are consecutive. For instance, it would be equivalent to do one query 
+     * to retrieve data with a quality >= LOW, and another query to retrieve 
+     * data with quality >= HIGH, or to do only one query to retrieve data 
+     * with a quality >= LOW, as these qualities are consecutive. 
+     * But as you can see, if the qualities were not consecutive, it would not be 
+     * an equivalent query (for instance, quality >= NODATA vs quality >= HIGH).
+     * 
+     * @param otherParams   A {@code CallParams} for which we want to compare 
+     *                      the {@code DataState}s with those of this {@code CallParams}.
+     * @return  {@code true} if this {@code CallParams} and {@code otherParams} 
+     *          have equivalent or consecutive {@code DataState}s for each data type.
+     * @see #coherent(DataState, DataState)
+     */
+    private boolean haveCoherentDataStates(CallParams otherParams) {
+        log.entry(otherParams);
+        
+        if (!coherent(this.getReferenceCallTO().getAffymetrixData(), 
+             otherParams.getReferenceCallTO().getAffymetrixData())) {
+            return log.exit(false);
+        }
+        if (!coherent(this.getReferenceCallTO().getESTData(), 
+                otherParams.getReferenceCallTO().getESTData())) {
+            return log.exit(false);
+        }
+        if (!coherent(this.getReferenceCallTO().getInSituData(), 
+                otherParams.getReferenceCallTO().getInSituData())) {
+            return log.exit(false);
+        }
+        if (!coherent(this.getReferenceCallTO().getRelaxedInSituData(), 
+                otherParams.getReferenceCallTO().getRelaxedInSituData())) {
+            return log.exit(false);
+        }
+        if (!coherent(this.getReferenceCallTO().getRNASeqData(), 
+                otherParams.getReferenceCallTO().getRNASeqData())) {
+            return log.exit(false);
+        }
+        return log.exit(true);
+    }
+    
+    /**
+     * Check whether {@code state1} and {@code state2} are equivalent (as defined 
+     * by {@link #equivalent(DataState, DataState)}), or consecutive. 
+     * Consecutive means that they have consecutive ordinal. A {@code DataState} 
+     * {@code null} will be considered to be equal to {@code NODATA}.
+     * 
+     * @param state1    The first {@code DataState} to be compared
+     * @param state2    The second {@code DataState} to be compared
+     * @return  {@code true} if {@code state1} and {@code state2} are equivalent 
+     *          or consecutive.
+     * @see #equivalen(DataState, DataState)
+     */
+    private static boolean coherent(DataState state1, DataState state2) {
+        log.entry(state1, state2);
+        
+        if (equivalent(state1, state2)) {
+            return log.exit(true);
+        }
+        
+        DataState compare1 = state1;
+        DataState compare2 = state2;
+        if (state1 == null) {
+            compare1 = DataState.NODATA;
+        }
+        if (state2 == null) {
+            compare2 = DataState.NODATA;
+        }
+        return log.exit(compare1.ordinal() <= compare2.ordinal() + 1 && 
+                compare1.ordinal() >= compare2.ordinal() - 1);
     }
     
     //****************************************

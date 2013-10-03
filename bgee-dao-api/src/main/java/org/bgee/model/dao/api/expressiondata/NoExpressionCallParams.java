@@ -47,7 +47,7 @@ public class NoExpressionCallParams extends CallParams {
      * @see #canMerge(CallParams, boolean)
      */
     @Override
-    protected NoExpressionCallParams merge(CallParams paramsToMerge) {
+    public NoExpressionCallParams merge(CallParams paramsToMerge) {
         log.entry(paramsToMerge);
         //first, determine whether we can merge the CallParams
         if (!this.canMerge(paramsToMerge)) {
@@ -78,19 +78,14 @@ public class NoExpressionCallParams extends CallParams {
      *                      with this {@code NoExpressionCallParams}.
      * @return              {@code true} if they could be merged. 
      */
-    private boolean canMerge(CallParams paramsToMerge) {
+    @Override
+    protected boolean canMerge(CallParams paramsToMerge) {
         log.entry(paramsToMerge);
         
         if (!(paramsToMerge instanceof NoExpressionCallParams)) {
             return log.exit(false);
         }
         NoExpressionCallParams otherParams = (NoExpressionCallParams) paramsToMerge;
-
-        //of note, this method also takes care of the check for data types 
-        //and qualities
-        if (!super.canMerge(otherParams)) {
-            return log.exit(false);
-        }
         
         //NoExpressionCallParams with different expression propagation rules 
         //are not merged, because no-expression calls using propagation would use 
@@ -105,6 +100,12 @@ public class NoExpressionCallParams extends CallParams {
         //would not be flagged "not taking into account parent structures" anymore...
         //So, we simply do not merge in that case.
         if (this.isIncludeParentStructures() != otherParams.isIncludeParentStructures()) {
+            return log.exit(false);
+        }
+
+        //of note, this method also takes care of the check for data types 
+        //and qualities
+        if (!super.canMerge(otherParams)) {
             return log.exit(false);
         }
         

@@ -63,7 +63,7 @@ public class DiffExpressionCallParams extends CallParams {
      * @see #canMerge(CallParams, boolean)
      */
     @Override
-    protected DiffExpressionCallParams merge(CallParams paramsToMerge) {
+    public DiffExpressionCallParams merge(CallParams paramsToMerge) {
         log.entry(paramsToMerge);
         //first, determine whether we can merge the CallParams
         if (!this.canMerge(paramsToMerge)) {
@@ -98,23 +98,24 @@ public class DiffExpressionCallParams extends CallParams {
      *                      with this {@code DiffExpressionCallParams}.
      * @return              {@code true} if they could be merged. 
      */
-    private boolean canMerge(CallParams paramsToMerge) {
+    @Override
+    protected boolean canMerge(CallParams paramsToMerge) {
         log.entry(paramsToMerge);
         
         if (!(paramsToMerge instanceof DiffExpressionCallParams)) {
             return log.exit(false);
         }
         DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
-
-        //of note, this method also takes care of the check for data types 
-        //and qualities
-        if (!super.canMerge(otherParams)) {
-            return log.exit(false);
-        }
         
         if (!this.getDiffCallType().equals(otherParams.getDiffCallType()) || 
                 !this.getFactor().equals(otherParams.getFactor()) || 
                 this.getMinConditionCount() != otherParams.getMinConditionCount()) {
+            return log.exit(false);
+        }
+
+        //of note, this method also takes care of the check for data types 
+        //and qualities
+        if (!super.canMerge(otherParams)) {
             return log.exit(false);
         }
         

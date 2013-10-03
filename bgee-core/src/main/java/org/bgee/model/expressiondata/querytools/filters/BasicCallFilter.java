@@ -48,9 +48,9 @@ abstract class BasicCallFilter implements CallFilter {
 	private final Call referenceCall;
 	/**
 	 * A {@code boolean} defining whether, when several {@code DataType}s 
-	 * are requested for this {@code BasicCallFilter} (or none, meaning all data types 
-	 * should be used), the data should be retrieved using any of them, 
-	 * or based on the agreement of all of them. The recommended value is {@code false}.
+	 * are requested for this {@code BasicCallFilter}, the data should be retrieved 
+	 * using any of them, or based on the agreement of all of them. 
+	 * The recommended value is {@code false}.
 	 * <p>
 	 * For instance, if the {@code CallType} requested is {@code Expression}, 
 	 * and the {@code DataType}s are {@code AFFYMETRIX} and {@code RNA-Seq}: 
@@ -493,8 +493,7 @@ abstract class BasicCallFilter implements CallFilter {
 
 	/**
 	 * Return the {@code boolean} defining whether, when {@link #getDataTypes()}
-	 * returns several {@code DataType}s (or none, meaning all data types should 
-	 * be used), data should be retrieved using any of them, 
+	 * returns several {@code DataType}s, data should be retrieved using any of them, 
 	 * or based on the agreement of all of them. 
 	 * <p>
 	 * For instance, if {@link #getCallType()} returns {@code Expression}, 
@@ -519,8 +518,7 @@ abstract class BasicCallFilter implements CallFilter {
 	}
 	/**
 	 * Set the {@code boolean} defining whether, when {@link #getDataTypes()}
-	 * returns several {@code DataType}s (or none, meaning all data types should 
-	 * be used), data should be retrieved using any of them, 
+	 * returns several {@code DataType}s, data should be retrieved using any of them, 
 	 * or based on the agreement of all of them. The recommended value is {@code false}.
 	 * <p>
 	 * For instance, if {@link #getCallType()} returns {@code Expression}, 
@@ -541,9 +539,7 @@ abstract class BasicCallFilter implements CallFilter {
 	 * @see #getCallTypes()
 	 */
 	public void setAllDataTypes(boolean allDataTypes) {
-		log.entry(allDataTypes);
 		this.allDataTypes = allDataTypes;
-		log.exit();
 	}
 
 }

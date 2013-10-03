@@ -45,7 +45,7 @@ public class ExpressionCallParams extends CallParams {
      * @see #canMerge(CallParams, boolean)
      */
     @Override
-    protected ExpressionCallParams merge(CallParams paramsToMerge) {
+    public ExpressionCallParams merge(CallParams paramsToMerge) {
         log.entry(paramsToMerge);
         //first, determine whether we can merge the CallParams
         if (!this.canMerge(paramsToMerge)) {
@@ -78,19 +78,14 @@ public class ExpressionCallParams extends CallParams {
      *                      with this {@code ExpressionCallParams}.
      * @return              {@code true} if they could be merged. 
      */
-    private boolean canMerge(CallParams paramsToMerge) {
+    @Override
+    protected boolean canMerge(CallParams paramsToMerge) {
         log.entry(paramsToMerge);
         
         if (!(paramsToMerge instanceof ExpressionCallParams)) {
             return log.exit(false);
         }
         ExpressionCallParams otherParams = (ExpressionCallParams) paramsToMerge;
-        
-        //of note, this method also takes care of the check for data types 
-        //and qualities
-        if (!super.canMerge(otherParams)) {
-            return log.exit(false);
-        }
         
         //ExpressionCallParams with different expression propagation rules 
         //are not merged, because expression calls using propagation would use 
@@ -106,6 +101,12 @@ public class ExpressionCallParams extends CallParams {
         //So, we simply do not merge in that case.
         if (this.isIncludeSubstructures() != otherParams.isIncludeSubstructures() || 
                 this.isIncludeSubStages() != otherParams.isIncludeSubStages()) {
+            return log.exit(false);
+        }
+        
+        //of note, this method also takes care of the check for data types 
+        //and qualities
+        if (!super.canMerge(otherParams)) {
             return log.exit(false);
         }
         

@@ -2,6 +2,8 @@ package org.bgee.model.dao.api.expressiondata;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,6 +47,469 @@ public class CallParamsTest extends TestAncestor {
             super.merge(paramsToMerge, newParams);
             return newParams;
         }
+    }
+    
+    /**
+     * Test the method {@link CallParams#getDifferentParametersCount(CallParams)}
+     */
+    @Test
+    public void shouldGetDifferentParametersCount() {
+        
+        CallParams params = new FakeCallParams();
+        CallParams paramsToCompare = new FakeCallParams();
+        String id = "testId";
+        assertEquals("incorrect number of parameters that are different", 0, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        params.addAnatEntityId(id);
+        assertEquals("incorrect number of parameters that are different", 1, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        params.addDevStageId(id);
+        assertEquals("incorrect number of parameters that are different", 2, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        params.addGeneId(id);
+        assertEquals("incorrect number of parameters that are different", 3, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        params.setUseAnatDescendants(true);
+        assertEquals("incorrect number of parameters that are different", 4, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        params.setUseDevDescendants(true);
+        assertEquals("incorrect number of parameters that are different", 5, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        params.setAllDataTypes(true);
+        assertEquals("incorrect number of parameters that are different", 5, 
+                params.getDifferentParametersCount(paramsToCompare));
+        //allDataTypes is considered only if at least 2 data types are set
+        params.setESTData(DataState.LOWQUALITY);
+        params.setAffymetrixData(DataState.LOWQUALITY);
+        assertEquals("incorrect number of parameters that are different", 6, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        
+        
+        
+        paramsToCompare.addAnatEntityId(id);
+        assertEquals("incorrect number of parameters that are different", 5, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        paramsToCompare.addDevStageId(id);
+        assertEquals("incorrect number of parameters that are different", 4, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        paramsToCompare.addGeneId(id);
+        assertEquals("incorrect number of parameters that are different", 3, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        paramsToCompare.setUseAnatDescendants(true);
+        assertEquals("incorrect number of parameters that are different", 2, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        paramsToCompare.setUseDevDescendants(true);
+        assertEquals("incorrect number of parameters that are different", 1, 
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        paramsToCompare.setAllDataTypes(true);
+        assertEquals("incorrect number of parameters that are different", 1, 
+                params.getDifferentParametersCount(paramsToCompare));
+        //allDataTypes is considered only if at least 2 data types are set
+        paramsToCompare.setESTData(DataState.LOWQUALITY);
+        paramsToCompare.setAffymetrixData(DataState.LOWQUALITY);
+        assertEquals("incorrect number of parameters that are different", 0, 
+                params.getDifferentParametersCount(paramsToCompare));
+    }
+    
+    /**
+     * Test the private method {@link CallParams#getDataTypesSetCount()}.
+     */
+    @Test
+    public void shouldGetDataTypesSetCount() throws NoSuchMethodException, 
+        SecurityException, IllegalAccessException, IllegalArgumentException, 
+        InvocationTargetException {
+        //in order to test private method
+        Method method = CallParams.class.getDeclaredMethod("getDataTypesSetCount", 
+                (Class<?>[]) null);
+        method.setAccessible(true);
+
+        CallParams params = new FakeCallParams();
+
+        assertEquals("Incorrect number of data types set.", 0, 
+                method.invoke(params, (Object[]) null));
+        
+        params.setAffymetrixData(DataState.LOWQUALITY);
+        assertEquals("Incorrect number of data types set.", 1, 
+                method.invoke(params, (Object[]) null));
+
+        params.setESTData(DataState.LOWQUALITY);
+        assertEquals("Incorrect number of data types set.", 2, 
+                method.invoke(params, (Object[]) null));
+
+        params.setInSituData(DataState.HIGHQUALITY);
+        assertEquals("Incorrect number of data types set.", 3, 
+                method.invoke(params, (Object[]) null));
+
+        params.setRelaxedInSituData(DataState.HIGHQUALITY);
+        assertEquals("Incorrect number of data types set.", 4, 
+                method.invoke(params, (Object[]) null));
+
+        params.setRNASeqData(DataState.LOWQUALITY);
+        assertEquals("Incorrect number of data types set.", 5, 
+                method.invoke(params, (Object[]) null));
+
+        params.setAffymetrixData(null);
+        assertEquals("Incorrect number of data types set.", 4, 
+                method.invoke(params, (Object[]) null));
+
+        params.setESTData(DataState.NODATA);
+        assertEquals("Incorrect number of data types set.", 3, 
+                method.invoke(params, (Object[]) null));
+        
+    }
+    
+    /**
+     * Test the private method {@link CallParams#hasSameDataStates(CallParams)}.
+     */
+    @Test
+    public void testHasSameDataStates() throws NoSuchMethodException, 
+        SecurityException, IllegalAccessException, IllegalArgumentException, 
+        InvocationTargetException {
+        //in order to test private method
+        Method method = CallParams.class.getDeclaredMethod("hasSameDataStates", 
+                CallParams.class);
+        method.setAccessible(true);
+
+        CallParams params = new FakeCallParams();
+        CallParams paramsToCompare = new FakeCallParams();
+        
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+ 
+        params.setAffymetrixData(DataState.LOWQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setAffymetrixData(DataState.HIGHQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setAffymetrixData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+ 
+        params.setESTData(DataState.LOWQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setESTData(DataState.HIGHQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setESTData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+ 
+        params.setInSituData(DataState.LOWQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setInSituData(DataState.HIGHQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setInSituData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+ 
+        params.setRelaxedInSituData(DataState.LOWQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setRelaxedInSituData(DataState.HIGHQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setRelaxedInSituData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+ 
+        params.setRNASeqData(DataState.LOWQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setRNASeqData(DataState.HIGHQUALITY);
+        assertFalse("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setRNASeqData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        
+
+
+        params.setAffymetrixData(DataState.NODATA);
+        paramsToCompare.setAffymetrixData(null);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        
+        params.setESTData(DataState.NODATA);
+        paramsToCompare.setESTData(null);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        
+        params.setInSituData(DataState.NODATA);
+        paramsToCompare.setInSituData(null);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        
+        params.setRelaxedInSituData(DataState.NODATA);
+        paramsToCompare.setRelaxedInSituData(null);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+
+        params.setRNASeqData(DataState.NODATA);
+        paramsToCompare.setRNASeqData(null);
+        assertTrue("Incorrect boolean returned by hasSameDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+    }
+    
+    /**
+     * Test the private method {@link CallParams#hasCoherentDataStates(CallParams)}.
+     */
+    @Test
+    public void testHasCoherentDataStates() throws NoSuchMethodException, 
+        SecurityException, IllegalAccessException, IllegalArgumentException, 
+        InvocationTargetException {
+        //in order to test private method
+        Method method = CallParams.class.getDeclaredMethod("hasCoherentDataStates", 
+                CallParams.class);
+        method.setAccessible(true);
+
+        CallParams params = new FakeCallParams();
+        CallParams paramsToCompare = new FakeCallParams();
+        
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+ 
+        params.setAffymetrixData(DataState.LOWQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setAffymetrixData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setAffymetrixData(DataState.NODATA);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setAffymetrixData(null);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        //to continue the test 
+        params.setAffymetrixData(DataState.HIGHQUALITY);
+ 
+        params.setESTData(DataState.LOWQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setESTData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setESTData(DataState.NODATA);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setESTData(null);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        //to continue the test 
+        params.setESTData(DataState.HIGHQUALITY);
+ 
+        params.setInSituData(DataState.LOWQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setInSituData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setInSituData(DataState.NODATA);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setInSituData(null);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        //to continue the test 
+        params.setInSituData(DataState.HIGHQUALITY);
+ 
+        params.setRelaxedInSituData(DataState.LOWQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setRelaxedInSituData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setRelaxedInSituData(DataState.NODATA);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setRelaxedInSituData(null);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        //to continue the test 
+        params.setRelaxedInSituData(DataState.HIGHQUALITY);
+ 
+        params.setRNASeqData(DataState.LOWQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        paramsToCompare.setRNASeqData(DataState.HIGHQUALITY);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setRNASeqData(DataState.NODATA);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        params.setRNASeqData(null);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        //to continue the test 
+        params.setRNASeqData(DataState.HIGHQUALITY);
+        
+        //test several data types and situations at the same time
+        params = new FakeCallParams();
+        paramsToCompare = new FakeCallParams();
+        params.setAffymetrixData(DataState.HIGHQUALITY);
+        paramsToCompare.setAffymetrixData(DataState.HIGHQUALITY);
+        params.setESTData(DataState.HIGHQUALITY);
+        paramsToCompare.setESTData(DataState.LOWQUALITY);
+        params.setInSituData(DataState.LOWQUALITY);
+        paramsToCompare.setInSituData(DataState.NODATA);
+        params.setRelaxedInSituData(DataState.LOWQUALITY);
+        paramsToCompare.setRelaxedInSituData(null);
+        params.setRNASeqData(null);
+        paramsToCompare.setRNASeqData(null);
+        assertTrue("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        
+        paramsToCompare.setRNASeqData(DataState.HIGHQUALITY);
+        assertFalse("Incorrect boolean returned by hasCoherentDataStates", 
+                (boolean) method.invoke(params, paramsToCompare));
+        
+    }
+    
+    /**
+     * Test the private method {@link CallParams#mergeDataStates(DataState, DataState)}.
+     */
+    @Test
+    public void shouldMergeDataStates() throws NoSuchMethodException, 
+        SecurityException, IllegalAccessException, IllegalArgumentException, 
+        InvocationTargetException {
+        //in order to test private method
+        Method method = CallParams.class.getDeclaredMethod("mergeDataStates", 
+                DataState.class, DataState.class);
+        method.setAccessible(true);
+        
+
+        assertEquals("Incorrect merged DataState", DataState.NODATA, 
+                method.invoke(null, null, null));
+        
+        assertEquals("Incorrect merged DataState", DataState.NODATA, 
+                method.invoke(null, DataState.NODATA, null));
+        
+        assertEquals("Incorrect merged DataState", DataState.NODATA, 
+                method.invoke(null, DataState.NODATA, DataState.LOWQUALITY));
+        
+        assertEquals("Incorrect merged DataState", DataState.NODATA, 
+                method.invoke(null, DataState.NODATA, DataState.HIGHQUALITY));
+        assertEquals("Incorrect merged DataState", DataState.NODATA, 
+                method.invoke(null, DataState.HIGHQUALITY, DataState.NODATA));
+        
+        assertEquals("Incorrect merged DataState", DataState.LOWQUALITY, 
+                method.invoke(null, DataState.LOWQUALITY, DataState.LOWQUALITY));
+        
+        assertEquals("Incorrect merged DataState", DataState.LOWQUALITY, 
+                method.invoke(null, DataState.LOWQUALITY, DataState.HIGHQUALITY));
+        
+        assertEquals("Incorrect merged DataState", DataState.HIGHQUALITY, 
+                method.invoke(null, DataState.HIGHQUALITY, DataState.HIGHQUALITY));
+    }
+    
+    /**
+     * Test the private method {@link CallParams#equivalent(DataState, DataState)}.
+     */
+    @Test
+    public void testEquivalent() throws NoSuchMethodException, 
+        SecurityException, IllegalAccessException, IllegalArgumentException, 
+        InvocationTargetException {
+        //in order to test private method
+        Method method = CallParams.class.getDeclaredMethod("equivalent", 
+                DataState.class, DataState.class);
+        method.setAccessible(true);
+        
+
+        assertTrue("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.NODATA, DataState.NODATA));
+        assertTrue("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, null, null));
+
+        assertTrue("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.NODATA, null));
+        assertTrue("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, null, DataState.NODATA));
+
+        assertTrue("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.LOWQUALITY, DataState.LOWQUALITY));
+        assertTrue("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.HIGHQUALITY, DataState.HIGHQUALITY));
+
+        assertFalse("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.LOWQUALITY, DataState.NODATA));
+        assertFalse("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.LOWQUALITY, DataState.HIGHQUALITY));
+        assertFalse("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.LOWQUALITY, null));
+        assertFalse("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, null, DataState.LOWQUALITY));
+
+        assertFalse("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.HIGHQUALITY, DataState.NODATA));
+        assertFalse("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.HIGHQUALITY, DataState.LOWQUALITY));
+        assertFalse("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, DataState.HIGHQUALITY, null));
+        assertFalse("Incorrect equivalence between DataStates", 
+                (boolean) method.invoke(null, null, DataState.HIGHQUALITY));
+    }
+    
+    /**
+     * Test the private method {@link CallParams#coherent(DataState, DataState)}.
+     */
+    @Test
+    public void testCoherent() throws NoSuchMethodException, 
+        SecurityException, IllegalAccessException, IllegalArgumentException, 
+        InvocationTargetException {
+        //in order to test private method
+        Method method = CallParams.class.getDeclaredMethod("coherent", 
+                DataState.class, DataState.class);
+        method.setAccessible(true);
+        
+
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.NODATA, DataState.NODATA));
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, null, null));
+
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.NODATA, null));
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, null, DataState.NODATA));
+
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.NODATA, DataState.LOWQUALITY));
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, null, DataState.LOWQUALITY));
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.LOWQUALITY, DataState.NODATA));
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.LOWQUALITY, null));
+
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.LOWQUALITY, DataState.HIGHQUALITY));
+        assertTrue("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.HIGHQUALITY, DataState.LOWQUALITY));
+
+        assertFalse("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.NODATA, DataState.HIGHQUALITY));
+        assertFalse("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.HIGHQUALITY, DataState.NODATA));
+        assertFalse("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, null, DataState.HIGHQUALITY));
+        assertFalse("Incorrect coherence between DataStates", 
+                (boolean) method.invoke(null, DataState.HIGHQUALITY, null));
     }
     
     /**

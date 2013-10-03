@@ -30,7 +30,7 @@ import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
  * WARNING: if you add parameters to this class, you will likely need 
  * to modify the methods merge(CallParams, CallParams), canMerge, hasDataRestrictions, 
  * getDifferentParametersCount, getDataTypeSetCount, haveSameDataStates, and 
- * haveCoherentDataStates.
+ * hasCoherentDataStates.
  */
 public abstract class CallParams {
     /**
@@ -367,15 +367,15 @@ public abstract class CallParams {
                 (paramsToMerge.isAllDataTypes() && paramsToMerge.getDataTypesSetCount() > 1));
         
         //merge data types and qualities held by the referenceCallTO
-        newResultingParams.setAffymetrixData(mergeDataState(this.getAffymetrixData(), 
+        newResultingParams.setAffymetrixData(mergeDataStates(this.getAffymetrixData(), 
                 paramsToMerge.getAffymetrixData()));
-        newResultingParams.setESTData(mergeDataState(this.getESTData(), 
+        newResultingParams.setESTData(mergeDataStates(this.getESTData(), 
                 paramsToMerge.getESTData()));
-        newResultingParams.setInSituData(mergeDataState(this.getInSituData(), 
+        newResultingParams.setInSituData(mergeDataStates(this.getInSituData(), 
                 paramsToMerge.getInSituData()));
-        newResultingParams.setRelaxedInSituData(mergeDataState(this.getRelaxedInSituData(), 
+        newResultingParams.setRelaxedInSituData(mergeDataStates(this.getRelaxedInSituData(), 
                 paramsToMerge.getRelaxedInSituData()));
-        newResultingParams.setRNASeqData(mergeDataState(this.getRNASeqData(), 
+        newResultingParams.setRNASeqData(mergeDataStates(this.getRNASeqData(), 
                 paramsToMerge.getRNASeqData()));
         
         //merge Sets of anatEntityIds, devStageIds, geneIds, and related parameters.
@@ -487,7 +487,7 @@ public abstract class CallParams {
         //with a quality >= LOW, and another query to retrieve data with quality >= HIGH, 
         //or to do only one query to retrieve data with a quality >= LOW. 
         //But if the qualities were not consecutive, it would not be equivalent.
-        if (diffParamCount == 0 && this.haveCoherentDataStates(paramsToMerge)) {
+        if (diffParamCount == 0 && this.hasCoherentDataStates(paramsToMerge)) {
             return log.exit(true);
         }
         
@@ -678,7 +678,7 @@ public abstract class CallParams {
      *          have equivalent or consecutive {@code DataState}s for each data type.
      * @see #coherent(DataState, DataState)
      */
-    private boolean haveCoherentDataStates(CallParams otherParams) {
+    private boolean hasCoherentDataStates(CallParams otherParams) {
         log.entry(otherParams);
         
         if (!coherent(this.getAffymetrixData(), 
@@ -714,7 +714,7 @@ public abstract class CallParams {
      * @param state2    The second {@code DataState} to be merged.
      * @return          A {@code DataState} resulting from the merging.
      */
-    private static DataState mergeDataState(DataState state1, DataState state2) {
+    private static DataState mergeDataStates(DataState state1, DataState state2) {
         log.entry(state1, state2);
         if (state1 == null || state2 == null) {
             return log.exit(DataState.NODATA);

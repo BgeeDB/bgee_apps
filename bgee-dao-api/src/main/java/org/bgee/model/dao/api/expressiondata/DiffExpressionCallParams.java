@@ -60,6 +60,9 @@ public class DiffExpressionCallParams extends CallParams {
      */
     public DiffExpressionCallParams() {
         super(new DiffExpressionCallTO());
+        this.setFactor(null);
+        this.setDiffCallType(null);
+        this.setMinConditionCount(MINCONDITIONCOUNT);
     }
     
     @Override

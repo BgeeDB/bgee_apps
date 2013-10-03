@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class ExpressionCallParamsTest  extends TestAncestor {
+public class ExpressionCallParamsTest extends TestAncestor {
     /**
      * {@code Logger} of the class. 
      */
@@ -117,6 +117,13 @@ public class ExpressionCallParamsTest  extends TestAncestor {
                 params.getDifferentParametersCount(paramsToCompare));
         paramsToCompare.setIncludeSubStages(true);
         assertEquals("Incorrect different parameter count", 2,
+                params.getDifferentParametersCount(paramsToCompare));
+        
+        paramsToCompare.setIncludeSubstructures(true);
+        assertEquals("Incorrect different parameter count", 1,
+                params.getDifferentParametersCount(paramsToCompare));
+        params.setIncludeSubStages(true);
+        assertEquals("Incorrect different parameter count", 0,
                 params.getDifferentParametersCount(paramsToCompare));
     }
     

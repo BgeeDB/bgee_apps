@@ -41,6 +41,8 @@ public class ExpressionCallParams extends CallParams {
      */
     public ExpressionCallParams() {
         super(new ExpressionCallTO());
+        this.setIncludeSubstructures(false);
+        this.setIncludeSubStages(false);
     }
     
     @Override
@@ -115,11 +117,19 @@ public class ExpressionCallParams extends CallParams {
             return log.exit(false);
         }
         
+        //if one of the CallParams has no restriction at all (all data retrieved), 
+        //then obviously a merging can occur, as the data retrieved by one CallParams 
+        //will be a subset of the data retrieved by the other one.
+        //we let this stub here, even if super.canMerge will do the same check 
+        //just below, because if other parameters would be added, they should be checked 
+        //after this stub (see DiffExpressionCallParams#canMerge(CallParams) for 
+        //an example).
+        if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
+            return log.exit(true);
+        }
+        
         //of note, this method also takes care of the check for data types 
-        //and qualities, and checks if one of the CallParams has no restriction 
-        //at all (all data retrieved), then obviously a merging can occur, 
-        //as the data retrieved by one CallParams will be a subset of the data 
-        //retrieved by the other one.
+        //and qualities.
         if (!super.canMerge(otherParams)) {
             return log.exit(false);
         }

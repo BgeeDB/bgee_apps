@@ -43,6 +43,7 @@ public class NoExpressionCallParams extends CallParams {
      */
     public NoExpressionCallParams() {
         super(new NoExpressionCallTO());
+        this.setIncludeParentStructures(false);
     }
     
     @Override
@@ -117,6 +118,10 @@ public class NoExpressionCallParams extends CallParams {
         //if one of the CallParams has no restriction at all (all data retrieved), 
         //then obviously a merging can occur, as the data retrieved by one CallParams 
         //will be a subset of the data retrieved by the other one.
+        //we let this stub here, even if super.canMerge will do the same check 
+        //just below, because if other parameters would be added, they should be checked 
+        //after this stub (see DiffExpressionCallParams#canMerge(CallParams) for 
+        //an example).
         if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
             return log.exit(true);
         }

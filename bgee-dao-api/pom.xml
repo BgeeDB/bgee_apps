@@ -12,14 +12,6 @@
   <packaging>jar</packaging>
   <name>bgee-dao-api</name>
   
-  
-  <dependencies>
-    <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
-    </dependency>
-  </dependencies>
-  
   <build>
       <plugins>
           <!-- Only once ClassLoader must be used at a same time: 

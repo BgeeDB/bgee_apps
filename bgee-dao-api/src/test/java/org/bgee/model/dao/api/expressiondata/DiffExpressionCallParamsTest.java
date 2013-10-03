@@ -50,6 +50,7 @@ public class DiffExpressionCallParamsTest extends TestAncestor {
         
         //if they have different min conditions, merge should fail
         params.setMinConditionCount(6);
+        paramsToCompare.setMinConditionCount(5);
         assertFalse("Incorrect boolean returned by canMerge", 
                 params.canMerge(paramsToCompare));
         paramsToCompare.setMinConditionCount(6);

@@ -132,12 +132,6 @@
 			
 			<!-- Needed for the dao-api layer -->
 			
-			<dependency>
-                <groupId>org.testng</groupId>
-                <artifactId>testng</artifactId>
-                <version>6.8.5</version>
-                <scope>test</scope>
-            </dependency>
             
 			<!-- End for the dao-api layer -->
 			

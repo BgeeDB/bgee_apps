@@ -299,6 +299,10 @@ public class DiffExpressionCallParams extends CallParams {
      *                                  {@code #MINCONDITIONCOUNT}.
      */
     public void setMinConditionCount(int conditionCount) throws IllegalArgumentException {
+        if (conditionCount < MINCONDITIONCOUNT) {
+            throw log.throwing(new IllegalArgumentException("minConditionCount " +
+            		"cannot be less than " + MINCONDITIONCOUNT));
+        }
         this.getReferenceCallTO().setMinConditionCount(conditionCount);
     }
 

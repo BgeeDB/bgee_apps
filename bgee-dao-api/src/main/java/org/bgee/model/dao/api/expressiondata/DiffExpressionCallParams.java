@@ -37,6 +37,10 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
  * data types and their {@code DataState}s, with a {@code protected} visibility.
  * Subclasses should then increase the visibility of the methods relative to 
  * their appropriate data types.
+ * 
+ * WARNING: if you add parameters specific to this class, you will likely need 
+ * to modify the methods merge, canMerge, hasDataRestrictions, and 
+ * getDifferentParametersCount.
  */
 public class DiffExpressionCallParams extends CallParams {
     /**
@@ -128,18 +132,10 @@ public class DiffExpressionCallParams extends CallParams {
             return log.exit(false);
         }
         
-        //if there is more than 1 difference between the Factor and DiffCallType 
-        //parameters of the two DiffExpressionCallParams, merge not possible 
+        //if there is more than 1 difference between the parameters of 
+        //the two DiffExpressionCallParams, merge not possible 
         //(no "OR" condition possible).
-        if (   ( (this.getDiffCallType() == null && 
-                    otherParams.getDiffCallType() != null) || 
-                  (this.getDiffCallType() != null && 
-                    !this.getDiffCallType().equals(otherParams.getDiffCallType())) ) &&
-                  
-               ( (this.getFactor() == null && otherParams.getFactor() != null) || 
-                 (this.getFactor() != null && 
-                    !this.getFactor().equals(otherParams.getFactor())) )    ) {
-            
+        if (this.getDifferentParametersCount(otherParams) > 1) {
             return log.exit(false);
         }
         
@@ -170,6 +166,47 @@ public class DiffExpressionCallParams extends CallParams {
         }
         
         return log.exit(true);
+    }
+    
+    @Override
+    protected boolean hasDataRestrictions() {
+        log.entry();
+        if (this.getFactor() != null || this.getDiffCallType() != null || 
+                this.getMinConditionCount() != MINCONDITIONCOUNT) {
+            return log.exit(true);
+        }
+        
+        return log.exit(super.hasDataRestrictions());
+    }
+    
+    @Override
+    protected int getDifferentParametersCount(CallParams otherParams) {
+        log.entry();
+        int diff = 0;
+        if (otherParams instanceof DiffExpressionCallParams) {
+            DiffExpressionCallParams params = (DiffExpressionCallParams) otherParams;
+            
+            if (  (this.getDiffCallType() == null && params.getDiffCallType() != null) || 
+                    
+                  (this.getDiffCallType() != null && 
+                  !this.getDiffCallType().equals(params.getDiffCallType()))) {
+                diff ++;
+            }
+            if (  (this.getFactor() == null && params.getFactor() != null) || 
+                    
+                  (this.getFactor() != null && 
+                  !this.getFactor().equals(params.getFactor()))) {
+                diff ++;
+            }
+            if (this.getMinConditionCount() != params.getMinConditionCount()) {
+                diff++;
+            }
+        } else {
+            //number of parameters in this class restraining data retrieved
+            diff = 3;
+        }
+        
+        return log.exit(diff + super.getDifferentParametersCount(otherParams));
     }
     
 

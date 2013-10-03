@@ -26,6 +26,10 @@ import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
  * data types and their {@code DataState}s, with a {@code protected} visibility.
  * Subclasses should then increase the visibility of the methods relative to 
  * their appropriate data types.
+ * 
+ * WARNING: if you add parameters specific to this class, you will likely need 
+ * to modify the methods merge, canMerge, hasDataRestrictions, and 
+ * getDifferentParametersCount.
  */
 public class NoExpressionCallParams extends CallParams {
     /**
@@ -117,6 +121,36 @@ public class NoExpressionCallParams extends CallParams {
         }
         
         return log.exit(true);
+    }
+    
+    @Override
+    protected boolean hasDataRestrictions() {
+        log.entry();
+        //the only parameters specific to this class are not seen as parameters 
+        //restraining the data retrieved, but rather, as parameters about the way 
+        //the data were generated (taking into account substructures or not, etc).
+        //And NoExpressionCallParams with differences for these parameters could not 
+        //be merged (see method canMerge).
+        //
+        //So we do not consider these parameters as relevant for this method call.
+        //We simply delegate to the super class
+        
+        return log.exit(super.hasDataRestrictions());
+    }
+    
+    @Override
+    protected int getDifferentParametersCount(CallParams otherParams) {
+        log.entry();
+        //the only parameters specific to this class are not seen as parameters 
+        //restraining the data retrieved, but rather, as parameters about the way 
+        //the data were generated (taking into account substructures or not, etc).
+        //And NoExpressionCallParams with differences for these parameters could not 
+        //be merged (see method canMerge).
+        //
+        //So we do not consider these parameters as relevant for this method call.
+        //We simply delegate to the super class
+        
+        return log.exit(super.getDifferentParametersCount(otherParams));
     }
     
     //**************************************

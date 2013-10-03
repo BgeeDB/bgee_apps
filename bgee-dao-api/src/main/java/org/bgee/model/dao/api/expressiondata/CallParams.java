@@ -25,6 +25,11 @@ import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
  * delegated to {@code #referenceCallTO} by this {@code CallParams}, as 
  * {@code protected} methods. Subclasses should then increase the visibility 
  * of the methods corresponding to their appropriate data types.
+ * 
+ * WARNING: if you add parameters to this class, you will likely need 
+ * to modify the methods merge(CallParams, CallParams), canMerge, hasDataRestrictions, 
+ * getDifferentParametersCount, getDataTypeSetCount, haveSameDataStates, and 
+ * haveCoherentDataStates.
  */
 public abstract class CallParams {
     /**
@@ -347,7 +352,7 @@ public abstract class CallParams {
         
         //If one of the CallParams has no parameters at all, then we simply return 
         //without setting any parameters in newResultingParams...
-        if (!this.hasSomeParameters() || !paramsToMerge.hasSomeParameters()) {
+        if (!this.hasDataRestrictions() || !paramsToMerge.hasDataRestrictions()) {
             log.exit();
         }
 
@@ -428,7 +433,7 @@ public abstract class CallParams {
         //be merged (all the data will be used according to one of the CallParams, 
         //so whatever the parameters of the other one, it will obviously get 
         //what it needs)
-        if (!this.hasSomeParameters() || !paramsToMerge.hasSomeParameters()) {
+        if (!this.hasDataRestrictions() || !paramsToMerge.hasDataRestrictions()) {
             return log.exit(true);
         }
         
@@ -468,7 +473,7 @@ public abstract class CallParams {
         
         //count the number of filters on IDs that differ 
         //(geneIds, anatEntityIds, devStageIds)
-        int diffParamCount = this.differentFilterCount(paramsToMerge);
+        int diffParamCount = this.getDifferentParametersCount(paramsToMerge);
         //if there is absolutely no difference between the parameters used 
         //to filter anat entities, dev stages, and genes, then at this point 
         //these CallParams could be merged, even if their data types and qualities 
@@ -515,11 +520,14 @@ public abstract class CallParams {
      * Check that this {@code CallParams} holds any parameter that would restrict 
      * the expression data used. Otherwise, it means that all data from the related 
      * call type could be used.
+     * <p>
+     * Subclasses must override this method, taking care of their own parameters, 
+     * and calling this method to check parameters of this class.
      * 
      * @return  {@code true} if this {@code CallParams} holds some parameters 
      *          that would restrict the data used.
      */
-    private boolean hasSomeParameters() {
+    protected boolean hasDataRestrictions() {
         log.entry();
         if (this.getDataTypesSetCount() != 0) {
             return log.exit(true);
@@ -534,18 +542,22 @@ public abstract class CallParams {
     }
     
     /**
-     * Returns the number of {@code Collection}s of {@code String}s used for filtering 
-     * that are different between this {@code CallParams} and {@code otherParams}. 
-     * This method compares between the two objects the {@code Set}s {@link 
-     * #getAnatEntityIds()}, {@link #getDevStageIds()}, and {@code #getGeneIds()}, 
-     * and count how many of them differ.
+     * Returns the number of parameters that are different between this 
+     * {@code CallParams} and {@code otherParams}, amongst the parameters 
+     * that allow to restrict the expression data used. This method is used because
+     * most of the time,  {@code CallParams} that have only one difference can be merged 
+     * (equivalent to a "OR" condition), while when they have more differences, 
+     * they cannot be merged.
+     * <p>
+     * Subclasses must override this method, taking care of their own parameters, 
+     * and calling this method to check parameters of this class.
      * 
      * @param otherParams   The {@code CallParams} for which we want to compare 
-     *                      with this {@code CallParams} the {@code Collection}s 
-     *                      of IDs used for filtering.
-     * @return  The number of {@code Collection}s of IDs used for filtering that differ.
+     *                      with this {@code CallParams} the parameters that can 
+     *                      restrict data used.
+     * @return  The number of parameters used for filtering that differ.
      */
-    private int differentFilterCount(CallParams otherParams) {
+    protected int getDifferentParametersCount(CallParams otherParams) {
         log.entry(otherParams);
         int diff = 0;
         if (!this.getAnatEntityIds().equals(otherParams.getAnatEntityIds())) {
@@ -592,27 +604,6 @@ public abstract class CallParams {
     }
     
     /**
-     * Merges {@code state1} with {@code state2}, and returns the resulting 
-     * merged {@code DataState}. If one of the {@code DataState}s is 
-     * {@code null}, then {@code NODATA} is returned. Otherwise, the {@code DataState} 
-     * with the lowest ordinal is returned.
-     * 
-     * @param state1    The first {@code DataState} to be merged.
-     * @param state2    The second {@code DataState} to be merged.
-     * @return          A {@code DataState} resulting from the merging.
-     */
-    private static DataState mergeDataState(DataState state1, DataState state2) {
-        log.entry(state1, state2);
-        if (state1 == null || state2 == null) {
-            return log.exit(DataState.NODATA);
-        }
-        if (state1.compareTo(state2) <= 0) {
-            return log.exit(state1);
-        } 
-        return log.exit(state2);
-    }
-    
-    /**
      * Determines whether this {@code CallParams} and {@code otherParams} have 
      * exactly the same {@code DataState} for each data type. A {@code null} 
      * {@code DataState} or {@code NODATA} will be considered equivalent.
@@ -647,29 +638,6 @@ public abstract class CallParams {
             return log.exit(false);
         }
         return log.exit(true);
-    }
-    
-    /**
-     * Check whether {@code state1} and {@code state2} are equivalent. This is 
-     * different from {@code equals}, as {@code DataState}s {@code null} or equals to 
-     * {@code NODATA} will be considered equivalent. Otherwise, they must be equal.
-     * 
-     * @param state1    The first {@code DataState} to be compared
-     * @param state2    The second {@code DataState} to be compared
-     * @return  {@code true} if {@code state1} and {@code state2} are equivalent.
-     */
-    private static boolean equivalent(DataState state1, DataState state2) {
-        log.entry(state1, state2);
-        if (  ( 
-                (state1 == null || state1.equals(DataState.NODATA)) && 
-                (state2 == null || state2.equals(DataState.NODATA))
-              ) 
-              || 
-              (state1 != null && state1.equals(state2))
-           ) {
-            return log.exit(true);
-        }
-        return log.exit(false);
     }
     
     /**
@@ -721,6 +689,50 @@ public abstract class CallParams {
         return log.exit(true);
     }
     
+    /**
+     * Merges {@code state1} with {@code state2}, and returns the resulting 
+     * merged {@code DataState}. If one of the {@code DataState}s is 
+     * {@code null}, then {@code NODATA} is returned. Otherwise, the {@code DataState} 
+     * with the lowest ordinal is returned.
+     * 
+     * @param state1    The first {@code DataState} to be merged.
+     * @param state2    The second {@code DataState} to be merged.
+     * @return          A {@code DataState} resulting from the merging.
+     */
+    private static DataState mergeDataState(DataState state1, DataState state2) {
+        log.entry(state1, state2);
+        if (state1 == null || state2 == null) {
+            return log.exit(DataState.NODATA);
+        }
+        if (state1.compareTo(state2) <= 0) {
+            return log.exit(state1);
+        } 
+        return log.exit(state2);
+    }
+
+    /**
+     * Check whether {@code state1} and {@code state2} are equivalent. This is 
+     * different from {@code equals}, as {@code DataState}s {@code null} or equals to 
+     * {@code NODATA} will be considered equivalent. Otherwise, they must be equal.
+     * 
+     * @param state1    The first {@code DataState} to be compared
+     * @param state2    The second {@code DataState} to be compared
+     * @return  {@code true} if {@code state1} and {@code state2} are equivalent.
+     */
+    private static boolean equivalent(DataState state1, DataState state2) {
+        log.entry(state1, state2);
+        if (  ( 
+                (state1 == null || state1.equals(DataState.NODATA)) && 
+                (state2 == null || state2.equals(DataState.NODATA))
+              ) 
+              || 
+              (state1 != null && state1.equals(state2))
+           ) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
     /**
      * Check whether {@code state1} and {@code state2} are equivalent (as defined 
      * by {@link #equivalent(DataState, DataState)}), or consecutive. 

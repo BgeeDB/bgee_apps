@@ -210,6 +210,9 @@ public abstract class CallParams {
     /**
      * Merges as much as possible {@code allCallParams}, and return a {@code Set} 
      * of {@code CallParams}, that are the corresponding merged {@code CallParams}.
+     * The returned {@code Set} will contain newly instantiated {@code CallParams} 
+     * corresponding to a merge, and submitted {@code CallParams} instances that 
+     * could not be merged.
      * The aim of this method is to simplify as much as possible the {@code CallParams}, 
      * so that the queries generated afterwards by the {@code DAO}s are themselves 
      * simplified. All {@code DAO} implementations using {@code CallParams} should 
@@ -354,7 +357,7 @@ public abstract class CallParams {
         //If one of the CallParams has no parameters at all, then we simply return 
         //without setting any parameters in newResultingParams...
         if (!this.hasDataRestrictions() || !paramsToMerge.hasDataRestrictions()) {
-            log.exit();
+            log.exit(); return;
         }
 
         //we blindly perform the merging here, even if if meaningless, it is the 

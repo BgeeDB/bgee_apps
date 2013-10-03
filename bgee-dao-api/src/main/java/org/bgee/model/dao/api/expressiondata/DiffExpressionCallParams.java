@@ -2,6 +2,7 @@ package org.bgee.model.dao.api.expressiondata;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.DiffCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
 
@@ -29,6 +30,13 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
+ */
+/*
+ * (non-javadoc)
+ * The super class {@code CallParams} provides all the methods related to 
+ * data types and their {@code DataState}s, with a {@code protected} visibility.
+ * Subclasses should then increase the visibility of the methods relative to 
+ * their appropriate data types.
  */
 public class DiffExpressionCallParams extends CallParams {
     /**
@@ -63,7 +71,7 @@ public class DiffExpressionCallParams extends CallParams {
      * @see #canMerge(CallParams, boolean)
      */
     @Override
-    public DiffExpressionCallParams merge(CallParams paramsToMerge) {
+    protected DiffExpressionCallParams merge(CallParams paramsToMerge) {
         log.entry(paramsToMerge);
         //first, determine whether we can merge the CallParams
         if (!this.canMerge(paramsToMerge)) {
@@ -77,15 +85,21 @@ public class DiffExpressionCallParams extends CallParams {
         DiffExpressionCallParams mergedParams = new DiffExpressionCallParams();
         //of note, data types and qualities are merged by super.merge method
         super.merge(otherParams, mergedParams);
-        //conditionCount of this CallParams and of otherParams should be the same, 
-        //but it is not the responsibility of this method to decide whether the merging 
-        //makes sense, so we use the highest value
+        
         mergedParams.setMinConditionCount(Math.max(this.getMinConditionCount(), 
                 otherParams.getMinConditionCount()));
-        //Factor and DiffCallType should be the same, but once again...
-        //we just pick up one of them
-        mergedParams.setFactor(this.getFactor());
-        mergedParams.setDiffCallType(this.getDiffCallType());
+        //this condition check that if one of the CallParams did not have any 
+        //condition on Factor, it will remain that way (more data retrieved).
+        //otherwise, we simply pick up the value of one of the CallParams
+        if (this.getFactor() != null && otherParams.getFactor() != null) {
+            mergedParams.setFactor(this.getFactor());
+        }
+        //this condition check that if one of the CallParams did not have any 
+        //condition on CallType, it will remain that way (more data retrieved).
+        //otherwise, we simply pick up the value of one of the CallParams
+        if (this.getDiffCallType() != null && otherParams.getDiffCallType() != null) {
+            mergedParams.setDiffCallType(this.getDiffCallType());
+        }
 
         return log.exit(mergedParams);
     }
@@ -106,11 +120,47 @@ public class DiffExpressionCallParams extends CallParams {
             return log.exit(false);
         }
         DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
-        
-        if (!this.getDiffCallType().equals(otherParams.getDiffCallType()) || 
-                !this.getFactor().equals(otherParams.getFactor()) || 
-                this.getMinConditionCount() != otherParams.getMinConditionCount()) {
+
+        //here we cannot just keep the greatest condition count, 
+        //the summary of differential expression calls are different 
+        //depending on the minimum number of conditions requested.
+        if (this.getMinConditionCount() != otherParams.getMinConditionCount()) {
             return log.exit(false);
+        }
+        
+        //if there is more than 1 difference between the Factor and DiffCallType 
+        //parameters of the two DiffExpressionCallParams, merge not possible 
+        //(no "OR" condition possible).
+        if (   ( (this.getDiffCallType() == null && 
+                    otherParams.getDiffCallType() != null) || 
+                  (this.getDiffCallType() != null && 
+                    !this.getDiffCallType().equals(otherParams.getDiffCallType())) ) &&
+                  
+               ( (this.getFactor() == null && otherParams.getFactor() != null) || 
+                 (this.getFactor() != null && 
+                    !this.getFactor().equals(otherParams.getFactor())) )    ) {
+            
+            return log.exit(false);
+        }
+        
+        //now that we have checked there were not more than 1 difference, 
+        //we can merge the CallParams if one of their parameter is null and 
+        //the other is not (one CallParams requests all data, and the other one 
+        //only a subset, so it will work). Otherwise, they have to be equal.
+        
+        //if one of the DiffCallType is null, then it means no restriction on it, all data 
+        //whatever their call type will be used, so we can merge the CallParams whatever 
+        //the value of the call type for the other CallParams is.
+        if (this.getDiffCallType() != null && otherParams.getDiffCallType() != null &&
+            !this.getDiffCallType().equals(otherParams.getDiffCallType())) {
+            return log.exit(false);
+        }
+        //if one of the Factor is null, then it means no restriction on it, all data 
+        //whatever their factor will be used, so we can merge the CallParams whatever 
+        //the value of Factor for the other CallParams is.
+        if (this.getFactor() != null && otherParams.getFactor() != null &&
+            !this.getFactor().equals(otherParams.getFactor())) {
+              return log.exit(false);
         }
 
         //of note, this method also takes care of the check for data types 
@@ -123,9 +173,10 @@ public class DiffExpressionCallParams extends CallParams {
     }
     
 
-    //***********************************************
-    // GETTERS/SETTERS DELEGATED TO referenceCallTO
-    //***********************************************
+    //**************************************
+    // GETTERS/SETTERS FOR PARAMETERS SPECIFIC TO THIS CLASS, 
+    // DELEGATED TO referenceCallTO
+    //**************************************
     /**
      * Returns the {@code DiffCallType} defining the type of the differential 
      * expression calls to be used. If {@code null}, any will be used 
@@ -202,5 +253,33 @@ public class DiffExpressionCallParams extends CallParams {
      */
     public void setMinConditionCount(int conditionCount) throws IllegalArgumentException {
         this.getReferenceCallTO().setMinConditionCount(conditionCount);
+    }
+
+    //***********************************************
+    // SUPER CLASS GETTERS/SETTERS WITH INCREASED VISIBLITY
+    //***********************************************
+    /*
+     * (non-javadoc)
+     * The super class {@code CallParams} provides all the methods related to 
+     * data types and their {@code DataState}s, with a {@code protected} visibility.
+     * Subclasses should then increase the visibility of the methods relative to 
+     * their appropriate data types.
+     */
+    @Override
+    public DataState getAffymetrixData() {
+        return super.getAffymetrixData();
+    }
+    @Override
+    public void setAffymetrixData(DataState minContribution) {
+        super.setAffymetrixData(minContribution);
+    }
+
+    @Override
+    public DataState getRNASeqData() {
+        return super.getRNASeqData();
+    }
+    @Override
+    public void setRNASeqData(DataState minContribution) {
+        super.setRNASeqData(minContribution);
     }
 }

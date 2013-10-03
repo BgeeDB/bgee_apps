@@ -18,6 +18,13 @@ import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
  * @version Bgee 13
  * @since Bgee 13
  */
+/*
+ * (non-javadoc)
+ * The super class {@code CallParams} provides all the methods related to 
+ * data types and their {@code DataState}s, with a {@code protected} visibility.
+ * Subclasses should then increase the visibility of the methods relative to 
+ * their appropriate data types.
+ */
 public class ExpressionCallParams extends CallParams {
     /**
      * {@code Logger} of the class. 
@@ -45,7 +52,7 @@ public class ExpressionCallParams extends CallParams {
      * @see #canMerge(CallParams, boolean)
      */
     @Override
-    public ExpressionCallParams merge(CallParams paramsToMerge) {
+    protected ExpressionCallParams merge(CallParams paramsToMerge) {
         log.entry(paramsToMerge);
         //first, determine whether we can merge the CallParams
         if (!this.canMerge(paramsToMerge)) {
@@ -113,10 +120,10 @@ public class ExpressionCallParams extends CallParams {
         return log.exit(true);
     }
 
-    
-    //***********************************************
-    // GETTERS/SETTERS DELEGATED TO referenceCallTO
-    //***********************************************
+    //**************************************
+    // GETTERS/SETTERS FOR PARAMETERS SPECIFIC TO THIS CLASS, 
+    // DELEGATED TO referenceCallTO
+    //**************************************
     /**
      * Returns the {@code boolean} defining whether the expression calls 
      * used should be based on calls generated using data from anatomical 
@@ -179,71 +186,50 @@ public class ExpressionCallParams extends CallParams {
         this.getReferenceCallTO().setIncludeSubStages(include);
     }
 
-    /**
-     * @return  the {@code DataState} defining the requested minimum contribution 
-     *          of Affymetrix data to the generation of the calls 
-     *          to be used.
+
+    //***********************************************
+    // SUPER CLASS GETTERS/SETTERS WITH INCREASED VISIBLITY
+    //***********************************************
+    /*
+     * (non-javadoc)
+     * The super class {@code CallParams} provides all the methods related to 
+     * data types and their {@code DataState}s, with a {@code protected} visibility.
+     * Subclasses should then increase the visibility of the methods relative to 
+     * their appropriate data types.
      */
+    @Override
     public DataState getAffymetrixData() {
-        return this.getReferenceCallTO().getAffymetrixData();
+        return super.getAffymetrixData();
     }
-    /**
-     * @param minContribution   the {@code DataState} defining the requested minimum 
-     *                          contribution of Affymetrix data to the generation 
-     *                          of the calls to be used.
-     */
+    @Override
     public void setAffymetrixData(DataState minContribution) {
-        this.getReferenceCallTO().setAffymetrixData(minContribution);
+        super.setAffymetrixData(minContribution);
     }
 
-    /**
-     * @return  the {@code DataState} defining the requested minimum contribution 
-     *          of Affymetrix data to the generation of the calls 
-     *          to be used.
-     */
+    @Override
     public DataState getESTData() {
-        return this.getReferenceCallTO().getESTData();
+        return super.getESTData();
     }
-    /**
-     * @param minContribution   the {@code DataState} defining the requested minimum 
-     *                          contribution of EST data to the generation 
-     *                          of the calls to be used.
-     */
+    @Override
     public void setESTData(DataState minContribution) {
-        this.getReferenceCallTO().setESTData(minContribution);
+        super.setESTData(minContribution);
     }
 
-    /**
-     * @return  the {@code DataState} defining the requested minimum contribution 
-     *          of <em>in situ</em> data to the generation of the calls 
-     *          to be used.
-     */
+    @Override
     public DataState getInSituData() {
-        return this.getReferenceCallTO().getInSituData();
+        return super.getInSituData();
     }
-    /**
-     * @param minContribution   the {@code DataState} defining the requested minimum 
-     *                          contribution of <em>in situ</em> data to the generation 
-     *                          of the calls to be used.
-     */
+    @Override
     public void setInSituData(DataState minContribution) {
-        this.getReferenceCallTO().setInSituData(minContribution);
+        super.setInSituData(minContribution);
     }
 
-    /**
-     * @return  the {@code DataState} defining the requested minimum contribution 
-     *          of RNA-Seq data to the generation of the calls 
-     *          to be used.
-     */
+    @Override
     public DataState getRNASeqData() {
-        return this.getReferenceCallTO().getRNASeqData();
+        return super.getRNASeqData();
     }
-    /**
-     * @param minContribution   the {@code DataState} defining the requested minimum 
-     *                          contribution of RNA-Seq data to the generation 
-     *                          of the calls to be used.
-     */
+    @Override
     public void setRNASeqData(DataState minContribution) {
-        this.getReferenceCallTO().setRNASeqData(minContribution);
+        super.setRNASeqData(minContribution);
     }
 }

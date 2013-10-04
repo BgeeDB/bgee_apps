@@ -127,19 +127,22 @@ public class DiffExpressionCallParams extends CallParams {
             return log.exit(false);
         }
         DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
+
+        //here we cannot just keep the smallest condition count, 
+        //the summary of differential expression calls are different 
+        //depending on the minimum number of conditions requested.
+        //so whatever happens, we cannot merge DiffExpressionCallParams 
+        //with different minConditionCounts (even if one of them is the default one, 
+        //this is why we do this check before the hasDataRestrictions check below)
+        if (this.getMinConditionCount() != otherParams.getMinConditionCount()) {
+            return log.exit(false);
+        }
         
         //if one of the CallParams has no restriction at all (all data retrieved), 
         //then obviously a merging can occur, as the data retrieved by one CallParams 
         //will be a subset of the data retrieved by the other one.
         if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
             return log.exit(true);
-        }
-
-        //here we cannot just keep the greatest condition count, 
-        //the summary of differential expression calls are different 
-        //depending on the minimum number of conditions requested.
-        if (this.getMinConditionCount() != otherParams.getMinConditionCount()) {
-            return log.exit(false);
         }
         
         //if there is more than 1 difference between the parameters of 

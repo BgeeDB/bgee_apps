@@ -18,6 +18,8 @@ import org.semanticweb.owlapi.model.OWLOntologyFormat;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
+import owltools.graph.OWLGraphManipulator;
+import owltools.graph.OWLGraphWrapper;
 import owltools.io.ParserWrapper;
 
 public class GenerateUberonVersion 
@@ -25,11 +27,11 @@ public class GenerateUberonVersion
 	public static void main(String[] args) throws OWLOntologyCreationException, OBOFormatParserException, IOException, OWLOntologyStorageException 
 	{
 		ParserWrapper parserWrapper = new ParserWrapper();
-        OWLOntology ont = parserWrapper.parse("/Users/admin/Desktop/composite-metazoan.owl");
+        OWLOntology ont = parserWrapper.parse("/Users/admin/Desktop/uberon.owl");
     	OWLGraphManipulator graphManipulator = 
-    			new OWLGraphManipulator(new CustomOWLGraphWrapper(ont));
+    			new OWLGraphManipulator(new OWLGraphWrapper(ont));
     	
-    	graphManipulator.makeBasicOntology();
+    	//graphManipulator.makeBasicOntology();
     	/*//map all sub-relations of part_of and develops_from to these relations
     	Collection<String> relIds = new ArrayList<String>();
     	relIds.add("BFO:0000050");
@@ -38,7 +40,7 @@ public class GenerateUberonVersion
     	//keep only is_a, part_of and develops_from relations
     	int relsRemoved = graphManipulator.filterRelations(relIds, true);*/
     	
-    	graphManipulator.removeRelsToSubsets(Arrays.asList("upper_level"));
+    	//graphManipulator.removeRelsToSubsets(Arrays.asList("upper_level"));
     	//graphManipulator.removeSubgraphs(Arrays.asList("UBERON:0000481"), true);
     	//graphManipulator.removeClassAndPropagateEdges("UBERON:0001459");
     	graphManipulator.reducePartOfIsARelations();
@@ -47,9 +49,9 @@ public class GenerateUberonVersion
     	OBODoc oboOntology = converter.convert(
     			graphManipulator.getOwlGraphWrapper().getSourceOntology());
     	OBOFormatWriter writer = new OBOFormatWriter();
-    	writer.write(oboOntology, "/Users/admin/Desktop/custom_composite-metazoan.obo");
+    	writer.write(oboOntology, "/Users/admin/Desktop/custom_uberon.obo");
     	
-    	File owlFile = new File("/Users/admin/Desktop/custom_composite-metazoan.owl");
+    	File owlFile = new File("/Users/admin/Desktop/custom_uberon.owl");
     	OWLOntologyManager manager = graphManipulator.getOwlGraphWrapper().getManager();
     	OWLOntologyFormat originalFormat = manager.getOntologyFormat(
     			graphManipulator.getOwlGraphWrapper().getSourceOntology()); 

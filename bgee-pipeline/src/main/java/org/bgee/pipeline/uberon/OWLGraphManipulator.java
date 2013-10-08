@@ -291,7 +291,8 @@ public class OWLGraphManipulator
 							edgeIndex, outgoingEdgesCount, outgoingEdgeToTest);
 					//check that this relation still exists, it might have been removed 
 					//from another walk to the root
-					if (!ont.containsAxiom(this.getAxiom(outgoingEdgeToTest))) {
+					if (!ont.containsAxiomIgnoreAnnotations(
+					        this.getAxiom(outgoingEdgeToTest), true)) {
 						log.debug("Outgoing edge to test already removed, skip");
 						continue;
 					}
@@ -303,7 +304,8 @@ public class OWLGraphManipulator
 						if (outgoingEdgeToWalk.equals(outgoingEdgeToTest)) {
 							continue;
 						}
-						if (!ont.containsAxiom(this.getAxiom(outgoingEdgeToWalk))) {
+						if (!ont.containsAxiomIgnoreAnnotations(
+						        this.getAxiom(outgoingEdgeToWalk), true)) {
 							log.trace("Outgoing edge to walk already removed, skip {}", 
 									outgoingEdgeToWalk);
 							continue;
@@ -574,7 +576,8 @@ public class OWLGraphManipulator
     		for (OWLGraphEdge incomingEdge: 
     			    this.getOwlGraphWrapper().getIncomingEdges(classToRemove)) {
     			
-    			if (!ont.containsAxiom(this.getAxiom(incomingEdge))) {
+    			if (!ont.containsAxiomIgnoreAnnotations(
+    			        this.getAxiom(incomingEdge), true)) {
     				continue;
     			}
     			//fix bug
@@ -603,7 +606,8 @@ public class OWLGraphManipulator
 						boolean alreadyExist = false;
 						for (OWLGraphEdge testIfExistEdge: this.getOwlGraphWrapper().
 								getOWLGraphEdgeSubRelsReflexive(combine)) {
-							if (ont.containsAxiom(this.getAxiom(testIfExistEdge))) {
+							if (ont.containsAxiomIgnoreAnnotations(
+							        this.getAxiom(testIfExistEdge), true)) {
 								alreadyExist = true;
 								break;
 							}
@@ -767,7 +771,8 @@ public class OWLGraphManipulator
     			for (OWLGraphEdge edge: 
     				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
     				//to fix a bug
-    				if (!ontology.containsAxiom(this.getAxiom(edge))) {
+    				if (!ontology.containsAxiomIgnoreAnnotations(
+    				        this.getAxiom(edge), true)) {
     					continue;
     				}
     				edge.setOntology(ontology);
@@ -786,7 +791,8 @@ public class OWLGraphManipulator
     							ontology);
     					//check that the new edge does not already exists 
     					//(redundancy in the ontology?)
-    					if (!ontology.containsAxiom(this.getAxiom(newEdge))) {
+    					if (!ontology.containsAxiomIgnoreAnnotations(
+    					        this.getAxiom(newEdge), true)) {
     						edgesToAdd.add(newEdge);
     					    log.debug("Replacing relation {} by {}", edge, newEdge);
     					} else {
@@ -910,7 +916,8 @@ public class OWLGraphManipulator
     			for (OWLGraphEdge incomingEdge: 
     				    this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
                     //to fix a bug: 
-    				if (!ont.containsAxiom(this.getAxiom(incomingEdge))) {
+    				if (!ont.containsAxiomIgnoreAnnotations(
+    				        this.getAxiom(incomingEdge), true)) {
     					continue;
     				}
     				incomingEdge.setOntology(ont);
@@ -1213,7 +1220,8 @@ public class OWLGraphManipulator
     			for (OWLGraphEdge outgoingEdge: 
     				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
     				//to fix a bug
-    				if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
+    				if (!ont.containsAxiomIgnoreAnnotations(
+    				        this.getAxiom(outgoingEdge), true)) {
     					continue;
     				} 
     				outgoingEdge.setOntology(ont);
@@ -1338,7 +1346,8 @@ public class OWLGraphManipulator
 				for (OWLGraphEdge incomingEdge: 
 					    this.getOwlGraphWrapper().getIncomingEdges(subsetClass)) {
 					//fix bug
-					if (!ont.containsAxiom(this.getAxiom(incomingEdge))) {
+					if (!ont.containsAxiomIgnoreAnnotations(
+					        this.getAxiom(incomingEdge), true)) {
 						continue;
 					}
 					incomingEdge.setOntology(ont);
@@ -1371,7 +1380,8 @@ public class OWLGraphManipulator
 						for (OWLGraphEdge outgoingEdge: 
 							this.getOwlGraphWrapper().getOutgoingEdges(sourceObject)) {
 							//fix bug
-							if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
+							if (!ont.containsAxiomIgnoreAnnotations(
+							        this.getAxiom(outgoingEdge), true)) {
 								continue;
 							}
 							outgoingEdge.setOntology(ont);
@@ -1672,6 +1682,9 @@ public class OWLGraphManipulator
 		
 		OWLSubClassOfAxiom ax = factory.getOWLSubClassOfAxiom(source, 
 				(OWLClassExpression) this.getOwlGraphWrapper().edgeToTargetExpression(edge));
+        if (edge.getAnnotations() != null && !edge.getAnnotations().isEmpty()) {
+            ax = (OWLSubClassOfAxiom) ax.getAnnotatedAxiom(edge.getAnnotations());
+        }
     	
     	return log.exit(ax);
 	}

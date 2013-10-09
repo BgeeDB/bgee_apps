@@ -27,6 +27,7 @@ import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 
 import owltools.graph.OWLGraphEdge;
+import owltools.graph.OWLGraphWrapper;
 import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
@@ -71,7 +72,7 @@ public class OWLGraphManipulator
 	 * The {@code OWLGraphWrapper} on which the operations will be performed 
 	 * (relation reductions, edge propagations, ...).
 	 */
-	private CustomOWLGraphWrapper owlGraphWrapper;
+	private OWLGraphWrapper owlGraphWrapper;
 	/**
 	 * A {@code Set} of {@code OWLObjectPropertyExpression}s that are 
 	 * the sub-properties of the "part_of" property (for instance, "deep_part_of").
@@ -108,7 +109,7 @@ public class OWLGraphManipulator
 	 * @param owlGraphWrapper 	The {@code OWLGraphWrapper} on which the operations 
 	 * 							will be performed.
 	 */
-    public OWLGraphManipulator(CustomOWLGraphWrapper owlGraphWrapper)
+    public OWLGraphManipulator(OWLGraphWrapper owlGraphWrapper)
     {
     	this.setOwlGraphWrapper(owlGraphWrapper);
     }
@@ -268,75 +269,67 @@ public class OWLGraphManipulator
 		//todo?: everything could be done in one single walk from bottom nodes 
 		//to top nodes, this would be much faster, but would require much more memory.
 		int relationsRemoved = 0;
-	    for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-	    	Set<OWLClass> classes = ont.getClassesInSignature();
-	    	int classCount = classes.size();
-	    	int classIndex = 0;
-	    	log.debug("Start examining {} classes for current ontology", classCount);
-			for (OWLClass iterateClass: classes) {
-				classIndex++;
-				log.debug("Start examining class {}/{} {}...", classIndex, classCount, 
-						iterateClass);
-	
-				Set<OWLGraphEdge> outgoingEdges = 
-					this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
-				int outgoingEdgesCount = outgoingEdges.size();
-				//now for each outgoing edge, try to see if it is redundant, 
-				//as compared to composed relations obtained by walks to the top 
-				//starting from the other outgoing edges, at any distance
-				int edgeIndex = 0;
-				for (OWLGraphEdge outgoingEdgeToTest: outgoingEdges) {
-					edgeIndex++;
-					log.debug("Start testing edge for redundancy {}/{} {}", 
-							edgeIndex, outgoingEdgesCount, outgoingEdgeToTest);
-					//check that this relation still exists, it might have been removed 
-					//from another walk to the root
-					if (!ont.containsAxiomIgnoreAnnotations(
-					        this.getAxiom(outgoingEdgeToTest), true)) {
-						log.debug("Outgoing edge to test already removed, skip");
-						continue;
-					}
-					//fix a bug
-					outgoingEdgeToTest.setOntology(ont);
-					
-					boolean isRedundant = false;
-					for (OWLGraphEdge outgoingEdgeToWalk: outgoingEdges) {
-						if (outgoingEdgeToWalk.equals(outgoingEdgeToTest)) {
-							continue;
-						}
-						if (!ont.containsAxiomIgnoreAnnotations(
-						        this.getAxiom(outgoingEdgeToWalk), true)) {
-							log.trace("Outgoing edge to walk already removed, skip {}", 
-									outgoingEdgeToWalk);
-							continue;
-						}
-						//fix a bug
-						outgoingEdgeToWalk.setOntology(ont);
-						
-						isRedundant = this.areEdgesRedudant(outgoingEdgeToTest, 
-								outgoingEdgeToWalk, reducePartOfAndIsA);
-						if (isRedundant) {
-							break;
-						}
-					}
-					if (isRedundant) {
-						if (this.removeEdge(outgoingEdgeToTest)) {
-						    relationsRemoved++;
-						    log.debug("Tested edge is redundant and is removed: {}", 
-								outgoingEdgeToTest);
-						} else {
-							throw new AssertionError("Expected to remove a relation, " +
-									"removal failed");
-						}
-					} else {
-						log.debug("Done testing edge for redundancy, not redundant: {}", 
-								outgoingEdgeToTest);
-					}
-				}
-				log.debug("Done examining class {}", iterateClass);
-			}
-			log.debug("Done examining current ontology");
-	    }
+		int classCount = this.getOwlGraphWrapper().getAllOWLClasses().size();
+		int classIndex = 0;
+		for (OWLClass iterateClass: this.getOwlGraphWrapper().getAllOWLClasses()) {
+		    classIndex++;
+		    log.debug("Start examining class {}/{} {}...", classIndex, classCount, 
+		            iterateClass);
+		    
+		    Set<OWLGraphEdge> outgoingEdges = 
+		            this.getOwlGraphWrapper().getOutgoingEdges(iterateClass);
+		    int outgoingEdgesCount = outgoingEdges.size();
+		    //now for each outgoing edge, try to see if it is redundant, 
+		    //as compared to composed relations obtained by walks to the top 
+		    //starting from the other outgoing edges, at any distance
+		    int edgeIndex = 0;
+		    for (OWLGraphEdge outgoingEdgeToTest: outgoingEdges) {
+		        edgeIndex++;
+		        log.debug("Start testing edge for redundancy {}/{} {}", 
+		                edgeIndex, outgoingEdgesCount, outgoingEdgeToTest);
+		        //check that this relation actually exists, it might have been removed 
+		        //from another walk to the root, or it can be an OWLIntersectionOf
+		        if (!outgoingEdgeToTest.getOntology().containsAxiom(
+		                this.getAxiom(outgoingEdgeToTest), true)) {
+		            log.debug("Outgoing edge to test not existing, skip");
+		            continue;
+		        }
+		        
+		        boolean isRedundant = false;
+		        for (OWLGraphEdge outgoingEdgeToWalk: outgoingEdges) {
+		            if (outgoingEdgeToWalk.equals(outgoingEdgeToTest)) {
+		                continue;
+		            }
+		            if (!outgoingEdgeToWalk.getOntology().containsAxiom(
+	                        this.getAxiom(outgoingEdgeToWalk), true)) {
+	                    log.debug("Outgoing edge to test not existing, skip");
+	                    continue;
+	                }
+		            
+		            isRedundant = this.areEdgesRedudant(outgoingEdgeToTest, 
+		                    outgoingEdgeToWalk, reducePartOfAndIsA) || 
+		                    outgoingEdgeToWalk.equalsIgnoreAnnot(outgoingEdgeToTest);
+		            if (isRedundant) {
+		                break;
+		            }
+		        }
+		        if (isRedundant) {
+		            if (this.removeEdge(outgoingEdgeToTest)) {
+		                relationsRemoved++;
+		                log.debug("Tested edge is redundant and is removed: {}", 
+		                        outgoingEdgeToTest);
+		            } else {
+		                throw new AssertionError("Expected to remove a relation, " +
+		                        "removal failed");
+		            }
+		        } else {
+		            log.debug("Done testing edge for redundancy, not redundant: {}", 
+		                    outgoingEdgeToTest);
+		        }
+		    }
+		    log.debug("Done examining class {}", iterateClass);
+		}
+		log.debug("Done examining current ontology");
 		
 		log.info("Done relation reduction, {} relations removed.", relationsRemoved);
 		return log.exit(relationsRemoved);
@@ -415,9 +408,13 @@ public class OWLGraphManipulator
 					return log.exit(true);
 				}
 			//otherwise, check that edgeToWalk is not a sub-relation of edgeToTest
-			} else if (this.getOwlGraphWrapper().
-						getOWLGraphEdgeSubsumers(edgeToWalk).contains(edgeToTest)) {
-				return log.exit(true);
+			} else {
+			    for (OWLGraphEdge e: this.getOwlGraphWrapper().
+                        getOWLGraphEdgeSubsumers(edgeToWalk)) {
+			        if (e.equalsIgnoreAnnot(edgeToTest)) {
+			            return log.exit(true);
+			        }
+			    }
 			}
 		}
 		
@@ -492,10 +489,15 @@ public class OWLGraphManipulator
 	    					
 	    					return log.exit(true);
 	    				}
-	    			} else if (edgeToTest.equals(combine) || 
-	    					   this.getOwlGraphWrapper().
-	    						    getOWLGraphEdgeSubsumers(combine).contains(edgeToTest)) {
+	    			} else if (edgeToTest.equalsIgnoreAnnot(combine)) {
 	    				return log.exit(true);
+	    			} else {
+	    			    for (OWLGraphEdge e: this.getOwlGraphWrapper().
+                                getOWLGraphEdgeSubsumers(combine)) {
+	                        if (e.equalsIgnoreAnnot(edgeToTest)) {
+	                            return log.exit(true);
+	                        }
+	                    }
 	    			}
 	    			
 		    		//otherwise, as we met the target of the tested edge, 
@@ -528,6 +530,7 @@ public class OWLGraphManipulator
 	 * from the ontology, and propagate its incoming edges to the targets 
 	 * of its outgoing edges. Each incoming edges are composed with each outgoing edges (see 
 	 * {@link CustomOWLGraphWrapper#combineEdgePairWithSuperProps(OWLGraphEdge, OWLGraphEdge)}).
+	 * This method propagates intersectionOf axioms as subClassOf axioms (so, more relaxed).
 	 * <p>
 	 * This method returns the number of relations propagated and actually added 
 	 * to the ontology (propagated relations corresponding to a relation already 
@@ -572,58 +575,44 @@ public class OWLGraphManipulator
     	//edges to be added for propagating relations
     	Set<OWLGraphEdge> newEdges = new HashSet<OWLGraphEdge>();
     	
-    	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-    		for (OWLGraphEdge incomingEdge: 
-    			    this.getOwlGraphWrapper().getIncomingEdges(classToRemove)) {
-    			
-    			if (!ont.containsAxiomIgnoreAnnotations(
-    			        this.getAxiom(incomingEdge), true)) {
-    				continue;
-    			}
-    			//fix bug
-    			incomingEdge.setOntology(ont);
-    			
-    			//now propagate each incoming edge to each outgoing edge
-    			for (OWLGraphEdge outgoingEdge: 
-    				    this.getOwlGraphWrapper().getOutgoingEdges(classToRemove)) {
-    				//fix bug
-    				outgoingEdge.setOntology(ont);
-    				
-    				log.debug("Trying to combine incoming edge {} with outgoing edge {}", 
-    						incomingEdge, outgoingEdge);
-    				//combine edges
-    				OWLGraphEdge combine = 
-							this.getOwlGraphWrapper().combineEdgePairWithSuperProps(
-									incomingEdge, outgoingEdge);
-					//successfully combined
-					if (combine != null && combine.getQuantifiedPropertyList().size() == 1) {
-	    				//fix bug
-	    				combine.setOntology(ont);
-					    log.debug("Successfully combining edges into: {}", combine);
-					    
-						//check if there is an already existing relation equivalent 
-						//to the combined one, or a more precise one
-						boolean alreadyExist = false;
-						for (OWLGraphEdge testIfExistEdge: this.getOwlGraphWrapper().
-								getOWLGraphEdgeSubRelsReflexive(combine)) {
-							if (ont.containsAxiomIgnoreAnnotations(
-							        this.getAxiom(testIfExistEdge), true)) {
-								alreadyExist = true;
-								break;
-							}
-						}
-						if (!alreadyExist) {
-							newEdges.add(combine);
-						    log.debug("Combined relation does not already exist and will be added");
-						} else {
-							log.debug("Equivalent or more precise relation already exist, combined relation not added");
-						}
-					} else {
-						couldNotCombineWarnings++;
-						log.debug("Could not combine edges.");
-					}
-    			}
-    		}
+    	for (OWLGraphEdge incomingEdge: 
+    	    this.getOwlGraphWrapper().getIncomingEdges(classToRemove)) {
+    	    
+    	    //now propagate each incoming edge to each outgoing edge
+    	    for (OWLGraphEdge outgoingEdge: 
+    	        this.getOwlGraphWrapper().getOutgoingEdges(classToRemove)) {
+    	        
+    	        log.debug("Trying to combine incoming edge {} with outgoing edge {}", 
+    	                incomingEdge, outgoingEdge);
+    	        //combine edges
+    	        OWLGraphEdge combine = 
+    	                this.getOwlGraphWrapper().combineEdgePairWithSuperProps(
+    	                        incomingEdge, outgoingEdge);
+    	        //successfully combined
+    	        if (combine != null && combine.getQuantifiedPropertyList().size() == 1) {
+    	            log.debug("Successfully combining edges into: {}", combine);
+    	            
+    	            //check if there is an already existing relation equivalent 
+    	            //to the combined one, or a more precise one
+    	            boolean alreadyExist = false;
+    	            for (OWLGraphEdge testIfExistEdge: this.getOwlGraphWrapper().
+    	                    getOWLGraphEdgeSubRelsReflexive(combine)) {
+    	                if (testIfExistEdge.getOntology().containsAxiomIgnoreAnnotations(
+    	                        this.getAxiom(testIfExistEdge), true)) {
+    	                    alreadyExist = true;
+    	                    break;
+    	                }
+    	            }
+    	            if (!alreadyExist && this.addToEdgeSet(combine, newEdges)) {
+                        log.debug("Combined relation does not already exist and will be added");
+    	            } else {
+    	                log.debug("Equivalent or more precise relation already exist, combined relation not added");
+    	            }
+    	        } else {
+    	            couldNotCombineWarnings++;
+    	            log.debug("Could not combine edges.");
+    	        }
+    	    }
     	}
     	//now remove the class
     	log.debug("Removing class {}", classToRemove);
@@ -766,44 +755,45 @@ public class OWLGraphManipulator
     	//now, check each outgoing edge of each OWL class of each ontology
     	Set<OWLGraphEdge> edgesToRemove = new HashSet<OWLGraphEdge>();
     	Set<OWLGraphEdge> edgesToAdd    = new HashSet<OWLGraphEdge>();
-    	for (OWLOntology ontology: this.getOwlGraphWrapper().getAllOntologies()) {
-    		for (OWLClass iterateClass: ontology.getClassesInSignature()) {
-    			for (OWLGraphEdge edge: 
-    				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
-    				//to fix a bug
-    				if (!ontology.containsAxiomIgnoreAnnotations(
-    				        this.getAxiom(edge), true)) {
-    					continue;
-    				}
-    				edge.setOntology(ontology);
-    				
-    				//if it is a sub-property that should be mapped to a parent
-    				OWLObjectPropertyExpression parentProp;
-    				if ((parentProp = subPropToParent.get(
-    						edge.getSingleQuantifiedProperty().getProperty())) != null) {
-    					
-    					//store the edge to remove and to add, to perform all modifications 
-    					//at once (more efficient)
-    					edgesToRemove.add(edge);
-    					OWLGraphEdge newEdge = 
-    							new OWLGraphEdge(edge.getSource(), edge.getTarget(), 
-    							parentProp, edge.getSingleQuantifiedProperty().getQuantifier(), 
-    							ontology);
-    					//check that the new edge does not already exists 
-    					//(redundancy in the ontology?)
-    					if (!ontology.containsAxiomIgnoreAnnotations(
-    					        this.getAxiom(newEdge), true)) {
-    						edgesToAdd.add(newEdge);
-    					    log.debug("Replacing relation {} by {}", edge, newEdge);
-    					} else {
-    						log.debug("Removing {}, but {} already exists, will not be added", 
-    								edge, newEdge);
-    					}
-    				} else {
-    					log.trace("Relation not replaced: {}", edge);
-    				}
-    			}
-    		}
+    	for (OWLClass iterateClass: this.getOwlGraphWrapper().getAllOWLClasses()) {
+    	    for (OWLGraphEdge edge: 
+    	        this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
+    	        //this might actually be an intersectionOf relation, not a real 
+    	        //subClassOf axiom
+    	        if (!edge.getOntology().containsAxiom(this.getAxiom(edge), true)) {
+    	            continue;
+    	        }
+    	        
+    	        //if it is a sub-property that should be mapped to a parent
+    	        OWLObjectPropertyExpression parentProp;
+    	        if ((parentProp = subPropToParent.get(
+    	                edge.getSingleQuantifiedProperty().getProperty())) != null) {
+    	            
+    	            //store the edge to remove and to add, to perform all modifications 
+    	            //at once (more efficient)
+    	            edgesToRemove.add(edge);
+    	            OWLGraphEdge newEdge = 
+    	                    new OWLGraphEdge(edge.getSource(), edge.getTarget(), 
+    	                            parentProp, edge.getSingleQuantifiedProperty().getQuantifier(), 
+    	                            edge.getAnnotations(), edge.getOntology());
+    	            //check that the new edge does not already exists 
+    	            //(redundancy in the ontology?)
+    	            if (!newEdge.getOntology().containsAxiomIgnoreAnnotations(
+    	                    this.getAxiom(newEdge), true)) {
+    	                
+                        if (this.addToEdgeSet(newEdge, edgesToAdd)) {
+                            log.debug("Replacing relation {} by {}", edge, newEdge);
+                        } else {
+                            log.debug("Replacement relation already generated");
+                        }
+    	            } else {
+    	                log.debug("Removing {}, but {} already exists, will not be added", 
+    	                        edge, newEdge);
+    	            }
+    	        } else {
+    	            log.trace("Relation not replaced: {}", edge);
+    	        }
+    	    }
     	}
     	
     	if (log.isDebugEnabled()) {
@@ -911,30 +901,27 @@ public class OWLGraphManipulator
     		}
     		
     		//get direct descendants of the ancestor
-    		//iterate each ontology to fix a bug
-    		for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-    			for (OWLGraphEdge incomingEdge: 
-    				    this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
-                    //to fix a bug: 
-    				if (!ont.containsAxiomIgnoreAnnotations(
-    				        this.getAxiom(incomingEdge), true)) {
-    					continue;
-    				}
-    				incomingEdge.setOntology(ont);
-    				
-    				OWLObject directDescendant = incomingEdge.getSource(); 
-    				if (directDescendant instanceof OWLClass) { 
-    					//if the descendant is not an allowed root, nor an ancestor 
-    					//of an allowed root, then the relation should be removed.
-    					if (!allowedSubgraphRoots.contains(directDescendant) && 
-    							!ancestors.contains(directDescendant)) {
-
-    						edgesToRemove.add(incomingEdge);
-    						log.debug("Undesired subgraph, relation between {} and {} removed", 
-    								ancestor, directDescendant);
-    					}
-    				} 
-    			}
+    		for (OWLGraphEdge incomingEdge: 
+    		    this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
+    		    //in case this OWLGraphEdge represents an intersectionOf, 
+    		    //not an actual subClassOd.
+    		    if (!incomingEdge.getOntology().containsAxiom(
+    		            this.getAxiom(incomingEdge), true)) {
+    		        continue;
+    		    }
+    		    
+    		    OWLObject directDescendant = incomingEdge.getSource(); 
+    		    if (directDescendant instanceof OWLClass) { 
+    		        //if the descendant is not an allowed root, nor an ancestor 
+    		        //of an allowed root, then the relation should be removed.
+    		        if (!allowedSubgraphRoots.contains(directDescendant) && 
+    		                !ancestors.contains(directDescendant)) {
+    		            
+    		            edgesToRemove.add(incomingEdge);
+    		            log.debug("Undesired subgraph, relation between {} and {} removed", 
+    		                    ancestor, directDescendant);
+    		        }
+    		    } 
     		}
     	}
     	int edgesRemoved = this.removeEdges(edgesToRemove);
@@ -1215,63 +1202,61 @@ public class OWLGraphManipulator
     	this.getOwlGraphWrapper().clearCachedEdges();
     	
     	Set<OWLGraphEdge> relsToRemove = new HashSet<OWLGraphEdge>();
-    	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-    		for (OWLClass iterateClass: ont.getClassesInSignature()) {
-    			for (OWLGraphEdge outgoingEdge: 
-    				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
-    				//to fix a bug
-    				if (!ont.containsAxiomIgnoreAnnotations(
-    				        this.getAxiom(outgoingEdge), true)) {
-    					continue;
-    				} 
-    				outgoingEdge.setOntology(ont);
-    				
-    				Collection<OWLGraphEdge> toTest = new ArrayList<OWLGraphEdge>();
-    				toTest.add(outgoingEdge);
-    				//if subrelations need to be considered, 
-    				//we generalize over quantified properties
-    				//to check if this relation is a subrelation of a rel to remove or to keep.
-    				if (subRels) {
-    					toTest.addAll(
-    						this.getOwlGraphWrapper().getOWLGraphEdgeSubsumers(outgoingEdge));
-    				}
-    				//check if allowed.
-    				//if filter is true (keep relations in rels), 
-    				//then relations are not allowed unless they are related to the allowed rels
-    				boolean allowed = false;
-    				//if filter is false (remove relation in rels), 
-    				//then relations are allowed unless they are related to the forbidden rels
-    				if (!filter) {
-    					allowed = true;
-    				}
-    				
-    				edge: for (OWLGraphEdge edgeToTest: toTest) {
-    					OWLQuantifiedProperty prop = edgeToTest.getSingleQuantifiedProperty();
-    					//in case the allowedRels IDs were not OBO-style IDs
-    				    String iriId = prop.getPropertyId();
-    				    String oboId = this.getOwlGraphWrapper().getIdentifier(
-    						IRI.create(iriId));
-    				    
-    				    if (prop.getQuantifier() == Quantifier.SUBCLASS_OF || 
-    				    		rels.contains(oboId) || rels.contains(iriId)) {
-    				    	if (prop.getQuantifier() == Quantifier.SUBCLASS_OF || filter) {
-    				    		//if it is an is_a relations, 
-    				    		//or an allowed relation (filter is true)
-    				    		allowed = true;
-    				    	} else {
-    				    		//if it is not an is_a relation, 
-    				    		//and if it is a forbidden relation (filter is false)
-    				    		allowed = false;
-    				    	}
-    				    	break edge;
-    				    }
-    				}
-    				//remove rel if not allowed
-    				if (!allowed) {
-    					relsToRemove.add(outgoingEdge);
-    				}
-    			}
-    		}
+    	for (OWLClass iterateClass: this.getOwlGraphWrapper().getAllOWLClasses()) {
+    	    for (OWLGraphEdge outgoingEdge: 
+    	        this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
+    	        //in case this OWLGraphEdge represents an intersectionOf, 
+                //not an actual subClassOd.
+                if (!outgoingEdge.getOntology().containsAxiom(
+                        this.getAxiom(outgoingEdge), true)) {
+                    continue;
+                }
+    	        
+    	        Collection<OWLGraphEdge> toTest = new ArrayList<OWLGraphEdge>();
+    	        toTest.add(outgoingEdge);
+    	        //if subrelations need to be considered, 
+    	        //we generalize over quantified properties
+    	        //to check if this relation is a subrelation of a rel to remove or to keep.
+    	        if (subRels) {
+    	            toTest.addAll(
+    	                    this.getOwlGraphWrapper().getOWLGraphEdgeSubsumers(outgoingEdge));
+    	        }
+    	        //check if allowed.
+    	        //if filter is true (keep relations in rels), 
+    	        //then relations are not allowed unless they are related to the allowed rels
+    	        boolean allowed = false;
+    	        //if filter is false (remove relation in rels), 
+    	        //then relations are allowed unless they are related to the forbidden rels
+    	        if (!filter) {
+    	            allowed = true;
+    	        }
+    	        
+    	        edge: for (OWLGraphEdge edgeToTest: toTest) {
+    	            OWLQuantifiedProperty prop = edgeToTest.getSingleQuantifiedProperty();
+    	            //in case the allowedRels IDs were not OBO-style IDs
+    	            String iriId = prop.getPropertyId();
+    	            String oboId = this.getOwlGraphWrapper().getIdentifier(
+    	                    IRI.create(iriId));
+    	            
+    	            if (prop.getQuantifier() == Quantifier.SUBCLASS_OF || 
+    	                    rels.contains(oboId) || rels.contains(iriId)) {
+    	                if (prop.getQuantifier() == Quantifier.SUBCLASS_OF || filter) {
+    	                    //if it is an is_a relations, 
+    	                    //or an allowed relation (filter is true)
+    	                    allowed = true;
+    	                } else {
+    	                    //if it is not an is_a relation, 
+    	                    //and if it is a forbidden relation (filter is false)
+    	                    allowed = false;
+    	                }
+    	                break edge;
+    	            }
+    	        }
+    	        //remove rel if not allowed
+    	        if (!allowed) {
+    	            relsToRemove.add(outgoingEdge);
+    	        }
+    	    }
     	}
     	
     	int edgesRemoved = this.removeEdges(relsToRemove);
@@ -1340,87 +1325,85 @@ public class OWLGraphManipulator
 		for (OWLClass subsetClass: classesInSubsets) {
 			log.trace("Inspecting class in subset: {}", subsetClass);
 			
-			//we need to iterate all ontologies in order to set the ontology 
-	    	//of the incoming edges (owltools bug?)
-			for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-				for (OWLGraphEdge incomingEdge: 
-					    this.getOwlGraphWrapper().getIncomingEdges(subsetClass)) {
-					//fix bug
-					if (!ont.containsAxiomIgnoreAnnotations(
-					        this.getAxiom(incomingEdge), true)) {
-						continue;
-					}
-					incomingEdge.setOntology(ont);
-					log.trace("Inspecting incoming edge {}", incomingEdge);
-
-					//if this is not a is_a nor a part_of-like relation, skip
-					if (!this.isASubClassOfEdge(incomingEdge) && 
-							!this.isAPartOfEdge(incomingEdge)) {
-						log.trace("Incoming edge is not a is_a nor a part_of relation, skip it");
-						continue;
-					}
-
-					OWLObject sourceObject = incomingEdge.getSource();
-					if (sourcesExamined.contains(sourceObject)) {
-						log.trace("Source of incoming edge already inspected, skip it");
-						continue;
-					}
-					if (sourceObject instanceof OWLClass) {
-						//do nothing if the source class is itself in subsets
-						if (this.getOwlGraphWrapper().isOWLObjectInSubsets(
-								sourceObject, subsets)) {
-							log.trace("Source of incoming edge also in subsets, skip it");
-							continue;
-						}
-
-						//now distinguish is_a/part_of outgoing edges of the source class 
-						//going to classes in subsets and to classes not in subsets
-						Set<OWLGraphEdge> edgesToSubset    = new HashSet<OWLGraphEdge>();
-						Set<OWLGraphEdge> edgesNotToSubset = new HashSet<OWLGraphEdge>();
-						for (OWLGraphEdge outgoingEdge: 
-							this.getOwlGraphWrapper().getOutgoingEdges(sourceObject)) {
-							//fix bug
-							if (!ont.containsAxiomIgnoreAnnotations(
-							        this.getAxiom(outgoingEdge), true)) {
-								continue;
-							}
-							outgoingEdge.setOntology(ont);
-
-							//if this is not a is_a or part_of-like relation, skip it
-							if (!this.isASubClassOfEdge(outgoingEdge) && 
-									!this.isAPartOfEdge(outgoingEdge)) {
-								continue;
-							}
-							OWLObject targetObject = outgoingEdge.getTarget();
-							if (targetObject instanceof OWLClass) {
-								if (this.getOwlGraphWrapper().isOWLObjectInSubsets(
-										targetObject, subsets)) {
-									edgesToSubset.add(outgoingEdge);
-									log.trace("Incoming edge's source has an outgoing edge to a target in subsets: {}", 
-											outgoingEdge);
-								} else {
-									edgesNotToSubset.add(outgoingEdge);
-									log.trace("Incoming edge's source has an outgoing edge to a target NOT in subsets: {}", 
-											outgoingEdge);
-								}
-							}
-						}
-
-						//now, check if the source class has is_a/part_of outgoing edges to targets 
-						//not in subsets, and if it is the case, 
-						//remove all its is_a/part_of outgoing edges to targets in subsets
-						if (!edgesNotToSubset.isEmpty()) {
-							log.debug("Relations to remove: {}", edgesToSubset);
-							edgesToRemove.addAll(edgesToSubset);
-						} else {
-							log.trace("Incoming edge's source would be orphan, no relations removed");
-						}
-					} else {
-						log.trace("Source OWLObject is not an OWLClass, skip");
-					}
-					sourcesExamined.add(sourceObject);
-					log.trace("Done inspecting incoming edge {}", incomingEdge);
-				}
+			for (OWLGraphEdge incomingEdge: 
+			    this.getOwlGraphWrapper().getIncomingEdges(subsetClass)) {
+			    
+			    //in case this OWLGraphEdge represents an intersectionOf, 
+                //not an actual subClassOf.
+                if (!incomingEdge.getOntology().containsAxiom(
+                        this.getAxiom(incomingEdge), true)) {
+                    continue;
+                }
+			    log.trace("Inspecting incoming edge {}", incomingEdge);
+			    
+			    //if this is not a is_a nor a part_of-like relation, skip
+			    if (!this.isASubClassOfEdge(incomingEdge) && 
+			            !this.isAPartOfEdge(incomingEdge)) {
+			        log.trace("Incoming edge is not a is_a nor a part_of relation, skip it");
+			        continue;
+			    }
+			    
+			    OWLObject sourceObject = incomingEdge.getSource();
+			    if (sourcesExamined.contains(sourceObject)) {
+			        log.trace("Source of incoming edge already inspected, skip it");
+			        continue;
+			    }
+			    if (sourceObject instanceof OWLClass) {
+			        //do nothing if the source class is itself in subsets
+			        if (this.getOwlGraphWrapper().isOWLObjectInSubsets(
+			                sourceObject, subsets)) {
+			            log.trace("Source of incoming edge also in subsets, skip it");
+			            continue;
+			        }
+			        
+			        //now distinguish is_a/part_of outgoing edges of the source class 
+			        //going to classes in subsets and to classes not in subsets
+			        Set<OWLGraphEdge> edgesToSubset    = new HashSet<OWLGraphEdge>();
+			        Set<OWLGraphEdge> edgesNotToSubset = new HashSet<OWLGraphEdge>();
+			        for (OWLGraphEdge outgoingEdge: 
+			            this.getOwlGraphWrapper().getOutgoingEdges(sourceObject)) {
+			            
+			            //in case this OWLGraphEdge represents an intersectionOf, 
+		                //not an actual subClassOf.
+		                if (!outgoingEdge.getOntology().containsAxiom(
+		                        this.getAxiom(outgoingEdge), true)) {
+		                    continue;
+		                }
+			            
+			            //if this is not a is_a or part_of-like relation, skip it
+			            if (!this.isASubClassOfEdge(outgoingEdge) && 
+			                    !this.isAPartOfEdge(outgoingEdge)) {
+			                continue;
+			            }
+			            OWLObject targetObject = outgoingEdge.getTarget();
+			            if (targetObject instanceof OWLClass) {
+			                if (this.getOwlGraphWrapper().isOWLObjectInSubsets(
+			                        targetObject, subsets)) {
+			                    edgesToSubset.add(outgoingEdge);
+			                    log.trace("Incoming edge's source has an outgoing edge to a target in subsets: {}", 
+			                            outgoingEdge);
+			                } else {
+			                    edgesNotToSubset.add(outgoingEdge);
+			                    log.trace("Incoming edge's source has an outgoing edge to a target NOT in subsets: {}", 
+			                            outgoingEdge);
+			                }
+			            }
+			        }
+			        
+			        //now, check if the source class has is_a/part_of outgoing edges to targets 
+			        //not in subsets, and if it is the case, 
+			        //remove all its is_a/part_of outgoing edges to targets in subsets
+			        if (!edgesNotToSubset.isEmpty()) {
+			            log.debug("Relations to remove: {}", edgesToSubset);
+			            edgesToRemove.addAll(edgesToSubset);
+			        } else {
+			            log.trace("Incoming edge's source would be orphan, no relations removed");
+			        }
+			    } else {
+			        log.trace("Source OWLObject is not an OWLClass, skip");
+			    }
+			    sourcesExamined.add(sourceObject);
+			    log.trace("Done inspecting incoming edge {}", incomingEdge);
 			}
 			log.trace("Done inspecting class in subset {}", subsetClass);
 		}
@@ -1440,6 +1423,37 @@ public class OWLGraphManipulator
 	//*********************************
 	//    UTILS
 	//*********************************
+	/**
+	 * Add {@code e} to the {@code Set} {@code s}, only if {@code s} does not contain 
+	 * an {@code OWLGraphEdge} equivalent to {@code e} according to the method 
+	 * {@link #OWLGraphEdge#equalsIgnoreAnnot(Object)}. It it does contain an equivalent 
+	 * {@code OWLGraphEdge}, then the {@code OWLAnnotation}s of {@code e} are merged 
+	 * into the {@code OWLAnnotation}s of the {@code OWLGraphEdge} present in 
+	 * the {@code Set}.
+	 * <p>
+	 * Returns {@code true} if {@code e} was added to {@code s} as a result of this call.
+	 * 
+	 * @param e    The {@code OWLGraphEdge} to be added to {@code s}.
+	 * @param s    The {@code Set} of {@code OWLGraphEdge}s to test for existence of {@code e}.
+	 * @return     {@code true} if {@code e} was added to {@code s} as a result of this call.
+	 */
+	private boolean addToEdgeSet(OWLGraphEdge e, Set<OWLGraphEdge> s) {
+	    //as axioms with different annotations are considered different, 
+        //we need to merge the annotations if they are "equivalent"
+        boolean found = false;
+        for (OWLGraphEdge iterateEdge: s) {
+            if (iterateEdge.equalsIgnoreAnnot(e)) {
+                iterateEdge.setAnnotations(
+                        this.getOwlGraphWrapper().combineAnnotations(e, iterateEdge));
+                found = true;
+            }
+        }
+        if (!found) {
+            s.add(e);
+        }
+        return found;
+	}
+	
 	/**
 	 * Remove {@code edge} from its ontology. 
 	 * This method transforms the {@code OWLGraphEdge} {@code edge} 
@@ -1754,14 +1768,14 @@ public class OWLGraphManipulator
 	 * 
 	 * @return the  {@code OWLGraphWrapper} wrapped by this class.
 	 */
-	public CustomOWLGraphWrapper getOwlGraphWrapper() {
+	public OWLGraphWrapper getOwlGraphWrapper() {
 		return this.owlGraphWrapper;
 	}
 	/**
 	 * @param owlGraphWrapper the {@code owlGraphWrapper} that this class manipulates.
 	 * @see #owlGraphWrapper
 	 */
-	private void setOwlGraphWrapper(CustomOWLGraphWrapper owlGraphWrapper) {
+	private void setOwlGraphWrapper(OWLGraphWrapper owlGraphWrapper) {
 		this.owlGraphWrapper = owlGraphWrapper;
 	}
 }

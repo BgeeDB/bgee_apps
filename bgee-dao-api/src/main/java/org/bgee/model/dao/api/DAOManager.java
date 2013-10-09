@@ -115,11 +115,11 @@ public abstract class DAOManager implements AutoCloseable
     private final static Properties getProperties() {
         log.entry();
         
-        Properties props = new Properties();
+        Properties props = new Properties(System.getProperties());
         //try to get the properties file.
         //default name is bgee.dao.properties
         //check first if an alternative name has been provided in the System properties
-        String propertyFile = System.getProperty(CONFIGFILEKEY, DEFAULTCONFIGFILE);
+        String propertyFile = props.getProperty(CONFIGFILEKEY, DEFAULTCONFIGFILE);
         log.debug("Trying to use properties file " + propertyFile);
         InputStream propStream = DAOManager.class.getResourceAsStream(propertyFile);
         if (propStream != null) {
@@ -140,7 +140,6 @@ public abstract class DAOManager implements AutoCloseable
             }
             log.debug("{} loaded from classpath", propertyFile);
         } else {
-            props.putAll(System.getProperties());
             log.debug("{} not found in classpath. Using System properties.", propertyFile);
         }
         
@@ -236,15 +235,15 @@ public abstract class DAOManager implements AutoCloseable
 	 * will return the first available {@code Service Provider} that accepts 
 	 * {@code props}, meaning that it finds all its required parameters in it. 
 	 * This method will return {@code null} if none could be found, or if no service 
-	 * providers were available at all. {@code props} can be {@code null} or empty, 
+	 * providers were available at all. {@code props} can be {@code null}, 
 	 * but that would mean that the {@code Service Provider} obtained had  
 	 * absolutely no mandatory parameters.
 	 * <p>
 	 * If a {@code DAOManager} is already available for this thread, 
 	 * then this method will simply return it, after having provided {@code props} 
 	 * to it, so that its parameters can be changed after obtaining it. 
-	 * If {@code props} is {@code null} or empty, then the previously provided 
-	 * parameters will still be used. If {@code props} is not null nor empty, 
+	 * If {@code props} is {@code null}, then the previously provided 
+	 * parameters will still be used. If {@code props} is not null, 
 	 * but the already instantiated {@code DAOManager} does not find its required 
 	 * parameters in it, an {@code IllegalStateException} will be thrown.
 	 * <p>
@@ -306,7 +305,7 @@ public abstract class DAOManager implements AutoCloseable
         					managerIterator.next().getClass().newInstance();
 
         			log.trace("Testing: {}", testManager);
-        			if (props != null && !props.isEmpty()) {
+        			if (props != null) {
         				testManager.setParameters(props);
         			}
         			//parameters accepted, we will use this manager
@@ -341,7 +340,7 @@ public abstract class DAOManager implements AutoCloseable
         	}
         } else {
             log.debug("Get an already existing DAOManager instance");
-            if (props != null && !props.isEmpty()) {
+            if (props != null) {
             	try {
                     manager.setParameters(props);
             	} catch (IllegalArgumentException e) {
@@ -398,11 +397,11 @@ public abstract class DAOManager implements AutoCloseable
 	 * <p>
 	 * If no {@code DAOManager} is available for this thread yet, this method 
 	 * will try to obtain a {@code DAOManager} from the first Service provider 
-	 * available, or will return {@code null} if no appropriate Service provider 
-	 * could be found. When using this method, the parameters are retrieved either 
+	 * accepting the default parameters, or will return {@code null} if none 
+	 * could be found. The default parameters are retrieved either 
 	 * from system properties, or from a configuration file. This method then calls 
-	 * {@link #getDAOManager(Properties)} and provide to it these 
-	 * properties. If these properties were not {@code null} nor empty, the 
+	 * {@link #getDAOManager(Properties)} and provide to it these default 
+	 * properties. If these properties were not {@code null}, the 
 	 * {@code DAOManager} obtained has to accept them, meaning that it found 
 	 * all its mandatory parameters in it. Note that the properties obtained from 
 	 * system properties or configuration file are obtained only once at class loading.
@@ -436,7 +435,7 @@ public abstract class DAOManager implements AutoCloseable
 		}
 		
 		//otherwise, we use the properties obtained at class loading.
-		return log.exit(DAOManager.getDAOManager(properties));
+		return log.exit(DAOManager.getDAOManager(DAOManager.properties));
 	}
 	
 	/**

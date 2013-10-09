@@ -51,8 +51,7 @@ public class LoadPropertiesFromSysPropsTest extends TestAncestor
 		System.setProperty(DAOManager.CONFIGFILEKEY, "/none");
 		
 		//we use the mock DAOManager to check what properties it received
-        Properties props = new Properties();
-        props.putAll(System.getProperties());
+        Properties props = new Properties(System.getProperties());
         DAOManager.getDAOManager();
         verify(MockDAOManager.mockManager).setParameters(eq(props));
 		

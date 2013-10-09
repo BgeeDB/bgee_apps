@@ -15,11 +15,11 @@ import java.util.Properties;
 /**
  * At instantiation, this class automatically registers a mock {@code Driver} 
  * to the {@code DriverManager}, that accepts the URL {@link #MOCKURL}.
- * When the method {@code connect(String, Properties)} is called 
+ * When the method {@code connect(String, DAOProperties)} is called 
  * on this mock {@code Driver} , it returns a mock {@code Connection}, 
  * that can be obtained by calling {@link #getMockConnection()} (even before 
- * {@code Driver.connect(String, Properties)} is called). 
- * Any call to {@code Driver.connect(String, Properties)} 
+ * {@code Driver.connect(String, DAOProperties)} is called). 
+ * Any call to {@code Driver.connect(String, DAOProperties)} 
  * (whatever the value of the parameters)
  * will always return the same mock {@code Connection} instance.
  * <p>
@@ -51,7 +51,7 @@ public class MockDriverUtils
 	private final Driver mockDriver;
 	/**
 	 * The mock {@code Connection} returned by the mock Driver registered 
-	 * by this class. Any call to {@code Driver.connect(String, Properties)} 
+	 * by this class. Any call to {@code Driver.connect(String, DAOProperties)} 
 	 * will always return this same mock {@code Connection} instance 
 	 * (whatever the value of the parameters).
 	 */
@@ -61,7 +61,7 @@ public class MockDriverUtils
 	 * Constructor that create a mock {@code Driver} and register it 
 	 * to the {@code DriverManager}. By default, this mock {@code Driver} 
 	 * returns a mock {@code Connection} 
-	 * when {@code Driver.connect(String, Properties)} is called 
+	 * when {@code Driver.connect(String, DAOProperties)} is called 
 	 * (always the same {@code Connection} instance, whatever the calls 
 	 * to {@code connect}).
 	 * <p>
@@ -119,11 +119,11 @@ public class MockDriverUtils
 
 	/**
 	 * Return the mock {@code Connection} provided by the mock {@code Driver}.
-	 * Any call to {@code Driver.connect(String, Properties)} 
+	 * Any call to {@code Driver.connect(String, DAOProperties)} 
      * (whatever the value of the parameters)
      * will always return the same mock {@code Connection} instance, 
      * that can be obtain by this getter (even before 
-     * {@code Driver.connect(String, Properties)} is called).
+     * {@code Driver.connect(String, DAOProperties)} is called).
      * 
 	 * @return the {@link #mockConnection}
 	 */

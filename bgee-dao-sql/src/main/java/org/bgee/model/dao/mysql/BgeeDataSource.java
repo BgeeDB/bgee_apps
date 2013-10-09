@@ -181,8 +181,7 @@ public class BgeeDataSource implements AutoCloseable
                     props.getDataSourceResourceName());
         } catch (NamingException e) {
 
-            log.info("No DataSource obtained from InitialContext using JNDI, will rely on the DriverManager using URL {}", 
-                    props.getJdbcUrl());
+            log.info("No DataSource obtained from InitialContext using JNDI, will rely on the DriverManager");
             //if the name of a JDBC driver was provided, try to load it.
             //it should not be needed, but some buggy JDBC Drivers need to be 
             //"manually" loaded.

@@ -111,14 +111,14 @@ public class BgeeConnection implements AutoCloseable
      * 							{@code BgeeConnection}, used by {@code dataSource} 
      * 							to track the connection.
      */
-    protected BgeeConnection(BgeeDataSource dataSource, Connection realConnection, 
+    protected BgeeConnection(MySQLDAOManager manager, Connection realConnection, 
             String id)
     {
-        log.entry(dataSource, realConnection, id);
+        log.entry(manager, realConnection, id);
 
-        this.bgeeDataSource = dataSource;
+        this.manager        = manager;
         this.realConnection = realConnection;
-        this.id = id;
+        this.id             = id;
 
 
 

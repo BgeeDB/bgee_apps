@@ -1,10 +1,12 @@
 package org.bgee.model.dao.api;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,18 +33,20 @@ import org.bgee.model.dao.api.source.SourceDAO;
  * In that case, a call to a {@code getDAOManager} method from this thread 
  * would return a new {@code DAOManager} instance. 
  * <p>
- * At the first call inside a given thread, it is recommended to use 
- * {@link #getDAOManager(Map)}, which allows to provide parameters to 
- * the {@code DAOManager} (as if {@link #setParameters(Map)} was called), 
- * and to select only a {@code DAOManager} accepting the parameters. 
- * Then, {@link #getDAOManager()} can be safely called inside the same thread. 
- * <p>
- * Parameters provided to the DAOManager (either through {@link #getDAOManager(Map)} 
- * or {@link #setParameters(Map)}) are specific to the Service Provider used. 
+ * Parameters can be provided to the DAOManager either via System properties, 
+ * or via configuration file, or by using the method {@link #getDAOManager(Properties)}. 
+ * Parameters to be provided are specific to the Service Provider used. 
  * For instance, if this {@code DAOManager} was obtained from a Service provider 
  * using the JDBC API to use a SQL database, then the parameters might contain 
  * the URL to connect to the database. It is up to each Service provider to specify 
  * what are the parameters needed. 
+ * <p>
+ * If a configuration file is used, it must be placed in the classpath. Its default 
+ * name is {@link #DEFAULTCONFIGFILE}. This can be changed via System properties, 
+ * using the key {@link #CONFIGFILEKEY}.
+ * <p>
+ * See {@link #getDAOManager(Properties)} and {@link #getDAOManager()} for more details 
+ * about the instantiation process of a {@code DAOManager}.
  * <p>
  * Please note that it is extremely important to close {@code DAOManager}s 
  * when done using them, otherwise a {@code DAOManager} could be improperly 
@@ -81,6 +85,67 @@ public abstract class DAOManager implements AutoCloseable
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(DAOManager.class.getName());
+    
+    /**
+     * A {@code String} representing the default name of the configuration file 
+     * to retrieve parameters from. The name of the file to use can be changed 
+     * via system properties, using the key {@link #CONFIGFILEKEY};
+     */
+    public static final String DEFAULTCONFIGFILE = "bgee.dao.properties";
+    /**
+     * A {@code String} representing the key to use to retrieve from system properties 
+     * an alternative name for the configuration file.
+     */
+    public static final String CONFIGFILEKEY = "bgee.dao.properties.file";
+    
+    /**
+     * The {@code Properties} obtained at class loading either from system properties, 
+     * or from a configuration file (see {@link #DEFAULTCONFIGFILE}). They will be used 
+     * when {@link #getDAOManager()} is called, as default properties.
+     */
+    private static final Properties properties = DAOManager.getProperties();
+    
+    /**
+     * Get the default <code>java.util.Properties</code> either from the System properties, 
+     * or from a configuration file. The name of the configuration file can be changed 
+     * via System properties (see {@link #CONFIGFILEKEY}). This default properties 
+     * will be used when {@link #getDAOManager()} is called. 
+     * @return      The <code>java.util.Properties</code> to get properties from.
+     */
+    private final static Properties getProperties() {
+        log.entry();
+        
+        Properties props = new Properties();
+        //try to get the properties file.
+        //default name is bgee.dao.properties
+        //check first if an alternative name has been provided in the System properties
+        String propertyFile = System.getProperty(CONFIGFILEKEY, DEFAULTCONFIGFILE);
+        log.debug("Trying to use properties file " + propertyFile);
+        InputStream propStream = DAOManager.class.getResourceAsStream(propertyFile);
+        if (propStream != null) {
+            try {
+                props.load(propStream);
+            } catch (IOException e) {
+                //if properties are not correctly set, we let the getDAOManager method 
+                //throw an Exception if no DAOManager accepting the parameters is found.
+                log.catching(e);
+                return log.exit(null);
+            } finally {
+                try {
+                    propStream.close();
+                } catch (IOException e) {
+                    log.catching(e);
+                    return log.exit(null);
+                }
+            }
+            log.debug("{} loaded from classpath", propertyFile);
+        } else {
+            props.putAll(System.getProperties());
+            log.debug("{} not found in classpath. Using System properties.", propertyFile);
+        }
+        
+        return log.exit(props);
+    }
     
     /**
      * A {@code ConcurrentMap} used to store {@code DAOManager}s, 
@@ -159,7 +224,7 @@ public abstract class DAOManager implements AutoCloseable
 	
 	/**
 	 * Return a {@code DAOManager} instance with its parameters set using 
-	 * the provided {@code Map}. If it is the first call to one 
+	 * the provided {@code Properties}. If it is the first call to one 
 	 * of the {@code getDAOManager} methods within a given thread, 
 	 * the {@code getDAOManager} methods return a newly instantiated 
 	 * {@code DAOManager}. Following calls from the same thread will always 
@@ -168,19 +233,20 @@ public abstract class DAOManager implements AutoCloseable
 	 * important to close or kill {@code DAOManager} when done using it. 
 	 * <p>
 	 * If no {@code DAOManager} is available for this thread yet, this method 
-	 * will try to obtain from a {@code Service Provider} a concrete implementation 
-	 * that accepts its {@code parameters} to be set by calling 
-	 * {@link #setParameters(Map)} on it, or will return {@code null} 
-	 * if none could be found, or if no service providers were available at all. 
-	 * If {@code parameters} is {@code null}, 
-	 * then the first available {@code Service Provider} will be used, and 
-	 * {@link #setParameters(Map)} will not be called. 
+	 * will return the first available {@code Service Provider} that accepts 
+	 * {@code props}, meaning that it finds all its required parameters in it. 
+	 * This method will return {@code null} if none could be found, or if no service 
+	 * providers were available at all. {@code props} can be {@code null} or empty, 
+	 * but that would mean that the {@code Service Provider} obtained had  
+	 * absolutely no mandatory parameters.
 	 * <p>
 	 * If a {@code DAOManager} is already available for this thread, 
-	 * then this method will simply return it after having called {@link #setParameters(Map)} 
-	 * on it (unless {@code parameters} is {@code null}). This operation 
-	 * could throw an {@code IllegalArgumentException} if {@code parameters} 
-	 * are not supported by the current {@code DAOManager}. 
+	 * then this method will simply return it, after having provided {@code props} 
+	 * to it, so that its parameters can be changed after obtaining it. 
+	 * If {@code props} is {@code null} or empty, then the previously provided 
+	 * parameters will still be used. If {@code props} is not null nor empty, 
+	 * but the already instantiated {@code DAOManager} does not find its required 
+	 * parameters in it, an {@code IllegalStateException} will be thrown.
 	 * <p>
 	 * If caller wants to use a different {@code Service Provider}, accepting 
 	 * different parameters, then {@code close} or {@code kill} 
@@ -191,27 +257,26 @@ public abstract class DAOManager implements AutoCloseable
 	 * if an error occurred while trying to find a service provider from the 
 	 * {@code ServiceLoader}. 
 	 * 
-	 * @param parameters 	A {@code Map} with keys that are {@code String}s 
-	 * 						representing parameter names, and values that 
-	 * 						are {@code String}s representing parameters values, 
-	 * 						to be passed to the {@code DAOManager} instance. 
-	 * @return 				A {@code DAOManager} accepting {@code parameters}. 
-	 * 						{@code null} if none could be found, or 
-	 * 						if no service providers were available at all.
-	 * @throws IllegalArgumentException	if a  {@code DAOManager} is already 
-	 * 									available for this thread, but not accepting 
-	 * 									{@code parameters}. 
-	 * @throws IllegalStateException 	if {@code closeAll} was already called, 
-	 * 									so that no {@code DAOManager}s can be 
-	 * 									acquired anymore. 
-	 * @throws ServiceConfigurationError	If an error occurred while trying to find 
-	 * 										a {@code DAOManager} service provider 
-	 * 										from the {@code ServiceLoader}. 
+	 * @param props    A {@code java.util.Properties} object, 
+	 *                 to be passed to the {@code DAOManager} instance. 
+	 * @return 	       A {@code DAOManager} accepting the parameters provided 
+	 *                 in {@code props}. {@code null} if none could be found 
+	 *                 accepting the parameters, or if no service providers 
+	 *                 were available at all.
+	 * @throws IllegalStateException   if {@code closeAll} was already called, 
+	 *                                 so that no {@code DAOManager}s can be 
+	 *                                 acquired anymore. Or if the already instantiated 
+	 *                                 {@code DAOManager} does not accept the provided 
+	 *                                 parameters.
+	 * @throws ServiceConfigurationError   If an error occurred while trying to find 
+	 * 									   a {@code DAOManager} service provider 
+	 * 									   from the {@code ServiceLoader}. 
+	 * @see #getDAOMAnager()
 	 */
-	public final static DAOManager getDAOManager(Map<String, String> parameters) 
-	    throws IllegalArgumentException, IllegalStateException
+	public final static DAOManager getDAOManager(Properties props) 
+	    throws IllegalStateException, ServiceConfigurationError
 	{
-		log.entry(parameters);
+		log.entry(props);
 
         if (DAOManager.allClosed) {
             throw log.throwing(
@@ -241,8 +306,8 @@ public abstract class DAOManager implements AutoCloseable
         					managerIterator.next().getClass().newInstance();
 
         			log.trace("Testing: {}", testManager);
-        			if (parameters != null) {
-        				testManager.setParameters(parameters);
+        			if (props != null && !props.isEmpty()) {
+        				testManager.setParameters(props);
         			}
         			//parameters accepted, we will use this manager
         			manager = testManager;
@@ -276,9 +341,9 @@ public abstract class DAOManager implements AutoCloseable
         	}
         } else {
             log.debug("Get an already existing DAOManager instance");
-            if (parameters != null) {
+            if (props != null && !props.isEmpty()) {
             	try {
-                    manager.setParameters(parameters);
+                    manager.setParameters(props);
             	} catch (IllegalArgumentException e) {
             		toThrow = e;
             	}
@@ -311,7 +376,9 @@ public abstract class DAOManager implements AutoCloseable
 			} else if (toThrow instanceof ServiceConfigurationError) {
 				throw log.throwing((ServiceConfigurationError) toThrow);
 			} else if (toThrow instanceof IllegalArgumentException) {
-				throw log.throwing((IllegalArgumentException) toThrow);
+			    //this exception means that an already instantiated DAOManager
+			    //refused the parameters. This is then an illegal state.
+				throw log.throwing(new IllegalStateException(toThrow));
 			} else {
 				throw log.throwing(
 						new ServiceConfigurationError("Unexpected error", toThrow));
@@ -332,29 +399,44 @@ public abstract class DAOManager implements AutoCloseable
 	 * If no {@code DAOManager} is available for this thread yet, this method 
 	 * will try to obtain a {@code DAOManager} from the first Service provider 
 	 * available, or will return {@code null} if no appropriate Service provider 
-	 * could be found. If the caller needs more control on the Service provider used, 
-	 * {@link #getDAOManager(Map)} could be used. 
+	 * could be found. When using this method, the parameters are retrieved either 
+	 * from system properties, or from a configuration file. This method then calls 
+	 * {@link #getDAOManager(Properties)} and provide to it these 
+	 * properties. If these properties were not {@code null} nor empty, the 
+	 * {@code DAOManager} obtained has to accept them, meaning that it found 
+	 * all its mandatory parameters in it. Note that the properties obtained from 
+	 * system properties or configuration file are obtained only once at class loading.
+     * <p>
+     * If a {@code DAOManager} is already available for this thread, 
+     * then this method will simply return it, with the previously provided properties 
+     * still in use. If you want to change these properties, you need to directly 
+     * call {@link #getDAOManager(Properties)}.
 	 * <p>
-	 * If a {@code DAOManager} is already available for this thread, 
-	 * then this method will simply return it. 
-	 * <p>
-	 * This method will throw a {@code IllegalStateException} if {@link #closeAll()} 
+	 * This method will throw an {@code IllegalStateException} if {@link #closeAll()} 
 	 * was called prior to calling this method, and a {@code ServiceConfigurationError} 
 	 * if an error occurred while trying to find a service provider from the 
 	 * {@code ServiceLoader}. 
 	 * 
 	 * @return 				The first {@code DAOManager} available,  
 	 * 						{@code null} if no service providers were available at all.
-	 * @throws IllegalStateException 	if {@code closeAll} was already called, 
-	 * 									so that no {@code DAOManager}s can be 
-	 * 									acquired anymore. 
+	 * @throws IllegalStateException   if {@code closeAll} was already called, 
+	 * 								   so that no {@code DAOManager}s can be 
+	 * 								   acquired anymore. 
 	 * @throws ServiceConfigurationError	If an error occurred while trying to find 
 	 * 										a {@code DAOManager} service provider 
 	 * 										from the {@code ServiceLoader}. 
+	 * @see #getDAOManager(Properties)
 	 */
-	public final static DAOManager getDAOManager() throws IllegalStateException {
+	public final static DAOManager getDAOManager() throws IllegalStateException, ServiceConfigurationError {
 		log.entry();
-		return log.exit(DAOManager.getDAOManager(null));
+		
+		if (hasDAOManager()) {
+		    //this will avoid useless parsing of the properties.
+		    return log.exit(getDAOManager(null));
+		}
+		
+		//otherwise, we use the properties obtained at class loading.
+		return log.exit(DAOManager.getDAOManager(properties));
 	}
 	
 	/**
@@ -721,22 +803,21 @@ public abstract class DAOManager implements AutoCloseable
     /**
      * Set the parameters of this {@code DAOManager}. For instance, 
      * if this {@code DAOManager} was obtained from a Service provider using 
-     * the JDBC API to use a SQL database, then the parameters might contain 
-     * the {@code URL} to connect to the database. It is up to each 
-     * Service provider to specify what are the parameters needed. 
+     * the JDBC API to use a SQL database, then the provided properties might 
+     * contain a key/value pair defining the {@code URI} to connect to the database. 
+     * It is up to each Service provider to specify what are the parameters needed. 
      * <p>
      * This method throws an {@code IllegalArgumentException} if 
-     * the {@code DAOManager} does not accept these parameters. 
-     * This is the method used to find an appropriate Service provider 
-     * when calling {@link #getDAOManager(Map)}.
+     * the {@code DAOManager} does not accept these parameters, meaning that it could 
+     * not find its mandatory parameters in it. This is the method used to find 
+     * an appropriate Service provider when calling {@link #getDAOManager(Properties)}.
      * 
-     * @param parameters	A {@code Map} with keys that are {@code String}s 
-	 * 						representing parameter names, and values that 
-	 * 						are {@code String}s representing parameters values. 
-     * @throws IllegalArgumentException 	If this {@code DAOManager} does not accept 
-     * 										{@code parameters}. 
+     * @param props     A {@code Properties} object containing parameter names 
+     *                  and values to be used by this {@code DAOManager}. 
+     * @throws IllegalArgumentException     If this {@code DAOManager} does not accept 
+     * 										{@code props}. 
      */
-    public abstract void setParameters(Map<String, String> parameters) 
+    public abstract void setParameters(Properties props) 
     		throws IllegalArgumentException;
     
     /**

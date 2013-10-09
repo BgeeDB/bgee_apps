@@ -1,6 +1,6 @@
 package org.bgee.model.dao.api;
 
-import java.util.Map;
+import java.util.Properties;
 
 import org.bgee.model.dao.api.source.SourceDAO;
 
@@ -55,9 +55,9 @@ public class MockDAOManager extends DAOManager {
 	}
 
 	@Override
-	public void setParameters(Map<String, String> parameters)
+	public void setParameters(Properties props)
 			throws IllegalArgumentException {
-		MockDAOManager.mockManager.setParameters(parameters);
+		MockDAOManager.mockManager.setParameters(props);
 	}
 
 	@Override

@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Properties;
 import java.util.ServiceConfigurationError;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Exchanger;
@@ -60,10 +59,10 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 			@Override
 			public Boolean call() throws Exception {
 				try {
-					Map<String, String> parameters = new HashMap<String, String>();
-					parameters.put("test.key", "test.value");
+				    Properties parameters = new Properties();
+			        parameters.put("test.key", "test.value");
 					manager1 = DAOManager.getDAOManager();
-					manager2 = DAOManager.getDAOManager();
+					manager2 = DAOManager.getDAOManager(parameters);
 			        
 			        //main thread will be wake up by the finally statement
 			        
@@ -83,7 +82,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 		assertNotNull("Could not acquire a DAOManager", manager1);
 		//calling getDAOManager() a second time from this thread 
 		//should return the same DAOManager instance, even with different parameters
-		Map<String, String> parameters = new HashMap<String, String>();
+		Properties parameters = new Properties();
 		parameters.put("test.key", "test.value");
 		assertSame("A same thread acquired two instances of DAOManager", 
 				manager1, DAOManager.getDAOManager(parameters));
@@ -257,21 +256,21 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	}
 	
 	/**
-	 * Test the functionality of {@link DAOManager#setParameters(Map)}, 
-	 * in relation with {@link DAOManager#getDAOManager(Map)}.
+	 * Test the functionality of {@link DAOManager#setParameters(Properties)}, 
+	 * in relation with {@link DAOManager#getDAOManager(Properties)}.
 	 */
 	@Test
 	public void shouldSetParameters() {
 		//make the providers to refuse some parameters
 		
 		//MockDAOManager
-		Map<String, String> parameters = new HashMap<String, String>();
+	    Properties parameters = new Properties();
 		parameters.put("test.key", "test.value");
 		doThrow(new IllegalArgumentException("Mock exception on purpose")).
 		    when(MockDAOManager.mockManager).setParameters(eq(parameters));
 		
 		//MockDAOManager2
-		Map<String, String> parameters2 = new HashMap<String, String>();
+		Properties parameters2 = new Properties();
 		parameters2.put("test.key2", "test.value2");
 		doThrow(new IllegalArgumentException("Mock exception on purpose")).
 	        when(MockDAOManager2.mockManager).setParameters(eq(parameters2));
@@ -288,12 +287,12 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 				manager, DAOManager.getDAOManager());
 		
 		//calling getDAOManager with the parameters the current manager rejects 
-		//should throw an IllegalArgumentException
+		//should throw an IllegalStateException
 		try {
 			DAOManager.getDAOManager(parameters2);
 			//if we reach this point, test failed
-		    throw new AssertionError("A IllegalArgumentException should have been thrown");
-		} catch (IllegalArgumentException e) {
+		    throw new AssertionError("A IllegalStateException should have been thrown");
+		} catch (IllegalStateException e) {
 			//test passed
 			log.catching(Level.DEBUG, e);
 		}
@@ -304,7 +303,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 		assertSame("getDAOManager returned a second instance in a same thread", 
 				manager, DAOManager.getDAOManager(parameters));
 		
-		//now if we release it, wa can acquire an instance from the first provider
+		//now if we release it, we can acquire an instance from the first provider
 		manager.close();
 		manager = DAOManager.getDAOManager(parameters2);
 		assertEquals("getDAOManager returned the wrong service provider", 

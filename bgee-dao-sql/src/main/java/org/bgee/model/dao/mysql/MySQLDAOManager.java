@@ -5,6 +5,12 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
@@ -16,6 +22,15 @@ public class MySQLDAOManager extends DAOManager {
      */
     private final static Logger log = 
             LogManager.getLogger(MySQLDAOManager.class.getName());
+    
+
+    /**
+     * The {@code DataSource} used to obtain {@code Connection} from. 
+     * {@code null} if no {@code DataSource} could be obtained 
+     * from {@code InitialContext}. In that case, a JDBC {@code Driver} should 
+     * be used.
+     */
+    private DataSource dataSource;
     
     /**
      * A {@code String} that is the key to retrieve the resource name 
@@ -34,6 +49,7 @@ public class MySQLDAOManager extends DAOManager {
      * (see {@link #getUsername()} and {@link #getPassword()}).
      * 
      * @see #RESOURCENAMEKEY
+     * @see #dataSource
      */
     private String dataSourceResourceName;
     
@@ -196,7 +212,23 @@ public class MySQLDAOManager extends DAOManager {
         }
         //just in case we couldn't obtain the connection, without exception
         if (realConnection == null) {
-            throw new SQLException("Could not obtain a Connection");
+            String msg = "Could not obtain a Connection. ";
+            if (this.getDataSource() == null) {
+                msg += "No DataSource was provided. ";
+                if (StringUtils.isNotBlank(this.getJdbcDriverName())) {
+                    msg += "The provided JDBC Driver name, " + this.getJdbcDriverName() +
+                            ", did not allow to obtain a Connection. ";
+                }
+                if (StringUtils.isNotBlank(this.getJdbcUrl())) {
+                    msg += "The provided JDBC URL, " + this.getJdbcUrl() + 
+                            ", did not allow to obtain a Connection. ";
+                } else {
+                    msg += "No JDBC connection URL was provided. ";
+                }
+            } else {
+                msg += "The DataSource did not allow to obtain a Connection. ";
+            }
+            throw new SQLException(msg);
         }
         //now create the new BgeeConnection
         connection = new BgeeConnection(this, realConnection, connectionId);
@@ -207,9 +239,92 @@ public class MySQLDAOManager extends DAOManager {
         return log.exit(connection);
     }
     
+
+    /**
+     * Initialize a {@code DataSource} obtained from a JNDI {@code InitialContext}, 
+     * using the resource name provided by {@link #getDataSourceResourceName()}. 
+     * Will be stored into {@link #dataSource}.
+     */
+    private void loadDataSource() {
+        log.entry();
+        if (StringUtils.isBlank(this.getDataSourceResourceName())) {
+            log.exit(); return;
+        }
+        
+        try {
+            //try to get a DataSource using JNDI
+            Context ctx = new InitialContext();
+            this.setDataSource((DataSource) ctx.lookup(this.getDataSourceResourceName()));
+            log.info("DataSource obtained from InitialContext {} using JNDI", 
+                    this.getDataSourceResourceName());
+        } catch (NamingException e) {
+            log.catching(e);
+            log.info("No DataSource obtained from InitialContext using JNDI, should rely on a JDBC Driver");
+            //here, we do nothing: the DataSource could not be loaded, 
+            //SQLExceptions will be thrown when getConnection will be called anyway 
+            //(if no JDBC Driver is available).
+        }
+        log.exit();
+    }
+
+    /**
+     * Initialize a JDBC {@code Driver} using the value returned by 
+     * {@link #getJdbcDriverName()} as class name, if any was provided. 
+     * Providing the class name of the JDBC {@code Driver} to use is not mandatory, 
+     * but is strongly recommended, when using {@code Driver}s not auto-loaded, 
+     * or when using this application in a servlet container context. See 
+     * {@link #getJdbcDriverName()} for more details.
+     */
+    private void loadJdbcDriver() {
+        log.entry();
+        if (StringUtils.isBlank(this.getJdbcDriverName())) {
+            log.exit(); return;
+        }
+        
+        //if the name of a JDBC driver was provided, try to load it.
+        //it should not be needed, but some buggy JDBC Drivers need to be 
+        //"manually" loaded.
+        try {
+            //also, calling newInstance() should not be needed, 
+            //but some buggy JDBC Drivers do not properly initialized 
+            //themselves in the static initializer.
+            Class.forName(this.getJdbcDriverName()).newInstance();
+        } catch (InstantiationException | IllegalAccessException
+                | ClassNotFoundException e) {
+            //here, we do nothing: the JDBC Driver could not be loaded, 
+            //SQLExceptions will be thrown when getConnection will be called anyway.
+            log.catching(e);
+        }
+        log.exit();
+    }
+
     //******************************************
     // GETTERS/SETTERS
     //******************************************
+    /**
+     * Returns the {@code DataSource} used to obtain {@code Connection}s from. 
+     * {@code null} if no {@code DataSource} could be obtained 
+     * from {@code InitialContext}. In that case, a JDBC {@code Driver} should 
+     * be used.
+     * 
+     * @return the {@code DataSource} used to obtain {@code Connection}s from.
+     */
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+    /**
+     * Sets the {@code DataSource} used to obtain {@code Connection}s from. 
+     * {@code null} if no {@code DataSource} could be obtained 
+     * from {@code InitialContext}. In that case, a JDBC {@code Driver} should 
+     * be used.
+     * 
+     * @param dataSource    the {@code DataSource} that should be used to obtain 
+     *                      {@code Connection}s from.
+     */
+    private void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+    
     /**
      * Returns the {@code String} that is the resource name of the {@code DataSource} 
      * to use. This parameter is not mandatory if a JDBC {@code Driver} is used 
@@ -222,7 +337,7 @@ public class MySQLDAOManager extends DAOManager {
      *          to use.
      * @see #RESOURCENAMEKEY
      */
-    public String getDataSourceResourceName() {
+    private String getDataSourceResourceName() {
         return dataSourceResourceName;
     }
     /**
@@ -378,13 +493,69 @@ public class MySQLDAOManager extends DAOManager {
     // IMPLEMENT DAOManager ABSTRACT METHODS
     //******************************************
 
+    /*
+     * (non-Javadoc)
+     * Of note, this method is responsible for triggering the loading of 
+     * the DataSource or the JDBC Driver when the appropriate parameters are provided.
+     * 
+     * @see org.bgee.model.dao.api.DAOManager#setParameters(java.util.Properties)
+     */
     @Override
-    public void setParameters(Properties props)
-            throws IllegalArgumentException {
-        // TODO Auto-generated method stub
+    public void setParameters(Properties props) throws IllegalArgumentException {
+        log.entry(props);
         
+        String resourceName = props.getProperty(RESOURCENAMEKEY);
+        String jdbcUrl      = props.getProperty(JDBCURLKEY);
+        
+        //check whether the required parameters are provided: this MySQLDAOManager 
+        //either needs a DataSource, or a JDBC connection URL to use a JDBC Driver 
+        //(the JDBC Driver name is not mandatory, it is possible to obtain it 
+        //from the DriverManager only thanks to the URL).
+        //username and password are not mandatory, they can either be provided 
+        //in the configuration of the DataSource, or in the JDBC URL.
+        if (StringUtils.isBlank(resourceName) && StringUtils.isBlank(jdbcUrl)) {
+            throw log.throwing(new IllegalArgumentException("The parameters provided " +
+            		"do not allow to use a MySQLDAOManager: it must be provided " +
+            		"either the name of the resource to retrieve a DataSource " +
+            		"from an InitialContext, or the JDBC connection URL to use " +
+            		"with the DriverManager."));
+        }
+        
+        //check whether the DataSource or the Driver should be reloaded, 
+        //to avoid useless loadings
+        boolean dataSourceChange = false;
+        if ((this.getDataSourceResourceName() == null && resourceName != null) || 
+                (this.getDataSourceResourceName() != null && 
+                !this.getDataSourceResourceName().equals(resourceName))) {
+            dataSourceChange = true;
+        }
+        
+        String driverName   = props.getProperty(JDBCDRIVERNAMEKEY);
+        boolean driverChange = false;
+        if ((this.getJdbcDriverName() == null && driverName != null) || 
+                (this.getJdbcDriverName() != null && 
+                !this.getJdbcDriverName().equals(driverName))) {
+            driverChange = true;
+        }
+        
+        this.setDataSourceResourceName(resourceName);
+        this.setJdbcDriverName(driverName);
+        this.setJdbcUrl(props.getProperty(JDBCURLKEY));
+        this.setUsername(props.getProperty(USERNAMEKEY));
+        this.setPassword(props.getProperty(PASSWORDKEY));
+        
+        //these methods are responsible to check for the validity of resourceName 
+        //and driverName
+        if (dataSourceChange) {
+            this.loadDataSource();
+        }
+        if (driverChange) {
+            this.loadJdbcDriver();
+        }
+        
+        log.exit();
     }
-
+    
     @Override
     protected void closeDAOManager() {
         // TODO Auto-generated method stub

@@ -9,7 +9,6 @@ import javax.naming.StringRefAddr;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.DataSourceFactory;
 import org.bgee.model.BgeeProperties;
-import org.bgee.model.dao.mysql.DriverTestImpl;
 import org.bgee.model.dao.mysql.MockDriverUtils;
 
 import com.sun.jndi.fscontext.RefFSContextFactory;

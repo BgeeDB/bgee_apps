@@ -369,7 +369,7 @@ public class MySQLDAOManager extends DAOManager {
 
     /**
      * Notification that a {@code BgeeConnection}, with an {@code ID} 
-     * equals to {@code connectionId}, holds by this {@code MySQLDAOManager}, 
+     * equals to {@code connectionId}, held by this {@code MySQLDAOManager}, 
      * has been closed. 
      * <p>
      * This method will thus removed from {@link #connections} 
@@ -724,6 +724,7 @@ public class MySQLDAOManager extends DAOManager {
                     throw log.throwing(new DAOException(e));
                 }
             }
+            this.close();
         }
     }
     

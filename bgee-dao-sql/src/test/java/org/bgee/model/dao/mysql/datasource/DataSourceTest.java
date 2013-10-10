@@ -7,9 +7,9 @@ import java.util.concurrent.Exchanger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.mysql.BgeeConnection;
 import org.bgee.model.dao.mysql.BgeeDataSource;
+import org.bgee.model.dao.mysql.TestAncestor;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

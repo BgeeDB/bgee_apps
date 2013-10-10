@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql;
+package org.bgee.model.dao.mysql.datasource;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
+
+import org.bgee.model.dao.mysql.MockDriverUtils;
 
 /**
  * A minimal implementation of a Driver 

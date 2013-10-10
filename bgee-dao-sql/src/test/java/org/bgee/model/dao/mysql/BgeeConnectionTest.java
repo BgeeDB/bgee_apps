@@ -5,7 +5,6 @@ import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.mysql.datasource.InitDataSourceTest;
 import org.junit.After;
 import org.junit.AfterClass;

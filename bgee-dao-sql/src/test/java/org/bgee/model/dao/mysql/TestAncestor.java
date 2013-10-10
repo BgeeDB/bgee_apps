@@ -1,4 +1,4 @@
-package org.bgee.model;
+package org.bgee.model.dao.mysql;
 
 import org.apache.logging.log4j.Logger;
 import org.junit.Rule;

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -260,7 +261,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	 * in relation with {@link DAOManager#getDAOManager(Properties)}.
 	 */
 	@Test
-	public void shouldSetParameters() {
+	public void shouldSetParameters() throws DAOException {
 		//make the providers to refuse some parameters
 		
 		//MockDAOManager
@@ -470,7 +471,7 @@ public class ManagerLoadAndReleaseTest extends TestAncestor {
 	 * Test the getXXXDAO() methods.
 	 */
 	@Test
-	public void shouldGetDAOs() {
+	public void shouldGetDAOs() throws DAOException {
 		DAOManager manager = DAOManager.getDAOManager();
 		DAOManager mockManager = ((MockDAOManager) manager).instanceMockManager;
 		

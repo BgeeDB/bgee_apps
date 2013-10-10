@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.source.SourceDAO;
 
 /**
@@ -172,6 +173,16 @@ public abstract class DAOManager implements AutoCloseable
      */
 	private static final ConcurrentMap<Long, DAOManager> managers = 
 			new ConcurrentHashMap<Long, DAOManager>(); 
+	/**
+	 * This {@code ConcurrentMap} stores one instance of {@code DAOManager} for each 
+	 * service provider used (so for each class name among the {@code DAOManager}s 
+	 * used). They are still stored even after having called {@code close} on 
+	 * a {@code DAOManager} that is a representative. This is to be able  
+	 * to call {@link #shutdown()} on them, when {@link #closeAll()} is called, 
+	 * to bypass the limitation of Java of not allowing abstract static methods.
+	 */
+	private static final ConcurrentMap<String, DAOManager> representativeManagers = 
+            new ConcurrentHashMap<String, DAOManager>(); 
 	
 	/**
 	 * A unmodifiable {@code List} containing all available providers of 
@@ -219,7 +230,7 @@ public abstract class DAOManager implements AutoCloseable
      * or if it is not possible anymore (meaning that the method {@link #closeAll()} 
      * has been called).
      */
-    private static volatile boolean allClosed = false;
+    private static final AtomicBoolean allClosed = new AtomicBoolean(false);
 	
 	/**
 	 * Return a {@code DAOManager} instance with its parameters set using 
@@ -277,7 +288,7 @@ public abstract class DAOManager implements AutoCloseable
 	{
 		log.entry(props);
 
-        if (DAOManager.allClosed) {
+        if (DAOManager.allClosed.get()) {
             throw log.throwing(
             		new IllegalStateException("closeAll() has been already called, " +
                     "it is not possible to acquire a DAOManager anymore"));
@@ -311,6 +322,11 @@ public abstract class DAOManager implements AutoCloseable
         			//parameters accepted, we will use this manager
         			manager = testManager;
         			manager.setId(threadId);
+                    //as soon as a DAOManager is loaded, we need to store a representative 
+                    //of its class to properly unload them at application shutdown
+                    representativeManagers.putIfAbsent(
+                            testManager.getClass().getName(), testManager);
+                    
         			log.debug("Valid DAOManager: {}", manager);
         			break providers;
 
@@ -354,7 +370,7 @@ public abstract class DAOManager implements AutoCloseable
         	synchronized (manager.closed) {
         		if (manager.isClosed()) {
         			//if the manager was closed following a call to closeAll
-        			if (DAOManager.allClosed) {
+        			if (DAOManager.allClosed.get()) {
         				toThrow = new IllegalStateException(
         						"closeAll() has been already called, " +
         						"it is not possible to acquire a DAOManager anymore");
@@ -474,21 +490,31 @@ public abstract class DAOManager implements AutoCloseable
      * 
      * @return 	An {@code int} that is the number of {@code DAOManager} instances  
      * 			that were closed.
+     * 
+     * @throws DAOException If an error occurred while closing the managers.
      */
-    public final static int closeAll()
+    public final static int closeAll() throws DAOException
     {
         log.entry();
-
+        
         //this volatile boolean will act more or less like a lock 
         //(no new DAOManager can be obtained after this boolean is set to true).
         //It's not totally true, but we don't except any major error 
         //if it doesn't act like a lock.
-        DAOManager.allClosed = true;
+        if (DAOManager.allClosed.getAndSet(true)) {
+            //already closed, or closing.
+            log.exit(); return 0;
+        }
 
         int managerCount = 0;
         for (DAOManager manager: managers.values()) {
         	managerCount++;
         	manager.close();
+        }
+        //call shutdown on representative DAOManagers (see representativeManagers attribute, 
+        //and shutdown method documentation)
+        for (DAOManager manager: representativeManagers.values()) {
+            manager.shutdown();
         }
 
         return log.exit(managerCount);
@@ -499,10 +525,11 @@ public abstract class DAOManager implements AutoCloseable
      * with an ID (returned by {@link #getId()}) equals to {@code managerId}.
      * 
      * @param managerId 	A {@code long} corresponding to the ID of 
-     * 						the {@code DAOManager} to kill. 
+     * 						the {@code DAOManager} to kill.
+     * @throws DAOException If an error occurred while killing the manager.
      * @see #kill()
      */
-    public final static void kill(long managerId) {
+    public final static void kill(long managerId) throws DAOException {
     	log.entry(managerId);
     	DAOManager manager = managers.get(managerId);
         if (manager != null) {
@@ -515,13 +542,14 @@ public abstract class DAOManager implements AutoCloseable
      * with {@code thread}.
      * 
      * @param thread 	A {@code Thread} associated with a {@code DAOManager}. 
+     * @throws DAOException If an error occurred while killing the manager.
      * @see #kill()
      */
     /*
      * This method is used to hide the implementation detail that the ID associated 
      * to a DAOManager is its holder Thread ID.
      */
-    public final static void kill(Thread thread) {
+    public final static void kill(Thread thread) throws DAOException {
     	log.entry(thread);
     	DAOManager.kill(thread.getId());
         log.exit();
@@ -601,13 +629,13 @@ public abstract class DAOManager implements AutoCloseable
      * <p>
      * Specified by {@link java.lang.AutoCloseable#close()}.
      * 
+     * @throws DAOException If an error occurred while closing the manager.
      * @see #closeAll()
      * @see #kill()
      * @see #kill(long)
      */
 	@Override
-    public final void close()
-    {
+    public final void close() throws DAOException {
         log.entry();
         if (this.atomicCloseAndRemoveFromPool(false)) {
         	//implementation-specific code here
@@ -647,9 +675,10 @@ public abstract class DAOManager implements AutoCloseable
      * should throw a {@code QueryInterruptedException} from the thread 
      * that was interrupted. 
      * 
+     * @throws DAOException If an error occurred while killing the manager.
      * @see #kill(long)
      */
-    public final void kill() {
+    public final void kill() throws DAOException {
     	log.entry();
     	if (this.atomicCloseAndRemoveFromPool(true)) {
     		//implementation-specific code here
@@ -753,7 +782,7 @@ public abstract class DAOManager implements AutoCloseable
     
     
     //*****************************************
-    //  ABSTRACT METHODS TO IMPLEMENT
+    //  CORE ABSTRACT METHODS TO IMPLEMENT
     //*****************************************	
     
     /**
@@ -767,8 +796,10 @@ public abstract class DAOManager implements AutoCloseable
      * <p>
      * This method is called by {@link #close()} after having remove this 
      * {@code DAOManager} from the pool. 
+     * 
+     * @throws DAOException If an error occurred while closing the manager.
      */
-    protected abstract void closeDAOManager();
+    protected abstract void closeDAOManager() throws DAOException;
     
     /**
      * Service providers must implement in this method the operations necessary 
@@ -796,8 +827,27 @@ public abstract class DAOManager implements AutoCloseable
      * because it might require some atomic operations, but this {@code DAOManager} 
      * <strong>must</strong> be closed following a call to this method, 
      * as if {@link #closeDAOManager()} had been called. 
+     * 
+     * @throws DAOException If an error occurred while killing the manager.
      */
-    protected abstract void killDAOManager();
+    protected abstract void killDAOManager() throws DAOException;
+    
+    /**
+     * Service providers must implement in this method all the operations necessary 
+     * to close the application. For instance, if the service provider use the JDBC API, 
+     * then it should deregister all {@code Driver}s used, when this method is called.
+     * Note that the method {@code close} would have already been called on each individual 
+     * {@code DAOManager}s, before this method is called (so it is not necessary to 
+     * close {@code Connection}s, for instance). 
+     * <p>
+     * This method should definitely be static, but it is not possible to declare 
+     * an abstract method static in Java, damn it. This method will then be called 
+     * <strong>only on one</strong> {@code DAOManager} instance, for each 
+     * service provider.
+     * 
+     * @throws DAOException If an error occurred while closing the service.
+     */
+    protected abstract void shutdown() throws DAOException;
     
     /**
      * Set the parameters of this {@code DAOManager}. For instance, 
@@ -819,6 +869,10 @@ public abstract class DAOManager implements AutoCloseable
     public abstract void setParameters(Properties props) 
     		throws IllegalArgumentException;
     
+
+    //*****************************************
+    //  METHODS TO OBTAIN DAOs TO IMPLEMENT
+    //***************************************** 
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.source.SourceDAO SourceDAO} instance 

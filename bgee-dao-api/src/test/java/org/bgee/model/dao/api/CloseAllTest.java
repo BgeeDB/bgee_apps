@@ -14,6 +14,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import static org.mockito.Mockito.*;
+
 /**
  * A class to test the functionality of {@link DAOManager#closeAll()}.
  * Following a call to this method, it is not possible to acquire 
@@ -135,5 +137,9 @@ public class CloseAllTest extends TestAncestor {
 	        		"IllegalStateException not thrown in the second thread");
         	}
         }
+        
+        //now, check that shutdown was called on only one representative of mock DAOManager
+        verify(MockDAOManager.mockManager, times(1)).shutdown();
+        verify(MockDAOManager2.mockManager, times(0)).shutdown();
 	}
 }

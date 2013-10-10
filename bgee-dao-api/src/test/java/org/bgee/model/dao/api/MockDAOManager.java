@@ -2,6 +2,7 @@ package org.bgee.model.dao.api;
 
 import java.util.Properties;
 
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.source.SourceDAO;
 
 import static org.mockito.Mockito.mock;
@@ -45,16 +46,21 @@ public class MockDAOManager extends DAOManager {
 	}
 
 	@Override
-	protected void closeDAOManager() {
+	protected void closeDAOManager() throws DAOException {
 		this.instanceMockManager.closeDAOManager();
 	}
 
 	@Override
-	protected void killDAOManager() {
+	protected void killDAOManager() throws DAOException {
 		this.instanceMockManager.killDAOManager();
 	}
 
 	@Override
+    protected void shutdown() throws DAOException {
+	    MockDAOManager.mockManager.shutdown();
+    }
+
+    @Override
 	public void setParameters(Properties props)
 			throws IllegalArgumentException {
 		MockDAOManager.mockManager.setParameters(props);

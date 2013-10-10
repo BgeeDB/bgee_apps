@@ -2,13 +2,13 @@ package org.bgee.model.dao.mysql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.BgeeProperties;
 
 /**
  * Abstraction layer to use a {@code java.sql.Connection}. 
@@ -20,21 +20,20 @@ import org.bgee.model.BgeeProperties;
  * {@code try-with-resources} statement.
  * 
  * @author Frederic Bastian
- * @author Mathieu Seppey
- * @version Bgee 13, May 2013
+ * @version Bgee 13
  * @since Bgee 13
  */
-public class BgeeConnection implements AutoCloseable
+public final class BgeeConnection implements AutoCloseable
 {
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(BgeeConnection.class.getName());
     /**
-     * The {@code BgeeDataSource} used to obtain this {@code BgeeConnection}. 
+     * The {@code MySQLDAOManager} used to obtain this {@code BgeeConnection}. 
      * Used for notifications purpose. 
      */
-    private final BgeeDataSource bgeeDataSource;
+    private final MySQLDAOManager manager;
     /**
      * The real {@code java.sql.Connection} that this class wraps.
      */
@@ -42,76 +41,49 @@ public class BgeeConnection implements AutoCloseable
     /**
      * A {@code String} representing an identifier 
      * for this {@code BgeeConnection} object. It is used for the connection 
-     * to be tracked by the container {@code BgeeDataSource} object 
-     * (the {@code BgeeDataSource} that instantiated this {@code BgeeConnection}).
+     * to be tracked by the container {@code MySQLDAOManager} object 
+     * (see {@link #manager}).
      */
     private final String id;
+    
     /**
-     * A {@code Map} which contains every already existing and available
-     * {@code BgeePreparedStatement}
-     * related to this {@code BgeeConnection}.
-     * Its size is maintained to a maximum defined in the properties
-     * {@code preparedStatmentPoolSize} in 
-     * {@code BgeeProperties}, using
-     * a LRU exclusion algorithm.
-     * @see BgeeProperties
+     * A concurrent <code>Set</code> (backed up by a <code>ConcurrentHashMap</code>) 
+     * to store all {@code BgeePreparedStatement}s provided by this {@code BgeeConnection}, 
+     * and not yet closed. This will allow to close them if this {@code BgeeConnection} 
+     * is closed, or to cancel a running statement to implement the method 
+     * {@link #MySQLDAOManager#killDAOManager()}.
+     * <p>
+     * It is a concurrent <code>Set</code>, so that it can be read by another thread 
+     * to kill a running statement.
      */
-    private final Map<String,BgeePreparedStatement> preparedStatementPool 
-    = new LinkedHashMap<String,BgeePreparedStatement>(BgeeProperties
-            .getBgeeProperties().getPrepStatPoolMaxSize(),1F) {
-
-        private static final long serialVersionUID = 6122694567906790867L;
-
-        /**
-         * Return {@code true} if the maximum capacity of the {@code LinkedHashMap}
-         * is reached. It is meant to be only automatically called by the
-         * {@code PreparedStatementPool put()} method to define if an item has 
-         * to be dropped to keep the list at the limit size.
-         */
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, BgeePreparedStatement> eldest)
-        {
-
-            log.entry(eldest);
-
-            if(size() >= BgeeProperties.getBgeeProperties().getPrepStatPoolMaxSize()){
-                log.info("Too many prepared statement pooled for connection {}. Drop the LRU PreparedStatement."
-                        ,BgeeConnection.this); 
-                BgeeConnection.this.reportPoolState(-1);
-                
-                return log.exit(true);
-            }
-
-            return  log.exit(false);
-        }
-
-    };
+    private final Set<BgeePreparedStatement> preparedStatements;
+    
     /**
-     * Default constructor, should not be used. 
-     * Constructor protected, so that only a {@link BgeeDataSource} can provide 
-     * a {@code BgeeConnection}.
+     * Default constructor private, should not be used. 
      */
-    protected BgeeConnection()
+    @SuppressWarnings("unused")
+    private BgeeConnection()
     {
         this(null, null, null);
     }
     /**
-     * Constructor providing the {@code BgeeDataSource} object used to instantiate 
-     * this connection (for notifications purpose), the real {@code java.sql.Connection} 
-     * that this class wraps, and the {@code id} to use to identify and track this connection.
+     * Constructor providing the {@code MySQLDAOManager} object used to instantiate 
+     * this {@code BgeeConnection} (for notifications purpose), the real 
+     * {@code java.sql.Connection} that this class wraps, and the {@code id} 
+     * to use to identify and track this {@code BgeeConnection}.
      * 
-     * Constructor protected, so that only a {@link BgeeDataSource} can instantiate 
+     * Constructor package-private, so that only a {@link MySQLDAOManager} can instantiate 
      * a {@code BgeeConnection}.
-     * @param dataSource 		The {@code BgeeDataSource} used to obtain 
+     * @param manager    		The {@code MySQLDAOManager} used to obtain 
      * 							this connection. Is used for notifications purpose 
      * 							(notably when {@code close()} is called 
      * 							on this {@code BgeeConnection}).
      * @param realConnection 	The {@code java.sql.Connection} that this class wraps
      * @param id 				A {@code String} representing the ID of this 
-     * 							{@code BgeeConnection}, used by {@code dataSource} 
+     * 							{@code BgeeConnection}, used by {@code manager} 
      * 							to track the connection.
      */
-    protected BgeeConnection(MySQLDAOManager manager, Connection realConnection, 
+    BgeeConnection(MySQLDAOManager manager, Connection realConnection, 
             String id)
     {
         log.entry(manager, realConnection, id);
@@ -119,101 +91,30 @@ public class BgeeConnection implements AutoCloseable
         this.manager        = manager;
         this.realConnection = realConnection;
         this.id             = id;
-
-
+        this.preparedStatements = Collections.newSetFromMap(
+                new ConcurrentHashMap<BgeePreparedStatement, Boolean>());
 
         log.exit();
     }
 
     /**
-     * Provide a {@code BgeePreparedStatement} for the requested sql.
-     * <p>
-     * It is fetched in the {@code BgeePreparedStatement} pool if 
-     * any is available for the requested sql. Else create and return a new one.
-     * <p>
-     * When an existing {@code BgeePreparedStatement} is returned, it is
-     * removed from the pool making it unavailable.
-     * <p>
-     * It hashes the sql {@code String} to use it as pool key
-     * 
-     * @param   sql a {@code String} with contains the PreparedStatement sql
-     * @return  a {@code BgeePreparedStatement} which already existed or newly created
-     *  
-     * @throws SQLException if a database error occurred or if the method is called on
-     * a closed connection
+     * @return The real {@code java.sql.Connection} that this class wraps.
      */
-    public BgeePreparedStatement prepareStatement(String sql) throws SQLException 
-    {
-        log.entry(sql);
-
-        String digestedSql = DigestUtils.sha256Hex(sql) ;
-
-        if(this.preparedStatementPool.containsKey(digestedSql)){
-            BgeePreparedStatement ps =  this.preparedStatementPool.remove(digestedSql);
-            log.debug("Return a already existing BgeePreparedStatement : {}", ps);  
-            log.debug("Remove from the pool the prepared statement {} from connection {} and datasource {}",
-                    ps,this,this.getBgeeDataSource());  
-            this.reportPoolState(-1);
-
-            return log.exit(ps);
-        }
-        else{
-            BgeePreparedStatement ps = new BgeePreparedStatement(digestedSql,this,
-                    this.getRealConnection().prepareStatement(sql));
-            log.debug("Return a newly created BgeePreparedStatement : {}", ps);         
-            return log.exit(ps);
-        }
-    }
-
-    /**
-     * @return the {@link #realConnection}
-     */
-    protected Connection getRealConnection() {
+    public Connection getRealConnection() {
         return this.realConnection;
     }
     /**
-     * @return the {@link #id}
+     * Returns the ID of this {@code BgeeConnection} object. It is used for the 
+     * connection to be tracked by the container {@code MySQLDAOManager}. 
+     * @return  the {@code String} representing this {@code BgeeConnection} ID. 
      */
     protected String getId() {
         return this.id;
     }
-    /**
-     * @return the {@link #bgeeDataSource}
-     */
-    protected BgeeDataSource getBgeeDataSource() {
-        return this.bgeeDataSource;
-    }
-    /**
-     * @return the {@link #preparedStatementPool}
-     */
-    protected Map<String, BgeePreparedStatement> getPreparedStatementPool() {
-        return this.preparedStatementPool;
-    }
 
-    /**
-     * Add a {@code BgeePreparedStatement} to the {@code preparedStatementPool}
-     * 
-     * @param ps   a BgeePreparedStatement to be added to the pool
-     * @throws SQLException     If an error occurred while trying to obtain the connection, 
-     *                          of if this {@code BgeeDataSource} was closed.
-     * 
-     */
-    protected void addToPrepStatPool(BgeePreparedStatement ps) throws SQLException{
-        log.entry(ps);
-
-        this.getBgeeDataSource().checkPrepStatPools();
-
-        log.debug("Put in the pool the prepared statement {} from connection {} and datasource {}",
-                ps,this,this.getBgeeDataSource());  
-
-        this.preparedStatementPool.put(ps.getId(),ps);
-
-        this.reportPoolState(+1);
-        log.exit();
-    }
     /**
      * Close the real {@code Connection} that this class wraps, 
-     * and notify of the closing the {@code BgeeDataSource} used to obtain 
+     * and notify of the closing the {@code MySQLDAOManager} used to obtain 
      * this {@code BgeeConnection}.
      * 
      * @throws SQLException 	If the real {@code Connection} that this class wraps
@@ -221,62 +122,51 @@ public class BgeeConnection implements AutoCloseable
      */
     @Override
     public void close() throws SQLException {
-        try {
-            this.getRealConnection().close();
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            this.getBgeeDataSource().connectionClosed(this.getId());
-        }
-    }
-    /**
-     * Remove the last recent used item in the {@code PreparedStatementPool}
-     */
-    protected void cleanPrepStatPools(){
-
         log.entry();
-
-        log.info("Connection {} has the most pooled prepared statement and has to be cleaned",
-                this); 
-
-        String key = this.preparedStatementPool.keySet().iterator().next();
-
-        log.debug("Remove from the pool the prepared statement {} from connection {} and datasource {}",
-                this.preparedStatementPool.remove(key),this,this.getBgeeDataSource());
-
-        this.reportPoolState(-1);
-
+        try {
+            synchronized(this.preparedStatements) {
+                for (BgeePreparedStatement stmt: this.preparedStatements) {
+                    stmt.close();
+                }
+                this.getRealConnection().close();
+            }
+        } catch (SQLException e) {
+            throw log.throwing(e);
+        } finally {
+            this.manager.connectionClosed(this.getId());
+        }
         log.exit();
-
-    }     
+    }    
     /**
      * Retrieves whether this {@code BgeeConnection} object has been closed. 
      * A {@code BgeeConnection} is closed if the method {@link #close()} 
-     * has been called on it, or on its container {@code BgeeDataSource}.
+     * has been called on it, or on its container {@code MySQLDAOManager}.
      *  
      * @return 	{@code true} if this {@code BgeeConnection} object is closed; 
      * 			{@code false} if it is still open.
      * @throws SQLException		if a database access error occurs
      */
-    public boolean isClosed() throws SQLException
-    {
+    public boolean isClosed() throws SQLException {
         return this.getRealConnection().isClosed();
     }
+    
     /**
-     * Reports the updated number of pooled {@code BgeePreparedStatement}
-     * to the related {@code BgeeDataSource}
+     * Call the method {@code cancel} on any {@code BgeePreparedStatement} provided 
+     * by this {@code BgeeConnection}, currently running a query, and then call 
+     * {@link #close()}. This method is used to implement 
+     * {@link MySQLDAOManager#killDAOManager()}. It has to be called by a different thread 
+     * than the one running the queries.
      * 
-     * @param deltaPrepStatNumber  An {@code int} which represents the change
-     *                             in the {@code BgeePreparedStatement} number
-     *                                           
-     */    
-    private void reportPoolState(int deltaPrepStatNumber) {
-
-        log.entry(deltaPrepStatNumber);
-
-        this.getBgeeDataSource().reportPoolState(deltaPrepStatNumber,this);
-
-        log.exit();
-
+     * @throws SQLException If an error occurred while canceling a {@code PreparedStatement}.
+     */
+    void kill() throws SQLException {
+        synchronized(this.preparedStatements) {
+            for (BgeePreparedStatement stmt: this.preparedStatements) {
+                if (stmt.isRunningQuery()) {
+                    stmt.cancel();
+                }
+            }
+            this.close();
+        }
     }
 }

@@ -1,10 +1,12 @@
 package org.bgee.model.dao.mysql;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.QueryInterruptedException;
 
 /**
  * Abstraction layer to use a {@code java.sql.PreparedStatement}. 
@@ -37,21 +39,12 @@ public final class BgeePreparedStatement implements AutoCloseable {
      */
     private final PreparedStatement realPreparedStatement;
     /**
-     * A {@code boolean} set to {@code true} when a query is currently run  
-     * by this {@code BgeePreparedStatement}. It is set to {@code true} at the 
-     * beginning of the method {@code executeQuery}, and to {@code false} 
-     * at the end. This is used to determine whether the method {@code cancel}
-     * might be called on this {@code BgeePreparedStatement}. This is why it is 
-     * an {@code volatile}, its only purpose is to be accessed by different threads.
-     */
-    private volatile boolean runningQuery;
-    /**
-     * A {@code boolean} set to {@code true} if the method {@code cancel} was called. 
-     * A {@code BgeePreparedStatement} should then launch a {@code QueryInterruptedException} 
-     * when it realizes that it was canceled. The exception should not be thrown 
-     * by the thread asking the cancellation, but by the thread that was running 
-     * the query killed. This {@code boolean} is volatile as it will be accessed 
-     * by different threads.
+     * An {@code boolean} set to {@code true} if the method {@code cancel} 
+     * was called. A {@code BgeePreparedStatement} should then launch a 
+     * {@code QueryInterruptedException} when it realizes that it was canceled. 
+     * The exception should not be thrown by the thread asking the cancellation, 
+     * but by the thread that was running the query killed. It is a {@code volatile}, 
+     * as its only purpose is to be accessed by different threads.
      */
     private volatile boolean canceled;
     /**
@@ -79,9 +72,38 @@ public final class BgeePreparedStatement implements AutoCloseable {
             PreparedStatement realPreparedStatement) {
         this.bgeeConnection = connection;
         this.realPreparedStatement = realPreparedStatement;
-        this.setRunningQuery(false);
         this.setCanceled(false);
-    }    
+    }  
+    
+    public ResultSet executeQuery() throws SQLException {
+        log.entry();
+        
+        //before launching the query, we check the interruption flag, 
+        //maybe another thread used the method cancel and does not want 
+        //the query to be executed
+        if (this.isCanceled()) {
+            //we throw an exception even if the query was not "interrupted" as such, 
+            //to let know our thread that it should not pursue its execution.
+            throw log.throwing(new QueryInterruptedException());
+        }
+        
+        //now we launch the query. Maybe another thread is requesting cancellation 
+        //at this point, just before the query is launched, so that it will not 
+        //be actually cancelled. But we cannot do anything to ensure atomicity, 
+        //except having this thread to put a lock while launching the query in 
+        //another thread, to release the lock while the query is running. Without 
+        //such a mechanism, the cancel method would not be able to acquire the lock 
+        //before the end of the query...
+        try {
+            return log.exit(this.getRealPreparedStatement().executeQuery());
+        } finally {
+            //check that we did not return from the executeQuery method because of 
+            //a cancellation
+            if (this.isCanceled()) {
+                throw log.throwing(new QueryInterruptedException());
+            }
+        }
+    }
 
     /**
      * Close the real {@code PreparedStatement} that this class wraps, 
@@ -109,23 +131,22 @@ public final class BgeePreparedStatement implements AutoCloseable {
      * to cancel a statement that is being executed by another thread. 
      * A {@code BgeePreparedStatement} should then launch a {@code QueryInterruptedException} 
      * when it realizes that it was canceled. The exception should not be thrown 
-     * by the thread asking the cancellation, but by the thread that was running 
+     * by the thread requesting the cancellation, but by the thread that was running 
      * the query killed.
      * 
      * @throws SQLException if a database access error occurs or this method 
      *                      is called on a closed statement.
      */
     void cancel() throws SQLException {
-        if (this.isRunningQuery()) {
-            //we do not use any lock for atomicity. It means that this running 
-            //query could actually be completed when we will be calling cancel. 
-            //As a result, no QueryInterruptedException would be thrown.
-            //But the BgeeConnection and MySQLDAOManager will then be closed, 
-            //forbidding to the thread doing the queries to pursue (this method 
-            //is called when kill is called on the BgeeConnection, because 
-            //killDAOManager is called on the MySQLDAOManager)
-            to continue
-        }
+        //set the interrupted flag before canceling, so that the thread running 
+        //the query can see the flag when returning from the execution of the query.
+        this.setCanceled(true);
+        //here we cannot ensure any atomicity, maybe the other thread will launch 
+        //its query just after the cancel method is called, but before it is completed, 
+        //so that the query will not be prevented to be run. But there is nothing 
+        //we can do, we can not simply use a lock in the other thread, otherwise 
+        //we would need to wait for the query to end before entering this block...
+        this.getRealPreparedStatement().cancel();
     }
     
     //***********************************
@@ -139,37 +160,17 @@ public final class BgeePreparedStatement implements AutoCloseable {
     }
     
     /**
-     * Returns the {@code boolean} determining if a query is currently run  
-     * by this {@code BgeePreparedStatement}. It is set to {@code true} at the 
-     * beginning of the method {@code executeQuery}, and to {@code false} 
-     * at the end. This is used to determine whether the method {@code cancel}
-     * might be called on this {@code BgeePreparedStatement}. It is declared 
-     * {@code volatile}, its only purpose is to be accessed by different threads.
-     * 
-     * @return  a {@code boolean} determining if a query is currently run.
-     */
-    public boolean isRunningQuery() {
-        return runningQuery;
-    }
-    /**
-     * @param runningQuery the {@link #runningQuery} to set.
-     */
-    private void setRunningQuery(boolean runningQuery) {
-        this.runningQuery = runningQuery;
-    }
-    
-    /**
      * Returns the {@code boolean} determining if the method {@code cancel} was called. 
      * A {@code BgeePreparedStatement} should then launch a {@code QueryInterruptedException} 
      * when it realizes that it was canceled. The exception should not be thrown 
      * by the thread asking the cancellation, but by the thread that was running 
-     * the query killed. This {@code boolean} is volatile as it will be accessed 
-     * by different threads.
+     * the query killed. It is a {@code volatile}, as its only purpose is to be 
+     * accessed by different threads.
      * 
      * @return  A {@code boolean} determining if the method {@code cancel} was called.
      */
     public boolean isCanceled() {
-        return canceled;
+        return this.canceled;
     }
     /**
      * @param canceled the {@link #canceled} to set.

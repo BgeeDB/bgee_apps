@@ -2,12 +2,17 @@ package org.bgee.model.dao.api.exception;
 
 /**
  * {@code Exception} thrown when an error occurs while accessing the data source. 
+ * <p>
+ * It is a {@code RuntimeException}, because if a DAO encounters an error 
+ * which it can recover from, then it is its responsibility to do it. If the DAO 
+ * lets this exception getting out, then the application should not be able 
+ * to recover from it. Thus it is an unchecked exception.
  *  
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  */
-public class DAOException extends Exception {
+public class DAOException extends RuntimeException {
 
 	/**
 	 * Because {@code Exception}s are serializable. 

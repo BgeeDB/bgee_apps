@@ -19,8 +19,14 @@ import org.bgee.model.dao.mysql.MockDriverUtils;
  * @since Bgee 13
  */
 
-public class DriverTestImpl implements Driver
-{
+public class DriverTestImpl implements Driver {
+    public MockDriverUtils driverUtils;
+    /**
+     * Default constructor.
+     */
+    public DriverTestImpl() {
+        this.driverUtils = new MockDriverUtils();
+    }
 
     @Override
     public int getMajorVersion()
@@ -43,22 +49,28 @@ public class DriverTestImpl implements Driver
     @Override
     public boolean acceptsURL(String url) throws SQLException
     {
-        return true;
+        return this.driverUtils.getMockDriver().acceptsURL(url);
     }
 
     @Override
+    //suppress warnings present because we follow the overridden method signature.
+    @SuppressWarnings("unused")
     public Connection connect(String url, Properties info) throws SQLException
     {
-        return new MockDriverUtils().getMockConnection();
+        return this.driverUtils.getMockConnection();
     }
 
     @Override
+    //suppress warnings present because we follow the overridden method signature.
+    @SuppressWarnings("unused")
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException
     {
         return new DriverPropertyInfo[0];
     }
 
     @Override
+    //suppress warnings present because we follow the overridden method signature.
+    @SuppressWarnings("unused")
     public Logger getParentLogger() throws SQLFeatureNotSupportedException
     {
         return null;

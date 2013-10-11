@@ -8,13 +8,14 @@ import javax.naming.StringRefAddr;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.DataSourceFactory;
-import org.bgee.model.BgeeProperties;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.mysql.MockDriverUtils;
+import org.bgee.model.dao.mysql.MySQLDAOManager;
 
 import com.sun.jndi.fscontext.RefFSContextFactory;
 
 /**
- * This class provides methods to run for test classes using a {@code BgeeDataSource}: 
+ * This class provides methods to run for test classes using a {@code MySQLDAOManager}: 
  * methods to be called before and after running all tests, 
  * before and after each test. They allow to use a mocked {@code Driver}, 
  * to obtain mocked {@code Connection}.
@@ -24,26 +25,20 @@ import com.sun.jndi.fscontext.RefFSContextFactory;
  * @version Bgee 13, May 2013
  * @since Bgee 13
  */
-public class InitDataSourceTest 
-{
-    /**
-     * The {@code MockDriverUtils} providing mocked {@code Driver} 
-     * and mocked {@code Connection}s.
-     */
-    private static volatile MockDriverUtils mockDriverUtils;
+public class InitDataSourceTest {
+    private static final String DATASOURCENAME = "testdatasource";
 
     /**
      * Change the System properties 
      * in order to automatically acquire mocked {@code Driver}.
      */
-    public static void initClass()
-    { 
-        System.setProperty("bgee.properties.file", "/none");
-        System.setProperty("bgee.jdbc.url", MockDriverUtils.MOCKURL);
-        System.clearProperty("bgee.jdbc.driver");
-        System.setProperty("bgee.jdbc.username", "bgee.jdbc.username.test");
-        System.setProperty("bgee.jdbc.password", "bgee.jdbc.password.test");
-        System.setProperty("bgee.jdbc.pool.DataSource.resourceName","testdatasource");
+    public static void initClass() { 
+        System.setProperty(MySQLDAOManager.CONFIGFILEKEY, "/none");
+        System.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriverUtils.MOCKURL);
+        System.setProperty(MySQLDAOManager.JDBCDRIVERNAMEKEY, DriverTestImpl.class.getName());
+        System.setProperty(MySQLDAOManager.USERNAMEKEY, "bgee.jdbc.username.test");
+        System.setProperty(MySQLDAOManager.PASSWORDKEY, "bgee.jdbc.password.test");
+        System.setProperty(MySQLDAOManager.RESOURCENAMEKEY, DATASOURCENAME);
     }
     /**
      * Create a naming service initial context in order to use a JNDI DataSource
@@ -66,9 +61,8 @@ public class InitDataSourceTest
 
         ref.add(new StringRefAddr("driverClassName",DriverTestImpl.class.getName()));
 
-        // And bind it to the initial context with the name coming from the properties
-        new InitialContext().rebind(
-                BgeeProperties.getBgeeProperties().getDataSourceResourceName(), ref);   
+        // And bind it to the initial context 
+        new InitialContext().rebind(DATASOURCENAME, ref);   
 
     } 
     /**
@@ -77,33 +71,21 @@ public class InitDataSourceTest
      */
     public static void unloadClass()
     {
-        System.clearProperty("bgee.jdbc.url");
-        System.clearProperty("bgee.jdbc.username");
-        System.clearProperty("bgee.jdbc.password");
-        System.clearProperty("bgee.jdbc.pool.DataSource.resourceName");
+        System.clearProperty(MySQLDAOManager.CONFIGFILEKEY);
+        System.clearProperty(MySQLDAOManager.JDBCURLKEY);
+        System.clearProperty(MySQLDAOManager.JDBCDRIVERNAMEKEY);
+        System.clearProperty(MySQLDAOManager.USERNAMEKEY);
+        System.clearProperty(MySQLDAOManager.PASSWORDKEY);
+        System.clearProperty(MySQLDAOManager.RESOURCENAMEKEY);
     }
 
-    /**
-     * Obtain a {@code MockDriverUtils}, loading a mocked {@code Driver} 
-     * that will registered itself to the {@code DriverManager}, allowing to provide 
-     * mocked {@code Connection}s. 
-     * @see #unload()
-     */
-    public static void init()
-    {
-        mockDriverUtils = new MockDriverUtils();
-    }
     /**
      * Deregister the mocked {@code Driver}.
-     * @see #init()
      */
-    public static void unload()
-    {
-        mockDriverUtils.deregister();
-    }
-
-    public static MockDriverUtils getMockDriverUtils()
-    {
-        return mockDriverUtils;
+    public static void unload() 
+         {
+        if (DAOManager.hasDAOManager()) {
+            DAOManager.getDAOManager().close();
+        }
     }
 }

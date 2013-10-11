@@ -1,13 +1,9 @@
 package org.bgee.model.dao.mysql;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -140,7 +136,7 @@ public final class BgeeConnection implements AutoCloseable {
      * 
      * @param stmt  The {@code BgeePreparedStatement} that was closed. 
      */
-    protected void statementClosed(BgeePreparedStatement stmt)
+    void statementClosed(BgeePreparedStatement stmt)
     {
         log.entry(stmt);
         log.debug("Releasing BgeePreparedStatement {}", stmt);
@@ -206,10 +202,13 @@ public final class BgeeConnection implements AutoCloseable {
     void kill() throws SQLException {
         synchronized(this.preparedStatements) {
             for (BgeePreparedStatement stmt: this.preparedStatements) {
-                if (stmt.isRunningQuery()) {
+                try {
                     stmt.cancel();
-                    //this method will also remove the statement from preparedStatements
-                    stmt.close();
+                } finally {
+                    //we remove this statement "manually", because calling its close 
+                    //method to remove it will also call close on the real underlying 
+                    //statement, which is useless (cancel will already close it)
+                    this.statementClosed(stmt);
                 }
             }
             this.close();

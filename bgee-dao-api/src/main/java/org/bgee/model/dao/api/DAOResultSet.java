@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api;
 
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.exception.QueryInterruptedException;
 
 /**
  * A {@code DAOResultSet} allows to retrieve results obtained from a {@code DAO}, 
@@ -18,8 +19,10 @@ import org.bgee.model.dao.api.exception.DAOException;
  * on a result, the method {@link #getTO()} can be called to obtain the result 
  * as a {@code TransferObject}.
  * <p>
- * Clients must call the method {@link #close()} when they are done using 
- * a {@code DAOResultSet}.
+ * When a call to the {@code next} method returns {@code false}, this 
+ * {@code DAOResultSet} is closed, and all underlying resources used 
+ * to generate it are released. Calling {@link #getTO()} would throw 
+ * a {@code DAOException}. A {@code DAOResultSet} is not backward iterable.
  * <p>
  * As an example, if the {@code DAO} used is using a SQL database, then each result 
  * of a {@code DAOResultSet} would correspond to one row in the database. 
@@ -48,15 +51,19 @@ public interface DAOResultSet<T extends TransferObject> extends AutoCloseable {
      * and so on. A call to {@link #getTO()} allows to obtain the result 
      * corresponding to the current position.
      * <p>
-     * When a call to the {@code next} method returns {@code false}, the cursor 
-     * is positioned after the last result. Calling {@link #getTO()} if the cursor 
-     * is not positioned on a result will throw an {@code DAOException}. 
+     * When a call to the {@code next} method returns {@code false}, this 
+     * {@code DAOResultSet} is closed, and all underlying resources used 
+     * to generate it are released. Calling {@link #getTO()} would throw 
+     * a {@code DAOException}. A {@code DAOResultSet} is not backward iterable.
      * 
      * @return  {@code true} if the new current position allows to obtain a result; 
      *          {@code false} if there are no more results to retrieve. 
-     * @throws DAOException If a {@code DAO} access occurs. 
+     * @throws DAOException If an error occurred while iterating this {@code DAOResultSet}
+     * @throws QueryInterruptionException   If the query was requested to be interrupted 
+     *                                      following a call to {@link DAOManager#kill()} 
+     *                                      or {@link DAOManager#kill(long)}.
      */
-    public boolean next() throws DAOException;
+    public boolean next() throws DAOException, QueryInterruptedException;
     /**
      * Returns the result corresponding to the current cursor position of this 
      * {@code DAOResultSet} (see {@link #next()}) as a {@code TransferObject} {@code T}. 
@@ -68,10 +75,4 @@ public interface DAOResultSet<T extends TransferObject> extends AutoCloseable {
      * @throws DAOException If an error occurs while retrieving the result.
      */
     public T getTO() throws DAOException;
-    /**
-     * Close this {@code DAOResultSet} and release all underlying resources used 
-     * to generate it.
-     * @throws DAOException If a {@code DAO} access occurs. 
-     */
-    public void close() throws DAOException;
 }

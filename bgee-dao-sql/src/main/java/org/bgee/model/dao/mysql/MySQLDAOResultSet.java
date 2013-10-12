@@ -156,8 +156,11 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
     @Override
     public void close() throws DAOException {
         if (this.currentResultSet != null) {
-            
+            this.currentResultSet.close();
         }
+        faire statement?
+                vider all statemsnts?
+                        l'utiliser dans executeNextStatementQuery ?
     }
     
     /**

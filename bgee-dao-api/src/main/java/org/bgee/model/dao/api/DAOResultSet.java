@@ -23,6 +23,11 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * {@code DAOResultSet} is closed, and all underlying resources used 
  * to generate it are released. Calling {@link #getTO()} would throw 
  * a {@code DAOException}. A {@code DAOResultSet} is not backward iterable.
+ * {@code close} should still be called if the end of the result set was not reached 
+ * (for instance, an exception was thrown before getting to the point where 
+ * {@code next} returns {@code false}). But the could be accomplished at end 
+ * of the applicative code, by calling {@link DAOManager#close()}, that would 
+ * close all resources, including {@code DAOResultSet}.
  * <p>
  * As an example, if the {@code DAO} used is using a SQL database, then each result 
  * of a {@code DAOResultSet} would correspond to one row in the database. 
@@ -75,4 +80,10 @@ public interface DAOResultSet<T extends TransferObject> extends AutoCloseable {
      * @throws DAOException If an error occurs while retrieving the result.
      */
     public T getTO() throws DAOException;
+    /**
+     * Close this {@code DAOResultSet} and release all underlying resources used 
+     * to generate it.
+     * @throws DAOException If a {@code DAO} access occurs. 
+     */
+    public void close() throws DAOException;
 }

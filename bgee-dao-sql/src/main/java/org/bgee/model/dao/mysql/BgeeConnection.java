@@ -164,7 +164,11 @@ public final class BgeeConnection implements AutoCloseable {
         log.entry();
         try {
             synchronized(this.preparedStatements) {
-                for (BgeePreparedStatement stmt: this.preparedStatements) {
+                //get a shallow copy of preparedStatements, because closing the statement 
+                //will modify the collection
+                Set<BgeePreparedStatement> shallowCopy = 
+                        new HashSet<BgeePreparedStatement>(this.preparedStatements);
+                for (BgeePreparedStatement stmt: shallowCopy) {
                     //this method will also remove the statement from preparedStatements
                     stmt.close();
                 }

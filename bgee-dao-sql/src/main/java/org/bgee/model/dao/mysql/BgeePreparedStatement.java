@@ -172,6 +172,7 @@ public final class BgeePreparedStatement implements AutoCloseable {
         //we can do, we can not simply use a lock in the other thread, otherwise 
         //we would need to wait for the query to end before entering this block...
         this.getRealPreparedStatement().cancel();
+        this.close();
     }
     
     //***********************************

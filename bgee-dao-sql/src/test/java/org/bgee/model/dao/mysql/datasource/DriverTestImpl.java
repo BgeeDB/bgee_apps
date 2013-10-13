@@ -20,12 +20,11 @@ import org.bgee.model.dao.mysql.MockDriverUtils;
  */
 
 public class DriverTestImpl implements Driver {
-    public MockDriverUtils driverUtils;
+    public static MockDriverUtils driverUtils;
     /**
      * Default constructor.
      */
     public DriverTestImpl() {
-        this.driverUtils = new MockDriverUtils();
     }
 
     @Override
@@ -49,7 +48,7 @@ public class DriverTestImpl implements Driver {
     @Override
     public boolean acceptsURL(String url) throws SQLException
     {
-        return this.driverUtils.getMockDriver().acceptsURL(url);
+        return driverUtils.getMockDriver().acceptsURL(url);
     }
 
     @Override
@@ -57,7 +56,7 @@ public class DriverTestImpl implements Driver {
     @SuppressWarnings("unused")
     public Connection connect(String url, Properties info) throws SQLException
     {
-        return this.driverUtils.getMockConnection();
+        return driverUtils.getMockConnection();
     }
 
     @Override

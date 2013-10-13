@@ -107,15 +107,8 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
      *                                  provided. 
      */
     public MySQLDAOResultSet(List<BgeePreparedStatement> statements) {
-        for (BgeePreparedStatement stmt: statements) {
-            if (stmt.isExecuted()) {
-                throw log.throwing(new IllegalArgumentException("A BgeePreparedStatement " +
-                		"should not have been executed before being provided " +
-                		"to the MySQLDAOResultSet"));
-            }
-        }
         this.statements = new ArrayList<BgeePreparedStatement>();
-        this.statements.addAll(statements);
+        this.addAllStatements(statements);
         this.executeNextStatementQuery();
     }
 
@@ -128,9 +121,7 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
         if (this.currentResultSet == null) {
             return log.exit(false);
         }
-        if (this.currentStatement.isCanceled()) {
-            throw log.throwing(new QueryInterruptedException());
-        }
+        this.checkCurrentStatementCanceled();
         
         try {
             //if we get at the end of the current ResultSet, try to execute the next 
@@ -148,6 +139,7 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
             return log.exit(true);
             
         } catch (SQLException e) {
+            this.close();
             log.catching(e);
             throw log.throwing(new DAOException(e));
         }
@@ -155,12 +147,17 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
 
     @Override
     public void close() throws DAOException {
-        if (this.currentResultSet != null) {
-            this.currentResultSet.close();
+        log.entry();
+        this.closeCurrent();
+        for (BgeePreparedStatement stmt: this.statements) {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                log.catching(e);
+                throw log.throwing(new DAOException(e));
+            }
         }
-        faire statement?
-                vider all statemsnts?
-                        l'utiliser dans executeNextStatementQuery ?
+        log.exit();
     }
     
     /**
@@ -178,8 +175,37 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
      * @throws DAOException If a {@code SQLException} occurred when calling 
      *                      {@code executeQuery}.
      */
-    private void executeNextStatementQuery() throws DAOException {
+    private void executeNextStatementQuery() throws DAOException, QueryInterruptedException {
         log.entry();
+        try {
+            this.closeCurrent();
+            this.currentStatement = this.statements.remove(0);
+            this.checkCurrentStatementCanceled();
+            this.currentResultSet = this.currentStatement.executeQuery();
+        } catch (IndexOutOfBoundsException e) {
+            //this simply means that we have no more BgeePreparedStatement to iterate.
+            this.currentStatement = null;
+            this.currentResultSet = null;
+            log.catching(Level.TRACE, e);
+        } catch (SQLException e) {
+            //here, this is bad ;)
+            this.close();
+            log.catching(e);
+            throw log.throwing(new DAOException(e));
+        }
+        log.exit();
+    }
+    
+    /**
+     * Closes {@link #currentResultSet} and {@link #currentStatement}, and sets 
+     * these attributes to {@code null}.
+     * @throws  DAOException if an error occurred while closing the {@code ResultSet} 
+     *          or the {@code BgeePreparedStatement}.
+     */
+    private void closeCurrent() throws DAOException{
+        log.entry();
+        //closing the statement is supposed to close the ResultSet, but we are 
+        //never too careful
         try {
             if (this.currentResultSet != null) {
                 this.currentResultSet.close();
@@ -187,22 +213,72 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
             if (this.currentStatement != null) {
                 this.currentStatement.close();
             }
-            this.currentStatement = this.statements.remove(0);
-            this.currentResultSet = this.currentStatement.executeQuery();
-        } catch (IndexOutOfBoundsException e) {
-            //this simply mean that we have no more BgeePreparedStatement to iterate.
-            this.currentStatement = null;
-            this.currentResultSet = null;
-            log.catching(Level.TRACE, e);
         } catch (SQLException e) {
-            //here, this is bad ;)
+            //to avoid an infinite loop when calling close, which calls closeCurrent
+            this.currentResultSet = null;
+            this.currentStatement = null;
+            //this is to close the remaining BgeePreparedStatements
+            this.close();
             log.catching(e);
             throw log.throwing(new DAOException(e));
+        }
+        this.currentResultSet = null;
+        this.currentStatement = null;
+        log.exit();
+    }
+    
+    /**
+     * Checks whether {@link #currentStatement} was requested to be canceled 
+     * ({@link BgeePreparedStatement#isCanceled()} returns {@code true}). If it is 
+     * the case, it calls the method {@link #close()} and throws a 
+     * {@code QueryInterruptedException}.
+     * 
+     * @throws QueryInterruptedException    if {@link #currentStatement} was canceled.
+     */
+    private void checkCurrentStatementCanceled() throws QueryInterruptedException {
+        log.entry();
+        if (this.currentStatement.isCanceled()) {
+            //to close remaining BgeePreparedStatements
+            this.close();
+            throw log.throwing(new QueryInterruptedException());
         }
         log.exit();
     }
     
-    {@link #addStatement(BgeePreparedStatement)} or 
-    * {@link #addAllStatements(List)}
+    /**
+     * Add {@code stmt} at the tail of the {@code List} of {@code BgeePreparedStatement} 
+     * that should be executed by this {@code MysqlDAOResultSet}.
+     * 
+     * @param stmt  A {@code BgeePreparedStatement} to add to this {@code MysqlDAOResultSet}.
+     * @throws IllegalArgumentException If {@code executeQuery} has been already called 
+     *                                  on {@code stmt}. 
+     */
+    public void addStatement(BgeePreparedStatement stmt) throws IllegalArgumentException {
+        this.addAllStatements(Arrays.asList(stmt));
+    }
+    
+    /**
+     * Add {@code statements} at the tail of the {@code List} of 
+     * {@code BgeePreparedStatement} that should be executed by this 
+     * {@code MysqlDAOResultSet}, in order.
+     * 
+     * @param stmt  A {@code List} of {@code BgeePreparedStatement}s to be added 
+     *              to the tail of the {@code List} held by this {@code MysqlDAOResultSet}, 
+     *              to be executed in order.
+     * @throws IllegalArgumentException If {@code executeQuery} has been already called 
+     *                                  on any of the {@code BgeePreparedStatement}s 
+     *                                  provided. 
+     */
+    public void addAllStatements(List<BgeePreparedStatement> statements) 
+            throws IllegalArgumentException {
+        for (BgeePreparedStatement stmt: statements) {
+            if (stmt.isExecuted()) {
+                throw log.throwing(new IllegalArgumentException("A BgeePreparedStatement " +
+                        "should not have been executed before being provided " +
+                        "to the MySQLDAOResultSet"));
+            }
+        }
+        this.statements.addAll(statements);
+    }
     
 }

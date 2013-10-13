@@ -27,6 +27,7 @@ import com.sun.jndi.fscontext.RefFSContextFactory;
  */
 public class InitDataSourceTest {
     private static final String DATASOURCENAME = "testdatasource";
+    private static MockDriverUtils mockDriverUtils;
 
     /**
      * Change the System properties 
@@ -40,6 +41,14 @@ public class InitDataSourceTest {
         System.setProperty(MySQLDAOManager.PASSWORDKEY, "bgee.jdbc.password.test");
         System.setProperty(MySQLDAOManager.RESOURCENAMEKEY, DATASOURCENAME);
     }
+    
+    /**
+     * Register the mock driver.
+     */
+    public static void init() {
+        mockDriverUtils = new MockDriverUtils();
+    }
+    
     /**
      * Create a naming service initial context in order to use a JNDI DataSource
      * 
@@ -59,6 +68,7 @@ public class InitDataSourceTest {
         Reference ref = new Reference(DataSource.class.getName(),
                 DataSourceFactory.class.getName(),null);
 
+        DriverTestImpl.driverUtils = mockDriverUtils;
         ref.add(new StringRefAddr("driverClassName",DriverTestImpl.class.getName()));
 
         // And bind it to the initial context 
@@ -69,8 +79,7 @@ public class InitDataSourceTest {
      * Reset the System properties that were changed 
      * in order to automatically acquire mocked {@code Driver}.
      */
-    public static void unloadClass()
-    {
+    public static void unloadClass() {
         System.clearProperty(MySQLDAOManager.CONFIGFILEKEY);
         System.clearProperty(MySQLDAOManager.JDBCURLKEY);
         System.clearProperty(MySQLDAOManager.JDBCDRIVERNAMEKEY);
@@ -82,10 +91,10 @@ public class InitDataSourceTest {
     /**
      * Deregister the mocked {@code Driver}.
      */
-    public static void unload() 
-         {
-        if (DAOManager.hasDAOManager()) {
+    public static void unload() {
+        /*if (DAOManager.hasDAOManager()) {
             DAOManager.getDAOManager().close();
-        }
+        }*/
+        mockDriverUtils.deregister();
     }
 }

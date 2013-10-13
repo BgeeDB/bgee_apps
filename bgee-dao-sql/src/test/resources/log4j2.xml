@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="OFF">
+  <appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %level %class{36} %L %M - %m%ex%n"/>
+    </Console>
+  </appenders>
+  <loggers>
+    <root level="off">
+      <appender-ref ref="Console"/>
+    </root>  
+    <logger name="org.bgee" level="trace" additivity="false">
+      <appender-ref ref="Console"/>
+    </logger>
+  </loggers>
+</configuration>

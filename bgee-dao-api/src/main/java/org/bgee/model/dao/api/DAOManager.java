@@ -3,6 +3,8 @@ package org.bgee.model.dao.api;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -86,6 +88,19 @@ public abstract class DAOManager implements AutoCloseable
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(DAOManager.class.getName());
+    
+    /**
+     * A {@code Collection} of {@code String}s containing the qualified class names 
+     * of all service providers of this {@code DAOManager}. This is because 
+     * using the ServiceLoader in a servlet container context can be problematic, 
+     * and the automatic loading not work. As we know all service providers 
+     * (we just don't know which one is used), we will try to load all of them 
+     * "manually", so we need their class names.
+     * 
+     * @see #getServiceProviders
+     */
+    private static final Collection<String> providerClassNames = 
+            Arrays.asList("org.bgee.model.dao.mysql.MySQLDAOManager");
     
     /**
      * A {@code String} representing the default name of the configuration file 
@@ -214,11 +229,31 @@ public abstract class DAOManager implements AutoCloseable
 	private final static List<DAOManager> getServiceProviders() {
 		log.entry();
 		log.info("Loading DAOManager service providers");
+        List<DAOManager> providers = new ArrayList<DAOManager>();
+		//first, we try to load the classes that are the service providers: 
+		//Using the ServiceLoader in a servlet container context can be problematic, 
+		//and the automatic loading not work. As we know all service providers 
+		//(we just don't know which one is used), we try to load all of then 
+		//"manually"
+		for (String className: DAOManager.providerClassNames) {
+		    try {
+                providers.add((DAOManager) Class.forName(className).newInstance());
+                log.debug("A DAOManager service provider was loaded by class name");
+            } catch (ClassNotFoundException | InstantiationException | 
+                    IllegalAccessException e) {
+                //we do nothing, maybe the jar for this service provider is not present
+                log.catching(Level.TRACE, e);
+            }
+		}
+		//now, we also check the "classical" service loader mechanism, maybe 
+		//there is a sevice provider we don't know about
 		ServiceLoader<DAOManager> loader = 
 				ServiceLoader.load(DAOManager.class);
-		List<DAOManager> providers = new ArrayList<DAOManager>();
 		for (DAOManager provider: loader) {
-			providers.add(provider);
+		    if (!DAOManager.providerClassNames.contains(provider.getClass().getName())) {
+			    providers.add(provider);
+                log.debug("A DAOManager service provider was loaded by the ServiceLoader");
+		    }
 		}
 		log.info("Providers found: {}", providers);
 		return log.exit(Collections.unmodifiableList(providers));

@@ -2,8 +2,10 @@ package org.bgee.model.dao.mysql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +50,10 @@ public final class BgeeConnection implements AutoCloseable {
      * {@code BgeeConnection}, and not yet closed. This will allow to close them if 
      * this {@code BgeeConnection} is closed, or to cancel a running statement 
      * when {@link #kill()} is called.
+     * <p>
+     * This {@code Set} is a concurrent {@code Set} backed by a {@code ConcurrentHashMap}. 
+     * This is because a {@code BgeeConnection} can be killed by another thread, 
+     * so we need to make sure it would see the statements to cancel. 
      */
     private final Set<BgeePreparedStatement> preparedStatements;
     
@@ -84,7 +90,8 @@ public final class BgeeConnection implements AutoCloseable {
         this.manager        = manager;
         this.realConnection = realConnection;
         this.id             = id;
-        this.preparedStatements = new HashSet<BgeePreparedStatement>();
+        this.preparedStatements = Collections.newSetFromMap(
+                new ConcurrentHashMap<BgeePreparedStatement, Boolean>());
 
         log.exit();
     }
@@ -119,14 +126,7 @@ public final class BgeeConnection implements AutoCloseable {
         log.entry(sql);
         BgeePreparedStatement bgeeStmt = new BgeePreparedStatement(this, 
                 this.getRealConnection().prepareStatement(sql));
-        //we synchronize over this.preparedStatements, to establish a happens-before 
-        //relation for methods that can be used by other threads (e.g., kill), 
-        //and that will use the same lock, for atomicity. This is not because we expect 
-        //this method to be used by different thread, otherwise we could simply 
-        //have used a Set backed by a ConcurrentMap.
-        synchronized(this.preparedStatements) {
-            this.preparedStatements.add(bgeeStmt);
-        }
+        this.preparedStatements.add(bgeeStmt);
         return log.exit(bgeeStmt);
     }
     
@@ -140,14 +140,7 @@ public final class BgeeConnection implements AutoCloseable {
     {
         log.entry(stmt);
         log.debug("Releasing BgeePreparedStatement {}", stmt);
-        //we synchronize over this.preparedStatements, to establish a happens-before 
-        //relation for methods that can be used by other threads (e.g., kill), 
-        //and that will use the same lock, for atomicity. This is not because we expect 
-        //this method to be used by different thread, otherwise we could simply 
-        //have used a Set backed by a ConcurrentMap.
-        synchronized(this.preparedStatements) {
-            this.preparedStatements.remove(stmt);
-        }
+        this.preparedStatements.remove(stmt);
         log.exit();
     }
 
@@ -163,17 +156,15 @@ public final class BgeeConnection implements AutoCloseable {
     public void close() throws SQLException {
         log.entry();
         try {
-            synchronized(this.preparedStatements) {
-                //get a shallow copy of preparedStatements, because closing the statement 
-                //will modify the collection
-                Set<BgeePreparedStatement> shallowCopy = 
-                        new HashSet<BgeePreparedStatement>(this.preparedStatements);
-                for (BgeePreparedStatement stmt: shallowCopy) {
-                    //this method will also remove the statement from preparedStatements
-                    stmt.close();
-                }
-                this.getRealConnection().close();
+            //get a shallow copy of preparedStatements, because closing the statement 
+            //will modify the collection
+            Set<BgeePreparedStatement> shallowCopy = 
+                    new HashSet<BgeePreparedStatement>(this.preparedStatements);
+            for (BgeePreparedStatement stmt: shallowCopy) {
+                //this method will also remove the statement from preparedStatements
+                stmt.close();
             }
+            this.getRealConnection().close();
         } catch (SQLException e) {
             throw log.throwing(e);
         } finally {
@@ -204,18 +195,20 @@ public final class BgeeConnection implements AutoCloseable {
      * @throws SQLException If an error occurred while canceling a {@code PreparedStatement}.
      */
     void kill() throws SQLException {
-        synchronized(this.preparedStatements) {
-            for (BgeePreparedStatement stmt: this.preparedStatements) {
-                try {
-                    stmt.cancel();
-                } finally {
-                    //we remove this statement "manually", because calling its close 
-                    //method to remove it will also call close on the real underlying 
-                    //statement, which is useless (cancel will already close it)
-                    this.statementClosed(stmt);
-                }
+      //get a shallow copy of preparedStatements, because closing the statement 
+        //will modify the collection
+        Set<BgeePreparedStatement> shallowCopy = 
+                new HashSet<BgeePreparedStatement>(this.preparedStatements);
+        for (BgeePreparedStatement stmt: shallowCopy) {
+            try {
+                stmt.cancel();
+            } finally {
+                //we remove this statement "manually", because calling its close 
+                //method to remove it will also call close on the real underlying 
+                //statement, which is useless (cancel will already close it)
+                this.statementClosed(stmt);
             }
-            this.close();
         }
+        this.close();
     }
 }

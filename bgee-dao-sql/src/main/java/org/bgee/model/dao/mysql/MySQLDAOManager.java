@@ -5,10 +5,13 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -67,10 +70,10 @@ public class MySQLDAOManager extends DAOManager {
     /**
      * A {@code String} that is the resource name of the {@code DataSource} to use. 
      * This parameter is not mandatory if a JDBC {@code Driver} is used to connect 
-     * to the database (see {@link #getJdbcDriverName()}). If the username and 
+     * to the database (see {@link #getJdbcDriverName()}). If the user and 
      * password were not provided to the {@code InitialContext} loading the 
      * {@code DataSource}, it must be provided to this {@code MySQLDAOManager} 
-     * (see {@link #getUsername()} and {@link #getPassword()}).
+     * (see {@link #getUser()} and {@link #getPassword()}).
      * 
      * @see #RESOURCENAMEKEY
      * @see #dataSource
@@ -78,21 +81,21 @@ public class MySQLDAOManager extends DAOManager {
     private String dataSourceResourceName;
     
     /**
-     * A {@code String} that is the key to retrieve the username to use from 
+     * A {@code String} that is the key to retrieve the user to use from 
      * the {@code Properties} provided to the method {@code setParameters}. 
-     * See {@link #getUsername()} for more details.
-     * @see #getUsername()
+     * See {@link #getUser()} for more details.
+     * @see #getUser()
      */
-    public final static String USERNAMEKEY = "bgee.dao.username";
+    public final static String USERKEY = "bgee.dao.username";
     /**
-     * A {@code String} that is the username to use to connect to the database.
-     * It is used either when a {@code DataSource} is used and the username 
+     * A {@code String} that is the user to use to connect to the database.
+     * It is used either when a {@code DataSource} is used and the user 
      * was not provided in its configuration, or a JDBC {@code Driver} is used 
-     * and the username was not provided in the connection URL.
+     * and the user was not provided in the connection URL.
      * 
-     * @see #USERNAMEKEY
+     * @see #USERKEY
      */
-    private String username;
+    private String user;
     
     /**
      * A {@code String} that is the key to retrieve the password to use from 
@@ -112,15 +115,18 @@ public class MySQLDAOManager extends DAOManager {
     private String password;
     
     /**
-     * A {@code String} that is the key to retrieve the name of the JDBC {@code Driver} 
+     * A {@code String} that is the key to retrieve the names of the JDBC {@code Driver}s 
      * to use from the {@code Properties} provided to the method {@code setParameters}. 
-     * See {@link #getJdbcDriverName()} for more details.
-     * @see #getJdbcDriverName()
+     * See {@link #getJdbcDriverNames()} for more details.
+     * <p>
+     * Several driver names can be provided separated by a comma. This is useful, 
+     * for instance to load both a MySQL Driver and a log4jdbc-log4j2 Driver.
+     * @see #getJdbcDriverNames()
      */
-    public final static String JDBCDRIVERNAMEKEY = "bgee.dao.jdbc.driver.name";
+    public final static String JDBCDRIVERNAMESKEY = "bgee.dao.jdbc.driver.names";
     /**
-     * A {@code String} that is the name of the JDBC {@code Driver} to use 
-     * to connect to the database. This parameter should not be mandatory, as starting from 
+     * A {@code Set} of {@code String}s containing the names of the JDBC {@code Driver} 
+     * to load. This parameter should not be mandatory, as starting from 
      * JDBC 4, a {@code Driver} is supposed to be auto-loaded and retrieved automatically. 
      * But we make this parameter mandatory when not using a {@code DataSource}, 
      * so that the application can register and deregister the JDBC {@code Driver}: 
@@ -131,15 +137,15 @@ public class MySQLDAOManager extends DAOManager {
      * <p>
      * When using a {@code Driver} rather than a {@code DataSource}, the connection 
      * URL must be provided (see {@link #getJdbcUrl()}). If this URL does not 
-     * contain the username and password to use, they must also be provided 
-     * to this {@code DAOManager} (see {@link #getUsername()} and {@link #getPassword()}).
+     * contain the user and password to use, they must also be provided 
+     * to this {@code DAOManager} (see {@link #getUser()} and {@link #getPassword()}).
      * 
      * @see #JDBCDRIVERNAMEKEY
      * @see #getJdbcUrl()
-     * @see #getUsername()
+     * @see #getUser()
      * @see #getPassword()
      */
-    private String jdbcDriverName;
+    private final Set<String> jdbcDriverNames;
     
     /**
      * A {@code String} that is the key to retrieve the JDBC connection URL from 
@@ -165,6 +171,7 @@ public class MySQLDAOManager extends DAOManager {
     public MySQLDAOManager() {
         super();
         this.connections = new HashMap<String, BgeeConnection>();
+        this.jdbcDriverNames = new HashSet<String>();
     }
     
     //******************************************
@@ -174,7 +181,7 @@ public class MySQLDAOManager extends DAOManager {
      * Attempt to establish a connection, either from a {@code DataSource} 
      * if one was provided using JNDI, or from a JDBC {@code Driver} 
      * if one is defined in the parameters. The JDBC connection {@code URI}, 
-     * and username and password if not provided in the {@code URI}, are retrieved 
+     * and user and password if not provided in the {@code URI}, are retrieved 
      * from the attributes of this {@code MySQLDAOManager}, set by the method 
      * {@code setParameters}.
      * <p>
@@ -201,7 +208,7 @@ public class MySQLDAOManager extends DAOManager {
         }
 
         String connectionId = this.generateConnectionId(this.getJdbcUrl(), 
-                this.getUsername());
+                this.getUser());
         //we synchronized over this.connections, to establish a happens-before relation 
         //for methods that can be used by other threads (e.g., killDAOManager), 
         //and that will use the same lock, for atomicity. This is not because we expect 
@@ -217,36 +224,33 @@ public class MySQLDAOManager extends DAOManager {
             //otherwise, create a new connection
             Connection realConnection = null;
             if (this.getDataSource() != null) {
-                if (this.getUsername() == null) {
-                    log.debug("Trying to obtain a new Connection from the DataSource with default username/password");
+                if (this.getUser() == null) {
+                    log.debug("Trying to obtain a new Connection from the DataSource with default user/password");
                     realConnection = this.getDataSource().getConnection();
                 } else {
-                    log.debug("Trying to obtain a new Connection from the DataSource using username {}", 
-                            this.getUsername());
+                    log.debug("Trying to obtain a new Connection from the DataSource using user {}", 
+                            this.getUser());
                     realConnection = this.getDataSource().getConnection(
-                            this.getUsername(), this.getPassword());
+                            this.getUser(), this.getPassword());
                 }
             } else {
-                if (this.getUsername() == null) {
+                if (this.getUser() == null) {
                     log.debug("Trying to obtain a new Connection from the DriverManager using connection URL");
-                    DriverManager.getConnection(this.getJdbcUrl());
+                    realConnection = DriverManager.getConnection(this.getJdbcUrl());
                 } else {
-                    log.debug("Trying to obtain a new Connection from the DataSource using username {}", 
-                            this.getUsername());
-                    realConnection = this.getDataSource().getConnection(
-                            this.getUsername(), this.getPassword());
+                    log.debug("Trying to obtain a new Connection from the DriverManager using connection URL and user {}", 
+                            this.getUser());
+                    realConnection = DriverManager.getConnection(this.getJdbcUrl(), 
+                            this.getUser(), this.getPassword());
                 }
-                log.debug("Trying to obtain a new Connection from the DriverManager using connection URL and provided username/password");
-                realConnection = DriverManager.getConnection(this.getJdbcUrl(), 
-                        this.getUsername(), this.getPassword());
             }
             //just in case we couldn't obtain the connection, without exception
             if (realConnection == null) {
                 String msg = "Could not obtain a Connection. ";
                 if (this.getDataSource() == null) {
                     msg += "No DataSource was provided. ";
-                    if (StringUtils.isNotBlank(this.getJdbcDriverName())) {
-                        msg += "The provided JDBC Driver name, " + this.getJdbcDriverName() +
+                    if (!this.getJdbcDriverNames().isEmpty()) {
+                        msg += "The provided JDBC Drivers , " + this.getJdbcDriverNames() +
                                 ", did not allow to obtain a Connection. ";
                     }
                     if (StringUtils.isNotBlank(this.getJdbcUrl())) {
@@ -315,7 +319,7 @@ public class MySQLDAOManager extends DAOManager {
      */
     private void loadJdbcDriver() throws IllegalStateException {
         log.entry();
-        if (StringUtils.isBlank(this.getJdbcDriverName())) {
+        if (this.getJdbcDriverNames().isEmpty()) {
             log.exit(); return;
         }
         
@@ -323,44 +327,45 @@ public class MySQLDAOManager extends DAOManager {
         //it should not be needed, but some buggy JDBC Drivers need to be 
         //"manually" loaded.
         
-        //check that we do not already have this Driver registered
-        if (!registeredDrivers.containsKey(this.getJdbcDriverName())) {
-            try {
-                //also, calling newInstance() should not be needed, 
-                //but some buggy JDBC Drivers do not properly initialized 
-                //themselves in the static initializer. Plus, we want to keep track 
-                //on this instance, to be able to deregister the Driver at application 
-                //shutdown.
-                log.debug("Trying to register JDBC Driver with class name {}", 
-                        this.getJdbcDriverName());
-                Driver driver = (Driver) Class.forName(
-                        this.getJdbcDriverName()).newInstance();
-                
-                if (registeredDrivers.putIfAbsent(this.getJdbcDriverName(), driver) != null) {
-                    //here it means another Thread interleaved and registered the same Driver.
-                    //we deregister the newly instantiated Driver right away
-                    log.debug("Equivalent Driver already registered.");
-                    try {
-                        DriverManager.deregisterDriver(driver);
-                    } catch (SQLException e) {
-                        //hmm, I don't really know what this error should correspond to.
-                        //do nothing, the deregistration is to avoid memory leak 
-                        //in a servlet container context.
-                        log.catching(e);
+        //check that we do not already have this Drivers registered
+        for (String driverName: this.getJdbcDriverNames()) {
+            if (!registeredDrivers.containsKey(driverName)) {
+                try {
+                    //also, calling newInstance() should not be needed, 
+                    //but some buggy JDBC Drivers do not properly initialized 
+                    //themselves in the static initializer. Plus, we want to keep track 
+                    //on this instance, to be able to deregister the Driver at application 
+                    //shutdown.
+                    log.debug("Trying to register JDBC Driver with class name {}", 
+                            driverName);
+                    Driver driver = (Driver) Class.forName(driverName).newInstance();
+
+                    if (registeredDrivers.putIfAbsent(driverName, driver) != null) {
+                        //here it means another Thread interleaved and registered the same Driver.
+                        //we deregister the newly instantiated Driver right away
+                        log.debug("Equivalent Driver already registered.");
+                        try {
+                            DriverManager.deregisterDriver(driver);
+                        } catch (SQLException e) {
+                            //hmm, I don't really know what this error should correspond to.
+                            //do nothing, the deregistration is to avoid memory leak 
+                            //in a servlet container context.
+                            log.catching(e);
+                        }
+                    } else {
+                        log.debug("Driver successfully registered.");
                     }
-                } else {
-                    log.debug("Driver successfully registered.");
+
+                } catch (InstantiationException | IllegalAccessException
+                        | ClassNotFoundException e) {
+                    log.catching(e);
+                    throw log.throwing(new IllegalStateException("The JDBC Driver name " +
+                            "provided (" + driverName + ") did not allow " +
+                            "to register it.", e));
                 }
-                
-            } catch (InstantiationException | IllegalAccessException
-                    | ClassNotFoundException e) {
-                log.catching(e);
-                throw log.throwing(new IllegalStateException("The JDBC Driver name " +
-                		"provided (" + this.getJdbcDriverName() + ") did not allow " +
-                		"to register it.", e));
+            } else {
+                log.debug("Equivalent Driver already registered.");
             }
-        } else {
-            log.debug("Equivalent Driver already registered.");
         }
         log.exit();
     }
@@ -407,14 +412,14 @@ public class MySQLDAOManager extends DAOManager {
     /**
      * Generate an ID to uniquely identify the {@code BgeeConnection}s 
      * holded by this {@code MySQLDAOManager}. It is based on  
-     * {@code jdbcUrl} and {@code username}}. 
+     * {@code jdbcUrl} and {@code user}}. 
      * 
      * @param jdbcUrl   A {@code String} defining the JDBC URL used to open 
      *                  the connection. Will be used to generate the ID.
-     * @param username  A {@code String} defining the username used to open 
+     * @param user  A {@code String} defining the user used to open 
      *                  the connection. Will be used to generate the ID.
      * @return          A {@code String} representing an ID generated from 
-     *                  the JDBC URL, {@code username}.
+     *                  the JDBC URL, {@code user}.
      */
     private String generateConnectionId(String jdbcUrl, String username) {
         //I don't like much storing a password in memory, as it could be in the url, 
@@ -453,24 +458,24 @@ public class MySQLDAOManager extends DAOManager {
      * Returns the {@code String} that is the resource name of the {@code DataSource} 
      * to use. This parameter is not mandatory if a JDBC {@code Driver} is used 
      * to connect to the database (see {@link #getJdbcDriverName()}). 
-     * If the username and password were not provided to the {@code InitialContext} 
+     * If the user and password were not provided to the {@code InitialContext} 
      * loading the {@code DataSource}, it must be provided to this {@code MySQLDAOManager} 
-     * (see {@link #getUsername()} and {@link #getPassword()}).
+     * (see {@link #getUser()} and {@link #getPassword()}).
      * 
      * @return  A {@code String} representing the resource name of a {@code DataSource} 
      *          to use.
      * @see #RESOURCENAMEKEY
      */
-    private String getDataSourceResourceName() {
+    public String getDataSourceResourceName() {
         return dataSourceResourceName;
     }
     /**
      * Sets the {@code String} that is the resource name of the {@code DataSource} 
      * to use. This parameter is not mandatory if a JDBC {@code Driver} is used 
      * to connect to the database (see {@link #getJdbcDriverName()}). 
-     * If the username and password were not provided to the {@code InitialContext} 
+     * If the user and password were not provided to the {@code InitialContext} 
      * loading the {@code DataSource}, it must be provided to this {@code MySQLDAOManager} 
-     * (see {@link #getUsername()} and {@link #getPassword()}).
+     * (see {@link #getUser()} and {@link #getPassword()}).
      * 
      * @param name  The {@code String} that is the resource name 
      *              of the {@code DataSource} to use.
@@ -481,29 +486,29 @@ public class MySQLDAOManager extends DAOManager {
     }
 
     /**
-     * Returns the username to use to connect to the database. It is used either 
-     * when a {@code DataSource} is used and the username was not provided in 
-     * its configuration, or a JDBC {@code Driver} is used and the username 
+     * Returns the user to use to connect to the database. It is used either 
+     * when a {@code DataSource} is used and the user was not provided in 
+     * its configuration, or a JDBC {@code Driver} is used and the user 
      * was not provided in the connection URL.
      * 
-     * @return  A {@code String} that is the username to use to connect to the database.
-     * @see #USERNAMEKEY
+     * @return  A {@code String} that is the user to use to connect to the database.
+     * @see #USERKEY
      */
-    private String getUsername() {
-        return username;
+    public String getUser() {
+        return this.user;
     }
     /**
-     * Sets the username to use to connect to the database. It is used either 
-     * when a {@code DataSource} is used and the username was not provided in 
-     * its configuration, or a JDBC {@code Driver} is used and the username 
+     * Sets the user to use to connect to the database. It is used either 
+     * when a {@code DataSource} is used and the user was not provided in 
+     * its configuration, or a JDBC {@code Driver} is used and the user 
      * was not provided in the connection URL.
      * 
-     * @param username  A {@code String} that is the username to use 
+     * @param user  A {@code String} that is the user to use 
      *                  to connect to the database.
-     * @see #USERNAMEKEY
+     * @see #USERKEY
      */
-    private void setUsername(String username) {
-        this.username = username;
+    private void setUser(String user) {
+        this.user = user;
     }
 
     /**
@@ -515,7 +520,7 @@ public class MySQLDAOManager extends DAOManager {
      * @return  A {@code String} that is the password to use to connect to the database.
      * @see #PASSWORDKEY
      */
-    private String getPassword() {
+    public String getPassword() {
         return password;
     }
     /**
@@ -533,34 +538,39 @@ public class MySQLDAOManager extends DAOManager {
     }
 
     /**
-     * Returns the name of the JDBC {@code Driver} to use 
+     * Returns the names of the JDBC {@code Driver}s to use 
      * to connect to the database. This parameter should not be mandatory, as starting from 
      * JDBC 4, a {@code Driver} is supposed to be auto-loaded and retrieved automatically. 
      * But we make this parameter mandatory when not using a {@code DataSource}, 
-     * so that the application can register and deregister the JDBC {@code Driver}: 
+     * so that the application can register and deregister the JDBC {@code Driver}s: 
      * the auto-loading is basically broken in a servlet container environment. 
      * If a webapp used in a tomcat container has database drivers in its WEB-INF/lib 
      * directory, it cannot rely on the service provider mechanism, and should register 
      * the drivers explicitly.
      * <p>
+     * Several driver names can be provided separated by a comma. This is useful, 
+     * for instance to load both a MySQL Driver and a log4jdbc-log4j2 Driver.
+     * <p>
      * When using a {@code Driver} rather than a {@code DataSource}, the connection 
      * URL must be provided (see {@link #getJdbcUrl()}). If this URL does not 
-     * contain the username and password to use, they must also be provided 
-     * to this {@code DAOManager} (see {@link #getUsername()} and {@link #getPassword()}).
+     * contain the user and password to use, they must also be provided 
+     * to this {@code DAOManager} (see {@link #getUser()} and {@link #getPassword()}).
      * 
-     * @return  the {@code String} that is the name of the JDBC {@code Driver} to use.
-     * @see #JDBCDRIVERNAMEKEY
+     * @return  A {@code Set} of {@code String}s representing the names of all 
+     *          the JDBC {@code Driver} to load.
+     * @see #JDBCDRIVERNAMEsKEY
      * @see #getJdbcUrl()
-     * @see #getUsername()
+     * @see #getUser()
      * @see #getPassword()
      */
-    private String getJdbcDriverName() {
-        return jdbcDriverName;
+    public Set<String> getJdbcDriverNames() {
+        return this.jdbcDriverNames;
     }
     /**
-     * Sets the name of the JDBC {@code Driver} to use 
-     * to connect to the database. This parameter should not be mandatory, as starting from 
-     * JDBC 4, a {@code Driver} is supposed to be auto-loaded and retrieved automatically. 
+     * Sets the names of the JDBC {@code Driver}s to load. Several driver names 
+     * can be provided into the {@code driverNames} argument, separated by commas. 
+     * This parameter should not be mandatory, as starting from JDBC 4, a {@code Driver} 
+     * is supposed to be auto-loaded and retrieved automatically. 
      * But we make this parameter mandatory when not using a {@code DataSource}, 
      * so that the application can register and deregister the JDBC {@code Driver}: 
      * the auto-loading is basically broken in a servlet container environment. 
@@ -570,18 +580,21 @@ public class MySQLDAOManager extends DAOManager {
      * <p>
      * When using a {@code Driver} rather than a {@code DataSource}, the connection 
      * URL must be provided (see {@link #getJdbcUrl()}). If this URL does not 
-     * contain the username and password to use, they must also be provided 
-     * to this {@code DAOManager} (see {@link #getUsername()} and {@link #getPassword()}).
+     * contain the user and password to use, they must also be provided 
+     * to this {@code DAOManager} (see {@link #getUser()} and {@link #getPassword()}).
      * 
-     * @param jdbcDriverName    the {@code String} that is the name of the JDBC 
-     *                          {@code Driver} to use.
-     * @see #JDBCDRIVERNAMEKEY
+     * @param driverNames   a {@code String} containing the names of JDBC drivers 
+     *                      to load, separated by commas.
+     * @see #JDBCDRIVERNAMESKEY
      * @see #getJdbcUrl()
-     * @see #getUsername()
+     * @see #getUser()
      * @see #getPassword()
      */
-    private void setJdbcDriverName(String jdbcDriverName) {
-        this.jdbcDriverName = jdbcDriverName;
+    private void parseAndSetJdbcDriverNames(String driverNames) {
+        this.jdbcDriverNames.clear();
+        if (StringUtils.isNotBlank(driverNames)) {
+            this.jdbcDriverNames.addAll(Arrays.asList(driverNames.split(",")));
+        }
     }
 
     /**
@@ -594,7 +607,7 @@ public class MySQLDAOManager extends DAOManager {
      *          to the database.
      * @see #JDBCURLKEY
      */
-    private String getJdbcUrl() {
+    public String getJdbcUrl() {
         return jdbcUrl;
     }
     /**
@@ -625,19 +638,22 @@ public class MySQLDAOManager extends DAOManager {
     @Override
     public void setParameters(Properties props) throws IllegalArgumentException {
         log.entry(props);
+//      log.trace("Current parameters: DataSource name: {} - JDBC URL: {} - Driver names: {} - User: {} - Password: {}", 
+//              this.getDataSourceResourceName(), this.getJdbcUrl(), 
+//              this.getJdbcDriverNames(), this.getUser(), this.getPassword());
         
         String resourceName = props.getProperty(RESOURCENAMEKEY);
         String jdbcUrl      = props.getProperty(JDBCURLKEY);
-        String driverName   = props.getProperty(JDBCDRIVERNAMEKEY);
+        String driverNames   = props.getProperty(JDBCDRIVERNAMESKEY);
         
         //check whether the required parameters are provided: this MySQLDAOManager 
         //either needs a DataSource, or a JDBC connection URL and the JDBC Driver name 
         //(the JDBC Driver name should not be mandatory, but it is as the ServiceLoader 
         //mechanism is broken in a servlet container environment).
-        //username and password are not mandatory, they can either be provided 
+        //user and password are not mandatory, they can either be provided 
         //in the configuration of the DataSource, or in the JDBC URL.
         if (StringUtils.isBlank(resourceName) && 
-                (StringUtils.isBlank(jdbcUrl) || StringUtils.isBlank(driverName))) {
+                (StringUtils.isBlank(jdbcUrl) || StringUtils.isBlank(driverNames))) {
             throw log.throwing(new IllegalArgumentException("The parameters provided " +
             		"do not allow to use a MySQLDAOManager: it must be provided " +
             		"either the name of the resource to retrieve a DataSource " +
@@ -655,16 +671,16 @@ public class MySQLDAOManager extends DAOManager {
         }
         
         boolean driverChange = false;
-        if ((this.getJdbcDriverName() == null && driverName != null) || 
-                (this.getJdbcDriverName() != null && 
-                !this.getJdbcDriverName().equals(driverName))) {
+        this.parseAndSetJdbcDriverNames(driverNames);
+        Set<String> names = new HashSet<String>(this.getJdbcDriverNames());
+        names.removeAll(registeredDrivers.keySet());
+        if (!names.isEmpty()) {
             driverChange = true;
         }
         
         this.setDataSourceResourceName(resourceName);
-        this.setJdbcDriverName(driverName);
         this.setJdbcUrl(props.getProperty(JDBCURLKEY));
-        this.setUsername(props.getProperty(USERNAMEKEY));
+        this.setUser(props.getProperty(USERKEY));
         this.setPassword(props.getProperty(PASSWORDKEY));
         
         //these methods are responsible to check for the validity of resourceName 
@@ -681,7 +697,10 @@ public class MySQLDAOManager extends DAOManager {
             throw log.throwing(new IllegalArgumentException("The parameters provided " +
             		"did not allow to load a valid DataSource or JDBC Driver", e));
         }
-        
+
+//      log.trace("New parameters set: DataSource name: {} - JDBC URL: {} - Driver names: {} - User: {} - Password: {}", 
+//              this.getDataSourceResourceName(), this.getJdbcUrl(), 
+//              this.getJdbcDriverNames(), this.getUser(), this.getPassword());
         log.exit();
     }
     
@@ -741,6 +760,7 @@ public class MySQLDAOManager extends DAOManager {
                     throw log.throwing(new DAOException(e));
                 }
             }
+            registeredDrivers.clear();
         }
     }
 

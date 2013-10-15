@@ -290,34 +290,41 @@ public class MySQLDAOManager extends DAOManager {
             log.exit(); return;
         }
         
+        DataSource dataSource = null;
+        Exception exception = null;
         try {
             //try to get a DataSource using JNDI
             Context ctx = new InitialContext();
-            this.setDataSource((DataSource) ctx.lookup(this.getDataSourceResourceName()));
-            log.info("DataSource obtained from InitialContext {} using JNDI", 
-                    this.getDataSourceResourceName());
+            dataSource = (DataSource) ctx.lookup(this.getDataSourceResourceName());
         } catch (NamingException e) {
             log.catching(e);
+            //simply catch, an exception will be thrown if dataSource is null
+            exception = e;
+        }
+        if (dataSource == null) {
             throw log.throwing(new IllegalStateException("The DataSource resource name " +
                     "provided (" + this.getDataSourceResourceName() + ") did not allow " +
-                    "to obtain a valid DataSource.", e));
+                    "to obtain a valid DataSource.", exception));
         }
+        this.setDataSource(dataSource);
+        log.info("DataSource obtained from InitialContext {} using JNDI", 
+                this.getDataSourceResourceName());
         log.exit();
     }
 
     /**
-     * Initialize a JDBC {@code Driver} using the value returned by 
-     * {@link #getJdbcDriverName()} as class name, if any was provided. 
+     * Initialize JDBC {@code Driver}s using the values returned by 
+     * {@link #getJdbcDriverNames()} as class names, if any was provided. 
      * Providing the class name of the JDBC {@code Driver} to use is not mandatory, 
      * but is strongly recommended, when using {@code Driver}s not auto-loaded, 
      * or when using this application in a servlet container context. See 
      * {@link #getJdbcDriverName()} for more details.
      * 
-     * @throws IllegalStateException    If {@link #getJdbcDriverName()} is not {@code null} 
-     *                                  nor empty, but did not allow to register a JDBC 
+     * @throws IllegalStateException    If {@link #getJdbcDriverNames()} is not {@code null} 
+     *                                  nor empty, but did not allow to register any JDBC 
      *                                  {@code Driver}.
      */
-    private void loadJdbcDriver() throws IllegalStateException {
+    private void loadJdbcDrivers() throws IllegalStateException {
         log.entry();
         if (this.getJdbcDriverNames().isEmpty()) {
             log.exit(); return;
@@ -328,6 +335,7 @@ public class MySQLDAOManager extends DAOManager {
         //"manually" loaded.
         
         //check that we do not already have this Drivers registered
+        boolean jdbcUrlAccepted = false;
         for (String driverName: this.getJdbcDriverNames()) {
             if (!registeredDrivers.containsKey(driverName)) {
                 try {
@@ -339,6 +347,7 @@ public class MySQLDAOManager extends DAOManager {
                     log.debug("Trying to register JDBC Driver with class name {}", 
                             driverName);
                     Driver driver = (Driver) Class.forName(driverName).newInstance();
+                    DriverManager.registerDriver(driver);
 
                     if (registeredDrivers.putIfAbsent(driverName, driver) != null) {
                         //here it means another Thread interleaved and registered the same Driver.
@@ -353,11 +362,11 @@ public class MySQLDAOManager extends DAOManager {
                             log.catching(e);
                         }
                     } else {
-                        log.debug("Driver successfully registered.");
+                        log.debug("Driver {} successfully registered.", driver);
                     }
 
                 } catch (InstantiationException | IllegalAccessException
-                        | ClassNotFoundException e) {
+                        | ClassNotFoundException | SQLException e) {
                     log.catching(e);
                     throw log.throwing(new IllegalStateException("The JDBC Driver name " +
                             "provided (" + driverName + ") did not allow " +
@@ -366,6 +375,18 @@ public class MySQLDAOManager extends DAOManager {
             } else {
                 log.debug("Equivalent Driver already registered.");
             }
+            try {
+                if (registeredDrivers.get(driverName).acceptsURL(this.getJdbcUrl())) {
+                    jdbcUrlAccepted = true;
+                }
+            } catch (SQLException e) {
+                throw log.throwing(new IllegalStateException("The Driver " + 
+                    driverName + " refuses to answer nicely.", e));
+            }
+        }
+        if (!jdbcUrlAccepted) {
+            throw log.throwing(new IllegalStateException("No Drivers accepted the JDBC URL " +
+                this.getJdbcUrl()));
         }
         log.exit();
     }
@@ -677,6 +698,11 @@ public class MySQLDAOManager extends DAOManager {
         if (!names.isEmpty()) {
             driverChange = true;
         }
+        if ((this.getJdbcUrl() == null && jdbcUrl != null) || 
+                (this.getJdbcUrl() != null && 
+                !this.getJdbcUrl().equals(jdbcUrl))) {
+            driverChange = true;
+        }
         
         this.setDataSourceResourceName(resourceName);
         this.setJdbcUrl(props.getProperty(JDBCURLKEY));
@@ -690,7 +716,7 @@ public class MySQLDAOManager extends DAOManager {
                 this.loadDataSource();
             }
             if (driverChange) {
-                this.loadJdbcDriver();
+                this.loadJdbcDrivers();
             }
         } catch (IllegalStateException e) {
             log.catching(e);
@@ -728,6 +754,7 @@ public class MySQLDAOManager extends DAOManager {
 
     @Override
     protected void killDAOManager() throws DAOException {
+        log.entry();
         synchronized(this.connections) {
             //get a shallow copy of the collection, so that the removal of 
             //a connection will not interfere with the iteration
@@ -745,16 +772,19 @@ public class MySQLDAOManager extends DAOManager {
             }
             this.close();
         }
+        log.exit();
     }
     
     @Override
     protected void shutdown() throws DAOException {
+        log.entry();
         //reminder: this method should actually be a static method, 
         //but Java does not permit abstract static methods...
         synchronized(registeredDrivers) {
             for (Driver driver: registeredDrivers.values()) {
                 try {
                     DriverManager.deregisterDriver(driver);
+                    log.debug("Driver {} deregistered", driver);
                 } catch (SQLException e) {
                     log.catching(e);
                     throw log.throwing(new DAOException(e));
@@ -762,6 +792,7 @@ public class MySQLDAOManager extends DAOManager {
             }
             registeredDrivers.clear();
         }
+        log.exit();
     }
 
     //******************************************

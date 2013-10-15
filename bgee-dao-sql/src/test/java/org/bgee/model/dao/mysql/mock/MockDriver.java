@@ -63,6 +63,10 @@ public class MockDriver implements Driver {
      * {@code Connection} instance (whatever the value of the parameters).
      */
     private static Connection mockConnection;
+    /**
+     * The mock {@code PreparedStatement} returned by the {@link #mockConnection}
+     */
+    private static PreparedStatement mockStatement;
     
     /**
      * Default constructor.
@@ -73,8 +77,9 @@ public class MockDriver implements Driver {
     }
     
     public static void initialize() {
-        Connection mockConnectionTemp = null;
-        Driver mockDriverTemp         = null;
+        Connection mockConnectionTemp  = null;
+        Driver mockDriverTemp          = null;
+        PreparedStatement mockStmtTemp = null;
         try {
             //create the mock Driver
             Driver mockDriver = mock(Driver.class);
@@ -92,6 +97,7 @@ public class MockDriver implements Driver {
             .thenReturn(mockPrep);
 
             mockDriverTemp = mockDriver;
+            mockStmtTemp = mockPrep;
         } catch (SQLException e) {
             //do nothing. The only method that could throw an actual exception 
             //is DriverManager.registerDriver, and in that case, the Driver 
@@ -99,6 +105,7 @@ public class MockDriver implements Driver {
         }
         mockDriver     = mockDriverTemp;
         mockConnection = mockConnectionTemp;
+        mockStatement  = mockStmtTemp;
     }
 
     /**
@@ -113,6 +120,14 @@ public class MockDriver implements Driver {
      */
     public static Connection getMockConnection() {
         return mockConnection;
+    }
+
+    /**
+     * Gets the mock {@code PreparedStatement} returned by the mock 
+     * {@code Connection}.
+     */
+    public static PreparedStatement getMockStatement() {
+        return mockStatement;
     }
 
     /**

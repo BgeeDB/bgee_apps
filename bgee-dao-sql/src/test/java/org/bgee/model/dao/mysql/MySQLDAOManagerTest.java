@@ -2,8 +2,11 @@ package org.bgee.model.dao.mysql;
 
 import static org.junit.Assert.*;
 
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.concurrent.Exchanger;
@@ -20,6 +23,7 @@ import org.bgee.model.dao.mysql.MySQLDAOManager;
 import org.bgee.model.dao.mysql.mock.MockDataSource;
 import org.bgee.model.dao.mysql.mock.MockDriver;
 import org.bgee.model.dao.mysql.mock.MockInitialContextFactory;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -77,6 +81,274 @@ public class MySQLDAOManagerTest extends TestAncestor
     } 
 	
 	/**
+	 * Destroy the {@code InitialContextFactory} registered by {@link #initInitialContext()}.
+	 */
+	@AfterClass
+	public static void destroyInitialContext() {
+	    System.clearProperty(Context.INITIAL_CONTEXT_FACTORY);
+	}
+	
+	/**
+     * Test {@link MySQLDAOManager#connectionClosed(String)}.
+     */
+    @Test
+    public void testConnectionClosed() throws SQLException {
+        MockDriver.initialize();
+        //set the properties to use it
+        Properties props = new Properties();
+        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        //test to provide several JDBC driver names
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
+        //going through the DAOManager#getDAOManager() method
+        MySQLDAOManager manager = new MySQLDAOManager();
+        manager.setParameters(props);
+        
+        BgeeConnection conn = manager.getConnection();
+        manager.connectionClosed(conn.getId());
+        //the manager should not hold this connection anymore, yet it should still 
+        //be opened, as we did not call the close method of the connection
+        verify(MockDriver.getMockConnection(), never()).close();
+        assertNotEquals("Should get a new BgeeConnection after calling connectionClosed.", 
+                conn, manager.getConnection());
+        
+        manager.shutdown();
+        MockDriver.initialize();
+    }
+    /**
+     * Try to set parameters and to read them.
+     * @throws SQLException 
+     */
+    @Test
+    public void shouldGetSet() throws SQLException {
+        //we need to initialize the mock DataSource, because some attributes can only 
+        //be set if they are valid, corresponding to real java.sql or javax.sql objects.
+        MockDataSource.initialize();
+        //we will try to load the mock Driver and the MySQL Driver
+        Properties props = new Properties();
+        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, 
+                MockDriver.class.getName() + "," + com.mysql.jdbc.Driver.class.getName());
+        props.setProperty(MySQLDAOManager.USERKEY, "bgee.jdbc.username.test");
+        props.setProperty(MySQLDAOManager.PASSWORDKEY, "bgee.jdbc.password.test");
+        
+        MySQLDAOManager manager = new MySQLDAOManager();
+        manager.setParameters(props);
+        
+        assertEquals("Incorrect JDBC URL read", MockDriver.MOCKURL, manager.getJdbcUrl());
+        assertEquals("Incorrect DataSource name read", MockDataSource.DATASOURCENAME, 
+                manager.getDataSourceResourceName());
+        assertEquals("Incorrect JDBC Driver names read", new HashSet<String>(
+                Arrays.asList(MockDriver.class.getName(), com.mysql.jdbc.Driver.class.getName())), 
+                manager.getJdbcDriverNames());
+        assertEquals("Incorrect username name read", "bgee.jdbc.username.test", 
+                manager.getUser());
+        assertEquals("Incorrect password name read", "bgee.jdbc.password.test", 
+                manager.getPassword());
+    
+        manager.shutdown();
+        MockDataSource.initialize();
+        
+    }
+    
+    /**
+     * Test the behavior of {@link MySQLDAOManager#setParameters(Properties)} 
+     * when provided with incorrect properties. 
+     */
+    @Test
+    public void shouldSetWrongParameters() throws SQLException {
+      //we need to initialize the mock DataSource, because some attributes can only 
+        //be set if they are valid, corresponding to real java.sql or javax.sql objects.
+        MockDataSource.initialize();
+        MockDriver.initialize();
+        MySQLDAOManager manager = new MySQLDAOManager();
+        
+        //it is mandatory to provided at least a DataSource JNDI resource name, 
+        //or a JDBC Driver name with JDBC connection URL
+        Properties props = new Properties();
+        try {
+            manager.setParameters(props);
+            //if we reach this point, test failed
+            throw new AssertionError("The manager should refuse properties " +
+            		"with no DataSource name provided, nor any JDBC Driver name " +
+            		"with JDBC Connection URL.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        //DataSource provided? then it should work
+        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
+        manager.setParameters(props);
+        props.remove(MySQLDAOManager.RESOURCENAMEKEY);
+        
+        //only the JDBC Driver? The JDBC Connection URL is missing, it should fail.
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        try {
+            manager.setParameters(props);
+            //if we reach this point, test failed
+            throw new AssertionError("The manager should refuse properties " +
+                    "with a JDBC Driver provided without a JDBC Connection URL.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        props.remove(MySQLDAOManager.JDBCDRIVERNAMESKEY);
+        
+        //only the JDBC URL? Should fail also
+        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        try {
+            manager.setParameters(props);
+            //if we reach this point, test failed
+            throw new AssertionError("The manager should refuse properties " +
+                    "with a JDBC URL provided without a JDBC Driver name.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        //let's add the Driver name, it should work
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        manager.setParameters(props);
+        //let's add a DataSource, it should still work
+        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
+        manager.setParameters(props);
+        
+        //let's set an incorrect Driver, it should fail
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, "whatever");
+        try {
+            manager.setParameters(props);
+            //if we reach this point, test failed
+            throw new AssertionError("The manager should refuse properties " +
+                    "with an incorrect JDBC Driver name.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        //now an incorrect URL
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.JDBCURLKEY, "whatever");
+        try {
+            manager.setParameters(props);
+            //if we reach this point, test failed
+            throw new AssertionError("The manager should refuse properties " +
+                    "with an incorrect JDBC connection URL.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        //now an incorrect DataSource resource name
+        props.remove(MySQLDAOManager.JDBCDRIVERNAMESKEY);
+        props.remove(MySQLDAOManager.JDBCURLKEY);
+        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, "whatever");
+        try {
+            manager.setParameters(props);
+            //if we reach this point, test failed
+            throw new AssertionError("The manager should refuse properties " +
+                    "with an incorrect DataSource resource name.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        
+        //final check, let's provide valid parameters to check we didn't "block" 
+        //the manager
+        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
+        manager.setParameters(props);
+
+        MockDataSource.initialize();
+        MockDriver.initialize();
+        manager.shutdown();
+    }
+    
+    /**
+     * Test {@link MySQLDAOManager#killDAOManager()}.
+     */
+    @Test
+    public void shouldKillDAOManager() throws SQLException {
+        MockDriver.initialize();
+        //set the properties to use it
+        Properties props = new Properties();
+        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        //test to provide several JDBC driver names
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
+        //going through the DAOManager#getDAOManager() method
+        MySQLDAOManager manager = new MySQLDAOManager();
+        manager.setParameters(props);
+        
+        BgeeConnection conn1 = manager.getConnection();
+        //get mock PreparedStatement
+        conn1.prepareStatement("test");
+        //get another connection
+        props.setProperty(MySQLDAOManager.USERKEY, "test");
+        manager.setParameters(props);
+        BgeeConnection conn2 = manager.getConnection();
+        //get mock PreparedStatement
+        conn2.prepareStatement("test");
+        //just to be sure we get the connections we expected
+        assertNotSame("Invalid BgeeConnections returned", conn1, conn2);
+        
+        //actual test
+        manager.killDAOManager();
+        //statements held by the connections should have been canceled
+        verify(MockDriver.getMockStatement(), times(2)).cancel();
+        //connections should have been closed
+        verify(MockDriver.getMockConnection(), times(2)).close();
+        
+        manager.shutdown();
+        MockDriver.initialize();
+    }
+    
+    /**
+     * Test {@link MySQLDAOManager#shutdown()}
+     */
+    @Test
+    public void shouldShutdown() throws SQLException {
+        MockDriver.initialize();
+        
+        //first we deregister any Driver already loaded
+        Enumeration<Driver> drivers = DriverManager.getDrivers();
+        while (drivers.hasMoreElements()) {
+            DriverManager.deregisterDriver(drivers.nextElement());
+        }
+        
+        Properties props = new Properties();
+        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, 
+                MockDriver.class.getName() + "," + com.mysql.jdbc.Driver.class.getName());
+        MySQLDAOManager manager = new MySQLDAOManager();
+        manager.setParameters(props);
+        
+        //The DriverManager should have our two Drivers loaded
+        drivers = DriverManager.getDrivers();
+        int myDriversFound = 0;
+        while (drivers.hasMoreElements()) {
+            Driver nextDriver = drivers.nextElement();
+            log.trace("Driver in DriverManager: {}", nextDriver);
+            if (nextDriver.getClass().getName().equals(MockDriver.class.getName()) || 
+               nextDriver.getClass().getName().equals(com.mysql.jdbc.Driver.class.getName())) {
+                myDriversFound++;
+            }
+        }
+        assertEquals("The DriverManager did not registered our Drivers", 2, myDriversFound);
+        
+        manager.shutdown();
+        
+        drivers = DriverManager.getDrivers();
+        myDriversFound = 0;
+        while (drivers.hasMoreElements()) {
+            Driver nextDriver = drivers.nextElement();
+            log.trace("Driver in DriverManager: {}", nextDriver);
+            if (nextDriver.getClass().getName().equals(MockDriver.class.getName()) || 
+               nextDriver.getClass().getName().equals(com.mysql.jdbc.Driver.class.getName())) {
+                myDriversFound++;
+            }
+        }
+        assertEquals("The DriverManager did not deregistered our Drivers", 0, myDriversFound);
+        
+        MockDriver.initialize();
+    }
+    
+    
+    /**
 	 * Test the acquisition of a {@code BgeeConnection} when using a JDBC {@code Driver}, 
 	 * and only a connection URL (meaning username and password should be provided in the URL).
 	 * 
@@ -306,14 +578,18 @@ public class MySQLDAOManagerTest extends TestAncestor
                     conn2, test.conn2);
             
             //trying to acquire connections with the same parameters should return the same connection
-            assertEquals("Get two BgeeConnection instances for the smae parameters", 
+            assertEquals("Get two BgeeConnection instances for the same parameters", 
                     conn1, manager1.getConnection());
+            
             props.setProperty(MySQLDAOManager.USERKEY, "test");
             manager1.setParameters(props);
-            assertEquals("Get two BgeeConnection instances for the smae parameters", 
+            assertEquals("Get two BgeeConnection instances for the same parameters", 
                     conn2, manager1.getConnection());
+            
             props.remove(MySQLDAOManager.USERKEY);
             manager1.setParameters(props);
+            assertEquals("Get two BgeeConnection instances for the same parameters", 
+                    conn1, manager1.getConnection());
             
             //close the source in the main thread
             manager1.closeDAOManager();
@@ -332,6 +608,11 @@ public class MySQLDAOManagerTest extends TestAncestor
                 throw new SQLException("A SQLException occurred in the second thread.");
             }
             
+            //try to get a Connection with same parameters again, 
+            //it should be a new one now the MySQLDAOManager was closed
+            assertNotNull("Failed to acquire a BgeeConnection", manager1.getConnection());
+            assertNotEquals("Should get a new BgeeConnection after closing.", 
+                    conn1, manager1.getConnection());
             
             //close the BgeeDataSource one by one without calling closeAll(), 
             //that would make other test to fail
@@ -344,42 +625,5 @@ public class MySQLDAOManagerTest extends TestAncestor
             Thread.currentThread().interrupt();
         } 
 
-    }
-    
-    /**
-     * Try to set parameters and to read them.
-     * @throws SQLException 
-     */
-    @Test
-    public void shouldGetSet() throws SQLException {
-        //we need to initialize the mock DataSource, because some attributes can only 
-        //be set if they are valid, corresponding to real java.sql or javax.sql objects.
-        MockDataSource.initialize();
-        //we will try to load the mock Driver and the MySQL Driver
-        Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
-        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, 
-                MockDriver.class.getName() + "," + com.mysql.jdbc.Driver.class.getName());
-        props.setProperty(MySQLDAOManager.USERKEY, "bgee.jdbc.username.test");
-        props.setProperty(MySQLDAOManager.PASSWORDKEY, "bgee.jdbc.password.test");
-        
-        MySQLDAOManager manager = new MySQLDAOManager();
-        manager.setParameters(props);
-        
-        assertEquals("Incorrect JDBC URL read", MockDriver.MOCKURL, manager.getJdbcUrl());
-        assertEquals("Incorrect DataSource name read", MockDataSource.DATASOURCENAME, 
-                manager.getDataSourceResourceName());
-        assertEquals("Incorrect JDBC Driver names read", new HashSet<String>(
-                Arrays.asList(MockDriver.class.getName(), com.mysql.jdbc.Driver.class.getName())), 
-                manager.getJdbcDriverNames());
-        assertEquals("Incorrect username name read", "bgee.jdbc.username.test", 
-                manager.getUser());
-        assertEquals("Incorrect password name read", "bgee.jdbc.password.test", 
-                manager.getPassword());
-
-        manager.shutdown();
-        MockDataSource.initialize();
-        
     }
 }

@@ -1,18 +1,11 @@
 package org.bgee.model.dao.mysql;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.mysql.datasource.InitDataSourceTest;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.bgee.model.dao.mysql.mock.MockDriver;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -32,90 +25,134 @@ public class BgeeConnectionTest extends TestAncestor
 	protected Logger getLogger() {
 		return log;
 	}
+    
+    /**
+     * Test {@link BgeeConnection#prepareStatement(String)}
+     */
+    @Test
+    public void shouldPrepareStatement() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = new BgeeConnection(null, MockDriver.getMockConnection(), 
+                "ID1");
+        assertNotNull("Could not acquire a BgeePreparedStatement", 
+                con.prepareStatement("test"));
+        assertEquals("Incorrect number of BgeePreparedStatement held by the BgeeConnection", 
+                1, con.getStatementCount());
+        assertNotNull("Could not acquire a BgeePreparedStatement", 
+                con.prepareStatement("test"));
+        assertEquals("Incorrect number of BgeePreparedStatement held by the BgeeConnection", 
+                2, con.getStatementCount());
+
+        MockDriver.initialize();
+    }
 	
 	/**
-	 * @see {@link InitDataSourceTest#initClass()}
-	 */
-	@BeforeClass
-	public static void initClass()
-	{
-		InitDataSourceTest.initClass();
-	}
-	/**
-	 * @see {@link InitDataSourceTest#unloadClass()}
-	 */
-	@AfterClass
-	public static void unloadClass()
-	{
-		InitDataSourceTest.unloadClass();
-	}
-	
-	/**
-	 * @see InitDataSourceTest#init()
-	 */
-	@Before
-	public void init()
-	{
-		InitDataSourceTest.init();
-	}
-	/**
-	 * @see InitDataSourceTest#unload()
-	 */
-	@After
-	public void unload()
-	{
-		InitDataSourceTest.unload();
-	}
-	
-	/**
-	 * Test the methods 
-	 * {@link org.bgee.model.dao.mysql.BgeeConnection#close() BgeeConnection#close()} and 
-	 * {@link org.bgee.model.dao.mysql.BgeeConnection#isClosed() BgeeConnection#isClosed()}
+	 * Test {@link BgeeConnection#close()}
 	 */
 	@Test
-	public void shouldCloseConnection() throws SQLException
-	{
-		//set the mocked connection
-		when(InitDataSourceTest.getMockDriverUtils().getMockConnection().isClosed())
-		    .thenAnswer(new Answer<Boolean>() {
-				@Override
-				public Boolean answer(InvocationOnMock invocation) {
-			        try {
-						verify((Connection) invocation.getMock()).close();
-						return true;
-					} catch (Throwable e) {
-						return false;
-					}
-			    }
-			});
-		
-		//get two connections
-		BgeeConnection conn1 = BgeeDataSource.getBgeeDataSource().getConnection();
-		BgeeConnection conn2 = BgeeDataSource.getBgeeDataSource().getConnection("", "");
-		//close the first connection
-		conn1.close();
-		//check that it was correctly closed
-		assertTrue("The connection was not properly closed", conn1.isClosed());
-		//and that trying to get this connection again will return a new one
-		assertNotEquals("A BgeeConnection was acquired after it has been closed", 
-				conn1, BgeeDataSource.getBgeeDataSource().getConnection());
-		//but we can still obtain the second connection
-		assertEquals("Closing a BgeeConnection interfered with another one", 
-				conn2, BgeeDataSource.getBgeeDataSource().getConnection("", ""));
+	public void shouldClose() throws SQLException {
+	    MockDriver.initialize();
+	    MySQLDAOManager manager = new MySQLDAOManager();
+	    manager = spy(manager);
+	    
+	    BgeeConnection con = new BgeeConnection(manager, MockDriver.getMockConnection(), 
+	            "ID1");
+	    //to test that the connection closes its statements
+	    con.prepareStatement("test");
+        con.prepareStatement("test");
+        assertEquals("Incorrect number of BgeePreparedStatement held by the BgeeConnection", 
+                2, con.getStatementCount());
+        
+        con.close();
+        verify(MockDriver.getMockConnection()).close();
+        verify(MockDriver.getMockStatement(), times(2)).close();
+        verify(manager).connectionClosed("ID1");
+        assertEquals("Incorrect number of BgeePreparedStatement held by the BgeeConnection", 
+                0, con.getStatementCount());
+        
+        MockDriver.initialize();
 	}
+    
+    /**
+     * Test {@link BgeeConnection#kill()}
+     */
+    @Test
+    public void shouldKill() throws SQLException {
+        MockDriver.initialize();
+        MySQLDAOManager manager = new MySQLDAOManager();
+        manager = spy(manager);
+        
+        BgeeConnection con = new BgeeConnection(manager, MockDriver.getMockConnection(), 
+                "ID1");
+        //to test that the connection closes its statements
+        con.prepareStatement("test");
+        con.prepareStatement("test");
+        
+        con.kill();
+        verify(MockDriver.getMockConnection()).close();
+        verify(MockDriver.getMockStatement(), times(2)).cancel();
+        verify(manager).connectionClosed("ID1");
+        
+        MockDriver.initialize();
+    }
+    
+    /**
+     * Test {@link BgeeConnection#statementClosed(BgeePreparedStatement)}.
+     */
+    @Test
+    public void testStatementClosed() throws SQLException {
+        MockDriver.initialize();
+        
+        BgeeConnection con = new BgeeConnection(null, MockDriver.getMockConnection(), 
+                "ID1");
+        //to test that the connection closes its statements
+        BgeePreparedStatement stmt = con.prepareStatement("test");
+        assertEquals("Incorrect number of BgeePreparedStatement held by the BgeeConnection", 
+                1, con.getStatementCount());
+        con.statementClosed(stmt);
+        assertEquals("Incorrect number of BgeePreparedStatement held by the BgeeConnection", 
+                0, con.getStatementCount());
+        
+        MockDriver.initialize();
+    }
+    
+    /**
+     * Test {@link BgeeConnection#getRealConnection()}.
+     */
+    @Test
+    public void shouldGetRealConnection() {
+        MockDriver.initialize();
+        BgeeConnection con = new BgeeConnection(null, MockDriver.getMockConnection(), 
+                "ID1");
+        assertSame("Incorrect real Connection returned", MockDriver.getMockConnection(), 
+                con.getRealConnection());
+        MockDriver.initialize();
+    }
+    
+    /**
+     * Test {@link BgeeConnection#getId()}.
+     */
+    @Test
+    public void shouldGetId() {
+        BgeeConnection con = new BgeeConnection(null, null, "ID1");
+        assertEquals("Incorrect ID returned", "ID1", con.getId());
+    }
 	
 	/**
-	 * Test the method {@link org.bgee.model.dao.mysql.BgeeConnection#prepareStatement(String) 
-	 * BgeeConnection#prepareStatement(String)}
-	 * @throws SQLException 
+	 * Test {@link BgeeConnection#isClosed()}.
 	 */
 	@Test
-	public void shouldPrepareStatement() throws SQLException
-	{
-		//get a PreparedStatement
-		BgeePreparedStatement statement = 
-				BgeeDataSource.getBgeeDataSource().getConnection().prepareStatement("test");
-		assertNotNull("Could not acquire a BgeePreparedStatement", statement);
-		
+	public void testIsClosed() throws SQLException {
+	    //BgeeConnection should simply forward the call to the real connection
+	    MockDriver.initialize();
+        MySQLDAOManager manager = new MySQLDAOManager();
+        manager = spy(manager);
+        
+        BgeeConnection con = new BgeeConnection(manager, MockDriver.getMockConnection(), 
+                "ID1");
+        when(MockDriver.getMockConnection().isClosed()).thenReturn(true);
+        assertTrue("Incorrect value returned by isClosed", con.isClosed());
+        
+        MockDriver.initialize();
 	}
 }

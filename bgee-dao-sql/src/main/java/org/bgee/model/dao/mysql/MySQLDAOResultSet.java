@@ -157,6 +157,7 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
                 throw log.throwing(new DAOException(e));
             }
         }
+        this.statements.clear();
         log.exit();
     }
     
@@ -279,6 +280,14 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
             }
         }
         this.statements.addAll(statements);
+    }
+    
+    /**
+     * @return  an {@code int} that is the number of {@code BgeePreparedStatement}s 
+     *          currently held by this {@code MySQLDAOResultSet}.
+     */
+    int getStatementCount() {
+        return this.statements.size();
     }
     
 }

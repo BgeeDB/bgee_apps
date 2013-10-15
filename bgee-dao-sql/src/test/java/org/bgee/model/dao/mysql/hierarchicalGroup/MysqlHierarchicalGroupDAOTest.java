@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 
 public class MysqlHierarchicalGroupDAOTest {
 
-	public void testGetHierarchicalOrthologusGenes() throws SQLException {
+	/*public void testGetHierarchicalOrthologusGenes() throws SQLException {
 
 		String[] requiredOrthologusGenes = new String[] { "ENSG00000165810",
 				"ENSG00000186470", "ENSG00000215811", "ENSMUSG00000034359",
@@ -21,6 +21,6 @@ public class MysqlHierarchicalGroupDAOTest {
 		assertArrayEquals(requiredOrthologusGenes, query
 				.getHierarchicalOrthologusGenes("ENSG00000186470", "")
 				.toArray());
-	}
+	}*/
 
 }

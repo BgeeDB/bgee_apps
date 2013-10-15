@@ -27,7 +27,7 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * @see MySQLDAOResultSet
  * @since Bgee 13
  */
-public final class BgeePreparedStatement implements AutoCloseable {
+public class BgeePreparedStatement implements AutoCloseable {
     /**
      * {@code Logger} of the class. 
      */

@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 13
  * @since Bgee 13
  */
-public final class BgeeConnection implements AutoCloseable {
+public class BgeeConnection implements AutoCloseable {
     /**
      * {@code Logger} of the class. 
      */
@@ -142,6 +142,14 @@ public final class BgeeConnection implements AutoCloseable {
         log.debug("Releasing BgeePreparedStatement {}", stmt);
         this.preparedStatements.remove(stmt);
         log.exit();
+    }
+    
+    /**
+     * @return  an {@code int} representing the current number of 
+     * {@code BgeePreparedStatement}s held by this {@code BgeeConnection}.
+     */
+    int getStatementCount() {
+        return this.preparedStatements.size();
     }
 
     /**

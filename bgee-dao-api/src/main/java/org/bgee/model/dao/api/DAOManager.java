@@ -100,7 +100,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see #getServiceProviders
      */
     private static final Collection<String> providerClassNames = 
-            Arrays.asList("org.bgee.model.dao.mysql.MySQLDAOManager");
+            Arrays.asList("org.bgee.model.dao.mysql.connector.MySQLDAOManager");
     
     /**
      * A {@code String} representing the default name of the configuration file 

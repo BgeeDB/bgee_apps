@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql;
+package org.bgee.model.dao.mysql.connector;
 
 import static org.junit.Assert.*;
 
@@ -18,11 +18,12 @@ import javax.naming.Reference;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.mysql.BgeeConnection;
-import org.bgee.model.dao.mysql.MySQLDAOManager;
-import org.bgee.model.dao.mysql.mock.MockDataSource;
-import org.bgee.model.dao.mysql.mock.MockDriver;
-import org.bgee.model.dao.mysql.mock.MockInitialContextFactory;
+import org.bgee.model.dao.mysql.TestAncestor;
+import org.bgee.model.dao.mysql.connector.BgeeConnection;
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.connector.mock.MockDataSource;
+import org.bgee.model.dao.mysql.connector.mock.MockDriver;
+import org.bgee.model.dao.mysql.connector.mock.MockInitialContextFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

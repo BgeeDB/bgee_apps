@@ -1,10 +1,14 @@
-package org.bgee.model.dao.mysql;
+package org.bgee.model.dao.mysql.connector;
 
 import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.mysql.mock.MockDriver;
+import org.bgee.model.dao.mysql.TestAncestor;
+import org.bgee.model.dao.mysql.connector.BgeeConnection;
+import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.connector.mock.MockDriver;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

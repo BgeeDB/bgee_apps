@@ -14,10 +14,6 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.BgeeProperties;
-import org.bgee.model.data.sql.BgeeConnection;
-import org.bgee.model.data.sql.BgeeDataSource;
-import org.bgee.model.data.sql.BgeePreparedStatement;
 
 import sbc.orthoxml.Gene;
 import sbc.orthoxml.Group;

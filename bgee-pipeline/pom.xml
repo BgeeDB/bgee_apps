@@ -1,7 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   
   <parent>
@@ -16,18 +14,21 @@
   
   <dependencies>
   
+    <!-- The API will be used to access he DAOManager and the TransferObjects, 
+        otherwise, the MySQL layer will be used directly. -->
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-core</artifactId>
+    <groupId>${project.groupId}</groupId>
+      <artifactId>bgee-dao-api</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
+    <!-- The pipeline is allowed to access directly the MySQL layer. 
+         Notably, the insertion/update queries are not part of the API. -->
     <dependency>
-    <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-core</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bgee-dao-sql</artifactId>
       <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
+      <scope>compile</scope>
     </dependency>
   
     <dependency>

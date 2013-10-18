@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.mock;
+package org.bgee.model.dao.mysql.connector.mock;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;

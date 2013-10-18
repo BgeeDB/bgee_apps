@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql;
+package org.bgee.model.dao.mysql.connector;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,6 +12,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.dao.mysql.TestAncestor;
+import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

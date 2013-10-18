@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql;
+package org.bgee.model.dao.mysql.connector;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

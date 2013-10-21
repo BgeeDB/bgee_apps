@@ -478,7 +478,7 @@ public class MySQLDAOManager extends DAOManager {
     /**
      * Returns the {@code String} that is the resource name of the {@code DataSource} 
      * to use. This parameter is not mandatory if a JDBC {@code Driver} is used 
-     * to connect to the database (see {@link #getJdbcDriverName()}). 
+     * to connect to the database (see {@link #getJdbcDriverNames()}). 
      * If the user and password were not provided to the {@code InitialContext} 
      * loading the {@code DataSource}, it must be provided to this {@code MySQLDAOManager} 
      * (see {@link #getUser()} and {@link #getPassword()}).
@@ -579,7 +579,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @return  A {@code Set} of {@code String}s representing the names of all 
      *          the JDBC {@code Driver} to load.
-     * @see #JDBCDRIVERNAMEsKEY
+     * @see #JDBCDRIVERNAMESKEY
      * @see #getJdbcUrl()
      * @see #getUser()
      * @see #getPassword()

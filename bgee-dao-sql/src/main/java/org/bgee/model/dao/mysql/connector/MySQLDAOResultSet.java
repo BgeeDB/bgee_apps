@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 
@@ -35,8 +36,11 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
+ *
+ * @param <T>   The type of {@code TransferObject} that can be obtained 
+ *              from this {@code MySQLDAOResultSet}.
  */
-public abstract class MySQLDAOResultSet implements DAOResultSet {
+public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAOResultSet<T> {
     /**
      * {@code Logger} of the class. 
      */
@@ -263,7 +267,7 @@ public abstract class MySQLDAOResultSet implements DAOResultSet {
      * {@code BgeePreparedStatement} that should be executed by this 
      * {@code MysqlDAOResultSet}, in order.
      * 
-     * @param stmt  A {@code List} of {@code BgeePreparedStatement}s to be added 
+     * @param statements  A {@code List} of {@code BgeePreparedStatement}s to be added 
      *              to the tail of the {@code List} held by this {@code MysqlDAOResultSet}, 
      *              to be executed in order.
      * @throws IllegalArgumentException If {@code executeQuery} has been already called 

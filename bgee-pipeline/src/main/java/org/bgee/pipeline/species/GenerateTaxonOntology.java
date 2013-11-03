@@ -64,7 +64,7 @@ public class GenerateTaxonOntology {
      * will be kept in the ontology). ID provided with the {@code NCBITaxon:} 
      * prefix (for instance, {@code NCBITaxon:33208} for <i>metazoa</i>).
      * <li>path to the file to store the generated ontology in OBO format. So 
-     * it must finish with {@code .obo} ;)
+     * it must finish with {@code .obo}
      * </ol>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -89,28 +89,62 @@ public class GenerateTaxonOntology {
             		"provided, expected " + expectedArgLength + " arguments, " + args.length + 
             		" provided."));
         }
-        if (!args[0].endsWith(".dat")) {
-            throw log.throwing(new IllegalArgumentException("No .dat file provided "));
-        }
-        if (!args[1].startsWith("NCBITaxon:")) {
-            throw log.throwing(new IllegalArgumentException("No NCBI Taxon ID provided " +
-            		"to restrain the scope of the ontology generated."));
-        }
-        if (!args[2].endsWith(".obo")) {
-            throw log.throwing(new IllegalArgumentException("The output file must be " +
-            		"an OBO format."));
-        }
-        String taxDatFile       = args[0];
-        String requestedTaxonId = args[1];
-        String outputFile       = args[2];
         
         GenerateTaxonOntology generate = new GenerateTaxonOntology();
-        //convert the NCBI data into an OWL ontology
-        OWLOntology ont = generate.ncbi2owl(taxDatFile);
+        generate.generateOntology(args[0], args[1], args[2]);
+        
+        log.exit();
+    }
+    
+    /**
+     * Generates a taxonomy ontology, based on the NCBI taxonomy data, that 
+     * will be stored in OBO format, and that will include only a specific branch 
+     * of the taxonomy. This taxonomy will include only taxa related to the specified 
+     * taxon ({@code requestedTaxonId}).
+     * 
+     * @param taxDataFile       A {@code String} that is the path to the NCBI 
+     *                          {@code taxonomy.dat} file.
+     * @param requestedTaxonId  A {@code String} that is the NCBI ID of the taxon 
+     *                          for which we want to keep related taxa in the 
+     *                          generated ontology (meaning, only descendants and 
+     *                          ancestors of this taxon will be kept in the ontology). 
+     *                          ID provided with the {@code NCBITaxon:} prefix 
+     *                          (for instance, {@code NCBITaxon:33208} for <i>metazoa</i>).
+     * @param outputFile        path to the file to store the generated ontology 
+     *                          in OBO format. So it must finish with {@code .obo}
+     *                          
+     * @throws IllegalArgumentException If {@code requestedTaxonId} has an incorrect 
+     *                                  format, or if {@code outputFile} is not 
+     *                                  an OBO file. 
+     * @throws IOException  IF the {@code taxonomy.dat} file could not be opened, 
+     *                      or an error occurred while saving the converted ontology. 
+     * @throws OWLOntologyCreationException Can be thrown by during the conversion 
+     *                                      from NCBI data to OWL ontology, or during 
+     *                                      the conversion of the OWL ontology into 
+     *                                      an OBO ontology.
+     * @throws OWLOntologyStorageException  Can be thrown by {@code NCBI2OWL} 
+     *                                      during the conversion.
+     */
+    public void generateOntology(String taxDataFile, String requestedTaxonId, 
+            String outputFile) throws IllegalArgumentException, 
+            OWLOntologyCreationException, OWLOntologyStorageException, IOException {
+        log.entry(taxDataFile, requestedTaxonId, outputFile);
+        
+        if (!requestedTaxonId.startsWith("NCBITaxon:")) {
+            throw log.throwing(new IllegalArgumentException("Incorrect format " +
+            		"of the NCBI Taxon ID to restrain the scope of the ontology " +
+            		"generated."));
+        }
+        if (!outputFile.endsWith(".obo")) {
+            throw log.throwing(new IllegalArgumentException("The output file must be " +
+                    "an OBO format."));
+        }
+        
+        OWLOntology ont = this.ncbi2owl(taxDataFile);
         //now modify the ontology in order to keep only taxa related to provided taxon
-        generate.filterOntology(ont, requestedTaxonId);
+        this.filterOntology(ont, requestedTaxonId);
         //finally, store the modified ontology in OBO
-        generate.saveOntology(ont, outputFile);
+        this.saveOntology(ont, outputFile);
         
         log.exit();
     }

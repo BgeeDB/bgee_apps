@@ -96,6 +96,12 @@
 				<version>0.2.1-SNAPSHOT</version>
 				<scope>compile</scope>
 			</dependency>
+            <dependency>
+                <groupId>org.bbop</groupId>
+                <artifactId>OWLTools-ncbi</artifactId>
+                <version>0.2.1-SNAPSHOT</version>
+                <scope>compile</scope>
+            </dependency>
 			<dependency>
 				<groupId>sbc</groupId>
 				<artifactId>orthoxml</artifactId>

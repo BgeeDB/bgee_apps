@@ -6,24 +6,216 @@
               as the first entry and export the buildfile again. -->
 <project basedir="." default="build" name="bgee-pipeline">
     <property environment="env"/>
-    <property name="bgee-core.location" value="../bgee-core"/>
     <property name="ECLIPSE_HOME" value="../../../../../../../../Applications/eclipse"/>
+    <property name="junit.output.dir" value="junit"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
     <property name="source" value="1.7"/>
     <path id="Maven Dependencies.libraryclasspath">
-        <pathelement location="../bgee-core"/>
-        <pathelement location="~/.m2/repository/org/bbop/OWLTools-Parent/0.2.1-SNAPSHOT/OWLTools-Parent-0.2.1-SNAPSHOT.jar"/>
-        <pathelement location="~/.m2/repository/org/apache/logging/log4j/log4j-core/2.0-beta4/log4j-core-2.0-beta4.jar"/>
-        <pathelement location="~/.m2/repository/org/apache/logging/log4j/log4j-api/2.0-beta4/log4j-api-2.0-beta4.jar"/>
-        <pathelement location="~/.m2/repository/junit/junit/4.11/junit-4.11.jar"/>
-        <pathelement location="~/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
+        <pathelement location="../../../../../../.m2/repository/org/bgee/bgee-dao-api/13/bgee-dao-api-13.jar"/>
+        <pathelement location="../../../../../../.m2/repository/commons-lang/commons-lang/2.6/commons-lang-2.6.jar"/>
+        <pathelement location="../../../../../../.m2/repository/org/bgee/bgee-dao-sql/13/bgee-dao-sql-13.jar"/>
+        <pathelement location="../../../../../../.m2/repository/org/bbop/OWLTools-all/0.2.1-SNAPSHOT/OWLTools-all-0.2.1-SNAPSHOT.jar"/>
+        <pathelement location="../../../../../../.m2/repository/org/bbop/OWLTools-NCBI/0.2.1-SNAPSHOT/OWLTools-NCBI-0.2.1-SNAPSHOT.jar"/>
+        <pathelement location="../../../../../../.m2/repository/sbc/orthoxml/0.1b/orthoxml-0.1b.jar"/>
+        <pathelement location="../../../../../../.m2/repository/org/apache/logging/log4j/log4j-core/2.0-beta7/log4j-core-2.0-beta7.jar"/>
+        <pathelement location="../../../../../../.m2/repository/org/apache/logging/log4j/log4j-api/2.0-beta7/log4j-api-2.0-beta7.jar"/>
+        <pathelement location="../../../../../../.m2/repository/junit/junit/4.11/junit-4.11.jar"/>
+        <pathelement location="../../../../../../.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
+        <pathelement location="../../../../../../.m2/repository/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar"/>
     </path>
     <path id="bgee-pipeline.classpath">
         <pathelement location="target/classes"/>
         <pathelement location="target/test-classes"/>
         <path refid="Maven Dependencies.libraryclasspath"/>
-        <pathelement location="${bgee-core.location}/target/classes"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.isOWLObjectInSubsetsTest.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldCombineEdgePairWithSuperProps.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldCombinePropertyPairOverSuperProperties.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetAllOWLClasses.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetOWLClassAncestors.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetOWLClassDescendants.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetOWLClassDirectDescendants.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetOWLGraphEdgeSubRelsReflexive.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetOntologyRoots.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetSubPropertiesOf.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetSubPropertyClosureOf.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetSubPropertyReflexiveClosureOf.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.CustomOWLGraphWrapperTest.shouldGetSuperPropertyReflexiveClosureOf.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.GenerateUberonVersion (1).classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldCombinedPropertyPairOverSuperProperties.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldDelPartOfSubClassOfRelsToSubsetsIfNonOrphan.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterAllRelations.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterRelations.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterRelationsTest.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterRelationsWithNonOboId.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterRelationsWithNonOboId2.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterRelationsWithSubRel.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterRelationsWithSubRelTest.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterSubgraph.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldFilterSubgraphs.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldGetOWLGraphEdgeSubRels.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldGetOWLGraphEdgeSubRelsReflexive.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldGetSubPropertyReflexiveClosureOf.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldMakeBasicOntology.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldMapRelationsToParent.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldMapRelationsToParentWithRelsExcluded.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldReducePartOfAndSubClassOfRelations.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldReduceRelation.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldReduceRelations.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldRemoveClassAndPropagateEdges.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldRemoveNoRelation.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldRemoveRelations.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldRemoveRelationsWithSubRel.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldRemoveSubgraphs.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.shouldRemoveSubgraphsAndSharedClasses.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.test.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.testOWLClassHashCode.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.testOWLGraphEdgeHashCode.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.testOWLOntologyChangeHashCode.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
+    </path>
+    <path id="run.OWLGraphManipulatorTest.testOWLQuantifiedPropertyHashCode.classpath">
+        <path refid="bgee-pipeline.classpath"/>
+        <path refid="Maven Dependencies.libraryclasspath"/>
     </path>
     <target name="init">
         <mkdir dir="target/classes"/>
@@ -31,25 +223,33 @@
         <copy includeemptydirs="false" todir="target/classes">
             <fileset dir="src/main/java">
                 <exclude name="**/*.launch"/>
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
-        <copy includeemptydirs="false" todir="target/test-classes">
-            <fileset dir="src/test/java">
-                <exclude name="**/*.launch"/>
+                <exclude name="**/*.ucls"/>
+                <exclude name="**/*.useq"/>
                 <exclude name="**/*.java"/>
             </fileset>
         </copy>
         <copy includeemptydirs="false" todir="target/classes">
             <fileset dir="src/main/resources">
                 <exclude name="**/*.launch"/>
+                <exclude name="**/*.ucls"/>
+                <exclude name="**/*.useq"/>
                 <exclude name="**/*.java"/>
                 <exclude name="**"/>
             </fileset>
         </copy>
         <copy includeemptydirs="false" todir="target/test-classes">
+            <fileset dir="src/test/java">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.ucls"/>
+                <exclude name="**/*.useq"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <copy includeemptydirs="false" todir="target/test-classes">
             <fileset dir="src/test/resources">
                 <exclude name="**/*.launch"/>
+                <exclude name="**/*.ucls"/>
+                <exclude name="**/*.useq"/>
                 <exclude name="**/*.java"/>
                 <exclude name="**"/>
             </fileset>
@@ -68,13 +268,13 @@
             <src path="src/main/java"/>
             <classpath refid="bgee-pipeline.classpath"/>
         </javac>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="target/test-classes" source="${source}" target="${target}">
-            <src path="src/test/java"/>
-            <classpath refid="bgee-pipeline.classpath"/>
-        </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="target/classes" source="${source}" target="${target}">
             <src path="src/main/resources"/>
             <exclude name="**"/>
+            <classpath refid="bgee-pipeline.classpath"/>
+        </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="target/test-classes" source="${source}" target="${target}">
+            <src path="src/test/java"/>
             <classpath refid="bgee-pipeline.classpath"/>
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="target/test-classes" source="${source}" target="${target}">
@@ -96,5 +296,387 @@
     <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
         <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
         <antcall target="build"/>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.isOWLObjectInSubsetsTest">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.isOWLObjectInSubsetsTest.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldCombineEdgePairWithSuperProps">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldCombineEdgePairWithSuperProps.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldCombinePropertyPairOverSuperProperties">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldCombinePropertyPairOverSuperProperties.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetAllOWLClasses">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetAllOWLClasses.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetOWLClassAncestors">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetOWLClassAncestors.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetOWLClassDescendants">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetOWLClassDescendants.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetOWLClassDirectDescendants">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetOWLClassDirectDescendants.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetOWLGraphEdgeSubRelsReflexive">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetOWLGraphEdgeSubRelsReflexive.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetOntologyRoots">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetOntologyRoots.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetSubPropertiesOf">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetSubPropertiesOf.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetSubPropertyClosureOf">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetSubPropertyClosureOf.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetSubPropertyReflexiveClosureOf">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetSubPropertyReflexiveClosureOf.classpath"/>
+        </junit>
+    </target>
+    <target name="CustomOWLGraphWrapperTest.shouldGetSuperPropertyReflexiveClosureOf">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.CustomOWLGraphWrapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.CustomOWLGraphWrapperTest.shouldGetSuperPropertyReflexiveClosureOf.classpath"/>
+        </junit>
+    </target>
+    <target name="GenerateUberonVersion (1)">
+        <java classname="org.bgee.pipeline.uberon.GenerateUberonVersion" failonerror="true" fork="yes">
+            <jvmarg line="-Xmx2g -Xms2g"/>
+            <classpath refid="run.GenerateUberonVersion (1).classpath"/>
+        </java>
+    </target>
+    <target name="OWLGraphManipulatorTest">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldCombinedPropertyPairOverSuperProperties">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldCombinedPropertyPairOverSuperProperties.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldDelPartOfSubClassOfRelsToSubsetsIfNonOrphan">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldDelPartOfSubClassOfRelsToSubsetsIfNonOrphan.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterAllRelations">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterAllRelations.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterRelations">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterRelations.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterRelationsTest">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterRelationsTest.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterRelationsWithNonOboId">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterRelationsWithNonOboId.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterRelationsWithNonOboId2">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterRelationsWithNonOboId2.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterRelationsWithSubRel">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterRelationsWithSubRel.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterRelationsWithSubRelTest">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterRelationsWithSubRelTest.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterSubgraph">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterSubgraph.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldFilterSubgraphs">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldFilterSubgraphs.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldGetOWLGraphEdgeSubRels">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldGetOWLGraphEdgeSubRels.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldGetOWLGraphEdgeSubRelsReflexive">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldGetOWLGraphEdgeSubRelsReflexive.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldGetSubPropertyReflexiveClosureOf">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldGetSubPropertyReflexiveClosureOf.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldMakeBasicOntology">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldMakeBasicOntology.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldMapRelationsToParent">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldMapRelationsToParent.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldMapRelationsToParentWithRelsExcluded">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldMapRelationsToParentWithRelsExcluded.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldReducePartOfAndSubClassOfRelations">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldReducePartOfAndSubClassOfRelations.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldReduceRelation">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldReduceRelation.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldReduceRelations">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldReduceRelations.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldRemoveClassAndPropagateEdges">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldRemoveClassAndPropagateEdges.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldRemoveNoRelation">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldRemoveNoRelation.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldRemoveRelations">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldRemoveRelations.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldRemoveRelationsWithSubRel">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldRemoveRelationsWithSubRel.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldRemoveSubgraphs">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldRemoveSubgraphs.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.shouldRemoveSubgraphsAndSharedClasses">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.shouldRemoveSubgraphsAndSharedClasses.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.test">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.test.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.testOWLClassHashCode">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.testOWLClassHashCode.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.testOWLGraphEdgeHashCode">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.testOWLGraphEdgeHashCode.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.testOWLOntologyChangeHashCode">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.testOWLOntologyChangeHashCode.classpath"/>
+        </junit>
+    </target>
+    <target name="OWLGraphManipulatorTest.testOWLQuantifiedPropertyHashCode">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="org.bgee.pipeline.uberon.OWLGraphManipulatorTest" todir="${junit.output.dir}"/>
+            <classpath refid="run.OWLGraphManipulatorTest.testOWLQuantifiedPropertyHashCode.classpath"/>
+        </junit>
+    </target>
+    <target name="junitreport">
+        <junitreport todir="${junit.output.dir}">
+            <fileset dir="${junit.output.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${junit.output.dir}"/>
+        </junitreport>
     </target>
 </project>

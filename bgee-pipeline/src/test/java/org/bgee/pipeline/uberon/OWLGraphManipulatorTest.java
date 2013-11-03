@@ -9,7 +9,7 @@ import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.TestAncestor;
+import org.bgee.pipeline.TestAncestor;
 import org.junit.Before;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;

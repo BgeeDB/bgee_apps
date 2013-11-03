@@ -8,7 +8,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.TestAncestor;
+import org.bgee.pipeline.TestAncestor;
 
 import static org.mockito.Mockito.*;
 

@@ -1,9 +1,19 @@
 package org.bgee.pipeline.species;
 
+import java.io.IOException;
+import java.util.Arrays;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.obolibrary.obo2owl.Owl2Obo;
+import org.obolibrary.oboformat.model.OBODoc;
+import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
+import owltools.graph.OWLGraphManipulator;
 import owltools.ncbi.NCBI2OWL;
 
 /**
@@ -60,8 +70,17 @@ public class GenerateTaxonOntology {
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
      *                                  parameters.
+     * @throws IOException  IF the {@code taxonomy.dat} file could not be opened, 
+     *                      or an error occurred while saving the converted ontology. 
+     * @throws OWLOntologyCreationException Can be thrown by during the conversion 
+     *                                      from NCBI data to OWL ontology, or during 
+     *                                      the conversion of the OWL ontology into 
+     *                                      an OBO ontology.
+     * @throws OWLOntologyStorageException  Can be thrown by {@code NCBI2OWL} 
+     *                                      during the conversion.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws OWLOntologyCreationException, 
+        OWLOntologyStorageException, IOException {
         log.entry((Object[]) args);
         
         int expectedArgLength = 3;
@@ -81,9 +100,17 @@ public class GenerateTaxonOntology {
             throw log.throwing(new IllegalArgumentException("The output file must be " +
             		"an OBO format."));
         }
+        String taxDatFile       = args[0];
+        String requestedTaxonId = args[1];
+        String outputFile       = args[2];
         
         GenerateTaxonOntology generate = new GenerateTaxonOntology();
-        generate.ncbi2owl(args[0]);
+        //convert the NCBI data into an OWL ontology
+        OWLOntology ont = generate.ncbi2owl(taxDatFile);
+        //now modify the ontology in order to keep only taxa related to provided taxon
+        generate.filterOntology(ont, requestedTaxonId);
+        //finally, store the modified ontology in OBO
+        generate.saveOntology(ont, outputFile);
         
         log.exit();
     }
@@ -96,8 +123,62 @@ public class GenerateTaxonOntology {
      * @param pathToTaxonomyData    A {@code String} representing the path to the 
      *                              {@code taxonomy.dat} file, used by {@code 
      *                              owltools.ncbi.NCBI2OWL}
+     * @throws IOException  Can be thrown by {@code NCBI2OWL} during the conversion. 
+     * @throws OWLOntologyCreationException Can be thrown by {@code NCBI2OWL} 
+     *                                      during the conversion.
+     * @throws OWLOntologyStorageException  Can be thrown by {@code NCBI2OWL} 
+     *                                      during the conversion.
      */
-    private OWLOntology ncbi2owl(String pathToTaxonomyData) {
+    private OWLOntology ncbi2owl(String pathToTaxonomyData) 
+            throws OWLOntologyCreationException, OWLOntologyStorageException, 
+            IOException {
+        log.entry(pathToTaxonomyData);
+        return log.exit(NCBI2OWL.convertToOWL(pathToTaxonomyData, null));
+    }
+    
+    /**
+     * Keep in the {@code OWLOntology} {@code ont} only the {@code OWLClass}es 
+     * ancestors or descendants of the {@code OWLClass} with ID {@code taxonId}.
+     * 
+     * @param ont       The {@code OWLOntology} to modify.
+     * @param taxonId   A {@code String} representing the ID of the {@code OWLClass} 
+     *                  defining the subgraph to keep in {@code ont}.
+     * @throws UnknownOWLOntologyException  If an error occurred while loading 
+     *                                      the ontology into a wrapper to modify it.
+     * @throws OWLOntologyCreationException If an error occurred while loading 
+     *                                      the ontology into a wrapper to modify it.
+     */
+    private void filterOntology(OWLOntology ont, String taxonId) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        log.entry(ont, taxonId);
         
+        OWLGraphManipulator manipulator = new OWLGraphManipulator(ont);
+        manipulator.filterSubgraphs(Arrays.asList(taxonId));
+        
+        log.exit();
+    }
+    
+    /**
+     * Save the {@code OWLOntology} {@code ont} as an OBO ontology, into the file 
+     * {@code outputFile}.
+     * 
+     * @param ont           The {@code OWLOntology} to save in a file.
+     * @param outputFile    A {@code String} that is the name of the file to save 
+     *                      the ontology in OBO format.
+     * @throws OWLOntologyCreationException If an error occurred while converting 
+     *                                      the ontology into OBO.
+     * @throws IOException                  If an error occurred while saving 
+     *                                      the OBO ontology into a file.
+     */
+    private void saveOntology(OWLOntology ont, String outputFile) 
+            throws OWLOntologyCreationException, IOException {
+        log.entry(ont, outputFile);
+        
+        Owl2Obo converter = new Owl2Obo();
+        OBODoc oboOntology = converter.convert(ont);
+        OBOFormatWriter writer = new OBOFormatWriter();
+        writer.write(oboOntology, outputFile);
+        
+        log.exit();
     }
 }

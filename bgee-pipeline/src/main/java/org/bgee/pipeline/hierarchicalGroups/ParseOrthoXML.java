@@ -263,7 +263,7 @@ public class ParseOrthoXML {
 	public void addToHierarchicalGroupTable(Group group, Node node)
 			throws SQLException {
 
-		log.entry(group, node);
+		/*log.entry(group, node);
 
 		BgeeProperties props = BgeeProperties.getBgeeProperties();
 
@@ -298,7 +298,7 @@ public class ParseOrthoXML {
 		for (Node childNode : node.getChildNodes()) {
 			addToHierarchicalGroupTable(group, childNode);
 		}
-		log.exit();
+		log.exit();*/
 	}
 
 	/**

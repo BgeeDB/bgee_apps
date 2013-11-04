@@ -4,6 +4,8 @@ import java.util.Properties;
 
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.source.SourceDAO;
+import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.api.species.TaxonDAO;
 
 import static org.mockito.Mockito.mock;
 
@@ -79,5 +81,13 @@ public class MockDAOManager2 extends DAOManager {
 	protected SourceDAO getNewSourceDAO() {
 		return this.instanceMockManager.getNewSourceDAO();
 	}
+    @Override
+    protected SpeciesDAO getNewSpeciesDAO() {
+        return this.instanceMockManager.getNewSpeciesDAO();
+    }
+    @Override
+    protected TaxonDAO getNewTaxonDAO() {
+        return this.instanceMockManager.getNewTaxonDAO();
+    }
 
 }

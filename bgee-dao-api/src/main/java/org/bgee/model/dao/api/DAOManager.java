@@ -20,6 +20,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.source.SourceDAO;
+import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.api.species.TaxonDAO;
 
 /**
  * Manager of DAOs, following the abstract factory pattern, to obtain and manage DAOs. 
@@ -814,6 +816,32 @@ public abstract class DAOManager implements AutoCloseable
     	this.checkClosed();
     	return log.exit(this.getNewSourceDAO());
     }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.species.SpeciesDAO SpeciesDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code SpeciesDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.species.SpeciesDAO SpeciesDAO
+     */
+    public SpeciesDAO getSpeciesDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewSpeciesDAO());
+    }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.species.TaxonDAO TaxonDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code TaxonDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.species.TaxonDAO TaxonDAO
+     */
+    public TaxonDAO getTaxonDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewTaxonDAO());
+    }
     
     
     //*****************************************
@@ -916,4 +944,20 @@ public abstract class DAOManager implements AutoCloseable
      * @return 	A new {@code SourceDAO}
      */
     protected abstract SourceDAO getNewSourceDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.species.SpeciesDAO SpeciesDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code SpeciesDAO}
+     */
+    protected abstract SpeciesDAO getNewSpeciesDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.species.TaxonDAO TaxonDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code TaxonDAO}
+     */
+    protected abstract TaxonDAO getNewTaxonDAO();
 }

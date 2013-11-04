@@ -1,11 +1,13 @@
 package org.bgee.model.dao.api;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Parent class of all {@code TransferObject}s that are "Entities" in Bgee.
  * <p>
  * {@code TransferObject}s are immutable, but for the sake of simplicity, 
  * we do not use a {@code Builder} pattern as there is only 3 attributes 
- * in this class, and 2 constructors. 
+ * in this class, and 3 constructors. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -28,10 +30,20 @@ public abstract class EntityTO extends TransferObject {
      * Constructor providing the ID of this {@code Entity}.
      * @param id    A {@code String} that is the ID. Cannot be null nor empty, 
      *              otherwise an {@code IllegalArgumentException} is thrown.
-     * @throws IllegalArgumentException IF {@code id} is null or empty.
+     * @throws IllegalArgumentException If {@code id} is null or empty.
      */
-    protected EntityTO(String id) {
+    protected EntityTO(String id) throws IllegalArgumentException {
         this(id, null, null);
+    }
+    /**
+     * Constructor providing the ID and name of this {@code Entity}.
+     * @param id            A {@code String} that is the ID.
+     * @param name          A {@code String} that is the name. Can be {@code null}
+     *                      or empty.
+     * @throws IllegalArgumentException If {@code id} is null or empty.
+     */
+    protected EntityTO(String id, String name) throws IllegalArgumentException {
+        this(id, name, null);
     }
     /**
      * Constructor providing the ID, name and description of this {@code Entity}.
@@ -40,9 +52,11 @@ public abstract class EntityTO extends TransferObject {
      *                      or empty.
      * @param description   A {@code String} that is the description. Can be {@code null}
      *                      or empty.
+     * @throws IllegalArgumentException If {@code id} is null or empty.
      */
-    protected EntityTO(String id, String name, String description) {
-        if (id == null || id.trim().length() == 0) {
+    protected EntityTO(String id, String name, String description) 
+            throws IllegalArgumentException {
+        if (StringUtils.isBlank(id)) {
             throw new IllegalArgumentException("ID cannot be null nor empty.");
         }
         this.id          = id;

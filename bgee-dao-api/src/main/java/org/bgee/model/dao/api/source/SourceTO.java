@@ -6,17 +6,16 @@ import java.util.Date;
 import org.bgee.model.dao.api.TransferObject;
 
 /**
- * {@code TransferObject} for the class {@link org.bgee.model.source.Source}.
+ * {@code TransferObject} representing a source of data in the Bgee data source.
  * <p>
  * For information on this {@code TransferObject} and its fields, 
- * see the corresponding class.
+ * see the corresponding class in the {@code bgee-core} module.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
- * @see org.bgee.model.source.Source
  * @since Bgee 11
  */
-public class SourceTO extends TransferObject implements Serializable
+public final class SourceTO extends TransferObject implements Serializable
 {
 	private static final long serialVersionUID = -4966619139786311073L;
 	

@@ -40,10 +40,20 @@
       <groupId>org.bbop</groupId>
       <artifactId>OWLTools-ncbi</artifactId>
     </dependency>
+  
+    <dependency>
+      <groupId>org.bbop</groupId>
+      <artifactId>OWLTools-sim</artifactId>
+    </dependency>
       
     <dependency>
       <groupId>sbc</groupId>
       <artifactId>orthoxml</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>net.sf.supercsv</groupId>
+      <artifactId>super-csv</artifactId>
     </dependency>
       
   </dependencies>

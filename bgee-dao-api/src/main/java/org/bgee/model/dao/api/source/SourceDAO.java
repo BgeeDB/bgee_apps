@@ -3,6 +3,7 @@ package org.bgee.model.dao.api.source;
 import java.util.Collection;
 import java.util.List;
 
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -14,8 +15,21 @@ import org.bgee.model.dao.api.exception.DAOException;
  * @see SourceTO
  * @since Bgee 11
  */
-public interface SourceDAO 
-{
+public interface SourceDAO extends DAO<SourceDAO.Attribute> {
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code SourceTO}s 
+     * obtained from this {@code SourceDAO}.
+     * <ul>
+     * <li>{@code ID}: corresponds to {@link SourceTO#getId()}.
+     * <li>{@code NAME}: corresponds to {@link SourceTO#getName()}.
+     * </ul>
+     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Collection)
+     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Object[])
+     * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
+     */
+    public enum Attribute implements DAO.Attribute {
+        ID, NAME;
+    }
 	/**
      * Return all sources used in Bgee as a {@code Collection} 
      * of {@code SourceTO}s, retrieved from the data source.

@@ -14,24 +14,34 @@ public final class SpeciesTO extends EntityTO {
 
     /**
      * A {@code String} that is the genus of this species (for instance, <i>homo</i>).
+     * Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute GENUS}.
      */
     private final String genus;
     /**
      * A {@code String} that is the species name of this species (for instance, 
-     * <i>sapiens</i>).
+     * <i>sapiens</i>). Corresponds to the DAO {@code Attribute} 
+     * {@link SpeciesDAO.Attribute SPECIES}.
      */
     private final String species;
     /**
      * A {@code String} that is the ID of the parent taxon of this species (for instance, 
-     * {@code 9605} for <i>homo</i>, if this species was "human").
+     * {@code 9605} for <i>homo</i>, if this species was "human"). 
+     * Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
+     * PARENTTAXONID}.
      */
     private final String parentTaxonId;
     /**
      * Constructor providing the ID, the common name, the genus, the species, and the ID 
      * of the parent taxon.
      * @param id            A {@code String} that is the ID.
-     * @param name          A {@code String} that is the common name. Can be {@code null}
-     *                      or empty.
+     * @param commonName    A {@code String} that is the common name. 
+     * @param genus         A {@code String} that is the genus of the species 
+     *                      (for instance, <i>homo</i>).
+     * @param species       A {@code String} that is the species name of the species 
+     *                      (for instance, <i>sapiens</i>).
+     * @param parentTaxonId A {@code String} that is the NCBI ID of the parent taxon 
+     *                      of this species (for instance, {@code 9605} for <i>homo</i>, 
+     *                      the parent taxon of human).
      * @throws IllegalArgumentException If one of the arguments is {@code null} or empty.
      */
     public SpeciesTO(String id, String commonName, String genus, String species, 
@@ -48,7 +58,9 @@ public final class SpeciesTO extends EntityTO {
     }
     
     /**
-     * @return  The {@code String} that is the common name of this species.
+     * @return  The {@code String} that is the common name of this species. 
+     *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
+     *          COMMONNAME}.
      */
     @Override
     public String getName() {
@@ -58,6 +70,8 @@ public final class SpeciesTO extends EntityTO {
     /**
      * @return  the {@code String} that is the genus of this species 
      *          (for instance, <i>homo</i>).
+     *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
+     *          GENUS}.
      */
     public String getGenus() {
         return genus;
@@ -65,6 +79,8 @@ public final class SpeciesTO extends EntityTO {
     /**
      * @return  {@code String} that is the species name of this species 
      *          (for instance, <i>sapiens</i>).
+     *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
+     *          SPECIES}.
      */
     public String getSpecies() {
         return species;
@@ -72,6 +88,8 @@ public final class SpeciesTO extends EntityTO {
     /**
      * @return  the {@code String} that is the ID of the parent taxon of this species 
      *          (for instance, {@code 9605} for <i>homo</i>, if this species was "human").
+     *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
+     *          PARENTTAXONID}.
      */
     public String getParentTaxonId() {
         return parentTaxonId;

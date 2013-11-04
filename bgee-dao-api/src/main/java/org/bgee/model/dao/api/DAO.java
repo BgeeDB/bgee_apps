@@ -13,7 +13,7 @@ import java.util.Collection;
  *              to define what attributes should be populated in the {@code TransferObject}s 
  *              obtained from this {@code DAO}.
  */
-public interface DAO<T extends DAO.Attribute> {
+public interface DAO<T extends Enum & DAO.Attribute> {
     /**
      * Interface implemented by {@code Enum} classes allowing to select 
      * what are the attributes to populate in the {@code TransferObject}s obtained 
@@ -73,14 +73,14 @@ public interface DAO<T extends DAO.Attribute> {
     //to make the method robust to heap pollution, and to add the @SafeVarargs 
     //annotation. See http://docs.oracle.com/javase/7/docs/technotes/guides/language/non-reifiable-varargs.html
     @SuppressWarnings("unchecked")
-    public void setAttriutesToGet(T... attributes);
+    public void setAttributesToGet(T... attributes);
     
     /**
      * Resets what are the attributes that should be populated in 
      * the {@code TransferObject}s obtained from this {@code DAO}, for all 
      * the following calls. All available attributes will then be populated. 
-     * This is useful if you previously called {@code #setColumns(Collection)}
-     * or {@link #setColumns(Object[])} to populate only a subset of the attibutes, 
+     * This is useful if you previously called {@code #setAttributesToGet(Collection)}
+     * or {@link #setAttributesToGet(Object[])} to populate only a subset of the attributes, 
      * and now want to retrieve all of them.
      * 
      * @see #setAttributesToGet(Collection)

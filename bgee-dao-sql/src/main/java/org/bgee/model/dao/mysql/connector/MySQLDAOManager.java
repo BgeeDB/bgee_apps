@@ -185,7 +185,7 @@ public class MySQLDAOManager extends DAOManager {
      * from the attributes of this {@code MySQLDAOManager}, set by the method 
      * {@code setParameters}.
      * <p>
-     * If a {@code BgeeConnection} with the same parameters is already hold 
+     * If a {@code BgeeConnection} with the same parameters is already held 
      * by this {@code MySQLDAOManager}, it will be returned, without creating a new one. 
      * This {@code MySQLDAOManager} will hold this {@code BgeeConnection} 
      * as long as it is not closed (by a call to {@link BgeeConnection#close()} 

@@ -28,6 +28,9 @@ import owltools.io.ParserWrapper;
  * @since Bgee 13
  */
 public class GenerateTaxonOntologyTest extends TestAncestor {
+    /**
+     * {@code Logger} of the class. 
+     */
     private final static Logger log = 
             LogManager.getLogger(GenerateTaxonOntologyTest.class.getName());
     
@@ -97,5 +100,7 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         assertEquals("Incorrect leaf in generated ontology", 0, 
                 wrapper.getDescendants(
                         wrapper.getOWLClassByIdentifier("NCBITaxon:84993")).size());
+        
+        System.out.println(wrapper.getOBOSynonyms( wrapper.getOWLClassByIdentifier("NCBITaxon:2")));
     }
 }

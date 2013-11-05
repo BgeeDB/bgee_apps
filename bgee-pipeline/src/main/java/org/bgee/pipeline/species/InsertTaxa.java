@@ -60,27 +60,6 @@ public class InsertTaxa extends MySQLDAOUser {
      */
     private static final String ONTOLOGYIDPREFIX = "NCBITaxon:";
     /**
-     * A {@code String} representing the key to obtain left bound value 
-     * of a taxon, in the {@code Map} storing parameters of the nested set model 
-     * (taxonomy is stored as a nested set model in Bgee).
-     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
-     */
-    private static final String LEFTBOUNDKEY = "left";
-    /**
-     * A {@code String} representing the key to obtain right bound value 
-     * of a taxon, in the {@code Map} storing parameters of the nested set model 
-     * (taxonomy is stored as a nested set model in Bgee).
-     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
-     */
-    private static final String RIGHTBOUNDKEY = "right";
-    /**
-     * A {@code String} representing the key to obtain level value 
-     * of a taxon, in the {@code Map} storing parameters of the nested set model 
-     * (taxonomy is stored as a nested set model in Bgee).
-     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
-     */
-    private static final String LEVELKEY = "level";
-    /**
      * Default constructor. 
      */
     public InsertTaxa() {
@@ -317,29 +296,6 @@ public class InsertTaxa extends MySQLDAOUser {
     }
     
     
-    
-    /**
-     * Returns a newly instantiated {@code Map} where {@code leftBound}, {@code rightBound}, 
-     * and {@code level} are associated as values to their respective key 
-     * {@link #LEFTBOUNDKEY}, {@link #RIGHTBOUNDKEY}, and {@link #LEVEL}.
-     * 
-     * @param leftBound     The {@code int} to be associated to {@link #LEFTBOUNDKEY} 
-     *                      in the returned {@code Map}.
-     * @param rightBound    The {@code int} to be associated to {@link #RIGHTBOUNDKEY} 
-     *                      in the returned {@code Map}.
-     * @param level         The {@code int} to be associated to {@link #LEVEL} 
-     *                      in the returned {@code Map}.
-     * @return  a newly instantiated {@code Map} containing the provided arguments.
-     */
-    private Map<String, Integer> getOWLClassNestedSetModelParams(int leftBound, 
-            int rightBound, int level) {
-        log.entry(leftBound, rightBound, level);
-        Map<String, Integer> params = new HashMap<String, Integer>();
-        params.put(LEFTBOUNDKEY, leftBound);
-        params.put(RIGHTBOUNDKEY, rightBound);
-        params.put(LEVELKEY, level);
-        return log.exit(params);
-    }
     
     /**
      * Get the NCBI IDs (which are integers with no prefix) of the least common 

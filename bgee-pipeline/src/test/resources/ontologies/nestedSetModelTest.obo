@@ -1,0 +1,31 @@
+format-version: 1.2
+ontology: foo
+
+[Term]
+id: FOO:0001
+name: root
+
+[Term]
+id: FOO:0002
+name: A
+is_a: FOO:0001 ! root
+
+[Term]
+id: FOO:0003
+name: B
+is_a: FOO:0001 ! root
+
+[Term]
+id: FOO:0004
+name: C
+is_a: FOO:0001 ! root
+
+[Term]
+id: FOO:0005
+name: D
+is_a: FOO:0002 ! A
+
+[Term]
+id: FOO:0006
+name: E
+is_a: FOO:0002 ! A

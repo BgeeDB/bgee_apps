@@ -2,8 +2,8 @@ package org.bgee.pipeline;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -84,11 +84,13 @@ public class OntologyUtils {
     }
     
     /**
-     * Equivalent to calling {@link #computeNestedSetModelParams(NavigableSet)} 
+     * Equivalent to calling {@link #computeNestedSetModelParams(List)} 
      * with a {@code null} argument (no specific ordering requested).
      * 
-     * @return  See {@link #computeNestedSetModelParams(NavigableSet)} 
-     * @see #computeNestedSetModelParams(NavigableSet)
+     * @return  See {@link #computeNestedSetModelParams(List)} 
+     * @throws IllegalStateException    If the {@code OWLOntology} provided at instantiation 
+     *                                  is not a simple tree.
+     * @see #computeNestedSetModelParams(List)
      */
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams() {
         log.entry();
@@ -111,7 +113,7 @@ public class OntologyUtils {
      * that can be represented as a nested set model, an {@code IllegalStateException} 
      * is thrown. 
      * 
-     * @param classOrder    A {@code NavigableSet} that is used to order children 
+     * @param classOrder    A {@code List} that is used to order children 
      *                      of a same {@code OWLClass}. If {@code null} or empty, 
      *                      no specific order is specified.
      * @return              A {@code Map} associating {@code OWLClass}es of the ontology 
@@ -121,7 +123,7 @@ public class OntologyUtils {
      *                                  is not a simple tree.
      */
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(
-            NavigableSet<OWLClass> classOrder) throws IllegalStateException {
+            List<OWLClass> classOrder) throws IllegalStateException {
         log.entry(classOrder);
         
         Map<OWLClass, Map<String, Integer>> params = 
@@ -146,20 +148,20 @@ public class OntologyUtils {
      * A recursive method use to walk the {@code OWLOntology} wrapped into 
      * {@link #wrapper}, to compute the parameters allowing to represent the ontology 
      * as a nested set model. This method is first called by {@link 
-     * #computeNestedSetModelParams(NavigableSet)} by providing the {@code OWLClass} 
+     * #computeNestedSetModelParams(List)} by providing the {@code OWLClass} 
      * root of the ontology, an initialized {@code Map} to store the parameters, 
-     * and possibly a {@code NavigableSet} to order {@code OWLClass}es. Following 
+     * and possibly a {@code List} to order {@code OWLClass}es. Following 
      * this first call, all the ontology will be recursively walked, and {@code params} 
      * filled with data along the way. 
      * 
      * @param params            The {@code Map} allowing to store computed parameters, 
      *                          that will be populated along the recursive calls. 
      *                          See returned value of {@link 
-     *                          #computeNestedSetModelParams(NavigableSet)} for 
+     *                          #computeNestedSetModelParams(List)} for 
      *                          a description.
      * @param classInspected    Current {@code OWLClass} walked, for which children 
      *                          will be iterated. 
-     * @param classOrder        A {@code NavigableSet} allowing to order children 
+     * @param classOrder        A {@code List} allowing to order children 
      *                          of a same {@code OWLClass}, if not {@code null} 
      *                          nor empty.
      * @throws IllegalStateException    If the {@code OWLOntology} wrapped into 
@@ -168,7 +170,7 @@ public class OntologyUtils {
      */
     private void recursiveNestedSetModelParams(
             final Map<OWLClass, Map<String, Integer>> params, 
-            final OWLClass classInspected,  final NavigableSet<OWLClass> classOrder) 
+            final OWLClass classInspected,  final List<OWLClass> classOrder) 
         throws IllegalStateException {
         log.entry(params, classInspected, classOrder);
         
@@ -177,13 +179,15 @@ public class OntologyUtils {
         
         //if classOrder is not null nor empty, we use it to order the children. 
         if (classOrder != null && !classOrder.isEmpty()) {
-            //So we use a comparator
+            //So we use a comparator. The comparator will net be consistent with 
+            //the equals method if classOrder contains duplicated elements, 
+            //but it should not be a problem.
             TreeSet<OWLClass> sortedChildren = 
               new TreeSet<OWLClass>(new Comparator<OWLClass>() {
                 @Override
                 public int compare(OWLClass o1, OWLClass o2) {
                     //solution to get index from http://stackoverflow.com/a/7911697/1768736
-                    return classOrder.headSet(o1).size() - classOrder.headSet(o2).size();
+                    return classOrder.indexOf(o1) - classOrder.indexOf(o2);
                 }
               });
             sortedChildren.addAll(children);
@@ -193,23 +197,21 @@ public class OntologyUtils {
         //leftBound and level of classInspected are already set before this method call; 
         //its rightBound is yet to be determined
         int leftBound = params.get(classInspected).get(LEFTBOUNDKEY);
-        int rightBound = params.get(classInspected).get(RIGHTBOUNDKEY);
         int level = params.get(classInspected).get(LEVELKEY);
-        //at this point, if rightBound is different from 0, it means we already encountered 
-        //classInspected, which should not happen in a tree that can be represented 
-        //by a nested set model.
-        if (rightBound != 0) {
-            throw log.throwing(new IllegalStateException("The OWLOntology is not " +
-            		"a simple tree that can be represented as a nested set model."));
-        }
         
         //by default, if classInspected has no children, its right bound is equal 
         //to its left bound + 1.
-        rightBound = leftBound + 1;
+        int rightBound = leftBound + 1;
         //the left bound of the first child (if any) should be the classInspected 
         //left bound + 1
         int currentChildLeftBound = leftBound + 1;
         for (OWLClass child: children) {
+            //OWLClass already seen, the ontology is not a simple tree
+            if (params.containsKey(child)) {
+                throw log.throwing(new IllegalStateException("The OWLOntology is not " +
+                        "a simple tree that can be represented as a nested set model."));
+            }
+            
             //storing parameters for the current child;
             //right bound yet to be determined, after iterating all its children
             params.put(child, 
@@ -223,6 +225,8 @@ public class OntologyUtils {
             rightBound = childRightBound + 1;
         }
         
+        log.trace("Done inspecting children for class {}, computed right bound: {}", 
+                classInspected, rightBound);
         params.get(classInspected).put(RIGHTBOUNDKEY, rightBound);
         
         

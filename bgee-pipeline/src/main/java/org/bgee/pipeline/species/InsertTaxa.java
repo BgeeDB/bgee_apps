@@ -3,9 +3,15 @@ package org.bgee.pipeline.species;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,6 +60,27 @@ public class InsertTaxa extends MySQLDAOUser {
      */
     private static final String ONTOLOGYIDPREFIX = "NCBITaxon:";
     /**
+     * A {@code String} representing the key to obtain left bound value 
+     * of a taxon, in the {@code Map} storing parameters of the nested set model 
+     * (taxonomy is stored as a nested set model in Bgee).
+     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
+     */
+    private static final String LEFTBOUNDKEY = "left";
+    /**
+     * A {@code String} representing the key to obtain right bound value 
+     * of a taxon, in the {@code Map} storing parameters of the nested set model 
+     * (taxonomy is stored as a nested set model in Bgee).
+     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
+     */
+    private static final String RIGHTBOUNDKEY = "right";
+    /**
+     * A {@code String} representing the key to obtain level value 
+     * of a taxon, in the {@code Map} storing parameters of the nested set model 
+     * (taxonomy is stored as a nested set model in Bgee).
+     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
+     */
+    private static final String LEVELKEY = "level";
+    /**
      * Default constructor. 
      */
     public InsertTaxa() {
@@ -96,10 +123,29 @@ public class InsertTaxa extends MySQLDAOUser {
             OBOFormatParserException {
         log.entry(speciesFile, ncbiOntFile);
         
+        //get the NCBI IDs of the species to include in Bgee
         Set<Integer> speciesIds = this.getSpeciesIds(speciesFile);
+        
+        //load the NCBI taxonomy ontology
         OWLOntology taxOnt = this.getTaxOntology(ncbiOntFile);
-        this.filterTaxOntology(taxOnt, speciesIds);
-        this.insertTaxa(taxOnt);
+        //wrapper the ontology into a OWLGraphWrapper to perform the following actions
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(taxOnt);
+        //filter the ontology to get a light taxonomy with only relevant taxa and species.
+        this.filterTaxOntology(wrapper, speciesIds);
+        
+        //now we start a transaction to insert taxa and species in the Bgee data source.
+        //note that we do not need to call rollback if an error occurs, calling 
+        //closeDAO will rollback any ongoing transaction
+        try {
+            this.startTransaction();
+            //insert the taxa
+            this.insertTaxa(wrapper);
+            //insert the species
+            this.insertSpecies(wrapper);
+            this.commit();
+        } finally {
+            this.closeDAO();
+        }
         
         log.exit();
     }
@@ -169,24 +215,22 @@ public class InsertTaxa extends MySQLDAOUser {
     }
     
     /**
-     * Modifies the {@code OWLOntology} {@code taxOnt} so that it will only include  
-     * the subgraphs to the root containing the requested species, and so that 
-     * the requested species will be leaves of the ontology. The requested species 
-     * are specified by providing their NCBI taxonomy IDs using the 
-     * {@code ncbiSpeciesIds} argument (for instance, should contain {@code 9606} 
-     * to include human, as it is its ID on the NCBI taxonomy website).
+     * Modifies the {@code OWLOntology} wrapped into {@code taxOntWrapper}, 
+     * so that it will only include the subgraphs to the root containing 
+     * the requested species, and so that the requested species will be leaves 
+     * of the ontology. The requested species are specified by providing 
+     * their NCBI taxonomy IDs using the {@code ncbiSpeciesIds} argument 
+     * (for instance, should contain {@code 9606} to include human, as it is its ID 
+     * on the NCBI taxonomy website).
      * 
-     * @param taxOnt            The {@code OWLOntology} to modify.
+     * @param taxOntWrapper     The {@code OWLGraphWrapper} wrapping the 
+     *                          {@code OWLOntology} to modify.
      * @param ncbiSpeciesIds    A {@code Set} of {@code Integer}s that are the NCBI IDs 
      *                          of the species used to filter the ontology.
-     * @throws UnknownOWLOntologyException  If an error occurred while loading 
-     *                                      the ontology into a wrapper to modify it.
-     * @throws OWLOntologyCreationException If an error occurred while loading 
-     *                                      the ontology into a wrapper to modify it.
      */
-    private void filterTaxOntology(OWLOntology taxOnt, Set<Integer> ncbiSpeciesIds) 
-            throws UnknownOWLOntologyException, OWLOntologyCreationException {
-        log.entry(taxOnt, ncbiSpeciesIds);
+    private void filterTaxOntology(OWLGraphWrapper taxOntWrapper, 
+            Set<Integer> ncbiSpeciesIds) {
+        log.entry(taxOntWrapper, ncbiSpeciesIds);
         
         //transform the NCBI IDs into ontology IDs
         Set<String> speciesIds = new HashSet<String>();
@@ -195,18 +239,17 @@ public class InsertTaxa extends MySQLDAOUser {
         }
         //use an OWLGraphManipulator to keep only subgraphs that include 
         //the requested species
-        OWLGraphManipulator manipulator = new OWLGraphManipulator(taxOnt);
+        OWLGraphManipulator manipulator = new OWLGraphManipulator(taxOntWrapper);
         manipulator.filterSubgraphs(speciesIds);
         //and remove terms descendants of the requested species, so that they will be 
         //leaves of the ontology. To make use of the manipulator, we will consider 
         //each direct descendant of a requested species as the root of a subgraph 
         //to remove.
         Set<String> subgraphRootsToDel = new HashSet<String>();
-        OWLGraphWrapper wrapper = manipulator.getOwlGraphWrapper();
         for (String speciesId: speciesIds) {
-            for (OWLClass classToDel: wrapper.getOWLClassDirectDescendants(
-                            wrapper.getOWLClassByIdentifier(speciesId))) {
-                subgraphRootsToDel.add(wrapper.getIdentifier(classToDel));
+            for (OWLClass classToDel: taxOntWrapper.getOWLClassDirectDescendants(
+                    taxOntWrapper.getOWLClassByIdentifier(speciesId))) {
+                subgraphRootsToDel.add(taxOntWrapper.getIdentifier(classToDel));
             }
         }
         manipulator.removeSubgraphs(subgraphRootsToDel, false);
@@ -214,45 +257,118 @@ public class InsertTaxa extends MySQLDAOUser {
         log.exit();
     }
     
-    private void insertTaxa(OWLOntology taxOnt) 
-            throws UnknownOWLOntologyException, IllegalStateException, 
-            OWLOntologyCreationException {
+    private void insertTaxa(OWLGraphWrapper taxOntWrapper) 
+            throws IllegalStateException {
+        log.entry(taxOntWrapper);
         
-        Set<Integer> lcaIds = this.getLeastCommonAncestors(taxOnt);
-        continue here
+        //get the least common ancestors
+        Set<Integer> lcaIds = this.getLeastCommonAncestors(taxOntWrapper);
+        
+        //Now we generate the TaxonTOs to provide to the TaxonDAO to perform insertions.
+        //As the TaxonTOs are immutable, we store the attributes we generate 
+        //in a Map, before actually instantiating the TaxonTOs.
+        Map<OWLClass, Map<String, Integer>> nestedModelParams = 
+                new HashMap<OWLClass, Map<String, Integer>>();
+        //keys in the OWLClass Map
+        String leftBoundKey = "left";
+        String rightBoundKey = "right";
+        String levelKey = "level";
+        
+        //we want to order the taxon based on their scientific name, so we create 
+        //a Comparator. This comparator needs the OWLGraphWrapper, so we make 
+        //a final variable for taxOntWrapper
+        final OWLGraphWrapper wrapper = taxOntWrapper;
+        Comparator comparator = new Comparator<OWLClass>() {
+            @Override
+            public int compare(OWLClass o1, OWLClass o2) {
+                return wrapper.getLabel(o1).compareTo(wrapper.getLabel(o2));
+            }
+        };
+        
+        //now we walk the ontology, starting from the root, that should be unique.
+        //we use a Deque to store OWLClasses to walk through 
+        Set<OWLClass> roots = taxOntWrapper.getOntologyRoots();
+        if (roots.size() != 1) {
+            throw log.throwing(new IllegalStateException("Incorrect number of roots " +
+            		"in the taxonomy ontology"));
+        }
+        Deque<OWLClass> deque = new ArrayDeque<OWLClass>();
+        deque.addFirst(roots.iterator().next());
+        OWLClass classInspected;
+        int leftBound = 0;
+        int rightBound = 0;
+        int level = 0;
+        while ((classInspected = deque.pollFirst()) != null) {
+            leftBound++;
+            
+            Map<String, Integer> currentClassParams = nestedModelParams.get(classInspected);
+            if (currentClassParams == null) {
+                currentClassParams = new HashMap<String, Integer>();
+                currentClassParams.put(leftBoundKey, leftBound);
+                nestedModelParams.put(classInspected, currentClassParams);
+            }
+            
+            Set<OWLClass> directDescendants = 
+                    taxOntWrapper.getOWLClassDirectDescendants(classInspected);
+        }
+        
+        
+        log.exit();
+    }
+    
+    
+    
+    /**
+     * Returns a newly instantiated {@code Map} where {@code leftBound}, {@code rightBound}, 
+     * and {@code level} are associated as values to their respective key 
+     * {@link #LEFTBOUNDKEY}, {@link #RIGHTBOUNDKEY}, and {@link #LEVEL}.
+     * 
+     * @param leftBound     The {@code int} to be associated to {@link #LEFTBOUNDKEY} 
+     *                      in the returned {@code Map}.
+     * @param rightBound    The {@code int} to be associated to {@link #RIGHTBOUNDKEY} 
+     *                      in the returned {@code Map}.
+     * @param level         The {@code int} to be associated to {@link #LEVEL} 
+     *                      in the returned {@code Map}.
+     * @return  a newly instantiated {@code Map} containing the provided arguments.
+     */
+    private Map<String, Integer> getOWLClassNestedSetModelParams(int leftBound, 
+            int rightBound, int level) {
+        log.entry(leftBound, rightBound, level);
+        Map<String, Integer> params = new HashMap<String, Integer>();
+        params.put(LEFTBOUNDKEY, leftBound);
+        params.put(RIGHTBOUNDKEY, rightBound);
+        params.put(LEVELKEY, level);
+        return log.exit(params);
     }
     
     /**
      * Get the NCBI IDs (which are integers with no prefix) of the least common 
-     * ancestors of each pair of leaves in the {@code OWLOntology} {@code taxOnt}.
+     * ancestors of each pair of leaves in the {@code OWLOntology} wrapped into 
+     * {@code taxOntWrapper}.
+     * <p>
      * The rational is that the provided {@code OWLOntology} should contain 
      * all species used in Bgee as leaves, and that we want to identify the most 
      * important taxa, the taxa "branching" the Bgee species together. So we want 
      * to retrieve the least common ancestor of each pair of species.
      * 
-     * @param taxOnt    The {@code OWLOntology} to retrieve the taxonomy from.
+     * @param taxOntWrapper     The {@code OWLGraphWrapper} wrapping the 
+     *                          {@code OWLOntology} to modify.
      * @return          A {@code Set} of {@code Integer}s that are the NCBI IDs 
      *                  of the least common ancestors of the leaves of {@code taxOnt}.
      *                  
-     * @throws IllegalStateException        If {@code taxOnt} did not allow 
+     * @throws IllegalStateException        If the ontology did not allow 
      *                                      to retrieve proper least common ancestors.
-     * @throws UnknownOWLOntologyException  If an error occurred while loading 
-     *                                      the ontology into a wrapper to use it.
-     * @throws OWLOntologyCreationException If an error occurred while loading 
-     *                                      the ontology into a wrapper to use it.
      */
-    private Set<Integer> getLeastCommonAncestors(OWLOntology taxOnt) 
-            throws IllegalStateException, UnknownOWLOntologyException, 
-            OWLOntologyCreationException {
-        log.entry(taxOnt);
+    private Set<Integer> getLeastCommonAncestors(OWLGraphWrapper taxOntWrapper) 
+            throws IllegalStateException {
+        log.entry(taxOntWrapper);
         
         Set<Integer> lcaIds = new HashSet<Integer>();
-        
-        OWLGraphWrapper wrapper = new OWLGraphWrapper(taxOnt);
-        SimEngine se = new SimEngine(wrapper);
+
+        SimEngine se = new SimEngine(taxOntWrapper);
         //we want to find the least common ancestor of all possible pairs 
         //of leaves in the ontology
-        Set<OWLClass> leaves = wrapper.getOntologyLeaves();
+        Set<OWLClass> leaves = taxOntWrapper.getOntologyLeaves();
         for (OWLClass leave1: leaves) {
             for (OWLClass leave2: leaves) {
                 if (leave1.equals(leave2)) {
@@ -271,7 +387,7 @@ public class InsertTaxa extends MySQLDAOUser {
                             "the taxonomy ontology have incorrect relations."));
                 }
                 //OK, valid LCA, add its NCBI ID to the list
-                lcaIds.add(this.getTaxNcbiId(wrapper.getIdentifier(lca)));
+                lcaIds.add(this.getTaxNcbiId(taxOntWrapper.getIdentifier(lca)));
             }
         }
         

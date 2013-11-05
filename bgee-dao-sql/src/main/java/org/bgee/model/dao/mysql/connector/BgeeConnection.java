@@ -58,6 +58,12 @@ public class BgeeConnection implements AutoCloseable {
     private final Set<BgeePreparedStatement> preparedStatements;
     
     /**
+     * A {@code boolean} that is {@code true} if a transaction has been started, 
+     * and has not yet been commit or rollback.
+     */
+    private boolean ongoingTransaction;
+    
+    /**
      * Default constructor private, should not be used. 
      */
     @SuppressWarnings("unused")
@@ -92,6 +98,7 @@ public class BgeeConnection implements AutoCloseable {
         this.id             = id;
         this.preparedStatements = Collections.newSetFromMap(
                 new ConcurrentHashMap<BgeePreparedStatement, Boolean>());
+        this.setOngoingTransaction(false);
 
         log.exit();
     }
@@ -131,6 +138,83 @@ public class BgeeConnection implements AutoCloseable {
     }
     
     /**
+     * Starts a transaction with default isolation level. If {@code close} is called 
+     * before this transaction was commit, it will be rollback. If a transaction 
+     * is already ongoing, an {@code IllegalStateException} is thrown. It will 
+     * then be the responsibility of the caller to decide whether the ongoing 
+     * transaction should be rollback.
+     * 
+     * @throws SQLException If an error occurred while setting {@code autoCommit} 
+     *                      to {@code false}.
+     * @throws IllegalStateException    If a transaction is already ongoing.
+     */
+    public void startTransaction() throws SQLException, IllegalStateException {
+        log.entry();
+        if (this.isOngoingTransaction()) {
+            throw log.throwing(new IllegalStateException("A transaction is already ongoing, " +
+            		"cannot start a new one"));
+        }
+        this.getRealConnection().setAutoCommit(false);
+        this.setOngoingTransaction(true);
+        log.exit();
+    }
+    
+    /**
+     * Commit the current transaction, and set {@code autoCommit} back to {@code true}.
+     * If no transaction was ongoing, an {@code IllegalStateException} is thrown.
+     * 
+     * @throws SQLException             If an error occurred while the transaction 
+     *                                  was commit, or {@code autoCommit} set to 
+     *                                  {@code true}.
+     * @throws IllegalStateException    If no transaction was ongoing.
+     */
+    public void commit() throws SQLException, IllegalStateException {
+        log.entry();
+        if (!this.isOngoingTransaction()) {
+            throw log.throwing(new IllegalStateException("Try to commit a transaction, " +
+                    "but there was no ongoing transactions"));
+        }
+        this.getRealConnection().commit();
+        this.getRealConnection().setAutoCommit(true);
+        this.setOngoingTransaction(false);
+        log.exit();
+    }
+
+    /**
+     * Rollback the current transaction, and set {@code autoCommit} back to {@code true}.
+     * If no transaction was ongoing, an {@code IllegalStateException} is thrown.
+     * 
+     * @throws SQLException             If an error occurred while the transaction 
+     *                                  was rollback, or {@code autoCommit} set to 
+     *                                  {@code true}.
+     * @throws IllegalStateException    If no transaction was ongoing.
+     */
+    public void rollback() throws SQLException, IllegalStateException {
+        log.entry();
+        if (!this.isOngoingTransaction()) {
+            throw log.throwing(new IllegalStateException("Try to rollback a transaction, " +
+                    "but there was no ongoing transactions"));
+        }
+        this.getRealConnection().rollback();
+        this.getRealConnection().setAutoCommit(true);
+        this.setOngoingTransaction(false);
+        log.exit();
+    }
+    
+    /**
+     * @return  A {@code boolean} that is {@code true} if a transaction has been 
+     *          started, and has not yet been commit or rollback.
+     */
+    public boolean isOngoingTransaction() {
+        return ongoingTransaction;
+    }
+    /**
+     * @param ongoingTransaction    {@code boolean} to set {@link #ongoingTransaction}.
+     */
+    private void setOngoingTransaction(boolean ongoingTransaction) {
+        this.ongoingTransaction = ongoingTransaction;
+    }
+    /**
      * Notification that a {@code BgeePreparedStatement}, held by this {@code BgeeConnection}, 
      * has been closed. 
      * 
@@ -153,7 +237,8 @@ public class BgeeConnection implements AutoCloseable {
     }
 
     /**
-     * Close the real {@code Connection} that this class wraps, 
+     * Close the real {@code Connection} that this class wraps, rollback 
+     * any ongoing transaction by calling {@link #rollback()}, 
      * and notify of the closing the {@code MySQLDAOManager} used to obtain 
      * this {@code BgeeConnection}.
      * 
@@ -164,6 +249,10 @@ public class BgeeConnection implements AutoCloseable {
     public void close() throws SQLException {
         log.entry();
         try {
+            //rollback any ongoing transaction
+            if (this.isOngoingTransaction()) {
+                this.rollback();
+            }
             //get a shallow copy of preparedStatements, because closing the statement 
             //will modify the collection
             Set<BgeePreparedStatement> shallowCopy = 

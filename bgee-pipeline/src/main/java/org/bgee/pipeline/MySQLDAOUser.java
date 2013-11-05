@@ -1,8 +1,11 @@
 package org.bgee.pipeline;
 
+import java.sql.SQLException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
@@ -104,9 +107,61 @@ public abstract class MySQLDAOUser {
     }
     
     /**
-     * Closes the {@code MySQLDAOManager} used by this {@code MySQLDAOUser}.
+     * Start a transaction with the MySQL database. We wrap the potential 
+     * {@code SQLException} into a {@code DAOException}, because we do not want 
+     * the whole pipeline to be that dependent to the use of JDBC. 
+     * <p>
+     * To commit the transaction, call {@code #commit()}. There is no {@code rollback} 
+     * method available, because closing the {@code manager} will rollback any 
+     * ongoing transaction. So you just need to make sure to call {@link #closeDAO()} 
+     * in a {@code finally} block.
+     * 
+     * @throws IllegalStateException    If a transaction was already ongoing.
+     * @throws DAOException             If an error occurred while starting 
+     *                                  the transaction.
+     * @see #commit()
+     * @see #closeDAO()
      */
-    protected void close() {
+    protected void startTransaction() throws IllegalStateException, DAOException {
+        log.entry();
+        try {
+            this.manager.getConnection().startTransaction();
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+        log.exit();
+    }
+    
+    /**
+     * Commit an ongoing transaction with the MySQL database. We wrap the potential 
+     * {@code SQLException} into a {@code DAOException}, because we do not want 
+     * the whole pipeline to be that dependent to the use of JDBC. 
+     * <p>
+     * If {@link #startTransaction()} was not called prior to calling this method, 
+     * an {@code IllegalStateException} is thrown.
+     * 
+     * @throws IllegalStateException    If no transaction was ongoing.
+     * @throws DAOException             If an error occurred while starting 
+     *                                  the transaction.
+     * @see #startTransaction()
+     */
+    protected void commit() throws IllegalStateException, DAOException {
+        log.entry();
+        try {
+            this.manager.getConnection().commit();
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+        log.exit();
+    }
+    
+    /**
+     * Closes the {@code MySQLDAOManager} used by this {@code MySQLDAOUser}. 
+     * This will also rollback any ongoing transaction.
+     */
+    protected void closeDAO() {
+        log.entry();
         this.manager.close();
+        log.exit();
     }
 }

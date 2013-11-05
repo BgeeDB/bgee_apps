@@ -73,6 +73,16 @@ public class BgeeConnectionTest extends TestAncestor
         verify(manager).connectionClosed("ID1");
         assertEquals("Incorrect number of BgeePreparedStatement held by the BgeeConnection", 
                 0, con.getStatementCount());
+        //as there was no ongoing transaction, rollback should not have been called
+        verify(MockDriver.getMockConnection(), never()).rollback();
+        
+        //now we test that if a connection is closed during a transaction, 
+        //the transaction should be rollback
+        con = new BgeeConnection(manager, MockDriver.getMockConnection(), 
+                "ID1");
+        con.startTransaction();
+        con.close();
+        verify(MockDriver.getMockConnection()).rollback();
         
         MockDriver.initialize();
 	}
@@ -159,4 +169,128 @@ public class BgeeConnectionTest extends TestAncestor
         
         MockDriver.initialize();
 	}
+	
+	/**
+	 * Test {@link BgeeConnection#startTransaction()}.
+	 */
+	@Test
+	public void shouldStartTransaction() throws IllegalStateException, SQLException {
+        MockDriver.initialize();
+        
+        BgeeConnection con = new BgeeConnection(null, MockDriver.getMockConnection(), 
+                "ID1");
+        assertFalse("Incorrect value returned by isOngoingTransaction", 
+                con.isOngoingTransaction());
+        con.startTransaction();
+        verify(MockDriver.getMockConnection()).setAutoCommit(false);
+        assertTrue("Incorrect value returned by isOngoingTransaction", 
+                con.isOngoingTransaction());
+        //calling startTransaction before closing the transaction should throw 
+        //an IllegalStateException
+        try {
+            con.startTransaction();
+            //if we reach that point, test failed
+            throw new AssertionError("startTransaction did not throw an " +
+            		"IllegalStateException as expected");
+        } catch (IllegalStateException e) {
+            //test passed.
+        }
+        assertTrue("Incorrect value returned by isOngoingTransaction", 
+                con.isOngoingTransaction());
+        
+        //now end the transaction to try to start a new one
+        con.commit();
+        con.startTransaction();
+        //check that it also work with rollback
+        con.rollback();
+        con.startTransaction();
+        
+        MockDriver.initialize();
+	}
+    
+    /**
+     * Test {@link BgeeConnection#commit()}.
+     */
+    @Test
+    public void shouldCommit() throws IllegalStateException, SQLException {
+        MockDriver.initialize();
+        
+        BgeeConnection con = new BgeeConnection(null, MockDriver.getMockConnection(), 
+                "ID1");
+        //if we try to commit while there was no ongoing transaction, 
+        //an IllegalStateException should be thrown
+        try {
+            con.commit();
+            //if we reach that point, test failed
+            throw new AssertionError("commit did not throw an " +
+                    "IllegalStateException as expected");
+        } catch (IllegalStateException e) {
+            //test passed.
+        }
+        
+        assertFalse("Incorrect value returned by isOngoingTransaction", 
+                con.isOngoingTransaction());
+        con.startTransaction();
+        con.commit();
+        verify(MockDriver.getMockConnection()).setAutoCommit(true);
+        verify(MockDriver.getMockConnection()).commit();
+        assertFalse("Incorrect value returned by isOngoingTransaction", 
+                con.isOngoingTransaction());
+        
+        //trying to commit again with no ongoing transaction, 
+        //an IllegalStateException should be thrown
+        try {
+            con.commit();
+            //if we reach that point, test failed
+            throw new AssertionError("commit did not throw an " +
+                    "IllegalStateException as expected");
+        } catch (IllegalStateException e) {
+            //test passed.
+        }
+        
+        MockDriver.initialize();
+    }
+    
+    /**
+     * Test {@link BgeeConnection#rollback()}.
+     */
+    @Test
+    public void shouldRollback() throws IllegalStateException, SQLException {
+        MockDriver.initialize();
+        
+        BgeeConnection con = new BgeeConnection(null, MockDriver.getMockConnection(), 
+                "ID1");
+        //if we try to commit while there was no ongoing transaction, 
+        //an IllegalStateException should be thrown
+        try {
+            con.rollback();
+            //if we reach that point, test failed
+            throw new AssertionError("commit did not throw an " +
+                    "IllegalStateException as expected");
+        } catch (IllegalStateException e) {
+            //test passed.
+        }
+        
+        assertFalse("Incorrect value returned by isOngoingTransaction", 
+                con.isOngoingTransaction());
+        con.startTransaction();
+        con.rollback();
+        verify(MockDriver.getMockConnection()).setAutoCommit(true);
+        verify(MockDriver.getMockConnection()).rollback();
+        assertFalse("Incorrect value returned by isOngoingTransaction", 
+                con.isOngoingTransaction());
+        
+        //trying to commit again with no ongoing transaction, 
+        //an IllegalStateException should be thrown
+        try {
+            con.rollback();
+            //if we reach that point, test failed
+            throw new AssertionError("commit did not throw an " +
+                    "IllegalStateException as expected");
+        } catch (IllegalStateException e) {
+            //test passed.
+        }
+        
+        MockDriver.initialize();
+    }
 }

@@ -1,6 +1,6 @@
 package org.bgee.model;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Parent class of all classes corresponding to real entities in the Bgee database. 

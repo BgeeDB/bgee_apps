@@ -21,12 +21,14 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.source.SourceDAO;
+import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
+import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
 public class MySQLDAOManager extends DAOManager {
     /**
@@ -802,6 +804,16 @@ public class MySQLDAOManager extends DAOManager {
     protected SourceDAO getNewSourceDAO() {
         // TODO Auto-generated method stub
         return null;
+    }
+    @Override
+    protected MySQLSpeciesDAO getNewSpeciesDAO() {
+        log.entry();
+        return log.exit(new MySQLSpeciesDAO(this));
+    }
+    @Override
+    protected MySQLTaxonDAO getNewTaxonDAO() {
+        log.entry();
+        return log.exit(new MySQLTaxonDAO(this));
     }
     
 }

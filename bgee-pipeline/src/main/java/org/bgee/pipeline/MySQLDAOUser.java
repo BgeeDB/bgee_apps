@@ -4,22 +4,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
+import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
 /**
  * Parent class of all classes needing to use the MySQL Bgee database. 
- * It notably allows to acquire a {@code MySQLDAOManager}, then allowing 
- * to acquire specific MySQL {@code DAO}s. A {@code DAOManager} will be acquired 
- * using methods from the {@code bgee-dao-api} module, and then casted into  
- * {@code MySQLDAOManager}. It is the responsibility of the pipeline to provide 
- * the proper parameters so that the {@code bgee-dao-api} module actually returns 
- * a {@code MySQLDAOManager}. This is done through System properties, or property 
- * file in classpath (see {@link org.bgee.model.dao.api.DAOManager} documentation 
- * for details about how to provide parameters through System properties or property 
- * file; see {@link org.bgee.model.dao.mysql.connector.MySQLDAOManager} static attributes 
+ * It notably allows to acquire {@code MySQLDAO}s. A {@code DAOManager} will be 
+ * acquired, but {@code DAO}s returned by it will be casted into {@code MySQLDAO}s. 
+ * It is the responsibility of the pipeline to provide the proper parameters so 
+ * that the {@code bgee-dao-api} module actually uses a {@code MySQLDAOManager}. 
+ * This is done through System properties, or property file in classpath (see 
+ * {@link org.bgee.model.dao.api.DAOManager} documentation for details about 
+ * how to provide parameters through System properties or property file; see 
+ * {@link org.bgee.model.dao.mysql.connector.MySQLDAOManager} static attributes 
  * for details about accepted parameters).
  * <p>
  * As of Bgee 13, the data store used by Bgee is a MySQL database. The classes 
- * of the pipeline will directly used MySQL {@code DAO}s from the module 
+ * of the pipeline will directly use {@code MySQLDAO}s from the module 
  * {@code bgee-dao-sql}, rather than the API provided by the module {@code bgee-dao-api}, 
  * as the Bgee application normally should. This is because they will use methods 
  * that should not be exposed by the API, such as insertion or update methods. 
@@ -46,7 +47,7 @@ public abstract class MySQLDAOUser {
             LogManager.getLogger(MySQLDAOUser.class.getName());
     
     /**
-     * The {@code MySQLDAOManager} used to acquire MySQL {@code DAO}s 
+     * The {@code MySQLDAOManager} used to acquire {@code MySQLDAO}s 
      * ({@code DAO}s from the {@code bgee-dao-sql} module).
      */
     private MySQLDAOManager manager;
@@ -73,13 +74,6 @@ public abstract class MySQLDAOUser {
     }
 
     /**
-     * @return  the {@code MySQLDAOManager} used to acquire MySQL {@code DAO}s 
-     *          ({@code DAO}s from the {@code bgee-dao-sql} module).
-     */
-    protected MySQLDAOManager getManager() {
-        return this.manager;
-    }
-    /**
      * Sets the {@code MySQLDAOManager} used by this object. This is useful for 
      * unit testing, where you can provide a mock {@code MySQLDAOManager}.
      * 
@@ -94,5 +88,25 @@ public abstract class MySQLDAOUser {
             		"cannot be null"));
         }
         this.manager = manager;
+    }
+    
+    /**
+     * @return  A {@code MySQLSpeciesDAO}.
+     */
+    protected MySQLSpeciesDAO getSpeciesDAO() {
+        return (MySQLSpeciesDAO) this.manager.getSpeciesDAO();
+    }
+    /**
+     * @return  A {@code MySQLTaxonDAO}.
+     */
+    protected MySQLTaxonDAO getTaxonDAO() {
+        return (MySQLTaxonDAO) this.manager.getTaxonDAO();
+    }
+    
+    /**
+     * Closes the {@code MySQLDAOManager} used by this {@code MySQLDAOUser}.
+     */
+    protected void close() {
+        this.manager.close();
     }
 }

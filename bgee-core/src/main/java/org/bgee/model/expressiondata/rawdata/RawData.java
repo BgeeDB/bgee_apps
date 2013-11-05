@@ -1,6 +1,6 @@
 package org.bgee.model.expressiondata.rawdata;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.Entity;
 import org.bgee.model.source.Source;
 import org.bgee.model.source.SourceFactory;

@@ -26,7 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.source.SourceDAO;
+import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
@@ -200,7 +200,7 @@ public class MySQLDAOManager extends DAOManager {
      * @throws SQLException     If an error occurred while trying to obtain the connection, 
      *                          of if this {@code MySQLDAOManager} is already closed.
      */
-    public final BgeeConnection getConnection() throws SQLException
+    public BgeeConnection getConnection() throws SQLException
     {
         log.entry();
         log.debug("Trying to obtain a BgeeConnection");
@@ -801,7 +801,7 @@ public class MySQLDAOManager extends DAOManager {
     // IMPLEMENT DAOManager ABSTRACT METHODS TO OBTAIN DAOs
     //******************************************
     @Override
-    protected SourceDAO getNewSourceDAO() {
+    protected MySQLSourceDAO getNewSourceDAO() {
         // TODO Auto-generated method stub
         return null;
     }

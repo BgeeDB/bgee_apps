@@ -55,8 +55,8 @@ is_a: NCBITaxon:16 ! taxon G
 
 [Term]
 id: NCBITaxon:8
-name: species A
-synonym: "genusA speciesA" EXACT genbank_common_name []
+name: genusA speciesA
+synonym: "common name speciesA" EXACT genbank_common_name []
 synonym: "synonym not to pick" RELATED blast_name []
 is_a: NCBITaxon:16 ! taxon G
 
@@ -86,8 +86,8 @@ is_a: NCBITaxon:11 ! taxon D
 
 [Term]
 id: NCBITaxon:13
-name: species B
-synonym: "genusB speciesB" EXACT genbank_common_name []
+name: genusB speciesB
+synonym: "common name speciesB" EXACT genbank_common_name []
 synonym: "synonym not to pick" RELATED blast_name []
 is_a: NCBITaxon:12 ! taxon E
 
@@ -100,8 +100,8 @@ is_a: NCBITaxon:12 ! taxon E
 
 [Term]
 id: NCBITaxon:15
-name: species C
-synonym: "genusC speciesC" EXACT genbank_common_name []
+name: genusC speciesC
+synonym: "common name speciesC" EXACT genbank_common_name []
 synonym: "synonym not to pick" RELATED blast_name []
 is_a: NCBITaxon:14 ! taxon F
 

@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.species.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonTO;
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
@@ -76,7 +77,15 @@ public class InsertTaxa extends MySQLDAOUser {
      */
     public InsertTaxa() {
         super();
-        this.taxOntWrapper = null;
+    }
+    /**
+     * Constructor providing the {@code MySQLDAOManager} that will be used by 
+     * this object to perform queries to the database. This is useful for unit testing.
+     * 
+     * @param manager   the {@code MySQLDAOManager} to use.
+     */
+    public InsertTaxa(MySQLDAOManager manager) {
+        super(manager);
     }
     
     /**
@@ -508,10 +517,13 @@ public class InsertTaxa extends MySQLDAOUser {
         log.entry(owlClass);
         
         String commonName = null;
-        for (ISynonym syn: this.taxOntWrapper.getOBOSynonyms(owlClass)) {
-            if (syn.getCategory().equals(SYNCOMMONNAMECAT)) {
-                commonName = syn.getLabel();
-                break;
+        List<ISynonym> synonyms = this.taxOntWrapper.getOBOSynonyms(owlClass);
+        if (synonyms != null) {
+            for (ISynonym syn: synonyms) {
+                if (syn.getCategory().equals(SYNCOMMONNAMECAT)) {
+                    commonName = syn.getLabel();
+                    break;
+                }
             }
         }
         

@@ -1,6 +1,5 @@
 package org.bgee.model.dao.api.species;
 
-import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.dao.api.EntityTO;
 
 /**
@@ -33,6 +32,13 @@ public final class SpeciesTO extends EntityTO {
     /**
      * Constructor providing the ID, the common name, the genus, the species, and the ID 
      * of the parent taxon.
+     * <p>
+     * All of these parameters are optional except {@code id}, so they can be 
+     * {@code null} when not used.
+     * We do not use a {@code builder pattern}, because {@code TransferObject}s 
+     * are not meant to be instantiated by clients, but only by the application, 
+     * so we do not really care about having non-friendly constructors.
+     * 
      * @param id            A {@code String} that is the ID.
      * @param commonName    A {@code String} that is the common name. 
      * @param genus         A {@code String} that is the genus of the species 
@@ -42,15 +48,11 @@ public final class SpeciesTO extends EntityTO {
      * @param parentTaxonId A {@code String} that is the NCBI ID of the parent taxon 
      *                      of this species (for instance, {@code 9605} for <i>homo</i>, 
      *                      the parent taxon of human).
-     * @throws IllegalArgumentException If one of the arguments is {@code null} or empty.
+     * @throws IllegalArgumentException If {@code id} is {@code null} or empty.
      */
     public SpeciesTO(String id, String commonName, String genus, String speciesName, 
             String parentTaxonId) throws IllegalArgumentException {
         super(id, commonName);
-        if (StringUtils.isBlank(commonName) || StringUtils.isBlank(genus) || 
-                StringUtils.isBlank(speciesName) || StringUtils.isBlank(parentTaxonId)) {
-            throw new IllegalArgumentException("No argument can be null or empty.");
-        }
         
         this.genus = genus;
         this.speciesName = speciesName;
@@ -60,7 +62,7 @@ public final class SpeciesTO extends EntityTO {
     /**
      * @return  The {@code String} that is the common name of this species. 
      *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-     *          COMMONNAME}.
+     *          COMMONNAME}. Returns {@code null} if value not set.
      */
     @Override
     public String getName() {
@@ -71,7 +73,7 @@ public final class SpeciesTO extends EntityTO {
      * @return  the {@code String} that is the genus of this species 
      *          (for instance, <i>homo</i>).
      *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-     *          GENUS}.
+     *          GENUS}. Returns {@code null} if value not set.
      */
     public String getGenus() {
         return genus;
@@ -80,7 +82,7 @@ public final class SpeciesTO extends EntityTO {
      * @return  {@code String} that is the species name of this species 
      *          (for instance, <i>sapiens</i>).
      *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-     *          SPECIESNAME}.
+     *          SPECIESNAME}. Returns {@code null} if value not set.
      */
     public String getSpeciesName() {
         return speciesName;
@@ -89,10 +91,17 @@ public final class SpeciesTO extends EntityTO {
      * @return  the {@code String} that is the ID of the parent taxon of this species 
      *          (for instance, {@code 9605} for <i>homo</i>, if this species was "human").
      *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-     *          PARENTTAXONID}.
+     *          PARENTTAXONID}. Returns {@code null} if value not set.
      */
     public String getParentTaxonId() {
         return parentTaxonId;
     }
     
+    @Override
+    public String toString() {
+        return "ID: " + this.getId() + " - Common name: " + this.getName() + 
+                " - Genus: " + this.getGenus() + " - Species name: " + this.getSpeciesName() + 
+                " - Parent taxon ID: " + this.getParentTaxonId() + " - Description: " + 
+                this.getDescription();
+    }
 }

@@ -1,6 +1,16 @@
 package org.bgee.pipeline;
 
+import static org.mockito.Mockito.mock;
+
+import java.util.Properties;
+
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.mysql.connector.BgeeConnection;
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
+import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
+import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -48,4 +58,57 @@ public abstract class TestAncestor
 	 * @return 	A {@code Logger}
 	 */
 	protected abstract Logger getLogger();
+	
+	/**
+	 * A mock {@code MySQLDAOManager} used for unit testing. Its attributes are 
+	 * public mock objects that can be used to specify the behavior of this 
+	 * {@code MockDAOManager}. 
+	 */
+	protected class MockDAOManager extends MySQLDAOManager {
+	    public final MySQLDAOManager mockManager = mock(MySQLDAOManager.class);
+	    public final BgeeConnection mockConnection = mock(BgeeConnection.class);
+	    public final MySQLSourceDAO mockSourceDAO = mock(MySQLSourceDAO.class);
+        public final MySQLSpeciesDAO mockSpeciesDAO = mock(MySQLSpeciesDAO.class);
+        public final MySQLTaxonDAO mockTaxonDAO = mock(MySQLTaxonDAO.class);
+        
+        public MockDAOManager() {
+            
+        }
+
+        @Override
+        protected void closeDAOManager() throws DAOException {
+            //nothing here
+        }
+        @Override
+        protected void killDAOManager() throws DAOException {
+            //nothing here
+        }
+        @Override
+        protected void shutdown() throws DAOException {
+            //nothing here
+        }
+        
+        @Override
+        public void setParameters(Properties props)
+                throws IllegalArgumentException {
+            this.mockManager.setParameters(props);
+        }
+        @Override
+        public BgeeConnection getConnection() {
+            return this.mockConnection;
+        }
+
+        @Override
+        protected MySQLSourceDAO getNewSourceDAO() {
+            return this.mockSourceDAO;
+        }
+        @Override
+        protected MySQLSpeciesDAO getNewSpeciesDAO() {
+            return this.mockSpeciesDAO;
+        }
+        @Override
+        protected MySQLTaxonDAO getNewTaxonDAO() {
+            return this.mockTaxonDAO;
+        }
+	}
 }

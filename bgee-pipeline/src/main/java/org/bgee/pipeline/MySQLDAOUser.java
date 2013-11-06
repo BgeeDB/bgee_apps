@@ -53,7 +53,7 @@ public abstract class MySQLDAOUser {
      * The {@code MySQLDAOManager} used to acquire {@code MySQLDAO}s 
      * ({@code DAO}s from the {@code bgee-dao-sql} module).
      */
-    private MySQLDAOManager manager;
+    private final MySQLDAOManager manager;
     
     /**
      * Default constructor, acquiring a {@code MySQLDAOManager}. If parameters 
@@ -67,28 +67,32 @@ public abstract class MySQLDAOUser {
      *                              
      */
     public MySQLDAOUser() throws IllegalStateException {
+        String exceptMsg = "The properties provided " +
+                "either through System properties, or through a property file, " +
+                "did not allow to obtain a valid MySQLDAOManager";
         try {
-            this.setManager((MySQLDAOManager) DAOManager.getDAOManager());
+            MySQLDAOManager manager = (MySQLDAOManager) DAOManager.getDAOManager();
+            if (manager == null) {
+                throw log.throwing(new IllegalStateException(exceptMsg));
+            }
+            this.manager = manager;
         } catch (Throwable e) {
-            throw log.throwing(new IllegalStateException("The properties provided " +
-            		"either through System properties, or through a property file, " +
-            		"did not allow to obtain a valid MySQLDAOManager", e));
+            throw log.throwing(new IllegalStateException(exceptMsg, e));
         }
     }
-
+    
     /**
-     * Sets the {@code MySQLDAOManager} used by this object. This is useful for 
-     * unit testing, where you can provide a mock {@code MySQLDAOManager}.
+     * Constructor providing the {@code MySQLDAOManager} used by this object. 
+     * This is useful for unit testing, where you can provide a mock 
+     * {@code MySQLDAOManager}. Subclasses willing to provide this feature needs 
+     * to override this constructor to make it public.
      * 
-     * @param manager   the {@code MySQLDAOManager} that will be used to acquire 
-     *                  MySQL {@code DAO}s ({@code DAO}s from the {@code bgee-dao-sql} 
-     *                  module).
-     * @throws IllegalArgumentException If {@code manager} is {@code null}.
+     * @param manager   The {@code MySQLDAOManager} that will be used by this object.
      */
-    protected void setManager(MySQLDAOManager manager) throws IllegalArgumentException {
+    protected MySQLDAOUser(MySQLDAOManager manager) {
         if (manager == null) {
             throw log.throwing(new IllegalArgumentException("The MySQLDAOManager " +
-            		"cannot be null"));
+                    "cannot be null"));
         }
         this.manager = manager;
     }

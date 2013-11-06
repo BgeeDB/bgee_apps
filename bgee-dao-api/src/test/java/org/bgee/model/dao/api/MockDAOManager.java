@@ -28,7 +28,7 @@ public class MockDAOManager extends DAOManager {
 	/**
 	 * This static mocked {@code DAOManager} is needed because we sometimes 
 	 * need to specify mocked behavior before acquiring a instance 
-	 * (notably to test {@link DAOManager#gtDAOManager()}).
+	 * (notably to test {@link DAOManager#getDAOManager()}).
 	 */
 	public static final DAOManager mockManager = mock(DAOManager.class);
 	/**

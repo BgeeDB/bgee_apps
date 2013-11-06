@@ -251,12 +251,11 @@ public class OntologyUtils {
      */
     private Map<String, Integer> getOWLClassNestedSetModelParams(int leftBound, 
             int rightBound, int level) {
-        log.entry(leftBound, rightBound, level);
         Map<String, Integer> params = new HashMap<String, Integer>();
         params.put(LEFTBOUNDKEY, leftBound);
         params.put(RIGHTBOUNDKEY, rightBound);
         params.put(LEVELKEY, level);
-        return log.exit(params);
+        return params;
     }
     
 

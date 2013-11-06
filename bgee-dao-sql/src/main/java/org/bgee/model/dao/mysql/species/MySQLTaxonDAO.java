@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -40,7 +41,18 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
     //TO BE EXPOSED TO THE PUBLIC API.
     //***************************************************************************
-    public void insertTaxa(Collection<TaxonTO> taxa) {
+    /**
+     * Inserts the provided taxa into the Bgee database, represented as 
+     * a {@code Collection} of {@code TaxonTO}s.
+     * 
+     * @param taxa      a {@code Collection} of {@code TaxonTO}s to be inserted 
+     *                  into the database.
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code taxa}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public void insertTaxa(Collection<TaxonTO> taxa) throws DAOException {
         log.entry(taxa);
         
         log.exit();

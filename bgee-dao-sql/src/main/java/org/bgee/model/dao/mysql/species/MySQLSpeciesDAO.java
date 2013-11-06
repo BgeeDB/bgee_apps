@@ -1,8 +1,12 @@
 package org.bgee.model.dao.mysql.species;
 
+import java.util.Collection;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.api.species.SpeciesTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
@@ -37,5 +41,20 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
     //TO BE EXPOSED TO THE PUBLIC API.
     //***************************************************************************
-    
+    /**
+     * Inserts the provided species into the Bgee database, represented as 
+     * a {@code Collection} of {@code SpeciesTO}s.
+     * 
+     * @param species   a {@code Collection} of {@code SpeciesTO}s to be inserted 
+     *                  into the database.
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code species}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public void insertSpecies(Collection<SpeciesTO> species) throws DAOException {
+        log.entry(species);
+        
+        log.exit();
+    }
 }

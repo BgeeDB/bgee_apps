@@ -20,9 +20,9 @@ public final class SpeciesTO extends EntityTO {
     /**
      * A {@code String} that is the species name of this species (for instance, 
      * <i>sapiens</i>). Corresponds to the DAO {@code Attribute} 
-     * {@link SpeciesDAO.Attribute SPECIES}.
+     * {@link SpeciesDAO.Attribute SPECIESNAME}.
      */
-    private final String species;
+    private final String speciesName;
     /**
      * A {@code String} that is the ID of the parent taxon of this species (for instance, 
      * {@code 9605} for <i>homo</i>, if this species was "human"). 
@@ -37,23 +37,23 @@ public final class SpeciesTO extends EntityTO {
      * @param commonName    A {@code String} that is the common name. 
      * @param genus         A {@code String} that is the genus of the species 
      *                      (for instance, <i>homo</i>).
-     * @param species       A {@code String} that is the species name of the species 
+     * @param speciesName   A {@code String} that is the species name of the species 
      *                      (for instance, <i>sapiens</i>).
      * @param parentTaxonId A {@code String} that is the NCBI ID of the parent taxon 
      *                      of this species (for instance, {@code 9605} for <i>homo</i>, 
      *                      the parent taxon of human).
      * @throws IllegalArgumentException If one of the arguments is {@code null} or empty.
      */
-    public SpeciesTO(String id, String commonName, String genus, String species, 
+    public SpeciesTO(String id, String commonName, String genus, String speciesName, 
             String parentTaxonId) throws IllegalArgumentException {
         super(id, commonName);
         if (StringUtils.isBlank(commonName) || StringUtils.isBlank(genus) || 
-                StringUtils.isBlank(species) || StringUtils.isBlank(parentTaxonId)) {
+                StringUtils.isBlank(speciesName) || StringUtils.isBlank(parentTaxonId)) {
             throw new IllegalArgumentException("No argument can be null or empty.");
         }
         
         this.genus = genus;
-        this.species = species;
+        this.speciesName = speciesName;
         this.parentTaxonId = parentTaxonId;
     }
     
@@ -80,10 +80,10 @@ public final class SpeciesTO extends EntityTO {
      * @return  {@code String} that is the species name of this species 
      *          (for instance, <i>sapiens</i>).
      *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-     *          SPECIES}.
+     *          SPECIESNAME}.
      */
-    public String getSpecies() {
-        return species;
+    public String getSpeciesName() {
+        return speciesName;
     }
     /**
      * @return  the {@code String} that is the ID of the parent taxon of this species 

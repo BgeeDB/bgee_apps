@@ -184,7 +184,7 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link OntologyUtils#computeNestedSetModelParams(NavigableSet)} 
+     * Test that the method {@link OntologyUtils#computeNestedSetModelParams(NavigableSet)} 
      * throws an IllegalStateException if the {@code OWLOntology} used is not 
      * a simple tree.
      */
@@ -212,6 +212,5 @@ public class OntologyUtilsTest extends TestAncestor {
             wrapper.getManager().removeAxiom(wrapper.getSourceOntology(), ax);
             wrapper.clearCachedEdges();
         }
-        
     }
 }

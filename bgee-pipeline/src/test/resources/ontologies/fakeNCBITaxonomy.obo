@@ -1,0 +1,107 @@
+format-version: 1.2
+ontology: fakeNCBIOntology
+synonymtypedef: genbank_common_name "genbank common name"
+synonymtypedef: blast_name "blast name"
+
+[Term]
+id: NCBITaxon:1
+name: taxon A
+
+[Term]
+id: NCBITaxon:2
+name: taxon B
+synonym: "common name taxon B" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:1 ! taxon A
+
+[Term]
+id: NCBITaxon:3
+name: taxon that should not be considered 1
+is_a: NCBITaxon:2 ! taxon B
+
+[Term]
+id: NCBITaxon:4
+name: species that should not be considered 1
+is_a: NCBITaxon:3 ! taxon C
+
+[Term]
+id: NCBITaxon:5
+name: species that should not be considered 2
+is_a: NCBITaxon:3 ! taxon C
+
+[Term]
+id: NCBITaxon:6
+name: taxon C
+synonym: "common name taxon C" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:2 ! taxon B
+
+[Term]
+id: NCBITaxon:7
+name: species that should not be considered 3
+is_a: NCBITaxon:6 ! taxon C
+
+[Term]
+id: NCBITaxon:16
+name: taxon G
+synonym: "common name taxon G" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:6 ! taxon C
+
+[Term]
+id: NCBITaxon:17
+name: species that should not be considered 4
+is_a: NCBITaxon:16 ! taxon G
+
+[Term]
+id: NCBITaxon:8
+name: species A
+synonym: "genusA speciesA" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:16 ! taxon G
+
+[Term]
+id: NCBITaxon:9
+name: sub-species that should not be considered 1
+is_a: NCBITaxon:8 ! species A
+
+[Term]
+id: NCBITaxon:10
+name: sub-species that should not be considered 2
+is_a: NCBITaxon:8 ! species A
+
+[Term]
+id: NCBITaxon:11
+name: taxon D
+synonym: "common name taxon D" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:6 ! taxon C
+
+[Term]
+id: NCBITaxon:12
+name: taxon E
+synonym: "common name taxon E" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:11 ! taxon D
+
+[Term]
+id: NCBITaxon:13
+name: species B
+synonym: "genusB speciesB" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:12 ! taxon E
+
+[Term]
+id: NCBITaxon:14
+name: taxon F
+synonym: "common name taxon F" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:12 ! taxon E
+
+[Term]
+id: NCBITaxon:15
+name: species C
+synonym: "genusC speciesC" EXACT genbank_common_name []
+synonym: "synonym not to pick" RELATED blast_name []
+is_a: NCBITaxon:14 ! taxon F
+

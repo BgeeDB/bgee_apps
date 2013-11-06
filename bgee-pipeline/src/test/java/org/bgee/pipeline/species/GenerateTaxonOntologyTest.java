@@ -74,6 +74,8 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         OWLOntology ont = parserWrapper.parse(outputFile);
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
+        System.out.println("YO " + wrapper.getOBOSynonyms(wrapper.getOWLObjectByIdentifier("NCBITaxon:2")));
+        
         assertEquals("Incorrect number of classes in geenrated ontology", 7, 
                 wrapper.getAllOWLClasses().size());
         assertNotNull("Incorrect classes in generated ontology", 

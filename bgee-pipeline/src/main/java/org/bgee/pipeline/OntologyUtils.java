@@ -2,6 +2,7 @@ package org.bgee.pipeline;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,11 +11,13 @@ import java.util.TreeSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
 import owltools.graph.OWLGraphWrapper;
+import owltools.sim.SimEngine;
 
 /**
  * This class provides convenient methods when to use or analyze an {@code OWLOntology}. 
@@ -254,5 +257,47 @@ public class OntologyUtils {
         params.put(RIGHTBOUNDKEY, rightBound);
         params.put(LEVELKEY, level);
         return log.exit(params);
+    }
+    
+
+    /**
+     * Get the {@code OWLClass}es that are the least common ancestors of each pair 
+     * of leaves in the {@code OWLOntology} provided at instantiation.
+     * 
+     * @return          A {@code Set} of {@code OWLClass}es that are the least
+     *                  common ancestors of the {@code OWLOntology} provided 
+     *                  at instantiation.
+     *                  
+     * @throws IllegalStateException        If the ontology did not allow 
+     *                                      to retrieve proper least common ancestors.
+     */
+    public Set<OWLClass> getLeafLeastCommonAncestors() throws IllegalStateException {
+        log.entry();
+        
+        Set<OWLClass> lcas = new HashSet<OWLClass>();
+
+        SimEngine se = new SimEngine(this.wrapper);
+        //we want to find the least common ancestor of all possible pairs 
+        //of leaves in the ontology
+        Set<OWLClass> leaves = this.wrapper.getOntologyLeaves();
+        for (OWLClass leave1: leaves) {
+            for (OWLClass leave2: leaves) {
+                if (leave1.equals(leave2)) {
+                    continue;
+                }
+                for (OWLObject lca: se.getLeastCommonSubsumers(leave1, leave2)) {
+                    if (lca instanceof OWLClass) {
+                        lcas.add((OWLClass) lca);
+                    }
+                }
+            }
+        }
+        
+        if (lcas.isEmpty()) {
+            throw log.throwing(new IllegalStateException("The ontology " +
+                    "did not allow to identify any least common ancestors of species used."));
+        }
+        
+        return log.exit(lcas);
     }
 }

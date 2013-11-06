@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.species;
 
+import java.sql.SQLException;
 import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +9,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
+import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
 /**
@@ -45,16 +47,47 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
      * Inserts the provided species into the Bgee database, represented as 
      * a {@code Collection} of {@code SpeciesTO}s.
      * 
-     * @param species   a {@code Collection} of {@code SpeciesTO}s to be inserted 
+     * @param specieTOs a {@code Collection} of {@code SpeciesTO}s to be inserted 
      *                  into the database.
+     * @return          An {@code int} that is the number of species inserted 
+     *                  as a result of this method call.
      * @throws DAOException     If a {@code SQLException} occurred while trying 
      *                          to insert {@code species}. The {@code SQLException} 
      *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
      *                          do not expose these kind of implementation details).
      */
-    public void insertSpecies(Collection<SpeciesTO> species) throws DAOException {
-        log.entry(species);
+    public int insertSpecies(Collection<SpeciesTO> specieTOs) throws DAOException {
+        log.entry(specieTOs);
         
-        log.exit();
+        try {
+            String sql = "Insert into species (speciesId, genus, species, " +
+            		"speciesCommonName, parentTaxonId) values ";
+            for (int i = 0; i < specieTOs.size(); i++) {
+                if (i > 0) {
+                    sql += ", ";
+                }
+                sql += "(?, ?, ?, ?, ?) ";
+            }
+            BgeePreparedStatement stmt = 
+                    this.getManager().getConnection().prepareStatement(sql);
+            int paramIndex = 1;
+            for (SpeciesTO speciesTO: specieTOs) {
+                stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getId()));
+                paramIndex++;
+                stmt.setString(paramIndex, speciesTO.getGenus());
+                paramIndex++;
+                stmt.setString(paramIndex, speciesTO.getSpeciesName());
+                paramIndex++;
+                stmt.setString(paramIndex, speciesTO.getName());
+                paramIndex++;
+                stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getParentTaxonId()));
+                paramIndex++;
+            }
+            
+            return log.exit(stmt.executeUpdate());
+            
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 }

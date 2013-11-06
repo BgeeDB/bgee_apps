@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.species;
 
+import java.sql.SQLException;
 import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +9,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
+import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
 /**
@@ -52,9 +54,43 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
      *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
      *                          do not expose these kind of implementation details).
      */
-    public void insertTaxa(Collection<TaxonTO> taxa) throws DAOException {
+    public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException {
         log.entry(taxa);
         
-        log.exit();
+        try {
+            String sql = "Insert into taxon (taxonId, taxonScientificName, " +
+            		"taxonCommonName, taxonLeftBound, taxonRightBound, taxonLevel, " +
+                    "bgeeSpeciesLCA) values ";
+            for (int i = 0; i < taxa.size(); i++) {
+                if (i > 0) {
+                    sql += ", ";
+                }
+                sql += "(?, ?, ?, ?, ?, ?, ?) ";
+            }
+            BgeePreparedStatement stmt = 
+                    this.getManager().getConnection().prepareStatement(sql);
+            int paramIndex = 1;
+            for (TaxonTO taxonTO: taxa) {
+                stmt.setInt(paramIndex, Integer.parseInt(taxonTO.getId()));
+                paramIndex++;
+                stmt.setString(paramIndex, taxonTO.getScientificName());
+                paramIndex++;
+                stmt.setString(paramIndex, taxonTO.getName());
+                paramIndex++;
+                stmt.setInt(paramIndex, taxonTO.getLeftBound());
+                paramIndex++;
+                stmt.setInt(paramIndex, taxonTO.getRightBound());
+                paramIndex++;
+                stmt.setInt(paramIndex, taxonTO.getLevel());
+                paramIndex++;
+                stmt.setBoolean(paramIndex, taxonTO.isLca());
+                paramIndex++;
+            }
+            
+            return log.exit(stmt.executeUpdate());
+            
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 }

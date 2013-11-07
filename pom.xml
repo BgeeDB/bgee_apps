@@ -193,6 +193,27 @@
             </dependency>
 		    
 			<!-- End for the dao-sql layer -->
+			
+			<!-- Used for integration test using a real MySQL database. --> 
+			<!-- Spring framework is used to execute the .sql files to create the database. -->
+			<dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>3.2.5.RELEASE</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>3.2.5.RELEASE</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>3.2.5.RELEASE</version>
+                <scope>test</scope>
+            </dependency>
 
 		</dependencies>
 	</dependencyManagement>
@@ -271,6 +292,25 @@
                         </bgee.dao.jdbc.driver.names>
                         <!-- The connection URL is modified to use log4jdbc-log4j2 -->
                         <bgee.dao.jdbc.url>jdbc:log4$(bgee.jdbc.connectionURL)</bgee.dao.jdbc.url>
+                        
+                        <!-- The following properties are specific to integration tests -->
+                        <!-- Here we provide the paths to the SQL files to create the Bgee database -->
+                        <bgee.database.file.schema>
+                            ${basedir}/../../pipeline/pipeline/db_creation/bgeeSchema.sql
+                        </bgee.database.file.schema>
+                        <bgee.database.file.constraint>
+                            ${basedir}/../../pipeline/pipeline/db_creation/bgeeConstraint.sql
+                        </bgee.database.file.constraint>
+                        <bgee.database.file.index>
+                            ${basedir}/../../pipeline/pipeline/db_creation/bgeeIndex.sql
+                        </bgee.database.file.index>
+                        <bgee.database.file.foreignkey>
+                            ${basedir}/../../pipeline/pipeline/db_creation/bgeeForeignKey.sql
+                        </bgee.database.file.foreignkey>
+                        <!-- Here we provide the Driver class name of the real JDBC Driver 
+                             (Because we can provide severall in the Bgee parameters, we need 
+                             the actual one for DataSource configuration during unit test) -->
+                        <bgee.dao.jdbc.driver.name>$(bgee.jdbc.driver.className)</bgee.dao.jdbc.driver.name>
                     </systemPropertyVariables>
                 </configuration>
                 

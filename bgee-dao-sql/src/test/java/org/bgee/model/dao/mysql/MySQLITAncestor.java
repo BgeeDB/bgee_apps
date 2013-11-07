@@ -50,7 +50,7 @@ import static org.mockito.Mockito.*;
  * (with the name provided through System property associated to the key 
  * {@link MySQLDAOManager#DBPOPULATEDKEY}) that already contains the expected 
  * test data. The dump containing the test data to load is located at 
- * {@code src/test/resources/db_creation/testDataDump.sql}. 
+ * {@code src/test/resources/sql/testDataDump.sql}. 
  * <p>
  * The database will be automatically created and populated before the tests 
  * if you run the tests through Maven, as the @code maven-failsafe-plugin} 

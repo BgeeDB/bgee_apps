@@ -167,6 +167,19 @@ public class MySQLDAOManager extends DAOManager {
     private String jdbcUrl;
     
     /**
+     * A {@code String} representing the name of the database to use. All following 
+     * calls to {@link #getConnection()} will return {@code BgeeConnection}s with  
+     * their underlying real JDBC {@code Connection} set to use this database 
+     * (by using the method {@code Connection#setCatalog(String)}).
+     * <p>
+     * This is useful when a client needs to use a different database than the one 
+     * specified in the {@link #jdbcUrl}, or specified to the {@link #dataSource} used.
+     * <p>
+     * If {@code null}, then default parameters specified will be used again.
+     */
+    private String databaseToUse;
+    
+    /**
      * Default constructor. {@code DAOManager}s must provide a no-arguments public 
      * constructor, to be used as a {@code Service Provider}.
      */
@@ -200,8 +213,7 @@ public class MySQLDAOManager extends DAOManager {
      * @throws SQLException     If an error occurred while trying to obtain the connection, 
      *                          of if this {@code MySQLDAOManager} is already closed.
      */
-    public BgeeConnection getConnection() throws SQLException
-    {
+    public BgeeConnection getConnection() throws SQLException {
         log.entry();
         log.debug("Trying to obtain a BgeeConnection");
 
@@ -210,7 +222,7 @@ public class MySQLDAOManager extends DAOManager {
         }
 
         String connectionId = this.generateConnectionId(this.getJdbcUrl(), 
-                this.getUser());
+                this.getUser(), this.getDatabaseToUse());
         //we synchronized over this.connections, to establish a happens-before relation 
         //for methods that can be used by other threads (e.g., killDAOManager), 
         //and that will use the same lock, for atomicity. This is not because we expect 
@@ -268,8 +280,13 @@ public class MySQLDAOManager extends DAOManager {
             }
             //now create the new BgeeConnection
             connection = new BgeeConnection(this, realConnection, connectionId);
+            //if an alternative database to use has been specified, set it
+            if (this.getDatabaseToUse() != null) {
+                connection.getRealConnection().setCatalog(this.getDatabaseToUse());
+            }
             //store and return it
             this.connections.put(connection.getId(), connection);
+            
 
             log.debug("Return a newly opened Connection with ID {}", connection.getId());
             return log.exit(connection);
@@ -435,19 +452,26 @@ public class MySQLDAOManager extends DAOManager {
     /**
      * Generate an ID to uniquely identify the {@code BgeeConnection}s 
      * holded by this {@code MySQLDAOManager}. It is based on  
-     * {@code jdbcUrl} and {@code user}}. 
+     * {@code jdbcUrl}, {@code user}, and {@code databaseToUse}. 
      * 
-     * @param jdbcUrl   A {@code String} defining the JDBC URL used to open 
-     *                  the connection. Will be used to generate the ID.
-     * @param user  A {@code String} defining the user used to open 
-     *                  the connection. Will be used to generate the ID.
+     * @param jdbcUrl       A {@code String} defining the JDBC URL used to open 
+     *                      the connection. Will be used to generate the ID.
+     * @param user          A {@code String} defining the user used to open 
+     *                      the connection. Will be used to generate the ID.
+     * @param databaseToUse A {@code String} representing an alternative database 
+     *                      to use than the one specified in {@code jdbcUrl}. 
+     *                      See {@link #databaseToUse} for more details
      * @return          A {@code String} representing an ID generated from 
      *                  the JDBC URL, {@code user}.
      */
-    private String generateConnectionId(String jdbcUrl, String username) {
+    private String generateConnectionId(String jdbcUrl, String username, 
+            String databaseToUse) {
         //I don't like much storing a password in memory, as it could be in the url, 
         //let's hash it.
-        return DigestUtils.sha1Hex(jdbcUrl + "[sep]" + username + "[sep]");
+        return DigestUtils.sha1Hex(
+                (jdbcUrl       != null ? jdbcUrl:"") + "[sep]" + 
+                (username      != null ? username:"") + "[sep]" + 
+                (databaseToUse != null ? databaseToUse:""));
     }
 
     //******************************************
@@ -730,6 +754,32 @@ public class MySQLDAOManager extends DAOManager {
 //              this.getDataSourceResourceName(), this.getJdbcUrl(), 
 //              this.getJdbcDriverNames(), this.getUser(), this.getPassword());
         log.exit();
+    }
+    
+    /**
+     * Sets the name of an alternative database to use. All following 
+     * calls to {@link #getConnection()} will return {@code BgeeConnection}s with  
+     * their underlying real JDBC {@code Connection} set to use this database 
+     * (by using the method {@code Connection#setCatalog(String)}).
+     * <p>
+     * This is useful when a client needs to use a different database than the one 
+     * specified in the {@link #jdbcUrl}, or specified to the {@link #dataSource} used. 
+     * Note that it will not modified any {@code BgeeConnection}s already acquired, 
+     * but will allow to acquire new ones if not already existing.
+     * <p>
+     * If {@code null}, then default parameters specified will be used again.
+     * 
+     * @param dbName    A {@code String} representing the name of an alternative 
+     *                  database to use.
+     */
+    public void setDatabaseToUse(String dbName) {
+        this.databaseToUse = dbName;
+    }
+    /**
+     * @return the {@link #databaseToUse}.
+     */
+    private String getDatabaseToUse() {
+        return this.databaseToUse;
     }
     
     @Override

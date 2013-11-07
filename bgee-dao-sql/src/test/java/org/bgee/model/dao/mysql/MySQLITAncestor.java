@@ -1,6 +1,7 @@
 package org.bgee.model.dao.mysql;
 
 import java.sql.SQLException;
+import java.util.Properties;
 import java.util.ServiceConfigurationError;
 
 import org.apache.logging.log4j.LogManager;
@@ -50,15 +51,23 @@ public abstract class MySQLITAncestor extends TestAncestor{
             ServiceConfigurationError {
         log.entry(dbName, constraints, indexes, foreignKeys);
         
-        //it is the responsibiliy of the client running the code to make sure 
-        //that System properties have been configure to obtain a MySQLDAOManager.
+        //it is the responsibility of the client running the code to make sure 
+        //that System properties have been configured properly to obtain a MySQLDAOManager.
         MySQLDAOManager manager = (MySQLDAOManager) DAOManager.getDAOManager();
         BgeeConnection con = manager.getConnection();
         
-        //create and use database
+        //create and use the database
         BgeePreparedStatement stmt = con.prepareStatement("Create database ?");
         stmt.setString(1, dbName);
         con.getRealConnection().setCatalog(dbName);
+        //we modify the properties used by the manager to use the database created.
+        //we assume that the Connection URL is of the form 
+        //jdbc:mysql://[host][,failoverhost...][:port]/
+        //with no parameters after, so that we can simply append the database name.
+        Properties props = new Properties();
+        props.setProperty(MySQLDAOManager., value)
+        System.setProperty(MySQLDAOManager.JDBCURLKEY, manager.getJdbcUrl() + dbName);
+        manager.setParameters(System.getProperties());
         
         //use of the Spring framework to execute .sql scripts.
         
@@ -71,6 +80,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         dataSource.setUrl(manager.getJdbcUrl());
         dataSource.setUsername(manager.getUser());
         dataSource.setPassword(manager.getPassword());
+        dataSource.setConnectionProperties(connectionProperties)
         
         //run the scripts
         JdbcTemplate template = new JdbcTemplate(dataSource);

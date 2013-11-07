@@ -443,6 +443,57 @@ public class MySQLDAOManagerTest extends TestAncestor
     }
     
     /**
+     * Unit test for {@link MySQLDAOManager#setDatabasToUse(String)}.
+     */
+    @Test
+    public void shouldSetAlternativeDatabase() throws SQLException {
+        MockDriver.initialize();
+        //set the properties to use it
+        Properties props = new Properties();
+        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        //test to provide several JDBC driver names
+        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
+        //going through the DAOManager#getDAOManager() method
+        MySQLDAOManager manager = new MySQLDAOManager();
+        manager.setParameters(props);
+        
+        BgeeConnection conn = manager.getConnection();
+        //verify that there is an actual underlying real connection
+        assertNotNull("Real underlying connection missing.", conn.getRealConnection());
+        //verify that the correct Driver was used
+        verify(MockDriver.getMockDriver()).connect(eq(MockDriver.MOCKURL), (Properties) anyObject());
+        
+        //now, set an alternative database to use
+        String dbName = "alternative";
+        manager.setDatabaseToUse(dbName);
+        BgeeConnection conn2 = manager.getConnection();
+        assertNotNull("Real underlying connection missing.", conn.getRealConnection());
+        //check that the proper database name was set
+        verify(conn.getRealConnection()).setCatalog(dbName);
+        //it should be a different connection
+        assertNotSame("A same connection was returned for different database name", 
+                conn, conn2);
+        
+        //reset the database to use, we should get the first connection again
+        manager.setDatabaseToUse(null);
+        BgeeConnection conn3 = manager.getConnection();
+        assertSame("Different connections were returned for same parameters", 
+                conn, conn3);
+        //check that the database was not incorrectly changed
+        verify(conn.getRealConnection()).setCatalog(anyString());
+        
+        //reset the database again, we will have the second one again
+        manager.setDatabaseToUse(dbName);
+        BgeeConnection conn4 = manager.getConnection();
+        assertSame("Different connections were returned for same parameters", 
+                conn2, conn4);
+        
+        manager.shutdown();
+        MockDriver.initialize();
+    }
+    
+    /**
      * Test the acquisition of a {@code BgeeConnection} when using a {@code DataSource}, 
      * a username and a passord.
      * 

@@ -46,7 +46,10 @@
         <!-- Define here the JDBC Driver class name and connection URL 
              for the sql-maven-plugin used during integration tests. -->
         <bgee.jdbc.driver.className>com.mysql.jdbc.Driver</bgee.jdbc.driver.className>
-        <bgee.jdbc.connectionURL>jdbc:mysql:127.0.0.1</bgee.jdbc.connectionURL> 
+        <!-- Important: this connction URL MUST NOT contain the database name. Only 
+             the following part must be incuded: jdbc:mysql://[host][,failoverhost...][:port]/ 
+             That's it, no property should be passed through this URL-->
+        <bgee.jdbc.connectionURL>jdbc:mysql:127.0.0.1/</bgee.jdbc.connectionURL> 
 	</properties>
 
 	<repositories>

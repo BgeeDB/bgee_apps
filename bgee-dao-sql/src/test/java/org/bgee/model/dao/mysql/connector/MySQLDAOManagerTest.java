@@ -459,10 +459,6 @@ public class MySQLDAOManagerTest extends TestAncestor
         manager.setParameters(props);
         
         BgeeConnection conn = manager.getConnection();
-        //verify that there is an actual underlying real connection
-        assertNotNull("Real underlying connection missing.", conn.getRealConnection());
-        //verify that the correct Driver was used
-        verify(MockDriver.getMockDriver()).connect(eq(MockDriver.MOCKURL), (Properties) anyObject());
         
         //now, set an alternative database to use
         String dbName = "alternative";

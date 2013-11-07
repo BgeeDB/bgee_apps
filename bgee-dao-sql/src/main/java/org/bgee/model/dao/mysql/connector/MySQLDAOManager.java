@@ -208,6 +208,13 @@ public class MySQLDAOManager extends DAOManager {
      * <p>
      * If this {@code MySQLDAOManager} was closed ({@link #isClosed()} 
      * returns {@code true}), this method will throw a {@code SQLException}.
+     * <p>
+     * If you want to use a different database than the one defined by the connection 
+     * URL, you can use the method {@link #setDatabaseToUse(String)}.
+     * <p>
+     * <strong>Warning:</strong> you should never call {@code setCatalog} on the 
+     * real underlying JDBC {@code Connection} yourself. You must use 
+     * {@link setDatabaseToUse(String)} instead.
      * 
      * @return  An opened {@code BgeeConnection}. 
      * @throws SQLException     If an error occurred while trying to obtain the connection, 

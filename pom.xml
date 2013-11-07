@@ -43,13 +43,26 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		
+		<!-- The following proprties are used for integration tests -->
+		
         <!-- Define here the JDBC Driver class name and connection URL 
-             for the sql-maven-plugin used during integration tests. -->
+             for the sql-maven-plugin and for integration test classes. -->
         <bgee.jdbc.driver.className>com.mysql.jdbc.Driver</bgee.jdbc.driver.className>
-        <!-- Important: this connction URL MUST NOT contain the database name. Only 
-             the following part must be incuded: jdbc:mysql://[host][,failoverhost...][:port]/ 
-             That's it, no property should be passed through this URL-->
         <bgee.jdbc.connectionURL>jdbc:mysql:127.0.0.1/</bgee.jdbc.connectionURL> 
+        
+        <!-- Here we provide the paths to the SQL files to create the Bgee database -->
+        <bgee.database.file.schema>
+            ${basedir}/../../pipeline/pipeline/db_creation/bgeeSchema.sql
+        </bgee.database.file.schema>
+        <bgee.database.file.constraint>
+	        ${basedir}/../../pipeline/pipeline/db_creation/bgeeConstraint.sql
+        </bgee.database.file.constraint>
+	    <bgee.database.file.index>
+		    ${basedir}/../../pipeline/pipeline/db_creation/bgeeIndex.sql
+	    </bgee.database.file.index>
+	    <bgee.database.file.foreignkey>
+		    ${basedir}/../../pipeline/pipeline/db_creation/bgeeForeignKey.sql
+	    </bgee.database.file.foreignkey>
 	</properties>
 
 	<repositories>
@@ -286,8 +299,11 @@
                     <systemPropertyVariables>
                         <!-- Provides the System properties that Bgee will use to connect 
                              to a local MySQL database during integration tests -->
+                        <!-- username and password should be provided in your settings.xml file, 
+                             the other properties are defined in this pom.xml file. -->
                         <bgee.dao.jdbc.username>$(bgee.database.root.username)</bgee.dao.jdbc.username>
                         <bgee.dao.jdbc.password>$(bgee.database.root.password)</bgee.dao.jdbc.password>
+                        
                         <!-- Besides the usual database connector, we also use the log4jdbc-log4j2 Driver, 
                              as logging SQL queries will be useful -->
                         <bgee.dao.jdbc.driver.names>
@@ -296,24 +312,9 @@
                         <!-- The connection URL is modified to use log4jdbc-log4j2 -->
                         <bgee.dao.jdbc.url>jdbc:log4$(bgee.jdbc.connectionURL)</bgee.dao.jdbc.url>
                         
-                        <!-- The following properties are specific to integration tests -->
                         <!-- Here we provide the paths to the SQL files to create the Bgee database -->
-                        <bgee.database.file.schema>
-                            ${basedir}/../../pipeline/pipeline/db_creation/bgeeSchema.sql
-                        </bgee.database.file.schema>
-                        <bgee.database.file.constraint>
-                            ${basedir}/../../pipeline/pipeline/db_creation/bgeeConstraint.sql
-                        </bgee.database.file.constraint>
-                        <bgee.database.file.index>
-                            ${basedir}/../../pipeline/pipeline/db_creation/bgeeIndex.sql
-                        </bgee.database.file.index>
-                        <bgee.database.file.foreignkey>
-                            ${basedir}/../../pipeline/pipeline/db_creation/bgeeForeignKey.sql
-                        </bgee.database.file.foreignkey>
-                        <!-- Here we provide the Driver class name of the real JDBC Driver 
-                             (Because we can provide severall in the Bgee parameters, we need 
-                             the actual one for DataSource configuration during unit test) -->
-                        <bgee.dao.jdbc.driver.name>$(bgee.jdbc.driver.className)</bgee.dao.jdbc.driver.name>
+                        <bgee.database.file.schema>$(bgee.database.file.schema)</bgee.database.file.schema>
+                        
                     </systemPropertyVariables>
                 </configuration>
                 

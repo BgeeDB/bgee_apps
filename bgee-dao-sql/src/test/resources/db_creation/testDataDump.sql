@@ -1,0 +1,2 @@
+-- This is a dump file containing test data, that are used for the integration tests 
+-- of SELECT statements.

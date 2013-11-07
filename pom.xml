@@ -33,9 +33,20 @@
 			<name>bgee@isb-sib.ch</name>
 		</mailingList>
 	</mailingLists>
+	
+	<parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		
+        <!-- Define here the JDBC Driver class name and connection URL 
+             for the sql-maven-plugin used during integration tests. -->
+        <bgee.jdbc.driver.className>com.mysql.jdbc.Driver</bgee.jdbc.driver.className>
+        <bgee.jdbc.connectionURL>jdbc:mysql:127.0.0.1</bgee.jdbc.connectionURL> 
 	</properties>
 
 	<repositories>
@@ -55,7 +66,7 @@
 
 	<!-- Dependencies needed for *all* sub-projects -->
 	<dependencies>
-
+        <!-- Logging system -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
@@ -69,20 +80,22 @@
 			<scope>compile</scope>
 		</dependency>
 
+        <!-- General useful library (e.g., defines StringUtils) -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.1</version>
             <scope>compile</scope>
         </dependency>
-
+        
+        <!-- Unit testing -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
-
+        <!-- Mock object during unit testing -->
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-all</artifactId>
@@ -97,30 +110,37 @@
 		<dependencies>
 
 			<!-- Needed for the pipeline -->
+			<!-- Includes OWLools-Core, OBO2OWL, OWLAPI -->
 			<dependency>
 				<groupId>org.bbop</groupId>
 				<artifactId>OWLTools-all</artifactId>
 				<version>0.2.1-SNAPSHOT</version>
 				<scope>compile</scope>
 			</dependency>
+			<!-- Used to generate our custom NCBI taxonomy ontology -->
             <dependency>
                 <groupId>org.bbop</groupId>
                 <artifactId>OWLTools-ncbi</artifactId>
                 <version>0.2.1-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
+            <!-- Used to least common ancestors of species used in Bgee -->
             <dependency>
                 <groupId>org.bbop</groupId>
                 <artifactId>OWLTools-sim</artifactId>
                 <version>0.2.1-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
+            
+            <!-- To parse the OMA HOG data file -->
 			<dependency>
 				<groupId>sbc</groupId>
 				<artifactId>orthoxml</artifactId>
 				<version>0.1b</version>
 				<scope>compile</scope>
 			</dependency>
+			
+			<!-- To parse CSV/TSV files -->
 			<dependency>
                 <groupId>net.sf.supercsv</groupId>
                 <artifactId>super-csv</artifactId>
@@ -139,6 +159,7 @@
 			<!-- End for webapp -->
 
 			<!-- Needed for the core layer -->
+			<!-- Used to generate hashes -->
 			<dependency>
 				<groupId>commons-codec</groupId>
 				<artifactId>commons-codec</artifactId>
@@ -152,19 +173,19 @@
 			
             
 			<!-- End for the dao-api layer -->
-			
-			
 
 			<!-- Needed for the dao-sql layer -->
-			
+			<!-- JDBC logging library -->
 			<dependency>
 				<groupId>org.bgee.log4jdbc-log4j2</groupId>
 				<artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
 				<version>1.15</version>
 				<scope>compile</scope>
 			</dependency>
-			
+			<!-- The JDBC connector -->
 			<dependency>
+			    <!-- Properties defined in the <properties> section of this pom file 
+			         (because they are used in different places) -->
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>5.1.26</version>
@@ -197,6 +218,7 @@
                 <version>2.14.1</version>
             </plugin>
             
+            <!-- Generates sources and javadoc -->
             <plugin>
 	          <groupId>org.apache.maven.plugins</groupId>
 	          <artifactId>maven-source-plugin</artifactId>
@@ -235,6 +257,23 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>2.16</version>
+                
+                <configuration>
+                    <systemPropertyVariables>
+                        <!-- Provides the System properties that Bgee will use to connect 
+                             to a local MySQL database during integration tests -->
+                        <bgee.dao.jdbc.username>$(bgee.database.root.username)</bgee.dao.jdbc.username>
+                        <bgee.dao.jdbc.password>$(bgee.database.root.password)</bgee.dao.jdbc.password>
+                        <!-- Besides the usual database connector, we also use the log4jdbc-log4j2 Driver, 
+                             as logging SQL queries will be useful -->
+                        <bgee.dao.jdbc.driver.names>
+                            $(bgee.jdbc.driver.className),net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+                        </bgee.dao.jdbc.driver.names>
+                        <!-- The connection URL is modified to use log4jdbc-log4j2 -->
+                        <bgee.dao.jdbc.url>jdbc:log4$(bgee.jdbc.connectionURL)</bgee.dao.jdbc.url>
+                    </systemPropertyVariables>
+                </configuration>
+                
                 <executions>
                      <execution>
                           <id>integration-test</id>
@@ -245,6 +284,59 @@
                       </execution>
                 </executions>
             </plugin>
+            
+            <!-- Used during the pre-integration-test and post-integration-test 
+                 phases of the  Maven Failsafe Plugin, used for integration tests. 
+                 This allows to initialize or clean the MySQL database for integration 
+                 tests using a real local database. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>sql-maven-plugin</artifactId>
+                <version>1.5</version>
+                <dependencies>
+                    <!-- include the JDBC driver dependency here -->
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                        <version>5.1.26</version>
+                    </dependency>
+                </dependencies>
+                
+                <!-- common plugin configuration -->
+                <configuration>
+                    <!-- driver and url defined in this pom.xml -->
+                    <driver>$(bgee.jdbc.driver.className)</driver>
+                    <url>$(bgee.jdbc.connectionURL)</url>
+                    <!-- username and password should be defined in your settings.xml file -->
+                    <username>$(bgee.database.root.username)</username>
+                    <password>$(bgee.database.root.password)</password>
+                </configuration>
+                
+                <!-- the executions section binds the phases with some plugin goals 
+                     and optional additional configuration parameters -->
+                <executions>
+                     <execution>
+                         <phase>pre-integration-test</phase>
+                         <goals>
+                             <goal>execute</goal>
+                         </goals>
+                         <!-- specific configuration for this execution -->
+                         <configuration>
+                             <!-- Include here the SQL scripts to create the DB, inject some test data -->
+                         </configuration>
+                     </execution>
+                     <execution>
+                         <phase>post-integration-test</phase>
+                         <goals>
+                             <goal>execute</goal>
+                         </goals>
+                         <configuration>
+                             <!-- Include here the SQL scripts to drop the database -->
+                         </configuration>
+                     </execution>
+                 </executions>
+            </plugin>
+            
           </plugins>
 		</pluginManagement>
 	</build>

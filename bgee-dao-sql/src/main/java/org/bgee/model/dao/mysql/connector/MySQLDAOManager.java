@@ -88,7 +88,7 @@ public class MySQLDAOManager extends DAOManager {
      * See {@link #getUser()} for more details.
      * @see #getUser()
      */
-    public final static String USERKEY = "bgee.dao.username";
+    public final static String USERKEY = "bgee.dao.jdbc.username";
     /**
      * A {@code String} that is the user to use to connect to the database.
      * It is used either when a {@code DataSource} is used and the user 
@@ -105,7 +105,7 @@ public class MySQLDAOManager extends DAOManager {
      * See {@link #getPassword()} for more details.
      * @see #getPassword()
      */
-    public final static String PASSWORDKEY = "bgee.dao.password";
+    public final static String PASSWORDKEY = "bgee.dao.jdbc.password";
     /**
      * A {@code String} that is the password to use to connect to the database.
      * It is used either when a {@code DataSource} is used and the password 

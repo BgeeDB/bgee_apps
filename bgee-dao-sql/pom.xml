@@ -52,9 +52,18 @@
               </configuration>
           </plugin>
           
+          <!-- Integration tests. -->
           <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-failsafe-plugin</artifactId>
+          </plugin>
+          
+          <!-- Initialize or clean the database for integration tests 
+               during the pre-integration-test and post-integration-test 
+               phases of the Maven Failsafe Plugin. -->
+          <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>sql-maven-plugin</artifactId>
           </plugin>
           
       </plugins>

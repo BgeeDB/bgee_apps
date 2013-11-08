@@ -48,7 +48,7 @@
         <!-- Define here the JDBC Driver class name and connection URL 
              for the sql-maven-plugin and for integration test classes. -->
         <bgee.jdbc.driver.className>com.mysql.jdbc.Driver</bgee.jdbc.driver.className>
-        <bgee.jdbc.connectionURL>jdbc:mysql:127.0.0.1/</bgee.jdbc.connectionURL> 
+        <bgee.jdbc.connectionURL>jdbc:mysql://127.0.0.1/</bgee.jdbc.connectionURL> 
         
         <!-- Here we provide the paths to the SQL files to create the Bgee database -->
         <bgee.database.file.schema>
@@ -317,19 +317,19 @@
                              to a local MySQL database during integration tests -->
                         <!-- username and password should be provided in your settings.xml file, 
                              the other properties are defined in this pom.xml file. -->
-                        <bgee.dao.jdbc.username>$(bgee.database.root.username)</bgee.dao.jdbc.username>
-                        <bgee.dao.jdbc.password>$(bgee.database.root.password)</bgee.dao.jdbc.password>
+                        <bgee.dao.jdbc.username>${bgee.database.root.username}</bgee.dao.jdbc.username>
+                        <bgee.dao.jdbc.password>${bgee.database.root.password}</bgee.dao.jdbc.password>
                         
                         <!-- Besides the usual database connector, we also use the log4jdbc-log4j2 Driver, 
                              as logging SQL queries will be useful -->
                         <bgee.dao.jdbc.driver.names>
-                            $(bgee.jdbc.driver.className),net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+                            ${bgee.jdbc.driver.className},net.sf.log4jdbc.sql.jdbcapi.DriverSpy
                         </bgee.dao.jdbc.driver.names>
                         <!-- The connection URL is modified to use log4jdbc-log4j2 -->
-                        <bgee.dao.jdbc.url>jdbc:log4$(bgee.jdbc.connectionURL)</bgee.dao.jdbc.url>
+                        <bgee.dao.jdbc.url>jdbc:log4${bgee.jdbc.connectionURL}</bgee.dao.jdbc.url>
                         
                         <!-- Here we provide the paths to the SQL files to create the Bgee database -->
-                        <bgee.database.file.schema>$(bgee.database.file.schema)</bgee.database.file.schema>
+                        <bgee.database.file.schema>${bgee.database.file.schema}</bgee.database.file.schema>
                         
                     </systemPropertyVariables>
                 </configuration>
@@ -365,17 +365,18 @@
                 <!-- common plugin configuration -->
                 <configuration>
                     <!-- driver and url defined in this pom.xml -->
-                    <driver>$(bgee.jdbc.driver.className)</driver>
-                    <url>$(bgee.jdbc.connectionURL)</url>
+                    <driver>${bgee.jdbc.driver.className}</driver>
+                    <url>${bgee.jdbc.connectionURL}</url>
                     <!-- username and password should be defined in your settings.xml file -->
-                    <username>$(bgee.database.root.username)</username>
-                    <password>$(bgee.database.root.password)</password>
+                    <username>${bgee.database.root.username}</username>
+                    <password>${bgee.database.root.password}</password>
                 </configuration>
                 
                 <!-- the executions section binds the phases with some plugin goals 
                      and optional additional configuration parameters -->
                 <executions>
                      <execution>
+                         <id>sql-pre-integration-test</id>
                          <phase>pre-integration-test</phase>
                          <goals>
                              <goal>execute</goal>
@@ -386,6 +387,7 @@
                          </configuration>
                      </execution>
                      <execution>
+                         <id>sql-post-integration-test</id>
                          <phase>post-integration-test</phase>
                          <goals>
                              <goal>execute</goal>

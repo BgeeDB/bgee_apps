@@ -13,6 +13,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import static org.mockito.Mockito.*;
@@ -123,7 +124,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * @throws SQLException                 If an error occurred while creating 
      *                                      the database.
      */
-    protected void createDatabase(String dbName) throws SQLException  {
+    protected void createAndUseDatabase(String dbName) throws SQLException  {
         log.entry(dbName);
         
         String testDbName = this.getTestDbName(dbName);
@@ -133,9 +134,12 @@ public abstract class MySQLITAncestor extends TestAncestor{
         MySQLDAOManager manager = (MySQLDAOManager) DAOManager.getDAOManager();
         BgeeConnection con = manager.getConnection();
         
-        //create and use the database
-        BgeePreparedStatement stmt = con.prepareStatement("Create database ?");
-        stmt.setString(1, testDbName);
+        //drop, create, and use the database
+        //I don-t know why, but I can't use a prepared statement for database commands
+        BgeePreparedStatement stmt = con.prepareStatement("drop database if exists " + testDbName);
+        stmt.executeUpdate();
+        stmt = con.prepareStatement("create database " + testDbName);
+        stmt.executeUpdate();
         //we close this connection as we are going to change the database used
         con.close();
         manager.setDatabaseToUse(testDbName);
@@ -147,11 +151,14 @@ public abstract class MySQLITAncestor extends TestAncestor{
         //(yes, we cheat; this is because it is complicated to switch the database used 
         //by a real DataSource)
         DataSource dataSource = mock(DataSource.class);
+        SingleConnectionDataSource dataSource2 = 
+            new SingleConnectionDataSource(manager.getConnection().getRealConnection(), 
+                    false);
         when(dataSource.getConnection()).thenReturn(
                 manager.getConnection().getRealConnection());
         
         //run the scripts
-        JdbcTemplate template = new JdbcTemplate(dataSource);
+        JdbcTemplate template = new JdbcTemplate(dataSource2);
         //create db
         Resource resource = new FileSystemResource(System.getProperty(SCHEMAFILEKEY));
         JdbcTestUtils.executeSqlScript(template, resource, false);
@@ -171,8 +178,10 @@ public abstract class MySQLITAncestor extends TestAncestor{
         
         MySQLDAOManager manager = (MySQLDAOManager) DAOManager.getDAOManager();
         BgeeConnection con = manager.getConnection();
-        BgeePreparedStatement stmt = con.prepareStatement("Drop database ?");
-        stmt.setString(1, this.getTestDbName(dbName));
+        //I don't know why but I can't use prepared statement for database commands.
+        BgeePreparedStatement stmt = con.prepareStatement("Drop database " + 
+            this.getTestDbName(dbName));
+        stmt.executeUpdate();
         //we close this connection as we are going to change the database used
         con.close();
         manager.setDatabaseToUse(null);

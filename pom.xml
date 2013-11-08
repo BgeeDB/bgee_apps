@@ -63,6 +63,22 @@
 	    <bgee.database.file.foreignkey>
 		    ${basedir}/../../pipeline/pipeline/db_creation/bgeeForeignKey.sql
 	    </bgee.database.file.foreignkey>
+	    
+	    <!-- here, we provide the name of the test Bgee database that should be 
+	         populated with test data for integration tests of SELECT statements. 
+	         Note that the name of this database MUST start with "bgeeIntegrationTest_"-->
+        <bgee.database.test.name>bgeeIntegrationTest_select</bgee.database.test.name>
+        <!-- and here, the path to the dump file containing the test data, used 
+             to populate the database used for integration tests of SELECT statements -->
+        <bgee.database.file.dump.test>
+            ${basedir}/src/test/resources/sql/testDatDump.sql
+        </bgee.database.file.dump.test>
+        
+        <!-- Here we provide the path to a SQL file defining and calling a procedure 
+             to drop all databases used for integration tests. -->
+        <bgee.database.file.drop.procedure>
+            ${basedir}/src/test/resources/sql/dropTestDatabases.sql
+        </bgee.database.file.drop.procedure>
 	</properties>
 
 	<repositories>

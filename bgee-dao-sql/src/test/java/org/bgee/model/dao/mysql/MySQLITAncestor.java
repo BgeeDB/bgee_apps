@@ -4,6 +4,7 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
@@ -16,8 +17,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
-import static org.mockito.Mockito.*;
-
 /**
  * Super class of all classes performing integration tests on a real MySQL database. 
  * The following conditions must be met (the take home message is: if you run 
@@ -28,6 +27,20 @@ import static org.mockito.Mockito.*;
  * (these properties would be usually set by Maven through configuration of 
  * the {@code pom.xml} file, but you can provide them as you wish): 
  * <ul>
+ * <li>Property associated to the key {@link #POPULATEDDBKEY} to specify 
+ * the name of the test database populated with test data, to run integration tests 
+ * of SELECT statements. 
+ * <li>Property associated to the key {@link #EMPTYDBKEY} to specify 
+ * the name of the empty test database, used to run independent integration tests 
+ * of INSERT statements. Tests that might overlap, using the same tables, 
+ * should create and drop their own database instance (see 
+ * {@link #createAndUseDatabase(String)} and {@link #dropDatabase(String)}).
+ * <li>Property associated to the key {@link #SCHEMAFILEKEY} to specify 
+ * the path to the SQL file allowing to create the Bgee database. This will be used 
+ * to create independent instances of the database to perform insertion tests.
+ * <li>Property associated to the key {@link #DBNAMEPREFIXKEY} to specify how 
+ * to prefix the name of all databases created during these integration tests, 
+ * in order to automatically delete them if needed.
  * <li>Property associated to the key {@link MySQLDAOManager#JDBCDRIVERNAMESKEY} 
  * to specify the class names of the JDBC {@code Driver}s to use.
  * <li>Property associated to the key {@link MySQLDAOManager#JDBCURLKEY} to provide 
@@ -38,23 +51,17 @@ import static org.mockito.Mockito.*;
  * <li>Property associated to the key {@link MySQLDAOManager#PASSWORDKEY} to specify 
  * the password to connect as root to the database. Or it can be provided in the 
  * connection URL.
- * <li>Property associated to the key {@link MySQLDAOManager#SCHEMAFILEKEY} to specify 
- * the path to the SQL file allowing to create the Bgee database. This will be used 
- * to create independent instances of the database to perform insertion tests.
- * <li>Property associated to the key {@link MySQLDAOManager#DBPOPULATEDKEY} to specify 
- * the name of the test database populated with test data, to run integration tests 
- * of SELECT statements. 
  * </ul>
  * 
  * <h3>Create a database for testing SELECT statements</h3>
  * The integration tests for SELECT statements will assume that it exists a database 
  * (with the name provided through System property associated to the key 
- * {@link MySQLDAOManager#DBPOPULATEDKEY}) that already contains the expected 
+ * {@link #POPULATEDDBKEY}) that already contains the expected 
  * test data. The dump containing the test data to load is located at 
  * {@code src/test/resources/sql/testDataDump.sql}. 
  * <p>
  * The database will be automatically created and populated before the tests 
- * if you run the tests through Maven, as the @code maven-failsafe-plugin} 
+ * if you run the tests through Maven, as the {@code maven-failsafe-plugin} 
  * is configured to do it. (and it will be automatically dropped after the tests 
  * as well).
  * 
@@ -62,7 +69,7 @@ import static org.mockito.Mockito.*;
  * If some tests failed, the databases created for running the tests might not have 
  * been dropped. You should drop all databases starting with {@link #DBNAMEPREFIX}, 
  * and the database which the name has been provided through System properties 
- * using the key {@link #DBPOPULATEDKEY}. 
+ * using the key {@link #POPULATEDDBKEY}. 
  * This will be done automatically if you run these tests through Maven, as the 
  * {@code maven-failsafe-plugin} is configured to do it.
  * 
@@ -71,7 +78,27 @@ import static org.mockito.Mockito.*;
  * @since Bgee 13
  */
 public abstract class MySQLITAncestor extends TestAncestor{
+    /**
+     * {@code Logger} of the class.
+     */
     private final static Logger log = LogManager.getLogger(MySQLITAncestor.class.getName());
+    
+    /**
+     * A {@code String} that is the key to retrieve from the System properties 
+     * the name of the test Bgee database populated with test data, in order 
+     * to run integration tests of SELECT statements.
+     */
+    protected static final String POPULATEDDBKEYKEY = "bgee.database.test.select.name";
+    /**
+     * A {@code String} that is the key to retrieve from the System properties 
+     * the name of the empty test Bgee database, used to run integration tests 
+     * of independent INSERT statements, using different tables. INSERT integration 
+     * tests that might be overlapping should create and drop their own database 
+     * instance using the methods {@link #createAndUseDatabase(String)} and 
+     * {@link #dropDatabase(String)}.
+     */
+    protected static final String EMPTYDBKEY = "bgee.database.test.insert.name";
+    
     /**
      * A {@code String} that is the key to retrieve from the System properties 
      * the path to the SQL file containing the schema of the Bgee database, 
@@ -80,24 +107,28 @@ public abstract class MySQLITAncestor extends TestAncestor{
     protected static final String SCHEMAFILEKEY = "bgee.database.file.schema";
     /**
      * A {@code String} that is the key to retrieve from the System properties 
-     * the name of the test Bgee database populated with test data, in order 
-     * to run integration tests of SELECT statements.
+     * the prefix to append to the name of any database created using 
+     * {@link #createDatabase(String)}. This is to ensure that all databases created 
+     * by these integration tests will be deleted after execution of the tests, 
+     * even if an error occurs during the tests.
      */
-    protected static final String DBPOPULATEDKEY = "bgee.database.test.name";
+    protected static final String DBNAMEPREFIXKEY = "bgee.database.name.prefix";
     
     /**
-     * A {@code String} that will be used as a prefix appended to the name 
-     * of the databases created using {@link #createDatabase(String)}. This is 
-     * to ensure that all databases created for test purpose will be deleted 
-     * after execution of the tests, even if an error occurs during the tests.
-     */
-    protected static final String DBNAMEPREFIX = "bgeeIntegrationTest_";
-    
-    /**
-     * Default constructor.
+     * Default constructor. Checks that mandatory System properties are provided.
+     * Does not check properties that should be used by the MySQLDAOManager, 
+     * it will do it itself. If a property is missing, an {@code IllegalStateException} 
+     * will be thrown.
+     * @throws IllegalStateException    If a needed System property is missing.
      */
     public MySQLITAncestor() {
         super();
+        if (StringUtils.isBlank(System.getProperty(DBNAMEPREFIXKEY))) {
+            throw log.throwing(new IllegalStateException("A database name prefix " +
+            		"must be provided in order to track the test databses"));
+        }
+        //if some other properties are missing, then the test will just fail, 
+        //we do not check.
     }
     @Override
     protected Logger getLogger() {
@@ -114,11 +145,12 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * databases, to avoid collision of the tests. After performing the tests, 
      * the caller should use {@code dropDatabase(String)}.
      * <p> 
-     * This method will append {@link #DBNAMEPREFIX} to {@code dbName} to create 
-     * the database. This is to ensure that all databases created for test purpose 
-     * will be deleted after execution of the tests, even if an error occurs during 
-     * the tests. It is not necessary to append the prefix when calling 
-     * {@code dropDatabase(String)}. This modification should be invisible to callers.
+     * This method will append to {@code dbName} the value associated in System 
+     * properties to the key {@link #DBNAMEPREFIXKEY}, to create the database. 
+     * This is to ensure that all databases created for test purpose will be deleted 
+     * after execution of the tests, even if an error occurs during the tests. 
+     * It is not necessary to append the prefix when calling {@code dropDatabase(String)}. 
+     * This modification should be invisible to callers.
      * 
      * @param dbName    A {@code String} that is the name of the database to create.
      * @throws SQLException                 If an error occurred while creating 
@@ -147,18 +179,11 @@ public abstract class MySQLITAncestor extends TestAncestor{
         //use of the Spring framework to execute .sql scripts.
         
         //First, we need a DataSource to provide to the Spring framework
-        //we create a fake one that will use the Connection provided by the MySQLDAOManager 
-        //(yes, we cheat; this is because it is complicated to switch the database used 
-        //by a real DataSource)
-        DataSource dataSource = mock(DataSource.class);
-        SingleConnectionDataSource dataSource2 = 
-            new SingleConnectionDataSource(manager.getConnection().getRealConnection(), 
-                    false);
-        when(dataSource.getConnection()).thenReturn(
-                manager.getConnection().getRealConnection());
+        DataSource dataSource = new SingleConnectionDataSource(
+                manager.getConnection().getRealConnection(), false);
         
         //run the scripts
-        JdbcTemplate template = new JdbcTemplate(dataSource2);
+        JdbcTemplate template = new JdbcTemplate(dataSource);
         //create db
         Resource resource = new FileSystemResource(System.getProperty(SCHEMAFILEKEY));
         JdbcTestUtils.executeSqlScript(template, resource, false);
@@ -197,6 +222,6 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * @return          A {@code String} that is a modified version of {@code dbName}.
      */
     private String getTestDbName(String dbName) {
-        return DBNAMEPREFIX + dbName;
+        return System.getProperty(DBNAMEPREFIXKEY) + dbName;
     }
 }

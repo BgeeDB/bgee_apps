@@ -3,12 +3,17 @@
 -- and the databases were not dropped properly. This file is notably used by 
 -- the sql-maven-plugin, during the post-integration-test of the maven-failsafe-plugin 
 
--- a proceure need to be attqached to a database, so we use the test database
-use test;
+-- Thie file is tuned to be functional for the sql-maven-plugin, this explains why we need 
+-- this weird semicolons alone on some lines.
 
-DROP PROCEDURE IF EXISTS dropBgeeIntegrationTestDBs;
+-- If you need to run this file yourself in standalone, uncomment the following line:
+-- use test;
+ 
+DROP PROCEDURE IF EXISTS dropBgeeIntegrationTestDBs
+;
 
-DELIMITER $$
+-- If you need to run this file yourself in standalone, uncomment the following line:
+-- DELIMITER //
 
 CREATE PROCEDURE dropBgeeIntegrationTestDBs()
 BEGIN
@@ -34,9 +39,13 @@ END LOOP;
 
 CLOSE cur;
 
-END$$
+END
+-- If you need to run this file yourself in standalone, uncomment the following lines:
+-- //
+-- DELIMITER ;
+;
 
-DELIMITER ;
-
-CALL dropBgeeIntegrationTestDBs;
-DROP PROCEDURE dropBgeeIntegrationTestDBs;
+CALL dropBgeeIntegrationTestDBs
+;
+DROP PROCEDURE dropBgeeIntegrationTestDBs
+;

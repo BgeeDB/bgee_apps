@@ -43,6 +43,18 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		
+        <!-- We create the property skip.surefire.tests to override the property 
+             skipTests of the surefire plugin. This is because using skipTests=true 
+             also skips integration tests, while we would like to be able to run 
+             integration tests and to skip unit tests. So, to skip unit test, 
+             we would use the property skip.surefire.tests=true.
+             But in that case, using skipTests=true would not skip unit tests 
+             anymore. So we default skip.surefire.tests to skipTests, and 
+             everything is back to normal, we just have a new additional property 
+             allowing to skip unit tests but not integration tests.
+             See http://stackoverflow.com/a/17932772/1768736 -->
+        <skip.surefire.tests>${skipTests}</skip.surefire.tests>
+		
 		<!-- The following properties are used for integration tests -->
 		
         <!-- Define here the JDBC Driver class name and connection URL 
@@ -57,17 +69,16 @@
         <bgee.database.name.prefix>bgeeIntegrationTest_</bgee.database.name.prefix>
         <!-- here, we provide the name of the test Bgee database that should be 
              populated with test data for integration tests of SELECT statements. 
-             Note that the name of this database should NOT start with bgee.database.name.prefix, 
-             as this will allow to NOT drop this populated database between tests (but you can 
-             still re-activate the behavior of dropping this database in the configuration 
-             of the sql-maven-plugin, in this pom.xml)-->
-        <bgee.database.test.select.name>bgeeSelectIntegrationTestDB</bgee.database.test.select.name>
+             Note that the name of this database must start with bgee.database.name.prefix, 
+             to be properly dropped by the sql-maven-plugin -->
+        <bgee.database.test.select.name>${bgee.database.name.prefix}select</bgee.database.test.select.name>
         <!-- here, we provide the name of the empty test Bgee database, used to proceed to 
              INSERT/UPDATE integration tests. This test database will be used by integration 
              tests not overlapping. For integration tests that potentially use the same tables, 
              they will create their own database instance (still with a name starting with 
              bgee.database.name.prefix).
-             Note that the name of this database must start with bgee.database.name.prefix-->
+             Note that the name of this database must start with bgee.database.name.prefix, 
+             to be properly dropped by the sql-maven-plugin -->
         <bgee.database.test.insert.name>${bgee.database.name.prefix}insert</bgee.database.test.insert.name>
         
         <!-- Here we provide the paths to the SQL files to create the Bgee database -->
@@ -89,22 +100,11 @@
         <bgee.database.file.dump.test>
             ${basedir}/src/test/resources/sql/testDataDump.sql
         </bgee.database.file.dump.test>
-        
         <!-- Here we provide the path to a SQL file defining and calling a procedure 
              to drop all databases used for integration tests. -->
         <bgee.database.file.drop.procedure>
-            ${basedir}/src/test/resources/sql/dropInsertTestDatabases.sql
+            ${basedir}/src/test/resources/sql/dropTestDatabases.sql
         </bgee.database.file.drop.procedure>
-        <!-- here we define whether the database used to test SELECT statements 
-             should be dropped at the end of the integration tests. This allows 
-             to override this property from the maven command line. 
-             We use a trick that the value of this property will be appended 
-             at the beginning of a SQL statement ' database ${bgee.database.test.select.name}'.
-             This way, users only need to provide the parameter DROP in order to drop 
-             this database. Any other value will just make the statement to fail. 
-             Example of use: 
-             mvn verify -Dbgee.database.test.select.drop=DROP -->
-        <bgee.database.test.select.drop>CREATE</bgee.database.test.select.drop>
         
 	</properties>
 
@@ -294,6 +294,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.14.1</version>
+                <configuration>
+                    <!-- Property createe to skip surefire tests without skipping failsafe tests.
+                         Property value is default to skipTests so that we can still skip 
+                         unit tests by using skipTests. See the documentation of the property 
+                         skip.surefire.tests in this file for more details. -->
+                    <skipTests>${skip.surefire.tests}</skipTests>
+                </configuration>
             </plugin>
             
             <!-- Generates sources and javadoc -->
@@ -421,16 +428,16 @@
                          Executions bound to the pre-integration-test phase 
                          of the maven-failsafe-plugin 
                          ************************************** -->
-                    <!-- Drop any potential database used to test INSERT statements -->
+                    <!-- Drop any potential test database still existing (it should not) -->
                      <execution>
-                         <id>pre-integration-test-drop-db</id>
+                         <id>pre-integration-test-drop-dbs</id>
                          <phase>pre-integration-test</phase>
                          <goals>
                              <goal>execute</goal>
                          </goals>
                          <configuration>
                              <!-- we use the test database here, as we need to attach our procedure 
-                                  to a database -->
+                                  to drop all test databases to an existing database -->
                              <url>${bgee.jdbc.connectionURL}test</url>
                              <autocommit>true</autocommit>
                              <delimiterType>row</delimiterType>
@@ -440,50 +447,43 @@
                          </configuration>
                      </execution>
                      
-                     <!-- Create the database used to test independent INSERT statements -->
+                     <!-- Create the database used to test independent INSERT statements, 
+                          and the database used to test SELECT statements that will be 
+                          populated with data. -->
                      <execution>
-                         <id>pre-integration-test-create-insert-db</id>
+                         <id>pre-integration-test-create-dbs</id>
                          <phase>pre-integration-test</phase>
                          <goals>
                              <goal>execute</goal>
                          </goals>
                          <configuration>
                              <autocommit>true</autocommit>
-                             <sqlCommand>CREATE DATABASE ${bgee.database.test.insert.name};</sqlCommand>
-                         </configuration>
-                     </execution>
-                     
-                     <!-- Create the database used to test SELECT statements -->
-                     <execution>
-                         <id>pre-integration-test-create-select-db</id>
-                         <phase>pre-integration-test</phase>
-                         <goals>
-                             <goal>execute</goal>
-                         </goals>
-                         <configuration>
-                             <autocommit>true</autocommit>
-                             <!-- we want this command to fail if the DB already exists. -->
                              <sqlCommand>
+                                 CREATE DATABASE ${bgee.database.test.insert.name};
                                  CREATE DATABASE ${bgee.database.test.select.name};
                              </sqlCommand>
-                             <sqlFiles>
-                                 <!-- change the URL to connect to this database -->
-                                 <url>${bgee.jdbc.connectionURL}${bgee.database.test.select.name}</url>
-                                 <sqlFile>${bgee.database.file.schema}</sqlFile>
-                                 <srcFile>${bgee.database.file.dump.test}</srcFile>
-                                 <sqlFile>${bgee.database.file.constraint}</sqlFile>
-                                 <sqlFile>${bgee.database.file.index}</sqlFile>
-                                 <sqlFile>${bgee.database.file.foreignkey}</sqlFile>
-                             </sqlFiles>
-                             
-                             <!-- If it fails we expect that it is because the db already exists. -->
-                             <onError>continue</onError>
                          </configuration>
                      </execution>
                      
-                     <!-- Try to populate with data the database used to test SELECT statements.
-                          The insertion script will make the insertions only if there are no data 
-                          already in the database, so we can safely call it -->
+                     <!-- Populate the database used to test INSERT statements 
+                          (only the tables are inserted). -->
+                     <execution>
+                         <id>pre-integration-test-populate-insert-db</id>
+                         <phase>pre-integration-test</phase>
+                         <goals>
+                             <goal>execute</goal>
+                         </goals>
+                         <configuration>
+                             <!-- change the URL to use the database -->
+                             <url>${bgee.jdbc.connectionURL}${bgee.database.test.insert.name}</url>
+                             <autocommit>true</autocommit>
+                             <srcFiles>
+                                 <srcFile>${bgee.database.file.schema}</srcFile>
+                             </srcFiles>
+                         </configuration>
+                     </execution>
+                     
+                     <!-- Populate the database used to test SELECT statements. -->
                      <execution>
                          <id>pre-integration-test-populate-select-db</id>
                          <phase>pre-integration-test</phase>
@@ -494,9 +494,13 @@
                              <!-- change the URL to use the database -->
                              <url>${bgee.jdbc.connectionURL}${bgee.database.test.select.name}</url>
                              <autocommit>true</autocommit>
-                             <!-- <srcFiles>
+                             <srcFiles>
+                                 <srcFile>${bgee.database.file.schema}</srcFile>
                                  <srcFile>${bgee.database.file.dump.test}</srcFile>
-                             </srcFiles>-->
+                                 <srcFile>${bgee.database.file.constraint}</srcFile>
+                                 <srcFile>${bgee.database.file.index}</srcFile>
+                                 <srcFile>${bgee.database.file.foreignkey}</srcFile> 
+                             </srcFiles>
                          </configuration>
                      </execution>
                      
@@ -505,7 +509,8 @@
                          Executions bound to the post-integration-test phase 
                          of the maven-failsafe-plugin 
                          ************************************** -->
-                     <!-- Drop any potential database used to test INSERT statements -->
+                     <!-- Drop the test databases, including those that might have been created 
+                          by the Java integration tests. -->
                      <execution>
                          <id>post-integration-test-drop-db</id>
                          <phase>post-integration-test</phase>
@@ -514,33 +519,13 @@
                          </goals>
                          <configuration>
                              <!-- we use the test database here, as we need to attach our procedure 
-                                  to a database -->
+                                  to drop all test databases to an existing database -->
                              <url>${bgee.jdbc.connectionURL}test</url>
                              <autocommit>true</autocommit>
                              <delimiterType>row</delimiterType>
                              <srcFiles>
                                  <srcFile>${bgee.database.file.drop.procedure}</srcFile>
                              </srcFiles>
-                         </configuration>
-                     </execution>
-                     
-                     <!-- Drop the populated database used to test SELECT statements, 
-                          only if the caller asked to drop it (in that case, 
-                          ${bgee.database.test.select.drop} should be equal to 'DROP'). -->
-                     <execution>
-                         <id>post-integration-test-drop-select-db</id>
-                         <phase>post-integration-test</phase>
-                         <goals>
-                             <goal>execute</goal>
-                         </goals>
-                         <configuration>
-                             <autocommit>true</autocommit>
-                             <sqlCommand>
-                                 ${bgee.database.test.select.drop} DATABASE ${bgee.database.test.select.name};
-                             </sqlCommand>
-                             <!-- If the command fails it is because the caller provided another 
-                                  parameter than DROP, not to drop the test database. -->
-                             <onError>continue</onError>
                          </configuration>
                      </execution>
                      

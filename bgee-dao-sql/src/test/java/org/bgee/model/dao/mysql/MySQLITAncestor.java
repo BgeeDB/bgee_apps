@@ -4,7 +4,6 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
@@ -38,9 +37,6 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * <li>Property associated to the key {@link #SCHEMAFILEKEY} to specify 
  * the path to the SQL file allowing to create the Bgee database. This will be used 
  * to create independent instances of the database to perform insertion tests.
- * <li>Property associated to the key {@link #DBNAMEPREFIXKEY} to specify how 
- * to prefix the name of all databases created during these integration tests, 
- * in order to automatically delete them if needed.
  * <li>Property associated to the key {@link MySQLDAOManager#JDBCDRIVERNAMESKEY} 
  * to specify the class names of the JDBC {@code Driver}s to use.
  * <li>Property associated to the key {@link MySQLDAOManager#JDBCURLKEY} to provide 
@@ -53,23 +49,27 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * connection URL.
  * </ul>
  * 
- * <h3>Create a database for testing SELECT statements</h3>
+ * <h3>Test databases requested</h3>
  * The integration tests for SELECT statements will assume that it exists a database 
  * (with the name provided through System property associated to the key 
  * {@link #POPULATEDDBKEY}) that already contains the expected 
  * test data. The dump containing the test data to load is located at 
  * {@code src/test/resources/sql/testDataDump.sql}. 
- * <p>
- * The database will be automatically created and populated before the tests 
+ * This database will be automatically created and populated before the tests 
  * if you run the tests through Maven, as the {@code maven-failsafe-plugin} 
  * is configured to do it. (and it will be automatically dropped after the tests 
- * as well).
+ * as well). This behavior can be modified, see {@code bgee-applicatioons/pom.xml}.
+ * <p>
+ * The integration tests for INSERT statements will assume that it exists an empty 
+ * database, with only tables already created (with the name provided through 
+ * System property associated to the key {@link #EMPTYDBKEY}). 
+ * This database will be automatically created before the tests and dropped after 
+ * the tests if you run the tests through Maven. This behavior can be modified, 
+ * see {@code bgee-applicatioons/pom.xml}.
  * 
  * <h3>Cleaning after tests</h3>
  * If some tests failed, the databases created for running the tests might not have 
- * been dropped. You should drop all databases starting with {@link #DBNAMEPREFIX}, 
- * and the database which the name has been provided through System properties 
- * using the key {@link #POPULATEDDBKEY}. 
+ * been dropped. You should drop all databases starting with {@link #DBNAMEPREFIX}.
  * This will be done automatically if you run these tests through Maven, as the 
  * {@code maven-failsafe-plugin} is configured to do it.
  * 
@@ -105,14 +105,16 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * to create it. This is used to create independent databases for insertion tests.
      */
     protected static final String SCHEMAFILEKEY = "bgee.database.file.schema";
+    
     /**
-     * A {@code String} that is the key to retrieve from the System properties 
-     * the prefix to append to the name of any database created using 
-     * {@link #createDatabase(String)}. This is to ensure that all databases created 
-     * by these integration tests will be deleted after execution of the tests, 
-     * even if an error occurs during the tests.
+     * A {@code String} that the prefix to append to the name of any database 
+     * created using {@link #createDatabase(String)}. This is to ensure that all 
+     * databases created by these integration tests will be deleted after execution 
+     * of the tests, even if an error occurs during the tests. This property is 
+     * hardcoded, rather than provided through System properties, to be sure 
+     * it cannot be changed, which could result in unexpected database deletions.
      */
-    protected static final String DBNAMEPREFIXKEY = "bgee.database.name.prefix";
+    protected static final String DBNAMEPREFIX = "bgeeIntegrationTest_";
     
     /**
      * Default constructor. Checks that mandatory System properties are provided.
@@ -123,12 +125,10 @@ public abstract class MySQLITAncestor extends TestAncestor{
      */
     public MySQLITAncestor() {
         super();
-        if (StringUtils.isBlank(System.getProperty(DBNAMEPREFIXKEY))) {
-            throw log.throwing(new IllegalStateException("A database name prefix " +
-            		"must be provided in order to track the test databses"));
-        }
-        //if some other properties are missing, then the test will just fail, 
-        //we do not check.
+        //actually there are no more properties to be checked as this point 
+        //(it used to be).
+        //if some of the existing properties are missing, then the tests will 
+        //just fail, so we do not check.
     }
     @Override
     protected Logger getLogger() {
@@ -145,8 +145,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * databases, to avoid collision of the tests. After performing the tests, 
      * the caller should use {@code dropDatabase(String)}.
      * <p> 
-     * This method will append to {@code dbName} the value associated in System 
-     * properties to the key {@link #DBNAMEPREFIXKEY}, to create the database. 
+     * This method will append to the start of {@code dbName} the prefix 
+     * {@link #DBNAMEPREFIX}, to create the database. 
      * This is to ensure that all databases created for test purpose will be deleted 
      * after execution of the tests, even if an error occurs during the tests. 
      * It is not necessary to append the prefix when calling {@code dropDatabase(String)}. 
@@ -222,6 +222,6 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * @return          A {@code String} that is a modified version of {@code dbName}.
      */
     private String getTestDbName(String dbName) {
-        return System.getProperty(DBNAMEPREFIXKEY) + dbName;
+        return DBNAMEPREFIX + dbName;
     }
 }

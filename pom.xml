@@ -63,23 +63,43 @@
         <!-- Do not put the database name nor any query string parameters, e.g., 
              jdbc:mysql://[host][,failoverhost...][:port]/ -->
         <bgee.jdbc.connectionURL>jdbc:mysql://127.0.0.1/</bgee.jdbc.connectionURL> 
-        <!-- A prefix that all test database name should start with. This is to allow 
-             to drop them all after integration tests, even those created by the Java application 
-             and not dropped because of execution errors. -->
-        <bgee.database.name.prefix>bgeeIntegrationTest_</bgee.database.name.prefix>
+        
         <!-- here, we provide the name of the test Bgee database that should be 
-             populated with test data for integration tests of SELECT statements. 
-             Note that the name of this database must start with bgee.database.name.prefix, 
-             to be properly dropped by the sql-maven-plugin -->
-        <bgee.database.test.select.name>${bgee.database.name.prefix}select</bgee.database.test.select.name>
+             populated with test data for integration tests of SELECT statements 
+             (see bgee.database.file.dump.test for the path to the dump file populating 
+             this test database). 
+             The default name of this database starts with the prefix 'bgeeIntegrationTest_', 
+             so that it will be automatically dropped by the sql-maven-plugin after 
+             integration tests. This prefix is not a property to be sure it cannot be changed, 
+             which could result in unexpected database deletions. 
+             You can override this property to provide your own database name, not starting 
+             with this prefix, so that this database will not be deleted after integration 
+             tests, allowing a much faster re-launch. In that case, you should disable 
+             the populating of the database by setting bgee.database.test.select.populate 
+             to true (once it has been populated of course). -->
+        <bgee.database.test.select.name>bgeeIntegrationTest_select</bgee.database.test.select.name>
+        <!-- Properties used to skip the creation and populating of the database 
+             ${bgee.database.test.select.name}. See this property documentation 
+             for more details. -->
+        <bgee.database.test.skip.populate>false</bgee.database.test.skip.populate>
+        
         <!-- here, we provide the name of the empty test Bgee database, used to proceed to 
              INSERT/UPDATE integration tests. This test database will be used by integration 
-             tests not overlapping. For integration tests that potentially use the same tables, 
-             they will create their own database instance (still with a name starting with 
-             bgee.database.name.prefix).
-             Note that the name of this database must start with bgee.database.name.prefix, 
-             to be properly dropped by the sql-maven-plugin -->
-        <bgee.database.test.insert.name>${bgee.database.name.prefix}insert</bgee.database.test.insert.name>
+             tests not overlapping. Java classes running integration tests that could overlap 
+             (by using common tables for instance) will create their own additional databases.
+             The default name of this database starts with the prefix 'bgeeIntegrationTest_', 
+             so that it will be automatically dropped by the sql-maven-plugin after 
+             integration tests. This prefix is not a property to be sure it cannot be changed, 
+             which could result in unexpected database deletions. 
+             You can override this property to provide your own database name, not starting 
+             with this prefix, so that this database will not be deleted after integration 
+             tests (should be totally useless, but maybe you are crazy and want to inspect 
+             the data inserted yourself). It will be automatically created, do not create 
+             it yourself before running the tests. There is no property defined to avoid 
+             creating this database, because it is really a useless feature. So you will 
+             need to remove this database yourself if you intend to reuse the same name 
+             afterwards. -->
+        <bgee.database.test.insert.name>bgeeIntegrationTest_insert</bgee.database.test.insert.name>
         
         <!-- Here we provide the paths to the SQL files to create the Bgee database -->
         <bgee.database.file.schema>
@@ -376,9 +396,6 @@
                              This will be used by integrationt tests that need to create their own 
                              database instance for INSERT testing. -->
                         <bgee.database.file.schema>${bgee.database.file.schema}</bgee.database.file.schema>
-                        <!-- And we provide the prefix that should be used to name all test 
-                             databases created during the tests -->
-                        <bgee.database.name.prefix>${bgee.database.name.prefix}</bgee.database.name.prefix>
                         
                     </systemPropertyVariables>
                 </configuration>
@@ -428,7 +445,10 @@
                          Executions bound to the pre-integration-test phase 
                          of the maven-failsafe-plugin 
                          ************************************** -->
-                    <!-- Drop any potential test database still existing (it should not) -->
+                    <!-- Drop any potential test database still existing (it should not).
+                         The name of the databases to drop must start with 'bgeeIntegrationTest_'.
+                         This prefix is not a property to be sure it cannot be changed, 
+                         which could result in unexpected database deletions. -->
                      <execution>
                          <id>pre-integration-test-drop-dbs</id>
                          <phase>pre-integration-test</phase>
@@ -441,23 +461,16 @@
                              <url>${bgee.jdbc.connectionURL}test</url>
                              <autocommit>true</autocommit>
                              <delimiterType>row</delimiterType>
-                             <!-- the variable @bgeeTestDBPrefix allows to provide the prefix 
-                                  of the name of the test databases. Its default is 'bgeeIntegrationTest_'.
-                                  It is possible to do that because, by chance, the sql-maven-plugin 
-                                  executes sqlCommand before srcFiles, but this might maybe change 
-                                  someday...-->
-                             <sqlCommand>SET @bgeeTestDBPrefix='${bgee.database.name.prefix}'</sqlCommand>
                              <srcFiles>
                                  <srcFile>${bgee.database.file.drop.procedure}</srcFile>
                              </srcFiles>
                          </configuration>
                      </execution>
                      
-                     <!-- Create the database used to test independent INSERT statements, 
-                          and the database used to test SELECT statements that will be 
-                          populated with data. -->
+                     <!-- Create the database used to test independent INSERT statements 
+                          with the name ${bgee.database.test.insert.name}. -->
                      <execution>
-                         <id>pre-integration-test-create-dbs</id>
+                         <id>pre-integration-test-create-insert-db</id>
                          <phase>pre-integration-test</phase>
                          <goals>
                              <goal>execute</goal>
@@ -466,13 +479,12 @@
                              <autocommit>true</autocommit>
                              <sqlCommand>
                                  CREATE DATABASE ${bgee.database.test.insert.name};
-                                 CREATE DATABASE ${bgee.database.test.select.name};
                              </sqlCommand>
                          </configuration>
                      </execution>
                      
-                     <!-- Populate the database used to test INSERT statements 
-                          (only the tables are inserted). -->
+                     <!-- Insert tables into the database used to test INSERT statements 
+                          with the name ${bgee.database.test.insert.name}. -->
                      <execution>
                          <id>pre-integration-test-populate-insert-db</id>
                          <phase>pre-integration-test</phase>
@@ -489,7 +501,33 @@
                          </configuration>
                      </execution>
                      
-                     <!-- Populate the database used to test SELECT statements. -->
+                     <!-- Create the database used to test SELECT statements 
+                          with the name ${bgee.database.test.select.name}, that will be 
+                          populated with data. We do not create it at the same time as 
+                          ${bgee.database.test.insert.name}, because its creation can be
+                          skipped, using the parameter ${bgee.database.test.skip.populate}. 
+                          See the documentation of the property ${bgee.database.test.select.name} 
+                          for more details. -->
+                     <execution>
+                         <id>pre-integration-test-create-select-db</id>
+                         <phase>pre-integration-test</phase>
+                         <goals>
+                             <goal>execute</goal>
+                         </goals>
+                         <configuration>
+                             <skip>${bgee.database.test.skip.populate}</skip>
+                             <autocommit>true</autocommit>
+                             <sqlCommand>
+                                 CREATE DATABASE ${bgee.database.test.select.name};
+                             </sqlCommand>
+                         </configuration>
+                     </execution>
+                     
+                     <!-- Populate the database used to test SELECT statements 
+                          with the name ${bgee.database.test.select.name}. This step can be
+                          skipped by using the parameter ${bgee.database.test.skip.populate}. 
+                          See the documentation of the property ${bgee.database.test.select.name} 
+                          for more details.. -->
                      <execution>
                          <id>pre-integration-test-populate-select-db</id>
                          <phase>pre-integration-test</phase>
@@ -497,6 +535,7 @@
                              <goal>execute</goal>
                          </goals>
                          <configuration>
+                             <skip>${bgee.database.test.skip.populate}</skip>
                              <!-- change the URL to use the database -->
                              <url>${bgee.jdbc.connectionURL}${bgee.database.test.select.name}</url>
                              <autocommit>true</autocommit>
@@ -516,9 +555,12 @@
                          of the maven-failsafe-plugin 
                          ************************************** -->
                      <!-- Drop the test databases, including those that might have been created 
-                          by the Java integration tests. -->
+                          by the Java integration tests. 
+                          The name of the databases to drop must start with 'bgeeIntegrationTest_'.
+                          This prefix is not a property to be sure it cannot be changed, 
+                          which could result in unexpected database deletions. -->
                      <execution>
-                         <id>post-integration-test-drop-db</id>
+                         <id>post-integration-test-drop-dbs</id>
                          <phase>post-integration-test</phase>
                          <goals>
                              <goal>execute</goal>
@@ -529,12 +571,6 @@
                              <url>${bgee.jdbc.connectionURL}test</url>
                              <autocommit>true</autocommit>
                              <delimiterType>row</delimiterType>
-                             <!-- the variable @bgeeTestDBPrefix allows to provide the prefix 
-                                  of the name of the test databases. Its default is 'bgeeIntegrationTest_'.
-                                  It is possible to do that because, by chance, the sql-maven-plugin 
-                                  executes sqlCommand before srcFiles, but this might maybe change 
-                                  someday...-->
-                             <sqlCommand>SET @bgeeTestDBPrefix='${bgee.database.name.prefix}'</sqlCommand>
                              <srcFiles>
                                  <srcFile>${bgee.database.file.drop.procedure}</srcFile>
                              </srcFiles>

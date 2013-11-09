@@ -6,9 +6,9 @@
 -- Thie file is tuned to be functional for the sql-maven-plugin, this explains why we need 
 -- this weird semicolons alone on some lines.
 
+
 -- If you need to run this file yourself in standalone, uncomment the following line:
 -- use test;
- 
  
 -- the variable @bgeeTestDBPrefix will allow maven to provide a user-defined value.
 SET @bgeeTestDBPrefix = IF (@bgeeTestDBPrefix is null OR @bgeeTestDBPrefix like '% %' OR 

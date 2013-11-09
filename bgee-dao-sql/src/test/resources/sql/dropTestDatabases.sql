@@ -9,6 +9,12 @@
 -- If you need to run this file yourself in standalone, uncomment the following line:
 -- use test;
  
+ 
+-- the variable @bgeeTestDBPrefix will allow maven to provide a user-defined value.
+SET @bgeeTestDBPrefix = IF (@bgeeTestDBPrefix is null OR @bgeeTestDBPrefix like '% %' OR 
+                        @bgeeTestDBPrefix like '%\%%', 'bgeeIntegrationTest_', @bgeeTestDBPrefix)
+;
+ 
 DROP PROCEDURE IF EXISTS dropBgeeIntegrationTestDBs
 ;
 
@@ -17,10 +23,12 @@ DROP PROCEDURE IF EXISTS dropBgeeIntegrationTestDBs
 
 CREATE PROCEDURE dropBgeeIntegrationTestDBs()
 BEGIN
+	
 
 DECLARE finished INTEGER DEFAULT 0;
 DECLARE dbname VARCHAR(255);
-DECLARE cur CURSOR FOR SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME like 'bgeeIntegrationTest_%';
+DECLARE cur CURSOR FOR SELECT SCHEMA_NAME FROM information_schema.SCHEMATA 
+                       WHERE SCHEMA_NAME like CONCAT(@bgeeTestDBPrefix, '%');
 DECLARE CONTINUE HANDLER FOR NOT FOUND SET finished = 1;
 
 OPEN cur;
@@ -43,6 +51,7 @@ END
 -- If you need to run this file yourself in standalone, uncomment the following lines:
 -- //
 -- DELIMITER ;
+
 ;
 
 CALL dropBgeeIntegrationTestDBs

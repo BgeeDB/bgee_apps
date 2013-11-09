@@ -441,6 +441,12 @@
                              <url>${bgee.jdbc.connectionURL}test</url>
                              <autocommit>true</autocommit>
                              <delimiterType>row</delimiterType>
+                             <!-- the variable @bgeeTestDBPrefix allows to provide the prefix 
+                                  of the name of the test databases. Its default is 'bgeeIntegrationTest_'.
+                                  It is possible to do that because, by chance, the sql-maven-plugin 
+                                  executes sqlCommand before srcFiles, but this might maybe change 
+                                  someday...-->
+                             <sqlCommand>SET @bgeeTestDBPrefix='${bgee.database.name.prefix}'</sqlCommand>
                              <srcFiles>
                                  <srcFile>${bgee.database.file.drop.procedure}</srcFile>
                              </srcFiles>
@@ -523,6 +529,12 @@
                              <url>${bgee.jdbc.connectionURL}test</url>
                              <autocommit>true</autocommit>
                              <delimiterType>row</delimiterType>
+                             <!-- the variable @bgeeTestDBPrefix allows to provide the prefix 
+                                  of the name of the test databases. Its default is 'bgeeIntegrationTest_'.
+                                  It is possible to do that because, by chance, the sql-maven-plugin 
+                                  executes sqlCommand before srcFiles, but this might maybe change 
+                                  someday...-->
+                             <sqlCommand>SET @bgeeTestDBPrefix='${bgee.database.name.prefix}'</sqlCommand>
                              <srcFiles>
                                  <srcFile>${bgee.database.file.drop.procedure}</srcFile>
                              </srcFiles>

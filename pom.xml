@@ -75,8 +75,8 @@
              You can override this property to provide your own database name, not starting 
              with this prefix, so that this database will not be deleted after integration 
              tests, allowing a much faster re-launch. In that case, you should disable 
-             the populating of the database by setting bgee.database.test.select.populate 
-             to true (once it has been populated of course). -->
+             the populating of the database by setting bgee.database.test.skip.populate 
+             to true (once it will have been populated of course). -->
         <bgee.database.test.select.name>bgeeIntegrationTest_select</bgee.database.test.select.name>
         <!-- Properties used to skip the creation and populating of the database 
              ${bgee.database.test.select.name}. See this property documentation 
@@ -331,6 +331,7 @@
 	          <executions>
 		        <execution>
 			      <id>attach-sources</id>
+			      <phase>install</phase>
 			      <goals>
 				    <goal>jar</goal>
 			      </goals>
@@ -344,6 +345,7 @@
 	          <executions>
 		        <execution>
 			      <id>attach-javadocs</id>
+			      <phase>install</phase>
 			      <goals>
 				    <goal>jar</goal>
 				    <goal>aggregate</goal>

@@ -136,6 +136,34 @@ public abstract class MySQLITAncestor extends TestAncestor{
     }
     
     /**
+     * Configures the {@code MySQLDAOManager} of the current thread to return 
+     * {@code BgeeConnection}s connected to the empty test Bgee database, 
+     * used to run integration tests of independent INSERT statements (the database 
+     * name should be associated to the key {@link #EMPTYDBKEY} is System properties).
+     * <p>
+     * The {@code MySQLDAOManager} can be set back to use the default database specified 
+     * by the JDBC connection URL by calling {@link #useDefaultDB()}.
+     * 
+     * @see #useDefaultDB()
+     */
+    protected void useEmptyDB() {
+        log.entry();
+        this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(EMPTYDBKEY));
+        log.exit();
+    }
+    
+    /**
+     * Configures the {@code MySQLDAOManager} of the current thread to return 
+     * {@code BgeeConnection}s connected to the default database specified by 
+     * the JDBC connection URL (or no database if the URL does not specify any). 
+     * This is useful after having forced the connection to use a particular 
+     * database (see for instance {@link #useEmptyDB()}).
+     */
+    protected void useDefaultDB() {
+        this.getMySQLDAOManager().setDatabaseToUse(null);
+    }
+    
+    /**
      * Create an instance of the Bgee database with the name {@code dbName}, and configure  
      * the {@code DAOManager} to use this database. The path to the file containing 
      * the Bgee schema should be provided in a System property associated to the key 
@@ -163,7 +191,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         //it is the responsibility of the client running the code to make sure 
         //that System properties have been configured properly to obtain a MySQLDAOManager, 
         //with no database provided in the JDBC connection URL
-        MySQLDAOManager manager = (MySQLDAOManager) DAOManager.getDAOManager();
+        MySQLDAOManager manager = this.getMySQLDAOManager();
         BgeeConnection con = manager.getConnection();
         
         //drop, create, and use the database
@@ -201,7 +229,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
     protected void dropDatabase(String dbName) throws SQLException {
         log.entry(dbName);
         
-        MySQLDAOManager manager = (MySQLDAOManager) DAOManager.getDAOManager();
+        MySQLDAOManager manager = this.getMySQLDAOManager();
         BgeeConnection con = manager.getConnection();
         //I don't know why but I can't use prepared statement for database commands.
         BgeePreparedStatement stmt = con.prepareStatement("Drop database " + 
@@ -223,5 +251,16 @@ public abstract class MySQLITAncestor extends TestAncestor{
      */
     private String getTestDbName(String dbName) {
         return DBNAMEPREFIX + dbName;
+    }
+    
+    /**
+     * Returns the {MySQLDAOManager} associated to the current thread. It is 
+     * the responsibility of the caller code to make sure the proper parameters 
+     * were provided for the {@code DAOManager} to actually return a {@code MySQLDAOManager}. 
+     * 
+     * @return  the {MySQLDAOManager} associated to the current thread
+     */
+    protected MySQLDAOManager getMySQLDAOManager() {
+        return (MySQLDAOManager) DAOManager.getDAOManager();
     }
 }

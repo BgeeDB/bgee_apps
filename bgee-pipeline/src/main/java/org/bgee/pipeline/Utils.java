@@ -62,7 +62,7 @@ public class Utils {
             String[] headers = new String[] {columnName, null};
             //constrain the first column to be not-null, unique, and parse it to Integer.
             //we don't care about the second column
-            CellProcessor[] processors = new CellProcessor[] {
+            final CellProcessor[] processors = new CellProcessor[] {
                     new NotNull(new UniqueHashCode(new ParseInt())), null};
             Map<String, Object> speciesMap;
             while( (speciesMap = mapReader.read(headers, processors)) != null ) {

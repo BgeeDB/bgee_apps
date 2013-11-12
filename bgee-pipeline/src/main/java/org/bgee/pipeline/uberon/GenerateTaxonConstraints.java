@@ -2,9 +2,13 @@ package org.bgee.pipeline.uberon;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,6 +24,13 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.supercsv.cellprocessor.FmtBool;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.UniqueHashCode;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvMapWriter;
+import org.supercsv.prefs.CsvPreference;
 
 import owltools.graph.OWLGraphWrapper;
 import owltools.mooncat.SpeciesSubsetterUtil;
@@ -67,30 +78,94 @@ public class GenerateTaxonConstraints {
      * corresponding to the NCBI taxonomy ID (e.g., 9606 for human). The first line 
      * should be a header line, and first column should be the IDs. A second column 
      * can be present for human readability. 
-     * <li>path to the generated TSV files, output of the method.
+     * <li>path to the generated TSV file, output of the method.
      * <li>OPTIONNAL: a path to a directory where to store the intermediate generated 
      * ontologies. If this parameter is provided, an ontology will be generated 
      * for each taxon, and stored in this directory, containing only 
-     * the {@code OWLClass}es existing in that taxon.
+     * the {@code OWLClass}es existing in that taxon. If not provided, the intermediate 
+     * ontologies will not be stored. 
      * </ol>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws IllegalArgumentException     If some taxa in the taxon file could not
+     *                                      be found in the ontology.
+     * @throws FileNotFoundException        If some files could not be found.
+     * @throws IOException                  If some files could not be read/written.
+     * @throws UnknownOWLOntologyException  If the ontology provided could not be used.
+     * @throws OWLOntologyCreationException If the ontology provided could not be used.
+     * @throws OBOFormatParserException     If the ontology provided could not be parsed. 
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnknownOWLOntologyException, 
+        IllegalArgumentException, FileNotFoundException, OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        log.entry((Object[]) args);
         
+        if (args.length < 3 || args.length > 4) {
+            throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                    "provided, expected 3 to 4 arguments, " + args.length + 
+                    " provided."));
+        }
+        
+        String storeDir = null;
+        if (args.length >= 4) {
+            storeDir = args[3];
+        }
+        GenerateTaxonConstraints generate = new GenerateTaxonConstraints();
+        generate.generateTaxonConstraints(args[0], args[1], args[2], storeDir);
+        
+        log.exit();
     }
     
-    public void generateTaxonConstraints(String uberonFile, String speciesFile, 
+    /**
+     * Launches the generation of a TSV files, allowing to know, 
+     * for each {@code OWLClass} in the Uberon ontology stored in {@code uberonFile}, 
+     * in which taxa it exits, among the taxa provided through the TSV file 
+     * {@code taxonFile}, containing their NCBI ID. The results will be stored 
+     * in the TSV file {@code outputFile}. The approach is, for each taxon provided, 
+     * to generate a custom version of the ontology, that will contain only the 
+     * {@code OWLClass}es existing in this taxon. If you want to keep these intermediate  
+     * generated ontologies, you need to provide the path {@code storeOntologyDir} 
+     * where to store them. The ontology files will be named 
+     * <code>uberon_subset_TAXONID.obo</code>. If {@code storeOntologyDir} is 
+     * {@code null}, the intermediate ontology files will not be saved. 
+     * 
+     * @param uberonFile        A {@code String} that is the path to the Uberon 
+     *                          ontology file.
+     * @param taxonFile         A {@code String} that is the path to the TSV file 
+     *                          containing the IDs from the NCBI website of the taxa 
+     *                          to consider (for instance, 9606 for human). The first line 
+     *                          should be a header line, and first column should be the IDs. 
+     *                          A second column can be present for human readability.
+     * @param outputFile        A {@code String} that is the path to the generated 
+     *                          TSV file, output of the method. It will have one header line. 
+     *                          The columns will be: ID of the Uberon classes, IDs of each 
+     *                          of the taxa that were examined. For each of the taxon column, 
+     *                          a boolean is provided as "T" or "F", to define whether 
+     *                          the associated Uberon class exists in it.
+     * @param storeOntologyDir  A {@code String} that is the path to a directory 
+     *                          where to store intermediate ontologies. If {@code null} 
+     *                          the generated ontologies will not be stored.
+     * @throws IllegalArgumentException     If some taxa in {@code taxonFile} could not
+     *                                      be found in the ontology.
+     * @throws FileNotFoundException        If some files could not be found.
+     * @throws IOException                  If some files could not be read/written.
+     * @throws UnknownOWLOntologyException  If the ontology stored in 
+     *                                      {@code uberonFile} could not be used.
+     * @throws OWLOntologyCreationException If the ontology stored in {@code uberonFile} 
+     *                                      could not be used.
+     * @throws OBOFormatParserException     If {@code uberonFile} could not be parsed. 
+     */
+    public void generateTaxonConstraints(String uberonFile, String taxonFile, 
             String outputFile, String storeOntologyDir) throws IllegalArgumentException, 
             FileNotFoundException, IOException, UnknownOWLOntologyException, 
             OWLOntologyCreationException, OBOFormatParserException {
-        log.entry(uberonFile, speciesFile, outputFile, storeOntologyDir);
         
-        Set<Integer> speciesIds = Utils.getSpeciesIds(speciesFile);
-        Map<OWLClass, Set<Integer>> constraints = 
+        log.entry(uberonFile, taxonFile, outputFile, storeOntologyDir);
+        
+        Set<Integer> speciesIds = Utils.getSpeciesIds(taxonFile);
+        Map<String, Set<Integer>> constraints = 
                 this.generateTaxonConstraints(uberonFile, speciesIds, storeOntologyDir);
-        
-        
+        this.writeToFile(constraints, speciesIds, outputFile);
         
         log.exit();
     }
@@ -98,11 +173,19 @@ public class GenerateTaxonConstraints {
     /**
      * Returns a {@code Map} representing the taxon constraints generated from 
      * the ontology stored in {@code uberonFile}, for the taxa provided through 
-     * {@code taxonIds}. The returned {@code Map} contains all {@code OWLClass}es 
-     * present in the ontology, as keys, associated to a {@code Set} of {@code Integer}s, 
-     * that are the IDs of the taxa in which it exists, among the provided taxa. 
-     * If the {@code Set} is empty, then it means that the {@code OWLClass} 
-     * exists in none of the provided taxa. 
+     * {@code taxonIds}. The returned {@code Map} contains the OBO-like IDs of all 
+     * {@code OWLClass}es present in the ontology, as keys, associated to 
+     * a {@code Set} of {@code Integer}s, that are the IDs of the taxa in which 
+     * it exists, among the provided taxa. If the {@code Set} is empty, then 
+     * it means that the {@code OWLClass} existed in none of the provided taxa. 
+     * <p>
+     * The approach is, for each taxon provided, 
+     * to generate a custom version of the ontology, that will contain only the 
+     * {@code OWLClass}es existing in this taxon. If you want to keep these intermediate  
+     * generated ontologies, you need to provide the path {@code storeOntologyDir} 
+     * where to store them. The ontology files will be named 
+     * <code>uberon_subset_TAXONID.obo</code>. If {@code storeOntologyDir} is 
+     * {@code null}, the intermediate ontology files will not be saved. 
      * 
      * @param uberonFile        A {@code String} that is the path to the Uberon 
      *                          ontology file.
@@ -112,7 +195,7 @@ public class GenerateTaxonConstraints {
      * @param storeOntologyDir  A {@code String} that is the path to a directory 
      *                          where to store intermediate ontologies. If {@code null} 
      *                          the generated ontologies will not be stored.
-     * @return                  A {@code Map} where keys are {@code OWLClass}es 
+     * @return                  A {@code Map} where keys are IDs of the {@code OWLClass}es 
      *                          from the provided ontology, and values are  
      *                          {@code Set}s of {@code Integer}s containing the IDs 
      *                          of taxa in which the {@code OWLClass} exists.
@@ -123,7 +206,7 @@ public class GenerateTaxonConstraints {
      * @throws OBOFormatParserException     If {@code uberonFile} could not be parsed. 
      * @throws IOException                  If {@code uberonFile} could not be opened. 
      */
-    public Map<OWLClass, Set<Integer>> generateTaxonConstraints(String uberonFile, 
+    public Map<String, Set<Integer>> generateTaxonConstraints(String uberonFile, 
             Set<Integer> taxonIds, String storeOntologyDir) 
                     throws UnknownOWLOntologyException, OWLOntologyCreationException, 
                     OBOFormatParserException, IOException {
@@ -131,16 +214,17 @@ public class GenerateTaxonConstraints {
 
         OWLGraphWrapper uberonWrapper = 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonFile));
-        Map<OWLClass, Set<Integer>> taxonConstraints = new HashMap<OWLClass, Set<Integer>>();
+        Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
         for (OWLClass currentClass: uberonWrapper.getAllOWLClasses()) {
-            taxonConstraints.put(currentClass, new HashSet<Integer>());
+            taxonConstraints.put(uberonWrapper.getIdentifier(currentClass), 
+                    new HashSet<Integer>());
         }
         
         for (int taxonId: taxonIds) {
-            Set<OWLClass> classesDefined = this.getExistingOWLClass(
+            Set<OWLClass> classesDefined = this.getExistingOWLClasses(
                     uberonFile, taxonId, storeOntologyDir);
             for (OWLClass classDefined: classesDefined) {
-                taxonConstraints.get(classDefined).add(taxonId);
+                taxonConstraints.get(uberonWrapper.getIdentifier(classDefined)).add(taxonId);
             }
         }
         
@@ -171,7 +255,7 @@ public class GenerateTaxonConstraints {
      * @throws OBOFormatParserException     If {@code uberonFile} could not be parsed. 
      * @throws IOException                  If {@code uberonFile} could not be opened. 
      */
-    private Set<OWLClass> getExistingOWLClass(String uberonFile, int taxonId, 
+    private Set<OWLClass> getExistingOWLClasses(String uberonFile, int taxonId, 
             String storeOntologyDir) throws UnknownOWLOntologyException, 
             OWLOntologyCreationException, OBOFormatParserException, IOException  {
         log.entry(uberonFile, taxonId, storeOntologyDir);
@@ -237,6 +321,76 @@ public class GenerateTaxonConstraints {
     public void setReasonerFactory(OWLReasonerFactory factory) {
         log.entry(factory);
         this.reasonerFactory = factory;
+        log.exit();
+    }
+    
+    /**
+     * Write the taxon constraints in a TSV file. The taxon constraints are provided 
+     * by {@code taxonConstraints} as a {@code Map} where keys are the OBO-like IDs 
+     * of all {@code OWLClass}es examined, and are associated to a {@code Set} of 
+     * {@code Integer}s, that are the NCBI IDs of the taxon in which the {@code OWLClass} 
+     * exists, among all the taxa that were examined, listed in {@code taxonIds}. 
+     * <p>
+     * The generated TSV file will have one header line. The columns will be: ID 
+     * of the {@code OWLClass}, IDs of each of the taxa that were examined. For 
+     * each of the taxon column, a boolean is provided as "T" or "F", to define 
+     * whether the associated {@code OWLClass} exists in it.
+     * 
+     * @param taxonConstraints  A {@code Map} where keys are IDs of the {@code OWLClass}es 
+     *                          from the ontology that was examined, and values are  
+     *                          {@code Set}s of {@code Integer}s containing the IDs 
+     *                          of taxa in which the {@code OWLClass} exists.
+     * @param taxonIds          A {@code Set} of {@code Integer}s that are the IDs 
+     *                          from the NCBI website of the taxa that were considered 
+     *                          (for instance, 9606 for human).
+     * @param outputFile        A {@code String} that is the path to the output file 
+     *                          were constraints will be written as TSV.
+     * @throws IOException      If an error occurred while trying to write to 
+     *                          {@code outputFile}.
+     */
+    private void writeToFile(Map<String, Set<Integer>> taxonConstraints, 
+            Set<Integer> taxonIds, String outputFile) throws IOException {
+        log.entry(taxonConstraints, taxonIds, outputFile);
+
+        //order the taxon IDs to get consistent column ordering between releases
+        List<Integer> sortedTaxonIds = new ArrayList<Integer>(taxonIds);
+        Collections.sort(sortedTaxonIds);
+        //also, ordered the IDs of the OWLClasses, for easier comparison between 
+        //releases
+        List<String> sortedClassIds = new ArrayList<String>(taxonConstraints.keySet());
+        Collections.sort(sortedClassIds);
+        
+        //create the header of the file, and the conditions on the columns
+        int taxonCount = taxonIds.size();
+        CellProcessor[] processors = new CellProcessor[taxonCount + 1];
+        String[] header = new String[taxonCount + 1];
+        //ID of the OWLClass (must be unique)
+        processors[0] = new UniqueHashCode(new NotNull());
+        header[0] = "UBERON ID";
+        //boolean defining for each taxon if the OWLClass exists in it
+        for (int i = 0; i < taxonCount; i++) {
+            processors[i + 1] = new NotNull(new FmtBool("T", "F"));
+            header[i + 1] = sortedTaxonIds.get(i).toString();
+        }
+        
+        
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
+                CsvPreference.TAB_PREFERENCE)) {
+            
+            mapWriter.writeHeader(header);
+            
+            for (String uberonId: sortedClassIds) {
+                Map<String, Object> row = new HashMap<String, Object>();
+                row.put(header[0], uberonId);
+                for (Integer taxonId: taxonIds) {
+                    row.put(taxonId.toString(), 
+                            taxonConstraints.get(uberonId).contains(taxonId));
+                }
+                
+                mapWriter.write(row, header, processors);
+            }
+        }
+        
         log.exit();
     }
 }

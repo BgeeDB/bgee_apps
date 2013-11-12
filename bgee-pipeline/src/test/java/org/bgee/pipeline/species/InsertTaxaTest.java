@@ -60,7 +60,7 @@ public class InsertTaxaTest extends TestAncestor {
      *                           NCBITaxon:15 species C 
      * </pre>
      */
-    private final String TAXONTOLOGYFILE = "/ontologies/fakeNCBITaxonomy.obo";
+    private final String TAXONTOLOGYFILE = "/species/fakeNCBITaxonomy.obo";
 
     /**
      * Default Constructor. 

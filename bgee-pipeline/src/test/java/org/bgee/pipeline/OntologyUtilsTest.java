@@ -80,7 +80,7 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
-     * Load the (really basic) ontology {@code /ontologies/nestedSetModelTest.obo} 
+     * Load the (really basic) ontology {@code /utils/nestedSetModelTest.obo} 
      * into {@link #wrapper}, and the corresponding {@code OWLClass}es into 
      * {@link #classRoot}, {@link #classB}, {@link #classC}, {@link #classD}, 
      * {@link #classE}. The ontology is as followed: 
@@ -106,7 +106,7 @@ public class OntologyUtilsTest extends TestAncestor {
     {
         log.debug("Wrapping test ontology into OWLGraphWrapper...");
         OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
-                getResource("/ontologies/nestedSetModelTest.obo").getFile());
+                getResource("/utils/nestedSetModelTest.obo").getFile());
         wrapper = new OWLGraphWrapper(ont);
         classRoot = wrapper.getOWLClassByIdentifier("FOO:0001");
         classA = wrapper.getOWLClassByIdentifier("FOO:0002");

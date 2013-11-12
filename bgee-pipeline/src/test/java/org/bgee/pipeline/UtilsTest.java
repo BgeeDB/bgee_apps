@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link InsertTaxa}.
+ * Unit tests for {@link Utils}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13

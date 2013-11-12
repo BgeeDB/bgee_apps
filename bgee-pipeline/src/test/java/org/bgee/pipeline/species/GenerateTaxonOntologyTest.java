@@ -19,7 +19,6 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import owltools.graph.OWLGraphWrapper;
-import owltools.io.ParserWrapper;
 
 /**
  * Unit tests for {@link GenerateTaxonOntology}.

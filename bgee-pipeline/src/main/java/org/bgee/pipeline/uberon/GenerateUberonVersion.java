@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.bgee.pipeline.OntologyUtils;
 import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
@@ -41,8 +42,7 @@ public class GenerateUberonVersion
 {
 	public static void main(String[] args) throws OWLOntologyCreationException, OBOFormatParserException, IOException, OWLOntologyStorageException 
 	{
-		ParserWrapper parserWrapper = new ParserWrapper();
-        OWLOntology ont = parserWrapper.parse("/Users/admin/Desktop/uberon.owl");
+        OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/uberon.owl");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
     	OWLGraphManipulator graphManipulator = 
     			new OWLGraphManipulator(wrapper);

@@ -1,7 +1,6 @@
 package org.bgee.pipeline.species;
 
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,21 +18,15 @@ import org.bgee.model.dao.api.species.TaxonTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.OntologyUtils;
+import org.bgee.pipeline.Utils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.supercsv.cellprocessor.ParseInt;
-import org.supercsv.cellprocessor.constraint.NotNull;
-import org.supercsv.cellprocessor.constraint.UniqueHashCode;
-import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvMapReader;
-import org.supercsv.io.ICsvMapReader;
-import org.supercsv.prefs.CsvPreference;
 
 import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
 import owltools.graph.OWLGraphWrapper.ISynonym;
-import owltools.io.ParserWrapper;
 
 /**
  * Class responsible for inserting species and related NCBI taxonomy into 
@@ -52,13 +45,6 @@ public class InsertTaxa extends MySQLDAOUser {
     private final static Logger log = 
             LogManager.getLogger(InsertTaxa.class.getName());
     
-    /**
-     * A {@code String} that is the prefix to add to the NCBI taxonomy IDs 
-     * (that are {@code Integer}s) to obtain IDs used in the taxonomy ontology. 
-     * For instance, if a taxon has the ID {@code 9606} on the NCBI taxonomy website, 
-     * it will have the ID {@code NCBITaxon:9606} in the ontology file.
-     */
-    private static final String ONTOLOGYIDPREFIX = "NCBITaxon:";
     /**
      * A {@code String} defining the category of the synonym providing the common 
      * name of taxa in the taxonomy ontology. 
@@ -162,15 +148,39 @@ public class InsertTaxa extends MySQLDAOUser {
             OBOFormatParserException, IllegalArgumentException, DAOException {
         log.entry(speciesFile, ncbiOntFile);
         
+        this.insertSpeciesAndTaxa(Utils.getSpeciesIds(speciesFile), 
+                OntologyUtils.loadOntology(ncbiOntFile));
+        
+        log.exit();
+    }
+    
+    /**
+     * Inserts species and taxa into the Bgee database. The arguments are a {@code Set} 
+     * of {@code Integer}s that are the NCBI taxonomy IDs of the species used in Bgee, 
+     * (e.g., 9606 for human), and a {@code OWLOntology} representing the NCBI 
+     * taxonomy ontology 
+     * 
+     * @param speciesIds    a {@code Set} of {@code Integer}s that are the IDs 
+     *                      of the species used in Bgee
+     * @param taxOntology   An {@code OWLOntology} that is the NCBI taxonomy 
+     *                      ontology.
+     * @throws OWLOntologyCreationException If an error occurred while loading 
+     *                                      the NCBI taxonomy ontology.
+     * @throws IllegalArgumentException     If the arguments provided invalid information.
+     * @throws DAOException                 If an error occurred while inserting 
+     *                                      the data into the Bgee database.
+     */
+    public void insertSpeciesAndTaxa(Set<Integer> speciesIds, OWLOntology taxOntology) 
+            throws OWLOntologyCreationException, IllegalArgumentException, DAOException {
+        log.entry(speciesIds, taxOntology);
+        
         //catch any IllegalStateException to wrap it into a IllegalArgumentException 
         //(a IllegalStateException would be generated because the OWLOntology loaded 
         //from ncbiOntFile would be invalid, so it would be a wrong argument)
         try {
-            //get the NCBI IDs of the species to include in Bgee
-            Set<Integer> speciesIds = this.getSpeciesIds(speciesFile);
             
             //load the NCBI taxonomy ontology
-            this.loadTaxOntology(ncbiOntFile);
+            this.taxOntWrapper = new OWLGraphWrapper(taxOntology);
             //filter the ontology to get a light taxonomy with only relevant taxa and species.
             this.filterTaxOntology(speciesIds);
             
@@ -200,75 +210,10 @@ public class InsertTaxa extends MySQLDAOUser {
             }
         } catch (IllegalStateException e) {
             log.catching(e);
-            throw log.throwing(new IllegalArgumentException("The OWLOntology loaded " +
-            		"from the ontology file is invalid", e));
+            throw log.throwing(new IllegalArgumentException(
+                    "The OWLOntology provided is invalid", e));
         }
         
-        log.exit();
-    }
-    
-    /**
-     * Get the IDs of the species used in Bgee from the TSV file named {@code speciesFile}.
-     * The IDs are {@code Integer} corresponding to the NCBI taxonomy ID (e.g., 9606 
-     * for human). The first line should be a header line, and the second column 
-     * be present only for human readability. Only the first column is used 
-     * by the pipeline.
-     * 
-     * @param speciesFile   A {@code String} that is the path to the TSV file 
-     *                      containing the list of species used in Bgee.
-     * @return              A {@code Set} of {Integer}s that are the NCBI IDs 
-     *                      of the species present in {@code speciesFile}.
-     * @throws FileNotFoundException    If {@code speciesFile} could not be found.
-     * @throws IOException              If {@code speciesFile} could not be read.
-     * @throws IllegalArgumentException If the file located at {@code speciesFile} 
-     *                                  did not allow to obtain any valid species ID.
-     */
-    private Set<Integer> getSpeciesIds(String speciesFile) throws IllegalArgumentException, 
-        FileNotFoundException, IOException {
-        log.entry(speciesFile);
-        Set<Integer> speciesIds = new HashSet<Integer>();
-        
-        try (ICsvMapReader mapReader = new CsvMapReader(
-                new FileReader(speciesFile), CsvPreference.TAB_PREFERENCE)) {
-            mapReader.getHeader(true); 
-            //define our own headers, because only the first column is used
-            String columnName = "speciesId";
-            String[] headers = new String[] {columnName, null};
-            //constrain the first column to be not-null, unique, and parse it to Integer.
-            //we don't care about the second column
-            CellProcessor[] processors = new CellProcessor[] {
-                    new NotNull(new UniqueHashCode(new ParseInt())), null};
-            Map<String, Object> speciesMap;
-            while( (speciesMap = mapReader.read(headers, processors)) != null ) {
-                    speciesIds.add((Integer) speciesMap.get(columnName));
-            }
-        }
-        
-        if (speciesIds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The species file " +
-                    speciesFile + " did not contain any valid species ID"));
-        }
-        
-        return log.exit(speciesIds);
-    }
-    
-    /**
-     * Loads the {@code OWLOntology} loaded from the file located at {@code ncbiOntFile}, 
-     * wraps it into an {@code OWLGraphWrapper}, and sets the attribute 
-     * {@link #taxOntWrapper} using it.
-     * 
-     * @param ncbiOntFile   A {@code String} that is the name of the local NCBI 
-     *                      ontology file.
-     * @throws OWLOntologyCreationException If an error occurred while loading 
-     *                                      the ontology.
-     * @throws OBOFormatParserException     If the file could not be parsed correctly.
-     * @throws IOException                  If the file could not be read.
-     */
-    private void loadTaxOntology(String ncbiOntFile) 
-            throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        log.entry(ncbiOntFile);
-        ParserWrapper parserWrapper = new ParserWrapper();
-        this.taxOntWrapper = new OWLGraphWrapper(parserWrapper.parse(ncbiOntFile));
         log.exit();
     }
     
@@ -290,7 +235,7 @@ public class InsertTaxa extends MySQLDAOUser {
         //transform the NCBI IDs into ontology IDs
         Set<String> speciesIds = new HashSet<String>();
         for (Integer id: ncbiSpeciesIds) {
-            speciesIds.add(this.getTaxOntologyId(id)); 
+            speciesIds.add(OntologyUtils.getTaxOntologyId(id)); 
         }
         //use an OWLGraphManipulator to keep only subgraphs that include 
         //the requested species
@@ -371,14 +316,14 @@ public class InsertTaxa extends MySQLDAOUser {
         //because this is how we store this ID in the database. But we convert it 
         //to a String because the Bgee classes only accept IDs as Strings.
         String parentTaxonId = String.valueOf(
-                this.getTaxNcbiId(this.taxOntWrapper.getIdentifier(
+                OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(
                 parents.iterator().next())));
         
         //get the NCBI ID of this species.
         //we retrieve the Integer value of the ID used on the NCBI website, 
         //because this is how we store this ID in the database. But we convert it 
         //to a String because the Bgee classes only accept IDs as Strings.
-        String speciesId = String.valueOf(this.getTaxNcbiId(
+        String speciesId = String.valueOf(OntologyUtils.getTaxNcbiId(
                 this.taxOntWrapper.getIdentifier(speciesOWLClass)));
         
         //get the common name synonym
@@ -460,7 +405,7 @@ public class InsertTaxa extends MySQLDAOUser {
             //we retrieve the Integer value of the ID used on the NCBI website, 
             //because this is how we store this ID in the database. But we convert it 
             //to a String because the Bgee classes only accept IDs as Strings.
-            String taxonId = String.valueOf(this.getTaxNcbiId(
+            String taxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
                     this.taxOntWrapper.getIdentifier(taxon)));
             String commonName = this.getCommonNameSynonym(taxon);
             String scientificName = this.taxOntWrapper.getLabel(taxon);
@@ -528,33 +473,5 @@ public class InsertTaxa extends MySQLDAOUser {
         }
         
         return log.exit(commonName);
-    }
-    
-    
-    /**
-     * Transforms a NCBI ID (which are integers, for instance, {@code 9606} for human) 
-     * into the equivalent ID used in the generated taxonomy ontology (which are 
-     * strings with a prefix).
-     * 
-     * @param ncbiId    An {@code int} that is the ID of a taxon or species as used 
-     *                  on the NCBI website.
-     * @return          A {@code String} that is the corresponding ID as used in 
-     *                  the taxonomy ontology.
-     */
-    private String getTaxOntologyId(int ncbiId) {
-        return ONTOLOGYIDPREFIX + ncbiId;
-    }
-    /**
-     * Transform the ID of a taxonomy term in the generated ontology (which are strings 
-     * with a given prefix) into the equivalent ID used on the NCBI website (which 
-     * are integers with no prefix).
-     * 
-     * @param ontologyTermId    A {@code String} that is the ID of a term in 
-     *                          the taxonomy ontology.
-     * @return                  An {@code int} that is the corresponding ID 
-     *                          on the NCBI website. 
-     */
-    private int getTaxNcbiId(String ontologyTermId) {
-        return Integer.parseInt(ontologyTermId.substring(ONTOLOGYIDPREFIX.length()));
     }
 }

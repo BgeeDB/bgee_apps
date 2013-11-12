@@ -19,7 +19,6 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 import owltools.graph.OWLGraphWrapper;
-import owltools.io.ParserWrapper;
 
 /**
  * Unit tests for {@link OntologyUtils}.
@@ -106,8 +105,7 @@ public class OntologyUtilsTest extends TestAncestor {
             throws OWLOntologyCreationException, OBOFormatParserException, IOException
     {
         log.debug("Wrapping test ontology into OWLGraphWrapper...");
-        ParserWrapper parserWrapper = new ParserWrapper();
-        OWLOntology ont = parserWrapper.parse(OntologyUtilsTest.class.
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
                 getResource("/ontologies/nestedSetModelTest.obo").getFile());
         wrapper = new OWLGraphWrapper(ont);
         classRoot = wrapper.getOWLClassByIdentifier("FOO:0001");

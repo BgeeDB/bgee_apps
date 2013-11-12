@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,8 +71,7 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         generate.generateOntology(dataFile,  taxonSubgraph, outputFile);
         
         //now we open the saved ontology and perform the assertion tests
-        ParserWrapper parserWrapper = new ParserWrapper();
-        OWLOntology ont = parserWrapper.parse(outputFile);
+        OWLOntology ont = OntologyUtils.loadOntology(outputFile);
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
         System.out.println("YO " + wrapper.getOBOSynonyms(wrapper.getOWLObjectByIdentifier("NCBITaxon:2")));

@@ -1,5 +1,6 @@
 package org.bgee.pipeline;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +11,10 @@ import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.obolibrary.obo2owl.Owl2Obo;
+import org.obolibrary.oboformat.model.OBODoc;
+import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -17,6 +22,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
 import owltools.graph.OWLGraphWrapper;
+import owltools.io.ParserWrapper;
 import owltools.sim.SimEngine;
 
 /**
@@ -53,7 +59,59 @@ public class OntologyUtils {
      * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
      */
     public static final String LEVELKEY = "level";
+
+    /**
+     * A {@code String} that is the prefix to add to the NCBI taxonomy IDs 
+     * (that are {@code Integer}s) to obtain IDs used in the taxonomy ontology. 
+     * For instance, if a taxon has the ID {@code 9606} on the NCBI taxonomy website, 
+     * it will have the ID {@code NCBITaxon:9606} in the ontology file.
+     */
+    private static final String TAXONTOLOGYIDPREFIX = "NCBITaxon:";
     
+    /**
+     * Loads the ontology stored in the file {@code ontFile} and returns it 
+     * as an {@code OWLOntology}.
+     * 
+     * @param ontFile   A {@code String} that is the path to the ontology file.
+     * @return          An {@code OWLOntology} loaded from {@code ontFile}.
+     * @throws OWLOntologyCreationException If an error occurred while loading 
+     *                                      the ontology.
+     * @throws OBOFormatParserException     If the file could not be parsed correctly.
+     * @throws IOException                  If the file could not be read.
+     */
+    public static OWLOntology loadOntology(String ontFile) throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        ParserWrapper parserWrapper = new ParserWrapper();
+        return parserWrapper.parse(ontFile);
+    }
+    
+    /**
+     * Transforms a NCBI ID (which are integers, for instance, {@code 9606} for human) 
+     * into the equivalent ID used in the generated taxonomy ontology (which are 
+     * strings with a prefix).
+     * 
+     * @param ncbiId    An {@code int} that is the ID of a taxon or species as used 
+     *                  on the NCBI website.
+     * @return          A {@code String} that is the corresponding ID as used in 
+     *                  the taxonomy ontology.
+     */
+    public static String getTaxOntologyId(int ncbiId) {
+        return TAXONTOLOGYIDPREFIX + ncbiId;
+    }
+    /**
+     * Transform the ID of a taxonomy term in the generated ontology (which are strings 
+     * with a given prefix) into the equivalent ID used on the NCBI website (which 
+     * are integers with no prefix).
+     * 
+     * @param ontologyTermId    A {@code String} that is the ID of a term in 
+     *                          the taxonomy ontology.
+     * @return                  An {@code int} that is the corresponding ID 
+     *                          on the NCBI website. 
+     */
+    public static int getTaxNcbiId(String ontologyTermId) {
+        return Integer.parseInt(ontologyTermId.substring(TAXONTOLOGYIDPREFIX.length()));
+    }
+
     /**
      * The {@code OWLGraphWrapper} wrapping the {@code OWLOntology} which operations 
      * should be performed on.
@@ -100,6 +158,7 @@ public class OntologyUtils {
         return log.exit(this.computeNestedSetModelParams(null));
     }
     
+
     /**
      * Compute parameters to represent the {@code OWLOntology} provided at instantiation 
      * as a nested set model. This method returns a {@code Map} where each 
@@ -298,5 +357,35 @@ public class OntologyUtils {
         }
         
         return log.exit(lcas);
+    }
+    
+    /**
+     * Saves the {@code OWLOntology} wrapped by this object into {@code outputFile} 
+     * in OBO format.
+     * 
+     * @param outputFile    A {@code String} that is the path to the file to save 
+     *                      the ontology in OBO format.
+     * @throws OWLOntologyCreationException If the ontology could not be converted 
+     *                                      to OBO.
+     * @throws IOException                  If an error occurred while writing 
+     *                                      in the file.
+     * @throws IllegalArgumentException     if {@code outputFile} does not have 
+     *                                      a correct name.
+     */
+    public void saveAsOBO(String outputFile) throws OWLOntologyCreationException, 
+        IOException, IllegalArgumentException {
+        log.entry(outputFile);
+
+        if (!outputFile.endsWith(".obo")) {
+            throw log.throwing(new IllegalArgumentException("The output file must be " +
+                    "an OBO format."));
+        }
+        
+        Owl2Obo converter = new Owl2Obo();
+        OBODoc oboOntology = converter.convert(this.wrapper.getSourceOntology());
+        OBOFormatWriter writer = new OBOFormatWriter();
+        writer.write(oboOntology, outputFile);
+        
+        log.exit();
     }
 }

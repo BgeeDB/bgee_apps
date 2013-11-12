@@ -1,6 +1,9 @@
 package org.bgee.pipeline.uberon;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -10,11 +13,21 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.supercsv.cellprocessor.ParseBool;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.UniqueHashCode;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvMapReader;
+import org.supercsv.io.ICsvMapReader;
+import org.supercsv.prefs.CsvPreference;
+
+import owltools.graph.OWLGraphWrapper;
 
 /**
  * Unit tests for {@link GenerateTaxonConstraints}.
@@ -63,10 +76,10 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
     
     /**
      * Test the method 
-     * {@link GenerateTaxonConstraints.generateTaxonConstraints(String, Set, String)}.
+     * {@link GenerateTaxonConstraints#generateTaxonConstraints(String, Set, String)}.
      */
     @Test
-    public void generateTaxonConstraints() throws IOException, 
+    public void shouldGenerateTaxonConstraints() throws IOException, 
         UnknownOWLOntologyException, OWLOntologyCreationException, 
         OBOFormatParserException {
         GenerateTaxonConstraints generate = new GenerateTaxonConstraints();
@@ -76,11 +89,154 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
             Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(
                     ONTOLOGYFILE, TAXONIDS, tempDir.getPath());
             
+            assertEquals("Incorrect number of OWLClasses in taxon constraints", 24, 
+                    constraints.keySet().size());
+
+            //U:22 antenna never_in_taxon NCBITaxon:8 - exists in taxa 13 and 15
+            //U:23 subclass of U:22 - exists in taxa 13 and 15
+            //U:24 subclass of U:23 - exists in taxa 13 and 15
+            Set<Integer> expectedTaxa1 = new HashSet<Integer>(Arrays.asList(13, 15));
+            Set<String> expectedClassIds1 = new HashSet<String>(constraints.keySet());
+            expectedClassIds1.removeAll(Arrays.asList("U:22", "U:23", "U:24"));
+
+            //S:998 never_in_taxon NCBITaxon:13 - exists in taxa 8 and 15
+            //S:9 subclass of S:998 - exists in taxa 8 and 15
+            //S:12 intersection_of: S:6 and of part_of S:998 - exists in taxa 8 and 15
+            Set<Integer> expectedTaxa2 = new HashSet<Integer>(Arrays.asList(8, 15));
+            Set<String> expectedClassIds2 = new HashSet<String>(constraints.keySet());
+            expectedClassIds2.removeAll(Arrays.asList("S:998", "S:9", "S:12"));
+            
+            for (String classId: constraints.keySet()) {
+                Set<Integer> toCompare = TAXONIDS;
+                if (!expectedClassIds1.contains(classId)) {
+                    toCompare = expectedTaxa1;
+                } else if (!expectedClassIds2.contains(classId)) {
+                    toCompare = expectedTaxa2;
+                } 
+                assertEquals("Incorrect value in taxon constraints for class " + 
+                    classId, toCompare, constraints.get(classId));
+            }
+            
+            this.checkIntermediateOntology(8, expectedClassIds1, tempDir);
+            this.checkIntermediateOntology(13, expectedClassIds2, tempDir);
+            this.checkIntermediateOntology(15, constraints.keySet(), tempDir);
         } finally {
             if (tempDir != null) {
-                tempDir.delete();
+                for (File child: tempDir.listFiles()) {
+                    if (!child.delete()) {
+                        log.warn("File could not be deleted: {}", child);
+                    }
+                }
+                if (!tempDir.delete()) {
+                    log.warn("Temp directory not deleted: {}", tempDir);
+                }
             }
         }
     }
     
+    /**
+     * Checks that the intermediate ontology file generated for the taxon with ID 
+     * {@code taxonId} contains  all the {@code OWLClass}es with their OBO-like 
+     * ID in {@code expectedClassIds}, and only those {@code OWLClass}es. 
+     * Otherwise, an {@code AssertionError} is thrown. 
+     * 
+     * @param taxonId           A {@code int} that is the ID of the taxon for which 
+     *                          we want to check the intermediate ontology file generated.
+     * @param expectedClassIds  A {@code Set} of {@code String}s that are the OBO-like 
+     *                          IDs of the allowed {@code OWLClass}es.
+     * @param directory         A {@code File} that is the directory where generated 
+     *                          ontologies are stored.
+     * @throws AssertionError               If the ontology is not as expected.
+     * @throws OWLOntologyCreationException If an error occurred while loading 
+     *                                      the ontology.
+     * @throws OBOFormatParserException     If an error occurred while loading 
+     *                                      the ontology.
+     * @throws IOException                  If an error occurred while loading 
+     *                                      the ontology.
+     */
+    private void checkIntermediateOntology(int taxonId, Set<String> expectedClassIds, 
+            File directory) 
+        throws AssertionError, OWLOntologyCreationException, OBOFormatParserException, 
+        IOException {
+        
+        File ontFile = null;
+        ontFile = new File(directory, "uberon_subset" + taxonId + ".obo");
+        OWLGraphWrapper wrapper = 
+                new OWLGraphWrapper(OntologyUtils.loadOntology(ontFile.getPath()));
+        assertEquals("Incorrect OWLCLasses contained in intermediate ontology", 
+                wrapper.getAllOWLClasses().size(), expectedClassIds.size());
+        for (String classId: expectedClassIds) {
+            assertNotNull("Missing class " + classId, 
+                    wrapper.getOWLClassByIdentifier(classId));
+        }
+    }
+    
+    /**
+     * Test the method 
+     * {@link GenerateTaxonConstraints#generateTaxonConstraints(String, String, String, String)}
+     */
+    @Test
+    public void shouldGenerateTaxonConstraintsTSV() throws IOException, 
+        UnknownOWLOntologyException, IllegalArgumentException, 
+        OWLOntologyCreationException, OBOFormatParserException {
+        
+        File tempDir = null;
+        try {
+            tempDir = Files.createTempDirectory(null).toFile();
+            String outputTSV = new File(tempDir, "table.tsv").getPath();
+
+            GenerateTaxonConstraints generate = new GenerateTaxonConstraints();
+            generate.generateTaxonConstraints(ONTOLOGYFILE, TAXONFILE, outputTSV, null);
+            
+            //now read the TSV file
+            try (ICsvMapReader mapReader = new CsvMapReader(
+                    new FileReader(outputTSV), CsvPreference.TAB_PREFERENCE)) {
+                String[] headers = mapReader.getHeader(true); 
+                final CellProcessor[] processors = new CellProcessor[] {
+                        new NotNull(new UniqueHashCode()), 
+                        new NotNull(new ParseBool("t", "f")), 
+                        new NotNull(new ParseBool("t", "f")), 
+                        new NotNull(new ParseBool("t", "f"))};
+                
+                Map<String, Object> taxonConstraintMap;
+                int i = 0;
+                while( (taxonConstraintMap = mapReader.read(headers, processors)) != null ) {
+                    log.trace("Row: {}", taxonConstraintMap);
+                    i++;
+                    String uberonId = (String) taxonConstraintMap.get("UBERON ID");
+                    boolean taxon1ExpectedValue = true;
+                    boolean taxon2ExpectedValue = true;
+                    boolean taxon3ExpectedValue = true;
+                    if (uberonId.equals("U:22") || uberonId.equals("U:23") || 
+                            uberonId.equals("U:24")) {
+                        taxon1ExpectedValue = false;
+                    } else if (uberonId.equals("S:998") || uberonId.equals("S:9") || 
+                            uberonId.equals("S:12")) {
+                        taxon2ExpectedValue = false;
+                    }
+                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
+                            " and taxon 8", taxon1ExpectedValue, 
+                            taxonConstraintMap.get("8"));
+                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
+                            " and taxon 13", taxon2ExpectedValue, 
+                            taxonConstraintMap.get("13"));
+                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
+                            " and taxon 15", taxon3ExpectedValue, 
+                            taxonConstraintMap.get("15"));
+                }
+                assertEquals("Incorrect number of lines in TSV output", 24, i);
+            }
+        } finally {
+            if (tempDir != null) {
+                for (File child: tempDir.listFiles()) {
+                    if (!child.delete()) {
+                        log.warn("File could not be deleted: {}", child);
+                    }
+                }
+                if (!tempDir.delete()) {
+                    log.warn("Temp directory not deleted: {}", tempDir);
+                }
+            }
+        }
+    }
 }

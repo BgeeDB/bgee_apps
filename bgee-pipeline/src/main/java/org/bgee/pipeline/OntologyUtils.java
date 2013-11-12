@@ -378,7 +378,7 @@ public class OntologyUtils {
 
         if (!outputFile.endsWith(".obo")) {
             throw log.throwing(new IllegalArgumentException("The output file must be " +
-                    "an OBO format."));
+                    "an OBO format: " + outputFile));
         }
         
         Owl2Obo converter = new Owl2Obo();

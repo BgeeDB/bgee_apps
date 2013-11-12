@@ -283,8 +283,8 @@ public class GenerateTaxonConstraints {
         //if we want to store the intermediate ontology
         if (storeOntologyDir != null) {
             uberonWrapper.clearCachedEdges();
-            String outputFilePath = new File("uberon_subset" + taxonId + ".obo", 
-                    storeOntologyDir).getPath();
+            String outputFilePath = new File(storeOntologyDir, 
+                    "uberon_subset" + taxonId + ".obo").getPath();
             new OntologyUtils(uberonWrapper).saveAsOBO(outputFilePath);
         }
         
@@ -303,7 +303,7 @@ public class GenerateTaxonConstraints {
      *              should reason on.
      * @return      An <code>OWLReasoner</code> set to reason on {@code ont}.
      */
-    public OWLReasoner createReasoner(OWLOntology ont) {
+    private OWLReasoner createReasoner(OWLOntology ont) {
         log.entry(ont);
         if (this.reasonerFactory == null) {
             this.setReasonerFactory(new ElkReasonerFactory());

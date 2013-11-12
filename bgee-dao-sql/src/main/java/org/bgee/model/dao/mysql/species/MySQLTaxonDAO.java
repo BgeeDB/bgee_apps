@@ -57,18 +57,17 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException {
         log.entry(taxa);
         
-        try {
-            String sql = "Insert into taxon (taxonId, taxonScientificName, " +
-            		"taxonCommonName, taxonLeftBound, taxonRightBound, taxonLevel, " +
-                    "bgeeSpeciesLCA) values ";
-            for (int i = 0; i < taxa.size(); i++) {
-                if (i > 0) {
-                    sql += ", ";
-                }
-                sql += "(?, ?, ?, ?, ?, ?, ?) ";
+        String sql = "Insert into taxon (taxonId, taxonScientificName, " +
+                "taxonCommonName, taxonLeftBound, taxonRightBound, taxonLevel, " +
+                "bgeeSpeciesLCA) values ";
+        for (int i = 0; i < taxa.size(); i++) {
+            if (i > 0) {
+                sql += ", ";
             }
-            BgeePreparedStatement stmt = 
-                    this.getManager().getConnection().prepareStatement(sql);
+            sql += "(?, ?, ?, ?, ?, ?, ?) ";
+        }
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sql)) {
             int paramIndex = 1;
             for (TaxonTO taxonTO: taxa) {
                 stmt.setInt(paramIndex, Integer.parseInt(taxonTO.getId()));
@@ -86,7 +85,6 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
                 stmt.setBoolean(paramIndex, taxonTO.isLca());
                 paramIndex++;
             }
-            
             return log.exit(stmt.executeUpdate());
             
         } catch (SQLException e) {

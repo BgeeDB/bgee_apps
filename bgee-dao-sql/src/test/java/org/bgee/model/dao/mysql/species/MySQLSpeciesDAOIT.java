@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.species;
 
 import static org.junit.Assert.*;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +25,12 @@ import org.junit.Test;
 public class MySQLSpeciesDAOIT extends MySQLITAncestor {
     private final static Logger log = LogManager.getLogger(MySQLSpeciesDAOIT.class.getName());
     
+    /**
+     * A {@code String} that is the name of the table into which data are inserted 
+     * during testing of {@link MySQLSpeciesDAO} methods inserting data.
+     */
+    private final static String INSERTTABLENAME = "species";
+    
     public MySQLSpeciesDAOIT() {
         super();
     }
@@ -38,26 +43,55 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
      * Test the insertion method {@link MySQLSpeciesDAO#insertSpecies(Collection)}.
      */
     @Test
-    public void shouldInsertAndGetSpecies() throws SQLException {
+    public void shouldInsertSpecies() throws SQLException {
         this.useEmptyDB();
         //create a Collection of SpeciesTOs to be inserted
         Collection<SpeciesTO> speciesTOs = new ArrayList<SpeciesTO>();
-        speciesTOs.add(new SpeciesTO("ID1", "commonName1", "genus1", "speciesName1", 
-                "parentTaxonID1"));
-        speciesTOs.add(new SpeciesTO("ID2", "commonName2", "genus2", "speciesName2", 
-                "parentTaxonID2"));
-        speciesTOs.add(new SpeciesTO("ID3", "commonName3", "genus3", "speciesName3", 
-                "parentTaxonID3"));
-        MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
-        assertEquals("Incorrect number of rows inserted", 3, dao.insertSpecies(speciesTOs));
-        
-        //we manually verify the insertion, as we do not want to rely on other methods 
-        //that are tested elsewhere
-        BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                prepareStatement("select * from species order by speciesId");
-        
-        
-        
-        this.useDefaultDB();
+        speciesTOs.add(new SpeciesTO("10", "commonName1", "genus1", "speciesName1", 
+                "100"));
+        speciesTOs.add(new SpeciesTO("20", "commonName2", "genus2", "speciesName2", 
+                "120"));
+        speciesTOs.add(new SpeciesTO("30", "commonName3", "genus3", "speciesName3", 
+                "500"));
+        try {
+            MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
+            assertEquals("Incorrect number of rows inserted", 3, 
+                    dao.insertSpecies(speciesTOs));
+            
+            //we manually verify the insertion, as we do not want to rely on other methods 
+            //that are tested elsewhere.
+            //This test method could be better written (DRY, ...)
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from species where speciesId = ? and " +
+                            "speciesCommonName = ? and genus = ? and species = ? and " +
+                            "taxonId = ?")) {
+                
+                stmt.setInt(1, 10);
+                stmt.setString(2, "commonName1");
+                stmt.setString(3, "genus1");
+                stmt.setString(4, "speciesName1");
+                stmt.setInt(5, 100);
+                assertTrue("SpeciesTO incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setInt(1, 20);
+                stmt.setString(2, "commonName2");
+                stmt.setString(3, "genus2");
+                stmt.setString(4, "speciesName2");
+                stmt.setInt(5, 120);
+                assertTrue("SpeciesTO incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setInt(1, 30);
+                stmt.setString(2, "commonName3");
+                stmt.setString(3, "genus3");
+                stmt.setString(4, "speciesName3");
+                stmt.setInt(5, 500);
+                assertTrue("SpeciesTO incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+            }
+        } finally {
+            this.deleteFromTableAndUseDefaultDB(INSERTTABLENAME);
+        }
     }
 }

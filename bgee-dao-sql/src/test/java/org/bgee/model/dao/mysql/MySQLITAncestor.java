@@ -151,16 +151,28 @@ public abstract class MySQLITAncestor extends TestAncestor{
         this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(EMPTYDBKEY));
         log.exit();
     }
-    
     /**
-     * Configures the {@code MySQLDAOManager} of the current thread to return 
-     * {@code BgeeConnection}s connected to the default database specified by 
-     * the JDBC connection URL (or no database if the URL does not specify any). 
-     * This is useful after having forced the connection to use a particular 
-     * database (see for instance {@link #useEmptyDB()}).
+     * Delete all rows from the table named {@code tableName} in the database 
+     * currently used, and configure the {@code DAOManager} to stop using 
+     * this database and to use the default database specified by the JDBC connection 
+     * URL, if any.
+     * 
+     * @param tablebName    A {@code String} that is the name of the table 
+     *                      to delete data from.
+     * @throws SQLException If an error occurs while deleting the database.
      */
-    protected void useDefaultDB() {
-        this.getMySQLDAOManager().setDatabaseToUse(null);
+    protected void deleteFromTableAndUseDefaultDB(String tableName) throws SQLException {
+        log.entry(tableName);
+        
+        MySQLDAOManager manager = this.getMySQLDAOManager();
+        //cannot prepare statements for table queries
+        try (BgeePreparedStatement stmt = manager.getConnection().prepareStatement(
+                "delete from " + tableName)) {
+            stmt.executeUpdate();
+        }
+        manager.setDatabaseToUse(null);
+        
+        log.exit();
     }
     
     /**
@@ -221,22 +233,21 @@ public abstract class MySQLITAncestor extends TestAncestor{
     
     /**
      * Drop the database named {@code dbName} created for integration tests, and 
-     * configure the {@code DAOManager} to stop using this database.
+     * configure the {@code DAOManager} to stop using this database, and to use 
+     * the default database specified by the JDBC connection URL, if any.
      * 
      * @param dbName        A {@code String} that is the name of the database to drop.
      * @throws SQLException If an error occurs while deleting the database.
      */
-    protected void dropDatabase(String dbName) throws SQLException {
+    protected void dropDatabaseAndUseDefaultDB(String dbName) throws SQLException {
         log.entry(dbName);
         
         MySQLDAOManager manager = this.getMySQLDAOManager();
-        BgeeConnection con = manager.getConnection();
-        //I don't know why but I can't use prepared statement for database commands.
-        BgeePreparedStatement stmt = con.prepareStatement("Drop database " + 
-            this.getTestDbName(dbName));
-        stmt.executeUpdate();
-        //we close this connection as we are going to change the database used
-        con.close();
+        //cannot prepare statements for database queries
+        try (BgeePreparedStatement stmt = manager.getConnection().prepareStatement(
+                "Drop database " + this.getTestDbName(dbName))) {
+            stmt.executeUpdate();
+        }
         manager.setDatabaseToUse(null);
         
         log.exit();

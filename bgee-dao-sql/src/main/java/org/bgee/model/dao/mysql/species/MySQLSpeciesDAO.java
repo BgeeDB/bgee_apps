@@ -59,17 +59,16 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     public int insertSpecies(Collection<SpeciesTO> specieTOs) throws DAOException {
         log.entry(specieTOs);
         
-        try {
-            String sql = "Insert into species (speciesId, genus, species, " +
-            		"speciesCommonName, parentTaxonId) values ";
-            for (int i = 0; i < specieTOs.size(); i++) {
-                if (i > 0) {
-                    sql += ", ";
-                }
-                sql += "(?, ?, ?, ?, ?) ";
+        String sql = "Insert into species (speciesId, genus, species, " +
+                "speciesCommonName, taxonId) values ";
+        for (int i = 0; i < specieTOs.size(); i++) {
+            if (i > 0) {
+                sql += ", ";
             }
-            BgeePreparedStatement stmt = 
-                    this.getManager().getConnection().prepareStatement(sql);
+            sql += "(?, ?, ?, ?, ?) ";
+        }
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sql)) {
             int paramIndex = 1;
             for (SpeciesTO speciesTO: specieTOs) {
                 stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getId()));
@@ -85,7 +84,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             }
             
             return log.exit(stmt.executeUpdate());
-            
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

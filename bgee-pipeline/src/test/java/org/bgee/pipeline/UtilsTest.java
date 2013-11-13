@@ -41,7 +41,7 @@ public class UtilsTest extends TestAncestor {
     @Test
     public void shouldGetSpeciesIds() throws IllegalArgumentException, 
         FileNotFoundException, IOException {
-        Set<Integer> speciesIds = Utils.getSpeciesIds(
+        Set<Integer> speciesIds = Utils.getTaxonIds(
                 this.getClass().getResource("/species/species.tsv").getFile());
         assertTrue("Incorrect species IDs returned", speciesIds.size() == 4 && 
                 speciesIds.contains(8) && speciesIds.contains(13) && 

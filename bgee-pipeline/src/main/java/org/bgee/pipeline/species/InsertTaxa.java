@@ -148,7 +148,7 @@ public class InsertTaxa extends MySQLDAOUser {
             OBOFormatParserException, IllegalArgumentException, DAOException {
         log.entry(speciesFile, ncbiOntFile);
         
-        this.insertSpeciesAndTaxa(Utils.getSpeciesIds(speciesFile), 
+        this.insertSpeciesAndTaxa(Utils.getTaxonIds(speciesFile), 
                 OntologyUtils.loadOntology(ncbiOntFile));
         
         log.exit();

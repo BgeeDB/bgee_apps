@@ -2,18 +2,6 @@ format-version: 1.2
 ontology: taxonConstraintsTest
 
 [Term]
-id: NCBITaxon:8
-name: coelocanth
-
-[Term]
-id: NCBITaxon:13
-name: fly
-
-[Term]
-id: NCBITaxon:15
-name: whatever
-
-[Term]
 id: UBERON:0001062
 name: anatomical entity
 

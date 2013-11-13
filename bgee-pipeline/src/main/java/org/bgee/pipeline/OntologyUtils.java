@@ -44,19 +44,22 @@ public class OntologyUtils {
     /**
      * A {@code String} representing the key to obtain left bound value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
+     * @see #computeNestedSetModelParams()
+     * @see #computeNestedSetModelParams(List)
      */
     public static final String LEFTBOUNDKEY = "left";
     /**
      * A {@code String} representing the key to obtain right bound value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
+     * @see #computeNestedSetModelParams()
+     * @see #computeNestedSetModelParams(List)
      */
     public static final String RIGHTBOUNDKEY = "right";
     /**
      * A {@code String} representing the key to obtain level value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
-     * @see #computeNestedSetModelParams(OWLClass, Map, OWLGraphWrapper)
+     * @see #computeNestedSetModelParams()
+     * @see #computeNestedSetModelParams(List)
      */
     public static final String LEVELKEY = "level";
 
@@ -82,6 +85,7 @@ public class OntologyUtils {
     public static OWLOntology loadOntology(String ontFile) throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
         ParserWrapper parserWrapper = new ParserWrapper();
+        parserWrapper.setCheckOboDoc(false);
         return parserWrapper.parse(ontFile);
     }
     
@@ -384,6 +388,7 @@ public class OntologyUtils {
         Owl2Obo converter = new Owl2Obo();
         OBODoc oboOntology = converter.convert(this.wrapper.getSourceOntology());
         OBOFormatWriter writer = new OBOFormatWriter();
+        writer.setCheckStructure(false);
         writer.write(oboOntology, outputFile);
         
         log.exit();

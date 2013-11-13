@@ -361,7 +361,12 @@
 		<!-- Plugins needed for some sub-modules -->
 		<pluginManagement>
 		  <plugins>
-		  
+		    <!-- *******Used to generate executable JAR files with depedencies******** -->
+		    <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
+            </plugin>
+      
             <!-- ******************** Integration tests *********************** -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

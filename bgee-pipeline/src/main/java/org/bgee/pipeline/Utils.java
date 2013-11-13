@@ -49,7 +49,7 @@ public class Utils {
      * @throws IllegalArgumentException If the file located at {@code speciesFile} 
      *                                  did not allow to obtain any valid species ID.
      */
-    public static Set<Integer> getSpeciesIds(String speciesFile) throws IllegalArgumentException, 
+    public static Set<Integer> getTaxonIds(String speciesFile) throws IllegalArgumentException, 
         FileNotFoundException, IOException {
         log.entry(speciesFile);
         Set<Integer> speciesIds = new HashSet<Integer>();

@@ -13,7 +13,7 @@
     <root level="off">
       <appender-ref ref="Console"/>
     </root>  
-    <logger name="org.bgee.pipeline" level="trace" additivity="false">
+    <logger name="org.bgee" level="trace" additivity="false">
       <appender-ref ref="Console"/>
     </logger>
   </loggers>

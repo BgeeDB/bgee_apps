@@ -112,7 +112,7 @@ public class InsertTaxaTest extends TestAncestor {
 
         Set<TaxonTO> expectedTaxonTOs = new HashSet<TaxonTO>();
         expectedTaxonTOs.add(
-                new TaxonTO("1", "", "taxon A", 1, 14, 1, false));
+                new TaxonTO("1", null, "taxon A", 1, 14, 1, false));
         expectedTaxonTOs.add(
                 new TaxonTO("2", "common name taxon B", "taxon B", 2, 13, 2, false));
         expectedTaxonTOs.add(

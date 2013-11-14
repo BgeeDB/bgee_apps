@@ -14,9 +14,7 @@
       <appender-ref ref="Console"/>
     </root>  
     <logger name="org.bgee.pipeline" level="trace" additivity="false">
-      <appender-ref ref="test_file">
-          <MarkerFilter marker="FLOW" onMatch="DENY" onMismatch="NEUTRAL" />
-      </appender-ref>
+      <appender-ref ref="Console"/>
     </logger>
   </loggers>
 </configuration>

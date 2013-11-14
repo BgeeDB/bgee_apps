@@ -221,7 +221,8 @@ public class GenerateTaxonConstraints {
                     throws UnknownOWLOntologyException, OWLOntologyCreationException, 
                     OBOFormatParserException, IOException {
         log.entry(uberonFile, taxOntFile, taxonIds, storeOntologyDir);
-
+        log.info("Start generating taxon constraints...");
+        
         OWLGraphWrapper uberonWrapper = 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonFile));
         OWLGraphWrapper taxWrapper = 
@@ -247,6 +248,7 @@ public class GenerateTaxonConstraints {
             }
         }
         
+        log.info("Done generating taxon constraints.");
         return log.exit(taxonConstraints);
     }
     
@@ -281,6 +283,7 @@ public class GenerateTaxonConstraints {
             int taxonId, String storeOntologyDir) throws UnknownOWLOntologyException, 
             OWLOntologyCreationException, OBOFormatParserException, IOException  {
         log.entry(uberonFile, taxOntFile, taxonId, storeOntologyDir);
+        log.info("Generating constraints for taxon {}...", taxonId);
         
         //as there is no easy way to clone an ontology before modifying it, 
         //we need to reload it each time this method is called
@@ -323,6 +326,7 @@ public class GenerateTaxonConstraints {
             }
             returnedClasses.add(classToCheck);
         }
+        log.info("Done generating constraints for taxon {}.", taxonId);
         return log.exit(returnedClasses);
     }
     

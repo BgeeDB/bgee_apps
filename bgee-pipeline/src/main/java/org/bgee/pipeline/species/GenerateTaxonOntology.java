@@ -162,7 +162,10 @@ public class GenerateTaxonOntology {
             throws OWLOntologyCreationException, OWLOntologyStorageException, 
             IOException {
         log.entry(pathToTaxonomyData);
-        return log.exit(NCBI2OWL.convertToOWL(pathToTaxonomyData, null));
+        log.info("Starting convertion from .dat file to OWLOntology...");
+        OWLOntology ont = NCBI2OWL.convertToOWL(pathToTaxonomyData, null);
+        log.info("Done converting .dat file to OWLOntology.");
+        return log.exit(ont);
     }
     
     /**
@@ -177,9 +180,10 @@ public class GenerateTaxonOntology {
      */
     private void filterOntology(OWLGraphWrapper ontWrapper, String taxonId) {
         log.entry(ontWrapper, taxonId);
-        
+        log.info("Start filtering ontology for taxon {}...", taxonId);
         OWLGraphManipulator manipulator = new OWLGraphManipulator(ontWrapper);
         manipulator.filterSubgraphs(Arrays.asList(taxonId));
+        log.info("Done filtering ontology for taxon {}.", taxonId);
         
         log.exit();
     }

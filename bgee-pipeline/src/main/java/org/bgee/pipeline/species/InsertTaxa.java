@@ -173,6 +173,7 @@ public class InsertTaxa extends MySQLDAOUser {
     public void insertSpeciesAndTaxa(Set<Integer> speciesIds, OWLOntology taxOntology) 
             throws OWLOntologyCreationException, IllegalArgumentException, DAOException {
         log.entry(speciesIds, taxOntology);
+        log.info("Starting insertion of species and taxa...");
         
         //catch any IllegalStateException to wrap it into a IllegalArgumentException 
         //(a IllegalStateException would be generated because the OWLOntology loaded 
@@ -213,7 +214,8 @@ public class InsertTaxa extends MySQLDAOUser {
             throw log.throwing(new IllegalArgumentException(
                     "The OWLOntology provided is invalid", e));
         }
-        
+
+        log.info("Done inserting species and taxa.");
         log.exit();
     }
     

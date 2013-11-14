@@ -112,7 +112,7 @@ public class InsertTaxaTest extends TestAncestor {
 
         Set<TaxonTO> expectedTaxonTOs = new HashSet<TaxonTO>();
         expectedTaxonTOs.add(
-                new TaxonTO("1", null, "taxon A", 1, 14, 1, false));
+                new TaxonTO("1", "", "taxon A", 1, 14, 1, false));
         expectedTaxonTOs.add(
                 new TaxonTO("2", "common name taxon B", "taxon B", 2, 13, 2, false));
         expectedTaxonTOs.add(
@@ -129,7 +129,7 @@ public class InsertTaxaTest extends TestAncestor {
         verify(mockManager.mockTaxonDAO).insertTaxa(taxonTOsArg.capture());
         if (!this.areTaxonTOCollectionsEqual(
                 expectedTaxonTOs, taxonTOsArg.getValue())) {
-            throw new AssertionError("Incorrect TaxonTOs generated to inset species, " +
+            throw new AssertionError("Incorrect TaxonTOs generated to insert species, " +
                     "expected " + expectedTaxonTOs.toString() + ", but was " + 
                     taxonTOsArg.getValue());
         }

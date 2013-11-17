@@ -1,14 +1,26 @@
 package org.bgee.pipeline.species;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
@@ -17,7 +29,8 @@ import owltools.ncbi.NCBI2OWL;
 /**
  * Use the NCBI taxonomy data files to generate a taxonomy ontology, and stored it 
  * in OBO format. This taxonomy will include only taxa related to a specified 
- * taxon.
+ * taxon, and will include disjoint classes axions necessary to correctly infer 
+ * taxon constraints, for ontologies using the "in_taxon" relations.
  * <p>
  * This class uses the {@code owltools.ncbi.NCBI2OWL} class written by James A. Overton 
  * to generate the ontology. It is needed to provide the {@code taxonomy.dat} file 
@@ -30,15 +43,16 @@ import owltools.ncbi.NCBI2OWL;
  * the official ontology does not include the last modifications that we requested 
  * to NCBI, and that were accepted (e.g., addition of a <i>Dipnotetrapodomorpha</i> term).
  * <p>
- * To avoid to regenerate this ontology at each Bgee release, this custom 
- * ontology will not contain only taxa related to the species currently included 
- * in Bgee; and to avoid storing a too large ontology, it will contain only taxa 
+ * As explained on a Chris Mungall 
+ * <a href='http://douroucouli.wordpress.com/2012/04/24/taxon-constraints-in-owl/'>
+ * blog post</a>, it is also necessary to generate disjoint classes axioms. 
+ * Our code is based on the method 
+ * {@code owltools.cli.TaxonCommandRunner.createTaxonDisjointOverInTaxon(Opts)}. 
+ * <p>
+ * To avoid storing a too large ontology, it will contain only taxa 
  * related to a specified taxon (for instance, <i>metazoa</i>, NCBI ID <a 
  * href='http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=33208'>
  * 33208</a>).
- * <p>
- * The generated ontology will be stored in OBO format, to keep the file as small 
- * as possible (RDF OWL is verbose).
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -50,6 +64,11 @@ public class GenerateTaxonOntology {
      */
     private final static Logger log = 
             LogManager.getLogger(GenerateTaxonOntology.class.getName());
+    
+    /**
+     * A {@code String} that is the IRI of the {@code ObjectProperty} "in_taxon".
+     */
+    protected final static String INTAXONRELID = "http://purl.obolibrary.org/obo/RO_0002162";
     
     /**
      * Main method to trigger the generation of a taxonomy ontology, stored in 
@@ -98,7 +117,9 @@ public class GenerateTaxonOntology {
      * Generates a taxonomy ontology, based on the NCBI taxonomy data, that 
      * will be stored in OBO format, and that will include only a specific branch 
      * of the taxonomy. This taxonomy will include only taxa related to the specified 
-     * taxon ({@code requestedTaxonId}).
+     * taxon ({@code requestedTaxonId}). It will also include the disjoint classes 
+     * axioms necessary to correctly infer taxon constraints, for ontologies using 
+     * the "in_taxon" relations.
      * 
      * @param taxDataFile       A {@code String} that is the path to the NCBI 
      *                          {@code taxonomy.dat} file.
@@ -138,6 +159,10 @@ public class GenerateTaxonOntology {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         //now modify the ontology in order to keep only taxa related to provided taxon
         this.filterOntology(wrapper, requestedTaxonId);
+        //add the disjoint axioms necessary to correctly infer taxon constraints 
+        //at later steps.
+        this.createTaxonDisjointAxioms(wrapper);
+        
         //finally, store the modified ontology in OBO
         new OntologyUtils(wrapper).saveAsOBO(outputFile);
         
@@ -185,6 +210,85 @@ public class GenerateTaxonOntology {
         manipulator.filterSubgraphs(Arrays.asList(taxonId));
         log.info("Done filtering ontology for taxon {}.", taxonId);
         
+        log.exit();
+    }
+    
+    /**
+     * Add to the {@code OWLOntology} wrapped into {@code ontWrapper} the disjoint 
+     * classes axioms necessary to correctly infer taxon constraints, for ontologies 
+     * using "in_taxon" relations. 
+     * <p>
+     * This necessity is explained on a Chris Mungall 
+     * <a href='http://douroucouli.wordpress.com/2012/04/24/taxon-constraints-in-owl/'>
+     * blog post</a>. The code is copied from the method 
+     * {@code owltools.cli.TaxonCommandRunner.createTaxonDisjointOverInTaxon(Opts)}. 
+     * We have not use this class directly because it creates a new ontology to store 
+     * the axioms in it. 
+     * 
+     * @param ontWrapper    The {@code OWLGraphWrapper} into which the 
+     *                      {@code OWLOntology} to modify is wrapped.
+     * @throws IllegalStateException    If some axioms were not correctly added.
+     */
+    private void createTaxonDisjointAxioms(OWLGraphWrapper ontWrapper) {
+        log.entry(ontWrapper);
+        log.info("Start creating disjoint classes axioms...");
+        
+        OWLOntologyManager m = ontWrapper.getManager();
+        OWLDataFactory f = m.getOWLDataFactory();
+        OWLObjectProperty inTaxon = f.getOWLObjectProperty(IRI.create(INTAXONRELID));
+        log.trace("in_taxon property created: {}", inTaxon);
+        
+        // add disjoints
+        Deque<OWLClass> queue = new ArrayDeque<OWLClass>();
+        queue.addAll(ontWrapper.getOntologyRoots());
+        Set<OWLClass> done = new HashSet<OWLClass>();
+        
+        final OWLOntology ont = ontWrapper.getSourceOntology();
+        int axiomCount = 0;
+        OWLClass current;
+        while ((current = queue.pollFirst()) != null) {
+            if (done.add(current)) {
+                Set<OWLSubClassOfAxiom> axioms = ont.getSubClassAxiomsForSuperClass(current);
+                Set<OWLClass> siblings = new HashSet<OWLClass>();
+                for (OWLSubClassOfAxiom ax : axioms) {
+                    OWLClassExpression ce = ax.getSubClass();
+                    if (!ce.isAnonymous()) {
+                        OWLClass subCls = ce.asOWLClass();
+                        siblings.add(subCls);
+                        queue.offerLast(subCls);
+                    }
+                }
+                if (siblings.size() > 1) {
+                    Set<OWLAxiom> disjointAxioms = new HashSet<OWLAxiom>();
+                    for (OWLClass sibling1 : siblings) {
+                        for (OWLClass sibling2 : siblings) {
+                            if (sibling1 != sibling2) {
+                                log.trace("Creating disjoint axioms for {} and {}", 
+                                        sibling1, sibling2);
+                                OWLClassExpression ce1 = 
+                                        f.getOWLObjectSomeValuesFrom(inTaxon, sibling1);
+                                OWLClassExpression ce2 = 
+                                        f.getOWLObjectSomeValuesFrom(inTaxon, sibling2);
+                                disjointAxioms.add(f.getOWLDisjointClassesAxiom(ce1, ce2));
+                                
+                                disjointAxioms.add(
+                                        f.getOWLDisjointClassesAxiom(sibling1, sibling2));
+                            }
+                        }
+                    }
+                    int changeMade = m.addAxioms(ont, disjointAxioms).size();
+                    if (changeMade != disjointAxioms.size()) {
+                        throw log.throwing(new IllegalStateException("Some disjoint axioms " +
+                        		"could not be added."));
+                    }
+                    axiomCount += disjointAxioms.size();
+                }
+            }
+        }
+        
+        
+        log.info("Done creating disjoint classes axioms, created {} disjoint axioms.", 
+                axiomCount);
         log.exit();
     }
 }

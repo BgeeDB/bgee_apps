@@ -43,7 +43,7 @@ SYNONYM                   : High GC gram-positive bacteria
 BLAST NAME                : high GC Gram+
 //
 ID                        : 2037
-PARENT ID                 : 85003
+PARENT ID                 : 1760
 RANK                      : order
 GC ID                     : 11
 SCIENTIFIC NAME           : Actinomycetales
@@ -57,7 +57,7 @@ SYNONYM                   : Corynebacterium minutissimum (ex Sarkany et al. '62)
 SYNONYM                   : "Corynebacterium minutissimum" Sarkany et al. 1962
 //
 ID                        : 85003
-PARENT ID                 : 1760
+PARENT ID                 : 84992
 RANK                      : subclass
 GC ID                     : 11
 SCIENTIFIC NAME           : Actinobacteridae
@@ -98,8 +98,26 @@ SYNONYM                   : not Actinobacteria Cavalier-Smith 2002
 BLAST NAME                : actinobacteria
 //
 ID                        : 1223512
-PARENT ID                 : 38301
+PARENT ID                 : 85003
 RANK                      : no rank
 GC ID                     : 11
 SCIENTIFIC NAME           : Corynebacterium minutissimum NBRC 15361
+//
+ID                        : 12235122
+PARENT ID                 : 85003
+RANK                      : no rank
+GC ID                     : 11
+SCIENTIFIC NAME           : ffsdfds
+//
+ID                        : 65645
+PARENT ID                 : 84992
+RANK                      : no rank
+GC ID                     : 11
+SCIENTIFIC NAME           : ffsdfdsddsf
+//
+ID                        : 53435
+PARENT ID                 : 2
+RANK                      : no rank
+GC ID                     : 11
+SCIENTIFIC NAME           : ffsdfdsddsffdsfsd
 //

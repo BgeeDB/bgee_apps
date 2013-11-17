@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
 import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
@@ -38,9 +40,39 @@ import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
 import owltools.io.ParserWrapper;
 
-public class GenerateUberonVersion 
-{
-	public static void main(String[] args) throws OWLOntologyCreationException, OBOFormatParserException, IOException, OWLOntologyStorageException 
+public class GenerateUberonVersion {
+    /**
+     * {@code Logger} of the class.
+     */
+    private final static Logger log = 
+            LogManager.getLogger(GenerateUberonVersion.class.getName());
+    
+    /**
+     * Main method to trigger the generation of a custom simplified version of Uberon 
+     * for Bgee. Parameters that must be provided in order in {@code args} are: 
+     * <ol>
+     * <li>path to the source Uberon composite-metazan OWL ontology file.
+     * <li>path to the taxon constraints TSV file, generated at a previous step 
+     * (see {@link #GenerateTaxonConstraints}). The fist line should be a header line. 
+     * The columns are: ID of the Uberon classes, IDs of each of the taxa that 
+     * were examined. For each of the taxon columns, a boolean is provided 
+     * as "T" or "F", to define whether the associated Uberon class exists in it.
+     * <li>path to the TSV files containing the ID of the species used in Bgee, 
+     * corresponding to the NCBI taxonomy ID (e.g., 9606 for human). The first line 
+     * should be a header line, and first column should be the IDs. A second column 
+     * can be present for human readability. 
+     * </ol>
+     * Note that if a taxon is defined in the Bgee species file, but not in 
+     * the taxon constraints file, an {@code IllegalArgumentException} will be thrown.
+     * 
+     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+     */
+    public static void main(String[] args) {
+        log.entry((Object[]) args);
+        
+        log.exit();
+    }
+	public static void yo() throws OWLOntologyCreationException, OBOFormatParserException, IOException, OWLOntologyStorageException 
 	{
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/uberon.owl");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
@@ -55,20 +87,21 @@ public class GenerateUberonVersion
     	
     	
     	//graphManipulator.makeBasicOntology();
-    	/*//map all sub-relations of part_of and develops_from to these relations
+    	
+    	//map all sub-relations of part_of and develops_from to these relations
     	Collection<String> relIds = new ArrayList<String>();
     	relIds.add("BFO:0000050");
     	relIds.add("RO:0002202");
     	int relsMapped = graphManipulator.mapRelationsToParent(relIds);
     	//keep only is_a, part_of and develops_from relations
-    	int relsRemoved = graphManipulator.filterRelations(relIds, true);*/
+    	int relsRemoved = graphManipulator.filterRelations(relIds, true);
     	
-    	//graphManipulator.removeRelsToSubsets(Arrays.asList("upper_level"));
-    	//graphManipulator.removeSubgraphs(Arrays.asList("UBERON:0000481"), true);
-    	//graphManipulator.removeClassAndPropagateEdges("UBERON:0001459");
-    	//graphManipulator.reducePartOfIsARelations();
+    	graphManipulator.removeRelsToSubsets(Arrays.asList("upper_level"));
+    	graphManipulator.removeSubgraphs(Arrays.asList("UBERON:0000481"), true);
+    	graphManipulator.removeClassAndPropagateEdges("UBERON:0001459");
+    	graphManipulator.reducePartOfIsARelations();
     	
-    	/*Owl2Obo converter = new Owl2Obo();
+    	Owl2Obo converter = new Owl2Obo();
     	OBODoc oboOntology = converter.convert(
     			graphManipulator.getOwlGraphWrapper().getSourceOntology());
     	OBOFormatWriter writer = new OBOFormatWriter();
@@ -81,6 +114,6 @@ public class GenerateUberonVersion
             owlRdfFormat.copyPrefixesFrom(owlRdfFormat.asPrefixOWLOntologyFormat());
         } 
         manager.saveOntology(graphManipulator.getOwlGraphWrapper().getSourceOntology(), 
-                owlRdfFormat, IRI.create(rdfFile.toURI()));*/
+                owlRdfFormat, IRI.create(rdfFile.toURI()));
 	}
 }

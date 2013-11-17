@@ -74,7 +74,9 @@ public class GenerateTaxonConstraints {
      * their NCBI ID. Parameters that must be provided in order in {@code args} are: 
      * <ol>
      * <li>path to the source Uberon OWL ontology file.
-     * <li>path to the NCBI taxonomy, used as an import closure.
+     * <li>path to the NCBI taxonomy, used as an import closure. This taxonomy must 
+     * contain disjoint classes axioms between sibling terms, see 
+     * {@link org.bgee.pipeline.species.GenerateTaxonOntology}.
      * <li>path to the TSV files containing the ID of the species used in Bgee, 
      * corresponding to the NCBI taxonomy ID (e.g., 9606 for human). The first line 
      * should be a header line, and first column should be the IDs. A second column 
@@ -121,8 +123,11 @@ public class GenerateTaxonConstraints {
      * Launches the generation of a TSV files, allowing to know, 
      * for each {@code OWLClass} in the Uberon ontology stored in {@code uberonFile}, 
      * in which taxa it exits, among the taxa provided through the TSV file 
-     * {@code taxonIdFile}, containing their NCBI ID. The results will be stored 
-     * in the TSV file {@code outputFile}. The approach is, for each taxon provided, 
+     * {@code taxonIdFile}, containing their NCBI ID. This method needs to be provided 
+     * with a taxonomy ontology, that must contain disjoint classes axioms between 
+     * sibling terms, see {@link org.bgee.pipeline.species.GenerateTaxonOntology}. 
+     * The results will be stored in the TSV file {@code outputFile}. 
+     * The approach is, for each taxon provided, 
      * to generate a custom version of the ontology, that will contain only the 
      * {@code OWLClass}es existing in this taxon. If you want to keep these intermediate  
      * generated ontologies, you need to provide the path {@code storeOntologyDir} 

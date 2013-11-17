@@ -263,8 +263,6 @@ public class GenerateTaxonOntology {
                     for (OWLClass sibling1 : siblings) {
                         for (OWLClass sibling2 : siblings) {
                             if (sibling1 != sibling2) {
-                                log.trace("Creating disjoint axioms for {} and {}", 
-                                        sibling1, sibling2);
                                 OWLClassExpression ce1 = 
                                         f.getOWLObjectSomeValuesFrom(inTaxon, sibling1);
                                 OWLClassExpression ce2 = 

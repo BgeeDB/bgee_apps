@@ -4,8 +4,11 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -213,5 +216,17 @@ public class OntologyUtilsTest extends TestAncestor {
             wrapper.getManager().removeAxiom(wrapper.getSourceOntology(), ax);
             wrapper.clearCachedEdges();
         }
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#convertToTaxOntologyIds(Set)}.
+     */
+    @Test
+    public void shouldConvertToTaxOntologyIds() {
+        Set<Integer> ncbiIds = new HashSet<Integer>(Arrays.asList(2, 5, 10, 500));
+        Set<String> expectedOntIds = new HashSet<String>(Arrays.asList("NCBITaxon:2", 
+                "NCBITaxon:5", "NCBITaxon:10", "NCBITaxon:500"));
+        assertEquals("Incorrect conversion", expectedOntIds, 
+                OntologyUtils.convertToTaxOntologyIds(ncbiIds));
     }
 }

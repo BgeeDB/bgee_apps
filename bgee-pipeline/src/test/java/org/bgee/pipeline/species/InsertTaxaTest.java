@@ -40,16 +40,15 @@ public class InsertTaxaTest extends TestAncestor {
     private final String SPECIESFILE = "/species/species.tsv";
     /**
      * A {@code String} that is the path from the classpath to the fake NCBI 
-     * taxonomy ontology. This taxonomy <strong>after</strong> filtering to keep 
-     * only taxa related to the species in {@code SPECIESFILE} should look like 
-     * as following; least common ancestors of considered species are marked with *, 
-     * nested set model parameters are in brackets: 
+     * taxonomy ontology. This taxonomy is as following; least common ancestors 
+     * of considered species are marked with *, nested set model parameters after 
+     * species removal are in brackets: 
      * <pre>
-     *                    NCBITaxon:1 taxon A (1, 14, 1)
+     *                    NCBITaxon:1 taxon A (1, 16, 1)
      *                             |
-     *                    NCBITaxon:2 taxon B (2, 13, 2)
-     *                             |
-     *                  * NCBITaxon:6 taxon C * (3, 12, 3)
+     *                    NCBITaxon:2 taxon B (2, 15, 2)
+     *                        /                         \
+     *            * NCBITaxon:6 taxon C * (3, 12, 3)     NCBITaxon:3 taxon Bprime (13, 14, 3)
      *                   /                   \
      *     NCBITaxon:11 taxon D (4, 9, 4)  NCBITaxon:16 taxon G (10, 11, 4)
      *                  |                             |
@@ -112,9 +111,11 @@ public class InsertTaxaTest extends TestAncestor {
 
         Set<TaxonTO> expectedTaxonTOs = new HashSet<TaxonTO>();
         expectedTaxonTOs.add(
-                new TaxonTO("1", null, "taxon A", 1, 14, 1, false));
+                new TaxonTO("1", null, "taxon A", 1, 16, 1, false));
         expectedTaxonTOs.add(
-                new TaxonTO("2", "common name taxon B", "taxon B", 2, 13, 2, false));
+                new TaxonTO("2", "common name taxon B", "taxon B", 2, 15, 2, false));
+        expectedTaxonTOs.add(
+                new TaxonTO("3", null, "taxon z", 13, 14, 3, false));
         expectedTaxonTOs.add(
                 new TaxonTO("6", "common name taxon C", "taxon C", 3, 12, 3, true));
         expectedTaxonTOs.add(

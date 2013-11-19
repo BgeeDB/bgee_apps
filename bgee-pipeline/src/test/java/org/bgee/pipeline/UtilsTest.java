@@ -1,6 +1,7 @@
 package org.bgee.pipeline;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -10,9 +11,10 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
-import org.supercsv.cellprocessor.constraint.NotNull;
-import org.supercsv.cellprocessor.constraint.UniqueHashCode;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.util.CsvContext;
 
 /**
  * Unit tests for {@link Utils}.
@@ -40,33 +42,95 @@ public class UtilsTest extends TestAncestor {
     }
     
     /**
-     * Tests {@link Utils.getSpeciesIds(String)}.
+     * Tests {@link Utils.getTaxonIds(String)}.
      */
     @Test
-    public void shouldGetSpeciesIds() throws IllegalArgumentException, 
+    public void shouldGetTaxonIds() throws IllegalArgumentException, 
         FileNotFoundException, IOException {
-        Set<String> speciesIds = Utils.getTaxonIds(
+        Set<Integer> speciesIds = new Utils().getTaxonIds(
                 this.getClass().getResource("/species/species.tsv").getFile());
-        assertTrue("Incorrect species IDs returned", speciesIds.size() == 4 && 
-                speciesIds.contains("NCBITaxon:8") && speciesIds.contains("NCBITaxon:13") && 
-                speciesIds.contains("NCBITaxon:15") && speciesIds.contains("NCBITaxon:1001"));
+        assertTrue("Incorrect species IDs returned: " + speciesIds, 
+                speciesIds.size() == 3 && 
+                speciesIds.contains(8) && speciesIds.contains(13) && 
+                speciesIds.contains(15));
     }
     
-
     /**
-     * Tests {@link Utils.parseColumnAsString(String, int, int, CellProcessor)}.
+     * Tests {@link Utils.parseColumnAsString(String, String, CellProcessor)}.
      */
     @Test
     public void shouldParseColumnAsString() throws IllegalArgumentException, 
         FileNotFoundException, IOException {
-        CellProcessor processor = new NotNull(new UniqueHashCode());
-        List<String> values = Utils.parseColumnAsString(
+        CellProcessor processor = mock(CellProcessor.class);
+        when(processor.execute(anyObject(), any(CsvContext.class))).thenAnswer(
+            new Answer() {
+                @Override
+                public Object answer(InvocationOnMock invocation) throws Throwable {
+                    Object[] args = invocation.getArguments();
+                    return args[0];
+                }
+        });
+        
+        List<String> values = new Utils().parseColumnAsString(
                 this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
-                1, 3, processor);
+                "column2", processor);
         assertEquals("Incorrect values returned", 3, values.size());
         assertEquals("Incorrect values returned", "b1", values.get(0));
         assertEquals("Incorrect values returned", "b2", values.get(1));
         assertEquals("Incorrect values returned", "b3", values.get(2));
+        verify(processor, times(3)).execute(anyObject(), any(CsvContext.class));
+        
+        //an IllegalArgumentException should be thrown if no column with the provided 
+        //name could be found.
+        try {
+            new Utils().parseColumnAsString(
+                    this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
+                    "fakeColumn", processor);
+            //if we reach this point, test failed
+            throw new AssertionError("No IllegalArgumentException was thrown when " +
+            		"providing a non-existing column name");
+        } catch(IllegalArgumentException e) {
+            //test passed
+        }
+    }
+    
+    /**
+     * Tests {@link Utils.parseColumnAsInteger(String, String, CellProcessor)}.
+     */
+    @Test
+    public void shouldParseColumnAsInteger() throws IllegalArgumentException, 
+        FileNotFoundException, IOException {
+        CellProcessor processor = mock(CellProcessor.class);
+        when(processor.execute(anyObject(), any(CsvContext.class))).thenAnswer(
+            new Answer() {
+                @Override
+                public Object answer(InvocationOnMock invocation) throws Throwable {
+                    Object[] args = invocation.getArguments();
+                    return args[0];
+                }
+        });
+        
+        List<Integer> values = new Utils().parseColumnAsInteger(
+                this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
+                "column3", processor);
+        assertEquals("Incorrect values returned", 3, values.size());
+        assertEquals("Incorrect values returned", 3, (int) values.get(0));
+        assertEquals("Incorrect values returned", 2, (int) values.get(1));
+        assertEquals("Incorrect values returned", 1, (int) values.get(2));
+        verify(processor, times(3)).execute(anyObject(), any(CsvContext.class));
+        
+        //an IllegalArgumentException should be thrown if no column with the provided 
+        //name could be found.
+        try {
+            new Utils().parseColumnAsString(
+                    this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
+                    "fakeColumn", processor);
+            //if we reach this point, test failed
+            throw new AssertionError("No IllegalArgumentException was thrown when " +
+                    "providing a non-existing column name");
+        } catch(IllegalArgumentException e) {
+            //test passed
+        }
     }
     
 }

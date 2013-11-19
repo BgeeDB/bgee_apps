@@ -59,18 +59,18 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         OWLOntologyCreationException, OWLOntologyStorageException, IOException {
         
         String dataFile = this.getClass().getResource("/species/sample.dat").getFile();
-        String taxId1 = "NCBITaxon:1";
-        String taxId2 = "NCBITaxon:131567";
-        String taxId3 = "NCBITaxon:2";
-        String taxId4 = "NCBITaxon:201174";
-        String taxId5 = "NCBITaxon:1760";
-        String taxId6 = "NCBITaxon:84992";
-        String taxId7 = "NCBITaxon:84993";
-        String taxId8 = "NCBITaxon:85003";
-        String taxId9 = "NCBITaxon:1223512";
-        String taxId10 = "NCBITaxon:12235122";
-        String taxId11 = "NCBITaxon:65645";
-        Set<String> taxonIds = new HashSet<String>(Arrays.asList(taxId3, taxId4, 
+        int taxId1 = 1;
+        int taxId2 = 131567;
+        int taxId3 = 2;
+        int taxId4 = 201174;
+        int taxId5 = 1760;
+        int taxId6 = 84992;
+        int taxId7 = 84993;
+        int taxId8 = 85003;
+        int taxId9 = 1223512;
+        int taxId10 = 12235122;
+        int taxId11 = 65645;
+        Set<Integer> taxonIds = new HashSet<Integer>(Arrays.asList(taxId3, taxId4, 
                 taxId5, taxId6, taxId7, taxId8, taxId9, taxId10, taxId11));
         
         GenerateTaxonOntology generate = new GenerateTaxonOntology();
@@ -80,17 +80,18 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         assertEquals("Incorrect number of classes in generated ontology", 11, 
                 wrapper.getAllOWLClasses().size());
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier(taxId1);
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier(taxId2);
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier(taxId3);
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier(taxId4);
-        OWLClass cls5 = wrapper.getOWLClassByIdentifier(taxId5);
-        OWLClass cls6 = wrapper.getOWLClassByIdentifier(taxId6);
-        OWLClass cls7 = wrapper.getOWLClassByIdentifier(taxId7);
-        OWLClass cls8 = wrapper.getOWLClassByIdentifier(taxId8);
-        OWLClass cls11 = wrapper.getOWLClassByIdentifier(taxId11);
-        OWLClass cls9 = wrapper.getOWLClassByIdentifier(taxId9);
-        OWLClass cls10 = wrapper.getOWLClassByIdentifier(taxId10);
+        String prefix = "NCBITaxon:";
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier(prefix + taxId1);
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier(prefix + taxId2);
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier(prefix + taxId3);
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier(prefix + taxId4);
+        OWLClass cls5 = wrapper.getOWLClassByIdentifier(prefix + taxId5);
+        OWLClass cls6 = wrapper.getOWLClassByIdentifier(prefix + taxId6);
+        OWLClass cls7 = wrapper.getOWLClassByIdentifier(prefix + taxId7);
+        OWLClass cls8 = wrapper.getOWLClassByIdentifier(prefix + taxId8);
+        OWLClass cls11 = wrapper.getOWLClassByIdentifier(prefix + taxId11);
+        OWLClass cls9 = wrapper.getOWLClassByIdentifier(prefix + taxId9);
+        OWLClass cls10 = wrapper.getOWLClassByIdentifier(prefix + taxId10);
         assertNotNull("Incorrect classes in generated ontology", cls1);
         assertNotNull("Incorrect classes in generated ontology", cls2);
         assertNotNull("Incorrect classes in generated ontology", cls3);

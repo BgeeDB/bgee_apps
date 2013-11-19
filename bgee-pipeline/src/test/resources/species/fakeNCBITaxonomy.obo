@@ -16,18 +16,8 @@ is_a: NCBITaxon:1 ! taxon A
 
 [Term]
 id: NCBITaxon:3
-name: taxon that should not be considered 1
+name: taxon z
 is_a: NCBITaxon:2 ! taxon B
-
-[Term]
-id: NCBITaxon:4
-name: species that should not be considered 1
-is_a: NCBITaxon:3 ! taxon C
-
-[Term]
-id: NCBITaxon:5
-name: species that should not be considered 2
-is_a: NCBITaxon:3 ! taxon C
 
 [Term]
 id: NCBITaxon:6
@@ -37,21 +27,11 @@ synonym: "synonym not to pick" RELATED blast_name []
 is_a: NCBITaxon:2 ! taxon B
 
 [Term]
-id: NCBITaxon:7
-name: species that should not be considered 3
-is_a: NCBITaxon:6 ! taxon C
-
-[Term]
 id: NCBITaxon:16
 name: taxon G
 synonym: "common name taxon G" EXACT genbank_common_name []
 synonym: "synonym not to pick" RELATED blast_name []
 is_a: NCBITaxon:6 ! taxon C
-
-[Term]
-id: NCBITaxon:17
-name: species that should not be considered 4
-is_a: NCBITaxon:16 ! taxon G
 
 [Term]
 id: NCBITaxon:8

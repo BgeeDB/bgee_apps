@@ -77,10 +77,10 @@ public class GenerateTaxonConstraints {
      * <li>path to the NCBI taxonomy, used as an import closure. This taxonomy must 
      * contain disjoint classes axioms between sibling terms, see 
      * {@link org.bgee.pipeline.species.GenerateTaxonOntology}.
-     * <li>path to the TSV files containing the ID of the species used in Bgee, 
+     * <li>path to the TSV files containing the ID of all the taxa used in Bgee, 
      * corresponding to the NCBI taxonomy ID (e.g., 9606 for human). The first line 
-     * should be a header line, and first column should be the IDs. A second column 
-     * can be present for human readability. 
+     * should be a header line, defining a column to get IDs from, named exactly 
+     * "taxon ID" (other columns are optional and will be ignored).
      * <li>path to the generated TSV file, output of the method.
      * <li>OPTIONNAL: a path to a directory where to store the intermediate generated 
      * ontologies. If this parameter is provided, an ontology will be generated 
@@ -123,9 +123,12 @@ public class GenerateTaxonConstraints {
      * Launches the generation of a TSV files, allowing to know, 
      * for each {@code OWLClass} in the Uberon ontology stored in {@code uberonFile}, 
      * in which taxa it exits, among the taxa provided through the TSV file 
-     * {@code taxonIdFile}, containing their NCBI ID. This method needs to be provided 
-     * with a taxonomy ontology, that must contain disjoint classes axioms between 
-     * sibling terms, see {@link org.bgee.pipeline.species.GenerateTaxonOntology}. 
+     * {@code taxonIdFile}, containing their NCBI ID. The first line of this file 
+     * should be a header line, defining a column to get IDs from, named exactly 
+     * "taxon ID" (other columns are optional and will be ignored). 
+     * This method also needs to be provided with a taxonomy ontology, that must contain 
+     * disjoint classes axioms between sibling terms, see 
+     * {@link org.bgee.pipeline.species.GenerateTaxonOntology}. 
      * The results will be stored in the TSV file {@code outputFile}. 
      * The approach is, for each taxon provided, 
      * to generate a custom version of the ontology, that will contain only the 
@@ -144,8 +147,9 @@ public class GenerateTaxonConstraints {
      * @param taxonIdFile         A {@code String} that is the path to the TSV file 
      *                          containing the IDs from the NCBI website of the taxa 
      *                          to consider (for instance, 9606 for human). The first line 
-     *                          should be a header line, and first column should be the IDs. 
-     *                          A second column can be present for human readability.
+     *                          should be a header line, defining a column to get IDs from, 
+     *                          named exactly "taxon ID" (other columns are optional and 
+     *                          will be ignored).
      * @param outputFile        A {@code String} that is the path to the generated 
      *                          TSV file, output of the method. It will have one header line. 
      *                          The columns will be: ID of the Uberon classes, IDs of each 
@@ -173,11 +177,11 @@ public class GenerateTaxonConstraints {
         
         log.entry(uberonFile, taxOntFile, taxonIdFile, outputFile, storeOntologyDir);
         
-        Set<Integer> speciesIds = Utils.getTaxonIds(taxonIdFile);
+        Set<Integer> taxonIds = new Utils().getTaxonIds(taxonIdFile);
         Map<String, Set<Integer>> constraints = 
                 this.generateTaxonConstraints(uberonFile, taxOntFile, 
-                        speciesIds, storeOntologyDir);
-        this.writeToFile(constraints, speciesIds, outputFile);
+                        taxonIds, storeOntologyDir);
+        this.writeToFile(constraints, taxonIds, outputFile);
         
         log.exit();
     }

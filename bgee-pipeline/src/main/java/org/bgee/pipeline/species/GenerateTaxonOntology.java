@@ -77,10 +77,10 @@ public class GenerateTaxonOntology {
      * <li>path to the {@code taxonomy.dat} file.
      * <li>path to a TSV files containing the IDs of the taxa used as anchors of 
      * the ontology to generate: only these taxa and their ancestors will be kept 
-     * in the ontology. These IDs must correspond to the NCBI IDs, with an ontology 
-     * prefix added (e.g., "NCBITaxon:9606" for human). The first line is a header line, 
-     * the second column is optional and is present only for human readability. 
-     * Only the first column is used by the pipeline. 
+     * in the ontology. These IDs must correspond to the NCBI IDs (e.g., 
+     * "9606" for human). The first line should be a header line, defining a column 
+     * to get IDs from, named exactly "taxon ID" (other columns are optional and 
+     * will be ignored).
      * <li>path to the file to store the generated ontology in OWL format. So 
      * it must finish with {@code .owl}
      * </ol>
@@ -90,7 +90,7 @@ public class GenerateTaxonOntology {
      *                                  parameters.
      * @throws IOException  IF the {@code taxonomy.dat} file could not be opened, 
      *                      or an error occurred while saving the converted ontology. 
-     * @throws OWLOntologyCreationException Can be thrown by during the conversion 
+     * @throws OWLOntologyCreationException Can be thrown during the conversion 
      *                                      from NCBI data to OWL ontology.
      * @throws OWLOntologyStorageException  Can be thrown by {@code NCBI2OWL} 
      *                                      during the conversion, and when saving 
@@ -108,9 +108,49 @@ public class GenerateTaxonOntology {
         }
         
         GenerateTaxonOntology generate = new GenerateTaxonOntology();
-        OWLOntology ont = generate.generateOntology(args[0], Utils.getTaxonIds(args[1]));
+        generate.generateOntologyToFile(args[0], args[1], args[2]);
+        
+        log.exit();
+    }
+    
+    /**
+     * Generates a taxonomy ontology, based on the NCBI taxonomy data, and save it 
+     * in OWL format to {@code outputFile}. 
+     * This taxonomy will include only the specified taxa and their ancestors. 
+     * It will also include the disjoint classes axioms necessary to correctly 
+     * infer taxon constraints, for ontologies using the "in_taxon" relations.
+     * Taxa to keep are specified through the TSV file {@code taxonFile}. 
+     * The first line should be a header line, defining a column to get IDs from, 
+     * named exactly "taxon ID" (other columns are optional and will be ignored). 
+     * These IDs must correspond to the NCBI IDs (e.g., "9606" for human).
+     * 
+     * @param taxDataFile       A {@code String} that is the path to the NCBI 
+     *                          {@code taxonomy.dat} file.
+     * @param taxonFile         A {@code String} that is the path to a TSV files 
+     *                          containing the IDs of the taxa used as anchors of 
+     *                          the ontology to generate. 
+     * @param outputFile        A {@code String} that is the path to the file 
+     *                          to store the generated ontology in OWL format. 
+     *                          So it must finish with {@code .owl}
+     * @throws IllegalArgumentException If some IDs in {@code taxonIds} are not found 
+     *                                  in the generated ontology.
+     * @throws IOException  IF the {@code taxonomy.dat} file could not be opened, 
+     *                      or an error occurred while saving the converted ontology. 
+     * @throws OWLOntologyCreationException Can be thrown during the conversion 
+     *                                      from NCBI data to OWL ontology.
+     * @throws OWLOntologyStorageException  Can be thrown by {@code NCBI2OWL} 
+     *                                      during the conversion, and when saving 
+     *                                      the generated ontology.
+     */
+    public void generateOntologyToFile(String taxDataFile, String taxonFile, 
+            String outputFile) throws IllegalArgumentException, OWLOntologyCreationException, 
+            OWLOntologyStorageException, IOException {
+        log.entry(taxDataFile, taxonFile, outputFile);
+        
+        OWLOntology ont = this.generateOntology(taxDataFile, 
+                new Utils().getTaxonIds(taxonFile));
         //save in OWL
-        new OntologyUtils(ont).saveAsOWL(args[2]);
+        new OntologyUtils(ont).saveAsOWL(outputFile);
         
         log.exit();
     }
@@ -123,31 +163,28 @@ public class GenerateTaxonOntology {
      * 
      * @param taxDataFile       A {@code String} that is the path to the NCBI 
      *                          {@code taxonomy.dat} file.
-     * @param taxonIds          A {@code Set} of {@code String}s that are 
+     * @param taxonIds          A {@code Set} of {@code Integer}s that are 
      *                          the NCBI IDs of the taxa to keep in the ontology, 
      *                          along with their ancestors. These IDs must correspond 
-     *                          to the NCBI IDs, with an ontology prefix added 
-     *                          (e.g., "NCBITaxon:9606" for human). 
+     *                          to the NCBI IDs (e.g., "9606" for human). 
      * @return  The {@code OWLOntology} generated as a result.                    
      * @throws IllegalArgumentException If some IDs in {@code taxonIds} are not found 
      *                                  in the generated ontology.
      * @throws IOException  IF the {@code taxonomy.dat} file could not be opened, 
      *                      or an error occurred while saving the converted ontology. 
      * @throws OWLOntologyCreationException Can be thrown during the conversion 
-     *                                      from NCBI data to OWL ontology, or during 
-     *                                      the conversion of the OWL ontology into 
-     *                                      an OBO ontology.
+     *                                      from NCBI data to OWL ontology.
      * @throws OWLOntologyStorageException  Can be thrown by {@code NCBI2OWL} 
      *                                      during the conversion.
      */
-    public OWLOntology generateOntology(String taxDataFile, Set<String> taxonIds) 
+    public OWLOntology generateOntology(String taxDataFile, Set<Integer> taxonIds) 
             throws IllegalArgumentException, OWLOntologyCreationException, 
             OWLOntologyStorageException, IOException {
         log.entry(taxDataFile, taxonIds);
         
         OWLOntology ont = this.ncbi2owl(taxDataFile);
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        this.filterOntology(wrapper, taxonIds);
+        this.filterOntology(wrapper, OntologyUtils.convertToTaxOntologyIds(taxonIds));
         //add the disjoint axioms necessary to correctly infer taxon constraints 
         //at later steps.
         this.createTaxonDisjointAxioms(wrapper);
@@ -181,7 +218,9 @@ public class GenerateTaxonOntology {
     
     /**
      * Keep in the {@code OWLOntology} wrapped into {@code ontWrapper} only 
-     * the taxa specified by {@code taxonIds}, and their ancestors.
+     * the taxa specified by {@code taxonIds}, and their ancestors. The IDs must 
+     * be the IDs used in the ontology (so, the NCBI IDs with a prefix added, 
+     * for instance, {@code NCBITaxon:9606} for human).
      * 
      * @param ontWrapper    The {@code OWLGraphWrapper} into which the 
      *                      {@code OWLOntology} to modify is wrapped.
@@ -197,6 +236,10 @@ public class GenerateTaxonOntology {
         Set<OWLClass> owlClassesToKeep = new HashSet<OWLClass>();
         for (String taxonId: taxonIds) {
             OWLClass taxClass = ontWrapper.getOWLClassByIdentifier(taxonId);
+            if (taxClass == null) {
+                throw log.throwing(new IllegalArgumentException("Taxon " + taxonId + 
+                        " was not found in the ontology"));
+            }
             owlClassesToKeep.add(taxClass);
             owlClassesToKeep.addAll(ontWrapper.getOWLClassAncestors(taxClass));
         }

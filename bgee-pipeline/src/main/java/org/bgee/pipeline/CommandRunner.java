@@ -2,6 +2,7 @@ package org.bgee.pipeline;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.similarity.SimilarityAnnotation;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
 import org.bgee.pipeline.uberon.GenerateTaxonConstraints;
@@ -78,6 +79,11 @@ public class CommandRunner {
         //---------- uberon -----------
         case "GenerateTaxonConstraints": 
             GenerateTaxonConstraints.main(newArgs);
+            break;
+            
+        //---------- Similarity annotation -----------
+        case "SimilarityAnnotation": 
+            SimilarityAnnotation.main(newArgs);
             break;
             
         default: 

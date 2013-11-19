@@ -19,7 +19,6 @@ import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -28,7 +27,6 @@ import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
 import owltools.graph.OWLGraphWrapper;
 import owltools.io.ParserWrapper;
-import owltools.sim.SimEngine;
 
 /**
  * This class provides convenient methods when to use or analyze an {@code OWLOntology}. 
@@ -119,6 +117,26 @@ public class OntologyUtils {
      */
     public static int getTaxNcbiId(String ontologyTermId) {
         return Integer.parseInt(ontologyTermId.substring(TAXONTOLOGYIDPREFIX.length()));
+    }
+    /**
+     * Convert {@code taxNcbiIds} containing NCBI IDs (which are integers, 
+     * for instance, {@code 9606} for human) into a {@code Set} of {@code String}s 
+     * containing the equivalent IDs used in the generated taxonomy ontology (which are 
+     * strings with a prefix).
+     * 
+     * @param taxNcbiIds    A {@code Set} of {@code Integer}s that are the NCBI IDs 
+     *                      to convert.
+     * @return              A {@code Set} of {@code String}s that are the {@code taxNcbiIds} 
+     *                      converted into IDs used in the taxonomy ontology.
+     *                      
+     */
+    public static Set<String> convertToTaxOntologyIds(Set<Integer> taxNcbiIds) {
+        log.entry(taxNcbiIds);
+        Set<String> ontTaxonIds = new HashSet<String>();
+        for (int ncbiId: taxNcbiIds) {
+            ontTaxonIds.add(OntologyUtils.getTaxOntologyId(ncbiId));
+        }
+        return log.exit(ontTaxonIds);
     }
 
     /**
@@ -345,55 +363,6 @@ public class OntologyUtils {
         params.put(RIGHTBOUNDKEY, rightBound);
         params.put(LEVELKEY, level);
         return params;
-    }
-    
-
-    /**
-     * Get the {@code OWLClass}es that are the least common ancestors of each pair 
-     * of leaves in the {@code OWLOntology} provided at instantiation.
-     * 
-     * @return          A {@code Set} of {@code OWLClass}es that are the least
-     *                  common ancestors of the {@code OWLOntology} provided 
-     *                  at instantiation.
-     *                  
-     * @throws IllegalStateException        If the ontology did not allow 
-     *                                      to retrieve proper least common ancestors.
-     * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
-     *                                          provided at instantiation, and an error 
-     *                                          occurred while loading it.
-     * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
-     *                                          provided at instantiation, and an error 
-     *                                          occurred while loading it.
-     */
-    public Set<OWLClass> getLeafLeastCommonAncestors() throws IllegalStateException, 
-    UnknownOWLOntologyException, OWLOntologyCreationException {
-        log.entry();
-        
-        Set<OWLClass> lcas = new HashSet<OWLClass>();
-
-        SimEngine se = new SimEngine(this.getWrapper());
-        //we want to find the least common ancestor of all possible pairs 
-        //of leaves in the ontology
-        Set<OWLClass> leaves = this.getWrapper().getOntologyLeaves();
-        for (OWLClass leave1: leaves) {
-            for (OWLClass leave2: leaves) {
-                if (leave1.equals(leave2)) {
-                    continue;
-                }
-                for (OWLObject lca: se.getLeastCommonSubsumers(leave1, leave2)) {
-                    if (lca instanceof OWLClass) {
-                        lcas.add((OWLClass) lca);
-                    }
-                }
-            }
-        }
-        
-        if (lcas.isEmpty()) {
-            throw log.throwing(new IllegalStateException("The ontology " +
-                    "did not allow to identify any least common ancestors of species used."));
-        }
-        
-        return log.exit(lcas);
     }
     
     /**

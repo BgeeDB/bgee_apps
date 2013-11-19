@@ -1,0 +1,5 @@
+entity	qualifier	HOM ID	reference	ECO ID	confidence code ID	taxon ID	supporting text	assigned by	curator	date
+uberon:0000001		HOM:0000007	ISBN:978-0198566694 "Schmidt-Rhaesa A, The evolution of organ systems (2007) p.57"	ECO:0000060	CONF:0000005	7742	blabla "bla" blablabla	Bgee	ANN	2013-07-03
+uberon:0000002	NOT	HOM:0000007	ISBN:978-0198566694 "Schmidt-Rhaesa A, The evolution of organ systems (2007) p.57"	ECO:0000060	CONF:0000005	40674	blabla "bla" blablabla	Bgee	ANN	2013-07-03
+uberon:0000003		HOM:0000007	ISBN:978-0198566694 "Schmidt-Rhaesa A, The evolution of organ systems (2007) p.57"	ECO:0000060	CONF:0000005	40674	blabla "bla" blablabla	Bgee	ANN	2013-07-03
+uberon:0000004		HOM:0000007	ISBN:978-0198566694 "Schmidt-Rhaesa A, The evolution of organ systems (2007) p.57"	ECO:0000060	CONF:0000005	1294634	blabla "bla" blablabla	Bgee	ANN	2013-07-03

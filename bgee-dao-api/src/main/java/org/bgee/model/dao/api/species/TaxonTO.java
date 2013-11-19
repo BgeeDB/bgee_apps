@@ -144,7 +144,7 @@ public final class TaxonTO extends EntityTO {
     public String toString() {
         return "ID: " + this.getId() + " - Common name: " + this.getName() + 
                 " - Scientific name: " + this.getScientificName() + 
-                " - Left boud: " + this.getLeftBound() + " - Right bound: " + 
+                " - Left bound: " + this.getLeftBound() + " - Right bound: " + 
                 this.getRightBound() + " - Level: " + this.getLevel() + 
                 " - Is least common ancestor: " + this.isLca();
     }

@@ -1,5 +1,6 @@
 package org.bgee.pipeline;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -15,10 +16,14 @@ import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
+import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
 import owltools.graph.OWLGraphWrapper;
@@ -120,22 +125,21 @@ public class OntologyUtils {
      * The {@code OWLGraphWrapper} wrapping the {@code OWLOntology} which operations 
      * should be performed on.
      */
-    private final OWLGraphWrapper wrapper;
+    private OWLGraphWrapper wrapper;
+    /**
+     * The {@code OWLOntology} which operations should be performed on.
+     */
+    private OWLOntology ontology;
     
     /**
      * Constructor providing the {@code OWLOntology} which operations 
      * should be performed on.
      * @param ontology  the {@code OWLOntology} which operations 
      *                  should be performed on.
-     *                  
-     * @throws UnknownOWLOntologyException  If an error occurred while loading 
-     *                                      {@code ontology} into this class.
-     * @throws OWLOntologyCreationException If an error occurred while loading 
-     *                                      {@code ontology} into this class.
      */
-    public OntologyUtils(OWLOntology ontology) throws 
-        UnknownOWLOntologyException, OWLOntologyCreationException {
-        this(new OWLGraphWrapper(ontology));
+    public OntologyUtils(OWLOntology ontology) { 
+        this.ontology = ontology;
+        this.wrapper = null;
     }
     /**
      * Constructor providing the {@code OWLGraphWrapper} wrapping 
@@ -146,6 +150,7 @@ public class OntologyUtils {
      */
     public OntologyUtils(OWLGraphWrapper wrapper) {
         this.wrapper = wrapper;
+        this.ontology = wrapper.getSourceOntology();
     }
     
     /**
@@ -155,9 +160,17 @@ public class OntologyUtils {
      * @return  See {@link #computeNestedSetModelParams(List)} 
      * @throws IllegalStateException    If the {@code OWLOntology} provided at instantiation 
      *                                  is not a simple tree.
+     * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
+     * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
      * @see #computeNestedSetModelParams(List)
      */
-    public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams() {
+    public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams() 
+            throws UnknownOWLOntologyException, IllegalStateException, 
+            OWLOntologyCreationException {
         log.entry();
         return log.exit(this.computeNestedSetModelParams(null));
     }
@@ -187,15 +200,22 @@ public class OntologyUtils {
      *                      and level.
      * @throws IllegalStateException    If the {@code OWLOntology} provided at instantiation 
      *                                  is not a simple tree.
+     * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
+     * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
      */
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(
-            List<OWLClass> classOrder) throws IllegalStateException {
+            List<OWLClass> classOrder) throws IllegalStateException, UnknownOWLOntologyException, 
+            OWLOntologyCreationException {
         log.entry(classOrder);
         
         Map<OWLClass, Map<String, Integer>> params = 
                 new HashMap<OWLClass, Map<String, Integer>>();
         //get the root of the ontology, that should be unique.
-        Set<OWLClass> roots = this.wrapper.getOntologyRoots();
+        Set<OWLClass> roots = this.getWrapper().getOntologyRoots();
         if (roots.size() != 1) {
             throw log.throwing(new IllegalStateException("Incorrect number of roots " +
                     "in the taxonomy ontology"));
@@ -233,15 +253,21 @@ public class OntologyUtils {
      * @throws IllegalStateException    If the {@code OWLOntology} wrapped into 
      *                                  {@link #wrapper} is not a simple tree that 
      *                                  can be represented by a nested set model.
+     * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
+     * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
      */
     private void recursiveNestedSetModelParams(
             final Map<OWLClass, Map<String, Integer>> params, 
             final OWLClass classInspected,  final List<OWLClass> classOrder) 
-        throws IllegalStateException {
+        throws IllegalStateException, UnknownOWLOntologyException, OWLOntologyCreationException {
         log.entry(params, classInspected, classOrder);
         
         //we will iterate children of classInspected. 
-        Set<OWLClass> children = this.wrapper.getOWLClassDirectDescendants(classInspected);
+        Set<OWLClass> children = this.getWrapper().getOWLClassDirectDescendants(classInspected);
         
         //if classOrder is not null nor empty, we use it to order the children. 
         if (classOrder != null && !classOrder.isEmpty()) {
@@ -332,16 +358,23 @@ public class OntologyUtils {
      *                  
      * @throws IllegalStateException        If the ontology did not allow 
      *                                      to retrieve proper least common ancestors.
+     * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
+     * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
      */
-    public Set<OWLClass> getLeafLeastCommonAncestors() throws IllegalStateException {
+    public Set<OWLClass> getLeafLeastCommonAncestors() throws IllegalStateException, 
+    UnknownOWLOntologyException, OWLOntologyCreationException {
         log.entry();
         
         Set<OWLClass> lcas = new HashSet<OWLClass>();
 
-        SimEngine se = new SimEngine(this.wrapper);
+        SimEngine se = new SimEngine(this.getWrapper());
         //we want to find the least common ancestor of all possible pairs 
         //of leaves in the ontology
-        Set<OWLClass> leaves = this.wrapper.getOntologyLeaves();
+        Set<OWLClass> leaves = this.getWrapper().getOntologyLeaves();
         for (OWLClass leave1: leaves) {
             for (OWLClass leave2: leaves) {
                 if (leave1.equals(leave2)) {
@@ -386,11 +419,66 @@ public class OntologyUtils {
         }
         
         Owl2Obo converter = new Owl2Obo();
-        OBODoc oboOntology = converter.convert(this.wrapper.getSourceOntology());
+        OBODoc oboOntology = converter.convert(this.ontology);
         OBOFormatWriter writer = new OBOFormatWriter();
         writer.setCheckStructure(false);
         writer.write(oboOntology, outputFile);
         
         log.exit();
+    }
+    
+    /**
+     * Saves the {@code OWLOntology} wrapped by this object into {@code outputFile} 
+     * in OWL format.
+     * 
+     * @param outputFile    A {@code String} that is the path to the file to save 
+     *                      the ontology in OWL format.
+     * @throws OWLOntologyStorageException  If an error occurred while saving 
+     *                                      the ontology.
+     * @throws IllegalArgumentException     if {@code outputFile} does not have 
+     *                                      a correct name.
+     */
+    public void saveAsOWL(String outputFile) throws IllegalArgumentException, 
+        OWLOntologyStorageException {
+        log.entry(outputFile);
+
+        if (!outputFile.endsWith(".owl")) {
+            throw log.throwing(new IllegalArgumentException("The output file must be " +
+                    "an OWL format: " + outputFile));
+        }
+        
+        File rdfFile = new File(outputFile); 
+        OWLOntologyManager manager = this.ontology.getOWLOntologyManager();
+        RDFXMLOntologyFormat owlRdfFormat = new RDFXMLOntologyFormat();
+        if (owlRdfFormat.isPrefixOWLOntologyFormat()) {
+            owlRdfFormat.copyPrefixesFrom(owlRdfFormat.asPrefixOWLOntologyFormat());
+        } 
+        manager.saveOntology(this.ontology, 
+                owlRdfFormat, IRI.create(rdfFile.toURI()));
+        
+        log.exit();
+    }
+    
+    /**
+     * Return the {@code OWLGraphWrapper} wrapping the ontology on which operations 
+     * should be performed. If not provided at instantiation, it will be automatically 
+     * loaded the first time this method is called, from the {@code OWLOntology} provided 
+     * at instantiation.
+     * 
+     * @return  the {@code OWLGraphWrapper} wrapping the ontology on which operations 
+     *          should be performed.
+     * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
+     * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
+     *                                          provided at instantiation, and an error 
+     *                                          occurred while loading it.
+     */
+    private OWLGraphWrapper getWrapper() throws UnknownOWLOntologyException, 
+        OWLOntologyCreationException {
+        if (this.wrapper == null) {
+            this.wrapper = new OWLGraphWrapper(this.ontology);
+        }
+        return this.wrapper;
     }
 }

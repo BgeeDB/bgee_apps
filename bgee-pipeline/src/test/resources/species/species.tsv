@@ -1,6 +1,6 @@
 NCBI species ID	Species name
-8	species A
-13	species B
-15	species C
-1001	species not existing
+NCBITaxon:8	species A
+NCBITaxon:13	species B
+NCBITaxon:15	species C
+NCBITaxon:1001	species not existing
 

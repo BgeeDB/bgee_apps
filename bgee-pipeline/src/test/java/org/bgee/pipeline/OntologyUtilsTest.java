@@ -17,6 +17,7 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
 import owltools.graph.OWLGraphWrapper;
 
@@ -121,7 +122,8 @@ public class OntologyUtilsTest extends TestAncestor {
      * Test the method {@link OntologyUtils#computeNestedSetModelParams(NavigableSet)}.
      */
     @Test
-    public void shouldComputeNestedSetModelParams() {
+    public void shouldComputeNestedSetModelParams() throws UnknownOWLOntologyException, 
+    IllegalStateException, OWLOntologyCreationException {
         OntologyUtils utils = new OntologyUtils(wrapper);
         //get a List to order the ontology terms. We mess it a bit to test properly
         List<OWLClass> classOrder = new ArrayList<OWLClass>();
@@ -187,7 +189,8 @@ public class OntologyUtilsTest extends TestAncestor {
      * a simple tree.
      */
     @Test
-    public void shouldFailComputeNestedSetModel() {
+    public void shouldFailComputeNestedSetModel() throws UnknownOWLOntologyException, 
+    OWLOntologyCreationException {
         //we add a subClassOf axiom in the ontology, that will make a class 
         //to have several parents, so the ontology would not be a tree anymore
         OWLDataFactory factory = wrapper.getManager().getOWLDataFactory();

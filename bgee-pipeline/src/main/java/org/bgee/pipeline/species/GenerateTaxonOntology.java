@@ -2,7 +2,6 @@ package org.bgee.pipeline.species;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
@@ -10,6 +9,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
+import org.bgee.pipeline.Utils;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -28,8 +28,8 @@ import owltools.ncbi.NCBI2OWL;
 
 /**
  * Use the NCBI taxonomy data files to generate a taxonomy ontology, and stored it 
- * in OBO format. This taxonomy will include only taxa related to a specified 
- * taxon, and will include disjoint classes axions necessary to correctly infer 
+ * in OWL format. This taxonomy will include only taxa related to a specified 
+ * list of taxa, and will include disjoint classes axions necessary to correctly infer 
  * taxon constraints, for ontologies using the "in_taxon" relations.
  * <p>
  * This class uses the {@code owltools.ncbi.NCBI2OWL} class written by James A. Overton 
@@ -49,10 +49,8 @@ import owltools.ncbi.NCBI2OWL;
  * Our code is based on the method 
  * {@code owltools.cli.TaxonCommandRunner.createTaxonDisjointOverInTaxon(Opts)}. 
  * <p>
- * To avoid storing a too large ontology, it will contain only taxa 
- * related to a specified taxon (for instance, <i>metazoa</i>, NCBI ID <a 
- * href='http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=33208'>
- * 33208</a>).
+ * To avoid storing a too large ontology, it will contain only ancestors of a specified 
+ * list of taxa.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -66,22 +64,25 @@ public class GenerateTaxonOntology {
             LogManager.getLogger(GenerateTaxonOntology.class.getName());
     
     /**
-     * A {@code String} that is the IRI of the {@code ObjectProperty} "in_taxon".
+     * A {@code String} that is the IRI of the {@code ObjectProperty} "in_taxon", 
+     * used to generate taxon disjoint axioms.
      */
     protected final static String INTAXONRELID = "http://purl.obolibrary.org/obo/RO_0002162";
     
     /**
      * Main method to trigger the generation of a taxonomy ontology, stored in 
-     * OBO format, based on the NCBI taxonomy data. Parameters that must be provided 
-     * in order in {@code args} are: 
+     * OWL format, based on the NCBI taxonomy data, containing disjoint classes 
+     * axioms. Parameters that must be provided in order in {@code args} are: 
      * <ol>
      * <li>path to the {@code taxonomy.dat} file.
-     * <li>NCBI ID of the taxon for which we want to keep related taxa in the 
-     * generated ontology (meaning, only descendants and ancestors of this taxon 
-     * will be kept in the ontology). ID provided with the {@code NCBITaxon:} 
-     * prefix (for instance, {@code NCBITaxon:33208} for <i>metazoa</i>).
-     * <li>path to the file to store the generated ontology in OBO format. So 
-     * it must finish with {@code .obo}
+     * <li>path to a TSV files containing the IDs of the taxa used as anchors of 
+     * the ontology to generate: only these taxa and their ancestors will be kept 
+     * in the ontology. These IDs must correspond to the NCBI IDs, with an ontology 
+     * prefix added (e.g., "NCBITaxon:9606" for human). The first line is a header line, 
+     * the second column is optional and is present only for human readability. 
+     * Only the first column is used by the pipeline. 
+     * <li>path to the file to store the generated ontology in OWL format. So 
+     * it must finish with {@code .owl}
      * </ol>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -90,11 +91,10 @@ public class GenerateTaxonOntology {
      * @throws IOException  IF the {@code taxonomy.dat} file could not be opened, 
      *                      or an error occurred while saving the converted ontology. 
      * @throws OWLOntologyCreationException Can be thrown by during the conversion 
-     *                                      from NCBI data to OWL ontology, or during 
-     *                                      the conversion of the OWL ontology into 
-     *                                      an OBO ontology.
+     *                                      from NCBI data to OWL ontology.
      * @throws OWLOntologyStorageException  Can be thrown by {@code NCBI2OWL} 
-     *                                      during the conversion.
+     *                                      during the conversion, and when saving 
+     *                                      the generated ontology.
      */
     public static void main(String[] args) throws OWLOntologyCreationException, 
         OWLOntologyStorageException, IOException {
@@ -108,65 +108,51 @@ public class GenerateTaxonOntology {
         }
         
         GenerateTaxonOntology generate = new GenerateTaxonOntology();
-        generate.generateOntology(args[0], args[1], args[2]);
+        OWLOntology ont = generate.generateOntology(args[0], Utils.getTaxonIds(args[1]));
+        //save in OWL
+        new OntologyUtils(ont).saveAsOWL(args[2]);
         
         log.exit();
     }
     
     /**
-     * Generates a taxonomy ontology, based on the NCBI taxonomy data, that 
-     * will be stored in OBO format, and that will include only a specific branch 
-     * of the taxonomy. This taxonomy will include only taxa related to the specified 
-     * taxon ({@code requestedTaxonId}). It will also include the disjoint classes 
-     * axioms necessary to correctly infer taxon constraints, for ontologies using 
-     * the "in_taxon" relations.
+     * Generates a taxonomy ontology, based on the NCBI taxonomy data. 
+     * This taxonomy will include only the specified taxa and their ancestors. 
+     * It will also include the disjoint classes axioms necessary to correctly 
+     * infer taxon constraints, for ontologies using the "in_taxon" relations.
      * 
      * @param taxDataFile       A {@code String} that is the path to the NCBI 
      *                          {@code taxonomy.dat} file.
-     * @param requestedTaxonId  A {@code String} that is the NCBI ID of the taxon 
-     *                          for which we want to keep related taxa in the 
-     *                          generated ontology (meaning, only descendants and 
-     *                          ancestors of this taxon will be kept in the ontology). 
-     *                          ID provided with the {@code NCBITaxon:} prefix 
-     *                          (for instance, {@code NCBITaxon:33208} for <i>metazoa</i>).
-     * @param outputFile        path to the file to store the generated ontology 
-     *                          in OBO format. So it must finish with {@code .obo}
-     *                          
-     * @throws IllegalArgumentException If {@code requestedTaxonId} has an incorrect 
-     *                                  format, or if {@code outputFile} is not 
-     *                                  an OBO file. 
+     * @param taxonIds          A {@code Set} of {@code String}s that are 
+     *                          the NCBI IDs of the taxa to keep in the ontology, 
+     *                          along with their ancestors. These IDs must correspond 
+     *                          to the NCBI IDs, with an ontology prefix added 
+     *                          (e.g., "NCBITaxon:9606" for human). 
+     * @return  The {@code OWLOntology} generated as a result.                    
+     * @throws IllegalArgumentException If some IDs in {@code taxonIds} are not found 
+     *                                  in the generated ontology.
      * @throws IOException  IF the {@code taxonomy.dat} file could not be opened, 
      *                      or an error occurred while saving the converted ontology. 
-     * @throws OWLOntologyCreationException Can be thrown by during the conversion 
+     * @throws OWLOntologyCreationException Can be thrown during the conversion 
      *                                      from NCBI data to OWL ontology, or during 
      *                                      the conversion of the OWL ontology into 
      *                                      an OBO ontology.
      * @throws OWLOntologyStorageException  Can be thrown by {@code NCBI2OWL} 
      *                                      during the conversion.
      */
-    public void generateOntology(String taxDataFile, String requestedTaxonId, 
-            String outputFile) throws IllegalArgumentException, 
-            OWLOntologyCreationException, OWLOntologyStorageException, IOException {
-        log.entry(taxDataFile, requestedTaxonId, outputFile);
-        
-        if (!requestedTaxonId.startsWith("NCBITaxon:")) {
-            throw log.throwing(new IllegalArgumentException("Incorrect format " +
-            		"of the NCBI Taxon ID to restrain the scope of the ontology " +
-            		"generated."));
-        }
+    public OWLOntology generateOntology(String taxDataFile, Set<String> taxonIds) 
+            throws IllegalArgumentException, OWLOntologyCreationException, 
+            OWLOntologyStorageException, IOException {
+        log.entry(taxDataFile, taxonIds);
         
         OWLOntology ont = this.ncbi2owl(taxDataFile);
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        //now modify the ontology in order to keep only taxa related to provided taxon
-        this.filterOntology(wrapper, requestedTaxonId);
+        this.filterOntology(wrapper, taxonIds);
         //add the disjoint axioms necessary to correctly infer taxon constraints 
         //at later steps.
         this.createTaxonDisjointAxioms(wrapper);
         
-        //finally, store the modified ontology in OBO
-        new OntologyUtils(wrapper).saveAsOBO(outputFile);
-        
-        log.exit();
+        return log.exit(wrapper.getSourceOntology());
     }
     
     /**
@@ -195,20 +181,29 @@ public class GenerateTaxonOntology {
     
     /**
      * Keep in the {@code OWLOntology} wrapped into {@code ontWrapper} only 
-     * the {@code OWLClass}es ancestors or descendants of the {@code OWLClass} 
-     * with ID {@code taxonId}.
+     * the taxa specified by {@code taxonIds}, and their ancestors.
      * 
      * @param ontWrapper    The {@code OWLGraphWrapper} into which the 
      *                      {@code OWLOntology} to modify is wrapped.
-     * @param taxonId   A {@code String} representing the ID of the {@code OWLClass} 
-     *                  defining the subgraph to keep in the ontology.
+     * @param taxonIds      A {@code Set} of {@code String}s that are 
+     *                      the ontology IDs of the taxa to keep in the ontology, 
+     *                      along with their ancestors (for instance, {@code NCBITaxon:9606} 
+     *                      for human).
      */
-    private void filterOntology(OWLGraphWrapper ontWrapper, String taxonId) {
-        log.entry(ontWrapper, taxonId);
-        log.info("Start filtering ontology for taxon {}...", taxonId);
+    private void filterOntology(OWLGraphWrapper ontWrapper, Set<String> taxonIds) {
+        log.entry(ontWrapper, taxonIds);
+        log.info("Start filtering ontology for taxa {}...", taxonIds);
+        
+        Set<OWLClass> owlClassesToKeep = new HashSet<OWLClass>();
+        for (String taxonId: taxonIds) {
+            OWLClass taxClass = ontWrapper.getOWLClassByIdentifier(taxonId);
+            owlClassesToKeep.add(taxClass);
+            owlClassesToKeep.addAll(ontWrapper.getOWLClassAncestors(taxClass));
+        }
         OWLGraphManipulator manipulator = new OWLGraphManipulator(ontWrapper);
-        manipulator.filterSubgraphs(Arrays.asList(taxonId));
-        log.info("Done filtering ontology for taxon {}.", taxonId);
+        manipulator.filterClasses(owlClassesToKeep);
+        
+        log.info("Done filtering ontology for taxa {}.", taxonIds);
         
         log.exit();
     }
@@ -259,25 +254,20 @@ public class GenerateTaxonOntology {
                     }
                 }
                 if (siblings.size() > 1) {
+                    log.trace("Disjoint axioms for siblings: {}", siblings);
                     Set<OWLAxiom> disjointAxioms = new HashSet<OWLAxiom>();
-                    for (OWLClass sibling1 : siblings) {
-                        for (OWLClass sibling2 : siblings) {
-                            if (sibling1 != sibling2) {
-                                OWLClassExpression ce1 = 
-                                        f.getOWLObjectSomeValuesFrom(inTaxon, sibling1);
-                                OWLClassExpression ce2 = 
-                                        f.getOWLObjectSomeValuesFrom(inTaxon, sibling2);
-                                disjointAxioms.add(f.getOWLDisjointClassesAxiom(ce1, ce2));
-                                
-                                disjointAxioms.add(
-                                        f.getOWLDisjointClassesAxiom(sibling1, sibling2));
-                            }
-                        }
+                    // create compact disjoint and disjoint over never_in_taxon axioms
+                    disjointAxioms.add(f.getOWLDisjointClassesAxiom(siblings));
+                    Set<OWLClassExpression> expressions = new HashSet<OWLClassExpression>();
+                    for (OWLClass cls : siblings) {
+                        expressions.add(f.getOWLObjectSomeValuesFrom(inTaxon, cls));
                     }
+                    disjointAxioms.add(f.getOWLDisjointClassesAxiom(expressions));
+                    
                     int changeMade = m.addAxioms(ont, disjointAxioms).size();
                     if (changeMade != disjointAxioms.size()) {
                         throw log.throwing(new IllegalStateException("Some disjoint axioms " +
-                        		"could not be added."));
+                        		"could not be added among: " + disjointAxioms));
                     }
                     axiomCount += disjointAxioms.size();
                 }

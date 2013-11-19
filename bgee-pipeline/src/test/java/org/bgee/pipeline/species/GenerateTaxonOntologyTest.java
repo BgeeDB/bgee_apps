@@ -3,18 +3,15 @@ package org.bgee.pipeline.species;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -41,11 +38,6 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
     private final static Logger log = 
             LogManager.getLogger(GenerateTaxonOntologyTest.class.getName());
     
-    /**
-     * JUnit temp folder to store the generated test ontology. 
-     */
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
     
     /**
      * Default Constructor. 
@@ -59,40 +51,46 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
     }
     
     /**
-     * Test {@link GenerateTaxonOntology#generateOntology()}. Generate 
-     * an OBO ontology from the data file {@code 
-     * src/test/resources/species/sample.dat} and save it as an OBO, then open it 
-     * to perform the assertion tests. 
+     * Test {@link GenerateTaxonOntology#generateOntology(String, Set)}. Generates 
+     * the ontology  from the data file {@code src/test/resources/species/sample.dat}.
      */
     @Test
     public void shouldGenerateOntology() throws IllegalArgumentException, 
-        OWLOntologyCreationException, OWLOntologyStorageException, IOException, 
-        OBOFormatParserException  {
+        OWLOntologyCreationException, OWLOntologyStorageException, IOException {
         
-        String outputFile = this.tempFolder.newFile("test.obo").getAbsolutePath();
         String dataFile = this.getClass().getResource("/species/sample.dat").getFile();
-        String taxonSubgraph = "NCBITaxon:84992";
+        String taxId1 = "NCBITaxon:1";
+        String taxId2 = "NCBITaxon:131567";
+        String taxId3 = "NCBITaxon:2";
+        String taxId4 = "NCBITaxon:201174";
+        String taxId5 = "NCBITaxon:1760";
+        String taxId6 = "NCBITaxon:84992";
+        String taxId7 = "NCBITaxon:84993";
+        String taxId8 = "NCBITaxon:85003";
+        String taxId9 = "NCBITaxon:1223512";
+        String taxId10 = "NCBITaxon:12235122";
+        String taxId11 = "NCBITaxon:65645";
+        Set<String> taxonIds = new HashSet<String>(Arrays.asList(taxId3, taxId4, 
+                taxId5, taxId6, taxId7, taxId8, taxId9, taxId10, taxId11));
         
         GenerateTaxonOntology generate = new GenerateTaxonOntology();
-        generate.generateOntology(dataFile,  taxonSubgraph, outputFile);
-        
-        //now we open the saved ontology and perform the assertion tests
-        OWLOntology ont = OntologyUtils.loadOntology(outputFile);
+        OWLOntology ont = generate.generateOntology(dataFile,  taxonIds);
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
-        assertEquals("Incorrect number of classes in geenrated ontology", 11, 
+        assertEquals("Incorrect number of classes in generated ontology", 11, 
                 wrapper.getAllOWLClasses().size());
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("NCBITaxon:1");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("NCBITaxon:131567");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("NCBITaxon:2");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("NCBITaxon:201174");
-        OWLClass cls5 = wrapper.getOWLClassByIdentifier("NCBITaxon:1760");
-        OWLClass cls6 = wrapper.getOWLClassByIdentifier("NCBITaxon:84992");
-        OWLClass cls7 = wrapper.getOWLClassByIdentifier("NCBITaxon:84993");
-        OWLClass cls8 = wrapper.getOWLClassByIdentifier("NCBITaxon:85003");
-        OWLClass cls11 = wrapper.getOWLClassByIdentifier("NCBITaxon:65645");
-        OWLClass cls9 = wrapper.getOWLClassByIdentifier("NCBITaxon:1223512");
-        OWLClass cls10 = wrapper.getOWLClassByIdentifier("NCBITaxon:12235122");
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier(taxId1);
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier(taxId2);
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier(taxId3);
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier(taxId4);
+        OWLClass cls5 = wrapper.getOWLClassByIdentifier(taxId5);
+        OWLClass cls6 = wrapper.getOWLClassByIdentifier(taxId6);
+        OWLClass cls7 = wrapper.getOWLClassByIdentifier(taxId7);
+        OWLClass cls8 = wrapper.getOWLClassByIdentifier(taxId8);
+        OWLClass cls11 = wrapper.getOWLClassByIdentifier(taxId11);
+        OWLClass cls9 = wrapper.getOWLClassByIdentifier(taxId9);
+        OWLClass cls10 = wrapper.getOWLClassByIdentifier(taxId10);
         assertNotNull("Incorrect classes in generated ontology", cls1);
         assertNotNull("Incorrect classes in generated ontology", cls2);
         assertNotNull("Incorrect classes in generated ontology", cls3);
@@ -106,7 +104,7 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         assertNotNull("Incorrect classes in generated ontology", cls11);
         
         Set<OWLClass> roots = wrapper.getOntologyRoots();
-        assertEquals("Incorrect root in geenrated ontology", 1, 
+        assertEquals("Incorrect root in generated ontology", 1, 
                 roots.size());
         assertEquals("Incorrect root in geenrated ontology", roots.iterator().next(), 
                 cls1);
@@ -162,13 +160,13 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         
         
         //check the disjoint axioms. Generate a Collection of siblings.
-        Collection<Collection<OWLClass>> siblingSet = new HashSet<Collection<OWLClass>>();
-        Collection<OWLClass> siblings1 = new HashSet<OWLClass>();
+        Collection<Set<OWLClass>> siblingSet = new HashSet<Set<OWLClass>>();
+        Set<OWLClass> siblings1 = new HashSet<OWLClass>();
         siblings1.add(cls7);
         siblings1.add(cls8);
         siblings1.add(cls11);
         siblingSet.add(siblings1);
-        Collection<OWLClass> siblings2 = new HashSet<OWLClass>();
+        Set<OWLClass> siblings2 = new HashSet<OWLClass>();
         siblings2.add(cls9);
         siblings2.add(cls10);
         siblingSet.add(siblings2);
@@ -177,24 +175,18 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         OWLObjectProperty inTaxon = f.getOWLObjectProperty(
                 IRI.create(GenerateTaxonOntology.INTAXONRELID));
         
-        for (Collection<OWLClass> siblings: siblingSet) {
-            for (OWLClass sibling1 : siblings) {
-                for (OWLClass sibling2 : siblings) {
-                    if (sibling1 != sibling2) {
-                        OWLClassExpression ce1 = 
-                                f.getOWLObjectSomeValuesFrom(inTaxon, sibling1);
-                        OWLClassExpression ce2 = 
-                                f.getOWLObjectSomeValuesFrom(inTaxon, sibling2);
-                        assertTrue("Missing disjoint axiom", 
-                                wrapper.getSourceOntology().containsAxiom(
-                                        f.getOWLDisjointClassesAxiom(ce1, ce2)));
-                        
-                        assertTrue("Missing disjoint axiom", 
-                                wrapper.getSourceOntology().containsAxiom(
-                                f.getOWLDisjointClassesAxiom(sibling1, sibling2)));
-                    }
-                }
+        for (Set<OWLClass> siblings: siblingSet) {
+            assertTrue("Missing disjoint axiom", 
+                    wrapper.getSourceOntology().containsAxiom(
+                    f.getOWLDisjointClassesAxiom(siblings)));
+            
+            Set<OWLClassExpression> expressions = new HashSet<OWLClassExpression>();
+            for (OWLClass sibling : siblings) {
+                expressions.add(f.getOWLObjectSomeValuesFrom(inTaxon, sibling));
             }
+            assertTrue("Missing disjoint axiom", 
+                    wrapper.getSourceOntology().containsAxiom(
+                    f.getOWLDisjointClassesAxiom(expressions)));
         }
     }
 }

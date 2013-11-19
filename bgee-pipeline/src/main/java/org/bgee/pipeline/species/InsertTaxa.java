@@ -23,6 +23,7 @@ import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
 import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
@@ -374,7 +375,15 @@ public class InsertTaxa extends MySQLDAOUser {
         //wrapped in taxOntWrapper; we get the least common ancestors of all possible 
         //pairs of leaves (so, all possible pairs of species), in order to identify 
         //the important branching in the ontology for Bgee.
-        Set<OWLClass> lcas = utils.getLeafLeastCommonAncestors();
+        Set<OWLClass> lcas;
+        try {
+            lcas = utils.getLeafLeastCommonAncestors();
+        } catch (UnknownOWLOntologyException | OWLOntologyCreationException e) {
+            //should not be thrown, OntologyUtils has been provided directly with 
+            //an OWLGraphWrapper
+            throw log.throwing(new IllegalStateException("An OWLGraphWrapper should " +
+            		"have been arleady privided"));
+        }
         
         //now we remove the species (the leaves), in order to compute the parameters 
         //of the nested set model, only for the taxa (the taxonomy is represented 
@@ -397,8 +406,15 @@ public class InsertTaxa extends MySQLDAOUser {
         Collections.sort(classOrder, comparator);
         
         //get the parameters for the nested set model
-        Map<OWLClass, Map<String, Integer>> nestedSetModelParams = 
-                utils.computeNestedSetModelParams(classOrder);
+        Map<OWLClass, Map<String, Integer>> nestedSetModelParams;
+        try {
+            nestedSetModelParams = utils.computeNestedSetModelParams(classOrder);
+        } catch (UnknownOWLOntologyException | OWLOntologyCreationException e) {
+          //should not be thrown, OntologyUtils has been provided directly with 
+            //an OWLGraphWrapper
+            throw log.throwing(new IllegalStateException("An OWLGraphWrapper should " +
+                    "have been arleady privided"));
+        }
         
         //OK, now we have everything to instantiate the TaxonTOs
         Set<TaxonTO> taxonTOs = new HashSet<TaxonTO>();

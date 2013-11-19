@@ -4,11 +4,15 @@ import static org.junit.Assert.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.UniqueHashCode;
+import org.supercsv.cellprocessor.ift.CellProcessor;
 
 /**
  * Unit tests for {@link Utils}.
@@ -41,11 +45,28 @@ public class UtilsTest extends TestAncestor {
     @Test
     public void shouldGetSpeciesIds() throws IllegalArgumentException, 
         FileNotFoundException, IOException {
-        Set<Integer> speciesIds = Utils.getTaxonIds(
+        Set<String> speciesIds = Utils.getTaxonIds(
                 this.getClass().getResource("/species/species.tsv").getFile());
         assertTrue("Incorrect species IDs returned", speciesIds.size() == 4 && 
-                speciesIds.contains(8) && speciesIds.contains(13) && 
-                speciesIds.contains(15) && speciesIds.contains(1001));
+                speciesIds.contains("NCBITaxon:8") && speciesIds.contains("NCBITaxon:13") && 
+                speciesIds.contains("NCBITaxon:15") && speciesIds.contains("NCBITaxon:1001"));
+    }
+    
+
+    /**
+     * Tests {@link Utils.parseColumnAsString(String, int, int, CellProcessor)}.
+     */
+    @Test
+    public void shouldParseColumnAsString() throws IllegalArgumentException, 
+        FileNotFoundException, IOException {
+        CellProcessor processor = new NotNull(new UniqueHashCode());
+        List<String> values = Utils.parseColumnAsString(
+                this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
+                1, 3, processor);
+        assertEquals("Incorrect values returned", 3, values.size());
+        assertEquals("Incorrect values returned", "b1", values.get(0));
+        assertEquals("Incorrect values returned", "b2", values.get(1));
+        assertEquals("Incorrect values returned", "b3", values.get(2));
     }
     
 }

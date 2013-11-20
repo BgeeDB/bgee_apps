@@ -13,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.NotNull;
-import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.comment.CommentStartsWith;
 import org.supercsv.io.CsvListReader;
@@ -62,7 +61,7 @@ public class Utils {
         FileNotFoundException, IOException {
         log.entry(taxonFile);
         
-        CellProcessor processor = new NotNull(new UniqueHashCode());
+        CellProcessor processor = new NotNull();
         Set<Integer> taxonIds = new HashSet<Integer>(this.parseColumnAsInteger(taxonFile, 
                 TAXONCOLUMNNAME, processor));
         

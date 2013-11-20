@@ -45,15 +45,15 @@ public class UberonTest extends TestAncestor {
     public void shouldExtractTaxonIds() throws OWLOntologyCreationException, 
         OBOFormatParserException, IllegalArgumentException, IOException {
         
-        Set<String> expectedTaxonIds = new HashSet<String>();
+        Set<Integer> expectedTaxonIds = new HashSet<Integer>();
         //this one should be obtained from the 
         //oboInOwl:treat-xrefs-as-reverse-genus-differentia ontology annotations
-        expectedTaxonIds.add("NCBITaxon:8292"); 
+        expectedTaxonIds.add(8292); 
         //this one should be obtained from an "only_in_taxon" property
-        expectedTaxonIds.add("NCBITaxon:6656"); 
+        expectedTaxonIds.add(6656); 
         //this one should be obtained from an "in_taxon" property generating 
         //a class expression equivalent to owl:nothing
-        expectedTaxonIds.add("NCBITaxon:110815");
+        expectedTaxonIds.add(110815);
         
         assertEquals("Incorrect taxon IDs extracted", expectedTaxonIds, 
                 new Uberon().extractTaxonIds(

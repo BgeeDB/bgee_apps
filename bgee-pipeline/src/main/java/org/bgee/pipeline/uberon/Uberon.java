@@ -71,7 +71,7 @@ public class Uberon {
                         "3 arguments, " + args.length + " provided."));
             }
             
-            new Uberon().extractTaxonIds(args[0], args[1]);
+            new Uberon().extractTaxonIds(args[1], args[2]);
         }
         
         log.exit();

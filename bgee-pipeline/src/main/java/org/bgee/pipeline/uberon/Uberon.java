@@ -82,6 +82,8 @@ public class Uberon {
      * of {@code OWLRestriction}s over the object properties "in taxon" (or any 
      * sub-properties), or that are used in ontology annotations 
      * "treat-xrefs-as-reverse-genus-differentia", and to write them in a file.
+     * The IDs used are {@code Integer}s that are the NCBI IDs (for instance, 
+     * 9606 for human), not the ontology IDs with a prefix ("NCBITaxon:").
      * 
      * @param uberonFile    A {@code String} that is the path to the Uberon ontology file.
      * @param outputFile    A {@code String} that is the path to the file where 
@@ -100,10 +102,10 @@ public class Uberon {
             IllegalArgumentException, IOException {
         log.entry(uberonFile, outputFile);
         
-        Set<String> taxonIds = this.extractTaxonIds(uberonFile);
+        Set<Integer> taxonIds = this.extractTaxonIds(uberonFile);
         try(PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(outputFile), "utf-8")))) {
-            for (String taxonId: taxonIds) {
+            for (int taxonId: taxonIds) {
                 writer.println(taxonId);
             }
         }
@@ -115,10 +117,12 @@ public class Uberon {
      * Extract from the Uberon ontology all taxon IDs that are the targets 
      * of {@code OWLRestriction}s over the object properties "in taxon" (or any 
      * sub-properties), or that are used in ontology annotations 
-     * "treat-xrefs-as-reverse-genus-differentia". 
+     * "treat-xrefs-as-reverse-genus-differentia". The IDs returned are {@code Integer}s 
+     * that are the NCBI IDs (for instance, 9606 for human), not the ontology IDs 
+     * with a prefix ("NCBITaxon:").
      * 
      * @param uberonFile    A {@code String} that is the path to the Uberon ontology file.
-     * @return              A {@code Set} of {@code String}s that are the OBO-like IDs 
+     * @return              A {@code Set} of {@code Integer}s that are the NCBI IDs 
      *                      of the taxa used in Uberon as target of restrictions over 
      *                      "in taxon" object properties, or any sub-properties.
      * @throws IllegalArgumentException     If {@code uberonFile} did not allow to obtain 
@@ -129,7 +133,7 @@ public class Uberon {
      *                                      the ontology.
      * @throws IOException                  If {@code uberonFile} could not be read.
      */
-    public Set<String> extractTaxonIds(String uberonFile) 
+    public Set<Integer> extractTaxonIds(String uberonFile) 
             throws OWLOntologyCreationException, OBOFormatParserException, 
             IOException, IllegalArgumentException {
         log.entry(uberonFile);
@@ -184,6 +188,6 @@ public class Uberon {
             throw log.throwing(new IllegalArgumentException("The provided ontology " +
                     " did not allow to acquire any taxon ID"));
         }
-        return log.exit(taxonIds);
+        return log.exit(OntologyUtils.convertToNcbiIds(taxonIds));
     }
 }

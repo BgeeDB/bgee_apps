@@ -173,6 +173,25 @@ public class OntologyUtils {
         }
         return log.exit(ontTaxonIds);
     }
+    /**
+     * Convert {@code taxOntIds} containing taxonomy ontology IDs (which are strings, 
+     * for instance, {@code NCBITaxon:9606} for human) into a {@code Set} of {@code Integer}s 
+     * containing the equivalent IDs used in NCBI (for instance, {@code 9606} for human).
+     * 
+     * @param taxNcbiIds    A {@code Set} of {@code String}s that are the taxonomy IDs 
+     *                      with a prefix, to convert.
+     * @return              A {@code Set} of {@code Integer}s that are the {@code taxOntIds} 
+     *                      converted into IDs used in NCBI.
+     *                      
+     */
+    public static Set<Integer> convertToNcbiIds(Set<String> taxOntIds) {
+        log.entry(taxOntIds);
+        Set<Integer> convertIds = new HashSet<Integer>();
+        for (String id: taxOntIds) {
+            convertIds.add(OntologyUtils.getTaxNcbiId(id));
+        }
+        return log.exit(convertIds);
+    }
 
     /**
      * The {@code OWLGraphWrapper} wrapping the {@code OWLOntology} which operations 

@@ -39,18 +39,24 @@ public class InsertTaxaTest extends TestAncestor {
      */
     private final String SPECIESFILE = "/species/species.tsv";
     /**
+     * A {@code String} that is the path from the classpath to the fake taxon IDs 
+     * file, containing the NCBI IDs of the additional taxa to insert in Bgee, 
+     * as a TSV file.
+     */
+    private final String TAXONFILE = "/species/taxonIds.tsv";
+    /**
      * A {@code String} that is the path from the classpath to the fake NCBI 
      * taxonomy ontology. This taxonomy is as following; least common ancestors 
      * of considered species are marked with *, nested set model parameters after 
      * species removal are in brackets: 
      * <pre>
      *                    NCBITaxon:1 taxon A (1, 16, 1)
-     *                             |
-     *                    NCBITaxon:2 taxon B (2, 15, 2)
-     *                        /                         \
-     *            * NCBITaxon:6 taxon C * (3, 12, 3)     NCBITaxon:3 taxon Bprime (13, 14, 3)
-     *                   /                   \
-     *     NCBITaxon:11 taxon D (4, 9, 4)  NCBITaxon:16 taxon G (10, 11, 4)
+     *                         /                         \
+     *                NCBITaxon:2 taxon B (2, 15, 2)      NCBITaxon:17 taxon not included
+     *                        /                      \
+     *            * NCBITaxon:6 taxon C * (3, 12, 3)   NCBITaxon:3 taxon z (13, 14, 3)
+     *                   /                   \           
+     *     NCBITaxon:11 taxon D (4, 9, 4)  NCBITaxon:16 taxon G (10, 11, 4)    
      *                  |                             |
      * * NCBITaxon:12 taxon E * (5, 8, 5)  NCBITaxon:8 species A 
      *          /                    \
@@ -88,6 +94,7 @@ public class InsertTaxaTest extends TestAncestor {
         
         InsertTaxa insert = new InsertTaxa(mockManager);
         insert.insertSpeciesAndTaxa(this.getClass().getResource(SPECIESFILE).getFile(), 
+                this.getClass().getResource(TAXONFILE).getFile(), 
                 this.getClass().getResource(TAXONTOLOGYFILE).getFile());
         
         //generate the expected Sets of SpeciesTOs and taxonTOs to verify the calls 

@@ -8,6 +8,11 @@ id: NCBITaxon:1
 name: taxon A
 
 [Term]
+id: NCBITaxon:17
+name: taxon not included
+is_a: NCBITaxon:1 ! taxon A
+
+[Term]
 id: NCBITaxon:2
 name: taxon B
 synonym: "common name taxon B" EXACT genbank_common_name []

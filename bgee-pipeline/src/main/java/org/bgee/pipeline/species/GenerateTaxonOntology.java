@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.Utils;
 import org.semanticweb.owlapi.model.AddAxiom;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAxiom;

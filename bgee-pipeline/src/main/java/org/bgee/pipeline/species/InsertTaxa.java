@@ -81,13 +81,23 @@ public class InsertTaxa extends MySQLDAOUser {
      * Main method to trigger the insertion of species and taxonomy into the Bgee 
      * database. Parameters that must be provided in order in {@code args} are: 
      * <ol>
-     * <li>path to the tsv files containing the ID of the species used in Bgee, 
+     * <li>path to the tsv files containing the IDs of the species used in Bgee, 
      * corresponding to the NCBI taxonomy ID (e.g., 9606 for human). This is the file 
      * to modify to add/remove a species. The first line should be a header line, 
      * defining a column to get IDs from, named exactly "taxon ID" (other columns 
      * are optional and will be ignored).
+     * <li>path to the tsv files containing the IDs of the taxa to be inserted in Bgee, 
+     * corresponding to the NCBI taxonomy ID (e.g., 9605 for homo). Whatever the values 
+     * in this file are, the branches which the species used in Bgee belong to 
+     * will be inserted in any case. Using this file, you can specify additional taxa 
+     * to be inserted (along with their ancestors), which is useful, for instance 
+     * to back up our homology annotations. It does not matter whether this file 
+     * also includes the species used in Bgee, or their ancestors. The first line 
+     * of this file should be a header line, efining a column to get IDs from, named 
+     * exactly "taxon ID" (other columns are optional and will be ignored).
      * <li>path to the file storing the NCBI taxonomy as an ontology. This taxonomy 
-     * must contain only the taxa and species that should be inserted into Bgee.
+     * must contain all the branches related to the species and taxa to be used 
+     * in Bgee.
      * </ol>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -105,7 +115,7 @@ public class InsertTaxa extends MySQLDAOUser {
         OWLOntologyCreationException, OBOFormatParserException, IllegalArgumentException, 
         DAOException, IOException {
         log.entry((Object[]) args);
-        int expectedArgLength = 2;
+        int expectedArgLength = 3;
         if (args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
                     "provided, expected " + expectedArgLength + " arguments, " + args.length + 
@@ -113,23 +123,37 @@ public class InsertTaxa extends MySQLDAOUser {
         }
         
         InsertTaxa insert = new InsertTaxa();
-        insert.insertSpeciesAndTaxa(args[0], args[1]);
+        insert.insertSpeciesAndTaxa(args[0], args[1], args[2]);
         
         log.exit();
     }
     
     /**
-     * Inserts species and taxa into the Bgee database. This method uses the path 
-     * to the TSV file containing the ID of the species used in Bgee, corresponding to 
-     * their NCBI taxonomy ID (e.g., 9606 for human). This is the file 
+     * Inserts species and taxa into the Bgee database. This method uses: 
+     * <ul>
+     * <li>the path to the TSV file containing the IDs of the species used in Bgee, 
+     * corresponding to their NCBI taxonomy ID (e.g., 9606 for human). This is the file 
      * to modify to add/remove a species. The first line should be a header line, 
      * defining a column to get IDs from, named exactly "taxon ID" (other columns 
-     * are optional and will be ignored). This method also uses the path 
-     * to the file storing the NCBI taxonomy as an ontology. This taxonomy 
-     * must contain only the taxa and species that should be inserted into Bgee.
+     * are optional and will be ignored). 
+     * <li>the path to a TSV file containing the NCBI taxonomy IDs of additional taxa 
+     * to be inserted. Whatever the values in this file are, the branches which 
+     * the species used in Bgee belong to will be inserted in any case. Using this file, 
+     * you can specify additional taxa to be inserted (along with their ancestors), 
+     * which is useful, for instance to back up our homology annotations. It does not 
+     * matter whether this file also includes the species used in Bgee, or their ancestors. 
+     * The first line of this file should be a header line, defining a column to get IDs from, 
+     * named exactly "taxon ID" (other columns are optional and will be ignored). 
+     * This file can contain no taxa, as long as the header line is present.
+     * <li>the path to the file storing the NCBI taxonomy as an ontology. This taxonomy 
+     * must contain all the branches related to the species and taxa to be used 
+     * in Bgee.
+     * </ul>
      * 
      * @param speciesFile   A {@code String} that is the path to the TSV file 
-     *                      containing the ID of the species used in Bgee
+     *                      containing the IDs of the species used in Bgee
+     * @param taxonFile     A {@code String} that is the path to the TSV file 
+     *                      containing the IDs of additional taxa to insert in Bgee.
      * @param ncbiOntFile   A {@code String} that is the path to the NCBI taxonomy 
      *                      ontology.
      * @throws FileNotFoundException        If some files could not be found.
@@ -142,25 +166,38 @@ public class InsertTaxa extends MySQLDAOUser {
      * @throws DAOException                 If an error occurred while inserting 
      *                                      the data into the Bgee database.
      */
-    public void insertSpeciesAndTaxa(String speciesFile, String ncbiOntFile) 
-            throws FileNotFoundException, IOException, OWLOntologyCreationException, 
-            OBOFormatParserException, IllegalArgumentException, DAOException {
-        log.entry(speciesFile, ncbiOntFile);
+    public void insertSpeciesAndTaxa(String speciesFile, String taxonFile, 
+            String ncbiOntFile) throws FileNotFoundException, IOException, 
+            OWLOntologyCreationException, OBOFormatParserException, 
+            IllegalArgumentException, DAOException {
+        log.entry(speciesFile, taxonFile, ncbiOntFile);
         
         this.insertSpeciesAndTaxa(new Utils().getTaxonIds(speciesFile), 
+                new Utils().getTaxonIds(taxonFile), 
                 OntologyUtils.loadOntology(ncbiOntFile));
         
         log.exit();
     }
     
     /**
-     * Inserts species and taxa into the Bgee database. The arguments are a {@code Set} 
-     * of {@code Integer}s that are the NCBI taxonomy IDs of the species used in Bgee, 
-     * (e.g., 9606 for human), and a {@code OWLOntology} representing the NCBI 
-     * taxonomy ontology, and containing only the taxa and species to insert into Bgee.
+     * Inserts species and taxa into the Bgee database. The arguments are: 
+     * <ul>
+     * <li>a {@code Set} of {@code Integer}s that are the NCBI taxonomy IDs of the species 
+     * used in Bgee, (e.g., 9606 for human)
+     * <li>a {@code Set} of {@code Integer}s that are the NCBI taxonomy IDs of additional taxa 
+     * to be inserted. Whatever the values in this {@code Set} are, the branches which 
+     * the species used in Bgee belong to will be inserted in any case. Using these IDs, 
+     * you can specify additional taxa to be inserted (along with their ancestors), 
+     * which is useful, for instance to back up our homology annotations. It does not 
+     * matter whether these IDs also include the species used in Bgee, or their ancestors.
+     * <li>an {@code OWLOntology} representing the NCBI taxonomy ontology. This taxonomy 
+     * must contain all the branches related to the species and taxa to be used in Bgee.
+     * </ul>
      * 
      * @param speciesIds    a {@code Set} of {@code Integer}s that are the IDs 
      *                      of the species used in Bgee
+     * @param taxonIds      a {@code Set} of {@code Integer}s that are the IDs 
+     *                      of additional taxa to be inserted in Bgee
      * @param taxOntology   An {@code OWLOntology} that is the NCBI taxonomy 
      *                      ontology.
      * @throws OWLOntologyCreationException If an error occurred while loading 
@@ -169,9 +206,10 @@ public class InsertTaxa extends MySQLDAOUser {
      * @throws DAOException                 If an error occurred while inserting 
      *                                      the data into the Bgee database.
      */
-    public void insertSpeciesAndTaxa(Set<Integer> speciesIds, OWLOntology taxOntology) 
-            throws OWLOntologyCreationException, IllegalArgumentException, DAOException {
-        log.entry(speciesIds, taxOntology);
+    public void insertSpeciesAndTaxa(Set<Integer> speciesIds, Set<Integer> taxonIds, 
+            OWLOntology taxOntology) throws OWLOntologyCreationException, 
+            IllegalArgumentException, DAOException {
+        log.entry(speciesIds, taxonIds, taxOntology);
         log.info("Starting insertion of species and taxa...");
         
         //catch any IllegalStateException to wrap it into a IllegalArgumentException 
@@ -187,8 +225,9 @@ public class InsertTaxa extends MySQLDAOUser {
             
             //now get the TaxonTOs to insert their information into the database.
             //note that using this method will modify the taxonomy ontology, 
-            //by removing the Bgee species from it.
-            Set<TaxonTO> taxonTOs = this.getTaxonTOs(speciesIds);
+            //by removing the Bgee species from it, and removing all taxa not related 
+            //to neither speciesIds nor taxonIds.
+            Set<TaxonTO> taxonTOs = this.getTaxonTOs(speciesIds, taxonIds);
             
             //now we start a transaction to insert taxa and species in the Bgee data source.
             //note that we do not need to call rollback if an error occurs, calling 
@@ -303,28 +342,31 @@ public class InsertTaxa extends MySQLDAOUser {
     }
     
     /**
-     * Obtains the taxa from the NCBI taxonomy ontology wrapped into 
+     * Filter and obtains requested taxa from the NCBI taxonomy ontology wrapped into 
      * {@link #taxOntWrapper}, converts them into {@code TaxonTO}s, and 
      * returns them in a {@code Set}.
      * <p>
-     * <strong>Warning:</strong> this method will modify the ontology wrapped into 
-     * {@link #taxOntWrapper}, by removing the provided species: this method must be called 
-     * when the ontology still includes the species; these species will be used to identify 
-     * the least common ancestors of all possible pairs of species, in order to identify 
-     * important branchings for Bgee; these species will then be removed from the ontology, 
-     * in order to compute the parameters of a nested set model, for the taxa only (the taxonomy 
+     * The ontology wrapped into {@link #taxOntWrapper} will be modified to remove 
+     * any taxa not related to the species provided through {@code speciesIds}, 
+     * or to the taxa provided through {@code taxonIds} (only those taxa and their 
+     * ancestors, and the ancestors of the species used in Bgee, will be kept).
+     * Also, the species will be removed from the ontology, in order to compute 
+     * the parameters of a nested set model, for the taxa only (the taxonomy 
      * is represented as a nested set model in Bgee, and does not include the species).
      * 
      * @param speciesIds    a {@code Set} of {@code Integer}s that are the IDs 
      *                      of the species used in Bgee
+     * @param taxonIds      a {@code Set} of {@code Integer}s that are the IDs 
+     *                      of additional taxa to be inserted in Bgee
      * @return  A {@code Set} of {@code TaxonTO}s corresponding to the taxa 
      *          retrieved from the taxonomy ontology wrapped into {@link #taxOntWrapper}.
      * @throws IllegalStateException    If the {@code OWLOntology} used, wrapped 
      *                                  into {@link #taxOntWrapper}, does not allow 
      *                                  to properly acquire any {@code TaxonTO}s.
      */
-    private Set<TaxonTO> getTaxonTOs(Set<Integer> speciesIds) throws IllegalStateException {
-        log.entry(speciesIds);
+    private Set<TaxonTO> getTaxonTOs(Set<Integer> speciesIds, Set<Integer> taxonIds) 
+            throws IllegalStateException {
+        log.entry(speciesIds, taxonIds);
         
         //get the least common ancestors of the species used in Bgee: 
         //we get the least common ancestors of all possible pairs of species), 
@@ -353,10 +395,10 @@ public class InsertTaxa extends MySQLDAOUser {
                     "did not allow to identify any least common ancestors of species used."));
         }
         
-        //now we remove the species (the leaves), in order to compute the parameters 
-        //of the nested set model, only for the taxa (the taxonomy is represented 
-        //as a nested set model in Bgee)
-        this.removeSpecies(speciesIds);
+        //now keep only the taxa related to speciesIds or taxonIds, and remove 
+        //the species used in Bgee in order to compute the parameters 
+        //of the nested set model,
+        this.filterOntology(speciesIds, taxonIds);
         
         //we want to order the taxa based on their scientific name, so we create 
         //a Comparator. This comparator needs the OWLGraphWrapper, so we make 
@@ -419,26 +461,49 @@ public class InsertTaxa extends MySQLDAOUser {
     
     /**
      * Modifies the {@code OWLOntology} wrapped into {link #taxOntWrapper} to remove 
-     * from it the requested species. The requested species are specified by providing 
-     * their NCBI taxonomy IDs using the {@code ncbiSpeciesIds} argument 
-     * (for instance, should contain {@code 9606} to remove human).
+     * any taxa not related to the species provided through {@code speciesIds}, 
+     * or to the taxa provided through {@code taxonIds} (only those taxa and their 
+     * ancestors, and the ancestors of the species used in Bgee, will be kept).
+     * Also, the species will be removed from the ontology, in order to compute 
+     * the parameters of a nested set model, for the taxa only (the taxonomy 
+     * is represented as a nested set model in Bgee, and does not include the species).
+     * The IDs used are NCBI taxonomy IDs (for instance, {@code 9606} for human).
      * 
      * @param ncbiSpeciesIds    A {@code Set} of {@code Integer}s that are the NCBI IDs 
-     *                          of the species to remove from the ontology.
+     *                          of the species to be used in Bgee (along with their 
+     *                          ancestor taxa).
+     * @param taxonIds          A {@code Set} of {@code Integer}s that are the IDs 
+     *                          of additional taxa to be inserted in Bgee (along with 
+     *                          their ancestors)
+     * @throws IllegalStateException    If the {@code OWLOntology} wrapped into 
+     *                                  {link #taxOntWrapper} does not contain 
+     *                                  some of the requested species or taxa.
      */
-    private void removeSpecies(Set<Integer> ncbiSpeciesIds) {
-        log.entry(ncbiSpeciesIds);
+    private void filterOntology(Set<Integer> ncbiSpeciesIds, Set<Integer> ncbiTaxonIds) 
+        throws IllegalStateException {
+        log.entry(ncbiSpeciesIds, ncbiTaxonIds);
+        log.trace("Filtering ontology to keep only requested species and taxa...");
         
-        Set<OWLClass> owlClassesToRemove = new HashSet<OWLClass>();
-        for (int speciesId: ncbiSpeciesIds) {
+        Set<Integer> allTaxonIds = new HashSet<Integer>(ncbiSpeciesIds);
+        allTaxonIds.addAll(ncbiTaxonIds);
+        
+        Set<OWLClass> owlClassesToKeep = new HashSet<OWLClass>();
+        for (int taxonId: allTaxonIds) {
             OWLClass taxClass = this.taxOntWrapper.getOWLClassByIdentifier(
-                    OntologyUtils.getTaxOntologyId(speciesId));
-            owlClassesToRemove.add(taxClass);
-            owlClassesToRemove.addAll(this.taxOntWrapper.getOWLClassDescendants(taxClass));
+                    OntologyUtils.getTaxOntologyId(taxonId));
+            if (taxClass == null) {
+                throw log.throwing(new IllegalStateException("Taxon " + taxonId + 
+                        " was not found in the ontology"));
+            }
+            if (!ncbiSpeciesIds.contains(taxonId)) {
+                owlClassesToKeep.add(taxClass);
+            }
+            owlClassesToKeep.addAll(this.taxOntWrapper.getOWLClassAncestors(taxClass));
         }
         OWLGraphManipulator manipulator = new OWLGraphManipulator(this.taxOntWrapper);
-        manipulator.removeClasses(owlClassesToRemove);
+        int taxonRemovedCount = manipulator.filterClasses(owlClassesToKeep);
         
+        log.trace("Done filtering, {} taxa removed", taxonRemovedCount);
         log.exit();
     }
     

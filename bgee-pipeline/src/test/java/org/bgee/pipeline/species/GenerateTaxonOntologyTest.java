@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.IRI;
@@ -93,16 +94,37 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         OWLClass cls9 = wrapper.getOWLClassByIdentifier(prefix + taxId9);
         OWLClass cls10 = wrapper.getOWLClassByIdentifier(prefix + taxId10);
         assertNotNull("Incorrect classes in generated ontology", cls1);
+        assertEquals("Incorrect generated label", "root", wrapper.getLabel(cls1));
         assertNotNull("Incorrect classes in generated ontology", cls2);
+        assertEquals("Incorrect generated label", "cellular organisms", 
+                wrapper.getLabel(cls2));
         assertNotNull("Incorrect classes in generated ontology", cls3);
+        assertEquals("Incorrect generated label", "Bacteria", 
+                wrapper.getLabel(cls3));
         assertNotNull("Incorrect classes in generated ontology", cls4);
+        assertEquals("Incorrect generated label", "Actinobacteria", 
+                wrapper.getLabel(cls4));
         assertNotNull("Incorrect classes in generated ontology", cls5);
+        assertEquals("Incorrect generated label", "Actinobacteria", 
+                wrapper.getLabel(cls5));
         assertNotNull("Incorrect classes in generated ontology", cls6);
+        assertEquals("Incorrect generated label", "Acidimicrobidae", 
+                wrapper.getLabel(cls6));
         assertNotNull("Incorrect classes in generated ontology", cls7);
+        assertEquals("Incorrect generated label", "Acidimicrobiales", 
+                wrapper.getLabel(cls7));
         assertNotNull("Incorrect classes in generated ontology", cls8);
+        assertEquals("Incorrect generated label", "Actinobacteridae", 
+                wrapper.getLabel(cls8));
         assertNotNull("Incorrect classes in generated ontology", cls9);
+        assertEquals("Incorrect generated label", "name not unique on purpose", 
+                wrapper.getLabel(cls9));
         assertNotNull("Incorrect classes in generated ontology", cls10);
+        assertEquals("Incorrect generated label", "name not unique on purpose", 
+                wrapper.getLabel(cls10));
         assertNotNull("Incorrect classes in generated ontology", cls11);
+        assertEquals("Incorrect generated label", "name not unique on purpose", 
+                wrapper.getLabel(cls11));
         
         Set<OWLClass> roots = wrapper.getOntologyRoots();
         assertEquals("Incorrect root in generated ontology", 1, 
@@ -173,8 +195,7 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         siblingSet.add(siblings2);
         
         OWLDataFactory f = wrapper.getManager().getOWLDataFactory();
-        OWLObjectProperty inTaxon = f.getOWLObjectProperty(
-                IRI.create(GenerateTaxonOntology.INTAXONRELID));
+        OWLObjectProperty inTaxon = f.getOWLObjectProperty(OntologyUtils.INTAXONRELIRI);
         
         for (Set<OWLClass> siblings: siblingSet) {
             assertTrue("Missing disjoint axiom", 

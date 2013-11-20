@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +44,40 @@ public class OntologyUtils {
      */
     private final static Logger log = 
             LogManager.getLogger(OntologyUtils.class.getName());
+
+    /**
+     * {@code IRI} of the {@code ObjectProperty} "in_taxon".
+     */
+    public final static IRI INTAXONRELIRI = 
+            IRI.create("http://purl.obolibrary.org/obo/RO_0002162");
+    /**
+     * {@code IRI} of the {@code AnnotationProperty} 
+     * "treat-xrefs-as-reverse-genus-differentia".
+     */
+    public final static IRI GENUSDIFFERENTIAIRI = 
+            IRI.create("http://www.geneontology.org/formats/oboInOwl#" +
+            		"treat-xrefs-as-reverse-genus-differentia");
+    /**
+     * The {@code Pattern} used to parse the {@code OWLLiteral} associated to 
+     * <i>genus-differentia</i> {@code AnnotationProperty} (see 
+     * {@link #GENUSDIFFERENTIAIRI}). This {@code Pattern} allows to capture 2 groups: 
+     * the first group is the prefix of the anatomical ontology annotated, 
+     * the second group is the OBO-like ID of the taxon scoped. For instance, 
+     * if we have "AAO part_of NCBITaxon:8292", the first group will be "AAO", 
+     * the second will be "NCBITaxon:8292".
+     */
+    public final static Pattern GENUSDIFFERENTIALITERALPATTERN = 
+            Pattern.compile("^(.+?) part_of (.+?)$");
+    /**
+     * An {@code int} that is the index of the group capturing the taxon ID 
+     * in the {@code Pattern} {@link #GENUSDIFFERENTIALITERALPATTERN}.
+     */
+    public final static int GENUSDIFFERENTIATAXONGROUP = 2;
+    /**
+     * An {@code int} that is the index of the group capturing the anatomical ontology prefix 
+     * in the {@code Pattern} {@link #GENUSDIFFERENTIALITERALPATTERN}.
+     */
+    public final static int GENUSDIFFERENTIAANATGROUP = 1;
 
     /**
      * A {@code String} representing the key to obtain left bound value 

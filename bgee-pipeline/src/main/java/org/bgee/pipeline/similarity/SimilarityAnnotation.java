@@ -91,7 +91,7 @@ public class SimilarityAnnotation {
      * @param annotFile     A {@code String} that is the path to the similarity 
      *                      annotation file.
      * @param outputFile    A {@code String} that is the path to the file where 
-     *                      to write ID into.
+     *                      to write IDs into.
      * @throws UnsupportedEncodingException If incorrect encoding was used to write 
      *                                      in output file.
      * @throws FileNotFoundException        If {@code annotFile} could not be found.

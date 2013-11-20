@@ -6,6 +6,7 @@ import org.bgee.pipeline.similarity.SimilarityAnnotation;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
 import org.bgee.pipeline.uberon.GenerateTaxonConstraints;
+import org.bgee.pipeline.uberon.Uberon;
 
 /**
  * Entry point of the Bgee pipeline. It is a really basic tool, only used to dispatch 
@@ -79,6 +80,9 @@ public class CommandRunner {
         //---------- uberon -----------
         case "GenerateTaxonConstraints": 
             GenerateTaxonConstraints.main(newArgs);
+            break;
+        case "Uberon": 
+            Uberon.main(newArgs);
             break;
             
         //---------- Similarity annotation -----------

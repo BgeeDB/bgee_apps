@@ -1,5 +1,5 @@
-column1	column2	column3
+column1	column2	column3	following header column empty on purpose, empty columns on following lines on purpose	
 a1	b1	3
 //a comment
-a2	b2	2
-a3	b3	1
+a2		2	
+a3	b3	1		

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.util.CsvContext;
 
@@ -74,10 +75,11 @@ public class UtilsTest extends TestAncestor {
         List<String> values = new Utils().parseColumnAsString(
                 this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
                 "column2", processor);
-        assertEquals("Incorrect values returned", 3, values.size());
+        //the column to read in the second line is empty, it is in purpose 
+        //for a regression test
+        assertEquals("Incorrect values returned", 2, values.size());
         assertEquals("Incorrect values returned", "b1", values.get(0));
-        assertEquals("Incorrect values returned", "b2", values.get(1));
-        assertEquals("Incorrect values returned", "b3", values.get(2));
+        assertEquals("Incorrect values returned", "b3", values.get(1));
         verify(processor, times(3)).execute(anyObject(), any(CsvContext.class));
         
         //an IllegalArgumentException should be thrown if no column with the provided 
@@ -131,6 +133,11 @@ public class UtilsTest extends TestAncestor {
         } catch(IllegalArgumentException e) {
             //test passed
         }
+        
+        //we check if everything works fine even if we provide a ParseInt CellProcessor 
+        //(regression test)
+        new Utils().parseColumnAsInteger(
+                this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
+                "column3", new ParseInt());
     }
-    
 }

@@ -290,7 +290,11 @@ public class GenerateTaxonConstraints {
         //and the taxa it exists in. So, first, we get all OWLClasses for which 
         //we want to generate taxon constraints (taxa are excluded)
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
-        for (OWLClass cls: uberonWrapper.getSourceOntology().getClassesInSignature()) {
+        for (OWLClass cls: uberonWrapper.getAllOWLClasses()) {
+            //skip owl:thing and owl:nothing
+            if (cls.isTopEntity() || cls.isBottomEntity()) {
+                continue;
+            }
             //we do not want information about the taxa
             if (taxOntWrapper.getSourceOntology().containsClassInSignature(cls.getIRI())) {
                 continue;
@@ -565,8 +569,7 @@ public class GenerateTaxonConstraints {
                 OWLClass cls = ontWrapper.getOWLClassByIdentifier(uberonId);
                 String label = "-";
                 if (cls != null) {
-                    label = ontWrapper.getLabelOrDisplayId(
-                        ontWrapper.getOWLClassByIdentifier(uberonId));
+                    label = ontWrapper.getLabelOrDisplayId(cls);
                 } else {
                     throw log.throwing(new AssertionError("Could not find class " +
                     		"with ID " + uberonId));

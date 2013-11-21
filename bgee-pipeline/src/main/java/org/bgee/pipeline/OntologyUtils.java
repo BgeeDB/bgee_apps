@@ -178,7 +178,7 @@ public class OntologyUtils {
      * for instance, {@code NCBITaxon:9606} for human) into a {@code Set} of {@code Integer}s 
      * containing the equivalent IDs used in NCBI (for instance, {@code 9606} for human).
      * 
-     * @param taxNcbiIds    A {@code Set} of {@code String}s that are the taxonomy IDs 
+     * @param taxOntIds     A {@code Set} of {@code String}s that are the taxonomy IDs 
      *                      with a prefix, to convert.
      * @return              A {@code Set} of {@code Integer}s that are the {@code taxOntIds} 
      *                      converted into IDs used in NCBI.

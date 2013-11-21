@@ -204,12 +204,15 @@ public class GenerateTaxonConstraints {
         log.entry(uberonFile, taxOntFile, taxonIdFile, outputFile, storeOntologyDir);
         
         Set<Integer> taxonIds = new Utils().getTaxonIds(taxonIdFile);
+        OWLOntology uberontOnt = OntologyUtils.loadOntology(uberonFile);
         Map<String, Set<Integer>> constraints = 
-                this.generateTaxonConstraints(
-                        OntologyUtils.loadOntology(uberonFile), 
+                this.generateTaxonConstraints(uberontOnt, 
                         OntologyUtils.loadOntology(taxOntFile), 
                         taxonIds, storeOntologyDir);
-        this.writeToFile(constraints, taxonIds, outputFile);
+        //TODO: we should also provide the OWLGrahWrappers to the method 
+        //generateTaxonConstraints, to avoid loading them twice.
+        this.writeToFile(constraints, taxonIds, outputFile, 
+                new OWLGraphWrapper(uberontOnt));
         
         log.exit();
     }
@@ -287,7 +290,7 @@ public class GenerateTaxonConstraints {
         //and the taxa it exists in. So, first, we get all OWLClasses for which 
         //we want to generate taxon constraints (taxa are excluded)
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
-        for (OWLClass cls: uberonWrapper.getAllOWLClasses()) {
+        for (OWLClass cls: uberonWrapper.getSourceOntology().getClassesInSignature()) {
             //we do not want information about the taxa
             if (taxOntWrapper.getSourceOntology().containsClassInSignature(cls.getIRI())) {
                 continue;
@@ -501,11 +504,14 @@ public class GenerateTaxonConstraints {
      * of all {@code OWLClass}es examined, and are associated to a {@code Set} of 
      * {@code Integer}s, that are the NCBI IDs of the taxon in which the {@code OWLClass} 
      * exists, among all the taxa that were examined, listed in {@code taxonIds}. 
+     * Additionally, it is provided an {@code OWLGraphWrapper} wrapping the 
+     * {@code OWLOntology} were the {@code OWLClass}es examined come from, in order 
+     * to be able to print their name.
      * <p>
      * The generated TSV file will have one header line. The columns will be: ID 
-     * of the {@code OWLClass}, IDs of each of the taxa that were examined. For 
-     * each of the taxon column, a boolean is provided as "T" or "F", to define 
-     * whether the associated {@code OWLClass} exists in it.
+     * of the {@code OWLClass}, name of the {@code OWLClass}, IDs of each of the taxa 
+     * that were examined. For each of the taxon column, a boolean is provided as 
+     * "T" or "F", to define whether the associated {@code OWLClass} exists in it.
      * 
      * @param taxonConstraints  A {@code Map} where keys are IDs of the {@code OWLClass}es 
      *                          from the ontology that was examined, and values are  
@@ -520,8 +526,9 @@ public class GenerateTaxonConstraints {
      *                          {@code outputFile}.
      */
     private void writeToFile(Map<String, Set<Integer>> taxonConstraints, 
-            Set<Integer> taxonIds, String outputFile) throws IOException {
-        log.entry(taxonConstraints, taxonIds, outputFile);
+            Set<Integer> taxonIds, String outputFile, OWLGraphWrapper ontWrapper) 
+            throws IOException {
+        log.entry(taxonConstraints, taxonIds, outputFile, ontWrapper);
 
         //order the taxon IDs to get consistent column ordering between releases
         List<Integer> sortedTaxonIds = new ArrayList<Integer>(taxonIds);
@@ -533,15 +540,17 @@ public class GenerateTaxonConstraints {
         
         //create the header of the file, and the conditions on the columns
         int taxonCount = taxonIds.size();
-        CellProcessor[] processors = new CellProcessor[taxonCount + 1];
-        String[] header = new String[taxonCount + 1];
+        CellProcessor[] processors = new CellProcessor[taxonCount + 2];
+        String[] header = new String[taxonCount + 2];
         //ID of the OWLClass (must be unique)
         processors[0] = new UniqueHashCode(new NotNull());
-        header[0] = "UBERON ID";
+        processors[1] = new NotNull();
+        header[0] = "Uberon ID";
+        header[1] = "Uberon name";
         //boolean defining for each taxon if the OWLClass exists in it
         for (int i = 0; i < taxonCount; i++) {
-            processors[i + 1] = new NotNull(new FmtBool("T", "F"));
-            header[i + 1] = sortedTaxonIds.get(i).toString();
+            processors[i + 2] = new NotNull(new FmtBool("T", "F"));
+            header[i + 2] = sortedTaxonIds.get(i).toString();
         }
         
         
@@ -553,6 +562,8 @@ public class GenerateTaxonConstraints {
             for (String uberonId: sortedClassIds) {
                 Map<String, Object> row = new HashMap<String, Object>();
                 row.put(header[0], uberonId);
+                row.put(header[1], ontWrapper.getLabelOrDisplayId(
+                        ontWrapper.getOWLClassByIdentifier(uberonId)));
                 for (Integer taxonId: taxonIds) {
                     row.put(taxonId.toString(), 
                             taxonConstraints.get(uberonId).contains(taxonId));

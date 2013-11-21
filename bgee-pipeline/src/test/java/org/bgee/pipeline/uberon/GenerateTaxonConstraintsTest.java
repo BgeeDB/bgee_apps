@@ -213,6 +213,7 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
                 String[] headers = mapReader.getHeader(true); 
                 final CellProcessor[] processors = new CellProcessor[] {
                         new NotNull(new UniqueHashCode()), 
+                        new NotNull(), 
                         new NotNull(new ParseBool("t", "f")), 
                         new NotNull(new ParseBool("t", "f")), 
                         new NotNull(new ParseBool("t", "f")), 
@@ -224,6 +225,29 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
                     log.trace("Row: {}", taxonConstraintMap);
                     i++;
                     String uberonId = (String) taxonConstraintMap.get(headers[0]);
+                    String uberonName = (String) taxonConstraintMap.get(headers[1]);
+                    if (uberonId.equals("U:22")) {
+                        assertEquals("Incorrect name for U:22", "antenna", uberonName);
+                    }
+                    if (uberonId.equals("U:23")) {
+                        assertEquals("Incorrect name for U:23", "left antenna", uberonName);
+                    }
+                    if (uberonId.equals("U:24")) {
+                        assertEquals("Incorrect name for U:24", "left antenna segment", 
+                                uberonName);
+                    }
+                    if (uberonId.equals("S:998")) {
+                        assertEquals("Incorrect name for S:998", "Cephalus Obscurus", 
+                                uberonName);
+                    }
+                    if (uberonId.equals("S:9")) {
+                        assertEquals("Incorrect name for S:9", "Cell of Cephalus Obscurus", 
+                                uberonName);
+                    }
+                    if (uberonId.equals("S:12")) {
+                        assertEquals("Incorrect name for S:12", "Cephalus Obscurus Astrocyte", 
+                                uberonName);
+                    }
                     boolean taxon1ExpectedValue = true;
                     boolean taxon2ExpectedValue = true;
                     boolean taxon3ExpectedValue = true;
@@ -238,16 +262,16 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
                     }
                     assertEquals("Incorrect value for Uberon ID " + uberonId + 
                             " and taxon 8", taxon1ExpectedValue, 
-                            taxonConstraintMap.get(headers[1]));
-                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
-                            " and taxon 13", taxon2ExpectedValue, 
                             taxonConstraintMap.get(headers[2]));
                     assertEquals("Incorrect value for Uberon ID " + uberonId + 
-                            " and taxon 14", taxon3ExpectedValue, 
+                            " and taxon 13", taxon2ExpectedValue, 
                             taxonConstraintMap.get(headers[3]));
                     assertEquals("Incorrect value for Uberon ID " + uberonId + 
-                            " and taxon 15", taxon4ExpectedValue, 
+                            " and taxon 14", taxon3ExpectedValue, 
                             taxonConstraintMap.get(headers[4]));
+                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
+                            " and taxon 15", taxon4ExpectedValue, 
+                            taxonConstraintMap.get(headers[5]));
                 }
                 assertEquals("Incorrect number of lines in TSV output", 21, i);
             }

@@ -93,20 +93,26 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
         try {
             tempDir = Files.createTempDirectory(null).toFile();
             Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(
-                    UBERONFILE, TAXONTFILE, TAXONIDS, tempDir.getPath());
+                    OntologyUtils.loadOntology(UBERONFILE), 
+                    OntologyUtils.loadOntology(TAXONTFILE), TAXONIDS, tempDir.getPath());
             
             assertEquals("Incorrect number of OWLClasses in taxon constraints", 21, 
                     constraints.keySet().size());
 
-            //U:22 antenna never_in_taxon NCBITaxon:8 - exists in taxa 13, 14, and 15
+            //U:22 antenna never_in_taxon NCBITaxon:8 - exists in taxa 13, 14, and 15.
+            //note that this is also test that incorrect relations between taxa 
+            //are removed from Uberon (in Uberon, NCBITaxon:13 is NCBITaxon:8, 
+            //not in the provided taxonomy ontology).
             //U:23 subclass of U:22 - exists in taxa 13, 14, and 15
             //U:24 subclass of U:23 - exists in taxa 13, 14, and 15
             Set<Integer> expectedTaxa1 = new HashSet<Integer>(Arrays.asList(13, 14, 15));
             Set<String> expectedClassIds1 = new HashSet<String>(constraints.keySet());
             expectedClassIds1.removeAll(Arrays.asList("U:22", "U:23", "U:24"));
 
-            //S:998 never_in_taxon NCBITaxon:13 - NCBITaxon:13 subClassOf NCBITaxon:14 
+            //S:998 never_in_taxon NCBITaxon:13 - NCBITaxon:14 subClassOf NCBITaxon:13 
             // => exists in taxa 8 and 15
+            //note that this will also test that disjoint classes axioms are removed 
+            //from Uberon (in Uberon, NCBITaxon:13 disjoint_from NCBITaxon:14).
             //S:9 subclass of S:998 - exists in taxa 8 and 15
             //S:12 intersection_of: S:6 and of part_of S:998 - exists in taxa 8 and 15
             Set<Integer> expectedTaxa2 = new HashSet<Integer>(Arrays.asList(8, 15));

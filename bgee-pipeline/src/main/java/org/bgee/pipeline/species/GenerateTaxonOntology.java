@@ -15,10 +15,10 @@ import org.bgee.pipeline.Utils;
 import org.semanticweb.owlapi.model.AddAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -363,15 +363,8 @@ public class GenerateTaxonOntology {
                     }
                 }
                 if (siblings.size() > 1) {
-                    log.trace("Disjoint axioms for siblings: {}", siblings);
-                    Set<OWLAxiom> disjointAxioms = new HashSet<OWLAxiom>();
-                    // create compact disjoint and disjoint over never_in_taxon axioms
-                    disjointAxioms.add(f.getOWLDisjointClassesAxiom(siblings));
-                    Set<OWLClassExpression> expressions = new HashSet<OWLClassExpression>();
-                    for (OWLClass cls : siblings) {
-                        expressions.add(f.getOWLObjectSomeValuesFrom(inTaxon, cls));
-                    }
-                    disjointAxioms.add(f.getOWLDisjointClassesAxiom(expressions));
+                    Set<OWLDisjointClassesAxiom> disjointAxioms = 
+                            this.getCompactDisjoints(siblings, f);
                     
                     int changeMade = m.addAxioms(ont, disjointAxioms).size();
                     if (changeMade != disjointAxioms.size()) {
@@ -387,5 +380,90 @@ public class GenerateTaxonOntology {
         log.info("Done creating disjoint classes axioms, created {} disjoint axioms.", 
                 axiomCount);
         log.exit();
+    }
+    
+    /**
+     * Create a {@code Set} containing two {@code OWLDisjointClassesAxiom}s for 
+     * the provided {@code OWLClass}es: a {@code OWLDisjointClassesAxiom} stating 
+     * that all provided {@code OWLClass}es are pairwise disjoint; and a 
+     * {@code OWLDisjointClassesAxiom} stating that all {@code OWLObjectSomeValuesFrom}s 
+     * leading to one of the provided {@code OWLClass}es over the {@code OWLObjectProperty} 
+     * "in taxon" are pariwise disjoint.
+     * 
+     * @param classes   A {@code Set} of {@code OWLClass}es for which we want to create 
+     *                  the {@code OWLDisjointClassesAxiom}s.
+     * @param factory   The {@code OWLDataFactory} used to create the 
+     *                  {@code OWLDisjointClassesAxiom}s.
+     * @return          A {@code Set} of {@code OWLDisjointClassesAxiom}s for {@code classes}.
+     * @throws IllegalArgumentException If the size of {@code classes} is less than 2.
+     */
+    public Set<OWLDisjointClassesAxiom> getCompactDisjoints(Set<OWLClass> classes, 
+            OWLDataFactory factory) throws IllegalArgumentException {
+        log.entry(classes, factory);
+        
+        if (classes.size() < 2) {
+            throw log.throwing(new IllegalArgumentException("There are not several classes " +
+            		"provided to create the OWLDisjointClassesAxioms between them."));
+        }
+        
+        OWLObjectProperty inTaxon = 
+                factory.getOWLObjectProperty(OntologyUtils.INTAXONRELIRI);
+        Set<OWLDisjointClassesAxiom> disjointAxioms = 
+                new HashSet<OWLDisjointClassesAxiom>();
+        
+        // create compact disjoint and disjoint over never_in_taxon axioms
+        disjointAxioms.add(factory.getOWLDisjointClassesAxiom(classes));
+        Set<OWLClassExpression> expressions = new HashSet<OWLClassExpression>();
+        for (OWLClass cls : classes) {
+            expressions.add(factory.getOWLObjectSomeValuesFrom(inTaxon, cls));
+        }
+        disjointAxioms.add(factory.getOWLDisjointClassesAxiom(expressions));
+        
+        return log.exit(disjointAxioms);
+    }
+    
+    /**
+     * Create a {@code Set} containing all the pairwise {@code OWLDisjointClassesAxiom}s  
+     * for the provided {@code OWLClass}es. It means, all pairwise 
+     * {@code OWLDisjointClassesAxiom}s between the provided {@code OWLClass}es, 
+     * and all pairwise {@code OWLDisjointClassesAxiom}s between all 
+     * {@code OWLObjectSomeValuesFrom}s leading to one of the provided {@code OWLClass}es 
+     * over the {@code OWLObjectProperty} "in taxon".
+     * 
+     * @param classes   A {@code Set} of {@code OWLClass}es for which we want to create 
+     *                  the pairwise {@code OWLDisjointClassesAxiom}s.
+     * @param factory   The {@code OWLDataFactory} used to create the 
+     *                  {@code OWLDisjointClassesAxiom}s.
+     * @return          A {@code Set} of {@code OWLDisjointClassesAxiom}s for {@code classes}.
+     * @throws IllegalArgumentException If the size of {@code classes} is less than 2.
+     */
+    public Set<OWLDisjointClassesAxiom> getVerboseDisjoints(Set<OWLClass> classes, 
+            OWLDataFactory factory) throws IllegalArgumentException {
+        log.entry(classes, factory);
+        
+        if (classes.size() < 2) {
+            throw log.throwing(new IllegalArgumentException("There are not several classes " +
+                    "provided to create the OWLDisjointClassesAxioms between them."));
+        }
+        
+        OWLObjectProperty inTaxon = 
+                factory.getOWLObjectProperty(OntologyUtils.INTAXONRELIRI);
+        Set<OWLDisjointClassesAxiom> disjointAxioms = 
+                new HashSet<OWLDisjointClassesAxiom>();
+        
+        // create pairwise disjoint and disjoint over never_in_taxon axioms
+        for (OWLClass cls1 : classes) {
+            for (OWLClass cls2 : classes) {
+                if (cls1 != cls2) {
+                    disjointAxioms.add(factory.getOWLDisjointClassesAxiom(
+                            factory.getOWLObjectSomeValuesFrom(inTaxon, cls1), 
+                            factory.getOWLObjectSomeValuesFrom(inTaxon, cls2)));
+                    
+                    disjointAxioms.add(factory.getOWLDisjointClassesAxiom(cls1, cls2));
+                }
+            }
+        }
+        
+        return log.exit(disjointAxioms);
     }
 }

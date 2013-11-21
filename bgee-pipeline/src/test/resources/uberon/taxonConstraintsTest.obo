@@ -125,6 +125,33 @@ name: Cell of Cephalus Obscurus
 is_a: S:5
 relationship: part_of S:998
 
+! incorrect taxonomy on purpose
+[Term]
+id: NCBITaxon:8
+name: coelocanth
+
+[Term]
+id: NCBITaxon:13
+name: fly
+is_a: NCBITaxon:8
+
+[Term]
+id: NCBITaxon:14
+name: fly_subspecies
+is_a: NCBITaxon:8
+disjoint_from: NCBITaxon:13
+! disjoint_from: in_taxon NCBITaxon:13
+disjoint_from: NCBITaxon:15
+! disjoint_from: in_taxon NCBITaxon:15
+
+[Term]
+id: NCBITaxon:15
+name: fly_subspecies
+is_a: NCBITaxon:8
+disjoint_from: NCBITaxon:14
+! disjoint_from: in_taxon NCBITaxon:14
+
+
 [Typedef]
 id: part_of
 name: part_of

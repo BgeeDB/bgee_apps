@@ -562,8 +562,16 @@ public class GenerateTaxonConstraints {
             for (String uberonId: sortedClassIds) {
                 Map<String, Object> row = new HashMap<String, Object>();
                 row.put(header[0], uberonId);
-                row.put(header[1], ontWrapper.getLabelOrDisplayId(
-                        ontWrapper.getOWLClassByIdentifier(uberonId)));
+                OWLClass cls = ontWrapper.getOWLClassByIdentifier(uberonId);
+                String label = "-";
+                if (cls != null) {
+                    label = ontWrapper.getLabelOrDisplayId(
+                        ontWrapper.getOWLClassByIdentifier(uberonId));
+                } else {
+                    throw log.throwing(new AssertionError("Could not find class " +
+                    		"with ID " + uberonId));
+                }
+                row.put(header[1], label);
                 for (Integer taxonId: taxonIds) {
                     row.put(taxonId.toString(), 
                             taxonConstraints.get(uberonId).contains(taxonId));

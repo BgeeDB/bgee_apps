@@ -1,5 +1,5 @@
-taxon ID	taxon name
-8	species A
-13	species B
-15	species C
+taxon ID	genus	species	common name
+8	my genusA	my speciesA	my common nameA
+13	my genusB	my speciesB	my common nameB
+15	my genusC	my speciesC	my common nameC
 

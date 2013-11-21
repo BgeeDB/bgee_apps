@@ -36,9 +36,17 @@ public class Utils {
             LogManager.getLogger(Utils.class.getName());
     /**
      * A {@code String} that is the name of the column to get taxon IDs from, 
-     * in the file containing the taxa used in Bgee.
+     * in the file containing the taxa or species used in Bgee.
      */
     public final static String TAXONCOLUMNNAME = "taxon ID";
+    
+    /**
+     * A {@code CsvPreference} used to parse TSV files allowing commented line, 
+     * starting with "//".
+     */
+    public final static CsvPreference TSVCOMMENTED = 
+            new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
+            skipComments(new CommentStartsWith("//")).build();
 
     
     /**
@@ -229,12 +237,8 @@ public class Utils {
             IOException {
         log.entry(tsvFile, columnName, columnProcessor, cls);
         
-        CsvPreference tsvWithComments = 
-                new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
-                skipComments(new CommentStartsWith("//")).build();
-        
         try (ICsvListReader listReader = new CsvListReader(
-                new FileReader(tsvFile), tsvWithComments)) {
+                new FileReader(tsvFile), TSVCOMMENTED)) {
             //find the index of the column with name columnName
             String[] headers = listReader.getHeader(true);
             int columnIndex = -1;

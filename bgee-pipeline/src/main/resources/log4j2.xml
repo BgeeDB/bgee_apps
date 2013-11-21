@@ -16,5 +16,9 @@
     <logger name="org.bgee" level="trace" additivity="false">
       <appender-ref ref="Console"/>
     </logger>
+    <logger name="log4jdbc.log4j2" level="info" additivity="false">
+      <MarkerFilter marker="LOG4JDBC_OTHER" onMatch="DENY" onMismatch="NEUTRAL"/>
+      <appender-ref ref="Console"/>
+    </logger>
   </loggers>
 </configuration>

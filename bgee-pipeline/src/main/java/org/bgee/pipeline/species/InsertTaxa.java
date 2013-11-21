@@ -1,8 +1,10 @@
 package org.bgee.pipeline.species;
 
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -25,6 +28,12 @@ import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.supercsv.cellprocessor.ParseInt;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.UniqueHashCode;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvMapReader;
+import org.supercsv.io.ICsvMapReader;
 
 import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
@@ -56,6 +65,35 @@ public class InsertTaxa extends MySQLDAOUser {
     private static final String SYNCOMMONNAMECAT = "genbank_common_name";
     
     /**
+     * A {@code String} that is the key to retrieve the IDs of the species used in Bgee 
+     * from the {@code Map}s returned by {@link #getSpeciesFromFile(String)}, 
+     * and that is also the name of the column to retrieve these IDs from the TSV file 
+     * storing the species used in Bgee.
+     */
+    public static final String SPECIESIDKEY = Utils.TAXONCOLUMNNAME;
+    /**
+     * A {@code String} that is the key to retrieve the genus name (for instance, 
+     * "homo") of the species used in Bgee from the {@code Map}s returned by 
+     * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
+     * to retrieve these genus names from the TSV file storing the species used in Bgee.
+     */
+    public static final String SPECIESGENUSKEY = "genus";
+    /**
+     * A {@code String} that is the key to retrieve the species name (for instance, 
+     * "sapiens") of the species used in Bgee from the {@code Map}s returned by 
+     * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
+     * to retrieve these names from the TSV file storing the species used in Bgee.
+     */
+    public static final String SPECIESNAMEKEY = "species";
+    /**
+     * A {@code String} that is the key to retrieve the common name (for instance, 
+     * "human") of the species used in Bgee from the {@code Map}s returned by 
+     * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
+     * to retrieve these common names from the TSV file storing the species used in Bgee.
+     */
+    public static final String SPECIESCOMMONNAMEKEY = "common name";
+    
+    /**
      * A {@code OWLGraphWrapper} wrapping the NCBI taxonomy {@code OWLOntology}.
      * This attribute is set by the method {@link #loadTaxOntology(String)}, 
      * and is then used by subsequent methods called.
@@ -81,11 +119,10 @@ public class InsertTaxa extends MySQLDAOUser {
      * Main method to trigger the insertion of species and taxonomy into the Bgee 
      * database. Parameters that must be provided in order in {@code args} are: 
      * <ol>
-     * <li>path to the tsv files containing the IDs of the species used in Bgee, 
-     * corresponding to the NCBI taxonomy ID (e.g., 9606 for human). This is the file 
+     * <li>path to the tsv files containing the species used in Bgee. This is the file 
      * to modify to add/remove a species. The first line should be a header line, 
-     * defining a column to get IDs from, named exactly "taxon ID" (other columns 
-     * are optional and will be ignored).
+     * defining 4 columns, named exactly: "taxon ID", "genus", "species", "common name".
+     * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>path to the tsv files containing the IDs of the taxa to be inserted in Bgee, 
      * corresponding to the NCBI taxonomy ID (e.g., 9605 for homo). Whatever the values 
      * in this file are, the branches which the species used in Bgee belong to 
@@ -131,11 +168,10 @@ public class InsertTaxa extends MySQLDAOUser {
     /**
      * Inserts species and taxa into the Bgee database. This method uses: 
      * <ul>
-     * <li>the path to the TSV file containing the IDs of the species used in Bgee, 
-     * corresponding to their NCBI taxonomy ID (e.g., 9606 for human). This is the file 
+     * <li>the path to the tsv files containing the species used in Bgee. This is the file 
      * to modify to add/remove a species. The first line should be a header line, 
-     * defining a column to get IDs from, named exactly "taxon ID" (other columns 
-     * are optional and will be ignored). 
+     * defining 4 columns, named exactly: "taxon ID", "genus", "species", "common name".
+     * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>the path to a TSV file containing the NCBI taxonomy IDs of additional taxa 
      * to be inserted. Whatever the values in this file are, the branches which 
      * the species used in Bgee belong to will be inserted in any case. Using this file, 
@@ -151,7 +187,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * </ul>
      * 
      * @param speciesFile   A {@code String} that is the path to the TSV file 
-     *                      containing the IDs of the species used in Bgee
+     *                      containing the species used in Bgee
      * @param taxonFile     A {@code String} that is the path to the TSV file 
      *                      containing the IDs of additional taxa to insert in Bgee.
      * @param ncbiOntFile   A {@code String} that is the path to the NCBI taxonomy 
@@ -172,7 +208,7 @@ public class InsertTaxa extends MySQLDAOUser {
             IllegalArgumentException, DAOException {
         log.entry(speciesFile, taxonFile, ncbiOntFile);
         
-        this.insertSpeciesAndTaxa(new Utils().getTaxonIds(speciesFile), 
+        this.insertSpeciesAndTaxa(this.getSpeciesFromFile(speciesFile), 
                 new Utils().getTaxonIds(taxonFile), 
                 OntologyUtils.loadOntology(ncbiOntFile));
         
@@ -180,10 +216,80 @@ public class InsertTaxa extends MySQLDAOUser {
     }
     
     /**
+     * Extract the information about the species to include in Bgee from the provided 
+     * TSV file. The first line of this file should be a header line, 
+     * defining 4 columns, named exactly as: {@link #SPECIESIDKEY}, 
+     * {@link #SPECIESGENUSKEY}, {@link #SPECIESNAMEKEY}, {@link #SPECIESCOMMONNAMEKEY} 
+     * (in whatever order). This method returns a {@code Collection} where each 
+     * species is represented by a {@code Map}, containing information mapped 
+     * to the keys listed above. In these {@code Map}s, the value associated to 
+     * {@link #SPECIESIDKEY} will be an {@code Integer}, other values will be 
+     * {@code String}s.
+     * 
+     * @param speciesFile   A {@code String} that is the path to the TSV file 
+     *                      containing the species used in Bgee
+     * @return              A {@code Collection} of {@code Map}s where each {@code Map} 
+     *                      represents a species, with information about it mapped to 
+     *                      the keys {@link #SPECIESIDKEY}, {@link #SPECIESGENUSKEY}, 
+     *                      {@link #SPECIESNAMEKEY}, {@link #SPECIESCOMMONNAMEKEY}.
+     *                      The value associated to {@link #SPECIESIDKEY} is 
+     *                      an {@code Integer}, other values are {@code String}s.
+     * @throws FileNotFoundException        If the file could not be found.
+     * @throws IOException                  If the file could not be read.
+     */
+    private Collection<Map<String, Object>> getSpeciesFromFile(String speciesFile) 
+            throws FileNotFoundException, IOException {
+        log.entry(speciesFile);
+
+        Collection<Map<String, Object>> allSpecies = new HashSet<Map<String, Object>>();
+        try (ICsvMapReader mapReader = 
+                new CsvMapReader(new FileReader(speciesFile), Utils.TSVCOMMENTED)) {
+            
+            String unexpectedFormat = "The provided TSV species file is not " +
+            		"in the expected format";
+            String[] header = mapReader.getHeader(true);
+            if (header.length != 4) {
+                throw log.throwing(new IllegalArgumentException(unexpectedFormat));
+            }
+            
+            CellProcessor[] processors = new CellProcessor[header.length];
+            for (int i = 0; i < header.length; i++) {
+                if (header[i].equalsIgnoreCase(SPECIESIDKEY)) {
+                    processors[i] = new UniqueHashCode(new NotNull(new ParseInt()));
+                } else if (header[i].equalsIgnoreCase(SPECIESGENUSKEY)) {
+                    processors[i] = new NotNull();
+                } else if (header[i].equalsIgnoreCase(SPECIESNAMEKEY)) {
+                    processors[i] = new NotNull();
+                } else if (header[i].equalsIgnoreCase(SPECIESCOMMONNAMEKEY)) {
+                    processors[i] = new UniqueHashCode(new NotNull());
+                } else {
+                    throw log.throwing(new IllegalArgumentException(unexpectedFormat));
+                }
+            }
+            
+            Map<String, Object> species;
+            while( (species = mapReader.read(header, processors)) != null ) {
+                allSpecies.add(species);
+            }
+        }
+        if (allSpecies.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided TSV " +
+            		"species file did not allow to acquire any species."));
+        }
+        
+        return log.exit(allSpecies);
+    }
+    
+    /**
      * Inserts species and taxa into the Bgee database. The arguments are: 
      * <ul>
-     * <li>a {@code Set} of {@code Integer}s that are the NCBI taxonomy IDs of the species 
-     * used in Bgee, (e.g., 9606 for human)
+     * <li>A {@code Collection} of {@code Map}s where each {@code Map} represents 
+     * a species, with information about it mapped to the keys {@link #SPECIESIDKEY}, 
+     * {@link #SPECIESGENUSKEY}, {@link #SPECIESNAMEKEY}, {@link #SPECIESCOMMONNAMEKEY}.
+     * Each {@code Map} should contain exactly these 4 entries, with no {@code null} 
+     * values permitted. Value associated to {@link #SPECIESIDKEY} should be 
+     * an {@code Integer} (the NCBI taxonomy ID, for instance, 9606 for human), 
+     * other values should be {@code String}s.
      * <li>a {@code Set} of {@code Integer}s that are the NCBI taxonomy IDs of additional taxa 
      * to be inserted. Whatever the values in this {@code Set} are, the branches which 
      * the species used in Bgee belong to will be inserted in any case. Using these IDs, 
@@ -194,8 +300,8 @@ public class InsertTaxa extends MySQLDAOUser {
      * must contain all the branches related to the species and taxa to be used in Bgee.
      * </ul>
      * 
-     * @param speciesIds    a {@code Set} of {@code Integer}s that are the IDs 
-     *                      of the species used in Bgee
+     * @param allSpecies    A {@code Collection} of {@code Map}s where each {@code Map} 
+     *                      represents a species to be used in Bgee.
      * @param taxonIds      a {@code Set} of {@code Integer}s that are the IDs 
      *                      of additional taxa to be inserted in Bgee
      * @param taxOntology   An {@code OWLOntology} that is the NCBI taxonomy 
@@ -206,10 +312,10 @@ public class InsertTaxa extends MySQLDAOUser {
      * @throws DAOException                 If an error occurred while inserting 
      *                                      the data into the Bgee database.
      */
-    public void insertSpeciesAndTaxa(Set<Integer> speciesIds, Set<Integer> taxonIds, 
-            OWLOntology taxOntology) throws OWLOntologyCreationException, 
-            IllegalArgumentException, DAOException {
-        log.entry(speciesIds, taxonIds, taxOntology);
+    public void insertSpeciesAndTaxa(Collection<Map<String, Object>> allSpecies, 
+            Set<Integer> taxonIds, OWLOntology taxOntology) 
+            throws OWLOntologyCreationException, IllegalArgumentException, DAOException {
+        log.entry(allSpecies, taxonIds, taxOntology);
         log.info("Starting insertion of species and taxa...");
         
         //catch any IllegalStateException to wrap it into a IllegalArgumentException 
@@ -221,12 +327,17 @@ public class InsertTaxa extends MySQLDAOUser {
             this.taxOntWrapper = new OWLGraphWrapper(taxOntology);
             
             //get the SpeciesTOs to insert their information into the database
-            Set<SpeciesTO> speciesTOs = this.getSpeciesTOs(speciesIds);
+            Set<SpeciesTO> speciesTOs = this.getSpeciesTOs(allSpecies);
             
             //now get the TaxonTOs to insert their information into the database.
             //note that using this method will modify the taxonomy ontology, 
             //by removing the Bgee species from it, and removing all taxa not related 
             //to neither speciesIds nor taxonIds.
+            //we provide only the species IDs
+            Set<Integer> speciesIds = new HashSet<Integer>();
+            for (Map<String, Object> species: allSpecies) {
+                speciesIds.add((Integer) species.get(SPECIESIDKEY));
+            }
             Set<TaxonTO> taxonTOs = this.getTaxonTOs(speciesIds, taxonIds);
             
             //now we start a transaction to insert taxa and species in the Bgee data source.
@@ -254,91 +365,73 @@ public class InsertTaxa extends MySQLDAOUser {
     }
     
     /**
-     * Obtain the species with their ID provided in {@code speciesIds} from 
-     * the NCBI taxonomy ontology wrapped into {@link #taxOntWrapper}, 
-     * converts them into {@code SpeciesTO}s, and returns them in a {@code Set}.
+     * Use the species provided through {@code species}, and the NCBI taxonomy 
+     * ontology wrapped into {@link #taxOntWrapper}, to generate the corresponding 
+     * {@code SpeciesTO}s, and returns them in a {@code Set}.
+     * <p>
+     * {@code species} should be a {@code Collection} of {@code Map}s where each 
+     * {@code Map} represents a species, with information about it mapped to the keys 
+     * {@link #SPECIESIDKEY}, {@link #SPECIESGENUSKEY}, {@link #SPECIESNAMEKEY}, 
+     * {@link #SPECIESCOMMONNAMEKEY}. Each {@code Map} should contain exactly these 
+     * 4 entries, with no {@code null} values permitted. Value associated to 
+     * {@link #SPECIESIDKEY} should be an {@code Integer} (the NCBI taxonomy ID, 
+     * for instance, 9606 for human), other values should be {@code String}s.
      * 
-     * @param speciesIds    a {@code Set} of {@code Integer}s that are the IDs 
-     *                      of the species used in Bgee
+     * @param allSpecies    A {@code Collection} of {@code Map}s where each {@code Map} 
+     *                      represents a species to be used in Bgee.
      * @return  A {@code Set} of {@code SpeciesTO}s corresponding to the species 
      *          retrieved from the taxonomy ontology wrapped into {@link #taxOntWrapper}.
      * @throws IllegalStateException    If the {@code OWLOntology} used, wrapped 
      *                                  into {@link #taxOntWrapper}, does not allow 
      *                                  to properly acquire {@code SpeciesTO}s.
      */
-    private Set<SpeciesTO> getSpeciesTOs(Set<Integer> speciesIds) throws IllegalStateException {
-        log.entry(speciesIds);
+    private Set<SpeciesTO> getSpeciesTOs(Collection<Map<String, Object>> allSpecies) 
+            throws IllegalStateException {
+        log.entry(allSpecies);
         
         Set<SpeciesTO> speciesTOs = new HashSet<SpeciesTO>();
-        for (Integer speciesId: speciesIds) {
-            OWLClass species = this.taxOntWrapper.getOWLClassByIdentifier(
+        for (Map<String, Object> species: allSpecies) {
+            int speciesId = (Integer) species.get(SPECIESIDKEY);
+            OWLClass speciesCls = this.taxOntWrapper.getOWLClassByIdentifier(
                     OntologyUtils.getTaxOntologyId(speciesId));
-            if (species == null) {
+            if (speciesCls == null) {
                 throw log.throwing(new IllegalStateException(
                         "The provided species ID " + speciesId + 
                         "corresponds to no taxon in the taxonomy ontology."));
             }
-            speciesTOs.add(this.toSpeciesTO(species));
+            
+            //get the parent taxon ID of the species
+            Set<OWLClass> parents = 
+                    this.taxOntWrapper.getOWLClassDirectAncestors(speciesCls);
+            if (parents.size() != 1) {
+                throw log.throwing(new IllegalStateException("The taxonomy ontology " +
+                        "has incorrect relations between taxa"));
+            }
+            //get the NCBI ID of the parent taxon of this species.
+            //we retrieve the Integer value of the ID used on the NCBI website, 
+            //because this is how we store this ID in the database. But we convert it 
+            //to a String because the Bgee classes only accept IDs as Strings.
+            String parentTaxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
+                    this.taxOntWrapper.getIdentifier(parents.iterator().next())));
+            
+            String commonName  = (String) species.get(SPECIESCOMMONNAMEKEY);
+            String genus       = (String) species.get(SPECIESGENUSKEY);
+            String speciesName = (String) species.get(SPECIESNAMEKEY);
+            if (StringUtils.isBlank(commonName) || StringUtils.isBlank(genus) || 
+                    StringUtils.isBlank(speciesName)) {
+                throw log.throwing(new IllegalArgumentException("The provided species " +
+                        "contain incorrect information: " + commonName + " - " + 
+                        genus + " - " + speciesName));
+            }
+            
+            speciesTOs.add(new SpeciesTO(String.valueOf(speciesId), commonName, genus, 
+                    speciesName, parentTaxonId));
         }
-        if (speciesTOs.size() != speciesIds.size()) {
+        if (speciesTOs.size() != allSpecies.size()) {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +
             		"did not allow to acquire all the requested species"));
         }
         return log.exit(speciesTOs);
-    }
-    
-    /**
-     * Transforms the provided {@code speciesOWLClass} into a {@code SpeciesTO}. 
-     * Unexpected errors would occur if {@code speciesOWLClass} does not correspond 
-     * to a species in the NCBO taxonomy ontology.
-     * 
-     * @param speciesOWLClass   A {@code OWLClass} representing a species in the 
-     *                          NCBI taxonomy ontology to be transformed into an 
-     *                          {@code SpeciesTO}.
-     * @return  A {@code SpeciesTO} corresponding to {@code speciesOWLClass}.
-     * @throws IllegalStateException    If the {@code OWLOntology} used, wrapped 
-     *                                  into {@link #taxOntWrapper}, does not allow 
-     *                                  to identify the parent taxon of 
-     *                                  {@code speciesOWLClass}.
-     */
-    private SpeciesTO toSpeciesTO(OWLClass speciesOWLClass) throws IllegalStateException {
-        log.entry(speciesOWLClass);
-        
-        //we need the parent of this leaf to know the parent taxon ID 
-        //of the species
-        Set<OWLClass> parents = 
-                this.taxOntWrapper.getOWLClassDirectAncestors(speciesOWLClass);
-        if (parents.size() != 1) {
-            throw log.throwing(new IllegalStateException("The taxonomy ontology " +
-                    "has incorrect relations between taxa"));
-        }
-        //get the NCBI ID of the parent taxon of this species.
-        //we retrieve the Integer value of the ID used on the NCBI website, 
-        //because this is how we store this ID in the database. But we convert it 
-        //to a String because the Bgee classes only accept IDs as Strings.
-        String parentTaxonId = String.valueOf(
-                OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(
-                parents.iterator().next())));
-        
-        //get the NCBI ID of this species.
-        //we retrieve the Integer value of the ID used on the NCBI website, 
-        //because this is how we store this ID in the database. But we convert it 
-        //to a String because the Bgee classes only accept IDs as Strings.
-        String speciesId = String.valueOf(OntologyUtils.getTaxNcbiId(
-                this.taxOntWrapper.getIdentifier(speciesOWLClass)));
-        
-        //get the common name synonym
-        String commonName = this.getCommonNameSynonym(speciesOWLClass);
-        
-        //get the genus and species name from the scientific name
-        String scientificName = this.taxOntWrapper.getLabel(speciesOWLClass);
-        String[] nameSplit = scientificName.split(" ");
-        String genus = nameSplit[0];
-        String speciesName = nameSplit[1];
-        
-        //create and return the SpeciesTO
-        return log.exit(new SpeciesTO(speciesId, commonName, genus, 
-                speciesName, parentTaxonId));
     }
     
     /**

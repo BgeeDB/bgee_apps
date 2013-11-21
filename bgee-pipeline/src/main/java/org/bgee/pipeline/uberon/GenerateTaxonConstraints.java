@@ -571,8 +571,11 @@ public class GenerateTaxonConstraints {
                 if (cls != null) {
                     label = ontWrapper.getLabelOrDisplayId(cls);
                 } else {
-                    throw log.throwing(new AssertionError("Could not find class " +
-                    		"with ID " + uberonId));
+                    //we disable this assertion error, there are weird case 
+                    //were getOWLClassByIdentifier does not find the OWLClass, 
+                    //for instance, ID "biological:modeling".
+                    //throw log.throwing(new AssertionError("Could not find class " +
+                    //		"with ID " + uberonId));
                 }
                 row.put(header[1], label);
                 for (Integer taxonId: taxonIds) {

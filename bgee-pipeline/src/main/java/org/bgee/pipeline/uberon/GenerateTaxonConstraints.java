@@ -305,7 +305,9 @@ public class GenerateTaxonConstraints {
         }
         int mb = 1024*1024;
         for (int taxonId: taxonIds) {
-            log.debug("Memory before cloning Uberon: used {}MB - free {}MB - total {}MB", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/mb, Runtime.getRuntime().freeMemory()/mb, Runtime.getRuntime().totalMemory()/mb);
+            System.gc();
+            log.debug("Memory after GC call: used {}MB - free {}MB - total {}MB", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/mb, Runtime.getRuntime().freeMemory()/mb, Runtime.getRuntime().totalMemory()/mb);
+        
             //for each taxon, we clone our Uberon ontology merged with our taxonomy ontology, 
             //because the method getExistingOWLClasses will modified it.
             OWLOntology clonedUberon = OWLManager.createOWLOntologyManager().createOntology(
@@ -327,8 +329,6 @@ public class GenerateTaxonConstraints {
                 }
             }
             log.debug("Memory after putting existing classes in taxon constraints: used {}MB - free {}MB - total {}MB", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/mb, Runtime.getRuntime().freeMemory()/mb, Runtime.getRuntime().totalMemory()/mb);
-            System.gc();
-            log.debug("Memory after GC call: used {}MB - free {}MB - total {}MB", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/mb, Runtime.getRuntime().freeMemory()/mb, Runtime.getRuntime().totalMemory()/mb);
             
         }
         

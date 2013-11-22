@@ -93,8 +93,7 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
         try {
             tempDir = Files.createTempDirectory(null).toFile();
             Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(
-                    OntologyUtils.loadOntology(UBERONFILE), 
-                    OntologyUtils.loadOntology(TAXONTFILE), TAXONIDS, tempDir.getPath());
+                    UBERONFILE, TAXONTFILE, TAXONIDS, tempDir.getPath());
             
             assertEquals("Incorrect number of OWLClasses in taxon constraints", 21, 
                     constraints.keySet().size());

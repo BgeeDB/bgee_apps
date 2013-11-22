@@ -207,8 +207,7 @@ public class GenerateTaxonConstraints {
         Set<Integer> taxonIds = new Utils().getTaxonIds(taxonIdFile);
         OWLOntology uberontOnt = OntologyUtils.loadOntology(uberonFile);
         Map<String, Set<Integer>> constraints = 
-                this.generateTaxonConstraints(uberontOnt, 
-                        OntologyUtils.loadOntology(taxOntFile), 
+                this.generateTaxonConstraints(uberonFile, taxOntFile, 
                         taxonIds, storeOntologyDir);
         //TODO: we should also provide the OWLGrahWrappers to the method 
         //generateTaxonConstraints, to avoid loading them twice.
@@ -268,15 +267,14 @@ public class GenerateTaxonConstraints {
      *                                      could not be used.
      * @throws IOException                  If {@code uberonFile} could not be opened. 
      */
-    public Map<String, Set<Integer>> generateTaxonConstraints(OWLOntology uberonOnt, 
-            OWLOntology taxOnt, Set<Integer> taxonIds, String storeOntologyDir) 
+    public Map<String, Set<Integer>> generateTaxonConstraints(String uberonFile, String taxOntFile, Set<Integer> taxonIds, String storeOntologyDir) 
                     throws UnknownOWLOntologyException, OWLOntologyCreationException, 
-                    IOException, IllegalArgumentException {
-        log.entry(uberonOnt, taxOnt, taxonIds, storeOntologyDir);
+                    IOException, IllegalArgumentException, OBOFormatParserException {
+        log.entry(uberonFile, taxOntFile, taxonIds, storeOntologyDir);
         log.info("Start generating taxon constraints...");
         
-        OWLGraphWrapper uberonWrapper = new OWLGraphWrapper(uberonOnt);
-        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(taxOnt);
+        OWLGraphWrapper uberonWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(uberonFile));
+        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(taxOntFile));
         
         //first, we remove any "is_a" relations and disjoint classes axioms between taxa 
         //that might be present in Uberon, they can be inconsistent with the taxonomy we use.
@@ -305,14 +303,20 @@ public class GenerateTaxonConstraints {
         }
         
         for (int taxonId: taxonIds) {
-            //for each taxon, we clone our Uberon ontology merged with our taxonomy ontology, 
-            //because the method getExistingOWLClasses will modified it.
-            OWLOntology clonedUberon = OWLManager.createOWLOntologyManager().createOntology(
-                IRI.create("Uberon for " + taxonId), 
-                new HashSet<OWLOntology>(Arrays.asList(uberonWrapper.getSourceOntology())));
+            uberonWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(uberonFile));
+            taxOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(taxOntFile));
+            
+            //first, we remove any "is_a" relations and disjoint classes axioms between taxa 
+            //that might be present in Uberon, they can be inconsistent with the taxonomy we use.
+            this.filterUberonOntology(uberonWrapper, taxOntWrapper);
+            
+            //now we merge the Uberon ontology and the taxonomy ontology for the reasoner 
+            //to work properly, just importing them in a same OWLGraphWrapper woud not 
+            //be enough
+            uberonWrapper.mergeOntology(taxOntWrapper.getSourceOntology());
             
             Set<OWLClass> classesDefined = this.getExistingOWLClasses(
-                    new OWLGraphWrapper(clonedUberon), taxonId, storeOntologyDir);
+                    uberonWrapper, taxonId, storeOntologyDir);
             for (OWLClass classDefined: classesDefined) {
                 Set<Integer> existsInTaxa = taxonConstraints.get(
                         uberonWrapper.getIdentifier(classDefined));
@@ -323,6 +327,7 @@ public class GenerateTaxonConstraints {
                     existsInTaxa.add(taxonId);
                 }
             }
+            uberonWrapper.getManager().removeOntology(uberonWrapper.getSourceOntology());
         }
         
         log.info("Done generating taxon constraints.");

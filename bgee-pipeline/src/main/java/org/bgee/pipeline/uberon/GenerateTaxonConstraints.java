@@ -303,33 +303,33 @@ public class GenerateTaxonConstraints {
             log.trace("Taxon constraints will be generated for: {}", cls);
             taxonConstraints.put(uberonWrapper.getIdentifier(cls), new HashSet<Integer>());
         }
-        int mb = 1024*1024;
-        for (int taxonId: taxonIds) {
-            System.gc();
-            log.debug("Memory after GC call: used {}MB - free {}MB - total {}MB", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/mb, Runtime.getRuntime().freeMemory()/mb, Runtime.getRuntime().totalMemory()/mb);
         
+        //now, generate the constraints one taxon at a time.
+        for (int taxonId: taxonIds) {
+            //without the call to the garbage collector, we often had an issue that 
+            //not enough memory was freed between loops, before the reasoner starts its work. 
+            System.gc();
+            
             //for each taxon, we clone our Uberon ontology merged with our taxonomy ontology, 
             //because the method getExistingOWLClasses will modified it.
+            //we use a new OWLOntologyManager to be sure there is no memory leack.
             OWLOntology clonedUberon = OWLManager.createOWLOntologyManager().createOntology(
                 IRI.create("Uberon for " + taxonId), 
                 new HashSet<OWLOntology>(Arrays.asList(uberonWrapper.getSourceOntology())));
-            log.debug("Memory after cloning Uberon: used {}MB - free {}MB - total {}MB", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/mb, Runtime.getRuntime().freeMemory()/mb, Runtime.getRuntime().totalMemory()/mb);
             
             Set<OWLClass> classesDefined = this.getExistingOWLClasses(
                     new OWLGraphWrapper(clonedUberon), taxonId, storeOntologyDir);
-            log.debug("Memory after getting existing classes: used {}MB - free {}MB - total {}MB", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/mb, Runtime.getRuntime().freeMemory()/mb, Runtime.getRuntime().totalMemory()/mb);
+            
             for (OWLClass classDefined: classesDefined) {
                 Set<Integer> existsInTaxa = taxonConstraints.get(
                         uberonWrapper.getIdentifier(classDefined));
                 //if existsInTaxa is null,  it means it is not an OWLClass for which 
-                //we want the taxon constraints (e.g., an OWLClass representin a taxon)
+                //we want the taxon constraints (e.g., an OWLClass representing a taxon)
                 if (existsInTaxa != null) {
                     log.trace("Defining existence of {} in taxon {}", classDefined, taxonId);
                     existsInTaxa.add(taxonId);
                 }
             }
-            log.debug("Memory after putting existing classes in taxon constraints: used {}MB - free {}MB - total {}MB", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/mb, Runtime.getRuntime().freeMemory()/mb, Runtime.getRuntime().totalMemory()/mb);
-            
         }
         
         log.info("Done generating taxon constraints.");

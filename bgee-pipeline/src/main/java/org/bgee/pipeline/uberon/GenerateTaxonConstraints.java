@@ -322,6 +322,7 @@ public class GenerateTaxonConstraints {
                     existsInTaxa.add(taxonId);
                 }
             }
+            uberonWrapper.getManager().removeOntology(clonedUberon);
         }
         
         log.info("Done generating taxon constraints.");

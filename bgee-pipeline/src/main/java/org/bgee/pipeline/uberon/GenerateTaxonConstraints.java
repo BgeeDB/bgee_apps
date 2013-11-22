@@ -19,7 +19,9 @@ import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.elk.owlapi.ElkReasonerConfiguration;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.elk.reasoner.config.ReasonerConfiguration;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
@@ -28,10 +30,10 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
-import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
@@ -83,10 +85,10 @@ public class GenerateTaxonConstraints {
             LogManager.getLogger(GenerateTaxonConstraints.class.getName());
     
     /**
-     * The {@code OWLReasonerFactory} used to obtain {@code OWLReasoner}s, 
-     * used to produce the taxon-specific ontologies.
+     * An {@code int} that is the maximum number of workers when using the 
+     * {@code ElkResoner}, see {@link #createReasoner(OWLOntology)}.
      */
-    private OWLReasonerFactory reasonerFactory;
+    private final static int MAX_WORKER_COUNT = 10;
     
     /**
      * Main method to trigger the generation of a TSV files, allowing to know, 
@@ -121,10 +123,12 @@ public class GenerateTaxonConstraints {
      * @throws UnknownOWLOntologyException  If the ontology provided could not be used.
      * @throws OWLOntologyCreationException If the ontology provided could not be used.
      * @throws OBOFormatParserException     If the ontology provided could not be parsed. 
+     * @throws OWLOntologyStorageException  If an error occurred while saving the 
+     *                                      intermediate ontologies in owl.
      */
     public static void main(String[] args) throws UnknownOWLOntologyException, 
         IllegalArgumentException, FileNotFoundException, OWLOntologyCreationException, 
-        OBOFormatParserException, IOException {
+        OBOFormatParserException, IOException, OWLOntologyStorageException {
         log.entry((Object[]) args);
         
         if (args.length < 4 || args.length > 5) {
@@ -163,7 +167,7 @@ public class GenerateTaxonConstraints {
      * of the ontology, that will contain only the {@code OWLClass}es existing 
      * in this taxon. If you want to keep these intermediate generated ontologies, 
      * you need to provide the path {@code storeOntologyDir} where to store them. 
-     * The ontology files will be named <code>uberon_subset_TAXONID.obo</code>. 
+     * The ontology files will be named <code>uberon_subset_TAXONID.owl</code>. 
      * If {@code storeOntologyDir} is {@code null}, the intermediate ontology files 
      * will not be saved. 
      * 
@@ -195,12 +199,14 @@ public class GenerateTaxonConstraints {
      * @throws OWLOntologyCreationException If the ontology stored in {@code uberonFile} 
      *                                      could not be used.
      * @throws OBOFormatParserException     If {@code uberonFile} could not be parsed. 
+     * @throws OWLOntologyStorageException  If an error occurred while saving the 
+     *                                      intermediate ontologies in owl.
      */
     public void generateTaxonConstraints(String uberonFile, String taxOntFile, 
             String taxonIdFile, String outputFile, String storeOntologyDir) 
             throws IllegalArgumentException, FileNotFoundException, IOException, 
             UnknownOWLOntologyException, OWLOntologyCreationException, 
-            OBOFormatParserException {
+            OBOFormatParserException, OWLOntologyStorageException {
         
         log.entry(uberonFile, taxOntFile, taxonIdFile, outputFile, storeOntologyDir);
         
@@ -233,7 +239,7 @@ public class GenerateTaxonConstraints {
      * the ontology, that will contain only the {@code OWLClass}es existing in this taxon. 
      * If you want to keep these intermediate  generated ontologies, you need to provide 
      * the path {@code storeOntologyDir} where to store them. The ontology files will be 
-     * named <code>uberon_subset_TAXONID.obo</code>. If {@code storeOntologyDir} is 
+     * named <code>uberon_subset_TAXONID.owl</code>. If {@code storeOntologyDir} is 
      * {@code null}, the intermediate ontology files will not be saved. 
      * <p>
      * {@code uberonOnt} must be a version of the Uberon ontology containing the taxon 
@@ -266,12 +272,13 @@ public class GenerateTaxonConstraints {
      *                                      {@code uberonFile} could not be used.
      * @throws OWLOntologyCreationException If the ontology stored in {@code uberonFile} 
      *                                      could not be used.
-     * @throws IOException                  If {@code uberonFile} could not be opened. 
+     * @throws OWLOntologyStorageException  If an error occurred while saving the 
+     *                                      intermediate ontologies in owl. 
      */
     public Map<String, Set<Integer>> generateTaxonConstraints(OWLOntology uberonOnt, 
             OWLOntology taxOnt, Set<Integer> taxonIds, String storeOntologyDir) 
                     throws UnknownOWLOntologyException, OWLOntologyCreationException, 
-                    IOException, IllegalArgumentException {
+                    IllegalArgumentException, OWLOntologyStorageException {
         log.entry(uberonOnt, taxOnt, taxonIds, storeOntologyDir);
         log.info("Start generating taxon constraints...");
         
@@ -286,6 +293,14 @@ public class GenerateTaxonConstraints {
         //to work properly, just importing them in a same OWLGraphWrapper woud not 
         //be enough
         uberonWrapper.mergeOntology(taxOntWrapper.getSourceOntology());
+        //if we want to store the intermediate ontologies
+        if (storeOntologyDir != null) {
+            uberonWrapper.clearCachedEdges();
+            String outputFilePath = new File(storeOntologyDir, 
+                    "uberon_reasoning_source.owl").getPath();
+            new OntologyUtils(uberonWrapper).saveAsOWL(outputFilePath);
+        }
+        
         
         //taxonConstraints will store the association between an Uberon OWLClass, 
         //and the taxa it exists in. So, first, we get all OWLClasses for which 
@@ -306,9 +321,6 @@ public class GenerateTaxonConstraints {
         
         //now, generate the constraints one taxon at a time.
         for (int taxonId: taxonIds) {
-            //without the call to the garbage collector, we often had an issue that 
-            //not enough memory was freed between loops, before the reasoner starts its work. 
-            System.gc();
             
             //for each taxon, we clone our Uberon ontology merged with our taxonomy ontology, 
             //because the method getExistingOWLClasses will modified it.
@@ -439,14 +451,14 @@ public class GenerateTaxonConstraints {
      *                                      could not be found in the ontology.
      * @throws UnknownOWLOntologyException  If the ontology stored in 
      *                                      {@code uberonFile} could not be used.
-     * @throws OWLOntologyCreationException If the ontology stored in {@code uberonFile} 
-     *                                      could not be used.
+     * @throws OWLOntologyStorageException  If an error occurred while saving the 
+     *                                      intermediate ontology in owl.
      * @throws OBOFormatParserException     If {@code uberonFile} could not be parsed. 
      * @throws IOException                  If {@code uberonFile} could not be opened. 
      */
     private Set<OWLClass> getExistingOWLClasses(OWLGraphWrapper ontWrapper, int taxonId, 
             String storeOntologyDir) throws UnknownOWLOntologyException, 
-            OWLOntologyCreationException, IOException, IllegalArgumentException  {
+            IllegalArgumentException, OWLOntologyStorageException  {
         log.entry(ontWrapper, taxonId, storeOntologyDir);
         log.info("Generating constraints for taxon {}...", taxonId);
         
@@ -469,8 +481,8 @@ public class GenerateTaxonConstraints {
         if (storeOntologyDir != null) {
             ontWrapper.clearCachedEdges();
             String outputFilePath = new File(storeOntologyDir, 
-                    "uberon_subset" + taxonId + ".obo").getPath();
-            new OntologyUtils(ontWrapper).saveAsOBO(outputFilePath);
+                    "uberon_subset" + taxonId + ".owl").getPath();
+            new OntologyUtils(ontWrapper).saveAsOWL(outputFilePath);
         }
         
         log.info("Done generating constraints for taxon {}.", taxonId);
@@ -480,10 +492,11 @@ public class GenerateTaxonConstraints {
 
     /**
      * Creates and returns an {@code OWLReasoner} to reason on the provided 
-     * {@code OWLOntology}. If no {@code OWLReasonerFactory} was previously 
-     * provided (see {@link #setReasonerFactory(OWLReasonerFactory)}), 
-     * then the {@code ElkReasonerFactory} will be used (thus this method 
-     * would return {@code ElkReasoner}s).
+     * {@code OWLOntology}. 
+     * <p>
+     * As of Bgee 13, the reasoner used is the {@code ElkReasoner}, configured 
+     * to use a maximum number of workers of {@link #MAX_WORKER_COUNT} (can be less 
+     * depending on your number of processors).
      * 
      * @param ont  The {@code OWLOntology} which the returned {@code OWLReasoner} 
      *              should reason on.
@@ -491,23 +504,16 @@ public class GenerateTaxonConstraints {
      */
     private OWLReasoner createReasoner(OWLOntology ont) {
         log.entry(ont);
-        if (this.reasonerFactory == null) {
-            this.setReasonerFactory(new ElkReasonerFactory());
+        ElkReasonerConfiguration config = new ElkReasonerConfiguration();
+        //we need to set the number of workers because on our ubber machines, 
+        //we have too many processors, so that we have too many workers, 
+        //and too many memory consumed. 
+        if (config.getElkConfiguration().getParameterAsInt(
+                ReasonerConfiguration.NUM_OF_WORKING_THREADS) > MAX_WORKER_COUNT) {
+            config.getElkConfiguration().setParameter(
+                ReasonerConfiguration.NUM_OF_WORKING_THREADS, String.valueOf(MAX_WORKER_COUNT));
         }
-        return log.exit(this.reasonerFactory.createReasoner(ont));
-    }
-    /**
-     * Sets the {@code OWLReasonerFactory}, used to obtain {@code OWLReasoner}s, 
-     * used to produce the taxon-specific ontologies. Otherwise, by default, 
-     * the {@code ElkReasonerFactory} will be used (see 
-     * {@link #createReasoner(OWLOntology)}).
-     * 
-     * @param factory   the {@code OWLReasonerFactory} to use.
-     */
-    public void setReasonerFactory(OWLReasonerFactory factory) {
-        log.entry(factory);
-        this.reasonerFactory = factory;
-        log.exit();
+        return log.exit(new ElkReasonerFactory().createReasoner(ont, config));
     }
     
     /**

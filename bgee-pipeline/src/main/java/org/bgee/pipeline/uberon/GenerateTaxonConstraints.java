@@ -20,6 +20,7 @@ import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -306,7 +307,7 @@ public class GenerateTaxonConstraints {
         for (int taxonId: taxonIds) {
             //for each taxon, we clone our Uberon ontology merged with our taxonomy ontology, 
             //because the method getExistingOWLClasses will modified it.
-            OWLOntology clonedUberon = uberonWrapper.getManager().createOntology(
+            OWLOntology clonedUberon = OWLManager.createOWLOntologyManager().createOntology(
                 IRI.create("Uberon for " + taxonId), 
                 new HashSet<OWLOntology>(Arrays.asList(uberonWrapper.getSourceOntology())));
             
@@ -322,7 +323,6 @@ public class GenerateTaxonConstraints {
                     existsInTaxa.add(taxonId);
                 }
             }
-            uberonWrapper.getManager().removeOntology(clonedUberon);
         }
         
         log.info("Done generating taxon constraints.");

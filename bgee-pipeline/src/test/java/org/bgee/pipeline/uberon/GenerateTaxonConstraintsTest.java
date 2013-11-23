@@ -177,7 +177,7 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
         IOException {
         
         File ontFile = null;
-        ontFile = new File(directory, "uberon_subset" + taxonId + ".obo");
+        ontFile = new File(directory, "uberon_subset" + taxonId + ".owl");
         OWLGraphWrapper wrapper = 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(ontFile.getPath()));
         //the taxonomy ontology will have been added in this intermediate ontology as well

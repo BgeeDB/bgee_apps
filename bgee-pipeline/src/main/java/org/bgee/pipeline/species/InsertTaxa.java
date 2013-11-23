@@ -538,9 +538,9 @@ public class InsertTaxa extends MySQLDAOUser {
                     new TaxonTO(taxonId, 
                     commonName, 
                     scientificName, 
-                    taxonParams.get(OntologyUtils.LEFTBOUNDKEY), 
-                    taxonParams.get(OntologyUtils.RIGHTBOUNDKEY), 
-                    taxonParams.get(OntologyUtils.LEVELKEY), 
+                    taxonParams.get(OntologyUtils.LEFT_BOUND_KEY), 
+                    taxonParams.get(OntologyUtils.RIGHT_BOUND_KEY), 
+                    taxonParams.get(OntologyUtils.LEVEL_KEY), 
                     lcas.contains(taxon)));
         }
         

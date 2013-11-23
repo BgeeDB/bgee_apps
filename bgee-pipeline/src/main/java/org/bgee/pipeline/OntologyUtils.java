@@ -45,39 +45,86 @@ public class OntologyUtils {
     private final static Logger log = 
             LogManager.getLogger(OntologyUtils.class.getName());
 
+    //****************************
+    // OBJECT PROPERTIES
+    //****************************
     /**
-     * {@code IRI} of the {@code ObjectProperty} "in_taxon".
+     * {@code IRI} of the {@code OWLObjectProperty} "in_taxon".
      */
-    public final static IRI INTAXONRELIRI = 
+    public final static IRI IN_TAXON_IRI = 
             IRI.create("http://purl.obolibrary.org/obo/RO_0002162");
     /**
-     * {@code IRI} of the {@code AnnotationProperty} 
+     * {@code IRI} of the {@code OWLObjectProperty} "evolved_multiple_times_in".
+     */
+    public final static IRI EVOLVED_MULTIPLE_TIMES_IRI = 
+            IRI.create("http://purl.obolibrary.org/obo/uberon/core#evolved_multiple_times_in");
+    //****************************
+    // ANNOTATION PROPERTIES
+    //****************************
+    /**
+     * {@code IRI} of the {@code OWLAnnotationProperty} "ambiguous_for_taxon".
+     */
+    public final static IRI AMBIGUOUS_FOR_TAXON_IRI = 
+            IRI.create("http://purl.obolibrary.org/obo/uberon/core#ambiguous_for_taxon");
+    /**
+     * {@code IRI} of the {@code OWLAnnotationProperty} "dubious_for_taxon".
+     */
+    public final static IRI DUIOUS_FOR_TAXON_IRI = 
+            IRI.create("http://purl.obolibrary.org/obo/uberon/core#dubious_for_taxon");
+    /**
+     * {@code IRI} of the {@code OWLAnnotationProperty} "homologous_in".
+     */
+    public final static IRI HOMOLOGOUS_IN_IRI = 
+            IRI.create("http://purl.obolibrary.org/obo/uberon/core#homologous_in");
+    /**
+     * {@code IRI} of the {@code OWLAnnotationProperty} "never_in_taxon".
+     */
+    public final static IRI NEVER_IN_TAXON_IRI = 
+            IRI.create("http://www.geneontology.org/formats/oboInOwl#never_in_taxon");
+    /**
+     * {@code IRI} of the {@code OWLAnnotationProperty} "never_in_taxon" (ID RO:0002161), 
+     * different from {@link #NEVER_IN_TAXON_IRI}.
+     */
+    public final static IRI NEVER_IN_TAXON_BIS_IRI = 
+            IRI.create("http://purl.obolibrary.org/obo/RO_0002161");
+    /**
+     * {@code IRI} of the {@code OWLAnnotationProperty} "present_in_taxon".
+     */
+    public final static IRI PRESENT_IN_TAXON_IRI = 
+            IRI.create("http://purl.obolibrary.org/obo/uberon/core#present_in_taxon");
+    /**
+     * {@code IRI} of the {@code OWLAnnotationProperty} "taxon".
+     */
+    public final static IRI TAXON_IRI = 
+            IRI.create("http://www.geneontology.org/formats/oboInOwl#taxon");
+    /**
+     * {@code IRI} of the {@code OWLAnnotationProperty} 
      * "treat-xrefs-as-reverse-genus-differentia".
      */
-    public final static IRI GENUSDIFFERENTIAIRI = 
+    public final static IRI GENUS_DIFFERENTIA_IRI = 
             IRI.create("http://www.geneontology.org/formats/oboInOwl#" +
             		"treat-xrefs-as-reverse-genus-differentia");
     /**
      * The {@code Pattern} used to parse the {@code OWLLiteral} associated to 
      * <i>genus-differentia</i> {@code AnnotationProperty} (see 
-     * {@link #GENUSDIFFERENTIAIRI}). This {@code Pattern} allows to capture 2 groups: 
+     * {@link #GENUS_DIFFERENTIA_IRI}). This {@code Pattern} allows to capture 2 groups: 
      * the first group is the prefix of the anatomical ontology annotated, 
      * the second group is the OBO-like ID of the taxon scoped. For instance, 
      * if we have "AAO part_of NCBITaxon:8292", the first group will be "AAO", 
      * the second will be "NCBITaxon:8292".
      */
-    public final static Pattern GENUSDIFFERENTIALITERALPATTERN = 
+    public final static Pattern GENUS_DIFFERENTIA_LITERAL_PATTERN = 
             Pattern.compile("^(.+?) part_of (.+?)$");
     /**
      * An {@code int} that is the index of the group capturing the taxon ID 
-     * in the {@code Pattern} {@link #GENUSDIFFERENTIALITERALPATTERN}.
+     * in the {@code Pattern} {@link #GENUS_DIFFERENTIA_LITERAL_PATTERN}.
      */
-    public final static int GENUSDIFFERENTIATAXONGROUP = 2;
+    public final static int GENUS_DIFFERENTIA_TAXON_GROUP = 2;
     /**
      * An {@code int} that is the index of the group capturing the anatomical ontology prefix 
-     * in the {@code Pattern} {@link #GENUSDIFFERENTIALITERALPATTERN}.
+     * in the {@code Pattern} {@link #GENUS_DIFFERENTIA_LITERAL_PATTERN}.
      */
-    public final static int GENUSDIFFERENTIAANATGROUP = 1;
+    public final static int GENUS_DIFFERENTIA_ANAT_GROUP = 1;
 
     /**
      * A {@code String} representing the key to obtain left bound value 
@@ -85,21 +132,21 @@ public class OntologyUtils {
      * @see #computeNestedSetModelParams()
      * @see #computeNestedSetModelParams(List)
      */
-    public static final String LEFTBOUNDKEY = "left";
+    public static final String LEFT_BOUND_KEY = "left";
     /**
      * A {@code String} representing the key to obtain right bound value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
      * @see #computeNestedSetModelParams()
      * @see #computeNestedSetModelParams(List)
      */
-    public static final String RIGHTBOUNDKEY = "right";
+    public static final String RIGHT_BOUND_KEY = "right";
     /**
      * A {@code String} representing the key to obtain level value 
      * of a taxon, in the {@code Map} storing parameters of the nested set model.
      * @see #computeNestedSetModelParams()
      * @see #computeNestedSetModelParams(List)
      */
-    public static final String LEVELKEY = "level";
+    public static final String LEVEL_KEY = "level";
 
     /**
      * A {@code String} that is the prefix to add to the NCBI taxonomy IDs 
@@ -107,7 +154,7 @@ public class OntologyUtils {
      * For instance, if a taxon has the ID {@code 9606} on the NCBI taxonomy website, 
      * it will have the ID {@code NCBITaxon:9606} in the ontology file.
      */
-    private static final String TAXONTOLOGYIDPREFIX = "NCBITaxon:";
+    private static final String TAX_ONTOLOGY_ID_PREFIX = "NCBITaxon:";
     
     /**
      * Loads the ontology stored in the file {@code ontFile} and returns it 
@@ -138,7 +185,7 @@ public class OntologyUtils {
      *                  the taxonomy ontology.
      */
     public static String getTaxOntologyId(int ncbiId) {
-        return TAXONTOLOGYIDPREFIX + ncbiId;
+        return TAX_ONTOLOGY_ID_PREFIX + ncbiId;
     }
     /**
      * Transform the ID of a taxonomy term in the generated ontology (which are strings 
@@ -151,7 +198,7 @@ public class OntologyUtils {
      *                          on the NCBI website. 
      */
     public static int getTaxNcbiId(String ontologyTermId) {
-        return Integer.parseInt(ontologyTermId.substring(TAXONTOLOGYIDPREFIX.length()));
+        return Integer.parseInt(ontologyTermId.substring(TAX_ONTOLOGY_ID_PREFIX.length()));
     }
     /**
      * Convert {@code taxNcbiIds} containing NCBI IDs (which are integers, 
@@ -253,8 +300,8 @@ public class OntologyUtils {
      * as a nested set model. This method returns a {@code Map} where each 
      * {@code OWLClass} of the ontology is a key, associated to a {@code Map} 
      * storing its left bound, right bound, and level. These values can be retrieved 
-     * by using respectively the keys {@link #LEFTBOUNDKEY}, {@link #RIGHTBOUNDKEY}, 
-     * and {@link #LEVELKEY}.
+     * by using respectively the keys {@link #LEFT_BOUND_KEY}, {@link #RIGHT_BOUND_KEY}, 
+     * and {@link #LEVEL_KEY}.
      * <p>
      * The argument {@code classOrder} allows to order the children of a same 
      * {@code OWLClass} according to their order in {@code classOrder}. If {@code null} 
@@ -360,8 +407,8 @@ public class OntologyUtils {
         
         //leftBound and level of classInspected are already set before this method call; 
         //its rightBound is yet to be determined
-        int leftBound = params.get(classInspected).get(LEFTBOUNDKEY);
-        int level = params.get(classInspected).get(LEVELKEY);
+        int leftBound = params.get(classInspected).get(LEFT_BOUND_KEY);
+        int level = params.get(classInspected).get(LEVEL_KEY);
         
         //by default, if classInspected has no children, its right bound is equal 
         //to its left bound + 1.
@@ -384,14 +431,14 @@ public class OntologyUtils {
             this.recursiveNestedSetModelParams(params, child, classOrder);
             //now we can get its right bound, to infer the left bound of the next child, 
             //or the right bound of classInspected if this is its last child
-            int childRightBound = params.get(child).get(RIGHTBOUNDKEY);
+            int childRightBound = params.get(child).get(RIGHT_BOUND_KEY);
             currentChildLeftBound = childRightBound + 1;
             rightBound = childRightBound + 1;
         }
         
         log.trace("Done inspecting children for class {}, computed right bound: {}", 
                 classInspected, rightBound);
-        params.get(classInspected).put(RIGHTBOUNDKEY, rightBound);
+        params.get(classInspected).put(RIGHT_BOUND_KEY, rightBound);
         
         
         log.exit();
@@ -400,11 +447,11 @@ public class OntologyUtils {
     /**
      * Returns a newly instantiated {@code Map} where {@code leftBound}, {@code rightBound}, 
      * and {@code level} are associated as values to their respective key 
-     * {@link #LEFTBOUNDKEY}, {@link #RIGHTBOUNDKEY}, and {@link #LEVEL}.
+     * {@link #LEFT_BOUND_KEY}, {@link #RIGHT_BOUND_KEY}, and {@link #LEVEL}.
      * 
-     * @param leftBound     The {@code int} to be associated to {@link #LEFTBOUNDKEY} 
+     * @param leftBound     The {@code int} to be associated to {@link #LEFT_BOUND_KEY} 
      *                      in the returned {@code Map}.
-     * @param rightBound    The {@code int} to be associated to {@link #RIGHTBOUNDKEY} 
+     * @param rightBound    The {@code int} to be associated to {@link #RIGHT_BOUND_KEY} 
      *                      in the returned {@code Map}.
      * @param level         The {@code int} to be associated to {@link #LEVEL} 
      *                      in the returned {@code Map}.
@@ -413,9 +460,9 @@ public class OntologyUtils {
     private Map<String, Integer> getOWLClassNestedSetModelParams(int leftBound, 
             int rightBound, int level) {
         Map<String, Integer> params = new HashMap<String, Integer>();
-        params.put(LEFTBOUNDKEY, leftBound);
-        params.put(RIGHTBOUNDKEY, rightBound);
-        params.put(LEVELKEY, level);
+        params.put(LEFT_BOUND_KEY, leftBound);
+        params.put(RIGHT_BOUND_KEY, rightBound);
+        params.put(LEVEL_KEY, level);
         return params;
     }
     

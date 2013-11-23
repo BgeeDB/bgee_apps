@@ -18,6 +18,7 @@ import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -87,7 +88,7 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
     @Test
     public void shouldGenerateTaxonConstraints() throws IOException, 
         UnknownOWLOntologyException, OWLOntologyCreationException, 
-        OBOFormatParserException {
+        OBOFormatParserException, IllegalArgumentException, OWLOntologyStorageException {
         GenerateTaxonConstraints generate = new GenerateTaxonConstraints();
         File tempDir = null;
         try {
@@ -196,7 +197,8 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
     @Test
     public void shouldGenerateTaxonConstraintsTSV() throws IOException, 
         UnknownOWLOntologyException, IllegalArgumentException, 
-        OWLOntologyCreationException, OBOFormatParserException {
+        OWLOntologyCreationException, OBOFormatParserException, 
+        OWLOntologyStorageException {
         
         File tempDir = null;
         try {

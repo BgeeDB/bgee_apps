@@ -339,7 +339,7 @@ public class GenerateTaxonOntology {
         
         OWLOntologyManager m = ontWrapper.getManager();
         OWLDataFactory f = m.getOWLDataFactory();
-        OWLObjectProperty inTaxon = f.getOWLObjectProperty(OntologyUtils.INTAXONRELIRI);
+        OWLObjectProperty inTaxon = f.getOWLObjectProperty(OntologyUtils.IN_TAXON_IRI);
         log.trace("in_taxon property created: {}", inTaxon);
         
         // add disjoints
@@ -407,7 +407,7 @@ public class GenerateTaxonOntology {
         }
         
         OWLObjectProperty inTaxon = 
-                factory.getOWLObjectProperty(OntologyUtils.INTAXONRELIRI);
+                factory.getOWLObjectProperty(OntologyUtils.IN_TAXON_IRI);
         Set<OWLDisjointClassesAxiom> disjointAxioms = 
                 new HashSet<OWLDisjointClassesAxiom>();
         
@@ -447,7 +447,7 @@ public class GenerateTaxonOntology {
         }
         
         OWLObjectProperty inTaxon = 
-                factory.getOWLObjectProperty(OntologyUtils.INTAXONRELIRI);
+                factory.getOWLObjectProperty(OntologyUtils.IN_TAXON_IRI);
         Set<OWLDisjointClassesAxiom> disjointAxioms = 
                 new HashSet<OWLDisjointClassesAxiom>();
         

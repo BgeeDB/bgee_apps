@@ -157,8 +157,8 @@ public class OntologyUtilsTest extends TestAncestor {
      * Assert whether {@code classExamined} has an entry in {@code nestedSetModelParams}, 
      * allowing to retrieve a {@code Map} storing values corresponding to {@code leftBound}, 
      * {@code rightBound}, and {@code level}, respectively associated to 
-     * {@code OntologyUtils.LEFTBOUNDKEY}, {@code OntologyUtils.RIGHTBOUNDKEY}, 
-     * and {@code OntologyUtils.LEVELKEY}.
+     * {@code OntologyUtils.LEFT_BOUND_KEY}, {@code OntologyUtils.RIGHT_BOUND_KEY}, 
+     * and {@code OntologyUtils.LEVEL_KEY}.
      * 
      * @param nestedSetModelParams  The {@code Map} containing all parameters 
      *                              for all {@code OWLClass}es.
@@ -179,11 +179,11 @@ public class OntologyUtilsTest extends TestAncestor {
         
         Map<String, Integer> classParams = nestedSetModelParams.get(classExamined);
         assertEquals("Incorrect left bound for " + classId, leftBound, 
-                (int) classParams.get(OntologyUtils.LEFTBOUNDKEY));
+                (int) classParams.get(OntologyUtils.LEFT_BOUND_KEY));
         assertEquals("Incorrect left bound for " + classId, rightBound, 
-                (int) classParams.get(OntologyUtils.RIGHTBOUNDKEY));
+                (int) classParams.get(OntologyUtils.RIGHT_BOUND_KEY));
         assertEquals("Incorrect left bound for " + classId, level, 
-                (int) classParams.get(OntologyUtils.LEVELKEY));
+                (int) classParams.get(OntologyUtils.LEVEL_KEY));
     }
     
     /**

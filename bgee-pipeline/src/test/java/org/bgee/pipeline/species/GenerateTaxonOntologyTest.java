@@ -195,7 +195,7 @@ public class GenerateTaxonOntologyTest extends TestAncestor {
         siblingSet.add(siblings2);
         
         OWLDataFactory f = wrapper.getManager().getOWLDataFactory();
-        OWLObjectProperty inTaxon = f.getOWLObjectProperty(OntologyUtils.INTAXONRELIRI);
+        OWLObjectProperty inTaxon = f.getOWLObjectProperty(OntologyUtils.IN_TAXON_IRI);
         
         for (Set<OWLClass> siblings: siblingSet) {
             assertTrue("Missing disjoint axiom", 

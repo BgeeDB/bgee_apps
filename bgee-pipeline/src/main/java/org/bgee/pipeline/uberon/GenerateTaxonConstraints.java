@@ -326,7 +326,7 @@ public class GenerateTaxonConstraints {
             //because the method getExistingOWLClasses will modified it.
             //we use a new OWLOntologyManager to be sure there is no memory leack.
             OWLOntology clonedUberon = OWLManager.createOWLOntologyManager().createOntology(
-                IRI.create("Uberon for " + taxonId), 
+                IRI.create("Uberon_for_" + taxonId), 
                 new HashSet<OWLOntology>(Arrays.asList(uberonWrapper.getSourceOntology())));
             
             Set<OWLClass> classesDefined = this.getExistingOWLClasses(

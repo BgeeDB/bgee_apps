@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -14,19 +13,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -145,9 +141,7 @@ public class Uberon {
 
         OWLOntology ont = OntologyUtils.loadOntology(uberonFile);
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        OWLDataFactory factory = wrapper.getManager().getOWLDataFactory();
         
-        Set<OWLObject> taxa = new HashSet<OWLObject>();
         Set<String> taxonIds = new HashSet<String>();
         
         //will get taxon IDs from axioms over object properties "in_taxon", 
@@ -155,33 +149,44 @@ public class Uberon {
         Set<OWLObjectPropertyExpression> objectProps = this.getTaxonObjectProperties(wrapper);
         //will also get the taxon IDs from annotation axioms over annotation properties
         //"ambiguous_for_taxon", "dubious_for_taxon", "homologous_in","never_in_taxon", 
-        //"RO:0002161", "present_in_taxon", "taxon"
+        //"RO:0002161", "present_in_taxon", "taxon" (or any sub-properties)
         Set<OWLAnnotationProperty> annotProps = this.getTaxonAnnotationProperties(wrapper);
         
-        for (OWLAxiom ax : ont.getAxioms()) {
-            Set<OWLEntity> signature = ax.getSignature();
-            if ((ax.isLogicalAxiom() || ax.isAnnotationAxiom()) && 
-                 !(ax instanceof OWLSubAnnotationPropertyOfAxiom) && 
-                 !(ax instanceof OWLSubObjectPropertyOfAxiom) && 
-                 
-               (!Collections.disjoint(signature, objectProps) || 
-                    !Collections.disjoint(signature, annotProps))) {
-                log.trace("Validating axiom {}", ax);
+        for (OWLClass cls: ont.getClassesInSignature()) {
+            //try to get taxa from any object properties that can lead to a taxon
+            for (OWLGraphEdge edge: wrapper.getOutgoingEdges(cls)) {
+                
+                if (edge.getQuantifiedPropertyList().size() != 0 && 
+                    edge.getFinalQuantifiedProperty().isSomeValuesFrom() && 
+                    objectProps.contains(edge.getFinalQuantifiedProperty().getProperty()) && 
+                    edge.getTarget() instanceof OWLClass) {
+                    log.trace("Taxon {} captured through object property in axiom {}", 
+                            edge.getTarget(), edge.getAxioms());
+                    taxonIds.add(wrapper.getIdentifier(edge.getTarget()));
+                }
+            }
+            //and from any annotation properties that can lead to a taxon
+            for (OWLAnnotation annot: cls.getAnnotations(ont)) {
+                if (annotProps.contains(annot.getProperty()) && 
+                    annot.getValue() instanceof IRI) {
+                    log.trace("Taxon {} captured through annotation property in annotation {}", 
+                            annot.getValue(), annot);
+                    taxonIds.add(wrapper.getIdentifier(annot.getValue()));
+                }
             }
         }
         
-        for (OWLObject taxon: taxa) {
-            taxonIds.add(wrapper.getIdentifier(taxon));
-        }
-        
         //now we get the "treat-xrefs-as-reverse-genus-differentia" ontology annotations
-        OWLAnnotationProperty genusDifferentia = 
-                factory.getOWLAnnotationProperty(OntologyUtils.GENUS_DIFFERENTIA_IRI);
+        OWLAnnotationProperty genusDifferentia = wrapper.getManager().getOWLDataFactory().
+                getOWLAnnotationProperty(OntologyUtils.GENUS_DIFFERENTIA_IRI);
         for (OWLAnnotation annot: ont.getAnnotations()) {
             if (annot.getProperty().equals(genusDifferentia)) {
                 String value = ((OWLLiteral) annot.getValue()).getLiteral();
                 Matcher m = OntologyUtils.GENUS_DIFFERENTIA_LITERAL_PATTERN.matcher(value);
                 if (m.matches()) {
+                    String taxId = m.group(OntologyUtils.GENUS_DIFFERENTIA_TAXON_GROUP);
+                    log.trace("Taxon {} captured through treat-xrefs-as-reverse-genus-differentia {}", 
+                            taxId, value);
                     taxonIds.add(m.group(OntologyUtils.GENUS_DIFFERENTIA_TAXON_GROUP));
                 } else {
                     throw log.throwing(new IllegalArgumentException("The provided ontology " +

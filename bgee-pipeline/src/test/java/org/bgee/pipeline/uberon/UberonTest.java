@@ -3,6 +3,7 @@ package org.bgee.pipeline.uberon;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,12 +49,11 @@ public class UberonTest extends TestAncestor {
         Set<Integer> expectedTaxonIds = new HashSet<Integer>();
         //this one should be obtained from the 
         //oboInOwl:treat-xrefs-as-reverse-genus-differentia ontology annotations
-        expectedTaxonIds.add(8292); 
-        //this one should be obtained from an "only_in_taxon" property
-        expectedTaxonIds.add(6656); 
-        //this one should be obtained from an "in_taxon" property generating 
-        //a class expression equivalent to owl:nothing
-        expectedTaxonIds.add(110815);
+        expectedTaxonIds.add(1); 
+        //those should be obtained from the object properties
+        expectedTaxonIds.addAll(Arrays.asList(2, 3, 4, 13)); 
+        //those should be obtained from annotation properties
+        expectedTaxonIds.addAll(Arrays.asList(5, 6, 7, 8, 9, 10, 11, 12));
         
         assertEquals("Incorrect taxon IDs extracted", expectedTaxonIds, 
                 new Uberon().extractTaxonIds(

@@ -160,7 +160,7 @@
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">fdddf</rdfs:label>
         <rdfs:subClassOf>
             <owl:Restriction>
-                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/RO_0002160"/>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/uberon/core#evolved_multiple_times_in"/>
                 <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_4"/>
             </owl:Restriction>
         </rdfs:subClassOf>

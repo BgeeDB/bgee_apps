@@ -156,7 +156,7 @@ public class Uberon {
             //try to get taxa from any object properties that can lead to a taxon
             for (OWLGraphEdge edge: wrapper.getOutgoingEdges(cls)) {
                 
-                if (edge.getQuantifiedPropertyList().size() != 0 && 
+                if (!edge.getQuantifiedPropertyList().isEmpty() && 
                     edge.getFinalQuantifiedProperty().isSomeValuesFrom() && 
                     objectProps.contains(edge.getFinalQuantifiedProperty().getProperty()) && 
                     edge.getTarget() instanceof OWLClass) {

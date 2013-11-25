@@ -17,6 +17,12 @@ import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
@@ -28,7 +34,9 @@ import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
  * Unit tests for {@link GenerateTaxonConstraints}.
@@ -286,6 +294,55 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
                 }
                 if (!tempDir.delete()) {
                     log.warn("Temp directory not deleted: {}", tempDir);
+                }
+            }
+        }
+    }
+    
+    @Test
+    public void test() throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLGraphWrapper uberonWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
+                    this.getClass().getResource("/uberon/uberonExplainTaxonExistenceTest.owl").getPath()));
+        OWLDataFactory factory = uberonWrapper.getManager().getOWLDataFactory();
+        OWLOntology ont = uberonWrapper.getSourceOntology();
+        OWLObjectProperty inTaxon = 
+                factory.getOWLObjectProperty(OntologyUtils.IN_TAXON_IRI);
+        OWLClass nothing = factory.getOWLNothing();
+        //we want the classes equivalent to owl:nothing over "in taxon" object property, 
+        //and the targeted taxon
+        for (OWLEquivalentClassesAxiom eqa : ont.getEquivalentClassesAxioms(nothing)) {
+            for (OWLClassExpression ce : eqa.getClassExpressions()) {
+                if (ce.equals(nothing)) {
+                    continue;
+                }
+                //classes not existing in a taxon are described as the intersection 
+                //of the class, and of a restriction over "in taxon" targeting a taxon. 
+                //The OWLGraphWrapper will decompose those into one edge representing 
+                //a subClassOf relation to the class, and another edge representing 
+                //the restriction to the taxon
+                String clsId = null;
+                String taxonId = null;
+                for (OWLGraphEdge edge: uberonWrapper.getOutgoingEdges(ce)) {
+                    //edge subClassOf to the uberon class
+                    if (edge.getSingleQuantifiedProperty().getProperty() == null && 
+                            edge.getSingleQuantifiedProperty().getQuantifier() == 
+                            Quantifier.SUBCLASS_OF && 
+                            edge.getTarget() instanceof OWLClass) {
+                        clsId = uberonWrapper.getIdentifier(edge.getTarget());
+                        
+                    } 
+                    //edge "in taxon" to the targeted taxon
+                    else if (edge.getFinalQuantifiedProperty().getProperty() != null && 
+                            edge.getFinalQuantifiedProperty().isSomeValuesFrom() && 
+                            edge.getFinalQuantifiedProperty().getProperty().equals(inTaxon) && 
+                            edge.getTarget() instanceof OWLClass) {
+                        taxonId = uberonWrapper.getIdentifier(edge.getTarget());
+                    }
+                }
+                
+                if (clsId != null && taxonId != null) {
+                    log.info("Class: {} - taxon: {}", clsId, taxonId);
                 }
             }
         }

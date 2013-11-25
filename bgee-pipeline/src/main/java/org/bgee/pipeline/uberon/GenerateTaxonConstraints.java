@@ -28,6 +28,9 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -42,7 +45,9 @@ import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
 import org.supercsv.prefs.CsvPreference;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.mooncat.SpeciesSubsetterUtil;
 
 /**
@@ -307,10 +312,6 @@ public class GenerateTaxonConstraints {
         //we want to generate taxon constraints (taxa are excluded)
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
         for (OWLClass cls: uberonWrapper.getAllOWLClasses()) {
-            //skip owl:thing and owl:nothing
-            if (cls.isTopEntity() || cls.isBottomEntity()) {
-                continue;
-            }
             //we do not want information about the taxa
             if (taxOntWrapper.getSourceOntology().containsClassInSignature(cls.getIRI())) {
                 continue;
@@ -486,7 +487,7 @@ public class GenerateTaxonConstraints {
         }
         
         log.info("Done generating constraints for taxon {}.", taxonId);
-        return log.exit(ontWrapper.getOWLClassesFromSource());
+        return log.exit(ontWrapper.getAllOWLClassesFromSource());
     }
     
 
@@ -602,5 +603,72 @@ public class GenerateTaxonConstraints {
         }
         
         log.exit();
+    }
+    
+    public Map<OWLClass, List<OWLGraphEdge>> explainTaxonExistence(String uberonOntFile, String taxOntFile, 
+            Set<String> owlClassIds, Set<Integer> taxonIds) {
+        log.entry(uberonOntFile, taxOntFile, owlClassIds, taxonIds);
+        
+        return null;
+    }
+    
+    public Map<OWLClass, List<OWLGraphEdge>> explainTaxonExistence(OWLOntology uberonOnt, 
+            OWLOntology taxOnt, Set<String> owlClassIds, Set<Integer> taxonIds) {
+        log.entry(uberonOnt, taxOnt, owlClassIds, taxonIds);
+        
+        
+        
+        return null;
+    }
+    
+    private Map<OWLClass, Set<Integer>> notInTaxa(OWLGraphWrapper uberonWrapper) {
+        log.entry(uberonWrapper);
+        
+        Map<OWLClass, Set<Integer>> notInTaxa = new HashMap<OWLClass, Set<Integer>>();
+        
+        OWLDataFactory factory = uberonWrapper.getManager().getOWLDataFactory();
+        OWLOntology ont = uberonWrapper.getSourceOntology();
+        OWLObjectProperty inTaxon = 
+                factory.getOWLObjectProperty(OntologyUtils.IN_TAXON_IRI);
+        OWLClass nothing = factory.getOWLNothing();
+        //we want the classes equivalent to owl:nothing over "in taxon" object property, 
+        //and the targeted taxon
+        for (OWLEquivalentClassesAxiom eqa : ont.getEquivalentClassesAxioms(nothing)) {
+            for (OWLClassExpression ce : eqa.getClassExpressions()) {
+                if (ce.equals(nothing)) {
+                    continue;
+                }
+                //classes not existing in a taxon are described as the intersection 
+                //of the class, and of a restriction over "in taxon" targeting a taxon. 
+                //The OWLGraphWrapper will decompose those into one edge representing 
+                //a subClassOf relation to the class, and another edge representing 
+                //the restriction to the taxon
+                String clsId = null;
+                String taxonId = null;
+                for (OWLGraphEdge edge: uberonWrapper.getOutgoingEdges(ce)) {
+                    //edge subClassOf to the uberon class
+                    if (edge.getSingleQuantifiedProperty().getProperty() == null && 
+                            edge.getSingleQuantifiedProperty().getQuantifier() == 
+                            Quantifier.SUBCLASS_OF && 
+                            edge.getTarget() instanceof OWLClass) {
+                        clsId = uberonWrapper.getIdentifier(edge.getTarget());
+                        
+                    } 
+                    //edge "in taxon" to the targeted taxon
+                    else if (edge.getFinalQuantifiedProperty().getProperty() != null && 
+                            edge.getFinalQuantifiedProperty().isSomeValuesFrom() && 
+                            edge.getFinalQuantifiedProperty().getProperty().equals(inTaxon) && 
+                            edge.getTarget() instanceof OWLClass) {
+                        taxonId = uberonWrapper.getIdentifier(edge.getTarget());
+                    }
+                }
+                
+                if (clsId != null && taxonId != null) {
+                    if (!notInTaxa.containsKey(clsId)) {
+                        notInTaxa.put(key, value);
+                    }
+                }
+            }
+        }
     }
 }

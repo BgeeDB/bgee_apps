@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;

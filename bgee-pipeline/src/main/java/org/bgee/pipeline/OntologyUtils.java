@@ -2,6 +2,7 @@ package org.bgee.pipeline;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,6 +54,12 @@ public class OntologyUtils {
      */
     public final static IRI IN_TAXON_IRI = 
             IRI.create("http://purl.obolibrary.org/obo/RO_0002162");
+    /**
+     * {@code IRI} of the {@code OWLObjectProperty} "onl_in_taxon" (which is 
+     * a sub-property of "in_taxon", see {@link #IN_TAXON_IRI}).
+     */
+    public final static IRI ONLY_IN_TAXON_IRI = 
+            IRI.create("http://purl.obolibrary.org/obo/RO_0002160");
     /**
      * {@code IRI} of the {@code OWLObjectProperty} "evolved_multiple_times_in".
      */
@@ -206,13 +213,13 @@ public class OntologyUtils {
      * containing the equivalent IDs used in the generated taxonomy ontology (which are 
      * strings with a prefix).
      * 
-     * @param taxNcbiIds    A {@code Set} of {@code Integer}s that are the NCBI IDs 
+     * @param taxNcbiIds    A {@code Collection} of {@code Integer}s that are the NCBI IDs 
      *                      to convert.
      * @return              A {@code Set} of {@code String}s that are the {@code taxNcbiIds} 
      *                      converted into IDs used in the taxonomy ontology.
      *                      
      */
-    public static Set<String> convertToTaxOntologyIds(Set<Integer> taxNcbiIds) {
+    public static Set<String> convertToTaxOntologyIds(Collection<Integer> taxNcbiIds) {
         log.entry(taxNcbiIds);
         Set<String> ontTaxonIds = new HashSet<String>();
         for (int ncbiId: taxNcbiIds) {
@@ -225,13 +232,13 @@ public class OntologyUtils {
      * for instance, {@code NCBITaxon:9606} for human) into a {@code Set} of {@code Integer}s 
      * containing the equivalent IDs used in NCBI (for instance, {@code 9606} for human).
      * 
-     * @param taxOntIds     A {@code Set} of {@code String}s that are the taxonomy IDs 
+     * @param taxOntIds     A {@code Collection} of {@code String}s that are the taxonomy IDs 
      *                      with a prefix, to convert.
      * @return              A {@code Set} of {@code Integer}s that are the {@code taxOntIds} 
      *                      converted into IDs used in NCBI.
      *                      
      */
-    public static Set<Integer> convertToNcbiIds(Set<String> taxOntIds) {
+    public static Set<Integer> convertToNcbiIds(Collection<String> taxOntIds) {
         log.entry(taxOntIds);
         Set<Integer> convertIds = new HashSet<Integer>();
         for (String id: taxOntIds) {

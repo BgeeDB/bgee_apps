@@ -3,10 +3,12 @@ package org.bgee.pipeline.uberon;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -17,12 +19,6 @@ import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
@@ -34,41 +30,39 @@ import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
-import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
-import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
- * Unit tests for {@link GenerateTaxonConstraints}.
+ * Unit tests for {@link TaxonConstraints}.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  */
-public class GenerateTaxonConstraintsTest extends TestAncestor {
+public class TaxonConstraintsTest extends TestAncestor {
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(GenerateTaxonConstraintsTest.class.getName());
+            LogManager.getLogger(TaxonConstraintsTest.class.getName());
     
     /**
      * A {@code String} that is the path from the classpath to the fake taxon  
      * file, containing the NCBI IDs of the fake taxa to use for the tests.
      */
     private final static String TAXONFILE = 
-            GenerateTaxonConstraintsTest.class.getResource("/uberon/taxa.tsv").getPath();
+            TaxonConstraintsTest.class.getResource("/uberon/taxa.tsv").getPath();
     /**
      * A {@code String} that is the path from the classpath to the fake Uberon   
      * ontology used for the tests.
      */
-    private final static String UBERONFILE = GenerateTaxonConstraintsTest.class.
+    private final static String UBERONFILE = TaxonConstraintsTest.class.
             getResource("/uberon/taxonConstraintsTest.obo").getPath();
     /**
      * A {@code String} that is the path from the classpath to the fake NCBI    
      * taxonomy ontology used for the tests.
      */
-    private final static String TAXONTFILE = GenerateTaxonConstraintsTest.class.
+    private final static String TAXONTFILE = TaxonConstraintsTest.class.
             getResource("/uberon/fakeTaxonomy.obo").getPath();
     
     /**
@@ -81,7 +75,7 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
     /**
      * Default Constructor. 
      */
-    public GenerateTaxonConstraintsTest() {
+    public TaxonConstraintsTest() {
         super();
     }
     @Override
@@ -91,19 +85,20 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
     
     /**
      * Test the method 
-     * {@link GenerateTaxonConstraints#generateTaxonConstraints(String, Set, String)}.
+     * {@link TaxonConstraints#generateTaxonConstraints(String, Set, String)}.
      */
     @Test
     public void shouldGenerateTaxonConstraints() throws IOException, 
         UnknownOWLOntologyException, OWLOntologyCreationException, 
         OBOFormatParserException, IllegalArgumentException, OWLOntologyStorageException {
-        GenerateTaxonConstraints generate = new GenerateTaxonConstraints();
+        TaxonConstraints generate = new TaxonConstraints(
+                OntologyUtils.loadOntology(UBERONFILE), 
+                OntologyUtils.loadOntology(TAXONTFILE));
         File tempDir = null;
         try {
             tempDir = Files.createTempDirectory(null).toFile();
             Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(
-                    OntologyUtils.loadOntology(UBERONFILE), 
-                    OntologyUtils.loadOntology(TAXONTFILE), TAXONIDS, tempDir.getPath());
+                    TAXONIDS, tempDir.getPath());
             
             assertEquals("Incorrect number of OWLClasses in taxon constraints", 21, 
                     constraints.keySet().size());
@@ -200,7 +195,7 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
     
     /**
      * Test the method 
-     * {@link GenerateTaxonConstraints#generateTaxonConstraints(String, String, String, String)}
+     * {@link TaxonConstraints#generateTaxonConstraints(String, String, String, String)}
      */
     @Test
     public void shouldGenerateTaxonConstraintsTSV() throws IOException, 
@@ -213,9 +208,8 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
             tempDir = Files.createTempDirectory(null).toFile();
             String outputTSV = new File(tempDir, "table.tsv").getPath();
 
-            GenerateTaxonConstraints generate = new GenerateTaxonConstraints();
-            generate.generateTaxonConstraints(UBERONFILE, TAXONTFILE, TAXONFILE, 
-                    outputTSV, null);
+            TaxonConstraints generate = new TaxonConstraints(UBERONFILE, TAXONTFILE);
+            generate.generateTaxonConstraints(TAXONFILE, outputTSV, null);
             
             //now read the TSV file
             try (ICsvMapReader mapReader = new CsvMapReader(
@@ -299,52 +293,34 @@ public class GenerateTaxonConstraintsTest extends TestAncestor {
         }
     }
     
+    /**
+     * Test the method {@link TaxonConstraints#extractTaxonIds(String)}
+     */
     @Test
-    public void test() throws UnknownOWLOntologyException, OWLOntologyCreationException, 
-        OBOFormatParserException, IOException {
-        OWLGraphWrapper uberonWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
-                    this.getClass().getResource("/uberon/uberonExplainTaxonExistenceTest.owl").getPath()));
-        OWLDataFactory factory = uberonWrapper.getManager().getOWLDataFactory();
-        OWLOntology ont = uberonWrapper.getSourceOntology();
-        OWLObjectProperty inTaxon = 
-                factory.getOWLObjectProperty(OntologyUtils.IN_TAXON_IRI);
-        OWLClass nothing = factory.getOWLNothing();
-        //we want the classes equivalent to owl:nothing over "in taxon" object property, 
-        //and the targeted taxon
-        for (OWLEquivalentClassesAxiom eqa : ont.getEquivalentClassesAxioms(nothing)) {
-            for (OWLClassExpression ce : eqa.getClassExpressions()) {
-                if (ce.equals(nothing)) {
-                    continue;
-                }
-                //classes not existing in a taxon are described as the intersection 
-                //of the class, and of a restriction over "in taxon" targeting a taxon. 
-                //The OWLGraphWrapper will decompose those into one edge representing 
-                //a subClassOf relation to the class, and another edge representing 
-                //the restriction to the taxon
-                String clsId = null;
-                String taxonId = null;
-                for (OWLGraphEdge edge: uberonWrapper.getOutgoingEdges(ce)) {
-                    //edge subClassOf to the uberon class
-                    if (edge.getSingleQuantifiedProperty().getProperty() == null && 
-                            edge.getSingleQuantifiedProperty().getQuantifier() == 
-                            Quantifier.SUBCLASS_OF && 
-                            edge.getTarget() instanceof OWLClass) {
-                        clsId = uberonWrapper.getIdentifier(edge.getTarget());
-                        
-                    } 
-                    //edge "in taxon" to the targeted taxon
-                    else if (edge.getFinalQuantifiedProperty().getProperty() != null && 
-                            edge.getFinalQuantifiedProperty().isSomeValuesFrom() && 
-                            edge.getFinalQuantifiedProperty().getProperty().equals(inTaxon) && 
-                            edge.getTarget() instanceof OWLClass) {
-                        taxonId = uberonWrapper.getIdentifier(edge.getTarget());
-                    }
-                }
-                
-                if (clsId != null && taxonId != null) {
-                    log.info("Class: {} - taxon: {}", clsId, taxonId);
-                }
-            }
-        }
+    public void shouldExtractTaxonIds() throws FileNotFoundException, IOException {
+        Set<Integer> expectedTaxonIds = new HashSet<Integer>(Arrays.asList(10, 15, 16, 19));
+        assertEquals(expectedTaxonIds, new TaxonConstraints().extractTaxonIds(
+                this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
+    }
+    
+    /**
+     * Test the method {@link TaxonConstraints#extractTaxonConstraints(String)}
+     */
+    @Test
+    public void shouldExtractTaxonConstraints() throws FileNotFoundException, IOException {
+        Map<String, Set<Integer>> expectedConstraints = new HashMap<String, Set<Integer>>();
+        String clsId1 = "id1";
+        String clsId2 = "id2";
+        String clsId3 = "id3";
+        String clsId4 = "id4";
+        String clsId5 = "id5";
+        expectedConstraints.put(clsId1, new HashSet<Integer>(Arrays.asList(10, 15, 16, 19)));
+        expectedConstraints.put(clsId2, new HashSet<Integer>(Arrays.asList(10, 15, 16)));
+        expectedConstraints.put(clsId3, new HashSet<Integer>(Arrays.asList(10, 15)));
+        expectedConstraints.put(clsId4, new HashSet<Integer>(Arrays.asList(10)));
+        expectedConstraints.put(clsId5, new HashSet<Integer>());
+        
+        assertEquals(expectedConstraints, new TaxonConstraints().extractTaxonConstraints(
+                this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
     }
 }

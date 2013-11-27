@@ -1,0 +1,6 @@
+Uberon ID	Uberon name	10	15	16	19
+id1	name1	T	T	T	T
+id2	name2	T	T	T	F
+id3	name3	T	T	F	F
+id4	name4	T	F	F	F
+id5	name5	F	F	F	F

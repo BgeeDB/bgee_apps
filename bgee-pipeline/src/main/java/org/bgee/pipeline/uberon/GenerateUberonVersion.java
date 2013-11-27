@@ -53,7 +53,7 @@ public class GenerateUberonVersion {
      * <ol>
      * <li>path to the source Uberon composite-metazan OWL ontology file.
      * <li>path to the taxon constraints TSV file, generated at a previous step 
-     * (see {@link #GenerateTaxonConstraints}). The fist line should be a header line. 
+     * (see {@link #TaxonConstraints}). The fist line should be a header line. 
      * The columns are: ID of the Uberon classes, IDs of each of the taxa that 
      * were examined. For each of the taxon columns, a boolean is provided 
      * as "T" or "F", to define whether the associated Uberon class exists in it.

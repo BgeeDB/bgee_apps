@@ -1,4 +1,4 @@
-package org.bgee.pipeline.similarity;
+package org.bgee.pipeline.annotations;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
@@ -8,11 +8,15 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.uberon.TaxonConstraints;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.supercsv.cellprocessor.constraint.NotNull;
 
 /**
@@ -79,6 +83,34 @@ public class SimilarityAnnotation {
         
         log.exit();
     }
+    
+    public void generateReleaseFile(String annotFile, String taxonConstraintsFile, 
+            String homOntFile, String ecoOntFile, String outputFile) {
+        log.entry(annotFile, taxonConstraintsFile, homOntFile, ecoOntFile, outputFile);
+        
+        log.exit();
+    }
+    
+    public void generateReleaseFile(String annotFile, String taxonConstraintsFile, 
+            OWLOntology homOnt, OWLOntology ecoOnt, String outputFile) {
+        log.entry(annotFile, taxonConstraintsFile, homOnt, ecoOnt, outputFile);
+        
+        
+        
+        log.exit();
+    }
+    
+    public List<Map<String, Object>> generateReleaseData(String annotFile, 
+            String taxonConstraintsFile, OWLOntology homOnt, OWLOntology ecoOnt) 
+                    throws FileNotFoundException, IOException {
+        log.entry(annotFile, taxonConstraintsFile, homOnt, ecoOnt);
+        
+        Set<Integer> taxonIds = new TaxonConstraints().extractTaxonIds(taxonConstraintsFile);
+        
+        
+    }
+    
+    
     
     /**
      * Extract from the similarity annotation file {@code annotFile} the list 

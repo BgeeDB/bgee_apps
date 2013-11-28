@@ -15,12 +15,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -65,8 +68,8 @@ public class SimilarityAnnotation {
     public final static String ENTITY_NAME_COL_NAME = "entity name";
     /**
      * A {@code String} that is the name of the column containing the qualifier 
-     * in the similarity annotation file (for instance, "NOT" to state the an entity 
-     * is <strong>not</stong> homologous in a taxon).
+     * in the similarity annotation file (to state the an entity is <strong>not</stong> 
+     * homologous in a taxon).
      */
     public final static String QUALIFIER_COL_NAME = "qualifier";
     /**
@@ -83,14 +86,14 @@ public class SimilarityAnnotation {
      * A {@code String} that is the name of the column containing the reference ID 
      * in the similarity annotation file (for instance, "PMID:16771606").
      */
-    public final static String REFERENCE_COL_NAME = "reference";
+    public final static String REF_COL_NAME = "reference";
     /**
      * A {@code String} that is the name of the column containing the reference name 
      * in the similarity annotation file (for instance, 
      * "Liem KF, Bemis WE, Walker WF, Grande L, Functional Anatomy of the Vertebrates: 
      * An Evolutionary Perspective (2001) p.500").
      */
-    public final static String REFERENCE_TITLE_COL_NAME = "reference title";
+    public final static String REF_TITLE_COL_NAME = "reference title";
     /**
      * A {@code String} that is the name of the column containing the ECO IDs 
      * in the similarity annotation file (for instance, "ECO:0000067").
@@ -143,6 +146,54 @@ public class SimilarityAnnotation {
      * (for instance "2013-07-03").
      */
     public final static String DATE_COL_NAME = "date";
+    /**
+     * A {@code String} that is the name of the column containing the type   
+     * of the current line, in the similarity annotation file. 
+     * Either it is a raw annotation line, or it is a generated annotation summarizing 
+     * several related raw annotations regarding, using a confidence code 
+     * for multiple evidences.
+     * @see #RAW_LINE
+     * @see #SUMMARY_LINE
+     */
+    public final static String LINE_TYPE_COL_NAME = "line type";
+    
+    /**
+     * A {@code String} that is the separator when different IDs or names are used 
+     * in a same column of the similarity annotation file.
+     */
+    private final static String SEPARATOR = "|";
+    /**
+     * A {@code String} that is the value of the {@link #QUALIFIER_COL_NAME} column, 
+     * when the annotation is negated.
+     */
+    private final static String NEGATE_QUALIFIER = "NOT";
+    /**
+     * A {@code String} that is the value of the column {@link #LINE_TYPE_COL_NAME} 
+     * when the line stores a raw annotation from curators.
+     */
+    private final static String RAW_LINE = "RAW";
+    /**
+     * A {@code String} that is the value of the column {@link #LINE_TYPE_COL_NAME} 
+     * when the line stores a generated annotation summarizing several related annotations.
+     */
+    private final static String SUMMARY_LINE = "SUMMARY";
+    
+    /**
+     * A {@code Pattern} describing the possible values of the column {@link #REF_COL_NAME}. 
+     * This is because in the curator annotation file, the title of the reference 
+     * is mixed in the column containing the reference ID, so we need to parse it.
+     */
+    private final static Pattern REF_COL_PATTERN = Pattern.compile("(.+?)(:? \"?(.+?)\"?)?");
+    /**
+     * An {@code int} that is the index of the group containing the reference ID 
+     * in the {@code Pattern} {@link #REF_COL_PATTERN}.
+     */
+    private final static int REF_ID_PATTERN_GROUP = 1;
+    /**
+     * An {@code int} that is the index of the group containing the reference title 
+     * in the {@code Pattern} {@link #REF_COL_PATTERN}.
+     */
+    private final static int REF_TITLE_PATTERN_GROUP = 2;
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -259,21 +310,27 @@ public class SimilarityAnnotation {
     
     public List<Map<String, Object>> generateReleaseData(String annotFile, 
             String taxonConstraintsFile, OWLOntology uberonOnt, OWLOntology homOnt, 
-            OWLOntology ecoOnt) throws FileNotFoundException, IOException, 
-            UnknownOWLOntologyException, OWLOntologyCreationException {
+            OWLOntology ecoOnt) throws FileNotFoundException, IllegalArgumentException, 
+            IOException, UnknownOWLOntologyException, OWLOntologyCreationException {
         log.entry(annotFile, taxonConstraintsFile, uberonOnt, homOnt, ecoOnt);
         
+        //get the annotations
+        List<Map<String, Object>> annotations = this.extractAnnotations(annotFile);
+        
+        //now, get all the information required to perform correctness checks 
+        //on the annotations, and to add additional information (names corresponding 
+        //to uberon IDs, etc).
         TaxonConstraints extractor = new TaxonConstraints();
         Set<Integer> taxonIds = extractor.extractTaxonIds(taxonConstraintsFile);
         Map<String, Set<Integer>> taxonConstraints = 
                 extractor.extractTaxonConstraints(taxonConstraintsFile);
-        
-        List<Map<String, Object>> annotations = this.extractAnnotations(annotFile);
-        
-        
         OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(uberonOnt);
         OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(ecoOnt);
         OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(homOnt);
+        //check all annotations
+        for (Map<String, Object> annotation: annotations) {
+            this.checkAnnotation(annotation, taxonConstraints, taxonIds, ecoOntWrapper, homOntWrapper, confOntWrapper);
+        }
         
         return null;
     }
@@ -285,24 +342,24 @@ public class SimilarityAnnotation {
      * The expected key-value in the {@code Map}s are: 
      * <ul>
      * <li>values associated to the keys {@link #ENTITY_COL_NAME}, {@link #HOM_COL_NAME}, 
-     * {@link #REFERENCE_COL_NAME}, {@link #CONF_COL_NAME}, {@link #ASSIGN_COL_NAME} 
+     * {@link #REF_COL_NAME}, {@link #CONF_COL_NAME}, {@link #ASSIGN_COL_NAME} 
      * cannot be {@code null} and are {@code String}s.
      * <li>values associated to the key {@link #TAXON_COL_NAME} cannot be {@code null} 
      * and are {@code Integer}s.
      * <li>values associated to the keys {@link #ENTITY_NAME_COL_NAME}, 
-     * {@link #QUALIFIER_COL_NAME}, {@link #REFERENCE_TITLE_COL_NAME}, 
+     * {@link #QUALIFIER_COL_NAME}, {@link #REF_TITLE_COL_NAME}, 
      * {@link #ECO_COL_NAME}, {@link #ECO_NAME_COL_NAME}, {@link #CONF_NAME_COL_NAME}, 
      * {@link #TAXON_NAME_COL_NAME}, {@link #SUPPORT_TEXT_COL_NAME}, 
      * {@link #CURATOR_COL_NAME}, {@link #HOM_NAME_COL_NAME} can be {@code null} 
      * and are {@code String}s. {@link #ECO_COL_NAME}, {@link #ECO_NAME_COL_NAME}, 
      * {@link #SUPPORT_TEXT_COL_NAME}, and {@link #CURATOR_COL_NAME} are {@code null} 
      * when the annotation has not yet been manually reviewed by a curator. 
-     * {@link #ENTITY_NAME_COL_NAME}, {@link #REFERENCE_TITLE_COL_NAME}, 
+     * {@link #ENTITY_NAME_COL_NAME}, {@link #REF_TITLE_COL_NAME}, 
      * {@link #CONF_NAME_COL_NAME}, {@link #TAXON_NAME_COL_NAME} and 
      * {@link #HOM_NAME_COL_NAME} can be {@code null} because the file exists 
      * in different flavors (simple generated file does not include the names; the 
-     * annotation file does not provide {@link #REFERENCE_TITLE_COL_NAME}, because 
-     * this information is mixed in the {@link #REFERENCE_COL_NAME} column). 
+     * annotation file does not provide {@link #REF_TITLE_COL_NAME}, because 
+     * this information is mixed in the {@link #REF_COL_NAME} column). 
      * {@link #QUALIFIER_COL_NAME} is not {@code null} only when the annotation 
      * is negated. 
      * <li>values associated to the key {@link #DATE_COL_NAME} can be {@code null} 
@@ -343,7 +400,7 @@ public class SimilarityAnnotation {
                     if (header[i] != null) {
                         if (header[i].equalsIgnoreCase(ENTITY_COL_NAME) || 
                                 header[i].equalsIgnoreCase(HOM_COL_NAME) || 
-                                header[i].equalsIgnoreCase(REFERENCE_COL_NAME) || 
+                                header[i].equalsIgnoreCase(REF_COL_NAME) || 
                                 header[i].equalsIgnoreCase(CONF_COL_NAME) ||   
                                 header[i].equalsIgnoreCase(ASSIGN_COL_NAME)) {
                             
@@ -355,7 +412,7 @@ public class SimilarityAnnotation {
                             
                         } else if (header[i].equalsIgnoreCase(ENTITY_NAME_COL_NAME) || 
                                 header[i].equalsIgnoreCase(QUALIFIER_COL_NAME) || 
-                                header[i].equalsIgnoreCase(REFERENCE_TITLE_COL_NAME) || 
+                                header[i].equalsIgnoreCase(REF_TITLE_COL_NAME) || 
                                 header[i].equalsIgnoreCase(ECO_COL_NAME) ||   
                                 header[i].equalsIgnoreCase(ECO_NAME_COL_NAME) ||  
                                 header[i].equalsIgnoreCase(CONF_NAME_COL_NAME) ||   
@@ -387,6 +444,9 @@ public class SimilarityAnnotation {
                 Map<String, Object> valuesMapped = new HashMap<String, Object>();
                 int i = 0;
                 for (Object value: values) {
+                    if (value != null && value instanceof String) {
+                        value = ((String) value).trim();
+                    }
                     if (header[i] != null) {
                         valuesMapped.put(header[i], value);
                     }
@@ -403,7 +463,7 @@ public class SimilarityAnnotation {
                 //get a chance to verify NotNull condition)
                 if (StringUtils.isBlank((String) valuesMapped.get(ENTITY_COL_NAME)) || 
                         StringUtils.isBlank((String) valuesMapped.get(HOM_COL_NAME)) || 
-                        StringUtils.isBlank((String) valuesMapped.get(REFERENCE_COL_NAME)) || 
+                        StringUtils.isBlank((String) valuesMapped.get(REF_COL_NAME)) || 
                         StringUtils.isBlank((String) valuesMapped.get(CONF_COL_NAME)) || 
                         StringUtils.isBlank((String) valuesMapped.get(ASSIGN_COL_NAME))) {
                     throw log.throwing(new IllegalArgumentException(
@@ -411,9 +471,10 @@ public class SimilarityAnnotation {
                             valuesMapped));
                 }
                 //the only values permitted for QUALIFIER_COL_NAME are null value, 
-                //or a String equal to "NOT".
+                //or a String equal to NEGATE_QUALIFIER.
                 if (valuesMapped.get(QUALIFIER_COL_NAME) != null && 
-                   !((String) valuesMapped.get(QUALIFIER_COL_NAME)).equalsIgnoreCase("NOT")) {
+                   !((String) valuesMapped.get(QUALIFIER_COL_NAME)).equalsIgnoreCase(
+                           NEGATE_QUALIFIER)) {
                     throw log.throwing(new IllegalArgumentException(
                             "Incorrect value for column " + QUALIFIER_COL_NAME + 
                             ": " + valuesMapped.get(QUALIFIER_COL_NAME)));
@@ -430,61 +491,410 @@ public class SimilarityAnnotation {
         return log.exit(annotations);
     }
     
-    javadoc
-    private void checkAnnotation(Map<String, Object> annotation, Set<Integer> taxonIds, 
-            Map<String, Set<Integer>> taxonConstraints, OWLGraphWrapper uberonOntWrapper, 
-            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
-            OWLGraphWrapper confOntWrapper) {
-        log.entry(annotation, taxonIds, taxonConstraints, uberonOntWrapper, 
+    public List<Map<String, Object>> generateReleaseData(
+            List<Map<String, Object>> rawAnnots, Map<String, Set<Integer>> taxonConstraints, 
+            Set<Integer> taxonIds, OWLGraphWrapper uberonOntWrapper, 
+            OWLGraphWrapper taxOntWrapper, OWLGraphWrapper ecoOntWrapper, 
+            OWLGraphWrapper homOntWrapper, OWLGraphWrapper confOntWrapper) {
+        log.entry(rawAnnots, taxonConstraints, taxonIds, taxOntWrapper, uberonOntWrapper, 
                 ecoOntWrapper, homOntWrapper, confOntWrapper);
+        
+        List<Map<String, Object>> releaseData = new ArrayList<Map<String, Object>>();
+        //first pass, check each annotation, and add extra information to them 
+        //(names corresponding to Uberon IDs, etc). We will generate new Maps, 
+        //not to modify the raw annotations.
+        for (Map<String, Object> rawAnnot: rawAnnots) {
+            
+            if (!this.checkAnnotation(rawAnnot, taxonConstraints, taxonIds, 
+                    ecoOntWrapper, homOntWrapper, confOntWrapper)) {
+                continue;
+            }
+            
+            Map<String, Object> releaseAnnot = new HashMap<String, Object>();
+            releaseAnnot.put(LINE_TYPE_COL_NAME, RAW_LINE);
+            
+            //Uberon ID(s) used to define the entity annotated. Get them ordered 
+            //by alphabetical order, for easier diff between different release files.
+            List<String> uberonIds = 
+                    this.parseEntityColumn((String) rawAnnot.get(ECO_COL_NAME));
+            //get the corresponding names
+            List<String> uberonNames = new ArrayList<String>();
+            for (String uberonId: uberonIds) {
+                //it is the responsibility of the checkAnnotation method to make sure 
+                //the Uberon IDs exist, so we accept null values, it's not our job here.
+                if (uberonOntWrapper.getOWLClassByIdentifier(uberonId) != null) {
+                    uberonNames.add(uberonOntWrapper.getLabel(
+                            uberonOntWrapper.getOWLClassByIdentifier(uberonId)));
+                }
+            }
+            //store Uberon IDs and names as column values
+            releaseAnnot.put(ENTITY_COL_NAME, this.termsToColumnValue(uberonIds));
+            releaseAnnot.put(ENTITY_NAME_COL_NAME, this.termsToColumnValue(uberonNames));
+            
+            //taxon
+            if (rawAnnot.get(TAXON_COL_NAME) != null) {
+                int taxonId = (int) rawAnnot.get(TAXON_COL_NAME);
+                releaseAnnot.put(TAXON_COL_NAME, taxonId);
+                
+                String ontologyTaxId = OntologyUtils.getTaxOntologyId(taxonId);
+                if (taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId) != null) {
+                    releaseAnnot.put(TAXON_NAME_COL_NAME, taxOntWrapper.getLabel(
+                            taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId)));
+                }
+            }
+            
+            //qualifier
+            if (rawAnnot.get(QUALIFIER_COL_NAME) != null) {
+                releaseAnnot.put(QUALIFIER_COL_NAME, NEGATE_QUALIFIER);
+            }
+            
+            //HOM
+            if (rawAnnot.get(HOM_COL_NAME) != null) {
+                String homId = ((String) rawAnnot.get(HOM_COL_NAME)).trim();
+                releaseAnnot.put(HOM_COL_NAME, homId);
+                if (homOntWrapper.getOWLClassByIdentifier(homId) != null) {
+                    releaseAnnot.put(HOM_NAME_COL_NAME, homOntWrapper.getLabel(
+                            homOntWrapper.getOWLClassByIdentifier(homId)));
+                }
+            }
+            
+            //ECO
+            if (rawAnnot.get(ECO_COL_NAME) != null) {
+                String ecoId = ((String) rawAnnot.get(ECO_COL_NAME)).trim();
+                releaseAnnot.put(ECO_COL_NAME, ecoId);
+                if (ecoOntWrapper.getOWLClassByIdentifier(ecoId) != null) {
+                    releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
+                            ecoOntWrapper.getOWLClassByIdentifier(ecoId)));
+                }
+            }
+            
+            //CONF
+            if (rawAnnot.get(CONF_COL_NAME) != null) {
+                String confId = ((String) rawAnnot.get(CONF_COL_NAME)).trim();
+                releaseAnnot.put(CONF_COL_NAME, confId);
+                if (confOntWrapper.getOWLClassByIdentifier(confId) != null) {
+                    releaseAnnot.put(CONF_NAME_COL_NAME, confOntWrapper.getLabel(
+                            confOntWrapper.getOWLClassByIdentifier(confId)));
+                }
+            }
+            
+            //Reference
+            if (rawAnnot.get(REF_COL_NAME) != null) {
+                String refValue = ((String) rawAnnot.get(REF_COL_NAME)).trim();
+                //the raw annotation file mixes the title of the reference 
+                //in the same column as the reference ID, so we need to parse refValue
+                String refId = this.getRefIdFromRefColValue(refValue);
+                releaseAnnot.put(REF_COL_NAME, refId);
+                
+                String refTitle = this.getRefTitleFromRefColValue(refValue);
+                if (refTitle != null) {
+                    releaseAnnot.put(REF_TITLE_COL_NAME, refTitle);
+                }
+            }
+            if (rawAnnot.get(REF_TITLE_COL_NAME) != null) {
+                String refTitle = ((String) rawAnnot.get(REF_TITLE_COL_NAME)).trim();
+                refTitle = refTitle.startsWith("\"") ? refTitle.substring(1) : refTitle;
+                refTitle = refTitle.endsWith("\"") ? 
+                        refTitle.substring(0, refTitle.length()-1) : refTitle;
+                releaseAnnot.put(REF_TITLE_COL_NAME, refTitle);
+            }
+            
+            //Supporting text
+            if (rawAnnot.get(SUPPORT_TEXT_COL_NAME) != null) {
+                releaseAnnot.put(SUPPORT_TEXT_COL_NAME, 
+                        ((String) rawAnnot.get(SUPPORT_TEXT_COL_NAME)).trim());
+            }
+            
+            //Curator
+            if (rawAnnot.get(CURATOR_COL_NAME) != null) {
+                releaseAnnot.put(CURATOR_COL_NAME, 
+                        ((String) rawAnnot.get(CURATOR_COL_NAME)).trim());
+            }
+            
+            //Assigned by
+            if (rawAnnot.get(ASSIGN_COL_NAME) != null) {
+                releaseAnnot.put(ASSIGN_COL_NAME, 
+                        ((String) rawAnnot.get(ASSIGN_COL_NAME)).trim());
+            }
+            
+            //Annotation date
+            if (rawAnnot.get(DATE_COL_NAME) != null) {
+                releaseAnnot.put(DATE_COL_NAME, rawAnnot.get(DATE_COL_NAME));
+            }
+            
+            releaseData.add(releaseAnnot);
+        }
+        
+        if (releaseData.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided annotations " +
+            		"did not allow to generate any clean-transformed annotations."));
+        }
+        
+        //now we verify that the data provided are correct (the method checkAnnotation 
+        //used in this method will have filled attributes of this class storing errors 
+        //that are not syntax errors).
+        try {
+            this.verifyErrors();
+        } catch (IllegalStateException e) {
+            //wrap the IllegalStateException into an IllegalArgumentException
+            throw new IllegalArgumentException(e);
+        }
+        
+        //now we add the generated lines that summarize several related annotations 
+        //using a confidence code for multiple evidences assertion.
+        
+        return log.exit(releaseData);
+    }
+    
+    private void addGeneratedAnnotations(List<Map<String, Object>> annotations, 
+            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper confOntWrapper) {
+        log.entry(annotations, ecoOntWrapper, confOntWrapper);
+        
+        //in order to identify related annotations, we will use a Map where keys 
+        //are the concatenation of the entity column, the taxon column, the HOM column, and 
+        //associated values are the related annotations
+        Map<String, Set<Map<String, Object>>> relatedAnnotMapper = 
+                new HashMap<String, Set<Map<String, Object>>>();
+        
+        //first pass, group related annotations
+        for (Map<String, Object> annot: annotations) {
+            String concat = annot.get(ENTITY_COL_NAME) + "-" + 
+                annot.get(HOM_COL_NAME) + "-" + annot.get(TAXON_COL_NAME);
+            
+            if (relatedAnnotMapper.get(concat) == null) {
+                relatedAnnotMapper.put(concat, new HashSet<Map<String, Object>>());
+            }
+            relatedAnnotMapper.get(concat).add(annot);
+        }
+        
+        //now, generate summarizing annotations
+        for (Set<Map<String, Object>> relatedAnnots: relatedAnnotMapper.values()) {
+            if (relatedAnnots.size() == 1) {
+                continue;
+            }
+            
+            OWLClass previousECO  = null;
+            OWLClass previousConf = null;
+            boolean previousNegate = false;
+            boolean conflictingEvidence = false;
+            
+            for (Map<String, Object> annot: relatedAnnots) {
+                OWLClass currentECO = ecoOntWrapper.getOWLClassByIdentifier(
+                        (String) annot.get(ECO_COL_NAME));
+                OWLClass currentConf = confOntWrapper.getOWLClassByIdentifier(
+                        (String) annot.get(CONF_COL_NAME));
+                boolean currentNegate = annot.get(QUALIFIER_COL_NAME) != null ? true:false;
+                
+                continue here
+                
+                previousECO = currentECO;
+                previousConf = currentConf;
+                previousNegate = currentNegate;
+            }
+        }
+        
+        log.exit();
+    }
+    
+    /**
+     * Checks that no errors were detected and stored, in {@link #missingUberonIds}, 
+     * and/or {@link #missingTaxonIds}, and/or {@link #missingECOIds}, and/or 
+     * {@link #missingHOMIds}, and/or {@link #missingCONFIds}, and/or 
+     * {@link #idsNotExistingInTaxa}. If some errors were stored, an 
+     * {@code IllegalStateException} will be thrown with a detailed error message, 
+     * otherwise, nothing happens.
+     * @throws IllegalStateException    if some errors were detected and stored.
+     */
+    private void verifyErrors() throws IllegalStateException {
+        log.entry();
+        
+        String errorMsg = "";
+        if (!this.missingUberonIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated Uberon IDs: " + 
+                Utils.CR;
+            for (String uberonId: this.missingUberonIds) {
+                errorMsg += uberonId + Utils.CR;
+            }
+        }
+        if (!this.missingTaxonIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated taxon IDs: " + 
+                Utils.CR;
+            for (int taxonId: this.missingTaxonIds) {
+                errorMsg += taxonId + Utils.CR;
+            }
+        }
+        if (!this.idsNotExistingInTaxa.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, Uberon IDs annotated with a taxon " +
+                    "there are not supposed to exist in: " + Utils.CR;
+            for (Entry<String, Set<Integer>> entry: this.idsNotExistingInTaxa.entrySet()) {
+                for (int taxonId: entry.getValue()) {
+                    errorMsg += entry.getKey() + " - " + taxonId + Utils.CR;
+                }
+            }
+        }
+        if (!this.missingECOIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated ECO IDs: " + 
+                Utils.CR;
+            for (String ecoId: this.missingECOIds) {
+                errorMsg += ecoId + Utils.CR;
+            }
+        }
+        if (!this.missingHOMIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated HOM IDs: " + 
+                Utils.CR;
+            for (String homId: this.missingHOMIds) {
+                errorMsg += homId + Utils.CR;
+            }
+        }
+        if (!this.missingCONFIds.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, unknown or deprecated CONF IDs: " + 
+                Utils.CR;
+            for (String confId: this.missingCONFIds) {
+                errorMsg += confId + Utils.CR;
+            }
+        }
+        if (!errorMsg.equals("")) {
+            throw log.throwing(new IllegalStateException(errorMsg));
+        }
+        
+        log.exit();
+    }
+
+
+    /**
+     * A method to check the correctness of a line of annotation. If there is 
+     * a format exception in the annotation (for instance, an empty Uberon ID, 
+     * or a taxon ID that is not an {@code Integer}), an {@code IllegalArgumentException} 
+     * will be thrown right away. If there is a problem of incorrect information 
+     * provided (for instance, a non-existing Uberon ID), this incorrect information 
+     * is stored to be displayed later (possibly after reading all lines of annotations). 
+     * This is to avoid correcting only one information at a time, a re-running 
+     * this class after each correction. This way, we will see all the errors 
+     * at once. If the line of annotation was incorrect in any way, this method 
+     * returns {@code false}.
+     * <p>
+     * The line of annotation is checked thanks to the other arguments provided to 
+     * this method. The following checks are performed: 
+     * <ul>
+     * <li>If an Uberon ID cannot be found in {@code taxonConstraints}, it will be 
+     * stored in {@link #missingUberonIds}.
+     * <li>If an Uberon term is annotated with a taxon it is not supposed to exist in, 
+     * the Uberon and taxon IDs will be stored in {@link #idsNotExistingTaxa}.
+     * <li>If a taxon ID cannot be found in {@code taxonIds}, it will be stored in 
+     * {@link #missingTaxonIds}.
+     * <li>If an ECO ID cannot be found in the ontology wrapped in {@code ecoOntWrapper}, 
+     * it will be stored in {@link #missingECOIds}.
+     * <li>If a HOM ID cannot be found in the ontology wrapped in {@code homOntWrapper}, 
+     * it will be stored in {@link #missingHOMIds}.
+     * <li>If a CONF ID cannot be found in the ontology wrapped in {@code confOntWrapper}, 
+     * it will be stored in {@link #missingCONFIds}.
+     * </ul>
+     * 
+     * @param annotation        A {@code Map} that represents a line of annotation. 
+     *                          See {@link #extractAnnotations(String)} for details 
+     *                          about the key-value pairs in this {@code Map}.
+     * @param taxonConstraints  A {@code Map} where keys are IDs of Uberon terms, 
+     *                          and values are {@code Set}s of {@code Integer}s 
+     *                          containing the IDs of taxa in which the Uberon term 
+     *                          exists.
+     * @param taxonIds          A {@code Set} of {@code Integer}s that are the taxon IDs 
+     *                          of all taxa that were used to define taxon constraints 
+     *                          on Uberon terms.
+     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
+     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
+     *                          (ontology of homology an related concepts).
+     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
+     *                          code ontology.
+     * @return                  {@code false} if the line of annotation contained 
+     *                          any error.
+     * @throws IllegalArgumentException If {@code annotation} contains some incorrectly 
+     *                                  formatted information.
+     */
+    private boolean checkAnnotation(Map<String, Object> annotation, 
+            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
+            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
+            OWLGraphWrapper confOntWrapper) throws IllegalArgumentException {
+        log.entry(annotation, taxonConstraints, taxonIds, ecoOntWrapper, 
+                homOntWrapper, confOntWrapper);
         
         //if there is a format error, it is different than from non-existing IDs, 
         //we will throw an exception right away.
         boolean formatError = false;
+        boolean allGood = true;
         
         int taxonId = (Integer) annotation.get(TAXON_COL_NAME);
         if (taxonId == 0) {
             formatError = true;
+            allGood = false;
         }
         if (!taxonIds.contains(taxonId)) {
             this.missingTaxonIds.add(taxonId);
+            allGood = false;
         }
         
         for (String uberonId: this.parseEntityColumn(
                 (String) annotation.get(ENTITY_COL_NAME))) {
             if (StringUtils.isBlank(uberonId)) {
                 formatError = true;
+                allGood = false;
             }
             
             Set<Integer> existsIntaxa = taxonConstraints.get(uberonId);
             if (existsIntaxa == null) {
                 this.missingUberonIds.add(uberonId);
+                allGood = false;
             } else if (!existsIntaxa.contains(taxonId)) {
                 if (this.idsNotExistingInTaxa.get(uberonId) == null) {
                     this.idsNotExistingInTaxa.put(uberonId, new HashSet<Integer>());
                 }
                 this.idsNotExistingInTaxa.get(uberonId).add(taxonId);
+                allGood = false;
             }
         }
         
+        String qualifier = (String) annotation.get(QUALIFIER_COL_NAME);
+        if (qualifier != null && !qualifier.trim().equalsIgnoreCase(NEGATE_QUALIFIER)) {
+            formatError = true;
+            allGood = false;
+        }
+        
+        String refId = this.getRefIdFromRefColValue((String) annotation.get(REF_COL_NAME));
+        if (refId == null || !refId.matches("\\S+?:\\S+")) {
+            formatError = true;
+            allGood = false;
+        }
+        
         String ecoId = (String) annotation.get(ECO_COL_NAME);
-        if (ecoId != null && ecoOntWrapper.getOWLClassByIdentifier(ecoId) == null) {
-            this.missingECOIds.add(ecoId);
+        if (ecoId != null) {
+            OWLClass cls = ecoOntWrapper.getOWLClassByIdentifier(ecoId.trim());
+            if (cls == null || ecoOntWrapper.isObsolete(cls)) {
+                this.missingECOIds.add(ecoId);
+                allGood = false;
+            }
         }
         
         String homId = (String) annotation.get(HOM_COL_NAME);
-        if (homId != null && homOntWrapper.getOWLClassByIdentifier(homId) == null) {
-            this.missingHOMIds.add(homId);
+        if (homId != null) {
+            OWLClass cls = homOntWrapper.getOWLClassByIdentifier(homId.trim());
+            if (cls == null || homOntWrapper.isObsolete(cls)) {
+                this.missingHOMIds.add(homId);
+                allGood = false;
+            }
         }
         
         String confId = (String) annotation.get(CONF_COL_NAME);
-        if (confId != null && confOntWrapper.getOWLClassByIdentifier(confId) == null) {
-            this.missingCONFIds.add(confId);
+        if (confId != null) {
+            OWLClass cls = confOntWrapper.getOWLClassByIdentifier(confId.trim());
+            if (cls == null || confOntWrapper.isObsolete(cls)) {
+                this.missingCONFIds.add(confId);
+                allGood = false;
+            }
         }
         
         if (StringUtils.isBlank(ecoId) || StringUtils.isBlank(homId) || 
                 StringUtils.isBlank(confId)) {
             formatError = true;
+            allGood = false;
         }
         
         if (formatError) {
@@ -492,7 +902,7 @@ public class SimilarityAnnotation {
                     "for some values, annotation line is: " + annotation));
         }
         
-        log.exit();
+        return log.exit(allGood);
     }
     
     /**
@@ -507,16 +917,99 @@ public class SimilarityAnnotation {
      *                  the similarity annotation file.
      * @return          A {@code List} of {@code String}s that contains the individual 
      *                  Uberon ID(s), order by alphabetical order.
+     * @see #termsToColumnValue(List)
      */
     private List<String> parseEntityColumn(String entity) {
         log.entry(entity);
         
+        if (entity == null) {
+            return log.exit(null);
+        }
         String[] uberonIds = entity.split("\\|,");
         //perform the alphabetical ordering
         List<String> ids = new ArrayList<String>(Arrays.asList(uberonIds));
         Collections.sort(ids);
         
         return log.exit(ids);
+    }
+    /**
+     * Gets a reference ID from a value in the column {@link #REF_COL_NAME}. This is 
+     * because in the curator annotation file, reference titles can be mixed in 
+     * the column containing reference IDs, so we need to extract them.
+     * 
+     * @param refColValue   A {@code String} that is a value retrieved from 
+     *                      the column {@link #REF_COL_NAME}.
+     * @return              A {@code String} corresponding to a reference ID 
+     *                      extracted from {@code refColValue}.
+     * @throws IllegalArgumentException     If {@code refColValue} has an incorrect 
+     *                                      format.
+     */
+    private String getRefIdFromRefColValue(String refColValue) 
+            throws IllegalArgumentException {
+        log.entry(refColValue);
+        if (refColValue == null) {
+            return log.exit(null);
+        }
+        
+        Matcher m = REF_COL_PATTERN.matcher(refColValue);
+        if (m.matches()) {
+            return log.exit(m.group(REF_ID_PATTERN_GROUP).trim());
+        }
+        throw log.throwing(new IllegalArgumentException("Incorrect format for " +
+        		"the reference column: " + refColValue));
+    }
+    /**
+     * Gets a reference title from a value in the column {@link #REF_COL_NAME}. This is 
+     * because in the curator annotation file, reference titles can be mixed in 
+     * the column containing reference IDs, so we need to extract them.
+     * 
+     * @param refColValue   A {@code String} that is a value retrieved from 
+     *                      the column {@link #REF_COL_NAME}.
+     * @return              A {@code String} corresponding to a reference title 
+     *                      extracted from {@code refColValue}.
+     * @throws IllegalArgumentException     If {@code refColValue} has an incorrect 
+     *                                      format.
+     */
+    private String getRefTitleFromRefColValue(String refColValue) 
+            throws IllegalArgumentException {
+        log.entry(refColValue);
+        if (refColValue == null) {
+            return log.exit(null);
+        }
+        
+        Matcher m = REF_COL_PATTERN.matcher(refColValue);
+        if (m.matches()) {
+            String refTitle = m.group(REF_TITLE_PATTERN_GROUP);
+            if (refTitle == null) {
+                return log.exit(null);
+            }
+            return log.exit(refTitle.trim());
+        }
+        throw log.throwing(new IllegalArgumentException("Incorrect format for " +
+                "the reference column: " + refColValue));
+    }
+    /**
+     * Generates a {@code String} based on {@code terms}, that can be used as value 
+     * of a column in a similarity annotation file. This is because a same column 
+     * can contain multiple values (for instance, a same entity represented by 
+     * the union of several Uberon IDs, or, a same reference that have different 
+     * IDs). The order of the {@code String}s in {@code terms} will be preserved. 
+     * 
+     * @param uberonIds A {@code List} of {@code String}s that are the terms used 
+     *                  in a same column.
+     * @return          A {@code String} that is the formatting of {@code terms} 
+     *                  to be used in the column of an annotation file.
+     */
+    private String termsToColumnValue(List<String> terms) {
+        log.entry(terms);
+        String colValue = "";
+        for (String term: terms) {
+            if (!colValue.equals("")) {
+                colValue += SEPARATOR;
+            }
+            colValue += term.trim();
+        }
+        return log.exit(colValue);
     }
     
     /**

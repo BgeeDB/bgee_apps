@@ -66,8 +66,8 @@ public class SimilarityAnnotationTest extends TestAncestor {
         row1.put(SimilarityAnnotation.QUALIFIER_COL_NAME, null);
         row1.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:1");
         row1.put(SimilarityAnnotation.HOM_NAME_COL_NAME, "HOMName1");
-        row1.put(SimilarityAnnotation.REFERENCE_COL_NAME, "myRef:1");
-        row1.put(SimilarityAnnotation.REFERENCE_TITLE_COL_NAME, "myRefTitle1");
+        row1.put(SimilarityAnnotation.REF_COL_NAME, "myRef:1");
+        row1.put(SimilarityAnnotation.REF_TITLE_COL_NAME, "myRefTitle1");
         row1.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
         row1.put(SimilarityAnnotation.ECO_NAME_COL_NAME, "ECOName1");
         row1.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:1");
@@ -87,8 +87,8 @@ public class SimilarityAnnotationTest extends TestAncestor {
         row2.put(SimilarityAnnotation.QUALIFIER_COL_NAME, "NOT");
         row2.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:2");
         row2.put(SimilarityAnnotation.HOM_NAME_COL_NAME, null);
-        row2.put(SimilarityAnnotation.REFERENCE_COL_NAME, "myRef:2");
-        row2.put(SimilarityAnnotation.REFERENCE_TITLE_COL_NAME, null);
+        row2.put(SimilarityAnnotation.REF_COL_NAME, "myRef:2");
+        row2.put(SimilarityAnnotation.REF_TITLE_COL_NAME, null);
         row2.put(SimilarityAnnotation.ECO_COL_NAME, null);
         row2.put(SimilarityAnnotation.ECO_NAME_COL_NAME, null);
         row2.put(SimilarityAnnotation.CONF_COL_NAME, "CONF:2");

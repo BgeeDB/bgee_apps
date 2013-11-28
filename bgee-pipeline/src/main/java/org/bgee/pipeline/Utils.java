@@ -47,6 +47,11 @@ public class Utils {
     public final static CsvPreference TSVCOMMENTED = 
             new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
             skipComments(new CommentStartsWith("//")).build();
+    /**
+     * A {@code String} corresponding to {@code System.getProperty("line.separator")}.
+     * CR stands for Carriage Return.
+     */
+    public final static String CR = System.getProperty("line.separator");
 
     
     /**
@@ -285,5 +290,25 @@ public class Utils {
             }
             return log.exit(values);
         }
+    }
+    
+    /**
+     * Checks whether {@code toTest} contains any white space characters, as defined 
+     * by the method {@code java.lang.Character.isWhitespace}.
+     * 
+     * @param toTest    The {@code String} to search for white space.
+     * @return          {@code true} if {@code toTest} contained any white space 
+     *                  characters, {@code false} otherwise.
+     */
+    public boolean containsWhiteSpace(String toTest) {
+        log.entry(toTest);
+        if(toTest != null){
+            for(int i = 0; i < toTest.length(); i++){
+                if(Character.isWhitespace(toTest.charAt(i))){
+                    return log.exit(true);
+                }
+            }
+        }
+        return log.exit(false);
     }
 }

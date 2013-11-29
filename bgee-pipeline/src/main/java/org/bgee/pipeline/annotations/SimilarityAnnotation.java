@@ -419,7 +419,7 @@ public class SimilarityAnnotation {
                 //get the proper CellProcessors
                 CellProcessor[] processors = new CellProcessor[listReader.length()];
                 for (int i = 0; i < listReader.length(); i++) {
-                    if (header[i] != null) {
+                    if (i < header.length && header[i] != null) {
                         if (header[i].equalsIgnoreCase(ENTITY_COL_NAME) || 
                                 header[i].equalsIgnoreCase(HOM_COL_NAME) || 
                                 header[i].equalsIgnoreCase(REF_COL_NAME) || 
@@ -465,7 +465,7 @@ public class SimilarityAnnotation {
                     if (value != null && value instanceof String) {
                         value = ((String) value).trim();
                     }
-                    if (header[i] != null) {
+                    if (i < header.length && header[i] != null) {
                         valuesMapped.put(header[i], value);
                     }
                     i++;

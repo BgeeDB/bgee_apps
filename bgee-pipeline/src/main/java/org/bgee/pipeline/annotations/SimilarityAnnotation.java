@@ -658,8 +658,11 @@ public class SimilarityAnnotation {
                 //it is the responsibility of the checkAnnotation method to make sure 
                 //the Uberon IDs exist, so we accept null values, it's not our job here.
                 if (uberonOntWrapper.getOWLClassByIdentifier(uberonId) != null) {
-                    uberonNames.add(uberonOntWrapper.getLabel(
-                            uberonOntWrapper.getOWLClassByIdentifier(uberonId)));
+                    String name = uberonOntWrapper.getLabel(
+                            uberonOntWrapper.getOWLClassByIdentifier(uberonId));
+                    if (name != null) {
+                        uberonNames.add(name);
+                    }
                 }
             }
             //store Uberon IDs and names as column values

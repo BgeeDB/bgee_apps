@@ -4,12 +4,12 @@ import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,17 +28,20 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
+import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.supercsv.cellprocessor.FmtDate;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseDate;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvListReader;
+import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvListReader;
+import org.supercsv.io.ICsvMapWriter;
 
 import owltools.graph.OWLGraphWrapper;
 
@@ -218,6 +221,16 @@ public class SimilarityAnnotation {
      * when annotation was produced by the Bgee team.
      */
     public final static String BGEE_ASSIGNMENT = "Bgee";
+    /**
+     * A {@code String} that is the OBO-like ID if the evidence code to use for 
+     * a non-reviewed annotation.
+     */
+    public final static String AUTOMATIC_ECO = "ECO:0000313";
+    /**
+     * A {@code String} that is the value to use in the column {@link #CURATOR_COL_NAME} 
+     * for non-reviewed annotations.
+     */
+    public final static String AUTOMATIC_CURATOR = "vHOG";
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -231,6 +244,22 @@ public class SimilarityAnnotation {
      *   <li>path to the similarity annotation file to extract taxon IDs from.
      *   <li>path to the output file where write taxon IDs into, one per line.
      *   </ol>
+     * <li>If the first element in {@code args} is "generateReleaseFile", the action 
+     * will be to generate proper anntations from the raw annotation file, and 
+     * to write them in a file, see {@link #generateReleaseFile(String, String, String, 
+     * String, String, String, String, String)}.
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>the path to the raw annotation file.
+     *   <li>the path to the file containing taxon constraints. See {@link 
+     *   org.bgee.pipeline.uberon.TaxonConstraints}
+     *   <li>the path to the Uberon ontology.
+     *   <li>the path to the taxonomy ontology.
+     *   <li>the path to the homology and related concepts (HOM) ontology.
+     *   <li>the path to the ECO ontology.
+     *   <li>the path to the confidence information ontology.
+     *   <li>the path to the output file.
+     *   </ol>
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
@@ -240,9 +269,13 @@ public class SimilarityAnnotation {
      *                                      in output file.
      * @throws FileNotFoundException    If the annotation file provided could not be found.
      * @throws IOException              If the annotation file provided could not be read.
+     * @throws IOException
+     * @throws UnknownOWLOntologyException
+     * @throws OWLOntologyCreationException
      */
     public static void main(String[] args) throws UnsupportedEncodingException,
-        FileNotFoundException, IOException {
+        FileNotFoundException, IOException, UnknownOWLOntologyException, 
+        OWLOntologyCreationException, OBOFormatParserException {
         
         log.entry((Object[]) args);
         
@@ -253,6 +286,14 @@ public class SimilarityAnnotation {
                         "3 arguments, " + args.length + " provided."));
             }
             new SimilarityAnnotation().extractTaxonIdsToFile(args[1], args[2]);
+        } else if (args[0].equalsIgnoreCase("generateReleaseFile")) {
+            if (args.length != 9) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "9 arguments, " + args.length + " provided."));
+            }
+            new SimilarityAnnotation().generateReleaseFile(args[1], args[2], args[3], 
+                    args[4], args[5], args[6], args[7], args[8]);
         }
         
         log.exit();
@@ -473,30 +514,46 @@ public class SimilarityAnnotation {
     }
 
 
+    /**
+     * Generates the proper annotations to be released, from the raw annotations 
+     * from curators, and write them into {@code outputFile}. This method will 
+     * perform all necessary checks, will obtain names corresponding to the IDs used, 
+     * will generate summary annotation lines using the "multiple evidences" 
+     * confidence codes for related annotations, will order the generated annotations 
+     * for easier diff between releases. And will write the annotations 
+     * in {@code outputFile}.
+     * 
+     * @param annotFile             A {@code String} that is the path to the raw 
+     *                              annotation file.
+     * @param taxonConstraintsFile  A {@code String} that is the path to the file 
+     *                              containing taxon constraints. 
+     *                              See {@link org.bgee.pipeline.uberon.TaxonConstraints}
+     * @param uberonOntFile         A {@code String} that is the path to the Uberon 
+     *                              ontology.
+     * @param taxOntFile            A {@code String} that is the path to the taxonomy 
+     *                              ontology.
+     * @param homOntFile            A {@code String} that is the path to the homology  
+     *                              and related concepts (HOM) ontology.
+     * @param ecoOntFile            A {@code String} that is the path to the ECO 
+     *                              ontology.
+     * @param confOntFile           A {@code String} that is the path to the confidence 
+     *                              information ontology.
+     * @param outputFile            A {@code String} that is the path to the output file.
+     * @throws FileNotFoundException
+     * @throws IllegalArgumentException
+     * @throws IOException
+     * @throws UnknownOWLOntologyException
+     * @throws OWLOntologyCreationException
+     */
     public void generateReleaseFile(String annotFile, String taxonConstraintsFile, 
-            String homOntFile, String ecoOntFile, String outputFile) {
-        log.entry(annotFile, taxonConstraintsFile, homOntFile, ecoOntFile, outputFile);
+            String uberonOntFile, String taxOntFile, String homOntFile, 
+            String ecoOntFile, String confOntFile, String outputFile) 
+            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
+            OWLOntologyCreationException, OBOFormatParserException {
+        log.entry(annotFile, taxonConstraintsFile, uberonOntFile, taxOntFile, 
+                homOntFile, ecoOntFile, confOntFile, outputFile);
         
-        log.exit();
-    }
-    
-    public void generateReleaseFile(String annotFile, String taxonConstraintsFile, 
-            OWLOntology homOnt, OWLOntology ecoOnt, String outputFile) {
-        log.entry(annotFile, taxonConstraintsFile, homOnt, ecoOnt, outputFile);
-        
-        
-        
-        log.exit();
-    }
-    
-    public List<Map<String, Object>> generateReleaseData(String annotFile, 
-            String taxonConstraintsFile, OWLOntology uberonOnt, OWLOntology homOnt, 
-            OWLOntology ecoOnt, OWLOntology confOnt) throws FileNotFoundException, 
-            IllegalArgumentException, IOException, UnknownOWLOntologyException, 
-            OWLOntologyCreationException {
-        log.entry(annotFile, taxonConstraintsFile, uberonOnt, homOnt, ecoOnt, confOnt);
-        
-        //get the annotations
+      //get the annotations
         List<Map<String, Object>> annotations = this.extractAnnotations(annotFile);
         
         //now, get all the information required to perform correctness checks 
@@ -506,15 +563,73 @@ public class SimilarityAnnotation {
         Set<Integer> taxonIds = extractor.extractTaxonIds(taxonConstraintsFile);
         Map<String, Set<Integer>> taxonConstraints = 
                 extractor.extractTaxonConstraints(taxonConstraintsFile);
-        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(uberonOnt);
-        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(ecoOnt);
-        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(homOnt);
-        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(confOnt);
+        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(uberonOntFile));
+        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(taxOntFile));
+        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(ecoOntFile));
+        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(homOntFile));
+        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(confOntFile));
         
+        List<Map<String, Object>> properAnnots = this.generateReleaseData(annotations, 
+                taxonConstraints, taxonIds, uberonOntWrapper, taxOntWrapper, 
+                ecoOntWrapper, homOntWrapper, confOntWrapper);
         
-        return null;
+        //write the file
+        String[] header = new String[] {HOM_COL_NAME, HOM_NAME_COL_NAME, 
+                ENTITY_COL_NAME, ENTITY_NAME_COL_NAME, QUALIFIER_COL_NAME, 
+                TAXON_COL_NAME, TAXON_NAME_COL_NAME, LINE_TYPE_COL_NAME, 
+                ECO_COL_NAME, ECO_NAME_COL_NAME, CONF_COL_NAME, CONF_NAME_COL_NAME, 
+                REF_COL_NAME, REF_TITLE_COL_NAME, SUPPORT_TEXT_COL_NAME, 
+                ASSIGN_COL_NAME, CURATOR_COL_NAME, DATE_COL_NAME};
+        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
+                new NotNull(), new NotNull(), new Optional(), 
+                new NotNull(), new NotNull(), new NotNull(), 
+                new NotNull(), new NotNull(), new NotNull(), new NotNull(), 
+                new NotNull(), new Optional(), new Optional(), 
+                new NotNull(), new NotNull(), new Optional(new FmtDate("yyyy-MM-dd"))};
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
+                Utils.TSVCOMMENTED)) {
+            
+            mapWriter.writeHeader(header);
+            for (Map<String, Object> annot: properAnnots) {
+                mapWriter.write(annot, header, processors);
+            }
+        }
+        
+        log.exit();
     }
     
+    /**
+     * Generates the proper annotations to be released, from the raw annotations 
+     * from curators. This method will perform all necessary checks, will obtain 
+     * names corresponding to the IDs used, will generate summary annotation lines 
+     * using the "multiple evidences" confidence codes for related annotations, 
+     * will order the generated annotations for easier diff between releases.
+     *  
+     * @param rawAnnots         A {@code List} of {@code Map}s, where 
+     *                          each {@code Map} represents an annotation line.
+     * @param taxonConstraints  A {@code Map} where keys are IDs of Uberon terms, 
+     *                          and values are {@code Set}s of {@code Integer}s 
+     *                          containing the IDs of taxa in which the Uberon term 
+     *                          exists.
+     * @param taxonIds          A {@code Set} of {@code Integer}s that are the taxon IDs 
+     *                          of all taxa that were used to define taxon constraints 
+     *                          on Uberon terms.
+     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
+     * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
+     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
+     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
+     *                          (ontology of homology an related concepts).
+     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
+     *                          code ontology.
+     * @return                  A {@code List} of {@code Map}s, where each {@code Map} 
+     *                          represents a verified, completed, or generated 
+     *                          annotation line.
+     */
     public List<Map<String, Object>> generateReleaseData(
             List<Map<String, Object>> rawAnnots, Map<String, Set<Integer>> taxonConstraints, 
             Set<Integer> taxonIds, OWLGraphWrapper uberonOntWrapper, 
@@ -590,6 +705,12 @@ public class SimilarityAnnotation {
                     releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
                             ecoOntWrapper.getOWLClassByIdentifier(ecoId)));
                 }
+            } else {
+                //otherwise it means that it is an unreviewed annotations
+                releaseAnnot.put(ECO_COL_NAME, AUTOMATIC_ECO);
+                releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
+                        ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO)));
+                releaseAnnot.put(CURATOR_COL_NAME, AUTOMATIC_CURATOR);
             }
             
             //CONF

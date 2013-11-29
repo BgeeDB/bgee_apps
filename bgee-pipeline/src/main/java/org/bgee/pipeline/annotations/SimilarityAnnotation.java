@@ -449,11 +449,7 @@ public class SimilarityAnnotation {
                             
                             processors[i] = new ParseDate("yyyy-MM-dd");
                             
-                        } else {
-                            throw log.throwing(new IllegalArgumentException(
-                                    "The provided file contains an unknown column: " + 
-                                    header[i]));
-                        }
+                        } 
                     } else {
                         processors[i] = new Optional();
                     }

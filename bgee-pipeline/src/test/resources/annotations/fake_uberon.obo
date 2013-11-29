@@ -1,0 +1,14 @@
+format-version: 1.4
+ontology: uberon
+
+[Term]
+id: UBERON:1
+name: uberon 1
+
+[Term]
+id: UBERON:2
+name: uberon 2
+
+[Term]
+id: UBERON:3
+name: uberon 3

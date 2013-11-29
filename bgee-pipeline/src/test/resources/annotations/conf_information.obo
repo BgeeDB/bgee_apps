@@ -1,8 +1,5 @@
 format-version: 1.4
-date: 04:11:2012 14:44
-saved-by: admin
-auto-generated-by: OBO-Edit 2.1-beta17
-default-namespace: default_namespace
+ontology: conf_information
 
 [Term]
 id: CONF:0000000
@@ -97,7 +94,7 @@ intersection_of: CONF:0000029 ! high confidence level
 
 [Term]
 id: CONF:0000004
-name: Medium confidence assertion from single evidence
+name: medium confidence assertion from single evidence
 def: "A confidence information related to assertions supported by a moderately trusted evidence." [Bgee:draft]
 is_a: CONF:0000001 ! confidence from single evidence
 intersection_of: CONF:0000001 ! confidence from single evidence

@@ -1,0 +1,546 @@
+format-version: 1.2
+date: 02:12:2009 15:16
+saved-by: jroux
+auto-generated-by: OBO-Edit 2.1-beta1
+default-namespace: homology_and_related_concepts_in_biology
+namespace-id-rule: * HOM:$sequence(7,0,9999999)$
+
+[Term]
+id: HOM:0000000
+name: similarity
+def: "Relation between biological objects that resemble or are related to each other sufficiently to warrant a comparison." [BGEE:curator]
+synonym: "correspondence" RELATED [DOI:10.1007/BF02814479 "Richter S (2005) Homologies in phylogenetic analyses�concept and tests. Theory in Biosciences 124, 2: 105-120"]
+synonym: "resemblance" RELATED []
+synonym: "sameness" EXACT []
+xref: ECO:0000041 "inferred from similarity"
+xref: SO:similar_to
+
+[Term]
+id: HOM:0000001
+name: homology
+def: "Similarity that results from common evolutionary origin." [DOI:10.1002/bies.950180611 "Bolker JA and Rudolf AR (1996) Developmental genetics and traditional homology. BioEssays 18, 6: 489-494", DOI:10.1002/jmor.1051730307 "van Valen LM (1982) Homology and causes. Journal of Morphology 173, 3: 305-312", DOI:10.1007/BF02814480 "Scholtz G (2005) Homology and ontogeny: pattern and process in comparative developmental biology. Theory in Biosciences 124, 2: 121-143"]
+comment: This broad definition encompasses all the working definitions proposed so far in the literature.
+is_a: HOM:0000000 ! similarity
+disjoint_from: HOM:0000002 ! homoplasy
+
+[Term]
+id: HOM:0000002
+name: homoplasy
+def: "Similarity that results from independent evolution." [DOI:10.1016/j.jhevol.2006.11.010 "Hall BK (2007) Homoplasy and homology: Dichotomy or continuum? Journal of Human Evolution 52: 473-479"]
+synonym: "analogy" RELATED []
+is_a: HOM:0000000 ! similarity
+
+[Term]
+id: HOM:0000003
+name: homocracy
+def: "Similarity that is characterized by the organization of anatomical structures through the expression of homologous or identical patterning genes." [DOI:10.1007/BF02814484 "Theissen G (2005) Birth, life and death of developmental control genes: New challenges for the homology concept. Theory in Biosciences 124:199-212", DOI:10.1007/s00427-003-0301-4 "Nielsen C and Martinez P (2003) Patterns of gene expression: homology or homocracy? Development Genes and Evolution 213: 149-154", DOI:10.1186/1742-9994-2-15 "Sanetra M et al. (2005) Conservation and co-option in developmental programmes: the importance of homology relationships. Frontiers in Zoology 2:15"]
+comment: Homology and homocracy are not mutually exclusive. The homology relationships of patterning genes may be unresolved and thus may include orthologues and paralogues.
+xref: ECO:0000075 "inferred from gene expression similarity"
+is_a: HOM:0000000 ! similarity
+
+[Term]
+id: HOM:0000004
+name: convergence
+def: "Homoplasy that involves different underlying mechanisms or structures." [DOI:10.1016/j.jhevol.2006.11.010 "Hall BK (2007) Homoplasy and homology: Dichotomy or continuum? Journal of Human Evolution 52: 473-479"]
+comment: Convergence usually implies a notion of adaptation.
+synonym: "analogy" RELATED []
+is_a: HOM:0000002 ! homoplasy
+
+[Term]
+id: HOM:0000005
+name: parallelism
+def: "Homoplasy that involves homologous underlying mechanisms or structures." [DOI:10.1016/j.jhevol.2006.11.010 "Hall BK (2007) Homoplasy and homology: Dichotomy or continuum? Journal of Human Evolution 52: 473-479"]
+comment: Can be applied for features present in closely related organisms but not present continuously in all the members of the lineage.
+synonym: "parallel evolution" EXACT []
+is_a: HOM:0000002 ! homoplasy
+
+[Term]
+id: HOM:0000006
+name: structural homology
+def: "Homology that is defined by similarity with regard to selected structural parameters." [DOI:10.1016/j.jhevol.2006.11.014 "Rendall D and Di Fiore A (2007) Homoplasy, homology, and the perceived special status of behavior in evolution. Journal of Human Evolution 52, 5: 504-521", DOI:10.1146/annurev.es.20.110189.000411 "Wagner GP (1989) The Biological Homology Concept. Annual Review of Ecology and Systematics 20: 51-69", ISBN:0123195837 "Lauder GV (1994) in Hall BK (Ed.) Homology: The Hierarchical Basis of Comparative Biology. Academic Press, p. 153"]
+synonym: "idealistic homology" RELATED []
+xref: ECO:0000071 "inferred from morphological similarity"
+xref: MI:2163 "by homology"
+is_a: HOM:0000001 ! homology
+
+[Term]
+id: HOM:0000007
+name: historical homology
+def: "Homology that is defined by common descent." [DOI:10.1016/S0169-5347(97)01125-7 "Abouheif E (1997) Developmental genetics and homology: a hierarchical approach. Trends in Ecology & Evolution, 12 405-408.", ISBN:0123195837 "Rieppel O (1994) in Hall BK (Ed.), Homology: The Hierarchical Basis of Comparative Biology. Academic Press, p. 65"]
+synonym: "cladistic homology" EXACT []
+synonym: "homology" BROAD []
+synonym: "phylogenetic homology" EXACT []
+synonym: "taxic homology" EXACT []
+synonym: "true homology" RELATED []
+xref: ECO:0000080 "inferred from phylogeny"
+xref: RO_proposed_relation:homologous_to
+xref: SO:0000330 "conserved_region"
+xref: SO:0000853 "homologous_region"
+xref: SO:0000857 "homologous"
+xref: SO:homologous_to
+xref: TAO:homologous_to
+is_a: HOM:0000001 ! homology
+
+[Term]
+id: HOM:0000008
+name: biological homology
+def: "Homology that is defined by sharing of a set of developmental constraints, caused by locally acting self-regulatory mechanisms of differentiation, between individualized parts of the phenotype." [DOI:10.1016/S0169-5347(97)01125-7 "Abouheif E (1997) Developmental genetics and homology: a hierarchical approach. Trends in Ecology & Evolution, 12 405-408.", DOI:10.1146/annurev.es.20.110189.000411 "Wagner GP (1989) The Biological Homology Concept. Annual Review of Ecology and Systematics 20: 51-69"]
+comment: Applicable only to morphology. A certain degree of ambiguity is accepted between biological homology and parallelism.
+synonym: "transformational homology" RELATED []
+xref: ECO:0000067 "inferred from developmental similarity"
+is_a: HOM:0000001 ! homology
+
+[Term]
+id: HOM:0000009
+name: reversal
+def: "Homoplasy that involves phenotypes similar to those seen in ancestors within the lineage." [DOI:10.1016/j.jhevol.2006.11.010 "Hall BK (2007) Homoplasy and homology: Dichotomy or continuum? Journal of Human Evolution 52: 473-479"]
+synonym: "atavism" EXACT []
+synonym: "reversion" RELATED []
+synonym: "rudiment" EXACT []
+is_a: HOM:0000002 ! homoplasy
+
+[Term]
+id: HOM:0000010
+name: syntenic homology
+def: "Structural homology that is detected by similarity in content and organization between chromosomes." [MeSH:Synteny]
+synonym: "synteny" RELATED []
+xref: MeSH:Synteny
+xref: SO:0000860 "syntenic"
+xref: SO:0005858 "syntenic_region"
+is_a: HOM:0000006 ! structural homology
+
+[Term]
+id: HOM:0000011
+name: paralogy
+def: "Historical homology that involves genes that diverged after a duplication event." [DOI:10.1016/S0168-9525(00)02005-9 "Fitch WM (2000) Homology: a personal view on some of the problems. Trends in Genetics 16:227-231.", DOI:10.1146/annurev.genet.39.073003.114725 "Koonin EV (2005) ORTHOLOGS, PARALOGS, AND EVOLUTIONARY GENOMICS. Annual Review of Genetics, 39: 309-338", PMID:5449325 "Fitch WM (1970) Distinguishing homologous from analogous proteins. Syst. zool. 19(2): 99-113."]
+xref: SO:0000854 "paralogous_region"
+xref: SO:0000859 "paralogous"
+xref: SO:paralogous_to
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000012
+name: syntenic paralogy
+def: "Paralogy that involves sets of syntenic blocks." [DOI:10.1002/1097-010X(20001215)288\:4<345\:\:AID-JEZ7>3.0.CO;2-Y "Coulier F et al. (2000) MetaHox gene clusters. Journal of Experimental Zoology 288:345-351", DOI:10.1186/1471-213X-7-100 "Woolfe A et al. (2007) CONDOR: a database resource of developmentally associated conserved non-coding elements. BMC Developmental Biology 7:100"]
+synonym: "duplicon" RELATED []
+synonym: "paralogon" RELATED []
+is_a: HOM:0000010 ! syntenic homology
+is_a: HOM:0000011 ! paralogy
+
+[Term]
+id: HOM:0000013
+name: syntenic orthology
+def: "Syntenic homology that involves chromosomes of different species." [DOI:10.1101/gr.6380007 "Pontius JU et al. (2007) Initial sequence and comparative analysis of the cat genome. Genome Research, 17: 1675-1689  ."]
+is_a: HOM:0000010 ! syntenic homology
+
+[Term]
+id: HOM:0000014
+name: partial homology
+def: "Structural homology that involves complex structures from which only a fraction of the elements that can be isolated are separately homologous." [ISBN:0123195837 "Hillis DM (1994) in Hall BK (Ed.) Homology: The Hierarchical Basis of Comparative Biology. Academic Press, p. 348", ISBN:0123195837 "Sattler R (1994) in Hall BK (Ed.) Homology: The Hierarchical Basis of Comparative Biology. Academic Press, p. 425", ISBN:978-0471984931 "Hall BK (Ed.) (2000) HOMOLOGY : NOVARTIS FOUNDATION SYMPOSIUM 222. Wiley & Sons"]
+synonym: "fractional homology" EXACT []
+synonym: "mixed homology" RELATED []
+synonym: "modular homology" RELATED []
+synonym: "partial correspondence" RELATED []
+synonym: "percent homology" RELATED []
+synonym: "segmental homology" EXACT []
+is_a: HOM:0000006 ! structural homology
+
+[Term]
+id: HOM:0000015
+name: protein structural homology
+def: "Structural homology that is detected at the level of the 3D protein structure, but maybe not at the level of the amino acid sequence." [DOI:10.1016/0022-2836(76)90195-9 "Rossmann MG and Argos P (1976) Exploring structural homology of proteins. Journal of Molecular Biology 105, 1:75-95"]
+xref: MeSH:Structural Homology\, Protein
+is_a: HOM:0000006 ! structural homology
+
+[Term]
+id: HOM:0000016
+name: non functional homology
+def: "Structural homology that involves a pseudogenic feature and its functional ancestor." [SO:non_functional_homolog_of]
+synonym: "pseudogene" BROAD []
+xref: SO:non_functional_homolog_of
+is_a: HOM:0000006 ! structural homology
+disjoint_from: HOM:0000062 ! equivalogy
+
+[Term]
+id: HOM:0000017
+name: orthology
+def: "Historical homology that involves genes that diverged after a speciation event." [DOI:10.1007/BF02814484 "Theissen G (2005) Birth, life and death of developmental control genes: New challenges for the homology concept. Theory in Biosciences 124:199-212", DOI:10.1016/S0168-9525(00)02005-9 "Fitch WM (2000) Homology: a personal view on some of the problems. Trends in Genetics 16:227-231.", DOI:10.1146/annurev.genet.39.073003.114725 "Koonin EV (2005) ORTHOLOGS, PARALOGS, AND EVOLUTIONARY GENOMICS. Annual Review of Genetics, 39: 309-338", PMID:5449325 "Fitch WM (1970) Distinguishing homologous from analogous proteins. Syst. zool. 19(2): 99-113."]
+comment: The term is sometimes also used for anatomical structures.
+xref: ECO:00000060 "inferred from sequence orthology"
+xref: SO:0000855 "orthologous_region"
+xref: SO:0000858 "orthologous"
+xref: SO:orthologous_to
+is_a: HOM:0000007 ! historical homology
+disjoint_from: HOM:0000011 ! paralogy
+
+[Term]
+id: HOM:0000018
+name: xenology
+def: "Historical homology that is characterized by an interspecies (horizontal) transfer since the common ancestor." [DOI:10.1016/S0168-9525(00)02005-9 "Fitch WM (2000) Homology: a personal view on some of the problems. Trends in Genetics 16:227-231.", DOI:10.1146/annurev.genet.39.073003.114725 "Koonin EV (2005) ORTHOLOGS, PARALOGS, AND EVOLUTIONARY GENOMICS. Annual Review of Genetics, 39: 309-338"]
+comment: The term is sometimes also used for anatomical structures (e.g. in case of a symbiosis).
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000019
+name: 1 to 1 homology
+def: "Historical homology that involves two members sharing no other homologs in the lineages considered." [BGEE:curator]
+synonym: "1:1 homology" EXACT []
+synonym: "one-to-one homology" EXACT []
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000020
+name: 1 to 1 orthology
+def: "Orthology that involves two genes that did not experience any duplication after the speciation event that created them." [DOI:10.1007/BF02814484 "Theissen G (2005) Birth, life and death of developmental control genes: New challenges for the homology concept. Theory in Biosciences 124:199-212", http://www.ensembl.org/info/docs/compara/homology_method.html "Ensembl Compara documentation 07/2009"]
+synonym: "1:1 orthology" EXACT []
+synonym: "one-to-one orthology" EXACT []
+is_a: HOM:0000017 ! orthology
+is_a: HOM:0000019 ! 1 to 1 homology
+
+[Term]
+id: HOM:0000021
+name: allogeny
+def: "Relationship between recognizably corresponding characters that occurs in two or more taxa and have different generative bases." [DOI:10.1002/1521-1878(200009)22\:9<846\:\:AID-BIES10>3.0.CO;2-R "Butler AB and Saidel WM (2000) Defining sameness: historical, biological, and generative homology. Bioessays 22, 9: 846-53"]
+synonym: "generative homoplasy" EXACT []
+is_obsolete: true
+
+[Term]
+id: HOM:0000022
+name: ohnology
+def: "Paralogy that results from a whole genome duplication event." [DOI:10.1038/75560 "Wolfe K (2000) Robustness-it's not where you think it is. Nature Genetics 25, 3-4"]
+synonym: "homoeology" RELATED []
+is_a: HOM:0000011 ! paralogy
+
+[Term]
+id: HOM:0000023
+name: in-paralogy
+def: "Paralogy that results from a lineage-specific duplication subsequent to a given speciation event." [DOI:10.1146/annurev.genet.39.073003.114725 "Koonin EV (2005) ORTHOLOGS, PARALOGS, AND EVOLUTIONARY GENOMICS. Annual Review of Genetics, 39: 309-338"]
+synonym: "inparalogy" EXACT []
+synonym: "symparalogy" EXACT []
+is_a: HOM:0000011 ! paralogy
+
+[Term]
+id: HOM:0000024
+name: out-paralogy
+def: "Paralogy that results from a duplication preceding a given speciation event." [DOI:10.1146/annurev.genet.39.073003.114725 "Koonin EV (2005) ORTHOLOGS, PARALOGS, AND EVOLUTIONARY GENOMICS. Annual Review of Genetics, 39: 309-338"]
+synonym: "alloparalogy" EXACT []
+synonym: "outparalogy" EXACT []
+is_a: HOM:0000011 ! paralogy
+disjoint_from: HOM:0000023 ! in-paralogy
+
+[Term]
+id: HOM:0000025
+name: pro-orthology
+def: "1:many orthology that involves a gene in species A and one of its ortholog in species B, when duplications more recent than the species split have occurred in species B but not in species A." [DOI:10.1006/scdb.1999.0338 "Sharman AC (1999) Some new terms for duplicated genes. Seminars in Cell and Developmental Biology, 10, 5: 561-563", DOI:10.1038/nrg2099 "Wagner GP (2007) The developmental genetics of homology. Nature Reviews Genetics. 8, 6: 473-9"]
+is_a: HOM:0000034 ! 1 to many orthology
+
+[Term]
+id: HOM:0000026
+name: semi-orthology
+def: "1:many orthology that involves a gene in species A and its ortholog in species B, when duplications more recent than the species split have occurred in species A but not in species B." [DOI:10.1006/scdb.1999.0338 "Sharman AC (1999) Some new terms for duplicated genes. Seminars in Cell and Developmental Biology, 10, 5: 561-563", DOI:10.1038/nrg2099 "Wagner GP (2007) The developmental genetics of homology. Nature Reviews Genetics. 8, 6: 473-9"]
+comment: The converse of pro-orthologous.
+is_a: HOM:0000034 ! 1 to many orthology
+
+[Term]
+id: HOM:0000027
+name: serial homology
+def: "Iterative homology that involves structures arranged along the main body axis." [DOI:10.1146/annurev.es.20.110189.000411 "Wagner GP (1989) The Biological Homology Concept. Annual Review of Ecology and Systematics 20: 51-69"]
+synonym: "homonomy" RELATED []
+is_a: HOM:0000066 ! iterative homology
+
+[Term]
+id: HOM:0000028
+name: heterochronous homology
+def: "Biological homology that is characterized by changes, over evolutionary time, in the rate or timing of developmental events of homologous structures." [ISBN:978-0674639416 "Gould SJ (1985) Ontogeny and Phylogeny. Belknap Press of Harvard University Press"]
+synonym: "heterochrony" EXACT []
+is_a: HOM:0000008 ! biological homology
+
+[Term]
+id: HOM:0000029
+name: paedomorphorsis
+def: "Heterochronous homology that is produced by a retention in adults of a species of traits previously seen only in juveniles." [http://en.wikipedia.org/wiki/Pedomorphosis "Wikipedia 07/2009", ISBN:978-0674639416 "Gould SJ (1985) Ontogeny and Phylogeny. Belknap Press of Harvard University Press"]
+synonym: "juvenification" EXACT []
+synonym: "pedomorphosis" EXACT []
+is_a: HOM:0000028 ! heterochronous homology
+
+[Term]
+id: HOM:0000030
+name: peramorphosis
+def: "Heterochronous homology that is produced by a maturation of individuals of a species past adulthood, which take on hitherto unseen traits." [http://en.wikipedia.org/wiki/Peramorphosis "Wikipedia 07/2009"]
+is_a: HOM:0000028 ! heterochronous homology
+disjoint_from: HOM:0000029 ! paedomorphorsis
+
+[Term]
+id: HOM:0000031
+name: progenesis
+def: "Paedomorphosis that is produced by precocious sexual maturation of an organism still in a morphologically juvenile stage." [http://en.wikipedia.org/wiki/Progenesis "Wikipedia 07/2009", ISBN:978-0674639416 "Gould SJ (1985) Ontogeny and Phylogeny. Belknap Press of Harvard University Press"]
+is_a: HOM:0000029 ! paedomorphorsis
+
+[Term]
+id: HOM:0000032
+name: neoteny
+def: "Paedomorphosis that is produced by a retardation of somatic development." [http://en.wikipedia.org/wiki/Neoteny "Wikipedia 07/2009", ISBN:978-0674639416 "Gould SJ (1985) Ontogeny and Phylogeny. Belknap Press of Harvard University Press"]
+synonym: "juvenilization" EXACT []
+is_a: HOM:0000029 ! paedomorphorsis
+
+[Term]
+id: HOM:0000033
+name: mimicry
+def: "Convergence that results from co-evolution usually involving an evolutionary arms race." [http:\://en.wikipedia.org/wiki/Mimicry "Wikipedia 08/2009"]
+is_a: HOM:0000004 ! convergence
+created_by: admin
+creation_date: 2009-07-30T11:28:41Z
+
+[Term]
+id: HOM:0000034
+name: 1 to many orthology
+def: "Orthology that involves two genes when duplications more recent than the species split have occurred in one species but not the other." [DOI:10.1038/415741a "Theissen G (2002) Orthology: Secret life of genes. Nature 415:741", http://www.ensembl.org/info/docs/compara/homology_method.html "Ensembl Compara documentation 07/2009"]
+synonym: "1:many orthology" EXACT []
+synonym: "co-orthology" RELATED []
+synonym: "many to 1 orthology" RELATED []
+synonym: "one-to-many orthology" EXACT []
+is_a: HOM:0000017 ! orthology
+is_a: HOM:0000037 ! 1 to many homology
+
+[Term]
+id: HOM:0000036
+name: many to many homology
+def: "Historical homology that involves two members of a larger set of homologs." [DOI:10.1093/molbev/msp002 "Raghupathy N and Durand D (2009) Gene Cluster Statistics with Gene Families. Mol Biol Evol. 26:957-968."]
+synonym: "many-to-many homology" EXACT []
+synonym: "many:many homology " EXACT []
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000037
+name: 1 to many homology
+def: "Historical homology that involves a structure that has no other homologs in the species in which it is defined, and several homologous structures in another species." [BGEE:curator]
+synonym: "1:many homology" RELATED []
+synonym: "one-to-many homology" EXACT []
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000042
+name: apomorphy
+def: "Historical homology that is based on recent shared ancestry, characterizing a monophyletic group." [ISBN:978-0252068140 "Hennig W (1966) Phylogenetic systematics. University of Illinois Press, Urbana."]
+synonym: "synapomorphy" RELATED []
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000043
+name: plesiomorphy
+def: "Historical homology that is based on distant shared ancestry." [ISBN:978-0252068140 "Hennig W (1966) Phylogenetic systematics. University of Illinois Press, Urbana."]
+comment: This term is usually contrasted to apomorphy.
+synonym: "symplesiomorphy" RELATED []
+is_a: HOM:0000007 ! historical homology
+disjoint_from: HOM:0000042 ! apomorphy
+
+[Term]
+id: HOM:0000044
+name: deep homology
+def: "Homocracy that involves morphologically and phylogenetically disparate structures that are the result of parallel evolution." [DOI:10.1007/BF02814485 "Rutishauser R and Moline P (2005) Evo-devo and the search for homology (\"sameness\") in biological systems. Theory in Biosciences 124:213-241", DOI:10.1038/nature07891 "Shubin N, Tabin C and Carroll S (2009) Deep homology and the origins of evolutionary novelty, Nature, 457, 818-823"]
+comment: Used for structures in distantly related taxa.
+synonym: "deep genetic homology" EXACT []
+synonym: "generative homology" RELATED []
+synonym: "homoiology" RELATED []
+is_a: HOM:0000003 ! homocracy
+is_a: HOM:0000005 ! parallelism
+
+[Term]
+id: HOM:0000045
+name: hemiplasy
+def: "Historical homology that is characterized by topological discordance between a gene tree and a species tree attributable to the phylogenetic sorting of genetic polymorphisms across successive nodes in a species tree." [DOI:10.1073/pnas.0807433105 "Robinson TJ et al.(2008) Hemiplasy and homoplasy in the karyotypic phylogenies of mammals, PNAS, 105, 38: 14477-14481"]
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000046
+name: gametology
+def: "Historical homology that involves not recombining and subsequently differentiated sex chromosomes." [PMID:11110898 "Garcia-Moreno J and Mindell DP (2000) Rooting a Phylogeny with Homologous Genes on Opposite Sex Chromosomes (Gametologs): A Case Study Using Avian CHD, Mol Biol Evol, 17: 1826-1832"]
+is_a: HOM:0000047 ! chromosomal homology
+
+[Term]
+id: HOM:0000047
+name: chromosomal homology
+def: "Historical homology that involves the chromosomes able to pair (synapse) during meiosis." [ISBN:0195307615 "King RC and Stansfield WD (1997). A Dictionary of Genetics (5th Edition ed.). Oxford University Press"]
+xref: MeSH:Chromosome Pairing
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000048
+name: many to many orthology
+def: "Orthology that involves two genes that experienced duplications more recent than the species split that created them." [DOI:10.1038/415741a "Theissen G (2002) Orthology: Secret life of genes. Nature 415:741", http://www.ensembl.org/info/docs/compara/homology_method.html "Ensembl Compara documentation 07/2009"]
+synonym: "co-orthology" RELATED []
+synonym: "many-to-many orthology" EXACT []
+synonym: "many:many orthology" EXACT []
+synonym: "trans-homology" RELATED []
+synonym: "trans-orthology" EXACT []
+is_a: HOM:0000017 ! orthology
+is_a: HOM:0000036 ! many to many homology
+
+[Term]
+id: HOM:0000049
+name: within-species paralogy
+def: "Paralogy that involves genes from the same species." [http://www.ensembl.org/info/docs/compara/homology_method.html "Ensembl Compara documentation 07/2009"]
+is_a: HOM:0000011 ! paralogy
+disjoint_from: HOM:0000050 ! between-species paralogy
+
+[Term]
+id: HOM:0000050
+name: between-species paralogy
+def: "Paralogy that involves genes from different species." [http://www.ensembl.org/info/docs/compara/homology_method.html "Ensembl Compara documentation 07/2009"]
+comment: The genes have diverged before a speciation event.
+is_a: HOM:0000011 ! paralogy
+
+[Term]
+id: HOM:0000051
+name: postdisplacement
+def: "Paedomorphosis that is produced by delayed growth of immature structures into the adult form." [http://en.wikipedia.org/wiki/Pedomorphosis "Wikipedia 07/2009"]
+synonym: "post-displacement" EXACT []
+is_a: HOM:0000029 ! paedomorphorsis
+
+[Term]
+id: HOM:0000052
+name: hypermorphosis
+def: "Peramorphosis that is produced by a delay in the offset of development." [http://en.wikipedia.org/wiki/Peramorphosis "Wikipedia 07/2009", ISBN:978-0674639416 "Gould SJ (1985) Ontogeny and Phylogeny. Belknap Press of Harvard University Press"]
+is_a: HOM:0000030 ! peramorphosis
+
+[Term]
+id: HOM:0000053
+name: synology
+def: "Xenology that results, not from the transfer of a gene between two species, but from a hybridization of two species." [DOI:10.1007/BF00173425 "Gogarten JP (1994) Which is the most conserved group of proteins? Homology-orthology, paralogy, xenology, and the fusion of independent lineages. J Mol Evol, 39, 541-543", DOI:10.1016/S0168-9525(00)02005-9 "Fitch WM (2000) Homology: a personal view on some of the problems. Trends in Genetics 16:227-231."]
+is_a: HOM:0000018 ! xenology
+
+[Term]
+id: HOM:0000054
+name: isoorthology
+def: "Orthology that involves functional equivalent genes with retention of the ancestral function." [DOI:10.1016/S0168-9525(00)02005-9 "Fitch WM (2000) Homology: a personal view on some of the problems. Trends in Genetics 16:227-231."]
+xref: ECO:0000080 "inferred from phylogeny"
+is_a: HOM:0000017 ! orthology
+is_a: HOM:0000062 ! equivalogy
+
+[Term]
+id: HOM:0000055
+name: tandem paralogy
+def: "Paralogy that is characterized by duplication of adjacent sequences on a chromosome segment." [DOI:10.1016/S0168-9525(00)02005-9 "Fitch WM (2000) Homology: a personal view on some of the problems. Trends in Genetics 16:227-231.", ISBN:978-0878932665 "Graur D and Li WH  (2000) Molecular evolution. (Sinauer Associates, Sunderland, MA)"]
+synonym: "iterative paralogy" RELATED []
+synonym: "serial paralogy" RELATED []
+is_a: HOM:0000011 ! paralogy
+
+[Term]
+id: HOM:0000057
+name: latent homology
+def: "Parallelism that involves morphologically very similar structures, occurring only within some members of a taxon and absent in the common ancestor (which possessed the developmental basis to develop this character)." [DOI:10.1007/BF02814485 "Rutishauser R and Moline P (2005) Evo-devo and the search for homology (\"sameness\") in biological systems. Theory in Biosciences 124:213-241", DOI:10.1016/j.jhevol.2006.11.010 "Hall BK (2007) Homoplasy and homology: Dichotomy or continuum? Journal of Human Evolution. 52:5, 473-479", DOI:10.1186/1742-9994-2-15 "Sanetra M et al. (2005) Conservation and co-option in developmental programmes: the importance of homology relationships. Frontiers in Zoology 2:15", ISBN:0199141118 "de Beer G (1971). Homology, an unsolved problem. London, Oxford University Press."]
+comment: Used for structures in closely related taxa.
+synonym: "apomorphic tendency" EXACT []
+synonym: "cryptic homology" EXACT []
+synonym: "homoiology" RELATED []
+synonym: "homoplastic tendency" RELATED []
+synonym: "re-awakening" RELATED []
+synonym: "underlying synapomorphy" EXACT []
+is_a: HOM:0000005 ! parallelism
+is_a: HOM:0000058 ! syngeny
+
+[Term]
+id: HOM:0000058
+name: syngeny
+def: "Homocracy that involves recognizably corresponding characters that occurs in two or more taxa, or as a repeated unit within an individual." [DOI:10.1002/1521-1878(200009)22\:9<846\:\:AID-BIES10>3.0.CO;2-R "Butler AB and Saidel WM (2000) Defining sameness: historical, biological, and generative homology. Bioessays 22, 9: 846-53", DOI:10.1186/1742-9994-2-15 "Sanetra M et al. (2005) Conservation and co-option in developmental programmes: the importance of homology relationships. Frontiers in Zoology 2:15"]
+comment: Cannot be used when orthologous patterning gene are organizing obviously non-homologous structures in different organisms due for example to pleiotropic functions of these genes.
+synonym: "generative homology" EXACT []
+is_a: HOM:0000003 ! homocracy
+
+[Term]
+id: HOM:0000060
+name: apparent orthology
+def: "Between-species paralogy that involves single copy paralogs resulting from reciprocal gene loss." [DOI:10.1146/annurev.genet.39.073003.114725 "Koonin EV (2005) ORTHOLOGS, PARALOGS, AND EVOLUTIONARY GENOMICS. Annual Review of Genetics, 39: 309-338", http://www.ensembl.org/info/docs/compara/homology_method.html "Ensembl Compara documentation 07/2009"]
+comment: The genes are actually paralogs but appear to be orthologous due to differential, lineage-specific gene loss.
+synonym: "1:1 paralogy" EXACT []
+synonym: "apparent 1:1 orthology" EXACT []
+synonym: "pseudoorthology" EXACT []
+is_a: HOM:0000019 ! 1 to 1 homology
+is_a: HOM:0000050 ! between-species paralogy
+
+[Term]
+id: HOM:0000061
+name: pseudoparalogy
+def: "Xenology that involves genes that ended up in a given genome as a result of a combination of vertical inheritance and horizontal gene transfer." [DOI:10.1146/annurev.genet.39.073003.114725 "Koonin EV (2005) ORTHOLOGS, PARALOGS, AND EVOLUTIONARY GENOMICS. Annual Review of Genetics, 39: 309-338"]
+comment: These genes may come out as paralogs in a single-genome analysis.
+is_a: HOM:0000018 ! xenology
+
+[Term]
+id: HOM:0000062
+name: equivalogy
+def: "Historical homology that involves functional equivalent genes with retention of the ancestral function." [DOI:10.1093/nar/gkl1043 "Selengut JD et al. (2007) TIGRFAMs and Genome Properties: tools for the assignment of molecular function and biological process in prokaryotic genomes. Nucleic Acid Research, 35: D260-D264"]
+comment: This may include examples of orthology, paralogy and xenology.
+is_a: HOM:0000007 ! historical homology
+is_a: HOM:0000065 ! functional equivalence
+
+[Term]
+id: HOM:0000063
+name: interology
+def: "Historical homology that involves orthologous pairs of interacting molecules in different organisms." [DOI:10.1101/gr.1774904 "Yu H et al. (2004) Annotation Transfer Between Genomes: Protein-Protein Interologs and Protein-DNA Regulogs. Genome Research 14:1107-1118.", DOI:10.1126/science.287.5450.116 "Walhout AJM et al. (2000) Protein Interaction Mapping in C. elegans Using Proteins Involved in Vulval Development. Science 287:116-122."]
+is_a: HOM:0000007 ! historical homology
+
+[Term]
+id: HOM:0000065
+name: functional equivalence
+def: "Similarity that is characterized by interchangeability in function." [DOI:10.1007/BF02814484 "Theissen G (2005) Birth, life and death of developmental control genes: New challenges for the homology concept. Theory in Biosciences 124:199-212", DOI:10.1038/415741a "Theissen G (2002) Orthology: Secret life of genes. Nature 415:741"]
+synonym: "functional similarity" RELATED []
+is_a: HOM:0000000 ! similarity
+
+[Term]
+id: HOM:0000066
+name: iterative homology
+def: "Biological homology that involves parts of the same organism." [DOI:10.1146/annurev.es.20.110189.000411 "Wagner GP (1989) The Biological Homology Concept. Annual Review of Ecology and Systematics 20: 51-69"]
+is_a: HOM:0000008 ! biological homology
+
+[Term]
+id: HOM:0000068
+name: paraxenology
+def: "Xenology that is characterized by multiple horizontal transfer events, resulting in the presence of two or more copies of the foreign gene in the host genome." [PMID:3065587 "Patterson C (1988) Homology in classical and molecular biology. Mol Biol Evol 5:603-625"]
+synonym: "duplicate xenology" EXACT []
+synonym: "multiple xenology" EXACT []
+is_a: HOM:0000018 ! xenology
+
+[Term]
+id: HOM:0000069
+name: plerology
+def: "Paralogy that is characterized by extra similarity between paralogous sequences resulting from concerted evolution." [PMID:3065587 "Patterson C (1988) Homology in classical and molecular biology. Mol Biol Evol 5:603-625"]
+comment: This phenomenon is usually due to gene conversion process.
+is_a: HOM:0000011 ! paralogy
+
+[Term]
+id: HOM:0000071
+name: homotopy
+def: "Structural homology that involves structures with the same or similar relative positions." [DOI:10.1007/BF02814484 "Theissen G (2005) Birth, life and death of developmental control genes: New challenges for the homology concept. Theory in Biosciences 124:199-212", DOI:10.1007/BF02814485 "Rutishauser R and Moline P (2005) Evo-devo and the search for homology (\"sameness\") in biological systems. Theory in Biosciences 124:213-241", ISBN:0123195837 "Sattler R (1994) in Hall BK (Ed.) Homology: The Hierarchical Basis of Comparative Biology. Academic Press, p. 429"]
+comment: Theissen (2005) mentions that some authors may consider homotopy to be distinct from homology, but this is not the standard use.
+is_a: HOM:0000006 ! structural homology
+
+[Term]
+id: HOM:0000072
+name: homeosis
+def: "Biological homology that involves an ectopic structure and the normally positioned structure." [DOI:10.1007/BF02814485 "Rutishauser R and Moline P (2005) Evo-devo and the search for homology (\"sameness\") in biological systems. Theory in Biosciences 124:213-241", DOI:10.1016/j.cell.2008.06.030 "Carroll SB (2008) Evo-Devo and an Expanding Evolutionary Synthesis: A Genetic Theory of Morphological Evolution. Cell 134, 1: 25-36"]
+synonym: "heterotopy" RELATED []
+is_a: HOM:0000008 ! biological homology
+disjoint_from: HOM:0000071 ! homotopy
+
+[Term]
+id: HOM:0000073
+name: homoeology
+def: "Synology that results from allopolyploidy." [DOI:10.1073/pnas.0505156102 "Nomura T et al. (2005) Three genomes differentially contribute to the biosynthesis of benzoxazinones in hexaploid wheat. Proc. Natl. Acad. Sci. 102, 45: 16490-16495"]
+comment: On a long term, it is hard to distinguish allopolyploidy from whole genome duplication.
+is_a: HOM:0000022 ! ohnology
+is_a: HOM:0000053 ! synology
+
+[Term]
+id: HOM:0000074
+name: paramorphism
+def: "Iterative homology that involves two structures, one of which originated as a duplicate of the other and co-opted the expression of patterning genes of the ancestral structure." [DOI:10.1007/s10441-007-9023-8 "Kleisner K (2007) The Formation of the Theory of Homology in Biological Sciences. Acta Biotheoretica 55, 4: 317-340", DOI:10.1046/j.1525-142x.2000.00054.x "Minelli A (2000) Limbs and tail as evolutionarily diverging duplicates of the main body axis. Evolution and Development, 2, 3:157-165"]
+synonym: "axis paramorphism" RELATED []
+is_a: HOM:0000003 ! homocracy
+is_a: HOM:0000066 ! iterative homology
+
+[Term]
+id: HOM:0000075
+name: regulogy
+def: "Historical homology that involves orthologous pairs of transcription factors and downstream regulated genes in different organisms." [DOI:10.1101/gr.1774904 "Yu H et al. (2004) Annotation Transfer Between Genomes: Protein-Protein Interologs and Protein-DNA Regulogs. Genome Research 14:1107-1118."]
+is_a: HOM:0000007 ! historical homology
+

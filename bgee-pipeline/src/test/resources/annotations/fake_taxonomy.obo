@@ -1,0 +1,14 @@
+format-version: 1.4
+ontology: taxonomy
+
+[Term]
+id: NCBITaxon:1
+name: taxon 1
+
+[Term]
+id: NCBITaxon:2
+name: taxon 2
+
+[Term]
+id: NCBITaxon:3
+name: taxon 3

@@ -447,7 +447,7 @@ public class SimilarityAnnotation {
                             
                         } else if (header[i].equalsIgnoreCase(DATE_COL_NAME)) {
                             
-                            processors[i] = new ParseDate("yyyy-MM-dd");
+                            processors[i] = new Optional(new ParseDate("yyyy-MM-dd"));
                             
                         } 
                     } else {

@@ -344,6 +344,13 @@ public class SimilarityAnnotation {
     private final Map<String, Set<Integer>> idsNotExistingInTaxa;
     
     /**
+     * A {@code Collection} of {@code Map}s, where each {@code Map} represents 
+     * an annotation line that was incorrectly formatted.
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<Map<String, Object>> incorrectFormat;
+    
+    /**
      * Default constuctor.
      */
     public SimilarityAnnotation() {
@@ -352,6 +359,7 @@ public class SimilarityAnnotation {
         this.missingECOIds = new HashSet<String>();
         this.missingHOMIds = new HashSet<String>();
         this.missingCONFIds = new HashSet<String>();
+        this.incorrectFormat = new HashSet<Map<String, Object>>();
         
         this.idsNotExistingInTaxa = new HashMap<String, Set<Integer>>();
     }
@@ -1081,6 +1089,13 @@ public class SimilarityAnnotation {
         log.entry();
         
         String errorMsg = "";
+        if (!this.incorrectFormat.isEmpty()) {
+            errorMsg += Utils.CR + "Problem detected, incorrectly formatted annotation lines: " + 
+                Utils.CR;
+            for (Map annot: this.incorrectFormat) {
+                errorMsg += annot + Utils.CR;
+            }
+        }
         if (!this.missingUberonIds.isEmpty()) {
             errorMsg += Utils.CR + "Problem detected, unknown or deprecated Uberon IDs: " + 
                 Utils.CR;
@@ -1189,15 +1204,12 @@ public class SimilarityAnnotation {
         log.entry(annotation, taxonConstraints, taxonIds, ecoOntWrapper, 
                 homOntWrapper, confOntWrapper);
         
-        //if there is a format error, it is different than from non-existing IDs, 
-        //we will throw an exception right away.
-        boolean formatError = false;
         boolean allGood = true;
         
         int taxonId = (Integer) annotation.get(TAXON_COL_NAME);
         if (taxonId == 0) {
             log.error("Missing taxon ID");
-            formatError = true;
+            this.incorrectFormat.add(annotation);
             allGood = false;
         }
         if (!taxonIds.contains(taxonId)) {
@@ -1210,7 +1222,7 @@ public class SimilarityAnnotation {
                 (String) annotation.get(ENTITY_COL_NAME))) {
             if (StringUtils.isBlank(uberonId)) {
                 log.error("Missing Uberon ID");
-                formatError = true;
+                this.incorrectFormat.add(annotation);
                 allGood = false;
             }
             
@@ -1232,14 +1244,14 @@ public class SimilarityAnnotation {
         String qualifier = (String) annotation.get(QUALIFIER_COL_NAME);
         if (qualifier != null && !qualifier.trim().equalsIgnoreCase(NEGATE_QUALIFIER)) {
             log.error("Incorrect qualifier {}", qualifier);
-            formatError = true;
+            this.incorrectFormat.add(annotation);
             allGood = false;
         }
         
         String refId = this.getRefIdFromRefColValue((String) annotation.get(REF_COL_NAME));
         if (refId == null || !refId.matches("\\S+?:\\S+")) {
             log.error("Incorrect reference ID: {}", refId);
-            formatError = true;
+            this.incorrectFormat.add(annotation);
             allGood = false;
         }
         
@@ -1276,13 +1288,8 @@ public class SimilarityAnnotation {
         //ecoId is not mandatory
         if (StringUtils.isBlank(homId) || StringUtils.isBlank(confId)) {
             log.error("Missing HOM or confidence ID");
-            formatError = true;
+            this.incorrectFormat.add(annotation);
             allGood = false;
-        }
-        
-        if (formatError) {
-            throw log.throwing(new IllegalArgumentException("Incorrect format " +
-                    "for some values, annotation line is: " + annotation));
         }
         
         return log.exit(allGood);

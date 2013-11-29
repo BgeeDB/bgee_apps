@@ -218,14 +218,10 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 SimilarityAnnotation.BGEE_ASSIGNMENT);
         generatedAnnot.put(SimilarityAnnotation.REF_COL_NAME, null);
         generatedAnnot.put(SimilarityAnnotation.REF_TITLE_COL_NAME, null);
-        generatedAnnot.put(SimilarityAnnotation.ECO_COL_NAME, 
-                SimilarityAnnotation.AUTOMATIC_ECO);
-        generatedAnnot.put(SimilarityAnnotation.ECO_NAME_COL_NAME, 
-                ecoOntWrapper.getLabel(ecoOntWrapper.getOWLObjectByIdentifier(
-                        SimilarityAnnotation.AUTOMATIC_ECO)));
+        generatedAnnot.put(SimilarityAnnotation.ECO_COL_NAME, null);
+        generatedAnnot.put(SimilarityAnnotation.ECO_NAME_COL_NAME, null);
         generatedAnnot.put(SimilarityAnnotation.SUPPORT_TEXT_COL_NAME, null);
-        generatedAnnot.put(SimilarityAnnotation.CURATOR_COL_NAME, 
-                SimilarityAnnotation.AUTOMATIC_CURATOR);
+        generatedAnnot.put(SimilarityAnnotation.CURATOR_COL_NAME, null);
         generatedAnnot.put(SimilarityAnnotation.DATE_COL_NAME, null);
         
         annotations.add(annot2);
@@ -346,14 +342,10 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 SimilarityAnnotation.BGEE_ASSIGNMENT);
         generatedAnnot.put(SimilarityAnnotation.REF_COL_NAME, null);
         generatedAnnot.put(SimilarityAnnotation.REF_TITLE_COL_NAME, null);
-        generatedAnnot.put(SimilarityAnnotation.ECO_COL_NAME, 
-                SimilarityAnnotation.AUTOMATIC_ECO);
-        generatedAnnot.put(SimilarityAnnotation.ECO_NAME_COL_NAME, 
-                ecoOntWrapper.getLabel(ecoOntWrapper.getOWLObjectByIdentifier(
-                        SimilarityAnnotation.AUTOMATIC_ECO)));
+        generatedAnnot.put(SimilarityAnnotation.ECO_COL_NAME, null);
+        generatedAnnot.put(SimilarityAnnotation.ECO_NAME_COL_NAME, null);
         generatedAnnot.put(SimilarityAnnotation.SUPPORT_TEXT_COL_NAME, null);
-        generatedAnnot.put(SimilarityAnnotation.CURATOR_COL_NAME, 
-                SimilarityAnnotation.AUTOMATIC_CURATOR);
+        generatedAnnot.put(SimilarityAnnotation.CURATOR_COL_NAME, null);
         generatedAnnot.put(SimilarityAnnotation.DATE_COL_NAME, null);
         generatedAnnot.put(SimilarityAnnotation.ENTITY_NAME_COL_NAME, null);
         generatedAnnot.put(SimilarityAnnotation.HOM_NAME_COL_NAME, null);

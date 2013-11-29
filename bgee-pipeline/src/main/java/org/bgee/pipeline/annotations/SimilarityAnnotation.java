@@ -594,7 +594,7 @@ public class SimilarityAnnotation {
                 new NotNull(), new NotNull(), new NotNull(), 
                 new Optional(), new Optional(), new NotNull(), new NotNull(), 
                 new Optional(), new Optional(), new Optional(), 
-                new NotNull(), new NotNull(), new Optional(new FmtDate("yyyy-MM-dd"))};
+                new NotNull(), new Optional(), new Optional(new FmtDate("yyyy-MM-dd"))};
         try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
                 Utils.TSVCOMMENTED)) {
             
@@ -712,7 +712,13 @@ public class SimilarityAnnotation {
                     releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
                             ecoOntWrapper.getOWLClassByIdentifier(ecoId)));
                 }
-            } 
+            } else {
+                //otherwise it means that it is an unreviewed annotations
+                releaseAnnot.put(ECO_COL_NAME, AUTOMATIC_ECO);
+                releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
+                        ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO)));
+                releaseAnnot.put(CURATOR_COL_NAME, AUTOMATIC_CURATOR);
+            }
             
             //CONF
             if (rawAnnot.get(CONF_COL_NAME) != null) {
@@ -1055,14 +1061,13 @@ public class SimilarityAnnotation {
             newAnnot.put(CONF_COL_NAME, summaryConfId);
             newAnnot.put(CONF_NAME_COL_NAME, confOntWrapper.getLabel(summaryConf));
             newAnnot.put(ASSIGN_COL_NAME, BGEE_ASSIGNMENT);
-            newAnnot.put(ECO_COL_NAME, AUTOMATIC_ECO);
-            newAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
-                    ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO)));
-            newAnnot.put(CURATOR_COL_NAME, AUTOMATIC_CURATOR);
             //columns that should not be set for a generated summary annotation
             newAnnot.put(REF_COL_NAME, null);
             newAnnot.put(REF_TITLE_COL_NAME, null);
+            newAnnot.put(ECO_COL_NAME, null);
+            newAnnot.put(ECO_NAME_COL_NAME, null);
             newAnnot.put(SUPPORT_TEXT_COL_NAME, null);
+            newAnnot.put(CURATOR_COL_NAME, null);
             newAnnot.put(DATE_COL_NAME, null);
             
             annotations.add(newAnnot);

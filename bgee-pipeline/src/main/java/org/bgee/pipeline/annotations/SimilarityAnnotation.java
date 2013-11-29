@@ -1196,11 +1196,12 @@ public class SimilarityAnnotation {
         
         int taxonId = (Integer) annotation.get(TAXON_COL_NAME);
         if (taxonId == 0) {
+            log.error("Missing taxon ID");
             formatError = true;
             allGood = false;
         }
         if (!taxonIds.contains(taxonId)) {
-            log.trace("Missing taxon ID: {}", taxonId);
+            log.error("Missing taxon ID: {}", taxonId);
             this.missingTaxonIds.add(taxonId);
             allGood = false;
         }
@@ -1208,17 +1209,18 @@ public class SimilarityAnnotation {
         for (String uberonId: this.parseEntityColumn(
                 (String) annotation.get(ENTITY_COL_NAME))) {
             if (StringUtils.isBlank(uberonId)) {
+                log.error("Missing Uberon ID");
                 formatError = true;
                 allGood = false;
             }
             
             Set<Integer> existsIntaxa = taxonConstraints.get(uberonId);
             if (existsIntaxa == null) {
-                log.trace("Missing Uberon ID: {}", uberonId);
+                log.error("Missing Uberon ID: {}", uberonId);
                 this.missingUberonIds.add(uberonId);
                 allGood = false;
             } else if (!existsIntaxa.contains(taxonId)) {
-                log.trace("Uberon ID {} does not exist in taxa {}", uberonId, taxonId);
+                log.error("Uberon ID {} does not exist in taxa {}", uberonId, taxonId);
                 if (this.idsNotExistingInTaxa.get(uberonId) == null) {
                     this.idsNotExistingInTaxa.put(uberonId, new HashSet<Integer>());
                 }
@@ -1229,12 +1231,14 @@ public class SimilarityAnnotation {
         
         String qualifier = (String) annotation.get(QUALIFIER_COL_NAME);
         if (qualifier != null && !qualifier.trim().equalsIgnoreCase(NEGATE_QUALIFIER)) {
+            log.error("Incorrect qualifier {}", qualifier);
             formatError = true;
             allGood = false;
         }
         
         String refId = this.getRefIdFromRefColValue((String) annotation.get(REF_COL_NAME));
         if (refId == null || !refId.matches("\\S+?:\\S+")) {
+            log.error("Incorrect reference ID: {}", refId);
             formatError = true;
             allGood = false;
         }
@@ -1243,7 +1247,7 @@ public class SimilarityAnnotation {
         if (ecoId != null) {
             OWLClass cls = ecoOntWrapper.getOWLClassByIdentifier(ecoId.trim());
             if (cls == null || ecoOntWrapper.isObsolete(cls)) {
-                log.trace("Missing ECO ID: {}", ecoId);
+                log.error("Missing ECO ID: {}", ecoId);
                 this.missingECOIds.add(ecoId);
                 allGood = false;
             }
@@ -1271,6 +1275,7 @@ public class SimilarityAnnotation {
         
         //ecoId is not mandatory
         if (StringUtils.isBlank(homId) || StringUtils.isBlank(confId)) {
+            log.error("Missing HOM or confidence ID");
             formatError = true;
             allGood = false;
         }

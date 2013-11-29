@@ -188,7 +188,7 @@ public class SimilarityAnnotation {
      * This is because in the curator annotation file, the title of the reference 
      * is mixed in the column containing the reference ID, so we need to parse it.
      */
-    private final static Pattern REF_COL_PATTERN = Pattern.compile("(.+?)(?: \"?([^\"]+?)\"?)?");
+    private final static Pattern REF_COL_PATTERN = Pattern.compile("(.+?)( .+?)?");
     /**
      * An {@code int} that is the index of the group containing the reference ID 
      * in the {@code Pattern} {@link #REF_COL_PATTERN}.
@@ -1382,7 +1382,11 @@ public class SimilarityAnnotation {
             if (refTitle == null) {
                 return log.exit(null);
             }
-            return log.exit(refTitle.trim());
+            refTitle = refTitle.trim();
+            refTitle = refTitle.startsWith("\"") ? refTitle.substring(1) : refTitle;
+            refTitle = refTitle.endsWith("\"") ? 
+                    refTitle.substring(0, refTitle.length()-1) : refTitle;
+            return log.exit(refTitle);
         }
         throw log.throwing(new IllegalArgumentException("Incorrect format for " +
                 "the reference column: " + refColValue));

@@ -592,8 +592,8 @@ public class SimilarityAnnotation {
         CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
                 new NotNull(), new NotNull(), new Optional(), 
                 new NotNull(), new NotNull(), new NotNull(), 
-                new NotNull(), new NotNull(), new NotNull(), new NotNull(), 
-                new NotNull(), new Optional(), new Optional(), 
+                new Optional(), new Optional(), new NotNull(), new NotNull(), 
+                new Optional(), new Optional(), new Optional(), 
                 new NotNull(), new NotNull(), new Optional(new FmtDate("yyyy-MM-dd"))};
         try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
                 Utils.TSVCOMMENTED)) {

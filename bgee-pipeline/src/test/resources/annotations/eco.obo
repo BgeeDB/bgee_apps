@@ -14,3 +14,7 @@ is_a: ECO:1 ! eco 1
 id: ECO:3
 name: eco 3
 is_a: ECO:1 ! eco 1
+
+[Term]
+id: ECO:0000313
+name: imported information used in automatic assertion

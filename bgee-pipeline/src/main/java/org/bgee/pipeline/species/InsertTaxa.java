@@ -62,7 +62,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * name of taxa in the taxonomy ontology. 
      * See {@code owltools.graph.OWLGraphWrapper.ISynonym}.
      */
-    private static final String SYNCOMMONNAMECAT = "genbank_common_name";
+    private static final String SYN_COMMON_NAME_CAT = "genbank_common_name";
     
     /**
      * A {@code String} that is the key to retrieve the IDs of the species used in Bgee 
@@ -70,28 +70,28 @@ public class InsertTaxa extends MySQLDAOUser {
      * and that is also the name of the column to retrieve these IDs from the TSV file 
      * storing the species used in Bgee.
      */
-    public static final String SPECIESIDKEY = Utils.TAXONCOLUMNNAME;
+    public static final String SPECIES_ID_KEY = Utils.TAXONCOLUMNNAME;
     /**
      * A {@code String} that is the key to retrieve the genus name (for instance, 
      * "homo") of the species used in Bgee from the {@code Map}s returned by 
      * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
      * to retrieve these genus names from the TSV file storing the species used in Bgee.
      */
-    public static final String SPECIESGENUSKEY = "genus";
+    public static final String SPECIES_GENUS_KEY = "genus";
     /**
      * A {@code String} that is the key to retrieve the species name (for instance, 
      * "sapiens") of the species used in Bgee from the {@code Map}s returned by 
      * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
      * to retrieve these names from the TSV file storing the species used in Bgee.
      */
-    public static final String SPECIESNAMEKEY = "species";
+    public static final String SPECIES_NAME_KEY = "species";
     /**
      * A {@code String} that is the key to retrieve the common name (for instance, 
      * "human") of the species used in Bgee from the {@code Map}s returned by 
      * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
      * to retrieve these common names from the TSV file storing the species used in Bgee.
      */
-    public static final String SPECIESCOMMONNAMEKEY = "common name";
+    public static final String SPECIES_COMMON_NAME_KEY = "common name";
     
     /**
      * A {@code OWLGraphWrapper} wrapping the NCBI taxonomy {@code OWLOntology}.
@@ -218,21 +218,21 @@ public class InsertTaxa extends MySQLDAOUser {
     /**
      * Extract the information about the species to include in Bgee from the provided 
      * TSV file. The first line of this file should be a header line, 
-     * defining 4 columns, named exactly as: {@link #SPECIESIDKEY}, 
-     * {@link #SPECIESGENUSKEY}, {@link #SPECIESNAMEKEY}, {@link #SPECIESCOMMONNAMEKEY} 
+     * defining 4 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
+     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY} 
      * (in whatever order). This method returns a {@code Collection} where each 
      * species is represented by a {@code Map}, containing information mapped 
      * to the keys listed above. In these {@code Map}s, the value associated to 
-     * {@link #SPECIESIDKEY} will be an {@code Integer}, other values will be 
+     * {@link #SPECIES_ID_KEY} will be an {@code Integer}, other values will be 
      * {@code String}s.
      * 
      * @param speciesFile   A {@code String} that is the path to the TSV file 
      *                      containing the species used in Bgee
      * @return              A {@code Collection} of {@code Map}s where each {@code Map} 
      *                      represents a species, with information about it mapped to 
-     *                      the keys {@link #SPECIESIDKEY}, {@link #SPECIESGENUSKEY}, 
-     *                      {@link #SPECIESNAMEKEY}, {@link #SPECIESCOMMONNAMEKEY}.
-     *                      The value associated to {@link #SPECIESIDKEY} is 
+     *                      the keys {@link #SPECIES_ID_KEY}, {@link #SPECIES_GENUS_KEY}, 
+     *                      {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}.
+     *                      The value associated to {@link #SPECIES_ID_KEY} is 
      *                      an {@code Integer}, other values are {@code String}s.
      * @throws FileNotFoundException        If the file could not be found.
      * @throws IOException                  If the file could not be read.
@@ -254,13 +254,13 @@ public class InsertTaxa extends MySQLDAOUser {
             
             CellProcessor[] processors = new CellProcessor[header.length];
             for (int i = 0; i < header.length; i++) {
-                if (header[i].equalsIgnoreCase(SPECIESIDKEY)) {
+                if (header[i].equalsIgnoreCase(SPECIES_ID_KEY)) {
                     processors[i] = new UniqueHashCode(new NotNull(new ParseInt()));
-                } else if (header[i].equalsIgnoreCase(SPECIESGENUSKEY)) {
+                } else if (header[i].equalsIgnoreCase(SPECIES_GENUS_KEY)) {
                     processors[i] = new NotNull();
-                } else if (header[i].equalsIgnoreCase(SPECIESNAMEKEY)) {
+                } else if (header[i].equalsIgnoreCase(SPECIES_NAME_KEY)) {
                     processors[i] = new NotNull();
-                } else if (header[i].equalsIgnoreCase(SPECIESCOMMONNAMEKEY)) {
+                } else if (header[i].equalsIgnoreCase(SPECIES_COMMON_NAME_KEY)) {
                     processors[i] = new UniqueHashCode(new NotNull());
                 } else {
                     throw log.throwing(new IllegalArgumentException(unexpectedFormat));
@@ -284,10 +284,10 @@ public class InsertTaxa extends MySQLDAOUser {
      * Inserts species and taxa into the Bgee database. The arguments are: 
      * <ul>
      * <li>A {@code Collection} of {@code Map}s where each {@code Map} represents 
-     * a species, with information about it mapped to the keys {@link #SPECIESIDKEY}, 
-     * {@link #SPECIESGENUSKEY}, {@link #SPECIESNAMEKEY}, {@link #SPECIESCOMMONNAMEKEY}.
+     * a species, with information about it mapped to the keys {@link #SPECIES_ID_KEY}, 
+     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}.
      * Each {@code Map} should contain exactly these 4 entries, with no {@code null} 
-     * values permitted. Value associated to {@link #SPECIESIDKEY} should be 
+     * values permitted. Value associated to {@link #SPECIES_ID_KEY} should be 
      * an {@code Integer} (the NCBI taxonomy ID, for instance, 9606 for human), 
      * other values should be {@code String}s.
      * <li>a {@code Set} of {@code Integer}s that are the NCBI taxonomy IDs of additional taxa 
@@ -336,7 +336,7 @@ public class InsertTaxa extends MySQLDAOUser {
             //we provide only the species IDs
             Set<Integer> speciesIds = new HashSet<Integer>();
             for (Map<String, Object> species: allSpecies) {
-                speciesIds.add((Integer) species.get(SPECIESIDKEY));
+                speciesIds.add((Integer) species.get(SPECIES_ID_KEY));
             }
             Set<TaxonTO> taxonTOs = this.getTaxonTOs(speciesIds, taxonIds);
             
@@ -371,10 +371,10 @@ public class InsertTaxa extends MySQLDAOUser {
      * <p>
      * {@code species} should be a {@code Collection} of {@code Map}s where each 
      * {@code Map} represents a species, with information about it mapped to the keys 
-     * {@link #SPECIESIDKEY}, {@link #SPECIESGENUSKEY}, {@link #SPECIESNAMEKEY}, 
-     * {@link #SPECIESCOMMONNAMEKEY}. Each {@code Map} should contain exactly these 
+     * {@link #SPECIES_ID_KEY}, {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, 
+     * {@link #SPECIES_COMMON_NAME_KEY}. Each {@code Map} should contain exactly these 
      * 4 entries, with no {@code null} values permitted. Value associated to 
-     * {@link #SPECIESIDKEY} should be an {@code Integer} (the NCBI taxonomy ID, 
+     * {@link #SPECIES_ID_KEY} should be an {@code Integer} (the NCBI taxonomy ID, 
      * for instance, 9606 for human), other values should be {@code String}s.
      * 
      * @param allSpecies    A {@code Collection} of {@code Map}s where each {@code Map} 
@@ -391,7 +391,7 @@ public class InsertTaxa extends MySQLDAOUser {
         
         Set<SpeciesTO> speciesTOs = new HashSet<SpeciesTO>();
         for (Map<String, Object> species: allSpecies) {
-            int speciesId = (Integer) species.get(SPECIESIDKEY);
+            int speciesId = (Integer) species.get(SPECIES_ID_KEY);
             OWLClass speciesCls = this.taxOntWrapper.getOWLClassByIdentifier(
                     OntologyUtils.getTaxOntologyId(speciesId));
             if (speciesCls == null) {
@@ -414,9 +414,9 @@ public class InsertTaxa extends MySQLDAOUser {
             String parentTaxonId = String.valueOf(OntologyUtils.getTaxNcbiId(
                     this.taxOntWrapper.getIdentifier(parents.iterator().next())));
             
-            String commonName  = (String) species.get(SPECIESCOMMONNAMEKEY);
-            String genus       = (String) species.get(SPECIESGENUSKEY);
-            String speciesName = (String) species.get(SPECIESNAMEKEY);
+            String commonName  = (String) species.get(SPECIES_COMMON_NAME_KEY);
+            String genus       = (String) species.get(SPECIES_GENUS_KEY);
+            String speciesName = (String) species.get(SPECIES_NAME_KEY);
             if (StringUtils.isBlank(commonName) || StringUtils.isBlank(genus) || 
                     StringUtils.isBlank(speciesName)) {
                 throw log.throwing(new IllegalArgumentException("The provided species " +
@@ -602,7 +602,7 @@ public class InsertTaxa extends MySQLDAOUser {
     
     /**
      * Returns the synonym corresponding to the common name of the provided 
-     * {@code owlClass}. The category of such a synonym is {@link #SYNCOMMONNAMECATE}, 
+     * {@code owlClass}. The category of such a synonym is {@link #SYN_COMMON_NAME_CAT}, 
      * see {@code owltools.graph.OWLGraphWrapper.ISynonym}. Returns {@code null} 
      * if no common name synonym was found.
      * 
@@ -617,7 +617,7 @@ public class InsertTaxa extends MySQLDAOUser {
         List<ISynonym> synonyms = this.taxOntWrapper.getOBOSynonyms(owlClass);
         if (synonyms != null) {
             for (ISynonym syn: synonyms) {
-                if (syn.getCategory().equals(SYNCOMMONNAMECAT)) {
+                if (syn.getCategory().equals(SYN_COMMON_NAME_CAT)) {
                     commonName = syn.getLabel();
                     break;
                 }

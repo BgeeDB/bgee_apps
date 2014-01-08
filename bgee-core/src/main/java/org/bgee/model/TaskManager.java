@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 
 /**
- * This class allows to keep track of the advancement of log-running tasks, 
+ * This class allows to keep track of the advancement of long-running tasks, 
  * and provides means to interrupt this task. Instances of this class notably 
  * hold a reference to the {@code Thread} running the task, to be able 
  * to call {@code Interrupt} on it from another {@code Thread} 
@@ -361,7 +361,7 @@ public class TaskManager {
 	 * org.bgee.model.dao.api.DAOManager.kill(Thread)}. This method then calls 
 	 * {@code interrupt} on the {@code Thread} running the task. 
 	 * It is then the responsibility of the applicative code running the task 
-	 * to deal with the {@code InterruptedException}.
+	 * to deal with the interrupted status.
 	 */
 	public void interrupt() {
 		try {

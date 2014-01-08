@@ -13,7 +13,7 @@ import java.util.Collection;
  *              to define what attributes should be populated in the {@code TransferObject}s 
  *              obtained from this {@code DAO}.
  */
-public interface DAO<T extends Enum & DAO.Attribute> {
+public interface DAO<T extends Enum<?> & DAO.Attribute> {
     /**
      * Interface implemented by {@code Enum} classes allowing to select 
      * what are the attributes to populate in the {@code TransferObject}s obtained 

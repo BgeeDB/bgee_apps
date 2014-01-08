@@ -20,7 +20,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
  *              to define what attributes should be populated in the {@code TransferObject}s 
  *              obtained from this {@code DAO}.
  */
-public abstract class MySQLDAO<T extends Enum & DAO.Attribute> implements DAO<T> {
+public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO<T> {
     /**
      * {@code Logger} of the class. 
      */

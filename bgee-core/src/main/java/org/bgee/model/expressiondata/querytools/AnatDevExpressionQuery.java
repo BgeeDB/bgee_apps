@@ -398,7 +398,7 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
 	    //check class consistency of rootElements when the rendering is ONTOLOGY
 	    if (this.getRendering().equals(DataRendering.ONTOLOGY)) {
 	        //check that the roots are of only one single type
-	        Class previousElementClass = null;
+	        Class<? extends AnatDevElement> previousElementClass = null;
 	        for (AnatDevElement element: this.getRootElements()) {
 	            if (previousElementClass != null && 
 	                    !element.getClass().equals(previousElementClass)) {

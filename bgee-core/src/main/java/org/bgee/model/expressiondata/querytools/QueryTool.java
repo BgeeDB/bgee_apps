@@ -141,7 +141,7 @@ abstract class QueryTool {
     			this.getTaskManager().taskCompletedWithSuccess();
     		}
     	} else {
-    		this.getLogger().info("Query {} interrupted or termintated with errors", 
+    		this.getLogger().info("Query {} interrupted or terminated with errors", 
     				this.taskName);
     		if (this.getTaskManager() != null) {
     			this.getTaskManager().taskNotCompleted();

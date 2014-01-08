@@ -270,7 +270,7 @@ public class CallParamsTest extends TestAncestor {
         oneElement.add(id1);
         Set<String> twoElements = new HashSet<String>(oneElement);
         twoElements.add(id2);
-        assertEquals("Incorrect resulting merged CallParameters", new HashSet(), 
+        assertEquals("Incorrect resulting merged CallParameters", new HashSet<String>(), 
                 mergedParams.getAnatEntityIds());
         assertFalse("Incorrect resulting merged CallParameters", 
                 mergedParams.isUseAnatDescendants());
@@ -886,7 +886,7 @@ public class CallParamsTest extends TestAncestor {
         assertEquals("Incorrect anatEntityIds set/get", threeElementSet, 
                 params.getAnatEntityIds());
         params.clearAnatEntityIds();
-        assertEquals("Incorrect anatEntityIds set/get", new HashSet(), 
+        assertEquals("Incorrect anatEntityIds set/get", new HashSet<String>(), 
                 params.getAnatEntityIds());
         
         params.addAllDevStageIds(twoElementSet);
@@ -896,7 +896,7 @@ public class CallParamsTest extends TestAncestor {
         assertEquals("Incorrect devStageIds set/get", threeElementSet, 
                 params.getDevStageIds());
         params.clearDevStageIds();
-        assertEquals("Incorrect devStageIds set/get", new HashSet(), 
+        assertEquals("Incorrect devStageIds set/get", new HashSet<String>(), 
                 params.getDevStageIds());
         
         params.addAllGeneIds(twoElementSet);
@@ -906,7 +906,7 @@ public class CallParamsTest extends TestAncestor {
         assertEquals("Incorrect geneIds set/get", threeElementSet, 
                 params.getGeneIds());
         params.clearGeneIds();
-        assertEquals("Incorrect geneId set/get", new HashSet(), 
+        assertEquals("Incorrect geneId set/get", new HashSet<String>(), 
                 params.getGeneIds());
         
         

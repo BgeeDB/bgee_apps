@@ -49,26 +49,22 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
      */
     public int insertTerms(Collection<GOTermTO> terms) throws DAOException {
         log.entry(terms);
-
-        String sql = "Insert into geneOntologyTerm (GOId, GOTerm, GODomain) values ";
-        for (int i = 0; i < terms.size(); i++) {
-            if (i > 0) {
-                sql += ", ";
-            }
-            sql += "(?, ?, ?) ";
-        }
+        
+        //to not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+        //and because of laziness, we insert terms one at a time
+        int termInsertedCount = 0;
+        String sql = "Insert into geneOntologyTerm (GOId, GOTerm, GODomain) values (?, ?, ?) ";
+        
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql)) {
-            int paramIndex = 1;
             for (GOTermTO termTO: terms) {
-                stmt.setString(paramIndex, termTO.getId());
-                paramIndex++;
-                stmt.setString(paramIndex, termTO.getName());
-                paramIndex++;
-                stmt.setString(paramIndex, this.domainToString(termTO.getDomain()));
-                paramIndex++;
+                stmt.setString(1, termTO.getId());
+                stmt.setString(2, termTO.getName());
+                stmt.setString(3, this.domainToString(termTO.getDomain()));
+                termInsertedCount += stmt.executeUpdate();
+                stmt.getRealPreparedStatement().clearParameters();
             }
-            return log.exit(stmt.executeUpdate());
+            return log.exit(termInsertedCount);
 
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

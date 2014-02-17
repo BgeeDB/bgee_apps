@@ -205,6 +205,23 @@ public class BgeePreparedStatement implements AutoCloseable {
     }
 
     /**
+     * Call {@code clearParameters} method on the real {@code PreparedStatement} 
+     * that this class wraps.
+     * 
+     * @throws SQLException     If the real {@code PreparedStatement} that this class 
+     *                          wraps throws a {@code SQLException}.  
+     */
+    public void clearParameters() throws SQLException {
+        log.entry();
+        try {
+            this.getRealPreparedStatement().clearParameters();
+        } catch (SQLException e) {
+            throw log.throwing(e);
+        } 
+        log.exit();
+    }
+
+    /**
      * Close the real {@code PreparedStatement} that this class wraps, 
      * and notify of the closing the {@code BgeeConnection} used to obtain 
      * this {@code BgeePreparedStatement}.

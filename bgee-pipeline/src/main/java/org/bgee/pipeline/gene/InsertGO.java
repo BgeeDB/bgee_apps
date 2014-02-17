@@ -145,13 +145,13 @@ public class InsertGO extends MySQLDAOUser {
             } finally {
                 this.closeDAO();
             }
+            log.info("Done inserting GO ontology, {} terms inserted", goTermTOs.size());
         } catch (IllegalStateException e) {
             log.catching(e);
             throw log.throwing(new IllegalArgumentException(
                     "The OWLOntology provided is invalid", e));
         }
 
-        log.info("Done inserting GO ontology.");
         log.exit();
     }
     

@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
@@ -70,6 +71,8 @@ public abstract class TestAncestor
 	    public final MySQLSourceDAO mockSourceDAO = mock(MySQLSourceDAO.class);
         public final MySQLSpeciesDAO mockSpeciesDAO = mock(MySQLSpeciesDAO.class);
         public final MySQLTaxonDAO mockTaxonDAO = mock(MySQLTaxonDAO.class);
+        public final MySQLGeneOntologyDAO mockGeneOntologyDAO = 
+                mock(MySQLGeneOntologyDAO.class);
         
         public MockDAOManager() {
             
@@ -109,6 +112,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLTaxonDAO getNewTaxonDAO() {
             return this.mockTaxonDAO;
+        }
+        @Override
+        protected MySQLGeneOntologyDAO getNewGeneOntologyDAO() {
+            return this.mockGeneOntologyDAO;
         }
 	}
 }

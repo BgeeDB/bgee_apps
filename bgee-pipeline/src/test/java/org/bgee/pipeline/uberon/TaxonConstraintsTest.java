@@ -323,4 +323,5 @@ public class TaxonConstraintsTest extends TestAncestor {
         assertEquals(expectedConstraints, new TaxonConstraints().extractTaxonConstraints(
                 this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
     }
+    
 }

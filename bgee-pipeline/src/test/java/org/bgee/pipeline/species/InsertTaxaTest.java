@@ -110,7 +110,7 @@ public class InsertTaxaTest extends TestAncestor {
         verify(mockManager.mockSpeciesDAO).insertSpecies(speciesTOsArg.capture());
         if (!this.areSpeciesTOCollectionsEqual(
                 expectedSpeciesTOs, speciesTOsArg.getValue())) {
-            throw new AssertionError("Incorrect SpeciesTOs generated to inset species, " +
+            throw new AssertionError("Incorrect SpeciesTOs generated to insert species, " +
             		"expected " + expectedSpeciesTOs.toString() + ", but was " + 
             		speciesTOsArg.getValue());
         }

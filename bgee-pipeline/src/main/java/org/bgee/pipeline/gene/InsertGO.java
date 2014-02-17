@@ -19,6 +19,14 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import owltools.graph.OWLGraphWrapper;
 
+/**
+ * Class responsible for inserting the Gene Ontology into 
+ * the Bgee database. This class accepts the GO as a OBO or OWL file.
+ * 
+ * @author Frederic Bastian
+ * @version Bgee 13
+ * @since Bgee 13
+ */
 public class InsertGO extends MySQLDAOUser {
     /**
      * {@code Logger} of the class. 

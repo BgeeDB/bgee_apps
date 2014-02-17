@@ -3,6 +3,7 @@ package org.bgee.pipeline;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
+import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
 import org.bgee.pipeline.uberon.TaxonConstraints;
@@ -88,6 +89,11 @@ public class CommandRunner {
         //---------- Similarity annotation -----------
         case "SimilarityAnnotation": 
             SimilarityAnnotation.main(newArgs);
+            break;
+            
+        //---------- Genes -----------
+        case "InsertGO": 
+            InsertGO.main(newArgs);
             break;
             
         default: 

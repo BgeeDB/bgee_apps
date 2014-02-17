@@ -173,7 +173,7 @@ public class TaxonConstraints {
         OBOFormatParserException, IOException, OWLOntologyStorageException {
         log.entry((Object[]) args);
         
-        if (args[0].equalsIgnoreCase("explainTaxonConstraint")) {
+        if (args[0].equalsIgnoreCase("explainTaxonConstraints")) {
             if (args.length != 5) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
@@ -212,6 +212,9 @@ public class TaxonConstraints {
             }
             TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
             generate.generateTaxonConstraints(args[3], args[4], storeDir);
+        } else {
+            throw log.throwing(new IllegalArgumentException("The argument " + args[0] + 
+                    " provided does not correspond to any known action."));
         }
         
         log.exit();

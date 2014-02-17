@@ -1,0 +1,59 @@
+format-version: 1.2
+ontology: fakeGO
+
+[Term]
+id: GO:1
+name: test A
+namespace: biological_process
+
+[Term]
+id: GO:2
+name: test B
+namespace: molecular_function
+
+[Term]
+id: GO:3
+name: test C
+namespace: cellular_component
+
+[Term]
+id: GO:4
+name: test D
+namespace: cellular_component
+comment: to test insertion of relation is_a to GO:3
+is_a: GO:3 ! test C
+
+[Term]
+id: GO:5
+name: test E
+namespace: cellular_component
+comment: to test insertion of indirect relation to GO:3 (GO:5 part_of GO:4 is_a GO:3)
+relationship: part_of GO:4 ! test D
+
+[Term]
+id: GO:6
+name: test F
+namespace: cellular_component
+comment: to test insertion of relation part_of to GO:3
+relationship: part_of GO:3 ! test C
+
+[Term]
+id: GO:7
+name: test G
+namespace: cellular_component
+comment: to test ABSENCE of insertion of relation regulates to GO:3
+relationship: regulates GO:3 ! test C
+
+[Typedef]
+id: part_of
+name: part_of
+namespace: external
+xref: BFO:0000050
+is_transitive: true
+
+[Typedef]
+id: regulates
+name: regulates
+namespace: external
+def: "x regulates y if and only if x is a process and y is either a process or a quality, and the progression of x exerts an effect on the frequency, rate or exteny of y" []
+xref: RO:0002211

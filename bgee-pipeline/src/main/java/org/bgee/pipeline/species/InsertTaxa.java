@@ -95,8 +95,6 @@ public class InsertTaxa extends MySQLDAOUser {
     
     /**
      * A {@code OWLGraphWrapper} wrapping the NCBI taxonomy {@code OWLOntology}.
-     * This attribute is set by the method {@link #loadTaxOntology(String)}, 
-     * and is then used by subsequent methods called.
      */
     private OWLGraphWrapper taxOntWrapper;
     /**

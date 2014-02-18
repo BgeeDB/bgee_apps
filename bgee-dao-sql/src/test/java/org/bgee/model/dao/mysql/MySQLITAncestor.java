@@ -1,6 +1,8 @@
 package org.bgee.model.dao.mysql;
 
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -164,12 +166,35 @@ public abstract class MySQLITAncestor extends TestAncestor{
     protected void deleteFromTableAndUseDefaultDB(String tableName) throws SQLException {
         log.entry(tableName);
         
+        this.deleteFromTablesAndUseDefaultDB(Arrays.asList(tableName));
+        
+        log.exit();
+    }
+    /**
+     * Delete all rows from the tables in {@code tableNames} in the database 
+     * currently used, and configure the {@code DAOManager} to stop using 
+     * this database and to use the default database specified by the JDBC connection 
+     * URL, if any. The names of the tables are ordered according to the order tables 
+     * should be emptied (it is important because of foreign key constraints).
+     * 
+     * @param tablebNames    A {@code List} of {@code String}s that are the names 
+     *                       of the tables to delete data from, in the order they 
+     *                       should be deleted.
+     * @throws SQLException If an error occurs while deleting the database.
+     */
+    protected void deleteFromTablesAndUseDefaultDB(List<String> tableNames) throws SQLException {
+        log.entry(tableNames);
+        
         MySQLDAOManager manager = this.getMySQLDAOManager();
+        
         //cannot prepare statements for table queries
-        try (BgeePreparedStatement stmt = manager.getConnection().prepareStatement(
+        for (String tableName: tableNames) {
+            try (BgeePreparedStatement stmt = manager.getConnection().prepareStatement(
                 "delete from " + tableName)) {
-            stmt.executeUpdate();
+                stmt.executeUpdate();
+            }
         }
+        
         manager.setDatabaseToUse(null);
         
         log.exit();

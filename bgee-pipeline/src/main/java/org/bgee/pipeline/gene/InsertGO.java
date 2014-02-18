@@ -169,7 +169,8 @@ public class InsertGO extends MySQLDAOUser {
             goTermTOs.add(new GOTermTO(
                     goWrapper.getIdentifier(goTerm), 
                     goWrapper.getLabel(goTerm), 
-                    this.namespaceToDomain(goWrapper.getNamespace(goTerm))));
+                    this.namespaceToDomain(goWrapper.getNamespace(goTerm)), 
+                    goWrapper.getAltIds(goTerm)));
         }
         return goTermTOs;
     }

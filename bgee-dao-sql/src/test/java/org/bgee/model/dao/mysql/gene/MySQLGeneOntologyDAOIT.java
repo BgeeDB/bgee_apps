@@ -3,9 +3,12 @@ package org.bgee.model.dao.mysql.gene;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,10 +31,12 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
     private final static Logger log = LogManager.getLogger(MySQLGeneOntologyDAO.class.getName());
     
     /**
-     * A {@code String} that is the name of the table into which data are inserted 
-     * during testing of {@link MySQLGeneOntologyDAO} methods inserting data.
+     * A {@code List} of {@code String}s that are the names of the tables into which data 
+     * are inserted during testing of {@link MySQLGeneOntologyDAO} methods inserting data. 
+     * They are ordered according to the order tables should be emptied. 
      */
-    private final static String INSERTTABLENAME = "geneOntologyTerm";
+    private final static List<String> INSERTTABLENAMES = 
+            Arrays.asList("geneOntologyTerm", "geneOntologyTermAltId");
     
     public MySQLGeneOntologyDAOIT() {
         super();
@@ -50,8 +55,8 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
         //create a Collection of TaxonTOs to be inserted
         Collection<GOTermTO> goTermTOs = new ArrayList<GOTermTO>();
         goTermTOs.add(new GOTermTO("GO:10", "term1", Domain.BP));
-        goTermTOs.add(new GOTermTO("GO:50", "term2", Domain.MF));
-        goTermTOs.add(new GOTermTO("GO:60", "term3", Domain.CC));
+        goTermTOs.add(new GOTermTO("GO:50", "term2", Domain.MF, Arrays.asList("alt1_GO:50", "alt2_GO:50", "alt3_GO:50")));
+        goTermTOs.add(new GOTermTO("GO:60", "term3", Domain.CC, Arrays.asList("alt1_GO:60")));
         try {
             MySQLGeneOntologyDAO dao = new MySQLGeneOntologyDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 
@@ -82,8 +87,43 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
                 assertTrue("GOTermTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            //check insertion of alternative IDs
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from geneOntologyTermAltId where GOId = ? " +
+                    		"and goAltId = ?")) {
+                
+                stmt.setString(1, "GO:50");
+                stmt.setString(2, "alt1_GO:50");
+                assertTrue("GOTerm AltIds incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setString(1, "GO:50");
+                stmt.setString(2, "alt2_GO:50");
+                assertTrue("GOTerm AltIds incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setString(1, "GO:50");
+                stmt.setString(2, "alt3_GO:50");
+                assertTrue("GOTerm AltIds incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setString(1, "GO:60");
+                stmt.setString(2, "alt1_GO:60");
+                assertTrue("GOTerm AltIds incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+            }
+            //check that only the desire alternative IDs were inserted
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select count(*) from geneOntologyTermAltId")) {
+                
+                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+                rs.next();
+                assertEquals("GOTerm AltIds incorrectly inserted", 4, rs.getInt(1));
+            }
+            
         } finally {
-            this.deleteFromTableAndUseDefaultDB(INSERTTABLENAME);
+            this.deleteFromTablesAndUseDefaultDB(INSERTTABLENAMES);
         }
     }
 }

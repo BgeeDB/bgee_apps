@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -46,7 +47,7 @@ public class InsertGOTest extends TestAncestor {
      * Test {@link InsertGO#insert(String)}, which is 
      * the central method of the class doing all the job.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void shouldInsertGO() throws FileNotFoundException, 
         OWLOntologyCreationException, OBOFormatParserException, IllegalArgumentException, 
@@ -65,9 +66,11 @@ public class InsertGOTest extends TestAncestor {
         expectedGOTermTOs.add(
                 new GOTermTO("GO:1", "test A", GOTermTO.Domain.BP));
         expectedGOTermTOs.add(
-                new GOTermTO("GO:2", "test B", GOTermTO.Domain.MF));
+                new GOTermTO("GO:2", "test B", GOTermTO.Domain.MF, 
+                        Arrays.asList("GO:2_alt1", "GO:2_alt2", "GO:2_alt3")));
         expectedGOTermTOs.add(
-                new GOTermTO("GO:3", "test C", GOTermTO.Domain.CC));
+                new GOTermTO("GO:3", "test C", GOTermTO.Domain.CC, 
+                        Arrays.asList("GO:3_alt1", "GO:3_alt2")));
         expectedGOTermTOs.add(
                 new GOTermTO("GO:4", "test D", GOTermTO.Domain.CC));
         expectedGOTermTOs.add(
@@ -75,7 +78,8 @@ public class InsertGOTest extends TestAncestor {
         expectedGOTermTOs.add(
                 new GOTermTO("GO:6", "test F", GOTermTO.Domain.CC));
         expectedGOTermTOs.add(
-                new GOTermTO("GO:7", "test G", GOTermTO.Domain.CC));
+                new GOTermTO("GO:7", "test G", GOTermTO.Domain.CC, 
+                        Arrays.asList("GO:7_alt1")));
         
         ArgumentCaptor<Set> goTermTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneOntologyDAO).insertTerms(goTermTOsArg.capture());
@@ -114,7 +118,8 @@ public class InsertGOTest extends TestAncestor {
                     (s1.getName() == null && s2.getName() == null || 
                         s1.getName() != null && s1.getName().equals(s2.getName())) && 
                     (s1.getDomain() == null && s2.getDomain() == null || 
-                        s1.getDomain() != null && s1.getDomain().equals(s2.getDomain())) ) {
+                        s1.getDomain() != null && s1.getDomain().equals(s2.getDomain())) && 
+                    (s1.getAltIds().equals(s2.getAltIds())) ) {
                     found = true;    
                 }
             }

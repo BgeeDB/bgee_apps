@@ -38,7 +38,8 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
     //***************************************************************************
     /**
      * Inserts the provided Gene Ontology terms into the Bgee database, represented as 
-     * a {@code Collection} of {@code GOTermTO}s.
+     * a {@code Collection} of {@code GOTermTO}s. Note that this method will also 
+     * insert the alternative IDs of each term, if any (see {@code GOTermTO#getAltIds()}).
      * 
      * @param terms     a {@code Collection} of {@code GOTermTO}s to be inserted 
      *                  into the database.
@@ -53,16 +54,40 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
         //to not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         //and because of laziness, we insert terms one at a time
         int termInsertedCount = 0;
-        String sql = "Insert into geneOntologyTerm (GOId, GOTerm, GODomain) values (?, ?, ?) ";
+        String sql = "Insert into geneOntologyTerm (goId, goTerm, goDomain) values (?, ?, ?) ";
         
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql)) {
             for (GOTermTO termTO: terms) {
+                //insert GO term
                 stmt.setString(1, termTO.getId());
                 stmt.setString(2, termTO.getName());
                 stmt.setString(3, this.domainToString(termTO.getDomain()));
                 termInsertedCount += stmt.executeUpdate();
-                stmt.getRealPreparedStatement().clearParameters();
+                stmt.clearParameters();
+                
+                //insert altIds
+                if (!termTO.getAltIds().isEmpty()) {
+                    String altIdSql = "insert into geneOntologyTermAltId (goId, goAltId) values ";
+                    for (int i = 0; i < termTO.getAltIds().size(); i++) {
+                        if (i > 0) {
+                            altIdSql += ", ";
+                        }
+                        altIdSql += "(?, ?)";
+                    }
+                    try (BgeePreparedStatement altIdStmt = 
+                            this.getManager().getConnection().prepareStatement(altIdSql)) {
+                        int paramIndex = 1;
+                        for (String altId: termTO.getAltIds()) {
+                            altIdStmt.setString(paramIndex, termTO.getId());
+                            paramIndex++;
+                            altIdStmt.setString(paramIndex, altId);
+                            paramIndex++;
+                        }
+                        altIdStmt.executeUpdate();
+                        altIdStmt.clearParameters();
+                    }
+                }
             }
             return log.exit(termInsertedCount);
 

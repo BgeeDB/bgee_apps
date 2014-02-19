@@ -206,9 +206,7 @@ public class InsertGO extends MySQLDAOUser {
      * Note that only is_a and part_of relations are considered, and that we do not 
      * care about distinguishing them. So the ontology is simplified before retrieving 
      * the relations: all sub-relations of part_of are mapped to part_of, all relations 
-     * that are neither part_of nor is_a are then removed, relations are then reduced, 
-     * by considering is_a and part_of relations as equivalent. Then we retrieve 
-     * the remaining relations.
+     * that are neither part_of nor is_a are then removed.
      * 
      * @param goWrapper A {@code OWLGraphWrapper} wrapping the Gene Ontology.
      * @return          A {@code Set} of {@code RelationTO} corresponding to 
@@ -225,8 +223,12 @@ public class InsertGO extends MySQLDAOUser {
         OWLGraphManipulator manipulator = new OWLGraphManipulator(goWrapper);
         manipulator.mapRelationsToParent(Arrays.asList(OntologyUtils.PART_OF_ID));
         manipulator.filterRelations(Arrays.asList(OntologyUtils.PART_OF_ID), true);
-        manipulator.reduceRelations();
-        manipulator.reducePartOfIsARelations();
+        //actually, we don't care about the relation reduction, because here 
+        //the RelationTOs will not take into account the type of the relation, 
+        //and we retrieve all relations, even indirect. So, redundant relations 
+        //would appear on purpose anyway.
+        //manipulator.reduceRelations();
+        //manipulator.reducePartOfIsARelations();
         
         //to later check whether a relation is a part_of relation
         OWLObjectProperty partOf = 

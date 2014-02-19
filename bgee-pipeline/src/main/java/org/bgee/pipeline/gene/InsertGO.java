@@ -2,6 +2,7 @@ package org.bgee.pipeline.gene;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,15 +10,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GOTermTO;
+import org.bgee.model.dao.api.ontologycommon.RelationTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
+import owltools.graph.OWLGraphEdge;
+import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
  * Class responsible for inserting the Gene Ontology into 
@@ -130,17 +136,26 @@ public class InsertGO extends MySQLDAOUser {
         //(a IllegalStateException would be generated because the OWLOntology loaded 
         //from the file would be invalid, so it would be a wrong argument)
         try {
-            
-            //get the GOTermTOs to insert their information into the database
-            Set<GOTermTO> goTermTOs = this.getGOTermTOs(new OWLGraphWrapper(geneOntology));
+            OWLGraphWrapper goWrapper = new OWLGraphWrapper(geneOntology);
+            //get the GOTermTOs 
+            Set<GOTermTO> goTermTOs = this.getGOTermTOs(goWrapper);
+            //get the RelationTOs
+            Set<RelationTO> relTOs = this.getRelationTOs(goWrapper);
                         
             //now we start a transaction to insert GOTermTOs in the Bgee data source.
             //note that we do not need to call rollback if an error occurs, calling 
             //closeDAO will rollback any ongoing transaction
             try {
                 this.startTransaction();
-                //insert terms
+                
+                log.info("Start inserting of terms...");
                 this.getGeneOntologyDAO().insertTerms(goTermTOs);
+                log.info("Done inserting terms");
+                
+                log.info("Start inserting relations...");
+                this.getGeneOntologyDAO().insertRelations(relTOs);
+                log.info("Done inserting relations.");
+                
                 this.commit();
             } finally {
                 this.closeDAO();
@@ -164,6 +179,9 @@ public class InsertGO extends MySQLDAOUser {
      *          in {@code goWrapper}.
      */
     private Set<GOTermTO> getGOTermTOs(OWLGraphWrapper goWrapper) {
+        log.entry(goWrapper);
+        log.info("Retrieving terms...");
+        
         Set<GOTermTO> goTermTOs = new HashSet<GOTermTO>();
         for (OWLClass goTerm: goWrapper.getAllOWLClasses()) {
             goTermTOs.add(new GOTermTO(
@@ -172,7 +190,81 @@ public class InsertGO extends MySQLDAOUser {
                     this.namespaceToDomain(goWrapper.getNamespace(goTerm)), 
                     goWrapper.getAltIds(goTerm)));
         }
-        return goTermTOs;
+        
+        log.info("Done retrieving terms.");
+        return log.exit(goTermTOs);
+    }
+    
+    /**
+     * Extract the relations between terms from the Gene Ontology wrapped into 
+     * {@code goWrapper}. All relations are retrieved, whether there are direct 
+     * or indirect (for instance, if A is_a B is_a C, then 3 relations will be retrieved: 
+     * the direct relations A is_a B and B is_a C, and the indirect relation, following 
+     * standard composition rules, A is_a C). This will allow the application to retrieve 
+     * all children of a term, even indirect, in a single query.
+     * <p>
+     * Note that only is_a and part_of relations are considered, and that we do not 
+     * care about distinguishing them. So the ontology is simplified before retrieving 
+     * the relations: all sub-relations of part_of are mapped to part_of, all relations 
+     * that are neither part_of nor is_a are then removed, relations are then reduced, 
+     * by considering is_a and part_of relations as equivalent. Then we retrieve 
+     * the remaining relations.
+     * 
+     * @param goWrapper A {@code OWLGraphWrapper} wrapping the Gene Ontology.
+     * @return          A {@code Set} of {@code RelationTO} corresponding to 
+     *                  the simplified relations between terms, retrieved from 
+     *                  {@code goWrapper}.
+     */
+    private Set<RelationTO> getRelationTOs(OWLGraphWrapper goWrapper) {
+        log.entry(goWrapper);
+        log.info("Retrieving relations between terms...");
+        Set<RelationTO> rels = new HashSet<RelationTO>();
+        
+        //modify the GO to reduce the relations, to map sub-relations of part_of 
+        //to part_of, and to keep only is_a and part_of relations in the ontology. 
+        OWLGraphManipulator manipulator = new OWLGraphManipulator(goWrapper);
+        manipulator.mapRelationsToParent(Arrays.asList(OntologyUtils.PART_OF_ID));
+        manipulator.filterRelations(Arrays.asList(OntologyUtils.PART_OF_ID), true);
+        manipulator.reduceRelations();
+        manipulator.reducePartOfIsARelations();
+        
+        //to later check whether a relation is a part_of relation
+        OWLObjectProperty partOf = 
+                goWrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID);
+        
+        //now we get each term relations.
+        for (OWLClass goTerm: goWrapper.getAllOWLClasses()) {
+            Set<OWLGraphEdge> edges = goWrapper.getOutgoingEdgesNamedClosureOverSupProps(goTerm);
+            //generate the RelationTOs from the OWLGraphEdges. For the GO, we do not 
+            //care about the exact type of the relation, and whether the relations 
+            //are direct or indirect.
+            for (OWLGraphEdge edge: edges) {
+                //we consider the edge only if there is only one QuantifiedProperty at most
+                //(otherwise it means the relation could not be reduced, meaning 
+                //there is no "actual" relations between the terms)
+                if (edge.getQuantifiedPropertyList().size() > 1) {
+                    log.trace("Skipping edge with more than 1 QuantifiedProperty: {}", 
+                            edge);
+                    continue;
+                }
+                //to make sure that this edge is a is_a or part_of relation
+                if ((edge.getSingleQuantifiedProperty().getProperty() == null && 
+                  edge.getSingleQuantifiedProperty().getQuantifier() == Quantifier.SUBCLASS_OF) || 
+                  edge.getSingleQuantifiedProperty().getProperty().equals(partOf)) {
+                    
+                    RelationTO rel = new RelationTO(goWrapper.getIdentifier(edge.getSource()), 
+                            goWrapper.getIdentifier(edge.getTarget()));
+                    rels.add(rel);
+                    log.debug("Adding relation: {}", rel);
+                } else {
+                    throw log.throwing(new AssertionError("A relation that is neither is_a " +
+                    		"nor part_of is still present in the ontology: " + edge));
+                }
+            }
+        }
+        
+        log.info("Done retrieving relations between terms.");
+        return log.exit(rels);
     }
     
     /**

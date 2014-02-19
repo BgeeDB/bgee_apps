@@ -9,6 +9,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GOTermTO;
 import org.bgee.model.dao.api.gene.GOTermTO.Domain;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
+import org.bgee.model.dao.api.ontologycommon.RelationTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -91,6 +92,43 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
             }
             return log.exit(termInsertedCount);
 
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+    
+    /**
+     * Inserts the provided relations between Gene Ontology terms into the Bgee database, 
+     * represented as a {@code Collection} of {@code RelationTO}s. 
+     * 
+     * @param relations a {@code Collection} of {@code RelationTO}s to be inserted 
+     *                  into the database.
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code relations}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public int insertRelations(Collection<RelationTO> relations) throws DAOException {
+        log.entry(relations);
+        
+        //to not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+        //and because of laziness, we insert terms one at a time
+        int relInsertedCount = 0;
+        String sql = "Insert into geneOntologyRelation (goAllTargetId, goAllSourceId) " +
+        		"values (?, ?) ";
+        
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sql)) {
+            
+            for (RelationTO rel: relations) {
+                stmt.setString(1, rel.getTargetId());
+                stmt.setString(2, rel.getSourceId());
+                relInsertedCount += stmt.executeUpdate();
+                stmt.clearParameters();
+            }
+            
+            return log.exit(relInsertedCount);
+            
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

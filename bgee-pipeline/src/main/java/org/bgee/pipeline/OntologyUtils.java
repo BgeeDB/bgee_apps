@@ -50,6 +50,10 @@ public class OntologyUtils {
     // OBJECT PROPERTIES
     //****************************
     /**
+     * A {@code String} that is the OBO-like ID of the {@code part_of} relation.
+     */
+    public final static String PART_OF_ID = "BFO:0000050";
+    /**
      * {@code IRI} of the {@code OWLObjectProperty} "in_taxon".
      */
     public final static IRI IN_TAXON_IRI = 

@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.gene.GOTermTO;
 import org.bgee.model.dao.api.gene.GOTermTO.Domain;
+import org.bgee.model.dao.api.ontologycommon.RelationTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
      * They are ordered according to the order tables should be emptied. 
      */
     private final static List<String> INSERTTABLENAMES = 
-            Arrays.asList("geneOntologyTerm", "geneOntologyTermAltId");
+            Arrays.asList("geneOntologyTerm", "geneOntologyTermAltId", "geneOntologyRelation");
     
     public MySQLGeneOntologyDAOIT() {
         super();
@@ -52,7 +53,7 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
     @Test
     public void shouldInsertTerms() throws SQLException {
         this.useEmptyDB();
-        //create a Collection of TaxonTOs to be inserted
+        //create a Collection of GOTermTOs to be inserted
         Collection<GOTermTO> goTermTOs = new ArrayList<GOTermTO>();
         goTermTOs.add(new GOTermTO("GO:10", "term1", Domain.BP));
         goTermTOs.add(new GOTermTO("GO:50", "term2", Domain.MF, Arrays.asList("alt1_GO:50", "alt2_GO:50", "alt3_GO:50")));
@@ -120,6 +121,50 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
                 ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
                 rs.next();
                 assertEquals("GOTerm AltIds incorrectly inserted", 4, rs.getInt(1));
+            }
+            
+        } finally {
+            this.deleteFromTablesAndUseDefaultDB(INSERTTABLENAMES);
+        }
+    }
+    
+    /**
+     * Test the insertion method {@link MySQLGeneOntologyDAO#insertRelations(Collection)}.
+     */
+    @Test
+    public void shouldInsertRelations() throws SQLException {
+        this.useEmptyDB();
+        //create a Collection of RelationTOs to be inserted
+        Collection<RelationTO> relTOs = new ArrayList<RelationTO>();
+        relTOs.add(new RelationTO("GO:1", "GO:2"));
+        relTOs.add(new RelationTO("GO:1", "GO:3"));
+        relTOs.add(new RelationTO("GO:2", "GO:3"));
+        try {
+            MySQLGeneOntologyDAO dao = new MySQLGeneOntologyDAO(this.getMySQLDAOManager());
+            assertEquals("Incorrect number of rows inserted", 3, 
+                    dao.insertRelations(relTOs));
+            
+            //we manually verify the insertion, as we do not want to rely on other methods 
+            //that are tested elsewhere.
+            //This test method could be better written (DRY, ...)
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from geneOntologyRelation where " +
+                    		"goAllSourceId = ? and goAllTargetId= ?")) {
+                
+                stmt.setString(1, "GO:1");
+                stmt.setString(2, "GO:2");
+                assertTrue("RelationTO incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setString(1, "GO:1");
+                stmt.setString(2, "GO:3");
+                assertTrue("RelationTO incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setString(1, "GO:2");
+                stmt.setString(2, "GO:3");
+                assertTrue("RelationTO incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
             }
             
         } finally {

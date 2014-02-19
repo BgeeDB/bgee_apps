@@ -5,9 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * Parent class of all {@code TransferObject}s that are "Entities" in Bgee.
  * <p>
- * {@code TransferObject}s are immutable, but for the sake of simplicity, 
- * we do not use a {@code Builder} pattern as there is only 3 attributes 
- * in this class, and 3 constructors. 
+ * {@code TransferObject}s should be immutable. 
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -81,5 +79,39 @@ public abstract class EntityTO extends TransferObject {
      */
     public String getId() {
         return id;
+    }
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        EntityTO other = (EntityTO) obj;
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        } else if (!id.equals(other.id)) {
+            return false;
+        }
+        return true;
     }
 }

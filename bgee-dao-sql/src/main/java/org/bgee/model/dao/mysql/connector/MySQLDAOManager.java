@@ -215,7 +215,7 @@ public class MySQLDAOManager extends DAOManager {
      * <p>
      * <strong>Warning:</strong> you should never call {@code setCatalog} on the 
      * real underlying JDBC {@code Connection} yourself. You must use 
-     * {@link setDatabaseToUse(String)} instead.
+     * {@link #setDatabaseToUse(String)} instead.
      * 
      * @return  An opened {@code BgeeConnection}. 
      * @throws SQLException     If an error occurred while trying to obtain the connection, 

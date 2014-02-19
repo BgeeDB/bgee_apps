@@ -39,8 +39,10 @@ relationship: part_of GO:4 ! test D
 id: GO:6
 name: test F
 namespace: cellular_component
-comment: to test insertion of relation part_of to GO:3
-relationship: part_of GO:3 ! test C
+comment: to test insertion of relation part_of to GO:3, is_a to GO:1, and skipping of relation regulates
+relationship: in_deep_part_of GO:5 ! test E
+relationship: regulates GO:3 ! test C
+is_a: GO:1 ! test A
 
 [Term]
 id: GO:7
@@ -56,6 +58,12 @@ name: part_of
 namespace: external
 xref: BFO:0000050
 is_transitive: true
+
+[Typedef]
+id: in_deep_part_of
+name: in_deep_part_of
+namespace: uberon
+is_a: part_of ! part of
 
 [Typedef]
 id: regulates

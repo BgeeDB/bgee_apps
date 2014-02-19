@@ -1,5 +1,6 @@
 package org.bgee.pipeline.gene;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 
 import java.io.FileNotFoundException;
@@ -13,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GOTermTO;
+import org.bgee.model.dao.api.ontologycommon.RelationTO;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -89,6 +91,27 @@ public class InsertGOTest extends TestAncestor {
                     "expected " + expectedGOTermTOs.toString() + ", but was " + 
                     goTermTOsArg.getValue());
         }
+        
+        
+        //generate the expected Sets of RelationTOs to verify the calls 
+        //made to the DAO
+        Set<RelationTO> expectedRelationTOs = new HashSet<RelationTO>();
+        expectedRelationTOs.add(new RelationTO("GO:6", "GO:1"));
+        expectedRelationTOs.add(new RelationTO("GO:6", "GO:5"));
+        expectedRelationTOs.add(new RelationTO("GO:6", "GO:4"));
+        expectedRelationTOs.add(new RelationTO("GO:6", "GO:3"));
+        
+        expectedRelationTOs.add(new RelationTO("GO:5", "GO:4"));
+        expectedRelationTOs.add(new RelationTO("GO:5", "GO:3"));
+        
+        expectedRelationTOs.add(new RelationTO("GO:4", "GO:3"));
+        
+        ArgumentCaptor<Set> relationTOsArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockGeneOntologyDAO).insertRelations(relationTOsArg.capture());
+        //RelationTO is not an EntityTO, and implements hashCode and equals, 
+        //so we can directly use assertEquals
+        assertEquals("Incorrect RelationTOs generated", expectedRelationTOs, 
+                relationTOsArg.getValue());
     }
     
     /**
@@ -107,12 +130,16 @@ public class InsertGOTest extends TestAncestor {
      */
     private boolean areGOTermTOCollectionsEqual(Collection<GOTermTO> c1, 
             Collection<GOTermTO> c2) {
+        log.entry(c1, c2);
+        
         if (c1.size() != c2.size()) {
-            return false;
+            log.debug("Non matching sizes, {} - {}", c1.size(), c2.size());
+            return log.exit(false);
         }
         for (GOTermTO s1: c1) {
             boolean found = false;
             for (GOTermTO s2: c2) {
+                log.trace("Comparing {} to {}", s1, s2);
                 if ((s1.getId() == null && s2.getId() == null || 
                         s1.getId() != null && s1.getId().equals(s2.getId())) && 
                     (s1.getName() == null && s2.getName() == null || 
@@ -124,9 +151,10 @@ public class InsertGOTest extends TestAncestor {
                 }
             }
             if (!found) {
-                return false;
+                log.debug("No equivalent term found for {}", s1);
+                return log.exit(false);
             }      
         }
-        return true;
+        return log.exit(true);
     }
 }

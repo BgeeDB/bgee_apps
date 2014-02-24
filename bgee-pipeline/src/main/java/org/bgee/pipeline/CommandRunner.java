@@ -96,10 +96,10 @@ public class CommandRunner {
         case "InsertGO": 
             InsertGO.main(newArgs);
             break;
-        case "ExtractObsoleteIds": 
+        case "OntologyTools": 
             //in that case, we actually pass the real arg array: OntologyTools 
             //can perform several operations, and thus need a command as first argument. 
-            OntologyTools.main(args);
+            OntologyTools.main(newArgs);
             break;
             
         default: 

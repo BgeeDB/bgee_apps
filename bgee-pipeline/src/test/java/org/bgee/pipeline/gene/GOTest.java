@@ -3,7 +3,9 @@ package org.bgee.pipeline.gene;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,17 +18,26 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationTO;
 import org.bgee.pipeline.TestAncestor;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
-public class InsertGOTest extends TestAncestor {
+/**
+ * Unit tests for the classes {@link InsertGO} and {@link GOTools}.
+ * 
+ * @author admin
+ *
+ */
+public class GOTest extends TestAncestor {
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(InsertGOTest.class.getName());
+            LogManager.getLogger(GOTest.class.getName());
     
     /**
      * A {@code String} that is the path from the classpath to the fake Gene  
@@ -34,10 +45,13 @@ public class InsertGOTest extends TestAncestor {
      */
     private final String GOFILE = "/gene/fakeGO.obo";
     
+    @Rule
+    public final TemporaryFolder testFolder = new TemporaryFolder();
+    
     /**
      * Default Constructor. 
      */
-    public InsertGOTest() {
+    public GOTest() {
         super();
     }
     @Override
@@ -156,5 +170,58 @@ public class InsertGOTest extends TestAncestor {
             }      
         }
         return log.exit(true);
+    }
+    
+    /**
+     * Test {@link GOTools#getObsoleteIds(String)} (and subsequently, 
+     * {@link GOTools#getObsoleteIds(OWLOntology))).
+
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     * @throws UnknownOWLOntologyException      */
+    @Test
+    public void shouldGetObsoleteIds() throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        GOTools go = new GOTools();
+        Set<String> expectedIds = new HashSet<String>();
+        expectedIds.add("GO:8");
+        expectedIds.add("GO:9");
+        expectedIds.add("GO:12");
+        
+        assertEquals("Incorrect obsolete IDs retrieved", expectedIds, 
+                go.getObsoleteIds(this.getClass().getResource(GOFILE).getFile()));
+    }
+    
+    /**
+     * Test {@link GOTools#writeObsoletedTermsToFile(String, String)}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     * @throws UnknownOWLOntologyException 
+     */
+    @Test
+    public void shouldWriteObsoleteIdsToFile() throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        GOTools go = new GOTools();
+        Set<String> expectedIds = new HashSet<String>();
+        expectedIds.add("GO:8");
+        expectedIds.add("GO:9");
+        expectedIds.add("GO:12");
+        
+        String tempFile = testFolder.newFile("obsIds.txt").getPath();
+        
+        go.writeObsoletedTermsToFile(this.getClass().getResource(GOFILE).getFile(), 
+                tempFile);
+        
+        Set<String> actualIds = new HashSet<String>();
+        try(BufferedReader br = new BufferedReader(new FileReader(tempFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                actualIds.add(line);
+            }
+        }
+        
+        assertEquals("Incorrect obsolete IDs written to file", expectedIds, actualIds);
     }
 }

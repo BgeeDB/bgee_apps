@@ -47,7 +47,7 @@ public class OntologyTools {
      * <ul>
      * <li>For retrieving obsolete IDs from am ontology: 
      *   <ol>
-     *     <li>The keyword {@code extractObsoleteIds}.
+     *     <li>The keyword {@code ExtractObsoleteIds} (case-sensitive).
      *     <li>path to the file storing the GO ontology, either in OBO or in OWL.
      *     <li>path to the file where to store the list of obsolete GO terms (used 
      *         for other parts of the pipeline)
@@ -79,7 +79,7 @@ public class OntologyTools {
         
         OntologyTools tools = new OntologyTools();
         switch(args[0]) {
-        case "extractObsoleteIds":
+        case "ExtractObsoleteIds":
             tools.writeObsoletedTermsToFile(args[1], args[2]);
             break;
         default: 

@@ -1,4 +1,4 @@
-package org.bgee.pipeline.gene;
+package org.bgee.pipeline.ontologycommon;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
@@ -21,37 +21,39 @@ import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import owltools.graph.OWLGraphWrapper;
 
 /**
- * Class responsible for extracting relevant information from the Gene Ontology. 
- * This class accepts the GO as a OBO or OWL file. This class is distinct 
- * from {@code InsertGO}, because it does not rely on the use of the Bgee database, 
- * and therefore, is not a {@code MySQLDAOUser}.
+ * Class responsible for various generic operations on ontologies.
  * 
  * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  */
-public class GOTools {
+public class OntologyTools {
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(GOTools.class.getName());
+            LogManager.getLogger(OntologyTools.class.getName());
     
     /**
      * Default constructor. 
      */
-    public GOTools() {
+    public OntologyTools() {
         
     }
     
     /**
-     * Main method to trigger the extraction of relevant information from the Gene Ontology. 
+     * Main method to trigger various generic operations on any ontology. 
      * Parameters that must be provided in order in {@code args} are: 
-     * <ol>
-     * <li>path to the file storing the GO ontology, either in OBO or in OWL.
-     * <li>path to the file where to store the list of obsolete GO terms (used 
-     * for other parts of the pipeline)
-     * </ol>
+     * <ul>
+     * <li>For retrieving obsolete IDs from am ontology: 
+     *   <ol>
+     *     <li>The keyword {@code extractObsoleteIds}.
+     *     <li>path to the file storing the GO ontology, either in OBO or in OWL.
+     *     <li>path to the file where to store the list of obsolete GO terms (used 
+     *         for other parts of the pipeline)
+     *   </ol>
+     * </li>
+     * </ul>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws FileNotFoundException        If some files could not be found.
@@ -68,26 +70,33 @@ public class GOTools {
         OWLOntologyCreationException, OBOFormatParserException, IllegalArgumentException, 
         DAOException, IOException {
         log.entry((Object[]) args);
-        int expectedArgLength = 2;
+        int expectedArgLength = 3;
         if (args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
                     "provided, expected " + expectedArgLength + " arguments, " + args.length + 
                     " provided."));
         }
         
-        GOTools tools = new GOTools();
-        tools.writeObsoletedTermsToFile(args[0], args[1]);
+        OntologyTools tools = new OntologyTools();
+        switch(args[0]) {
+        case "extractObsoleteIds":
+            tools.writeObsoletedTermsToFile(args[1], args[2]);
+            break;
+        default: 
+            throw log.throwing(new IllegalArgumentException("Unrecognized command " + 
+                args[0]));
+        }
         
         log.exit();
     }
     
     /**
-     * Extract the OBO-like IDs of obsoleted terms from the Gene Ontology, stored 
-     * in the file {@code goFile}, and write them into the file {@code obsIdsFile}, 
+     * Extract the OBO-like IDs of obsoleted terms from the provided ontology, stored 
+     * in the file {@code ontFile}, and write them into the file {@code obsIdsFile}, 
      * one ID per line.
      * 
-     * @param goFile        A {@code String} that is the path to the file storing 
-     *                      the Gene Ontology, in OBO or OWL.
+     * @param ontFile       A {@code String} that is the path to the file storing 
+     *                      the ontology, in OBO or OWL.
      * @param obsIdsFile    A {@code String} that is the path to the file where to write 
      *                      the obsolete IDs.
      * @throws UnknownOWLOntologyException      If the ontology could not be loaded.
@@ -96,12 +105,12 @@ public class GOTools {
      * @throws IOException                      If the ontology file coud not be read, 
      *                                          or output file could not be written. 
      */
-    public void writeObsoletedTermsToFile(String goFile, String obsIdsFile) 
+    public void writeObsoletedTermsToFile(String ontFile, String obsIdsFile) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException, 
             OBOFormatParserException, IOException {
-        log.entry(goFile, obsIdsFile);
+        log.entry(ontFile, obsIdsFile);
         
-        Set<String> obsoleteIds = this.getObsoleteIds(goFile);
+        Set<String> obsoleteIds = this.getObsoleteIds(ontFile);
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
                 obsIdsFile)))) {
             for (String obsoleteId: obsoleteIds) {
@@ -113,10 +122,10 @@ public class GOTools {
     }
     
     /**
-     * Extract the OBO-like IDs of obsoleted terms from the Gene Ontology, stored 
-     * in the file {@code goFile}.
+     * Extract the OBO-like IDs of obsoleted terms from the provided ontology, stored 
+     * in the file {@code ontFile}.
      * 
-     * @param goFile    A {@code String} that is the path to the file storing the Gene Ontology, 
+     * @param ontFile   A {@code String} that is the path to the file storing an ontology, 
      *                  in OBO or OWL.
      * @return          A {@code Set} of {@code String}s that are the OBO-like IDs of deprecated 
      *                  terms (for instance, 'GO:0000005').
@@ -126,33 +135,33 @@ public class GOTools {
      * @throws IOException                      If the ontology file coud not be read. 
      * @see #getObsoleteIds(OWLOntology)
      */
-    public Set<String> getObsoleteIds(String goFile) throws UnknownOWLOntologyException, 
+    public Set<String> getObsoleteIds(String ontFile) throws UnknownOWLOntologyException, 
         OWLOntologyCreationException, OBOFormatParserException, IOException {
-        log.entry(goFile);
+        log.entry(ontFile);
         
-        return log.exit(this.getObsoleteIds(OntologyUtils.loadOntology(goFile)));
+        return log.exit(this.getObsoleteIds(OntologyUtils.loadOntology(ontFile)));
     }
     
     /**
-     * Extract the OBO-like IDs of obsoleted terms from {@code geneOntology}.
+     * Extract the OBO-like IDs of obsoleted terms from {@code ont}.
      * 
-     * @param geneOntology                  An {@code OWLOntology} that is the Gene Ontology.
-     * @return                              A {@code Set} of {@code String}s that are the 
-     *                                      OBO-like IDs of deprecated terms (for instance, 
-     *                                      'GO:0000005').
+     * @param ont   An {@code OWLOntology} storing an ontology.
+     * @return      A {@code Set} of {@code String}s that are the 
+     *              OBO-like IDs of deprecated terms (for instance, 
+     *              'GO:0000005').
      * @throws UnknownOWLOntologyException  If the ontology could not be loaded.
      * @throws OWLOntologyCreationException If the ontology could not be loaded.
      */
-    public Set<String> getObsoleteIds(OWLOntology geneOntology) throws UnknownOWLOntologyException, 
+    public Set<String> getObsoleteIds(OWLOntology ont) throws UnknownOWLOntologyException, 
         OWLOntologyCreationException {
-        log.entry(geneOntology);
+        log.entry(ont);
         Set<String> obsoleteIds = new HashSet<String>();
         
-        OWLGraphWrapper goWrapper = new OWLGraphWrapper(geneOntology);
-        for (OWLOntology ont: goWrapper.getAllOntologies()) {
+        OWLGraphWrapper goWrapper = new OWLGraphWrapper(ont);
+        for (OWLOntology myOnt: goWrapper.getAllOntologies()) {
             //we do not use goWrapper.getAllOWLClasses(), because it does not return 
             //deprecated classes
-            for (OWLClass goTerm: ont.getClassesInSignature()) {
+            for (OWLClass goTerm: myOnt.getClassesInSignature()) {
                 if (goWrapper.isObsolete(goTerm)) {
                     obsoleteIds.add(goWrapper.getIdentifier(goTerm));
                     obsoleteIds.addAll(goWrapper.getAltIds(goTerm));

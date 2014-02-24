@@ -3,8 +3,8 @@ package org.bgee.pipeline;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
-import org.bgee.pipeline.gene.GOTools;
 import org.bgee.pipeline.gene.InsertGO;
+import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
 import org.bgee.pipeline.uberon.TaxonConstraints;
@@ -96,8 +96,8 @@ public class CommandRunner {
         case "InsertGO": 
             InsertGO.main(newArgs);
             break;
-        case "GOTools": 
-            GOTools.main(newArgs);
+        case "GetObsoleteIds": 
+            OntologyTools.main(newArgs);
             break;
             
         default: 

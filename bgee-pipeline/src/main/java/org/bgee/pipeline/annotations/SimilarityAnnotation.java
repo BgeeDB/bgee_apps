@@ -30,6 +30,7 @@ import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.supercsv.cellprocessor.FmtDate;
@@ -245,7 +246,7 @@ public class SimilarityAnnotation {
      *   <li>path to the output file where write taxon IDs into, one per line.
      *   </ol>
      * <li>If the first element in {@code args} is "generateReleaseFile", the action 
-     * will be to generate proper anntations from the raw annotation file, and 
+     * will be to generate proper annotations from the raw annotation file, and 
      * to write them in a file, see {@link #generateReleaseFile(String, String, String, 
      * String, String, String, String, String)}.
      * Following elements in {@code args} must then be: 
@@ -258,6 +259,19 @@ public class SimilarityAnnotation {
      *   <li>the path to the homology and related concepts (HOM) ontology.
      *   <li>the path to the ECO ontology.
      *   <li>the path to the confidence information ontology.
+     *   <li>the path to the output file.
+     *   </ol>
+     * <li>If the first element in {@code args} is "generateSummaryFileForTaxon", the action will be 
+     * to extract, from a clean annotation file, the annotations related to a taxon (and 
+     * all its ancestors), to summarize them (for instance, if a {@code SUMMARY} annotation 
+     * exists for a given HOM ID/Entity ID/Taxon ID, only this summary will be used), 
+     * and to write them to an output file. See {@link 
+     * #writeToFileSummaryAnnotationsForTaxon(String, String, int, String)}.
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>the path to the clean annotation file.
+     *   <li>the path to the taxonomy ontology.
+     *   <li>the NCBI ID of the taxon to consider (for instance, 9606).
      *   <li>the path to the output file.
      *   </ol>
      * </ul>
@@ -294,6 +308,14 @@ public class SimilarityAnnotation {
             }
             new SimilarityAnnotation().generateReleaseFile(args[1], args[2], args[3], 
                     args[4], args[5], args[6], args[7], args[8]);
+        } else if (args[0].equalsIgnoreCase("generateSummaryFileForTaxon")) {
+            if (args.length != 5) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "5 arguments, " + args.length + " provided."));
+            }
+            new SimilarityAnnotation().writeToFileSummaryAnnotationsForTaxon(
+                    args[1], args[2], Integer.parseInt(args[3]), args[4]);
         }
         
         log.exit();
@@ -401,6 +423,9 @@ public class SimilarityAnnotation {
      *                          annotation file. This file can be of any flavor 
      *                          (curator annotation file, genrated simple file, 
      *                          generated file with names).
+     * @param rawFile           A {@code boolean} defining whether the similarity file used 
+     *                          is a raw file from annotators, or a clean generated file 
+     *                          ({@code false}).
      * @return                  A {@code List} of {@code Map}s where each {@code Map} 
      *                          represents a row in the file, the {@code Map}s being 
      *                          ordered in the order they were read from the file.
@@ -409,9 +434,9 @@ public class SimilarityAnnotation {
      * @throws IllegalArgumentException If {@code similarityFile} could not be 
      *                                  properly parsed.
      */
-    public List<Map<String, Object>> extractAnnotations(String similarityFile) 
+    public List<Map<String, Object>> extractAnnotations(String similarityFile, boolean rawFile) 
             throws FileNotFoundException, IOException {
-        log.entry(similarityFile);
+        log.entry(similarityFile, rawFile);
         
         List<Map<String, Object>> annotations = new ArrayList<Map<String, Object>>();
         
@@ -430,7 +455,7 @@ public class SimilarityAnnotation {
                     if (i < header.length && header[i] != null) {
                         if (header[i].equalsIgnoreCase(ENTITY_COL_NAME) || 
                                 header[i].equalsIgnoreCase(HOM_COL_NAME) || 
-                                header[i].equalsIgnoreCase(REF_COL_NAME) || 
+                                (header[i].equalsIgnoreCase(REF_COL_NAME) && rawFile) || 
                                 header[i].equalsIgnoreCase(CONF_COL_NAME) ||   
                                 header[i].equalsIgnoreCase(ASSIGN_COL_NAME)) {
                             
@@ -443,6 +468,7 @@ public class SimilarityAnnotation {
                         } else if (header[i].equalsIgnoreCase(ENTITY_NAME_COL_NAME) || 
                                 header[i].equalsIgnoreCase(QUALIFIER_COL_NAME) || 
                                 header[i].equalsIgnoreCase(REF_TITLE_COL_NAME) || 
+                                (header[i].equalsIgnoreCase(REF_COL_NAME) && !rawFile) || 
                                 header[i].equalsIgnoreCase(ECO_COL_NAME) ||   
                                 header[i].equalsIgnoreCase(ECO_NAME_COL_NAME) ||  
                                 header[i].equalsIgnoreCase(CONF_NAME_COL_NAME) ||   
@@ -489,7 +515,7 @@ public class SimilarityAnnotation {
                 //get a chance to verify NotNull condition)
                 if (StringUtils.isBlank((String) valuesMapped.get(ENTITY_COL_NAME)) || 
                         StringUtils.isBlank((String) valuesMapped.get(HOM_COL_NAME)) || 
-                        StringUtils.isBlank((String) valuesMapped.get(REF_COL_NAME)) || 
+                        (rawFile && StringUtils.isBlank((String) valuesMapped.get(REF_COL_NAME))) || 
                         StringUtils.isBlank((String) valuesMapped.get(CONF_COL_NAME)) || 
                         StringUtils.isBlank((String) valuesMapped.get(ASSIGN_COL_NAME))) {
                     throw log.throwing(new IllegalArgumentException(
@@ -557,8 +583,8 @@ public class SimilarityAnnotation {
         log.entry(annotFile, taxonConstraintsFile, uberonOntFile, taxOntFile, 
                 homOntFile, ecoOntFile, confOntFile, outputFile);
         
-      //get the annotations
-        List<Map<String, Object>> annotations = this.extractAnnotations(annotFile);
+        //get the annotations
+        List<Map<String, Object>> annotations = this.extractAnnotations(annotFile, true);
         
         //now, get all the information required to perform correctness checks 
         //on the annotations, and to add additional information (names corresponding 
@@ -581,6 +607,24 @@ public class SimilarityAnnotation {
         List<Map<String, Object>> properAnnots = this.generateReleaseData(annotations, 
                 taxonConstraints, taxonIds, uberonOntWrapper, taxOntWrapper, 
                 ecoOntWrapper, homOntWrapper, confOntWrapper);
+        //write to file
+        this.writeAnnotationsToFile(outputFile, properAnnots);
+        
+        log.exit();
+    }
+    
+    /**
+     * Write the annotations contained in {@code annotations} to the file {@code outputFile}, 
+     * in a TSV file format.
+     * 
+     * @param outputFile    A {@code String} that is the path to the output file to be written.
+     * @param annotations   A {@code List} of {@code Map}s, where each {@code Map} 
+     *                      represents an annotation line.
+     * @throws IOException  If an error occurs while trying to write in the file.
+     */
+    private void writeAnnotationsToFile(String outputFile, 
+            List<Map<String, Object>> annotations) throws IOException {
+        log.entry(outputFile, annotations);
         
         //write the file
         String[] header = new String[] {HOM_COL_NAME, HOM_NAME_COL_NAME, 
@@ -590,7 +634,7 @@ public class SimilarityAnnotation {
                 REF_COL_NAME, REF_TITLE_COL_NAME, SUPPORT_TEXT_COL_NAME, 
                 ASSIGN_COL_NAME, CURATOR_COL_NAME, DATE_COL_NAME};
         CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
-                new NotNull(), new NotNull(), new Optional(), 
+                new NotNull(), new Optional(), new Optional(), 
                 new NotNull(), new NotNull(), new NotNull(), 
                 new Optional(), new Optional(), new NotNull(), new NotNull(), 
                 new Optional(), new Optional(), new Optional(), 
@@ -599,7 +643,7 @@ public class SimilarityAnnotation {
                 Utils.TSVCOMMENTED)) {
             
             mapWriter.writeHeader(header);
-            for (Map<String, Object> annot: properAnnots) {
+            for (Map<String, Object> annot: annotations) {
                 mapWriter.write(annot, header, processors);
             }
         }
@@ -1092,7 +1136,7 @@ public class SimilarityAnnotation {
         if (!this.incorrectFormat.isEmpty()) {
             errorMsg += Utils.CR + "Problem detected, incorrectly formatted annotation lines: " + 
                 Utils.CR;
-            for (Map annot: this.incorrectFormat) {
+            for (Map<String, Object> annot: this.incorrectFormat) {
                 errorMsg += annot + Utils.CR;
             }
         }
@@ -1475,5 +1519,122 @@ public class SimilarityAnnotation {
         }
         
         return log.exit(taxonIds);
+    }
+    
+    /**
+     * Retrieve summarized annotations for a specific taxon from a <strong>clean</strong> 
+     * similarity annotation file, and write them into an output file.
+     * 
+     * @param similarityFile    A {@code String} that is the path to the annotation file.
+     * @param taxOntFile        An {@code String} that is the path to the taxonomy ontology, 
+     *                          to retrieve ancestors of the taxon with ID {@code taxonId}.
+     * @param taxonId           An {@code int} that is the NCBI ID of the taxon 
+     *                          for which we want to retrieve annotations, including 
+     *                          for its ancestral taxa.  
+     * @param outputFile        A {@code String} that is the path to the output file 
+     *                          to be written.
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws OWLOntologyCreationException
+     * @throws OBOFormatParserException
+     * @see #extractSummaryAnnotationsForTaxon(String, String, int)
+     */
+    public void writeToFileSummaryAnnotationsForTaxon(String similarityFile, String taxOntFile, 
+            int taxonId, String outputFile) throws FileNotFoundException, IOException, 
+            OWLOntologyCreationException, OBOFormatParserException {
+        log.entry(similarityFile, taxOntFile, taxonId, outputFile);
+        
+        List<Map<String, Object>> summarizedAnnotations = 
+                this.extractSummaryAnnotationsForTaxon(similarityFile, taxOntFile, taxonId);
+        this.writeAnnotationsToFile(outputFile, summarizedAnnotations);
+        
+        log.exit();
+    }
+    
+    /**
+     * Retrieve summarized annotations for a specific taxon from a <strong>clean</strong> 
+     * similarity annotation file. Only <strong>positive</strong> annotations are retrieved 
+     * (annotations with soleley a "NOT" qualifier with not be returned).
+     * <p>
+     * This method will retrieve all annotations that are applicable to the taxon 
+     * with the NCBI ID {@code taxonId} (for instance, {@code 9606}), and to 
+     * all its ancestral taxa. For a given entity ID and taxon ID, only one annotation 
+     * will be retrieved: either the {@code SUMMARY} annotation if available, 
+     * or the {@code RAW} annotation when only a single evidence is available 
+     * for this assertion. 
+     * <p>
+     * The assertions are returned as a {@code List} of {@code Map}s, where 
+     * each {@code Map} represents a summarized annotation. 
+     * See {@link #extractAnnotations(String)} for details about the keys used 
+     * in the {@code Map}s. 
+     *  
+     * @param similarityFile    A {@code String} that is the path to the annotation file.
+     * @param taxOntFile        An {@code String} that is the path to the taxonomy ontology, 
+     *                          to retrieve ancestors of the taxon with ID {@code taxonId}.
+     * @param taxonId           An {@code int} that is the NCBI ID of the taxon 
+     *                          for which we want to retrieve annotations, including 
+     *                          for its ancestral taxa.  
+     * @return                  A {@code List} of {@code Map}s, where each {@code Map} 
+     *                          represents a summarized annotation.
+     * @throws IOException 
+     * @throws FileNotFoundException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    public List<Map<String, Object>> extractSummaryAnnotationsForTaxon(String similarityFile, String taxOntFile, 
+            int taxonId) throws FileNotFoundException, IOException, 
+            OWLOntologyCreationException, OBOFormatParserException {
+        log.entry(similarityFile, taxOntFile, taxonId);
+        
+        //first, we retrieve from the taxonomy ontology the IDs of all the ancestor 
+        //of the taxon with ID taxonId
+        OWLOntology ont = OntologyUtils.loadOntology(taxOntFile);
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OWLClass taxClass = wrapper.getOWLClassByIdentifier(OntologyUtils.getTaxOntologyId(taxonId));
+        if (taxClass == null) {
+            throw log.throwing(new IllegalArgumentException("The taxon with ID " + taxonId + 
+                    " was not retrieved from the ontology file " + taxOntFile));
+        }
+        Set<Integer> allTaxIds = new HashSet<Integer>();
+        for (OWLClass ancestor: wrapper.getOWLClassAncestors(taxClass)) {
+            allTaxIds.add(OntologyUtils.getTaxNcbiId(wrapper.getIdentifier(ancestor)));
+        }
+        log.debug("Allowed tax IDs: {}", allTaxIds);
+        
+        List<Map<String, Object>> allAnnotations = this.extractAnnotations(similarityFile, false);
+        //associate annotations to a key to be able to identify SUMMARY annotations
+        Map<String, Map<String, Object>> summarizedAnnotations = new HashMap<String, Map<String, Object>>();
+        //we iterate all annotations, plus a last iteration after the last annotation
+        for (Map<String, Object> annotation: allAnnotations) {
+            String key = annotation.get(ENTITY_COL_NAME) + " - " + 
+                annotation.get(HOM_COL_NAME) + " - " + annotation.get(TAXON_COL_NAME);
+            //check it is a requested taxon
+            if (!allTaxIds.contains(annotation.get(TAXON_COL_NAME))) {
+                continue;
+            }
+            
+            //if an annotation for this HOM ID/Entity ID/Taxon ID was already seen, 
+            //then we wait for the SUMMARY line. If it is the first time we see it, 
+            //we use it directly.
+            if (!summarizedAnnotations.containsKey(key) || 
+                    (summarizedAnnotations.containsKey(key) && 
+                    annotation.get(LINE_TYPE_COL_NAME).equals(SUMMARY_LINE))) {
+                summarizedAnnotations.put(key, new HashMap<String, Object>(annotation));
+            }
+        }
+        
+        //now we filter to remove negative assertions.
+        //we do it afterwards, to be sure all information was taken into account 
+        //for the SUMMARY lines
+        List<Map<String, Object>> filteredAnnotations = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> annotation: summarizedAnnotations.values()) {
+            //check it is not a negative assertion
+            if (annotation.get(QUALIFIER_COL_NAME) == null || 
+                    !annotation.get(QUALIFIER_COL_NAME).equals(NEGATE_QUALIFIER)) {
+                filteredAnnotations.add(annotation);
+            }
+        }
+        
+        return log.exit(filteredAnnotations);
     }
 }

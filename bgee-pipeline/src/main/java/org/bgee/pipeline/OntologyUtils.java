@@ -54,6 +54,11 @@ public class OntologyUtils {
      */
     public final static String PART_OF_ID = "BFO:0000050";
     /**
+     * {@code IRI} of the {@code OWLObjectProperty} "developmentally_related_to".
+     */
+    public final static IRI DEVELOPMENTALLY_RELATED_TO_IRI = 
+            IRI.create("http://purl.obolibrary.org/obo/RO_0002324");
+    /**
      * {@code IRI} of the {@code OWLObjectProperty} "in_taxon".
      */
     public final static IRI IN_TAXON_IRI = 

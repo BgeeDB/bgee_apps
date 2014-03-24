@@ -2,16 +2,20 @@ package org.bgee.pipeline.uberon;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
+import org.bgee.pipeline.Utils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -23,6 +27,10 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvMapWriter;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -55,6 +63,15 @@ public class Uberon {
      *   <li>path to the Uberon ontology (a version making use of such restrictions...).
      *   <li>path to the output file where to write taxon IDs into, one per line.
      *   </ol>
+     * <li>If the first element in {@code args} is "extractDevelopmentRelatedRelations", the action 
+     * will be to retrieve all {@code OWLGraphEdge}s related to the relation 
+     * "developmentally_related_to", or any of its sub-property, and write them 
+     * into an output file, see {@link #extractDevelopmentRelatedEdgesToOutputFile(String, String)}.
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>path to the Uberon ontology with all relations used
+     *   <li>path to the output file where to write the relations
+     *   </ol>
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
@@ -73,6 +90,14 @@ public class Uberon {
             }
             
             new Uberon().extractTaxonIds(args[1], args[2]);
+        } else if (args[0].equalsIgnoreCase("extractDevelopmentRelatedRelations")) {
+            if (args.length != 3) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "3 arguments, " + args.length + " provided."));
+            }
+            
+            new Uberon().extractDevelopmentRelatedEdgesToOutputFile(args[1], args[2]);
         }
         
         log.exit();
@@ -285,5 +310,66 @@ public class Uberon {
         }
         
         return log.exit(annotProps);
+    }
+    
+    /**
+     * Retrieve all {@code OWLGraphEdge}s related to the relation "developmentally_related_to", 
+     * or any of its sub-property, and write them into an output file.
+     * 
+     * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
+     * @param outputFile    A {@code String} that is the output file to be written.
+     * @throws OWLOntologyCreationException
+     * @throws OBOFormatParserException
+     * @throws IOException
+     */
+    public void extractDevelopmentRelatedEdgesToOutputFile(
+            String uberonFile, String outputFile)  throws OWLOntologyCreationException, 
+            OBOFormatParserException, IOException {
+        log.entry(uberonFile, outputFile);
+        
+        OWLOntology ont = OntologyUtils.loadOntology(uberonFile);
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        
+        OWLObjectProperty dvlptRelatedTo = wrapper.getOWLObjectProperty(OntologyUtils.DEVELOPMENTALLY_RELATED_TO_IRI);
+        if (dvlptRelatedTo == null) {
+            throw log.throwing(new IllegalArgumentException("The provided ontology did not " +
+            		"contain the relation \"developmentally_related_to\" http://purl.obolibrary.org/obo/RO_0002324"));
+        }
+        Set<OWLObjectPropertyExpression> props = wrapper.getSubPropertyReflexiveClosureOf(dvlptRelatedTo);
+        Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
+        
+        for (OWLClass iterateClass: wrapper.getAllOWLClasses()) {
+            for (OWLGraphEdge edge: wrapper.getOutgoingEdges(iterateClass)) {
+                if (edge.getSingleQuantifiedProperty() != null && 
+                        props.contains(edge.getSingleQuantifiedProperty().getProperty())) {
+                    edges.add(edge);
+                }
+            }
+        }
+        
+        //write edges to file
+        String[] header = new String[] {"Uberon source ID", "Uberon source name", 
+                "Relation ID", "Relation name", "Uberon target ID", "Uberon target name"};
+        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
+                new NotNull(), new NotNull(), new NotNull(), new NotNull()};
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
+                Utils.TSVCOMMENTED)) {
+            
+            mapWriter.writeHeader(header);
+            for (OWLGraphEdge edge: edges) {
+                Map<String, String> line = new HashMap<String, String>();
+                line.put("Uberon source ID", wrapper.getIdentifier(edge.getSource()));
+                line.put("Uberon source name", wrapper.getLabel(edge.getSource()));
+                line.put("Relation ID", wrapper.getIdentifier(
+                        edge.getSingleQuantifiedProperty().getProperty()));
+                line.put("Relation name", wrapper.getLabel(
+                        edge.getSingleQuantifiedProperty().getProperty()));
+                line.put("Uberon target ID", wrapper.getIdentifier(edge.getTarget()));
+                line.put("Uberon target name", wrapper.getLabel(edge.getTarget()));
+                mapWriter.write(line, header, processors);
+            }
+        }
+        
+        log.exit();
     }
 }

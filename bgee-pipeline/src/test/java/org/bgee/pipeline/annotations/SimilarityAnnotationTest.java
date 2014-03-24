@@ -111,7 +111,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         expectedAnnots.add(row2);
         
         assertEquals(expectedAnnots, new SimilarityAnnotation().extractAnnotations(
-                this.getClass().getResource("/annotations/similarity2.tsv").getFile()));
+                this.getClass().getResource("/annotations/similarity2.tsv").getFile(), true));
     }
     
     /**

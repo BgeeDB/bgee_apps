@@ -63,14 +63,16 @@ public class Uberon {
      *   <li>path to the Uberon ontology (a version making use of such restrictions...).
      *   <li>path to the output file where to write taxon IDs into, one per line.
      *   </ol>
-     * <li>If the first element in {@code args} is "extractDevelopmentRelatedRelations", the action 
-     * will be to retrieve all {@code OWLGraphEdge}s related to the relation 
-     * "developmentally_related_to", or any of its sub-property, and write them 
-     * into an output file, see {@link #extractDevelopmentRelatedEdgesToOutputFile(String, String)}.
+     * <li>If the first element in {@code args} is "extractRelatedRelations", the action 
+     * will be to retrieve all {@code OWLGraphEdge}s related to the relation specified, 
+     * or any of its sub-property, and write them into an output file, 
+     * see {@link #extractRelatedEdgesToOutputFile(String, String, IRI)}.
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>path to the Uberon ontology with all relations used
      *   <li>path to the output file where to write the relations
+     *   <li>IRI of the relation, for instance 
+     *   {@code http://purl.obolibrary.org/obo/RO_0002324}
      *   </ol>
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -91,13 +93,13 @@ public class Uberon {
             
             new Uberon().extractTaxonIds(args[1], args[2]);
         } else if (args[0].equalsIgnoreCase("extractDevelopmentRelatedRelations")) {
-            if (args.length != 3) {
+            if (args.length != 4) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "3 arguments, " + args.length + " provided."));
+                        "4 arguments, " + args.length + " provided."));
             }
             
-            new Uberon().extractDevelopmentRelatedEdgesToOutputFile(args[1], args[2]);
+            new Uberon().extractRelatedEdgesToOutputFile(args[1], args[2], IRI.create(args[3]));
         }
         
         log.exit();
@@ -313,29 +315,30 @@ public class Uberon {
     }
     
     /**
-     * Retrieve all {@code OWLGraphEdge}s related to the relation "developmentally_related_to", 
+     * Retrieve all {@code OWLGraphEdge}s related to the relation {@code relationToUse}, 
      * or any of its sub-property, and write them into an output file.
      * 
      * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
      * @param outputFile    A {@code String} that is the output file to be written.
+     * @param relationToUse an {@code IRI} for the relation we want to use.
      * @throws OWLOntologyCreationException
      * @throws OBOFormatParserException
      * @throws IOException
      */
-    public void extractDevelopmentRelatedEdgesToOutputFile(
-            String uberonFile, String outputFile)  throws OWLOntologyCreationException, 
+    public void extractRelatedEdgesToOutputFile(
+            String uberonFile, String outputFile, IRI relationToUse)  throws OWLOntologyCreationException, 
             OBOFormatParserException, IOException {
-        log.entry(uberonFile, outputFile);
+        log.entry(uberonFile, outputFile, relationToUse);
         
         OWLOntology ont = OntologyUtils.loadOntology(uberonFile);
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
-        OWLObjectProperty dvlptRelatedTo = wrapper.getOWLObjectProperty(OntologyUtils.DEVELOPMENTALLY_RELATED_TO_IRI);
-        if (dvlptRelatedTo == null) {
+        OWLObjectProperty relProp = wrapper.getOWLObjectProperty(relationToUse);
+        if (relProp == null) {
             throw log.throwing(new IllegalArgumentException("The provided ontology did not " +
-            		"contain the relation \"developmentally_related_to\" http://purl.obolibrary.org/obo/RO_0002324"));
+            		"contain the relation " + relationToUse));
         }
-        Set<OWLObjectPropertyExpression> props = wrapper.getSubPropertyReflexiveClosureOf(dvlptRelatedTo);
+        Set<OWLObjectPropertyExpression> props = wrapper.getSubPropertyReflexiveClosureOf(relProp);
         Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
         
         for (OWLClass iterateClass: wrapper.getAllOWLClasses()) {

@@ -131,9 +131,9 @@ public class SimilarityAnnotationTest extends TestAncestor {
         method.setAccessible(true);
         
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
-        taxonConstraints.put("UBERON:1", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
-        taxonConstraints.put("UBERON:2", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
-        taxonConstraints.put("UBERON:3", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+        taxonConstraints.put("UBERON:0000001", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+        taxonConstraints.put("UBERON:0000002", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+        taxonConstraints.put("UBERON:0000003", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
         Set<Integer> taxonIds = new HashSet<Integer>(Arrays.asList(1, 2, 3));
 
         OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(
@@ -151,7 +151,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         List<Map<String, Object>> annotations = new ArrayList<Map<String, Object>>();
         List<Map<String, Object>> expectedAnnots = new ArrayList<Map<String, Object>>();
         Map<String, Object> annotSingle = new HashMap<String, Object>();
-        annotSingle.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:2");
+        annotSingle.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:0000002");
         annotSingle.put(SimilarityAnnotation.TAXON_COL_NAME, 2);
         annotSingle.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:3");
         annotSingle.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000005");
@@ -170,7 +170,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 SimilarityAnnotation.RAW_LINE);
         
         Map<String, Object> annot1 = new HashMap<String, Object>();
-        annot1.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:1");
+        annot1.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:0000001");
         annot1.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
         annot1.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
         annot1.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
@@ -189,7 +189,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 SimilarityAnnotation.RAW_LINE);
         
         Map<String, Object> annot2 = new HashMap<String, Object>();
-        annot2.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:1");
+        annot2.put(SimilarityAnnotation.ENTITY_COL_NAME, "UBERON:0000001");
         annot2.put(SimilarityAnnotation.TAXON_COL_NAME, 1);
         annot2.put(SimilarityAnnotation.ECO_COL_NAME, "ECO:1");
         annot2.put(SimilarityAnnotation.HOM_COL_NAME, "HOM:0000007");
@@ -674,6 +674,65 @@ public class SimilarityAnnotationTest extends TestAncestor {
         assertEquals("Incorrect number of lines in file", 3, lineCount);
         Set<Integer> expectedIds = new HashSet<Integer>(Arrays.asList(7742, 40674, 1294634));
         assertEquals("Incorrect taxon IDs retrieved from generated file", 
+                expectedIds, retrievedIds);
+    }
+    
+    /**
+     * Test the method {@link SimilarityAnnotation#getAnatEntityIdsWithNoTransformationOf(String, String)}
+     */
+    @Test
+    public void shouldGetAnatEntityIdsWithNoTransformationOf() 
+            throws UnknownOWLOntologyException, IllegalArgumentException, 
+            FileNotFoundException, OWLOntologyCreationException, 
+            OBOFormatParserException, IOException {
+        Set<String> expectedIds = new HashSet<String>(Arrays.asList("UBERON:0000001"));
+        assertEquals("Incorrect anatomical entities with no transformation_of relations identified", 
+                expectedIds, new SimilarityAnnotation().getAnatEntityIdsWithNoTransformationOf(
+                        this.getClass().getResource("/annotations/similarity.tsv").getFile(), 
+                        this.getClass().getResource("/annotations/fake_uberon.obo").getFile()));
+    }
+    
+    /**
+     * Test the method {@link SimilarityAnnotation#extractAnatEntityIds(String)}
+     */
+    @Test
+    public void shouldExtractAnatEntityIds() throws FileNotFoundException, IOException {
+        Set<String> expectedIds = new HashSet<String>(Arrays.asList("UBERON:0000001", 
+                "UBERON:0000002", "UBERON:0000003", "UBERON:0000004"));
+        assertEquals("Incorrect anatomical entity IDs extract from similarity annotation file", 
+                expectedIds, new SimilarityAnnotation().extractAnatEntityIds(
+                        this.getClass().getResource("/annotations/similarity.tsv").getFile()));
+    }
+    
+    /**
+     * Test the method {@link 
+     * SimilarityAnnotation#writeAnatEntityIdsWithNoTransformationOfToFile(String, String, String)}
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     * @throws IllegalArgumentException 
+     * @throws UnknownOWLOntologyException 
+     */
+    @Test
+    public void shouldExtractAnatEntityIdsWithNoTransformationOfToFile() 
+            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
+            IllegalArgumentException, OWLOntologyCreationException, OBOFormatParserException {
+        String tempFile = testFolder.newFile("anatEntitiesNoTransfOfOutput.txt").getPath();
+        new SimilarityAnnotation().writeAnatEntityIdsWithNoTransformationOfToFile(
+                this.getClass().getResource("/annotations/similarity.tsv").getFile(), 
+                this.getClass().getResource("/annotations/fake_uberon.obo").getFile(), 
+                tempFile);
+        Set<String> retrievedIds = new HashSet<String>();
+        int lineCount = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(tempFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                lineCount++;
+                retrievedIds.add(line);
+            }
+        }
+        assertEquals("Incorrect number of lines in file", 1, lineCount);
+        Set<String> expectedIds = new HashSet<String>(Arrays.asList("UBERON:0000001"));
+        assertEquals("Incorrect anatomical entities IDs retrieved from generated file", 
                 expectedIds, retrievedIds);
     }
     

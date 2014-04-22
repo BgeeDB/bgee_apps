@@ -30,6 +30,8 @@ import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
@@ -44,6 +46,7 @@ import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapWriter;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
 
 /**
@@ -1495,8 +1498,9 @@ public class SimilarityAnnotation {
     /**
      * Extract from the similarity annotation file {@code annotFile} the list 
      * of all taxon IDs used. The first line of the file should be a header line, 
-     * defining a column to get IDs from, named exactly "taxon ID". The IDs returned 
-     * are {@code Integer}s corresponding to the NCBI ID, for instance, "9606" for human.
+     * defining a column to get IDs from, named exactly as {@link #TAXON_COL_NAME}. 
+     * The IDs returned are {@code Integer}s corresponding to the NCBI ID, 
+     * for instance, "9606" for human.
      * 
      * @param annotFile A {@code String} that is the path to the similarity annotation file.
      * @return          A {@code Set} of {@code Integer}s that contains all IDs 
@@ -1636,5 +1640,160 @@ public class SimilarityAnnotation {
         }
         
         return log.exit(filteredAnnotations);
+    }
+    
+    /**
+     * This methods is a helper method for 
+     * {@link #getAnatEntityIdsWithNoTransformationOf(String, OWLGraphWrapper)}, 
+     * allowing to provide the path to the Uberon ontology as {@code String}. 
+     * @param annotFile     A {@code String} that is the path to 
+     *                      the similarity annotation file.
+     * @param uberonOntFile A {@code String} that is the path to the Uberon 
+     *                      ontology file.
+     * @return              See related method.
+     * @see #getAnatEntityIdsWithNoTransformationOf(String, OWLGraphWrapper)
+     * @throws IllegalArgumentException See related method.
+     * @throws FileNotFoundException    See related method.
+     * @throws IOException              See related method.
+     * @throws UnknownOWLOntologyException  If an error occurred while loading Uberon.
+     * @throws OWLOntologyCreationException If an error occurred while loading Uberon.
+     * @throws OBOFormatParserException     If an error occurred while loading Uberon.
+     */
+    public Set<String> getAnatEntityIdsWithNoTransformationOf(String annotFile, 
+            String uberonOntFile) throws IllegalArgumentException, FileNotFoundException, 
+            IOException, UnknownOWLOntologyException, OWLOntologyCreationException, 
+            OBOFormatParserException {
+        log.entry(annotFile, uberonOntFile);
+        return log.exit(
+                this.getAnatEntityIdsWithNoTransformationOf(annotFile, 
+                    new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile))));
+    }
+    
+    /**
+     * Obtains the IDs of anatomical entities used in the similarity annotation file 
+     * that have no {@code transformation_of} relations in the Uberon ontology 
+     * (nor any sub-relation of {@code transformation_of}). 
+     * <p>
+     * The {@code transformation_of} relations are important to be able to link 
+     * a same structure with its different developmental states, as we annotate 
+     * by default only the fully formed structures. The {@code transformation_of} 
+     * relations allow to expand our annotations to developmental structures. 
+     * 
+     * @param annotFile         A {@code String} that is the path to 
+     *                          the similarity annotation file.
+     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
+     * @return                  A {@code Set} of {@code String}s that are the OBO-like IDs 
+     *                          of the anatomical entities with no {@code transformation_of} 
+     *                          relations.
+     * @throws IllegalArgumentException If {@code annotFile} did not allow to obtain 
+     *                                  any valid anatomical entity ID, or {@code uberonOntWrapper} 
+     *                                  does not allow to retrieve any 
+     *                                  {@code transformation_of} relations.
+     * @throws FileNotFoundException    If {@code annotFile} could not be found.
+     * @throws IOException              If {@code annotFile} could not be read.
+     */
+    public Set<String> getAnatEntityIdsWithNoTransformationOf(String annotFile, 
+            OWLGraphWrapper uberonOntWrapper) throws IllegalArgumentException, 
+            FileNotFoundException, IOException {
+        log.entry(annotFile, uberonOntWrapper);
+
+        //get the transformation_of Object Property, and its sub-object properties
+        OWLObjectProperty transfOfRel = 
+                uberonOntWrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.TRANSFORMATION_OF_ID);
+        Set<OWLObjectPropertyExpression> transfOfRels = new HashSet<OWLObjectPropertyExpression>();
+        if (transfOfRel != null) {
+            transfOfRels = uberonOntWrapper.getSubPropertyReflexiveClosureOf(transfOfRel);
+        } 
+        if (transfOfRel == null || transfOfRels.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
+            		"did not contain any transformation_of relations."));
+        }
+        log.debug("Transformation_of relations identified: {}", transfOfRels);
+        
+        //now, identify all entities used in our annotations, with no transformation_of relation
+        Set<String> anatEntityIds = this.extractAnatEntityIds(annotFile);
+        Set<String> withNoTransfOf = new HashSet<String>();
+        anatEntities: for (String anatEntityId: anatEntityIds) {
+            OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(anatEntityId);
+            log.trace("Testing OWLClass for ID {}: {}", anatEntityId, anatEntity);
+            if (anatEntity == null) {
+                log.trace("Entity {} not found in the ontology.", anatEntityId);
+                continue anatEntities;
+            }
+            for (OWLGraphEdge edge: uberonOntWrapper.getOutgoingEdges(anatEntity)) {
+                log.trace("  OutgoingEdge: {}", edge);
+                if (transfOfRels.contains(edge.getSingleQuantifiedProperty().getProperty())) {
+                    continue anatEntities;
+                }
+            }
+            //if we reach that point, it means that the anat entity does not have 
+            //any transformation_of relation
+            log.trace("No transformation_of relation found for {}.", anatEntityId);
+            withNoTransfOf.add(anatEntityId);
+        }
+        
+        return log.exit(withNoTransfOf);
+    }
+    
+    /**
+     * Call {@link #getAnatEntityIdsWithNoTransformationOfToFile(String, String)}, 
+     * and write the results into {@code outputFile}, one ID per line.
+     * 
+     * @param annotFile     A {@code String} that is the path to 
+     *                      the similarity annotation file.
+     * @param uberonOntFile A {@code String} that is the path to the Uberon 
+     *                      ontology file.
+     * @param outputFile    A {@code String} that is the path to the file where to write results.
+     * @see #getAnatEntityIdsWithNoTransformationOf(String, String)
+     * @throws IllegalArgumentException See related method.
+     * @throws FileNotFoundException    See related method.
+     * @throws IOException              See related method.
+     * @throws UnknownOWLOntologyException  See related method.
+     * @throws OWLOntologyCreationException See related method.
+     * @throws OBOFormatParserException     See related method.
+     */
+    public void writeAnatEntityIdsWithNoTransformationOfToFile(String annotFile, 
+            String uberonOntFile, String outputFile) throws UnknownOWLOntologyException, 
+            IllegalArgumentException, FileNotFoundException, OWLOntologyCreationException, 
+            OBOFormatParserException, IOException {
+        log.entry(annotFile, uberonOntFile, outputFile);
+        
+        Set<String> entityIds = this.getAnatEntityIdsWithNoTransformationOf(annotFile, uberonOntFile);
+        try(PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(outputFile), "utf-8")))) {
+            for (String entityId: entityIds) {
+                writer.println(entityId);
+            }
+        }
+        
+        log.exit();
+    }
+    
+    /**
+     * Extract from the similarity annotation file {@code annotFile} the list 
+     * of all anatomical entity IDs used. The first line of the file should be a header line, 
+     * defining a column to get IDs from, named exactly as {@link #ENTITY_COL_NAME}. 
+     * 
+     * @param annotFile A {@code String} that is the path to the similarity annotation file.
+     * @return          A {@code Set} of {@code String}s that contains all IDs 
+     *                  of the anatomical entities used in the annotation file.
+     * @throws IllegalArgumentException If {@code annotFile} did not allow to obtain 
+     *                                  any valid anatomical entity ID.
+     * @throws FileNotFoundException    If {@code annotFile} could not be found.
+     * @throws IOException              If {@code annotFile} could not be read.
+     */
+    public Set<String> extractAnatEntityIds(String annotFile) 
+            throws IllegalArgumentException, FileNotFoundException, IOException {
+        log.entry(annotFile);
+        
+        Set<String> anatEntityIds = new HashSet<String>(new Utils().parseColumnAsString(
+                annotFile, ENTITY_COL_NAME, new NotNull()));
+        
+        if (anatEntityIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The annotation file " +
+                    annotFile + " did not contain any valid anatomical entity ID"));
+        }
+        
+        return log.exit(anatEntityIds);
     }
 }

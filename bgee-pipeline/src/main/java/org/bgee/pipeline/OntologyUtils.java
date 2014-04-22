@@ -59,6 +59,11 @@ public class OntologyUtils {
     public final static IRI DEVELOPMENTALLY_RELATED_TO_IRI = 
             IRI.create("http://purl.obolibrary.org/obo/RO_0002324");
     /**
+     * {@code IRI} of the {@code OWLObjectProperty} "transformation_of".
+     */
+    public final static String TRANSFORMATION_OF_ID = 
+            "http://semanticscience.org/resource/SIO_000657";
+    /**
      * {@code IRI} of the {@code OWLObjectProperty} "in_taxon".
      */
     public final static IRI IN_TAXON_IRI = 

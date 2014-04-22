@@ -2,13 +2,30 @@ format-version: 1.4
 ontology: uberon
 
 [Term]
-id: UBERON:1
+id: UBERON:0000001
 name: uberon 1
 
 [Term]
-id: UBERON:2
+id: UBERON:0000002
 name: uberon 2
+relationship: immediate_transformation_of UBERON:0000001 ! uberon 1
 
 [Term]
-id: UBERON:3
+id: UBERON:0000003
 name: uberon 3
+relationship: transformation_of UBERON:0000002 ! uberon 2
+
+[Typedef]
+id: transformation_of
+name: transformation_of
+synonym: "transforms from" EXACT [SIO:000657]
+xref: http://semanticscience.org/resource/SIO_000657
+is_transitive: true
+
+[Typedef]
+id: immediate_transformation_of
+name: immediate_transformation_of
+synonym: "direct_transformation_of" EXACT [https://orcid.org/0000-0002-6601-2165]
+synonym: "immediately transforms from" EXACT [SIO:000658]
+xref: http://semanticscience.org/resource/SIO_000658
+is_a: transformation_of ! transformation of

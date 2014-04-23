@@ -4,6 +4,7 @@ ontology: uberon
 [Term]
 id: UBERON:0000001
 name: uberon 1
+relationship: RO:0002202 UBERON:0000003 ! uberon 3
 
 [Term]
 id: UBERON:0000002
@@ -16,11 +17,22 @@ name: uberon 3
 relationship: transformation_of UBERON:0000002 ! uberon 2
 
 [Typedef]
+id: RO:0002324
+name: developmentally related to
+
+[Typedef]
+id: RO:0002202
+name: develops from
+is_transitive: true
+is_a: RO:0002324 ! developmentally related to
+
+[Typedef]
 id: transformation_of
 name: transformation_of
 synonym: "transforms from" EXACT [SIO:000657]
 xref: http://semanticscience.org/resource/SIO_000657
 is_transitive: true
+is_a: RO:0002324 ! developmentally related to
 
 [Typedef]
 id: immediate_transformation_of

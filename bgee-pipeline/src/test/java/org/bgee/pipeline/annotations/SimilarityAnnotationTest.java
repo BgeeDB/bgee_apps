@@ -28,10 +28,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
 import owltools.graph.OWLGraphWrapper;
+import owltools.io.ParserWrapper;
 
 /**
  * Unit tests for {@link SimilarityAnnotation}.
@@ -678,16 +680,24 @@ public class SimilarityAnnotationTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link SimilarityAnnotation#getAnatEntityIdsWithNoTransformationOf(String, String)}
+     * Test the method {@link SimilarityAnnotation#getAnatEntitiesWithNoTransformationOf(String, String)}
      */
     @Test
-    public void shouldGetAnatEntityIdsWithNoTransformationOf() 
+    public void shouldGetAnatEntitiesWithNoTransformationOf() 
             throws UnknownOWLOntologyException, IllegalArgumentException, 
             FileNotFoundException, OWLOntologyCreationException, 
             OBOFormatParserException, IOException {
-        Set<String> expectedIds = new HashSet<String>(Arrays.asList("UBERON:0000001"));
+        
+        ParserWrapper parserWrapper = new ParserWrapper();
+        parserWrapper.setCheckOboDoc(false);
+        OWLGraphWrapper fakeOntology = new OWLGraphWrapper(parserWrapper.parse(
+                this.getClass().getResource("/annotations/fake_uberon.obo").getFile()));
+        
+        Set<OWLClass> expectedClasses = new HashSet<OWLClass>(
+                Arrays.asList(fakeOntology.getOWLClassByIdentifier("UBERON:0000001")));
+        
         assertEquals("Incorrect anatomical entities with no transformation_of relations identified", 
-                expectedIds, new SimilarityAnnotation().getAnatEntityIdsWithNoTransformationOf(
+                expectedClasses, new SimilarityAnnotation().getAnatEntitiesWithNoTransformationOf(
                         this.getClass().getResource("/annotations/similarity.tsv").getFile(), 
                         this.getClass().getResource("/annotations/fake_uberon.obo").getFile()));
     }
@@ -706,34 +716,40 @@ public class SimilarityAnnotationTest extends TestAncestor {
     
     /**
      * Test the method {@link 
-     * SimilarityAnnotation#writeAnatEntityIdsWithNoTransformationOfToFile(String, String, String)}
+     * SimilarityAnnotation#writeAnatEntitiesWithNoTransformationOfToFile(String, String, String)}
      * @throws OBOFormatParserException 
      * @throws OWLOntologyCreationException 
      * @throws IllegalArgumentException 
      * @throws UnknownOWLOntologyException 
      */
     @Test
-    public void shouldExtractAnatEntityIdsWithNoTransformationOfToFile() 
+    public void shouldExtractAnatEntitiesWithNoTransformationOfToFile() 
             throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
             IllegalArgumentException, OWLOntologyCreationException, OBOFormatParserException {
         String tempFile = testFolder.newFile("anatEntitiesNoTransfOfOutput.txt").getPath();
-        new SimilarityAnnotation().writeAnatEntityIdsWithNoTransformationOfToFile(
+        new SimilarityAnnotation().writeAnatEntitiesWithNoTransformationOfToFile(
                 this.getClass().getResource("/annotations/similarity.tsv").getFile(), 
                 this.getClass().getResource("/annotations/fake_uberon.obo").getFile(), 
                 tempFile);
-        Set<String> retrievedIds = new HashSet<String>();
+        Set<String> retrievedEntities = new HashSet<String>();
         int lineCount = 0;
         try (BufferedReader br = new BufferedReader(new FileReader(tempFile))) {
             String line;
             while ((line = br.readLine()) != null) {
+                //skip the first line that is supposed to be a header line
                 lineCount++;
-                retrievedIds.add(line);
+                if (lineCount == 1) {
+                    continue;
+                }
+                retrievedEntities.add(line);
             }
         }
-        assertEquals("Incorrect number of lines in file", 1, lineCount);
-        Set<String> expectedIds = new HashSet<String>(Arrays.asList("UBERON:0000001"));
+        //we should have 2 lines: one header line, and one line with data
+        assertEquals("Incorrect number of lines in file", 2, lineCount);
+        Set<String> expectedEntities = new HashSet<String>(Arrays.asList("UBERON:0000001\tuberon 1\t" +
+        		"develops from: UBERON:0000003 uberon 3"));
         assertEquals("Incorrect anatomical entities IDs retrieved from generated file", 
-                expectedIds, retrievedIds);
+                expectedEntities, retrievedEntities);
     }
     
 }

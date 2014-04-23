@@ -45,12 +45,24 @@ public class OntologyTools {
      * Main method to trigger various generic operations on any ontology. 
      * Parameters that must be provided in order in {@code args} are: 
      * <ul>
-     * <li>For retrieving obsolete IDs from am ontology: 
+     * <li>If the first element in {@code args} is {@code ExtractObsoleteIds}, 
+     * the action will be to retrieve obsolete IDs from an ontology, 
+     * and to write them into an output file, see 
+     * {@link #writeObsoletedTermsToFile(String, String)}. 
+     * Following elements in {@code args} must then be: 
      *   <ol>
-     *     <li>The keyword {@code ExtractObsoleteIds} (case-sensitive).
-     *     <li>path to the file storing the GO ontology, either in OBO or in OWL.
-     *     <li>path to the file where to store the list of obsolete GO terms (used 
-     *         for other parts of the pipeline)
+     *     <li>path to the file storing the ontology, either in OBO or in OWL.
+     *     <li>path to the file where to store the list of IDs of obsolete terms.
+     *   </ol>
+     * </li>
+     * <li>If the first element in {@code args} is {@code ExtractAllIds}, 
+     * the action will be to retrieve IDs of "real" {@code OWLClass} from an ontology, 
+     * and to write them into an output file, see 
+     * {@link #writeOWLClassIdsToFile(String, String)}. 
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *     <li>path to the file storing the ontology, either in OBO or in OWL.
+     *     <li>path to the file where to store the list of IDs.
      *   </ol>
      * </li>
      * </ul>
@@ -70,19 +82,23 @@ public class OntologyTools {
         OWLOntologyCreationException, OBOFormatParserException, IllegalArgumentException, 
         DAOException, IOException {
         log.entry((Object[]) args);
-        int expectedArgLength = 3;
-        if (args.length != expectedArgLength) {
-            throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
-                    "provided, expected " + expectedArgLength + " arguments, " + args.length + 
-                    " provided."));
-        }
         
         OntologyTools tools = new OntologyTools();
-        switch(args[0]) {
-        case "ExtractObsoleteIds":
+        if (args[0].equalsIgnoreCase("ExtractObsoleteIds")) {
+            if (args.length != 3) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "3 arguments, " + args.length + " provided."));
+            }
             tools.writeObsoletedTermsToFile(args[1], args[2]);
-            break;
-        default: 
+        } else if (args[0].equalsIgnoreCase("ExtractAllIds")) {
+            if (args.length != 3) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "3 arguments, " + args.length + " provided."));
+            }
+            tools.writeOWLClassIdsToFile(args[1], args[2]);
+        } else {
             throw log.throwing(new IllegalArgumentException("Unrecognized command " + 
                 args[0]));
         }
@@ -170,6 +186,90 @@ public class OntologyTools {
         }
         
         return log.exit(obsoleteIds);
+    }
+    
+    /**
+     * Same method as {@link #getAllRealOWLClassIds(OWLGraphWrapper)}, except 
+     * that it is the path to the ontology file that is provided, rather than 
+     * an ontology already loaded into an {@code OWLGraphWrapper}. 
+     * 
+     * @param ontFile   A {@code String} that is the path to the ontology file.
+     * @return          A {@code Set} of {@code String}s that are the OBO-like IDs 
+     *                  of the "real" {@code OWLClass}es present in the ontology 
+     *                  (see {@link #getAllRealOWLClassIds(OWLGraphWrapper)} for details).
+     * @throws UnknownOWLOntologyException      If an error occurred while 
+     *                                          loading the ontology.
+     * @throws OWLOntologyCreationException     If an error occurred while 
+     *                                          loading the ontology.
+     * @throws OBOFormatParserException         If an error occurred while 
+     *                                          loading the ontology.
+     * @throws IOException                      If an error occurred while 
+     *                                          loading the ontology.
+     * @see #getAllRealOWLClassIds(OWLGraphWrapper)
+     */
+    public Set<String> getAllRealOWLClassIds(String ontFile) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+            OBOFormatParserException, IOException {
+        log.entry(ontFile);
+        
+        return log.exit(this.getAllRealOWLClassIds(
+                new OWLGraphWrapper(OntologyUtils.loadOntology(ontFile))));
+    }
+    
+    /**
+     * Returns the OBO-like IDs of all the "real" {@code OWLClass}es present 
+     * in the ontology wrapped into {@code ontWrapper} (meaning, {@code OWLClass}es 
+     * neither top entity (owl:thing), nor bottom entity (owl:nothing), 
+     * nor deprecated). 
+     * 
+     * @param ontWrapper    A {@code OWLGraphWrapper} wrapping the {@code OWLOntology} 
+     *                      for which we want class IDs.
+     * @return              A {@code Set} of {@code String}s that are the OBO-like IDs 
+     *                      of the "real" {@code OWLClass}es present in {@code ontWrapper}.
+     * @see #getAllRealOWLClassIds(String)
+     */
+    public Set<String> getAllRealOWLClassIds(OWLGraphWrapper ontWrapper) {
+        log.entry(ontWrapper);
+        Set<String> allIds = new HashSet<String>();
+        
+        for (OWLClass owlClass: ontWrapper.getAllOWLClasses()) {
+            allIds.add(ontWrapper.getIdentifier(owlClass));
+        }
+        
+        return log.exit(allIds);
+    }
+    
+    /**
+     * Extract the OBO-like IDs of all "real" {@code OWLClass}es present 
+     * in the ontology provided through {@code ontFile}, and write them 
+     * into the file {@code outputFile}, one ID per line. 
+     * See {@link #getAllRealOWLClassIds(OWLGraphWrapper)} for more details.
+     * 
+     * @param ontFile       A {@code String} that is the path to the file storing 
+     *                      the ontology, in OBO or OWL.
+     * @param outputFile    A {@code String} that is the path to the file where to write 
+     *                      the IDs.
+     * @throws UnknownOWLOntologyException      If the ontology could not be loaded.
+     * @throws OWLOntologyCreationException     If the ontology could not be loaded.
+     * @throws OBOFormatParserException         If the ontology file could not be parsed.
+     * @throws IOException                      If the ontology file coud not be read, 
+     *                                          or output file could not be written. 
+     * @see #getAllRealOWLClassIds(OWLGraphWrapper)
+     */
+    public void writeOWLClassIdsToFile(String ontFile, String outputFile) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+            OBOFormatParserException, IOException {
+        log.entry(ontFile, outputFile);
+        
+        Set<String> ids = this.getAllRealOWLClassIds(ontFile);
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
+                outputFile)))) {
+            for (String id: ids) {
+                out.println(id);
+            }
+        }
+        
+        log.exit();
     }
 
 }

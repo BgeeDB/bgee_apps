@@ -374,6 +374,7 @@
                 <version>2.16</version>
                 
                 <configuration>
+                    <skipTests>${skipITs}</skipTests> 
                     <systemPropertyVariables>
                         <!-- Provides the System properties that the Bgee applications will use 
                              to connect to a MySQL database as root during integration tests -->

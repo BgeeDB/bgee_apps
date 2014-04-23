@@ -54,6 +54,7 @@
              allowing to skip unit tests but not integration tests.
              See http://stackoverflow.com/a/17932772/1768736 -->
         <skip.surefire.tests>${skipTests}</skip.surefire.tests>
+        <skipITs>${skipTests}</skipITs>
 		
 		<!-- The following properties are used for integration tests -->
 		

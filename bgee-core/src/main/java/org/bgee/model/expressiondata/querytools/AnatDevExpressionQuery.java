@@ -59,9 +59,9 @@ public class AnatDevExpressionQuery extends ExpressionQuery {
      * <ul>
      * <li>{@code ANATOMY}: query for {@link org.bgee.model.anatdev.AnatElement}s
      * <li>{@code DEVELOPMENT}: query for {@link org.bgee.model.anatdev.DevElement}s
-     * <li>{@code ANATDEV}: query for {code AnatElement}s with details of 
+     * <li>{@code ANATWITHDEV}: query for {code AnatElement}s with details of 
      * {code DevElement}s with expression data for each of them.
-     * <li>{@code ANATDEV}: query for {code DevElement}s with details of 
+     * <li>{@code DEVWITHANAT}: query for {code DevElement}s with details of 
      * {code AnatElement}s with expression data for each of them.
      * </ul>
      * 

@@ -468,6 +468,7 @@ public class TaxonConstraints {
             String storeOntologyDir) throws IllegalArgumentException, 
             OWLOntologyStorageException, OWLOntologyCreationException {
         log.entry(taxonIds, storeOntologyDir);
+        
         if (this.uberonOntWrapper == null || this.taxOntWrapper == null) {
             throw log.throwing(new IllegalStateException("You must provide the Uberon " +
             		"ontology and the taxonomy ontology at instantiation."));

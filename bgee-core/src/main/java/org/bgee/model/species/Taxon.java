@@ -35,5 +35,9 @@ public class Taxon extends Entity implements OntologyElement {
 		super(id);
 		this.delegateOntElement = new BaseOntologyElement();
 	}
+	
+	public void registerWithId(String id) {
+	    this.delegateOntElement.registerWithId(id);
+	}
 
 }

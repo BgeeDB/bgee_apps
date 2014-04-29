@@ -45,7 +45,7 @@ public class OWLGraphManipulatorTest
     private final static Logger log = 
     		LogManager.getLogger(OWLGraphManipulatorTest.class.getName());
     /**
-     * The <code>OWLGraphWrapper</code> used to perform the test. 
+     * The {@code OWLGraphWrapper} used to perform the test. 
      */
     private OWLGraphManipulator graphManipulator;
 	
@@ -57,7 +57,7 @@ public class OWLGraphManipulatorTest
 	}
 	
 	/**
-	 * Load the (really basic) ontology <code>/ontologies/OWLGraphManipulatorTest.obo</code> 
+	 * Load the (really basic) ontology {@code /ontologies/OWLGraphManipulatorTest.obo} 
 	 * into {@link #graphManipulator}.
 	 * It is loaded before the execution of each test, so that a test can modify it 
 	 * without impacting another test.
@@ -648,7 +648,7 @@ public class OWLGraphManipulatorTest
 	/**
 	 * Test the functionalities of 
 	 * {@link OWLGraphManipulator#filterRelations(Collection, boolean)} 
-	 * with the <code>boolean</code> parameters set to <code>false</code>.
+	 * with the {@code boolean} parameters set to {@code false}.
 	 */
 	@Test
 	public void shouldFilterRelations()
@@ -661,7 +661,7 @@ public class OWLGraphManipulatorTest
 	/**
 	 * Test the functionalities of 
 	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
-	 * with the <code>boolean</code> parameters set to <code>true</code>.
+	 * with the {@code boolean} parameters set to {@code true}.
 	 */
 	@Test
 	public void shouldFilterRelationsWithSubRel()
@@ -676,7 +676,7 @@ public class OWLGraphManipulatorTest
 	 * Test the functionalities of 
 	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#filterRelations(Collection, boolean)} 
 	 * when filtering a relation with a non-OBO-style ID (in this method, 
-	 * <code>http://semanticscience.org/resource/SIO_000657</code>).
+	 * {@code http://semanticscience.org/resource/SIO_000657}).
 	 */
 	@Test
 	public void shouldFilterRelationsWithNonOboId()
@@ -702,7 +702,7 @@ public class OWLGraphManipulatorTest
 	/**
 	 * Test the functionalities of 
 	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#removeRelations(Collection, boolean)} 
-	 * with the <code>boolean</code> parameters set to <code>false</code>.
+	 * with the {@code boolean} parameters set to {@code false}.
 	 */
 	@Test
 	public void shouldRemoveRelations()
@@ -715,7 +715,7 @@ public class OWLGraphManipulatorTest
 	/**
 	 * Test the functionalities of 
 	 * {@link org.bgee.pipeline.uberon.OWLGraphManipulator#removeRelations(Collection, boolean)} 
-	 * with the <code>boolean</code> parameters set to <code>true</code>.
+	 * with the {@code boolean} parameters set to {@code true}.
 	 */
 	@Test
 	public void shouldRemoveRelationsWithSubRel()
@@ -745,17 +745,17 @@ public class OWLGraphManipulatorTest
 	 * with various configurations, called by the methods performing the actual unit test. 
 	 * 
 	 * @param rels 				corresponds to the first parameter of 
-	 * 							the <code>filterRelations</code> or 
-	 * 							<code>removeRelations</code> method.
+	 * 							the {@code filterRelations} or 
+	 * 							{@code removeRelations} method.
 	 * @param subRels			corresponds to the second parameter of 
-	 * 							the <code>filterRelations</code> or 
-	 * 							<code>removeRelations</code> method.
-	 * @param expRelsRemoved 	An <code>int</code> representing the expected number 
+	 * 							the {@code filterRelations} or 
+	 * 							{@code removeRelations} method.
+	 * @param expRelsRemoved 	An {@code int} representing the expected number 
 	 * 							of relations removed
-	 * @param filter 			A <code>boolean</code> defining whether the method tested is 
-	 * 							<code>filterRelations</code>, or <code>removeRelations</code>. 
-	 * 							If <code>true</code>, the method tested is 
-	 * 							<code>filterRelations</code>.
+	 * @param filter 			A {@code boolean} defining whether the method tested is 
+	 * 							{@code filterRelations}, or {@code removeRelations}. 
+	 * 							If {@code true}, the method tested is 
+	 * 							{@code filterRelations}.
 	 */
 	private void shouldFilterOrRemoveRelations(Collection<String> rels, 
 			boolean subRels, int expRelsRemoved, boolean filter)
@@ -865,7 +865,7 @@ public class OWLGraphManipulatorTest
 	/**
 	 * Test the functionalities of 
 	 * {@link OWLGraphManipulator#removeSubgraphs(Collection, boolean)}, 
-	 * with the <code>boolean</code> parameter set to <code>true</code>.
+	 * with the {@code boolean} parameter set to {@code true}.
 	 */
 	@Test
 	public void shouldRemoveSubgraphs()
@@ -907,7 +907,7 @@ public class OWLGraphManipulatorTest
 	/**
 	 * Test the functionalities of 
 	 * {@link OWLGraphManipulator#removeSubgraphs(Collection, boolean)}, 
-	 * with the <code>boolean</code> parameter set to <code>false</code>.
+	 * with the {@code boolean} parameter set to {@code false}.
 	 */
 	@Test
 	public void shouldRemoveSubgraphsAndSharedClasses()
@@ -947,9 +947,9 @@ public class OWLGraphManipulatorTest
 	
 	/**
 	 * Test {@link owltools.graph.OWLGraphEdge#hashCode()}. 
-	 * There used to be a problem that two equal <code>OWLGraphEdge<code> could have 
+	 * There used to be a problem that two equal {@code OWLGraphEdge{@code  could have 
 	 * different hashcodes, leading to the the possibility to have several identical 
-	 * <code>OWLGraphEdge</code>s in a <code>Set</code>.
+	 * {@code OWLGraphEdge}s in a {@code Set}.
 	 */
 	@Test
 	public void testOWLGraphEdgeHashCode()
@@ -968,7 +968,7 @@ public class OWLGraphManipulatorTest
 	}
 	
 	/**
-	 * Test that two <code>OWLClass</code>es that are equal have a same hashcode, 
+	 * Test that two {@code OWLClass}es that are equal have a same hashcode, 
 	 * because the OWLGraphEdge bug get me paranoid. 
 	 */
 	@Test
@@ -989,7 +989,7 @@ public class OWLGraphManipulatorTest
 		 assertTrue("Two OWLClasses are equal but have different hashcode", 
 				 class1.equals(class2) && class1.hashCode() == class2.hashCode());
 	}/**
-	 * Test that two <code>OWLClass</code>es that are equal have a same hashcode, 
+	 * Test that two {@code OWLClass}es that are equal have a same hashcode, 
 	 * because the OWLGraphEdge bug get me paranoid. 
 	 */
 	@Test
@@ -1043,7 +1043,7 @@ public class OWLGraphManipulatorTest
 	}
 	
 	/**
-	 * Test <code>hashCode</code> method and <code>equals</code> method 
+	 * Test {@code hashCode} method and {@code equals} method 
 	 * of {@link owltools.graph.OWLQuantifiedProperty}. 
 	 */
 	@Test

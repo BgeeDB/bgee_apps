@@ -9,9 +9,9 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
+import org.junit.Test;
 
 import static org.mockito.Mockito.*;
-
 import sbc.orthoxml.Group;
 import sbc.orthoxml.io.OrthoXMLReader;
 
@@ -23,11 +23,11 @@ import sbc.orthoxml.io.OrthoXMLReader;
  */
 public class ParseOrthoXMLTest extends TestAncestor {
 	
-	private static long hierarchicalGroupId = 1;
-	private static long nestedSetId = 1;
+	private static int hierarchicalGroupId = 1;
+	private static int nestedSetId = 1;
 
-	private final static Logger log = LogManager
-			.getLogger(ParseOrthoXMLTest.class.getName());
+	private final static Logger log = 
+			LogManager.getLogger(ParseOrthoXMLTest.class.getName());
 
 	private ParseOrthoXML parser;
 
@@ -46,6 +46,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
 
 	}
 
+	@Test
 	public void testBuildTree() throws FileNotFoundException, XMLStreamException, XMLParseException {
 		
 		File file = new File(parser.getOrthoXmlFile());

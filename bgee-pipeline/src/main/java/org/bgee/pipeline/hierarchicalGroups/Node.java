@@ -18,7 +18,7 @@ public class Node {
 	/**
 	 * An {@code long} representing a unique ID for every entry node.
 	 */
-	private long hierarchicalGroupId;
+	private int hierarchicalGroupId;
 
 	/**
 	 * A {@code List} of {@code Node} objects representing the all the
@@ -31,19 +31,19 @@ public class Node {
 	 * every {@code Node} in a particular group of orthologus genes, when
 	 * ordered according to the nested set model.
 	 */
-	private long hierarchicalLeftBound;
+	private int hierarchicalLeftBound;
 
 	/**
 	 * A {@code long} representing a unique Hierarchical Right Bound ID for
 	 * every {@code Node} in a particular group of orthologus genes, when
 	 * ordered according to the nested set model.
 	 */
-	private long hierarchicalRightBound;
+	private int hierarchicalRightBound;
 
 	/**
 	 * A {@code String} representing the ENSEMBL gene ID of the gene.
 	 */
-	private String GeneID;
+	private String geneID;
 
 	/**
 	 * An {@code long} representing a unique ID for every entry node.
@@ -58,16 +58,16 @@ public class Node {
 		this.setChildNodes(new ArrayList<Node>());
 		this.setHierarchicalLeftBound(0);
 		this.setHierarchicalRightBound(0);
-		this.setNcbiTaxonomyId(null);
+		this.setNcbiTaxonomyRange(null);
 		this.setGeneID(null);
 	}
 
-	public Node(long data) {
+	public Node(int data) {
 		setHierarchicalGroupId(data);
 		this.setChildNodes(new ArrayList<Node>());
 		this.setHierarchicalLeftBound(0);
 		this.setHierarchicalRightBound(0);
-		this.setNcbiTaxonomyId(null);
+		this.setNcbiTaxonomyRange(null);
 		this.setGeneID(null);
 	}
 
@@ -82,7 +82,7 @@ public class Node {
 	 * @param nodeId
 	 *            the nodeId to set
 	 */
-	public void setHierarchicalGroupId(long hierarchicalGroupId) {
+	public void setHierarchicalGroupId(int hierarchicalGroupId) {
 		this.hierarchicalGroupId = hierarchicalGroupId;
 	}
 
@@ -126,7 +126,7 @@ public class Node {
 	 * @param hierarchicalLeftBound
 	 *            the hierarchicalLeftBound to set
 	 */
-	public void setHierarchicalLeftBound(long hierarchicalLeftBound) {
+	public void setHierarchicalLeftBound(int hierarchicalLeftBound) {
 		this.hierarchicalLeftBound = hierarchicalLeftBound;
 	}
 
@@ -141,14 +141,14 @@ public class Node {
 	 * @param hierarchicalRightBound
 	 *            the hierarchicalRightBound to set
 	 */
-	public void setHierarchicalRightBound(long hierarchicalRightBound) {
+	public void setHierarchicalRightBound(int hierarchicalRightBound) {
 		this.hierarchicalRightBound = hierarchicalRightBound;
 	}
 
 	/**
 	 * @return the ncbiTaxonomyId
 	 */
-	public String getNcbiTaxonomyId() {
+	public String getNcbiTaxonomyRange() {
 		return this.ncbiTaxonomyId;
 	}
 
@@ -156,7 +156,7 @@ public class Node {
 	 * @param ncbiTaxonID
 	 *            the ncbiTaxonID to set
 	 */
-	public void setNcbiTaxonomyId(String ncbiTaxonomyId) {
+	public void setNcbiTaxonomyRange(String ncbiTaxonomyId) {
 		this.ncbiTaxonomyId = ncbiTaxonomyId;
 	}
 
@@ -164,7 +164,7 @@ public class Node {
 	 * @return the geneID
 	 */
 	public String getGeneID() {
-		return this.GeneID;
+		return this.geneID;
 	}
 
 	/**
@@ -172,6 +172,6 @@ public class Node {
 	 *            the geneID to set
 	 */
 	public void setGeneID(String geneID) {
-		GeneID = geneID;
+		this.geneID = geneID;
 	}
 }

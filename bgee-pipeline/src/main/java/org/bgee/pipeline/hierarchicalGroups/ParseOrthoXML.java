@@ -30,24 +30,24 @@ import sbc.orthoxml.io.OrthoXMLReader;
  */
 public class ParseOrthoXML {
 
-	private static long hierarchicalGroupId = 1;
-	private static long nestedSetId = 1;
+	private final static Logger log =
+			LogManager.getLogger(ParseOrthoXML.class.getName());
 
-	private final static Logger log = LogManager.getLogger(ParseOrthoXML.class
-			.getName());
-
+	
+	private static int hierarchicalGroupId = 1;
+	private int nestedSetId = 1;
 	private String orthoXmlFile;
 
-	public void deriveOrthologusGroups() {
-		
-		ParseOrthoXML parser = new ParseOrthoXML();
-
-		parser.setOrthoXmlFile(this.getClass()
-				.getResource("/orthoxml/HierarchicalGroups.orthoxml")
-				.toString());
-
-		// Get the orthoXML file.
-	}
+//	public void deriveOrthologusGroups() {
+//		
+//		ParseOrthoXML parser = new ParseOrthoXML();
+//
+//		parser.setOrthoXmlFile(this.getClass()
+//				.getResource("/orthoxml/HierarchicalGroups.orthoxml")
+//				.toString());
+//
+//		// Get the orthoXML file.
+//	}
 
 	/**
 	 * Performs the complete task of reading the Hierarchical Groups orthoxml
@@ -69,7 +69,7 @@ public class ParseOrthoXML {
 	 *             other unexpected processing errors.
 	 * @throws XMLParseException
 	 *             if there is an error in parsing the XML retrieved by the
-	 *             PrthoXMLReader
+	 *             OrthoXMLReader
 	 * @throws SQLException
 	 *             if there is an error establishing a connection to the
 	 *             database
@@ -79,54 +79,44 @@ public class ParseOrthoXML {
 			XMLParseException, SQLException {
 
 		log.entry();
-
-		if (log.isDebugEnabled()) {
-			log.debug("Hierarchical Groups OrthoXML File: {}", this.getOrthoXmlFile());
-		}
+		log.debug("Hierarchical Groups OrthoXML File: {}", this.getOrthoXmlFile());
 
 		File file = new File(this.getOrthoXmlFile());
 
 		OrthoXMLReader reader = new OrthoXMLReader(file);
-
-		ParseOrthoXML.hierarchicalGroupId = 1;
 		Group group;
-
+		Node rootNode;
+		
 		// read all the groups in the file iteratively
 		while ((group = reader.next()) != null) {
 
-			if (log.isDebugEnabled()) {
-				log.debug("OrthologusGroupId: {}", group.getId());
-			}
+			log.debug("OrthologusGroupId: {}", group.getId());
 
-			Node rootNode = new Node();
-			rootNode.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
+			rootNode = new Node();
+			rootNode.setHierarchicalGroupId(hierarchicalGroupId++);
 
-			if (log.isInfoEnabled()) {
-				log.info("Building Tree..");
-			}
+			log.info("Start building Tree...");
 			// Build the tree of the current group
 			ParseOrthoXML.buildTree(group, rootNode);
+            log.info("Done inserting Tree.");
 
-			if (log.isInfoEnabled()) {
-				log.info("Building Nested Set Model..");
-			}
+			log.info("Start building Nested Set Model...");
 			// After building the tree, now traverse the tree again to
 			// assign the hierarchical left bound and right bound in order to
 			// store them as a nested set.
-			ParseOrthoXML.nestedSetId = 0;
+			nestedSetId = 0;
 			this.buildNestedSet(rootNode);
+            log.info("Done building Nested Set Model.");
 
-			if (log.isInfoEnabled()) {
-				log.info("Adding data to hierarchicalGroup table.. ");
-			}
+			log.info("Start adding data to hierarchicalGroup table...");
 			// Add data of this group to the HierarchicalGroup table
 			this.addToHierarchicalGroupTable(group, rootNode);
+			log.info("Done adding data to hierarchicalGroup table.");
 
-			if (log.isInfoEnabled()) {
-				log.info("Adding data to gene table.. ");
-			}
+			log.info("Start adding data to gene table...");
 			// Add data of this group to the gene table
 			this.addToGeneTable(group, rootNode);
+			log.info("Done adding data to gene table.");
 
 		}
 
@@ -134,8 +124,7 @@ public class ParseOrthoXML {
 	}
 
 	/**
-	 * Builds a {@code Tree} of the {@code Group} passed as a
-	 * parameter.
+	 * Builds a {@code Tree} of the {@code Group} passed as a parameter.
 	 * <p>
 	 * This method builds a tree of the current {@code Group} with the root
 	 * {@code Node} which is passed at a parameter. It recursively iterates
@@ -155,25 +144,26 @@ public class ParseOrthoXML {
 		log.entry(group, node);
 
 		// Adding the NCBI taxonomy ID,i.e,the hierarchical level
-		node.setNcbiTaxonomyId(group.getProperty("TaxRange"));
+		node.setNcbiTaxonomyRange(group.getProperty("TaxRange"));
 
-		// For all the leaves, i.e, the genes, create a node for each of
-		// them add data about their GeneIDs to the {@code Node}
+		// For all the leaves, i.e {@code Gene}, create a node for each of
+		// them and add data about their GeneIDs to the {@code Node}
 		// object.
+		Node leaf;
 		for (Gene gene : group.getGenes()) {
-			Node leaf = new Node();
-			node.addChild(leaf);
-			leaf.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
+			leaf = new Node();
+			leaf.setHierarchicalGroupId(hierarchicalGroupId++);
+			//TODO comment and parse string?
 			leaf.setGeneID(gene.getProteinIdentifier());
+			node.addChild(leaf);
 		}
 
 		// Iterating through all the children of the current group
+		Node childNode;
 		for (Group child : group.getChildren()) {
-
 			// Make a new node object for every child, and set a unique ID
-			Node childNode = new Node();
-			childNode
-					.setHierarchicalGroupId(ParseOrthoXML.hierarchicalGroupId++);
+			childNode = new Node();
+			childNode.setHierarchicalGroupId(hierarchicalGroupId++);
 
 			// Add that node as a child to the parent node
 			node.addChild(childNode);
@@ -203,17 +193,16 @@ public class ParseOrthoXML {
 	public void buildNestedSet(Node node) {
 		log.entry(node);
 		// For every node visited, increment the ID.
-		ParseOrthoXML.nestedSetId++;
+		nestedSetId++;
 		// Left
-		node.setHierarchicalLeftBound(ParseOrthoXML.nestedSetId);
+		node.setHierarchicalLeftBound(nestedSetId);
 		// Right = left + 2*numberOfChildren + 1;
-		node.setHierarchicalRightBound(ParseOrthoXML.nestedSetId + 2
-				* (count(node) - 1) + 1);
+		node.setHierarchicalRightBound(nestedSetId + 2 * (count(node) - 1) + 1);
 
 		// Recurse!!
 		for (Node childNode : node.getChildNodes()) {
 			buildNestedSet(childNode);
-			ParseOrthoXML.nestedSetId++;
+			nestedSetId++;
 		}
 		log.exit();
 	}

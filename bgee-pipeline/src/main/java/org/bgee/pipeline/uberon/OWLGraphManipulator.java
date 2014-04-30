@@ -14,7 +14,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.AddAxiom;
-import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -31,17 +32,12 @@ import org.semanticweb.owlapi.util.OWLEntityRemover;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
-import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
  * This class provides functionalities to modify an ontology wrapped 
- * into an {@link owltools.graph.OWLGraphWrapper OWLGraphWrapper}. 
- * <p>
- * It allows for instance to generate a "basic" ontology, with complex relations removed 
- * (e.g., "serially_homologous_to"), or transformed into simpler parent relations 
- * (e.g., "dorsal_part_of" transformed into "part_of"), and redundant relations reduced 
- * (e.g., if A SubClassOf B, B SubClassOf C, then A SubClassOf C is a redundant relation).
+ * into an {@link owltools.graph.OWLGraphWrapper OWLGraphWrapper} 
+ * to simplify its graph structure. 
  * <p>
  * <strong>Warning: </strong>these operations must be performed on an ontology 
  * already reasoned.  
@@ -57,7 +53,7 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * <li><u>relation mapping to parent relations</u>, see {@link #mapRelationsToParent(Collection)} 
  * and {@link #mapRelationsToParent(Collection, Collection)}
  * <li><u>relation filtering or removal</u>, see {@link #filterRelations(Collection, boolean)} 
- * and {@link #removeRelations(Collection, boolean)}. 
+ * and {@link #removeRelations(Collection, boolean)}.  
  * <li><u>subgraph filtering or removal</u>, see {@link #filterSubgraphs(Collection)} and 
  * {@link #removeSubgraphs(Collection, boolean)}. 
  * <li><u>relation removal to subsets</u> if non orphan, see 
@@ -1164,23 +1160,34 @@ public class OWLGraphManipulator {
 	//*********************************
     
     /**
-     * Filter the {@code OWLSubClassOfAxiom}s in the ontology to keep only  
-     * those that correspond to OBO relations listed in {@code allowedRels}, 
-     * as OBO-style IDs. {@code SubClassOf}/{@code is_a} relations 
+     * Filter the {@code OWLAxiom}s in the ontologies to keep only  
+     * those that correspond to {@code OWLObjectProperty}s listed in {@code allowedRels}, 
+     * as OBO-style IDs. {@code is_a} relations 
      * will not be removed, whatever the content of {@code allowedRels}. 
      * <p>
      * If {@code allowSubRels} is {@code true}, then the relations 
      * that are subproperties of the allowed relations are also kept 
      * (e.g., if RO:0002131 "overlaps" is allowed, and {@code allowSubRels} 
      * is {@code true}, then RO:0002151 "partially_overlaps" is also allowed). 
+     * <p>
+     * This method is similar to the {@link 
+     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set<OWLObjectProperty>) 
+     * Mooncat#retainAxiomsInPropertySubset} method, the differences lie only in 
+     * the options of these methods, and the way sub-properties are retrieved 
+     * (via a reasonner in {@code Mooncat}, via {@code OWLGraphWrapper} in this method). 
+     * Also, the {@code Mooncat} method try to replace a {@code OWLObjectProperty} 
+     * to remove, by an allowed super-property, while here, users should use 
+     * {@link #mapRelationsToParent(Collection)}.
      * 
      * @param allowedRels 		A {@code Collection} of {@code String}s 
      * 							representing the OBO-style IDs of the relations 
      * 							to keep in the ontology, e.g. "BFO:0000050". 
      * @param allowSubRels		A {@code boolean} defining whether sub-relations 
      * 							of the allowed relations should also be kept. 
-     * @return 					An {@code int} representing the number of relations 
-     * 							removed as a result. 
+     * @return          An {@code int} representing the number of {@code OWLSubClassOfAxiom} 
+     *                  removed as a result (but other axioms are removed as well). 
+     * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
+     *                                  an {@code OWLObjectProperty}.
      */
     public int filterRelations(Collection<String> allowedRels, boolean allowSubRels) {
         if (log.isInfoEnabled()) {
@@ -1196,23 +1203,34 @@ public class OWLGraphManipulator {
     	return relsRemoved;
     }
     /**
-     * Remove the {@code OWLSubClassOfAxiom}s in the ontology  
-     * corresponding to the to OBO relations listed in {@code forbiddenRels}, 
-     * as OBO-style IDs. {@code SubClassOf}/{@code is_a} relations 
+     * Remove the {@code OWLAxiom}s in the ontologies  
+     * corresponding to the {@code OWLObjectProperty}s listed in {@code forbiddenRels}, 
+     * as OBO-style IDs. {@code is_a} relations 
      * will not be removed, whatever the content of {@code forbiddenRels}. 
      * <p>
      * If {@code forbidSubRels} is {@code true}, then the relations 
      * that are subproperties of the relations to remove are also removed 
      * (e.g., if RO:0002131 "overlaps" should be removed, and {@code forbidSubRels} 
      * is {@code true}, then RO:0002151 "partially_overlaps" is also removed). 
+     * <p>
+     * This method is the inverse of the {@link 
+     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set<OWLObjectProperty>) 
+     * Mooncat#retainAxiomsInPropertySubset} method, the differences lie also in 
+     * the options of these methods, and the way sub-properties are retrieved 
+     * (via a reasonner in {@code Mooncat}, via {@code OWLGraphWrapper} in this method).
+     * Also, the {@code Mooncat} method try to replace a {@code OWLObjectProperty} 
+     * to remove, by an allowed super-property, while here, users should use 
+     * {@link #mapRelationsToParent(Collection)}.
      * 
      * @param forbiddenRels 	A {@code Collection} of {@code String}s 
      * 							representing the OBO-style IDs of the relations 
      * 							to remove from the ontology, e.g. "BFO:0000050". 
      * @param forbidSubRels		A {@code boolean} defining whether sub-relations 
      * 							of the relations to remove should also be removed. 
-     * @return 					An {@code int} representing the number of relations 
-     * 							removed as a result. 
+     * @return          An {@code int} representing the number of {@code OWLSubClassOfAxiom} 
+     *                  removed as a result (but other axioms are removed as well). 
+     * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
+     *                                  an {@code OWLObjectProperty}.
      */
     public int removeRelations(Collection<String> forbiddenRels, boolean forbidSubRels)
     {
@@ -1228,19 +1246,17 @@ public class OWLGraphManipulator {
     	return relsRemoved;
     }
     /**
-     * Filter the {@code OWLSubClassOfAxiom}s in the ontology to keep or remove 
+     * Filter the {@code OWLAxiom}s in the ontologies to keep or remove 
      * (depending on the {@code filter} parameter)  
-     * those that correspond to OBO relations listed in {@code rels}, 
-     * as OBO-style IDs. {@code SubClassOf}/{@code is_a} relations 
-     * will not be removed, whatever the content of {@code rels}. 
+     * those that correspond to {@code OWLObjectProperty}s listed in {@code rels}, 
+     * as OBO-style IDs. 
      * <p>
      * If {@code filter} is {@code true}, then the relations listed 
      * in {@code rels} should be kept, and all others removed. 
      * If {@code filter} is {@code false}, relations in {@code rels} 
-     * should be removed, and all others conserved. This methods is needed and called by 
+     * should be removed, and all others conserved. The methods 
      * {@link #filterRelations(Collection, boolean)} and 
-     * {@link #removeRelations(Collection, boolean)}, because it is almost 
-     * the same code to write in both scenarios.
+     * {@link #removeRelations(Collection, boolean)} delegate to this one.
      * <p>
      * If {@code subRels} is {@code true}, then the relations 
      * that are subproperties of the relations in {@code rels} are also kept or removed, 
@@ -1249,6 +1265,15 @@ public class OWLGraphManipulator {
      * contains the RO:0002131 "overlaps" relation, 
      * and if {@code subRels} is {@code true}, 
      * then the relation RO:0002151 "partially_overlaps" will also be kept in the ontology). 
+     * <p>
+     * This method is similar to {@link 
+     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set<OWLObjectProperty>) 
+     * Mooncat#retainAxiomsInPropertySubset} method, the differences lie in 
+     * the options of these methods, and the way sub-properties are retrieved 
+     * (via a reasonner in {@code Mooncat}, via {@code OWLGraphWrapper} in this method).
+     * Also, the {@code Mooncat} method try to replace a {@code OWLObjectProperty} 
+     * to remove, by an allowed super-property, while here, users should use 
+     * {@link #mapRelationsToParent(Collection)}.
      * 
      * @param rels		A {@code Collection} of {@code String}s 
      * 					representing the OBO-style IDs of the relations 
@@ -1261,83 +1286,76 @@ public class OWLGraphManipulator {
      * 					in {@code rels} (and their sub-relations if {@code subRels} 
      * 					is {@code true}) should be kept, or removed. 
      * 					If {@code true}, they will be kept, otherwise they will be removed.
-     * @return 			An {@code int} representing the number of relations 
-     * 					removed as a result. 
+     * @return 			An {@code int} representing the number of {@code OWLSubClassOfAxiom} 
+     * 					removed as a result (but other axioms are removed as well). 
      * 
      * @see #filterRelations(Collection, boolean)
      * @see #removeRelations(Collection, boolean)
+     * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
+     *                                  an {@code OWLObjectProperty}.
      */
     private int filterOrRemoveRelations(Collection<String> rels, boolean subRels, 
-    		boolean filter)
-    {
-    	//clear cache to avoid AssertionError thrown by error (see end of this method)
-    	this.getOwlGraphWrapper().clearCachedEdges();
+    		boolean filter) throws IllegalArgumentException {
+
+    	//Obtain the OWLObjectProperties to consider.
+    	Set<OWLObjectPropertyExpression> propsToConsider = 
+    	        new HashSet<OWLObjectPropertyExpression>();
+    	for (String propId: rels) {
+    	    //get the OWLObjectProperty corresponding to the iterated ID
+    	    OWLObjectProperty prop = 
+    	            this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(propId);
+    	    //maybe the ID was not an OBO-like ID, but a String corresponding to an IRI
+    	    if (prop == null) {
+    	        prop = this.getOwlGraphWrapper().getOWLObjectProperty(propId);
+    	    }
+    	    //could not find an property corresponding to the ID
+    	    if (prop == null) {
+    	        throw new IllegalArgumentException("The ID '" + propId + 
+    	                "' does not correspond to any OWLObjectProperty");
+    	    }
+    	    
+    	    propsToConsider.add(prop);
+    	    if (subRels) {
+    	        propsToConsider.addAll(this.getOwlGraphWrapper().getSubPropertyClosureOf(prop));
+    	    }
+    	}
+    	if (log.isInfoEnabled()) {
+    	    if (propsToConsider.isEmpty()) {
+    	        log.info("Filter or remove any axioms containing an OWLObjectProperty");
+    	    } else {
+    	        log.info("OWLObjectProperties considered: " + propsToConsider);
+    	    }
+    	}
     	
-    	Set<OWLGraphEdge> relsToRemove = new HashSet<OWLGraphEdge>();
+    	//now, identify the axioms to remove
+    	int subClassOfAxiomsRmCount = 0;
     	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-    		for (OWLClass iterateClass: ont.getClassesInSignature()) {
-    			for (OWLGraphEdge outgoingEdge: 
-    				    this.getOwlGraphWrapper().getOutgoingEdges(iterateClass)) {
-    				//to fix a bug
-    				if (!ont.containsAxiom(this.getAxiom(outgoingEdge))) {
-    					continue;
-    				} 
-    				outgoingEdge.setOntology(ont);
-    				
-    				Collection<OWLGraphEdge> toTest = new ArrayList<OWLGraphEdge>();
-    				toTest.add(outgoingEdge);
-    				//if subrelations need to be considered, 
-    				//we generalize over quantified properties
-    				//to check if this relation is a subrelation of a rel to remove or to keep.
-    				if (subRels) {
-    					toTest.addAll(
-    						this.getOwlGraphWrapper().getOWLGraphEdgeSubsumers(outgoingEdge));
-    				}
-    				//check if allowed.
-    				//if filter is true (keep relations in rels), 
-    				//then relations are not allowed unless they are related to the allowed rels
-    				boolean allowed = false;
-    				//if filter is false (remove relation in rels), 
-    				//then relations are allowed unless they are related to the forbidden rels
-    				if (!filter) {
-    					allowed = true;
-    				}
-    				
-    				edge: for (OWLGraphEdge edgeToTest: toTest) {
-    					OWLQuantifiedProperty prop = edgeToTest.getSingleQuantifiedProperty();
-    					//in case the allowedRels IDs were not OBO-style IDs
-    				    String iriId = prop.getPropertyId();
-    				    String oboId = this.getOwlGraphWrapper().getIdentifier(
-    						IRI.create(iriId));
-    				    
-    				    if (prop.getQuantifier() == Quantifier.SUBCLASS_OF || 
-    				    		rels.contains(oboId) || rels.contains(iriId)) {
-    				    	if (prop.getQuantifier() == Quantifier.SUBCLASS_OF || filter) {
-    				    		//if it is an is_a relations, 
-    				    		//or an allowed relation (filter is true)
-    				    		allowed = true;
-    				    	} else {
-    				    		//if it is not an is_a relation, 
-    				    		//and if it is a forbidden relation (filter is false)
-    				    		allowed = false;
-    				    	}
-    				    	break edge;
-    				    }
-    				}
-    				//remove rel if not allowed
-    				if (!allowed) {
-    					relsToRemove.add(outgoingEdge);
-    				}
-    			}
-    		}
+            for (OWLAxiom ax : ont.getAxioms()) {
+                Set<OWLObjectProperty> ps = ax.getObjectPropertiesInSignature();
+                boolean hasChanged = ps.removeAll(propsToConsider);
+                //if we wanted to keep only the properties to consider, 
+                //but there are others properties in this axiom: remove the axiom.
+                //if we wanted to remove the properties to consider, 
+                //and we find some in this axiom: remove the axiom
+                if ((filter && ps.size() > 0) ||
+                        (!filter && hasChanged)) { 
+
+                    if (log.isInfoEnabled()) {
+                        log.info("Axioms to remove: " + ax);
+                    }
+                    int changes = ont.getOWLOntologyManager().removeAxiom(ont, ax).size();
+                    if (log.isEnabledFor(Level.WARN) && changes == 0) {
+                        log.warn("The axiom " + ax + " was not removed");
+                    }
+                    //count the number of subClassOf axioms actually removed
+                    if (ax.isOfType(AxiomType.SUBCLASS_OF) && changes > 0) {
+                        subClassOfAxiomsRmCount++;
+                    }
+                }
+            }
     	}
     	
-    	int edgesRemoved = this.removeEdges(relsToRemove);
-    	if (edgesRemoved != relsToRemove.size()) {
-    		throw new AssertionError("Incorrect number of relations removed, expected " + 
-    				relsToRemove.size() + ", but was " + edgesRemoved);
-    	}
-    	return edgesRemoved;
+    	return subClassOfAxiomsRmCount;
     }
     
 	//*********************************

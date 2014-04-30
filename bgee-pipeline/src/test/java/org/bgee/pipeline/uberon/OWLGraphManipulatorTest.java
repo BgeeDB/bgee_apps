@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -13,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLAxiomChange;
@@ -696,7 +698,7 @@ public class OWLGraphManipulatorTest
 	{
 		//filter relations to keep only is_a relations
 		//15 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
+		this.shouldFilterOrRemoveRelations(new HashSet<String>(), 
 				true, 15, true);
 	}
 	/**
@@ -735,7 +737,7 @@ public class OWLGraphManipulatorTest
 	{
 		//remove nothing
 		//0 relations should be removed
-		this.shouldFilterOrRemoveRelations(Arrays.asList(""), 
+		this.shouldFilterOrRemoveRelations(new HashSet<String>(), 
 			true, 0, false);
 	}
 	/**
@@ -760,9 +762,9 @@ public class OWLGraphManipulatorTest
 	private void shouldFilterOrRemoveRelations(Collection<String> rels, 
 			boolean subRels, int expRelsRemoved, boolean filter)
 	{
-		//get the original number of axioms
+		//get the original number of SubClassOf axioms
 		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
-			    .getSourceOntology().getAxiomCount();
+			    .getSourceOntology().getAxiomCount(AxiomType.SUBCLASS_OF);
 		
 		//filter relations to keep 
 		int relRemovedCount = 0;
@@ -774,9 +776,9 @@ public class OWLGraphManipulatorTest
 		//expRelsRemoved relations should have been removed
 		assertEquals("Incorrect number of relations removed", expRelsRemoved, relRemovedCount);
 		
-		//get the number of axioms after removal
+		//get the number of SubClassOf axioms after removal
 		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
-			    .getSourceOntology().getAxiomCount();
+			    .getSourceOntology().getAxiomCount(AxiomType.SUBCLASS_OF);
 		//check that it corresponds to the returned value
 		assertEquals("The number of relations removed does not correspond to " +
 				"the number of axioms removed", 

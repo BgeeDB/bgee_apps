@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -150,6 +151,44 @@ public class OWLGraphManipulatorTest
                 getOWLObjectPropertyByIdentifier("BFO:0000050");
         
         //test that new OWLSubClassOfAxioms were correctly generated
+        
+        //OWLObjectIntersectionOf corresponding to already existing SubClassOfAxioms
+        Set<OWLAxiom> expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsB, root));
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsB, 
+                factory.getOWLObjectSomeValuesFrom(partOf, clsA)));
+        assertEquals("Incorrect axioms generated", expectedAxioms, ont.getAxioms(clsB));
+        
+        //OWLObjectIntersectionOf corresponding to no relations
+        expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsC, 
+                factory.getOWLObjectSomeValuesFrom(partOf, clsA)));
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsC, 
+                factory.getOWLObjectSomeValuesFrom(partOf, root)));
+        assertEquals("Incorrect axioms generated", expectedAxioms, ont.getAxioms(clsC));
+        
+        //OWLObjectUnionOf corresponding to no relations
+        expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsE, clsD));
+        assertEquals("Incorrect axioms generated", expectedAxioms, ont.getAxioms(clsE));
+        expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsF, clsD));
+        assertEquals("Incorrect axioms generated", expectedAxioms, ont.getAxioms(clsF));
+        
+        //OWLObjectUnionOf corresponding to already existing SubClassOfAxioms
+        expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsH, clsG));
+        assertEquals("Incorrect axioms generated", expectedAxioms, ont.getAxioms(clsH));
+        expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsI, clsG));
+        assertEquals("Incorrect axioms generated", expectedAxioms, ont.getAxioms(clsI));
+        
+        //OWLEquivalentClassesAxiom between named classes,
+        //no relation should have been generated.
+        assertEquals("Incorrect axioms generated: " + ont.getAxioms(clsJ), 
+                0, ont.getAxioms(clsJ).size());
+        assertEquals("Incorrect axioms generated: " + ont.getAxioms(clsG), 
+                0, ont.getAxioms(clsG).size());
 	}
 	
 	

@@ -237,6 +237,10 @@ public class OWLGraphManipulator {
      * 'http://owlapi.sourceforge.net/javadoc/org/semanticweb/owlapi/ConvertEquivalentClassesToSuperClasses.html'>
      * ConvertEquivalentClassesToSuperClasses</a>. It will allow split any operands 
      * that are {@code OWLObjectIntersectionOf}s.
+     * <p>
+     * Note that if several named class expressions are part of a same 
+     * {@code OWLEquivalentClassesAxiom}, no {@code OWLSubClassOfAxiom} will be created 
+     * between them, to avoid generating a cycle.
      * 
      * @see #performDefaultModifications()
      */
@@ -251,24 +255,42 @@ public class OWLGraphManipulator {
             allClasses.addAll(ont.getClassesInSignature());
         }
         
-        //now, remove for each class the ECAs. 
+        //now, remove for each class the ECAs. Store all changes before applying them, 
+        //so that if several named classes are part of an ECA, the ECA is not removed 
+        //after the iteration of the first named class. Also, changes will be filtered 
+        //to avoid creating a cycle between such multiple named classes of an ECA.
+        List<OWLOntologyChange> allChanges = new ArrayList<OWLOntologyChange>();
         for (OWLClass cls: allClasses) {
             ConvertEquivalentClassesToSuperClasses convert = 
                     new ConvertEquivalentClassesToSuperClasses(
                             this.getOwlGraphWrapper().getDataFactory(), cls, 
                             this.getOwlGraphWrapper().getAllOntologies(), 
                             this.getOwlGraphWrapper().getSourceOntology(), 
-                            true);
-            //we apply the changes immediately, this way, if an ECA contained two named 
-            //class expressions, we would avoid creating a cycle when iterating 
-            //the other OWLClass, as the axiom would have been removed. 
-            //Yet, which OWLClass will be super/subclass is completely arbitrary, 
-            //and if an ECA contains more than 2 OWLClasses, some subClassOf axioms 
-            //will be lost... 
-            //TODO: avoid relying on ConvertEquivalentClassesToSuperClasses, to treat all 
-            //ECAs at once, and avoid this unpredictability and loss of relation. 
-            this.getOwlGraphWrapper().getManager().applyChanges(convert.getChanges());
+                            false); //disable splitting of OWLObjectIntersectionOf, 
+                                    //otherwise it would be difficult to filter 
+                                    //axioms created between named classes (see below)
+            List<OWLOntologyChange> localChanges = convert.getChanges();
+            
+            //filter the changes to avoid creating a cycle between named classes
+            Set<OWLOntologyChange> addAxiomsToCancel = new HashSet<OWLOntologyChange>();
+            for (OWLOntologyChange change: localChanges) {
+                if (change.isAddAxiom() && 
+                    change.getAxiom() instanceof OWLSubClassOfAxiom && 
+                    !((OWLSubClassOfAxiom) change.getAxiom()).getSuperClass().isAnonymous()) {
+                    
+                    //TODO: maybe we should store the OWLClasses involved, and share/exchange 
+                    //all their related SubClassOfAxioms afterwards.
+                    addAxiomsToCancel.add(change);
+                    log.warn("An EquivalentClassesAxiom contained several named " +
+                    		"class expressions, no SubClassOfAxiom will be created " +
+                    		"between them. Axiom that will NOT be added: " + 
+                    		change.getAxiom());
+                }
+            }
+            localChanges.removeAll(addAxiomsToCancel);
+            allChanges.addAll(localChanges);
         }
+        this.getOwlGraphWrapper().getManager().applyChanges(allChanges);
         
         //update the wrapper
         this.getOwlGraphWrapper().clearCachedEdges();
@@ -282,9 +304,9 @@ public class OWLGraphManipulator {
      * SplitSubClassAxioms</a>.
      * <p>
      * Note that it is likely that the {@code OWLObjectIntersectionOf}s where used in
-     * {@code OWLEquivalentClassesAxiom}s, rather than {@code OWLSubClassOfAxiom}s, in which 
-     * case they should have been already relaxed by the method 
-     * {@link #convertEquivalentClassesToSuperClasses()}.
+     * {@code OWLEquivalentClassesAxiom}s, rather than in {@code OWLSubClassOfAxiom}s. 
+     * But the method {@link #convertEquivalentClassesToSuperClasses()} would have transformed 
+     * them into {@code OWLSubClassOfAxiom}s. It must be called before this method.
      * 
      * @see #performDefaultModifications()
      * @see #convertEquivalentClassesToSuperClasses()

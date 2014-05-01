@@ -1811,9 +1811,21 @@ public class OWLGraphManipulator {
 	 * 							removed from the ontology. 
      */
     private boolean removeClass(OWLClass classToDel) {
-    	Set<OWLClass> classes = new HashSet<OWLClass>();
-		classes.add(classToDel);
-		return this.removeClasses(classes) > 0;
+        OWLEntityRemover remover = new OWLEntityRemover(
+                this.getOwlGraphWrapper().getManager(), 
+                this.getOwlGraphWrapper().getAllOntologies());
+        classToDel.accept(remover);
+        if (this.applyChanges(remover.getChanges())) {
+            if (log.isDebugEnabled()) {
+                log.debug("Removing OWLClass " + classToDel);
+            }
+            this.triggerWrapperUpdate();
+            return true;
+        } 
+        if (log.isDebugEnabled()) {
+            log.debug("Fail removing OWLClass " + classToDel);
+        }
+        return false;
     }
 	/**
      * Remove from all ontologies all {@code OWLClass}es 
@@ -1828,25 +1840,9 @@ public class OWLGraphManipulator {
     private int removeClasses(Set<OWLClass> classesToDel) {
     	int classCount = 0;
     	for (OWLClass classToDel: classesToDel) {
-    		//we use the remover one class at a time, to check 
-	    	//that it is actually removed
-	    	OWLEntityRemover remover = new OWLEntityRemover(
-	    			this.getOwlGraphWrapper().getManager(), 
-	    			this.getOwlGraphWrapper().getAllOntologies());
-    		classToDel.accept(remover);
-		    if (this.applyChanges(remover.getChanges())) {
-		        if (log.isDebugEnabled()) {
-		            log.debug("Removing OWLClass " + classToDel);
-		        }
+		    if (this.removeClass(classToDel)) {
 		        classCount++;
-		    } else {
-		        if (log.isDebugEnabled()) {
-		    	    log.debug("Fail removing OWLClass " + classToDel);
-		        }
-		    }
-    	}
-    	if (classCount != 0) {
-    	    this.triggerWrapperUpdate();
+		    } 
     	}
     	return classCount;
     }
@@ -1865,28 +1861,11 @@ public class OWLGraphManipulator {
     	int classCount = 0;
     	for (OWLOntology o : this.getOwlGraphWrapper().getAllOntologies()) {
     		for (OWLClass iterateClass: o.getClassesInSignature()) {
-			    if (!classesToKeep.contains(iterateClass)) {
-			    	//we use the remover one class at a time, to check 
-			    	//that it is actually removed
-			    	OWLEntityRemover remover = new OWLEntityRemover(
-			    			this.getOwlGraphWrapper().getManager(), 
-			    			this.getOwlGraphWrapper().getAllOntologies());
-				    iterateClass.accept(remover);
-				    if (this.applyChanges(remover.getChanges())) {
-				        if (log.isDebugEnabled()) {
-				            log.debug("Removing OWLClass " + iterateClass);
-				        }
+			    if (!classesToKeep.contains(iterateClass) && 
+			            this.removeClass(iterateClass)) {
 				        classCount++;
-				    } else {
-				        if (log.isDebugEnabled()) {
-				    	    log.debug("Fail removing OWLClass " + iterateClass);
-				        }
-				    }
 			    }
     		}
-    	}
-    	if (classCount != 0) {
-    	    this.triggerWrapperUpdate();
     	}
     	return classCount;
     }

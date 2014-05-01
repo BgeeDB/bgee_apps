@@ -38,8 +38,8 @@ import owltools.io.ParserWrapper;
  * Test the functionalities of {@link OWLGraphManipulator}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13, May 2013
- * @since Bgee 13
+ * @version June 2014
+ * @since June 2013
  *
  */
 public class OWLGraphManipulatorTest
@@ -656,7 +656,7 @@ public class OWLGraphManipulatorTest
 	public void shouldFilterRelations()
 	{
 		//filter relations to keep only is_a, part_of and develops_from
-		//5 relations should be removed
+		//5 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
 				false, 5, true);
 	}
@@ -670,7 +670,7 @@ public class OWLGraphManipulatorTest
 	{
 		//filter relations to keep is_a, part_of, develops_from, 
 		//and their sub-relations.
-		//3 relations should be removed
+		//3 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
 				true, 3, true);
 	}
@@ -684,9 +684,9 @@ public class OWLGraphManipulatorTest
 	public void shouldFilterRelationsWithNonOboId()
 	{
 		//filter relations to keep only is_a and transformation_of relations
-		//14 relations should be removed
+		//15 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
-				true, 14, true);
+				true, 15, true);
 	}	
 	/**
 	 * Test the functionalities of 
@@ -697,9 +697,9 @@ public class OWLGraphManipulatorTest
 	public void shouldFilterAllRelations()
 	{
 		//filter relations to keep only is_a relations
-		//15 relations should be removed
+		//16 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(new HashSet<String>(), 
-				true, 15, true);
+				true, 16, true);
 	}
 	/**
 	 * Test the functionalities of 
@@ -710,9 +710,9 @@ public class OWLGraphManipulatorTest
 	public void shouldRemoveRelations()
 	{
 		//remove part_of and develops_from relations
-		//10 relations should be removed
+		//11 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-			false, 10, false);
+			false, 11, false);
 	}
 	/**
 	 * Test the functionalities of 
@@ -723,7 +723,7 @@ public class OWLGraphManipulatorTest
 	public void shouldRemoveRelationsWithSubRel()
 	{
 		//remove develops_from relations and sub-relations
-		//2 relations should be removed
+		//2 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("RO:0002202"), 
 			true, 2, false);
 	}
@@ -736,7 +736,7 @@ public class OWLGraphManipulatorTest
 	public void shouldRemoveNoRelation()
 	{
 		//remove nothing
-		//0 relations should be removed
+		//0 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(new HashSet<String>(), 
 			true, 0, false);
 	}
@@ -753,7 +753,7 @@ public class OWLGraphManipulatorTest
 	 * 							the {@code filterRelations} or 
 	 * 							{@code removeRelations} method.
 	 * @param expRelsRemoved 	An {@code int} representing the expected number 
-	 * 							of relations removed
+	 * 							of OWLClassAxioms removed
 	 * @param filter 			A {@code boolean} defining whether the method tested is 
 	 * 							{@code filterRelations}, or {@code removeRelations}. 
 	 * 							If {@code true}, the method tested is 
@@ -762,9 +762,12 @@ public class OWLGraphManipulatorTest
 	private void shouldFilterOrRemoveRelations(Collection<String> rels, 
 			boolean subRels, int expRelsRemoved, boolean filter)
 	{
-		//get the original number of SubClassOf axioms
+		//get the original number of OWLClassAxioms (we expect 
+	    //only subClassOf and EquivalentClasses axioms)
 		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
-			    .getSourceOntology().getAxiomCount(AxiomType.SUBCLASS_OF);
+			    .getSourceOntology().getAxiomCount(AxiomType.SUBCLASS_OF) + 
+			    this.graphManipulator.getOwlGraphWrapper()
+                .getSourceOntology().getAxiomCount(AxiomType.EQUIVALENT_CLASSES);
 		
 		//filter relations to keep 
 		int relRemovedCount = 0;
@@ -778,11 +781,13 @@ public class OWLGraphManipulatorTest
 		
 		//get the number of SubClassOf axioms after removal
 		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
-			    .getSourceOntology().getAxiomCount(AxiomType.SUBCLASS_OF);
+                .getSourceOntology().getAxiomCount(AxiomType.SUBCLASS_OF) + 
+                this.graphManipulator.getOwlGraphWrapper()
+                .getSourceOntology().getAxiomCount(AxiomType.EQUIVALENT_CLASSES);
 		//check that it corresponds to the returned value
 		assertEquals("The number of relations removed does not correspond to " +
 				"the number of axioms removed", 
-				axiomCountBefore - axiomCountAfter, relRemovedCount);
+				relRemovedCount, axiomCountBefore - axiomCountAfter);
 	}
 	
 	

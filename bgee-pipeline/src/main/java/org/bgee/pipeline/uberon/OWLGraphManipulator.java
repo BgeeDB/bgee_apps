@@ -13,15 +13,19 @@ import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.semanticweb.owlapi.ConvertEquivalentClassesToSuperClasses;
+import org.semanticweb.owlapi.SplitSubClassAxioms;
 import org.semanticweb.owlapi.model.AddAxiom;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLObjectUnionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -35,14 +39,41 @@ import owltools.graph.OWLGraphWrapper;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
- * This class provides functionalities to modify an ontology wrapped 
- * into an {@link owltools.graph.OWLGraphWrapper OWLGraphWrapper} 
- * to simplify its graph structure. 
+ * This class provides functionalities to modify an ontology to simplify its graph structure. 
+ * The resulting ontology will not be suitable for reasoning. The aim of this class 
+ * is only to make an ontology suitable for a nicer graph display. 
+ * <p>
+ * Notably, at instantiation of this class, several operations are performed to obtain only 
+ * simple edges between classes, similar to what the method {@link 
+ * OWLGraphWrapperEdges#getOutgoingEdges(OWLObject) getOutgoingEdges} is simulating. 
+ * The operations performed are, in order: 
+ * <ol>
+ *   <li>to reverse all {@code OWLObjectUnionOf}s, that are part of 
+ *   an {@code OWLEquivalentClassesAxiom}, into individual {@code OWLSubClassOfAxiom}s, where 
+ *   the named classes part of the {@code OWLObjectUnionOf} become subclasses, and 
+ *   the top level named classes of the {@code OWLEquivalentClassesAxiom}, superclass. 
+ *   <li>to relax all {@code OWLEquivalentClassesAxiom}s into {@code OWLSubClassOfAxiom}s 
+ *   using a <a href=
+ *   'http://owlapi.sourceforge.net/javadoc/org/semanticweb/owlapi/ConvertEquivalentClassesToSuperClasses.html'>
+ *    ConvertEquivalentClassesToSuperClasses</a>.
+ *   <li>to relax all {@code OWLSubClassOfAxiom}s, whose superclass is an 
+ *   {@code OWLObjectIntersectionOf}, into multiple {@code OWLSubClassOfAxiom}s, using a <a 
+ *   href='http://owlapi.sourceforge.net/javadoc/org/semanticweb/owlapi/SplitSubClassAxioms.html'>
+ *   SplitSubClassAxioms</a>.
+ *   <li>to remove any {@code OWLEquivalentClassesAxiom} or {@code OWLSubClassOfAxiom} using 
+ *   an {@code OWLObjectUnionOf}.
+ * </ol>
+ * These operations will then allow to remove specific edges between terms, 
+ * without impacting other edges that would be associated to them, through 
+ * {@code OWLEquivalentClassesAxiom}s, or {@code OWLObjectIntersectionOf}s, 
+ * {@code OWLObjectUnionOf}s. These operations are doing for real what the method {@link 
+ * OWLGraphWrapperEdges#getOutgoingEdges(OWLObject) getOutgoingEdges} is simulating 
+ * under the hood.
  * <p>
  * <strong>Warning: </strong>these operations must be performed on an ontology 
- * already reasoned.  
+ * already reasoned, as this class does not accept reasoners for now. 
  * <p>
- * This class allows to perform:
+ * This class then allows to perform:
  * <ul>
  * <li><u>relation reduction</u> using regular composition rules, and composition over 
  * super properties, see {@link #reduceRelations()}. 
@@ -53,16 +84,17 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * <li><u>relation mapping to parent relations</u>, see {@link #mapRelationsToParent(Collection)} 
  * and {@link #mapRelationsToParent(Collection, Collection)}
  * <li><u>relation filtering or removal</u>, see {@link #filterRelations(Collection, boolean)} 
- * and {@link #removeRelations(Collection, boolean)}.  
+ * and {@link #removeRelations(Collection, boolean)}. 
+ * <li><u>relation removal to subsets</u> if non orphan, see 
+ * {@link #removeRelsToSubsets(Collection)} 
  * <li><u>subgraph filtering or removal</u>, see {@link #filterSubgraphs(Collection)} and 
  * {@link #removeSubgraphs(Collection, boolean)}. 
- * <li><u>relation removal to subsets</u> if non orphan, see 
- * {@link #removeRelsToSubsets(Collection)}
- * <li>a combination of these methods to <u>generate a basic ontology</u>, see 
- * {@link #makeBasicOntology()}.
+ * <li>a combination of these methods to <u>generate a simple ontology</u>, see 
+ * {@link #makeSimpleOntology()}.
  * 
  * @author Frederic Bastian
- * @version June 2013
+ * @version June 2014
+ * @since June 2013
  */
 public class OWLGraphManipulator {
 	private final static Logger log = LogManager.getLogger(OWLGraphManipulator.class.getName());
@@ -102,16 +134,6 @@ public class OWLGraphManipulator {
         this((OWLGraphWrapper) null);
     }
     /**
-     * Constructor providing the {@code OWLGraphWrapper} 
-     * wrapping the ontology on which modifications will be performed. 
-     * 
-     * @param owlGraphWrapper   The {@code OWLGraphWrapper} on which the operations 
-     *                          will be performed.
-     */
-    public OWLGraphManipulator(OWLGraphWrapper owlGraphWrapper) {
-        this.setOwlGraphWrapper(owlGraphWrapper);
-    }
-    /**
      * Constructor providing the {@code OWLOntology} on which modifications 
      * will be performed, that will be wrapped in a {@code OWLGraphWrapper}. 
      * 
@@ -126,7 +148,192 @@ public class OWLGraphManipulator {
      */
     public OWLGraphManipulator(OWLOntology ont) throws UnknownOWLOntologyException, 
         OWLOntologyCreationException {
-        this.setOwlGraphWrapper(new OWLGraphWrapper(ont));
+        this(new OWLGraphWrapper(ont));
+    }
+    /**
+     * Constructor providing the {@code OWLGraphWrapper} 
+     * wrapping the ontology on which modifications will be performed. 
+     * 
+     * @param owlGraphWrapper   The {@code OWLGraphWrapper} on which the operations 
+     *                          will be performed.
+     */
+    public OWLGraphManipulator(OWLGraphWrapper owlGraphWrapper) {
+        this.setOwlGraphWrapper(owlGraphWrapper);
+        this.performDefaultModifications();
+    }
+
+    //*********************************
+    //  DEFAULT ONTOLOGY MODIFICATIONS
+    //*********************************
+    /**
+     * Performs all default modifications needed before using this class, to get only 
+     * simple edges between classes, similar to what the method {@link 
+     * OWLGraphWrapperEdges#getOutgoingEdges(OWLObject) getOutgoingEdges} is simulating.
+     * <p>
+     * Methods called are, in order: 
+     * <ol>
+     *   <li>{@link #reverseOWLObjectUnionOfs()}
+     *   <li>{@link #convertEquivalentClassesToSuperClasses()}
+     *   <li>{@link #splitSubClassAxioms()}
+     *   <li>{@link #removeOWLObjectUnionOfs()}
+     * </ol>
+     * 
+     * @see #reverseOWLObjectUnionOfs()
+     * @see #convertEquivalentClassesToSuperClasses()
+     * @see #splitSubClassAxioms()
+     * @see #removeOWLObjectUnionOfs()
+     */
+    private void performDefaultModifications() {
+        this.reverseOWLObjectUnionOfs();
+        this.convertEquivalentClassesToSuperClasses();
+        this.splitSubClassAxioms();
+        this.removeOWLObjectUnionOfs();
+    }
+    
+    /**
+     * Reverse all {@code OWLObjectUnionOf}s, that are operands in 
+     * an {@code OWLEquivalentClassesAxiom}, into individual {@code OWLSubClassOfAxiom}s, where 
+     * the classes part of the {@code OWLObjectUnionOf} become subclasses, and 
+     * the original first operand of the {@code OWLEquivalentClassesAxiom} superclass. 
+     * <p>
+     * Note that such {@code OWLEquivalentClassesAxiom}s are not removed from the ontology, 
+     * only {@code OWLSubClassOfAxiom}s are added. The axioms containing 
+     * {@code OWLObjectUnionOf}s will be removed by calling {@link #removeOWLObjectUnionOfs()}, 
+     * in order to give a chance to {@link #convertEquivalentClassesToSuperClasses()} 
+     * to do its job before.
+     * 
+     * @see #performDefaultModifications()
+     * @see #removeOWLObjectUnionOfs()
+     * @see #convertEquivalentClassesToSuperClasses()
+     */
+    private void reverseOWLObjectUnionOfs() {
+        log.info("Reversing OWLObjectUnionOfs into OWLSubClassOfAxioms");
+        for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
+            for (OWLClass cls : ont.getClassesInSignature()) {
+                for (OWLEquivalentClassesAxiom eca : ont.getEquivalentClassesAxioms(cls)) {
+                    for (OWLClassExpression ce : eca.getClassExpressions()) {
+                        if (ce instanceof OWLObjectUnionOf) {
+                            for (OWLObject child : ((OWLObjectUnionOf)ce).getOperands()) {
+                                //we reverse only named classes
+                                if (child instanceof OWLClass) {
+                                    this.getOwlGraphWrapper().getManager().addAxiom(ont, 
+                                            ont.getOWLOntologyManager().getOWLDataFactory().
+                                                getOWLSubClassOfAxiom((OWLClass) child, cls));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //update the wrapper
+        this.getOwlGraphWrapper().clearCachedEdges();
+        log.info("OWLObjectUnionOf reversion done.");
+    }
+    
+    /**
+     * Relaxes all {@code OWLEquivalentClassesAxiom}s into {@code OWLSubClassOfAxiom}s 
+     * using a <a href=
+     * 'http://owlapi.sourceforge.net/javadoc/org/semanticweb/owlapi/ConvertEquivalentClassesToSuperClasses.html'>
+     * ConvertEquivalentClassesToSuperClasses</a>. It will allow split any operands 
+     * that are {@code OWLObjectIntersectionOf}s.
+     * 
+     * @see #performDefaultModifications()
+     */
+    private void convertEquivalentClassesToSuperClasses() {
+        log.info("Relaxing OWLEquivalentClassesAxioms into OWLSubClassOfAxioms...");
+        //first, get all OWLClasses in all OWLOntologies, as the 
+        //ConvertEquivalentClassesToSuperClasses will then remove axioms for an OWLClass 
+        //in all ontologies, so, if a class was present in several ontologies, 
+        //it would be redundant.
+        Set<OWLClass> allClasses = new HashSet<OWLClass>();
+        for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
+            allClasses.addAll(ont.getClassesInSignature());
+        }
+        
+        //now, remove for each class the ECAs. 
+        for (OWLClass cls: allClasses) {
+            ConvertEquivalentClassesToSuperClasses convert = 
+                    new ConvertEquivalentClassesToSuperClasses(
+                            this.getOwlGraphWrapper().getDataFactory(), cls, 
+                            this.getOwlGraphWrapper().getAllOntologies(), 
+                            this.getOwlGraphWrapper().getSourceOntology(), 
+                            true);
+            //we apply the changes immediately, this way, if an ECA contained two named 
+            //class expressions, we would avoid creating a cycle when iterating 
+            //the other OWLClass, as the axiom would have been removed. 
+            //Yet, which OWLClass will be super/subclass is completely arbitrary, 
+            //and if an ECA contains more than 2 OWLClasses, some subClassOf axioms 
+            //will be lost... 
+            //TODO: avoid relying on ConvertEquivalentClassesToSuperClasses, to treat all 
+            //ECAs at once, and avoid this unpredictability and loss of relation. 
+            this.getOwlGraphWrapper().getManager().applyChanges(convert.getChanges());
+        }
+        
+        //update the wrapper
+        this.getOwlGraphWrapper().clearCachedEdges();
+        log.info("ECA relaxation done.");
+    }
+    
+    /**
+     * Relaxes all {@code OWLSubClassOfAxiom}s, whose superclass is an 
+     * {@code OWLObjectIntersectionOf}, into multiple {@code OWLSubClassOfAxiom}s, using a <a 
+     * href='http://owlapi.sourceforge.net/javadoc/org/semanticweb/owlapi/SplitSubClassAxioms.html'>
+     * SplitSubClassAxioms</a>.
+     * <p>
+     * Note that it is likely that the {@code OWLObjectIntersectionOf}s where used in
+     * {@code OWLEquivalentClassesAxiom}s, rather than {@code OWLSubClassOfAxiom}s, in which 
+     * case they should have been already relaxed by the method 
+     * {@link #convertEquivalentClassesToSuperClasses()}.
+     * 
+     * @see #performDefaultModifications()
+     * @see #convertEquivalentClassesToSuperClasses()
+     */
+    private void splitSubClassAxioms() {
+        log.info("Relaxing OWLSubClassOfAxioms whose superclass is an OWLObjectIntersectionOf");
+        SplitSubClassAxioms split = new SplitSubClassAxioms(
+                this.getOwlGraphWrapper().getAllOntologies(), 
+                this.getOwlGraphWrapper().getDataFactory());
+        
+        this.getOwlGraphWrapper().getManager().applyChanges(split.getChanges());
+        //update the wrapper
+        this.getOwlGraphWrapper().clearCachedEdges();
+        log.info("OWLObjectIntersectionOf relaxation done.");
+    }
+    
+    /**
+     * Remove any {@code OWLEquivalentClassesAxiom} containing an {@code OWLObjectUnionOf} 
+     * as class expression, and any {@code OWLSubClassOfAxiom} whose superclass is an 
+     * {@code OWLObjectUnionOf}.
+     * 
+     * @see #performDefaultModifications()
+     * @see #reverseOWLObjectUnionOfs()
+     */
+    private void removeOWLObjectUnionOfs() {
+        log.info("Removing OWLEquivalentClassesAxiom or OWLSubClassOfAxiom containig OWLObjectUnionOf...");
+        for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
+            for (OWLAxiom ax: ont.getAxioms()) {
+                boolean toRemove = false;
+                if (ax instanceof OWLSubClassOfAxiom) {
+                    if (((OWLSubClassOfAxiom) ax).getSuperClass() instanceof  OWLObjectUnionOf) {
+                        toRemove = true;
+                    }
+                } else if (ax instanceof OWLEquivalentClassesAxiom) {
+                    for (OWLClassExpression ce : 
+                        ((OWLEquivalentClassesAxiom) ax).getClassExpressions()) {
+                        if (ce instanceof  OWLObjectUnionOf) {
+                            toRemove = true;
+                            break;
+                        }
+                    }
+                }
+                if (toRemove) {
+                    ont.getOWLOntologyManager().removeAxiom(ont, ax);
+                }
+            }
+        }
+        
+        log.info("Done removing OWLObjectUnionOfs");
     }
 
 	//*********************************
@@ -162,7 +369,7 @@ public class OWLGraphManipulator {
      * @see #filterRelations(Collection, boolean)
      * @see #reduceRelations()
      */
-    public int makeBasicOntology() {
+    public int makeSimpleOntology() {
     	log.info("Start building a basic ontology...");
     	
     	Collection<String> relIds = new ArrayList<String>();
@@ -1184,7 +1391,7 @@ public class OWLGraphManipulator {
      * 							to keep in the ontology, e.g. "BFO:0000050". 
      * @param allowSubRels		A {@code boolean} defining whether sub-relations 
      * 							of the allowed relations should also be kept. 
-     * @return          An {@code int} representing the number of {@code OWLSubClassOfAxiom} 
+     * @return          An {@code int} representing the number of {@code OWLClassAxiom}s 
      *                  removed as a result (but other axioms are removed as well). 
      * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
      *                                  an {@code OWLObjectProperty}.
@@ -1227,7 +1434,7 @@ public class OWLGraphManipulator {
      * 							to remove from the ontology, e.g. "BFO:0000050". 
      * @param forbidSubRels		A {@code boolean} defining whether sub-relations 
      * 							of the relations to remove should also be removed. 
-     * @return          An {@code int} representing the number of {@code OWLSubClassOfAxiom} 
+     * @return          An {@code int} representing the number of {@code OWLClassAxiom}s 
      *                  removed as a result (but other axioms are removed as well). 
      * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
      *                                  an {@code OWLObjectProperty}.
@@ -1286,7 +1493,7 @@ public class OWLGraphManipulator {
      * 					in {@code rels} (and their sub-relations if {@code subRels} 
      * 					is {@code true}) should be kept, or removed. 
      * 					If {@code true}, they will be kept, otherwise they will be removed.
-     * @return 			An {@code int} representing the number of {@code OWLSubClassOfAxiom} 
+     * @return 			An {@code int} representing the number of {@code OWLClassAxiom}s 
      * 					removed as a result (but other axioms are removed as well). 
      * 
      * @see #filterRelations(Collection, boolean)
@@ -1297,7 +1504,7 @@ public class OWLGraphManipulator {
     private int filterOrRemoveRelations(Collection<String> rels, boolean subRels, 
     		boolean filter) throws IllegalArgumentException {
 
-    	//Obtain the OWLObjectProperties to consider.
+    	//*** Obtain the OWLObjectProperties to consider ***
     	Set<OWLObjectPropertyExpression> propsToConsider = 
     	        new HashSet<OWLObjectPropertyExpression>();
     	for (String propId: rels) {
@@ -1319,16 +1526,16 @@ public class OWLGraphManipulator {
     	        propsToConsider.addAll(this.getOwlGraphWrapper().getSubPropertyClosureOf(prop));
     	    }
     	}
-    	if (log.isInfoEnabled()) {
+    	if (log.isDebugEnabled()) {
     	    if (propsToConsider.isEmpty()) {
-    	        log.info("Filter or remove any axioms containing an OWLObjectProperty");
+    	        log.debug("Filter or remove any axioms containing an OWLObjectProperty");
     	    } else {
-    	        log.info("OWLObjectProperties considered: " + propsToConsider);
+    	        log.debug("OWLObjectProperties considered: " + propsToConsider);
     	    }
     	}
     	
-    	//now, identify the axioms to remove
-    	int subClassOfAxiomsRmCount = 0;
+    	//*** now, identify the axioms to remove ***
+    	int classAxiomsRmCount = 0;
     	for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
             for (OWLAxiom ax : ont.getAxioms()) {
                 Set<OWLObjectProperty> ps = ax.getObjectPropertiesInSignature();
@@ -1340,22 +1547,23 @@ public class OWLGraphManipulator {
                 if ((filter && ps.size() > 0) ||
                         (!filter && hasChanged)) { 
 
-                    if (log.isInfoEnabled()) {
-                        log.info("Axioms to remove: " + ax);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Axioms to remove (is a OWLClasAxiom: " + 
+                            (ax instanceof OWLClassAxiom) + "): " + ax);
                     }
                     int changes = ont.getOWLOntologyManager().removeAxiom(ont, ax).size();
                     if (log.isEnabledFor(Level.WARN) && changes == 0) {
                         log.warn("The axiom " + ax + " was not removed");
                     }
-                    //count the number of subClassOf axioms actually removed
-                    if (ax.isOfType(AxiomType.SUBCLASS_OF) && changes > 0) {
-                        subClassOfAxiomsRmCount++;
+                    //count the number of OWLClassAxioms actually removed
+                    if (ax instanceof OWLClassAxiom && changes > 0) {
+                        classAxiomsRmCount++;
                     }
                 }
             }
     	}
     	
-    	return subClassOfAxiomsRmCount;
+    	return classAxiomsRmCount;
     }
     
 	//*********************************

@@ -106,8 +106,6 @@ name: E
 comment: test of propagation when using removeClassAndPropagateEdges(String) on FOO:0004. Also, the relation part_of FOO:0001 is redundant and should be removed by reduceRelations()
 is_a: FOO:0004 ! C
 relationship: part_of FOO:0001 ! root
-intersection_of: FOO:0004 ! C
-intersection_of: part_of FOO:0001 ! root
 
 [Term]
 id: FOO:0016

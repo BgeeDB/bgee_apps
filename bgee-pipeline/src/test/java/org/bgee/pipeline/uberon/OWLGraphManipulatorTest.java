@@ -793,9 +793,9 @@ public class OWLGraphManipulatorTest
 	public void shouldFilterRelationsWithNonOboId()
 	{
 		//filter relations to keep only is_a and transformation_of relations
-		//15 OWLClassAxioms should be removed
+		//14 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("http://semanticscience.org/resource/SIO_000657"), 
-				true, 15, true);
+				true, 14, true);
 	}	
 	/**
 	 * Test the functionalities of 
@@ -806,9 +806,9 @@ public class OWLGraphManipulatorTest
 	public void shouldFilterAllRelations()
 	{
 		//filter relations to keep only is_a relations
-		//16 OWLClassAxioms should be removed
+		//15 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(new HashSet<String>(), 
-				true, 16, true);
+				true, 15, true);
 	}
 	/**
 	 * Test the functionalities of 
@@ -819,9 +819,9 @@ public class OWLGraphManipulatorTest
 	public void shouldRemoveRelations()
 	{
 		//remove part_of and develops_from relations
-		//11 OWLClassAxioms should be removed
+		//10 OWLClassAxioms should be removed
 		this.shouldFilterOrRemoveRelations(Arrays.asList("BFO:0000050", "RO:0002202"), 
-			false, 11, false);
+			false, 10, false);
 	}
 	/**
 	 * Test the functionalities of 

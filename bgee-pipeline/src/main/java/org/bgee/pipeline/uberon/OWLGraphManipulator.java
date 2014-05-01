@@ -15,12 +15,9 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.ConvertEquivalentClassesToSuperClasses;
 import org.semanticweb.owlapi.SplitSubClassAxioms;
-import org.semanticweb.owlapi.model.AddAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -30,7 +27,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 
@@ -226,8 +222,7 @@ public class OWLGraphManipulator {
                 }
             }
         }
-        //update the wrapper
-        this.getOwlGraphWrapper().clearCachedEdges();
+        this.triggerWrapperUpdate();
         log.info("OWLObjectUnionOf reversion done.");
     }
     
@@ -291,9 +286,8 @@ public class OWLGraphManipulator {
             allChanges.addAll(localChanges);
         }
         this.getOwlGraphWrapper().getManager().applyChanges(allChanges);
-        
-        //update the wrapper
-        this.getOwlGraphWrapper().clearCachedEdges();
+
+        this.triggerWrapperUpdate();
         log.info("ECA relaxation done.");
     }
     
@@ -318,9 +312,8 @@ public class OWLGraphManipulator {
                 this.getOwlGraphWrapper().getAllOntologies(), 
                 this.getOwlGraphWrapper().getDataFactory());
         this.getOwlGraphWrapper().getManager().applyChanges(split.getChanges());
-        
-        //update the wrapper
-        this.getOwlGraphWrapper().clearCachedEdges();
+
+        this.triggerWrapperUpdate();
         log.info("OWLObjectIntersectionOf relaxation done.");
     }
     
@@ -357,8 +350,7 @@ public class OWLGraphManipulator {
             }
         }
 
-        //update the wrapper
-        this.getOwlGraphWrapper().clearCachedEdges();
+        this.triggerWrapperUpdate();
         log.info("Done removing OWLObjectUnionOfs");
     }
 
@@ -519,8 +511,6 @@ public class OWLGraphManipulator {
             int classCount = 0;
 	    	if (log.isDebugEnabled()) {
     	    	classCount = classes.size();
-    	    	log.debug("Start examining " + classCount + 
-    	    	        " classes for current ontology");
 	    	}
 			for (OWLClass iterateClass: classes) {
 			    if (log.isDebugEnabled()) {
@@ -1417,7 +1407,7 @@ public class OWLGraphManipulator {
      * 							to keep in the ontology, e.g. "BFO:0000050". 
      * @param allowSubRels		A {@code boolean} defining whether sub-relations 
      * 							of the allowed relations should also be kept. 
-     * @return          An {@code int} representing the number of {@code OWLClassAxiom}s 
+     * @return          An {@code int} representing the number of {@code OWLSubClassOfAxiom}s 
      *                  removed as a result (but other axioms are removed as well). 
      * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
      *                                  an {@code OWLObjectProperty}.
@@ -1460,7 +1450,7 @@ public class OWLGraphManipulator {
      * 							to remove from the ontology, e.g. "BFO:0000050". 
      * @param forbidSubRels		A {@code boolean} defining whether sub-relations 
      * 							of the relations to remove should also be removed. 
-     * @return          An {@code int} representing the number of {@code OWLClassAxiom}s 
+     * @return          An {@code int} representing the number of {@code OWLSubClassOfAxiom}s 
      *                  removed as a result (but other axioms are removed as well). 
      * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
      *                                  an {@code OWLObjectProperty}.
@@ -1519,7 +1509,7 @@ public class OWLGraphManipulator {
      * 					in {@code rels} (and their sub-relations if {@code subRels} 
      * 					is {@code true}) should be kept, or removed. 
      * 					If {@code true}, they will be kept, otherwise they will be removed.
-     * @return 			An {@code int} representing the number of {@code OWLClassAxiom}s 
+     * @return 			An {@code int} representing the number of {@code OWLSubClassOfAxiom}s 
      * 					removed as a result (but other axioms are removed as well). 
      * 
      * @see #filterRelations(Collection, boolean)
@@ -1574,15 +1564,15 @@ public class OWLGraphManipulator {
                         (!filter && hasChanged)) { 
 
                     if (log.isDebugEnabled()) {
-                        log.debug("Axioms to remove (is a OWLClasAxiom: " + 
-                            (ax instanceof OWLClassAxiom) + "): " + ax);
+                        log.debug("Axioms to remove (is a OWLSubClassOfAxiom: " + 
+                            (ax instanceof OWLSubClassOfAxiom) + "): " + ax);
                     }
                     int changes = ont.getOWLOntologyManager().removeAxiom(ont, ax).size();
                     if (log.isEnabledFor(Level.WARN) && changes == 0) {
                         log.warn("The axiom " + ax + " was not removed");
                     }
                     //count the number of OWLClassAxioms actually removed
-                    if (ax instanceof OWLClassAxiom && changes > 0) {
+                    if (ax instanceof OWLSubClassOfAxiom && changes > 0) {
                         classAxiomsRmCount++;
                     }
                 }
@@ -1738,25 +1728,25 @@ public class OWLGraphManipulator {
 	//    UTILS
 	//*********************************
 	/**
-	 * Remove {@code edge} from its ontology. 
-	 * This method transforms the {@code OWLGraphEdge} {@code edge} 
-	 * into an {@code OWLSubClassOfAxiom}, then remove it, 
-	 * and trigger a wrapper update. 
+	 * Remove {@code edge} from its ontology. It means that the {@code OWLAxiom}s 
+	 * returned by the method {@code OWLGraphEdge#getAxioms()}, that allowed to generate 
+	 * {@code edge}, will be removed from the ontology. 
 	 * 
-	 * @param edge 	The {@code OWLGraphEdge} to be removed from the ontology. 
-	 * @return 			{@code true} if {@code edge} was actually present 
-	 * 					in the ontology and removed. 
+	 * @param edge 	   The {@code OWLGraphEdge} to be removed from the ontology. 
+	 * @return         {@code true} if all underlying {@code OWLAxiom}s of {@code edge} 
+	 *                 were actually present in its ontology, and removed. 
+	 * @see #removeEdges(Collection)
 	 */
 	public boolean removeEdge(OWLGraphEdge edge) {
-		Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
-		edges.add(edge);
-		return this.removeEdges(edges) > 0;
+	    int axiomsRemovedCount = edge.getOntology().getOWLOntologyManager().removeAxioms(
+	            edge.getOntology(), edge.getAxioms()).size();
+	    this.triggerWrapperUpdate();
+	    return (axiomsRemovedCount == edge.getAxioms().size());
 	}
 	/**
-	 * Remove {@code edges} from their related ontology. 
-	 * This method transforms the {@code OWLGraphEdge}s in {@code edge}s 
-	 * into {@code OWLSubClassOfAxiom}s, then remove them, and trigger 
-	 * a wrapper update. 
+	 * Remove {@code edges} from their related ontology. It means that the {@code OWLAxiom}s 
+     * returned by the method {@code OWLGraphEdge#getAxioms()}, that allowed to generate 
+     * the {@code OWLGraphEdge}s, will be removed from the ontology. 
 	 * 
 	 * @param edges 	A {@code Collection} of {@code OWLGraphEdge}s 
 	 * 					to be removed from their ontology. 
@@ -1765,27 +1755,18 @@ public class OWLGraphManipulator {
 	 * @see #removeEdge(OWLGraphEdge)
 	 */
 	public int removeEdges(Collection<OWLGraphEdge> edges) {
-		
 		int edgeCount = 0;
 		for (OWLGraphEdge edge: edges) {
-    		//we use the remover one edge at a time, to check 
-	    	//that it is actually removed
-			RemoveAxiom remove = new RemoveAxiom(edge.getOntology(), this.getAxiom(edge));
-			if (this.applyChange(remove)) {
+			if (this.removeEdge(edge)) {
 				edgeCount++;
 			} 
-		}
-		
-		if (edgeCount != 0) {
-			this.triggerWrapperUpdate();
 		}
 		return edgeCount;
 	}
 	/**
 	 * Add {@code edge} to its related ontology. 
 	 * This method transforms the {@code OWLGraphEdge} {@code edge} 
-	 * into an {@code OWLSubClassOfAxiom}, 
-	 * then add it to the ontology   
+	 * into an {@code OWLSubClassOfAxiom}, then add it to the ontology   
      * and update the {@code OWLGraphWrapper} container. 
 	 * 
 	 * @param edge 		The {@code OWLGraphEdge} to be added to its related ontology. 
@@ -1793,9 +1774,11 @@ public class OWLGraphManipulator {
 	 * 					to the ontology. 
 	 */
 	public boolean addEdge(OWLGraphEdge edge) {
-		Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
-		edges.add(edge);
-		return this.addEdges(edges) > 0;
+	    int addAxiomCount = edge.getOntology().getOWLOntologyManager().addAxiom(
+	            edge.getOntology(), 
+	            this.getAxiom(edge)).size();
+	    this.triggerWrapperUpdate();
+	    return (addAxiomCount > 0);
 	}
 	/**
 	 * Add {@code edges} to their related ontology. 
@@ -1812,16 +1795,9 @@ public class OWLGraphManipulator {
 	public int addEdges(Set<OWLGraphEdge> edges) {
 		int edgeCount = 0;
 		for (OWLGraphEdge edge: edges) {
-    		//we use the addaxiom one edge at a time, to check 
-	    	//that it is actually removed
-			AddAxiom addAx = new AddAxiom(edge.getOntology(), this.getAxiom(edge));
-			if (this.applyChange(addAx)) {
+			if (this.addEdge(edge)) {
 				edgeCount++;
 			} 
-		}
-		
-		if (edgeCount != 0) {
-			this.triggerWrapperUpdate();
 		}
 		return edgeCount;
 	}
@@ -1953,13 +1929,11 @@ public class OWLGraphManipulator {
 	 * 								to {@code OWLGraphEdge}.
 	 */
 	private OWLSubClassOfAxiom getAxiom(OWLGraphEdge edge) {
-        OWLClassExpression source      = (OWLClassExpression) edge.getSource();
-    	OWLDataFactory factory = this.getOwlGraphWrapper().getManager().getOWLDataFactory();
 		
-		OWLSubClassOfAxiom ax = factory.getOWLSubClassOfAxiom(source, 
+		return edge.getOntology().getOWLOntologyManager().
+		    getOWLDataFactory().getOWLSubClassOfAxiom(
+		        (OWLClassExpression) edge.getSource(), 
 				(OWLClassExpression) this.getOwlGraphWrapper().edgeToTargetExpression(edge));
-    	
-		return ax;
 	}
 	
     /**
@@ -1985,24 +1959,12 @@ public class OWLGraphManipulator {
     	return false;
     }
     /**
-     * Convenient method to apply {@code change} to the ontology.
-     * 
-     * @param change 	The {@code OWLOntologyChange} to be applied to the ontology. 
-     * @return 			{@code true} if the change was actually applied. 
-     * @see #applyChanges(List)
-     */
-    private boolean applyChange(OWLOntologyChange change) {
-    	List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
-    	changes.add(change);
-    	return this.applyChanges(changes);
-    }
-    /**
      * Convenient method to trigger an update of the {@code OWLGraphWrapper} 
      * on which modifications are performed.
      */
     private void triggerWrapperUpdate() {
     	this.getOwlGraphWrapper().clearCachedEdges();
-        this.getOwlGraphWrapper().cacheEdges();
+        //this.getOwlGraphWrapper().cacheEdges();
     }
     
     

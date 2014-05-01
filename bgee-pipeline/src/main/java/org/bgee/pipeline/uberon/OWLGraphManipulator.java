@@ -291,11 +291,12 @@ public class OWLGraphManipulator {
      */
     private void splitSubClassAxioms() {
         log.info("Relaxing OWLSubClassOfAxioms whose superclass is an OWLObjectIntersectionOf");
+        
         SplitSubClassAxioms split = new SplitSubClassAxioms(
                 this.getOwlGraphWrapper().getAllOntologies(), 
                 this.getOwlGraphWrapper().getDataFactory());
-        
         this.getOwlGraphWrapper().getManager().applyChanges(split.getChanges());
+        
         //update the wrapper
         this.getOwlGraphWrapper().clearCachedEdges();
         log.info("OWLObjectIntersectionOf relaxation done.");
@@ -311,6 +312,7 @@ public class OWLGraphManipulator {
      */
     private void removeOWLObjectUnionOfs() {
         log.info("Removing OWLEquivalentClassesAxiom or OWLSubClassOfAxiom containig OWLObjectUnionOf...");
+        
         for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
             for (OWLAxiom ax: ont.getAxioms()) {
                 boolean toRemove = false;
@@ -332,7 +334,9 @@ public class OWLGraphManipulator {
                 }
             }
         }
-        
+
+        //update the wrapper
+        this.getOwlGraphWrapper().clearCachedEdges();
         log.info("Done removing OWLObjectUnionOfs");
     }
 

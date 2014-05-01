@@ -21,10 +21,13 @@ import org.semanticweb.owlapi.model.OWLAxiomChange;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectUnionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
@@ -80,6 +83,73 @@ public class OWLGraphManipulatorTest
         		this.getClass().getResource("/graph/OWLGraphManipulatorTest.obo").getFile());
     	this.graphManipulator = new OWLGraphManipulator(new OWLGraphWrapper(ont));
 		log.debug("Done wrapping test ontology into OWLGraphManipulator.");
+	}
+    
+    
+    //***********************************************
+    //    TESTS FOR DEFAULT OPERATIONS PERFORMED AT INSTANTIATION
+    //***********************************************
+	/**
+	 * Test the default operations performed at instantiation of the {@code OWLGraphManipulator}. 
+	 * Note that this test used a different test ontology than the one loaded by 
+	 * {@link #loadTestOntology()} before each test. 
+	 */
+	@Test
+	public void shouldTestDefaultOperations() throws OWLOntologyCreationException, 
+	    OBOFormatParserException, IOException {
+	    
+	    log.debug("Loading ontology for testing default operations at instantiation...");
+	    ParserWrapper parserWrapper = new ParserWrapper();
+        OWLOntology ont = parserWrapper.parse(
+            this.getClass().getResource("/graph/manipulatorInstantiationTest.obo").getFile());
+        log.debug("Done loading the ontology.");
+        
+        log.debug("Loading the ontology into OWLGraphManipulator, testing default operations...");
+        this.graphManipulator = new OWLGraphManipulator(new OWLGraphWrapper(ont));
+        log.debug("Default operations done.");
+        
+        //test that OWLEquivalentClassesAxioms were removed
+        assertEquals("OWLEquivalentClassesAxioms not removed", 0, 
+                ont.getAxiomCount(AxiomType.EQUIVALENT_CLASSES));
+        //test that there is no more OWLSubClassOfAxioms with OWLObjectIntersectionOf or 
+        //OWLObjectUnionOf as sub or superclass
+        for (OWLSubClassOfAxiom ax: ont.getAxioms(AxiomType.SUBCLASS_OF)) {
+            for (OWLClassExpression ce: ax.getNestedClassExpressions()) {
+                if (ce instanceof OWLObjectIntersectionOf || ce instanceof OWLObjectUnionOf) {
+                    throw new AssertionError("An OWLObjectIntersectionOf or " +
+                            "OWLObjectUnionOf was not removed: " + ax);
+                }
+            }
+        }
+        
+        //get objects needed for following tests
+        OWLDataFactory factory = ont.getOWLOntologyManager().getOWLDataFactory();
+        OWLClass root = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0001");
+        OWLClass clsA = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0002");
+        OWLClass clsB = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0003");
+        OWLClass clsC = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0004");
+        OWLClass clsD = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0005");
+        OWLClass clsE = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0006");
+        OWLClass clsF = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0007");
+        OWLClass clsG = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0008");
+        OWLClass clsH = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0009");
+        OWLClass clsI = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0010");
+        OWLClass clsJ = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0011");
+        OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+                getOWLObjectPropertyByIdentifier("BFO:0000050");
+        
+        //test that new OWLSubClassOfAxioms were correctly generated
 	}
 	
 	
@@ -949,7 +1019,7 @@ public class OWLGraphManipulatorTest
 	 */
 	public void shouldMakeBasicOntology()
 	{
-		this.graphManipulator.makeBasicOntology();
+		this.graphManipulator.makeSimpleOntology();
 	}
 	
 	/**

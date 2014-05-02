@@ -2,6 +2,7 @@ format-version: 1.4
 ontology: foo
 subsetdef: test_subset1 "used to test method delPartOfSubClassOfRelsToSubsetsIfNonOrphan"
 subsetdef: test_subset2 "used to test method delPartOfSubClassOfRelsToSubsetsIfNonOrphan"
+import: OWLGraphManipulatorTest_2.obo ! to test the merge of imported ontologies
 
 [Term]
 id: FOO:0001
@@ -86,26 +87,12 @@ comment: term part of the subgraph to remove, should be removed
 relationship: transformation_of FOO:0008 ! subgraph2_B
 
 [Term]
-id: FOO:0013
-name: subgraph3_root
-comment: term root of a subgraph not to be removed. Also, relation is_a to the root should be removed by reducePartOfAndSubClassOfRelations()
-is_a: FOO:0001 ! root
-relationship: part_of FOO:0001 ! root
-
-[Term]
 id: FOO:0014
 name: subgraph4_root_subgraph2
 comment: term part of both the subgraph to remove, and a subgraph to keep, should NOT be removed. It is a sibling of the root of the subgraph to be removed, and also one of its descendant. Also, relation is_a to the root is redundant and should be removed by reduceRelations(). It should also be removed by reducePartOfAndSubClassOfRelations(). 
 is_a: FOO:0001 ! root
 is_a: FOO:0006 ! subgraph2_root
 is_a: FOO:0002 ! A
-
-[Term]
-id: FOO:0015
-name: E
-comment: test of propagation when using removeClassAndPropagateEdges(String) on FOO:0004. Also, the relation part_of FOO:0001 is redundant and should be removed by reduceRelations()
-is_a: FOO:0004 ! C
-relationship: part_of FOO:0001 ! root
 
 [Term]
 id: FOO:0016

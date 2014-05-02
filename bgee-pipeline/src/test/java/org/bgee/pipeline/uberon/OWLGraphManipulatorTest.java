@@ -82,7 +82,10 @@ public class OWLGraphManipulatorTest
 		ParserWrapper parserWrapper = new ParserWrapper();
         OWLOntology ont = parserWrapper.parse(
         		this.getClass().getResource("/graph/OWLGraphManipulatorTest.obo").getFile());
+        OWLOntology supportOntology = parserWrapper.parse(
+                this.getClass().getResource("/graph/OWLGraphManipulatorTest_3.obo").getFile());
     	this.graphManipulator = new OWLGraphManipulator(new OWLGraphWrapper(ont));
+    	this.graphManipulator.getOwlGraphWrapper().addSupportOntology(supportOntology);
 		log.debug("Done wrapping test ontology into OWLGraphManipulator.");
 	}
     
@@ -147,13 +150,23 @@ public class OWLGraphManipulatorTest
                 this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0010");
         OWLClass clsJ = 
                 this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0011");
+        OWLClass clsImport = 
+                this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0015");
         OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
                 getOWLObjectPropertyByIdentifier("BFO:0000050");
+        
+        //merge of the imported ontologies
+        Set<OWLAxiom> expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsImport, clsC));
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsImport, 
+                factory.getOWLObjectSomeValuesFrom(partOf, root)));
+        assertEquals("Axioms from import ontology incorrectly merged", 
+                expectedAxioms, ont.getAxioms(clsImport));
         
         //test that new OWLSubClassOfAxioms were correctly generated
         
         //OWLObjectIntersectionOf corresponding to already existing SubClassOfAxioms
-        Set<OWLAxiom> expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms = new HashSet<OWLAxiom>();
         expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsB, root));
         expectedAxioms.add(factory.getOWLSubClassOfAxiom(clsB, 
                 factory.getOWLObjectSomeValuesFrom(partOf, clsA)));
@@ -202,14 +215,18 @@ public class OWLGraphManipulatorTest
 	public void shouldReduceRelations()
 	{
 		//get the original number of axioms
-	    int axiomCountBefore = 
-	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+	    int axiomCountBefore = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountBefore += ont.getAxiomCount();
+        }
 				
 		int relsRemoved = this.graphManipulator.reduceRelations();
 		
 		//get the number of axioms after removal
-		int axiomCountAfter = 
-				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+		int axiomCountAfter = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountAfter += ont.getAxiomCount();
+        }
 				
 		//4 relations should have been removed
 		assertEquals("Incorrect number of relations removed", 4, relsRemoved);
@@ -275,14 +292,18 @@ public class OWLGraphManipulatorTest
 	public void shouldReducePartOfIsARelations()
 	{
 		//get the original number of axioms
-	    int axiomCountBefore = 
-	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+	    int axiomCountBefore = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountBefore += ont.getAxiomCount();
+        }
 				
 		int relsRemoved = this.graphManipulator.reducePartOfIsARelations();
 		
 		//get the number of axioms after removal
-		int axiomCountAfter = 
-				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+		int axiomCountAfter = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountAfter += ont.getAxiomCount();
+        }
 				
 		//3 relations should have been removed
 		assertEquals("Incorrect number of relations removed", 3, relsRemoved);
@@ -323,11 +344,15 @@ public class OWLGraphManipulatorTest
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0013");
 		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
 				getOWLObjectPropertyByIdentifier("BFO:0000050");
-		checkEdge = new OWLGraphEdge(source, root, partOf, Quantifier.SOME, ont);
-		axiom = factory.getOWLSubClassOfAxiom(source, 
+		checkEdge = new OWLGraphEdge(source, root, partOf, Quantifier.SOME, 
+		    this.graphManipulator.getOwlGraphWrapper().getSupportOntologySet().iterator().next());
+		axiom = this.graphManipulator.getOwlGraphWrapper().getSupportOntologySet().iterator().next().
+		        getOWLOntologyManager().getOWLDataFactory().getOWLSubClassOfAxiom(source, 
 				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
 				edgeToTargetExpression(checkEdge));
-		assertFalse("Incorrect relation removed", ont.containsAxiom(axiom));
+		assertFalse("Incorrect relation removed", 
+		    this.graphManipulator.getOwlGraphWrapper().getSupportOntologySet().iterator().next().
+		    containsAxiom(axiom));
 	}
 	
 	//***********************************************
@@ -341,8 +366,10 @@ public class OWLGraphManipulatorTest
 	public void shouldMapRelationsToParent()
 	{
 		//get the original number of axioms
-	    int axiomCountBefore = 
-	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+	    int axiomCountBefore = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountBefore += ont.getAxiomCount();
+        }
 				
 	    //map sub-relations to part_of and has_developmental_contribution_from
 	    Collection<String> parentRelIds = new ArrayList<String>();
@@ -351,8 +378,10 @@ public class OWLGraphManipulatorTest
 		int relsUpdated = this.graphManipulator.mapRelationsToParent(parentRelIds);
 		
 		//get the number of axioms after removal
-		int axiomCountAfter = 
-				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+		int axiomCountAfter = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountAfter += ont.getAxiomCount();
+        }
 				
 		//3 relations should have been updated
 		assertEquals("Incorrect number of relations updated", 3, relsUpdated);
@@ -457,8 +486,10 @@ public class OWLGraphManipulatorTest
 	public void shouldMapRelationsToParentWithRelsExcluded()
 	{
 		//get the original number of axioms
-	    int axiomCountBefore = 
-	    		this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+	    int axiomCountBefore = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountBefore += ont.getAxiomCount();
+        }
 				
 	    //map sub-relations to part_of and has_developmental_contribution_from
 	    Collection<String> parentRelIds = new ArrayList<String>();
@@ -470,8 +501,10 @@ public class OWLGraphManipulatorTest
 		int relsUpdated = this.graphManipulator.mapRelationsToParent(parentRelIds, relIdsExcluded);
 		
 		//get the number of axioms after removal
-		int axiomCountAfter = 
-				this.graphManipulator.getOwlGraphWrapper().getSourceOntology().getAxiomCount();
+		int axiomCountAfter = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountAfter += ont.getAxiomCount();
+        }
 				
 		//only 1 relations should have been updated, 
 		//as develops_from is excluded from mapping (and so its sub-relation 
@@ -702,13 +735,17 @@ public class OWLGraphManipulatorTest
 		subsets.add("test_subset1");
 		subsets.add("test_subset2");
 		//get the original number of axioms
-		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
-				.getSourceOntology().getAxiomCount();
+		int axiomCountBefore = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountBefore += ont.getAxiomCount();
+        }
 		int relsRemoved = 
 				this.graphManipulator.removeRelsToSubsets(subsets);
 		//number of axioms after modification
-		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
-				.getSourceOntology().getAxiomCount();
+		int axiomCountAfter = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountAfter += ont.getAxiomCount();
+        }
 		
 		//2 relations should have been removed
 		assertEquals("Incorrect number of relations removed", 2, relsRemoved);
@@ -873,10 +910,11 @@ public class OWLGraphManipulatorTest
 	{
 		//get the original number of OWLClassAxioms (we expect 
 	    //only subClassOf and EquivalentClasses axioms)
-		int axiomCountBefore = this.graphManipulator.getOwlGraphWrapper()
-			    .getSourceOntology().getAxiomCount(AxiomType.SUBCLASS_OF) + 
-			    this.graphManipulator.getOwlGraphWrapper()
-                .getSourceOntology().getAxiomCount(AxiomType.EQUIVALENT_CLASSES);
+	    int axiomCountBefore = 0;
+	    for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+		    axiomCountBefore += ont.getAxiomCount(AxiomType.SUBCLASS_OF) + 
+			    ont.getAxiomCount(AxiomType.EQUIVALENT_CLASSES);
+	    }
 		
 		//filter relations to keep 
 		int relRemovedCount = 0;
@@ -889,10 +927,11 @@ public class OWLGraphManipulatorTest
 		assertEquals("Incorrect number of relations removed", expRelsRemoved, relRemovedCount);
 		
 		//get the number of SubClassOf axioms after removal
-		int axiomCountAfter = this.graphManipulator.getOwlGraphWrapper()
-                .getSourceOntology().getAxiomCount(AxiomType.SUBCLASS_OF) + 
-                this.graphManipulator.getOwlGraphWrapper()
-                .getSourceOntology().getAxiomCount(AxiomType.EQUIVALENT_CLASSES);
+		int axiomCountAfter = 0;
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            axiomCountAfter += ont.getAxiomCount(AxiomType.SUBCLASS_OF) + 
+                ont.getAxiomCount(AxiomType.EQUIVALENT_CLASSES);
+        }
 		//check that it corresponds to the returned value
 		assertEquals("The number of relations removed does not correspond to " +
 				"the number of axioms removed", 
@@ -918,8 +957,11 @@ public class OWLGraphManipulatorTest
 		//should be removed.
 		
 		//first, let's get the number of classes in the ontology
-		int classCount = this.graphManipulator.getOwlGraphWrapper()
-				    .getSourceOntology().getClassesInSignature().size();
+	    Set<OWLClass> allClasses = new HashSet<OWLClass>();
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            allClasses.addAll(ont.getClassesInSignature());
+        }
+        int classCount = allClasses.size();
 		
 		//filter the subgraphs, we want to keep: 
 		//FOO:0002 corresponds to term "A", root of the first subgraph to keep. 
@@ -939,8 +981,11 @@ public class OWLGraphManipulatorTest
 		assertEquals("Incorrect number of classes removed", 7, countRemoved);
 		
 		//test that these classes were actually removed from the ontology
-		int newClassCount = this.graphManipulator.getOwlGraphWrapper()
-			    .getSourceOntology().getClassesInSignature().size();
+		allClasses = new HashSet<OWLClass>();
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            allClasses.addAll(ont.getClassesInSignature());
+        }
+        int newClassCount = allClasses.size();
 		assertEquals("filterSubgraph did not return the correct number of classes removed", 
 				classCount - newClassCount, countRemoved);
 		
@@ -992,8 +1037,11 @@ public class OWLGraphManipulatorTest
 		//should be removed.
 
 		//first, let's get the number of classes in the ontology
-		int classCount = this.graphManipulator.getOwlGraphWrapper()
-				.getSourceOntology().getClassesInSignature().size();
+	    Set<OWLClass> allClasses = new HashSet<OWLClass>();
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            allClasses.addAll(ont.getClassesInSignature());
+        }
+        int classCount = allClasses.size();
 
 		//remove the subgraph
 		Collection<String> toRemove = new ArrayList<String>();
@@ -1006,8 +1054,11 @@ public class OWLGraphManipulatorTest
 		//The test ontology is designed so that 7 classes should have been removed
 		assertEquals("Incorrect number of classes removed", 7, countRemoved);
 		//test that these classes were actually removed from the ontology
-		int newClassCount = this.graphManipulator.getOwlGraphWrapper()
-				.getSourceOntology().getClassesInSignature().size();
+		allClasses = new HashSet<OWLClass>();
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            allClasses.addAll(ont.getClassesInSignature());
+        }
+        int newClassCount = allClasses.size();
 		assertEquals("removeSubgraph did not return the correct number of classes removed", 
 				classCount - newClassCount, countRemoved);
 
@@ -1034,8 +1085,11 @@ public class OWLGraphManipulatorTest
 		//should be removed.
 
 		//first, let's get the number of classes in the ontology
-		int classCount = this.graphManipulator.getOwlGraphWrapper()
-				.getSourceOntology().getClassesInSignature().size();
+	    Set<OWLClass> allClasses = new HashSet<OWLClass>();
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            allClasses.addAll(ont.getClassesInSignature());
+        }
+        int classCount = allClasses.size();
 
 		//remove the subgraph
 		Collection<String> toRemove = new ArrayList<String>();
@@ -1045,8 +1099,11 @@ public class OWLGraphManipulatorTest
 		//The test ontology is designed so that 8 classes should have been removed
 		assertEquals("Incorrect number of classes removed", 8, countRemoved);
 		//test that these classes were actually removed from the ontology
-		int newClassCount = this.graphManipulator.getOwlGraphWrapper()
-				.getSourceOntology().getClassesInSignature().size();
+		allClasses = new HashSet<OWLClass>();
+        for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
+            allClasses.addAll(ont.getClassesInSignature());
+        }
+        int newClassCount = allClasses.size();
 		assertEquals("removeSubgraph did not return the correct number of classes removed", 
 				classCount - newClassCount, countRemoved);
 	}

@@ -508,8 +508,7 @@ public class OWLGraphManipulator {
 	 * @see #reduceRelations()
 	 * @see #reducePartOfIsARelations()
 	 */
-	private int reduceRelations(boolean reducePartOfAndIsA)
-	{
+	private int reduceRelations(boolean reducePartOfAndIsA) {
 		if (!reducePartOfAndIsA) {
 		    log.info("Start relation reduction...");
 		} else {
@@ -870,13 +869,16 @@ public class OWLGraphManipulator {
     	            boolean alreadyExist = false;
     	            for (OWLGraphEdge existingEdge: 
     	                this.getOwlGraphWrapper().getOutgoingEdges(combine.getSource())) {
-    	                
+    	                log.debug("Test existing edge: " + existingEdge);
     	                for (OWLGraphEdge combineTest: this.getOwlGraphWrapper().
                                 getOWLGraphEdgeSubRelsReflexive(combine)) {
+    	                    log.debug("Compare to subsumer of combine: " + combineTest);
     	                    if (existingEdge.equalsIgnoreOntology(combineTest)) {
+    	                        log.debug("Equal");
     	                        alreadyExist = true;
     	                        break;
     	                    } 
+    	                    log.debug("not equal");
     	                }
     	            }
     	            if (!alreadyExist) {
@@ -1780,9 +1782,14 @@ public class OWLGraphManipulator {
 	 * 					to the ontology. 
 	 */
 	public boolean addEdge(OWLGraphEdge edge) {
+	    //this.getAxiom was used here in former versions
+	    OWLSubClassOfAxiom newAxiom = edge.getOntology().getOWLOntologyManager().
+        getOWLDataFactory().getOWLSubClassOfAxiom(
+            (OWLClassExpression) edge.getSource(), 
+            (OWLClassExpression) this.getOwlGraphWrapper().edgeToTargetExpression(edge));
+	    
 	    int addAxiomCount = edge.getOntology().getOWLOntologyManager().addAxiom(
-	            edge.getOntology(), 
-	            this.getAxiom(edge)).size();
+	            edge.getOntology(), newAxiom).size();
 	    this.triggerWrapperUpdate();
 	    return (addAxiomCount > 0);
 	}
@@ -1905,22 +1912,22 @@ public class OWLGraphManipulator {
     }
  
    
-    /**
-	 * Convenient method to get a {@code OWLSubClassOfAxiom} corresponding to 
-	 * the provided {@code OWLGraphEdge}.
-	 * 
-	 * @param edge 			An {@code OWLGraphEdge} to transform 
-	 * 								into a {@code OWLSubClassOfAxiom}
-	 * @return OWLSubClassOfAxiom 	The {@code OWLSubClassOfAxiom} corresponding 
-	 * 								to {@code OWLGraphEdge}.
-	 */
-	private OWLSubClassOfAxiom getAxiom(OWLGraphEdge edge) {
-		
-		return edge.getOntology().getOWLOntologyManager().
-		    getOWLDataFactory().getOWLSubClassOfAxiom(
-		        (OWLClassExpression) edge.getSource(), 
-				(OWLClassExpression) this.getOwlGraphWrapper().edgeToTargetExpression(edge));
-	}
+//    /**
+//	 * Convenient method to get a {@code OWLSubClassOfAxiom} corresponding to 
+//	 * the provided {@code OWLGraphEdge}.
+//	 * 
+//	 * @param edge 			An {@code OWLGraphEdge} to transform 
+//	 * 								into a {@code OWLSubClassOfAxiom}
+//	 * @return OWLSubClassOfAxiom 	The {@code OWLSubClassOfAxiom} corresponding 
+//	 * 								to {@code OWLGraphEdge}.
+//	 */
+//	private OWLSubClassOfAxiom getAxiom(OWLGraphEdge edge) {
+//		
+//		return edge.getOntology().getOWLOntologyManager().
+//		    getOWLDataFactory().getOWLSubClassOfAxiom(
+//		        (OWLClassExpression) edge.getSource(), 
+//				(OWLClassExpression) this.getOwlGraphWrapper().edgeToTargetExpression(edge));
+//	}
 	
     /**
      * Convenient method to apply {@code changes} to the ontology.

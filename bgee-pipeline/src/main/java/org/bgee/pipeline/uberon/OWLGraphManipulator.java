@@ -1180,7 +1180,7 @@ public class OWLGraphManipulator {
     	}
     	
     	//remove unwanted classes
-    	int classesRemoved = this.filterClasses(toKeep);
+    	int classesRemoved = this.filterClasses(toKeep).size();
     	
     	//remove any relation between an ancestor of an allowed root and one of its descendants, 
     	//as it would represent an undesired subgraph. 
@@ -1296,7 +1296,7 @@ public class OWLGraphManipulator {
         		    log.debug("Subgraph being deleted, descendants of subgraph " +
         		    		"root to remove: " + descendants);
         		}
-        		classesRemoved += this.removeClasses(classesToDel);
+        		classesRemoved += this.removeClasses(classesToDel).size();
         		continue rootLoop;
         	}
     		
@@ -1389,7 +1389,7 @@ public class OWLGraphManipulator {
     			}
     		}
 
-    		classesRemoved += this.filterClasses(toKeep);
+    		classesRemoved += this.filterClasses(toKeep).size();
     	}
     	
     	if (log.isInfoEnabled()) {
@@ -1823,7 +1823,7 @@ public class OWLGraphManipulator {
 	 * @return 					{@code true} if {@code classToDel} was actually 
 	 * 							removed from the ontology. 
      */
-    private boolean removeClass(OWLClass classToDel) {
+    public boolean removeClass(OWLClass classToDel) {
         OWLEntityRemover remover = new OWLEntityRemover(
                 this.getOwlGraphWrapper().getManager(), 
                 this.getOwlGraphWrapper().getAllOntologies());
@@ -1847,17 +1847,17 @@ public class OWLGraphManipulator {
      * 
      * @param classesToDel	 	a {@code Set} of {@code OWLClass}es 
      * 							to be removed from the ontologies. 
-     * @return					An {@code int} representing the number of classes 
+     * @return					A {@code Set} of {@code OWLClass}es representing the classes 
      * 							actually removed as a result. 
      */
-    private int removeClasses(Set<OWLClass> classesToDel) {
-    	int classCount = 0;
+    public Set<OWLClass> removeClasses(Set<OWLClass> classesToDel) {
+    	Set<OWLClass> classesRemoved = new HashSet<OWLClass>();
     	for (OWLClass classToDel: classesToDel) {
 		    if (this.removeClass(classToDel)) {
-		        classCount++;
+		        classesRemoved.add(classToDel);
 		    } 
     	}
-    	return classCount;
+    	return classesRemoved;
     }
     /**
      * Filter from the ontologies all {@code OWLClass}es 
@@ -1866,21 +1866,21 @@ public class OWLGraphManipulator {
      * 
      * @param classesToKeep 	a {@code Set} of {@code OWLClass}s 
      * 							that are classes to be kept in the ontology. 
-     * @return					An {@code int} representing the number of classes 
-     * 							actually removed as a result. 
+     * @return                  A {@code Set} of {@code OWLClass}es representing the classes 
+     *                          actually removed as a result. 
      */
-    public int filterClasses(Set<OWLClass> classesToKeep) {
-    	//now remove all classes not included in classIdsToKeep
-    	int classCount = 0;
+    public Set<OWLClass> filterClasses(Set<OWLClass> classesToKeep) {
+    	//now remove all classes not included in classesToKeep
+        Set<OWLClass> classesRemoved = new HashSet<OWLClass>();
     	for (OWLOntology o : this.getOwlGraphWrapper().getAllOntologies()) {
     		for (OWLClass iterateClass: o.getClassesInSignature()) {
 			    if (!classesToKeep.contains(iterateClass) && 
 			            this.removeClass(iterateClass)) {
-				        classCount++;
+	                classesRemoved.add(iterateClass);
 			    }
     		}
     	}
-    	return classCount;
+    	return classesRemoved;
     }
     
     /**

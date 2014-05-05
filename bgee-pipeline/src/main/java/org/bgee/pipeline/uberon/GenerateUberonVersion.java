@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,31 +15,17 @@ import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
-import org.semanticweb.owlapi.io.OWLXMLOntologyFormat;
 import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.RemoveAxiom;
+import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
-import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
-import owltools.io.ParserWrapper;
 
 public class GenerateUberonVersion {
     /**
@@ -57,10 +44,10 @@ public class GenerateUberonVersion {
      * The columns are: ID of the Uberon classes, IDs of each of the taxa that 
      * were examined. For each of the taxon columns, a boolean is provided 
      * as "T" or "F", to define whether the associated Uberon class exists in it.
-     * <li>path to the TSV files containing the ID of the species used in Bgee, 
-     * corresponding to the NCBI taxonomy ID (e.g., 9606 for human). The first line 
-     * should be a header line, and first column should be the IDs. A second column 
-     * can be present for human readability. 
+     * <li>path to the tsv files containing the species used in Bgee. The first line should be 
+     * a header line, defining at least a column named exactly as 
+     * {@link org.bgee.pipeline.Utils#TAXONCOLUMNNAME}.
+     * The IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * </ol>
      * Note that if a taxon is defined in the Bgee species file, but not in 
      * the taxon constraints file, an {@code IllegalArgumentException} will be thrown.
@@ -72,6 +59,43 @@ public class GenerateUberonVersion {
         
         log.exit();
     }
+    
+    public void generate(String uberonOntFile, String taxonFile) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+            OBOFormatParserException, IOException {
+        log.entry(uberonOntFile, taxonFile);
+        
+        OWLGraphManipulator graphManipulator = 
+                new OWLGraphManipulator(OntologyUtils.loadOntology(uberonOntFile));
+        
+        log.exit();
+    }
+    
+    //TODO: see org.bgee.pipeline.uberon.TaxonConstraints.extractTaxonConstraints(String) to get taxonConstraints (as strings?)
+    //or reverse the Map? (taxonIds as keys, Uberon classes existing as values)
+    public OWLGraphWrapper generate(OWLGraphWrapper uberonOntWrapper, Map<String, Set<Integer>> taxonConstraints) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        log.entry(uberonOntWrapper, taxonConstraints);
+        
+        //first generate main version
+        this.generate(uberonOntWrapper);
+        
+        //then, one version for each taxon, just by removing classes not existing
+        
+        //TODO
+        return log.exit(null);
+    }
+    
+    public OWLGraphWrapper generate(OWLGraphWrapper uberonOntWrapper) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        log.entry(uberonOntWrapper);
+        
+        //first generate main version
+        
+        //TODO
+        return log.exit(null);
+    }
+    
 	public static void yo() throws OWLOntologyCreationException, OBOFormatParserException, IOException, OWLOntologyStorageException 
 	{
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/uberon.owl");

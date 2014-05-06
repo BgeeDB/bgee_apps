@@ -197,7 +197,7 @@ public class OWLGraphManipulator {
      * @see #removeOWLObjectUnionOfs()
      */
     private void performDefaultModifications() throws OWLOntologyCreationException {
-        //this.getOwlGraphWrapper().mergeImportClosure(true);
+        this.getOwlGraphWrapper().mergeImportClosure(true);
         this.reverseOWLObjectUnionOfs();
         this.convertEquivalentClassesToSuperClasses();
         this.splitSubClassAxioms();

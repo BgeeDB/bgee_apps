@@ -78,6 +78,10 @@ public class OWLGraphManipulatorTest
 	public void loadTestOntology() 
 			throws OWLOntologyCreationException, OBOFormatParserException, IOException
 	{
+	    //OWLGraphManipulatorTest.obo imports OWLGraphManipulatorTest_2.obo
+	    //also, we add OWLGraphManipulatorTest_3.obo as a support ontology.
+	    //this is to check the capability of OWLGraphManipulator to act on multiple 
+	    //ontologies at the same time.
 		log.debug("Wrapping test ontology into OWLGraphManipulator...");
 		ParserWrapper parserWrapper = new ParserWrapper();
         OWLOntology ont = parserWrapper.parse(
@@ -103,6 +107,8 @@ public class OWLGraphManipulatorTest
 	    OBOFormatParserException, IOException {
 	    
 	    log.debug("Loading ontology for testing default operations at instantiation...");
+	    ////manipulatorInstantiationTest.obo imports OWLGraphManipulatorTest_2.obo 
+	    //to check the merge of imported ontologies.
 	    ParserWrapper parserWrapper = new ParserWrapper();
         OWLOntology ont = parserWrapper.parse(
             this.getClass().getResource("/graph/manipulatorInstantiationTest.obo").getFile());
@@ -375,6 +381,12 @@ public class OWLGraphManipulatorTest
 	    Collection<String> parentRelIds = new ArrayList<String>();
 	    parentRelIds.add("BFO:0000050");
 	    parentRelIds.add("RO:0002254");
+	    //check that if one of the relation in parentRelIds, is a sub-relation 
+	    //of another parentRel, it will not be mapped.
+	    //here, transformation_of is sub-property of has_developmental_contribution_from; 
+	    //immediate_transformation_of should therefore be mapped to transformation_of, 
+	    //and transformation_of not mapped to has_developmental_contribution_from
+        parentRelIds.add("http://semanticscience.org/resource/SIO_000657");
 		int relsUpdated = this.graphManipulator.mapRelationsToParent(parentRelIds);
 		
 		//get the number of axioms after removal
@@ -402,6 +414,8 @@ public class OWLGraphManipulatorTest
 				getOWLObjectPropertyByIdentifier("RO:0002202");
 		OWLObjectProperty transfOf = this.graphManipulator.getOwlGraphWrapper().
 				getOWLObjectPropertyByIdentifier("http://semanticscience.org/resource/SIO_000657");
+        OWLObjectProperty immTransfOf = this.graphManipulator.getOwlGraphWrapper().
+                getOWLObjectPropertyByIdentifier("http://semanticscience.org/resource/SIO_000658");
 		
 		//FOO:0003 in_deep_part_of FOO:0004 updated to 
 		//FOO:0003 part_of FOO:0004
@@ -428,28 +442,28 @@ public class OWLGraphManipulatorTest
 				ont.containsAxiom(newAxiom));
 		
 		
-		//FOO:0012 transformation_of FOO:0008 updated to 
-		//FOO:0012 has_developmental_contribution_from FOO:0008
+		//FOO:0012 immediate_transformation_of FOO:0008 updated to 
+		//FOO:0012 tranformation_of FOO:0008
 		source = 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0012");
 		target = 
 				this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0008");
 
-		checkEdge = new OWLGraphEdge(source, target, transfOf, 
+		checkEdge = new OWLGraphEdge(source, target, immTransfOf, 
 				Quantifier.SOME, ont);
 		oldAxiom = factory.getOWLSubClassOfAxiom(source, 
 				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
 				edgeToTargetExpression(checkEdge));
 
-		checkEdge = new OWLGraphEdge(source, target, hasDvlptCont, 
+		checkEdge = new OWLGraphEdge(source, target, transfOf, 
 				Quantifier.SOME, ont);
 		newAxiom = factory.getOWLSubClassOfAxiom(source, 
 				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
 				edgeToTargetExpression(checkEdge));
 
-		assertFalse("Relation FOO:0012 transformation_of FOO:0008 was not removed", 
+		assertFalse("Relation FOO:0012 immediate_transformation_of FOO:0008 was not removed", 
 				ont.containsAxiom(oldAxiom));
-		assertTrue("Relation FOO:0012 has_developmental_contribution_from FOO:0008 was not added", 
+		assertTrue("Relation FOO:0012 tranformation_of FOO:0008 was not added", 
 				ont.containsAxiom(newAxiom));
 
 		
@@ -1049,7 +1063,7 @@ public class OWLGraphManipulatorTest
 		//add as a root to remove a term that is in the FOO:0006 subgraph, 
 		//to check if the ancestors check will not lead to keep erroneously FOO:0007
 		toRemove.add("FOO:0008");
-		int countRemoved = this.graphManipulator.removeSubgraphs(toRemove, true);
+		int countRemoved = this.graphManipulator.removeSubgraphs(toRemove, true).size();
 
 		//The test ontology is designed so that 7 classes should have been removed
 		assertEquals("Incorrect number of classes removed", 7, countRemoved);
@@ -1094,7 +1108,7 @@ public class OWLGraphManipulatorTest
 		//remove the subgraph
 		Collection<String> toRemove = new ArrayList<String>();
 		toRemove.add("FOO:0006");
-		int countRemoved = this.graphManipulator.removeSubgraphs(toRemove, false);
+		int countRemoved = this.graphManipulator.removeSubgraphs(toRemove, false).size();
 
 		//The test ontology is designed so that 8 classes should have been removed
 		assertEquals("Incorrect number of classes removed", 8, countRemoved);

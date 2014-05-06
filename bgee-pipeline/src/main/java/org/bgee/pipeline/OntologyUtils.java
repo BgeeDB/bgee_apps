@@ -59,6 +59,10 @@ public class OntologyUtils {
     public final static IRI DEVELOPMENTALLY_RELATED_TO_IRI = 
             IRI.create("http://purl.obolibrary.org/obo/RO_0002324");
     /**
+     * A {@code String} that is the OBO-like ID of the {@code develops_from} relation.
+     */
+    public final static String DEVELOPS_FROM_ID = "RO:0002202";
+    /**
      * {@code IRI} of the {@code OWLObjectProperty} "transformation_of".
      */
     public final static String TRANSFORMATION_OF_ID = 

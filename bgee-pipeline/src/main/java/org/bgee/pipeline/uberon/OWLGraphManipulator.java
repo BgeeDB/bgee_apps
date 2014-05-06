@@ -2,6 +2,7 @@ package org.bgee.pipeline.uberon;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -61,7 +62,7 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * </ol>
  * These operations will then allow to remove specific edges between terms, 
  * without impacting other edges that would be associated to them, through 
- * {@code OWLEquivalentClassesAxiom}s, or {@code OWLObjectIntersectionOf}s, 
+ * {@code OWLEquivalentClassesAxiom}s, or {@code OWLObjectIntersectionOf}s, or 
  * {@code OWLObjectUnionOf}s. These operations are doing for real what the method {@link 
  * OWLGraphWrapperEdges#getOutgoingEdges(OWLObject) getOutgoingEdges} is simulating 
  * under the hood.
@@ -72,7 +73,7 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * {@link OWLGraphWrapperBasic#mergeImportClosure(boolean)}.
  * <p>
  * <strong>Warning: </strong>these operations must be performed on an ontology 
- * already reasoned, as this class does not accept reasoners for now. 
+ * already reasoned, as this class does not accept any reasoner for now. 
  * <p>
  * This class then allows to perform:
  * <ul>
@@ -91,7 +92,7 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * <li><u>subgraph filtering or removal</u>, see {@link #filterSubgraphs(Collection)} and 
  * {@link #removeSubgraphs(Collection, boolean)}. 
  * <li>a combination of these methods to <u>generate a simple ontology</u>, see 
- * {@link #makeSimpleOntology()}.
+ * {@link #simplifies(Collection, Collection, Collection, Collection, Collection) simplifies}.
  * 
  * @author Frederic Bastian
  * @version June 2014
@@ -196,7 +197,7 @@ public class OWLGraphManipulator {
      * @see #removeOWLObjectUnionOfs()
      */
     private void performDefaultModifications() throws OWLOntologyCreationException {
-        this.getOwlGraphWrapper().mergeImportClosure(true);
+        //this.getOwlGraphWrapper().mergeImportClosure(true);
         this.reverseOWLObjectUnionOfs();
         this.convertEquivalentClassesToSuperClasses();
         this.splitSubClassAxioms();
@@ -376,57 +377,71 @@ public class OWLGraphManipulator {
 	//*********************************
     /**
      * Make a basic ontology, with only is_a, part_of, and develops_from relations, 
-     * and with redundant relations removed. This is simply a convenient method 
-     * combining several of the methods present in this class: 
-     * <ul>
-     * <li>this method first maps all sub-relations of part_of and develops_from 
-     * to these parents, by calling {@link #mapRelationsToParent(Collection)} 
-     * with the part_of and develops_from OBO-style IDs as argument.
-     * <li>then, all relations that are not is_a, part_of, or develops_from 
-     * are removed, by calling {@link #filterRelations(Collection, boolean)} 
-     * with the part_of and develops_from OBO-style IDs as argument.
-     * <li>finally, redundant relations are removed by calling 
-     * {@link #reduceRelations()}.
-     * </ul>
-     * <p>
-     * This method returns the number of relations that were removed as a result 
-     * of the filtering of the relations ({@code filterRelations} method) 
-     * and the removal of redundant relations ({@code reduceRelations} method). 
-     * The number of relations updated to be mapped to their parent relations 
-     * ({@code mapRelationsToParent} method) is not returned. 
-     * <p>
-     * Note that this class includes several other methods to tweak 
-     * an ontology in different ways. 
+     * and redundant relations removed, and redundant relations over is_a/part_of 
+     * removed. This method calls {@link #simplifies(Collection, Collection, Collection, 
+     * Collection, Collection) simplifies}, by providing only 
+     * the object property IDs of the "part_of" and "develops_from" relations.
      * 
-     * @return 	An {@code int} that is the number of relations removed by this method.
-     * 
-     * @see #mapRelationsToParent(Collection)
-     * @see #filterRelations(Collection, boolean)
-     * @see #reduceRelations()
+     * @see #simplifies(Collection, Collection, Collection, Collection, Collection)
      */
-    public int makeSimpleOntology() {
+    public void makeSimpleOntology() {
     	log.info("Start building a basic ontology...");
-    	
-    	Collection<String> relIds = new ArrayList<String>();
-    	relIds.add(PARTOFID);
-    	relIds.add(DVLPTFROMID);
 
-    	//map all sub-relations of part_of and develops_from to these relations
-    	int relsMapped = this.mapRelationsToParent(relIds);
-    	//keep only is_a, part_of and develops_from relations
-    	int relsRemoved = this.filterRelations(relIds, true);//could be false, there shouldn't
-    	                                                     //be any sub-relations left here
-    	//remove redundant relations
-    	int relsReduced = this.reduceRelations();
-    	
-    	if (log.isInfoEnabled()) {
-    	    log.info("Done building a basic ontology, " + relsMapped + 
-    			" relations were mapped to parent part_of/develops_from relations, " +
-    			relsRemoved + " relations not is_a/part_of/develops_from removed, " +
-    			relsReduced + " redundant relations removed.");
-    	}
-    	
-    	return relsRemoved + relsReduced;
+    	this.simplifies(Arrays.asList(PARTOFID, DVLPTFROMID), null, null, null, null);
+    }
+    
+    /**
+     * Helper method to perform standard simplifications. All parameters are optional. 
+     * Operations performed will be to call in order: 
+     * <ul>
+     *   <li>{@link #mapRelationsToParent(Collection)} using {@code relIds}.
+     *   <li>{@link #filterRelations(Collection, boolean)} using {@code relIds} and 
+     *   {@code true} as the second parameter.
+     *   <li>{@link #filterSubgraphs(Collection)} using {@code toFilterSubgraphRootIds}.
+     *   <li>{@link #removeSubgraphs(Collection, boolean)} using {@code toRemoveSubgraphRootIds} 
+     *   and {@code true} as the second parameter.
+     *   <li>{@link #removeClassAndPropagateEdges(String)} on each of the {@code String} 
+     *   in {@code classIdsToRemove}.
+     *   <li>{@link #reduceRelations()}
+     *   <li>{@link #reducePartOfIsARelations()}
+     *   <li>{@link #removeRelsToSubsets(Collection)} using {@code subsetNames}
+     * </ul>
+     * @param relIds                    A {@code Collection} of {@code String}s to call 
+     *                                  {@link #mapRelationsToParent(Collection)} and 
+     *                                  #filterRelations(Collection, boolean)}.
+     * @param toFilterSubgraphRootIds   A {@code Collection} of {@code String}s to call 
+     *                                  {@link #filterSubgraphs(Collection)}.
+     * @param toRemoveSubgraphRootIds   A {@code Collection} of {@code String}s to call 
+     *                                  {@link #removeSubgraphs(Collection, boolean)}.
+     * @param classIdsToRemove          A {@code Collection} of {@code String}s to call 
+     *                                  {@link #removeClassAndPropagateEdges(String)} 
+     *                                  on each of them.
+     * @param subsetNames               A {@code Collection} of {@code String}s to call 
+     *                                  {@link #removeRelsToSubsets(Collection)}.
+     */
+    public void simplifies(Collection<String> relIds, 
+            Collection<String> toFilterSubgraphRootIds, 
+            Collection<String> toRemoveSubgraphRootIds, Collection<String> classIdsToRemove, 
+            Collection<String> subsetNames) {
+        
+        if (relIds != null && !relIds.isEmpty()) {
+            this.mapRelationsToParent(relIds);
+            this.filterRelations(relIds, true);
+        }
+        if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
+            this.filterSubgraphs(toFilterSubgraphRootIds);
+        }
+        if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
+            this.removeSubgraphs(toRemoveSubgraphRootIds, true);
+        }
+        for (String classIdToRemove: classIdsToRemove) {
+            this.removeClassAndPropagateEdges(classIdToRemove);
+        }
+        this.reduceRelations();
+        this.reducePartOfIsARelations();
+        if (subsetNames != null && !subsetNames.isEmpty()) {
+            this.removeRelsToSubsets(subsetNames);
+        }
     }
 
 	//*********************************
@@ -585,8 +600,8 @@ public class OWLGraphManipulator {
 		                            outgoingEdgeToTest);
 		                }
 		            } else {
-		                throw new AssertionError("Expected to remove a relation, " +
-		                        "removal failed");
+		                throw new AssertionError("Relation removal failed: " + 
+		                        outgoingEdgeToTest);
 		            }
 		        } else {
 		            if (log.isDebugEnabled()) {
@@ -869,16 +884,12 @@ public class OWLGraphManipulator {
     	            boolean alreadyExist = false;
     	            for (OWLGraphEdge existingEdge: 
     	                this.getOwlGraphWrapper().getOutgoingEdges(combine.getSource())) {
-    	                log.debug("Test existing edge: " + existingEdge);
     	                for (OWLGraphEdge combineTest: this.getOwlGraphWrapper().
                                 getOWLGraphEdgeSubRelsReflexive(combine)) {
-    	                    log.debug("Compare to subsumer of combine: " + combineTest);
     	                    if (existingEdge.equalsIgnoreOntology(combineTest)) {
-    	                        log.debug("Equal");
     	                        alreadyExist = true;
     	                        break;
     	                    } 
-    	                    log.debug("not equal");
     	                }
     	            }
     	            if (!alreadyExist) {
@@ -932,7 +943,9 @@ public class OWLGraphManipulator {
      * Replace the sub-relations of {@code parentRelations} by these parent relations. 
      * {@code parentRelations} contains the OBO-style IDs of the parent relations 
      * (for instance, "BFO:0000050"). All their sub-relations will be replaced by 
-     * these parent relations. 
+     * these parent relations. If a relation in {@code parentRelations} is the sub-relation 
+     * of another parent relation, it will not be mapped to this other parent relation, 
+     * and their common sub-relations will be mapped to the more precise one.
      * <p>
      * For instance, if {@code parentRelations} contains "RO:0002202" ("develops_from" ID), 
      * all sub-relations will be replaced: "transformation_of" relations will be replaced 
@@ -953,21 +966,11 @@ public class OWLGraphManipulator {
     	return this.mapRelationsToParent(parentRelations, null);
     }
     /**
-     * Replace the sub-relations of {@code parentRelations} by these parent relations, 
-     * except the sub-relations listed in {@code relsExcluded}. 
-     * {@code parentRelations} and {@code relsExcluded} contain the OBO-style IDs 
-     * of the relations (for instance, "BFO:0000050"). All their sub-relations 
-     * will be replaced by these parent relations, or removed if the parent relations 
-     * already exists, except the sub-relations in code>relsExcluded}. 
-     * <p>
-     * For instance, if {@code parentRelations} contains "RO:0002202" ("develops_from" ID), 
-     * all sub-relations will be replaced: "transformation_of" relations will be replaced 
-     * by "develops_from", "immediate_transformation_of" will be replaced by "develops_from", ...
+     * Identical to {@link #mapRelationsToParent(Collection)}, except that this method 
+     * allows to filter relations not to be mapped to parents: 
      * <p>
      * If a sub-relation of a relation in {@code parentRelations} should not be mapped, 
-     * its OBO-style ID should be added to {@code relsExcluded}. In the previous example, 
-     * if {@code relsExcluded} contained "SIO:000658" "immediate_transformation_of", 
-     * this relation would not be replaced by "develops_from". All sub-relations 
+     * its OBO-style ID should be added to {@code relsExcluded}. All sub-relations 
      * of {@code relsExcluded} are excluded from replacement. 
      * <p>
      * Note that if mapping a relation to its parent produces an already existing relation, 
@@ -1011,24 +1014,37 @@ public class OWLGraphManipulator {
     	}
     	
     	//get the properties corresponding to the parent relations, 
-    	//and create a map where their sub-properties are associated to it, 
-    	//except the excluded properties
+    	//and create a map where their sub-properties are associated to it.
     	Map<OWLObjectPropertyExpression, OWLObjectPropertyExpression> subPropToParent = 
     			new HashMap<OWLObjectPropertyExpression, OWLObjectPropertyExpression>();
     	
+    	//get all the parent Object Properties first
+    	Set<OWLObjectProperty> parentProps = new HashSet<OWLObjectProperty>();
     	for (String parentRelId: parentRelations) {
     		OWLObjectProperty parentProp = 
     				this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(parentRelId);
     		if (parentProp != null) {
-    			for (OWLObjectPropertyExpression subProp: 
-    				        this.getOwlGraphWrapper().getSubPropertyClosureOf(parentProp)) {
-    				//put in the map only the sub-properties that actually need to be mapped 
-    				//(properties not excluded)
-    				if (!relExclProps.contains(subProp)) {
-    				    subPropToParent.put(subProp, parentProp);
-    				}
-    			}
+    		    parentProps.add(parentProp);
     		}
+    	}
+    	//get and filter their subproperties
+    	for (OWLObjectProperty parentProp: parentProps) {
+    	    Set<OWLObjectPropertyExpression> subProps = 
+                    this.getOwlGraphWrapper().getSubPropertyClosureOf(parentProp);
+    	    for (OWLObjectPropertyExpression subProp: subProps) {
+    	        //put in the map only the sub-properties that actually need to be mapped: 
+    	        //properties not excluded, and not itself a parentProp to map relations to.
+    	        if (!relExclProps.contains(subProp) &&
+    	                !parentProps.contains(subProp)) {
+    	            //also check that if the mapping is already present, we use 
+    	            //the more precise one (in case one of the property in parentProps 
+    	            //is the parent of another property in parentProps)
+    	            OWLObjectPropertyExpression existingParentProp = subPropToParent.get(subProp);
+    	            if (existingParentProp == null || !subProps.contains(existingParentProp)) {
+    	                subPropToParent.put(subProp, parentProp);
+    	            }
+    	        }
+    	    }
     	}
     	
     	//now, check each outgoing edge of each OWL class of each ontology
@@ -1251,11 +1267,11 @@ public class OWLGraphManipulator {
      * 								a subgraph to remove and a subgraph not to be removed,  
      * 								should be deleted. If {@code true}, they will be kept, 
      * 								otherwise, they will be deleted. 
-     * @return 						An {@code int} representing the number of 
-     * 								{@code OWLClass}es removed.
+     * @return 						A {@code Collection} of {@code String}s that are 
+     *                              the OBO-like ID of the {@code OWLClass}es removed.
      * @see #filterSubgraphs(Collection)
      */
-    public int removeSubgraphs(Collection<String> subgraphRootIds, boolean keepSharedClasses) {
+    public Collection<String> removeSubgraphs(Collection<String> subgraphRootIds, boolean keepSharedClasses) {
         int classCount   = 0;
         if (log.isInfoEnabled()) {
     	    log.info("Start removing subgraphs of undesired roots: " + subgraphRootIds);
@@ -1271,7 +1287,7 @@ public class OWLGraphManipulator {
     		ontRoots = this.getOwlGraphWrapper().getOntologyRoots();
     	}
     	
-    	int classesRemoved = 0;
+    	Set<String> classIdsRemoved = new HashSet<String>();
     	rootLoop: for (String rootId: subgraphRootIds) {
     		OWLClass subgraphRoot = 
     				this.getOwlGraphWrapper().getOWLClassByIdentifier(rootId);
@@ -1296,7 +1312,9 @@ public class OWLGraphManipulator {
         		    log.debug("Subgraph being deleted, descendants of subgraph " +
         		    		"root to remove: " + descendants);
         		}
-        		classesRemoved += this.removeClasses(classesToDel).size();
+                for (OWLClass classRemoved: this.removeClasses(classesToDel)) {
+                    classIdsRemoved.add(this.getOwlGraphWrapper().getIdentifier(classRemoved));
+                }
         		continue rootLoop;
         	}
     		
@@ -1389,15 +1407,17 @@ public class OWLGraphManipulator {
     			}
     		}
 
-    		classesRemoved += this.filterClasses(toKeep).size();
+    		for (OWLClass classRemoved: this.filterClasses(toKeep)) {
+                classIdsRemoved.add(this.getOwlGraphWrapper().getIdentifier(classRemoved));
+            }
     	}
     	
     	if (log.isInfoEnabled()) {
-    	    log.info("Done removing subgraphs of undesired roots, " + classesRemoved + 
+    	    log.info("Done removing subgraphs of undesired roots, " + classIdsRemoved.size() + 
     	            " classes removed over " + classCount + " classes total.");
     	}
     	
-    	return classesRemoved;
+    	return classIdsRemoved;
     }
 
 	//*********************************

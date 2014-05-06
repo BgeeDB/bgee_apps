@@ -6,6 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -16,7 +18,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.Utils;
+import org.obolibrary.obo2owl.Owl2Obo;
+import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
@@ -27,6 +32,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapWriter;
@@ -84,6 +90,14 @@ public class Uberon {
         OBOFormatParserException, IOException {
         log.entry((Object[]) args);
         
+        Uberon uberon = new Uberon();
+        OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/ext.owl");
+        uberon.simplifyUberon(ont, null, null, null, null, null);
+        Owl2Obo converter = new Owl2Obo();
+        OBODoc oboOntology = converter.convert(ont);
+        OBOFormatWriter writer = new OBOFormatWriter();
+        writer.write(oboOntology, "/Users/admin/Desktop/custom_ext.obo");
+        
         if (args[0].equalsIgnoreCase("extractTaxonIds")) {
             if (args.length != 3) {
                 throw log.throwing(new IllegalArgumentException(
@@ -102,6 +116,34 @@ public class Uberon {
             new Uberon().extractRelatedEdgesToOutputFile(args[1], args[2], IRI.create(args[3]));
         }
         
+        log.exit();
+    }
+    
+    public void simplifyUberon(OWLOntology uberonOnt, Collection<String> relIds, 
+            Collection<String> toFilterSubgraphRootIds, 
+            Collection<String> toRemoveSubgraphRootIds, Collection<String> classIdsToRemove, 
+            Collection<String> subsetNames) throws UnknownOWLOntologyException, 
+            OWLOntologyCreationException {
+        log.entry(uberonOnt);
+        
+        OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
+        manipulator.simplifies(
+                Arrays.asList(OntologyUtils.PART_OF_ID, 
+                              OntologyUtils.DEVELOPS_FROM_ID, 
+                              OntologyUtils.TRANSFORMATION_OF_ID), 
+                Arrays.asList("UBERON:0013701",  //main body axis
+                              "UBERON:0000026",  //appendage
+                              "UBERON:0000467"), //anatomical system
+                null, 
+                Arrays.asList("UBERON:0000480", //anatomical group
+                              "UBERON:0000061", //anatomical structure
+                              "UBERON:0000465", //material anatomical entity
+                              "UBERON:0000475", //organism subdivision
+                              "UBERON:0000468", //multi-cellular organism
+                              "UBERON:0010000"), //multicellular anatomical structure
+                
+                Arrays.asList("grouping_class", "non_informative", "ubprop:upper_level", 
+                        "upper_level"));
         log.exit();
     }
     

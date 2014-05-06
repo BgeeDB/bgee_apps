@@ -84,7 +84,7 @@ is_a: FOO:0002 ! A
 id: FOO:0012
 name: subgraph2_E
 comment: term part of the subgraph to remove, should be removed
-relationship: transformation_of FOO:0008 ! subgraph2_B
+relationship: immediate_transformation_of FOO:0008 ! subgraph2_B
 
 [Term]
 id: FOO:0014
@@ -158,6 +158,14 @@ synonym: "transforms from" EXACT [SIO:000657]
 xref: http://semanticscience.org/resource/SIO_000657
 is_transitive: true
 is_a: develops_from ! develops_from
+
+[Typedef]
+id: immediate_transformation_of
+name: immediate_transformation_of
+synonym: "direct_transformation_of" EXACT [SIO:000658]
+xref: http://semanticscience.org/resource/SIO_000658
+is_transitive: true
+is_a: transformation_of ! transformation_of
 
 [Typedef]
 id: fake_rel1

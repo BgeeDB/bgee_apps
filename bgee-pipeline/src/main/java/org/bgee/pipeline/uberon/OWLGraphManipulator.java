@@ -16,10 +16,12 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.ConvertEquivalentClassesToSuperClasses;
 import org.semanticweb.owlapi.SplitSubClassAxioms;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
@@ -28,6 +30,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 
@@ -69,8 +72,7 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * <p>
  * Even before these operations take place, all imported ontologies are merged into 
  * the source ontology, then removed from the import closure, to be able 
- * to modify any relation or any class. This is done using 
- * {@link OWLGraphWrapperBasic#mergeImportClosure(boolean)}.
+ * to modify any relation or any class. 
  * <p>
  * <strong>Warning: </strong>these operations must be performed on an ontology 
  * already reasoned, as this class does not accept any reasoner for now. 
@@ -120,6 +122,14 @@ public class OWLGraphManipulator {
 	 * A {@code String} representing the OBO-style ID of the develops_from relation. 
 	 */
 	private final static String DVLPTFROMID = "RO:0002202";
+	
+	private final static Set<String> maxOneCardinalityAnnots = 
+	        new HashSet<String>(Arrays.asList("http://purl.obolibrary.org/obo/IAO_0000115", 
+	                "http://www.w3.org/2000/01/rdf-schema#label", 
+	                "http://www.w3.org/2000/01/rdf-schema#comment", 
+	                "http://purl.obolibrary.org/obo/IAO_0000427", 
+	                "http://www.w3.org/2002/07/owl#deprecated", 
+	                "http://purl.org/dc/elements/1.1/date"));
 	
 	//*********************************
 	//    CONSTRUCTORS
@@ -181,7 +191,7 @@ public class OWLGraphManipulator {
      * <p>
      * Methods called are, in order: 
      * <ol>
-     *   <li>{@link OWLGraphWrapperBasic#mergeImportClosure(boolean)}</li>
+     *   <li>{@link #mergeImportClosure()}</li>
      *   <li>{@link #reverseOWLObjectUnionOfs()}
      *   <li>{@link #convertEquivalentClassesToSuperClasses()}
      *   <li>{@link #splitSubClassAxioms()}
@@ -191,17 +201,94 @@ public class OWLGraphManipulator {
      * @throws OWLOntologyCreationException     If an error occurred while merging 
      *                                          the imported ontologies into the source 
      *                                          ontology.
+     * 
+     * @see #mergeImportClosure()
      * @see #reverseOWLObjectUnionOfs()
      * @see #convertEquivalentClassesToSuperClasses()
      * @see #splitSubClassAxioms()
      * @see #removeOWLObjectUnionOfs()
      */
     private void performDefaultModifications() throws OWLOntologyCreationException {
-        this.getOwlGraphWrapper().mergeImportClosure(true);
+        this.mergeImportClosure();
         this.reverseOWLObjectUnionOfs();
         this.convertEquivalentClassesToSuperClasses();
         this.splitSubClassAxioms();
         this.removeOWLObjectUnionOfs();
+    }
+    
+    /**
+     * Merges {@code OWLAxiom}s from the import ontology closure, with the source ontology.
+     * This method is similar to {@link OWLGraphWrapperBasic#mergeImportClosure(boolean)}, 
+     * except that: i) an {@code OWLAxiom} will be added to the source ontology only if 
+     * it is not already present in it (without taking annotations into account); 
+     * ii) a check is performed to ensure that there will not be more than 
+     * one annotation axiom for a given subject, when the annotation property 
+     * corresponds to a tag with max cardinality one in OBO format 
+     * (see {@code org.obolibrary.oboformat.model.Frame#check()}). As for 
+     * {@link OWLGraphWrapperBasic#mergeImportClosure(boolean)}, annotations on the ontology 
+     * itself as not imported. 
+     */
+    private void mergeImportClosure() {
+        log.info("Merging axioms from import closure with source ontology...");
+        OWLOntology sourceOnt = this.getOwlGraphWrapper().getSourceOntology();
+        for (OWLOntology importedOnt: sourceOnt.getImportsClosure()) {
+            if (importedOnt.equals(sourceOnt)) {
+                continue;
+            }
+            
+//            OWLDataFactory df = sourceOnt.getOWLOntologyManager().getOWLDataFactory();
+//            OWLAnnotationProperty p = 
+//                    df.getOWLAnnotationProperty(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
+//            OWLLiteral v = df.getOWLLiteral("Imported " + importedOnt);
+//            OWLAnnotation ann = df.getOWLAnnotation(p, v);
+//            AddOntologyAnnotation addAnn = 
+//                    new AddOntologyAnnotation(sourceOnt, ann);
+//            sourceOnt.getOWLOntologyManager().applyChange(addAnn);
+            
+            //filter the axioms included to avoid redundancy
+            importAxioms: for (OWLAxiom importedAx: importedOnt.getAxioms()) {
+                if (sourceOnt.containsAxiomIgnoreAnnotations(importedAx)) {
+                    continue importAxioms;
+                }
+                    
+                //if it is an annotation axion, we need to ensure that 
+                //there will not be more than one axiom for a given subject, 
+                //when the annotation corresponds to a tag with max cardinality one 
+                //in OBO format (see org.obolibrary.oboformat.model.Frame#check()).
+                if (importedAx instanceof OWLAnnotationAssertionAxiom) {
+                    OWLAnnotationAssertionAxiom castedAx = 
+                            (OWLAnnotationAssertionAxiom) importedAx;
+
+                    if (maxOneCardinalityAnnots.contains(
+                            castedAx.getProperty().getIRI().toString()) || 
+                            maxOneCardinalityAnnots.contains(
+                                    this.getOwlGraphWrapper().getIdentifier(
+                                            castedAx.getProperty()))) {
+
+                        for (OWLAnnotationAssertionAxiom sourceAnnotAx: 
+                            sourceOnt.getAnnotationAssertionAxioms(
+                                    castedAx.getSubject())) {
+                            if (sourceAnnotAx.getProperty().equals(
+                                    castedAx.getProperty())) {
+                                //discard the axiom from import ontology, there is already 
+                                //an annotation with same property on same subject
+                                log.info("Discarding axiom: " + castedAx);
+                                continue importAxioms;
+                            }
+                        }
+                    }
+                    
+                    sourceOnt.getOWLOntologyManager().addAxiom(sourceOnt, importedAx);
+                }
+            }
+        }
+
+        Set<OWLImportsDeclaration> oids = sourceOnt.getImportsDeclarations();
+        for (OWLImportsDeclaration oid : oids) {
+            RemoveImport ri = new RemoveImport(sourceOnt, oid);
+            sourceOnt.getOWLOntologyManager().applyChange(ri);
+        }
+        log.info("Done merging axioms.");
     }
     
     /**

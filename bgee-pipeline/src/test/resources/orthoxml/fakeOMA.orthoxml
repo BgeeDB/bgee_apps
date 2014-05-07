@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orthoXML xmlns="http://orthoXML.org/2011/" version="0.3" origin="OMA Standalone" originVersion="OMA_STANDALONE_VERSION">
+ <species name="DANRE" NCBITaxId="7955">
+  <database name="DANRE" version="Cache/DB/DANRE.db">
+   <genes>
+    <gene id="1" protId="AAH90822.1; ENSDARG00000039453" />
+    <gene id="2" protId="ENSDARG00000069839" />
+    <gene id="3" protId="ENSDARG00000078198" />
+    <gene id="4" protId="ENSDARG00000069837" />
+    <gene id="5" protId="ENSDARG00000078286" />
+    <gene id="6" protId="ENSDARG00000075443" />
+    <gene id="7" protId="ENSDARG00000079599" />
+   </genes>
+  </database>
+ </species>
+ <species name="HUMAN" NCBITaxId="9606">
+  <database name="HUMAN" version="Cache/DB/HUMAN.db">
+   <genes>
+    <gene id="43344" protId="CAA51335.1; ENSG00000211633" />
+    <gene id="43345" protId="ENSG00000242580" />
+    <gene id="55815" protId="BAA20004.1; ENSG00000211655" />
+   </genes>
+  </database>
+ </species>
+ <species name="MOUSE" NCBITaxId="10090">
+  <database name="MOUSE" version="Cache/DB/MOUSE.db">
+   <genes>
+    <gene id="75930" protId="AAL61310.1; AAP70758.1; EDK97548.1; ENSMUSG00000050742" />
+   </genes>
+  </database>
+ </species>
+ <species name="XENTR" NCBITaxId="8364">
+  <database name="XENTR" version="Cache/DB/XENTR.db">
+   <genes>
+    <gene id="98343" protId="ENSXETG00000024927" />
+    <gene id="98643" protId="ENSXETG00000021946; Rep609" />
+    <gene id="98644" protId="ENSXETG00000021946; Rep610" />
+    <gene id="105488" protId="ENSXETG00000030835" />
+   </genes>
+  </database>
+ </species>
+ <groups>
+  <orthologGroup id="1">
+   <property name="TaxRange" value="Euteleostomi"/>
+   <geneRef id="2"/>
+   <paralogGroup>
+    <geneRef id="98643"/>
+    <geneRef id="98644"/>
+   </paralogGroup>
+  </orthologGroup>
+  <orthologGroup id="2">
+   <property name="TaxRange" value="Euteleostomi"/>
+   <paralogGroup>
+    <geneRef id="3"/>
+    <geneRef id="5"/>
+    <geneRef id="6"/>
+    <geneRef id="7"/>
+   </paralogGroup>
+   <paralogGroup>
+    <geneRef id="43344"/>
+    <geneRef id="55815"/>
+    <geneRef id="105488"/>
+    <orthologGroup >
+     <property name="TaxRange" value="Tetrapoda"/>
+     <geneRef id="98343"/>
+     <geneRef id="75930"/>
+    </orthologGroup>
+   </paralogGroup>
+  </orthologGroup>
+ </groups>
+</orthoXML>

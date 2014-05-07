@@ -312,6 +312,7 @@ public class OntologyUtils {
      *                                          occurred while loading it.
      * @see #computeNestedSetModelParams(List)
      */
+    //TODO adapt as in org.bgee.pipeline.hierarchicalGroups.ParseOrthoXML.buildNestedSet(Node)
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams() 
             throws UnknownOWLOntologyException, IllegalStateException, 
             OWLOntologyCreationException {

@@ -28,6 +28,6 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DOMAIN, SPECIESID, GENEBIOTYPEID, OMANODEID, ENSEMBLGENE;
+        ID, NAME, DESCRIPTION, SPECIESID, GENEBIOTYPEID, OMANODEID, ENSEMBLGENE;
     }
 }

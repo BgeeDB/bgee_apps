@@ -92,9 +92,9 @@ public class Uberon {
         
         Uberon uberon = new Uberon();
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/ext.owl");
-        OWLGraphManipulator manip = new OWLGraphManipulator(ont);
+        uberon.simplifyUberon(ont, null, null, null, null, null);
         Owl2Obo converter = new Owl2Obo();
-        OBODoc oboOntology = converter.convert(manip.getOwlGraphWrapper().getSourceOntology());
+        OBODoc oboOntology = converter.convert(ont);
         OBOFormatWriter writer = new OBOFormatWriter();
         writer.write(oboOntology, "/Users/admin/Desktop/custom_ext.obo");
         

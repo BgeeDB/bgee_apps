@@ -123,13 +123,23 @@ public class OWLGraphManipulator {
 	 */
 	private final static String DVLPTFROMID = "RO:0002202";
 	
+	/**
+	 * A {@code Set} of {@code String}s that are the string representations of the {@code IRI}s 
+	 * of {@code OWLAnnotationProperty}s for which it is not allowed to have a cardinality 
+	 * greater than one for a given {@code OWLAnnotationSubject}. 
+	 * See {@code org.obolibrary.oboformat.model.Frame#check()} in oboformat library. 
+	 * Used in method {@link #mergeImportClosure()}.
+	 * 
+	 * @see #mergeImportClosure()
+	 */
 	private final static Set<String> maxOneCardinalityAnnots = 
 	        new HashSet<String>(Arrays.asList("http://purl.obolibrary.org/obo/IAO_0000115", 
 	                "http://www.w3.org/2000/01/rdf-schema#label", 
 	                "http://www.w3.org/2000/01/rdf-schema#comment", 
 	                "http://purl.obolibrary.org/obo/IAO_0000427", 
 	                "http://www.w3.org/2002/07/owl#deprecated", 
-	                "http://purl.org/dc/elements/1.1/date"));
+	                "http://purl.org/dc/elements/1.1/date", 
+	                "http://www.geneontology.org/formats/oboInOwl#shorthand"));
 	
 	//*********************************
 	//    CONSTRUCTORS
@@ -158,8 +168,7 @@ public class OWLGraphManipulator {
      *                                      the {@code OWLOntology} into a 
      *                                      {@code OWLGraphWrapper}.
      */
-    public OWLGraphManipulator(OWLOntology ont) throws UnknownOWLOntologyException, 
-        OWLOntologyCreationException {
+    public OWLGraphManipulator(OWLOntology ont) throws UnknownOWLOntologyException {
         this(new OWLGraphWrapper(ont));
     }
     /**
@@ -172,8 +181,7 @@ public class OWLGraphManipulator {
      *                                          the imported ontologies into the source 
      *                                          ontology.
      */
-    public OWLGraphManipulator(OWLGraphWrapper owlGraphWrapper) 
-            throws OWLOntologyCreationException {
+    public OWLGraphManipulator(OWLGraphWrapper owlGraphWrapper) {
         this.setOwlGraphWrapper(owlGraphWrapper);
         this.performDefaultModifications();
     }
@@ -208,7 +216,7 @@ public class OWLGraphManipulator {
      * @see #splitSubClassAxioms()
      * @see #removeOWLObjectUnionOfs()
      */
-    private void performDefaultModifications() throws OWLOntologyCreationException {
+    private void performDefaultModifications() {
         this.mergeImportClosure();
         this.reverseOWLObjectUnionOfs();
         this.convertEquivalentClassesToSuperClasses();
@@ -220,21 +228,36 @@ public class OWLGraphManipulator {
      * Merges {@code OWLAxiom}s from the import ontology closure, with the source ontology.
      * This method is similar to {@link OWLGraphWrapperBasic#mergeImportClosure(boolean)}, 
      * except that: i) an {@code OWLAxiom} will be added to the source ontology only if 
-     * it is not already present in it (without taking annotations into account); 
+     * it is not already present in the source (without taking annotations into account); 
      * ii) a check is performed to ensure that there will not be more than 
      * one annotation axiom for a given subject, when the annotation property 
      * corresponds to a tag with max cardinality one in OBO format 
      * (see {@code org.obolibrary.oboformat.model.Frame#check()}). As for 
      * {@link OWLGraphWrapperBasic#mergeImportClosure(boolean)}, annotations on the ontology 
-     * itself as not imported. 
+     * itself are not imported, and the import declarations are removed after execution. 
      */
     private void mergeImportClosure() {
         log.info("Merging axioms from import closure with source ontology...");
         OWLOntology sourceOnt = this.getOwlGraphWrapper().getSourceOntology();
+        
+        //the method OWLOntology.containsAxiomIgnoreAnnotations is really 
+        //not well optimized, so we get all OWLAxioms without annotations 
+        //from the source ontology. 
+        log.debug("Retrieving OWLAxioms without annotations from source ontology...");
+        Set<OWLAxiom> sourceAxiomsNoAnnots = new HashSet<OWLAxiom>();
+        for (OWLAxiom ax: sourceOnt.getAxioms()) {
+            sourceAxiomsNoAnnots.add(ax.getAxiomWithoutAnnotations());
+        }
+        if (log.isDebugEnabled()) {
+            log.debug(sourceAxiomsNoAnnots.size() + " axioms without annotations retrieved " +
+            		"over " + sourceOnt.getAxiomCount() + " axioms.");
+        }
+        
         for (OWLOntology importedOnt: sourceOnt.getImportsClosure()) {
             if (importedOnt.equals(sourceOnt)) {
                 continue;
             }
+            log.info("Merging " + importedOnt);
             
 //            OWLDataFactory df = sourceOnt.getOWLOntologyManager().getOWLDataFactory();
 //            OWLAnnotationProperty p = 
@@ -245,9 +268,11 @@ public class OWLGraphManipulator {
 //                    new AddOntologyAnnotation(sourceOnt, ann);
 //            sourceOnt.getOWLOntologyManager().applyChange(addAnn);
             
-            //filter the axioms included to avoid redundancy
+            //filter the axioms imported to avoid redundancy (too bad there is not 
+            //a method OWLOntology.getAxiomsIgnoreAnnotations())
+            int importedAxiomCount = 0;
             importAxioms: for (OWLAxiom importedAx: importedOnt.getAxioms()) {
-                if (sourceOnt.containsAxiomIgnoreAnnotations(importedAx)) {
+                if (sourceAxiomsNoAnnots.contains(importedAx.getAxiomWithoutAnnotations())) {
                     continue importAxioms;
                 }
                     
@@ -256,38 +281,46 @@ public class OWLGraphManipulator {
                 //when the annotation corresponds to a tag with max cardinality one 
                 //in OBO format (see org.obolibrary.oboformat.model.Frame#check()).
                 if (importedAx instanceof OWLAnnotationAssertionAxiom) {
-                    OWLAnnotationAssertionAxiom castedAx = 
+                    OWLAnnotationAssertionAxiom castAx = 
                             (OWLAnnotationAssertionAxiom) importedAx;
 
                     if (maxOneCardinalityAnnots.contains(
-                            castedAx.getProperty().getIRI().toString()) || 
+                            castAx.getProperty().getIRI().toString()) || 
                             maxOneCardinalityAnnots.contains(
                                     this.getOwlGraphWrapper().getIdentifier(
-                                            castedAx.getProperty()))) {
+                                            castAx.getProperty()))) {
 
+                        //check whether we have an annotation for the same subject 
+                        //in the source ontology.
                         for (OWLAnnotationAssertionAxiom sourceAnnotAx: 
                             sourceOnt.getAnnotationAssertionAxioms(
-                                    castedAx.getSubject())) {
+                                    castAx.getSubject())) {
                             if (sourceAnnotAx.getProperty().equals(
-                                    castedAx.getProperty())) {
+                                    castAx.getProperty())) {
                                 //discard the axiom from import ontology, there is already 
                                 //an annotation with same property on same subject
-                                log.info("Discarding axiom: " + castedAx);
+                                log.info("Discarding axiom: " + castAx);
                                 continue importAxioms;
                             }
                         }
                     }
-                    
-                    sourceOnt.getOWLOntologyManager().addAxiom(sourceOnt, importedAx);
                 }
+                
+                //all verifications passed, include the axiom
+                importedAxiomCount++;
+                sourceAxiomsNoAnnots.add(importedAx.getAxiomWithoutAnnotations());
+                sourceOnt.getOWLOntologyManager().addAxiom(sourceOnt, importedAx);
             }
+            log.info(importedAxiomCount + " axioms imported.");
         }
 
+        //remove the import declarations
         Set<OWLImportsDeclaration> oids = sourceOnt.getImportsDeclarations();
         for (OWLImportsDeclaration oid : oids) {
             RemoveImport ri = new RemoveImport(sourceOnt, oid);
             sourceOnt.getOWLOntologyManager().applyChange(ri);
         }
+        
         log.info("Done merging axioms.");
     }
     
@@ -481,9 +514,6 @@ public class OWLGraphManipulator {
      * Helper method to perform standard simplifications. All parameters are optional. 
      * Operations performed will be to call in order: 
      * <ul>
-     *   <li>{@link #mapRelationsToParent(Collection)} using {@code relIds}.
-     *   <li>{@link #filterRelations(Collection, boolean)} using {@code relIds} and 
-     *   {@code true} as the second parameter.
      *   <li>{@link #filterSubgraphs(Collection)} using {@code toFilterSubgraphRootIds}.
      *   <li>{@link #removeSubgraphs(Collection, boolean)} using {@code toRemoveSubgraphRootIds} 
      *   and {@code true} as the second parameter.
@@ -491,6 +521,9 @@ public class OWLGraphManipulator {
      *   in {@code classIdsToRemove}.
      *   <li>{@link #reduceRelations()}
      *   <li>{@link #reducePartOfIsARelations()}
+     *   <li>{@link #mapRelationsToParent(Collection)} using {@code relIds}.
+     *   <li>{@link #filterRelations(Collection, boolean)} using {@code relIds} and 
+     *   {@code true} as the second parameter.
      *   <li>{@link #removeRelsToSubsets(Collection)} using {@code subsetNames}
      * </ul>
      * @param relIds                    A {@code Collection} of {@code String}s to call 
@@ -511,10 +544,6 @@ public class OWLGraphManipulator {
             Collection<String> toRemoveSubgraphRootIds, Collection<String> classIdsToRemove, 
             Collection<String> subsetNames) {
         
-        if (relIds != null && !relIds.isEmpty()) {
-            this.mapRelationsToParent(relIds);
-            this.filterRelations(relIds, true);
-        }
         if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
             this.filterSubgraphs(toFilterSubgraphRootIds);
         }
@@ -526,6 +555,10 @@ public class OWLGraphManipulator {
         }
         this.reduceRelations();
         this.reducePartOfIsARelations();
+        if (relIds != null && !relIds.isEmpty()) {
+            this.mapRelationsToParent(relIds);
+            this.filterRelations(relIds, true);
+        }
         if (subsetNames != null && !subsetNames.isEmpty()) {
             this.removeRelsToSubsets(subsetNames);
         }
@@ -557,6 +590,7 @@ public class OWLGraphManipulator {
 	 * </ul>
 	 * 
 	 * @return 	An {@code int} representing the number of relations removed. 
+	 * @see #reducePartOfIsARelations()
 	 */
 	public int reduceRelations() {
 		return this.reduceRelations(false);
@@ -1040,6 +1074,10 @@ public class OWLGraphManipulator {
      * <p>
      * Note that if mapping a relation to its parent produces an already existing relation, 
      * the sub-relation will then be simply removed.
+     * <p>
+     * <strong>Important:</strong> If it is planed to also call {@link #reduceRelations()}, 
+     * this method must be called first, otherwise, already mapped relations could reappear 
+     * due to property chain rules.
      * 
      * @param parentRelations 	A {@code Collection} of {@code String}s containing 
      * 							the OBO-style IDs of the parent relations, that should replace 
@@ -1062,6 +1100,10 @@ public class OWLGraphManipulator {
      * <p>
      * Note that if mapping a relation to its parent produces an already existing relation, 
      * the sub-relation will then be simply removed.
+     * <p>
+     * <strong>Important:</strong> If it is planed to also call {@link #reduceRelations()}, 
+     * this method must be called first, otherwise, already mapped relations could reappear 
+     * due to property chain rules.
      * 
      * @param parentRelations 	A {@code Collection} of {@code String}s containing 
      * 							the OBO-style IDs of the parent relations, that should replace 
@@ -1530,6 +1572,10 @@ public class OWLGraphManipulator {
      * Also, the {@code Mooncat} method try to replace a {@code OWLObjectProperty} 
      * to remove, by an allowed super-property, while here, users should use 
      * {@link #mapRelationsToParent(Collection)}.
+     * <p>
+     * <strong>Important:</strong> If it is planed to also call {@link #reduceRelations()}, 
+     * this method must be called first, otherwise, already removed relations could reappear 
+     * due to property chain rules.
      * 
      * @param allowedRels 		A {@code Collection} of {@code String}s 
      * 							representing the OBO-style IDs of the relations 
@@ -1538,6 +1584,7 @@ public class OWLGraphManipulator {
      * 							of the allowed relations should also be kept. 
      * @return          An {@code int} representing the number of {@code OWLSubClassOfAxiom}s 
      *                  removed as a result (but other axioms are removed as well). 
+     * @see #removeRelations(Collection, boolean)
      * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
      *                                  an {@code OWLObjectProperty}.
      */
@@ -1573,6 +1620,10 @@ public class OWLGraphManipulator {
      * Also, the {@code Mooncat} method try to replace a {@code OWLObjectProperty} 
      * to remove, by an allowed super-property, while here, users should use 
      * {@link #mapRelationsToParent(Collection)}.
+     * <p>
+     * <strong>Important:</strong> If it is planed to also call {@link #reduceRelations()}, 
+     * this method must be called first, otherwise, already removed relations could reappear 
+     * due to property chain rules.
      * 
      * @param forbiddenRels 	A {@code Collection} of {@code String}s 
      * 							representing the OBO-style IDs of the relations 
@@ -1581,6 +1632,7 @@ public class OWLGraphManipulator {
      * 							of the relations to remove should also be removed. 
      * @return          An {@code int} representing the number of {@code OWLSubClassOfAxiom}s 
      *                  removed as a result (but other axioms are removed as well). 
+     * @see #filterRelations(Collection, boolean)
      * @throws IllegalArgumentException If an ID in {@code rels} did not allow to identify 
      *                                  an {@code OWLObjectProperty}.
      */

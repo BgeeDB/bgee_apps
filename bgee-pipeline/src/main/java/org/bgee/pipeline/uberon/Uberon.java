@@ -32,6 +32,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -87,16 +88,17 @@ public class Uberon {
      *                                  correct information.
      */
     public static void main(String[] args) throws OWLOntologyCreationException, 
-        OBOFormatParserException, IOException {
+        OBOFormatParserException, IOException, IllegalArgumentException, OWLOntologyStorageException {
         log.entry((Object[]) args);
         
         Uberon uberon = new Uberon();
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/ext.owl");
-        uberon.simplifyUberon(ont, null, null, null, null, null);
-        Owl2Obo converter = new Owl2Obo();
-        OBODoc oboOntology = converter.convert(ont);
-        OBOFormatWriter writer = new OBOFormatWriter();
-        writer.write(oboOntology, "/Users/admin/Desktop/custom_ext.obo");
+        OWLGraphManipulator manip = new OWLGraphManipulator(ont);
+        OntologyUtils utils = new OntologyUtils(manip.getOwlGraphWrapper().getSourceOntology());
+        utils.saveAsOBO("/Users/admin/Desktop/custom_ext.obo");
+        utils.saveAsOWL("/Users/admin/Desktop/custom_ext.owl");
+        
+        
         
         if (args[0].equalsIgnoreCase("extractTaxonIds")) {
             if (args.length != 3) {

@@ -517,7 +517,7 @@ public class OntologyUtils {
         Owl2Obo converter = new Owl2Obo();
         OBODoc oboOntology = converter.convert(this.ontology);
         OBOFormatWriter writer = new OBOFormatWriter();
-        writer.setCheckStructure(false);
+        writer.setCheckStructure(true);
         writer.write(oboOntology, outputFile);
         
         log.exit();

@@ -7,7 +7,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
+import org.bgee.model.dao.mysql.hierarchicalgroup.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
@@ -111,10 +113,22 @@ public abstract class MySQLDAOUser {
         return (MySQLTaxonDAO) this.manager.getTaxonDAO();
     }
     /**
-     * @return  A {@code MySQLTaxonDAO}.
+     * @return  A {@code MySQLGeneOntologyDAO}.
      */
     protected MySQLGeneOntologyDAO getGeneOntologyDAO() {
         return (MySQLGeneOntologyDAO) this.manager.getGeneOntologyDAO();
+    }
+    /**
+     * @return  A {@code MySQLGeneDAO}.
+     */
+    protected MySQLGeneDAO getGeneDAO() {
+        return (MySQLGeneDAO) this.manager.getGeneDAO();
+    }
+    /**
+     * @return  A {@code MySQLHierarchicalGroupDAO}.
+     */
+    protected MySQLHierarchicalGroupDAO getHierarchicalGroupDAO() {
+        return (MySQLHierarchicalGroupDAO) this.manager.getHierarchicalGroupDAO();
     }
     
     /**

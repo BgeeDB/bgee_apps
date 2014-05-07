@@ -19,7 +19,9 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
+import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.TaxonDAO;
@@ -856,7 +858,33 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.exit(this.getNewGeneOntologyDAO());
     }
-    
+    /**
+     * Get a new {@link org.bgee.model.dao.api.gene.GeneDAO GeneDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code GeneDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.gene.GeneDAO GeneDAO
+     */
+    public final GeneDAO getGeneDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewGeneDAO());
+    }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO 
+     * HierarchicalGroupDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code HierarchicalGroupDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO HierarchicalGroupDAO
+     */
+    public final HierarchicalGroupDAO getHierarchicalGroupDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewHierarchicalGroupDAO());
+    }
+
     
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
@@ -982,4 +1010,20 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code GeneOntologyDAO}
      */
     protected abstract GeneOntologyDAO getNewGeneOntologyDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.gene.GeneDAO GeneDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code GeneDAO}
+     */
+    protected abstract GeneDAO getNewGeneDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO 
+     * HierarchicalGroupDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code HierarchicalGroupDAO}
+     */
+    protected abstract HierarchicalGroupDAO getNewHierarchicalGroupDAO();
 }

@@ -26,7 +26,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
+import org.bgee.model.dao.mysql.hierarchicalgroup.MySQLHierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
@@ -878,5 +880,14 @@ public class MySQLDAOManager extends DAOManager {
         log.entry();
         return log.exit(new MySQLGeneOntologyDAO(this));
     }
-    
+    @Override
+    protected MySQLGeneDAO getNewGeneDAO() {
+        log.entry();
+        return log.exit(new MySQLGeneDAO(this));
+    }
+    @Override
+    protected MySQLHierarchicalGroupDAO getNewHierarchicalGroupDAO() {
+        log.entry();
+        return log.exit(new MySQLHierarchicalGroupDAO(this));
+    }
 }

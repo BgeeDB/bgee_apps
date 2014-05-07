@@ -3,7 +3,9 @@ package org.bgee.model.dao.api;
 import java.util.Properties;
 
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
+import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.TaxonDAO;
@@ -94,5 +96,12 @@ public class MockDAOManager2 extends DAOManager {
     protected GeneOntologyDAO getNewGeneOntologyDAO() {
         return this.instanceMockManager.getNewGeneOntologyDAO();
     }
-
+    @Override
+    protected GeneDAO getNewGeneDAO() {
+        return this.instanceMockManager.getNewGeneDAO();
+    }
+    @Override
+    protected HierarchicalGroupDAO getNewHierarchicalGroupDAO() {
+        return this.instanceMockManager.getNewHierarchicalGroupDAO();
+    }
 }

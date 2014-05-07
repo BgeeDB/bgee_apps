@@ -2,18 +2,29 @@ package org.bgee.pipeline.hierarchicalGroups;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.management.modelmbean.XMLParseException;
 import javax.xml.stream.XMLStreamException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.gene.GeneTO;
+import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupTO;
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.pipeline.MySQLDAOUser;
 
 import sbc.orthoxml.Gene;
 import sbc.orthoxml.Group;
@@ -26,339 +37,282 @@ import sbc.orthoxml.io.OrthoXMLReader;
  * pertaining to the orthologus genes.
  * 
  * @author Komal Sanjeev
- * 
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @since Bgee 13
  */
-public class ParseOrthoXML {
+/**
+ * @author vrechdelaval
+ *
+ */
+public class ParseOrthoXML extends MySQLDAOUser {
 
 	private final static Logger log =
 			LogManager.getLogger(ParseOrthoXML.class.getName());
-
 	
-	private static int hierarchicalGroupId = 1;
-	private int nestedSetId = 1;
-	private String orthoXmlFile;
+	private static int OMANodeId = 1;
+	private int nestedSetId = 0;
+	private Set<HierarchicalGroupTO> hierarchicalGroupTOs = new HashSet<HierarchicalGroupTO>();
+	private Set<GeneTO> geneTOs = new HashSet<GeneTO>();
+	private List<String> genesInDb;
 
-//	public void deriveOrthologusGroups() {
-//		
-//		ParseOrthoXML parser = new ParseOrthoXML();
-//
-//		parser.setOrthoXmlFile(this.getClass()
-//				.getResource("/orthoxml/HierarchicalGroups.orthoxml")
-//				.toString());
-//
-//		// Get the orthoXML file.
-//	}
+    /**
+     * Default constructor. 
+     */
+    public ParseOrthoXML() {
+        super();
+    }
+    
+    /**
+     * Constructor providing the {@code MySQLDAOManager} that will be used by 
+     * this object to perform queries to the database. This is useful for unit testing.
+     * 
+     * @param manager   the {@code MySQLDAOManager} to use.
+     */
+    public ParseOrthoXML(MySQLDAOManager manager) {
+        super(manager);
+    }
 
-	/**
+    /**
+     * Main method to trigger the insertion of the hierarchical orthologus 
+     * groups obtained from OMA into the Bgee database. Parameters that must 
+     * be provided in order in {@code args} are: 
+     * <ol>
+     * <li>path to the file storing the hierarchical orthologus groups in OrthoXML.
+     * </ol>
+     * 
+     * @param args	An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws FileNotFoundException		If some files could not be found.
+     * @throws IllegalArgumentException		If the files used provided invalid information.
+     * @throws DAOException					If an error occurred while inserting
+											the data into the Bgee database.
+     * @throws XMLStreamException			If there is an error in the well-formedness of
+											the XML or other unexpected processing errors.
+     * @throws XMLParseException			If there is an error in parsing the XML retrieved
+											by the OrthoXMLReader.
+     */
+    public static void main(String[] args) throws FileNotFoundException, 
+    		IllegalArgumentException, DAOException, 
+    		XMLStreamException, XMLParseException {
+        log.entry((Object[]) args);
+        
+        int expectedArgLength = 1;
+        if (args.length != expectedArgLength) {
+            throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                    "provided, expected " + expectedArgLength + " arguments, " + args.length + 
+                    " provided."));
+        }
+    
+        ParseOrthoXML parser = new ParseOrthoXML();
+        parser.parseXML(args[0]);
+        
+        
+        log.exit();
+    }
+
+    /**
 	 * Performs the complete task of reading the Hierarchical Groups orthoxml
 	 * file and adding the data into the database.
 	 * <p>
 	 * This method reads the Hierarchical Groups OrthoXML file, and adds all the
-	 * data required to the database. It first iterates through all the
-	 * orthologus groups present in the file and builds a tree like model with
-	 * {@code Node}s. It then iterates through this tree to build a nested
-	 * set model.
+	 * data required to the database. It first retrieves genes id from Ensembl of 
+	 * the Bgee database to be able to check if genes IDs of the file are Ensembl ID
+	 * Then it iterates through all the orthologous groups present in the file and 
+	 * builds a {@code Collection} of {@code HierarchicalGroupTO}s as a nested set
+	 * model and a {@code Collection} of {@code GeneTO}s.
 	 * <p>
-	 * After the data required to store the groups as a nested set model is
-	 * generated, this data is added to the HierarchicalGroup and gene tables.
+	 * After the data is added to the OMAHierarchicalGroup table and the gene table
+	 * is updated.
 	 * 
-	 * @throws FileNotFoundException
-	 *             if the OrthoXMLReader cannot find the file
-	 * @throws XMLStreamException
-	 *             if there is an error in the well-formedness of the XML or
-	 *             other unexpected processing errors.
-	 * @throws XMLParseException
-	 *             if there is an error in parsing the XML retrieved by the
-	 *             OrthoXMLReader
-	 * @throws SQLException
-	 *             if there is an error establishing a connection to the
-	 *             database
+     * @param orthoXMLFile	A {@code String} that is the path to the OMA groups file.	
+     * @throws DAOException				If an error occurred while inserting
+										the data into the Bgee database.
+     * @throws FileNotFoundException	If some files could not be found.
+     * @throws XMLStreamException		If there is an error in the well-formedness of
+										the XML or other unexpected processing errors.
+     * @throws XMLParseException		If there is an error in parsing the XML retrieved
+										by the OrthoXMLReader.
+     */
+    public void parseXML(String orthoXMLFile) throws DAOException, FileNotFoundException, 
+    		XMLStreamException, XMLParseException {  
+    	log.entry();
+    	log.info("Start parsing of OrthoXML file...");
+
+    	// Catch any IllegalStateException to wrap it into a IllegalArgumentException 
+    	// (a IllegalStateException would be generated because the OrthoXML groups
+    	// loaded from the file would be invalid, so it would be a wrong argument).
+    	try {
+    		// Retrieve genes id from Ensembl of the Bgee database to be able to check
+    		// if OMA genes are Ensembl ID and update OMAGroupId in gene table.
+    		this.getGenesOfDb();
+
+    		// Construct HierarchicalGroupTOs and GeneTOs
+    		this.setTOs(orthoXMLFile);
+
+    		// Start a transaction to insert HierarchicalGroupTOs and update GeneTOs 
+    		// in the Bgee data source.Note that we do not need to call rollback if
+    		// an error occurs, calling closeDAO will rollback any ongoing transaction.
+    		try {
+    			this.startTransaction();
+
+    			log.info("Start inserting of hierarchical groups...");
+    			this.getHierarchicalGroupDAO().insertHierarchicalGroups(
+    					hierarchicalGroupTOs);
+    			log.info("Done inserting hierarchical groups");
+
+    			log.info("Start updating genes...");
+    			this.getGeneDAO().updateOMAGroupIDs(geneTOs);
+    			log.info("Done updating genes.");
+
+    			this.commit();
+    		} finally {
+    			this.closeDAO();
+    		}
+    		log.info("Done parsing of OrthoXML file: "
+    				+ "{} hierarchical groups inserted and "
+    				+ "{} genes inserted.", 
+    				hierarchicalGroupTOs.size(), 
+    				geneTOs.size());
+    	} catch (IllegalStateException e) {
+    		log.catching(e);
+    		throw log.throwing(new IllegalArgumentException(
+    				"The OrthoXML provided is invalid", e));
+    	}
+
+    	log.exit();
+    }
+
+	/**
+	 * Retrieves all Ensembl gene IDs present into the Bgee database.
 	 * 
+     * @throws DAOException				If an error occurred while inserting
+										the data into the Bgee database.
 	 */
-	public void parseXML() throws FileNotFoundException, XMLStreamException,
-			XMLParseException, SQLException {
-
-		log.entry();
-		log.debug("Hierarchical Groups OrthoXML File: {}", this.getOrthoXmlFile());
-
-		File file = new File(this.getOrthoXmlFile());
-
-		OrthoXMLReader reader = new OrthoXMLReader(file);
-		Group group;
-		Node rootNode;
+	private void getGenesOfDb() throws DAOException {
+    	log.entry();
 		
-		// read all the groups in the file iteratively
+        try {
+            this.startTransaction();
+            
+            log.info("Start getting gene IDs...");
+            genesInDb.addAll(this.getGeneDAO().getEnsemblGeneIDs());
+            log.info("Done getting gene IDs");
+            
+            this.commit();
+        } finally {
+            this.closeDAO();
+        }
+        log.info("Done getting gene IDs, {} genes found", genesInDb.size());
+        log.exit();
+	}
+
+	/**
+	 * Extract all relevant information from the OrthoXML file and fill the 
+	 * {@code Collection} of {@code HierarchicalGroupTO}s as a nested set
+	 * model and the {@code Collection} of {@code GeneTO}s.
+	 * 
+     * @param orthoXMLFile	A {@code String} that is the path to the OMA groups file.	
+     * @throws FileNotFoundException	If some files could not be found.
+     * @throws XMLStreamException		If there is an error in the well-formedness of
+										the XML or other unexpected processing errors.
+     * @throws XMLParseException		If there is an error in parsing the XML retrieved
+										by the OrthoXMLReader.
+	 */
+	private void setTOs(String orthoXMLFile) throws FileNotFoundException,  
+			XMLStreamException, XMLParseException {
+		log.entry();
+        log.info("Retrieving hierarchical groups...");
+        
+		OrthoXMLReader reader = new OrthoXMLReader(new File(orthoXMLFile));
+		Group group;
+		// Read all the groups in the file iteratively
 		while ((group = reader.next()) != null) {
-
-			log.debug("OrthologusGroupId: {}", group.getId());
-
-			rootNode = new Node();
-			rootNode.setHierarchicalGroupId(hierarchicalGroupId++);
-
-			log.info("Start building Tree...");
-			// Build the tree of the current group
-			ParseOrthoXML.buildTree(group, rootNode);
-            log.info("Done inserting Tree.");
-
-			log.info("Start building Nested Set Model...");
-			// After building the tree, now traverse the tree again to
-			// assign the hierarchical left bound and right bound in order to
-			// store them as a nested set.
-			nestedSetId = 0;
-			this.buildNestedSet(rootNode);
-            log.info("Done building Nested Set Model.");
-
-			log.info("Start adding data to hierarchicalGroup table...");
-			// Add data of this group to the HierarchicalGroup table
-			this.addToHierarchicalGroupTable(group, rootNode);
-			log.info("Done adding data to hierarchicalGroup table.");
-
-			log.info("Start adding data to gene table...");
-			// Add data of this group to the gene table
-			this.addToGeneTable(group, rootNode);
-			log.info("Done adding data to gene table.");
-
+			Deque<Group> dequeGroup = new ArrayDeque<Group>();
+			int OMAGroupId = Integer.parseInt(group.getId());
+			dequeGroup.addLast(group);
+			while (!dequeGroup.isEmpty()) {
+				Group currentGroup = dequeGroup.removeFirst();
+				addHierarchicalGroupTO(OMAGroupId, 
+						currentGroup.getProperty("TaxRange"), count(group));
+				if (currentGroup.getGenes() != null) {
+					for (Gene groupGene : currentGroup.getGenes()) {
+						// Create a {@code HierarchicalGroupTO} for each 
+						// {@code Gene}. {@code Gene}s haven't got child.
+						addHierarchicalGroupTO(OMAGroupId, 
+								currentGroup.getProperty("TaxRange"), 0);
+						// Parse gene identifiers (named protId in OrthoXML file)
+						List<String> genes = Arrays.asList(
+								groupGene.getProteinIdentifier().split("; "));
+						for (String geneId : genes) {
+							if (genesInDb.contains(geneId)) {
+								// Add new {@code GeneTO} to {@code Collection} 
+								// of {@code GeneTO}s to be able to update
+								// OMAGroupId in gene table.
+								geneTOs.add(new GeneTO(geneId, OMAGroupId));
+								break;
+							}
+						}
+						// Genes haven't got child
+						nestedSetId++;
+					}
+				}
+				if (currentGroup.getChildren() != null) {
+					// Add to {@code Deque} all children of the current {@code Group}.
+					for (Group childGroup : currentGroup.getChildren()) {
+						dequeGroup.addLast(childGroup);
+					}
+				} else {
+					// No child
+					nestedSetId++;
+				}
+			}
 		}
-
-		log.exit();
+        log.info("Done retrieving hierarchical groups.");
+        log.exit();
 	}
 
 	/**
-	 * Builds a {@code Tree} of the {@code Group} passed as a parameter.
-	 * <p>
-	 * This method builds a tree of the current {@code Group} with the root
-	 * {@code Node} which is passed at a parameter. It recursively iterates
-	 * through all the sub-groups at all the taxonomic levels of the group and
-	 * builds a
+	 * Given a OMAGroupId with the taxonomy range and a number of children, 
+	 * calculate nested set bounds and fill the {@code Collection} of 
+	 * {@code HierarchicalGroupTO}s as a nested set model.
 	 * 
-	 * @param group
-	 *            the {@code Group} object of the current orthologus group
-	 *            whose tree is to be built
-	 * @param node
-	 *            the root {@code Node} of the {@code Tree} whose tree
-	 *            is to be built
-	 * 
+	 * @param OMAGroupId	A {@code int} that is the OMA group ID.
+	 * @param taxRange		A {@code String} that is the taxonomy range 
+	 * 						of the {@code HierarchicalGroupTO} to create.
+	 * @param nbChild		A {@code int} that is the number of children 
+	 * 						of the {@code HierarchicalGroupTO} to create.
 	 */
-	public static void buildTree(Group group, Node node) {
-
-		log.entry(group, node);
-
-		// Adding the NCBI taxonomy ID,i.e,the hierarchical level
-		node.setNcbiTaxonomyRange(group.getProperty("TaxRange"));
-
-		// For all the leaves, i.e {@code Gene}, create a node for each of
-		// them and add data about their GeneIDs to the {@code Node}
-		// object.
-		Node leaf;
-		for (Gene gene : group.getGenes()) {
-			leaf = new Node();
-			leaf.setHierarchicalGroupId(hierarchicalGroupId++);
-			//TODO comment and parse string?
-			leaf.setGeneID(gene.getProteinIdentifier());
-			node.addChild(leaf);
-		}
-
-		// Iterating through all the children of the current group
-		Node childNode;
-		for (Group child : group.getChildren()) {
-			// Make a new node object for every child, and set a unique ID
-			childNode = new Node();
-			childNode.setHierarchicalGroupId(hierarchicalGroupId++);
-
-			// Add that node as a child to the parent node
-			node.addChild(childNode);
-
-			// Recurse!!
-			buildTree(child, childNode);
-		}
-		log.exit();
-	}
-
-	/**
-	 * Build the nested set model for the current {@code Group} whose root
-	 * {@code Node} is passed as a parameter.
-	 * <p>
-	 * This method assign the hierarchical left and right bounds to all the
-	 * nodes in the current {@code Group} (tree) whose root
-	 * {@code Node} is passed as a parameter.
-	 * <p>
-	 * The right bound can be calculated using this formula:
-	 * <p>
-	 * rightBound = leftBound + 2(number of child nodes) + 1
-	 * 
-	 * @param node
-	 *            the root {@code Node} of the tree whose nested set model
-	 *            is to be built.
-	 */
-	public void buildNestedSet(Node node) {
-		log.entry(node);
-		// For every node visited, increment the ID.
+	private void addHierarchicalGroupTO(int OMAGroupId, String taxRange, int nbChild) {
 		nestedSetId++;
 		// Left
-		node.setHierarchicalLeftBound(nestedSetId);
-		// Right = left + 2*numberOfChildren + 1;
-		node.setHierarchicalRightBound(nestedSetId + 2 * (count(node) - 1) + 1);
-
-		// Recurse!!
-		for (Node childNode : node.getChildNodes()) {
-			buildNestedSet(childNode);
-			nestedSetId++;
-		}
-		log.exit();
+		int left = nestedSetId;
+		// Right = left + 2 * number of children + 1;
+		int right = nestedSetId + 2 * nbChild + 1;
+		hierarchicalGroupTOs.add(new HierarchicalGroupTO(OMANodeId++, OMAGroupId, left, right, taxRange));
 	}
-
+	
 	/**
-	 * Counts the number of nodes of the current tree/subtree.
+	 * Counts the number of {@code Group}s of the current group/subgroup.
 	 * <p>
-	 * This method recursively iterates through all the nodes of the tree whose
-	 * root {@code Node} is passed as a parameter and returns the total
-	 * number of nodes in the tree (including the root node).
+	 * This method recursively iterates through all the groups of the tree
+	 * whose {@code Group} is passed as a parameter and returns the total
+	 * number of groups in the tree (including the root group).
 	 * 
-	 * @param node
-	 *            the {@code Node} object of the tree/subtree whose total
-	 *            number of children nodes are to be counted
-	 * @return an {@code int} giving the total number of nodes in the
-	 *         tree/subtree
+	 * @param group
+	 *            the {@code Group} object of the group/subgroup whose 
+	 *            total number of children groups are to be counted
+	 * @return an {@code int} giving the total number of groups in the
+	 *         group/subgroup
 	 */
-	public static int count(Node node) {
-		log.entry(node);
+	private static int count(Group group) {
+		log.entry(group);
 		int c = 1;
-		for (Node childNode : node.getChildNodes()) {
-			c += count(childNode);
+		for (Group childGroup : group.getChildren()) {
+			c += count(childGroup);
 		}
 		return log.exit(c);
 	}
-
-	/**
-	 * Add data of the {@code Group} whose root {@code Node} is being
-	 * passed as a parameter.
-	 * <p>
-	 * This method recursively iterates through the {@code Node}s of the
-	 * {@code Group} whose root {@code Node} is passed as a parameter,
-	 * and adds the data pertaining to every node into the hierarchicalGroup
-	 * table. The data includes the hierarchicalGroupId, orthologusGroupId,
-	 * hierarchicalLeftBound, hierarchicalRightBound, and the ncbiTaxonomyId.
-	 * 
-	 * @param group
-	 *            the orthologus group ID of the current {@code Group}
-	 *            whose data is being added into the database.
-	 * @param root
-	 *            the root node of the {@code Group} whose data is being
-	 *            added into the database
-	 * @throws SQLException
-	 *             if there is an error establishing a connection to the
-	 *             database
-	 */
-	public void addToHierarchicalGroupTable(Group group, Node node)
-			throws SQLException {
-
-		/*log.entry(group, node);
-
-		BgeeProperties props = BgeeProperties.getBgeeProperties();
-
-		BgeeDataSource source = BgeeDataSource.getBgeeDataSource();
-		BgeeConnection connection = source.getConnection();
-
-		String sql = "INSERT INTO hierarchicalGroup (uniqueRowId, hierarchicalGroupId, hierarchicalGroupLeftBound, hierarchicalGroupRightBound, "
-				+ "ncbiTaxonomyId, ncbiGeneId)" + " VALUES (?, ?, ?, ?, ?, ?)";
-
-		try {
-			BgeePreparedStatement bgeePreparedStatement = connection
-					.prepareStatement(sql);
-			bgeePreparedStatement.setLong(1, node.getHierarchicalGroupId());
-			bgeePreparedStatement.setString(2, group.getId());
-			bgeePreparedStatement.setLong(3, node.getHierarchicalLeftBound());
-			bgeePreparedStatement.setLong(4, node.getHierarchicalRightBound());
-			bgeePreparedStatement.setString(5, node.getNcbiTaxonomyId());
-
-			if (log.isDebugEnabled()) {
-				log.debug(bgeePreparedStatement.toString());
-			}
-
-			bgeePreparedStatement.executeUpdate();
-
-		} catch (SQLException e) {
-			log.error(e.toString());
-		} finally {
-			connection.close();
-		}
-
-		// Recurse!!
-		for (Node childNode : node.getChildNodes()) {
-			addToHierarchicalGroupTable(group, childNode);
-		}
-		log.exit();*/
-	}
-
-	/**
-	 * Add data of the {@code Group} whose root {@code Node} is being
-	 * passed as a parameter.
-	 * <p>
-	 * This method recursively iterates through the {@code Node}s of the
-	 * {@code Group} whose root {@code Node} is passed as a parameter,
-	 * and adds the data pertaining to every node into the gene table. The data
-	 * includes the hierarchicalGroupId corresponding to the geneId.
-	 * 
-	 * @param group
-	 *            the orthologus group ID of the current {@code Group}
-	 *            whose data is being added into the database.
-	 * @param root
-	 *            the root node of the {@code Group} whose data is being
-	 *            added into the database
-	 * @throws SQLException
-	 *             if there is an error establishing a connection to the
-	 *             database
-	 */
-	public void addToGeneTable(Group group, Node node) throws SQLException {
-
-		log.entry(group, node);
-
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-		} catch (ClassNotFoundException e) {
-			log.error("here.. " + e.toString());
-		}
-
-		// If gene,
-		if (node.getGeneID() != null) {
-
-			String[] geneIds = node.getGeneID().split("; ");
-
-			Connection connection = DriverManager.getConnection(
-					"jdbc:mysql://localhost:3306/db", "user", "pass");
-
-			String sql = "UPDATE gene SET hierarchicalGroupId='"
-					+ node.getHierarchicalGroupId() + "' WHERE ";
-
-			for (String id : geneIds) {
-				sql = sql + "geneId='" + id + "' OR ";
-			}
-
-			sql = sql + " geneId='';";
-
-			try {
-				PreparedStatement preparedStatement = connection
-						.prepareStatement(sql);
-
-				if (log.isDebugEnabled()) {
-					log.debug(preparedStatement.toString());
-				}
-
-				preparedStatement.executeUpdate();
-			} catch (SQLException e) {
-				log.error(e.toString());
-			} finally {
-				connection.close();
-			}
-
-		}
-		// Recurse!!
-		for (Node childNode : node.getChildNodes()) {
-			addToGeneTable(group, childNode);
-		}
-		log.exit();
-	}
-
+	
 	/**
 	 * Reads the species IDs of all the species present in the orthoxml file.
 	 * 
@@ -389,20 +343,4 @@ public class ParseOrthoXML {
 
 		return log.exit(speciesIds);
 	}
-
-	/**
-	 * @return the orthoXmlFile
-	 */
-	public String getOrthoXmlFile() {
-		return this.orthoXmlFile;
-	}
-
-	/**
-	 * @param orthoXmlFile
-	 *            the orthoXmlFile to set
-	 */
-	public void setOrthoXmlFile(String orthoXmlFile) {
-		this.orthoXmlFile = orthoXmlFile;
-	}
-
 }

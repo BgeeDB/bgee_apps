@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api.hierarchicalgroup;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import org.bgee.model.dao.api.TransferObject;
 
 /**
  * {@code TransferObject} for the class 
@@ -12,63 +11,99 @@ import java.util.Collection;
  * 
  * @author Komal Sanjeev
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @see org.bgee.model.hierarchicalgroup.HierarchicalGroup
  * @since Bgee 13
  */
-public class HierarchicalGroupTO {
-
-	/**
-	 * A {@code String} representing the gene ID queried, whose orthologus
-	 * genes are to be retrieved.
-	 */
-	public String queryGeneId;
-
-	/**
-	 * A {@code String} representing the NCBI taxonomy ID of the hierarchical
-	 * level queried.
-	 */
-	public String ncbiTaxonomyId;
-	/**
-	 * A {@code String} representing the ID for a particular group of
-	 * orthologus genes.
-	 */
-	public String orthologousGroupId;
+public class HierarchicalGroupTO extends TransferObject {
 
 	/**
 	 * An {@code int} representing the ID of a node in the tree of 
 	 * hierarchical groups. 
 	 */
-	public int hierarchicalGroupId;
+	private final int nodeId;
+
+	/**
+	 * A {@code int} representing the ID for a particular OMA group of
+	 * orthologous genes.
+	 */
+	private final int OMAGroupId;
+
 	/**
 	 * An {@code int} representing the hierarchical left bound ID which is
 	 * generated when each hierarchical group is stored as a nested set.
 	 */
-	public int hierarchicalGroupLeftBound;
+	private final int nodeLeftBound;
 
 	/**
 	 * An {@code int} representing the hierarchical right bound ID which is
 	 * generated when each hierarchical group is stored as a nested set.
 	 */
-	public int hierarchicalGroupRightBound;
-
+	private final int nodeRightBound;
+	
 	/**
-	 * A {@code Collection} of {@code String}s which represents the
-	 * IDs of orthologus genes retrieved for the {@link #queryGeneId} for the
-	 * taxon represented by {@link #ncbiTaxonomyId}
+	 * A {@code String} representing the NCBI taxonomy ID of the hierarchical
+	 * level queried.
 	 */
-	public Collection<String> orthologGenes;
-
-	public HierarchicalGroupTO() {
-
-		this.hierarchicalGroupId = 0;
-		this.orthologousGroupId = null;
-		this.hierarchicalGroupLeftBound = 0;
-		this.hierarchicalGroupRightBound = 0;
-		this.ncbiTaxonomyId = null;
-		this.queryGeneId = null;
-		this.orthologGenes = new ArrayList<String>();
-
+	private final String ncbiTaxonomyId;
+	
+	public HierarchicalGroupTO(int nodeId, int OMAGroupId, int nodeLeftBound, int nodeRightBound) {
+		this(nodeId, OMAGroupId, nodeLeftBound, nodeRightBound, null);
 	}
 
+	public HierarchicalGroupTO(int nodeId, int OMAGroupId, int nodeLeftBound, int nodeRightBound, String ncbiTaxonomyId) {
+		super();
+		this.nodeId = nodeId;
+        if (OMAGroupId <= 0 || nodeLeftBound <= 0 || nodeRightBound <= 0 || 
+        		ncbiTaxonomyId != null && Integer.parseInt(ncbiTaxonomyId) <= 0) {
+            throw new IllegalArgumentException("Integer parameters must be positive.");
+        }
+		this.OMAGroupId = OMAGroupId;
+		this.nodeLeftBound = nodeLeftBound;
+		this.nodeRightBound = nodeRightBound;
+		this.ncbiTaxonomyId = ncbiTaxonomyId;
+	}
+	
+    /**
+     * @return  A {@code int} that this the ID of a node in the tree of 
+	 * 			hierarchical groups.
+	 */
+    public int getNodeId() {
+        return this.nodeId;
+    }
+
+    /**
+     * @return  A {@code int} that this the ID for a particular OMA group 
+     * 			of orthologous genes.
+     */
+    public int getOMAGroupId() {
+        return this.OMAGroupId;
+    }
+
+    /**
+     * @return  An {@code int} representing the hierarchical left bound ID 
+     * 			which is generated when each hierarchical group is stored 
+     * 			as a nested set.
+     */
+    public int getNodeLeftBound() {
+        return this.nodeLeftBound;
+    }
+
+    /**
+     * @return  An {@code int} representing the hierarchical right bound ID 
+     * 			which is generated when each hierarchical group is stored 
+     * 			as a nested set.
+     */
+    public int getNodeRightBound() {
+        return this.nodeRightBound;
+    }
+
+    /**
+     * @return  A {@code String} representing the NCBI taxonomy ID of the 
+     * 			hierarchical level queried.
+     */
+    public String getNcbiTaxonomyId() {
+        return this.ncbiTaxonomyId;
+    }
 }

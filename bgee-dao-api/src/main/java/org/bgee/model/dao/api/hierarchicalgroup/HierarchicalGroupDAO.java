@@ -1,19 +1,36 @@
 package org.bgee.model.dao.api.hierarchicalgroup;
 
-import java.util.Collection;
-
-import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.DAO;
 
 /**
  * DAO defining queries using or retrieving {@link HierarchicalGroupTO}s. 
  * 
  * @author Komal Sanjeev
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @see HierarchicalGroupTO
  * @since Bgee 13
  */
-public interface HierarchicalGroupDAO {
+public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute>{
+
+    /**
+     * {@code Enum} used to define the attributes to populate in the {@code HierarchicalGroupTO}s 
+     * obtained from this {@code HierarchicalGroupDAO}.
+     * <ul>
+     * <li>{@code NODEID}: corresponds to {@link HierarchicalGroupTO#getNodeId()}.
+     * <li>{@code GROUPID}: corresponds to {@link HierarchicalGroupTO#getOMAGroupId()}.
+     * <li>{@code NODELEFTBOUND}: corresponds to {@link HierarchicalGroupTO#getNodeLeftBound()}.
+     * <li>{@code NODERIGHTBOUND}: corresponds to {@link HierarchicalGroupTO#getNodeRightBound()}.
+     * <li>{@code TAXONID}: corresponds to {@link HierarchicalGroupTO#getNcbiTaxonomyId()}.
+     * </ul>
+     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Collection)
+     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Object[])
+     * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
+     */
+    public enum Attribute implements DAO.Attribute {
+    	NODEID, GROUPID, NODELEFTBOUND, NODERIGHTBOUND, TAXONID;
+    }
 
 //	/**
 //	 * Retrieves all the orthologus genes corresponding to the queried gene at

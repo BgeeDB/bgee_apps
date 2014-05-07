@@ -1,24 +1,96 @@
 package org.bgee.model.dao.mysql.hierarchicalgroup;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import java.util.ArrayList;
+import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupTO;
+import org.bgee.model.dao.mysql.MySQLDAO;
+import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 /*
-import org.bgee.model.dao.common.hierarchicalGroup.HierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.BgeeConnection;
 import org.bgee.model.dao.mysql.BgeePreparedStatement;
 import org.bgee.model.dao.sql.*;*/
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 
-public class MySQLHierarchicalGroupDAO /*implements HierarchicalGroupDAO*/ {
+/**
+ * A {@code HierarchicalGroupDAO} for MySQL. 
+ * 
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @see org.bgee.model.dao.api.species.HierarchicalGroupTO
+ * @since Bgee 13
+ */
+public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Attribute> 
+implements HierarchicalGroupDAO {
+    /**
+     * {@code Logger} of the class. 
+     */
+    private final static Logger log = 
+            LogManager.getLogger(MySQLGeneOntologyDAO.class.getName());
+
+    /**
+     * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
+     * will use to obtain {@code BgeeConnection}s.
+     * @param manager   the {@code MySQLDAOManager} to use.
+     * @throws IllegalArgumentException If {@code manager} is {@code null}.
+     */
+    public MySQLHierarchicalGroupDAO(MySQLDAOManager manager) throws IllegalArgumentException {
+        super(manager);
+    }
+    
+    //***************************************************************************
+    // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
+    //TO BE EXPOSED TO THE PUBLIC API.
+    //***************************************************************************
+    /**
+     * Inserts the provided Hierarchical Groups into the Bgee database, represented as 
+     * a {@code Collection} of {@code HierarchicalGroupTO}s.
+     * 
+     * @param terms     a {@code Collection} of {@code HierarchicalGroupTO}s to be 
+     * 					inserted into the database.
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code terms}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public int insertHierarchicalGroups(Collection<HierarchicalGroupTO> groups) throws DAOException {
+    	log.entry(groups);
+    	int groupInsertedCount = 0;
+
+    	// To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+    	// and because of laziness, we insert terms one at a time
+    	String sql = "INSERT INTO OMAHierarchicalGroup ("
+    			+ "OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId)"
+    			+ "values (?, ?, ?, ?, ?) ";
+
+    	try (BgeePreparedStatement stmt = 
+    			this.getManager().getConnection().prepareStatement(sql)) {
+
+    		for (HierarchicalGroupTO group: groups) {
+    			stmt.setInt(1, group.getNodeId());
+    			stmt.setInt(2, group.getOMAGroupId());
+    			stmt.setInt(3, group.getNodeLeftBound());
+    			stmt.setInt(4, group.getNodeRightBound());
+    			stmt.setString(5, group.getNcbiTaxonomyId());
+    			groupInsertedCount += stmt.executeUpdate();
+
+    			log.debug(stmt.toString());
+
+    			stmt.clearParameters();
+    		}
+    		return log.exit(groupInsertedCount);
+    	} catch (SQLException e) {
+    		throw log.throwing(new DAOException(e));
+    	}
+    }
+
 //
 //	BgeeConnection connection;
-//
-//	private final static Logger log = LogManager
-//			.getLogger(MySQLHierarchicalGroupDAO.class.getName());
 //
 //	/**
 //	 * Retrieves all the orthologus genes corresponding to the queried gene at

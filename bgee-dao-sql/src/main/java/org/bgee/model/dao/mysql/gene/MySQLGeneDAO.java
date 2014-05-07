@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneTO;
@@ -59,31 +58,32 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 	 * 
 	 * @throws SQLException
 	 */
-	public List<String> getAllGeneIDs() throws DAOException {
+	public List<GeneTO> getAllGeneIDs() throws DAOException {
 		log.entry();
 
-//		List<GeneDAO.Attribute> listAttribute = Arrays.asList(GeneDAO.Attribute.ID); 
-		List<String> geneIDs = new ArrayList<String>();
-
+		List<GeneTO> geneTOs = new ArrayList<GeneTO>();
 		String sql = "SELECT geneId FROM gene;";
-
-		if (log.isDebugEnabled()) {
-			log.debug("QUERY: {}", sql);
-		}
+				
+		List<GeneDAO.Attribute> listAttribute = Arrays.asList(GeneDAO.Attribute.ID);
+		this.setAttributesToGet(listAttribute);		      
 
         try (BgeePreparedStatement stmt = 
-                this.getManager().getConnection().prepareStatement(sql)) {
-        		ResultSet resultSet = 
-        				stmt.getRealPreparedStatement().executeQuery();
+        		this.getManager().getConnection().prepareStatement(sql)) {
+        	ResultSet resultSet = 
+        			stmt.getRealPreparedStatement().executeQuery();
 
-			while (resultSet.next()) {
-				geneIDs.add(resultSet.getString("geneId"));
-			}
-	
-			return log.exit(geneIDs);
-		} catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-		}
+        	while (resultSet.next()) {
+            	GeneTO geneTO = new GeneTO(
+            			resultSet.getString(GeneDAO.Attribute.ID.toString()),
+            			resultSet.getString(GeneDAO.Attribute.NAME.toString()),
+            			resultSet.getInt(GeneDAO.Attribute.SPECIESID.toString()));
+            	geneTOs.add(geneTO);
+        	}
+
+        	return log.exit(new ArrayList<GeneTO>());
+        } catch (SQLException e) {
+        	throw log.throwing(new DAOException(e));
+        }
 	}
 	
 	public int updateOMAGroupIDs(Collection<GeneTO> genes) throws DAOException {
@@ -105,6 +105,5 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
          */
 	}
-	
 
 }

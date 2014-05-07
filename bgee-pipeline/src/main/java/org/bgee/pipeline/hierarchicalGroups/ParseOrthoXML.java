@@ -195,7 +195,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
             this.startTransaction();
             
             log.info("Start getting gene IDs...");
-            genesInDb.addAll(this.getGeneDAO().getEnsemblGeneIDs());
+            List<GeneTO> genes = this.getGeneDAO().getAllGeneIDs();
+            for (GeneTO gene: genes) {
+            	genesInDb.add(gene.getId());
+            }
             log.info("Done getting gene IDs");
             
             this.commit();

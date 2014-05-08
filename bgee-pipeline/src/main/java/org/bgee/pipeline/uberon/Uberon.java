@@ -22,8 +22,10 @@ import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -55,6 +57,15 @@ public class Uberon {
      */
     private final static Logger log = 
             LogManager.getLogger(Uberon.class.getName());
+
+    /**
+     * A {@code Set} of {@code String}s that are the string representations of the {@code IRI}s 
+     * of {@code OWLAnnotationProperty}s to discard, to simplify the export in OBO.
+     * 
+     * @see #simplifyUberon()
+     */
+    private final static Set<String> discardedAnnotProps = 
+            new HashSet<String>(Arrays.asList("http://xmlns.com/foaf/0.1/depicted_by"));
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -93,10 +104,10 @@ public class Uberon {
         
         Uberon uberon = new Uberon();
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/ext.owl");
-        OWLGraphManipulator manip = new OWLGraphManipulator(ont);
-        OntologyUtils utils = new OntologyUtils(manip.getOwlGraphWrapper().getSourceOntology());
-        utils.saveAsOBO("/Users/admin/Desktop/custom_ext.obo");
+        uberon.simplifyUberon(ont, null, null, null, null, null);
+        OntologyUtils utils = new OntologyUtils(ont);
         utils.saveAsOWL("/Users/admin/Desktop/custom_ext.owl");
+        utils.saveAsOBO("/Users/admin/Desktop/custom_ext.obo");
         
         
         
@@ -146,6 +157,18 @@ public class Uberon {
                 
                 Arrays.asList("grouping_class", "non_informative", "ubprop:upper_level", 
                         "upper_level"));
+        
+        for (OWLAnnotationAssertionAxiom ax: 
+                uberonOnt.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
+            if (discardedAnnotProps.contains(
+                    ax.getProperty().getIRI().toString()) || 
+                    discardedAnnotProps.contains(
+                            manipulator.getOwlGraphWrapper().getIdentifier(
+                                    ax.getProperty()))) {
+                uberonOnt.getOWLOntologyManager().removeAxiom(uberonOnt, ax);
+                log.debug("Discarded annotation: " + ax);
+            }
+        }
         log.exit();
     }
     

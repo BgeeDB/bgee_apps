@@ -115,8 +115,8 @@ public class Uberon {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/ext.owl");
         uberon.simplifyUberon(ont, null, null, null, null, null);
         OntologyUtils utils = new OntologyUtils(ont);
-        utils.saveAsOWL("/Users/admin/Desktop/custom_ext3.owl");
-        utils.saveAsOBO("/Users/admin/Desktop/custom_ext3.obo");
+        utils.saveAsOWL("/Users/admin/Desktop/custom_ext.owl");
+        utils.saveAsOBO("/Users/admin/Desktop/custom_ext.obo");
         
         
         
@@ -150,9 +150,9 @@ public class Uberon {
         
         OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
         manipulator.simplifies(
-                Arrays.asList(OntologyUtils.PART_OF_ID, 
-                              OntologyUtils.DEVELOPS_FROM_ID, 
-                              OntologyUtils.TRANSFORMATION_OF_ID), 
+                Arrays.asList(OntologyUtils.PART_OF_ID),//, 
+                              //OntologyUtils.DEVELOPS_FROM_ID, 
+                              //OntologyUtils.TRANSFORMATION_OF_ID), 
                 Arrays.asList("UBERON:0013701",  //main body axis
                               "UBERON:0000026",  //appendage
                               "UBERON:0000467"), //anatomical system

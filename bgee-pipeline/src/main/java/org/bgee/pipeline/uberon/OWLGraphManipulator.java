@@ -299,7 +299,7 @@ public class OWLGraphManipulator {
                                     castAx.getProperty())) {
                                 //discard the axiom from import ontology, there is already 
                                 //an annotation with same property on same subject
-                                log.info("Discarding axiom: " + castAx);
+                                log.trace("Discarding axiom: " + castAx);
                                 continue importAxioms;
                             }
                         }
@@ -874,8 +874,7 @@ public class OWLGraphManipulator {
 	    			//add the edge anyway to see it in the logs
 	    			iteratedWalk.add(combine);
 	    			if (log.isEnabledFor(Level.WARN)) {
-	    			    log.warn("Edge already seen! Is there a cycle? Edge from " +
-	    			        "which the walk started: " + edgeToWalk +" - List of " +
+	    			    log.warn("Cycle detected. List of " +
 	    			        "all relations composed on the walk: " + iteratedWalk);
 	    			}
 	    			continue nextEdge;

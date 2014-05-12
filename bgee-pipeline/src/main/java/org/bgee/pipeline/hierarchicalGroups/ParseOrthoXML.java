@@ -2,11 +2,6 @@ package org.bgee.pipeline.hierarchicalGroups;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +16,8 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.gene.GeneTO;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
@@ -193,9 +189,14 @@ public class ParseOrthoXML extends MySQLDAOUser {
 		
         try {
             this.startTransaction();
-            
+
             log.info("Start getting gene IDs...");
-            List<GeneTO> genes = this.getGeneDAO().getAllGeneIDs();
+            
+            
+    		List<GeneDAO.Attribute> listAttribute = Arrays.asList(GeneDAO.Attribute.ID);
+    		this.getGeneDAO().setAttributesToGet(listAttribute);
+
+    		List<GeneTO> genes = this.getGeneDAO().getAllGenes();
             for (GeneTO gene: genes) {
             	genesInDb.add(gene.getId());
             }

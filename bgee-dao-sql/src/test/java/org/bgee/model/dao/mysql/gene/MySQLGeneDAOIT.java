@@ -88,7 +88,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         
         try {
             MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
-            assertEquals("Incorrect list returned", expectedIDs, dao.getAllGeneIDs());
+            assertEquals("Incorrect list returned", expectedIDs, dao.getAllGenes());
             
         } finally {
             this.deleteFromTableAndUseDefaultDB(INSERTTABLENAME);

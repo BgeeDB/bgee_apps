@@ -514,16 +514,16 @@ public class OWLGraphManipulator {
      * Helper method to perform standard simplifications. All parameters are optional. 
      * Operations performed will be to call in order: 
      * <ul>
-     *   <li>{@link #filterSubgraphs(Collection)} using {@code toFilterSubgraphRootIds}.
-     *   <li>{@link #removeSubgraphs(Collection, boolean)} using {@code toRemoveSubgraphRootIds} 
-     *   and {@code true} as the second parameter.
-     *   <li>{@link #removeClassAndPropagateEdges(String)} on each of the {@code String} 
-     *   in {@code classIdsToRemove}.
      *   <li>{@link #reduceRelations()}
      *   <li>{@link #reducePartOfIsARelations()}
+     *   <li>{@link #removeClassAndPropagateEdges(String)} on each of the {@code String} 
+     *   in {@code classIdsToRemove}.
      *   <li>{@link #mapRelationsToParent(Collection)} using {@code relIds}.
      *   <li>{@link #filterRelations(Collection, boolean)} using {@code relIds} and 
      *   {@code true} as the second parameter.
+     *   <li>{@link #filterSubgraphs(Collection)} using {@code toFilterSubgraphRootIds}.
+     *   <li>{@link #removeSubgraphs(Collection, boolean)} using {@code toRemoveSubgraphRootIds} 
+     *   and {@code true} as the second parameter.
      *   <li>{@link #removeRelsToSubsets(Collection)} using {@code subsetNames}
      * </ul>
      * @param relIds                    A {@code Collection} of {@code String}s to call 
@@ -544,20 +544,20 @@ public class OWLGraphManipulator {
             Collection<String> toRemoveSubgraphRootIds, Collection<String> classIdsToRemove, 
             Collection<String> subsetNames) {
         
+        this.reduceRelations();
+        this.reducePartOfIsARelations();
+        for (String classIdToRemove: classIdsToRemove) {
+            this.removeClassAndPropagateEdges(classIdToRemove);
+        }
+        if (relIds != null && !relIds.isEmpty()) {
+            this.mapRelationsToParent(relIds);
+            this.filterRelations(relIds, true);
+        }
         if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
             this.filterSubgraphs(toFilterSubgraphRootIds);
         }
         if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
             this.removeSubgraphs(toRemoveSubgraphRootIds, true);
-        }
-        for (String classIdToRemove: classIdsToRemove) {
-            this.removeClassAndPropagateEdges(classIdToRemove);
-        }
-        this.reduceRelations();
-        this.reducePartOfIsARelations();
-        if (relIds != null && !relIds.isEmpty()) {
-            this.mapRelationsToParent(relIds);
-            this.filterRelations(relIds, true);
         }
         if (subsetNames != null && !subsetNames.isEmpty()) {
             this.removeRelsToSubsets(subsetNames);
@@ -1284,19 +1284,18 @@ public class OWLGraphManipulator {
     	    classCount = this.getOwlGraphWrapper().getAllOWLClasses().size();
         }
 
-    	Set<OWLClass> allowedSubgraphRoots = new HashSet<OWLClass>();
     	//first, we get all OWLObjects descendants and ancestors of the allowed roots, 
     	//to define which OWLObjects should be kept in the ontology. 
-    	//We store the ancestors in another collection to check 
+    	//We store ancestors and descendants in different collections to check 
     	//for undesired relations after class removals (see end of the method). 
-    	Set<OWLClass> toKeep               = new HashSet<OWLClass>();
+        Set<OWLClass> allowedSubgraphRoots = new HashSet<OWLClass>();
     	Set<OWLClass> ancestors            = new HashSet<OWLClass>();
+        Set<OWLClass> descendants          = new HashSet<OWLClass>();
     	for (String allowedRootId: allowedSubgraphRootIds) {
     		OWLClass allowedRoot = 
     				this.getOwlGraphWrapper().getOWLClassByIdentifier(allowedRootId);
     		
     		if (allowedRoot != null) {
-    			toKeep.add(allowedRoot);
     			allowedSubgraphRoots.add(allowedRoot);
     			if (log.isDebugEnabled()) {
     			    log.debug("Allowed root class: " + allowedRoot);
@@ -1304,15 +1303,14 @@ public class OWLGraphManipulator {
     			
     			//get all its descendants and ancestors
     			//fill the Collection toKeep and ancestorsIds
-    			Set<OWLClass> descendants = 
+    			Set<OWLClass> descs = 
     					this.getOwlGraphWrapper().getOWLClassDescendants(allowedRoot);
     			if (log.isDebugEnabled()) {
-    			    log.debug("Allowed descendant classes: " + descendants);
+    			    log.debug("Allowed descendant classes: " + descs);
     			}
-    			toKeep.addAll(descendants);
+    			descendants.addAll(descs);
     			Set<OWLClass> rootAncestors = 
     					this.getOwlGraphWrapper().getOWLClassAncestors(allowedRoot);
-    			toKeep.addAll(rootAncestors);
     			ancestors.addAll(rootAncestors);
     			if (log.isDebugEnabled()) {
 				    log.debug("Allowed ancestor classes: " + rootAncestors);
@@ -1325,20 +1323,25 @@ public class OWLGraphManipulator {
     	}
     	
     	//remove unwanted classes
+        Set<OWLClass> toKeep = new HashSet<OWLClass>();
+        toKeep.addAll(allowedSubgraphRoots);
+        toKeep.addAll(ancestors);
+        toKeep.addAll(descendants);
     	int classesRemoved = this.filterClasses(toKeep).size();
     	
-    	//remove any relation between an ancestor of an allowed root and one of its descendants, 
+    	//remove relations between any ancestor of an allowed root, that is not also 
+    	//the children of another allowed root, and descendants of those allowed roots, 
     	//as it would represent an undesired subgraph. 
     	Set<OWLGraphEdge> edgesToRemove = new HashSet<OWLGraphEdge>();
     	ancestor: for (OWLClass ancestor: ancestors) {
-    		//if this ancestor is also an allowed root, 
-    		//all relations to it are allowed
-    		if (allowedSubgraphRoots.contains(ancestor)) {
+    		//if this ancestor is also an allowed root, or also a descendant of another 
+    	    //allowed root, all relations to it are allowed
+    		if (allowedSubgraphRoots.contains(ancestor) || 
+    		        descendants.contains(ancestor)) {
     			continue ancestor;
     		}
     		
     		//get direct descendants of the ancestor
-    		//iterate each ontology to fix a bug
     	    for (OWLGraphEdge incomingEdge: 
     				    this.getOwlGraphWrapper().getIncomingEdges(ancestor)) {
     	        

@@ -60,12 +60,21 @@ public class Uberon {
 
     /**
      * A {@code Set} of {@code String}s that are the string representations of the {@code IRI}s 
-     * of {@code OWLAnnotationProperty}s to discard, to simplify the export in OBO.
+     * of {@code OWLAnnotationProperty}s to discard, to simplify the export in OBO. 
+     * Most are annotations in OWL that are translated into relationships in OBO, 
+     * or EquivalentClassesAxioms between owl:nothing and a class, translated into 
+     * relationships, thus disturbing the graph structure.
      * 
      * @see #simplifyUberon()
      */
     private final static Set<String> discardedAnnotProps = 
-            new HashSet<String>(Arrays.asList("http://xmlns.com/foaf/0.1/depicted_by"));
+            new HashSet<String>(Arrays.asList("http://xmlns.com/foaf/0.1/depicted_by", 
+                    "http://purl.obolibrary.org/obo/RO_0002175", //present_in_taxon
+                    "http://purl.obolibrary.org/obo/RO_0002161", //never_in_taxon
+                    "http://purl.obolibrary.org/obo/RO_0002171", //mutually_spatially_disjoint_with
+                    "http://purl.obolibrary.org/obo/RO_0002475", //has_no_connections_with
+                    "http://purl.obolibrary.org/obo/RO_0002174", //dubious_for_taxon
+                    "http://purl.obolibrary.org/obo/RO_0002173"));//ambiguous_for_taxon
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -106,8 +115,8 @@ public class Uberon {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/ext.owl");
         uberon.simplifyUberon(ont, null, null, null, null, null);
         OntologyUtils utils = new OntologyUtils(ont);
-        utils.saveAsOWL("/Users/admin/Desktop/custom_ext.owl");
-        utils.saveAsOBO("/Users/admin/Desktop/custom_ext.obo");
+        utils.saveAsOWL("/Users/admin/Desktop/custom_ext3.owl");
+        utils.saveAsOBO("/Users/admin/Desktop/custom_ext3.obo");
         
         
         
@@ -151,6 +160,7 @@ public class Uberon {
                 Arrays.asList("UBERON:0000480", //anatomical group
                               "UBERON:0000061", //anatomical structure
                               "UBERON:0000465", //material anatomical entity
+                              "UBERON:0001062", //anatomical entity
                               "UBERON:0000475", //organism subdivision
                               "UBERON:0000468", //multi-cellular organism
                               "UBERON:0010000"), //multicellular anatomical structure

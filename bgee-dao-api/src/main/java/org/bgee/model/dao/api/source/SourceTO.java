@@ -1,6 +1,5 @@
 package org.bgee.model.dao.api.source;
 
-import java.io.Serializable;
 import java.util.Date;
 
 import org.bgee.model.dao.api.TransferObject;
@@ -15,7 +14,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @version Bgee 13
  * @since Bgee 11
  */
-public final class SourceTO extends TransferObject implements Serializable
+public final class SourceTO implements TransferObject
 {
 	private static final long serialVersionUID = -4966619139786311073L;
 	

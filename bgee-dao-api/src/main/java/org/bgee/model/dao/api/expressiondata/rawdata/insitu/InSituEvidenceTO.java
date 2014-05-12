@@ -16,7 +16,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @see org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence
  * @since Bgee 11
  */
-public class InSituEvidenceTO extends TransferObject implements Serializable
+public class InSituEvidenceTO implements TransferObject
 {
 
 	/**

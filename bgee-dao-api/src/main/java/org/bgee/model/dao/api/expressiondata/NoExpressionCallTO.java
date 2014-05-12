@@ -14,7 +14,8 @@ package org.bgee.model.dao.api.expressiondata;
  * @since Bgee 13
  */
 public final class NoExpressionCallTO extends CallTO {
-    /**
+	private static final long serialVersionUID = 5793434647776540L;
+	/**
      * A {@code boolean} defining whether this no-expression call was generated 
      * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
      * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 

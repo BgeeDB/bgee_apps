@@ -18,9 +18,10 @@ import org.bgee.model.dao.api.TransferObject;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class RelationTO extends TransferObject {
+public class RelationTO implements TransferObject {
 
-    /**
+	private static final long serialVersionUID = 6320202680108735124L;
+	/**
      * List the different relation types allowed in the Bgee database. 
      * Bgee makes no distinction between is_a and part_of relations, so they are merged 
      * into one single enum type. Enum types available: 

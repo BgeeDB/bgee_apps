@@ -16,7 +16,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqExp
  * @since Bgee 12
  */
-public class RNASeqExpTO extends TransferObject implements Serializable
+public class RNASeqExpTO implements TransferObject
 {
 
 	/**

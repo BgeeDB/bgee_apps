@@ -18,7 +18,8 @@ package org.bgee.model.dao.api.expressiondata;
  * @since Bgee 13
  */
 public final class DiffExpressionCallTO extends CallTO {
-    /**
+	private static final long serialVersionUID = 1130761423323249175L;
+	/**
      * Represents different types of differential expression calls obtained 
      * from differential expression analyzes: 
      * <ul>

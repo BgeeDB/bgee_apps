@@ -11,7 +11,8 @@ import org.bgee.model.dao.api.EntityTO;
  */
 public final class SpeciesTO extends EntityTO {
 
-    /**
+	private static final long serialVersionUID = 341628321446710146L;
+	/**
      * A {@code String} that is the genus of this species (for instance, <i>homo</i>).
      * Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute GENUS}.
      */

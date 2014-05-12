@@ -15,7 +15,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @since Bgee 11
  */
 @Deprecated
-public class CallSourceRawDataTO extends TransferObject
+public class CallSourceRawDataTO implements TransferObject
 {
     public String geneId;
     public String expressionId;

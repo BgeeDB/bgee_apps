@@ -16,7 +16,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @see org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixExp
  * @since Bgee 11
  */
-public class AffymetrixExpTO extends TransferObject implements Serializable
+public class AffymetrixExpTO implements TransferObject
 {
 
 	/**

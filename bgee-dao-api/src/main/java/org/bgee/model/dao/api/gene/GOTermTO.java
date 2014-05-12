@@ -15,7 +15,9 @@ import org.bgee.model.dao.api.EntityTO;
  * @since Bgee 13
  */
 public class GOTermTO extends EntityTO {
-    /**
+	private static final long serialVersionUID = 5833418034550328328L;
+
+	/**
      * An {@code enum} listing the different domains a GO term can be attributed to 
      * in the Bgee database.
      * <ul>

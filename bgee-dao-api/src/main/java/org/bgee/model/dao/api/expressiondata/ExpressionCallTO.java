@@ -12,7 +12,8 @@ package org.bgee.model.dao.api.expressiondata;
  * @since Bgee 13
  */
 public final class ExpressionCallTO extends CallTO {
-    /**
+	private static final long serialVersionUID = 1198652013999835872L;
+	/**
      * A {@code boolean} defining whether this expression call was generated 
      * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
      * alone, or by also considering all its descendants by <em>is_a</em> or 

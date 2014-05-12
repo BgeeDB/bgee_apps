@@ -19,8 +19,9 @@ import org.bgee.model.dao.api.TransferObject;
  * @version Bgee 13
  * @since Bgee 13
  */
-public abstract class CallTO extends TransferObject {
-    /**
+public abstract class CallTO implements TransferObject {
+	private static final long serialVersionUID = 2157139618099008406L;
+	/**
      * An {@code enum} used to define, for each data type that allowed to generate 
      * a call (Affymetrix, RNA-Seq, ...), its contribution to the generation 
      * of the call.

@@ -10,8 +10,8 @@ import org.bgee.model.dao.api.EntityTO;
  * @since Bgee 13
  */
 public final class TaxonTO extends EntityTO {
-
-    /**
+	private static final long serialVersionUID = 704571970140502441L;
+	/**
      * A {@code String} that is the scientific name of this taxon (for instance, 
      * "Corynebacteriaceae" for "Coryneform bacteria").
      * Corresponds to the DAO {@code Attribute} {@link TaxonDAO.Attribute SCIENTIFICNAME}.

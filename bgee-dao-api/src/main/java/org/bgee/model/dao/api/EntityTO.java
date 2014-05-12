@@ -11,8 +11,9 @@ import org.apache.commons.lang3.StringUtils;
  * @version Bgee 13
  * @since Bgee 01
  */
-public abstract class EntityTO extends TransferObject {
-    private final String id;
+public abstract class EntityTO implements TransferObject {
+	private static final long serialVersionUID = 9170289303150839721L;
+	private final String id;
     private final String name;
     private final String description;
     

@@ -1,5 +1,9 @@
 package org.bgee.pipeline;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
@@ -32,6 +36,16 @@ public class CommandRunner {
      */
     private final static Logger log = 
             LogManager.getLogger(CommandRunner.class.getName());
+    
+    /**
+     * A {@code String} that is the separator between elements of a same list, 
+     * when a list needs to be provided as a single argument for a command line usage. 
+     * For instance, a list of IDs to provide as a single argument would be: 
+     * {@code Id1 + listSeparator + Id2 + listSeparator + ...}.
+     * 
+     * @see #parseListArgument(String)
+     */
+    public static final String LIST_SEPARATOR = ",";
     
     
     /**
@@ -106,5 +120,29 @@ public class CommandRunner {
         }
         
         log.exit();
+    }
+    
+    /**
+     * Split {@code listArg} based on {@link #LIST_SEPARATOR}. The resulting {@code String}s 
+     * are returned as a {@code List}, in the order they were obtained from {@code listArg}.
+     * This method is used when a list needs to be provided as a single argument, 
+     * for a command line usage. 
+     * 
+     * @param listArg   A {@code String} corresponding to a list of elements separated by 
+     *                  {@link #LIST_SEPARATOR}.
+     * @return          A {@code List} of {@code String}s that are the result of the split 
+     *                  of {@code listArg}, according to {@code LIST_SEPARATOR}.
+     */
+    public static List<String> parseListArgument(String listArg) {
+        log.entry(listArg);
+        
+        List<String> resultingList = new ArrayList<String>();
+        for (String arg: listArg.split(LIST_SEPARATOR)) {
+            if (StringUtils.isNotBlank(arg)) {
+                resultingList.add(arg);
+            }
+        }
+        
+        return log.exit(resultingList);
     }
 }

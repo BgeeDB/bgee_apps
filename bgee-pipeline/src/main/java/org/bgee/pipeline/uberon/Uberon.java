@@ -2,26 +2,20 @@ package org.bgee.pipeline.uberon;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.OntologyUtils;
-import org.bgee.pipeline.Utils;
-import org.obolibrary.obo2owl.Owl2Obo;
-import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
-import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -36,10 +30,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
-import org.supercsv.cellprocessor.constraint.NotNull;
-import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvMapWriter;
-import org.supercsv.io.ICsvMapWriter;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -101,6 +91,31 @@ public class Uberon {
      *   <li>IRI of the relation, for instance 
      *   {@code http://purl.obolibrary.org/obo/RO_0002324}
      *   </ol>
+     * <li>If the first element in {@code args} is "simplifyUberon", the action 
+     * will be to simplify the Uberon ontology and to save it to files in OBO and OWL formats, 
+     * see {@link #simplifyUberonAndSaveToFile(String, String, Collection, Collection, 
+     * Collection, Collection, Collection) simplifyUberonAndSaveToFile}.
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>path to the file storing the Uberon ontology.
+     *   <li>a prefix to use to generate the names of the files storing the resulting 
+     *   ontology in OBO and OWL. 
+     *   <li>A list of OBO-like IDs of {@code OWLClass}es to remove from the ontology, 
+     *   and to propagate their incoming edges to their outgoing edges. These IDs must be 
+     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     *   <li>A list of OBO-like IDs or {@code IRI}s of relations to be filtered 
+     *   and mapped to parent relations. These IDs must be separated by the {@code String} 
+     *   {@link CommandRunner#LIST_SEPARATOR}.
+     *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
+     *   of the subgraphs that will be kept in the ontology. These IDs must be 
+     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
+     *   of the subgraphs to be removed from the ontology. These IDs must be 
+     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     *   <li>A list of names of targeted subsets, for which member {@code OWLClass}es 
+     *   should have their is_a/part_of incoming edges removed. These IDs must be 
+     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     *   </ol>
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
@@ -108,17 +123,9 @@ public class Uberon {
      *                                  correct information.
      */
     public static void main(String[] args) throws OWLOntologyCreationException, 
-        OBOFormatParserException, IOException, IllegalArgumentException, OWLOntologyStorageException {
+        OBOFormatParserException, IOException, IllegalArgumentException, 
+        OWLOntologyStorageException {
         log.entry((Object[]) args);
-        
-        Uberon uberon = new Uberon();
-        OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/ext.owl");
-        uberon.simplifyUberon(ont, null, null, null, null, null);
-        OntologyUtils utils = new OntologyUtils(ont);
-        utils.saveAsOWL("/Users/admin/Desktop/custom_ext.owl");
-        utils.saveAsOBO("/Users/admin/Desktop/custom_ext.obo");
-        
-        
         
         if (args[0].equalsIgnoreCase("extractTaxonIds")) {
             if (args.length != 3) {
@@ -128,45 +135,167 @@ public class Uberon {
             }
             
             new Uberon().extractTaxonIds(args[1], args[2]);
-        } else if (args[0].equalsIgnoreCase("extractDevelopmentRelatedRelations")) {
-            if (args.length != 4) {
+
+// NOTE May 13 2014: this method seems now completely useless, to remove if it is confirmed.
+//        } else if (args[0].equalsIgnoreCase("extractDevelopmentRelatedRelations")) {
+//            if (args.length != 4) {
+//                throw log.throwing(new IllegalArgumentException(
+//                        "Incorrect number of arguments provided, expected " + 
+//                        "4 arguments, " + args.length + " provided."));
+//            }
+//            
+//            new Uberon().extractRelatedEdgesToOutputFile(args[1], args[2], args[3]);
+            
+        } else if (args[0].equalsIgnoreCase("simplifyUberon")) {
+            if (args.length != 8) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "4 arguments, " + args.length + " provided."));
+                        "8 arguments, " + args.length + " provided."));
             }
-            
-            new Uberon().extractRelatedEdgesToOutputFile(args[1], args[2], IRI.create(args[3]));
+            new Uberon().simplifyUberonAndSaveToFile(args[1], args[2], 
+                    CommandRunner.parseListArgument(args[3]), 
+                    CommandRunner.parseListArgument(args[4]), 
+                    CommandRunner.parseListArgument(args[5]), 
+                    CommandRunner.parseListArgument(args[6]), 
+                    CommandRunner.parseListArgument(args[7]));
         }
         
         log.exit();
     }
     
-    public void simplifyUberon(OWLOntology uberonOnt, Collection<String> relIds, 
+    /**
+     * Simplifies the Uberon ontology stored in {@code pathToUberonOnt}, and saves it in OWL 
+     * and OBO format using {@code exportName}. This method first calls  
+     * {@link #simplifyUberon(OWLOntology, Collection, Collection, Collection, Collection, 
+     * Collection)}, by loading the {@code OWLOntology} provided through {@code pathToUberonOnt}, 
+     * and using arguments of same names as in this method. The resulting {@code OWLOntology} 
+     * is then saved, in OBO (with a ".obo" extension to the name {@code exportName}), 
+     * and in OWL (with a ".owl" extension to the name {@code exportName}).
+     * 
+     * @param pathToUberonOnt           A {@code String} that is the path to the file 
+     *                                  storing the Uberon ontology (recommended version is OWL, 
+     *                                  but OBO versions can be used as well).
+     * @param exportName                A {@code String} that is the prefix of the file names 
+     *                                  to use to save the resulting {@code OWLOntology} 
+     *                                  (suffixes will be ".obo" and ".owl").
+     * @param classIdsToRemove          See same name argument in method {@code simplifyUberon}.
+     * @param relIds                    See same name argument in method {@code simplifyUberon}.
+     * @param toFilterSubgraphRootIds   See same name argument in method {@code simplifyUberon}.
+     * @param toRemoveSubgraphRootIds   See same name argument in method {@code simplifyUberon}.
+     * @param subsetNames               See same name argument in method {@code simplifyUberon}.
+     * @throws IOException                      If an error occurred while reading the file 
+     *                                          {@code pathToUberonOnt}.
+     * @throws OBOFormatParserException         If the ontology was provided in OBO format 
+     *                                          and a parser error occurred. 
+     * @throws OWLOntologyCreationException     If an error occurred while loading 
+     *                                          the ontology to modify it.
+     * @throws UnknownOWLOntologyException      If an error occurred while loading 
+     *                                          the ontology to modify it.
+     * @throws OWLOntologyStorageException      If an error occurred while saving the resulting 
+     *                                          ontology in OWL.
+     * @see #simplifyUberon(OWLOntology, Collection, Collection, Collection, Collection, 
+     * Collection)
+     */
+    public void simplifyUberonAndSaveToFile(String pathToUberonOnt, String exportName, 
+            Collection<String> classIdsToRemove, Collection<String> relIds, 
             Collection<String> toFilterSubgraphRootIds, 
-            Collection<String> toRemoveSubgraphRootIds, Collection<String> classIdsToRemove, 
-            Collection<String> subsetNames) throws UnknownOWLOntologyException, 
-            OWLOntologyCreationException {
-        log.entry(uberonOnt);
+            Collection<String> toRemoveSubgraphRootIds, Collection<String> subsetNames) 
+                    throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+                    OBOFormatParserException, IOException, OWLOntologyStorageException {
+        log.entry(pathToUberonOnt, exportName, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
+                toRemoveSubgraphRootIds, subsetNames);
+        
+        OWLOntology ont = OntologyUtils.loadOntology(pathToUberonOnt);
+        
+        this.simplifyUberon(ont, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
+                toRemoveSubgraphRootIds, subsetNames);
+
+        OntologyUtils utils = new OntologyUtils(ont);
+        utils.saveAsOWL(exportName + ".owl");
+        utils.saveAsOBO(exportName + ".obo");
+        
+        log.exit();
+    }
+    
+    /**
+     * Simplifies {@code uberonOnt} by using an {@code OWLGraphManipulator}. This method 
+     * calls {@code owltools.graph.OWLGraphManipulator#simplifies(Collection, Collection, 
+     * Collection, Collection, Collection)} using the arguments of this method, then 
+     * removes the {@code OWLAnnotationAssertionAxiom}s that are problematic to convert 
+     * the ontology in OBO.
+     * <p>
+     * Note that the {@code OWLOntology} passed as argument will be modified as a result 
+     * of the call to this method.
+     *  
+     * @param uberonOnt                         The {@code OWLOntology} to simplify.
+     * @param classIdsToRemove                  A {@code Collection} of {@code String}s that 
+     *                                          are the OBO-like IDs of {@code OWLClass}es 
+     *                                          to remove from the ontology, and to propagate 
+     *                                          their incoming edges to their outgoing edges. 
+                                                (see same argument in 
+     *                                          {@code OWLGraphManipulator.simplifies} method).
+     * @param relIds                            A {@code Collection} of {@code String}s that 
+     *                                          are the OBO-like IDs or {@code IRI}s of relations 
+     *                                          to be filtered and mapped to parent relations 
+     *                                          (see same argument in 
+     *                                          {@code OWLGraphManipulator.simplifies} method).
+     * @param toFilterSubgraphRootIds           A {@code Collection} of {@code String}s that 
+     *                                          are the OBO-like IDs of the {@code OWLClass}es 
+     *                                          that are the roots of the subgraphs that 
+     *                                          will be kept in the ontology. Their ancestors 
+     *                                          will be kept as well. (see same argument in 
+     *                                          {@code OWLGraphManipulator.simplifies} method).
+     * @param toRemoveSubgraphRootIds           A {@code Collection} of {@code String}s that 
+     *                                          are the OBO-like IDs of the {@code OWLClass}es 
+     *                                          that are the roots of the subgraphs to be 
+     *                                          removed from the ontology. Classes part both of 
+     *                                          a subgraph to remove and a subgraph not 
+     *                                          to be removed will be kept (see same argument in 
+     *                                          {@code OWLGraphManipulator.simplifies} method).
+     * @param subsetNames                       A {@code Collection} of {@code String}s that 
+     *                                          are the names of the targeted subsets, for which 
+     *                                          member {@code OWLClass}es should have 
+     *                                          their is_a/part_of incoming edges removed. 
+                                                (only if the source of the incoming edge 
+     *                                          will not be left orphan of other is_a/part_of 
+     *                                          relations to {@code OWLClass}es not in 
+     *                                          {@code subsets}, see same argument in 
+     *                                          {@code OWLGraphManipulator.simplifies} method).
+     * @throws OWLOntologyCreationException     If an error occurred while wrapping 
+     *                                          the {@code uberonOnt} into an 
+     *                                          {@code OWLGraphManipulator}.
+     * @throws UnknownOWLOntologyException      If an error occurred while wrapping 
+     *                                          the {@code uberonOnt} into an 
+     *                                          {@code OWLGraphManipulator}.
+     */
+    public void simplifyUberon(OWLOntology uberonOnt, Collection<String> classIdsToRemove, 
+            Collection<String> relIds, Collection<String> toFilterSubgraphRootIds, 
+            Collection<String> toRemoveSubgraphRootIds, Collection<String> subsetNames) 
+                    throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        log.entry(uberonOnt, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
+                toRemoveSubgraphRootIds, subsetNames);
         
         OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
-        manipulator.simplifies(
-                Arrays.asList(OntologyUtils.PART_OF_ID),//, 
-                              //OntologyUtils.DEVELOPS_FROM_ID, 
-                              //OntologyUtils.TRANSFORMATION_OF_ID), 
-                Arrays.asList("UBERON:0013701",  //main body axis
-                              "UBERON:0000026",  //appendage
-                              "UBERON:0000467"), //anatomical system
-                null, 
-                Arrays.asList("UBERON:0000480", //anatomical group
-                              "UBERON:0000061", //anatomical structure
-                              "UBERON:0000465", //material anatomical entity
-                              "UBERON:0001062", //anatomical entity
-                              "UBERON:0000475", //organism subdivision
-                              "UBERON:0000468", //multi-cellular organism
-                              "UBERON:0010000"), //multicellular anatomical structure
-                
-                Arrays.asList("grouping_class", "non_informative", "ubprop:upper_level", 
-                        "upper_level"));
+        manipulator.simplifies(classIdsToRemove, relIds, toFilterSubgraphRootIds, 
+                toRemoveSubgraphRootIds, subsetNames);
+//        manipulator.simplifies(
+//                Arrays.asList(OntologyUtils.PART_OF_ID),//, 
+//                              //OntologyUtils.DEVELOPS_FROM_ID, 
+//                              //OntologyUtils.TRANSFORMATION_OF_ID), 
+//                Arrays.asList("UBERON:0013701",  //main body axis
+//                              "UBERON:0000026",  //appendage
+//                              "UBERON:0000467"), //anatomical system
+//                null, 
+//                Arrays.asList("UBERON:0000480", //anatomical group
+//                              "UBERON:0000061", //anatomical structure
+//                              "UBERON:0000465", //material anatomical entity
+//                              "UBERON:0001062", //anatomical entity
+//                              "UBERON:0000475", //organism subdivision
+//                              "UBERON:0000468", //multi-cellular organism
+//                              "UBERON:0010000"), //multicellular anatomical structure
+//                
+//                Arrays.asList("grouping_class", "non_informative", "ubprop:upper_level", 
+//                        "upper_level"));
         
         for (OWLAnnotationAssertionAxiom ax: 
                 uberonOnt.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
@@ -391,65 +520,76 @@ public class Uberon {
         return log.exit(annotProps);
     }
     
-    /**
-     * Retrieve all {@code OWLGraphEdge}s related to the relation {@code relationToUse}, 
-     * or any of its sub-property, and write them into an output file.
-     * 
-     * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
-     * @param outputFile    A {@code String} that is the output file to be written.
-     * @param relationToUse an {@code IRI} for the relation we want to use.
-     * @throws OWLOntologyCreationException
-     * @throws OBOFormatParserException
-     * @throws IOException
-     */
-    public void extractRelatedEdgesToOutputFile(
-            String uberonFile, String outputFile, IRI relationToUse)  throws OWLOntologyCreationException, 
-            OBOFormatParserException, IOException {
-        log.entry(uberonFile, outputFile, relationToUse);
-        
-        OWLOntology ont = OntologyUtils.loadOntology(uberonFile);
-        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        
-        OWLObjectProperty relProp = wrapper.getOWLObjectProperty(relationToUse);
-        if (relProp == null) {
-            throw log.throwing(new IllegalArgumentException("The provided ontology did not " +
-            		"contain the relation " + relationToUse));
-        }
-        Set<OWLObjectPropertyExpression> props = wrapper.getSubPropertyReflexiveClosureOf(relProp);
-        Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
-        
-        for (OWLClass iterateClass: wrapper.getAllOWLClasses()) {
-            for (OWLGraphEdge edge: wrapper.getOutgoingEdges(iterateClass)) {
-                if (edge.getSingleQuantifiedProperty() != null && 
-                        props.contains(edge.getSingleQuantifiedProperty().getProperty())) {
-                    edges.add(edge);
-                }
-            }
-        }
-        
-        //write edges to file
-        String[] header = new String[] {"Uberon source ID", "Uberon source name", 
-                "Relation ID", "Relation name", "Uberon target ID", "Uberon target name"};
-        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
-                new NotNull(), new NotNull(), new NotNull(), new NotNull()};
-        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
-                Utils.TSVCOMMENTED)) {
-            
-            mapWriter.writeHeader(header);
-            for (OWLGraphEdge edge: edges) {
-                Map<String, String> line = new HashMap<String, String>();
-                line.put("Uberon source ID", wrapper.getIdentifier(edge.getSource()));
-                line.put("Uberon source name", wrapper.getLabel(edge.getSource()));
-                line.put("Relation ID", wrapper.getIdentifier(
-                        edge.getSingleQuantifiedProperty().getProperty()));
-                line.put("Relation name", wrapper.getLabel(
-                        edge.getSingleQuantifiedProperty().getProperty()));
-                line.put("Uberon target ID", wrapper.getIdentifier(edge.getTarget()));
-                line.put("Uberon target name", wrapper.getLabel(edge.getTarget()));
-                mapWriter.write(line, header, processors);
-            }
-        }
-        
-        log.exit();
-    }
+// NOTE May 13 2014: this method seems now completely useless, to remove if it is confirmed.
+//    /**
+//     * Retrieve all {@code OWLGraphEdge}s related to the relation {@code relationToUse}, 
+//     * or any of its sub-property, from the ontology stored in {@code uberonFile}, 
+//     * and write them into {@code outputFile}.
+//     * 
+//     * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
+//     * @param outputFile    A {@code String} that is the output file to be written.
+//     * @param relationToUse A {@code String} that is the OBO-like ID of the IRI of 
+//     *                      the relation to use. 
+//     * @throws IOException                      If an error occurred while reading the file 
+//     *                                          {@code uberonFile}.
+//     * @throws OBOFormatParserException         If the ontology was provided in OBO format 
+//     *                                          and a parser error occurred. 
+//     * @throws OWLOntologyCreationException     If an error occurred while loading 
+//     *                                          the ontology.
+//     */
+//    public void extractRelatedEdgesToOutputFile(
+//            String uberonFile, String outputFile, String relationToUseId)  throws OWLOntologyCreationException, 
+//            OBOFormatParserException, IOException {
+//        log.entry(uberonFile, outputFile, relationToUseId);
+//        
+//        OWLOntology ont = OntologyUtils.loadOntology(uberonFile);
+//        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+//        
+//        //try to get the relation by its IRI
+//        OWLObjectProperty relProp = wrapper.getOWLObjectProperty(relationToUseId);
+//        //try to get it from its OBO-like ID
+//        if (relProp == null) {
+//            relProp = wrapper.getOWLObjectPropertyByIdentifier(relationToUseId);
+//        }
+//        if (relProp == null) {
+//            throw log.throwing(new IllegalArgumentException("The provided ontology did not " +
+//            		"contain the relation " + relationToUseId));
+//        }
+//        Set<OWLObjectPropertyExpression> props = wrapper.getSubPropertyReflexiveClosureOf(relProp);
+//        Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
+//        
+//        for (OWLClass iterateClass: wrapper.getAllOWLClasses()) {
+//            for (OWLGraphEdge edge: wrapper.getOutgoingEdges(iterateClass)) {
+//                if (edge.getSingleQuantifiedProperty() != null && 
+//                        props.contains(edge.getSingleQuantifiedProperty().getProperty())) {
+//                    edges.add(edge);
+//                }
+//            }
+//        }
+//        
+//        //write edges to file
+//        String[] header = new String[] {"Uberon source ID", "Uberon source name", 
+//                "Relation ID", "Relation name", "Uberon target ID", "Uberon target name"};
+//        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
+//                new NotNull(), new NotNull(), new NotNull(), new NotNull()};
+//        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
+//                Utils.TSVCOMMENTED)) {
+//            
+//            mapWriter.writeHeader(header);
+//            for (OWLGraphEdge edge: edges) {
+//                Map<String, String> line = new HashMap<String, String>();
+//                line.put("Uberon source ID", wrapper.getIdentifier(edge.getSource()));
+//                line.put("Uberon source name", wrapper.getLabel(edge.getSource()));
+//                line.put("Relation ID", wrapper.getIdentifier(
+//                        edge.getSingleQuantifiedProperty().getProperty()));
+//                line.put("Relation name", wrapper.getLabel(
+//                        edge.getSingleQuantifiedProperty().getProperty()));
+//                line.put("Uberon target ID", wrapper.getIdentifier(edge.getTarget()));
+//                line.put("Uberon target name", wrapper.getLabel(edge.getTarget()));
+//                mapWriter.write(line, header, processors);
+//            }
+//        }
+//        
+//        log.exit();
+//    }
 }

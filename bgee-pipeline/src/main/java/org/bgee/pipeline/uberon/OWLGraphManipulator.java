@@ -526,6 +526,8 @@ public class OWLGraphManipulator {
      *   and {@code true} as the second parameter.
      *   <li>{@link #removeRelsToSubsets(Collection)} using {@code subsetNames}
      * </ul>
+     * @param classIdsToRemove          A {@code Collection} of {@code String}s to call 
+     *                                  {@link #removeClassAndPropagateEdges(String)} 
      * @param relIds                    A {@code Collection} of {@code String}s to call 
      *                                  {@link #mapRelationsToParent(Collection)} and 
      *                                  #filterRelations(Collection, boolean)}.
@@ -533,15 +535,13 @@ public class OWLGraphManipulator {
      *                                  {@link #filterSubgraphs(Collection)}.
      * @param toRemoveSubgraphRootIds   A {@code Collection} of {@code String}s to call 
      *                                  {@link #removeSubgraphs(Collection, boolean)}.
-     * @param classIdsToRemove          A {@code Collection} of {@code String}s to call 
-     *                                  {@link #removeClassAndPropagateEdges(String)} 
      *                                  on each of them.
      * @param subsetNames               A {@code Collection} of {@code String}s to call 
      *                                  {@link #removeRelsToSubsets(Collection)}.
      */
-    public void simplifies(Collection<String> relIds, 
+    public void simplifies(Collection<String> classIdsToRemove, Collection<String> relIds, 
             Collection<String> toFilterSubgraphRootIds, 
-            Collection<String> toRemoveSubgraphRootIds, Collection<String> classIdsToRemove, 
+            Collection<String> toRemoveSubgraphRootIds,  
             Collection<String> subsetNames) {
         
         this.reduceRelations();
@@ -1794,7 +1794,7 @@ public class OWLGraphManipulator {
 	 * </ul>
 	 * @param subsets 	A {@code Collection} of {@code String}s representing 
 	 * 					the names of the targeted subsets, for which 
-	 * 					member {@code OWLClasses} should have their is_a/part_of 
+	 * 					member {@code OWLClass}es should have their is_a/part_of 
 	 * 					incoming edges removed.
 	 * @return			An {@code int} that is the number of is_a/part_of 
 	 * 					relations (or sub-relations) removed.

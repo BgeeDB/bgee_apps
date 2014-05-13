@@ -83,18 +83,6 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          */
         private final boolean ensemblGene;
 
-        /**
-         * Constructor providing the ID of this gene and the ID of a node in the tree of 
-         * hierarchical groups.
-         * 
-         * @param geneId    a {@code String} that is the ID of this gene.
-         * @param OMANodeId a {@code Integer} that is the ID of the OMA Hierarchical 
-         * 					Orthologous Group.
-         */
-    	public GeneTO(String geneId, Integer OMANodeId) {
-    		this(geneId, null, null, null, null, OMANodeId, true);
-    	}
-
     	/**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), and the species ID of this gene.
@@ -122,10 +110,10 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param ensemblGene		a {code boolean} defining whether this gene is present 
          * 							in Ensembl. 
          */
-    	public GeneTO(String geneId, String geneName, String geneDescription, Integer speciesId, Integer geneBioTypeId, Integer OMANodeId, boolean ensemblGene) {
+    	public GeneTO(String geneId, String geneName, String geneDescription, int speciesId,
+    			Integer geneBioTypeId, Integer OMANodeId, boolean ensemblGene) {
     		super(geneId, geneName, geneDescription);
-            if (speciesId != null && speciesId <= 0|| 
-            		geneBioTypeId != null && geneBioTypeId <= 0 || 
+            if (speciesId <= 0 || geneBioTypeId != null && geneBioTypeId <= 0 || 
             		OMANodeId != null && OMANodeId <= 0) {
                 throw new IllegalArgumentException("Integer parameters must be positive.");
             }

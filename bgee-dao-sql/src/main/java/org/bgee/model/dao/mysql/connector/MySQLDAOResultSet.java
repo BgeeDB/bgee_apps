@@ -34,6 +34,7 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * {@code BgeePreparedStatement}s in the list.
  * 
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @since Bgee 13
  *
@@ -149,6 +150,18 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         }
     }
 
+    /**
+     * Returns the {@code ResultSet} corresponding to the current cursor position of this 
+     * {@code DAOResultSet}. The {@code ResultSet} is null, this simply means that we have no 
+     * more {@code ResultSet}.
+     * 
+     * @return 	The current {@code ResultSet} corresponding to the current cursor position of 
+     * 			this {@code DAOResultSet}.
+     */
+    protected ResultSet getCurrentResultSet() {
+    	return this.currentResultSet;
+    }
+    
     @Override
     public void close() throws DAOException {
         log.entry();

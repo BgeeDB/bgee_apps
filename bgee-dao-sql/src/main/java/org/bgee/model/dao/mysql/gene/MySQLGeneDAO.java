@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.gene;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,71 +43,115 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
     //***************************************************************************
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
-    //TO BE EXPOSED TO THE PUBLIC API.
+    // TO BE EXPOSED TO THE PUBLIC API.
     //***************************************************************************
 
 	/**
-	 * Retrieves all genes present into the Bgee database.
+	 * Retrieve all genes present into the Bgee database.
 	 * <p>
-	 * The genes are retrieved and returned as a {@code Collection} 
-	 * of {@code String}.
+	 * The genes are retrieved and returned as a {@code Collection} of 
+	 * {@code MySQLGeneTOResultSet}.
 	 * 
-	 * @return A {@code Collection} of {@code GeneTO}s containing all
+	 * @return A {@code Collection} of {@code MySQLGeneTOResultSet}s containing all
 	 *         genes present into the Bgee database.
 	 * 
 	 * @throws SQLException
 	 */
-	public List<GeneTO> getAllGenes() throws DAOException {
+	public Collection<MySQLGeneTOResultSet> getAllGenes() throws DAOException {
 		log.entry();
-
-		List<GeneTO> geneTOs = new ArrayList<GeneTO>();
+		List<MySQLGeneTOResultSet> resultSets = new ArrayList<MySQLGeneTOResultSet>();
 		
-//TODO construct sql query according to currents attributes
-		String sql = "SELECT geneId FROM gene;";
+		//Construct sql query according to currents attributes
+		Collection<GeneDAO.Attribute> attributes = this.getAttributesToGet();
+		StringBuilder sql = new StringBuilder("SELECT "); 
+		for (GeneDAO.Attribute attribute: attributes) {
+			sql.append(attribute.toString());
+			sql.append(", ");
+		}
+		sql.delete(sql.lastIndexOf(","), sql.length());
+		sql.append("FROM gene;");
 		
 		try (BgeePreparedStatement stmt = 
-				this.getManager().getConnection().prepareStatement(sql)) {
+				this.getManager().getConnection().prepareStatement(sql.toString())) {
 			
 			MySQLGeneTOResultSet resultSet = new MySQLGeneTOResultSet(stmt); 
 			while (resultSet.next()) {
-				geneTOs.add(resultSet.getTO());
+				resultSets.add(resultSet);
         	}
-
-        	return log.exit(new ArrayList<GeneTO>());
+        	return log.exit(resultSets);
         } catch (SQLException e) {
         	throw log.throwing(new DAOException(e));
         }
 	}
-	
-	
+
+	/**
+	 * Update the provided genes with OMA parent Node ID into the Bgee database, 
+     * represented as a {@code Collection} of {@code GeneTO}s
+	 * @param genes	a {@code Collection} of {@code GeneTO}s to be updated into the database.
+	 * @return	a {@code int} representing the number of genes updated.
+     * @throws DAOException		If a {@code SQLException} occurred while trying 
+     *                          to update {@code gene}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+	 */
 	public int updateOMAGroupIDs(Collection<GeneTO> genes) throws DAOException {
-        log.entry(genes);
-        int geneUpdatedCount = 0;
-        return log.exit(geneUpdatedCount);
-        //TODO
-        /*
-			String sql = "UPDATE gene SET OMANodeId='"
-					+ node.getOMANodeId() + "' WHERE ";
+		log.entry(genes);
+		int geneUpdatedCount = 0;
+		String sql = "UPDATE gene SET OMANodeId = ? WHERE geneId = ?";
 
-			for (String id : geneIds) {
-				sql = sql + "geneId='" + id + "' OR ";
+		try (BgeePreparedStatement stmt = 
+				this.getManager().getConnection().prepareStatement(sql)) {
+			for (GeneTO gene: genes) {
+				stmt.setInt(1, gene.getOMANodeId());
+				stmt.setString(2, gene.getId());
+				geneUpdatedCount += stmt.executeUpdate();
+				stmt.clearParameters();
 			}
-
-			sql = sql + " geneId='';";
-         */
+			return log.exit(geneUpdatedCount);
+		} catch (SQLException e) {
+			throw log.throwing(new DAOException(e));
+		}
 	}
 
+	/**
+	 * A {@code MySQLDAOResultSet} specific to {@code GeneTO}.
+	 * 
+	 * @author Valentine Rech de Laval
+	 * @version Bgee 13
+	 * @since Bgee 13
+	 */
 	public class MySQLGeneTOResultSet extends MySQLDAOResultSet<GeneTO> {
 
+		/**
+		 * Constructor providing the first {@code BgeePreparedStatement} to execute 
+		 * a query on. Note that additional {@code BgeePreparedStatement}s can be provided
+		 * afterwards by calling {@link #addStatement(BgeePreparedStatement)} or 
+		 * {@link #addAllStatements(List)}.
+		 * 
+		 * @param statement the first {@code BgeePreparedStatement} to execute 
+		 *                  a query on.
+		 */
 		public MySQLGeneTOResultSet(BgeePreparedStatement statement) {
 			super(statement);
 		}
 
 		@Override
 		public GeneTO getTO() throws DAOException {
-			// TODO Auto-generated method stub
-			return null;
+			log.entry();
+			try {
+				ResultSet currentResultSet = this.getCurrentResultSet();
+				GeneTO geneTO = new GeneTO(
+						currentResultSet.getString("geneId"),
+						currentResultSet.getString("geneName"),
+						currentResultSet.getString("geneDescription"),
+						currentResultSet.getInt("speciesId"),
+						currentResultSet.getInt("geneBioTypeId"),
+						currentResultSet.getInt("OMAParentNodeId"),
+						currentResultSet.getBoolean("ensemblGene"));
+				return log.exit(geneTO);
+			} catch (SQLException e) {
+				throw log.throwing(new DAOException(e));
+			}
 		}
-		
 	}
 }

@@ -3,7 +3,6 @@ package org.bgee.model.dao.api.gene;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
-import org.bgee.model.dao.api.gene.GOTermTO.Domain;
 
 /**
  * DAO defining queries using or retrieving {@link GeneTO}s. 
@@ -85,10 +84,11 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         private final boolean ensemblGene;
 
         /**
-         * Constructor providing XXX.
+         * Constructor providing the ID of this gene and the ID of a node in the tree of 
+         * hierarchical groups.
          * 
          * @param geneId    a {@code String} that is the ID of this gene.
-         * @param OMANodeId a {@code Integer} that is the id of the OMA Hierarchical 
+         * @param OMANodeId a {@code Integer} that is the ID of the OMA Hierarchical 
          * 					Orthologous Group.
          */
     	public GeneTO(String geneId, Integer OMANodeId) {
@@ -96,9 +96,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     	}
 
     	/**
-         * Constructor providing the ID (for instance, 
-         * {@code Ensembl:ENSMUSG00000038253}), the name (for instance, 
-         * {@code Hoxa5}), and the species id of this gene.
+         * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
+         * the name (for instance, {@code Hoxa5}), and the species ID of this gene.
          * 
          * @param geneId    a {@code String} that is the ID of this gene.
          * @param geneName  a {@code String} that is the name of this gene.
@@ -109,25 +108,19 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     	}
 
         /**
-         * Constructor providing  XXX.
+         * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
+         * the name (for instance, {@code Hoxa5}), and the species id of this gene.
          * 
-         * @param geneId    
-         * 					a {@code String} that is the ID of this gene.
-         * @param geneName  
-         * 					a {@code String} that is the name of this gene.
-         * @param geneDescription
-         * 					a {@code String} that is the desciption of this gene.
-         * @param speciesId 
-         * 					a {@code Integer} that is the species id which this 
-         * 					gene belongs to.
-         * @param geneBioTypeId
-         * 					a {@code Integer} that is the geneBioType of this gene.
-         * @param OMANodeId
-         * 					a {@code Integer} that is the id of the OMA Hierarchical 
-         * 					Orthologous Group.
-         * @param ensemblGene
-         * 					a {code boolean} defining whether this gene is present 
-         * 					in Ensembl. 
+         * @param geneId    		a {@code String} that is the ID of this gene.
+         * @param geneName  		a {@code String} that is the name of this gene.
+         * @param geneDescription	a {@code String} that is the desciption of this gene.
+         * @param speciesId			a {@code Integer} that is the species ID which this 
+         * 							gene belongs to.
+         * @param geneBioTypeId		a {@code Integer} that is the BioType of this gene.
+         * @param OMANodeId			a {@code Integer} that is the ID of the OMA Hierarchical 
+         * 							Orthologous Group.
+         * @param ensemblGene		a {code boolean} defining whether this gene is present 
+         * 							in Ensembl. 
          */
     	public GeneTO(String geneId, String geneName, String geneDescription, Integer speciesId, Integer geneBioTypeId, Integer OMANodeId, boolean ensemblGene) {
     		super(geneId, geneName, geneDescription);

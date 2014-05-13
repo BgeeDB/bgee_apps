@@ -76,6 +76,15 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
     public void setAttributesToGet(T... attributes);
     
     /**
+     * Get {@code Attribute}s to retrieve in order to build {@code TransferObject}s associated 
+     * to this {@code DAO}. Returned {@code Collection} is a copy.
+     * 
+     * @return	A {@code Collection} of {@code Attribute}s {@code T} defining the attributes
+     * 			to populate in the {@code TransferObject}s obtained from this {@code DAO}.
+     */
+    public Collection<T> getAttributesToGet();
+
+    /**
      * Resets what are the attributes that should be populated in 
      * the {@code TransferObject}s obtained from this {@code DAO}, for all 
      * the following calls. All available attributes will then be populated. 

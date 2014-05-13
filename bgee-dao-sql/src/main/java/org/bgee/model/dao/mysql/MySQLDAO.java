@@ -105,4 +105,10 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         this.attributes.clear();
         log.exit();
     }
+    @Override
+    public Collection<T> getAttributesToGet() {
+        log.entry();
+        Set<T> attributeCopy = new HashSet<T>(attributes) ;
+        return log.exit(attributeCopy);
+    }
 }

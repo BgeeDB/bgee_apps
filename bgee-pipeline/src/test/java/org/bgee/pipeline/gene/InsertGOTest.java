@@ -13,7 +13,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.gene.GOTermTO;
+import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationTO;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;

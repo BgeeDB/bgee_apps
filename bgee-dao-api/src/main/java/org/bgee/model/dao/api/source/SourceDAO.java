@@ -1,9 +1,11 @@
 package org.bgee.model.dao.api.source;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -62,4 +64,57 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
      * @throws DAOException 	If an error occurred when accessing the data source.
      */
 	public SourceTO getDataSourceById(String dataSourceId) throws DAOException;
+	
+    /**
+     * {@code DAOResultSet} specifics to {@code SourceTO}s
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+	public interface SourceTOResultSet extends DAOResultSet<SourceTO> {
+		
+	}
+
+	/**
+	 * {@code TransferObject} representing a source of data in the Bgee data source.
+	 * <p>
+	 * For information on this {@code TransferObject} and its fields, 
+	 * see the corresponding class in the {@code bgee-core} module.
+	 * 
+	 * @author Frederic Bastian
+	 * @version Bgee 13
+	 * @since Bgee 11
+	 */
+	public final class SourceTO implements TransferObject
+	{
+		private static final long serialVersionUID = -4966619139786311073L;
+		
+		public String xRefUrl;
+		public String experimentUrl;
+		public String evidenceUrl;
+		public String baseUrl;
+	    
+		public Date releaseDate;  
+		public String releaseVersion;
+	    
+		public boolean toDisplay;
+		public String category;
+
+		public String dataSourceDescription;
+
+		public SourceTO() {
+			super();
+			this.xRefUrl               = null;
+			this.experimentUrl         = null;
+			this.evidenceUrl           = null;
+			this.baseUrl               = null;
+			this.releaseDate           = null;
+			this.releaseVersion        = null;
+			this.toDisplay             = false;
+			this.category              = null;
+			this.dataSourceDescription = null;
+		}
+	}
+
 }

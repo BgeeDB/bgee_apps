@@ -6,7 +6,6 @@ import java.util.List;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.source.SourceDAO;
-import org.bgee.model.dao.api.source.SourceTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 

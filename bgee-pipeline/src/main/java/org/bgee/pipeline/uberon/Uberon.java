@@ -96,6 +96,13 @@ public class Uberon {
      *   should have their is_a/part_of incoming edges removed. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      *   </ol>
+     *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
+     *   Uberon simplifyUberon ext.owl custom_ext 
+     *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000 
+     *   BFO:0000050 
+     *   UBERON:0013701,UBERON:0000026,UBERON:0000467 
+     *   none 
+     *   grouping_class,non_informative,ubprop:upper_level,upper_level}
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 

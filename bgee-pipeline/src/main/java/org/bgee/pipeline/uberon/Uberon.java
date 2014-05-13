@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,10 +15,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
@@ -48,23 +45,6 @@ public class Uberon {
     private final static Logger log = 
             LogManager.getLogger(Uberon.class.getName());
 
-    /**
-     * A {@code Set} of {@code String}s that are the string representations of the {@code IRI}s 
-     * of {@code OWLAnnotationProperty}s to discard, to simplify the export in OBO. 
-     * Most are annotations in OWL that are translated into relationships in OBO, 
-     * or EquivalentClassesAxioms between owl:nothing and a class, translated into 
-     * relationships, thus disturbing the graph structure.
-     * 
-     * @see #simplifyUberon()
-     */
-    private final static Set<String> discardedAnnotProps = 
-            new HashSet<String>(Arrays.asList("http://xmlns.com/foaf/0.1/depicted_by", 
-                    "http://purl.obolibrary.org/obo/RO_0002175", //present_in_taxon
-                    "http://purl.obolibrary.org/obo/RO_0002161", //never_in_taxon
-                    "http://purl.obolibrary.org/obo/RO_0002171", //mutually_spatially_disjoint_with
-                    "http://purl.obolibrary.org/obo/RO_0002475", //has_no_connections_with
-                    "http://purl.obolibrary.org/obo/RO_0002174", //dubious_for_taxon
-                    "http://purl.obolibrary.org/obo/RO_0002173"));//ambiguous_for_taxon
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -222,7 +202,8 @@ public class Uberon {
      * calls {@code owltools.graph.OWLGraphManipulator#simplifies(Collection, Collection, 
      * Collection, Collection, Collection)} using the arguments of this method, then 
      * removes the {@code OWLAnnotationAssertionAxiom}s that are problematic to convert 
-     * the ontology in OBO.
+     * the ontology in OBO, using 
+     * {@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}.
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
      * of the call to this method.
@@ -274,7 +255,7 @@ public class Uberon {
                     throws UnknownOWLOntologyException, OWLOntologyCreationException {
         log.entry(uberonOnt, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
                 toRemoveSubgraphRootIds, subsetNames);
-        
+        //TODO: dependency injection?
         OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
         manipulator.simplifies(classIdsToRemove, relIds, toFilterSubgraphRootIds, 
                 toRemoveSubgraphRootIds, subsetNames);
@@ -297,17 +278,9 @@ public class Uberon {
 //                Arrays.asList("grouping_class", "non_informative", "ubprop:upper_level", 
 //                        "upper_level"));
         
-        for (OWLAnnotationAssertionAxiom ax: 
-                uberonOnt.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
-            if (discardedAnnotProps.contains(
-                    ax.getProperty().getIRI().toString()) || 
-                    discardedAnnotProps.contains(
-                            manipulator.getOwlGraphWrapper().getIdentifier(
-                                    ax.getProperty()))) {
-                uberonOnt.getOWLOntologyManager().removeAxiom(uberonOnt, ax);
-                log.debug("Discarded annotation: " + ax);
-            }
-        }
+        OntologyUtils utils = new OntologyUtils(manipulator.getOwlGraphWrapper());
+        utils.removeOBOProblematicAxioms();
+        
         log.exit();
     }
     

@@ -15,6 +15,10 @@ import org.apache.logging.log4j.Logger;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -228,5 +232,58 @@ public class OntologyUtilsTest extends TestAncestor {
                 "NCBITaxon:5", "NCBITaxon:10", "NCBITaxon:500"));
         assertEquals("Incorrect conversion", expectedOntIds, 
                 OntologyUtils.convertToTaxOntologyIds(ncbiIds));
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#removeOBOProblematicAxioms()}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldRemoveOBOProblematicAxioms() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/rmProblematicAxioms.owl").getFile());
+        OntologyUtils utils = new OntologyUtils(ont);
+
+        utils.removeOBOProblematicAxioms();
+        
+        //check for presence of the problematic annotation axioms
+        boolean axiomFound = false;
+        for (OWLAnnotationAssertionAxiom ax: ont.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
+            if (ax.getProperty().getIRI().toString().equals(
+                    "http://xmlns.com/foaf/0.1/depicted_by") || 
+               ax.getProperty().getIRI().toString().equals(
+                    "http://purl.obolibrary.org/obo/RO_0002175") || 
+               ax.getProperty().getIRI().toString().equals(
+                    "http://purl.obolibrary.org/obo/RO_0002475") ) {
+                axiomFound = true;
+                break;
+            }
+        }
+        assertFalse("Some problematic annotations were not removed, annotation axioms " +
+        		"still present: " + ont.getAxioms(AxiomType.ANNOTATION_ASSERTION), axiomFound);
+        
+        //check that we did not loose axioms using object properties
+        OWLDataFactory factory = ont.getOWLOntologyManager().getOWLDataFactory();
+        Set<OWLAxiom> expectedAxioms = new HashSet<OWLAxiom>();
+        
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(
+            factory.getOWLClass(IRI.create("http://purl.obolibrary.org/obo/UBERON_0000003")), 
+            factory.getOWLClass(IRI.create("http://purl.obolibrary.org/obo/UBERON_0000001"))));
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(
+            factory.getOWLClass(IRI.create("http://purl.obolibrary.org/obo/UBERON_0000003")), 
+            factory.getOWLObjectSomeValuesFrom(
+                factory.getOWLObjectProperty(IRI.create("http://purl.obolibrary.org/obo/RO_0002324")), 
+                factory.getOWLClass(IRI.create("http://purl.obolibrary.org/obo/UBERON_0000002")))));
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(
+            factory.getOWLClass(IRI.create("http://purl.obolibrary.org/obo/UBERON_0000004")), 
+            factory.getOWLClass(IRI.create("http://purl.obolibrary.org/obo/UBERON_0000001"))));
+        
+        assertEquals("Some axioms using object property were removed", expectedAxioms, 
+                ont.getAxioms(AxiomType.SUBCLASS_OF));
+        
     }
 }

@@ -2,6 +2,7 @@ package org.bgee.pipeline;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,7 +20,9 @@ import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.obolibrary.oboformat.writer.OBOFormatWriter;
 import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -180,6 +183,24 @@ public class OntologyUtils {
      * it will have the ID {@code NCBITaxon:9606} in the ontology file.
      */
     private static final String TAX_ONTOLOGY_ID_PREFIX = "NCBITaxon:";
+
+    /**
+     * A {@code Set} of {@code String}s that are the string representations of the {@code IRI}s 
+     * of {@code OWLAnnotationProperty}s to discard, to simplify the export in OBO. 
+     * Most are annotations in OWL that are translated into relationships in OBO, 
+     * or EquivalentClassesAxioms between owl:nothing and a class, translated into 
+     * relationships, thus disturbing the graph structure.
+     * 
+     * @see #removeOBOProblematicAxioms()
+     */
+    private final static Set<String> discardedAnnotProps = 
+            new HashSet<String>(Arrays.asList("http://xmlns.com/foaf/0.1/depicted_by", 
+                    "http://purl.obolibrary.org/obo/RO_0002175", //present_in_taxon
+                    "http://purl.obolibrary.org/obo/RO_0002161", //never_in_taxon
+                    "http://purl.obolibrary.org/obo/RO_0002171", //mutually_spatially_disjoint_with
+                    "http://purl.obolibrary.org/obo/RO_0002475", //has_no_connections_with
+                    "http://purl.obolibrary.org/obo/RO_0002174", //dubious_for_taxon
+                    "http://purl.obolibrary.org/obo/RO_0002173"));//ambiguous_for_taxon
     
     /**
      * Loads the ontology stored in the file {@code ontFile} and returns it 
@@ -553,6 +574,35 @@ public class OntologyUtils {
                 owlRdfFormat, IRI.create(rdfFile.toURI()));
         
         log.exit();
+    }
+    
+    /**
+     * Modifies the {@code OWLOntology} wrapped by this object to remove 
+     * {@code OWLAnnotationAssertionAxiom}s that are problematic to convert 
+     * the ontology in OBO format.
+     * 
+     * @throws OWLOntologyCreationException If an error occurred when using an 
+     *                                      {@code OWLGraphWrapper} on the {@code OWLOntology} 
+     *                                      wrapped by this object
+     * @throws UnknownOWLOntologyException  If an error occurred when using an 
+     *                                      {@code OWLGraphWrapper} on the {@code OWLOntology} 
+     *                                      wrapped by this object
+     */
+    public void removeOBOProblematicAxioms() throws UnknownOWLOntologyException, 
+        OWLOntologyCreationException {
+        log.entry();
+        
+        for (OWLAnnotationAssertionAxiom ax: 
+            this.ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
+            if (discardedAnnotProps.contains(
+                    ax.getProperty().getIRI().toString()) || 
+                    discardedAnnotProps.contains(
+                            this.getWrapper().getIdentifier(
+                                    ax.getProperty()))) {
+                this.ontology.getOWLOntologyManager().removeAxiom(this.ontology, ax);
+                log.debug("Discarded annotation: " + ax);
+            }
+        }
     }
     
     /**

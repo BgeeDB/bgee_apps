@@ -78,8 +78,8 @@ public class Uberon {
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>path to the file storing the Uberon ontology.
-     *   <li>a prefix to use to generate the names of the files storing the resulting 
-     *   ontology in OBO and OWL. 
+     *   <li>path to use to generate the files storing the resulting 
+     *   ontology in OBO and OWL. The prefixes ".owl" or ".obo" willb e automatically added.
      *   <li>A list of OBO-like IDs of {@code OWLClass}es to remove from the ontology, 
      *   and to propagate their incoming edges to their outgoing edges. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
@@ -145,19 +145,19 @@ public class Uberon {
     
     /**
      * Simplifies the Uberon ontology stored in {@code pathToUberonOnt}, and saves it in OWL 
-     * and OBO format using {@code exportName}. This method first calls  
+     * and OBO format using {@code exportPath}. This method first calls  
      * {@link #simplifyUberon(OWLOntology, Collection, Collection, Collection, Collection, 
      * Collection)}, by loading the {@code OWLOntology} provided through {@code pathToUberonOnt}, 
      * and using arguments of same names as in this method. The resulting {@code OWLOntology} 
-     * is then saved, in OBO (with a ".obo" extension to the name {@code exportName}), 
-     * and in OWL (with a ".owl" extension to the name {@code exportName}).
+     * is then saved, in OBO (with a ".obo" extension to the path {@code exportPath}), 
+     * and in OWL (with a ".owl" extension to the path {@code exportPath}).
      * 
      * @param pathToUberonOnt           A {@code String} that is the path to the file 
      *                                  storing the Uberon ontology (recommended version is OWL, 
      *                                  but OBO versions can be used as well).
-     * @param exportName                A {@code String} that is the prefix of the file names 
-     *                                  to use to save the resulting {@code OWLOntology} 
-     *                                  (suffixes will be ".obo" and ".owl").
+     * @param exportPath                A {@code String} that is the path to use to save 
+     *                                  the resulting {@code OWLOntology} in files 
+     *                                  (suffixes ".obo" and ".owl" will be automatically added).
      * @param classIdsToRemove          See same name argument in method {@code simplifyUberon}.
      * @param relIds                    See same name argument in method {@code simplifyUberon}.
      * @param toFilterSubgraphRootIds   See same name argument in method {@code simplifyUberon}.
@@ -176,13 +176,13 @@ public class Uberon {
      * @see #simplifyUberon(OWLOntology, Collection, Collection, Collection, Collection, 
      * Collection)
      */
-    public void simplifyUberonAndSaveToFile(String pathToUberonOnt, String exportName, 
+    public void simplifyUberonAndSaveToFile(String pathToUberonOnt, String exportPath, 
             Collection<String> classIdsToRemove, Collection<String> relIds, 
             Collection<String> toFilterSubgraphRootIds, 
             Collection<String> toRemoveSubgraphRootIds, Collection<String> subsetNames) 
                     throws UnknownOWLOntologyException, OWLOntologyCreationException, 
                     OBOFormatParserException, IOException, OWLOntologyStorageException {
-        log.entry(pathToUberonOnt, exportName, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
+        log.entry(pathToUberonOnt, exportPath, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
                 toRemoveSubgraphRootIds, subsetNames);
         
         OWLOntology ont = OntologyUtils.loadOntology(pathToUberonOnt);
@@ -191,8 +191,8 @@ public class Uberon {
                 toRemoveSubgraphRootIds, subsetNames);
 
         OntologyUtils utils = new OntologyUtils(ont);
-        utils.saveAsOWL(exportName + ".owl");
-        utils.saveAsOBO(exportName + ".obo");
+        utils.saveAsOWL(exportPath + ".owl");
+        utils.saveAsOBO(exportPath + ".obo");
         
         log.exit();
     }

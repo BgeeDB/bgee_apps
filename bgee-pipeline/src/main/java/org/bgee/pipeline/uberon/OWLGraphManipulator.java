@@ -232,9 +232,11 @@ public class OWLGraphManipulator {
         //check that all operations worked properly
         if (log.isEnabledFor(Level.WARN)) {
             for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
-                if (ont.getAxiomCount(AxiomType.EQUIVALENT_CLASSES) != 0) {
-                    log.warn("Some EquivalentClassesAxioms were not removed as expected: " + 
-                            ont.getAxioms(AxiomType.EQUIVALENT_CLASSES));
+                for (OWLEquivalentClassesAxiom ax: ont.getAxioms(AxiomType.EQUIVALENT_CLASSES)) {
+                    if (ax.containsNamedEquivalentClass()) {
+                        log.warn("Some EquivalentClassesAxioms were not removed as expected: " + 
+                                ax);
+                    }
                 }
                 for (OWLSubClassOfAxiom ax: ont.getAxioms(AxiomType.SUBCLASS_OF)) {
                     if (!ax.getSubClass().isAnonymous()) {

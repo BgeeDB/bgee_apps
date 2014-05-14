@@ -111,4 +111,31 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         Set<T> attributeCopy = new HashSet<T>(attributes) ;
         return log.exit(attributeCopy);
     }
+    
+//  /**
+//  * Returns the select expression corresponding to the provided {@code Attribute} 
+//  * (in most cases, this corresponds to the column name of a MySQL table). 
+//  * This method allows to build the SQL statements used by this {@code MySQLDAO}. 
+//  * If no select expression corresponds to {@code attribute}, 
+//  * an {@code IllegalArgumentException} should be thrown.
+//  * 
+//  * @param attribute     An {@code Attribute} which we want the column associated to, 
+//  *                      in the MySQL schema.  
+//  * @return              A {@code String} that is the column name corresponding to 
+//  *                      {@code attribute}.
+//  * @throw IllegalArgumentException  If no select expression is associated to 
+//  *                                  {@code attribute}.
+//  */
+// protected String getSelectExpression(T attribute) {
+//     if (attribute instanceof ...) {
+//         
+//     }
+// }
+// 
+// /**
+//  * Returns the name of the table associated to this {@code MySQLDAO} in the MySQL schema.
+//  * 
+//  * @return  A {@code String} that is the name 
+//  */
+// protected  abstract String getTableName();
 }

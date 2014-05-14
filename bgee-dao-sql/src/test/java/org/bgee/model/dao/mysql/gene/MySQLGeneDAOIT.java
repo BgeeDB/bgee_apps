@@ -1,17 +1,17 @@
 package org.bgee.model.dao.mysql.gene;
 
-import static org.junit.Assert.assertEquals;
-
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.junit.Test;
 
 /**
@@ -33,7 +33,6 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
      * are inserted during testing of {@link MySQLGeneDAO} methods inserting data. 
      * They are ordered according to the order tables should be emptied. 
      */
-    private final static String INSERTTABLENAME = "gene";
     
     public MySQLGeneDAOIT() {
         super();
@@ -44,55 +43,91 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the insertion method {@link MySQLGeneDAO#insertTerms(Collection)}.
+     * Test the select method {@link MySQLGeneDAO#getAllGenes()}.
      */
-    public void testGetEnsemblGeneIDs() throws SQLException {
-        this.useEmptyDB();
-        
-        String sql = "INSERT INTO gene (geneId, geneName, speciesId, ensemblGene) "
-        		   + "VALUES (?, ?, ?, ?) ";
+//    @Test
+    public void testGetAllGenes() throws SQLException {
+    	log.entry();
+    	this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
+    	try {
+    		MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
 
-        try (BgeePreparedStatement stmt = 
-        		this.getMySQLDAOManager().getConnection().prepareStatement(sql)) {
-        	//insert some genes
-            stmt.setString(1, "ID1");
-            stmt.setString(2, "GeneName1");
-            stmt.setInt(3, 11);
-            stmt.setBoolean(4, true);
-            stmt.executeUpdate();
-            stmt.clearParameters();
-            stmt.setString(1, "ID2");
-            stmt.setString(2, "GeneName2");
-            stmt.setInt(3, 12);
-            stmt.setBoolean(4, false);
-            stmt.executeUpdate();
-            stmt.clearParameters();
-            stmt.setString(1, "ID3");
-            stmt.setString(2, "GeneName3");
-            stmt.setInt(3, 13);
-            stmt.setBoolean(4, true);
-            stmt.executeUpdate();
-            stmt.clearParameters();
-            stmt.setString(1, "ID4");
-            stmt.setString(2, "GeneName4");
-            stmt.setInt(3, 14);
-            stmt.setBoolean(4, false);
-            stmt.executeUpdate();
-            stmt.clearParameters();
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
+    		try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+    				prepareStatement("select geneId from gene order by geneId;")) {
+        		// Generate manually expected result
+    			MySQLGeneTOResultSet myResults = dao.new MySQLGeneTOResultSet(stmt);
 
-        // create manually expected gene IDs list (with ensemblGene at true)
-        List<String> expectedIDs = Arrays.asList("ID1", "ID3");
-        
-        try {
-            MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
-            assertEquals("Incorrect list returned", expectedIDs, dao.getAllGenes());
-            
-        } finally {
-            this.deleteFromTableAndUseDefaultDB(INSERTTABLENAME);
-        }
+    			// Generate result with the method
+        		dao.setAttributesToGet(Arrays.asList(GeneDAO.Attribute.ID));
+    			MySQLGeneTOResultSet methResults = dao.getAllGenes();
+
+    			if (!areGeneTOResultSetsEqual(myResults, methResults)) {
+    				throw log.throwing(new AssertionError(
+    						"Incorrect generated selection from gene table"));
+    			}
+    		} 
+    	} finally {
+    		//TODO
+    	}
+        log.exit();
     }
 
+    /**
+     * Method to compare two {@code MySQLGeneTOResultSet}s, to check for complete equality
+     * of each {@code GeneTO}s.
+     * 
+     * @param rs1	  A {@code MySQLGeneTOResultSet} to be compared to {@code rs2}.
+     * @param rs2 A {@code MySQLGeneTOResultSet} to be compared to {@code rs1}.
+	 * @return		{@code true} if {@code rs1} and {@code rs2} has same {@code GeneTO}s.
+     */
+    private boolean areGeneTOResultSetsEqual(
+    		MySQLGeneTOResultSet rs1, MySQLGeneTOResultSet rs2) {
+    	log.entry(rs1, rs2);
+    	List<GeneTO> myList = new ArrayList<GeneTO>();
+		while(rs1.next()){
+			myList.add(rs1.getTO());
+		}
+    	List<GeneTO> methList = new ArrayList<GeneTO>();
+		while(rs2.next()){
+			methList.add(rs1.getTO());
+		}
+		for (GeneTO myGene: myList) {
+        	boolean found = false;
+			for (GeneTO methGene: methList) {
+        		if (areGeneTOsEqual(myGene,methGene)) {
+        			found = true;
+        		}
+			}
+        	if (!found) {
+        		log.debug("No equivalent gene found for {}", myGene.getId());
+        		return log.exit(false);
+        	}      
+		}
+		return log.exit(true);
+	}
+
+    /**
+     * Method to compare two {@code GeneTO}s, to check for complete equality
+     * of each attribute.
+     * 
+     * @param geneTO1	A {@code GeneTO} to be compared to {@code geneTO2}.
+     * @param geneTO2	A {@code GeneTO} to be compared to {@code geneTO1}.
+     * @return		{@code true} if {@code geneTO1} and {@code geneTO2} has all attributes
+     * 				equal as well as for child {@code GeneTO}s.
+     */
+    private boolean areGeneTOsEqual(GeneTO geneTO1, GeneTO geneTO2) {
+    	log.entry(geneTO1, geneTO2);
+    	if(!geneTO1.getId().equals(geneTO2.getId()) ||
+    			!geneTO1.getName().equals(geneTO2.getName()) ||
+    			(geneTO1.getDescription() != null &&
+    			!geneTO1.getDescription().equals(geneTO2.getDescription())) ||
+    			geneTO1.getSpeciesId( ) != geneTO2.getSpeciesId() ||
+    			geneTO1.getGeneBioTypeId() != geneTO2.getGeneBioTypeId() ||
+    			geneTO1.getOMANodeId() != geneTO2.getOMANodeId() ||
+    			geneTO1.isEnsemblGene() != geneTO2.isEnsemblGene()){
+    		log.debug("Nodes are not equivalent {}", geneTO1.getOMANodeId());
+    		return log.exit(false);
+    	}
+    	return log.exit(true);
+    }
 }

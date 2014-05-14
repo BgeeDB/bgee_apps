@@ -596,7 +596,8 @@ public class OWLGraphManipulator {
      *   <li>{@link #filterSubgraphs(Collection)} using {@code toFilterSubgraphRootIds}.
      *   <li>{@link #removeSubgraphs(Collection, boolean)} using {@code toRemoveSubgraphRootIds} 
      *   and {@code true} as the second parameter.
-     *   <li>{@link #removeRelsToSubsets(Collection)} using {@code subsetNames}
+     *   <li>{@link #removeRelsToSubsets(Collection, Collection)} using {@code subsetNames} 
+     *   as first argument, and {@code toFilterSubgraphRootIds} as second argument. 
      * </ul>
      * @param classIdsToRemove          A {@code Collection} of {@code String}s to call 
      *                                  {@link #removeClassAndPropagateEdges(String)} 
@@ -632,7 +633,7 @@ public class OWLGraphManipulator {
             this.removeSubgraphs(toRemoveSubgraphRootIds, true);
         }
         if (subsetNames != null && !subsetNames.isEmpty()) {
-            this.removeRelsToSubsets(subsetNames);
+            this.removeRelsToSubsets(subsetNames, toFilterSubgraphRootIds);
         }
     }
 
@@ -1842,10 +1843,27 @@ public class OWLGraphManipulator {
 	//*********************************
     
     /**
+     * Delegates method call to {@link #removeRelsToSubsets(Collection, Collection)}, 
+     * with no {@code OWLClass}es excluded specified. 
+     * 
+     * @param subsets   See same name argument in 
+     *                  {@link #removeRelsToSubsets(Collection, Collection)}.
+     * @return          See value returned by 
+     *                  {@link #removeRelsToSubsets(Collection, Collection)}.
+     * @see #removeRelsToSubsets(Collection, Collection)
+     */
+    public int removeRelsToSubsets(Collection<String> subsets) {
+        return this.removeRelsToSubsets(subsets, null);
+    }
+    
+    /**
 	 * Remove is_a and part_of incoming edges to {@code OWLClass}es 
 	 * in {@code subsets}, only if the source of the incoming edge 
 	 * will not be left orphan of other is_a/part_of relations to {@code OWLClass}es 
-	 * not in {@code subsets}. 
+	 * not in {@code subsets}. {@code OWLClass}es with their OBO-like ID or IRI 
+	 * in {@code classIdsExcluded} will be excluded from this mechanism, even if 
+	 * they are part of a targeted subset (meaning, none of their incoming edges will be 
+	 * removed)
 	 * <p>
 	 * <strong>Warning:</strong> please note that the resulting ontology will not be 
 	 * semantically correct. It is the same kind of modifications made by 
@@ -1868,13 +1886,17 @@ public class OWLGraphManipulator {
 	 * 					the names of the targeted subsets, for which 
 	 * 					member {@code OWLClass}es should have their is_a/part_of 
 	 * 					incoming edges removed.
+	 * @param classIdsExcluded A {@code Collection} of {@code String}s that are the OBO-like 
+	 *                         IDs or IRIs of {@code OWLClass}es, whose their incoming edges
+	 *                         should not be removed.  
 	 * @return			An {@code int} that is the number of is_a/part_of 
 	 * 					relations (or sub-relations) removed.
 	 */
-	public int removeRelsToSubsets(Collection<String> subsets) {
+	public int removeRelsToSubsets(Collection<String> subsets, 
+	        Collection<String> classIdsExcluded) {
 	    if (log.isInfoEnabled()) {
 		    log.info("Start removing is_a/part_of relations to subsets if non orphan: " +
-				subsets);
+				subsets + " - Classes excluded: " + classIdsExcluded);
 	    }
 		
 		//update cache so that we make sure the last AssertionError at the end of the method 
@@ -1887,6 +1909,19 @@ public class OWLGraphManipulator {
 			classesInSubsets.addAll(
 					this.getOwlGraphWrapper().getOWLClassesInSubset(subsetId));
 		}
+		Set<OWLClass> classesExcluded = new HashSet<OWLClass>();
+		if (classIdsExcluded != null) {
+		    for (String classId: classIdsExcluded) {
+		        OWLClass cls = this.getOwlGraphWrapper().getOWLClassByIdentifier(classId);
+		        if (cls == null) {
+		            cls = this.getOwlGraphWrapper().getOWLClass(classId);
+		        }
+		        if (cls != null) {
+		            classesExcluded.add(cls);
+		        }
+		    }
+		}
+		classesInSubsets.removeAll(classesExcluded);
 		
 		//now check each source of the incoming edges to the classes in the subsets
 		Set<OWLGraphEdge> edgesToRemove = new HashSet<OWLGraphEdge>();

@@ -774,7 +774,7 @@ public class OWLGraphManipulatorTest
 	//***********************************************
 	/**
 	 * Test the functionalities of 
-	 * {@link OWLGraphManipulator#removeRelsToSubsets(Collection)}. 
+	 * {@link OWLGraphManipulator#removeRelsToSubsets(Collection, Collection)}. 
 	 */
 	@Test
 	public void shouldRemoveRelsToSubsets()
@@ -815,15 +815,16 @@ public class OWLGraphManipulatorTest
             axiomCountBefore += ont.getAxiomCount();
         }
 		int relsRemoved = 
-				this.graphManipulator.removeRelsToSubsets(subsets);
+				this.graphManipulator.removeRelsToSubsets(subsets, 
+				        Arrays.asList("FOO:0009"));
 		//number of axioms after modification
 		int axiomCountAfter = 0;
         for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
             axiomCountAfter += ont.getAxiomCount();
         }
 		
-		//2 relations should have been removed
-		assertEquals("Incorrect number of relations removed", 2, relsRemoved);
+		//1 relations should have been removed
+		assertEquals("Incorrect number of relations removed", 1, relsRemoved);
 		//check it corresponds to the number of axioms removed
 		assertEquals("The method did not return the correct number of relations removed", 
 				relsRemoved, axiomCountBefore - axiomCountAfter);
@@ -847,7 +848,8 @@ public class OWLGraphManipulatorTest
 		assertFalse("Relation FOO:0014 is_a FOO:0006 was not removed", 
 				ont.containsAxiom(axiom));
 		
-		//FOO:0011 part_of FOO:0009 should have been removed
+		//FOO:0011 part_of FOO:0009 should NOT have been removed (because FOO:0009 is an 
+		//excluded class)
 		OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
 				getOWLObjectPropertyByIdentifier("BFO:0000050");
 		source = 
@@ -860,7 +862,7 @@ public class OWLGraphManipulatorTest
 				(OWLClassExpression) this.graphManipulator.getOwlGraphWrapper().
 				edgeToTargetExpression(checkEdge));
 		
-		assertFalse("Relation FOO:0011 part_of FOO:0009 was not removed", 
+		assertTrue("Relation FOO:0011 part_of FOO:0009 was removed", 
 				ont.containsAxiom(axiom));
 	}
 	

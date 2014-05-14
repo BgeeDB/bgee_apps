@@ -16,20 +16,26 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.ConvertEquivalentClassesToSuperClasses;
 import org.semanticweb.owlapi.SplitSubClassAxioms;
+import org.semanticweb.owlapi.model.AddAxiom;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLObjectUnionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.RemoveAxiom;
 import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
@@ -222,6 +228,25 @@ public class OWLGraphManipulator {
         this.convertEquivalentClassesToSuperClasses();
         this.splitSubClassAxioms();
         this.removeOWLObjectUnionOfs();
+        
+        //check that all operations worked properly
+        if (log.isEnabledFor(Level.WARN)) {
+            for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
+                if (ont.getAxiomCount(AxiomType.EQUIVALENT_CLASSES) != 0) {
+                    log.warn("Some EquivalentClassesAxioms were not removed as expected: " + 
+                            ont.getAxioms(AxiomType.EQUIVALENT_CLASSES));
+                }
+                for (OWLSubClassOfAxiom ax: ont.getAxioms(AxiomType.SUBCLASS_OF)) {
+                    for (OWLClassExpression ce: ax.getNestedClassExpressions()) {
+                        if (ce instanceof OWLObjectIntersectionOf || 
+                                ce instanceof OWLObjectUnionOf) {
+                            log.warn("Some OWLObjectIntersectionOf or OWLObjectUnionOf " +
+                                    "was not removed as expected: " + ax);
+                        }
+                    }
+                }
+            }
+        }
     }
     
     /**
@@ -430,10 +455,15 @@ public class OWLGraphManipulator {
     }
     
     /**
-     * Relaxes all {@code OWLSubClassOfAxiom}s, whose superclass is an 
-     * {@code OWLObjectIntersectionOf}, into multiple {@code OWLSubClassOfAxiom}s, using a <a 
+     * Relaxes all {@code OWLObjectIntersectionOf}s. This method will relax 
+     * {@code OWLSubClassOfAxiom}s, whose superclass is an {@code OWLObjectIntersectionOf}, 
+     * into multiple {@code OWLSubClassOfAxiom}s, using a <a 
      * href='http://owlapi.sourceforge.net/javadoc/org/semanticweb/owlapi/SplitSubClassAxioms.html'>
-     * SplitSubClassAxioms</a>.
+     * SplitSubClassAxioms</a>. It will also relax {@code OWLSubClassOfAxiom}s, whose 
+     * superclass is an {@code OWLObjectSomeValuesFrom} with a filler being an 
+     * {@code OWLObjectIntersectionOf}, into multiple {@code OWLSubClassOfAxiom}s with 
+     * an {@code OWLObjectSomeValuesFrom} as superclass, with the same 
+     * {@code OWLPropertyExpression}, and individual operands as filler. 
      * <p>
      * Note that it is likely that the {@code OWLObjectIntersectionOf}s where used in
      * {@code OWLEquivalentClassesAxiom}s, rather than in {@code OWLSubClassOfAxiom}s. 
@@ -446,12 +476,51 @@ public class OWLGraphManipulator {
     private void splitSubClassAxioms() {
         log.info("Relaxing OWLSubClassOfAxioms whose superclass is an OWLObjectIntersectionOf");
         
+        //first, split subClassOf axioms whose superclass is an OWLObjectIntersectionOf
         SplitSubClassAxioms split = new SplitSubClassAxioms(
                 this.getOwlGraphWrapper().getAllOntologies(), 
                 this.getOwlGraphWrapper().getDataFactory());
         this.getOwlGraphWrapper().getManager().applyChanges(split.getChanges());
-
         this.triggerWrapperUpdate();
+        
+        //some ontologies use an OWLObjectIntersectionOf as the filler of 
+        //an OWLObjectSomeValuesFrom class expression. We go only one level down 
+        //(i.e., we would not translate another OWLObjectSomeValuesFrom part of the 
+        //OWLObjectIntersectionOf)
+        OWLDataFactory dataFactory = this.getOwlGraphWrapper().getDataFactory();
+        List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
+        for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
+            for (OWLSubClassOfAxiom ax : ont.getAxioms(AxiomType.SUBCLASS_OF)) {
+                OWLClassExpression superClsExpr = ax.getSuperClass();
+                if (superClsExpr instanceof OWLObjectSomeValuesFrom) {
+                    OWLObjectSomeValuesFrom someValuesFrom = 
+                            (OWLObjectSomeValuesFrom) superClsExpr;
+                    if (someValuesFrom.getFiller() instanceof OWLObjectIntersectionOf) {
+                        //remove original axiom
+                        changes.add(new RemoveAxiom(ont, ax));
+                        
+                        OWLObjectIntersectionOf filler = 
+                                (OWLObjectIntersectionOf) someValuesFrom.getFiller();
+                        for (OWLClassExpression op : filler.getOperands()) {
+                            //we accept only OWLClasses, otherwise we would need to compose 
+                            //OWLObjectPropertyExpressions
+                            if (op instanceof OWLClass) {
+                                OWLAxiom replAx = dataFactory.
+                                        getOWLSubClassOfAxiom(ax.getSubClass(), 
+                                        dataFactory.getOWLObjectSomeValuesFrom(
+                                                    someValuesFrom.getProperty(), op));
+                                changes.add(new AddAxiom(ont, replAx));
+                            }
+                        }
+                    }
+                    
+                }
+            }
+        }
+        this.getOwlGraphWrapper().getManager().applyChanges(changes);
+        log.info("Changes: " + changes);
+        this.triggerWrapperUpdate();
+        
         log.info("OWLObjectIntersectionOf relaxation done.");
     }
     

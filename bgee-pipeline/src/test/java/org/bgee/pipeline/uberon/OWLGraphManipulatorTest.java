@@ -210,6 +210,67 @@ public class OWLGraphManipulatorTest
                 0, ont.getAxioms(clsG).size());
 	}
 	
+    /**
+     * Regression test for the default operations performed at instantiation 
+     * of the {@code OWLGraphManipulator}, following problems with OWLIntersectionOfs 
+     * nested in OWLObjectSomeValuesFrom. 
+     * Note that this test used a different test ontology than the one loaded by 
+     * {@link #loadTestOntology()} before each test. 
+     */
+    @Test
+    public void regressionTestAxiomRelaxation() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        
+        log.debug("Loading ontology for testing axiom relaxation at instantiation...");
+        ParserWrapper parserWrapper = new ParserWrapper();
+        OWLOntology ont = parserWrapper.parse(
+                this.getClass().getResource("/graph/relaxAxiomsTest.owl").getFile());
+        log.debug("Done loading the ontology.");
+        
+        log.debug("Loading the ontology into OWLGraphManipulator, testing default operations...");
+        this.graphManipulator = new OWLGraphManipulator(new OWLGraphWrapper(ont));
+        log.debug("Default operations done.");      
+        
+        //test that are no ECAs left
+        assertEquals("Some EquivalentClassesAxioms were not removed", 0, 
+                ont.getAxiomCount(AxiomType.EQUIVALENT_CLASSES));
+        //test that there is no more OWLSubClassOfAxioms with OWLObjectIntersectionOf or 
+        //OWLObjectUnionOf as sub or superclass
+        for (OWLSubClassOfAxiom ax: ont.getAxioms(AxiomType.SUBCLASS_OF)) {
+            for (OWLClassExpression ce: ax.getNestedClassExpressions()) {
+                if (ce instanceof OWLObjectIntersectionOf || ce instanceof OWLObjectUnionOf) {
+                    throw new AssertionError("An OWLObjectIntersectionOf or " +
+                            "OWLObjectUnionOf was not removed: " + ax);
+                }
+            }
+        }
+        //test that they were replaced as expected
+        OWLDataFactory factory = ont.getOWLOntologyManager().getOWLDataFactory();
+        OWLObjectProperty partOf = this.graphManipulator.getOwlGraphWrapper().
+            getOWLObjectPropertyByIdentifier("BFO:0000050");
+        OWLGraphWrapper wrapper = this.graphManipulator.getOwlGraphWrapper();
+        
+        Set<OWLAxiom> expectedAxioms = new HashSet<OWLAxiom>();
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(
+                wrapper.getOWLClass("http://purl.obolibrary.org/obo/CL_1000321"), 
+                factory.getOWLObjectSomeValuesFrom(partOf, 
+                        wrapper.getOWLClass("http://purl.obolibrary.org/obo/UBERON_0000483"))));
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(
+                wrapper.getOWLClass("http://purl.obolibrary.org/obo/CL_1000321"), 
+                factory.getOWLObjectSomeValuesFrom(partOf, 
+                        wrapper.getOWLClass("http://purl.obolibrary.org/obo/UBERON_0001983"))));
+        //other existing axioms
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(
+                wrapper.getOWLClass("http://purl.obolibrary.org/obo/CL_1000321"), 
+                wrapper.getOWLClass("http://purl.obolibrary.org/obo/CL_1000320")));
+        expectedAxioms.add(factory.getOWLSubClassOfAxiom(
+                wrapper.getOWLClass("http://purl.obolibrary.org/obo/CL_1000321"), 
+                wrapper.getOWLClass("http://purl.obolibrary.org/obo/CL_0000160")));
+        assertEquals("Axioms from import ontology incorrectly merged", 
+                expectedAxioms, 
+                ont.getAxioms(wrapper.getOWLClass("http://purl.obolibrary.org/obo/CL_1000321")));
+    }
+	
 	
 	//***********************************************
 	//    RELATION REDUCTION AND RELATED TESTS

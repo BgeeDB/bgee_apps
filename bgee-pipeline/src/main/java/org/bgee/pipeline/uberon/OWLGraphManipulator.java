@@ -237,11 +237,13 @@ public class OWLGraphManipulator {
                             ont.getAxioms(AxiomType.EQUIVALENT_CLASSES));
                 }
                 for (OWLSubClassOfAxiom ax: ont.getAxioms(AxiomType.SUBCLASS_OF)) {
-                    for (OWLClassExpression ce: ax.getNestedClassExpressions()) {
-                        if (ce instanceof OWLObjectIntersectionOf || 
-                                ce instanceof OWLObjectUnionOf) {
-                            log.warn("Some OWLObjectIntersectionOf or OWLObjectUnionOf " +
-                                    "was not removed as expected: " + ax);
+                    if (!ax.getSubClass().isAnonymous()) {
+                        for (OWLClassExpression ce: ax.getNestedClassExpressions()) {
+                            if (ce instanceof OWLObjectIntersectionOf || 
+                                    ce instanceof OWLObjectUnionOf) {
+                                log.warn("Some OWLObjectIntersectionOf or OWLObjectUnionOf " +
+                                        "was not removed as expected: " + ax);
+                            }
                         }
                     }
                 }
@@ -518,7 +520,6 @@ public class OWLGraphManipulator {
             }
         }
         this.getOwlGraphWrapper().getManager().applyChanges(changes);
-        log.info("Changes: " + changes);
         this.triggerWrapperUpdate();
         
         log.info("OWLObjectIntersectionOf relaxation done.");

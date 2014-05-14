@@ -48,7 +48,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	private int nestedSetId = 0;
 	private Set<HierarchicalGroupTO> hierarchicalGroupTOs = new HashSet<HierarchicalGroupTO>();
 	private Set<GeneTO> geneTOs = new HashSet<GeneTO>();
-	private List<String> genesInDb;
+	private List<String> genesInDb = new ArrayList<String>();
 
     /**
      * Default constructor. 
@@ -185,13 +185,12 @@ public class ParseOrthoXML extends MySQLDAOUser {
             this.startTransaction();
 
             log.info("Start getting gene IDs...");
-    		List<GeneDAO.Attribute> listAttribute = Arrays.asList(GeneDAO.Attribute.ID);
-    		this.getGeneDAO().setAttributesToGet(listAttribute);
+    		this.getGeneDAO().setAttributesToGet(Arrays.asList(GeneDAO.Attribute.ID));
 
-    		Collection<MySQLGeneTOResultSet> rsGenes = this.getGeneDAO().getAllGenes();
-            for (MySQLGeneTOResultSet rsGene: rsGenes) {
-            	genesInDb.add(rsGene.getTO().getId());
-            }
+    		MySQLGeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
+    		while (rsGenes.next()) {
+    			genesInDb.add(rsGenes.getTO().getId());
+    		}
             log.info("Done getting gene IDs");
             
             this.commit();

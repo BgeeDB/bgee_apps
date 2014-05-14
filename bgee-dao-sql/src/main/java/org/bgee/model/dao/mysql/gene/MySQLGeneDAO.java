@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,7 +19,6 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.species.GeneTO
  * @since Bgee 13
  */
 public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO {
@@ -57,28 +55,38 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 	 * 
 	 * @throws SQLException
 	 */
-	public Collection<MySQLGeneTOResultSet> getAllGenes() throws DAOException {
+	public MySQLGeneTOResultSet getAllGenes() throws DAOException {
 		log.entry();
-		List<MySQLGeneTOResultSet> resultSets = new ArrayList<MySQLGeneTOResultSet>();
 		
 		//Construct sql query according to currents attributes
 		Collection<GeneDAO.Attribute> attributes = this.getAttributesToGet();
-		StringBuilder sql = new StringBuilder("SELECT "); 
+		StringBuilder sql = new StringBuilder("SELECT ");
 		for (GeneDAO.Attribute attribute: attributes) {
-			sql.append(attribute.toString());
+			if (attribute==GeneDAO.Attribute.ID) {
+				sql.append("geneId");
+			} else if (attribute==GeneDAO.Attribute.NAME) {
+				sql.append("geneName");
+			} else if (attribute==GeneDAO.Attribute.DESCRIPTION) {
+				sql.append("geneDescription");
+			} else if (attribute==GeneDAO.Attribute.SPECIESID) {
+				sql.append("speciesId");
+			} else if (attribute==GeneDAO.Attribute.GENEBIOTYPEID) {
+				sql.append("geneBioTypeId");
+			} else if (attribute==GeneDAO.Attribute.OMANODEID) {
+				sql.append("OMAParentNodeId");
+			} else if (attribute==GeneDAO.Attribute.ENSEMBLGENE) {
+				sql.append("ensemblGene");
+			}
 			sql.append(", ");
 		}
 		sql.delete(sql.lastIndexOf(","), sql.length());
-		sql.append("FROM gene;");
-		
+		sql.append(" FROM gene");
+		sql.append(";");
+
 		try (BgeePreparedStatement stmt = 
 				this.getManager().getConnection().prepareStatement(sql.toString())) {
-			
 			MySQLGeneTOResultSet resultSet = new MySQLGeneTOResultSet(stmt); 
-			while (resultSet.next()) {
-				resultSets.add(resultSet);
-        	}
-        	return log.exit(resultSets);
+        	return log.exit(resultSet);
         } catch (SQLException e) {
         	throw log.throwing(new DAOException(e));
         }

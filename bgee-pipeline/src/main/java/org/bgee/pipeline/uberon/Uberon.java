@@ -99,7 +99,7 @@ public class Uberon {
      *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
      *   Uberon simplifyUberon ext.owl custom_ext 
      *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000 
-     *   BFO:0000050 
+     *   BFO:0000050,RO:0002202,http://semanticscience.org/resource/SIO_000657 
      *   UBERON:0013701,UBERON:0000026,UBERON:0000467,UBERON:0011676 
      *   none 
      *   grouping_class,non_informative,ubprop:upper_level,upper_level}

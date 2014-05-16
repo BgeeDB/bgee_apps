@@ -100,7 +100,7 @@ public class Uberon {
      *   Uberon simplifyUberon ext.owl custom_ext 
      *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000 
      *   BFO:0000050 
-     *   UBERON:0013701,UBERON:0000026,UBERON:0000467 
+     *   UBERON:0013701,UBERON:0000026,UBERON:0000467,UBERON:0011676 
      *   none 
      *   grouping_class,non_informative,ubprop:upper_level,upper_level}
      * </ul>
@@ -272,7 +272,8 @@ public class Uberon {
 //                              //OntologyUtils.TRANSFORMATION_OF_ID), 
 //                Arrays.asList("UBERON:0013701",  //main body axis
 //                              "UBERON:0000026",  //appendage
-//                              "UBERON:0000467"), //anatomical system
+//                              "UBERON:0000467", //anatomical system
+//                              "UBERON:0011676"), //subdivision of organism along main body axis
 //                null, 
 //                Arrays.asList("UBERON:0000480", //anatomical group
 //                              "UBERON:0000061", //anatomical structure

@@ -946,8 +946,8 @@ public class OWLGraphManipulator {
 	    		if (cycle) {
 	    			//add the edge anyway to see it in the logs
 	    			iteratedWalk.add(combine);
-	    			if (log.isEnabledFor(Level.WARN)) {
-	    			    log.warn("Cycle detected. List of " +
+	    			if (log.isDebugEnabled()) {
+	    			    log.debug("Cycle detected. List of " +
 	    			        "all relations composed on the walk: " + iteratedWalk);
 	    			}
 	    			continue nextEdge;

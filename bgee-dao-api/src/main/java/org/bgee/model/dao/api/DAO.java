@@ -21,8 +21,8 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * 
      * @author Frederic Bastian
      * @version Bgee 13
-     * @see org.bgee.model.dao.api.DAO#setAttributesToGet(Collection)
-     * @see org.bgee.model.dao.api.DAO#setAttributesToGet(Object[])
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Object[])
      * @since Bgee 13
      */
     public interface Attribute {
@@ -33,7 +33,7 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * Allows to define what attributes should be populated in the {@code TransferObject}s 
      * obtained from this {@code DAO}, for all the following calls. By default, 
      * all available attributes are retrieved. If {@code attributes} is {@code null} 
-     * or empty, it has the same effect than calling {@link #clearAttributesToGet()}, 
+     * or empty, it has the same effect than calling {@link #clearAttributes()}, 
      * and all available attributes will be retrieved for the next calls.
      * <p>
      * Defining what attributes should be populated, rather than populating 
@@ -53,27 +53,27 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * @param attributes    A {@code Collection} of {@code Attribute}s {@code T} 
      *                      defining the attributes to populate in the 
      *                      {@code TransferObject}s obtained from this {@code DAO}.
-     * @see #clearAttributesToGet()
+     * @see #clearAttributes()
      */
-    public void setAttributesToGet(Collection<T> attributes);
+    public void setAttributes(Collection<T> attributes);
     
     /**
-     * Convenient method equivalent to calling {@link #setAttributesToGet(Collection)} 
+     * Convenient method equivalent to calling {@link #setAttributes(Collection)} 
      * with a {@code Collection} containing all {@code attributes} provided to 
      * this method.
      * 
      * @param attributes    A list of {@code Attribute}s {@code T} defining 
      *                      the attributes to populate in the {@code TransferObject}s 
      *                      obtained from this {@code DAO}, see {@link 
-     *                      #setAttributesToGet(Collection)}.
-     * @see #setAttributesToGet(Collection)
-     * @see #clearAttributesToGet()
+     *                      #setAttributes(Collection)}.
+     * @see #setAttributes(Collection)
+     * @see #clearAttributes()
      */
     //suppress warning because it is the responsibility of the implementation 
     //to make the method robust to heap pollution, and to add the @SafeVarargs 
     //annotation. See http://docs.oracle.com/javase/7/docs/technotes/guides/language/non-reifiable-varargs.html
     @SuppressWarnings("unchecked")
-    public void setAttributesToGet(T... attributes);
+    public void setAttributes(T... attributes);
     
     /**
      * Get {@code Attribute}s to retrieve in order to build {@code TransferObject}s associated 
@@ -82,18 +82,18 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * @return	A {@code Collection} of {@code Attribute}s {@code T} defining the attributes
      * 			to populate in the {@code TransferObject}s obtained from this {@code DAO}.
      */
-    public Collection<T> getAttributesToGet();
+    public Collection<T> getAttributes();
 
     /**
      * Resets what are the attributes that should be populated in 
      * the {@code TransferObject}s obtained from this {@code DAO}, for all 
      * the following calls. All available attributes will then be populated. 
-     * This is useful if you previously called {@code #setAttributesToGet(Collection)}
-     * or {@link #setAttributesToGet(Object[])} to populate only a subset of the attributes, 
+     * This is useful if you previously called {@code #setAttributes(Collection)}
+     * or {@link #setAttributes(Object[])} to populate only a subset of the attributes, 
      * and now want to retrieve all of them.
      * 
-     * @see #setAttributesToGet(Collection)
-     * @see #setAttributesToGet(Object[])
+     * @see #setAttributes(Collection)
+     * @see #setAttributes(Object[])
      */
-    public void clearAttributesToGet();
+    public void clearAttributes();
 }

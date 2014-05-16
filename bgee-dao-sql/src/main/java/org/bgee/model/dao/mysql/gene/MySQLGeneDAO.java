@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.gene;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +26,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(MySQLGeneOntologyDAO.class.getName());
+            LogManager.getLogger(MySQLGeneDAO.class.getName());
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
@@ -59,7 +58,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		log.entry();
 		
 		//Construct sql query according to currents attributes
-		Collection<GeneDAO.Attribute> attributes = this.getAttributesToGet();
+		Collection<GeneDAO.Attribute> attributes = this.getAttributes();
 		StringBuilder sql = new StringBuilder("SELECT ");
 		for (GeneDAO.Attribute attribute: attributes) {
 			if (attribute==GeneDAO.Attribute.ID) {
@@ -72,7 +71,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 				sql.append("speciesId");
 			} else if (attribute==GeneDAO.Attribute.GENEBIOTYPEID) {
 				sql.append("geneBioTypeId");
-			} else if (attribute==GeneDAO.Attribute.OMANODEID) {
+			} else if (attribute==GeneDAO.Attribute.OMAPARENTNODEID) {
 				sql.append("OMAParentNodeId");
 			} else if (attribute==GeneDAO.Attribute.ENSEMBLGENE) {
 				sql.append("ensemblGene");
@@ -110,7 +109,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		try (BgeePreparedStatement stmt = 
 				this.getManager().getConnection().prepareStatement(sql)) {
 			for (GeneTO gene: genes) {
-				stmt.setInt(1, gene.getOMANodeId());
+				stmt.setInt(1, gene.getOMAParentNodeId());
 				stmt.setString(2, gene.getId());
 				geneUpdatedCount += stmt.executeUpdate();
 				stmt.clearParameters();

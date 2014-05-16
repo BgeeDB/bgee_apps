@@ -58,7 +58,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     			MySQLGeneTOResultSet myResults = dao.new MySQLGeneTOResultSet(stmt);
 
     			// Generate result with the method
-        		dao.setAttributesToGet(Arrays.asList(GeneDAO.Attribute.ID));
+        		dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
     			MySQLGeneTOResultSet methResults = dao.getAllGenes();
 
     			if (!areGeneTOResultSetsEqual(myResults, methResults)) {
@@ -123,9 +123,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     			!geneTO1.getDescription().equals(geneTO2.getDescription())) ||
     			geneTO1.getSpeciesId( ) != geneTO2.getSpeciesId() ||
     			geneTO1.getGeneBioTypeId() != geneTO2.getGeneBioTypeId() ||
-    			geneTO1.getOMANodeId() != geneTO2.getOMANodeId() ||
+    			geneTO1.getOMAParentNodeId() != geneTO2.getOMAParentNodeId() ||
     			geneTO1.isEnsemblGene() != geneTO2.isEnsemblGene()){
-    		log.debug("Nodes are not equivalent {}", geneTO1.getOMANodeId());
+    		log.debug("Nodes are not equivalent {}", geneTO1.getOMAParentNodeId());
     		return log.exit(false);
     	}
     	return log.exit(true);

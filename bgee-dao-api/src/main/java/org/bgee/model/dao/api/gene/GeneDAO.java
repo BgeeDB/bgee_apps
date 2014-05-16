@@ -22,7 +22,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * <li>{@code DOMAIN}: corresponds to {@link GeneTO#getDomain()}.
      * <li>{@code SPECIESID}: corresponds to {@link GeneTO#getSpeciesId()}.
      * <li>{@code GENEBIOTYPEID}: corresponds to {@link GeneTO#getGeneBioTypeId()}.
-     * <li>{@code OMANODEID}: corresponds to {@link GeneTO#getOMANodeId()}.
+     * <li>{@code OMAPARENTNODEID}: corresponds to {@link GeneTO#getOMANodeId()}.
      * <li>{@code ENSEMBLGENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Collection)
@@ -30,7 +30,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, SPECIESID, GENEBIOTYPEID, OMANODEID, ENSEMBLGENE;
+        ID, NAME, DESCRIPTION, SPECIESID, GENEBIOTYPEID, OMAPARENTNODEID, ENSEMBLGENE;
     }
     
     /**
@@ -74,7 +74,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     	 * does not belong to a hierarchical group a gene can belong 
     	 * to one and only one group
     	 */
-        private final int OMANodeId;
+        private final int OMAParentNodeId;
         
         /**
          * A {@code boolean} defining whether this gene is present in Ensembl. 
@@ -105,21 +105,21 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param speciesId			a {@code Integer} that is the species ID which this 
          * 							gene belongs to.
          * @param geneBioTypeId		a {@code Integer} that is the BioType of this gene.
-         * @param OMANodeId			a {@code Integer} that is the ID of the OMA Hierarchical 
+         * @param OMAParentNodeId	a {@code Integer} that is the ID of the OMA Hierarchical 
          * 							Orthologous Group.
          * @param ensemblGene		a {code boolean} defining whether this gene is present 
          * 							in Ensembl. 
          */
     	public GeneTO(String geneId, String geneName, String geneDescription, int speciesId,
-    			Integer geneBioTypeId, Integer OMANodeId, boolean ensemblGene) {
+    			Integer geneBioTypeId, Integer OMAParentNodeId, boolean ensemblGene) {
     		super(geneId, geneName, geneDescription);
             if (speciesId <= 0 || geneBioTypeId != null && geneBioTypeId <= 0 || 
-            		OMANodeId != null && OMANodeId <= 0) {
+                    OMAParentNodeId != null && OMAParentNodeId <= 0) {
                 throw new IllegalArgumentException("Integer parameters must be positive.");
             }
     		this.speciesId = speciesId;
     		this.geneBioTypeId = geneBioTypeId;
-    		this.OMANodeId = OMANodeId;
+    		this.OMAParentNodeId = OMAParentNodeId;
     		this.ensemblGene = ensemblGene;
     	}
     	
@@ -153,8 +153,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         /**
          * @return  The OMA Hierarchical Orthologous Group ID that this gene belongs to.
          */
-        public int getOMANodeId() {
-            return this.OMANodeId;
+        public int getOMAParentNodeId() {
+            return this.OMAParentNodeId;
         }
         
         /**

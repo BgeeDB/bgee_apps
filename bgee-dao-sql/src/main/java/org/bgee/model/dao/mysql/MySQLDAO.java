@@ -73,9 +73,9 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     }
 
     @Override
-    public void setAttributesToGet(Collection<T> attributes) {
+    public void setAttributes(Collection<T> attributes) {
         log.entry(attributes);
-        this.clearAttributesToGet();
+        this.clearAttributes();
         if (attributes != null) {
             this.attributes.addAll(attributes);
         }
@@ -90,23 +90,23 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      */
     @SafeVarargs
     @Override
-    public final void setAttributesToGet(T... attributes) {
+    public final void setAttributes(T... attributes) {
         log.entry((Object[]) attributes);
         Set<T> newAttributes = new HashSet<T>();
         for (int i = 0; i < attributes.length; i++) {
             newAttributes.add(attributes[i]);
         }
-        this.setAttributesToGet(newAttributes);
+        this.setAttributes(newAttributes);
         log.exit();
     }
     @Override
-    public void clearAttributesToGet() {
+    public void clearAttributes() {
         log.entry();
         this.attributes.clear();
         log.exit();
     }
     @Override
-    public Collection<T> getAttributesToGet() {
+    public Collection<T> getAttributes() {
         log.entry();
         Set<T> attributeCopy = new HashSet<T>(attributes) ;
         return log.exit(attributeCopy);

@@ -64,7 +64,7 @@ public class UtilsTest extends TestAncestor {
         FileNotFoundException, IOException {
         CellProcessor processor = mock(CellProcessor.class);
         when(processor.execute(anyObject(), any(CsvContext.class))).thenAnswer(
-            new Answer() {
+            new Answer<Object>() {
                 @Override
                 public Object answer(InvocationOnMock invocation) throws Throwable {
                     Object[] args = invocation.getArguments();
@@ -104,7 +104,7 @@ public class UtilsTest extends TestAncestor {
         FileNotFoundException, IOException {
         CellProcessor processor = mock(CellProcessor.class);
         when(processor.execute(anyObject(), any(CsvContext.class))).thenAnswer(
-            new Answer() {
+            new Answer<Object>() {
                 @Override
                 public Object answer(InvocationOnMock invocation) throws Throwable {
                     Object[] args = invocation.getArguments();

@@ -121,14 +121,12 @@ public class InsertGO extends MySQLDAOUser {
      * an {@code OWLOntology} representing the GO ontology, to be used in Bgee.
      * 
      * @param geneOntology    An {@code OWLOntology} that is the GO ontology.
-     * @throws OWLOntologyCreationException If an error occurred while loading 
-     *                                      the ontology.
      * @throws IllegalArgumentException     If the arguments provided invalid information.
      * @throws DAOException                 If an error occurred while inserting 
      *                                      the data into the Bgee database.
      */
     public void insert(OWLOntology geneOntology) 
-            throws OWLOntologyCreationException, IllegalArgumentException, DAOException {
+            throws IllegalArgumentException, DAOException {
         log.entry(geneOntology);
         log.info("Starting insertion of GO ontology...");
         

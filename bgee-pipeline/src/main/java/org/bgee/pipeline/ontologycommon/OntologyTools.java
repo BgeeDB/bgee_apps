@@ -166,10 +166,8 @@ public class OntologyTools {
      *              OBO-like IDs of deprecated terms (for instance, 
      *              'GO:0000005').
      * @throws UnknownOWLOntologyException  If the ontology could not be loaded.
-     * @throws OWLOntologyCreationException If the ontology could not be loaded.
      */
-    public Set<String> getObsoleteIds(OWLOntology ont) throws UnknownOWLOntologyException, 
-        OWLOntologyCreationException {
+    public Set<String> getObsoleteIds(OWLOntology ont) throws UnknownOWLOntologyException {
         log.entry(ont);
         Set<String> obsoleteIds = new HashSet<String>();
         

@@ -240,6 +240,9 @@ public class Uberon {
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
      * of the call to this method.
+     * <p>
+     * Information about the simplification process can be retrieved afterwards, 
+     * see {@link #getSubgraphClassesRemoved()}.
      *  
      * @param uberonOnt                         The {@code OWLOntology} to simplify.
      * @param classIdsToRemove                  A {@code Collection} of {@code String}s that 
@@ -466,6 +469,15 @@ public class Uberon {
                     " did not allow to acquire any taxon ID"));
         }
         return log.exit(OntologyUtils.convertToNcbiIds(taxonIds));
+    }
+    
+    /**
+     * @return  A {@code Set} of {@code String}s that are the OBO-like IDs of 
+     *          {@code OWLClass}es removed as a result of graph filtering. Graph filtering 
+     *          is performed in the {@code simplifyUberon} method.
+     */
+    public Set<String> getSubgraphClassesRemoved() {
+        return this.subgraphClassesRemoved;
     }
     
     /**

@@ -356,15 +356,13 @@ public class InsertTaxa extends MySQLDAOUser {
      *                      of additional taxa to be inserted in Bgee
      * @param taxOntology   An {@code OWLOntology} that is the NCBI taxonomy 
      *                      ontology.
-     * @throws OWLOntologyCreationException If an error occurred while loading 
-     *                                      the NCBI taxonomy ontology.
      * @throws IllegalArgumentException     If the arguments provided invalid information.
      * @throws DAOException                 If an error occurred while inserting 
      *                                      the data into the Bgee database.
      */
     public void insertSpeciesAndTaxa(Collection<Map<String, Object>> allSpecies, 
             Set<Integer> taxonIds, OWLOntology taxOntology) 
-            throws OWLOntologyCreationException, IllegalArgumentException, DAOException {
+            throws IllegalArgumentException, DAOException {
         log.entry(allSpecies, taxonIds, taxOntology);
         log.info("Starting insertion of species and taxa...");
         

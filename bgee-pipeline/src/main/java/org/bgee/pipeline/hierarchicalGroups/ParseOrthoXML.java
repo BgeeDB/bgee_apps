@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -185,7 +184,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             this.startTransaction();
 
             log.info("Start getting gene IDs...");
-    		this.getGeneDAO().setAttributesToGet(Arrays.asList(GeneDAO.Attribute.ID));
+    		this.getGeneDAO().setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
 
     		MySQLGeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
     		while (rsGenes.next()) {

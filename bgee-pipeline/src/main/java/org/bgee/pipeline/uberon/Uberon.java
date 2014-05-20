@@ -98,7 +98,7 @@ public class Uberon {
      *   </ol>
      *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
      *   Uberon simplifyUberon ext.owl custom_ext 
-     *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000 
+     *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000,UBERON:0003103,UBERON:0000062,UBERON:0000489 
      *   BFO:0000050,RO:0002202,http://semanticscience.org/resource/SIO_000657 
      *   UBERON:0013701,UBERON:0000026,UBERON:0000467,UBERON:0011676 
      *   none 
@@ -134,25 +134,47 @@ public class Uberon {
 //            new Uberon().extractRelatedEdgesToOutputFile(args[1], args[2], args[3]);
             
         } else if (args[0].equalsIgnoreCase("simplifyUberon")) {
-            if (args.length != 8) {
+            if (args.length != 9) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "8 arguments, " + args.length + " provided."));
+                        "9 arguments, " + args.length + " provided."));
             }
-            new Uberon().simplifyUberonAndSaveToFile(args[1], args[2], 
-                    CommandRunner.parseListArgument(args[3]), 
+            new Uberon().simplifyUberonAndSaveToFile(args[1], args[2], args[3], 
                     CommandRunner.parseListArgument(args[4]), 
                     CommandRunner.parseListArgument(args[5]), 
                     CommandRunner.parseListArgument(args[6]), 
-                    CommandRunner.parseListArgument(args[7]));
+                    CommandRunner.parseListArgument(args[7]), 
+                    CommandRunner.parseListArgument(args[8]));
         }
         
         log.exit();
     }
     
     /**
+     * A {@code Set} of {@code String}s that are the OBO-like IDs of {@code OWLClass}es 
+     * removed as a result of graph filtering. Graph filtering is performed in the 
+     * {@code simplifyUberon} method by calling 
+     * {@code owltools.graph.OWLGraphManipulator#filterSubgraphs(Collection)} and 
+     * {@code owltools.graph.OWLGraphManipulator#removeSubgraphs(Collection, boolean)}
+     */
+    private final Set<String> subgraphClassesRemoved;
+    
+    /**
+     * Default constructor.
+     */
+    public Uberon() {
+        this.subgraphClassesRemoved = new HashSet<String>();
+    }
+    
+    /**
      * Simplifies the Uberon ontology stored in {@code pathToUberonOnt}, and saves it in OWL 
-     * and OBO format using {@code exportPath}. This method first calls  
+     * and OBO format using {@code modifiedOntPath}. Various information about 
+     * the simplification process can be stored in a separate file, provided through 
+     * {@code infoFilePath} (for instance, list of {@code OWLClass}es that were removed 
+     * following a subgraph filtering). This argument can be left {@code null} or blank 
+     * if this information does not need to be stored. 
+     * <p>
+     * This method first calls  
      * {@link #simplifyUberon(OWLOntology, Collection, Collection, Collection, Collection, 
      * Collection)}, by loading the {@code OWLOntology} provided through {@code pathToUberonOnt}, 
      * and using arguments of same names as in this method. The resulting {@code OWLOntology} 
@@ -162,9 +184,12 @@ public class Uberon {
      * @param pathToUberonOnt           A {@code String} that is the path to the file 
      *                                  storing the Uberon ontology (recommended version is OWL, 
      *                                  but OBO versions can be used as well).
-     * @param exportPath                A {@code String} that is the path to use to save 
+     * @param modifiedOntPath           A {@code String} that is the path to use to save 
      *                                  the resulting {@code OWLOntology} in files 
      *                                  (suffixes ".obo" and ".owl" will be automatically added).
+     * @param infoFilePath              A {@code String} that is the path to a file that will 
+     *                                  store various information about the simplification 
+     *                                  process.
      * @param classIdsToRemove          See same name argument in method {@code simplifyUberon}.
      * @param relIds                    See same name argument in method {@code simplifyUberon}.
      * @param toFilterSubgraphRootIds   See same name argument in method {@code simplifyUberon}.
@@ -183,14 +208,15 @@ public class Uberon {
      * @see #simplifyUberon(OWLOntology, Collection, Collection, Collection, Collection, 
      * Collection)
      */
-    public void simplifyUberonAndSaveToFile(String pathToUberonOnt, String exportPath, 
+    public void simplifyUberonAndSaveToFile(String pathToUberonOnt, String modifiedOntPath, 
+            String infoFilePath, 
             Collection<String> classIdsToRemove, Collection<String> relIds, 
             Collection<String> toFilterSubgraphRootIds, 
             Collection<String> toRemoveSubgraphRootIds, Collection<String> subsetNames) 
                     throws UnknownOWLOntologyException, OWLOntologyCreationException, 
                     OBOFormatParserException, IOException, OWLOntologyStorageException {
-        log.entry(pathToUberonOnt, exportPath, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
-                toRemoveSubgraphRootIds, subsetNames);
+        log.entry(pathToUberonOnt, modifiedOntPath, infoFilePath, classIdsToRemove, relIds, 
+                toFilterSubgraphRootIds, toRemoveSubgraphRootIds, subsetNames);
         
         OWLOntology ont = OntologyUtils.loadOntology(pathToUberonOnt);
         
@@ -198,8 +224,8 @@ public class Uberon {
                 toRemoveSubgraphRootIds, subsetNames);
 
         OntologyUtils utils = new OntologyUtils(ont);
-        utils.saveAsOWL(exportPath + ".owl");
-        utils.saveAsOBO(exportPath + ".obo");
+        utils.saveAsOWL(modifiedOntPath + ".owl");
+        utils.saveAsOBO(modifiedOntPath + ".obo");
         
         log.exit();
     }
@@ -264,8 +290,28 @@ public class Uberon {
                 toRemoveSubgraphRootIds, subsetNames);
         //TODO: dependency injection?
         OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
-        manipulator.simplifies(classIdsToRemove, relIds, toFilterSubgraphRootIds, 
-                toRemoveSubgraphRootIds, subsetNames);
+        
+        manipulator.reduceRelations();
+        manipulator.reducePartOfIsARelations();
+        for (String classIdToRemove: classIdsToRemove) {
+            manipulator.removeClassAndPropagateEdges(classIdToRemove);
+        }
+        if (relIds != null && !relIds.isEmpty()) {
+            manipulator.mapRelationsToParent(relIds);
+            manipulator.filterRelations(relIds, true);
+        }
+        if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
+            this.subgraphClassesRemoved.addAll(
+                    manipulator.filterSubgraphs(toFilterSubgraphRootIds));
+        }
+        if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
+            this.subgraphClassesRemoved.addAll(
+                    manipulator.removeSubgraphs(toRemoveSubgraphRootIds, true));
+        }
+        if (subsetNames != null && !subsetNames.isEmpty()) {
+            manipulator.removeRelsToSubsets(subsetNames, toFilterSubgraphRootIds);
+        }
+        
 //        manipulator.simplifies(
 //                Arrays.asList(OntologyUtils.PART_OF_ID),//, 
 //                              //OntologyUtils.DEVELOPS_FROM_ID, 
@@ -281,7 +327,10 @@ public class Uberon {
 //                              "UBERON:0001062", //anatomical entity
 //                              "UBERON:0000475", //organism subdivision
 //                              "UBERON:0000468", //multi-cellular organism
-//                              "UBERON:0010000"), //multicellular anatomical structure
+//                              "UBERON:0010000", //multicellular anatomical structure
+//                              "UBERON:0003103", //compound organ
+//                              "UBERON:0000062", //organ
+//                              "UBERON:0000489"), //cavitated compound organ
 //                
 //                Arrays.asList("grouping_class", "non_informative", "ubprop:upper_level", 
 //                        "upper_level"));
@@ -290,6 +339,10 @@ public class Uberon {
         utils.removeOBOProblematicAxioms();
         
         log.exit();
+    }
+    
+    public void getSimplificationInfo() {
+        
     }
     
     /**

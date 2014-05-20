@@ -2,14 +2,21 @@ package org.bgee.pipeline.uberon;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.CommandRunner;
@@ -27,6 +34,12 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.UniqueHashCode;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvMapWriter;
+import org.supercsv.prefs.CsvPreference;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -97,7 +110,7 @@ public class Uberon {
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      *   </ol>
      *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
-     *   Uberon simplifyUberon ext.owl custom_ext 
+     *   Uberon simplifyUberon ext.owl custom_ext simplification_info.tsv 
      *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000,UBERON:0003103,UBERON:0000062,UBERON:0000489 
      *   BFO:0000050,RO:0002202,http://semanticscience.org/resource/SIO_000657 
      *   UBERON:0013701,UBERON:0000026,UBERON:0000467,UBERON:0011676 
@@ -170,9 +183,9 @@ public class Uberon {
      * Simplifies the Uberon ontology stored in {@code pathToUberonOnt}, and saves it in OWL 
      * and OBO format using {@code modifiedOntPath}. Various information about 
      * the simplification process can be stored in a separate file, provided through 
-     * {@code infoFilePath} (for instance, list of {@code OWLClass}es that were removed 
-     * following a subgraph filtering). This argument can be left {@code null} or blank 
-     * if this information does not need to be stored. 
+     * {@code infoFilePath} (see {@link #saveSimplificationInfo(OWLOntology, String)}). 
+     * This argument can be left {@code null} or blank if this information does not need 
+     * to be stored. 
      * <p>
      * This method first calls  
      * {@link #simplifyUberon(OWLOntology, Collection, Collection, Collection, Collection, 
@@ -223,9 +236,18 @@ public class Uberon {
         this.simplifyUberon(ont, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
                 toRemoveSubgraphRootIds, subsetNames);
 
+        //save ontology
         OntologyUtils utils = new OntologyUtils(ont);
         utils.saveAsOWL(modifiedOntPath + ".owl");
         utils.saveAsOBO(modifiedOntPath + ".obo");
+        
+        //save information about the simplification process if requested
+        if (StringUtils.isNotBlank(infoFilePath)) {
+            //we need the original ontology, as before the simplification, 
+            //so we reload the ontology
+            this.saveSimplificationInfo(OntologyUtils.loadOntology(pathToUberonOnt), 
+                    infoFilePath);
+        }
         
         log.exit();
     }
@@ -242,7 +264,8 @@ public class Uberon {
      * of the call to this method.
      * <p>
      * Information about the simplification process can be retrieved afterwards, 
-     * see {@link #getSubgraphClassesRemoved()}.
+     * (see {@link #getSubgraphClassesRemoved()}), or saved to a file (see 
+     * {@link #saveSimplificationInfo(OWLOntology, String)}).
      *  
      * @param uberonOnt                         The {@code OWLOntology} to simplify.
      * @param classIdsToRemove                  A {@code Collection} of {@code String}s that 
@@ -341,8 +364,66 @@ public class Uberon {
         log.exit();
     }
     
-    public void getSimplificationInfo() {
+    /**
+     * Save to the file {@code infoFilePath} information about the simplification process 
+     * of the original {@code OWLOntology} {@code ont}. This currently includes a listing 
+     * of the {@code OWLClass}es that were removed as a result of graph filterings 
+     * performed by the {@code simplifyUberon} method.
+     * 
+     * @param uberonOnt     The original {@code OWLOntology}, as before simplification.
+     * @param infoFilePath  A {@code String} that is the path to a file that will 
+     *                      store various information about the simplification 
+     *                      process.
+     * @throws IOException  If an error occurred while writing in {@code infoFilePath}.
+     */
+    public void saveSimplificationInfo(OWLOntology ont, String infoFilePath) 
+            throws IOException {
+        log.entry(ont, infoFilePath);
         
+        //get a OWLGraphWrapper to obtain information about classes
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        
+        //Write IDs removed as a result of graph filtering
+        //first, order the IDs
+        List<String> orderedIds = new ArrayList<String>(this.getSubgraphClassesRemoved());
+        Collections.sort(orderedIds);
+        //create the header of the file, and the conditions on the columns
+        String[] header = new String[2];
+        header[0] = "Uberon ID";
+        header[1] = "Uberon name";
+        CellProcessor[] processors = new CellProcessor[2];
+        //ID of the OWLClass (must be unique)
+        processors[0] = new UniqueHashCode(new NotNull());
+        //label of the OWLClass
+        processors[1] = new NotNull();
+        
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(infoFilePath),
+                CsvPreference.TAB_PREFERENCE)) {
+            
+            mapWriter.writeComment("#===== Uberon IDs removed as a result " +
+                    "of graph filtering =====");
+            mapWriter.writeHeader(header);
+            
+            for (String uberonId: orderedIds) {
+                Map<String, Object> row = new HashMap<String, Object>();
+                row.put(header[0], uberonId);
+                OWLClass cls = wrapper.getOWLClassByIdentifier(uberonId);
+                String label = "-";
+                if (cls != null) {
+                    label = wrapper.getLabelOrDisplayId(cls);
+                } else {
+                    //we disable this assertion error, there are weird case 
+                    //were getOWLClassByIdentifier does not find the OWLClass, 
+                    //for instance, ID "biological:modeling".
+                    //throw log.throwing(new AssertionError("Could not find class " +
+                    //      "with ID " + uberonId));
+                }
+                row.put(header[1], label);
+                mapWriter.write(row, header, processors);
+            }
+        }
+        
+        log.exit();
     }
     
     /**

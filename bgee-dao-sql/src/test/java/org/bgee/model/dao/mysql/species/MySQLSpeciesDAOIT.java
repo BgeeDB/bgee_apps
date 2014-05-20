@@ -48,11 +48,11 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         //create a Collection of SpeciesTOs to be inserted
         Collection<SpeciesTO> speciesTOs = new ArrayList<SpeciesTO>();
         speciesTOs.add(new SpeciesTO("10", "commonName1", "genus1", "speciesName1", 
-                "100"));
+                "100", "path/1", null, ""));
         speciesTOs.add(new SpeciesTO("20", "commonName2", "genus2", "speciesName2", 
-                "120"));
+                "120", "path/2", "200", "YEAH"));
         speciesTOs.add(new SpeciesTO("30", "commonName3", "genus3", "speciesName3", 
-                "500"));
+                "500", "path/3", "200", ""));
         try {
             MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 
@@ -64,13 +64,17 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("select 1 from species where speciesId = ? and " +
                             "speciesCommonName = ? and genus = ? and species = ? and " +
-                            "taxonId = ?")) {
+                            "taxonId = ? and genomeFilePath = ? and genomeSpeciesId = ? " +
+                            "and fakeGeneIdPrefix = ?")) {
                 
                 stmt.setInt(1, 10);
                 stmt.setString(2, "commonName1");
                 stmt.setString(3, "genus1");
                 stmt.setString(4, "speciesName1");
                 stmt.setInt(5, 100);
+                stmt.setString(6, "path/1");
+                stmt.setInt(7, 0);
+                stmt.setString(8, "");
                 assertTrue("SpeciesTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
                 
@@ -79,6 +83,9 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
                 stmt.setString(3, "genus2");
                 stmt.setString(4, "speciesName2");
                 stmt.setInt(5, 120);
+                stmt.setString(6, "path/2");
+                stmt.setInt(7, 200);
+                stmt.setString(8, "YEAH");
                 assertTrue("SpeciesTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
                 
@@ -87,6 +94,9 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
                 stmt.setString(3, "genus3");
                 stmt.setString(4, "speciesName3");
                 stmt.setInt(5, 500);
+                stmt.setString(6, "path/3");
+                stmt.setInt(7, 200);
+                stmt.setString(8, "");
                 assertTrue("SpeciesTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }

@@ -36,12 +36,12 @@ INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, taxonLeftBound
 INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA)
 	VALUES (511, 'taxSName511', 'taxCName511', 7, 8, 1, 1);
 
-INSERT INTO species (speciesId, genus, species, speciesCommonName, taxonId)
-	VALUES (11, 'gen11', 'sp11', 'spCName11', 111);
-INSERT INTO species (speciesId, genus, species, speciesCommonName, taxonId)
-	VALUES (21, 'gen21', 'sp21', 'spCName21', 211);
-INSERT INTO species (speciesId, genus, species, speciesCommonName, taxonId)
-	VALUES (31, 'gen31', 'sp31', 'spCName31', 311);
+INSERT INTO species (speciesId, genus, species, speciesCommonName, taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix)
+	VALUES (11, 'gen11', 'sp11', 'spCName11', 111, 'path/genome11', 0, '');
+INSERT INTO species (speciesId, genus, species, speciesCommonName, taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix)
+	VALUES (21, 'gen21', 'sp21', 'spCName21', 211, 'path/genome21', 52, 'FAKEPREFIX');
+INSERT INTO species (speciesId, genus, species, speciesCommonName, taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix)
+	VALUES (31, 'gen31', 'sp31', 'spCName31', 311, 'path/genome31', 0, '');
 
 INSERT INTO gene (geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId, ensemblGene)
 	VALUES ('ID1', 'genN1', 'genDesc1', 11, 12, 2, true);

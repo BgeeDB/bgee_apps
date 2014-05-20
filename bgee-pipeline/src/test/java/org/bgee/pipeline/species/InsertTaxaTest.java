@@ -82,7 +82,7 @@ public class InsertTaxaTest extends TestAncestor {
      * Test {@link InsertTaxa#insertSpeciesAndTaxa(String, String)}, which is 
      * the central method of the class doing all the job.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void shouldInsertSpeciesAndTaxa() throws FileNotFoundException, 
         OWLOntologyCreationException, OBOFormatParserException, IllegalArgumentException, 
@@ -101,11 +101,14 @@ public class InsertTaxaTest extends TestAncestor {
         //made to the DAOs
         Set<SpeciesTO> expectedSpeciesTOs = new HashSet<SpeciesTO>();
         expectedSpeciesTOs.add(
-                new SpeciesTO("8", "my common nameA", "my genusA", "my speciesA", "16"));
+                new SpeciesTO("8", "my common nameA", "my genusA", "my speciesA", "16", 
+                        "file/pathA", null, null));
         expectedSpeciesTOs.add(
-                new SpeciesTO("13", "my common nameB", "my genusB", "my speciesB", "12"));
+                new SpeciesTO("13", "my common nameB", "my genusB", "my speciesB", "12", 
+                        "file/pathB", "20", "PREFIX"));
         expectedSpeciesTOs.add(
-                new SpeciesTO("15", "my common nameC", "my genusC", "my speciesC", "14"));
+                new SpeciesTO("15", "my common nameC", "my genusC", "my speciesC", "14", 
+                        "file/pathC", null, null));
         ArgumentCaptor<Set> speciesTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockSpeciesDAO).insertSpecies(speciesTOsArg.capture());
         if (!this.areSpeciesTOCollectionsEqual(
@@ -176,7 +179,13 @@ public class InsertTaxaTest extends TestAncestor {
                     (s1.getParentTaxonId() == null && s2.getParentTaxonId() == null || 
                         s1.getParentTaxonId() != null && s1.getParentTaxonId().equals(s2.getParentTaxonId())) && 
                     (s1.getDescription() == null && s2.getDescription() == null || 
-                        s1.getDescription() != null && s1.getDescription().equals(s2.getDescription())) ) {
+                        s1.getDescription() != null && s1.getDescription().equals(s2.getDescription())) && 
+                    (s1.getGenomeFilePath() == null && s2.getGenomeFilePath() == null || 
+                        s1.getGenomeFilePath() != null && s1.getGenomeFilePath().equals(s2.getGenomeFilePath())) && 
+                    (s1.getGenomeSpeciesId() == null && s2.getGenomeSpeciesId() == null || 
+                        s1.getGenomeSpeciesId() != null && s1.getGenomeSpeciesId().equals(s2.getGenomeSpeciesId())) && 
+                    (s1.getFakeGeneIdPrefix() == null && s2.getFakeGeneIdPrefix() == null || 
+                        s1.getFakeGeneIdPrefix() != null && s1.getFakeGeneIdPrefix().equals(s2.getFakeGeneIdPrefix())) ) {
                     found = true;    
                 }
             }

@@ -59,12 +59,13 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         log.entry(specieTOs);
         
         String sql = "Insert into species (speciesId, genus, species, " +
-                "speciesCommonName, taxonId) values ";
+                "speciesCommonName, taxonId, genomeFilePath, genomeSpeciesId, " +
+                "fakeGeneIdPrefix) values ";
         for (int i = 0; i < specieTOs.size(); i++) {
             if (i > 0) {
                 sql += ", ";
             }
-            sql += "(?, ?, ?, ?, ?) ";
+            sql += "(?, ?, ?, ?, ?, ?, ?, ?) ";
         }
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql)) {
@@ -79,6 +80,22 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 stmt.setString(paramIndex, speciesTO.getName());
                 paramIndex++;
                 stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getParentTaxonId()));
+                paramIndex++;
+                stmt.setString(paramIndex, speciesTO.getGenomeFilePath());
+                paramIndex++;
+                //TODO: handles default values in a better way
+                if (speciesTO.getGenomeSpeciesId() != null) {
+                    stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getGenomeSpeciesId()));
+                } else {
+                    stmt.setInt(paramIndex, 0);
+                }
+                paramIndex++;
+                //TODO: handles default values in a better way
+                if (speciesTO.getFakeGeneIdPrefix() != null) {
+                    stmt.setString(paramIndex, speciesTO.getFakeGeneIdPrefix());
+                } else {
+                    stmt.setString(paramIndex, "");
+                }
                 paramIndex++;
             }
             

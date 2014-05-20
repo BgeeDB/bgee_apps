@@ -71,6 +71,35 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * PARENTTAXONID}.
          */
         private final String parentTaxonId;
+        
+        /**
+         * A {@code String} that is the path to retrieve the genome file we use 
+         * for this species, from the GTF directory of the Ensembl FTP, without the Ensembl 
+         * version suffix, nor the file type suffixes. For instance, for human, 
+         * the GTF file in Ensembl 75 is stored at: 
+         * {@code ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz}.
+         * This attribute would then contain: {@code homo_sapiens/Homo_sapiens.GRCh37}
+         * This attribute is needed because we use for some species the genome 
+         * of another species (for instance, chimp genome for bonobo species).
+         */
+        private final String genomeFilePath;
+        
+        /**
+         * A {@code String} that is the ID of the species whose the genome was used 
+         * for this species. This is used when a genome is not in Ensembl, but genome 
+         * of a close species is. For instance, for bonobo (ID 9597), we use the chimp genome 
+         * (ID 9598), because bonobo is not in Ensembl.
+         */
+        private final String genomeSpeciesId;
+        
+        /**
+         * A {@code String} that is the prefix of gene IDs for this species, if its genome 
+         * was not in Ensembl. This is because when another genome was used for a species 
+         * in Bgee, we change the gene ID prefix (for instance, the chimp gene IDs, 
+         * starting with 'ENSPTRG', will be changed to 'PPAG' when used for the bonobo).
+         */
+        private final String fakeGeneIdPrefix;
+        
         /**
          * Constructor providing the ID, the common name, the genus, the species, and the ID 
          * of the parent taxon.
@@ -93,12 +122,16 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * @throws IllegalArgumentException If {@code id} is {@code null} or empty.
          */
         public SpeciesTO(String id, String commonName, String genus, String speciesName, 
-                String parentTaxonId) throws IllegalArgumentException {
+                String parentTaxonId, String genomeFilePath, String genomeSpeciesId, 
+                String fakeGeneIdPrefix) throws IllegalArgumentException {
             super(id, commonName);
             
             this.genus = genus;
             this.speciesName = speciesName;
             this.parentTaxonId = parentTaxonId;
+            this.genomeFilePath = genomeFilePath;
+            this.genomeSpeciesId = genomeSpeciesId;
+            this.fakeGeneIdPrefix = fakeGeneIdPrefix;
         }
         
         /**
@@ -139,12 +172,44 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
             return parentTaxonId;
         }
         
+        /**
+         * @return  {@code String} that is the path to retrieve the genome file we use 
+         *          for this species, from the GTF directory of the Ensembl FTP, 
+         *          without the Ensembl version suffix, nor the file type suffixes.
+         */
+        public String getGenomeFilePath() {
+            return genomeFilePath;
+        }
+
+        /**
+         * @return  A {@code String} that is the ID of the species whose the genome was used 
+         *          for this species. This is used when a genome is not in Ensembl, 
+         *          but genome of a close species is. 
+         */
+        public String getGenomeSpeciesId() {
+            return genomeSpeciesId;
+        }
+
+        /**
+         * @return  A {@code String} that is the prefix of gene IDs for this species, 
+         *          if its genome was not in Ensembl. This is because when another genome 
+         *          was used for a species in Bgee, we change the gene ID prefix 
+         *          (for instance, the chimp gene IDs, starting with 'ENSPTRG', will be 
+         *          changed to 'PPAG' when used for the bonobo).
+         */
+        public String getFakeGeneIdPrefix() {
+            return fakeGeneIdPrefix;
+        }
+
         @Override
         public String toString() {
             return "ID: " + this.getId() + " - Common name: " + this.getName() + 
                     " - Genus: " + this.getGenus() + " - Species name: " + this.getSpeciesName() + 
                     " - Parent taxon ID: " + this.getParentTaxonId() + " - Description: " + 
-                    this.getDescription();
+                    this.getDescription() + " - Genome file path: " + 
+                    this.getGenomeFilePath() + " - Genome species ID: " + 
+                    this.getGenomeSpeciesId() + " - Fake gene ID prefix: " + 
+                    this.getFakeGeneIdPrefix();
         }
     }
 }

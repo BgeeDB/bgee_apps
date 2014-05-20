@@ -28,6 +28,7 @@ import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
@@ -91,7 +92,44 @@ public class InsertTaxa extends MySQLDAOUser {
      * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
      * to retrieve these common names from the TSV file storing the species used in Bgee.
      */
-    public static final String SPECIES_COMMON_NAME_KEY = "common name";
+    public static final String SPECIES_COMMON_NAME_KEY = "speciesCommonName";
+    /**
+     * A {@code String} that is the key to retrieve the path to the genome file 
+     * for a species used in Bgee, from the {@code Map}s returned by 
+     * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
+     * to retrieve these values from the TSV file storing the species used in Bgee.
+     * <p>
+     * This is the path to retrieve the genome file we use for this species, 
+     * from the GTF directory of the Ensembl FTP, without the Ensembl version suffix, 
+     * nor the file type suffixes. For instance, for human, the GTF file in Ensembl 75 
+     * is stored at: {@code ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz}.
+     * This field would then contain: {@code homo_sapiens/Homo_sapiens.GRCh37}
+     * This field is needed because we use for some species the genome of another species 
+     * (for instance, chimp genome for bonobo species).
+     */
+    public static final String SPECIES_GENOME_FILE_KEY= "genomeFilePath";
+    /**
+     * A {@code String} that is the key to retrieve the ID of the species whose the genome 
+     * was used for a species used in Bgee, from the {@code Map}s returned by 
+     * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
+     * to retrieve these values from the TSV file storing the species used in Bgee.
+     * <p>
+     * This is used when a genome is not in Ensembl. For instance, for bonobo (ID 9597), 
+     * we use the chimp genome (ID 9598), because bonobo is not in Ensembl. 
+     */
+    public static final String SPECIES_GENOME_ID_KEY= "genomeSpeciesId";
+    /**
+     * A {@code String} that is the key to retrieve the fake prefix of genes for species 
+     * whose genome is not in Ensembl, and that are used in Bgee, 
+     * from the {@code Map}s returned by 
+     * {@link #getSpeciesFromFile(String)}, and that is also the name of the column 
+     * to retrieve these values from the TSV file storing the species used in Bgee.
+     * <p>
+     * This is because when another genome was used for a species in Bgee, we change 
+     * the gene ID prefix (for instance, the chimp gene IDs, starting with 'ENSPTRG', 
+     * will be changed to 'PPAG' when used for the bonobo).
+     */
+    public static final String SPECIES_FAKE_GENE_PREFIX_KEY= "fakeGeneIdPrefix";
     
     /**
      * A {@code OWLGraphWrapper} wrapping the NCBI taxonomy {@code OWLOntology}.
@@ -119,7 +157,10 @@ public class InsertTaxa extends MySQLDAOUser {
      * <ol>
      * <li>path to the tsv files containing the species used in Bgee. This is the file 
      * to modify to add/remove a species. The first line should be a header line, 
-     * defining 4 columns, named exactly: "taxon ID", "genus", "species", "common name".
+     * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
+     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_ID_KEY}, 
+     * {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>path to the tsv files containing the IDs of the taxa to be inserted in Bgee, 
      * corresponding to the NCBI taxonomy ID (e.g., 9605 for homo). Whatever the values 
@@ -168,7 +209,10 @@ public class InsertTaxa extends MySQLDAOUser {
      * <ul>
      * <li>the path to the tsv files containing the species used in Bgee. This is the file 
      * to modify to add/remove a species. The first line should be a header line, 
-     * defining 4 columns, named exactly: "taxon ID", "genus", "species", "common name".
+     * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
+     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_ID_KEY}, 
+     * {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order).
      * the IDs should correspond to the NCBI taxonomy ID (e.g., 9606 for human).
      * <li>the path to a TSV file containing the NCBI taxonomy IDs of additional taxa 
      * to be inserted. Whatever the values in this file are, the branches which 
@@ -216,9 +260,11 @@ public class InsertTaxa extends MySQLDAOUser {
     /**
      * Extract the information about the species to include in Bgee from the provided 
      * TSV file. The first line of this file should be a header line, 
-     * defining 4 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
-     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY} 
-     * (in whatever order). This method returns a {@code Collection} where each 
+     * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
+     * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
+     * {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_ID_KEY}, 
+     * {@link #SPECIES_FAKE_GENE_PREFIX_KEY} (in whatever order). 
+     * This method returns a {@code Collection} where each 
      * species is represented by a {@code Map}, containing information mapped 
      * to the keys listed above. In these {@code Map}s, the value associated to 
      * {@link #SPECIES_ID_KEY} will be an {@code Integer}, other values will be 
@@ -246,7 +292,7 @@ public class InsertTaxa extends MySQLDAOUser {
             String unexpectedFormat = "The provided TSV species file is not " +
             		"in the expected format";
             String[] header = mapReader.getHeader(true);
-            if (header.length != 4) {
+            if (header.length != 7) {
                 throw log.throwing(new IllegalArgumentException(unexpectedFormat));
             }
             
@@ -260,6 +306,12 @@ public class InsertTaxa extends MySQLDAOUser {
                     processors[i] = new NotNull();
                 } else if (header[i].equalsIgnoreCase(SPECIES_COMMON_NAME_KEY)) {
                     processors[i] = new UniqueHashCode(new NotNull());
+                } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_FILE_KEY)) {
+                    processors[i] = new NotNull();
+                } else if (header[i].equalsIgnoreCase(SPECIES_GENOME_ID_KEY)) {
+                    processors[i] = new Optional(new ParseInt());
+                } else if (header[i].equalsIgnoreCase(SPECIES_FAKE_GENE_PREFIX_KEY)) {
+                    processors[i] = new Optional();
                 } else {
                     throw log.throwing(new IllegalArgumentException(unexpectedFormat));
                 }
@@ -421,9 +473,18 @@ public class InsertTaxa extends MySQLDAOUser {
                         "contain incorrect information: " + commonName + " - " + 
                         genus + " - " + speciesName));
             }
+            String genomeFilePath = (String) species.get(SPECIES_GENOME_FILE_KEY);
+            if (StringUtils.isBlank(genomeFilePath)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Missing path to genome file for species: " + commonName));
+            }
+            Integer genomeSpeciesId = (Integer) species.get(SPECIES_GENOME_ID_KEY);
+            String fakeGeneIdPrefix = (String) species.get(SPECIES_FAKE_GENE_PREFIX_KEY);
             
             speciesTOs.add(new SpeciesTO(String.valueOf(speciesId), commonName, genus, 
-                    speciesName, parentTaxonId));
+                    speciesName, parentTaxonId, genomeFilePath, 
+                    (genomeSpeciesId == null ? null: String.valueOf(genomeSpeciesId)), 
+                    fakeGeneIdPrefix));
         }
         if (speciesTOs.size() != allSpecies.size()) {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +

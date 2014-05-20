@@ -581,15 +581,11 @@ public class OntologyUtils {
      * {@code OWLAnnotationAssertionAxiom}s that are problematic to convert 
      * the ontology in OBO format.
      * 
-     * @throws OWLOntologyCreationException If an error occurred when using an 
-     *                                      {@code OWLGraphWrapper} on the {@code OWLOntology} 
-     *                                      wrapped by this object
      * @throws UnknownOWLOntologyException  If an error occurred when using an 
      *                                      {@code OWLGraphWrapper} on the {@code OWLOntology} 
      *                                      wrapped by this object
      */
-    public void removeOBOProblematicAxioms() throws UnknownOWLOntologyException, 
-        OWLOntologyCreationException {
+    public void removeOBOProblematicAxioms() throws UnknownOWLOntologyException {
         log.entry();
         
         for (OWLAnnotationAssertionAxiom ax: 
@@ -616,12 +612,8 @@ public class OntologyUtils {
      * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
      *                                          provided at instantiation, and an error 
      *                                          occurred while loading it.
-     * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
-     *                                          provided at instantiation, and an error 
-     *                                          occurred while loading it.
      */
-    private OWLGraphWrapper getWrapper() throws UnknownOWLOntologyException, 
-        OWLOntologyCreationException {
+    private OWLGraphWrapper getWrapper() throws UnknownOWLOntologyException {
         if (this.wrapper == null) {
             this.wrapper = new OWLGraphWrapper(this.ontology);
         }

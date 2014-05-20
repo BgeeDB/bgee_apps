@@ -275,9 +275,6 @@ public class Uberon {
      *                                          relations to {@code OWLClass}es not in 
      *                                          {@code subsets}, see same argument in 
      *                                          {@code OWLGraphManipulator.simplifies} method).
-     * @throws OWLOntologyCreationException     If an error occurred while wrapping 
-     *                                          the {@code uberonOnt} into an 
-     *                                          {@code OWLGraphManipulator}.
      * @throws UnknownOWLOntologyException      If an error occurred while wrapping 
      *                                          the {@code uberonOnt} into an 
      *                                          {@code OWLGraphManipulator}.
@@ -285,7 +282,7 @@ public class Uberon {
     public void simplifyUberon(OWLOntology uberonOnt, Collection<String> classIdsToRemove, 
             Collection<String> relIds, Collection<String> toFilterSubgraphRootIds, 
             Collection<String> toRemoveSubgraphRootIds, Collection<String> subsetNames) 
-                    throws UnknownOWLOntologyException, OWLOntologyCreationException {
+                    throws UnknownOWLOntologyException {
         log.entry(uberonOnt, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
                 toRemoveSubgraphRootIds, subsetNames);
         //TODO: dependency injection?

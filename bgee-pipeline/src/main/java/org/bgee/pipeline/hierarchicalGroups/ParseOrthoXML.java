@@ -18,9 +18,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.pipeline.MySQLDAOUser;
 
 import sbc.orthoxml.Gene;
@@ -40,8 +40,7 @@ import sbc.orthoxml.io.OrthoXMLReader;
  */
 public class ParseOrthoXML extends MySQLDAOUser {
 
-	private final static Logger log =
-			LogManager.getLogger(ParseOrthoXML.class.getName());
+	private final static Logger log = LogManager.getLogger(ParseOrthoXML.class.getName());
 	
 	private static int OMANodeId = 1;
 	private int nestedSetId = 0;
@@ -60,7 +59,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * Constructor providing the {@code MySQLDAOManager} that will be used by 
      * this object to perform queries to the database. This is useful for unit testing.
      * 
-     * @param manager   the {@code MySQLDAOManager} to use.
+     * @param manager   The {@code MySQLDAOManager} to use.
      */
     public ParseOrthoXML(MySQLDAOManager manager) {
         super(manager);
@@ -77,7 +76,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @param args	An {@code Array} of {@code String}s containing the requested parameters.
      * @throws FileNotFoundException		If some files could not be found.
      * @throws IllegalArgumentException		If the files used provided invalid information.
-     * @throws DAOException					If an error occurred while inserting
+     * @throws DAOException					If an error occurred while getting or updating
 											the data into the Bgee database.
      * @throws XMLStreamException			If there is an error in the well-formedness of
 											the XML or other unexpected processing errors.
@@ -117,7 +116,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	 * is updated.
 	 * 
      * @param orthoXMLFile	A {@code String} that is the path to the OMA groups file.	
-     * @throws DAOException				If an error occurred while inserting
+     * @throws DAOException				If an error occurred while getting or updating
 										the data into the Bgee database.
      * @throws FileNotFoundException	If some files could not be found.
      * @throws XMLStreamException		If there is an error in the well-formedness of
@@ -173,10 +172,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
 
 	/**
-	 * Retrieves all Ensembl gene IDs present into the Bgee database.
+	 * Retrieves all gene IDs present into the Bgee database.
 	 * 
-     * @throws DAOException				If an error occurred while inserting
-										the data into the Bgee database.
+     * @throws DAOException		If an error occurred while getting the data
+     * 							from the Bgee database.
 	 */
 	private void getGenesOfDb() throws DAOException {
     	log.entry();
@@ -186,7 +185,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             log.info("Start getting gene IDs...");
     		this.getGeneDAO().setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
 
-    		MySQLGeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
+    		GeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
     		while (rsGenes.next()) {
     			genesInDb.add(rsGenes.getTO().getId());
     		}
@@ -231,15 +230,15 @@ public class ParseOrthoXML extends MySQLDAOUser {
 				if (currentGroup.getGenes() != null) {
 					for (Gene groupGene : currentGroup.getGenes()) {
 						// Parse gene identifiers (named protId in OrthoXML file)
-						//TODO check new OrthoXML file
+						// TODO check new OrthoXML file
 						List<String> genes = Arrays.asList(groupGene.getProteinIdentifier().split("; "));
 						for (String geneId : genes) {
 							if (genesInDb.contains(geneId)) {
 								// Add new {@code GeneTO} to {@code Collection} of 
 								// {@code GeneTO}s to be able to update OMAGroupId
 								// in gene table.
-								geneTOs.add(new GeneTO(geneId, null, null, Integer.MAX_VALUE, 
-														null, OMANodeId, true));
+								geneTOs.add(new GeneTO(geneId, null, null, 0, 0,
+														OMANodeId, true));
 								break;
 							}
 						}
@@ -293,10 +292,9 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	 * whose {@code Group} is passed as a parameter and returns the total
 	 * number of groups in the tree (including the root group).
 	 * 
-	 * @param group
-	 *            the {@code Group} object of the group/subgroup whose 
-	 *            total number of children groups are to be counted
-	 * @return an {@code int} giving the total number of groups in the
+	 * @param group		The {@code Group} object of the group/subgroup whose 
+	 *            		total number of children groups are to be counted
+	 * @return An {@code int} giving the total number of groups in the
 	 *         group/subgroup
 	 */
 	private static int count(Group group) {
@@ -311,14 +309,11 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	/**
 	 * Reads the species IDs of all the species present in the orthoxml file.
 	 * 
-	 * @throws XMLParseException
-	 *             if there is an error in parsing the XML retrieved by the
-	 *             OrthoXMLReader
-	 * @throws XMLStreamException
-	 *             if there is an error in the well-formedness of the XML or
-	 *             other unexpected processing errors.
-	 * @throws FileNotFoundException
-	 *             if the OrthoXMLReader cannot find the file
+	 * @throws XMLParseException		If there is an error in parsing the XML retrieved by 
+	 * 									the OrthoXMLReader
+	 * @throws XMLStreamException		If there is an error in the well-formedness of the XML
+	 * 									or other unexpected processing errors.
+	 * @throws FileNotFoundException	If the OrthoXMLReader cannot find the file
 	 */
 	public static ArrayList<String> getSpecies(File file)
 			throws FileNotFoundException, XMLStreamException, XMLParseException {

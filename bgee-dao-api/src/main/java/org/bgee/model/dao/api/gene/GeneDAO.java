@@ -1,8 +1,11 @@
 package org.bgee.model.dao.api.gene;
 
+import java.util.Collection;
+
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link GeneTO}s. 
@@ -33,6 +36,27 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         ID, NAME, DESCRIPTION, SPECIESID, GENEBIOTYPEID, OMAPARENTNODEID, ENSEMBLGENE;
     }
     
+	/**
+	 * Retrieve all genes from data source.
+	 * <p>
+	 * The genes are retrieved and returned as a {@code GeneTOResultSet}.
+	 * 
+	 * @return A {@code GeneTOResultSet} containing all genes from data source.
+	 */
+	public GeneTOResultSet getAllGenes();
+    
+	/**
+	 * Update {@code Attribute}s of the provided of genes, which are represented as a 
+	 * {@code Collection} of {@code GeneTO}s
+	 * 
+	 * @param genes					A {@code Collection} of {@code GeneTO}s that is genes
+	 * 								to be updated into the data source.
+	 * @param attributesToUpdate	A {@code Collection} of {@code Attribute}s that is 
+	 * 								attributes to be updated into the data source.
+	 * @return	A {@code int} representing the number of genes updated.
+	 */
+	public int updateGenes(Collection<GeneTO> genes, Collection<GeneDAO.Attribute> attributesToUpdate);
+	
     /**
      * {@code DAOResultSet} specifics to {@code GeneTO}s
      * 
@@ -54,7 +78,6 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public class GeneTO extends EntityTO {
 
     	private static final long serialVersionUID = -9011956802137411474L;
-
 
     	/**
          * A {@code int} that is the species id of the species.
@@ -86,13 +109,16 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     	/**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), and the species ID of this gene.
+         * <p>
+         * The BioType and the ID of the OMA Hierarchical Orthologous Group of this gene are
+         * set to default value, i.e. they are set to 0.
          * 
          * @param geneId    a {@code String} that is the ID of this gene.
          * @param geneName  a {@code String} that is the name of this gene.
          * @param speciesId a {@code int} of the species which this gene belongs to.
          */
     	public GeneTO(String geneId, String geneName, int speciesId) {
-    		this(geneId, geneName, null, speciesId, null, null, true);
+    		this(geneId, geneName, null, speciesId, 0, 0, true);
     	}
 
         /**
@@ -111,12 +137,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * 							in Ensembl. 
          */
     	public GeneTO(String geneId, String geneName, String geneDescription, int speciesId,
-    			Integer geneBioTypeId, Integer OMAParentNodeId, boolean ensemblGene) {
+    			int geneBioTypeId, int OMAParentNodeId, boolean ensemblGene) {
     		super(geneId, geneName, geneDescription);
-            if (speciesId <= 0 || geneBioTypeId != null && geneBioTypeId <= 0 || 
-                    OMAParentNodeId != null && OMAParentNodeId <= 0) {
-                throw new IllegalArgumentException("Integer parameters must be positive.");
-            }
     		this.speciesId = speciesId;
     		this.geneBioTypeId = geneBioTypeId;
     		this.OMAParentNodeId = OMAParentNodeId;
@@ -137,14 +159,14 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
 
 
         /**
-         * @return  The {@link Domain} that this Gene Ontology term belongs to.
+         * @return  The species ID.
          */
         public int getSpeciesId() {
             return this.speciesId;
         }
 
         /**
-         * @return The the gene type ID (for instance, the ID for protein_coding)
+         * @return The gene bio type ID (for instance, the ID for protein_coding)
          */
         public int getGeneBioTypeId() {
             return this.geneBioTypeId;
@@ -158,7 +180,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         }
         
         /**
-         * @return  the {@code boolean} defining whether this gene is present in Ensembl.
+         * @return  The {@code boolean} defining whether this gene is present in Ensembl.
          */
         public boolean isEnsemblGene() {
             return this.ensemblGene;

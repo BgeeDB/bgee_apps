@@ -14,7 +14,6 @@ import org.bgee.model.dao.mysql.BgeeConnection;
 import org.bgee.model.dao.mysql.BgeePreparedStatement;
 import org.bgee.model.dao.sql.*;*/
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 
 /**
  * A {@code HierarchicalGroupDAO} for MySQL. 
@@ -30,7 +29,7 @@ implements HierarchicalGroupDAO {
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(MySQLGeneOntologyDAO.class.getName());
+            LogManager.getLogger(MySQLHierarchicalGroupDAO.class.getName());
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 

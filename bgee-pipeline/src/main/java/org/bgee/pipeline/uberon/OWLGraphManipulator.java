@@ -1334,21 +1334,21 @@ public class OWLGraphManipulator {
      * of a subgraph root and one of its descendants will be removed, 
      * as this would represent an undesired subgraph. 
      * <p>
-     * This method returns the number of {@code OWLClass}es removed as a result.
+     * This method returns the OBO-like IDs of the {@code OWLClass}es removed as a result.
      * <p>
-     * This is the opposite method of {@code removeSubgraphs(Collection<String>)}.
+     * This is the opposite method of {@code removeSubgraphs(Collection, boolean)}.
      * 
      * @param allowedSubgraphRootIds 	A {@code Collection} of {@code String}s 
      * 									representing the OBO-style IDs of the 
      * 									{@code OWLClass}es that are the roots of the 
      * 									subgraphs that will be kept in the ontology. 
      * 									Their ancestors will be kept as well.
-     * @return 						An {@code int} representing the number of 
-     * 								{@code OWLClass}es removed.
+     * @return                      A {@code Collection} of {@code String}s that are 
+     *                              the OBO-like ID of the {@code OWLClass}es removed 
+     *                              as a result of this method call.
      * @see #removeSubgraphs(Collection, boolean)
      */
-    public int filterSubgraphs(Collection<String> allowedSubgraphRootIds)
-    {
+    public Set<String> filterSubgraphs(Collection<String> allowedSubgraphRootIds) {
         int classCount   = 0;
         if (log.isInfoEnabled()) {
     	    log.info("Start filtering subgraphs of allowed roots: " + 
@@ -1399,7 +1399,10 @@ public class OWLGraphManipulator {
         toKeep.addAll(allowedSubgraphRoots);
         toKeep.addAll(ancestors);
         toKeep.addAll(descendants);
-    	int classesRemoved = this.filterClasses(toKeep).size();
+        Set<String> classIdsRemoved = new HashSet<String>();
+    	for (OWLClass classRemoved: this.filterClasses(toKeep)) {
+    	    classIdsRemoved.add(this.getOwlGraphWrapper().getIdentifier(classRemoved));
+    	}
     	
     	//remove relations between any ancestor of an allowed root, that is not also 
     	//the children of another allowed root, and descendants of those allowed roots, 
@@ -1441,12 +1444,12 @@ public class OWLGraphManipulator {
     	}
     	
     	if (log.isInfoEnabled()) {
-    	    log.info("Done filtering subgraphs of allowed roots, " + classesRemoved + 
+    	    log.info("Done filtering subgraphs of allowed roots, " + classIdsRemoved.size() + 
     	            " classes removed over " + classCount + " classes total, " + 
     	            edgesRemoved + " undesired relations removed.");
     	}
     	
-    	return classesRemoved;
+    	return classIdsRemoved;
     }
     /**
      * Remove from the ontology the subgraphs starting 
@@ -1475,7 +1478,7 @@ public class OWLGraphManipulator {
      *                              the OBO-like ID of the {@code OWLClass}es removed.
      * @see #filterSubgraphs(Collection)
      */
-    public Collection<String> removeSubgraphs(Collection<String> subgraphRootIds, boolean keepSharedClasses) {
+    public Set<String> removeSubgraphs(Collection<String> subgraphRootIds, boolean keepSharedClasses) {
         int classCount   = 0;
         if (log.isInfoEnabled()) {
     	    log.info("Start removing subgraphs of undesired roots: " + subgraphRootIds);

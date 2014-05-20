@@ -1052,10 +1052,13 @@ public class OWLGraphManipulatorTest
 		toKeep.add("FOO:0002");
 		toKeep.add("FOO:0013");
 		toKeep.add("FOO:0014");
-		int countRemoved = this.graphManipulator.filterSubgraphs(toKeep);
+		
+		Set<String> expectedClassesRemoved = new HashSet<String>(Arrays.asList("FOO:0100", 
+		        "FOO:0007", "FOO:0016", "FOO:0009", "FOO:0008", "FOO:0010", "FOO:0012"));
+		Set<String> classesRemoved = this.graphManipulator.filterSubgraphs(toKeep);
 		
 		//The test ontology is designed so that 7 classes should have been removed
-		assertEquals("Incorrect number of classes removed", 7, countRemoved);
+		assertEquals("Incorrect classes removed", expectedClassesRemoved, classesRemoved);
 		
 		//test that these classes were actually removed from the ontology
 		allClasses = new HashSet<OWLClass>();
@@ -1064,7 +1067,7 @@ public class OWLGraphManipulatorTest
         }
         int newClassCount = allClasses.size();
 		assertEquals("filterSubgraph did not return the correct number of classes removed", 
-				classCount - newClassCount, countRemoved);
+				classCount - newClassCount, classesRemoved.size());
 		
 		//Test that the terms part of both subgraphs were not incorrectly removed.
 		//Their IDs are FOO:0011 and FOO:0014, they have slighty different relations to the root

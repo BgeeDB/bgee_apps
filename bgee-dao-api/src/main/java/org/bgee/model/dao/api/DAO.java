@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Parent interface of all DAOs.
@@ -96,4 +97,21 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * @see #setAttributes(Object[])
      */
     public void clearAttributes();
+    
+    /**
+     * Convenient method to retrieve all {@code TransferObject}s returned by {@code resultSet}. 
+     * This method is useful because, usually, DAO methods returned a {@code DAOResultSet}, 
+     * allowing to iterate the results without putting all of them in memory; this method 
+     * can thus be used to retrieve all results at once, putting all of them in memory. 
+     * <p>
+     * This method will call {@link DAOResultSet#next()} as long as it returns {@code true}, 
+     * and will store, in a {@code List}, the {@code TransferObject}s returned by 
+     * {@link DAOResultSet#getTO()}.
+     * 
+     * @param resultSet The {@code DAOResultSet} to retrieve {@code TransferObject}s from.
+     * @return          A {@code List} of {@code TransferObject}s, retrieved by iterating 
+     *                  the results of {@code resultSet}, and stored in the order 
+     *                  they were retrieved. 
+     */
+    public <O extends TransferObject> List<O> getAllTOs(DAOResultSet<O> resultSet);
 }

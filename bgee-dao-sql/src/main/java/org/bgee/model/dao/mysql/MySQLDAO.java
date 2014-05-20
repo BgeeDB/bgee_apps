@@ -1,12 +1,16 @@
 package org.bgee.model.dao.mysql;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
 /**
@@ -110,6 +114,16 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         log.entry();
         Set<T> attributeCopy = new HashSet<T>(attributes) ;
         return log.exit(attributeCopy);
+    }
+    
+    @Override
+    public <O extends TransferObject> List<O> getAllTOs(DAOResultSet<O> resultSet) {
+        log.entry(resultSet);
+        List<O> allTOs = new ArrayList<O>();
+        while (resultSet.next()) {
+            allTOs.add(resultSet.getTO());
+        }
+        return log.exit(allTOs);
     }
     
 //  /**

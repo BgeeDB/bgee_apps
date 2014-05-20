@@ -174,7 +174,8 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
     	 * @param ncbiTaxonomyId	an {@code String} that is the NCBI taxonomy ID of the
     	 * 							hierarchical level queried.
     	 */
-    	public HierarchicalGroupTO(int nodeId, int OMAGroupId, int nodeLeftBound, int nodeRightBound, String ncbiTaxonomyId) {
+    	public HierarchicalGroupTO(int nodeId, int OMAGroupId, int nodeLeftBound, 
+    				int nodeRightBound, String ncbiTaxonomyId) {
     		super(String.valueOf(nodeId));
             if (OMAGroupId <= 0 || nodeLeftBound <= 0 || nodeRightBound <= 0 || 
             		ncbiTaxonomyId != null && Integer.parseInt(ncbiTaxonomyId) <= 0) {
@@ -187,9 +188,10 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
     	}
     	
         /**
-         * @return  A {@code String} that this the ID of a node in the tree of hierarchical groups.
-         *          Corresponds to the DAO {@code Attribute} {@link HierarchicalGroupDAO.Attribute 
-         *          NODEID}. Returns {@code null} if value not set.
+         * @return  A {@code String} that this the ID of a node in the tree of hierarchical 
+         * 			groups. Corresponds to the DAO {@code Attribute} 
+         * 			{@link HierarchicalGroupDAO.Attribute NODEID}. Returns {@code null} if
+         * 			value not set.
     	 */
     	@Override
         public String getId() {
@@ -198,17 +200,20 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         }
 
     	/**
-         * @return  A {@code int} that this the ID of a node in the tree of hierarchical groups.
-         *          Corresponds to the DAO {@code Attribute} {@link HierarchicalGroupDAO.Attribute 
-         *          NODEID}. Returns {@code null} if value not set.
+         * @return  A {@code int} that this an unique ID of a node in the tree of the generated
+         * 			hierarchical groups. Corresponds to the DAO {@code Attribute} 
+         * 			{@link HierarchicalGroupDAO.Attribute NODEID}. Same as 
+         * 			{@link HierarchicalGroupTO#getId()} but return an {@code int} 
+         * 			instead of a {@code String}.
     	 */
         public int getNodeId() {
             return Integer.parseInt(super.getId());
         }
 
         /**
-         * @return  A {@code int} that this the ID for a particular OMA group 
-         * 			of orthologous genes.
+         * @return  A {@code int} that this the ID of a particular Hierarchical Orthologous 
+         * 			Group as provided by OMA. Corresponds to the DAO {@code Attribute} 
+         * 			{@link HierarchicalGroupDAO.Attribute GROUPID}.
          */
         public int getOMAGroupId() {
             return this.OMAGroupId;

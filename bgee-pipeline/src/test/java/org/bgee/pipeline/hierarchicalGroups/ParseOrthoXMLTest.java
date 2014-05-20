@@ -147,9 +147,6 @@ public class ParseOrthoXMLTest extends TestAncestor {
         return log.exit(true);
 	}
 
-	public void testBuildNestedSetModel() {
-	}
-
 	public void testCount() {
 	}
 

@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.OntologyUtils;
+import org.bgee.pipeline.Utils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -39,7 +41,6 @@ import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
-import org.supercsv.prefs.CsvPreference;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -167,23 +168,22 @@ public class Uberon {
      * A {@code Set} of {@code String}s that are the OBO-like IDs of {@code OWLClass}es 
      * removed as a result of graph filtering. Graph filtering is performed in the 
      * {@code simplifyUberon} method by calling 
-     * {@code owltools.graph.OWLGraphManipulator#filterSubgraphs(Collection)} and 
-     * {@code owltools.graph.OWLGraphManipulator#removeSubgraphs(Collection, boolean)}
+     * {@code owltools.graph.OWLGraphManipulator#filterSubgraphs(Collection)}.
      */
-    private final Set<String> subgraphClassesRemoved;
+    private final Set<String> subgraphClassesFiltered;
     
     /**
      * Default constructor.
      */
     public Uberon() {
-        this.subgraphClassesRemoved = new HashSet<String>();
+        this.subgraphClassesFiltered = new HashSet<String>();
     }
     
     /**
      * Simplifies the Uberon ontology stored in {@code pathToUberonOnt}, and saves it in OWL 
      * and OBO format using {@code modifiedOntPath}. Various information about 
      * the simplification process can be stored in a separate file, provided through 
-     * {@code infoFilePath} (see {@link #saveSimplificationInfo(OWLOntology, String)}). 
+     * {@code infoFilePath} (see {@code #saveSimplificationInfo} method). 
      * This argument can be left {@code null} or blank if this information does not need 
      * to be stored. 
      * <p>
@@ -246,7 +246,7 @@ public class Uberon {
             //we need the original ontology, as before the simplification, 
             //so we reload the ontology
             this.saveSimplificationInfo(OntologyUtils.loadOntology(pathToUberonOnt), 
-                    infoFilePath);
+                    infoFilePath, this.getSubgraphClassesFiltered());
         }
         
         log.exit();
@@ -264,7 +264,7 @@ public class Uberon {
      * of the call to this method.
      * <p>
      * Information about the simplification process can be retrieved afterwards, 
-     * (see {@link #getSubgraphClassesRemoved()}), or saved to a file (see 
+     * (see {@link #getSubgraphClassesFiltered()}), or saved to a file (see 
      * {@link #saveSimplificationInfo(OWLOntology, String)}).
      *  
      * @param uberonOnt                         The {@code OWLOntology} to simplify.
@@ -324,11 +324,11 @@ public class Uberon {
             manipulator.filterRelations(relIds, true);
         }
         if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
-            this.subgraphClassesRemoved.addAll(
+            this.subgraphClassesFiltered.addAll(
                     manipulator.filterSubgraphs(toFilterSubgraphRootIds));
         }
         if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
-            this.subgraphClassesRemoved.addAll(
+            this.subgraphClassesFiltered.addAll(
                     manipulator.removeSubgraphs(toRemoveSubgraphRootIds, true));
         }
         if (subsetNames != null && !subsetNames.isEmpty()) {
@@ -366,27 +366,52 @@ public class Uberon {
     
     /**
      * Save to the file {@code infoFilePath} information about the simplification process 
-     * of the original {@code OWLOntology} {@code ont}. This currently includes a listing 
-     * of the {@code OWLClass}es that were removed as a result of graph filterings 
-     * performed by the {@code simplifyUberon} method.
+     * of the original {@code OWLOntology} {@code ont}. The information is provided 
+     * through this method arguments. This currently includes: 
+     * <ul>
+     *   <li>{@code subgraphClassesFiltered} a listing of the {@code OWLClass}es 
+     *   that were removed as a result of graph filtering performed by 
+     *   the {@code simplifyUberon} method.
      * 
-     * @param uberonOnt     The original {@code OWLOntology}, as before simplification.
-     * @param infoFilePath  A {@code String} that is the path to a file that will 
-     *                      store various information about the simplification 
-     *                      process.
+     * @param uberonOnt                 The original {@code OWLOntology}, 
+     *                                  as before simplification.
+     * @param infoFilePath              A {@code String} that is the path to a file that will 
+     *                                  store various information about the simplification 
+     *                                  process.
+     * @param subgraphClassesFiltered   A {@code Collection} of {@code String}s that are 
+     *                                  the OBO-like IDs of {@code OWLClass}es 
+     *                                  removed as a result of graph filtering.
      * @throws IOException  If an error occurred while writing in {@code infoFilePath}.
      */
-    public void saveSimplificationInfo(OWLOntology ont, String infoFilePath) 
-            throws IOException {
-        log.entry(ont, infoFilePath);
+    public void saveSimplificationInfo(OWLOntology ont, String infoFilePath, 
+            Collection<String> subgraphClassesFiltered) throws IOException {
+        log.entry(ont, infoFilePath, subgraphClassesFiltered);
         
         //get a OWLGraphWrapper to obtain information about classes
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
         //Write IDs removed as a result of graph filtering
-        //first, order the IDs
-        List<String> orderedIds = new ArrayList<String>(this.getSubgraphClassesRemoved());
-        Collections.sort(orderedIds);
+        //first, filter potential redundancy 
+        Set<String> filteredIds = new HashSet<String>(subgraphClassesFiltered);
+        //then, order the IDs. 
+        List<String> orderedIds = new ArrayList<String>(filteredIds);
+        //To get a natural ordering, we order based on the prefix of the ID, 
+        //then based on the numeric part
+        Collections.sort(orderedIds, new Comparator<String>() {
+            @Override
+            public int compare(String id1, String id2) {
+                //pattern using lookbehind
+                String splitPattern = ":";
+                String prefix1 = id1.split(splitPattern)[0];
+                String prefix2 = id2.split(splitPattern)[0];
+                if (!prefix1.equals(prefix2)) {
+                    return prefix1.compareTo(prefix2);
+                }
+                Integer numeric1 = Integer.parseInt(id1.split(splitPattern)[1]);
+                Integer numeric2 = Integer.parseInt(id2.split(splitPattern)[1]);
+                return (numeric1-numeric2);
+            }
+          });
         //create the header of the file, and the conditions on the columns
         String[] header = new String[2];
         header[0] = "Uberon ID";
@@ -398,9 +423,9 @@ public class Uberon {
         processors[1] = new NotNull();
         
         try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(infoFilePath),
-                CsvPreference.TAB_PREFERENCE)) {
+                Utils.TSVCOMMENTED)) {
             
-            mapWriter.writeComment("#===== Uberon IDs removed as a result " +
+            mapWriter.writeComment("//===== Uberon IDs removed as a result " +
                     "of graph filtering =====");
             mapWriter.writeHeader(header);
             
@@ -557,8 +582,8 @@ public class Uberon {
      *          {@code OWLClass}es removed as a result of graph filtering. Graph filtering 
      *          is performed in the {@code simplifyUberon} method.
      */
-    public Set<String> getSubgraphClassesRemoved() {
-        return this.subgraphClassesRemoved;
+    public Set<String> getSubgraphClassesFiltered() {
+        return this.subgraphClassesFiltered;
     }
     
     /**

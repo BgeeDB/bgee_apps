@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
+import org.bgee.pipeline.Utils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -29,7 +30,6 @@ import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
-import org.supercsv.prefs.CsvPreference;
 
 import owltools.graph.OWLGraphWrapper;
 
@@ -201,7 +201,7 @@ public class TaxonConstraintsTest extends TestAncestor {
 
         //now read the TSV file
         try (ICsvMapReader mapReader = new CsvMapReader(
-                new FileReader(outputTSV), CsvPreference.TAB_PREFERENCE)) {
+                new FileReader(outputTSV), Utils.TSVCOMMENTED)) {
             String[] headers = mapReader.getHeader(true); 
             final CellProcessor[] processors = new CellProcessor[] {
                     new NotNull(new UniqueHashCode()), 

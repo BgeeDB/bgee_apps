@@ -48,7 +48,6 @@ import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
-import org.supercsv.prefs.CsvPreference;
 
 import owltools.graph.OWLGraphWrapper;
 import owltools.mooncat.SpeciesSubsetterUtil;
@@ -678,7 +677,7 @@ public class TaxonConstraints {
         
         
         try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
-                CsvPreference.TAB_PREFERENCE)) {
+                Utils.TSVCOMMENTED)) {
             
             mapWriter.writeHeader(header);
             

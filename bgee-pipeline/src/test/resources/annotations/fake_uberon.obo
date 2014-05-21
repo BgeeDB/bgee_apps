@@ -30,7 +30,7 @@ is_a: RO:0002324 ! developmentally related to
 id: transformation_of
 name: transformation_of
 synonym: "transforms from" EXACT [SIO:000657]
-xref: http://semanticscience.org/resource/SIO_000657
+xref: RO:0002494
 is_transitive: true
 is_a: RO:0002324 ! developmentally related to
 
@@ -39,5 +39,5 @@ id: immediate_transformation_of
 name: immediate_transformation_of
 synonym: "direct_transformation_of" EXACT [https://orcid.org/0000-0002-6601-2165]
 synonym: "immediately transforms from" EXACT [SIO:000658]
-xref: http://semanticscience.org/resource/SIO_000658
+xref: RO:0002495
 is_a: transformation_of ! transformation of

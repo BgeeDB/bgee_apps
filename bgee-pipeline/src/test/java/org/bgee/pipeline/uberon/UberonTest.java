@@ -129,4 +129,18 @@ public class UberonTest extends TestAncestor {
         assertEquals("Incorrect number of lines in TSV output", 3, i);
     }
     
+    /**
+     * Test the method {@link Uberon#simplifyUberon(OWLOntology, Collection, 
+     * Collection, Collection, Collection, Collection)}
+     */
+    @Test
+    public void shouldSimplifyUberon() {
+        //TODO: this unit test should be done, but as it only uses methods 
+        //from OWLGraphManipulator, that are already tested, I am lazy here.
+        //but it should be done anyway, because OWLGraphManipulator is not officially 
+        //part of Bgee, but of owltools, so we must ensure that no modifications 
+        //of owltools mess up our simplification
+        //ontology to use for the test: /uberon/simplifyUberonTest.obo
+    }
+    
 }

@@ -40,7 +40,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
      * Extends {@code MySQLDAOResultSet}, which is abstract, to perform 
      * unit tests using it.
      */
-    private class FakeDAOResultSet extends MySQLDAOResultSet {
+    private class FakeDAOResultSet extends MySQLDAOResultSet<TransferObject> {
         public FakeDAOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
@@ -92,7 +92,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         ResultSet realRs = mock(ResultSet.class);
         when(mockStatement2.executeQuery()).thenReturn(realRs);
         
-        MySQLDAOResultSet rs = new FakeDAOResultSet(
+        MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2));
         //first mockStatement should have been executed right away.
         //the call to executeNextStatementQuery should lose the first one and 
@@ -126,7 +126,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
         when(mockStatement2.isCanceled()).thenReturn(true);
         
-        MySQLDAOResultSet rs = new FakeDAOResultSet(
+        MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2));
         //first mockStatement should have been executed right away.
         //the call to executeNextStatementQuery should lose the first one and 
@@ -165,7 +165,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         ResultSet mockRs3 = mock(ResultSet.class);
         when(mockStatement3.executeQuery()).thenReturn(mockRs3);
         
-        MySQLDAOResultSet myRs = new FakeDAOResultSet(
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2, mockStatement3));
         verify(mockStatement).executeQuery();
         verify(mockStatement2, never()).executeQuery();
@@ -232,7 +232,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         ResultSet mockRs = mock(ResultSet.class);
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
-        MySQLDAOResultSet myRs = new FakeDAOResultSet(mockStatement);        
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement);        
 
         when(mockRs.next()).thenReturn(true);
         assertTrue("Incorrect value returend by next", myRs.next());
@@ -262,7 +262,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         ResultSet mockRs = mock(ResultSet.class);
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
-        MySQLDAOResultSet myRs = new FakeDAOResultSet(
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2, mockStatement3));
         myRs.close();
         verify(mockStatement).close();
@@ -277,7 +277,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
      */
     @Test
     public void shouldAddStatement() {
-        MySQLDAOResultSet rs = new FakeDAOResultSet(mock(BgeePreparedStatement.class));
+        MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(mock(BgeePreparedStatement.class));
         //first statement is immediately executed, so we do not count it
         assertEquals("Incorrect number of BgeePreparedStatement", 0, 
                 rs.getStatementCount());

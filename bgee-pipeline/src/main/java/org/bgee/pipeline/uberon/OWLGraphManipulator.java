@@ -593,9 +593,9 @@ public class OWLGraphManipulator {
      *   <li>{@link #mapRelationsToParent(Collection)} using {@code relIds}.
      *   <li>{@link #filterRelations(Collection, boolean)} using {@code relIds} and 
      *   {@code true} as the second parameter.
-     *   <li>{@link #filterSubgraphs(Collection)} using {@code toFilterSubgraphRootIds}.
      *   <li>{@link #removeSubgraphs(Collection, boolean)} using {@code toRemoveSubgraphRootIds} 
-     *   and {@code true} as the second parameter.
+     *   and {@code false} as the second parameter.
+     *   <li>{@link #filterSubgraphs(Collection)} using {@code toFilterSubgraphRootIds}.
      *   <li>{@link #removeRelsToSubsets(Collection, Collection)} using {@code subsetNames} 
      *   as first argument, and {@code toFilterSubgraphRootIds} as second argument. 
      * </ul>
@@ -604,17 +604,17 @@ public class OWLGraphManipulator {
      * @param relIds                    A {@code Collection} of {@code String}s to call 
      *                                  {@link #mapRelationsToParent(Collection)} and 
      *                                  #filterRelations(Collection, boolean)}.
-     * @param toFilterSubgraphRootIds   A {@code Collection} of {@code String}s to call 
-     *                                  {@link #filterSubgraphs(Collection)}.
      * @param toRemoveSubgraphRootIds   A {@code Collection} of {@code String}s to call 
      *                                  {@link #removeSubgraphs(Collection, boolean)}.
      *                                  on each of them.
+     * @param toFilterSubgraphRootIds   A {@code Collection} of {@code String}s to call 
+     *                                  {@link #filterSubgraphs(Collection)}.
      * @param subsetNames               A {@code Collection} of {@code String}s to call 
      *                                  {@link #removeRelsToSubsets(Collection)}.
      */
     public void simplifies(Collection<String> classIdsToRemove, Collection<String> relIds, 
-            Collection<String> toFilterSubgraphRootIds, 
-            Collection<String> toRemoveSubgraphRootIds,  
+            Collection<String> toRemoveSubgraphRootIds,
+            Collection<String> toFilterSubgraphRootIds,   
             Collection<String> subsetNames) {
         
         this.reduceRelations();
@@ -626,11 +626,11 @@ public class OWLGraphManipulator {
             this.mapRelationsToParent(relIds);
             this.filterRelations(relIds, true);
         }
+        if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
+            this.removeSubgraphs(toRemoveSubgraphRootIds, false);
+        }
         if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
             this.filterSubgraphs(toFilterSubgraphRootIds);
-        }
-        if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
-            this.removeSubgraphs(toRemoveSubgraphRootIds, true);
         }
         if (subsetNames != null && !subsetNames.isEmpty()) {
             this.removeRelsToSubsets(subsetNames, toFilterSubgraphRootIds);

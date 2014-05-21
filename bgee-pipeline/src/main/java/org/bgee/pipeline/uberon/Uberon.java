@@ -114,8 +114,8 @@ public class Uberon {
      *   Uberon simplifyUberon ext.owl custom_ext simplification_info.tsv 
      *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000,UBERON:0003103,UBERON:0000062,UBERON:0000489 
      *   BFO:0000050,RO:0002202,http://semanticscience.org/resource/SIO_000657 
+     *   NBO:0000313,GO:0008150,GO:0005575,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,NCBITaxon:1,CHEBI:24431
      *   UBERON:0013701,UBERON:0000026,UBERON:0000467,UBERON:0011676 
-     *   none 
      *   grouping_class,non_informative,ubprop:upper_level,upper_level}
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -205,8 +205,8 @@ public class Uberon {
      *                                  process.
      * @param classIdsToRemove          See same name argument in method {@code simplifyUberon}.
      * @param relIds                    See same name argument in method {@code simplifyUberon}.
-     * @param toFilterSubgraphRootIds   See same name argument in method {@code simplifyUberon}.
      * @param toRemoveSubgraphRootIds   See same name argument in method {@code simplifyUberon}.
+     * @param toFilterSubgraphRootIds   See same name argument in method {@code simplifyUberon}.
      * @param subsetNames               See same name argument in method {@code simplifyUberon}.
      * @throws IOException                      If an error occurred while reading the file 
      *                                          {@code pathToUberonOnt}.
@@ -224,12 +224,12 @@ public class Uberon {
     public void simplifyUberonAndSaveToFile(String pathToUberonOnt, String modifiedOntPath, 
             String infoFilePath, 
             Collection<String> classIdsToRemove, Collection<String> relIds, 
-            Collection<String> toFilterSubgraphRootIds, 
-            Collection<String> toRemoveSubgraphRootIds, Collection<String> subsetNames) 
+            Collection<String> toRemoveSubgraphRootIds, 
+            Collection<String> toFilterSubgraphRootIds, Collection<String> subsetNames) 
                     throws UnknownOWLOntologyException, OWLOntologyCreationException, 
                     OBOFormatParserException, IOException, OWLOntologyStorageException {
         log.entry(pathToUberonOnt, modifiedOntPath, infoFilePath, classIdsToRemove, relIds, 
-                toFilterSubgraphRootIds, toRemoveSubgraphRootIds, subsetNames);
+                toRemoveSubgraphRootIds, toFilterSubgraphRootIds, subsetNames);
         
         OWLOntology ont = OntologyUtils.loadOntology(pathToUberonOnt);
         
@@ -278,19 +278,19 @@ public class Uberon {
      *                                          are the OBO-like IDs or {@code IRI}s of relations 
      *                                          to be filtered and mapped to parent relations 
      *                                          (see same argument in 
-     *                                          {@code OWLGraphManipulator.simplifies} method).
-     * @param toFilterSubgraphRootIds           A {@code Collection} of {@code String}s that 
-     *                                          are the OBO-like IDs of the {@code OWLClass}es 
-     *                                          that are the roots of the subgraphs that 
-     *                                          will be kept in the ontology. Their ancestors 
-     *                                          will be kept as well. (see same argument in 
-     *                                          {@code OWLGraphManipulator.simplifies} method).
      * @param toRemoveSubgraphRootIds           A {@code Collection} of {@code String}s that 
      *                                          are the OBO-like IDs of the {@code OWLClass}es 
      *                                          that are the roots of the subgraphs to be 
      *                                          removed from the ontology. Classes part both of 
      *                                          a subgraph to remove and a subgraph not 
      *                                          to be removed will be kept (see same argument in 
+     *                                          {@code OWLGraphManipulator.simplifies} method).
+     *                                          {@code OWLGraphManipulator.simplifies} method).
+     * @param toFilterSubgraphRootIds           A {@code Collection} of {@code String}s that 
+     *                                          are the OBO-like IDs of the {@code OWLClass}es 
+     *                                          that are the roots of the subgraphs that 
+     *                                          will be kept in the ontology. Their ancestors 
+     *                                          will be kept as well. (see same argument in 
      *                                          {@code OWLGraphManipulator.simplifies} method).
      * @param subsetNames                       A {@code Collection} of {@code String}s that 
      *                                          are the names of the targeted subsets, for which 
@@ -306,11 +306,11 @@ public class Uberon {
      *                                          {@code OWLGraphManipulator}.
      */
     public void simplifyUberon(OWLOntology uberonOnt, Collection<String> classIdsToRemove, 
-            Collection<String> relIds, Collection<String> toFilterSubgraphRootIds, 
-            Collection<String> toRemoveSubgraphRootIds, Collection<String> subsetNames) 
+            Collection<String> relIds, Collection<String> toRemoveSubgraphRootIds, 
+            Collection<String> toFilterSubgraphRootIds, Collection<String> subsetNames) 
                     throws UnknownOWLOntologyException {
-        log.entry(uberonOnt, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
-                toRemoveSubgraphRootIds, subsetNames);
+        log.entry(uberonOnt, classIdsToRemove, relIds, toRemoveSubgraphRootIds, 
+                toFilterSubgraphRootIds, subsetNames);
         //TODO: dependency injection?
         OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
         
@@ -323,27 +323,19 @@ public class Uberon {
             manipulator.mapRelationsToParent(relIds);
             manipulator.filterRelations(relIds, true);
         }
+        if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
+            this.subgraphClassesFiltered.addAll(
+                    manipulator.removeSubgraphs(toRemoveSubgraphRootIds, false));
+        }
         if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
             this.subgraphClassesFiltered.addAll(
                     manipulator.filterSubgraphs(toFilterSubgraphRootIds));
-        }
-        if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
-            this.subgraphClassesFiltered.addAll(
-                    manipulator.removeSubgraphs(toRemoveSubgraphRootIds, true));
         }
         if (subsetNames != null && !subsetNames.isEmpty()) {
             manipulator.removeRelsToSubsets(subsetNames, toFilterSubgraphRootIds);
         }
         
 //        manipulator.simplifies(
-//                Arrays.asList(OntologyUtils.PART_OF_ID),//, 
-//                              //OntologyUtils.DEVELOPS_FROM_ID, 
-//                              //OntologyUtils.TRANSFORMATION_OF_ID), 
-//                Arrays.asList("UBERON:0013701",  //main body axis
-//                              "UBERON:0000026",  //appendage
-//                              "UBERON:0000467", //anatomical system
-//                              "UBERON:0011676"), //subdivision of organism along main body axis
-//                null, 
 //                Arrays.asList("UBERON:0000480", //anatomical group
 //                              "UBERON:0000061", //anatomical structure
 //                              "UBERON:0000465", //material anatomical entity
@@ -354,7 +346,22 @@ public class Uberon {
 //                              "UBERON:0003103", //compound organ
 //                              "UBERON:0000062", //organ
 //                              "UBERON:0000489"), //cavitated compound organ
-//                
+//                Arrays.asList(OntologyUtils.PART_OF_ID),//, 
+//                              //OntologyUtils.DEVELOPS_FROM_ID, 
+//                              //OntologyUtils.TRANSFORMATION_OF_ID), 
+//                Arrays.asList("NBO:0000313",  //behavior process
+//                              "GO:0008150",  //biological_process
+//                              "GO:0005575", //cellular_component
+//                              "ENVO:01000254", //environmental system
+//                              "BFO:0000040", //material entity
+//                              "GO:0003674", //molecular_function
+//                              "PATO:0000001", //quality
+//                              "NCBITaxon:1", //root
+//                              "CHEBI:24431"), //chemical entity
+//                Arrays.asList("UBERON:0013701",  //main body axis
+//                              "UBERON:0000026",  //appendage
+//                              "UBERON:0000467", //anatomical system
+//                              "UBERON:0011676"), //subdivision of organism along main body axis
 //                Arrays.asList("grouping_class", "non_informative", "ubprop:upper_level", 
 //                        "upper_level"));
         
@@ -400,7 +407,6 @@ public class Uberon {
         Collections.sort(orderedIds, new Comparator<String>() {
             @Override
             public int compare(String id1, String id2) {
-                //pattern using lookbehind
                 String splitPattern = ":";
                 String prefix1 = id1.split(splitPattern)[0];
                 String prefix2 = id2.split(splitPattern)[0];

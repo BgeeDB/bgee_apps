@@ -1,8 +1,8 @@
 format-version: 1.4
-ontology: foo
+ontology: simplifyUberonTest
 subsetdef: test_subset1 "used to test method removeRelsToSubsets"
 subsetdef: test_subset2 "used to test method removeRelsToSubsets"
-import: OWLGraphManipulatorTest_2.obo ! to test the merge of imported ontologies
+
 
 [Term]
 id: FOO:0001
@@ -10,7 +10,7 @@ name: root
 
 [Term]
 id: FOO:0100
-comment: test for the method removeSubgraphs, this root should not be renoved. 
+comment: test for the method removeSubgraphs, this root should not be removed. 
 name: root2
 
 [Term]
@@ -198,4 +198,3 @@ id: fake_rel5
 name: fake_rel5
 namespace: fake_rel
 is_a: develops_from ! develops from
-

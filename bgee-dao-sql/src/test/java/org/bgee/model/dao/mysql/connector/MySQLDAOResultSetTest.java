@@ -5,7 +5,9 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +18,8 @@ import org.bgee.model.dao.mysql.TestAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.junit.Test;
+
+import com.mysql.jdbc.ResultSetMetaData;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -88,13 +92,30 @@ public class MySQLDAOResultSetTest extends TestAncestor
         IllegalArgumentException, InvocationTargetException {
         
         BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
-        BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
         ResultSet realRs = mock(ResultSet.class);
-        when(mockStatement2.executeQuery()).thenReturn(realRs);
+        when(mockStatement.executeQuery()).thenReturn(realRs);
+        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
+        when(realRs.getMetaData()).thenReturn(metaData);
+        when(metaData.getColumnCount()).thenReturn(1);
+        when(metaData.getColumnLabel(eq(1))).thenReturn("column1");
+        
+        BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
+        ResultSet realRs2 = mock(ResultSet.class);
+        when(mockStatement2.executeQuery()).thenReturn(realRs2);
+        ResultSetMetaData metaData2 = mock(ResultSetMetaData.class);
+        when(realRs2.getMetaData()).thenReturn(metaData2);
+        when(metaData2.getColumnCount()).thenReturn(2);
+        when(metaData2.getColumnLabel(eq(1))).thenReturn("column2-1");
+        when(metaData2.getColumnLabel(eq(2))).thenReturn("column2-2");
         
         MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2));
         //first mockStatement should have been executed right away.
+        //check column labels
+        Map<Integer, String> expectedColumnLabels = new HashMap<Integer, String>();
+        expectedColumnLabels.put(1, "column1");
+        assertEquals("Incorrect column labels", expectedColumnLabels, rs.getColumnLabels());
+        
         //the call to executeNextStatementQuery should lose the first one and 
         //execute the second one
         verify(mockStatement2, never()).executeQuery();
@@ -108,6 +129,10 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement).close();
         verify(mockStatement2).executeQuery();
         verify(mockStatement2, never()).close();
+        expectedColumnLabels = new HashMap<Integer, String>();
+        expectedColumnLabels.put(1, "column2-1");
+        expectedColumnLabels.put(2, "column2-2");
+        assertEquals("Incorrect column labels", expectedColumnLabels, rs.getColumnLabels());
         
         method.invoke(rs);
         verify(mockStatement2).close();

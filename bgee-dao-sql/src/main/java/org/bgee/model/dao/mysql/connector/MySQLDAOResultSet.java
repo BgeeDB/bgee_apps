@@ -1,10 +1,14 @@
 package org.bgee.model.dao.mysql.connector;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -74,6 +78,10 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * @see #currentStatement
      */
     private ResultSet currentResultSet;
+    /**
+     * @see #getColumnLabels()
+     */
+    private final Map<Integer, String> columnLabels;
     
     /**
      * Default constructor private, at least one {@code BgeePreparedStatement} 
@@ -113,6 +121,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      */
     public MySQLDAOResultSet(List<BgeePreparedStatement> statements) {
         this.statements = new ArrayList<BgeePreparedStatement>();
+        this.columnLabels = new HashMap<Integer, String>();
         this.addAllStatements(statements);
         this.executeNextStatementQuery();
     }
@@ -161,6 +170,30 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     protected ResultSet getCurrentResultSet() {
     	return this.currentResultSet;
     }
+    /**
+     * Returns an unmodifiable {@code Map} associating column indexes to column labels. 
+     * Keys are {@code Integer}s representing column indexes, corresponding values 
+     * are {@code String}s being the column labels, from the metadata obtained 
+     * from the current {@code ResultSet} (see {@link #getCurrentResultSet()}). 
+     * <p>
+     * This {@code Map} is populated by calling {@code getColumnLabel} 
+     * on the {@code ResultSetMetaData} object obtained from the current {@code ResultSet}. 
+     * This information is loaded when the current {@code ResultSet} is set 
+     * (see {@link #executeNextStatementQuery()}).
+     * <p>
+     * Note that these are the labels that are stored, not the column names. From the JDBC 
+     * javadoc, they are "the designated column's suggested title for use 
+     * in printouts and displays. The suggested title is usually specified by the SQL 
+     * {@code AS} clause. If a SQL {@code AS} is not specified, the label will be 
+     * the same as the column name".
+     * 
+     * @return  An unmodifiable {@code Map} where keys are {@code Integer}s and values 
+     *          are {@code String}s, providing the association from column indexes 
+     *          to column labels. 
+     */
+    protected Map<Integer, String> getColumnLabels() {
+        return Collections.unmodifiableMap(this.columnLabels);
+    }
     
     @Override
     public void close() throws DAOException {
@@ -175,6 +208,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             }
         }
         this.statements.clear();
+        this.columnLabels.clear();
         log.exit();
     }
     
@@ -200,10 +234,17 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             this.currentStatement = this.statements.remove(0);
             this.checkCurrentStatementCanceled();
             this.currentResultSet = this.currentStatement.executeQuery();
+            //store currentResultSet column labels
+            this.columnLabels.clear();
+            ResultSetMetaData metaData = this.currentResultSet.getMetaData();
+            for (int column = 1; column <= metaData.getColumnCount(); column++) {
+                this.columnLabels.put(column, metaData.getColumnLabel(column));
+            }
         } catch (IndexOutOfBoundsException e) {
             //this simply means that we have no more BgeePreparedStatement to iterate.
             this.currentStatement = null;
             this.currentResultSet = null;
+            this.columnLabels.clear();
             log.catching(Level.TRACE, e);
         } catch (SQLException e) {
             //here, this is bad ;)
@@ -235,6 +276,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             //to avoid an infinite loop when calling close, which calls closeCurrent
             this.currentResultSet = null;
             this.currentStatement = null;
+            this.columnLabels.clear();
             //this is to close the remaining BgeePreparedStatements
             this.close();
             log.catching(e);
@@ -242,6 +284,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         }
         this.currentResultSet = null;
         this.currentStatement = null;
+        this.columnLabels.clear();
         log.exit();
     }
     

@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +16,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -71,6 +72,9 @@ public class TaxonConstraintsTest extends TestAncestor {
      */
     private final static Set<Integer> TAXONIDS = 
             new HashSet<Integer>(Arrays.asList(8, 13, 14, 15));
+    
+    @Rule
+    public final TemporaryFolder testFolder = new TemporaryFolder();
 
     /**
      * Default Constructor. 
@@ -94,64 +98,51 @@ public class TaxonConstraintsTest extends TestAncestor {
         TaxonConstraints generate = new TaxonConstraints(
                 OntologyUtils.loadOntology(UBERONFILE), 
                 OntologyUtils.loadOntology(TAXONTFILE));
-        File tempDir = null;
-        try {
-            tempDir = Files.createTempDirectory(null).toFile();
-            Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(
-                    TAXONIDS, tempDir.getPath());
-            
-            assertEquals("Incorrect number of OWLClasses in taxon constraints", 21, 
-                    constraints.keySet().size());
+        
+        File tempDir = testFolder.getRoot().getAbsoluteFile();
+        Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(
+                TAXONIDS, testFolder.getRoot().getPath());
 
-            //U:22 antenna never_in_taxon NCBITaxon:8 - exists in taxa 13, 14, and 15.
-            //note that this is also test that incorrect relations between taxa 
-            //are removed from Uberon (in Uberon, NCBITaxon:13 is NCBITaxon:8, 
-            //not in the provided taxonomy ontology).
-            //U:23 subclass of U:22 - exists in taxa 13, 14, and 15
-            //U:24 subclass of U:23 - exists in taxa 13, 14, and 15
-            Set<Integer> expectedTaxa1 = new HashSet<Integer>(Arrays.asList(13, 14, 15));
-            Set<String> expectedClassIds1 = new HashSet<String>(constraints.keySet());
-            expectedClassIds1.removeAll(Arrays.asList("U:22", "U:23", "U:24"));
+        assertEquals("Incorrect number of OWLClasses in taxon constraints", 21, 
+                constraints.keySet().size());
 
-            //S:998 never_in_taxon NCBITaxon:13 - NCBITaxon:14 subClassOf NCBITaxon:13 
-            // => exists in taxa 8 and 15
-            //note that this will also test that disjoint classes axioms are removed 
-            //from Uberon (in Uberon, NCBITaxon:13 disjoint_from NCBITaxon:14).
-            //S:9 subclass of S:998 - exists in taxa 8 and 15
-            //S:12 intersection_of: S:6 and of part_of S:998 - exists in taxa 8 and 15
-            Set<Integer> expectedTaxa2 = new HashSet<Integer>(Arrays.asList(8, 15));
-            Set<String> expectedClassIds2 = new HashSet<String>(constraints.keySet());
-            expectedClassIds2.removeAll(Arrays.asList("S:998", "S:9", "S:12"));
-            
-            //now iterate the Uberon OWLClass IDs
-            for (String classId: constraints.keySet()) {
-                Set<Integer> toCompare = TAXONIDS;
-                if (!expectedClassIds1.contains(classId)) {
-                    toCompare = expectedTaxa1;
-                } else if (!expectedClassIds2.contains(classId)) {
-                    toCompare = expectedTaxa2;
-                } 
-                assertEquals("Incorrect value in taxon constraints for class " + 
+        //U:22 antenna never_in_taxon NCBITaxon:8 - exists in taxa 13, 14, and 15.
+        //note that this is also test that incorrect relations between taxa 
+        //are removed from Uberon (in Uberon, NCBITaxon:13 is NCBITaxon:8, 
+        //not in the provided taxonomy ontology).
+        //U:23 subclass of U:22 - exists in taxa 13, 14, and 15
+        //U:24 subclass of U:23 - exists in taxa 13, 14, and 15
+        Set<Integer> expectedTaxa1 = new HashSet<Integer>(Arrays.asList(13, 14, 15));
+        Set<String> expectedClassIds1 = new HashSet<String>(constraints.keySet());
+        expectedClassIds1.removeAll(Arrays.asList("U:22", "U:23", "U:24"));
+
+        //S:998 never_in_taxon NCBITaxon:13 - NCBITaxon:14 subClassOf NCBITaxon:13 
+        // => exists in taxa 8 and 15
+        //note that this will also test that disjoint classes axioms are removed 
+        //from Uberon (in Uberon, NCBITaxon:13 disjoint_from NCBITaxon:14).
+        //S:9 subclass of S:998 - exists in taxa 8 and 15
+        //S:12 intersection_of: S:6 and of part_of S:998 - exists in taxa 8 and 15
+        Set<Integer> expectedTaxa2 = new HashSet<Integer>(Arrays.asList(8, 15));
+        Set<String> expectedClassIds2 = new HashSet<String>(constraints.keySet());
+        expectedClassIds2.removeAll(Arrays.asList("S:998", "S:9", "S:12"));
+
+        //now iterate the Uberon OWLClass IDs
+        for (String classId: constraints.keySet()) {
+            Set<Integer> toCompare = TAXONIDS;
+            if (!expectedClassIds1.contains(classId)) {
+                toCompare = expectedTaxa1;
+            } else if (!expectedClassIds2.contains(classId)) {
+                toCompare = expectedTaxa2;
+            } 
+            assertEquals("Incorrect value in taxon constraints for class " + 
                     classId, toCompare, constraints.get(classId));
-            }
-            
-            this.checkIntermediateOntology(8, expectedClassIds1, tempDir);
-            this.checkIntermediateOntology(13, expectedClassIds2, tempDir);
-            //taxon 14 is subclass of taxon 13, so we expect the exact same results
-            this.checkIntermediateOntology(14, expectedClassIds2, tempDir);
-            this.checkIntermediateOntology(15, constraints.keySet(), tempDir);
-        } finally {
-            if (tempDir != null) {
-                for (File child: tempDir.listFiles()) {
-                    if (!child.delete()) {
-                        log.warn("File could not be deleted: {}", child);
-                    }
-                }
-                if (!tempDir.delete()) {
-                    log.warn("Temp directory not deleted: {}", tempDir);
-                }
-            }
         }
+
+        this.checkIntermediateOntology(8, expectedClassIds1, tempDir);
+        this.checkIntermediateOntology(13, expectedClassIds2, tempDir);
+        //taxon 14 is subclass of taxon 13, so we expect the exact same results
+        this.checkIntermediateOntology(14, expectedClassIds2, tempDir);
+        this.checkIntermediateOntology(15, constraints.keySet(), tempDir);
     }
     
     /**
@@ -203,94 +194,80 @@ public class TaxonConstraintsTest extends TestAncestor {
         OWLOntologyCreationException, OBOFormatParserException, 
         OWLOntologyStorageException {
         
-        File tempDir = null;
-        try {
-            tempDir = Files.createTempDirectory(null).toFile();
-            String outputTSV = new File(tempDir, "table.tsv").getPath();
+        String outputTSV = testFolder.newFile("table.tsv").getPath();
 
-            TaxonConstraints generate = new TaxonConstraints(UBERONFILE, TAXONTFILE);
-            generate.generateTaxonConstraints(TAXONFILE, outputTSV, null);
-            
-            //now read the TSV file
-            try (ICsvMapReader mapReader = new CsvMapReader(
-                    new FileReader(outputTSV), CsvPreference.TAB_PREFERENCE)) {
-                String[] headers = mapReader.getHeader(true); 
-                final CellProcessor[] processors = new CellProcessor[] {
-                        new NotNull(new UniqueHashCode()), 
-                        new NotNull(), 
-                        new NotNull(new ParseBool("t", "f")), 
-                        new NotNull(new ParseBool("t", "f")), 
-                        new NotNull(new ParseBool("t", "f")), 
-                        new NotNull(new ParseBool("t", "f"))};
-                
-                Map<String, Object> taxonConstraintMap;
-                int i = 0;
-                while( (taxonConstraintMap = mapReader.read(headers, processors)) != null ) {
-                    log.trace("Row: {}", taxonConstraintMap);
-                    i++;
-                    String uberonId = (String) taxonConstraintMap.get(headers[0]);
-                    String uberonName = (String) taxonConstraintMap.get(headers[1]);
-                    if (uberonId.equals("U:22")) {
-                        assertEquals("Incorrect name for U:22", "antenna", uberonName);
-                    }
-                    if (uberonId.equals("U:23")) {
-                        assertEquals("Incorrect name for U:23", "left antenna", uberonName);
-                    }
-                    if (uberonId.equals("U:24")) {
-                        assertEquals("Incorrect name for U:24", "left antenna segment", 
-                                uberonName);
-                    }
-                    if (uberonId.equals("S:998")) {
-                        assertEquals("Incorrect name for S:998", "Cephalus Obscurus", 
-                                uberonName);
-                    }
-                    if (uberonId.equals("S:9")) {
-                        assertEquals("Incorrect name for S:9", "Cell of Cephalus Obscurus", 
-                                uberonName);
-                    }
-                    if (uberonId.equals("S:12")) {
-                        assertEquals("Incorrect name for S:12", "Cephalus Obscurus Astrocyte", 
-                                uberonName);
-                    }
-                    boolean taxon1ExpectedValue = true;
-                    boolean taxon2ExpectedValue = true;
-                    boolean taxon3ExpectedValue = true;
-                    boolean taxon4ExpectedValue = true;
-                    if (uberonId.equals("U:22") || uberonId.equals("U:23") || 
-                            uberonId.equals("U:24")) {
-                        taxon1ExpectedValue = false;
-                    } else if (uberonId.equals("S:998") || uberonId.equals("S:9") || 
-                            uberonId.equals("S:12")) {
-                        taxon2ExpectedValue = false;
-                        taxon3ExpectedValue = false;
-                    }
-                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
-                            " and taxon 8", taxon1ExpectedValue, 
-                            taxonConstraintMap.get(headers[2]));
-                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
-                            " and taxon 13", taxon2ExpectedValue, 
-                            taxonConstraintMap.get(headers[3]));
-                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
-                            " and taxon 14", taxon3ExpectedValue, 
-                            taxonConstraintMap.get(headers[4]));
-                    assertEquals("Incorrect value for Uberon ID " + uberonId + 
-                            " and taxon 15", taxon4ExpectedValue, 
-                            taxonConstraintMap.get(headers[5]));
+        TaxonConstraints generate = new TaxonConstraints(UBERONFILE, TAXONTFILE);
+        generate.generateTaxonConstraints(TAXONFILE, outputTSV, null);
+
+        //now read the TSV file
+        try (ICsvMapReader mapReader = new CsvMapReader(
+                new FileReader(outputTSV), CsvPreference.TAB_PREFERENCE)) {
+            String[] headers = mapReader.getHeader(true); 
+            final CellProcessor[] processors = new CellProcessor[] {
+                    new NotNull(new UniqueHashCode()), 
+                    new NotNull(), 
+                    new NotNull(new ParseBool("t", "f")), 
+                    new NotNull(new ParseBool("t", "f")), 
+                    new NotNull(new ParseBool("t", "f")), 
+                    new NotNull(new ParseBool("t", "f"))};
+
+            Map<String, Object> taxonConstraintMap;
+            int i = 0;
+            while( (taxonConstraintMap = mapReader.read(headers, processors)) != null ) {
+                log.trace("Row: {}", taxonConstraintMap);
+                i++;
+                String uberonId = (String) taxonConstraintMap.get(headers[0]);
+                String uberonName = (String) taxonConstraintMap.get(headers[1]);
+                if (uberonId.equals("U:22")) {
+                    assertEquals("Incorrect name for U:22", "antenna", uberonName);
                 }
-                assertEquals("Incorrect number of lines in TSV output", 21, i);
+                if (uberonId.equals("U:23")) {
+                    assertEquals("Incorrect name for U:23", "left antenna", uberonName);
+                }
+                if (uberonId.equals("U:24")) {
+                    assertEquals("Incorrect name for U:24", "left antenna segment", 
+                            uberonName);
+                }
+                if (uberonId.equals("S:998")) {
+                    assertEquals("Incorrect name for S:998", "Cephalus Obscurus", 
+                            uberonName);
+                }
+                if (uberonId.equals("S:9")) {
+                    assertEquals("Incorrect name for S:9", "Cell of Cephalus Obscurus", 
+                            uberonName);
+                }
+                if (uberonId.equals("S:12")) {
+                    assertEquals("Incorrect name for S:12", "Cephalus Obscurus Astrocyte", 
+                            uberonName);
+                }
+                boolean taxon1ExpectedValue = true;
+                boolean taxon2ExpectedValue = true;
+                boolean taxon3ExpectedValue = true;
+                boolean taxon4ExpectedValue = true;
+                if (uberonId.equals("U:22") || uberonId.equals("U:23") || 
+                        uberonId.equals("U:24")) {
+                    taxon1ExpectedValue = false;
+                } else if (uberonId.equals("S:998") || uberonId.equals("S:9") || 
+                        uberonId.equals("S:12")) {
+                    taxon2ExpectedValue = false;
+                    taxon3ExpectedValue = false;
+                }
+                assertEquals("Incorrect value for Uberon ID " + uberonId + 
+                        " and taxon 8", taxon1ExpectedValue, 
+                        taxonConstraintMap.get(headers[2]));
+                assertEquals("Incorrect value for Uberon ID " + uberonId + 
+                        " and taxon 13", taxon2ExpectedValue, 
+                        taxonConstraintMap.get(headers[3]));
+                assertEquals("Incorrect value for Uberon ID " + uberonId + 
+                        " and taxon 14", taxon3ExpectedValue, 
+                        taxonConstraintMap.get(headers[4]));
+                assertEquals("Incorrect value for Uberon ID " + uberonId + 
+                        " and taxon 15", taxon4ExpectedValue, 
+                        taxonConstraintMap.get(headers[5]));
             }
-        } finally {
-            if (tempDir != null) {
-                for (File child: tempDir.listFiles()) {
-                    if (!child.delete()) {
-                        log.warn("File could not be deleted: {}", child);
-                    }
-                }
-                if (!tempDir.delete()) {
-                    log.warn("Temp directory not deleted: {}", tempDir);
-                }
-            }
+            assertEquals("Incorrect number of lines in TSV output", 21, i);
         }
+      
     }
     
     /**

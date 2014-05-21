@@ -413,8 +413,22 @@ public class Uberon {
                 if (!prefix1.equals(prefix2)) {
                     return prefix1.compareTo(prefix2);
                 }
-                Integer numeric1 = Integer.parseInt(id1.split(splitPattern)[1]);
-                Integer numeric2 = Integer.parseInt(id2.split(splitPattern)[1]);
+                int numeric1 = 0;
+                int numeric2 = 0;
+                try {
+                    numeric1 = Integer.parseInt(id1.split(splitPattern)[1]);
+                } catch (NumberFormatException e) {
+                    throw log.throwing(new NumberFormatException(
+                            "A malformed ID caused a NumberFormatException when parsed: " + 
+                            id1 + " - " + e.getMessage()));
+                }
+                try {
+                    numeric2 = Integer.parseInt(id2.split(splitPattern)[1]);
+                } catch (NumberFormatException e) {
+                    throw log.throwing(new NumberFormatException(
+                            "A malformed ID caused a NumberFormatException when parsed: " + 
+                            id2 + " - " + e.getMessage()));
+                }
                 return (numeric1-numeric2);
             }
           });

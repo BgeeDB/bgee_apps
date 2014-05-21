@@ -68,8 +68,7 @@ public class OntologyUtils {
     /**
      * {@code IRI} of the {@code OWLObjectProperty} "transformation_of".
      */
-    public final static String TRANSFORMATION_OF_ID = 
-            "http://semanticscience.org/resource/SIO_000657";
+    public final static String TRANSFORMATION_OF_ID = "RO:0002494";
     /**
      * {@code IRI} of the {@code OWLObjectProperty} "in_taxon".
      */

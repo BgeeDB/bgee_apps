@@ -450,21 +450,23 @@ public class Uberon {
             mapWriter.writeHeader(header);
             
             for (String uberonId: orderedIds) {
-                Map<String, Object> row = new HashMap<String, Object>();
-                row.put(header[0], uberonId);
                 OWLClass cls = wrapper.getOWLClassByIdentifier(uberonId);
-                String label = "-";
                 if (cls != null) {
-                    label = wrapper.getLabelOrDisplayId(cls);
-                } else {
+                    //check that the class is not obsolete
+                    if (wrapper.isObsolete(cls)) {
+                        continue;
+                    }
+                    Map<String, Object> row = new HashMap<String, Object>();
+                    row.put(header[0], uberonId);
+                    row.put(header[1], wrapper.getLabelOrDisplayId(cls));
+                    mapWriter.write(row, header, processors);
+                } //else {
                     //we disable this assertion error, there are weird case 
                     //were getOWLClassByIdentifier does not find the OWLClass, 
                     //for instance, ID "biological:modeling".
                     //throw log.throwing(new AssertionError("Could not find class " +
                     //      "with ID " + uberonId));
-                }
-                row.put(header[1], label);
-                mapWriter.write(row, header, processors);
+                //}
             }
         }
         

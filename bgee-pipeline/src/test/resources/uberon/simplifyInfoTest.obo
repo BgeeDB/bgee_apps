@@ -24,8 +24,7 @@ relationship: part_of U:2 ! brain
 [Term]
 id: U:4
 name: forebrain astrocyte
-intersection_of: U:6
-intersection_of: part_of U:3
+is_obsolete: true
 
 [Term]
 id: U:22

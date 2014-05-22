@@ -89,8 +89,9 @@ public class UberonTest extends TestAncestor {
         OWLOntology uberonOnt = OntologyUtils.loadOntology(
                 this.getClass().getResource("/uberon/simplifyInfoTest.obo").getPath());
         //we provide an unordered, redundant list of class IDs
+        //U:4 is obsolete and should not be displayed in the file
         Collection<String> subgraphClassesFiltered = 
-                Arrays.asList("U:3", "U:2", "U:23", "U:3");
+                Arrays.asList("U:4", "U:3", "U:2", "U:23", "U:3");
         String tempFile = testFolder.newFile("simplifyInfo.tsv").getPath();
         uberonTest.saveSimplificationInfo(uberonOnt, tempFile, subgraphClassesFiltered);
         

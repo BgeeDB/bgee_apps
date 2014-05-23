@@ -233,8 +233,8 @@ public class Uberon {
         
         OWLOntology ont = OntologyUtils.loadOntology(pathToUberonOnt);
         
-        this.simplifyUberon(ont, classIdsToRemove, relIds, toFilterSubgraphRootIds, 
-                toRemoveSubgraphRootIds, subsetNames);
+        this.simplifyUberon(ont, classIdsToRemove, relIds, toRemoveSubgraphRootIds, 
+                toFilterSubgraphRootIds, subsetNames);
 
         //save ontology
         OntologyUtils utils = new OntologyUtils(ont);
@@ -324,8 +324,7 @@ public class Uberon {
             manipulator.filterRelations(relIds, true);
         }
         if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
-            this.subgraphClassesFiltered.addAll(
-                    manipulator.removeSubgraphs(toRemoveSubgraphRootIds, false));
+            manipulator.removeSubgraphs(toRemoveSubgraphRootIds, false);
         }
         if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
             this.subgraphClassesFiltered.addAll(

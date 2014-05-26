@@ -29,7 +29,7 @@ import sbc.orthoxml.Species;
 import sbc.orthoxml.io.OrthoXMLReader;
 
 /**
- * This class parses the orthoxml file which contains all the data of the hierarchical 
+ * This class parses the OrthoXML file which contains all the data of the hierarchical 
  * orthologous groups obtained from OMA. It retrieves all the data pertaining to the
  * orthologous genes.
  * 
@@ -143,26 +143,26 @@ public class ParseOrthoXML extends MySQLDAOUser {
     		// Start a transaction to insert HierarchicalGroupTOs and update GeneTOs 
     		// in the Bgee data source.Note that we do not need to call rollback if
     		// an error occurs, calling closeDAO will rollback any ongoing transaction.
+    		int nbInsertedGenes = 0, nbUpdatedGenes = 0;
     		try {
     			this.startTransaction();
 
     			log.info("Start inserting of hierarchical groups...");
-    			this.getHierarchicalGroupDAO().insertHierarchicalGroups(hierarchicalGroupTOs);
+    			nbInsertedGenes = this.getHierarchicalGroupDAO().insertHierarchicalGroups(
+    					hierarchicalGroupTOs);
     			log.info("Done inserting hierarchical groups");
 
     			log.info("Start updating genes...");
-    			this.getGeneDAO().updateOMAGroupIDs(geneTOs);
+    			nbUpdatedGenes = this.getGeneDAO().updateGenes(geneTOs, 
+    					Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID));
     			log.info("Done updating genes.");
 
     			this.commit();
     		} finally {
     			this.closeDAO();
     		}
-    		log.info("Done parsing of OrthoXML file: "
-    				+ "{} hierarchical groups inserted and "
-    				+ "{} genes inserted.", 
-    				hierarchicalGroupTOs.size(), 
-    				geneTOs.size());
+    		log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted and "
+    				+ "{} genes inserted.", nbInsertedGenes, nbUpdatedGenes);
     	} catch (IllegalStateException e) {
     		log.catching(e);
     		throw log.throwing(new IllegalArgumentException(
@@ -184,7 +184,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
 
             log.info("Start getting gene IDs...");
     		this.getGeneDAO().setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-
     		GeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
     		while (rsGenes.next()) {
     			genesInDb.add(rsGenes.getTO().getId());
@@ -231,14 +230,14 @@ public class ParseOrthoXML extends MySQLDAOUser {
 					for (Gene groupGene : currentGroup.getGenes()) {
 						// Parse gene identifiers (named protId in OrthoXML file)
 						// TODO check new OrthoXML file
-						List<String> genes = Arrays.asList(groupGene.getProteinIdentifier().split("; "));
+						List<String> genes = Arrays.asList(
+								groupGene.getProteinIdentifier().split("; "));
 						for (String geneId : genes) {
 							if (genesInDb.contains(geneId)) {
 								// Add new {@code GeneTO} to {@code Collection} of 
 								// {@code GeneTO}s to be able to update OMAGroupId
 								// in gene table.
-								geneTOs.add(new GeneTO(geneId, null, null, 0, 0,
-														OMANodeId, true));
+								geneTOs.add(new GeneTO(geneId, "", "", 0, 0, OMANodeId, true));
 								break;
 							}
 						}
@@ -269,10 +268,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	 * calculate nested set bounds and fill the {@code Collection} of 
 	 * {@code HierarchicalGroupTO}s as a nested set model.
 	 * 
-	 * @param OMAGroupId	A {@code int} that is the OMA group ID.
+	 * @param OMAGroupId	An {@code int} that is the OMA group ID.
 	 * @param taxRange		A {@code String} that is the taxonomy range 
 	 * 						of the {@code HierarchicalGroupTO} to create.
-	 * @param nbChild		A {@code int} that is the number of children 
+	 * @param nbChild		An {@code int} that is the number of children 
 	 * 						of the {@code HierarchicalGroupTO} to create.
 	 */
 	private void addHierarchicalGroupTO(int OMAGroupId, String taxRange, int nbChild) {
@@ -307,7 +306,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	}
 	
 	/**
-	 * Reads the species IDs of all the species present in the orthoxml file.
+	 * Reads the species IDs of all the species present in the OrthoXML file.
 	 * 
 	 * @throws XMLParseException		If there is an error in parsing the XML retrieved by 
 	 * 									the OrthoXMLReader

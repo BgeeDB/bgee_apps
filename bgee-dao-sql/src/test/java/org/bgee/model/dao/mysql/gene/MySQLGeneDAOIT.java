@@ -11,12 +11,14 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * Integration tests for {@link MySQLGeneDAO}, performed on a real MySQL database. 
@@ -59,7 +61,13 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 			// Generate result with the method
     		MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
     		dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-			GeneTOResultSet methResults = dao.getAllGenes();
+    		GeneTOResultSet methResults = dao.getAllGenes();
+
+//    		MySQLGeneDAO mockDao = Mockito.mock(MySQLGeneDAO.class);
+//    		GeneTOResultSet mockedGeneRs = Mockito.mock(GeneTOResultSet.class);
+//	        when(mockDao.getAllGenes()).thenReturn(mockedGeneRs);
+//    		mockDao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+//			GeneTOResultSet methResults = mockDao.getAllGenes();
 
     		// Generate manually expected result
     		GeneTO geneTO1 = new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 2, true);
@@ -119,34 +127,74 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
      * Test the select method {@link MySQLGeneDAO#updateOMAGroupIDs()}.
      * @throws SQLException 
      */
-//    @Test
-    public void testUpdateOMAGroupIDs() throws SQLException {
+    @Test
+    public void testUpdateGenes() throws SQLException {
     	log.entry();
     	this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
 
     	Collection<GeneTO> geneTOs = new ArrayList<GeneTO>();
-    	geneTOs.add(new GeneTO("ID1", null, null, 0, 0, 7, true));
-    	geneTOs.add(new GeneTO("ID2", null, null, 0, 0, 6, true));
-
+    	geneTOs.add(new GeneTO("ID1", "GNMod1", "DescMod1", 31, 12, 7, true));
+    	geneTOs.add(new GeneTO("ID2", "GNMod2", "DescMod2", 11, 12, 6, false));
+    	
+    	Collection<GeneDAO.Attribute> attributesToUpdate1 = new ArrayList<GeneDAO.Attribute>();
+    	attributesToUpdate1.add(GeneDAO.Attribute.OMAPARENTNODEID);
+    	Collection<GeneDAO.Attribute> attributesToUpdate2 = new ArrayList<GeneDAO.Attribute>();
+    	attributesToUpdate2.add(GeneDAO.Attribute.NAME);
+    	attributesToUpdate2.add(GeneDAO.Attribute.DESCRIPTION);
+    	attributesToUpdate2.add(GeneDAO.Attribute.SPECIESID);
+    	attributesToUpdate2.add(GeneDAO.Attribute.GENEBIOTYPEID);
+    	attributesToUpdate2.add(GeneDAO.Attribute.OMAPARENTNODEID);
+    	attributesToUpdate2.add(GeneDAO.Attribute.ENSEMBLGENE);
+    	
     	try {
+    		//Test with on Attribute
     		MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
     		assertEquals("Incorrect number of rows inserted", 2, 
-    				dao.updateOMAGroupIDs(geneTOs));
+    				dao.updateGenes(geneTOs, attributesToUpdate1));
 
     		try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
     				prepareStatement("select 1 from gene where " +
     						"geneID = ? and OMAParentNodeId= ?")) {
 
     			stmt.setString(1, "ID1");
-    			stmt.setString(2, "7");
+    			stmt.setInt(2, 7);
     			assertTrue("GeneTO incorrectly updated", 
     					stmt.getRealPreparedStatement().executeQuery().next());
 
     			stmt.setString(1, "ID2");
-    			stmt.setString(2, "6");
+    			stmt.setInt(2, 6);
     			assertTrue("GeneTO incorrectly updated", 
     					stmt.getRealPreparedStatement().executeQuery().next());
-    		}    
+    		}
+    		
+    		//Test with all Attributes
+    		assertEquals("Incorrect number of rows inserted", 2, 
+    				dao.updateGenes(geneTOs, attributesToUpdate2));
+
+    		try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+    				prepareStatement("select 1 from gene where geneID = ? and geneName = ? "
+    						+ "and geneDescription = ? and speciesId= ? and geneBioTypeId= ? "
+    						+ "and OMAParentNodeId= ? and ensemblGene = ?")) {
+    			stmt.setString(1, "ID1");
+    			stmt.setString(2, "GNMod1");
+    			stmt.setString(3, "DescMod1");
+    			stmt.setInt(4, 31);
+    			stmt.setInt(5, 12);
+    			stmt.setInt(6, 7);
+    			stmt.setBoolean(7, true);
+    			assertTrue("GeneTO incorrectly updated", 
+    					stmt.getRealPreparedStatement().executeQuery().next());
+
+    			stmt.setString(1, "ID2");
+    			stmt.setString(2, "GNMod2");
+    			stmt.setString(3, "DescMod2");
+    			stmt.setInt(4, 11);
+    			stmt.setInt(5, 12);
+    			stmt.setInt(6, 6);
+    			stmt.setBoolean(7, false);
+    			assertTrue("GeneTO incorrectly updated", 
+    					stmt.getRealPreparedStatement().executeQuery().next());
+    		}
     	} finally {
     		this.deleteFromTablesAndUseDefaultDB(UPDATEDTABLENAMES);
     	}

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -15,7 +14,6 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import sbc.orthoxml.Group;
@@ -36,8 +34,6 @@ public class ParseOrthoXMLTest extends TestAncestor {
      */
 	private final static Logger log = 
 			LogManager.getLogger(ParseOrthoXMLTest.class.getName());
-
-	private static ParseOrthoXML parser;
 
     private static final String OMAFILE = "/orthoxml/fakeOMA.orthoxml";
 
@@ -147,7 +143,42 @@ public class ParseOrthoXMLTest extends TestAncestor {
         return log.exit(true);
 	}
 
-	public void testCount() {
+	/**
+     * Test {@link ParseOrthoXML#count(Group)}.
+	 * @throws XMLStreamException
+	 * @throws NoSuchMethodException
+	 * @throws SecurityException
+	 * @throws IllegalAccessException
+	 * @throws IllegalArgumentException
+	 * @throws InvocationTargetException
+	 * @throws FileNotFoundException
+	 * @throws XMLParseException
+	 */
+	@Test
+	public void testCount() throws XMLStreamException, NoSuchMethodException, SecurityException, 
+			IllegalAccessException, IllegalArgumentException, InvocationTargetException, 
+			FileNotFoundException, XMLParseException {
+        log.entry();
+        
+        MockDAOManager mockManager = new MockDAOManager();
+        ParseOrthoXML parser = new ParseOrthoXML(mockManager);
+        
+		OrthoXMLReader reader = new OrthoXMLReader(new File(
+				ParseOrthoXMLTest.class.getResource(OMAFILE).getPath()));
+	
+        Method method = parser.getClass().getDeclaredMethod("count", Group.class);
+        method.setAccessible(true);
+		
+		// Count and check the number of group/subgroups in the first group
+		Group group = reader.next();
+		int i = (int) method.invoke(parser, group);
+        assertEquals("False count: found "+i+" group/subgroup instead of 2", 2, i);
+        
+		// Count and check the number of group/subgroups in the second group
+		group = reader.next();
+		i = (int) method.invoke(parser, group);
+        assertEquals("False count: found "+i+" group/subgroup instead of 4", 4, i);
+        log.exit();
 	}
 
 	public void testGetSpecies() {

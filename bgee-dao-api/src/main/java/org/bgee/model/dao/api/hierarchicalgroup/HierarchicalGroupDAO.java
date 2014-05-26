@@ -119,7 +119,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
     	private static final long serialVersionUID = 3491884200260547404L;
 
     	/**
-    	 * A {@code int} representing the ID for a particular OMA group of
+    	 * An {@code int} representing the ID for a particular OMA group of
     	 * orthologous genes.
     	 */
     	private final int OMAGroupId;
@@ -200,7 +200,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         }
 
     	/**
-         * @return  A {@code int} that this an unique ID of a node in the tree of the generated
+         * @return  An {@code int} that this an unique ID of a node in the tree of the generated
          * 			hierarchical groups. Corresponds to the DAO {@code Attribute} 
          * 			{@link HierarchicalGroupDAO.Attribute NODEID}. Same as 
          * 			{@link HierarchicalGroupTO#getId()} but return an {@code int} 
@@ -211,7 +211,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         }
 
         /**
-         * @return  A {@code int} that this the ID of a particular Hierarchical Orthologous 
+         * @return  An {@code int} that this the ID of a particular Hierarchical Orthologous 
          * 			Group as provided by OMA. Corresponds to the DAO {@code Attribute} 
          * 			{@link HierarchicalGroupDAO.Attribute GROUPID}.
          */

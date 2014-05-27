@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
@@ -106,6 +107,11 @@ public class CommandRunner {
             SimilarityAnnotation.main(newArgs);
             break;
             
+        //---------- General annotations -----------
+        case "AnnotationCommon": 
+            AnnotationCommon.main(newArgs);
+            break;
+            
         //---------- Genes -----------
         case "InsertGO": 
             InsertGO.main(newArgs);
@@ -115,8 +121,8 @@ public class CommandRunner {
             break;
             
         default: 
-            throw log.throwing(new IllegalArgumentException("The first argument " +
-            		"provided does not correspond to any known action."));
+            throw log.throwing(new UnsupportedOperationException("The following action " +
+                    "is not recognized: " + args[0]));
         }
         
         log.exit();

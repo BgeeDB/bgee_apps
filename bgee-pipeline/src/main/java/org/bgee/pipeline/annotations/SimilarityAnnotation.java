@@ -332,6 +332,9 @@ public class SimilarityAnnotation {
             }
             new SimilarityAnnotation().writeAnatEntitiesWithNoTransformationOfToFile(
                     args[1], args[2], args[3]);
+        } else {
+            throw log.throwing(new UnsupportedOperationException("The following action " +
+                    "is not recognized: " + args[0]));
         }
         
         log.exit();

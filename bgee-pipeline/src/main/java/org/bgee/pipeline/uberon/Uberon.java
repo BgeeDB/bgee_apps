@@ -176,6 +176,9 @@ public class Uberon {
                     CommandRunner.parseListArgument(args[6]), 
                     CommandRunner.parseListArgument(args[7]), 
                     CommandRunner.parseListArgument(args[8]));
+        } else {
+            throw log.throwing(new UnsupportedOperationException("The following action " +
+                    "is not recognized: " + args[0]));
         }
         
         log.exit();

@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.uberon.Uberon;
 import org.supercsv.io.CsvListReader;
@@ -82,6 +83,55 @@ public class AnnotationCommon {
     public final static Set<String> ENTITY_SEPARATORS = 
             Collections.unmodifiableSet(new HashSet<String>(
                     Arrays.asList(DEFAULT_ENTITY_SEPARATOR, ",")));
+    
+    /**
+     * Actions that can be launched from this main method, depending on the first 
+     * element in {@code args}: 
+     * <ul>
+     * <li>If the first element in {@code args} is "filterInfoFiles", the action 
+     * will be to filter the information obtained following simplification of Uberon, 
+     * to contain only anatomical entities used in our annotations. See {@link 
+     * #filterUberonSimplificationInfo(Set, Set, Set, String)} for more details. 
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>A list of paths to information files generated from Uberon simplification, 
+     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     *   <li>A list of paths to annotation files using single anatomical entities 
+     *   for annotations (see {@link #ANAT_ENTITY_COL_NAMES}), 
+     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     *   <li>A list of paths to annotation files using multiple anatomical entities 
+     *   for annotations (see {@link #MULTIPLE_ENTITY_COL_NAMES}), 
+     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     *   <li>The path to the directory where to store filtered info files. 
+     *   </ol>
+     * </ul>
+     * 
+     * @param args  An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws IOException             
+     * @throws FileNotFoundException 
+     */
+    public static void main(String[] args) throws FileNotFoundException, IOException {
+        log.entry((Object[]) args);
+        
+        if (args[0].equalsIgnoreCase("filterInfoFiles")) {
+            if (args.length != 5) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "5 arguments, " + args.length + " provided."));
+            }
+            
+            AnnotationCommon.filterUberonSimplificationInfo(
+                    new HashSet<String>(CommandRunner.parseListArgument(args[1])), 
+                    new HashSet<String>(CommandRunner.parseListArgument(args[2])), 
+                    new HashSet<String>(CommandRunner.parseListArgument(args[3])), 
+                    args[4]);
+        } else {
+            throw log.throwing(new UnsupportedOperationException("The following action " +
+            		"is not recognized: " + args[0]));
+        }
+        
+        log.exit();
+    }
     
     /**
      * Filter the anatomical entities reported from {@link 

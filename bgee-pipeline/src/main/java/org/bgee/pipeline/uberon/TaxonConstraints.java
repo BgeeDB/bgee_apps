@@ -212,8 +212,8 @@ public class TaxonConstraints {
             TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
             generate.generateTaxonConstraints(args[3], args[4], storeDir);
         } else {
-            throw log.throwing(new IllegalArgumentException("The argument " + args[0] + 
-                    " provided does not correspond to any known action."));
+            throw log.throwing(new UnsupportedOperationException("The following action " +
+                    "is not recognized: " + args[0]));
         }
         
         log.exit();

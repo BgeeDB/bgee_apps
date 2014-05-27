@@ -1,5 +1,5 @@
-fake column	Uberon ID	Uberon name
-whatever	ID:1	name1
-whatever_again	ID:3	name3
-still_whatever	ID:100	name100
-will be used to check for Uberon info filtering based on XRef	ALT_ID:0000006	test A
+UberonId	Uberon ID	Uberon name	anatEntityId
+column should not be used, not preferred name	ID:1	name1	column should not be used, not preferred name
+column should not be used, not preferred name	ID:3	name3	column should not be used, not preferred name
+column should not be used, not preferred name	ID:100	name100	column should not be used, not preferred name
+column should not be used, not preferred name - Uberon ID will be used to check for Uberon info filtering based on XRef	ALT_ID:0000006	test A	column should not be used, not preferred name

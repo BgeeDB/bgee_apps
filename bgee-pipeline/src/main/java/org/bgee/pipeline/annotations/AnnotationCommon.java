@@ -49,26 +49,26 @@ public class AnnotationCommon {
             LogManager.getLogger(AnnotationCommon.class.getName());
     
     /**
-     * An unmodifiable {@code Set} of {@code String}s that are the potential names 
+     * An unmodifiable {@code List} of {@code String}s that are the potential names 
      * of columns containing anatomical entity IDs, in annotation files (for instance, 
      * expression data annotation files assign samples to one anatomical entity).
      * We allow multiple values because maybe this is inconsistent in the various 
-     * annotation files.
+     * annotation files. These values are ordered by order of preference of use.
      */
-    public static final Set<String> ANAT_ENTITY_COL_NAMES = Collections.unmodifiableSet(
-            new HashSet<String>(Arrays.asList(Uberon.ANAT_ENTITY_ID)));
+    public static final List<String> ANAT_ENTITY_COL_NAMES = Collections.unmodifiableList(
+            Arrays.asList(Uberon.ANAT_ENTITY_ID, "UberonId", "anatEntityId"));
     /**
-     * An unmodifiable {@code Set} of {@code String}s that are the potential names 
+     * An unmodifiable {@code List} of {@code String}s that are the potential names 
      * of columns containing multiple anatomical entity IDs, in annotation files 
      * (for instance, in the similarity annotation file, to describe homology between 
      * "lung" and "swim bladder", we would use the syntax "UBERON:0002048|UBERON:0006860").
      * We allow multiple values because maybe this is inconsistent in the various 
-     * annotation files. Allowed separators between entities are listed in 
-     * {@link #ENTITY_SEPARATORS}.
+     * annotation files. These values are ordered by order of preference of use. 
+     * Allowed separators between entities are listed in {@link #ENTITY_SEPARATORS}.
      */
-    public static final Set<String> MULTIPLE_ANAT_ENTITY_COL_NAMES = 
-            Collections.unmodifiableSet(new HashSet<String>(
-                    Arrays.asList(SimilarityAnnotation.ENTITY_COL_NAME)));
+    public static final List<String> MULTIPLE_ANAT_ENTITY_COL_NAMES = 
+            Collections.unmodifiableList(
+                    Arrays.asList(SimilarityAnnotation.ENTITY_COL_NAME));
     
     /**
      * A {@code String} that is the default separator between entities, in columns 
@@ -308,20 +308,26 @@ public class AnnotationCommon {
         try (ICsvListReader listReader = new CsvListReader(
                 new FileReader(pathToTSVFile), Utils.TSVCOMMENTED)) {
 
-            //localize the proper column
+            //localize the proper column. We choose the column by order of preference 
+            //(some annotation files contain several columns 
+            //from potential column names)
             String[] header = listReader.getHeader(true);
             //column indexes start at 1 in super csv 
             int columnIndex = 0;
-            for (int i = 0; i < header.length; i++) {
-                if (singleAnatEntity && ANAT_ENTITY_COL_NAMES.contains(header[i])) {
-                    //column indexes start at 1 in super csv 
-                    columnIndex = i + 1;
-                    break;
-                } else if (!singleAnatEntity && 
-                        MULTIPLE_ANAT_ENTITY_COL_NAMES.contains(header[i])) {
-                    //column indexes start at 1 in super csv 
-                    columnIndex = i + 1;
-                    break;
+            List<String> colNamesToUse;
+            if (singleAnatEntity) {
+                colNamesToUse = ANAT_ENTITY_COL_NAMES;
+            } else {
+                colNamesToUse = MULTIPLE_ANAT_ENTITY_COL_NAMES;
+            }
+            //iterate potential column name in order of preference
+            anatEntity: for (String anatEntityColName: colNamesToUse) {
+                for (int i = 0; i < header.length; i++) {
+                    if (anatEntityColName.equals(header[i])) {
+                        //column indexes start at 1 in super csv, so we add 1
+                        columnIndex = i + 1;
+                        break anatEntity;
+                    } 
                 }
             }
             

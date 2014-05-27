@@ -549,24 +549,6 @@ public class SimilarityAnnotationTest extends TestAncestor {
     }
     
     /**
-     * Test {@link SimilarityAnnotation#parseEntityColumn(String)}
-     */
-    @Test
-    public void shouldParseEntityColumn() throws NoSuchMethodException, 
-        SecurityException, IllegalAccessException, IllegalArgumentException, 
-        InvocationTargetException {
-        SimilarityAnnotation sim = new SimilarityAnnotation();
-        Method method = sim.getClass().getDeclaredMethod("parseEntityColumn", 
-                String.class);
-        method.setAccessible(true);
-        
-        List<String> expectedList = Arrays.asList("ID:1", "ID:2", "ID:3");
-        assertEquals(expectedList, method.invoke(sim, "ID:2|ID:3|ID:1"));
-        assertEquals(expectedList, method.invoke(sim, "ID:2,ID:3,ID:1"));
-        assertEquals(Arrays.asList("ID:1"), method.invoke(sim, " ID:1 "));
-    }
-    
-    /**
      * Test {@link SimilarityAnnotation#getRefIdFromRefColValue(String)}
      */
     @Test
@@ -630,21 +612,6 @@ public class SimilarityAnnotationTest extends TestAncestor {
     }
     
     /**
-     * Test {@link SimilarityAnnotation#termsToColumnValue(List)}
-     */
-    @Test
-    public void shouldGetTermsToColumnValue() throws NoSuchMethodException, 
-        SecurityException, IllegalAccessException, IllegalArgumentException, 
-        InvocationTargetException {
-        SimilarityAnnotation sim = new SimilarityAnnotation();
-        Method method = sim.getClass().getDeclaredMethod("termsToColumnValue", List.class);
-        method.setAccessible(true);
-        
-        String expectedTerm = "ID:2|ID:1|ID:3";
-        assertEquals(expectedTerm, method.invoke(sim, Arrays.asList("ID:2", "ID:1", "ID:3")));
-    }
-    
-    /**
      * Test the method {@link SimilarityAnnotation#extractTaxonIds(String)}
      */
     @Test
@@ -700,18 +667,6 @@ public class SimilarityAnnotationTest extends TestAncestor {
                 expectedClasses, new SimilarityAnnotation().getAnatEntitiesWithNoTransformationOf(
                         this.getClass().getResource("/annotations/similarity.tsv").getFile(), 
                         this.getClass().getResource("/annotations/fake_uberon.obo").getFile()));
-    }
-    
-    /**
-     * Test the method {@link SimilarityAnnotation#extractAnatEntityIds(String)}
-     */
-    @Test
-    public void shouldExtractAnatEntityIds() throws FileNotFoundException, IOException {
-        Set<String> expectedIds = new HashSet<String>(Arrays.asList("UBERON:0000001", 
-                "UBERON:0000002", "UBERON:0000003", "UBERON:0000004"));
-        assertEquals("Incorrect anatomical entity IDs extract from similarity annotation file", 
-                expectedIds, new SimilarityAnnotation().extractAnatEntityIds(
-                        this.getClass().getResource("/annotations/similarity.tsv").getFile()));
     }
     
     /**

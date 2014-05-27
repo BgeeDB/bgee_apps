@@ -165,12 +165,6 @@ public class SimilarityAnnotation {
      * @see #SUMMARY_LINE
      */
     public final static String LINE_TYPE_COL_NAME = "line type";
-    
-    /**
-     * A {@code String} that is the separator when different IDs or names are used 
-     * in a same column of the similarity annotation file.
-     */
-    private final static String SEPARATOR = "|";
     /**
      * A {@code String} that is the value of the {@link #QUALIFIER_COL_NAME} column, 
      * when the annotation is negated.
@@ -732,8 +726,8 @@ public class SimilarityAnnotation {
             
             //Uberon ID(s) used to define the entity annotated. Get them ordered 
             //by alphabetical order, for easier diff between different release files.
-            List<String> uberonIds = 
-                    this.parseEntityColumn((String) rawAnnot.get(ENTITY_COL_NAME));
+            List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
+                    (String) rawAnnot.get(ENTITY_COL_NAME));
             //get the corresponding names
             List<String> uberonNames = new ArrayList<String>();
             for (String uberonId: uberonIds) {
@@ -748,8 +742,10 @@ public class SimilarityAnnotation {
                 }
             }
             //store Uberon IDs and names as column values
-            releaseAnnot.put(ENTITY_COL_NAME, this.termsToColumnValue(uberonIds));
-            releaseAnnot.put(ENTITY_NAME_COL_NAME, this.termsToColumnValue(uberonNames));
+            releaseAnnot.put(ENTITY_COL_NAME, 
+                    AnnotationCommon.getTermsToColumnValue(uberonIds));
+            releaseAnnot.put(ENTITY_NAME_COL_NAME, 
+                    AnnotationCommon.getTermsToColumnValue(uberonNames));
             
             //taxon
             if (rawAnnot.get(TAXON_COL_NAME) != null) {
@@ -1292,7 +1288,7 @@ public class SimilarityAnnotation {
             allGood = false;
         }
         
-        for (String uberonId: this.parseEntityColumn(
+        for (String uberonId: AnnotationCommon.parseMultipleEntitiesColumn(
                 (String) annotation.get(ENTITY_COL_NAME))) {
             if (StringUtils.isBlank(uberonId)) {
                 log.error("Missing Uberon ID");
@@ -1370,36 +1366,6 @@ public class SimilarityAnnotation {
     }
     
     /**
-     * Parses a value extracted from the column {@link #ENTITY_COL_NAME}. An entity 
-     * can be represented by several Uberon IDs (like in the case of lung/swim bladder), 
-     * separated by either by a pipe symbol ("|"), or a comma (",").
-     * <p>
-     * The {@code String}s in the {@code List} are ordered using their natural ordering, 
-     * because this will allow easier diff on the generated file between releases.
-     * 
-     * @param entity    A {@code String} extracted from the entity column of 
-     *                  the similarity annotation file.
-     * @return          A {@code List} of {@code String}s that contains the individual 
-     *                  Uberon ID(s), order by alphabetical order.
-     * @see #termsToColumnValue(List)
-     */
-    private List<String> parseEntityColumn(String entity) {
-        log.entry(entity);
-        
-        if (entity == null) {
-            return log.exit(null);
-        }
-        String[] uberonIds = entity.split("\\||,");
-        List<String> ids = new ArrayList<String>();
-        for (String uberonId: uberonIds) {
-            ids.add(uberonId.trim());
-        }
-        //perform the alphabetical ordering
-        Collections.sort(ids);
-        
-        return log.exit(ids);
-    }
-    /**
      * Gets a reference ID from a value in the column {@link #REF_COL_NAME}. This is 
      * because in the curator annotation file, reference titles can be mixed in 
      * the column containing reference IDs, so we need to extract them.
@@ -1464,29 +1430,6 @@ public class SimilarityAnnotation {
         }
         throw log.throwing(new IllegalArgumentException("Incorrect format for " +
                 "the reference column: " + refColValue));
-    }
-    /**
-     * Generates a {@code String} based on {@code terms}, that can be used as value 
-     * of a column in a similarity annotation file. This is because a same column 
-     * can contain multiple values (for instance, a same entity represented by 
-     * the union of several Uberon IDs, or, a same reference that have different 
-     * IDs). The order of the {@code String}s in {@code terms} will be preserved. 
-     * 
-     * @param uberonIds A {@code List} of {@code String}s that are the terms used 
-     *                  in a same column.
-     * @return          A {@code String} that is the formatting of {@code terms} 
-     *                  to be used in the column of an annotation file.
-     */
-    private String termsToColumnValue(List<String> terms) {
-        log.entry(terms);
-        String colValue = "";
-        for (String term: terms) {
-            if (!colValue.equals("")) {
-                colValue += SEPARATOR;
-            }
-            colValue += term.trim();
-        }
-        return log.exit(colValue);
     }
     
     /**
@@ -1743,7 +1686,8 @@ public class SimilarityAnnotation {
         log.debug("Transformation_of relations identified: {}", transfOfRels);
         
         //now, identify all entities used in our annotations, with no transformation_of relation
-        Set<String> anatEntityIds = this.extractAnatEntityIds(annotFile);
+        Set<String> anatEntityIds = 
+                AnnotationCommon.extractAnatEntityIdsFromFile(annotFile, false);
         Set<OWLClass> withNoTransfOf = new HashSet<OWLClass>();
         anatEntities: for (String anatEntityId: anatEntityIds) {
             OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(anatEntityId);
@@ -1852,33 +1796,5 @@ public class SimilarityAnnotation {
         }
         
         log.exit();
-    }
-    
-    /**
-     * Extract from the similarity annotation file {@code annotFile} the list 
-     * of all anatomical entity IDs used. The first line of the file should be a header line, 
-     * defining a column to get IDs from, named exactly as {@link #ENTITY_COL_NAME}. 
-     * 
-     * @param annotFile A {@code String} that is the path to the similarity annotation file.
-     * @return          A {@code Set} of {@code String}s that contains all IDs 
-     *                  of the anatomical entities used in the annotation file.
-     * @throws IllegalArgumentException If {@code annotFile} did not allow to obtain 
-     *                                  any valid anatomical entity ID.
-     * @throws FileNotFoundException    If {@code annotFile} could not be found.
-     * @throws IOException              If {@code annotFile} could not be read.
-     */
-    public Set<String> extractAnatEntityIds(String annotFile) 
-            throws IllegalArgumentException, FileNotFoundException, IOException {
-        log.entry(annotFile);
-        
-        Set<String> anatEntityIds = new HashSet<String>(new Utils().parseColumnAsString(
-                annotFile, ENTITY_COL_NAME, new NotNull()));
-        
-        if (anatEntityIds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The annotation file " +
-                    annotFile + " did not contain any valid anatomical entity ID"));
-        }
-        
-        return log.exit(anatEntityIds);
     }
 }

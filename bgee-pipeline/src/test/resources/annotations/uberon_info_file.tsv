@@ -1,0 +1,7 @@
+fake column	Uberon ID	Uberon name
+whatever	ID:1	name_1
+still_whatever	ID:100	name_100
+should be removed because not used in annotation	ID:1000	name_1000
+	UBERON:0000001	
+should be removed because not used in annotation	UBERON:000200	
+	UBERON:0000005	

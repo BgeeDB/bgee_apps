@@ -58,6 +58,23 @@ public class Uberon {
      */
     private final static Logger log = 
             LogManager.getLogger(Uberon.class.getName());
+    
+    /**
+     * A {@code String} that is the name of the column containing the anatomical entity IDs 
+     * (for instance, "UBERON:0001905") in the information files (see 
+     * {@link #saveSimplificationInfo(OWLOntology, String, Collection)}).
+     * 
+     * @see #saveSimplificationInfo(OWLOntology, String, Collection)
+     */
+    public static final String ANAT_ENTITY_ID = "Uberon ID";
+    /**
+     * A {@code String} that is the name of the column containing the anatomical entity names 
+     * (for instance, "pineal body") in the information files (see 
+     * {@link #saveSimplificationInfo(OWLOntology, String, Collection)}).
+     * 
+     * @see #saveSimplificationInfo(OWLOntology, String, Collection)
+     */
+    public static final String ANAT_ENTITY_NAME = "Uberon name";
 
     
     /**
@@ -111,7 +128,7 @@ public class Uberon {
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      *   </ol>
      *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
-     *   Uberon simplifyUberon ext.owl custom_ext simplification_info.tsv 
+     *   Uberon simplifyUberon ext.owl custom_ext subgraphClassesFiltered.tsv 
      *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000,UBERON:0003103,UBERON:0000062,UBERON:0000489 
      *   BFO:0000050,RO:0002202,RO:0002494
      *   NBO:0000313,GO:0008150,GO:0005575,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,NCBITaxon:1,CHEBI:24431
@@ -182,8 +199,8 @@ public class Uberon {
     /**
      * Simplifies the Uberon ontology stored in {@code pathToUberonOnt}, and saves it in OWL 
      * and OBO format using {@code modifiedOntPath}. Various information about 
-     * the simplification process can be stored in a separate file, provided through 
-     * {@code infoFilePath} (see {@code #saveSimplificationInfo} method). 
+     * the simplification process can be stored in separate files, provided through 
+     * {@code subgraphFilteredFilePath} (see {@code #saveSimplificationInfo} method). 
      * This argument can be left {@code null} or blank if this information does not need 
      * to be stored. 
      * <p>
@@ -200,9 +217,9 @@ public class Uberon {
      * @param modifiedOntPath           A {@code String} that is the path to use to save 
      *                                  the resulting {@code OWLOntology} in files 
      *                                  (suffixes ".obo" and ".owl" will be automatically added).
-     * @param infoFilePath              A {@code String} that is the path to a file that will 
-     *                                  store various information about the simplification 
-     *                                  process.
+     * @param subgraphFilteredFilePath  A {@code String} that is the path to the file that will 
+     *                                  store information about the {@code OWLClass}es 
+     *                                  that were removed as a result of subgraph filtering.
      * @param classIdsToRemove          See same name argument in method {@code simplifyUberon}.
      * @param relIds                    See same name argument in method {@code simplifyUberon}.
      * @param toRemoveSubgraphRootIds   See same name argument in method {@code simplifyUberon}.
@@ -222,14 +239,14 @@ public class Uberon {
      * Collection)
      */
     public void simplifyUberonAndSaveToFile(String pathToUberonOnt, String modifiedOntPath, 
-            String infoFilePath, 
+            String subgraphFilteredFilePath, 
             Collection<String> classIdsToRemove, Collection<String> relIds, 
             Collection<String> toRemoveSubgraphRootIds, 
             Collection<String> toFilterSubgraphRootIds, Collection<String> subsetNames) 
                     throws UnknownOWLOntologyException, OWLOntologyCreationException, 
                     OBOFormatParserException, IOException, OWLOntologyStorageException {
-        log.entry(pathToUberonOnt, modifiedOntPath, infoFilePath, classIdsToRemove, relIds, 
-                toRemoveSubgraphRootIds, toFilterSubgraphRootIds, subsetNames);
+        log.entry(pathToUberonOnt, modifiedOntPath, subgraphFilteredFilePath, classIdsToRemove, 
+                relIds, toRemoveSubgraphRootIds, toFilterSubgraphRootIds, subsetNames);
         
         OWLOntology ont = OntologyUtils.loadOntology(pathToUberonOnt);
         
@@ -242,11 +259,11 @@ public class Uberon {
         utils.saveAsOBO(modifiedOntPath + ".obo");
         
         //save information about the simplification process if requested
-        if (StringUtils.isNotBlank(infoFilePath)) {
+        if (StringUtils.isNotBlank(subgraphFilteredFilePath)) {
             //we need the original ontology, as before the simplification, 
             //so we reload the ontology
             this.saveSimplificationInfo(OntologyUtils.loadOntology(pathToUberonOnt), 
-                    infoFilePath, this.getSubgraphClassesFiltered());
+                    subgraphFilteredFilePath, this.getSubgraphClassesFiltered());
         }
         
         log.exit();
@@ -371,27 +388,32 @@ public class Uberon {
     }
     
     /**
-     * Save to the file {@code infoFilePath} information about the simplification process 
-     * of the original {@code OWLOntology} {@code ont}. The information is provided 
-     * through this method arguments. This currently includes: 
+     * Save information about the simplification process of the original 
+     * {@code OWLOntology} {@code ont}. The information is provided through 
+     * this method arguments. This currently includes: 
      * <ul>
      *   <li>{@code subgraphClassesFiltered} a listing of the {@code OWLClass}es 
      *   that were removed as a result of graph filtering performed by 
-     *   the {@code simplifyUberon} method.
+     *   the {@code simplifyUberon} method. This information will be written to the file 
+     *   {@code subgraphFilteredFilePath}.
+     * </ul>
+     * <p>
+     * If more information was to be stored in the future, it should be stored in separate 
+     * files (thus, modifying this method signature).
      * 
      * @param uberonOnt                 The original {@code OWLOntology}, 
      *                                  as before simplification.
-     * @param infoFilePath              A {@code String} that is the path to a file that will 
-     *                                  store various information about the simplification 
-     *                                  process.
+     * @param subgraphFilteredFilePath  A {@code String} that is the path to the file that will 
+     *                                  store information about the {@code OWLClass}es 
+     *                                  that were removed as a result of subgraph filtering.
      * @param subgraphClassesFiltered   A {@code Collection} of {@code String}s that are 
      *                                  the OBO-like IDs of {@code OWLClass}es 
      *                                  removed as a result of graph filtering.
-     * @throws IOException  If an error occurred while writing in {@code infoFilePath}.
+     * @throws IOException  If an error occurred while writing information.
      */
-    public void saveSimplificationInfo(OWLOntology ont, String infoFilePath, 
+    public void saveSimplificationInfo(OWLOntology ont, String subgraphFilteredFilePath, 
             Collection<String> subgraphClassesFiltered) throws IOException {
-        log.entry(ont, infoFilePath, subgraphClassesFiltered);
+        log.entry(ont, subgraphFilteredFilePath, subgraphClassesFiltered);
         
         //get a OWLGraphWrapper to obtain information about classes
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
@@ -433,15 +455,16 @@ public class Uberon {
           });
         //create the header of the file, and the conditions on the columns
         String[] header = new String[2];
-        header[0] = "Uberon ID";
-        header[1] = "Uberon name";
+        header[0] = ANAT_ENTITY_ID;
+        header[1] = ANAT_ENTITY_NAME;
         CellProcessor[] processors = new CellProcessor[2];
         //ID of the OWLClass (must be unique)
         processors[0] = new UniqueHashCode(new NotNull());
         //label of the OWLClass
         processors[1] = new NotNull();
         
-        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(infoFilePath),
+        try (ICsvMapWriter mapWriter = 
+                new CsvMapWriter(new FileWriter(subgraphFilteredFilePath),
                 Utils.TSVCOMMENTED)) {
             
             mapWriter.writeComment("//===== Uberon IDs removed as a result " +

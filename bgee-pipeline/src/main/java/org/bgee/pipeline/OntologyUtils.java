@@ -601,6 +601,30 @@ public class OntologyUtils {
     }
     
     /**
+     * Obtains a mapping from OBO-like IDs of the {@code OWLClass}es 
+     * present in the {@code OWLOntology} wrapped by this object, to their XRef IDs. 
+     * 
+     * @return  A {@code Map} where keys are {@code String}s representing OBO-like IDs 
+     *          of {@code OWLClass}es, the associated value being a {@code Set} of 
+     *          {@code String}s representing its XRefs.
+     */
+    public Map<String, Set<String>> getXRefMappings() {
+        log.entry();
+        
+        Map<String, Set<String>> xRefMapping = new HashMap<String, Set<String>>();
+        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+            
+            String clsId = this.getWrapper().getIdentifier(cls);
+            List<String> xrefs = this.getWrapper().getXref(cls);
+            if (!xrefs.isEmpty()) {
+                xRefMapping.put(clsId, new HashSet<String>(xrefs));
+            }
+        }
+        
+        return log.exit(xRefMapping);
+    }
+    
+    /**
      * Return the {@code OWLGraphWrapper} wrapping the ontology on which operations 
      * should be performed. If not provided at instantiation, it will be automatically 
      * loaded the first time this method is called, from the {@code OWLOntology} provided 

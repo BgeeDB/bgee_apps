@@ -15,11 +15,14 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
@@ -81,7 +84,8 @@ public class AnnotationCommonTest extends TestAncestor {
     @Test
     public void shouldExtractAnatEntityIdsFromFile() throws FileNotFoundException, IOException {
         //first, test with single anatomical entity annotations
-        Set<String> expectedIds = new HashSet<String>(Arrays.asList("ID:1", "ID:3", "ID:100"));
+        Set<String> expectedIds = new HashSet<String>(Arrays.asList("ID:1", "ID:3", "ID:100", 
+                "ALT_ID:0000006"));
         assertEquals("Incorrect anatomical entity IDs extract from file", expectedIds, 
                 AnnotationCommon.extractAnatEntityIdsFromFile(this.getClass().getResource(
                         "/annotations/annotations_extract_ids.tsv").getFile(), 
@@ -99,9 +103,13 @@ public class AnnotationCommonTest extends TestAncestor {
     /**
      * Test the method {@link AnnotationCommon#filterUberonSimplificationInfo(Set, Set, Set, String)}
      * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
      */
     @Test
-    public void shouldFilterUberonSimplificationInfo() throws IOException {
+    public void shouldFilterUberonSimplificationInfo() throws IOException, 
+        OWLOntologyCreationException, OBOFormatParserException {
+        
         String infoFileName = "uberon_info_file.tsv";
         String infoFile = this.getClass().getResource(
                 "/annotations/" + infoFileName).getFile();
@@ -111,6 +119,8 @@ public class AnnotationCommonTest extends TestAncestor {
                 "/annotations/similarity_extract_ids.tsv").getFile();
         
         AnnotationCommon.filterUberonSimplificationInfo(
+                OntologyUtils.loadOntology(this.getClass().getResource(
+                "/annotations/xRefForFiltering.obo").getFile()), 
                 new HashSet<String>(Arrays.asList(infoFile)), 
                 new HashSet<String>(Arrays.asList(singleEntityAnnotFile)), 
                 new HashSet<String>(Arrays.asList(multipleEntitiesAnnotFile)), 
@@ -130,6 +140,7 @@ public class AnnotationCommonTest extends TestAncestor {
             assertArrayEquals("Incorrect header in filtered file", expectedHeader, header);
             
             Map<String, String> row;
+            int i = 0;
             while( (row = mapReader.read(header)) != null ) {
                 Map<String, String> expectedRow = new HashMap<String, String>();
                 //getRowNumber == 1 corresponds to the header line
@@ -149,12 +160,20 @@ public class AnnotationCommonTest extends TestAncestor {
                     expectedRow.put(header[0], null);
                     expectedRow.put(header[1], "UBERON:0000005");
                     expectedRow.put(header[2], null);
+                } else if (mapReader.getRowNumber() == 6) {
+                    //this one is kept thanks to its XRef (it is its XRef that is used 
+                    //in annotation file, not its main ID)
+                    expectedRow.put(header[0], "XRef filtering");
+                    expectedRow.put(header[1], "UBERON:0000006");
+                    expectedRow.put(header[2], "name_uberon_6");
                 } else {
                     throw new AssertionError("Incorrect number of rows in filtered file: " + 
                             mapReader.getRowNumber());
                 }
                 assertEquals("Incorrect row in filtered info file", expectedRow, row);
+                i++;
             }
+            assertEquals("Incorrect number of rows in filtered info file", 5, i);
         }
     }
 

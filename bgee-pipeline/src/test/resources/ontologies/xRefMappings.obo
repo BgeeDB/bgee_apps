@@ -1,0 +1,19 @@
+format-version: 1.2
+ontology: xRefMappings
+
+[Term]
+id: ID:1
+name: test A
+xref: ALT_ID:1
+xref: ALT_ALT_ID:1
+
+[Term]
+id: ID:2
+name: test B
+xref: ALT_ID:2
+
+[Term]
+id: ID:3
+name: test C
+xref: ALT_ID:3
+xref: ALT_ALT_ID:3

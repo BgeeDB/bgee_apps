@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -285,5 +286,29 @@ public class OntologyUtilsTest extends TestAncestor {
         assertEquals("Some axioms using object property were removed", expectedAxioms, 
                 ont.getAxioms(AxiomType.SUBCLASS_OF));
         
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#getXRefMappings()}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetXRefMappings() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/xRefMappings.obo").getFile());
+        OntologyUtils utils = new OntologyUtils(ont);
+        
+        Map<String, Set<String>> expectedMappings = new HashMap<String, Set<String>>();
+        expectedMappings.put("ID:1", 
+                new HashSet<String>(Arrays.asList("ALT_ID:1", "ALT_ALT_ID:1")));
+        expectedMappings.put("ID:2", 
+                new HashSet<String>(Arrays.asList("ALT_ID:2")));
+        expectedMappings.put("ID:3", 
+                new HashSet<String>(Arrays.asList("ALT_ID:3", "ALT_ALT_ID:3")));
+        assertEquals("Incorrect XRef mapping returned", expectedMappings, 
+                utils.getXRefMappings());
     }
 }

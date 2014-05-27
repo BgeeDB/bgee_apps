@@ -43,5 +43,10 @@ public class CommandRunnerTest extends TestAncestor {
                         "ID1" + CommandRunner.LIST_SEPARATOR + 
                         "ID2" + CommandRunner.LIST_SEPARATOR + 
                         "ID3" + CommandRunner.LIST_SEPARATOR));
+        
+
+        assertEquals("Incorrect parsing of string as list", 
+                Arrays.asList("ID1"), 
+                CommandRunner.parseListArgument("ID1"));
     }
 }

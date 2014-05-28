@@ -2,10 +2,8 @@ package org.bgee.pipeline.hierarchicalGroups;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -135,10 +133,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
     	try {
     		// Retrieve genes id from Ensembl of the Bgee database to be able to check
     		// if OMA genes are Ensembl ID and update OMAGroupId in gene table.
-    		this.getGenesOfDb();
+    		this.getGenesFromDb();
 
     		// Construct HierarchicalGroupTOs and GeneTOs
-    		this.setTOs(orthoXMLFile);
+    		this.generateTOsFromFile(orthoXMLFile);
 
     		// Start a transaction to insert HierarchicalGroupTOs and update GeneTOs 
     		// in the Bgee data source.Note that we do not need to call rollback if
@@ -177,7 +175,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @throws DAOException		If an error occurred while getting the data
      * 							from the Bgee database.
 	 */
-	private void getGenesOfDb() throws DAOException {
+	private void getGenesFromDb() throws DAOException {
     	log.entry();
         try {
             this.startTransaction();
@@ -210,59 +208,62 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @throws XMLParseException		If there is an error in parsing the XML retrieved
 										by the OrthoXMLReader.
 	 */
-	private void setTOs(String orthoXMLFile) throws FileNotFoundException,  
-			XMLStreamException, XMLParseException {
+	private void generateTOsFromFile(String orthoXMLFile) throws FileNotFoundException, 
+														XMLStreamException, XMLParseException {
 		log.entry();
-        log.info("Retrieving hierarchical groups...");
-        
 		OrthoXMLReader reader = new OrthoXMLReader(new File(orthoXMLFile));
 		Group group;
 		// Read all the groups in the file iteratively
 		while ((group = reader.next()) != null) {
-			Deque<Group> dequeGroup = new ArrayDeque<Group>();
-			int OMAGroupId = Integer.parseInt(group.getId());
-			dequeGroup.addLast(group);
-			while (!dequeGroup.isEmpty()) {
-				Group currentGroup = dequeGroup.removeFirst();
-				addHierarchicalGroupTO(OMAGroupId, currentGroup.getProperty("TaxRange"), 
-						count(group));
-				if (currentGroup.getGenes() != null) {
-					for (Gene groupGene : currentGroup.getGenes()) {
-						// Parse gene identifiers (named protId in OrthoXML file)
-						// TODO check new OrthoXML file
-						List<String> genes = Arrays.asList(
-								groupGene.getProteinIdentifier().split("; "));
-						for (String geneId : genes) {
-							if (genesInDb.contains(geneId)) {
-								// Add new {@code GeneTO} to {@code Collection} of 
-								// {@code GeneTO}s to be able to update OMAGroupId
-								// in gene table.
-								geneTOs.add(new GeneTO(geneId, "", "", 0, 0, OMANodeId, true));
-								break;
-							}
-						}
-						// Genes haven't got child so we have to increment nestedSetId
-						nestedSetId++;
+			this.generateTOsFromGroup(group, Integer.parseInt(group.getId()));
+			nestedSetId++;
+		}
+		log.info("Done retrieving hierarchical groups.");
+		log.exit();
+	}
+	
+	/**
+	 * Extract all relevant information from a {@code Group} and fill the 
+	 * {@code Collection} of {@code HierarchicalGroupTO}s as a nested set
+	 * model and the {@code Collection} of {@code GeneTO}s.
+	 * 
+     * @param group			A {@code Group} that is the path to the OMA groups file.	
+     * @param OMAGroupId	An {@code int} that the OMA group ID to use for subgroups.	
+	 */
+	private void generateTOsFromGroup(Group group, int OMAGroupId)  {
+		nestedSetId++;
+		// Add a HierarchicalGroupTO in collection. We remove 1 to the count to get 
+		// the number of children i.e. to remove the current group.
+		this.addHierarchicalGroupTO(OMAGroupId, group.getProperty("TaxRange"), 
+				countChildren(group));
+		if (group.getGenes() != null) {
+			for (Gene groupGene : group.getGenes()) {
+				// Parse gene identifiers (named protId in OrthoXML file)
+				List<String> genes = Arrays.asList(
+						groupGene.getProteinIdentifier().split("; "));
+				for (String geneId : genes) {
+					// Check if that identifier is already in our data source 
+					if (genesInDb.contains(geneId)) {
+						// Add new {@code GeneTO} to {@code Collection} of  {@code GeneTO}s 
+						// to be able to update OMAGroupId in gene table.
+						geneTOs.add(new GeneTO(geneId, "", "", 0, 0, OMANodeId, true));
+						break;
 					}
-				}
-				// Incrementing the node ID. Done after to be able to set 
-				// OMA parent node ID into gene table
-				OMANodeId++;
-				if (currentGroup.getChildren() != null) {
-					// Add to {@code Deque} all children of the current {@code Group}.
-					for (Group childGroup : currentGroup.getChildren()) {
-						dequeGroup.addLast(childGroup);
-					}
-				} else {
-					// No child so we have to increment nestedSetId
-					nestedSetId++;
 				}
 			}
 		}
-        log.info("Done retrieving hierarchical groups.");
-        log.exit();
+		// Incrementing the node ID. Done after to be able to set OMA parent node ID 
+		// into gene table
+		OMANodeId++;
+		if (group.getChildren() != null 
+				&& group.getChildren().size() > 0) {
+			for (Group childGroup : group.getChildren()) {
+				// Recurse
+				generateTOsFromGroup(childGroup, OMAGroupId);
+				nestedSetId++;
+			}
+		}
 	}
-
 	/**
 	 * Given a OMAGroupId with the taxonomy range and a number of children, 
 	 * calculate nested set bounds and fill the {@code Collection} of 
@@ -274,33 +275,41 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	 * @param nbChild		An {@code int} that is the number of children 
 	 * 						of the {@code HierarchicalGroupTO} to create.
 	 */
-	private void addHierarchicalGroupTO(int OMAGroupId, String taxRange, int nbChild) {
-		nestedSetId++;
+	private int[] addHierarchicalGroupTO(int OMAGroupId, String taxRange, int nbChild) {
+		log.entry(OMAGroupId, taxRange, nbChild);
 		// Left
 		int left = nestedSetId;
 		// Right = left + 2 * number of children + 1;
 		int right = nestedSetId + 2 * nbChild + 1;
+		log.debug("OMANodeId={}, OMAGroupId={}, left={}, right={}, taxRange={}", 
+				OMANodeId, OMAGroupId, left, right, taxRange);
 		hierarchicalGroupTOs.add(new HierarchicalGroupTO(
-				OMANodeId, OMAGroupId, left, right, taxRange));
+									OMANodeId, OMAGroupId, left, right, taxRange));
+		int[] bounds = new int[2];
+		bounds[0]=left;
+		bounds[1]=right;
+		return log.exit(bounds);
 	}
 	
 	/**
-	 * Counts the number of {@code Group}s of the current group/subgroup.
+	 * Counts the number of child {@code Group}s. 
 	 * <p>
-	 * This method recursively iterates through all the groups of the tree
-	 * whose {@code Group} is passed as a parameter and returns the total
-	 * number of groups in the tree (including the root group).
+	 * This method recursively iterates through all subgroups of {@code Group} passed as 
+	 * a parameter and returns the total number of subgroups (children) of that {@code Group}.
 	 * 
-	 * @param group		The {@code Group} object of the group/subgroup whose 
-	 *            		total number of children groups are to be counted
-	 * @return An {@code int} giving the total number of groups in the
-	 *         group/subgroup
+	 * @param group	The {@code Group} whose the number of child 
+	 * 				{@code Group}s are to be counted.
+	 * @return	An {@code int} giving the total number of child 
+	 * 			{@code Group}s in the given {@code Group}.
 	 */
-	private static int count(Group group) {
+	private static int countChildren(Group group) {
 		log.entry(group);
 		int c = 1;
 		for (Group childGroup : group.getChildren()) {
-			c += count(childGroup);
+			c += countChildren(childGroup);
+		}
+		if (group.getParent() == null) {
+			c--;
 		}
 		return log.exit(c);
 	}
@@ -309,10 +318,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	 * Reads the species IDs of all the species present in the OrthoXML file.
 	 * 
 	 * @throws XMLParseException		If there is an error in parsing the XML retrieved by 
-	 * 									the OrthoXMLReader
+	 * 									the OrthoXMLReader.
 	 * @throws XMLStreamException		If there is an error in the well-formedness of the XML
 	 * 									or other unexpected processing errors.
-	 * @throws FileNotFoundException	If the OrthoXMLReader cannot find the file
+	 * @throws FileNotFoundException	If the OrthoXMLReader cannot find the file.
 	 */
 	public static ArrayList<String> getSpecies(File file)
 			throws FileNotFoundException, XMLStreamException, XMLParseException {

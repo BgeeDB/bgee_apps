@@ -24,13 +24,17 @@ import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.io.ParserWrapper;
 
 /**
@@ -294,6 +298,17 @@ public class OntologyUtils {
      * The {@code OWLOntology} which operations should be performed on.
      */
     private OWLOntology ontology;
+    /**
+     * A {@code Set} of {@code OWLObjectPropertyExpression}s containing 
+     * the sub-properties of the "part_of" property (for instance, "in_deep_part_of"), 
+     * and the "part_of" property itself (see {@link #PART_OF_ID}).
+     * <p>
+     * This attribute is lazy loaded when {@link #getIsAPartOfOutgoingEdges(OWLObject)} 
+     * is called. 
+     * 
+     * @see #getIsAPartOfOutgoingEdges(OWLObject)
+     */
+    private Set<OWLObjectPropertyExpression> partOfRels;
     
     /**
      * Constructor providing the {@code OWLOntology} which operations 
@@ -304,6 +319,7 @@ public class OntologyUtils {
     public OntologyUtils(OWLOntology ontology) { 
         this.ontology = ontology;
         this.wrapper = null;
+        this.partOfRels = null;
     }
     /**
      * Constructor providing the {@code OWLGraphWrapper} wrapping 
@@ -315,6 +331,7 @@ public class OntologyUtils {
     public OntologyUtils(OWLGraphWrapper wrapper) {
         this.wrapper = wrapper;
         this.ontology = wrapper.getSourceOntology();
+        this.partOfRels = null;
     }
     
     /**
@@ -622,6 +639,53 @@ public class OntologyUtils {
         }
         
         return log.exit(xRefMapping);
+    }
+    
+    /**
+     * Similar to the method from owltools 
+     * {@code owltools.graph.OWLGraphWrapperEdges.getOutgoingEdges(OWLObject)}, 
+     * but returns only {@code OWLGraphEdge}s representing an {@code is_a} 
+     * ({@code SubClassOf}) relation, or a {@code part_of} related relation (including 
+     * child {@code ObjectProperty}s, for instance {@code in_deep_part_of}), and 
+     * that lead to a named target ({@code owltools.graph.OWLGraphEdge.isTargetNamedObject()} 
+     * returns {@code true}). 
+     * 
+     * @param object    the {@code OWLObject} for which we want the filtered outgoing 
+     *                  {@code OWLGraphEdge}s.
+     * @return          A {@code Set} of {@code OWLGraphEdge}s, outgoing from {@code object}, 
+     *                  leading to a named target, and representing only is_a or 
+     *                  part_of related relations.
+     */
+    public Set<OWLGraphEdge> getIsAPartOfOutgoingEdges(OWLObject object) {
+        log.entry(object);
+        
+        //lazy loading of part_of related OWLObjectProperties
+        if (this.partOfRels == null) {
+            this.partOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
+                    this.getWrapper().getOWLObjectPropertyByIdentifier(PART_OF_ID));
+        }
+        
+        Set<OWLGraphEdge> isAPartOfEdges = new HashSet<OWLGraphEdge>();
+        for (OWLGraphEdge edge: wrapper.getOutgoingEdges(object)) {
+            //consider only named target
+            if (!edge.isTargetNamedObject()) {
+                continue;
+            }
+            if (//if it is a part_of related relation
+                (this.partOfRels.contains(
+                    edge.getSingleQuantifiedProperty().getProperty()) && 
+                    edge.getSingleQuantifiedProperty().getQuantifier().equals(
+                            Quantifier.SOME)) || 
+               //or an is_a relation
+               (edge.getSingleQuantifiedProperty().getProperty() == null && 
+                            edge.getSingleQuantifiedProperty().getQuantifier().equals(
+                                    Quantifier.SUBCLASS_OF))) {
+                
+                isAPartOfEdges.add(edge);
+            } 
+        }
+        
+        return log.exit(isAPartOfEdges);
     }
     
     /**

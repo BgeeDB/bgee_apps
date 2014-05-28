@@ -22,12 +22,15 @@ import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
  * Unit tests for {@link OntologyUtils}.
@@ -310,5 +313,42 @@ public class OntologyUtilsTest extends TestAncestor {
                 new HashSet<String>(Arrays.asList("ALT_ID:3", "ALT_ALT_ID:3")));
         assertEquals("Incorrect XRef mapping returned", expectedMappings, 
                 utils.getXRefMappings());
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#getIsAPartOfOutgoingEdges(OWLObject)}.
+     */
+    @Test
+    public void shouldGetIsAPartOfOutgoingEdges() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/getIsAPartOfRelations.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass root = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass clsA = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass clsB = wrapper.getOWLClassByIdentifier("FOO:0003");
+        OWLClass clsC = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
+                OntologyUtils.PART_OF_ID);
+        OWLObjectProperty inDeepPartOf = wrapper.getOWLObjectPropertyByIdentifier(
+                "in_deep_part_of");
+        
+        Set<OWLGraphEdge> expectedEdges = new HashSet<OWLGraphEdge>();
+        expectedEdges.add(new OWLGraphEdge(clsA, root, ont));
+        assertEquals("Incorrect filtered edges returned", expectedEdges, 
+                utils.getIsAPartOfOutgoingEdges(clsA));
+        
+        expectedEdges = new HashSet<OWLGraphEdge>();
+        expectedEdges.add(new OWLGraphEdge(clsB, root, inDeepPartOf, Quantifier.SOME, ont));
+        expectedEdges.add(new OWLGraphEdge(clsB, clsA, partOf, Quantifier.SOME, ont));
+        expectedEdges.add(new OWLGraphEdge(clsB, root, ont));
+        assertEquals("Incorrect filtered edges returned", expectedEdges, 
+                utils.getIsAPartOfOutgoingEdges(clsB));
+        
+        expectedEdges = new HashSet<OWLGraphEdge>();
+        assertEquals("Incorrect filtered edges returned", expectedEdges, 
+                utils.getIsAPartOfOutgoingEdges(clsC));
     }
 }

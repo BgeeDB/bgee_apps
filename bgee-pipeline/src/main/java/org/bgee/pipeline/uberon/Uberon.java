@@ -36,6 +36,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -66,7 +67,7 @@ public class Uberon {
      * 
      * @see #saveSimplificationInfo(OWLOntology, String, Collection)
      */
-    public static final String ANAT_ENTITY_ID = "Uberon ID";
+    public static final String ANAT_ENTITY_ID_COL = "Uberon ID";
     /**
      * A {@code String} that is the name of the column containing the anatomical entity names 
      * (for instance, "pineal body") in the information files (see 
@@ -74,7 +75,15 @@ public class Uberon {
      * 
      * @see #saveSimplificationInfo(OWLOntology, String, Collection)
      */
-    public static final String ANAT_ENTITY_NAME = "Uberon name";
+    public static final String ANAT_ENTITY_NAME_COL = "Uberon name";
+    /**
+     * A {@code String} that is the name of the column containing the is_a/part_of relations 
+     * of terms in the information files (see 
+     * {@link #saveSimplificationInfo(OWLOntology, String, Collection)}).
+     * 
+     * @see #saveSimplificationInfo(OWLOntology, String, Collection)
+     */
+    public static final String RELATIONS_COL = "is_a/part_of relations";
 
     
     /**
@@ -420,6 +429,8 @@ public class Uberon {
         
         //get a OWLGraphWrapper to obtain information about classes
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        //we will also need an OntologyUtils to retrieve is_a/part_of outgoing edges
+        OntologyUtils utils = new OntologyUtils(wrapper);
         
         //Write IDs removed as a result of graph filtering
         //first, filter potential redundancy 
@@ -457,14 +468,17 @@ public class Uberon {
             }
           });
         //create the header of the file, and the conditions on the columns
-        String[] header = new String[2];
-        header[0] = ANAT_ENTITY_ID;
-        header[1] = ANAT_ENTITY_NAME;
-        CellProcessor[] processors = new CellProcessor[2];
+        String[] header = new String[3];
+        header[0] = ANAT_ENTITY_ID_COL;
+        header[1] = ANAT_ENTITY_NAME_COL;
+        header[2] = RELATIONS_COL;
+        CellProcessor[] processors = new CellProcessor[3];
         //ID of the OWLClass (must be unique)
         processors[0] = new UniqueHashCode(new NotNull());
         //label of the OWLClass
         processors[1] = new NotNull();
+        //is_a/part_of relations, can be empty if no relations
+        processors[2] = new Optional();
         
         try (ICsvMapWriter mapWriter = 
                 new CsvMapWriter(new FileWriter(subgraphFilteredFilePath),
@@ -481,9 +495,26 @@ public class Uberon {
                     if (wrapper.isObsolete(cls)) {
                         continue;
                     }
+                    //get the is_a/part_of relations, translated to a String
+                    String relations = "";
+                    for (OWLGraphEdge edge: utils.getIsAPartOfOutgoingEdges(cls)) {
+                        if (!relations.equals("")) {
+                            relations += " - ";
+                        }
+                        String relationType = "is_a";
+                        if (edge.getSingleQuantifiedProperty().getProperty() != null) {
+                            relationType = wrapper.getLabelOrDisplayId(
+                                    edge.getSingleQuantifiedProperty().getProperty());
+                        }
+                        relations += relationType + " " + 
+                                wrapper.getIdentifier(edge.getTarget()) + " " + 
+                                wrapper.getLabelOrDisplayId(edge.getTarget());
+                    }
+                    
                     Map<String, Object> row = new HashMap<String, Object>();
                     row.put(header[0], uberonId);
                     row.put(header[1], wrapper.getLabelOrDisplayId(cls));
+                    row.put(header[2], relations);
                     mapWriter.write(row, header, processors);
                 } //else {
                     //we disable this assertion error, there are weird case 

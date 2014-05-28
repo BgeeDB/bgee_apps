@@ -21,6 +21,7 @@ import org.junit.rules.TemporaryFolder;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -102,23 +103,41 @@ public class UberonTest extends TestAncestor {
             String[] headers = mapReader.getHeader(true); 
             final CellProcessor[] processors = new CellProcessor[] {
                     new UniqueHashCode(new NotNull()), //Uberon ID
-                    new NotNull()}; //Uberon name
+                    new NotNull(), //Uberon name
+                    new Optional()}; //relations
 
             Map<String, Object> infoMap;
             while( (infoMap = mapReader.read(headers, processors)) != null ) {
                 log.trace("Row: {}", infoMap);
                 String uberonId = (String) infoMap.get(headers[0]);
                 String uberonName = (String) infoMap.get(headers[1]);
+                String relations = (String) infoMap.get(headers[2]);
                 log.trace("Retrieved info from line: {} - {}", uberonId, uberonName); 
                 if (i == 0) {
                     assertEquals("U:2", uberonId);
                     assertEquals("brain", uberonName);
+                    String relationTested = "is_a U:1 anatomical structure";
+                    assertTrue("Missing relation for U:2: '" + relationTested + "' - " +
+                    		"Actual relations were: " + relations, 
+                            relations.contains(relationTested));
                 } else if (i == 1) {
                     assertEquals("U:3", uberonId);
                     assertEquals("forebrain", uberonName);
+                    String relationTested = "is_a U:1 anatomical structure";
+                    assertTrue("Missing relation for U:3: '" + relationTested + "' - " +
+                            "Actual relations were: " + relations, 
+                            relations.contains(relationTested));
+                    relationTested = "part_of U:2 brain";
+                    assertTrue("Missing relation for U:3: '" + relationTested + "' - " +
+                            "Actual relations were: " + relations, 
+                            relations.contains(relationTested));
                 } else if (i == 2) {
                     assertEquals("U:23", uberonId);
                     assertEquals("U_23", uberonName);
+                    String relationTested = "is_a U:22 antenna";
+                    assertTrue("Missing relation for U:23: '" + relationTested + "' - " +
+                            "Actual relations were: " + relations, 
+                            relations.contains(relationTested));
                 } else {
                     throw new AssertionError("Incorrect number of Uberon terms listed, " +
                     		"currently iterated term: " + uberonId + " - " + uberonName);

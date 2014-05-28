@@ -492,7 +492,7 @@ public class Uberon {
                 OWLClass cls = wrapper.getOWLClassByIdentifier(uberonId);
                 if (cls != null) {
                     //check that the class is not obsolete
-                    if (wrapper.isObsolete(cls)) {
+                    if (wrapper.isObsolete(cls) || wrapper.getIsObsolete(cls)) {
                         continue;
                     }
                     //get the is_a/part_of relations, translated to a String

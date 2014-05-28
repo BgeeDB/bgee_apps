@@ -6,6 +6,7 @@ id: ID:1
 name: test A
 xref: ALT_ID:1
 xref: ALT_ALT_ID:1
+xref: ALT_ID:2
 
 [Term]
 id: ID:2
@@ -17,3 +18,21 @@ id: ID:3
 name: test C
 xref: ALT_ID:3
 xref: ALT_ALT_ID:3
+
+[Term]
+id: ID:4
+name: test D
+is_obsolete: true
+consider: ID_CONSIDER:4
+consider: ID_CONSIDER_BIS:4
+replaced_by: ID_REPLACED:4
+replaced_by: ID_REPLACED_BIS:4
+
+[Term]
+id: ID:5
+name: test E
+is_obsolete: true
+consider: ID_CONSIDER:5
+consider: ID_CONSIDER_BIS:5
+replaced_by: ID_REPLACED:5
+replaced_by: ID_REPLACED_BIS:5

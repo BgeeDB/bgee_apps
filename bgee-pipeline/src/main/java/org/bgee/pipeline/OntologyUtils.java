@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -299,6 +301,26 @@ public class OntologyUtils {
      */
     private OWLOntology ontology;
     /**
+     * A {@code Map} storing the XRef mappings lazy loaded by the method 
+     * {@link #getXRefMappings()}. See this method for details.
+     * @see #getXRefMappings()
+     */
+    private Map<String, Set<String>> xRefMappings;
+    /**
+     * A {@code Map} storing the mappings from OBO-like IDs of obsolete {@code OWLClass}es 
+     * to IDs associated to their {@code consider} annotation. It is lazy loaded by the method 
+     * {@link #getConsiderMappings()}. See this method for details.
+     * @see #getConsiderMappings()
+     */
+    private Map<String, Set<String>> considerMappings;
+    /**
+     * A {@code Map} storing the mappings from OBO-like IDs of obsolete {@code OWLClass}es 
+     * to IDs associated to their {@code replaced_by} annotation. It is lazy loaded by the method 
+     * {@link #getReplacedByMappings()}. See this method for details.
+     * @see #getReplacedByMappings()
+     */
+    private Map<String, Set<String>> replacedByMappings;
+    /**
      * A {@code Set} of {@code OWLObjectPropertyExpression}s containing 
      * the sub-properties of the "part_of" property (for instance, "in_deep_part_of"), 
      * and the "part_of" property itself (see {@link #PART_OF_ID}).
@@ -319,6 +341,7 @@ public class OntologyUtils {
     public OntologyUtils(OWLOntology ontology) { 
         this.ontology = ontology;
         this.wrapper = null;
+        this.xRefMappings = null;
         this.partOfRels = null;
     }
     /**
@@ -618,27 +641,141 @@ public class OntologyUtils {
     }
     
     /**
-     * Obtains a mapping from OBO-like IDs of the {@code OWLClass}es 
-     * present in the {@code OWLOntology} wrapped by this object, to their XRef IDs. 
+     * Obtains a unmodifiable mapping from all XRef IDs, present in the {@code OWLOntology} 
+     * wrapped by this object, to the OBO-like IDs of the {@code OWLClass}es they were 
+     * associated to. Each XRef ID can be associated to several OBO-like IDs 
+     * of {@code OWLClass}es, to let opened this possibility, even if unlikely. Only 
+     * non obsolete {@code OWLClass}es are considered.
+     * <p>
+     * This mapping is lazy loaded the first time this method is called. 
      * 
-     * @return  A {@code Map} where keys are {@code String}s representing OBO-like IDs 
-     *          of {@code OWLClass}es, the associated value being a {@code Set} of 
-     *          {@code String}s representing its XRefs.
+     * @return  A unmodifiable {@code Map} where keys are {@code String}s 
+     *          representing XRef IDs, the associated value being an unmodifiable {@code Set} 
+     *          of {@code String}s representing the OBO-like IDs of the {@code OWLClass}es 
+     *          they were associated to.
      */
     public Map<String, Set<String>> getXRefMappings() {
         log.entry();
         
-        Map<String, Set<String>> xRefMapping = new HashMap<String, Set<String>>();
-        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
-            
-            String clsId = this.getWrapper().getIdentifier(cls);
-            List<String> xrefs = this.getWrapper().getXref(cls);
-            if (!xrefs.isEmpty()) {
-                xRefMapping.put(clsId, new HashSet<String>(xrefs));
+        //lazy loading
+        if (this.xRefMappings == null) {
+            log.trace("Lazy loading of XRefMappings...");
+            //first, we obtained the mappings, then we will make them unmodifiable
+            Map<String, Set<String>> modifiableXRefMappings = 
+                    new HashMap<String, Set<String>>();
+            for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+                
+                String clsId = this.getWrapper().getIdentifier(cls);
+                for (String xref: this.getWrapper().getXref(cls)) {
+                    Set<String> associatedClassIds = modifiableXRefMappings.get(xref);
+                    if (associatedClassIds == null) {
+                        associatedClassIds = new HashSet<String>();
+                        modifiableXRefMappings.put(xref, associatedClassIds);
+                    }
+                    associatedClassIds.add(clsId);
+                }
             }
+
+            this.xRefMappings = new HashMap<String, Set<String>>();
+            //now, perform a deep transformation of the mappings to be unmodifiable
+            for (Entry<String, Set<String>> entry: modifiableXRefMappings.entrySet()) {
+                this.xRefMappings.put(entry.getKey(), 
+                        Collections.unmodifiableSet(entry.getValue()));
+            }
+            this.xRefMappings = Collections.unmodifiableMap(this.xRefMappings);
+            log.trace("Lazy loading done, {} xrefs loaded.", this.xRefMappings.size());
         }
         
-        return log.exit(xRefMapping);
+        return log.exit(this.xRefMappings);
+    }
+    
+    /**
+     * Obtains a unmodifiable mapping from OBO-like IDs of obsolete {@code OWLClass}es, 
+     * present in the {@code OWLOntology} wrapped by this object, to the IDs associated to 
+     * their {@code consider} annotation. Only obsolete {@code OWLClass}es are considered.
+     * <p>
+     * This mapping is lazy loaded the first time this method is called, or the first time 
+     * {@link #getReplacedByMappings()} is called. 
+     * 
+     * @return  A unmodifiable {@code Map} where keys are {@code String}s representing 
+     *          OBO-like IDs of obsolete {@code OWLClass}es, the associated value being 
+     *          an unmodifiable {@code Set} of {@code String}s representing the IDs 
+     *          associated to their {@code consider} annotations.
+     * @see #getReplacedByMappings()
+     */
+    public Map<String, Set<String>> getConsiderMappings() {
+        log.entry();
+        
+        //lazy loading
+        if (this.considerMappings == null) {
+            this.loadConsiderReplacedByMappings();
+        }
+        
+        return log.exit(this.considerMappings);
+    }
+    
+    /**
+     * Obtains a unmodifiable mapping from OBO-like IDs of obsolete {@code OWLClass}es, 
+     * present in the {@code OWLOntology} wrapped by this object, to the IDs associated to 
+     * their {@code replaced_by} annotation. Only obsolete {@code OWLClass}es are considered.
+     * <p>
+     * This mapping is lazy loaded the first time this method is called, or the first time 
+     * {@link #getConsiderMappings()} is called. 
+     * 
+     * @return  A unmodifiable {@code Map} where keys are {@code String}s representing 
+     *          OBO-like IDs of obsolete {@code OWLClass}es, the associated value being 
+     *          an unmodifiable {@code Set} of {@code String}s representing the IDs 
+     *          associated to their {@code replaced_by} annotations.
+     * @see #getConsiderMappings()
+     */
+    public Map<String, Set<String>> getReplacedByMappings() {
+        log.entry();
+        
+        //lazy loading
+        if (this.replacedByMappings == null) {
+            this.loadConsiderReplacedByMappings();
+        }
+        
+        return log.exit(this.replacedByMappings);
+    }
+    
+    /**
+     * Load the mappings from OBO-like IDs of obsolete {@code OWLClass}es to the IDs 
+     * associated to their {@code replaced_by} annotations (into {@link #replacedByMappings}), 
+     * and to their {@code consider} annotations (into {@link #considerMappings}). 
+     * <p>
+     * We load both types of annotations at the same time, as it requires identical code, 
+     * and consider obsolete classes only in both cases. 
+     */
+    private void loadConsiderReplacedByMappings() {
+        log.entry();
+        
+        log.trace("Lazy loading of replaced_by and consider mappings...");
+        this.replacedByMappings = new HashMap<String, Set<String>>();
+        this.considerMappings = new HashMap<String, Set<String>>();
+        
+        for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
+            for (OWLClass cls: ont.getClassesInSignature()) {
+                
+                //consider only obsolete OWLClasses
+                if (!this.getWrapper().isObsolete(cls) && 
+                        !this.getWrapper().getIsObsolete(cls)) {
+                    continue;
+                }
+                
+                String clsId = this.getWrapper().getIdentifier(cls);
+                this.replacedByMappings.put(clsId, Collections.unmodifiableSet(
+                                new HashSet<String>(this.getWrapper().getReplacedBy(cls))));
+                this.considerMappings.put(clsId, Collections.unmodifiableSet(
+                                new HashSet<String>(this.getWrapper().getConsider(cls))));
+            }
+        }
+        this.replacedByMappings = Collections.unmodifiableMap(this.replacedByMappings);
+        this.considerMappings = Collections.unmodifiableMap(this.considerMappings);
+        log.trace("Lazy loading done, {} replaced_by mappings loaded, {} consider mappings loaded.", 
+                this.replacedByMappings.size(), this.considerMappings.size());
+        
+        log.exit();
     }
     
     /**

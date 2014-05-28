@@ -305,14 +305,65 @@ public class OntologyUtilsTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(ont);
         
         Map<String, Set<String>> expectedMappings = new HashMap<String, Set<String>>();
-        expectedMappings.put("ID:1", 
-                new HashSet<String>(Arrays.asList("ALT_ID:1", "ALT_ALT_ID:1")));
-        expectedMappings.put("ID:2", 
-                new HashSet<String>(Arrays.asList("ALT_ID:2")));
-        expectedMappings.put("ID:3", 
-                new HashSet<String>(Arrays.asList("ALT_ID:3", "ALT_ALT_ID:3")));
+        expectedMappings.put("ALT_ID:1", 
+                new HashSet<String>(Arrays.asList("ID:1")));
+        expectedMappings.put("ALT_ALT_ID:1", 
+                new HashSet<String>(Arrays.asList("ID:1")));
+        expectedMappings.put("ALT_ID:3", 
+                new HashSet<String>(Arrays.asList("ID:3")));
+        expectedMappings.put("ALT_ALT_ID:3", 
+                new HashSet<String>(Arrays.asList("ID:3")));
+        expectedMappings.put("ALT_ID:2", 
+                new HashSet<String>(Arrays.asList("ID:1", "ID:2")));
+        
         assertEquals("Incorrect XRef mapping returned", expectedMappings, 
                 utils.getXRefMappings());
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#getConsiderMappings()}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetConsiderMappings() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/xRefMappings.obo").getFile());
+        OntologyUtils utils = new OntologyUtils(ont);
+        
+        Map<String, Set<String>> expectedMappings = new HashMap<String, Set<String>>();
+        expectedMappings.put("ID:4", 
+                new HashSet<String>(Arrays.asList("ID_CONSIDER:4", "ID_CONSIDER_BIS:4")));
+        expectedMappings.put("ID:5", 
+                new HashSet<String>(Arrays.asList("ID_CONSIDER:5", "ID_CONSIDER_BIS:5")));
+        
+        assertEquals("Incorrect consider mapping returned", expectedMappings, 
+                utils.getConsiderMappings());
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#getReplacedByMappings()}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetReplacedByMappings() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/xRefMappings.obo").getFile());
+        OntologyUtils utils = new OntologyUtils(ont);
+        
+        Map<String, Set<String>> expectedMappings = new HashMap<String, Set<String>>();
+        expectedMappings.put("ID:4", 
+                new HashSet<String>(Arrays.asList("ID_REPLACED:4", "ID_REPLACED_BIS:4")));
+        expectedMappings.put("ID:5", 
+                new HashSet<String>(Arrays.asList("ID_REPLACED:5", "ID_REPLACED_BIS:5")));
+        
+        assertEquals("Incorrect consider mapping returned", expectedMappings, 
+                utils.getReplacedByMappings());
     }
     
     /**

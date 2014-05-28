@@ -6,3 +6,8 @@ should be removed because not used in annotation	ID:1000	name_1000
 should be removed because not used in annotation	UBERON:000200	
 	UBERON:0000005	
 XRef filtering	UBERON:0000006	name_uberon_6
+indirect child	UBERON:0000007	name_uberon_7
+consider tag	UBERON:0000011	name_uberon_11
+replaced_by tag	UBERON:0000013	name_uberon_13
+informative parent	UBERON:0000014	name_uberon_14
+non-informative parent	UBERON:0000015	name_uberon_15

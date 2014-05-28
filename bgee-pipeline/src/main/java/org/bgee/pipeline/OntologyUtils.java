@@ -54,6 +54,14 @@ public class OntologyUtils {
      */
     private final static Logger log = 
             LogManager.getLogger(OntologyUtils.class.getName());
+    
+    /**
+     * An unmodifiable {@code Set} of {@code String}s that are the names 
+     * of non-informative subsets in Uberon.
+     */
+    public final static Set<String> NON_INFORMATIVE_SUBSETS = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList("grouping_class", "non_informative", 
+                    "ubprop:upper_level", "upper_level")));
 
     //****************************
     // OBJECT PROPERTIES

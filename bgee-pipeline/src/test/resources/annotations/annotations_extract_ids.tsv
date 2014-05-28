@@ -3,3 +3,8 @@ column should not be used, not preferred name	ID:1	name1	column should not be us
 column should not be used, not preferred name	ID:3	name3	column should not be used, not preferred name
 column should not be used, not preferred name	ID:100	name100	column should not be used, not preferred name
 column should not be used, not preferred name - Uberon ID will be used to check for Uberon info filtering based on XRef	ALT_ID:0000006	test A	column should not be used, not preferred name
+Uberon ID will be used to check that during Uberon info filtering, a term is kept if any child is used in an annotation	UBERON:0000009	test D	
+Uberon ID will be used to check that during Uberon info filtering, a term is kept if it corresponds to an obsolete ID used in an annotation	UBERON:0000010	test E	
+Uberon ID will be used to check that during Uberon info filtering, a term is kept if it corresponds to an obsolete ID used in an annotation	UBERON:0000012	test G	
+Uberon ID will be used to check that during Uberon info filtering, a term is filtered if its parent is present in the info file	UBERON:0000014	test I	
+Uberon ID will be used to check that during Uberon info filtering, a term is NOT filtered if its parent is present in the info file, but this parent is member of a non-informative subset	UBERON:0000015	test J	

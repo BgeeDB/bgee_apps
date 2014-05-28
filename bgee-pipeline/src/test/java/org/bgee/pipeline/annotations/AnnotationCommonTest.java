@@ -85,7 +85,8 @@ public class AnnotationCommonTest extends TestAncestor {
     public void shouldExtractAnatEntityIdsFromFile() throws FileNotFoundException, IOException {
         //first, test with single anatomical entity annotations
         Set<String> expectedIds = new HashSet<String>(Arrays.asList("ID:1", "ID:3", "ID:100", 
-                "ALT_ID:0000006"));
+                "ALT_ID:0000006", "UBERON:0000009", "UBERON:0000010", "UBERON:0000012", 
+                "UBERON:0000014", "UBERON:0000015"));
         assertEquals("Incorrect anatomical entity IDs extract from file", expectedIds, 
                 AnnotationCommon.extractAnatEntityIdsFromFile(this.getClass().getResource(
                         "/annotations/annotations_extract_ids.tsv").getFile(), 
@@ -101,14 +102,44 @@ public class AnnotationCommonTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link AnnotationCommon#filterUberonSimplificationInfo(Set, Set, Set, String)}
+     * Test the method {@link AnnotationCommon#filterUberonSimplificationInfo(OWLOntology, Set, 
+     * Set, Set, String, boolean)}, with the last {@code boolean} argument set to {@code true}.
      * @throws IOException 
      * @throws OBOFormatParserException 
      * @throws OWLOntologyCreationException 
      */
     @Test
-    public void shouldFilterUberonSimplificationInfo() throws IOException, 
-        OWLOntologyCreationException, OBOFormatParserException {
+    public void shouldFilterUberonSimplificationInfoWithParentFilter() 
+            throws IOException, OWLOntologyCreationException, OBOFormatParserException {
+        this.shouldFilterUberonSimplificationInfo(true);
+    }
+    
+    /**
+     * Test the method {@link AnnotationCommon#filterUberonSimplificationInfo(OWLOntology, Set, 
+     * Set, Set, String, boolean)}, with the last {@code boolean} argument set to {@code false}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldFilterUberonSimplificationInfoWithoutParentFilter() 
+            throws IOException, OWLOntologyCreationException, OBOFormatParserException {
+        this.shouldFilterUberonSimplificationInfo(false);
+    }
+    
+    /**
+     * Test the method {@link AnnotationCommon#filterUberonSimplificationInfo(OWLOntology, Set, 
+     * Set, Set, String, boolean)}, with the last {@code boolean} argument defined 
+     * based on the argument of this method {@code filterUsingParents}.
+     * 
+     * @param filterUsingParents    a {@code boolean} to be passed to the 
+     *                              {@code filterUberonSimplificationInfo} method.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    public void shouldFilterUberonSimplificationInfo(boolean filterUsingParents) 
+            throws IOException, OWLOntologyCreationException, OBOFormatParserException {
         
         String infoFileName = "uberon_info_file.tsv";
         String infoFile = this.getClass().getResource(
@@ -120,11 +151,11 @@ public class AnnotationCommonTest extends TestAncestor {
         
         AnnotationCommon.filterUberonSimplificationInfo(
                 OntologyUtils.loadOntology(this.getClass().getResource(
-                "/annotations/xRefForFiltering.obo").getFile()), 
+                "/annotations/infoFiltering.obo").getFile()), 
                 new HashSet<String>(Arrays.asList(infoFile)), 
                 new HashSet<String>(Arrays.asList(singleEntityAnnotFile)), 
                 new HashSet<String>(Arrays.asList(multipleEntitiesAnnotFile)), 
-                testFolder.getRoot().toString());
+                testFolder.getRoot().toString(), filterUsingParents);
         
         //read filtered info file for the unit test
         try (ICsvMapReader mapReader = 
@@ -166,6 +197,36 @@ public class AnnotationCommonTest extends TestAncestor {
                     expectedRow.put(header[0], "XRef filtering");
                     expectedRow.put(header[1], "UBERON:0000006");
                     expectedRow.put(header[2], "name_uberon_6");
+                } else if (mapReader.getRowNumber() == 7) {
+                    //should be kept because indirect child used in annotation
+                    expectedRow.put(header[0], "indirect child");
+                    expectedRow.put(header[1], "UBERON:0000007");
+                    expectedRow.put(header[2], "name_uberon_7");
+                } else if (mapReader.getRowNumber() == 8) {
+                    //should be kept because an obsolete ID used in annotation 
+                    //should be replaced by this ID (consider tag)
+                    expectedRow.put(header[0], "consider tag");
+                    expectedRow.put(header[1], "UBERON:0000011");
+                    expectedRow.put(header[2], "name_uberon_11");
+                } else if (mapReader.getRowNumber() == 9) {
+                    //should be kept because an obsolete ID used in annotation 
+                    //should be replaced by this ID (consider tag)
+                    expectedRow.put(header[0], "replaced_by tag");
+                    expectedRow.put(header[1], "UBERON:0000013");
+                    expectedRow.put(header[2], "name_uberon_13");
+                } else if (mapReader.getRowNumber() == 10 && !filterUsingParents) {
+                    //should be kept because, despite the fact that its parent is present 
+                    //in the file, this filtering was not activated
+                    expectedRow.put(header[0], "informative parent");
+                    expectedRow.put(header[1], "UBERON:0000014");
+                    expectedRow.put(header[2], "name_uberon_14");
+                } else if (mapReader.getRowNumber() == 10 && filterUsingParents || 
+                        mapReader.getRowNumber() == 11 && !filterUsingParents) {
+                    //should be kept because, despite the fact that its parent 
+                    //is in the file, this parent is member of a non-informative subset.
+                    expectedRow.put(header[0], "non-informative parent");
+                    expectedRow.put(header[1], "UBERON:0000015");
+                    expectedRow.put(header[2], "name_uberon_15");
                 } else {
                     throw new AssertionError("Incorrect number of rows in filtered file: " + 
                             mapReader.getRowNumber());
@@ -173,7 +234,12 @@ public class AnnotationCommonTest extends TestAncestor {
                 assertEquals("Incorrect row in filtered info file", expectedRow, row);
                 i++;
             }
-            assertEquals("Incorrect number of rows in filtered info file", 5, i);
+            int expectedRowCount = 10;
+            if (filterUsingParents) {
+                expectedRowCount = 9;
+            }
+            assertEquals("Incorrect number of rows in filtered info file", 
+                    expectedRowCount, i);
         }
     }
 

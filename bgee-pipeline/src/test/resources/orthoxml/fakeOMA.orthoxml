@@ -41,7 +41,7 @@
  </species>
  <groups>
   <orthologGroup id="1">
-   <property name="TaxRange" value="Euteleostomi"/>
+   <property name="TaxRange" value="Euteleostomi" taxid="117571"/>
    <geneRef id="2"/>
    <paralogGroup>
     <geneRef id="98643"/>
@@ -49,22 +49,54 @@
    </paralogGroup>
   </orthologGroup>
   <orthologGroup id="2">
-   <property name="TaxRange" value="Euteleostomi"/>
+   <property name="TaxRange" value="Euteleostomi" taxid="117571"/>
    <paralogGroup>
     <geneRef id="3"/>
     <geneRef id="5"/>
     <geneRef id="6"/>
     <geneRef id="7"/>
+    <paralogGroup>
+     <geneRef id="43344"/>
+     <geneRef id="105488"/>
+    </paralogGroup>
+    <orthologGroup>
+     <property name="TaxRange" value="Cladistia" taxid="1338366"/>
+     <geneRef id="2"/>
+     <paralogGroup>
+      <geneRef id="98643"/>
+      <geneRef id="98644"/>
+     </paralogGroup>
+    </orthologGroup>
    </paralogGroup>
    <paralogGroup>
     <geneRef id="43344"/>
     <geneRef id="55815"/>
     <geneRef id="105488"/>
-    <orthologGroup >
-     <property name="TaxRange" value="Tetrapoda"/>
+    <orthologGroup>
+     <property name="TaxRange" value="Tetrapoda" taxid="32523"/>
      <geneRef id="98343"/>
      <geneRef id="75930"/>
     </orthologGroup>
+   </paralogGroup>
+   <orthologGroup>
+    <property name="TaxRange" value="Vertebrata" taxid="7742"/>
+    <geneRef id="2"/>
+    <paralogGroup>
+     <geneRef id="98643"/>
+     <geneRef id="98644"/>
+    </paralogGroup>
+    <paralogGroup>
+     <geneRef id="3"/>
+     <geneRef id="5"/>
+    </paralogGroup>
+   </orthologGroup>
+  </orthologGroup>
+  <orthologGroup id="3">
+   <property name="TaxRange" value="Chordata" taxid="7711"/>
+   <geneRef id="2"/>
+   <paralogGroup>
+    <geneRef id="43344"/>
+    <geneRef id="105488"/>
    </paralogGroup>
   </orthologGroup>
  </groups>

@@ -2162,7 +2162,8 @@ public class OWLGraphManipulator {
      */
     private boolean isASubClassOfEdge(OWLGraphEdge edge) {
     	return (edge.getSingleQuantifiedProperty().getProperty() == null && 
-				edge.getSingleQuantifiedProperty().getQuantifier() == Quantifier.SUBCLASS_OF);
+				edge.getSingleQuantifiedProperty().getQuantifier().equals(
+				        Quantifier.SUBCLASS_OF));
     }
     
     /**
@@ -2179,7 +2180,8 @@ public class OWLGraphManipulator {
         			this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(PARTOFID));
     	}
     	return (partOfRels.contains(edge.getSingleQuantifiedProperty().getProperty()) && 
-    	        edge.getSingleQuantifiedProperty().getQuantifier() == Quantifier.SOME);
+    	        edge.getSingleQuantifiedProperty().getQuantifier().equals(
+    	                Quantifier.SOME));
     }
  
    

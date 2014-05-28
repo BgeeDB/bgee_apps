@@ -1331,7 +1331,8 @@ public class SimilarityAnnotation {
         String ecoId = (String) annotation.get(ECO_COL_NAME);
         if (ecoId != null) {
             OWLClass cls = ecoOntWrapper.getOWLClassByIdentifier(ecoId.trim());
-            if (cls == null || ecoOntWrapper.isObsolete(cls)) {
+            if (cls == null || 
+                    ecoOntWrapper.isObsolete(cls) || ecoOntWrapper.getIsObsolete(cls)) {
                 log.error("Missing ECO ID: {}", ecoId);
                 this.missingECOIds.add(ecoId);
                 allGood = false;
@@ -1341,7 +1342,8 @@ public class SimilarityAnnotation {
         String homId = (String) annotation.get(HOM_COL_NAME);
         if (homId != null) {
             OWLClass cls = homOntWrapper.getOWLClassByIdentifier(homId.trim());
-            if (cls == null || homOntWrapper.isObsolete(cls)) {
+            if (cls == null || 
+                    homOntWrapper.isObsolete(cls) || homOntWrapper.getIsObsolete(cls)) {
                 log.trace("Missing HOM ID: {}", homId);
                 this.missingHOMIds.add(homId);
                 allGood = false;
@@ -1351,7 +1353,8 @@ public class SimilarityAnnotation {
         String confId = (String) annotation.get(CONF_COL_NAME);
         if (confId != null) {
             OWLClass cls = confOntWrapper.getOWLClassByIdentifier(confId.trim());
-            if (cls == null || confOntWrapper.isObsolete(cls)) {
+            if (cls == null || 
+                    confOntWrapper.isObsolete(cls) || confOntWrapper.getIsObsolete(cls)) {
                 log.trace("Missing CONF ID: {}", confId);
                 this.missingCONFIds.add(confId);
                 allGood = false;

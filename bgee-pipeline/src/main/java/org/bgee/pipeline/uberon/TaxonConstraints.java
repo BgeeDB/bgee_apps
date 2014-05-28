@@ -573,7 +573,8 @@ public class TaxonConstraints {
         //Get the OWLClass corresponding to the requested taxon
         String ontTaxonId = OntologyUtils.getTaxOntologyId(taxonId);
         OWLClass taxClass = ontWrapper.getOWLClassByIdentifier(ontTaxonId);
-        if (taxClass == null || ontWrapper.isObsolete(taxClass)) {
+        if (taxClass == null || 
+                ontWrapper.isObsolete(taxClass) || ontWrapper.getIsObsolete(taxClass)) {
             throw log.throwing(new IllegalArgumentException("A taxon ID " +
                     "provided could not be found or was deprecated in " +
                     "the provided ontology: " + taxonId));

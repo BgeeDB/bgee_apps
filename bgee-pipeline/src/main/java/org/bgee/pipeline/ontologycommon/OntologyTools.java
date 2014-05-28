@@ -176,7 +176,7 @@ public class OntologyTools {
             //we do not use goWrapper.getAllOWLClasses(), because it does not return 
             //deprecated classes
             for (OWLClass goTerm: myOnt.getClassesInSignature()) {
-                if (goWrapper.isObsolete(goTerm)) {
+                if (goWrapper.isObsolete(goTerm) || goWrapper.getIsObsolete(goTerm)) {
                     obsoleteIds.add(goWrapper.getIdentifier(goTerm));
                     obsoleteIds.addAll(goWrapper.getAltIds(goTerm));
                 }

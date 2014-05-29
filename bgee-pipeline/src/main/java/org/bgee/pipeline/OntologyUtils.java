@@ -834,6 +834,20 @@ public class OntologyUtils {
     }
     
     /**
+     * Determines whether {@code object} is a member of a non-informative subset.
+     * 
+     * @param object    the {@code OWLObject} which we want subset information about.
+     * @return          {@code true} if {@code object} is member of a non-informative subset.
+     * @see #NON_INFORMATIVE_SUBSETS
+     */
+    public boolean isNonInformativeSubsetMember(OWLObject object) {
+        log.entry(object);
+        
+        return log.exit(!Collections.disjoint(NON_INFORMATIVE_SUBSETS, 
+                this.getWrapper().getSubsets(object)));
+    }
+    
+    /**
      * Return the {@code OWLGraphWrapper} wrapping the ontology on which operations 
      * should be performed. If not provided at instantiation, it will be automatically 
      * loaded the first time this method is called, from the {@code OWLOntology} provided 

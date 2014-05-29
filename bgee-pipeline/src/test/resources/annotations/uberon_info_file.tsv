@@ -7,6 +7,7 @@ should be removed because not used in annotation	UBERON:000200
 	UBERON:0000005	
 XRef filtering	UBERON:0000006	name_uberon_6
 indirect child	UBERON:0000007	name_uberon_7
+indirect child, but is member of a non-informative subset	UBERON:00000016	name_uberon_16
 consider tag	UBERON:0000011	name_uberon_11
 replaced_by tag	UBERON:0000013	name_uberon_13
 informative parent	UBERON:0000014	name_uberon_14

@@ -402,4 +402,21 @@ public class OntologyUtilsTest extends TestAncestor {
         assertEquals("Incorrect filtered edges returned", expectedEdges, 
                 utils.getIsAPartOfOutgoingEdges(clsC));
     }
+    
+    /**
+     * Test the method {@link OntologyUtils#isNonInformativeSubsetMember(OWLObject)}.
+     */
+    @Test
+    public void testIsNonInformativeSubsetMember() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/nonInformativeSubset.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        assertTrue(utils.isNonInformativeSubsetMember(
+                wrapper.getOWLClassByIdentifier("UBERON:0000001")));
+        assertFalse(utils.isNonInformativeSubsetMember(
+                wrapper.getOWLClassByIdentifier("UBERON:0000002")));
+    }
 }

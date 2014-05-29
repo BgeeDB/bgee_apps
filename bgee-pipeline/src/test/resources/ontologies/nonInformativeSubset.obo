@@ -1,0 +1,12 @@
+format-version: 1.4
+ontology: xRefForFiltering
+subsetdef: non_informative "non informative"
+
+[Term]
+id: UBERON:0000001
+name: test A
+subset: non_informative
+
+[Term]
+id: UBERON:0000002
+name: test B

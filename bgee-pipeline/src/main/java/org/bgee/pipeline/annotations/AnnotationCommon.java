@@ -155,7 +155,8 @@ public class AnnotationCommon {
     /**
      * Filter the anatomical entities reported from {@link 
      * org.bgee.pipeline.uberon.Uberon#saveSimplificationInfo(OWLOntology, String, Collection) 
-     * Uberon#saveSimplificationInfo} method, to keep only those used in our annotations. 
+     * Uberon#saveSimplificationInfo} method, to keep only those used in our annotations, 
+     * or their parents, not part of a non-informative subset. 
      * This method will generate new files, corresponding to those listed in {@code infoFiles}, 
      * in the directory {@code filteredFileDirectory} (so make sure you provide a different 
      * directory from where original info files are stored). 
@@ -220,13 +221,13 @@ public class AnnotationCommon {
         log.info("Start filtering Uberon simplification info...");
         
         //first, read all annotation files to get all anatomical entity IDs used
-        Set<String> allowedAnatEntityIds = new HashSet<String>();
+        Set<String> annotatedAnatEntityIds = new HashSet<String>();
         for (String singleAnatEntityFile: singleAnatEntityFiles) {
-            allowedAnatEntityIds.addAll(AnnotationCommon.extractAnatEntityIdsFromFile(
+            annotatedAnatEntityIds.addAll(AnnotationCommon.extractAnatEntityIdsFromFile(
                     singleAnatEntityFile, true));
         }
         for (String multipleAnatEntitiesFile: multipleAnatEntitieFiles) {
-            allowedAnatEntityIds.addAll(AnnotationCommon.extractAnatEntityIdsFromFile(
+            annotatedAnatEntityIds.addAll(AnnotationCommon.extractAnatEntityIdsFromFile(
                     multipleAnatEntitiesFile, false));
         }
         
@@ -236,8 +237,8 @@ public class AnnotationCommon {
         //now, we get from the original ontology the association from XRefs to Uberon IDs, 
         //to be able to recognize a term even if the annotation was using a xref
         for (Entry<String, Set<String>> xRefEntry: utils.getXRefMappings().entrySet()) {
-            if (allowedAnatEntityIds.contains(xRefEntry.getKey())) {
-                allowedAnatEntityIds.addAll(xRefEntry.getValue());
+            if (annotatedAnatEntityIds.contains(xRefEntry.getKey())) {
+                annotatedAnatEntityIds.addAll(xRefEntry.getValue());
             }
         }
         
@@ -245,25 +246,25 @@ public class AnnotationCommon {
         //was used in an annotation
         for (Entry<String, Set<String>> considerEntry: 
             utils.getConsiderMappings().entrySet()) {
-            if (allowedAnatEntityIds.contains(considerEntry.getKey())) {
-                allowedAnatEntityIds.addAll(considerEntry.getValue());
+            if (annotatedAnatEntityIds.contains(considerEntry.getKey())) {
+                annotatedAnatEntityIds.addAll(considerEntry.getValue());
             }
         }
         for (Entry<String, Set<String>> replacedByEntry: 
             utils.getReplacedByMappings().entrySet()) {
-            if (allowedAnatEntityIds.contains(replacedByEntry.getKey())) {
-                allowedAnatEntityIds.addAll(replacedByEntry.getValue());
+            if (annotatedAnatEntityIds.contains(replacedByEntry.getKey())) {
+                annotatedAnatEntityIds.addAll(replacedByEntry.getValue());
             }
         }
         
         //now, we add all the ancestors of the allowed terms, so that we display terms 
         //if one of their children is used in an annotation
         Set<String> allParentIds = new HashSet<String>();
-        for (String allowedId: allowedAnatEntityIds) {
-            OWLClass cls = wrapper.getOWLClassByIdentifier(allowedId);
+        for (String annotatedId: annotatedAnatEntityIds) {
+            OWLClass cls = wrapper.getOWLClassByIdentifier(annotatedId);
             if (cls == null) {
                 //maybe was not an OBO-like ID but an IRI
-                cls = wrapper.getOWLClass(allowedId);
+                cls = wrapper.getOWLClass(annotatedId);
             }
             //OK, maybe it was an xref or an obsolete ID, continue
             if (cls == null) {
@@ -277,6 +278,7 @@ public class AnnotationCommon {
                 }
             }
         }
+        Set<String> allowedAnatEntityIds = new HashSet<String>(annotatedAnatEntityIds);
         allowedAnatEntityIds.addAll(allParentIds);
         
         //now, for each file infoFile, we generate a corresponding file with IDs filtered
@@ -365,6 +367,24 @@ public class AnnotationCommon {
                             continue rowLoop;
                         }
                         
+                        //if this ID is allowed not because used in our annotations directly, 
+                        //but because it is a parent of a term used in an annotation, 
+                        //we discard it if it is member of a non-informative subset
+                        if (!annotatedAnatEntityIds.contains(entityId) && 
+                                (cls == null || !annotatedAnatEntityIds.contains(
+                                        wrapper.getIdentifier(cls)))) {
+                            if (cls != null && utils.isNonInformativeSubsetMember(cls)) {
+                                if (log.isTraceEnabled()) {
+                                    log.trace("Discarding row because parent " +
+                                            "of a term used in annotations, but member of " +
+                                            "a non-informative subset: " + 
+                                            infoReader.getLineNumber() + " - " + 
+                                            infoReader.getUntokenizedRow());
+                                }
+                                continue rowLoop;
+                            }
+                        }
+                        
                         //filter terms that have a parent by is_a or part_of relation 
                         //in the list, if this parent is not member of 
                         //a non informative subset
@@ -376,9 +396,7 @@ public class AnnotationCommon {
                                     utils.getIsAPartOfOutgoingEdges(cls)) {
                                     //if the parent is member of a non-informative subset, 
                                     //we will not discard the term anyway
-                                    if (!Collections.disjoint(
-                                            OntologyUtils.NON_INFORMATIVE_SUBSETS, 
-                                            wrapper.getSubsets(edge.getTarget()))) {
+                                    if (utils.isNonInformativeSubsetMember(edge.getTarget())) {
                                         continue edgeLoop;
                                     }
                                     //check if the parent is itself in the info file

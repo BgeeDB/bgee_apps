@@ -1,6 +1,7 @@
 format-version: 1.4
 ontology: xRefForFiltering
 subsetdef: non_informative "non informative"
+subsetdef: informative "informative"
 
 [Term]
 id: UBERON:0000006
@@ -11,6 +12,7 @@ subset: non_informative
 [Term]
 id: UBERON:0000007
 name: test B
+subset: informative
 
 [Term]
 id: UBERON:0000008
@@ -43,9 +45,15 @@ is_obsolete: true
 replaced_by: UBERON:0000013
 
 [Term]
+id: UBERON:00000016
+name: test K
+subset: non_informative
+
+[Term]
 id: UBERON:0000014
 name: test I
 relationship: in_deep_part_of UBERON:0000007
+is_a: UBERON:00000016
 
 [Term]
 id: UBERON:0000015

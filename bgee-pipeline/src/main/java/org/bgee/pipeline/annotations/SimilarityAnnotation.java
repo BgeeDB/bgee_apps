@@ -1251,7 +1251,7 @@ public class SimilarityAnnotation {
      * </ul>
      * 
      * @param annotation        A {@code Map} that represents a line of annotation. 
-     *                          See {@link #extractAnnotations(String)} for details 
+     *                          See {@link #extractAnnotations(String, boolean)} for details 
      *                          about the key-value pairs in this {@code Map}.
      * @param taxonConstraints  A {@code Map} where keys are IDs of Uberon terms, 
      *                          and values are {@code Set}s of {@code Integer}s 
@@ -1545,7 +1545,7 @@ public class SimilarityAnnotation {
      * <p>
      * The assertions are returned as a {@code List} of {@code Map}s, where 
      * each {@code Map} represents a summarized annotation. 
-     * See {@link #extractAnnotations(String)} for details about the keys used 
+     * See {@link #extractAnnotations(String, boolean)} for details about the keys used 
      * in the {@code Map}s. 
      *  
      * @param similarityFile    A {@code String} that is the path to the annotation file.
@@ -1620,14 +1620,14 @@ public class SimilarityAnnotation {
     
     /**
      * This methods is a helper method for 
-     * {@link #getAnatEntityIdsWithNoTransformationOf(String, OWLGraphWrapper)}, 
+     * {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}, 
      * allowing to provide the path to the Uberon ontology as {@code String}. 
      * @param annotFile     A {@code String} that is the path to 
      *                      the similarity annotation file.
      * @param uberonOntFile A {@code String} that is the path to the Uberon 
      *                      ontology file.
      * @return              See related method.
-     * @see #getAnatEntityIdsWithNoTransformationOf(String, OWLGraphWrapper)
+     * @see #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)
      * @throws IllegalArgumentException See related method.
      * @throws FileNotFoundException    See related method.
      * @throws IOException              See related method.
@@ -1733,7 +1733,7 @@ public class SimilarityAnnotation {
      * @param uberonOntFile A {@code String} that is the path to the Uberon 
      *                      ontology file.
      * @param outputFile    A {@code String} that is the path to the file where to write results.
-     * @see #getAnatEntityIdsWithNoTransformationOf(String, String)
+     * @see #getAnatEntitiesWithNoTransformationOf(String, String)
      * @throws IllegalArgumentException See related method.
      * @throws FileNotFoundException    See related method.
      * @throws IOException              See related method.

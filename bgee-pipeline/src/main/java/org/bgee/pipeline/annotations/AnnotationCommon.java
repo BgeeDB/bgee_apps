@@ -101,7 +101,8 @@ public class AnnotationCommon {
      * <li>If the first element in {@code args} is "filterInfoFiles", the action 
      * will be to filter the information obtained following simplification of Uberon, 
      * to contain only anatomical entities used in our annotations. See {@link 
-     * #filterUberonSimplificationInfo(Set, Set, Set, String)} for more details. 
+     * #filterUberonSimplificationInfo(OWLOntology, Set, Set, Set, String, boolean)} 
+     * for more details. 
      * Following elements in {@code args} must then be: 
      *   <ol>
      *   <li>The path to the original ontology, as before the simplification process
@@ -111,7 +112,7 @@ public class AnnotationCommon {
      *   for annotations (see {@link #ANAT_ENTITY_COL_NAMES}), 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      *   <li>A list of paths to annotation files using multiple anatomical entities 
-     *   for annotations (see {@link #MULTIPLE_ENTITY_COL_NAMES}), 
+     *   for annotations (see {@link #MULTIPLE_ANAT_ENTITY_COL_NAMES}), 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      *   <li>The path to the directory where to store filtered info files. 
      *   <li>A boolean value defining whether a term should be filtered 
@@ -188,7 +189,7 @@ public class AnnotationCommon {
      * <p>
      * Annotation files using multiple anatomical entities for annotations are expected 
      * to have a header, a column whose name is listed in 
-     * {@link #MULTIPLE_ENTITY_COL_NAMES}, with entities separated by one of the separators 
+     * {@link #MULTIPLE_ANAT_ENTITY_COL_NAMES}, with entities separated by one of the separators 
      * listed in {@link #ENTITY_SEPARATORS}. 
      * 
      * @param originalOnt               The {@code OWLOntology} that was used as source for 

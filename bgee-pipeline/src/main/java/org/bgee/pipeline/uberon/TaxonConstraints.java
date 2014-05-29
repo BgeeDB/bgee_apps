@@ -116,7 +116,7 @@ public class TaxonConstraints {
      * it will launch the generation of a TSV files, allowing to know, 
      * for each {@code OWLClass} in the Uberon ontology, in which taxa it exits, 
      * among the taxa provided through another TSV file, containing their NCBI IDs. 
-     * See {@link #generateTaxonConstraints(String, String, String, String, String)} 
+     * See {@link #generateTaxonConstraints(String, String, String)} 
      * for more details.
      * Following elements in {@code args} must then be: 
      *   <ol>
@@ -141,7 +141,7 @@ public class TaxonConstraints {
      * <li>If the first element in {@code args} is "explainTaxonConstraints", 
      * the action will be to display the explanation for the existence or absence 
      * of existence of a Uberon term in a given taxon. See {@link 
-     * #explainTaxonExistence(String, String, Collection, Collection)} for more details. 
+     * #explainTaxonExistence(Collection, Collection)} for more details. 
      * The explanation will be displayed using the logger of this class with an 
      * {@code info} level.
      * Following elements in {@code args} must then be: 
@@ -736,10 +736,6 @@ public class TaxonConstraints {
      * owltools.mooncat.SpeciesSubsetterUtil#explainTaxonConstraint(Collection, Collection)} 
      * for more details.
      * 
-     * @param uberonOnt     The Uberon {@code OWLOntology} which the classes we want 
-     *                      explanations for belong to.
-     * @param taxOnt        The taxonomy {@code OWLOntology} which to extract relations 
-     *                      between taxa from.
      * @param owlClassIds   A {@code Collection} of {@code String}s that are the OBO-like 
      *                      IDs of the {@code OWLClass}es for which we want explanations 
      *                      of taxon constraints.

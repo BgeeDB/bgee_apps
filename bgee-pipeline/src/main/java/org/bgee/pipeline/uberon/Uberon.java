@@ -100,20 +100,9 @@ public class Uberon {
      *   <li>path to the Uberon ontology (a version making use of such restrictions...).
      *   <li>path to the output file where to write taxon IDs into, one per line.
      *   </ol>
-     * <li>If the first element in {@code args} is "extractRelatedRelations", the action 
-     * will be to retrieve all {@code OWLGraphEdge}s related to the relation specified, 
-     * or any of its sub-property, and write them into an output file, 
-     * see {@link #extractRelatedEdgesToOutputFile(String, String, IRI)}.
-     * Following elements in {@code args} must then be: 
-     *   <ol>
-     *   <li>path to the Uberon ontology with all relations used
-     *   <li>path to the output file where to write the relations
-     *   <li>IRI of the relation, for instance 
-     *   {@code http://purl.obolibrary.org/obo/RO_0002324}
-     *   </ol>
      * <li>If the first element in {@code args} is "simplifyUberon", the action 
      * will be to simplify the Uberon ontology and to save it to files in OBO and OWL formats, 
-     * see {@link #simplifyUberonAndSaveToFile(String, String, Collection, Collection, 
+     * see {@link #simplifyUberonAndSaveToFile(String, String, String, Collection, Collection, 
      * Collection, Collection, Collection) simplifyUberonAndSaveToFile}.
      * Following elements in {@code args} must then be: 
      *   <ol>
@@ -294,7 +283,7 @@ public class Uberon {
      * <p>
      * Information about the simplification process can be retrieved afterwards, 
      * (see {@link #getSubgraphClassesFiltered()}), or saved to a file (see 
-     * {@link #saveSimplificationInfo(OWLOntology, String)}).
+     * {@link #saveSimplificationInfo(OWLOntology, String, Collection)}).
      *  
      * @param uberonOnt                         The {@code OWLOntology} to simplify.
      * @param classIdsToRemove                  A {@code Collection} of {@code String}s that 
@@ -413,7 +402,7 @@ public class Uberon {
      * If more information was to be stored in the future, it should be stored in separate 
      * files (thus, modifying this method signature).
      * 
-     * @param uberonOnt                 The original {@code OWLOntology}, 
+     * @param ont                       The original {@code OWLOntology}, 
      *                                  as before simplification.
      * @param subgraphFilteredFilePath  A {@code String} that is the path to the file that will 
      *                                  store information about the {@code OWLClass}es 

@@ -1643,7 +1643,7 @@ public class OWLGraphManipulator {
      * is {@code true}, then RO:0002151 "partially_overlaps" is also allowed). 
      * <p>
      * This method is similar to the {@link 
-     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set<OWLObjectProperty>) 
+     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set) 
      * Mooncat#retainAxiomsInPropertySubset} method, the differences lie only in 
      * the options of these methods, and the way sub-properties are retrieved 
      * (via a reasonner in {@code Mooncat}, via {@code OWLGraphWrapper} in this method). 
@@ -1691,7 +1691,7 @@ public class OWLGraphManipulator {
      * is {@code true}, then RO:0002151 "partially_overlaps" is also removed). 
      * <p>
      * This method is the inverse of the {@link 
-     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set<OWLObjectProperty>) 
+     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set) 
      * Mooncat#retainAxiomsInPropertySubset} method, the differences lie also in 
      * the options of these methods, and the way sub-properties are retrieved 
      * (via a reasonner in {@code Mooncat}, via {@code OWLGraphWrapper} in this method).
@@ -1749,7 +1749,7 @@ public class OWLGraphManipulator {
      * then the relation RO:0002151 "partially_overlaps" will also be kept in the ontology). 
      * <p>
      * This method is similar to {@link 
-     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set<OWLObjectProperty>) 
+     * owltools.mooncat.Mooncat#retainAxiomsInPropertySubset(OWLOntology, Set) 
      * Mooncat#retainAxiomsInPropertySubset} method, the differences lie in 
      * the options of these methods, and the way sub-properties are retrieved 
      * (via a reasonner in {@code Mooncat}, via {@code OWLGraphWrapper} in this method).
@@ -2209,7 +2209,6 @@ public class OWLGraphManipulator {
      * 					to be applied to the ontology. 
      * @return 			{@code true} if all changes were applied, 
      * 					{@code false} otherwise. 
-     * @see #applyChange(OWLOntologyChange)
      */
     private boolean applyChanges(List<OWLOntologyChange> changes) {
     	

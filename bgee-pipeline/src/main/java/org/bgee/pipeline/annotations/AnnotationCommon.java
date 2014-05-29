@@ -295,20 +295,13 @@ public class AnnotationCommon {
                     new CsvMapReader(new FileReader(infoFile), Utils.TSVCOMMENTED)) {
                 
                 String[] header = infoReader.getHeader(true);
-                //iterate potential column names in order of preference
-                colNameLoop: for (String anatEntityColName: ANAT_ENTITY_COL_NAMES) {
-                    for (String headerCol: header) {
-                        if (anatEntityColName.equals(headerCol)) {
-                            entityColName = anatEntityColName;
-                            break colNameLoop;
-                        } 
-                    }
-                }
-                if (entityColName == null) {
+                int entityColIndex = localizeColumn(header, ANAT_ENTITY_COL_NAMES);
+                if (entityColIndex == -1) {
                     throw log.throwing(new IllegalArgumentException("The info file " + 
                         infoFile + " does not contain any column to retrieve anatomical " +
                                 "entities from. Offending header: " + header));
                 }
+                entityColName = header[entityColIndex];
                 
                 //now we read all the file if filtering on parents is requested
                 if (filterUsingParents) {
@@ -461,25 +454,14 @@ public class AnnotationCommon {
             //(some annotation files contain several columns 
             //from potential column names)
             String[] header = listReader.getHeader(true);
-            //column indexes start at 1 in super csv 
-            int columnIndex = 0;
             List<String> colNamesToUse;
             if (singleAnatEntity) {
                 colNamesToUse = ANAT_ENTITY_COL_NAMES;
             } else {
                 colNamesToUse = MULTIPLE_ANAT_ENTITY_COL_NAMES;
             }
-            //iterate potential column name in order of preference
-            anatEntity: for (String anatEntityColName: colNamesToUse) {
-                for (int i = 0; i < header.length; i++) {
-                    if (anatEntityColName.equals(header[i])) {
-                        //column indexes start at 1 in super csv, so we add 1
-                        columnIndex = i + 1;
-                        break anatEntity;
-                    } 
-                }
-            }
-            
+            //column indexes start at 1 in super csv, so we add 1
+            int columnIndex = localizeColumn(header, colNamesToUse) + 1;
             if (columnIndex == 0) {
                 throw log.throwing(new IllegalArgumentException("The file " + pathToTSVFile + 
                         " does not contain any column to retrieve " +
@@ -575,6 +557,56 @@ public class AnnotationCommon {
             colValue += term.trim();
         }
         return log.exit(colValue);
+    }
+    
+    /**
+     * Determine, among {@code header}, the index of the element having an equal value 
+     * in {@code allowedColumnNames}. If several elements in {@code header} have 
+     * an equal value in {@code allowedColumnNames}, then the element whose matching value 
+     * has the lowest index in {@code allowedColumnNames} is considered. Index returned 
+     * starts from 0. If no element could be found in {@code header} with a matching value 
+     * in {@code allowedColumnNames}, then -1 is returned. 
+     * <p>
+     * The aim is to localize, in the header of a TSV file, the column with the preferred 
+     * name, when several column names are allowed to describe a same type of data, 
+     * and a header includes several of these allowed column names. For instance, 
+     * in some annotation files, the column name "anatEntityId" is sometimes used 
+     * to refer to Uberon anatomical entities. But, in other files, "anatEntityId" 
+     * represents IDs from anatomical ontologies used before we moved to Uberon, 
+     * and they also include a column named "UberonId", referring to Uberon anatomical 
+     * entities. In that case, the allowed names to refer to Uberon entities will be, 
+     * in order of preference, "UberonId", then "anatEntityId". This will allow 
+     * to correctly localize the column "UberonId" in files also including a column 
+     * "anatEntityId", and to correctly localize the column "anatEntityId" in files 
+     * where it is the only valid column. 
+     * 
+     * @param header                An {@code Array} of {@code String}s representing 
+     *                              the tokenized header of a TSV file. This is how 
+     *                              headers are returned by the {@code Super CSV} library 
+     *                              that we use to read/write TSV files.
+     * @param allowedColumnNames    A {@code List} of {@code String}s representing 
+     *                              the potential column names allowed for the data 
+     *                              we are looking for, in order of preference.  
+     * @return                      an {@code int} that is the index of the preferred 
+     *                              matching element in {@code header} (index starts from 0). 
+     *                              If no elements in {@code header} match an element 
+     *                              in {@code allowedColumnNames}, then -1 is returned. 
+     */
+    public static int localizeColumn(String[] header, List<String> allowedColumnNames) {
+        log.entry(header, allowedColumnNames);
+        
+        int columnIndex = -1;
+        //iterate potential column names in order of preference
+        columnLoop: for (String columnName: allowedColumnNames) {
+            for (int i = 0; i < header.length; i++) {
+                if (columnName.equals(header[i])) {
+                    columnIndex = i;
+                    break columnLoop;
+                } 
+            }
+        }
+         
+         return log.exit(columnIndex);
     }
     
 }

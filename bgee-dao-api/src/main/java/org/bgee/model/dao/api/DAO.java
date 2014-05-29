@@ -22,8 +22,8 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * 
      * @author Frederic Bastian
      * @version Bgee 13
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Object[])
+     * @see #setAttributes(Collection)
+     * @see #setAttributes(Enum[])
      * @since Bgee 13
      */
     public interface Attribute {
@@ -90,11 +90,11 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * the {@code TransferObject}s obtained from this {@code DAO}, for all 
      * the following calls. All available attributes will then be populated. 
      * This is useful if you previously called {@code #setAttributes(Collection)}
-     * or {@link #setAttributes(Object[])} to populate only a subset of the attributes, 
+     * or {@link #setAttributes(Enum[])} to populate only a subset of the attributes, 
      * and now want to retrieve all of them.
      * 
      * @see #setAttributes(Collection)
-     * @see #setAttributes(Object[])
+     * @see #setAttributes(Enum[])
      */
     public void clearAttributes();
     

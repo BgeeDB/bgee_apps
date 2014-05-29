@@ -321,7 +321,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * @throws ServiceConfigurationError   If an error occurred while trying to find 
 	 * 									   a {@code DAOManager} service provider 
 	 * 									   from the {@code ServiceLoader}. 
-	 * @see #getDAOMAnager()
+	 * @see #getDAOManager()
 	 */
 	public final static DAOManager getDAOManager(Properties props) 
 	    throws IllegalStateException, ServiceConfigurationError

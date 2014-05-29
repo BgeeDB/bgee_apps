@@ -56,7 +56,7 @@ public class NoExpressionCallParams extends CallParams {
     //****************************************
 
     /**
-     * @see #canMerge(CallParams, boolean)
+     * @see #canMerge(CallParams)
      */
     @Override
     protected NoExpressionCallParams merge(CallParams paramsToMerge) {

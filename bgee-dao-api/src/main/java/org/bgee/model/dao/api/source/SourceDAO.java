@@ -25,9 +25,9 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
      * <li>{@code ID}: corresponds to {@link SourceTO#getId()}.
      * <li>{@code NAME}: corresponds to {@link SourceTO#getName()}.
      * </ul>
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Collection)
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Object[])
-     * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
+     * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
         ID, NAME;

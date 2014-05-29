@@ -27,9 +27,9 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
      * <li>{@code LABEL}: corresponds to {@link GOTermTO#getName()}.
      * <li>{@code DOMAIN}: corresponds to {@link GOTermTO#getDomain()}.
      * </ul>
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Collection)
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Object[])
-     * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
+     * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
         ID, LABEL, DOMAIN;

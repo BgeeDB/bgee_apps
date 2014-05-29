@@ -55,7 +55,7 @@ public class ExpressionCallParams extends CallParams {
     //****************************************
     
     /**
-     * @see #canMerge(CallParams, boolean)
+     * @see #canMerge(CallParams)
      */
     @Override
     protected ExpressionCallParams merge(CallParams paramsToMerge) {

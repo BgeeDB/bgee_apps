@@ -24,9 +24,9 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * <li>{@code SPECIESNAME}: corresponds to {@link SpeciesTO#getSpeciesName()}.
      * <li>{@code PARENTTAXONID}: corresponds to {@link SpeciesTO#getParentTaxonId()}.
      * </ul>
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Collection)
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Object[])
-     * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
+     * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
         ID, COMMONNAME, GENUS, SPECIESNAME, PARENTTAXONID;

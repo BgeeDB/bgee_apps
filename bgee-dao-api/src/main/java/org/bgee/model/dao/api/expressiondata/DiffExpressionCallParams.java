@@ -8,7 +8,8 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
 
 /**
  * This class allows to provide the parameters specific to differential expression 
- * calls, when using a {@link DAO}, to params the differential expression calls 
+ * calls, when using a {@link org.bgee.model.dao.api.DAO DAO}, to params 
+ * the differential expression calls 
  * used during queries. It allows to define conditions on the data types and 
  * data qualities of the differential expression calls to use, the call type  
  * that they should be based on, the experimental factor compared when generating 
@@ -19,7 +20,8 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
  * for differential expression calls, so no associated parameters.
  * <p>
  * In general, a {@code DiffCallType} and a {@code Factor} should be provided (see 
- * {@link #setDiffCallType(DiffCallType)}) and (see {@link #setFactor(Factor)}).
+ * {@link #setDiffCallType(DiffExpressionCallTO.DiffCallType)} and 
+ * {@link #setFactor(DiffExpressionCallTO.Factor)}).
  * Otherwise, It means that different types of call would be used (for instance, 
  * {@code OVEREXPRESSED} and {@code UNDEREXPRESSED}), or comparing different things 
  * (for instance, comparing expression in an organ at different stage, or comparing 
@@ -75,7 +77,7 @@ public class DiffExpressionCallParams extends CallParams {
     //****************************************
     
     /**
-     * @see #canMerge(CallParams, boolean)
+     * @see #canMerge(CallParams)
      */
     @Override
     protected DiffExpressionCallParams merge(CallParams paramsToMerge) {

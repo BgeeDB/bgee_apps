@@ -26,9 +26,9 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * <li>{@code NODERIGHTBOUND}: corresponds to {@link HierarchicalGroupTO#getNodeRightBound()}.
      * <li>{@code TAXONID}: corresponds to {@link HierarchicalGroupTO#getNcbiTaxonomyId()}.
      * </ul>
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Collection)
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Object[])
-     * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
+     * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
     	NODEID, GROUPID, NODELEFTBOUND, NODERIGHTBOUND, TAXONID;

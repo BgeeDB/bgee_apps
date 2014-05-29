@@ -27,9 +27,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * <li>{@code OMAPARENTNODEID}: corresponds to {@link GeneTO#getOMANodeId()}.
      * <li>{@code ENSEMBLGENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
      * </ul>
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Collection)
-     * @see org.bgee.model.dao.api.DAO.setAttributesToGet(Object[])
-     * @see org.bgee.model.dao.api.DAO.clearAttributesToGet()
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
+     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
+     * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
         ID, NAME, DESCRIPTION, SPECIESID, GENEBIOTYPEID, OMAPARENTNODEID, ENSEMBLGENE;

@@ -48,32 +48,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 	public GeneTOResultSet getAllGenes() throws DAOException {
 		log.entry();
 		
-		//Construct sql query according to currents attributes
-		Collection<GeneDAO.Attribute> attributes = this.getAttributes();
+		//Construct sql query
 		StringBuilder sql = new StringBuilder("SELECT ");
-		Boolean isFirstIteration = true;
-		for (GeneDAO.Attribute attribute: attributes) {
-			if (isFirstIteration) {
-				isFirstIteration = false;
-			} else {
-				sql.append(", ");
-			}
-			if (attribute.equals(GeneDAO.Attribute.ID)) {
-				sql.append("geneId");
-			} else if (attribute.equals(GeneDAO.Attribute.NAME)) {
-				sql.append("geneName");
-			} else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
-				sql.append("geneDescription");
-			} else if (attribute.equals(GeneDAO.Attribute.SPECIESID)) {
-				sql.append("speciesId");
-			} else if (attribute.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
-				sql.append("geneBioTypeId");
-			} else if (attribute.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
-				sql.append("OMAParentNodeId");
-			} else if (attribute.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
-				sql.append("ensemblGene");
-			}
-		}
+		sql.append(getSelectExpr());
 		sql.append(" FROM gene");
 
 		try (BgeePreparedStatement stmt = 
@@ -84,6 +61,35 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
 	}
 
+    public String getSelectExpr() {
+		log.entry();
+		StringBuilder selectExpr = new StringBuilder();
+		Collection<GeneDAO.Attribute> attributes = this.getAttributes();
+		Boolean isFirstIteration = true;
+		for (GeneDAO.Attribute attribute: attributes) {
+			if (isFirstIteration) {
+				isFirstIteration = false;
+			} else {
+				selectExpr.append(", ");
+			}
+			if (attribute.equals(GeneDAO.Attribute.ID)) {
+				selectExpr.append("geneId");
+			} else if (attribute.equals(GeneDAO.Attribute.NAME)) {
+				selectExpr.append("geneName");
+			} else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
+				selectExpr.append("geneDescription");
+			} else if (attribute.equals(GeneDAO.Attribute.SPECIESID)) {
+				selectExpr.append("speciesId");
+			} else if (attribute.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
+				selectExpr.append("geneBioTypeId");
+			} else if (attribute.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
+				selectExpr.append("OMAParentNodeId");
+			} else if (attribute.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
+				selectExpr.append("ensemblGene");
+			}
+		}
+    	return log.exit(selectExpr.toString());
+    }
 	@Override
 	public int updateGenes(Collection<GeneTO> genes, 
 			Collection<GeneDAO.Attribute> attributesToUpdate) {

@@ -17,6 +17,7 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -109,18 +110,17 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
      */
     private boolean areGeneTOsEqual(GeneTO geneTO1, GeneTO geneTO2) {
     	log.entry(geneTO1, geneTO2);
-    	if(!geneTO1.getId().equals(geneTO2.getId()) ||
-    			!geneTO1.getName().equals(geneTO2.getName()) ||
-    			(geneTO1.getDescription() != null &&
-    			!geneTO1.getDescription().equals(geneTO2.getDescription())) ||
-    			geneTO1.getSpeciesId( ) != geneTO2.getSpeciesId() ||
-    			geneTO1.getGeneBioTypeId() != geneTO2.getGeneBioTypeId() ||
-    			geneTO1.getOMAParentNodeId() != geneTO2.getOMAParentNodeId() ||
-    			geneTO1.isEnsemblGene() != geneTO2.isEnsemblGene()){
-    		log.debug("Genes are not equivalent {}", geneTO1.getOMAParentNodeId());
-    		return log.exit(false);
-    	}
-    	return log.exit(true);
+        if (geneTO1.getId().equals(geneTO2.getId()) && 
+            (geneTO1.getName() == null && geneTO2.getName() == null || 
+            		geneTO1.getName() != null && geneTO1.getName().equals(geneTO2.getName())) && 
+            geneTO1.getSpeciesId() == geneTO2.getSpeciesId() && 
+            geneTO1.getGeneBioTypeId() == geneTO2.getGeneBioTypeId() && 
+            geneTO1.getOMAParentNodeId() == geneTO2.getOMAParentNodeId() && 
+            geneTO1.isEnsemblGene() == geneTO2.isEnsemblGene()) {
+        	return log.exit(true);
+        }
+		log.debug("Genes are not equivalent {}", geneTO1.getOMAParentNodeId());
+		return log.exit(false);
     }
     
     /**

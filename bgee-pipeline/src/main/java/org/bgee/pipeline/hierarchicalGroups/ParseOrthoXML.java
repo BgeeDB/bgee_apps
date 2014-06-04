@@ -178,8 +178,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
 	private void getGenesFromDb() throws DAOException {
     	log.entry();
         try {
-            this.startTransaction();
-
             log.info("Start getting gene IDs...");
     		this.getGeneDAO().setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
     		GeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
@@ -187,8 +185,6 @@ public class ParseOrthoXML extends MySQLDAOUser {
     			genesInDb.add(rsGenes.getTO().getId());
     		}
             log.info("Done getting gene IDs");
-            
-            this.commit();
         } finally {
             this.closeDAO();
         }

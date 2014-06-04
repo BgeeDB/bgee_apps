@@ -1,15 +1,16 @@
 package org.bgee.pipeline.hierarchicalGroups;
 
-import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.management.modelmbean.XMLParseException;
@@ -18,12 +19,14 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
-import sbc.orthoxml.Group;
-import sbc.orthoxml.io.OrthoXMLReader;
 
 /**
  * Tests the functions of {@link #org.bgee.pipeline.hierarchicalGroups.ParseOrthoXML}
@@ -51,103 +54,150 @@ public class ParseOrthoXMLTest extends TestAncestor {
 		return log;
 	}
 	
-	public void testParseXML() {
+    /**
+     * Test {@link ParseOrthoXML#parseXML(String)}, which is 
+     * the central method of the class doing all the job.
+     */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void testParseXML() throws DAOException, FileNotFoundException, XMLStreamException, 
+										XMLParseException {
 		log.debug("Testing if the OrthoXML file is parsed correctly..");
-		//TODO Check if we have unique OMANodeID
+
+        // First, we need a mock MySQLGeneDAO to mock the return of getAllGenes() method.
+		MySQLGeneDAO dao = mock(MySQLGeneDAO.class);
+		GeneTO geneTO1 = new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 2, true);
+		GeneTO geneTO2 = new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 0, true);
+		GeneTO geneTO3 = new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false);
+		List<GeneTO> expectedList = new ArrayList<GeneTO>();
+		expectedList.add(geneTO1);
+		expectedList.add(geneTO2);
+		expectedList.add(geneTO3);
+		// TODO finish the mock 
+//		when(dao.getAllGenes()).thenReturn(expectedList);
+		
+        // Second, we need a mock MySQLDAOManager, for the class to acquire mock MySQLGeneDAO.
+		// This will allow to verify that the correct values were tried to be inserted and
+		// inserted into the database.
+		MockDAOManager mockManager = new MockDAOManager();
+		ParseOrthoXML parser = new ParseOrthoXML(mockManager);
+		parser.parseXML(ParseOrthoXMLTest.class.getResource(OMAFILE).getPath());
+
+        // Generate the expected Sets of GeneTOs to verify the calls made to the DAO.
+        Set<GeneTO> expectedGeneTOs = new HashSet<GeneTO>();
+        //TODO create set
+        
+        ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockGeneDAO).updateGenes(
+        		geneTOsArg.capture(), Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID));
+        if (!this.areGeneTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue())) {
+            throw new AssertionError("Incorrect HierarchicalGroupTOs generated to insert "
+            		+ "hierarchical groups, expected " + expectedGeneTOs.toString() + 
+            		", but was " + geneTOsArg.getValue());
+        }
+
+        // Generate the expected Sets of HierarchicalGroupTOs to verify the calls made 
+        // to the DAO.
+        Set<HierarchicalGroupTO> expectedHGroupTOs = new HashSet<HierarchicalGroupTO>();
+        //TODO create set
+
+        ArgumentCaptor<Set> hGroupsTOsArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockHierarchicalGroupDAO).insertHierarchicalGroups(
+        		hGroupsTOsArg.capture());
+        if (!this.areHGroupTOCollectionsEqual(
+                expectedHGroupTOs, hGroupsTOsArg.getValue())) {
+            throw new AssertionError("Incorrect HierarchicalGroupTOs generated to insert "
+            		+ "hierarchical groups, expected " + expectedHGroupTOs.toString() + 
+            		", but was " + hGroupsTOsArg.getValue());
+        }
 	}
 
     /**
-     * Test {@link ParseOrthoXML#buildTree(Group)}.
-     */
-	public void testBuildTree() throws FileNotFoundException, XMLStreamException, 
-	XMLParseException, IllegalAccessException, IllegalArgumentException, 
-	InvocationTargetException, NoSuchMethodException, SecurityException {
-		File file = new File(ParseOrthoXMLTest.class.getResource(OMAFILE).getPath());
-		OrthoXMLReader reader = new OrthoXMLReader(file);
-		Group group;
-        // generate the expected data
-		Node expectedNode1 = new Node();
-		expectedNode1.setOMANodeId(1);
-		expectedNode1.setOMAGroupId(1);
-		expectedNode1.setNcbiTaxonomyRange("Euteleostomi");
-		Node node2 = new Node();
-		node2.setOMANodeId(2);
-		node2.setOMAGroupId(1);
-		node2.setGeneIDs(Arrays.asList("ENSDARG00000069839"));
-		expectedNode1.addChild(node2);
-		Node node3 = new Node();
-		node3.setOMANodeId(3);
-		node3.setOMAGroupId(1);
-		Node node4 = new Node();
-		node4.setOMANodeId(4);
-		node4.setOMAGroupId(1);
-		node4.setGeneIDs(Arrays.asList("ENSXETG00000021946", "Rep609"));
-		node3.addChild(node4);
-		Node node5 = new Node();
-		node5.setOMANodeId(5);
-		node5.setOMAGroupId(1);
-		node5.setGeneIDs(Arrays.asList("ENSXETG00000021946", "Rep610"));
-		node3.addChild(node5);
-		expectedNode1.addChild(node3);
-
-		// read first group in the file
-		group = reader.next();
-		log.debug("OrthologusGroupId: {}", group.getId());
-		ParseOrthoXML parse = new ParseOrthoXML();
-        Method method = parse.getClass().getDeclaredMethod("buildTree",
-        		Group.class);
-        method.setAccessible(true);
-
-		// Build the tree of the current group
-		Node rootNode = (Node) method.invoke(parse, group);
-		//check data
-		if (!this.areNodesEqual(expectedNode1, rootNode)) {
-			throw new AssertionError("Incorrect generated node from OMA Group");
-		}
-	}
-
-	/**
-     * Method to compare two {@code Node}s, to check for complete equality
-     * of each attribute.
+     * Method to compare two {@code Collection}s of {@code GeneTO}s, to check for complete 
+     * equality of each attribute of each {@code GeneTO}. This is because the {@code equals} 
+     * method of {@code GeneTO}s is solely based on their ID, not on other attributes. 
+     * Here we check for equality of each attribute. 
      * 
-	 * @param node1	A {@code Node} to be compared to {@code node2}.
-	 * @param node2	A {@code Node} to be compared to {@code node1}.
-	 * @return		{@code true} if {@code node1} and {@code node2} has all attributes equal
-	 * 				as well as for child {@code Node}s.
-	 */
-	private boolean areNodesEqual(Node node1, Node node2) {
-        log.entry(node1, node2);
-
-        if ((node1.getOMANodeId() == node2.getOMANodeId())
-        	&& (node1.getOMAGroupId() == node2.getOMAGroupId())
-        	&& (node1.getNcbiTaxonomyRange() == null && 
-        		node2.getNcbiTaxonomyRange() == null ||
-        		node1.getNcbiTaxonomyRange() != null &&
-        		node1.getNcbiTaxonomyRange().equals(
-        			node2.getNcbiTaxonomyRange()))
-        	&& (node1.getGeneIDs() == null &&
-        		node2.getGeneIDs() == null ||
-        		node1.getGeneIDs().containsAll(node2.getGeneIDs()) &&
-        		node2.getGeneIDs().containsAll(node1.getGeneIDs()))) {
-        	//Equivalent nodes
-        } else {
-            log.debug("Nodes are not equivalent {}", node1.getOMANodeId());
+     * @param cGeneTO1	A {@code Collection} of {@code GeneTO}s o be compared to 
+     *					{@code cGeneTO2}.
+     * @param cGeneTO2	A {@code Collection} of {@code GeneTO}s o be compared to 
+     * 					{@code cGeneTO1}.
+     * @return	{@code true} if {@code cGeneTO1} and {@code cGeneTO2} contain the same number 
+     *			of {@code GeneTO}s, and each {@code GeneTO} of a {@code Collection} has an 
+     *			equivalent {@code GeneTO} in the other {@code Collection}, with all attributes 
+     *			equal.
+     */
+	private boolean areGeneTOCollectionsEqual(Set<GeneTO> cGeneTO1, Set<GeneTO> cGeneTO2) {
+        log.entry(cGeneTO1, cGeneTO2);
+        
+        if (cGeneTO1.size() != cGeneTO2.size()) {
+            log.debug("Non matching sizes, {} - {}", cGeneTO1.size(), cGeneTO2.size());
             return log.exit(false);
         }
-   	
-    	// Check if children are equals (recurse) 
-        for (Node expectedChild: node1.getChildNodes()) {
-        	boolean found = false;
-        	for (Node generatedChild: node2.getChildNodes()) {
-        		if (areNodesEqual(expectedChild, generatedChild)) {
-        			found = true;
-        		}
-        	}
-        	if (!found) {
-        		log.debug("No equivalent child node found for {}", 
-        				expectedChild.getOMANodeId());
-        		return log.exit(false);
-        	}      
+        for (GeneTO g1: cGeneTO1) {
+            boolean found = false;
+            for (GeneTO g2: cGeneTO2) {
+                log.trace("Comparing {} to {}", g1, g2);
+                if ((g1.getId() == null && g2.getId() == null || 
+                		g1.getId() != null && g1.getId().equals(g2.getId())) && 
+                    (g1.getName() == null && g2.getName() == null || 
+                    		g1.getName() != null && g1.getName().equals(g2.getName())) && 
+                     g1.getSpeciesId() == g2.getSpeciesId() && 
+                     g1.getGeneBioTypeId() == g2.getGeneBioTypeId() && 
+                     g1.getOMAParentNodeId() == g2.getOMAParentNodeId() && 
+                     g1.isEnsemblGene() == g2.isEnsemblGene()) {
+                    found = true;    
+                }
+            }
+            if (!found) {
+                log.debug("No equivalent gene found for {}", g1);
+                return log.exit(false);
+            }      
+        }
+        return log.exit(true);
+	}
+
+    /**
+     * Method to compare two {@code Collection}s of {@code HierarchicalGroupTO}s, to check for 
+     * complete equality of each attribute of each {@code HierarchicalGroupTO}. This is because 
+     * the {@code equals} method of {@code HierarchicalGroupTO}s is solely based on their ID, 
+     * not on other attributes. Here we check for equality of each attribute. 
+     * 
+     * @param cHGroupTO1	A {@code Collection} of {@code HierarchicalGroupTO}s o be compared
+     * 						to {@code cHGroupTO2}.
+     * @param cHGroupTO2	A {@code Collection} of {@code HierarchicalGroupTO}s o be compared
+     * 						to {@code cHGroupTO1}.
+     * @return	{@code true} if {@code cHGroupTO1} and {@code cHGroupTO2} contain the same
+     * 			number of {@code HierarchicalGroupTO}s, and each {@code HierarchicalGroupTO} 
+     * 			of a {@code Collection} has an equivalent {@code HierarchicalGroupTO} in the 
+     * 			other {@code Collection}, with all attributes equal.
+     */
+	private boolean areHGroupTOCollectionsEqual(
+			Set<HierarchicalGroupTO> cHGroupTO1, Set<HierarchicalGroupTO> cHGroupTO2) {
+        log.entry(cHGroupTO1, cHGroupTO2);
+        
+        if (cHGroupTO1.size() != cHGroupTO2.size()) {
+            log.debug("Non matching sizes, {} - {}", cHGroupTO1.size(), cHGroupTO2.size());
+            return log.exit(false);
+        }
+        for (HierarchicalGroupTO hg1: cHGroupTO1) {
+            boolean found = false;
+            for (HierarchicalGroupTO hg2: cHGroupTO2) {
+                log.trace("Comparing {} to {}", hg1, hg2);
+                if ((hg1.getId() == null && hg2.getId() == null || 
+                		hg1.getId() != null && hg1.getId().equals(hg2.getId())) && 
+                    (hg1.getName() == null && hg2.getName() == null || 
+                    		hg1.getName() != null && hg1.getName().equals(hg2.getName())) && 
+                     hg1.getOMAGroupId() == hg2.getOMAGroupId() && 
+                     hg1.getNodeLeftBound() == hg2.getNodeLeftBound() && 
+                     hg1.getNodeRightBound() == hg2.getNodeRightBound() && 
+                     hg1.getNcbiTaxonomyId() == hg2.getNcbiTaxonomyId()) {
+                    found = true;    
+                }
+            }
+            if (!found) {
+                log.debug("No equivalent hierarchical group found for {}", hg1);
+                return log.exit(false);
+            }      
         }
         return log.exit(true);
 	}
@@ -173,6 +223,19 @@ public class ParseOrthoXMLTest extends TestAncestor {
 								FileNotFoundException, XMLStreamException, XMLParseException {
 		log.entry();
 		
+		// Mock getAllGenes()
+		
+		MySQLGeneDAO dao = mock(MySQLGeneDAO.class);
+		GeneTO geneTO1 = new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 2, true);
+		GeneTO geneTO2 = new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 0, true);
+		GeneTO geneTO3 = new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false);
+		List<GeneTO> expectedList = new ArrayList<GeneTO>();
+		expectedList.add(geneTO1);
+		expectedList.add(geneTO2);
+		expectedList.add(geneTO3);
+
+//		when(dao.getAllGenes()).thenReturn(expectedList);
+
 		// Expected HierarchicalGroupTOs
 		// First group
 		HierarchicalGroupTO hierarchicalGroupTO1 = new HierarchicalGroupTO(
@@ -256,49 +319,6 @@ public class ParseOrthoXMLTest extends TestAncestor {
 		log.exit();
 	}
 	
-	/**
-     * Test {@link ParseOrthoXML#count(Group)}.
-	 * @throws XMLStreamException
-	 * @throws NoSuchMethodException
-	 * @throws SecurityException
-	 * @throws IllegalAccessException
-	 * @throws IllegalArgumentException
-	 * @throws InvocationTargetException
-	 * @throws FileNotFoundException
-	 * @throws XMLParseException
-	 */
-	@Test
-	public void testCountChildren() throws XMLStreamException, NoSuchMethodException, SecurityException, 
-			IllegalAccessException, IllegalArgumentException, InvocationTargetException, 
-			FileNotFoundException, XMLParseException {
-        log.entry();
-        
-        MockDAOManager mockManager = new MockDAOManager();
-        ParseOrthoXML parser = new ParseOrthoXML(mockManager);
-        
-		OrthoXMLReader reader = new OrthoXMLReader(new File(
-				ParseOrthoXMLTest.class.getResource(OMAFILE).getPath()));
-	
-        Method method = parser.getClass().getDeclaredMethod("countChildren", Group.class);
-        method.setAccessible(true);
-		
-		// Count and check the number of group/subgroups in the first group
-		Group group = reader.next();
-		int i = (int) method.invoke(parser, group);
-        assertEquals("False count: found "+i+" group/subgroup instead of 1", 1, i);
-        
-		// Count and check the number of group/subgroups in the second group
-		group = reader.next();
-		i = (int) method.invoke(parser, group);
-        assertEquals("False count: found "+i+" group/subgroup instead of 9", 9, i);
-
-		// Count and check the number of group/subgroups in the third group
-		group = reader.next();
-		i = (int) method.invoke(parser, group);
-        assertEquals("False count: found "+i+" group/subgroup instead of 1", 1, i);
-        log.exit();
-	}
-
 	public void testGetSpecies() {
 	}
 }

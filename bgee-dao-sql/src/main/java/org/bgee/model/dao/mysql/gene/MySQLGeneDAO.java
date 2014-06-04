@@ -2,6 +2,7 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -49,9 +50,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		log.entry();
 		
 		//Construct sql query
-		StringBuilder sql = new StringBuilder("SELECT ");
-		sql.append(getSelectExpr());
-		sql.append(" FROM gene");
+		String sql = "SELECT " + getSelectExpr() + " FROM gene";
 
 		//we don't use a try-with-resource, because we return a pointer to the results, 
 		//not the actual results, so we should not close this BgeePreparedStatement.
@@ -64,10 +63,20 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
 	}
 
-    public String getSelectExpr() {
+    /**
+     * Returns the select expression corresponding to {@code Attribute}s obtained from the
+     * {@code DAO}, see {@link org.bgee.model.dao.api.DAO#getAttributes()}.
+     * @return	A {@code String} that is the column name corresponding to {@code Attribute}s.
+     * 			If the {@code Collection} of {@code Attribute}s is empty, returns select 
+     * 			expression with all {@code Attribute}s of {@code GeneDAO}
+     */
+    private String getSelectExpr() throws IllegalArgumentException {
 		log.entry();
 		StringBuilder selectExpr = new StringBuilder();
 		Collection<GeneDAO.Attribute> attributes = this.getAttributes();
+		if (attributes.size() == 0) {
+			attributes.addAll(Arrays.asList(GeneDAO.Attribute.values()));
+		}
 		Boolean isFirstIteration = true;
 		for (GeneDAO.Attribute attribute: attributes) {
 			if (isFirstIteration) {
@@ -93,6 +102,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		}
     	return log.exit(selectExpr.toString());
     }
+    
 	@Override
 	public int updateGenes(Collection<GeneTO> genes, 
 			Collection<GeneDAO.Attribute> attributesToUpdate) {

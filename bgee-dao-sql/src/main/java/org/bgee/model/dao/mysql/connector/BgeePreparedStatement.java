@@ -21,6 +21,17 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * but only by {@link MySQLDAOResultSet}s, this is why it is not public. See documentation 
  * of {@link MySQLDAOResultSet} for more details. {@code DAO}s should only create 
  * the SQL statement, and set the parameters.
+ * <p>
+ * Note that you should not use a {@code try-with-resource} statement with this class, 
+ * for methods returning a pointer to the results, and not the actual results. Indeed, 
+ * {@code SELECT} methods return a pointer to the results (a {@code DAOResultSet}), 
+ * not the results themselves, to not overload the memory. If we were using 
+ * the {@code AutoCloseable} feature in such methods, the {@code BgeePreparedStatement} 
+ * would be closed, as well as its underlying {@code ResultSet}, before retrieving 
+ * the results. 
+ * <p>
+ * You can of course use {@code AutoCloseable} feature in methods that do not return 
+ * a pointer to the results (for instance, an {@code INSERT} method). 
  * 
  * @author Frederic Bastian
  * @version Bgee 13

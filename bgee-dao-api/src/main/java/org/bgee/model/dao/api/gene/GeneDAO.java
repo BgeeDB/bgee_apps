@@ -38,7 +38,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
 	/**
 	 * Retrieve all genes from data source.
 	 * <p>
-	 * The genes are retrieved and returned as a {@code GeneTOResultSet}.
+	 * The genes are retrieved and returned as a {@code GeneTOResultSet}. 
+	 * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+	 * results are retrieved.
 	 * 
 	 * @return A {@code GeneTOResultSet} containing all genes from data source.
 	 */

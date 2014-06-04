@@ -53,8 +53,11 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		sql.append(getSelectExpr());
 		sql.append(" FROM gene");
 
-		try (BgeePreparedStatement stmt = 
-				this.getManager().getConnection().prepareStatement(sql.toString())) {
+		//we don't use a try-with-resource, because we return a pointer to the results, 
+		//not the actual results, so we should not close this BgeePreparedStatement.
+		BgeePreparedStatement stmt = null;
+		try {
+		    stmt = this.getManager().getConnection().prepareStatement(sql.toString());
         	return log.exit(new MySQLGeneTOResultSet(stmt));
         } catch (SQLException e) {
         	throw log.throwing(new DAOException(e));

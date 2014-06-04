@@ -88,6 +88,14 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
     public Collection<T> getAttributes();
 
     /**
+     * Get {@code int} that is the maximum number of rows that can be inserted in a 
+     * single INSERT or UPDATE statements.
+     * @return	An {@code int} that is the maximum number of rows that can be inserted in a 
+     * 			single INSERT or UPDATE statements.
+     */
+    public int getMaxUpdateCount();
+
+    /**
      * Resets what are the attributes that should be populated in 
      * the {@code TransferObject}s obtained from this {@code DAO}, for all 
      * the following calls. All available attributes will then be populated. 

@@ -31,6 +31,13 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      */
     private final static Logger log = 
             LogManager.getLogger(MySQLDAO.class.getName());
+
+    /**
+     * An {@code int} that is the maximum number of rows that can be inserted in a 
+     * single INSERT or UPDATE statements.
+     */
+    private final static int MAX_UPDATE_COUNT = 10000;
+    
     /**
      * A {@code Set} of {@code DAO.Attribute}s specifying the attributes to retrieve 
      * from the data source in order to build {@code TransferObject}s associated to 
@@ -116,7 +123,11 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         Set<T> attributeCopy = new HashSet<T>(attributes) ;
         return log.exit(attributeCopy);
     }
-    
+    @Override
+    public int getMaxUpdateCount() {
+        log.entry();
+        return log.exit(MAX_UPDATE_COUNT);
+    }
     @Override
     public <O extends TransferObject> List<O> getAllTOs(DAOResultSet<O> resultSet) 
         throws DAOException {

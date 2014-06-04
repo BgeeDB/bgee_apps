@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
 /**
@@ -117,12 +118,14 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     }
     
     @Override
-    public <O extends TransferObject> List<O> getAllTOs(DAOResultSet<O> resultSet) {
+    public <O extends TransferObject> List<O> getAllTOs(DAOResultSet<O> resultSet) 
+        throws DAOException {
         log.entry(resultSet);
         List<O> allTOs = new ArrayList<O>();
         while (resultSet.next()) {
             allTOs.add(resultSet.getTO());
         }
+        resultSet.close();
         return log.exit(allTOs);
     }
     

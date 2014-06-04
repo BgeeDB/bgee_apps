@@ -3,6 +3,8 @@ package org.bgee.model.dao.api;
 import java.util.Collection;
 import java.util.List;
 
+import org.bgee.model.dao.api.exception.DAOException;
+
 /**
  * Parent interface of all DAOs.
  * 
@@ -106,12 +108,16 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * <p>
      * This method will call {@link DAOResultSet#next()} as long as it returns {@code true}, 
      * and will store, in a {@code List}, the {@code TransferObject}s returned by 
-     * {@link DAOResultSet#getTO()}.
+     * {@link DAOResultSet#getTO()}. It will then call {@link DAOResultSet#close()}, before 
+     * returning the {@code List} of {@code TransferObject}s.
      * 
      * @param resultSet The {@code DAOResultSet} to retrieve {@code TransferObject}s from.
      * @return          A {@code List} of {@code TransferObject}s, retrieved by iterating 
      *                  the results of {@code resultSet}, and stored in the order 
      *                  they were retrieved. 
+     * @throws DAOException if an error occurred while calling {@code next}, or {@code getTO}, 
+     *                      or {@code close}, on {@code resultSet}. 
      */
-    public <O extends TransferObject> List<O> getAllTOs(DAOResultSet<O> resultSet);
+    public <O extends TransferObject> List<O> getAllTOs(DAOResultSet<O> resultSet) 
+            throws DAOException;
 }

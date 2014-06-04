@@ -197,31 +197,36 @@ public class AnnotationCommonTest extends TestAncestor {
                     expectedRow.put(header[0], "XRef filtering");
                     expectedRow.put(header[1], "UBERON:0000006");
                     expectedRow.put(header[2], "name_uberon_6");
+                    
+                //NOTE 2014-06-04: we have disabled the possibility to list terms 
+                //solely because one of their children is used in annotation. 
+                //following test canceled, following getRowNumber reduced by 1 as well as expectedRowCount. 
+//                } else if (mapReader.getRowNumber() == 7) {
+//                    //should be kept because indirect child used in annotation
+//                    expectedRow.put(header[0], "indirect child");
+//                    expectedRow.put(header[1], "UBERON:0000007");
+//                    expectedRow.put(header[2], "name_uberon_7");
+                    
                 } else if (mapReader.getRowNumber() == 7) {
-                    //should be kept because indirect child used in annotation
-                    expectedRow.put(header[0], "indirect child");
-                    expectedRow.put(header[1], "UBERON:0000007");
-                    expectedRow.put(header[2], "name_uberon_7");
-                } else if (mapReader.getRowNumber() == 8) {
                     //should be kept because an obsolete ID used in annotation 
                     //should be replaced by this ID (consider tag)
                     expectedRow.put(header[0], "consider tag");
                     expectedRow.put(header[1], "UBERON:0000011");
                     expectedRow.put(header[2], "name_uberon_11");
-                } else if (mapReader.getRowNumber() == 9) {
+                } else if (mapReader.getRowNumber() == 8) {
                     //should be kept because an obsolete ID used in annotation 
                     //should be replaced by this ID (consider tag)
                     expectedRow.put(header[0], "replaced_by tag");
                     expectedRow.put(header[1], "UBERON:0000013");
                     expectedRow.put(header[2], "name_uberon_13");
-                } else if (mapReader.getRowNumber() == 10 && !filterUsingParents) {
+                } else if (mapReader.getRowNumber() == 9 && !filterUsingParents) {
                     //should be kept because, despite the fact that its parent is present 
                     //in the file, this filtering was not activated
                     expectedRow.put(header[0], "informative parent");
                     expectedRow.put(header[1], "UBERON:0000014");
                     expectedRow.put(header[2], "name_uberon_14");
-                } else if (mapReader.getRowNumber() == 10 && filterUsingParents || 
-                        mapReader.getRowNumber() == 11 && !filterUsingParents) {
+                } else if (mapReader.getRowNumber() == 9 && filterUsingParents || 
+                        mapReader.getRowNumber() == 10 && !filterUsingParents) {
                     //should be kept because, despite the fact that its parent 
                     //is in the file, this parent is member of a non-informative subset.
                     expectedRow.put(header[0], "non-informative parent");
@@ -234,9 +239,9 @@ public class AnnotationCommonTest extends TestAncestor {
                 assertEquals("Incorrect row in filtered info file", expectedRow, row);
                 i++;
             }
-            int expectedRowCount = 10;
+            int expectedRowCount = 9;
             if (filterUsingParents) {
-                expectedRowCount = 9;
+                expectedRowCount = 8;
             }
             assertEquals("Incorrect number of rows in filtered info file", 
                     expectedRowCount, i);

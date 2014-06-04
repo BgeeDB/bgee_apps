@@ -26,7 +26,6 @@ import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.uberon.Uberon;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.supercsv.io.CsvListReader;
@@ -156,15 +155,13 @@ public class AnnotationCommon {
     /**
      * Filter the anatomical entities reported from {@link 
      * org.bgee.pipeline.uberon.Uberon#saveSimplificationInfo(OWLOntology, String, Collection) 
-     * Uberon#saveSimplificationInfo} method, to keep only those used in our annotations, 
-     * or their parents, not part of a non-informative subset. 
+     * Uberon#saveSimplificationInfo} method, to keep only those used in our annotations. 
      * This method will generate new files, corresponding to those listed in {@code infoFiles}, 
      * in the directory {@code filteredFileDirectory} (so make sure you provide a different 
      * directory from where original info files are stored). 
      * <p>
      * The {@code OWLOntology} {@code originalOnt} will be used to retrieve 
-     * the ancestors of terms used in our annotations (to keep such parents 
-     * in filtered files), to retrieve mappings from XRef IDs to {@code OWLClass} IDs 
+     * the ancestors of terms, to retrieve mappings from XRef IDs to {@code OWLClass} IDs 
      * (in case an annotation used a xRef), and mapping from obsolete IDs to replacement IDs 
      * (in case an annotation used an obsolete ID). It must be the original 
      * {@code OWLOntology}, as before simplification, that must be provided.
@@ -261,24 +258,30 @@ public class AnnotationCommon {
         //now, we add all the ancestors of the allowed terms, so that we display terms 
         //if one of their children is used in an annotation
         Set<String> allParentIds = new HashSet<String>();
-        for (String annotatedId: annotatedAnatEntityIds) {
-            OWLClass cls = wrapper.getOWLClassByIdentifier(annotatedId);
-            if (cls == null) {
-                //maybe was not an OBO-like ID but an IRI
-                cls = wrapper.getOWLClass(annotatedId);
-            }
-            //OK, maybe it was an xref or an obsolete ID, continue
-            if (cls == null) {
-                continue;
-            }
-            //get all ancestors, even indirect
-            for (OWLObject ancestor: wrapper.getAncestors(cls)) {
-                //consider only named ancestors
-                if (ancestor instanceof OWLClass) {
-                    allParentIds.add(wrapper.getIdentifier(ancestor));
-                }
-            }
-        }
+        //NOTE 2014-06-04: Anne asked to not display these parents: these parent terms 
+        //were used so that annotators could easily find the parent that is the cause 
+        //of a term filtering. But Anne says it is easy to spot the responsible parent, 
+        //and it is easier to have a shorter list of terms to review. 
+        //So, the following code is disabled: 
+//        for (String annotatedId: annotatedAnatEntityIds) {
+//            OWLClass cls = wrapper.getOWLClassByIdentifier(annotatedId);
+//            if (cls == null) {
+//                //maybe was not an OBO-like ID but an IRI
+//                cls = wrapper.getOWLClass(annotatedId);
+//            }
+//            //OK, maybe it was an xref or an obsolete ID, continue
+//            if (cls == null) {
+//                continue;
+//            }
+//            //get all ancestors, even indirect
+//            for (OWLObject ancestor: wrapper.getAncestors(cls)) {
+//                //consider only named ancestors
+//                if (ancestor instanceof OWLClass) {
+//                    allParentIds.add(wrapper.getIdentifier(ancestor));
+//                }
+//            }
+//        }
+        
         Set<String> allowedAnatEntityIds = new HashSet<String>(annotatedAnatEntityIds);
         allowedAnatEntityIds.addAll(allParentIds);
         

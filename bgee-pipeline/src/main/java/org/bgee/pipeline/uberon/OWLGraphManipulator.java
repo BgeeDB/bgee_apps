@@ -617,11 +617,14 @@ public class OWLGraphManipulator {
             Collection<String> toFilterSubgraphRootIds,   
             Collection<String> subsetNames) {
         
-        this.reduceRelations();
-        this.reducePartOfIsARelations();
+
         for (String classIdToRemove: classIdsToRemove) {
             this.removeClassAndPropagateEdges(classIdToRemove);
         }
+        
+        this.reduceRelations();
+        this.reducePartOfIsARelations();
+        
         if (relIds != null && !relIds.isEmpty()) {
             this.mapRelationsToParent(relIds);
             this.filterRelations(relIds, true);

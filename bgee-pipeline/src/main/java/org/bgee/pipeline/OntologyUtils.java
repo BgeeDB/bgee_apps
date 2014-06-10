@@ -99,6 +99,10 @@ public class OntologyUtils {
      */
     public final static IRI EVOLVED_MULTIPLE_TIMES_IRI = 
             IRI.create("http://purl.obolibrary.org/obo/uberon/core#evolved_multiple_times_in");
+    /**
+     * A {@code String} that is the OBO-like ID of the {@code preceded_by} relation.
+     */
+    public final static String PRECEDED_BY = "BFO:0000062";
     //****************************
     // ANNOTATION PROPERTIES
     //****************************

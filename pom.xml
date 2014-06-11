@@ -67,8 +67,7 @@
         
         <!-- here, we provide the name of the test Bgee database that should be 
              populated with test data for integration tests of SELECT statements 
-             (see bgee.database.file.dump.test for the path to the dump file populating 
-             this test database). 
+             (the database will be populated with data by the Java application). 
              The default name of this database starts with the prefix 'bgeeIntegrationTest_', 
              so that it will be automatically dropped by the sql-maven-plugin after 
              integration tests. This prefix is not a property to be sure it cannot be changed, 
@@ -104,7 +103,8 @@
              afterwards. -->
         <bgee.database.test.insert.name>bgeeIntegrationTest_insert</bgee.database.test.insert.name>
         
-        <!-- Here we provide the paths to the SQL files to create the Bgee database -->
+        <!-- Here we provide the paths to the SQL files to create the Bgee database 
+             The database will be populated with data by the Java application -->
         <bgee.database.file.schema>
             ${basedir}/../../pipeline/pipeline/db_creation/bgeeSchema.sql
         </bgee.database.file.schema>
@@ -118,11 +118,6 @@
 		    ${basedir}/../../pipeline/pipeline/db_creation/bgeeForeignKey.sql
 	    </bgee.database.file.foreignkey>
 	    
-        <!-- and here, the path to the dump file containing the test data, used 
-             to populate the database used for integration tests of SELECT statements -->
-        <bgee.database.file.dump.test>
-            ${basedir}/src/test/resources/sql/testDataDump.sql
-        </bgee.database.file.dump.test>
         <!-- Here we provide the path to a SQL file defining and calling a procedure 
              to drop all databases used for integration tests. -->
         <bgee.database.file.drop.procedure>
@@ -480,7 +475,7 @@
                          </configuration>
                      </execution>
                      
-                     <!-- Create the database used to test independent INSERT statements 
+                     <!-- Create the database used to test independent INSERT/UPDATE statements 
                           with the name ${bgee.database.test.insert.name}. -->
                      <execution>
                          <id>pre-integration-test-create-insert-db</id>
@@ -497,7 +492,7 @@
                          </configuration>
                      </execution>
                      
-                     <!-- Insert tables into the database used to test INSERT statements 
+                     <!-- Insert tables into the database used to test INSERT/UPDATE statements 
                           with the name ${bgee.database.test.insert.name}. -->
                      <execution>
                          <id>pre-integration-test-populate-insert-db</id>
@@ -538,7 +533,7 @@
                          </configuration>
                      </execution>
                      
-                     <!-- Populate the database used to test SELECT statements 
+                     <!-- Create the tables and constraints used to test SELECT statements 
                           with the name ${bgee.database.test.select.name}. This step can be
                           skipped by using the parameter ${bgee.database.test.skip.populate}. 
                           See the documentation of the property ${bgee.database.test.select.name} 
@@ -556,7 +551,6 @@
                              <autocommit>true</autocommit>
                              <srcFiles>
                                  <srcFile>${bgee.database.file.schema}</srcFile>
-                                 <srcFile>${bgee.database.file.dump.test}</srcFile>
                                  <srcFile>${bgee.database.file.constraint}</srcFile>
                                  <srcFile>${bgee.database.file.index}</srcFile>
                                  <srcFile>${bgee.database.file.foreignkey}</srcFile> 

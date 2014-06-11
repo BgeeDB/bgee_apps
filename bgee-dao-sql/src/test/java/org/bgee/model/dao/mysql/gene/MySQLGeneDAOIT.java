@@ -34,13 +34,6 @@ import org.mockito.Mockito;
 public class MySQLGeneDAOIT extends MySQLITAncestor {
 	
     private final static Logger log = LogManager.getLogger(MySQLGeneDAOIT.class.getName());
-    
-    /**
-     * A {@code List} of {@code String}s that are the names of the tables into which data 
-     * are inserted during testing of {@link MySQLGeneDAO} methods inserting data. 
-     * They are ordered according to the order tables should be emptied. 
-     */
-    private final static List<String> UPDATEDTABLENAMES = Arrays.asList("gene");
 
     public MySQLGeneDAOIT() {
         super();
@@ -58,61 +51,55 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     public void testGetAllGenes() throws SQLException {
     	log.entry();
     	this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
-    	try {
-			// Generate result with the method
-    		MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
-    		dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-    		GeneTOResultSet methResults = dao.getAllGenes();
 
-//    		MySQLGeneDAO mockDao = Mockito.mock(MySQLGeneDAO.class);
-//    		GeneTOResultSet mockedGeneRs = Mockito.mock(GeneTOResultSet.class);
-//	        when(mockDao.getAllGenes()).thenReturn(mockedGeneRs);
-//    		mockDao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-//			GeneTOResultSet methResults = mockDao.getAllGenes();
+    	// Generate result with the method
+    	MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
+    	dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+    	GeneTOResultSet methResults = dao.getAllGenes();
 
-    		// Generate manually expected result
-    		GeneTO geneTO1 = new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 2, true);
-    		GeneTO geneTO2 = new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 0, true);
-    		GeneTO geneTO3 = new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false);
+    	// Generate manually expected result
+    	GeneTO geneTO1 = new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 2, true);
+    	GeneTO geneTO2 = new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 0, true);
+    	GeneTO geneTO3 = new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false);
+    	List<GeneTO> expectedGenes = new ArrayList<>();
+    	expectedGenes.add(geneTO1);
+    	expectedGenes.add(geneTO2);
+    	expectedGenes.add(geneTO3);
 
-    		if (methResults.next()) {
-    			if (!areGeneTOsEqual(methResults.getTO(), geneTO1)) {
-    				throw log.throwing(new AssertionError(
-    						"Incorrect generated TO"));
-    			}
-    		}
-    		if (methResults.next()) {
-    			if (!areGeneTOsEqual(methResults.getTO(), geneTO2)) {
-    				throw log.throwing(new AssertionError(
-    						"Incorrect generated TO"));
-    			}
-    		}
-    		if (methResults.next()) {
-    			if (!areGeneTOsEqual(methResults.getTO(), geneTO3)) {
-    				throw log.throwing(new AssertionError(
-    						"Incorrect generated TO"));
-    			}
-    		}
-    		
-    	} finally {
-    		this.deleteFromTablesAndUseDefaultDB(UPDATEDTABLENAMES);
+    	do {
+    	    boolean found = false;
+    	    GeneTO methGene = methResults.getTO();
+    	    for (GeneTO expGene: expectedGenes) {
+    	        log.trace("Comparing {} to {}", methGene, expGene);
+    	        if (areGeneTOsEqual(methGene, expGene)) {
+    	            found = true;
+    	        }
+    	    }
+    	    if (!found) {
+    	        log.debug("No equivalent gene found for {}", methGene);
+    	        throw log.throwing(new AssertionError("Incorrect generated TO"));
+    	    }
     	}
-        log.exit();
+    	while (methResults.next());
+
+    	methResults.close();
+    	log.exit();
     }
 
     /**
-     * Method to compare two {@code GeneTO}s, to check for complete equality
-     * of each attribute.
+     * Method to compare two {@code GeneTO}s, to check for complete equality of each attribute. 
+     * This is because the {@code equals} method of {@code GeneTO}s is solely based on their
+     * ID, not on other attributes. 
      * 
      * @param geneTO1	A {@code GeneTO} to be compared to {@code geneTO2}.
      * @param geneTO2	A {@code GeneTO} to be compared to {@code geneTO1}.
-     * @return	{@code true} if {@code geneTO1} and {@code geneTO2} has all attributes equal.
+     * @return	{@code true} if {@code geneTO1} and {@code geneTO2} have all attributes equal.
      */
     private boolean areGeneTOsEqual(GeneTO geneTO1, GeneTO geneTO2) {
     	log.entry(geneTO1, geneTO2);
         if (geneTO1.getId().equals(geneTO2.getId()) && 
             (geneTO1.getName() == null && geneTO2.getName() == null || 
-            		geneTO1.getName() != null && geneTO1.getName().equals(geneTO2.getName())) && 
+            	geneTO1.getName() != null && geneTO1.getName().equals(geneTO2.getName())) && 
             geneTO1.getSpeciesId() == geneTO2.getSpeciesId() && 
             geneTO1.getGeneBioTypeId() == geneTO2.getGeneBioTypeId() && 
             geneTO1.getOMAParentNodeId() == geneTO2.getOMAParentNodeId() && 
@@ -122,16 +109,17 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 		log.debug("Genes are not equivalent {}", geneTO1.getOMAParentNodeId());
 		return log.exit(false);
     }
-    
+
     /**
      * Test the select method {@link MySQLGeneDAO#updateOMAGroupIDs()}.
      * @throws SQLException 
      */
-    @Test
+//    @Test
     public void testUpdateGenes() throws SQLException {
     	log.entry();
-    	this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
+        this.populateAndUseDatabase(EMPTYDBKEY);
 
+    	//TODO populate update test database
     	Collection<GeneTO> geneTOs = new ArrayList<GeneTO>();
     	geneTOs.add(new GeneTO("ID1", "GNMod1", "DescMod1", 31, 12, 7, true));
     	geneTOs.add(new GeneTO("ID2", "GNMod2", "DescMod2", 11, 12, 6, false));
@@ -196,7 +184,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     					stmt.getRealPreparedStatement().executeQuery().next());
     		}
     	} finally {
-    		this.deleteFromTablesAndUseDefaultDB(UPDATEDTABLENAMES);
+    	    this.emptyAndUseDefaultDB(EMPTYDBKEY);
     	}
     	log.exit();
     }

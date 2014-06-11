@@ -117,7 +117,7 @@ public class Uberon {
      *   <ol>
      *   <li>path to the file storing the Uberon ontology.
      *   <li>path to use to generate the files storing the resulting 
-     *   ontology in OBO and OWL. The prefixes ".owl" or ".obo" willb e automatically added.
+     *   ontology in OBO and OWL. The prefixes ".owl" or ".obo" will be automatically added.
      *   <li>A list of OBO-like IDs of {@code OWLClass}es to remove from the ontology, 
      *   and to propagate their incoming edges to their outgoing edges. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
@@ -125,10 +125,10 @@ public class Uberon {
      *   and mapped to parent relations. These IDs must be separated by the {@code String} 
      *   {@link CommandRunner#LIST_SEPARATOR}.
      *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
-     *   of the subgraphs that will be kept in the ontology. These IDs must be 
+     *   of the subgraphs to be removed from the ontology. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
-     *   of the subgraphs to be removed from the ontology. These IDs must be 
+     *   of the subgraphs that will be kept in the ontology. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      *   <li>A list of names of targeted subsets, for which member {@code OWLClass}es 
      *   should have their is_a/part_of incoming edges removed. These IDs must be 

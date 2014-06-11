@@ -47,6 +47,13 @@ public class CommandRunner {
      * @see #parseListArgument(String)
      */
     public static final String LIST_SEPARATOR = ",";
+    /**
+     * A {@code String} that represents the character to provide an empty list, as argument 
+     * of command line usage.
+     * 
+     * @see #parseListArgument(String)
+     */
+    public static final String EMPTY_LIST = "-";
     
     
     /**
@@ -147,6 +154,9 @@ public class CommandRunner {
             if (StringUtils.isNotBlank(arg)) {
                 resultingList.add(arg);
             }
+        }
+        if (resultingList.size() == 1 && resultingList.get(0).equals(EMPTY_LIST)) {
+            resultingList.clear();
         }
         
         return log.exit(resultingList);

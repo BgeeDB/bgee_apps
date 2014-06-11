@@ -2,6 +2,7 @@ package org.bgee.pipeline;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
@@ -48,5 +49,10 @@ public class CommandRunnerTest extends TestAncestor {
         assertEquals("Incorrect parsing of string as list", 
                 Arrays.asList("ID1"), 
                 CommandRunner.parseListArgument("ID1"));
+        
+
+        assertEquals("Incorrect parsing of empty list", 
+                new ArrayList<String>(), 
+                CommandRunner.parseListArgument(CommandRunner.EMPTY_LIST));
     }
 }

@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -50,7 +49,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 		log.entry();
 		
 		//Construct sql query
-		String sql = "SELECT " + getSelectExpr() + " FROM gene";
+		String sql = "SELECT " + this.getSelectExpr(this.getAttributes()) + " FROM gene";
 
 		//we don't use a try-with-resource, because we return a pointer to the results, 
 		//not the actual results, so we should not close this BgeePreparedStatement.
@@ -62,48 +61,8 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         	throw log.throwing(new DAOException(e));
         }
 	}
-
-    /**
-     * Returns the select expression corresponding to {@code Attribute}s obtained from the
-     * {@code DAO}, see {@link org.bgee.model.dao.api.DAO#getAttributes()}.
-     * @return	A {@code String} that is the column name corresponding to {@code Attribute}s.
-     * 			If the {@code Collection} of {@code Attribute}s is empty, returns select 
-     * 			expression with all {@code Attribute}s of {@code GeneDAO}
-     */
-    private String getSelectExpr() throws IllegalArgumentException {
-		log.entry();
-		StringBuilder selectExpr = new StringBuilder();
-		Collection<GeneDAO.Attribute> attributes = this.getAttributes();
-		if (attributes.size() == 0) {
-			attributes.addAll(Arrays.asList(GeneDAO.Attribute.values()));
-		}
-		Boolean isFirstIteration = true;
-		for (GeneDAO.Attribute attribute: attributes) {
-			if (isFirstIteration) {
-				isFirstIteration = false;
-			} else {
-				selectExpr.append(", ");
-			}
-			if (attribute.equals(GeneDAO.Attribute.ID)) {
-				selectExpr.append("geneId");
-			} else if (attribute.equals(GeneDAO.Attribute.NAME)) {
-				selectExpr.append("geneName");
-			} else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
-				selectExpr.append("geneDescription");
-			} else if (attribute.equals(GeneDAO.Attribute.SPECIESID)) {
-				selectExpr.append("speciesId");
-			} else if (attribute.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
-				selectExpr.append("geneBioTypeId");
-			} else if (attribute.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
-				selectExpr.append("OMAParentNodeId");
-			} else if (attribute.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
-				selectExpr.append("ensemblGene");
-			}
-		}
-    	return log.exit(selectExpr.toString());
-    }
     
-	@Override
+    @Override
 	public int updateGenes(Collection<GeneTO> genes, 
 			Collection<GeneDAO.Attribute> attributesToUpdate) {
 		log.entry(genes);
@@ -117,19 +76,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 			} else {
 				sql.append(", ");
 			}
-			if (attribute.equals(GeneDAO.Attribute.NAME)) {
-				sql.append("geneName = ?");
-			} else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
-				sql.append("geneDescription = ?");
-			} else if (attribute.equals(GeneDAO.Attribute.SPECIESID)) {
-				sql.append("speciesId = ?");
-			} else if (attribute.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
-				sql.append( "geneBioTypeId = ?");
-			} else if (attribute.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
-				sql.append("OMAParentNodeId = ?");
-			} else if (attribute.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
-				sql.append("ensemblGene = ?");
-			}
+            sql.append(this.getLabel(attribute) + " = ?");
 		}
 		sql.append(" WHERE geneId = ?");
 		try (BgeePreparedStatement stmt = 
@@ -160,15 +107,64 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 			throw log.throwing(new DAOException(e));
 		}
 	}
+	
+	@Override
+    public String getLabel(GeneDAO.Attribute attribute) {
+        log.entry(attribute);
+        if (attribute.equals(GeneDAO.Attribute.ID)) {
+            return log.exit("geneId");
+        } else if (attribute.equals(GeneDAO.Attribute.NAME)) {
+            return log.exit("geneName");
+        } else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
+            return log.exit("geneDescription");
+        } else if (attribute.equals(GeneDAO.Attribute.SPECIESID)) {
+            return log.exit("speciesId");
+        } else if (attribute.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
+            return log.exit("geneBioTypeId");
+        } else if (attribute.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
+            return log.exit("OMAParentNodeId");
+        } else if (attribute.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
+            return log.exit("ensemblGene");
+        }
+        throw log.throwing(new IllegalArgumentException("The attribute provided ("
+                + attribute.toString() + ") is unknown for " + MySQLGeneDAO.class));
+    }
 
-	/**
+    @Override
+    protected String getSelectExpr(Collection<GeneDAO.Attribute> attributes) {
+        log.entry(attributes);
+        if (attributes == null || attributes.size() == 0) {
+            return log.exit(MySQLDAO.GENE_TABLE_NAME + ".*");
+        }
+        StringBuilder selectExpr = new StringBuilder();
+        Boolean isFirstIteration = true;
+        for (GeneDAO.Attribute attribute: attributes) {
+            if (isFirstIteration) {
+                isFirstIteration = false;
+            } else {
+                selectExpr.append(", ");
+            }
+            selectExpr.append(MySQLDAO.GENE_TABLE_NAME);
+            selectExpr.append(".");
+            selectExpr.append(this.getLabel(attribute));
+        }
+        return log.exit(selectExpr.toString());        
+    }
+
+    @Override
+    protected String getTableReferences(Collection<GeneDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
+
+    /**
 	 * A {@code MySQLDAOResultSet} specific to {@code GeneTO}.
 	 * 
 	 * @author Valentine Rech de Laval
 	 * @version Bgee 13
 	 * @since Bgee 13
 	 */
-	public class MySQLGeneTOResultSet extends MySQLDAOResultSet<GeneTO> implements GeneTOResultSet {
+    public class MySQLGeneTOResultSet extends MySQLDAOResultSet<GeneTO> 
+            implements GeneTOResultSet {
 
 		/**
 		 * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
@@ -191,19 +187,19 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 			// Get results
 			for (String currentColumnLabel : currentColumnLabels.values()) {
 				try {
-					if (currentColumnLabel.equals(GeneDAO.Attribute.ID)) {
+					if (currentColumnLabel.equals("geneId")) {
 						geneId = currentResultSet.getString("geneId");
-					} else if (currentColumnLabel.equals(GeneDAO.Attribute.NAME)) {
+					} else if (currentColumnLabel.equals("geneName")) {
 						geneName = currentResultSet.getString("geneName");
-					} else if (currentColumnLabel.equals(GeneDAO.Attribute.DESCRIPTION)) {
+					} else if (currentColumnLabel.equals("geneDescription")) {
 						geneDescription = currentResultSet.getString("geneDescription");
-					} else if (currentColumnLabel.equals(GeneDAO.Attribute.SPECIESID)) {
+					} else if (currentColumnLabel.equals("speciesId")) {
 						speciesId = currentResultSet.getInt("speciesId");
-					} else if (currentColumnLabel.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
+					} else if (currentColumnLabel.equals("geneBioTypeId")) {
 						geneBioTypeId = currentResultSet.getInt("geneBioTypeId");
-					} else if (currentColumnLabel.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
+					} else if (currentColumnLabel.equals("OMAParentNodeId")) {
 						OMAParentNodeId = currentResultSet.getInt("OMAParentNodeId");
-					} else if (currentColumnLabel.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
+					} else if (currentColumnLabel.equals("ensemblGene")) {
 						ensemblGene = currentResultSet.getBoolean("ensemblGene");
 					}
 				} catch (SQLException e) {

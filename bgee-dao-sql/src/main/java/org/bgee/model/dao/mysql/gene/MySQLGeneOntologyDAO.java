@@ -159,4 +159,29 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
             
             
     }
+
+    @Override
+    public String getLabel(GeneOntologyDAO.Attribute attribute)
+            throws IllegalArgumentException {
+        log.entry(attribute);
+        if (attribute.equals(GeneOntologyDAO.Attribute.ID)) {
+            return log.exit("goId");
+        } else if (attribute.equals(GeneOntologyDAO.Attribute.LABEL)) {
+            return log.exit("goTerm");
+        } else if (attribute.equals(GeneOntologyDAO.Attribute.DOMAIN)) {
+            return log.exit("goDomain");
+        }
+        throw log.throwing(new IllegalArgumentException("The attribute provided ("
+                + attribute.toString() + ") is unknown for " + MySQLGeneOntologyDAO.class));
+    }
+
+    @Override
+    protected String getSelectExpr(Collection<GeneOntologyDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
+
+    @Override
+    protected String getTableReferences(Collection<GeneOntologyDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
 }

@@ -87,6 +87,38 @@ implements HierarchicalGroupDAO {
     	}
     }
 
+    @Override
+    public String getLabel(HierarchicalGroupDAO.Attribute attribute)
+            throws IllegalArgumentException {
+        log.entry(attribute);
+        if (attribute.equals(HierarchicalGroupDAO.Attribute.NODEID)) {
+            return log.exit("OMANodeId");
+        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.GROUPID)) {
+            return log.exit("OMAGroupId");
+        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.NODELEFTBOUND)) {
+            return log.exit("OMANodeLeftBound");
+        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.NODERIGHTBOUND)) {
+            return log.exit("OMANodeRightBound");
+        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.TAXONID)) {
+            return log.exit("taxonId");
+        }
+        throw log.throwing(new IllegalArgumentException(
+                "The attribute provided (" + attribute.toString() + ") is unknown for "
+                + MySQLHierarchicalGroupDAO.class));
+    }
+
+    @Override
+    protected String getSelectExpr(
+                    Collection<HierarchicalGroupDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
+
+    @Override
+    protected String getTableReferences(
+            Collection<HierarchicalGroupDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
+
 //
 //	BgeeConnection connection;
 //

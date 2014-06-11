@@ -32,6 +32,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     private final static Logger log = 
             LogManager.getLogger(MySQLDAO.class.getName());
 
+    public final static String GENE_TABLE_NAME = "gene";
     /**
      * An {@code int} that is the maximum number of rows that can be inserted in a 
      * single INSERT or UPDATE statements.
@@ -140,30 +141,53 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         return log.exit(allTOs);
     }
     
-//  /**
-//  * Returns the select expression corresponding to the provided {@code Attribute} 
-//  * (in most cases, this corresponds to the column name of a MySQL table). 
-//  * This method allows to build the SQL statements used by this {@code MySQLDAO}. 
-//  * If no select expression corresponds to {@code attribute}, 
-//  * an {@code IllegalArgumentException} should be thrown.
-//  * 
-//  * @param attribute     An {@code Attribute} which we want the column associated to, 
-//  *                      in the MySQL schema.  
-//  * @return              A {@code String} that is the column name corresponding to 
-//  *                      {@code attribute}.
-//  * @throw IllegalArgumentException  If no select expression is associated to 
-//  *                                  {@code attribute}.
-//  */
-// protected String getSelectExpression(T attribute) {
-//     if (attribute instanceof ...) {
-//         
-//     }
-// }
-// 
-// /**
-//  * Returns the name of the table associated to this {@code MySQLDAO} in the MySQL schema.
-//  * 
-//  * @return  A {@code String} that is the name 
-//  */
-// protected  abstract String getTableName();
+    /**
+     * Returns the label name associated to this {@code MySQLDAO} corresponding to the
+     * provided {@code Attribute}.
+     * 
+     * @param attribute An {@code Attribute} which we want the label name.
+     * @return  A {@code String} that is the label name.
+     * @throw IllegalArgumentException      If no select expression is associated to
+     *                                      {@code attribute}.
+     * @throw UnsupportedOperationException If the method is not implemented yet.
+     */
+    public abstract String getLabel(T attribute);
+    /**
+     * Returns the select expression corresponding to the provided {@code Attribute}s (in
+     * most cases, this corresponds to the column name of a MySQL table). This method
+     * allows to build the SQL statements used by this {@code MySQLDAO}. If no select
+     * expression corresponds to {@code attribute}, an {@code IllegalArgumentException}
+     * should be thrown.
+     * 
+     * @param attributes A {@code Collection} of {@code Attribute}s which we want the
+     *                   columns associated to, in the MySQL schema.
+     * @return A {@code String} that is the select expression corresponding to the
+     *         {@code Collection} of {@code Attribute}s. If the {@code Collection} is
+     *         empty, returns '*' that select all columns from the table.
+     * @throw IllegalArgumentException      If no select expression is associated to
+     *                                      {@code attribute}.
+     * @throw UnsupportedOperationException If the method is not implemented yet.
+     */
+    protected abstract String getSelectExpr(Collection<T> attributes);
+    
+    /**
+     * Returns the table_references part (in most cases, this corresponds to a MySQL table
+     * name). This method allows to build the SQL statements used by this {@code MySQLDAO}.
+     * 
+     * @param attributes A {@code Collection} of {@code Attribute}s which we want the
+     *            columns associated to, in the MySQL schema.
+     * @return A {@code String} that is the table_references part.
+     * @throw IllegalArgumentException      If no select expression is associated to
+     *                                      {@code attribute}.
+     * @throw UnsupportedOperationException If the method is not implemented yet.
+     */
+    protected abstract String getTableReferences(Collection<T> attributes);
+
+    // 
+    // /**
+    //  * Returns the name of the table associated to this {@code MySQLDAO} in the MySQL schema.
+    //  * 
+    //  * @return  A {@code String} that is the name 
+    //  */
+    // protected  abstract String getTableName();
 }

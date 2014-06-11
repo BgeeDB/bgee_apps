@@ -104,4 +104,33 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             throw log.throwing(new DAOException(e));
         }
     }
+
+    @Override
+    public String getLabel(SpeciesDAO.Attribute attribute)
+            throws IllegalArgumentException {
+        log.entry(attribute);
+        if (attribute.equals(SpeciesDAO.Attribute.ID)) {
+            return log.exit("speciesId");
+        } else if (attribute.equals(SpeciesDAO.Attribute.COMMONNAME)) {
+            return log.exit("speciesCommonName");
+        } else if (attribute.equals(SpeciesDAO.Attribute.GENUS)) {
+            return log.exit("genus");
+        } else if (attribute.equals(SpeciesDAO.Attribute.SPECIESNAME)) {
+            return log.exit("species");
+        } else if (attribute.equals(SpeciesDAO.Attribute.PARENTTAXONID)) {
+            return log.exit("taxonId");
+        }
+        throw log.throwing(new IllegalArgumentException("The attribute provided ("
+                + attribute.toString() + ") is unknown for " + MySQLSpeciesDAO.class));
+    }
+
+    @Override
+    protected String getSelectExpr(Collection<SpeciesDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
+
+    @Override
+    protected String getTableReferences(Collection<SpeciesDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
 }

@@ -34,5 +34,20 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public String getLabel(SourceDAO.Attribute attribute) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
+
+    @Override
+    protected String getSelectExpr(Collection<SourceDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
+
+    @Override
+    protected String getTableReferences(Collection<SourceDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
     
 }

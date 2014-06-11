@@ -90,4 +90,36 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
             throw log.throwing(new DAOException(e));
         }
     }
+
+    @Override
+    public String getLabel(TaxonDAO.Attribute attribute) throws IllegalArgumentException {
+        log.entry(attribute);
+        if (attribute.equals(TaxonDAO.Attribute.ID)) {
+            return log.exit("taxonId");
+        } else if (attribute.equals(TaxonDAO.Attribute.COMMONNAME)) {
+            return log.exit("taxonCommonName");
+        } else if (attribute.equals(TaxonDAO.Attribute.SCIENTIFICNAME)) {
+            return log.exit("taxonScientificName");
+        } else if (attribute.equals(TaxonDAO.Attribute.LEFTBOUND)) {
+            return log.exit("taxonLeftBound");
+        } else if (attribute.equals(TaxonDAO.Attribute.RIGHTBOUND)) {
+            return log.exit("taxonRightBound");
+        } else if (attribute.equals(TaxonDAO.Attribute.LEVEL)) {
+            return log.exit("taxonLevel");
+        } else if (attribute.equals(TaxonDAO.Attribute.LCA)) {
+            return log.exit("bgeeSpeciesLCA");
+        }
+        throw log.throwing(new IllegalArgumentException("The attribute provided ("
+                + attribute.toString() + ") is unknown for " + MySQLTaxonDAO.class));
+    }
+
+    @Override
+    protected String getSelectExpr(Collection<TaxonDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
+
+    @Override
+    protected String getTableReferences(Collection<TaxonDAO.Attribute> attributes) {
+        throw new UnsupportedOperationException("The method is not implemented yet");
+    }
 }

@@ -61,7 +61,7 @@ public class AnnotationCommon {
      * annotation files. These values are ordered by order of preference of use.
      */
     public static final List<String> ANAT_ENTITY_COL_NAMES = Collections.unmodifiableList(
-            Arrays.asList(Uberon.ANAT_ENTITY_ID_COL, "UberonId", "anatEntityId"));
+            Arrays.asList(Uberon.UBERON_ENTITY_ID_COL, "UberonId", "anatEntityId"));
     /**
      * An unmodifiable {@code List} of {@code String}s that are the potential names 
      * of columns containing multiple anatomical entity IDs, in annotation files 

@@ -13,6 +13,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.OntologyUtils;
+import org.bgee.pipeline.OntologyUtilsTest;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
 import org.junit.Rule;
@@ -163,4 +164,49 @@ public class UberonTest extends TestAncestor {
         //ontology to use for the test: /uberon/simplifyUberonTest.obo
     }
     
+    /**
+     * Test the method {@link Uberon#saveXRefMappingsToFile(OWLOntology, String)}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldSaveXRefMappings() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        
+        String tempFile = testFolder.newFile("xRefMappings.tsv").getPath();
+        
+        new Uberon().saveXRefMappingsToFile(OntologyUtilsTest.class.
+                getResource("/ontologies/xRefMappings.obo").getFile(), tempFile);
+        
+        //now, read the generated TSV file
+        int i = 0;
+        try (ICsvMapReader mapReader = new CsvMapReader(
+                new FileReader(tempFile), Utils.TSVCOMMENTED)) {
+            String[] headers = mapReader.getHeader(true); 
+            final CellProcessor[] processors = new CellProcessor[] {
+                    new NotNull(), //XRef ID
+                    new NotNull()}; //Uberon ID
+
+            Map<String, Object> xRefMap;
+            while( (xRefMap = mapReader.read(headers, processors)) != null ) {
+                log.trace("Row: {}", xRefMap);
+                String xRefId = (String) xRefMap.get(headers[0]);
+                String uberonId = (String) xRefMap.get(headers[1]);
+                log.trace("Retrieved info from line: {} - {}", xRefId, uberonId); 
+                
+                if (!(xRefId.equals("ALT_ID:1") && uberonId.equals("ID:1") || 
+                        xRefId.equals("ALT_ALT_ID:1") && uberonId.equals("ID:1") || 
+                        xRefId.equals("ALT_ID:3") && uberonId.equals("ID:3") || 
+                        xRefId.equals("ALT_ALT_ID:3") && uberonId.equals("ID:3") || 
+                        xRefId.equals("ALT_ID:2") && uberonId.equals("ID:1") || 
+                        xRefId.equals("ALT_ID:2") && uberonId.equals("ID:2"))) {
+                    throw new AssertionError("Incorrect line: " + mapReader.getUntokenizedRow());
+                }
+                i++;
+                
+            }
+        }
+        assertEquals("Incorrect number of lines in TSV output", 6, i);
+    }
 }

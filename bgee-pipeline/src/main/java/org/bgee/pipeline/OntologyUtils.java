@@ -368,6 +368,21 @@ public class OntologyUtils {
         this.ontology = wrapper.getSourceOntology();
         this.partOfRels = null;
     }
+    /**
+     * Constructor providing the path to the file storing the ontology  
+     * which operations should be performed on. It can be either obo or owl.
+     * 
+     * @param pathToOntology    A {@code String} that is the path to the ontology. 
+     * @throws IOException                  If {@code pathToOntology} could not be read.
+     * @throws OBOFormatParserException     If {@code pathToOntology} was in OBO and could not 
+     *                                      be parsed.
+     * @throws OWLOntologyCreationException If {@code pathToOntology} was in OWL and could not 
+     *                                      be parsed.
+     */
+    public OntologyUtils(String pathToOntology) throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        this(OntologyUtils.loadOntology(pathToOntology));
+    }
     
     /**
      * Equivalent to calling {@link #computeNestedSetModelParams(List)} 

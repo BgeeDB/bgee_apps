@@ -113,13 +113,13 @@ public class ParseOrthoXMLTest extends TestAncestor {
 
     /**
      * Method to compare two {@code Collection}s of {@code GeneTO}s, to check for complete 
-     * equality of each attribute of each {@code GeneTO}. This is because the {@code equals} 
-     * method of {@code GeneTO}s is solely based on their ID, not on other attributes. 
-     * Here we check for equality of each attribute. 
+     * equality of each attribute of each {@code GeneTO} calling {@link #areGeneTOEqual()}.
+     * This is because the {@code equals} method of {@code GeneTO}s is solely based on their 
+     * ID, not on other attributes. 
      * 
-     * @param cGeneTO1	A {@code Collection} of {@code GeneTO}s o be compared to 
+     * @param cGeneTO1	A {@code Collection} of {@code GeneTO}s to be compared to 
      *					{@code cGeneTO2}.
-     * @param cGeneTO2	A {@code Collection} of {@code GeneTO}s o be compared to 
+     * @param cGeneTO2	A {@code Collection} of {@code GeneTO}s to be compared to 
      * 					{@code cGeneTO1}.
      * @return	{@code true} if {@code cGeneTO1} and {@code cGeneTO2} contain the same number 
      *			of {@code GeneTO}s, and each {@code GeneTO} of a {@code Collection} has an 
@@ -137,14 +137,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
             boolean found = false;
             for (GeneTO g2: cGeneTO2) {
                 log.trace("Comparing {} to {}", g1, g2);
-                if ((g1.getId() == null && g2.getId() == null || 
-                		g1.getId() != null && g1.getId().equals(g2.getId())) && 
-                    (g1.getName() == null && g2.getName() == null || 
-                    		g1.getName() != null && g1.getName().equals(g2.getName())) && 
-                     g1.getSpeciesId() == g2.getSpeciesId() && 
-                     g1.getGeneBioTypeId() == g2.getGeneBioTypeId() && 
-                     g1.getOMAParentNodeId() == g2.getOMAParentNodeId() && 
-                     g1.isEnsemblGene() == g2.isEnsemblGene()) {
+                if (areGeneTOEqual(g1, g2)) {
                     found = true;    
                 }
             }
@@ -154,6 +147,31 @@ public class ParseOrthoXMLTest extends TestAncestor {
             }      
         }
         return log.exit(true);
+	}
+	
+    /**
+     * Method to compare two {@code GeneTO}s, to check for complete equality of each attribute. 
+     * This is because the {@code equals} method of {@code GeneTO}s is solely based on their
+     * ID, not on other attributes. 
+     * 
+     * @param g1	A {@code GeneTO}s to be compared to {@code g2}.
+     * @param g2	A {@code GeneTO}s to be compared to {@code g1}.
+     * @return	{@code true} if {@code g1} and {@code g2} have all attributes equal.
+     */
+	private boolean areGeneTOEqual(GeneTO g1, GeneTO g2) {
+        log.entry(g1, g2);
+        if ((g1.getId() == null && g2.getId() == null || 
+        		g1.getId() != null && g1.getId().equals(g2.getId())) && 
+            (g1.getName() == null && g2.getName() == null || 
+            		g1.getName() != null && g1.getName().equals(g2.getName())) && 
+             g1.getSpeciesId() == g2.getSpeciesId() && 
+             g1.getGeneBioTypeId() == g2.getGeneBioTypeId() && 
+             g1.getOMAParentNodeId() == g2.getOMAParentNodeId() && 
+             g1.isEnsemblGene() == g2.isEnsemblGene()) {
+    		return log.exit(true);
+        }
+		log.debug("Genes are not equivalent {}", g1.getOMAParentNodeId());
+		return log.exit(false);
 	}
 
     /**
@@ -222,6 +240,11 @@ public class ParseOrthoXMLTest extends TestAncestor {
 								NoSuchMethodException, InvocationTargetException, DAOException, 
 								FileNotFoundException, XMLStreamException, XMLParseException {
 		log.entry();
+//		MySQLGeneDAO mockDao = Mockito.mock(MySQLGeneDAO.class);
+//		GeneTOResultSet mockedGeneRs = Mockito.mock(GeneTOResultSet.class);
+//        when(mockDao.getAllGenes()).thenReturn(mockedGeneRs);
+//		mockDao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+//		GeneTOResultSet methResults = mockDao.getAllGenes();
 		
 		// Mock getAllGenes()
 		

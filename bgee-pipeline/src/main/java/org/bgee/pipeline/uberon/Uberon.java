@@ -135,7 +135,7 @@ public class Uberon {
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      *   </ol>
      *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
-     *   Uberon simplifyUberon ext.owl custom_ext subgraphClassesFiltered.tsv 
+     *   Uberon simplifyUberon ext.owl custom_ext classesRemoved.tsv 
      *   UBERON:0000480,UBERON:0000061,UBERON:0000465,UBERON:0001062,UBERON:0000475,UBERON:0000468,UBERON:0010000,UBERON:0003103,UBERON:0000062,UBERON:0000489 
      *   BFO:0000050,RO:0002202,RO:0002494
      *   NBO:0000313,GO:0008150,GO:0005575,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,NCBITaxon:1,CHEBI:24431
@@ -209,17 +209,15 @@ public class Uberon {
     
     /**
      * A {@code Set} of {@code String}s that are the OBO-like IDs of {@code OWLClass}es 
-     * removed as a result of graph filtering. Graph filtering is performed in the 
-     * {@code simplifyUberon} method by calling 
-     * {@code owltools.graph.OWLGraphManipulator#filterSubgraphs(Collection)}.
+     * removed as a result of simplification. .
      */
-    private final Set<String> subgraphClassesFiltered;
+    private final Set<String> classesRemoved;
     
     /**
      * Default constructor.
      */
     public Uberon() {
-        this.subgraphClassesFiltered = new HashSet<String>();
+        this.classesRemoved = new HashSet<String>();
     }
     
     /**
@@ -289,7 +287,7 @@ public class Uberon {
             //we need the original ontology, as before the simplification, 
             //so we reload the ontology
             this.saveSimplificationInfo(OntologyUtils.loadOntology(pathToUberonOnt), 
-                    subgraphFilteredFilePath, this.getSubgraphClassesFiltered());
+                    subgraphFilteredFilePath, this.getClassesRemoved());
         }
         
         log.exit();
@@ -360,6 +358,7 @@ public class Uberon {
 
         for (String classIdToRemove: classIdsToRemove) {
             manipulator.removeClassAndPropagateEdges(classIdToRemove);
+            this.classesRemoved.add(classIdToRemove);
         }
         
         manipulator.reduceRelations();
@@ -370,10 +369,11 @@ public class Uberon {
             manipulator.filterRelations(relIds, true);
         }
         if (toRemoveSubgraphRootIds != null && !toRemoveSubgraphRootIds.isEmpty()) {
-            manipulator.removeSubgraphs(toRemoveSubgraphRootIds, false);
+            this.classesRemoved.addAll(
+                    manipulator.removeSubgraphs(toRemoveSubgraphRootIds, true));
         }
         if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
-            this.subgraphClassesFiltered.addAll(
+            this.classesRemoved.addAll(
                     manipulator.filterSubgraphs(toFilterSubgraphRootIds));
         }
         if (subsetNames != null && !subsetNames.isEmpty()) {
@@ -422,7 +422,7 @@ public class Uberon {
      * {@code OWLOntology} {@code ont}. The information is provided through 
      * this method arguments. This currently includes: 
      * <ul>
-     *   <li>{@code subgraphClassesFiltered} a listing of the {@code OWLClass}es 
+     *   <li>{@code classesRemoved} a listing of the {@code OWLClass}es 
      *   that were removed as a result of graph filtering performed by 
      *   the {@code simplifyUberon} method. This information will be written to the file 
      *   {@code subgraphFilteredFilePath}.
@@ -436,7 +436,7 @@ public class Uberon {
      * @param subgraphFilteredFilePath  A {@code String} that is the path to the file that will 
      *                                  store information about the {@code OWLClass}es 
      *                                  that were removed as a result of subgraph filtering.
-     * @param subgraphClassesFiltered   A {@code Collection} of {@code String}s that are 
+     * @param classesRemoved   A {@code Collection} of {@code String}s that are 
      *                                  the OBO-like IDs of {@code OWLClass}es 
      *                                  removed as a result of graph filtering.
      * @throws IOException  If an error occurred while writing information.
@@ -677,7 +677,7 @@ public class Uberon {
         
         //potential subgraph root to keep: UBERON:0000104 life cycle
         if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
-            this.subgraphClassesFiltered.addAll(
+            this.classesRemoved.addAll(
                     manipulator.filterSubgraphs(toFilterSubgraphRootIds));
         }        
         
@@ -819,8 +819,8 @@ public class Uberon {
      *          {@code OWLClass}es removed as a result of graph filtering. Graph filtering 
      *          is performed in the {@code simplifyUberon} method.
      */
-    public Set<String> getSubgraphClassesFiltered() {
-        return this.subgraphClassesFiltered;
+    public Set<String> getClassesRemoved() {
+        return this.classesRemoved;
     }
     
     /**

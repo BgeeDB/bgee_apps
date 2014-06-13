@@ -65,7 +65,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     @Override
 	public int updateGenes(Collection<GeneTO> genes, 
 			Collection<GeneDAO.Attribute> attributesToUpdate) {
-		log.entry(genes);
+		log.entry(genes, attributesToUpdate);
 		int geneUpdatedCount = 0;
 		//Construct sql query according to currents attributes
 		StringBuilder sql = new StringBuilder("UPDATE gene SET ");  
@@ -153,7 +153,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
     @Override
     protected String getTableReferences(Collection<GeneDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
+        log.entry(attributes);
+        throw log.throwing(
+                new UnsupportedOperationException("The method is not implemented yet"));
     }
 
     /**
@@ -183,7 +185,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 			Map<Integer, String> currentColumnLabels = this.getColumnLabels();
 			String geneId=null, geneName=null, geneDescription=null;
 			int speciesId=0, geneBioTypeId=0, OMAParentNodeId=0;
-			Boolean ensemblGene=null;
+			Boolean ensemblGene=false;
 			// Get results
 			for (String currentColumnLabel : currentColumnLabels.values()) {
 				try {
@@ -203,7 +205,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 						ensemblGene = currentResultSet.getBoolean("ensemblGene");
 					}
 				} catch (SQLException e) {
-					log.throwing(new DAOException(e));				
+					throw log.throwing(new DAOException(e));				
 				}
 			}
 			//Set GeneTO

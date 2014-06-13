@@ -86,7 +86,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
     /**
      * {@code Logger} of the class.
      */
-    private final static Logger log = LogManager.getLogger(MySQLITAncestor.class.getName());
+    private final static Logger log = 
+            LogManager.getLogger(MySQLITAncestor.class.getName());
     
     /**
      * A {@code String} that is the key to retrieve from the System properties 
@@ -141,7 +142,16 @@ public abstract class MySQLITAncestor extends TestAncestor{
     }
     
 //    @BeforeClass
+    /**
+     * Populates select test database if it's empty.
+     * <p>
+     * To verify if the select test database is empty, we look inside the dataSource
+     * table.
+     * 
+     * @throws SQLException  If an error occurs while filling the database.
+     */
     protected void doBeforeClass() throws SQLException {
+        log.entry();
         this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
         try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                 prepareStatement("select 1 from dataSource")) {
@@ -149,6 +159,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
                 this.populateAndUseDatabase(POPULATEDDBKEYKEY);
             }
         }
+        log.exit();
     }
 
     /**
@@ -167,6 +178,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(EMPTYDBKEY));
         log.exit();
     }
+    
     /**
      * Delete all rows from the table named {@code tableName} in the database 
      * currently used, and configure the {@code DAOManager} to stop using 
@@ -184,6 +196,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         
         log.exit();
     }
+    
     /**
      * Delete all rows from the tables in {@code tableNames} in the database 
      * currently used, and configure the {@code DAOManager} to stop using 
@@ -196,7 +209,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
      *                       should be deleted.
      * @throws SQLException If an error occurs while deleting the database.
      */
-    protected void deleteFromTablesAndUseDefaultDB(List<String> tableNames) throws SQLException {
+    protected void deleteFromTablesAndUseDefaultDB(List<String> tableNames) 
+            throws SQLException {
         log.entry(tableNames);
         
         MySQLDAOManager manager = this.getMySQLDAOManager();
@@ -239,15 +253,16 @@ public abstract class MySQLITAncestor extends TestAncestor{
         log.entry(dbName);
         
         String testDbName = this.getTestDbName(dbName);
-        //it is the responsibility of the client running the code to make sure 
-        //that System properties have been configured properly to obtain a MySQLDAOManager, 
+        //it is the responsibility of the client running the code to make sure that 
+        //System properties have been configured properly to obtain a MySQLDAOManager, 
         //with no database provided in the JDBC connection URL
         MySQLDAOManager manager = this.getMySQLDAOManager();
         BgeeConnection con = manager.getConnection();
         
         //drop, create, and use the database
         //I don-t know why, but I can't use a prepared statement for database commands
-        BgeePreparedStatement stmt = con.prepareStatement("drop database if exists " + testDbName);
+        BgeePreparedStatement stmt = con.prepareStatement(
+                "drop database if exists " + testDbName);
         stmt.executeUpdate();
         stmt = con.prepareStatement("create database " + testDbName);
         stmt.executeUpdate();
@@ -271,28 +286,20 @@ public abstract class MySQLITAncestor extends TestAncestor{
     }
 
     /**
-     * Populates the database with test data, that are used for the integration tests of
-     * SELECT and UPDATE statements.
+     * Populates with test data the database with the name {@code dbName}, that are used 
+     * for the integration tests of SELECT and UPDATE statements.
      * <p>
-     * This method is used by tests of select and update statements. After performing update
-     * tests, the caller should use {@link #emptyAndUseDefaultDB(String)}.
-     * <p> 
-     * This method will append to the start of {@code dbName} the prefix 
-     * {@link #DBNAMEPREFIX}, to create the database. 
-     * This is to ensure that all databases created for test purpose will be deleted 
-     * after execution of the tests, even if an error occurs during the tests. 
-     * It is not necessary to append the prefix when calling {@code dropDatabase(String)}. 
-     * This modification should be invisible to callers.
+     * This method is used by tests of select and update statements. After performing 
+     * update tests, the caller should use {@link #emptyAndUseDefaultDB(String)}.
      * 
-     * @param dbName A {@code String} that is the name of the database to drop.
-     * @throws SQLException If an error occurs while updating the database.
+     * @param dbName            A {@code String} that is the name of the database to drop.
+     * @throws SQLException     If an error occurs while updating the database.
      */
     protected void populateAndUseDatabase(String dbName) throws SQLException {
+        log.entry(dbName);
         MySQLDAOManager manager = this.getMySQLDAOManager();
+        manager.setDatabaseToUse(dbName);
         BgeeConnection con = manager.getConnection();
-        
-        String testDbName = this.getTestDbName(dbName);
-        manager.setDatabaseToUse(testDbName);
         // Insert test data
         // dataSource table
         BgeePreparedStatement stmt = con.prepareStatement(
@@ -301,13 +308,39 @@ public abstract class MySQLITAncestor extends TestAncestor{
                 "dataSourceDescription, toDisplay, category, displayOrder) VALUES (" +
                 "1, 'First DataSource', 'XRefUrl', 'experimentUrl', 'evidenceUrl', " +
                 "'baseUrl', NOW(), '1.0', 'My custom data source', 1, " +
-                "'Genomics database', 1))");
+                "'Genomics database', 1)");
         stmt.executeUpdate();
         // geneBioType table
         stmt = con.prepareStatement(
                 "INSERT INTO geneBioType (geneBioTypeId, geneBioTypeName) "
                 + "VALUES (12, 'geneBioTypeName12')");
         stmt.executeUpdate();
+        // taxon table
+        stmt = con.prepareStatement(
+                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
+                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
+                "VALUES (111, 'taxSName111', 'taxCName111', 1, 10, 1, 1)");
+        stmt.executeUpdate();
+        stmt = con.prepareStatement(
+                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
+                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
+                "VALUES (211, 'taxSName211', 'taxCName211', 2, 3, 2, 0)");
+        stmt.executeUpdate();
+        stmt = con.prepareStatement(
+                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
+                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
+                "VALUES (311, 'taxSName311', 'taxCName311', 4, 9, 2, 0)");
+        stmt.executeUpdate();
+        stmt = con.prepareStatement(
+                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
+                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
+                "VALUES (411, 'taxSName411', 'taxCName411', 5, 6, 1, 1)");
+        stmt.executeUpdate();
+        stmt = con.prepareStatement(
+                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
+                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
+                "VALUES (511, 'taxSName511', 'taxCName511', 7, 8, 1, 1)");
+        stmt.executeUpdate();        
         // OMAHierarchicalGroup table
         stmt = con.prepareStatement(
                 "INSERT INTO OMAHierarchicalGroup " +
@@ -344,37 +377,6 @@ public abstract class MySQLITAncestor extends TestAncestor{
                 "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
                 "VALUES (7, 88, 11, 12, 511)");
         stmt.executeUpdate();
-        // taxon table
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (111, 'taxSName111', 'taxCName111', 1, 10, 1, 1)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (111, 'taxSName111', 'taxCName111', 1, 10, 1, 1)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (211, 'taxSName211', 'taxCName211', 2, 3, 2, 0)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (311, 'taxSName311', 'taxCName311', 4, 9, 2, 0)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (411, 'taxSName411', 'taxCName411', 5, 6, 1, 1)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (511, 'taxSName511', 'taxCName511', 7, 8, 1, 1)");
-        stmt.executeUpdate();
         // species table
         stmt = con.prepareStatement(
                 "INSERT INTO species (speciesId, genus, species, speciesCommonName, " +
@@ -384,7 +386,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
         stmt = con.prepareStatement(
                 "INSERT INTO species (speciesId, genus, species, speciesCommonName, " +
                 "taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) " +
-                "VALUES (21, 'gen21', 'sp21', 'spCName21', 211, 'path/genome21', 52, 'FAKEPREFIX')");
+                "VALUES (21, 'gen21', 'sp21', 'spCName21', 211, 'path/genome21', 52, " +
+                "'FAKEPREFIX')");
         stmt.executeUpdate();
         stmt = con.prepareStatement(
                 "INSERT INTO species (speciesId, genus, species, speciesCommonName, " +
@@ -407,7 +410,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
                 "geneBioTypeId, OMAParentNodeId, ensemblGene) " +
                 "VALUES ('ID3', 'genN3', 'genDesc3', 31, null, 3, false)");
         stmt.executeUpdate();
-    }
+        log.exit();
+   }
     
     /**
      * Delete all rows from all tables in the database named {@code dbName}, and configure
@@ -417,10 +421,11 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * It gets table names using {@link #DatabaseMetaData} the database named
      * {@code dbName} created for integration tests, and deletes all rows of that tables.
      * 
-     * @param dbName A {@code String} that is the name of the database to empty.
-     * @throws SQLException If an error occurred while deleting the database.
+     * @param dbName           A {@code String} that is the name of the database to empty.
+     * @throws SQLException    If an error occurred while deleting the database.
      */
-    protected void emptyAndUseDefaultDB(String dbName) throws SQLException {
+    protected void emptyAndUseDefaultDB() throws SQLException {
+        log.entry();
         MySQLDAOManager manager = this.getMySQLDAOManager();
         BgeeConnection con = manager.getConnection();
         DatabaseMetaData meta = con.getRealConnection().getMetaData();
@@ -435,6 +440,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         con.close();
 
         manager.setDatabaseToUse(null);
+        log.exit();
     }
         
     /**
@@ -442,8 +448,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * configure the {@code DAOManager} to stop using this database, and to use 
      * the default database specified by the JDBC connection URL, if any.
      * 
-     * @param dbName        A {@code String} that is the name of the database to drop.
-     * @throws SQLException If an error occurs while deleting the database.
+     * @param dbName           A {@code String} that is the name of the database to drop.
+     * @throws SQLException    If an error occurs while deleting the database.
      */
     protected void dropDatabaseAndUseDefaultDB(String dbName) throws SQLException {
         log.entry(dbName);
@@ -463,8 +469,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * Get the modified name of {@code dbName}, that allows to retrieve all databases 
      * used for tests, and to ensure that they will be dropped.
      * 
-     * @param dbName    A {@code String} that is the original requested name of a database.
-     * @return          A {@code String} that is a modified version of {@code dbName}.
+     * @param dbName   A {@code String} that is the original requested name of a database.
+     * @return         A {@code String} that is a modified version of {@code dbName}.
      */
     private String getTestDbName(String dbName) {
         return DBNAMEPREFIX + dbName;
@@ -473,7 +479,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
     /**
      * Returns the {MySQLDAOManager} associated to the current thread. It is 
      * the responsibility of the caller code to make sure the proper parameters 
-     * were provided for the {@code DAOManager} to actually return a {@code MySQLDAOManager}. 
+     * were provided for the {@code DAOManager} to actually return a 
+     * {@code MySQLDAOManager}. 
      * 
      * @return  the {MySQLDAOManager} associated to the current thread
      */

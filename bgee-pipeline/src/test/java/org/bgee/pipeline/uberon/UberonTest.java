@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -79,7 +79,7 @@ public class UberonTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link Uberon#saveSimplificationInfo(OWLOntology, String, Collection)}.
+     * Test the method {@link Uberon#saveSimplificationInfo(OWLOntology, String, Map)}.
      * @throws IOException 
      * @throws OBOFormatParserException 
      * @throws OWLOntologyCreationException 
@@ -90,12 +90,15 @@ public class UberonTest extends TestAncestor {
         Uberon uberonTest = new Uberon();
         OWLOntology uberonOnt = OntologyUtils.loadOntology(
                 this.getClass().getResource("/uberon/simplifyInfoTest.obo").getPath());
-        //we provide an unordered, redundant list of class IDs
+        
         //U:4 is obsolete and should not be displayed in the file
-        Collection<String> subgraphClassesFiltered = 
-                Arrays.asList("U:4", "U:3", "U:2", "U:23", "U:3");
+        Map<String, String> classesRemoved = new HashMap<String, String>();
+        classesRemoved.put("U:4", "reason 4");
+        classesRemoved.put("U:3", "reason 3");
+        classesRemoved.put("U:2", "reason 2");
+        classesRemoved.put("U:23", "reason 23");
         String tempFile = testFolder.newFile("simplifyInfo.tsv").getPath();
-        uberonTest.saveSimplificationInfo(uberonOnt, tempFile, subgraphClassesFiltered);
+        uberonTest.saveSimplificationInfo(uberonOnt, tempFile, classesRemoved);
         
         //now, read the generated TSV file
         int i = 0;
@@ -105,7 +108,8 @@ public class UberonTest extends TestAncestor {
             final CellProcessor[] processors = new CellProcessor[] {
                     new UniqueHashCode(new NotNull()), //Uberon ID
                     new NotNull(), //Uberon name
-                    new Optional()}; //relations
+                    new Optional(), //relations
+                    new NotNull()}; //reason for removal
 
             Map<String, Object> infoMap;
             while( (infoMap = mapReader.read(headers, processors)) != null ) {
@@ -113,10 +117,12 @@ public class UberonTest extends TestAncestor {
                 String uberonId = (String) infoMap.get(headers[0]);
                 String uberonName = (String) infoMap.get(headers[1]);
                 String relations = (String) infoMap.get(headers[2]);
+                String reason = (String) infoMap.get(headers[3]);
                 log.trace("Retrieved info from line: {} - {}", uberonId, uberonName); 
                 if (i == 0) {
                     assertEquals("U:2", uberonId);
                     assertEquals("brain", uberonName);
+                    assertEquals("reason 2", reason);
                     String relationTested = "is_a U:1 anatomical structure";
                     assertTrue("Missing relation for U:2: '" + relationTested + "' - " +
                     		"Actual relations were: " + relations, 
@@ -124,6 +130,7 @@ public class UberonTest extends TestAncestor {
                 } else if (i == 1) {
                     assertEquals("U:3", uberonId);
                     assertEquals("forebrain", uberonName);
+                    assertEquals("reason 3", reason);
                     String relationTested = "is_a U:1 anatomical structure";
                     assertTrue("Missing relation for U:3: '" + relationTested + "' - " +
                             "Actual relations were: " + relations, 
@@ -135,6 +142,7 @@ public class UberonTest extends TestAncestor {
                 } else if (i == 2) {
                     assertEquals("U:23", uberonId);
                     assertEquals("U_23", uberonName);
+                    assertEquals("reason 23", reason);
                     String relationTested = "is_a U:22 antenna";
                     assertTrue("Missing relation for U:23: '" + relationTested + "' - " +
                             "Actual relations were: " + relations, 

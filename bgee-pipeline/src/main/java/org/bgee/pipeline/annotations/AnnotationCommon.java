@@ -154,7 +154,7 @@ public class AnnotationCommon {
     
     /**
      * Filter the anatomical entities reported from {@link 
-     * org.bgee.pipeline.uberon.Uberon#saveSimplificationInfo(OWLOntology, String, Collection) 
+     * org.bgee.pipeline.uberon.Uberon#saveSimplificationInfo(OWLOntology, String, Map) 
      * Uberon#saveSimplificationInfo} method, to keep only those used in our annotations. 
      * This method will generate new files, corresponding to those listed in {@code infoFiles}, 
      * in the directory {@code filteredFileDirectory} (so make sure you provide a different 

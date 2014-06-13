@@ -33,6 +33,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.semanticweb.owlapi.model.UnloadableImportException;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -234,7 +235,25 @@ public class OntologyUtils {
         OBOFormatParserException, IOException {
         ParserWrapper parserWrapper = new ParserWrapper();
         parserWrapper.setCheckOboDoc(false);
-        return parserWrapper.parse(ontFile);
+        try {
+            return parserWrapper.parse(ontFile);
+        } catch(UnloadableImportException e) {
+            //we sometimes have the problem that an import ontology cannot be accessed 
+            //because of network errors. In that case, we retry 3 times before throwing 
+            //the exception
+            log.catching(e);
+            log.debug("Error while importing ontologies, trying again...");
+            for (int i = 0; i < 3; i++) {
+                try {
+                    return parserWrapper.parse(ontFile);
+                } catch(UnloadableImportException e2) {
+                    //do nothing here
+                    log.catching(e2);
+                }
+            }
+            
+            throw log.throwing(e);
+        }
     }
     
     /**

@@ -33,6 +33,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
             LogManager.getLogger(MySQLDAO.class.getName());
 
     public final static String GENE_TABLE_NAME = "gene";
+    public final static String DATA_SOURCE_TABLE_NAME = "dataSource";
     /**
      * An {@code int} that is the maximum number of rows that can be inserted in a 
      * single INSERT or UPDATE statements.
@@ -72,7 +73,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         this.attributes = new HashSet<T>();
         if (manager == null) {
             throw log.throwing(new IllegalArgumentException("The MySQLDAOManager " +
-            		"cannot be null"));
+                    "cannot be null"));
         }
         this.manager = manager;
     }
@@ -142,14 +143,14 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     }
     
     /**
-     * Returns the label name associated to this {@code MySQLDAO} corresponding to the
-     * provided {@code Attribute}.
+     * Returns the label corresponding to the provided {@code Attribute}.
+     * <p>
+     * In most cases, this corresponds to the column name of a MySQL table.
      * 
-     * @param attribute An {@code Attribute} which we want the label name.
-     * @return  A {@code String} that is the label name.
+     * @param attribute     An {@code Attribute} which we want the label name.
+     * @return              A {@code String} that is the label name.
      * @throw IllegalArgumentException      If no select expression is associated to
      *                                      {@code attribute}.
-     * @throw UnsupportedOperationException If the method is not implemented yet.
      */
     public abstract String getLabel(T attribute);
     /**
@@ -159,27 +160,31 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      * expression corresponds to {@code attribute}, an {@code IllegalArgumentException}
      * should be thrown.
      * 
-     * @param attributes A {@code Collection} of {@code Attribute}s which we want the
-     *                   columns associated to, in the MySQL schema.
-     * @return A {@code String} that is the select expression corresponding to the
-     *         {@code Collection} of {@code Attribute}s. If the {@code Collection} is
-     *         empty, returns '*' that select all columns from the table.
+     * @param attributes    A {@code Collection} of {@code Attribute}s which we want the
+     *                      columns associated to, in the MySQL schema.
+     * @return              A {@code String} that is the select expression corresponding 
+     *                      to the {@code Collection} of {@code Attribute}s. If the 
+     *                      {@code Collection} is empty, returns '*' that select all 
+     *                      columns from the table.
      * @throw IllegalArgumentException      If no select expression is associated to
      *                                      {@code attribute}.
-     * @throw UnsupportedOperationException If the method is not implemented yet.
+     * @throw UnsupportedOperationException If no SELECT request done by the 
+     *                                      {@code MySQLDAO}. 
      */
     protected abstract String getSelectExpr(Collection<T> attributes);
     
     /**
      * Returns the table_references part (in most cases, this corresponds to a MySQL table
-     * name). This method allows to build the SQL statements used by this {@code MySQLDAO}.
+     * name). This method allows to build the SQL statements used by this {@code MySQLDAO}
+     * .
      * 
-     * @param attributes A {@code Collection} of {@code Attribute}s which we want the
-     *            columns associated to, in the MySQL schema.
-     * @return A {@code String} that is the table_references part.
+     * @param attributes    A {@code Collection} of {@code Attribute}s which we want the
+     *                      columns associated to, in the MySQL schema.
+     * @return              A {@code String} that is the table_references part.
      * @throw IllegalArgumentException      If no select expression is associated to
      *                                      {@code attribute}.
-     * @throw UnsupportedOperationException If the method is not implemented yet.
+     * @throw UnsupportedOperationException If no SELECT request done by the
+     *                                      {@code MySQLDAO}.
      */
     protected abstract String getTableReferences(Collection<T> attributes);
 

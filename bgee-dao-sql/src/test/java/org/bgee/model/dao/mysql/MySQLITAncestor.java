@@ -307,122 +307,62 @@ public abstract class MySQLITAncestor extends TestAncestor{
         BgeePreparedStatement stmt = con.prepareStatement(
                 "INSERT INTO dataSource (dataSourceId, dataSourceName, XRefUrl, " +
                 "experimentUrl, evidenceUrl, baseUrl, releaseDate, releaseVersion, " +
-                "dataSourceDescription, toDisplay, category, displayOrder) VALUES (" +
-                "1, 'First DataSource', 'XRefUrl', 'experimentUrl', 'evidenceUrl', " +
-                "'baseUrl', NOW(), '1.0', 'My custom data source', 1, " +
-                "'Genomics database', 1)");
+                "dataSourceDescription, toDisplay, category, displayOrder) VALUES " +
+                "(1, 'First DataSource', 'XRefUrl', 'experimentUrl', 'evidenceUrl', " +
+                    "'baseUrl', NOW(), '1.0', 'My custom data source', 1, " +
+                    "'Genomics database', 1)");
         stmt.executeUpdate();
         // geneBioType table
         stmt = con.prepareStatement(
-                "INSERT INTO geneBioType (geneBioTypeId, geneBioTypeName) "
-                + "VALUES (12, 'geneBioTypeName12')");
+                "INSERT INTO geneBioType (geneBioTypeId, geneBioTypeName) VALUES "
+                + "(12, 'geneBioTypeName12')");
         stmt.executeUpdate();
-        // taxon table
+        // taxon table 
         stmt = con.prepareStatement(
                 "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (111, 'taxSName111', 'taxCName111', 1, 10, 1, 1)");
+                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) VALUES "+
+                "(111, 'taxSName111', 'taxCName111', 1, 10, 1, 1), " +
+                "(211, 'taxSName211', 'taxCName211', 2, 3, 2, 0), " +
+                "(311, 'taxSName311', 'taxCName311', 4, 9, 2, 0), " +
+                "(411, 'taxSName411', 'taxCName411', 5, 6, 1, 1), " +
+                "(511, 'taxSName511', 'taxCName511', 7, 8, 1, 1)");
         stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (211, 'taxSName211', 'taxCName211', 2, 3, 2, 0)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (311, 'taxSName311', 'taxCName311', 4, 9, 2, 0)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (411, 'taxSName411', 'taxCName411', 5, 6, 1, 1)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) " +
-                "VALUES (511, 'taxSName511', 'taxCName511', 7, 8, 1, 1)");
-        stmt.executeUpdate();        
         // OMAHierarchicalGroup table
         stmt = con.prepareStatement(
                 "INSERT INTO OMAHierarchicalGroup " +
-                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
-                "VALUES (1, 99, 1, 8, 111)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO OMAHierarchicalGroup " +
-                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
-                "VALUES (2, 99, 2, 3, 211)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO OMAHierarchicalGroup " +
-                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
-                "VALUES (3, 99, 4, 7, 311)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO OMAHierarchicalGroup " +
-                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
-                "VALUES (4, 99, 5, 6, 411)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO OMAHierarchicalGroup " +
-                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
-                "VALUES (5, 88, 9, 14, 111)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO OMAHierarchicalGroup " +
-                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
-                "VALUES (6, 88, 10, 13, 211)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO OMAHierarchicalGroup " +
-                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
-                "VALUES (7, 88, 11, 12, 511)");
+                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) VALUES (1, 99, 1, 8, 111), " +
+                "(2, 99, 2, 3, 211), " +
+                "(3, 99, 4, 7, 311), " +
+                "(4, 99, 5, 6, 411), " +
+                "(5, 88, 9, 14, 111), " +
+                "(6, 88, 10, 13, 211), " +
+                "(7, 88, 11, 12, 511)");
         stmt.executeUpdate();
         // species table
         stmt = con.prepareStatement(
                 "INSERT INTO species (speciesId, genus, species, speciesCommonName, " +
-                "taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) " +
-                "VALUES (11, 'gen11', 'sp11', 'spCName11', 111, 'path/genome11', 0, '')");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO species (speciesId, genus, species, speciesCommonName, " +
-                "taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) " +
-                "VALUES (21, 'gen21', 'sp21', 'spCName21', 211, 'path/genome21', 52, " +
-                "'FAKEPREFIX')");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO species (speciesId, genus, species, speciesCommonName, " +
-                "taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) " +
-                "VALUES (31, 'gen31', 'sp31', 'spCName31', 311, 'path/genome31', 0, '')");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO gene (geneId, geneName, geneDescription, speciesId, " +
-                "geneBioTypeId, OMAParentNodeId, ensemblGene) " +
-                "VALUES ('ID1', 'genN1', 'genDesc1', 11, 12, 2, true)");
+                "taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) VALUES " +
+                "(11, 'gen11', 'sp11', 'spCName11', 111, 'path/genome11', 0, ''), " +
+                "(21, 'gen21', 'sp21', 'spCName21', 211, 'path/genome21', 52, " +
+                    "'FAKEPREFIX'), " +
+                "(31, 'gen31', 'sp31', 'spCName31', 311, 'path/genome31', 0, '')");
         stmt.executeUpdate();
         // gene table
         stmt = con.prepareStatement(
                 "INSERT INTO gene (geneId, geneName, geneDescription, speciesId, " +
-                "geneBioTypeId, OMAParentNodeId, ensemblGene) " +
-                "VALUES ('ID2', 'genN2', 'genDesc2', 21, null, null, true)");
-        stmt.executeUpdate();
-        stmt = con.prepareStatement(
-                "INSERT INTO gene (geneId, geneName, geneDescription, speciesId, " +
-                "geneBioTypeId, OMAParentNodeId, ensemblGene) " +
-                "VALUES ('ID3', 'genN3', 'genDesc3', 31, null, 3, false)");
+                "geneBioTypeId, OMAParentNodeId, ensemblGene) VALUES " +
+                "('ID1', 'genN1', 'genDesc1', 11, 12, 2, true), " +
+                "('ID2', 'genN2', 'genDesc2', 21, null, null, true), " +
+                "('ID3', 'genN3', 'genDesc3', 31, null, 3, false)");
         stmt.executeUpdate();
         log.exit();
    }
-    
+   
     /**
      * Delete all rows from all tables in the database named {@code dbName}, and configure
      * the {@code DAOManager} to stop using this database, and to use the default database
      * specified by the JDBC connection URL, if any.
-     * <p>
-     * It gets table names using {@link #DatabaseMetaData} the database named
-     * {@code dbName} created for integration tests, and deletes all rows of that tables.
-     * 
+     *
      * @param dbName           A {@code String} that is the name of the database to empty.
      * @throws SQLException    If an error occurred while deleting the database.
      */
@@ -444,7 +384,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         manager.setDatabaseToUse(null);
         log.exit();
     }
-        
+       
     /**
      * Drop the database named {@code dbName} created for integration tests, and 
      * configure the {@code DAOManager} to stop using this database, and to use 

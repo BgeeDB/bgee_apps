@@ -245,10 +245,15 @@ public class OntologyUtils {
             log.debug("Error while importing ontologies, trying again...");
             for (int i = 0; i < 3; i++) {
                 try {
+                    //wait 1 sec. before retrying
+                    Thread.sleep(1000);
                     return parserWrapper.parse(ontFile);
                 } catch(UnloadableImportException e2) {
                     //do nothing here
                     log.catching(e2);
+                } catch(InterruptedException ex) {
+                    //propagate the interruption flag
+                    Thread.currentThread().interrupt();
                 }
             }
             

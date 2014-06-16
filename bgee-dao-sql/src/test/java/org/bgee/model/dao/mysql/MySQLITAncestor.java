@@ -153,8 +153,10 @@ public abstract class MySQLITAncestor extends TestAncestor{
     protected void doBeforeClass() throws SQLException {
         log.entry();
         this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
+        //here we assume that the table dataSource is always filled with some test data 
+        //when the test database is already loaded
         try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                prepareStatement("select 1 from dataSource")) {
+                prepareStatement("select 1 from dataSource")) { 
             if (!stmt.getRealPreparedStatement().executeQuery().next()) {
                 this.populateAndUseDatabase(POPULATEDDBKEYKEY);
             }

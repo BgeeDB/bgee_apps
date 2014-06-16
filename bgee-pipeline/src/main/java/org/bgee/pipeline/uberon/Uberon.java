@@ -391,13 +391,10 @@ public class Uberon {
                 }
             }
         }
-        if (toFilterSubgraphRootIds != null) {
-            for (String subgraphRootId: toFilterSubgraphRootIds) {
-                for (String classIdRemoved: 
-                    manipulator.filterSubgraphs(Arrays.asList(subgraphRootId))) {
-                    this.classesRemoved.put(classIdRemoved, 
-                            "Filtering of subgraph with root ID " + subgraphRootId);
-                }
+        if (toFilterSubgraphRootIds != null && !toFilterSubgraphRootIds.isEmpty()) {
+            for (String classIdRemoved: manipulator.filterSubgraphs(toFilterSubgraphRootIds)) {
+                this.classesRemoved.put(classIdRemoved, 
+                        "Filtering of subgraph with root IDs: " + toFilterSubgraphRootIds);
             }
         }
         if (subsetNames != null && !subsetNames.isEmpty()) {

@@ -23,7 +23,6 @@ import org.bgee.pipeline.MySQLDAOUser;
 
 import sbc.orthoxml.Gene;
 import sbc.orthoxml.Group;
-import sbc.orthoxml.Species;
 import sbc.orthoxml.io.OrthoXMLReader;
 
 /**
@@ -311,28 +310,5 @@ public class ParseOrthoXML extends MySQLDAOUser {
             c--;
         }
         return log.exit(c);
-    }
-
-    /**
-     * Reads the species IDs of all the species present in the OrthoXML file.
-     * 
-     * @throws XMLParseException        If there is an error in parsing the XML retrieved
-     *                                  by the OrthoXMLReader.
-     * @throws XMLStreamException       If there is an error in the well-formedness of the
-     *                                  XML or other unexpected processing errors.
-     * @throws FileNotFoundException    If the OrthoXMLReader cannot find the file.
-     */
-    public static ArrayList<String> getSpecies(File file) throws FileNotFoundException,
-            XMLStreamException, XMLParseException {
-        log.entry();
-        // Read the species iteratively
-        OrthoXMLReader reader = new OrthoXMLReader(file);
-        List<Species> species = new ArrayList<Species>();
-        species = reader.getSpecies();
-        ArrayList<String> speciesIds = new ArrayList<String>();
-        for (Species specie : species) {
-            speciesIds.add(specie.getName());
-        }
-        return log.exit(speciesIds);
     }
 }

@@ -297,6 +297,10 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * @param dbName            A {@code String} that is the name of the database to drop.
      * @throws SQLException     If an error occurs while updating the database.
      */
+    //TODO: use a stored procedure to populte the DB. This stored procedure 
+    //could be defined in a SQL file, loaded by Maven into the SELECT/UPDATE databases. 
+    //A property could provide the name of the procedure, so that we can call it 
+    //from the Java code.
     protected void populateAndUseDatabase(String dbName) throws SQLException {
         log.entry(dbName);
         MySQLDAOManager manager = this.getMySQLDAOManager();
@@ -366,6 +370,10 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * @param dbName           A {@code String} that is the name of the database to empty.
      * @throws SQLException    If an error occurred while deleting the database.
      */
+    //TODO: use a stored procedure to empty all tables. This stored procedure 
+    //could be defined in a SQL file, loaded by Maven into the INSERT/UPDATE databases. 
+    //A property could provide the name of the procedure, so that we can call it 
+    //from the Java code.
     protected void emptyAndUseDefaultDB() throws SQLException {
         log.entry();
         MySQLDAOManager manager = this.getMySQLDAOManager();

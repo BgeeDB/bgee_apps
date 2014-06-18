@@ -2163,7 +2163,8 @@ public class OWLGraphManipulator {
      * @param edge	The {@code OWLGraphEdge} to test.
      * @return		{@code true} if {@code edge} is an is_a (SubClassOf) relation.
      */
-    private boolean isASubClassOfEdge(OWLGraphEdge edge) {
+    //TODO: move this to OWLGraphWrapperEdgesExtended
+    public boolean isASubClassOfEdge(OWLGraphEdge edge) {
     	return (edge.getSingleQuantifiedProperty().getProperty() == null && 
 				edge.getSingleQuantifiedProperty().getQuantifier().equals(
 				        Quantifier.SUBCLASS_OF));
@@ -2177,7 +2178,8 @@ public class OWLGraphManipulator {
      * @return		{@code true} if {@code edge} is a part_of relation, 
      * 				or one of its sub-relations.
      */
-    private boolean isAPartOfEdge(OWLGraphEdge edge) {
+    //TODO: move this to OWLGraphWrapperEdgesExtended
+    public boolean isAPartOfEdge(OWLGraphEdge edge) {
     	if (this.partOfRels == null) {
     		this.partOfRels = this.getOwlGraphWrapper().getSubPropertyReflexiveClosureOf(
         			this.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(PARTOFID));

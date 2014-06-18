@@ -375,6 +375,15 @@ public class Uberon {
             this.classesRemoved.put(classIdToRemove, "Remove class and propagate edges");
         }
         
+        //momentary modification to remove some specific relations
+        //TODO: implements this officially
+        for (OWLGraphEdge edge: manipulator.getOwlGraphWrapper().getIncomingEdges(
+                manipulator.getOwlGraphWrapper().getOWLClassByIdentifier("UBERON:0000468"))) {
+            if (manipulator.isAPartOfEdge(edge)) {
+                manipulator.removeEdge(edge);
+            }
+        }
+        
         manipulator.reduceRelations();
         manipulator.reducePartOfIsARelations();
         

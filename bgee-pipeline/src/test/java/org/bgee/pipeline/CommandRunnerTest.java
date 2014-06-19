@@ -4,6 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,5 +58,36 @@ public class CommandRunnerTest extends TestAncestor {
         assertEquals("Incorrect parsing of empty list", 
                 new ArrayList<String>(), 
                 CommandRunner.parseListArgument(CommandRunner.EMPTY_LIST));
+    }
+
+    /**
+     * Test method {@link CommandRunner#parseMapArgument(String)}.
+     */
+    @Test
+    public void shouldParseMapArgument() {
+        Map<String, Set<String>> expectedMap = new HashMap<String, Set<String>>();
+        expectedMap.put("key1", new HashSet<String>(Arrays.asList("value1", "value2")));
+        expectedMap.put("key2", new HashSet<String>(Arrays.asList("value2")));
+        expectedMap.put("key3", new HashSet<String>(Arrays.asList("value3")));
+        assertEquals("Incorrect parsing of string as map", 
+                expectedMap, 
+                CommandRunner.parseMapArgument(
+                        " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " value1 " + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "key2" + CommandRunner.KEY_VALUE_SEPARATOR + "value2" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "key1" + CommandRunner.KEY_VALUE_SEPARATOR + " value1 " + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "key1" + CommandRunner.KEY_VALUE_SEPARATOR + "value2" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "key3" + CommandRunner.KEY_VALUE_SEPARATOR + "value3" + 
+                            CommandRunner.LIST_SEPARATOR));
+        
+        expectedMap.clear();
+        expectedMap.put("key1", new HashSet<String>(Arrays.asList("value1")));
+        assertEquals("Incorrect parsing of string as map", 
+                expectedMap, 
+                CommandRunner.parseMapArgument(
+                        " key1 " + CommandRunner.KEY_VALUE_SEPARATOR + " value1 "));
     }
 }

@@ -1,7 +1,11 @@
 package org.bgee.pipeline;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -47,6 +51,17 @@ public class CommandRunner {
      * @see #parseListArgument(String)
      */
     public static final String LIST_SEPARATOR = ",";
+    /**
+     * A {@code String} that is the separator between a key and its associated value, 
+     * in a list of key-value pairs of a map, 
+     * when a map needs to be provided as a single argument for a command line usage. 
+     * The separator between the different key-value pairs is {@link #LIST_SEPARATOR}. 
+     * For instance, a map of IDs to provide as a single argument would be: 
+     * {@code Id1 + KEY_VALUE_SEPARATOR + Id2 + listSeparator + Id3 + KEY_VALUE_SEPARATOR + Id4 + ...}.
+     * 
+     * @see #parseMapArgument(String)
+     */
+    public static final String KEY_VALUE_SEPARATOR = "/";
     /**
      * A {@code String} that represents the character to provide an empty list, as argument 
      * of command line usage.
@@ -150,15 +165,60 @@ public class CommandRunner {
         log.entry(listArg);
         
         List<String> resultingList = new ArrayList<String>();
-        for (String arg: listArg.split(LIST_SEPARATOR)) {
-            if (StringUtils.isNotBlank(arg)) {
-                resultingList.add(arg);
+        listArg = listArg.trim();
+        if (!listArg.equals(EMPTY_LIST)) {
+            for (String arg: listArg.split(LIST_SEPARATOR)) {
+                if (StringUtils.isNotBlank(arg)) {
+                    resultingList.add(arg.trim());
+                }
             }
-        }
-        if (resultingList.size() == 1 && resultingList.get(0).equals(EMPTY_LIST)) {
-            resultingList.clear();
         }
         
         return log.exit(resultingList);
+    }
+    
+    /**
+     * Split {@code mapArg} representing a map in a command line argument, where 
+     * key-value pairs are separated by {@link #LIST_SEPARATOR}, and keys  
+     * are separated from their associated value by {@link #KEY_VALUE_SEPARATOR}. 
+     * A same key can be associated to several values, this why values of the returned 
+     * {@code Map} are {@code Set}s of {@code String}s.
+     * 
+     * @param mapArg    A {@code String} corresponding to a map, see {@link #KEY_VALUE_SEPARATOR} 
+     *                  for an example.
+     * @return          A {@code Map} resulting from the split of {@code mapArg}, where keys 
+     *                  are {@code String}s that are ssociated to a {@code Set} of {@code String}s.
+     * @see #KEY_VALUE_SEPARATOR
+     */
+    public static Map<String, Set<String>> parseMapArgument(String mapArg) {
+        log.entry(mapArg);
+        
+        Map<String, Set<String>> resultingMap = new HashMap<String, Set<String>>();
+        mapArg = mapArg.trim();
+        if (!mapArg.equals(EMPTY_LIST)) {
+            for (String arg: mapArg.split(LIST_SEPARATOR)) {
+                if (StringUtils.isNotBlank(arg)) {
+                    String[] keyValue = arg.split(KEY_VALUE_SEPARATOR);
+                    
+                    if (keyValue.length != 2 || StringUtils.isBlank(keyValue[0]) || 
+                            StringUtils.isBlank(keyValue[1])) {
+                        throw log.throwing(new IllegalArgumentException("Incorrect format " +
+                                "for a key-value pair in a Map command line argument: " + 
+                                arg));
+                    }
+                        
+                    String key = keyValue[0].trim();
+                    String value = keyValue[1].trim();
+                    Set<String> existingValues = resultingMap.get(key);
+                    if (existingValues == null) {
+                        existingValues = new HashSet<String>();
+                        resultingMap.put(key, existingValues);
+                    }
+                    existingValues.add(value);
+                }
+            }
+        }
+        
+        return log.exit(resultingMap);
     }
 }

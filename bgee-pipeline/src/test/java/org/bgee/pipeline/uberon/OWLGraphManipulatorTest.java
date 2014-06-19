@@ -1015,7 +1015,24 @@ public class OWLGraphManipulatorTest
 				relRemovedCount, axiomCountBefore - axiomCountAfter);
 	}
 	
-	
+	/**
+	 * Test the method {@link OWLGraphManipulator#removeEdgesBetween(String, String)}.
+	 */
+	@Test
+	public void shouldRemoveEdgesBetween() {
+	    String sourceId = "FOO:0005";
+	    String targetId = "FOO:0002";
+	    OWLGraphWrapper wrapper = this.graphManipulator.getOwlGraphWrapper();
+	    assertEquals("Incorrect number of relations removed", 1, 
+	            this.graphManipulator.removeDirectEdgesBetween(sourceId, targetId));
+	    
+	    //check that there is no more edges between these classes
+	    Set<OWLGraphEdge> edgesBetween = wrapper.getEdgesBetween(
+	            wrapper.getOWLClassByIdentifier(sourceId), 
+                wrapper.getOWLClassByIdentifier(targetId));
+	    assertTrue("Edge to remove still exists in the ontology: " + edgesBetween, 
+	            edgesBetween.isEmpty());
+	}
 
 	//***********************************************
 	//    SUBGRAPH FILTERING AND REMOVAL TESTS

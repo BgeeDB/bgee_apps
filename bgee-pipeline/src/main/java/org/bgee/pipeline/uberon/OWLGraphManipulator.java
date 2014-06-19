@@ -2010,6 +2010,42 @@ public class OWLGraphManipulator {
 	//    UTILS
 	//*********************************
 	/**
+	 * Remove direct edges between the {@code OWLObject}s with the OBO-like IDs 
+	 * {@code sourceId} and {@code targetId}.
+	 * 
+	 * @param sourceId A {@code String} that is the OBO-like ID of the {@code OWLObject} 
+	 *                 whose edges to remove outgoing from.
+	 * @param targetId A {@code String} that is the OBO-like ID of the {@code OWLObject} 
+     *                 whose edges to remove incoming to.
+	 * @return         An {@code int} that is the number of {@code OWLGraphEdge}s 
+	 *                 removed as a result.
+	 */
+	public int removeDirectEdgesBetween(String sourceId, String targetId) {
+	    OWLObject source = this.getOwlGraphWrapper().getOWLObjectByIdentifier(sourceId);
+        if (source == null) {
+            throw new IllegalArgumentException(sourceId + " was not found in the ontology");
+        }
+        OWLObject target = this.getOwlGraphWrapper().getOWLObjectByIdentifier(targetId);
+        if (target == null) {
+            throw new IllegalArgumentException(targetId + " was not found in the ontology");
+        }
+        
+        Set<OWLGraphEdge> edgesToRemove = new HashSet<OWLGraphEdge>();
+        for (OWLGraphEdge edge: this.getOwlGraphWrapper().getOutgoingEdges(source)) {
+            if (edge.getTarget().equals(target)) {
+                edgesToRemove.add(edge);
+            }
+        }
+        int edgesRemoved = this.removeEdges(edgesToRemove);
+        
+        if (log.isInfoEnabled()) {
+            log.info("Edges between " + sourceId + " and " + targetId + " removed, " + 
+                    edgesRemoved + " removed.");
+        }
+        
+        return edgesRemoved;
+	}
+	/**
 	 * Remove {@code edge} from its ontology. It means that the {@code OWLAxiom}s 
 	 * returned by the method {@code OWLGraphEdge#getAxioms()}, that allowed to generate 
 	 * {@code edge}, will be removed from the ontology. 

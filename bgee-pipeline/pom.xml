@@ -62,6 +62,9 @@
       <finalName>bgee-pipeline-${project.version}</finalName>
       
       <plugins>
+      
+        <!-- The use of the maven-assembly-plugin has been replaced by the maven-shade-plugin, 
+             because it allows to manage files from the dependencies included. 
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
@@ -78,14 +81,15 @@
               
               <executions>
                   <execution>
-                      <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                      <phase>package</phase> <!-- bind to the packaging phase -->
+                      <id>make-assembly</id> 
+                      <phase>package</phase> 
                       <goals>
                           <goal>single</goal>
                       </goals>
                   </execution>
               </executions>
           </plugin>
+          -->
           
           <plugin>
               <groupId>org.apache.maven.plugins</groupId>

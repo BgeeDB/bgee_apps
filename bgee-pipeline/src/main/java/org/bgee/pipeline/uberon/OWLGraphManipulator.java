@@ -739,9 +739,9 @@ public class OWLGraphManipulator {
         //variables for logging purpose
         int classIndex = 0;
 		for (OWLClass iterateClass: allClasses) {
-		    if (log.isDebugEnabled()) {
+		    if (log.isInfoEnabled()) {
 		        classIndex++;
-		        log.debug("Start examining class " + classIndex + "/" + 
+		        log.info("Start examining class " + classIndex + "/" + 
 		                allClasses.size() + " " + iterateClass + "...");
 		    }
 		    
@@ -920,23 +920,46 @@ public class OWLGraphManipulator {
 	    while ((iteratedWalk = allWalks.pollFirst()) != null) {
 	    	//iteratedWalk should never be empty, get the last composed relation walked
 	    	OWLGraphEdge currentEdge = iteratedWalk.get(iteratedWalk.size()-1);
+	    	if (log.isDebugEnabled()) {
+	    	    log.debug("Current combined edge tested: " + currentEdge);
+	    	}
 
 	    	//get the outgoing edges starting from the target of currentEdge, 
 	    	//and compose these relations with currentEdge, 
 	    	//trying to get a composed edge with only one relation (one property)
 	    	nextEdge: for (OWLGraphEdge nextEdge: this.getOwlGraphWrapper().getOutgoingEdges(
 	    				currentEdge.getTarget())) {
+	    	    
+	    	    if (log.isDebugEnabled()) {
+	                log.debug("Current raw edge walked: " + nextEdge);
+	            }
 
+	    	    //check that the target of nextEdge is not the source of edgeToTest. 
+	    	    //We had problem with reciprocal relations between terms, using relations 
+	    	    //that are the inverse of each other. For instance: 
+	    	    //A synapsed_by B and A synapsed_to B
+	    	    //B synapsed_by A and B synapsed_to A. 
+	    	    //there will be several round walk generating non-identical composed relations, 
+	    	    //before detecting a cycle with the code used later.
+	    	    if (edgeToTest.getSource().equals(nextEdge.getTarget())) {
+	    	        log.debug("A walk leads to the source of the edge currently under test, stop this walk.");
+	    	        continue nextEdge;
+	    	    }
+	    	    
 				//check that nextEdge has the target of edgeToTest
 				//on its path, otherwise stop this walk here
 				if (!this.getOwlGraphWrapper().getAncestorsReflexive(nextEdge.getTarget()).
 						contains(edgeToTest.getTarget())) {
+				    log.debug("Target not on path, stop this walk.");
 					continue nextEdge;
 				}
 			    
 	    		OWLGraphEdge combine = 
 	    				this.getOwlGraphWrapper().combineEdgePairWithSuperProps(
 	    						currentEdge, nextEdge);
+	    		if (log.isDebugEnabled()) {
+                    log.debug("Resulting combined edge: " + combine);
+                }
 
 	    		//if there is a cycle in the ontology: 
 	    		boolean cycle = false;

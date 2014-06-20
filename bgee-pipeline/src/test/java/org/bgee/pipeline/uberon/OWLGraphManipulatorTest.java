@@ -1016,7 +1016,7 @@ public class OWLGraphManipulatorTest
 	}
 	
 	/**
-	 * Test the method {@link OWLGraphManipulator#removeEdgesBetween(String, String)}.
+	 * Test the method {@link OWLGraphManipulator#removeDirectEdgesBetween(String, String)}.
 	 */
 	@Test
 	public void shouldRemoveEdgesBetween() {

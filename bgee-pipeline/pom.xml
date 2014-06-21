@@ -112,7 +112,9 @@
                                    and to make sure our conf. files are not overridden 
                                    by a file with identical name in a dependency. 
                                    If we didn't exclude these files from the jar, 
-                                   they would have preeminence over the external files. -->
+                                   they would have preeminence over the external files. 
+                                   Our property files will be exported to the target directory, 
+                                   see end of this pom.xml. -->
                               <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                                   <resource>log4j2.xml</resource>
                               </transformer>
@@ -122,23 +124,36 @@
                 
                               <!-- If we wanted to put these configuration files only in the jar, 
                                    and to make sure they are not overridden by files 
-                                   with identical name in a dependency. -->
+                                   with identical name in a dependency, we should do: -->
                               <!-- <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                   <resource>log4j2.xml</resource>
                               </transformer>
                               <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                   <resource>log4j.properties</resource>
                               </transformer> -->
-                              
                               <!-- If we needed to merge them instead, 
                                    see org.apache.maven.plugins.shade.resource.AppendingTransformer 
                                    and org.apache.maven.plugins.shade.resource.XmlAppendingTransformer -->
+                                   
                           </transformers>
                       </configuration>
                   </execution>
               </executions>
           </plugin>
       </plugins>
+      
+      <!-- In order to export logger configuration files to the target directory, 
+           for easier external configuration. -->
+      <resources>
+        <resource>
+            <directory>src/main/resources</directory>
+            <targetPath>${project.build.directory}</targetPath>
+            <includes>
+                <include>log4j2.xml</include>
+                <include>log4j.properties</include>
+            </includes>
+        </resource>
+    </resources>
   </build>
   
 </project>

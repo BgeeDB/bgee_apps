@@ -759,9 +759,9 @@ public class OWLGraphManipulator {
 		    //as compared to composed relations obtained by walks to the top 
 		    //starting from the other outgoing edges, at any distance
 		    for (OWLGraphEdge outgoingEdgeToTest: outgoingEdges) {
-		        if (log.isDebugEnabled()) {
+		        if (log.isTraceEnabled()) {
 		            edgeIndex++;
-		            log.debug("Start testing edge for redundancy " + edgeIndex + 
+		            log.trace("Start testing edge for redundancy " + edgeIndex + 
 		                    "/" + outgoingEdgesCount + " " + outgoingEdgeToTest);
 		        }
 		        /*
@@ -792,8 +792,8 @@ public class OWLGraphManipulator {
 		            if (this.removeEdge(outgoingEdgeToTest)) {
 		                relationsRemoved++;
                         outgoingEdgesRemoved.add(outgoingEdgeToTest);
-		                if (log.isDebugEnabled()) {
-		                    log.debug("Tested edge is redundant and is removed: " + 
+		                if (log.isTraceEnabled()) {
+		                    log.trace("Tested edge is redundant and is removed: " + 
 		                            outgoingEdgeToTest);
 		                }
 		            } else {
@@ -801,14 +801,11 @@ public class OWLGraphManipulator {
 		                        outgoingEdgeToTest);
 		            }
 		        } else {
-		            if (log.isDebugEnabled()) {
-		                log.debug("Done testing edge for redundancy, not redundant: " + 
+		            if (log.isTraceEnabled()) {
+		                log.trace("Done testing edge for redundancy, not redundant: " + 
 		                        outgoingEdgeToTest);
 		            }
 		        }
-		    }
-		    if (log.isDebugEnabled()) {
-		        log.debug("Done examining class " + iterateClass);
 		    }
 	    }
 		
@@ -873,8 +870,8 @@ public class OWLGraphManipulator {
 		if (reducePartOfAndIsA && 
 			!this.isAPartOfEdge(edgeToTest) && 
 			!this.isASubClassOfEdge(edgeToTest)) {
-		    if (log.isDebugEnabled()) {
-			    log.debug("Edge to test is not a is_a/part_of relation, " +
+		    if (log.isTraceEnabled()) {
+			    log.trace("Edge to test is not a is_a/part_of relation, " +
 			    		"cannot be redundant: " + edgeToTest);
 		    }
 			return false;
@@ -920,8 +917,8 @@ public class OWLGraphManipulator {
 	    while ((iteratedWalk = allWalks.pollFirst()) != null) {
 	    	//iteratedWalk should never be empty, get the last composed relation walked
 	    	OWLGraphEdge currentEdge = iteratedWalk.get(iteratedWalk.size()-1);
-	    	if (log.isDebugEnabled()) {
-	    	    log.debug("Current combined edge tested: " + currentEdge);
+	    	if (log.isTraceEnabled()) {
+	    	    log.trace("Current combined edge tested: " + currentEdge);
 	    	}
 
 	    	//get the outgoing edges starting from the target of currentEdge, 
@@ -930,8 +927,8 @@ public class OWLGraphManipulator {
 	    	nextEdge: for (OWLGraphEdge nextEdge: this.getOwlGraphWrapper().getOutgoingEdges(
 	    				currentEdge.getTarget())) {
 	    	    
-	    	    if (log.isDebugEnabled()) {
-	                log.debug("Current raw edge walked: " + nextEdge);
+	    	    if (log.isTraceEnabled()) {
+	                log.trace("Current raw edge walked: " + nextEdge);
 	            }
 
 	    	    //check that the target of nextEdge is not the source of edgeToTest. 
@@ -942,7 +939,7 @@ public class OWLGraphManipulator {
 	    	    //there will be several round walk generating non-identical composed relations, 
 	    	    //before detecting a cycle with the code used later.
 	    	    if (edgeToTest.getSource().equals(nextEdge.getTarget())) {
-	    	        log.debug("A walk leads to the source of the edge currently under test, stop this walk.");
+	    	        log.trace("A walk leads to the source of the edge currently under test, stop this walk.");
 	    	        continue nextEdge;
 	    	    }
 	    	    
@@ -950,15 +947,15 @@ public class OWLGraphManipulator {
 				//on its path, otherwise stop this walk here
 				if (!this.getOwlGraphWrapper().getAncestorsReflexive(nextEdge.getTarget()).
 						contains(edgeToTest.getTarget())) {
-				    log.debug("Target not on path, stop this walk.");
+				    log.trace("Target not on path, stop this walk.");
 					continue nextEdge;
 				}
 			    
 	    		OWLGraphEdge combine = 
 	    				this.getOwlGraphWrapper().combineEdgePairWithSuperProps(
 	    						currentEdge, nextEdge);
-	    		if (log.isDebugEnabled()) {
-                    log.debug("Resulting combined edge: " + combine);
+	    		if (log.isTraceEnabled()) {
+                    log.trace("Resulting combined edge: " + combine);
                 }
 
 	    		//if there is a cycle in the ontology: 
@@ -972,8 +969,8 @@ public class OWLGraphManipulator {
 	    		if (cycle) {
 	    			//add the edge anyway to see it in the logs
 	    			iteratedWalk.add(combine);
-	    			if (log.isDebugEnabled()) {
-	    			    log.debug("Cycle detected. List of " +
+	    			if (log.isTraceEnabled()) {
+	    			    log.trace("Cycle detected. List of " +
 	    			        "all relations composed on the walk: " + iteratedWalk);
 	    			}
 	    			continue nextEdge;
@@ -1425,9 +1422,15 @@ public class OWLGraphManipulator {
         toKeep.addAll(allowedSubgraphRoots);
         toKeep.addAll(ancestors);
         toKeep.addAll(descendants);
+        if (log.isDebugEnabled()) {
+            log.debug("Allowed classes: " + toKeep);
+        }
         Set<String> classIdsRemoved = new HashSet<String>();
     	for (OWLClass classRemoved: this.filterClasses(toKeep)) {
     	    classIdsRemoved.add(this.getOwlGraphWrapper().getIdentifier(classRemoved));
+    	}
+    	if (log.isDebugEnabled()) {
+    	    log.debug("Classes removed: " + classIdsRemoved);
     	}
     	
     	//remove relations between any ancestor of an allowed root, that is not also 

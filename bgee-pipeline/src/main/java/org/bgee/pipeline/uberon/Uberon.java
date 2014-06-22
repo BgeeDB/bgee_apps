@@ -207,11 +207,11 @@ public class Uberon {
             new Uberon().simplifyUberonAndSaveToFile(args[1], args[2], args[3], 
                     CommandRunner.parseListArgument(args[4]), 
                     CommandRunner.parseListArgument(args[5]), 
-                    CommandRunner.parseListArgument(args[6]), 
+                    CommandRunner.parseMapArgument(args[6]), 
                     CommandRunner.parseListArgument(args[7]), 
                     CommandRunner.parseListArgument(args[8]), 
                     CommandRunner.parseListArgument(args[9]), 
-                    CommandRunner.parseMapArgument(args[10]));
+                    CommandRunner.parseListArgument(args[10]));
             
         } else if (args[0].equalsIgnoreCase("extractXRefMappings")) {
             if (args.length != 3) {
@@ -292,21 +292,21 @@ public class Uberon {
      */
     public void simplifyUberonAndSaveToFile(String pathToUberonOnt, String modifiedOntPath, 
             String classesRemovedFilePath, Collection<String> classIdsToRemove, 
-            Collection<String> relIds, Collection<String> toRemoveSubgraphRootIds, 
+            Collection<String> relIds, Map<String, Set<String>> relsBetweenToRemove, 
+            Collection<String> toRemoveSubgraphRootIds, 
             Collection<String> toFilterSubgraphRootIds, Collection<String> subsetNames, 
-            Collection<String> classIdsExcludedFromSubsetRemoval, 
-            Map<String, Set<String>> relsBetweenToRemove) throws UnknownOWLOntologyException, 
+            Collection<String> classIdsExcludedFromSubsetRemoval) throws UnknownOWLOntologyException, 
             OWLOntologyCreationException, OBOFormatParserException, IOException, 
             OWLOntologyStorageException {
         log.entry(pathToUberonOnt, modifiedOntPath, classesRemovedFilePath, 
-                classIdsToRemove, relIds, toRemoveSubgraphRootIds, toFilterSubgraphRootIds, 
-                subsetNames, classIdsExcludedFromSubsetRemoval, relsBetweenToRemove);
+                classIdsToRemove, relIds, relsBetweenToRemove, toRemoveSubgraphRootIds, 
+                toFilterSubgraphRootIds, subsetNames, classIdsExcludedFromSubsetRemoval);
         
         OWLOntology ont = OntologyUtils.loadOntology(pathToUberonOnt);
         
-        this.simplifyUberon(ont, classIdsToRemove, relIds, 
+        this.simplifyUberon(ont, classIdsToRemove, relIds, relsBetweenToRemove, 
                 toRemoveSubgraphRootIds, toFilterSubgraphRootIds, subsetNames, 
-                classIdsExcludedFromSubsetRemoval, relsBetweenToRemove);
+                classIdsExcludedFromSubsetRemoval);
 
         //save ontology
         OntologyUtils utils = new OntologyUtils(ont);
@@ -397,13 +397,13 @@ public class Uberon {
      *                                          {@code OWLGraphManipulator}.
      */
     public void simplifyUberon(OWLOntology uberonOnt, Collection<String> classIdsToRemove, 
-            Collection<String> relIds, Collection<String> toRemoveSubgraphRootIds, 
+            Collection<String> relIds, Map<String, Set<String>> relsBetweenToRemove, 
+            Collection<String> toRemoveSubgraphRootIds, 
             Collection<String> toFilterSubgraphRootIds, Collection<String> subsetNames, 
-            Collection<String> classIdsExcludedFromSubsetRemoval, 
-            Map<String, Set<String>> relsBetweenToRemove) throws UnknownOWLOntologyException {
-        log.entry(uberonOnt, classIdsToRemove, relIds, 
+            Collection<String> classIdsExcludedFromSubsetRemoval) throws UnknownOWLOntologyException {
+        log.entry(uberonOnt, classIdsToRemove, relIds, relsBetweenToRemove, 
                 toRemoveSubgraphRootIds, toFilterSubgraphRootIds, subsetNames, 
-                classIdsExcludedFromSubsetRemoval, relsBetweenToRemove);
+                classIdsExcludedFromSubsetRemoval);
         //TODO: dependency injection?
         OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
 
@@ -414,6 +414,14 @@ public class Uberon {
             }
         }
         
+        if (relsBetweenToRemove != null) {
+            for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
+                for (String targetId: relsToRemove.getValue()) {
+                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+                }
+            }
+        }
+        
         manipulator.reduceRelations();
         manipulator.reducePartOfIsARelations();
         
@@ -421,6 +429,7 @@ public class Uberon {
             manipulator.mapRelationsToParent(relIds);
             manipulator.filterRelations(relIds, true);
         }
+        
         if (toRemoveSubgraphRootIds != null) {
             for (String subgraphRootId: toRemoveSubgraphRootIds) {
                 for (String classIdRemoved: 
@@ -438,14 +447,6 @@ public class Uberon {
         }
         if (subsetNames != null && !subsetNames.isEmpty()) {
             manipulator.removeRelsToSubsets(subsetNames, classIdsExcludedFromSubsetRemoval);
-        }
-        
-        if (relsBetweenToRemove != null) {
-            for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
-                for (String targetId: relsToRemove.getValue()) {
-                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
-                }
-            }
         }
 
         //TODO: dependency injection?

@@ -731,10 +731,9 @@ public class OWLGraphManipulator {
 		//and for each class, check each outgoing edges
 		//todo?: everything could be done in one single walk from bottom nodes 
 		//to top nodes, this would be much faster, but would require much more memory.
-		Set<OWLClass> allClasses = new HashSet<OWLClass>();
-		for (OWLOntology ont: this.getOwlGraphWrapper().getAllOntologies()) {
-		    allClasses.addAll(ont.getClassesInSignature());
-		}
+		Set<OWLClass> allClasses = 
+		        new HashSet<OWLClass>(this.getOwlGraphWrapper().getAllOWLClasses());
+		
 		int relationsRemoved = 0;
         //variables for logging purpose
         int classIndex = 0;

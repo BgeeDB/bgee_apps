@@ -2,10 +2,11 @@ package org.bgee.pipeline.hierarchicalGroups;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.management.modelmbean.XMLParseException;
@@ -44,7 +45,11 @@ public class ParseOrthoXML extends MySQLDAOUser {
     private Set<HierarchicalGroupTO> hierarchicalGroupTOs = 
             new HashSet<HierarchicalGroupTO>();
     private Set<GeneTO> geneTOs = new HashSet<GeneTO>();
-    private List<String> genesInDb = new ArrayList<String>();
+    // A Set of geneId presents into the Bgee database 
+    private Set<String> genesInBgee = new HashSet<String>();
+    // A Map of geneId-OMANodeID to be able to check if the gene is present in two
+    // different HOGs
+    private Map<String, String> genesUpdated = new HashMap<String, String>();
 
     /**
      * Default constructor. 
@@ -140,32 +145,31 @@ public class ParseOrthoXML extends MySQLDAOUser {
             this.generateTOsFromFile(orthoXMLFile);
 
             // Start a transaction to insert HierarchicalGroupTOs and update GeneTOs
-            // in the Bgee data source.Note that we do not need to call rollback if
+            // in the Bgee data source. Note that we do not need to call rollback if
             // an error occurs, calling closeDAO will rollback any ongoing transaction.
             int nbInsertedGenes = 0, nbUpdatedGenes = 0;
-            try {
-                this.startTransaction();
 
-                log.info("Start inserting of hierarchical groups...");
-                nbInsertedGenes = this.getHierarchicalGroupDAO()
-                        .insertHierarchicalGroups(hierarchicalGroupTOs);
-                log.info("Done inserting hierarchical groups");
+            this.startTransaction(); 
 
-                log.info("Start updating genes...");
-                nbUpdatedGenes = this.getGeneDAO().updateGenes(geneTOs,
-                        Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID));
-                log.info("Done updating genes.");
+            log.info("Start inserting of hierarchical groups...");
+            nbInsertedGenes = this.getHierarchicalGroupDAO()
+                    .insertHierarchicalGroups(hierarchicalGroupTOs);
+            log.info("Done inserting hierarchical groups");
 
-                this.commit();
-            } finally {
-                this.closeDAO();
-            }
-            log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted and "
-                    + "{} genes inserted.", nbInsertedGenes, nbUpdatedGenes);
+            log.info("Start updating genes...");
+            nbUpdatedGenes = this.getGeneDAO().updateGenes(geneTOs,
+                    Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID));
+            log.info("Done updating genes.");
+
+            this.commit();
+            log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted " +
+                    "and {} genes inserted.", nbInsertedGenes, nbUpdatedGenes);
         } catch (IllegalStateException e) {
             log.catching(e);
             throw log.throwing(new IllegalArgumentException(
                     "The OrthoXML provided is invalid", e));
+        } finally {
+            this.closeDAO();
         }
         log.exit();
     }
@@ -178,18 +182,15 @@ public class ParseOrthoXML extends MySQLDAOUser {
      */
     private void getGenesFromDb() throws DAOException {
         log.entry();
-        try {
-            log.info("Start getting gene IDs...");
-            this.getGeneDAO().setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-            GeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
-            while (rsGenes.next()) {
-                genesInDb.add(rsGenes.getTO().getId());
-            }
-            log.info("Done getting gene IDs");
-        } finally {
-            this.closeDAO();
+        
+        log.info("Start getting gene IDs...");
+        this.getGeneDAO().setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+        GeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
+        while (rsGenes.next()) {
+            genesInBgee.add(rsGenes.getTO().getId());
         }
-        log.info("Done getting gene IDs, {} genes found", genesInDb.size());
+        log.info("Done getting gene IDs, {} genes found", genesInBgee.size());
+
         log.exit();
     }
 
@@ -212,7 +213,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         Group group;
         // Read all the groups in the file iteratively
         while ((group = reader.next()) != null) {
-            this.generateTOsFromGroup(group, Integer.parseInt(group.getId()));
+            this.generateTOsFromGroup(group, group.getId());
             nestedSetId++;
         }
         log.info("Done retrieving hierarchical groups.");
@@ -220,32 +221,45 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
     
     /**
-     * Extract all relevant information from a {@code Group} and fill the
-     * {@code Collection} of {@code HierarchicalGroupTO}s as a nested set model and the
+     * Extract all relevant information from a {@code Group} and create a 
+     * {@code Collection} of {@code HierarchicalGroupTO}s as a nested set model, and a
      * {@code Collection} of {@code GeneTO}s.
      * 
      * @param group         A {@code Group} that is the path to the OMA groups file.
-     * @param OMAGroupId    An {@code int} that the OMA group ID to use for subgroups.
+     * @param OMAGroupId    A {@code String} that the OMA group ID to use for subgroups.
      */
-    private void generateTOsFromGroup(Group group, int OMAGroupId) {
+    private void generateTOsFromGroup(Group group, String OMAGroupId) {
         nestedSetId++;
-        // Add a HierarchicalGroupTO in collection. We remove 1 to the count to get
-        // the number of children i.e. to remove the current group.
-        this.addHierarchicalGroupTO(OMAGroupId, group.getProperty("TaxRange"),
-                countChildren(group));
+        // Add a HierarchicalGroupTO in collection.
+        this.addHierarchicalGroupTO(OMAGroupId, group.getProperty("TaxId"),
+                countGroups(group) - 1);
         if (group.getGenes() != null) {
             for (Gene groupGene : group.getGenes()) {
-                // Parse gene identifiers (named protId in OrthoXML file)
-                List<String> genes = Arrays.asList(
-                        groupGene.getProteinIdentifier().split("; "));
+                List<String> genes = Arrays.asList(groupGene.getGeneIdentifier().split("; "));
+                boolean isInBgee = false ;
                 for (String geneId : genes) {
                     // Check if that identifier is already in our data source
-                    if (genesInDb.contains(geneId)) {
-                        // Add new {@code GeneTO} to {@code Collection} of {@code GeneTO}s
-                        // to be able to update OMAGroupId in gene table.
-                        geneTOs.add(new GeneTO(geneId, "", "", 0, 0, OMANodeId, true));
+                    if (genesInBgee.contains(geneId)) {
+                        isInBgee = true;
+                        GeneTO gene = new GeneTO(geneId, "", "", 0, 0, OMANodeId, true);
+                        if (genesUpdated.containsKey(geneId)
+                                && !genesUpdated.get(geneId).equals(OMAGroupId)) {                            
+                            log.warn("The gene {} is in diffent hierarchical " +  
+                                     "orthologous groups: /{}/ and /{}/", gene.getId(),
+                                     genesUpdated.get(geneId), OMAGroupId);
+                        } else {
+                            genesUpdated.put(geneId, OMAGroupId);
+                            // Add new {@code GeneTO} to {@code Collection} of 
+                            // {@code GeneTO}s to be able to update OMAGroupId in gene
+                            // table.
+                            geneTOs.add(gene);
+                        }
                         break;
                     }
+                }
+                if (!isInBgee) {
+                    log.warn("No gene ID in {} found in Bgee for the node {}",
+                            groupGene.getGeneIdentifier(), OMANodeId);
                 }
             }
         }
@@ -266,22 +280,25 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * nested set bounds and fill the {@code Collection} of {@code HierarchicalGroupTO}s
      * as a nested set model.
      * 
-     * @param OMAGroupId    An {@code int} that is the OMA group ID.
-     * @param taxRange      A {@code String} that is the taxonomy range of the
+     * @param OMAGroupId    A {@code String} that is the OMA group ID.
+     * @param taxRange      An {@code int} that is the taxonomy range of the
      *                      {@code HierarchicalGroupTO} to create.
      * @param nbChild       An {@code int} that is the number of children of the
      *                      {@code HierarchicalGroupTO} to create.
      */
-    private int[] addHierarchicalGroupTO(int OMAGroupId, String taxRange, int nbChild) {
-        log.entry(OMAGroupId, taxRange, nbChild);
+    private int[] addHierarchicalGroupTO(String OMAGroupId, String taxId, int nbChild) {
+        log.entry(OMAGroupId, taxId, nbChild);
         // Left
         int left = nestedSetId;
         // Right = left + 2 * number of children + 1;
         int right = nestedSetId + 2 * nbChild + 1;
-        log.debug("OMANodeId={}, OMAGroupId={}, left={}, right={}, taxRange={}",
-                OMANodeId, OMAGroupId, left, right, taxRange);
-        hierarchicalGroupTOs.add(new HierarchicalGroupTO(OMANodeId, OMAGroupId, left,
-                right, taxRange));
+        int taxonomyId = 0;
+        if (taxId != null) {
+            taxonomyId = Integer.valueOf(taxId);            
+        }
+        hierarchicalGroupTOs.add(
+                new HierarchicalGroupTO(OMANodeId, OMAGroupId, left, right, taxonomyId));            
+
         int[] bounds = new int[2];
         bounds[0] = left;
         bounds[1] = right;
@@ -289,25 +306,22 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
 
     /**
-     * Counts the number of child {@code Group}s.
+     * Count the number of {@code Group}s in the provided {@code Group}.
      * <p>
      * This method recursively iterates through all subgroups of {@code Group} passed as a
-     * parameter and returns the total number of subgroups (children) of that
-     * {@code Group}.
+     * parameter and returns the total number of {@code Group}s of the parameter
+     * including the provided {@code Group}.
      * 
-     * @param group The {@code Group} whose the number of child {@code Group}s are to be
+     * @param group The {@code Group} whose the number of {@code Group}s are to be
      *              counted.
-     * @return      An {@code int} giving the total number of child {@code Group}s in the
-     *              given {@code Group}.
+     * @return      An {@code int} giving the total number of {@code Group}s in the given
+     *              {@code Group} including the provided {@code Group}.
      */
-    private static int countChildren(Group group) {
+    private static int countGroups(Group group) {
         log.entry(group);
         int c = 1;
         for (Group childGroup : group.getChildren()) {
-            c += countChildren(childGroup);
-        }
-        if (group.getParent() == null) {
-            c--;
+            c += countGroups(childGroup);
         }
         return log.exit(c);
     }

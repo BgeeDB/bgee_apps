@@ -23,8 +23,9 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
  * @see org.bgee.model.dao.api.species.HierarchicalGroupTO
  * @since Bgee 13
  */
-public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Attribute> 
-implements HierarchicalGroupDAO {
+public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Attribute>
+        implements HierarchicalGroupDAO {
+
     /**
      * {@code Logger} of the class. 
      */
@@ -32,12 +33,14 @@ implements HierarchicalGroupDAO {
             LogManager.getLogger(MySQLHierarchicalGroupDAO.class.getName());
 
     /**
-     * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
-     * will use to obtain {@code BgeeConnection}s.
-     * @param manager   the {@code MySQLDAOManager} to use.
+     * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} will
+     * use to obtain {@code BgeeConnection}s.
+     * 
+     * @param manager the {@code MySQLDAOManager} to use.
      * @throws IllegalArgumentException If {@code manager} is {@code null}.
      */
-    public MySQLHierarchicalGroupDAO(MySQLDAOManager manager) throws IllegalArgumentException {
+    public MySQLHierarchicalGroupDAO(MySQLDAOManager manager)
+            throws IllegalArgumentException {
         super(manager);
     }
     
@@ -46,39 +49,40 @@ implements HierarchicalGroupDAO {
     //TO BE EXPOSED TO THE PUBLIC API.
     //***************************************************************************
     /**
-     * Inserts the provided Hierarchical Groups into the Bgee database, represented as 
-     * a {@code Collection} of {@code HierarchicalGroupTO}s.
+     * Inserts the provided Hierarchical Groups into the Bgee database, represented as a
+     * {@code Collection} of {@code HierarchicalGroupTO}s.
      * 
-     * @param terms     a {@code Collection} of {@code HierarchicalGroupTO}s to be 
-     * 					inserted into the database.
-     * @throws DAOException     If a {@code SQLException} occurred while trying 
-     *                          to insert {@code terms}. The {@code SQLException} 
-     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
-     *                          do not expose these kind of implementation details).
+     * @param terms         A {@code Collection} of {@code HierarchicalGroupTO}s to be
+     *                      inserted into the database.
+     * @throws DAOException If a {@code SQLException} occurred while trying to insert
+     *                      {@code terms}. The {@code SQLException} will be wrapped into a
+     *                      {@code DAOException} ({@code DAOs} do not expose these kind of
+     *                      implementation details).
      */
-    public int insertHierarchicalGroups(Collection<HierarchicalGroupTO> groups) throws DAOException {
+    public int insertHierarchicalGroups(Collection<HierarchicalGroupTO> groups)
+            throws DAOException {
     	log.entry(groups);
     	int groupInsertedCount = 0;
 
     	// To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
     	// and because of laziness, we insert terms one at a time
-    	String sql = "INSERT INTO OMAHierarchicalGroup ("
-    			+ "OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId)"
-    			+ "values (?, ?, ?, ?, ?) ";
+        String sql = "INSERT INTO OMAHierarchicalGroup ("
+                + getLabel(HierarchicalGroupDAO.Attribute.NODEID) + ", "
+                + getLabel(HierarchicalGroupDAO.Attribute.GROUPID) + ", "
+                + getLabel(HierarchicalGroupDAO.Attribute.NODELEFTBOUND) + ", "
+                + getLabel(HierarchicalGroupDAO.Attribute.NODERIGHTBOUND) + ", "
+                + getLabel(HierarchicalGroupDAO.Attribute.TAXONID)
+                + " values (?, ?, ?, ?, ?)";
 
     	try (BgeePreparedStatement stmt = 
     			this.getManager().getConnection().prepareStatement(sql)) {
-
     		for (HierarchicalGroupTO group: groups) {
     			stmt.setInt(1, group.getNodeId());
-    			stmt.setInt(2, group.getOMAGroupId());
+    			stmt.setString(2, group.getOMAGroupId());
     			stmt.setInt(3, group.getNodeLeftBound());
     			stmt.setInt(4, group.getNodeRightBound());
-    			stmt.setString(5, group.getNcbiTaxonomyId());
+    			stmt.setInt(5, group.getNcbiTaxonomyId());
     			groupInsertedCount += stmt.executeUpdate();
-
-    			log.debug(stmt.toString());
-
     			stmt.clearParameters();
     		}
     		return log.exit(groupInsertedCount);
@@ -103,13 +107,12 @@ implements HierarchicalGroupDAO {
             return log.exit("taxonId");
         }
         throw log.throwing(new IllegalArgumentException(
-                "The attribute provided (" + attribute.toString() + ") is unknown for "
-                + MySQLHierarchicalGroupDAO.class));
+                "The attribute provided (" + attribute.toString() + ") is unknown for " +
+                MySQLHierarchicalGroupDAO.class.getName()));
     }
 
     @Override
-    protected String getSelectExpr(
-                    Collection<HierarchicalGroupDAO.Attribute> attributes) {
+    protected String getSelectExpr(Collection<HierarchicalGroupDAO.Attribute> attributes) {
         throw new UnsupportedOperationException("The method is not implemented yet");
     }
 
@@ -123,34 +126,34 @@ implements HierarchicalGroupDAO {
 //	BgeeConnection connection;
 //
 //	/**
-//	 * Retrieves all the orthologus genes corresponding to the queried gene at
+//	 * Retrieves all the orthologous genes corresponding to the queried gene at
 //	 * the taxonomy level specified.
 //	 * <p>
 //	 * This method takes as parameters a {@code String} representing the
 //	 * gene ID, and a {@code long} representing the NCBI taxonomy ID for
-//	 * the taxonomy level queried. Then, the orthologus genes for the submitted
+//	 * the taxonomy level queried. Then, the orthologous genes for the submitted
 //	 * gene ID at the particular taxonomy level are retrieved and returned as a
 //	 * {@code Collection} of {@code String}.
 //	 * 
 //	 * @param queryGene
 //	 *            A {@code String} representing the gene ID queried, whose
-//	 *            orthologus genes are to be retrieved.
+//	 *            orthologous genes are to be retrieved.
 //	 * 
 //	 * @param ncbiTaxonomyId
 //	 *            A {@code long} representing the NCBI taxonomy ID of the
 //	 *            hierarchical level queried.
 //	 * @return A {@code Collection} of {@code String} containing all
-//	 *         the orthologus genes of the query gene corresponding to the
+//	 *         the orthologous genes of the query gene corresponding to the
 //	 *         taxonomy level queried.
 //	 * 
 //	 * @throws SQLException
 //	 */
-//	public ArrayList<String> getHierarchicalOrthologusGenes(String queryGene,
+//	public ArrayList<String> getHierarchicalOrthologousGenes(String queryGene,
 //			String ncbiTaxonomyId) throws SQLException {
 //
 //		log.entry();
 //
-//		ArrayList<String> orthologusGenes = new ArrayList<String>();
+//		ArrayList<String> orthologousGenes = new ArrayList<String>();
 //
 //		String sql = "SELECT t5.* FROM gene AS t1 "
 //				+ "INNER JOIN hierarchicalGroup AS t2 ON t1.hierarchicalGroupId = t2.hierarchicalGroupId "
@@ -177,7 +180,7 @@ implements HierarchicalGroupDAO {
 //			ResultSet resultSet = preparedStatement.executeQuery();
 //
 //			while (resultSet.next()) {
-//				orthologusGenes.add(resultSet.getString("geneId"));
+//				orthologousGenes.add(resultSet.getString("geneId"));
 //			}
 //
 //		} catch (SQLException e) {
@@ -186,24 +189,24 @@ implements HierarchicalGroupDAO {
 //			connection.close();
 //		}
 //
-//		return log.exit(orthologusGenes);
+//		return log.exit(orthologousGenes);
 //	}
 //
 //	/**
-//	 * Retrieves all the orthologus genes corresponding to the queried gene at
+//	 * Retrieves all the orthologous genes corresponding to the queried gene at
 //	 * the taxonomy level specified, belonging to a list of species.
 //	 * <p>
 //	 * This method takes as parameters a {@code String} representing the
 //	 * gene ID, a {@code long} representing the NCBI taxonomy ID for the
 //	 * taxonomy level queried, and an {@code ArrayList} representing the
-//	 * list of species whose genes are required. Then, the orthologus genes for
+//	 * list of species whose genes are required. Then, the orthologous genes for
 //	 * the submitted gene ID at the particular taxonomy level, belonging to each
 //	 * of the species submitted are retrieved and returned as a
 //	 * {@code Collection} of {@code String}.
 //	 * 
 //	 * @param queryGene
 //	 *            A {@code String} representing the gene ID queried, whose
-//	 *            orthologus genes are to be retrieved.
+//	 *            orthologous genes are to be retrieved.
 //	 * 
 //	 * @param ncbiTaxonomyId
 //	 *            A {@code long} representing the NCBI taxonomy ID of the
@@ -213,19 +216,19 @@ implements HierarchicalGroupDAO {
 //	 *            whose genes are required
 //	 * 
 //	 * @return A {@code Collection} of {@code String} containing all
-//	 *         the orthologus genes of the query gene corresponding to the
+//	 *         the orthologous genes of the query gene corresponding to the
 //	 *         taxonomy level queried.
 //	 * 
 //	 * @throws SQLException
 //	 * 
 //	 */
-//	public ArrayList<String> getHierarchicalOrthologusGenesForSpecies(
+//	public ArrayList<String> getHierarchicalOrthologousGenesForSpecies(
 //			String queryGene, String ncbiTaxonomyId, ArrayList<Long> speciesIds)
 //			throws SQLException {
 //
 //		log.entry();
 //
-//		ArrayList<String> orthologusGenes = new ArrayList<String>();
+//		ArrayList<String> orthologousGenes = new ArrayList<String>();
 //
 //		for (long speciesId : speciesIds) {
 //
@@ -255,7 +258,7 @@ implements HierarchicalGroupDAO {
 //				ResultSet resultSet = preparedStatement.executeQuery();
 //
 //				while (resultSet.next()) {
-//					orthologusGenes.add(resultSet.getString("geneId"));
+//					orthologousGenes.add(resultSet.getString("geneId"));
 //				}
 //
 //			} catch (SQLException e) {
@@ -265,7 +268,7 @@ implements HierarchicalGroupDAO {
 //			}
 //		}
 //
-//		return log.exit(orthologusGenes);
+//		return log.exit(orthologousGenes);
 //	}
 //
 //	/**
@@ -338,20 +341,20 @@ implements HierarchicalGroupDAO {
 //	}
 //
 //	/**
-//	 * Retrieves all the orthologus genes corresponding to the queried gene in
+//	 * Retrieves all the orthologous genes corresponding to the queried gene in
 //	 * the closest species.
 //	 * <p>
 //	 * This method takes as parameters a {@code String} representing the
-//	 * gene ID. Then, the orthologus genes for the submitted gene ID belonging
+//	 * gene ID. Then, the orthologous genes for the submitted gene ID belonging
 //	 * closest species are retrieved and returned as a {@code Collection}
 //	 * of {@code String}.
 //	 * 
 //	 * @param queryGene
 //	 *            A {@code String} representing the gene ID queried, whose
-//	 *            orthologus genes in it's closest species are to be retrieved.
+//	 *            orthologous genes in it's closest species are to be retrieved.
 //	 * 
 //	 * @return A {@code Collection} of {@code String} containing all
-//	 *         the orthologus genes of the query gene in the closest species.
+//	 *         the orthologous genes of the query gene in the closest species.
 //	 * 
 //	 * @throws SQLException
 //	 * 
@@ -361,7 +364,7 @@ implements HierarchicalGroupDAO {
 //
 //		log.entry();
 //
-//		ArrayList<String> orthologusGenes = new ArrayList<String>();
+//		ArrayList<String> orthologousGenes = new ArrayList<String>();
 //
 //		String sql = "SELECT t6.* FROM gene AS t6"
 //				+ " INNER JOIN hierarchicalGroup AS t5 "
@@ -394,7 +397,7 @@ implements HierarchicalGroupDAO {
 //			ResultSet resultSet = preparedStatement.executeQuery();
 //
 //			while (resultSet.next()) {
-//				orthologusGenes.add(resultSet.getString("geneId"));
+//				orthologousGenes.add(resultSet.getString("geneId"));
 //			}
 //
 //			if (log.isDebugEnabled()) {
@@ -407,29 +410,29 @@ implements HierarchicalGroupDAO {
 //			connection.close();
 //		}
 //
-//		return log.exit(orthologusGenes);
+//		return log.exit(orthologousGenes);
 //	}
 //
 //	/**
-//	 * Retrieves all the orthologus genes corresponding to the queried gene in a
+//	 * Retrieves all the orthologous genes corresponding to the queried gene in a
 //	 * list of species.
 //	 * <p>
 //	 * This method takes as parameters a {@code String} representing the
 //	 * gene ID, and an {@code ArrayList} representing the list of species
-//	 * representing the list of species IDs. Then, the orthologus genes for the
+//	 * representing the list of species IDs. Then, the orthologous genes for the
 //	 * submitted gene ID belonging to these species are retrieved and returned
 //	 * as a {@code Collection} of {@code String}.
 //	 * 
 //	 * @param queryGene
 //	 *            A {@code String} representing the gene ID queried, whose
-//	 *            orthologus genes in it's closest species are to be retrieved.
+//	 *            orthologous genes in it's closest species are to be retrieved.
 //	 * 
 //	 * @param speciesIds
 //	 *            An {@code ArrayList} representing the list of species
 //	 *            whose genes are required
 //	 * 
 //	 * @return A {@code Collection} of {@code String} containing all
-//	 *         the orthologus genes of the query gene in the closest species.
+//	 *         the orthologous genes of the query gene in the closest species.
 //	 * 
 //	 * @throws SQLException
 //	 * 
@@ -439,7 +442,7 @@ implements HierarchicalGroupDAO {
 //
 //		log.entry();
 //
-//		ArrayList<String> orthologusGenes = new ArrayList<String>();
+//		ArrayList<String> orthologousGenes = new ArrayList<String>();
 //
 //		for (long speciesId : speciesIds) {
 //
@@ -470,7 +473,7 @@ implements HierarchicalGroupDAO {
 //				ResultSet resultSet = preparedStatement.executeQuery();
 //
 //				while (resultSet.next()) {
-//					orthologusGenes.add(resultSet.getString("geneId"));
+//					orthologousGenes.add(resultSet.getString("geneId"));
 //				}
 //
 //				if (log.isDebugEnabled()) {
@@ -484,7 +487,7 @@ implements HierarchicalGroupDAO {
 //			}
 //		}
 //
-//		return log.exit(orthologusGenes);
+//		return log.exit(orthologousGenes);
 //
 //	}
 

@@ -738,6 +738,7 @@ public class OWLGraphManipulator {
         //variables for logging purpose
         int classIndex = 0;
 		for (OWLClass iterateClass: allClasses) {
+		    
 		    if (log.isInfoEnabled()) {
 		        classIndex++;
 		        log.info("Start examining class " + classIndex + "/" + 
@@ -902,29 +903,24 @@ public class OWLGraphManipulator {
 		
 		//--------OK, real stuff starts here----------
 		
-	    //For each walk, we need to store each step to check for cycles in the ontology.
-	    //Rather than using a recursive function, we use a List of OWLGraphEdges, 
-	    //where the current composed edge walked is the last element, 
-	    //and the previous composed relations are the previous elements.
-	    List<OWLGraphEdge> startWalk = new ArrayList<OWLGraphEdge>();
-	    startWalk.add(edgeToWalk);
-	    //now, create a Deque to store all the independent walks
-	    Deque<List<OWLGraphEdge>> allWalks = new ArrayDeque<List<OWLGraphEdge>>();
-	    allWalks.addFirst(startWalk);
+	    //create a Deque to walk all composed relations, 
+		//without using a recursive function.
+	    Deque<OWLGraphEdge> walk = new ArrayDeque<OWLGraphEdge>();
+	    walk.addFirst(edgeToWalk);
+	    //store all composed relations, to be able to detect cycles
+	    Set<OWLGraphEdge> allComposedEdges = new HashSet<OWLGraphEdge>();
 	
-	    List<OWLGraphEdge> iteratedWalk;
-	    while ((iteratedWalk = allWalks.pollFirst()) != null) {
-	    	//iteratedWalk should never be empty, get the last composed relation walked
-	    	OWLGraphEdge currentEdge = iteratedWalk.get(iteratedWalk.size()-1);
+	    OWLGraphEdge walkedEdge;
+	    while ((walkedEdge = walk.pollFirst()) != null) {
 	    	if (log.isTraceEnabled()) {
-	    	    log.trace("Current combined edge tested: " + currentEdge);
+	    	    log.trace("Current combined edge tested: " + walkedEdge);
 	    	}
 
-	    	//get the outgoing edges starting from the target of currentEdge, 
+	    	//get the outgoing edges starting from the target of walkedEdge, 
 	    	//and compose these relations with currentEdge, 
 	    	//trying to get a composed edge with only one relation (one property)
 	    	nextEdge: for (OWLGraphEdge nextEdge: this.getOwlGraphWrapper().getOutgoingEdges(
-	    				currentEdge.getTarget())) {
+	    	        walkedEdge.getTarget())) {
 	    	    
 	    	    if (log.isTraceEnabled()) {
 	                log.trace("Current raw edge walked: " + nextEdge);
@@ -937,10 +933,14 @@ public class OWLGraphManipulator {
 	    	    //B synapsed_by A and B synapsed_to A. 
 	    	    //there will be several round walk generating non-identical composed relations, 
 	    	    //before detecting a cycle with the code used later.
-	    	    if (edgeToTest.getSource().equals(nextEdge.getTarget())) {
+	    	    //-------------------------
+	    	    //===NOTE JUNE 2014===: disabling this check, it might be a performance issue, 
+	    	    //but maybe the results are incorrect when discarding such reciprocal relations.
+	    	    //-------------------------
+	    	    /*if (edgeToTest.getSource().equals(nextEdge.getTarget())) {
 	    	        log.trace("A walk leads to the source of the edge currently under test, stop this walk.");
 	    	        continue nextEdge;
-	    	    }
+	    	    }*/
 	    	    
 				//check that nextEdge has the target of edgeToTest
 				//on its path, otherwise stop this walk here
@@ -952,25 +952,24 @@ public class OWLGraphManipulator {
 			    
 	    		OWLGraphEdge combine = 
 	    				this.getOwlGraphWrapper().combineEdgePairWithSuperProps(
-	    						currentEdge, nextEdge);
+	    				        walkedEdge, nextEdge);
 	    		if (log.isTraceEnabled()) {
                     log.trace("Resulting combined edge: " + combine);
                 }
 
 	    		//if there is a cycle in the ontology: 
 	    		boolean cycle = false;
-	    		for (OWLGraphEdge walkedEdge: iteratedWalk) {
-	    		    if (walkedEdge.equalsIgnoreOntology(combine)) {
+	    		//we do not use the contains method, to be able to use equalsIgnoreOntology, 
+	    		//rather than equals.
+	    		for (OWLGraphEdge edgeAlreadyWalked: allComposedEdges) {
+	    		    if (edgeAlreadyWalked.equalsIgnoreOntology(combine)) {
 	    		        cycle = true;
 	    		        break;
 	    		    }
 	    		}
 	    		if (cycle) {
-	    			//add the edge anyway to see it in the logs
-	    			iteratedWalk.add(combine);
 	    			if (log.isTraceEnabled()) {
-	    			    log.trace("Cycle detected. List of " +
-	    			        "all relations composed on the walk: " + iteratedWalk);
+	    			    log.trace("Relation already seen, stop this walk: " + combine);
 	    			}
 	    			continue nextEdge;
 	    		}
@@ -1011,10 +1010,8 @@ public class OWLGraphManipulator {
 	    		}
 
 	    		//continue the walk for this combined edge
-	    		List<OWLGraphEdge> newIndependentWalk = 
-	    				new ArrayList<OWLGraphEdge>(iteratedWalk);
-	    		newIndependentWalk.add(combine);
-	    		allWalks.addFirst(newIndependentWalk);
+	    		walk.addFirst(combine);
+	    		allComposedEdges.add(combine);
 	    	}
 	    }
 	    

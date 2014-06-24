@@ -34,7 +34,7 @@ public enum Parameter {
 	/**
 	 * DESCRIPTION PARAM
 	 */
-	ACTION ("action", false, true,"java.lang.String"),
+	ACTION ("action", false, true,"java.lang.String",null),
 	
 	/**
 	 * DESCRIPTION PARAM
@@ -64,7 +64,13 @@ public enum Parameter {
 	/**
 	 * DESCRIPTION PARAM
 	 */	
-	CHOSEN_DATA_TYPE("chosen_data_type", false, true,"java.lang.Integer"); 
+	CHOSEN_DATA_TYPE("chosen_data_type", false, true,"java.lang.Integer"),
+	
+	/**
+	 * DESCRIPTION PARAM
+	 */	
+	EMAIL("email", false, true,"java.lang.string",
+			"[\\w\\._-]+@[\\w\\._-]+\\.[a-zA-Z][a-zA-Z][a-zA-Z]?$");
 	
 	/**
 	 * The Logger log4j
@@ -73,7 +79,6 @@ public enum Parameter {
 	
     /**
      * A {@code String} that contains the name of the parameter as it is written in an URL.
-     * It is also used as the key to store the value.
      * @see #index
      */
 	private final String name ;
@@ -100,6 +105,11 @@ public enum Parameter {
 	private final String type ;
 	
 	/**
+	 * A {@code String} that contains the regular expression the parameter should match.
+	 */
+	private String format;
+	
+	/**
 	 * Default max allowed length of <code>Strings</code> for parameters values.
 	 */
 	private static final int MAXSTRINGLENGTH = 128;
@@ -110,14 +120,30 @@ public enum Parameter {
 	 * @param isCacheable	A {@code boolean} that tells whether the parametr is cacheable or not 
 	 * @param isSecure		A {@code boolean} that tells whether the parametr is secure or not 
 	 * @param type			A {@code String} that contains the data type of the parameter
+	 * @param format		A {@code String} that contains the regular expression that this parameter has to fit to.
 	 */
 	Parameter(String name, boolean isCacheable, boolean isSecure,String type){
+
+		this(name,isCacheable,isSecure,type,null);
+		
+	}	
+	
+	/**
+	 * Constructor
+	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
+	 * @param isCacheable	A {@code boolean} that tells whether the parametr is cacheable or not 
+	 * @param isSecure		A {@code boolean} that tells whether the parametr is secure or not 
+	 * @param type			A {@code String} that contains the data type of the parameter
+	 * @param format		A {@code String} that contains the regular expression that this parameter has to fit to.
+	 */
+	Parameter(String name, boolean isCacheable, boolean isSecure,String type,String format){
 
 		this.name = name ;
 		this.maxSize = MAXSTRINGLENGTH ;
 		this.isCacheable = isCacheable ;
 		this.isSecure = isSecure ;
 		this.type = type ;
+		this.format = format ;
 	}
 	
 	/**
@@ -129,19 +155,26 @@ public enum Parameter {
 //	}
 	
 	/**
+	 * @return A {@code String} that contains the name of the parameter as it is written in an URL.
+	 */
+	public String getName() {
+		return name;
+	}
+	
+	/**
 	 * @return An {@code int} that represents the maximum size allowed for the parameter.
 	 */
 	public int getMaxSize() {
 		return maxSize;
 	}
-
+	
 	/**
 	 * @param maxSize  An {@code int} that represents the maximum size allowed for the parameter.
 	 */
 	public void setMaxSize(int maxSize) {
 		this.maxSize = maxSize;
 	}
-
+	
 	/**
 	 * @return	A {@code boolean} that indicates whether the parameter is cacheable or not.
 	 */
@@ -181,9 +214,28 @@ public enum Parameter {
 		return name;
 	}
 
+	/**
+	 * @return  A {@code String} that contains the data type of the parameter.
+	 */
 	public String getType() {
 		return type;
 	}
+
+	/**
+	 * @return	 A {@code String} that contains the regular expression the parameter should match.
+	 */
+	public String getFormat() {
+		return format;
+	}
+
+	/**
+	 * @param format	A {@code String} that contains the regular expression 
+	 * 					the parameter should match.
+	 */
+	public void setFormat(String format) {
+		this.format = format;
+	}
+
 
 }
 

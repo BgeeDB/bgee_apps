@@ -4,6 +4,8 @@ import java.util.EnumMap;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.bgee.utils.BgeeStringUtils;
+
 /**
  * Prototype of RequestParameters to test the concept.
  * @author Mathieu Seppey
@@ -38,7 +40,8 @@ public class RequestParameters {
 			switch(p.getType()){
 
 			case("java.lang.String") :
-				parameterStringMap.put(p, value1);
+				parameterStringMap.put(p, BgeeStringUtils.secureString(value1, p.getMaxSize(),
+						p.getFormat()));
 			break;
 
 			case("java.lang.Integer") :

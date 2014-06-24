@@ -335,12 +335,12 @@ public abstract class MySQLITAncestor extends TestAncestor{
         stmt = con.prepareStatement(
                 "INSERT INTO OMAHierarchicalGroup " +
                 "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) VALUES (1, 99, 1, 8, 111), " +
-                "(2, 99, 2, 3, 211), " +
-                "(3, 99, 4, 7, 311), " +
-                "(4, 99, 5, 6, 411), " +
-                "(5, 88, 9, 14, 111), " +
-                "(6, 88, 10, 13, 211), " +
-                "(7, 88, 11, 12, 511)");
+                "(2, 'HOG:NAILDQY', 2, 3, 211), " +
+                "(3, 'HOG:NAILDQY', 4, 7, 311), " +
+                "(4, 'HOG:NAILDQY', 5, 6, 411), " +
+                "(5, 'HOG:VALEWID', 9, 14, 111), " +
+                "(6, 'HOG:VALEWID', 10, 13, 211), " +
+                "(7, 'HOG:VALEWID', 11, 12, 511)");
         stmt.executeUpdate();
         // species table
         stmt = con.prepareStatement(

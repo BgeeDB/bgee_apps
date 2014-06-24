@@ -2,20 +2,28 @@ package org.bgee.utils;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * This class extends {@link org.apache.commons.lang3.StringUtils} and provides methods to 
+ * check and secure {@code String}s for their use within the webapp. 
+ * 
+ * @author Mathieu Seppey
+ */
 public class BgeeStringUtils extends org.apache.commons.lang3.StringUtils {
 	
-	BgeeStringUtils(){
+	/**
+	 * Default constructor
+	 * StringUtils instances should NOT be constructed in standard programming.
+	 */
+	public BgeeStringUtils(){
 		super();
 	}
 	
 	/**
-	 * Perform security controls and prepare the submitted <code>String</code> for use, 
-	 * including a check for String length.
+	 * Perform security controls and prepare the submitted <code>String</code> for use
 	 * 
 	 * @param  	stringToCheck
-	 * @return 	a secured and prepared <code>String</code>. Return an empty String if security checks have failed, 
-	 * 			or if the stringToCheck was null, or if the length of <code>stringToCheck</code>  
-	 * 			is greater than <code>MAXSTRINGLENGTH</code>.
+	 * @return 	a secured and prepared <code>String</code>. Return an empty String if security checks 
+	 * 			have failed.
 	 * TODO 	log message if the String is discarded.
 	 */
 	public static String secureString(String stringToCheck)
@@ -24,17 +32,23 @@ public class BgeeStringUtils extends org.apache.commons.lang3.StringUtils {
 	}
 		
 	/**
-	 * Perform security controls and prepare the submitted <code>String</code> for use.
+	 * Perform security controls and prepare the submitted <code>String</code> for use. It includes
+	 * a check of the <code>String</code> length and the format of the <code>String</code>.
 	 * 
 	 * @param  	stringToCheck
-	 * @param 	lengthToCheck 	an <code>int</code> defining the max allowed length of <code>stringToCheck</code>.
-	 * 							If <code>stringToCheck</code> is greater than 0, 
-	 * 							and if the length of <code>stringToCheck</code> is greater than <code>lengthToCheck</code>, 
+	 * @param 	lengthToCheck 	an <code>int</code> defining the max allowed length of 
+	 * 							<code>stringToCheck</code>.
+	 * 							If <code>stringToCheck</code> is greater than 0, and if the length of
+	 * 							 <code>stringToCheck</code> is greater than <code>lengthToCheck</code>, 
 	 * 							this method returns an empty string. 
-	 * 							If <code>stringToCheck</code> is equal to 0, no control are performed on string length 
-	 * 							(but other modifications are still performed, such as triming the <code>String</code>). 
-	 * @return 	a secured and prepared <code>String</code>. Return an empty String if security checks have failed, 
-	 * 			or if the stringToCheck was null, or of its length was greater than <code>lengthToCheck</code>.
+	 * 							If <code>stringToCheck</code> is equal to 0, no control are performed 
+	 * 							on string length (but other modifications are still performed, 
+	 * 							such as triming the <code>String</code>). 
+	 * @param	format			A {@code String} that contains the regular expression the 
+	 * 							{@code String} should match.
+	 * @return 	a secured and prepared <code>String</code>. Return an empty String if security checks
+	 * 			have failed, or if the stringToCheck was null, or of its length was greater than 
+	 * 			<code>lengthToCheck</code>.
 	 * TODO 	log message if the String is discarded.
 	 */
 	public static String secureString(String stringToCheck, int lengthToCheck, String format)
@@ -53,8 +67,8 @@ public class BgeeStringUtils extends org.apache.commons.lang3.StringUtils {
 	 * without checking length of <code>stringToCheck</code> (<code>MAXSTRINGLENGTH</code>).
 	 * 
 	 * @param  	stringToCheck
-	 * @return 	a secured and prepared <code>String</code>. Return an empty String if security checks have failed, 
-	 * 			or if the stringToCheck was null.
+	 * @return 	a secured and prepared <code>String</code>. Return an empty String if security checks
+	 * 			 have failed, or if the stringToCheck was null.
 	 * @see 	#secureString(String)
 	 * TODO 	log message if the String is discarded.
 	 */
@@ -68,7 +82,8 @@ public class BgeeStringUtils extends org.apache.commons.lang3.StringUtils {
 	 * 
 	 * @param  	stringToCheck
 	 * @return 	a <code>boolean</code> corresponding to the <code>stringToCheck</code>. 
-	 * 			Return also <code>false</code> if <code>stringToCheck</code> was null, empty, or not secured.
+	 * 			Return also <code>false</code> if <code>stringToCheck</code> was null, empty,
+	 * 			or not secured.
 	 * TODO 	log message if the String is discarded.
 	 */
 	public static boolean secureStringAndCastToBoolean(String stringToCheck)

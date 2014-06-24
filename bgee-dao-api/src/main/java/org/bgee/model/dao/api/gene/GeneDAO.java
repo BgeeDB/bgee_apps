@@ -186,5 +186,14 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         public boolean isEnsemblGene() {
             return this.ensemblGene;
         }
+
+        @Override
+        public String toString() {
+            return "ID: " + this.getId() + " - Label: " + this.getName() + 
+                   " - Species ID: " + this.getSpeciesId() + 
+                   " - Gene bio type ID: " + this.getGeneBioTypeId() + 
+                   " - OMA Hierarchical Orthologous Group ID: " + this.getOMAParentNodeId() + 
+                   " - Is Ensembl Gene: " + this.isEnsemblGene();
+        }
     }
 }

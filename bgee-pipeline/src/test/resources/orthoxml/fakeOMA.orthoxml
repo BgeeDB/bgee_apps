@@ -1,103 +1,219 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<orthoXML xmlns="http://orthoXML.org/2011/" version="0.3" origin="OMA Standalone" originVersion="OMA_STANDALONE_VERSION">
- <species name="DANRE" NCBITaxId="7955">
-  <database name="DANRE" version="Cache/DB/DANRE.db">
-   <genes>
-    <gene id="1" protId="AAH90822.1; ENSDARG00000039453" />
-    <gene id="2" protId="ENSDARG00000069839" />
-    <gene id="3" protId="ENSDARG00000078198" />
-    <gene id="4" protId="ENSDARG00000069837" />
-    <gene id="5" protId="ENSDARG00000078286" />
-    <gene id="6" protId="ENSDARG00000075443" />
-    <gene id="7" protId="ENSDARG00000079599" />
-   </genes>
-  </database>
- </species>
- <species name="HUMAN" NCBITaxId="9606">
-  <database name="HUMAN" version="Cache/DB/HUMAN.db">
-   <genes>
-    <gene id="43344" protId="CAA51335.1; ENSG00000211633" />
-    <gene id="43345" protId="ENSG00000242580" />
-    <gene id="55815" protId="BAA20004.1; ENSG00000211655" />
-   </genes>
-  </database>
- </species>
- <species name="MOUSE" NCBITaxId="10090">
-  <database name="MOUSE" version="Cache/DB/MOUSE.db">
-   <genes>
-    <gene id="75930" protId="AAL61310.1; AAP70758.1; EDK97548.1; ENSMUSG00000050742" />
-   </genes>
-  </database>
- </species>
- <species name="XENTR" NCBITaxId="8364">
-  <database name="XENTR" version="Cache/DB/XENTR.db">
-   <genes>
-    <gene id="98343" protId="ENSXETG00000024927" />
-    <gene id="98643" protId="ENSXETG00000021946; Rep609" />
-    <gene id="98644" protId="ENSXETG00000021946; Rep610" />
-    <gene id="105488" protId="ENSXETG00000030835" />
-   </genes>
-  </database>
- </species>
- <groups>
-  <orthologGroup id="1">
-   <property name="TaxRange" value="Euteleostomi" taxid="117571"/>
-   <geneRef id="2"/>
-   <paralogGroup>
-    <geneRef id="98643"/>
-    <geneRef id="98644"/>
-   </paralogGroup>
-  </orthologGroup>
-  <orthologGroup id="2">
-   <property name="TaxRange" value="Euteleostomi" taxid="117571"/>
-   <paralogGroup>
-    <geneRef id="3"/>
-    <geneRef id="5"/>
-    <geneRef id="6"/>
-    <geneRef id="7"/>
-    <paralogGroup>
-     <geneRef id="43344"/>
-     <geneRef id="105488"/>
-    </paralogGroup>
-    <orthologGroup>
-     <property name="TaxRange" value="Cladistia" taxid="1338366"/>
-     <geneRef id="2"/>
-     <paralogGroup>
-      <geneRef id="98643"/>
-      <geneRef id="98644"/>
-     </paralogGroup>
-    </orthologGroup>
-   </paralogGroup>
-   <paralogGroup>
-    <geneRef id="43344"/>
-    <geneRef id="55815"/>
-    <geneRef id="105488"/>
-    <orthologGroup>
-     <property name="TaxRange" value="Tetrapoda" taxid="32523"/>
-     <geneRef id="98343"/>
-     <geneRef id="75930"/>
-    </orthologGroup>
-   </paralogGroup>
-   <orthologGroup>
-    <property name="TaxRange" value="Vertebrata" taxid="7742"/>
-    <geneRef id="2"/>
-    <paralogGroup>
-     <geneRef id="98643"/>
-     <geneRef id="98644"/>
-    </paralogGroup>
-    <paralogGroup>
-     <geneRef id="3"/>
-     <geneRef id="5"/>
-    </paralogGroup>
-   </orthologGroup>
-  </orthologGroup>
-  <orthologGroup id="3">
-   <property name="TaxRange" value="Chordata" taxid="7711"/>
-   <geneRef id="2"/>
-   <paralogGroup>
-    <geneRef id="43344"/>
-    <geneRef id="105488"/>
-   </paralogGroup>
-  </orthologGroup>
- </groups>
+<orthoXML xmlns="http://orthoXML.org/2011/" version="0.3" origin="OMA Standalone" originVersion="0.99v">
+    <notes>
+        MinScore=181; LengthTol=0.61; StablePairTol=1.81; VerifiedPairTol=1.53; MinSeqLen=50; ReachabilityCutoff=0.65
+    </notes>
+    <species name="ANOCA" NCBITaxId="28377">
+        <database name="ANOCA" version="Ensembl 70; AnoCar2.0; 11-DEC-2012">
+            <genes>
+                <gene id="10392" protId="ENSACAP00000017311" transcriptId="ENSACAT00000017651" geneId="ENSACAG00000017588"/>
+            </genes>
+        </database>
+    </species>
+    <species name="BOVIN" NCBITaxId="9913">
+        <database name="BOVIN" version="Ensembl 70; UMD3.1; 11-DEC-2012">
+            <genes>
+                <gene id="29443" protId="ENSBTAP00000025701" transcriptId="ENSBTAT00000025701" geneId="ENSBTAG00000019302"/>
+            </genes>
+        </database>
+    </species>
+    <species name="CAEEL" NCBITaxId="6239">
+        <database name="CAEEL" version="Ensembl 73; WBcel235; 24-AUG-2013">
+            <genes>
+                <gene id="41227" protId="Y105E8B.1a" geneId="BAA07540.1; BAA07541.1; BAA07543.1; BAA07544.1; CAC70112.1; CAC70113.2; CAC70114.1; CAE54913.1; Y105E8B.1"/>
+                <gene id="41228" protId="Y105E8B.1c" geneId="Rep22; Y105E8B.1"/>
+                <gene id="41229" protId="Y105E8B.1b.3" geneId="Rep23; Y105E8B.1"/>
+                <gene id="41230" protId="Y105E8B.1e.3" geneId="AAG10302.1; BAA07542.1; BAA07545.1; CAC70115.1; CAD45604.1; Y105E8B.1"/>
+                <gene id="41231" protId="Y105E8B.1g" geneId="Rep24; Y105E8B.1"/>
+            </genes>
+        </database>
+    </species>
+    <species name="CHICK" NCBITaxId="9031">
+        <database name="CHICK" version="Ensembl 70; WASHUC2; 11-DEC-2012">
+            <genes>
+                <gene id="65782" protId="ENSGALP00000020984" transcriptId="ENSGALT00000021014" geneId="ENSGALG00000012885"/>
+            </genes>
+        </database>
+    </species>
+    <species name="DANRE" NCBITaxId="7955">
+        <database name="DANRE" version="Ensembl 70; Zv9; 12-DEC-2012">
+            <genes>
+                <gene id="87600" protId="ENSDARP00000111329" transcriptId="ENSDART00000130300" geneId="ENSDARG00000089109"/>
+                <gene id="93252" protId="ENSDARP00000105564" transcriptId="ENSDART00000128843" geneId="ENSDARG00000025613"/>
+                <gene id="101189" protId="ENSDARP00000108542" transcriptId="ENSDART00000128128" geneId="ENSDARG00000087888"/>
+            </genes>
+        </database>
+    </species>
+    <species name="DROME" NCBITaxId="7227">
+        <database name="DROME" version="Ensembl 73; BDGP5; 24-AUG-2013">
+            <genes>
+                <gene id="114022" protId="FBpp0089024; FBtr0089968" geneId="FBgn0003721; Rep140"/>
+                <gene id="114024" protId="FBpp0088899; FBtr0089960" geneId="FBgn0003721; Rep142"/>
+                <gene id="114025" protId="FBpp0306045; FBtr0333917" geneId="FBgn0003721; Rep143"/>
+                <gene id="114021" protId="FBpp0291172; FBtr0301960" geneId="FBgn0003721; Rep139"/>
+            </genes>
+        </database>
+    </species>
+    <species name="GORGO" NCBITaxId="9595">
+        <database name="GORGO" version="Ensembl 70; gorGor3.1; 12-DEC-2012">
+            <genes>
+                <gene id="127726" protId="ENSGGOP00000028034" transcriptId="ENSGGOT00000033135" geneId="ENSGGOG00000000790"/>
+                <gene id="133151" protId="ENSGGOP00000022313" transcriptId="ENSGGOT00000002186" geneId="ENSGGOG00000002173"/>
+            </genes>
+        </database>
+    </species>
+    <species name="HUMAN" NCBITaxId="9606">
+        <database name="HUMAN" version="Ensembl 73; GRCh37; 24-AUG-2013">
+            <genes>
+                <gene id="154012" protId="ENSP00000381185" transcriptId="ENST00000398117" geneId="ENSG00000171791"/>
+                
+            </genes>
+        </database>
+    </species>
+    <species name="MACMU" NCBITaxId="9544">
+        <database name="MACMU" version="Ensembl 70; MMUL_1; 11-DEC-2012">
+            <genes>
+                <gene id="183042" protId="ENSMMUP00000008651" transcriptId="ENSMMUT00000009207" geneId="ENSMMUG00000006577"/>
+            </genes>
+        </database>
+    </species>
+    <species name="MONDO" NCBITaxId="13616">
+        <database name="MONDO" version="Ensembl 70; BROADO5; 11-DEC-2012">
+            <genes>
+                <gene id="202166" protId="ENSMODP00000040141" transcriptId="ENSMODT00000043243" geneId="ENSMODG00000027681"/>
+                <gene id="205245" protId="ENSMODP00000006458" transcriptId="ENSMODT00000006593" geneId="ENSMODG00000005242"/>
+                <gene id="217129" protId="ENSMODP00000040257" transcriptId="ENSMODT00000043361" geneId="ENSMODG00000029527"/>
+            </genes>
+        </database>
+    </species>
+    <species name="MOUSE" NCBITaxId="10090">
+        <database name="MOUSE" version="Ensembl 73; GRCm38; 24-AUG-2013">
+            <genes>
+                <gene id="218632" protId="ENSMUSP00000108371" transcriptId="ENSMUST00000112751" geneId="ENSMUSG00000057329"/>
+            </genes>
+        </database>
+    </species>
+    <species name="PANTR" NCBITaxId="9598">
+        <database name="PANTR" version="Ensembl 66; CHIMP2.1.4; 15-FEB-2012">
+            <genes>
+                <gene id="269947" protId="ENSPTRP00000017121" transcriptId="ENSPTRT00000018483" geneId="ENSPTRG00000010079"/>
+            </genes>
+        </database>
+    </species>
+    <species name="PIGXX" NCBITaxId="9823">
+        <database name="PIGXX" version="Ensembl 67; Sscrofa10.2; 26-APR-2012">
+            <genes>
+                <gene id="295177" protId="ENSSSCP00000005266" transcriptId="ENSSSCT00000005401" geneId="ENSSSCG00000004895"/>
+            </genes>
+        </database>
+    </species>
+    <species name="PONAB" NCBITaxId="9601">
+        <database name="PONAB" version="Ensembl 70; PPYG2; 11-DEC-2012">
+            <genes>
+                <gene id="309922" protId="ENSPPYP00000010339" transcriptId="ENSPPYT00000010751" geneId="ENSPPYG00000009212"/>
+                <gene id="314780" protId="ENSPPYP00000016218" transcriptId="ENSPPYT00000016871" geneId="ENSPPYG00000014510"/>
+            </genes>
+        </database>
+    </species>
+    <species name="RATNO" NCBITaxId="10116">
+        <database name="RATNO" version="Ensembl 73; Rnor_5.0; 24-AUG-2013">
+            <genes>
+                <gene id="327976" protId="ENSRNOP00000003768" transcriptId="ENSRNOT00000003768" geneId="ENSRNOG00000002791"/>
+            </genes>
+        </database>
+    </species>
+    <species name="TETNG" NCBITaxId="99883">
+        <database name="TETNG" version="Ensembl 70; TETRAODON8; 11-DEC-2012">
+            <genes>
+                <gene id="349954" protId="ENSTNIP00000002788" transcriptId="ENSTNIT00000002761" geneId="ENSTNIG00000000982"/>
+            </genes>
+        </database>
+    </species>
+    <species name="XENTR" NCBITaxId="8364">
+        <database name="XENTR" version="Ensembl 73; JGI_4.2; 23-AUG-2013">
+            <genes>
+                <gene id="369512" protId="ENSXETP00000052056" transcriptId="ENSXETT00000052056" geneId="ENSXETG00000024124"/>
+            </genes>
+        </database>
+    </species>
+    <groups>
+        <orthologGroup id="HOG:SVYPSSI">
+            <property name="TaxRange" value="Euteleostomi"/>
+            <property name="TaxId" value="117571"/>
+            <geneRef id="101189"/>
+            <paralogGroup>
+                <geneRef id="202166"/>
+                <geneRef id="217129"/>
+            </paralogGroup>
+        </orthologGroup>
+        <orthologGroup id="HOG:HADISHS">
+            <property name="TaxRange" value="Hominidae"/>
+            <property name="TaxId" value="9604"/>
+            <geneRef id="133151"/>
+            <geneRef id="314780"/>
+        </orthologGroup>
+        <orthologGroup id="HOG:AFFEFGG">
+            <property name="TaxRange" value="Euteleostomi"/>
+            <property name="TaxId" value="117571"/>
+            <paralogGroup>
+                <geneRef id="93252"/>
+                <orthologGroup >
+                    <property name="TaxRange" value="Clupeocephala"/>
+                    <property name="TaxId" value="186625"/>
+                    <geneRef id="349954"/>
+                    <geneRef id="87600"/>
+                </orthologGroup>
+            </paralogGroup>
+            <orthologGroup >
+                <property name="TaxRange" value="Tetrapoda"/>
+                <property name="TaxId" value="32523"/>
+                <orthologGroup >
+                    <property name="TaxRange" value="Amniota"/>
+                    <property name="TaxId" value="32524"/>
+                    <orthologGroup >
+                        <property name="TaxRange" value="Theria"/>
+                        <property name="TaxId" value="32525"/>
+                        <geneRef id="309922"/>
+                        <geneRef id="205245"/>
+                    </orthologGroup>
+                    <orthologGroup >
+                        <property name="TaxRange" value="Sauria"/>
+                        <property name="TaxId" value="32561"/>
+                        <geneRef id="65782"/>
+                        <geneRef id="10392"/>
+                    </orthologGroup>
+                </orthologGroup>
+                <geneRef id="369512"/>
+                <geneRef id="154012"/>
+            </orthologGroup>
+        </orthologGroup>
+        <orthologGroup id="HOG:RIQLVEE">
+            <property name="TaxRange" value="Bilateria"/>
+            <property name="TaxId" value="33213"/>
+            <paralogGroup>
+                <geneRef id="41227"/>
+                <geneRef id="41228"/>
+                <geneRef id="114022"/>
+                <geneRef id="154012"/>
+            </paralogGroup>
+            <orthologGroup >
+                <property name="TaxRange" value="Ecdysozoa"/>
+                <property name="TaxId" value="1206794"/>
+                <geneRef id="41231"/>
+                <geneRef id="114024"/>
+            </orthologGroup>
+            <orthologGroup >
+                <property name="TaxRange" value="Ecdysozoa"/>
+                <property name="TaxId" value="1206794"/>
+                <geneRef id="41229"/>
+                <geneRef id="114025"/>
+            </orthologGroup>
+            <orthologGroup >
+                <property name="TaxRange" value="Ecdysozoa"/>
+                <property name="TaxId" value="1206794"/>
+                <geneRef id="41230"/>
+                <geneRef id="114021"/>
+            </orthologGroup>
+        </orthologGroup>
+    </groups>
 </orthoXML>

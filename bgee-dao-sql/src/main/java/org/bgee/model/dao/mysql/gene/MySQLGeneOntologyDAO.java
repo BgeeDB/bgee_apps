@@ -171,8 +171,9 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
         } else if (attribute.equals(GeneOntologyDAO.Attribute.DOMAIN)) {
             return log.exit("goDomain");
         }
-        throw log.throwing(new IllegalArgumentException("The attribute provided ("
-                + attribute.toString() + ") is unknown for " + MySQLGeneOntologyDAO.class));
+        throw log.throwing(new IllegalArgumentException("The attribute provided ("+ 
+                attribute.toString() + ") is unknown for " + 
+                MySQLGeneOntologyDAO.class.getName()));
     }
 
     @Override

@@ -109,8 +109,9 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         } else if (attribute.equals(TaxonDAO.Attribute.LCA)) {
             return log.exit("bgeeSpeciesLCA");
         }
-        throw log.throwing(new IllegalArgumentException("The attribute provided ("
-                + attribute.toString() + ") is unknown for " + MySQLTaxonDAO.class));
+        throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                attribute.toString() + ") is unknown for " + 
+                MySQLTaxonDAO.class.getName()));
     }
 
     @Override

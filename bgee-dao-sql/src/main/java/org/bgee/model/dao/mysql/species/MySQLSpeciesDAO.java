@@ -120,8 +120,9 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         } else if (attribute.equals(SpeciesDAO.Attribute.PARENTTAXONID)) {
             return log.exit("taxonId");
         }
-        throw log.throwing(new IllegalArgumentException("The attribute provided ("
-                + attribute.toString() + ") is unknown for " + MySQLSpeciesDAO.class));
+        throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
+                attribute.toString() + ") is unknown for " + 
+                MySQLSpeciesDAO.class.getName()));
     }
 
     @Override

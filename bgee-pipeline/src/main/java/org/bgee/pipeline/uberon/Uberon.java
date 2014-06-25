@@ -311,7 +311,9 @@ public class Uberon {
         //save ontology
         OntologyUtils utils = new OntologyUtils(ont);
         utils.saveAsOWL(modifiedOntPath + ".owl");
-        utils.saveAsOBO(modifiedOntPath + ".obo");
+        //we do not check the structure of the ontology to generate the OBO version, 
+        //with the composite ontology there are too many problems.
+        utils.saveAsOBO(modifiedOntPath + ".obo", false);
         
         //save information about the simplification process if requested
         if (StringUtils.isNotBlank(classesRemovedFilePath)) {

@@ -212,7 +212,9 @@ public class OntologyUtils {
      * @see #removeOBOProblematicAxioms()
      */
     private final static Set<String> discardedAnnotProps = 
-            new HashSet<String>(Arrays.asList("http://xmlns.com/foaf/0.1/depicted_by", 
+            new HashSet<String>(Arrays.asList(
+                    "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+                    "http://xmlns.com/foaf/0.1/depicted_by", 
                     "http://purl.obolibrary.org/obo/RO_0002175", //present_in_taxon
                     "http://purl.obolibrary.org/obo/RO_0002161", //never_in_taxon
                     "http://purl.obolibrary.org/obo/RO_0002171", //mutually_spatially_disjoint_with
@@ -604,11 +606,31 @@ public class OntologyUtils {
     }
     
     /**
+     * Delegates to {@link #saveAsOBO(String, boolean)}, with the first argument being 
+     * {@code outputFile}, and with the boolean argument set to {@code true}.
+     * 
+     * @param outputFile    See same name argument in {@link #saveAsOBO(String, boolean)}.
+     * @see #saveAsOBO(String, boolean)
+     * @throws OWLOntologyCreationException
+     * @throws IOException
+     * @throws IllegalArgumentException
+     */
+    public void saveAsOBO(String outputFile) 
+            throws OWLOntologyCreationException, IOException, IllegalArgumentException {
+        log.entry(outputFile);
+        this.saveAsOBO(outputFile, true);
+        log.exit();
+    }
+    
+    /**
      * Saves the {@code OWLOntology} wrapped by this object into {@code outputFile} 
      * in OBO format.
      * 
-     * @param outputFile    A {@code String} that is the path to the file to save 
-     *                      the ontology in OBO format.
+     * @param outputFile        A {@code String} that is the path to the file to save 
+     *                          the ontology in OBO format.
+     * @param checkStructure    A {@code boolean} defining whether structure of the ontology 
+     *                          should be checked (see method 
+     *                          {@code OBOFormatWriter.setCheckStructure(true)}).
      * @throws OWLOntologyCreationException If the ontology could not be converted 
      *                                      to OBO.
      * @throws IOException                  If an error occurred while writing 
@@ -616,8 +638,8 @@ public class OntologyUtils {
      * @throws IllegalArgumentException     if {@code outputFile} does not have 
      *                                      a correct name.
      */
-    public void saveAsOBO(String outputFile) throws OWLOntologyCreationException, 
-        IOException, IllegalArgumentException {
+    public void saveAsOBO(String outputFile, boolean checkStructure) 
+            throws OWLOntologyCreationException, IOException, IllegalArgumentException {
         log.entry(outputFile);
 
         if (!outputFile.endsWith(".obo")) {
@@ -628,7 +650,7 @@ public class OntologyUtils {
         Owl2Obo converter = new Owl2Obo();
         OBODoc oboOntology = converter.convert(this.ontology);
         OBOFormatWriter writer = new OBOFormatWriter();
-        writer.setCheckStructure(true);
+        writer.setCheckStructure(checkStructure);
         writer.write(oboOntology, outputFile);
         
         log.exit();

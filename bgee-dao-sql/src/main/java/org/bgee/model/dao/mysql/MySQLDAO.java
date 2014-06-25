@@ -33,6 +33,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
             LogManager.getLogger(MySQLDAO.class.getName());
 
     public final static String GENE_TABLE_NAME = "gene";
+    public final static String SPECIES_TABLE_NAME = "species";
     public final static String DATA_SOURCE_TABLE_NAME = "dataSource";
     /**
      * An {@code int} that is the maximum number of rows that can be inserted in a 

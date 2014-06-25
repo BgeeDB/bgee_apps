@@ -45,14 +45,19 @@ public class ParseOrthoXML extends MySQLDAOUser {
     
     private static int OMANodeId = 1;
     private int nestedSetId = 0;
+    
+    // A Set of HierarchicalGroupTOs to insert into the Bgee database
     private Set<HierarchicalGroupTO> hierarchicalGroupTOs = 
             new HashSet<HierarchicalGroupTO>();
+    // A Set of GeneTOs to update into the Bgee database
     private Set<GeneTO> geneTOs = new HashSet<GeneTO>();
-    // A Set of geneId presents into the Bgee database 
+    
+    // A Set of geneId presents into the Bgee database
     private Set<String> genesInBgee = new HashSet<String>();
     // A Map of genomeSpeciesId-fakeGeneIdPrefix to be able to duplicate genes with the
     // fake prefix when a species using a genome of another species.
     private Map<Integer, String> speciesPrefixes = new HashMap<Integer, String>();
+    
     // A Map of geneId-OMANodeID to be able to check if the gene is present in two
     // different HOGs
     private Map<String, String> genesUpdated = new HashMap<String, String>();
@@ -76,14 +81,13 @@ public class ParseOrthoXML extends MySQLDAOUser {
 
     /**
      * Main method to trigger the insertion of the hierarchical orthologous groups
-     * obtained from OMA into the Bgee database. Parameters that must be provided in order
-     * in {@code args} are:
+     * obtained from OMA and the update of genes into the Bgee database. Parameters that
+     * must be provided in order in {@code args} are:
      * <ol>
      * <li>path to the file storing the hierarchical orthologous groups in OrthoXML.
      * </ol>
      * 
-     * @param args                      An {@code Array} of {@code String}s containing the
-     *                                  requested parameters.
+     * @param args An {@code Array} of {@code String}s containing the requested parameters.
      * @throws FileNotFoundException    If some files could not be found.
      * @throws IllegalArgumentException If the files used provided invalid information.
      * @throws DAOException             If an error occurred while getting or updating 
@@ -116,9 +120,9 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * adding the data into the database.
      * <p>
      * First, it retrieves genes id from Bgee to be able to check if OMA genes are in Bgee 
-     * and to update OMAGroupId in gene table. Second it retrieves 
-     * genomeSpeciesId-fakeGeneIdPrefix from the Bgee to be able to duplicate genes with 
-     * the fake prefix when a species using a genome of another species. Then, this method
+     * and to update OMAParentNodeId in gene table. Second it retrieves 
+     * genomeSpeciesId-fakeGeneIdPrefix from Bgee to be able to duplicate genes with the
+     * fake prefix when a species using a genome of another species. Then, this method
      * reads the Hierarchical Orthologous Groups OrthoXML file, iterates through all the 
      * orthologous groups present in the file and builds a {@code Collection} of 
      * {@code HierarchicalGroupTO}s as a nested set model and a {@code Collection} of 
@@ -143,13 +147,12 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // (a IllegalStateException would be generated because the OrthoXML groups
         // loaded from the file would be invalid, so it would be a wrong argument).
         try {
-            // Retrieve genes id of the Bgee database to be able to check
-            // if OMA genes are in Bgee and to update OMAGroupId in gene table.
+            // Retrieve genes id of the Bgee database to be able to check if OMA genes are
+            // in Bgee and to update OMAParentNodeId in gene table.
             this.getGenesFromDb();
 
-            // Retrieve genomeSpeciesId-fakeGeneIdPrefix from the Bgee to be able to
-            // duplicate genes with the fake prefix when a species using a genome of
-            // another species.
+            // Retrieve genomeSpeciesId-fakeGeneIdPrefix from Bgee to be able to duplicate
+            // genes with the fake prefix when a species using a genome of  another species.
             this.getSpeciesFromDb();
             
             // Construct HierarchicalGroupTOs and GeneTOs
@@ -206,7 +209,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
 
     /**
-     * Retrieves all species TOs present into the Bgee database.
+     * Retrieves genome species ID and fake gene ID prefix of species using a genome of 
+     * another species.
      * 
      * @throws DAOException     If an error occurred while getting the data from the Bgee
      *                          database.
@@ -236,7 +240,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * {@code Collection} of {@code HierarchicalGroupTO}s as a nested set model and the
      * {@code Collection} of {@code GeneTO}s.
      * 
-     * @param orthoXMLFile  A {@code String} that is the path to the OMA groups file.
+     * @param orthoXMLFile  A {@code String} that is the path to the OMA group file which 
+     *                      data will be retrieved.
      * @throws FileNotFoundException    If some files could not be found.
      * @throws XMLStreamException       If there is an error in the well-formedness of the 
      *                                  XML or other unexpected processing errors.
@@ -262,7 +267,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * {@code Collection} of {@code HierarchicalGroupTO}s as a nested set model, and a
      * {@code Collection} of {@code GeneTO}s.
      * 
-     * @param group         A {@code Group} that is the path to the OMA groups file.
+     * @param group         A {@code Group} that is the OMA group which data will be 
+     *                      retrieved.
      * @param OMAGroupId    A {@code String} that the OMA group ID to use for subgroups.
      */
     private void generateTOsFromGroup(Group group, String OMAGroupId) {
@@ -291,7 +297,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
                     }
                     if (genesInBgee.contains(duplicate)) {
                         isInBgee = true;
-                        this.addGeneTO(new GeneTO(duplicate, "", "", 0, 0, OMANodeId, true), 
+                        this.addGeneTO(
+                                new GeneTO(duplicate, "", "", 0, 0, OMANodeId, true), 
                                 OMAGroupId);
                     }
                 }
@@ -314,7 +321,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
 
     /**
-     * Given a OMAGroupId with the taxonomy range and a number of children, calculate
+     * Given a OMA Group Id with the taxonomy range and a number of children, calculate
      * nested set bounds and add it in the {@code Collection} of 
      * {@code HierarchicalGroupTO}s to be as a nested set model.
      * 
@@ -340,8 +347,11 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
 
     /**
-     * Given a {@code GeneTO} and an OMAGroupID, add the {@code GeneTO} in the 
+     * Given a {@code GeneTO} and an OMA Group ID, add the {@code GeneTO} in the 
      * {@code Collection} of {@code GeneTO}s to be update.
+     * <p>
+     * If the given {@code GeneTO} has already been inserted in the {@code Collection} 
+     * with another OMA Group ID, ​​a warning will be generated.
      * 
      * @param geneTO        A {@code GeneTO} to add. 
      * @param OMAGroupID    A {@code String} that is the OMA group ID.
@@ -367,8 +377,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * parameter and returns the total number of {@code Group}s of the parameter
      * including the provided {@code Group}.
      * 
-     * @param group The {@code Group} whose the number of {@code Group}s are to be
-     *              counted.
+     * @param group The {@code Group} whose the number of {@code Group}s are to be counted.
      * @return      An {@code int} giving the total number of {@code Group}s in the given
      *              {@code Group} including the provided {@code Group}.
      */

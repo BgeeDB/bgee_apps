@@ -127,7 +127,6 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 new GeneTO("ENSACAG00000017588", "NAME17588", "DESC17588", 28377, 12, 0, true),
                 new GeneTO("ENSACAG00000017588", "NAME17588", "DESC17588", 28377, 12, 0, true),
                 new GeneTO("ENSBTAG00000019302", "NAME19302", "DESC19302", 9913, 12, 0, true),
-//                new GeneTO("Y105E8B.1", "NAMEY105E8B", "DESCY105E8B",6239, 12, 0, true),
                 new GeneTO("ENSGALG00000012885", "NAME12885", "DESC12885", 9031, 12, 0, true),
                 new GeneTO("ENSDARG00000089109", "NAME89109", "DESC89109", 7955, 12, 0, true),
                 new GeneTO("ENSDARG00000025613", "NAME25613", "DESC25613", 7955, 12, 0, true),
@@ -154,7 +153,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
             int currentIndex = -1;
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
                 // Return true while there is geneTO to return 
-                return currentIndex++ < 23;
+                return currentIndex++ < 24;
             }
         });
 
@@ -207,7 +206,6 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 new GeneTO("ENSMODG00000005242", "", "", 0, 0, 9, true),
                 new GeneTO("ENSGALG00000012885", "", "", 0, 0, 10, true),
                 new GeneTO("ENSACAG00000017588", "", "", 0, 0, 10, true),
-//                new GeneTO("Y105E8B.1", "", "", 0, 0, 12, true),
                 new GeneTO("FBgn0003721", "", "", 0, 0, 12, true));
 
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);

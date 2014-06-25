@@ -29,9 +29,20 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, COMMONNAME, GENUS, SPECIESNAME, PARENTTAXONID;
+        ID, COMMONNAME, GENUS, SPECIESNAME, PARENTTAXONID, FAKEGENEIDPREFIX;
     }
     
+    /**
+     * Retrieve all species from data source.
+     * <p>
+     * The species are retrieved and returned as a {@code SpeciesTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @return A {@code SpeciesTOResultSet} containing all species from data source.
+     */
+    public SpeciesTOResultSet getAllSpecies();
+
     /**
      * {@code DAOResultSet} specifics to {@code SpeciesTO}s
      * 

@@ -4,11 +4,15 @@ import static org.junit.Assert.*;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
@@ -104,4 +108,87 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
             this.deleteFromTableAndUseDefaultDB(INSERTTABLENAME);
         }
     }
+    
+    /**
+     * Test the select method {@link MySQLSpeciesDAO#getAllSpecies()}.
+     */
+    @Test
+    public void shouldGetAllSpecies() throws SQLException {
+        log.entry();
+        this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
+        // TODO Populate database if empty in a @BeforeClass
+        // in MySQLITAncestor instead here
+        try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                prepareStatement("select 1 from " + MySQLDAO.DATA_SOURCE_TABLE_NAME)) {
+            if (!stmt.getRealPreparedStatement().executeQuery().next()) {
+                this.populateAndUseDatabase(System.getProperty(POPULATEDDBKEYKEY));
+            }
+        }
+
+        // Generate result with the method
+        MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
+        SpeciesTOResultSet methResults = dao.getAllSpecies();
+
+        // Generate manually expected result
+        List<SpeciesTO> expectedSpecies = Arrays.asList(
+                new SpeciesTO("11", "gen11", "sp11", "spCName11", "111", "path/genome11",
+                        "0", ""), 
+                new SpeciesTO("21", "gen21", "sp21", "spCName21", "211", "path/genome21", 
+                        "52", "FAKEPREFIX"), 
+                new SpeciesTO("31", "gen31", "sp31", "spCName31", "311", "path/genome31", 
+                        "0", "")); 
+        while (methResults.next()) {
+            boolean found = false;
+            SpeciesTO methSpecies = methResults.getTO();
+            for (SpeciesTO expSpecies: expectedSpecies) {
+                log.trace("Comparing {} to {}", methSpecies, expSpecies);
+                if (areSpeciesTOsEqual(methSpecies, expSpecies)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log.debug("No equivalent Species found for {}", methSpecies);
+                throw log.throwing(new AssertionError("Incorrect generated TO"));
+            }
+        }
+        methResults.close();
+        log.exit();
+    }
+    
+    /**
+     * Method to compare two {@code SpeciesTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code SpeciesTO}s is 
+     * solely based on their ID, not on other attributes.
+     * 
+     * @param spTO1     A {@code SpeciesTO} to be compared to {@code spTO2}.
+     * @param spTO2     A {@code SpeciesTO} to be compared to {@code spTO1}.
+     * @return          {@code true} if {@code spTO1} and {@code spTO2} have all 
+     *                  attributes equal.
+     *                  
+                String fakeGeneIdPrefix
+     */
+    private boolean areSpeciesTOsEqual(SpeciesTO spTO1, SpeciesTO spTO2) {
+            log.entry(spTO1, spTO2);
+            if (spTO1.getId().equals(spTO2.getId()) && 
+                (spTO1.getName() == null && spTO2.getName() == null || 
+                    spTO1.getName() != null && spTO1.getName().equals(spTO2.getName())) && 
+                (spTO1.getGenus() == null && spTO2.getGenus() == null || 
+                    spTO1.getGenus() != null && spTO1.getGenus().equals(spTO2.getGenus())) && 
+                (spTO1.getSpeciesName() == null && spTO2.getSpeciesName() == null || 
+                    spTO1.getSpeciesName() != null && spTO1.getSpeciesName().equals(spTO2.getSpeciesName())) && 
+                (spTO1.getParentTaxonId() == null && spTO2.getParentTaxonId() == null || 
+                    spTO1.getParentTaxonId() != null && spTO1.getParentTaxonId().equals(spTO2.getParentTaxonId())) && 
+                (spTO1.getGenomeFilePath() == null && spTO2.getGenomeFilePath() == null || 
+                    spTO1.getGenomeFilePath() != null && spTO1.getGenomeFilePath().equals(spTO2.getGenomeFilePath())) && 
+                (spTO1.getGenomeSpeciesId() == null && spTO2.getGenomeSpeciesId() == null || 
+                    spTO1.getGenomeSpeciesId() != null && spTO1.getGenomeSpeciesId().equals(spTO2.getGenomeSpeciesId())) &&
+                (spTO1.getFakeGeneIdPrefix()== null && spTO2.getFakeGeneIdPrefix() == null || 
+                        spTO1.getFakeGeneIdPrefix() != null && spTO1.getFakeGeneIdPrefix().equals(spTO2.getFakeGeneIdPrefix()))) {
+                return log.exit(true);
+            }
+            log.debug("Species are not equivalent {}", spTO1.getId());
+            return log.exit(false);
+    }
+
 }

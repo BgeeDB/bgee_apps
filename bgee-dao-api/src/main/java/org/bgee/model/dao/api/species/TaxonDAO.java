@@ -18,7 +18,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      * obtained from this {@code TaxonDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link TaxonTO#getId()}.
-     * <li>{@code COMMONNAME}: corresponds to {@link TaxonTO#getName()}.
+     * <li>{@code COMMON_NAME}: corresponds to {@link TaxonTO#getName()}.
      * <li>{@code SCIENTIFICNAME}: corresponds to {@link TaxonTO#getScientificName()}.
      * <li>{@code LEFTBOUND}: corresponds to {@link TaxonTO#getLeftBound()}.
      * <li>{@code RIGHTBOUND}: corresponds to {@link TaxonTO#getRightBound()}.
@@ -128,7 +128,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          * @return  The {@code String} that is the common name of this taxon 
          *          (for instance, "Coryneform bacteria" for "Corynebacteriaceae").
          *          Corresponds to the DAO {@code Attribute} {@link TaxonDAO.Attribute 
-         *          COMMONNAME}. Returns {@code null} if value not set.
+         *          COMMON_NAME}. Returns {@code null} if value not set.
          */
         @Override
         public String getName() {

@@ -6,7 +6,7 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 /*
@@ -67,21 +67,21 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     	// To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
     	// and because of laziness, we insert terms one at a time
         String sql = "INSERT INTO OMAHierarchicalGroup ("
-                + getLabel(HierarchicalGroupDAO.Attribute.NODEID) + ", "
-                + getLabel(HierarchicalGroupDAO.Attribute.GROUPID) + ", "
-                + getLabel(HierarchicalGroupDAO.Attribute.NODELEFTBOUND) + ", "
-                + getLabel(HierarchicalGroupDAO.Attribute.NODERIGHTBOUND) + ", "
-                + getLabel(HierarchicalGroupDAO.Attribute.TAXONID)
+                + getLabel(HierarchicalGroupDAO.Attribute.ID) + ", "
+                + getLabel(HierarchicalGroupDAO.Attribute.OMA_GROUP_ID) + ", "
+                + getLabel(HierarchicalGroupDAO.Attribute.LEFT_BOUND) + ", "
+                + getLabel(HierarchicalGroupDAO.Attribute.RIGHT_BOUND) + ", "
+                + getLabel(HierarchicalGroupDAO.Attribute.TAXON_ID)
                 + " values (?, ?, ?, ?, ?)";
 
     	try (BgeePreparedStatement stmt = 
     			this.getManager().getConnection().prepareStatement(sql)) {
     		for (HierarchicalGroupTO group: groups) {
-    			stmt.setInt(1, group.getNodeId());
+    			stmt.setInt(1, Integer.parseInt(group.getId()));
     			stmt.setString(2, group.getOMAGroupId());
-    			stmt.setInt(3, group.getNodeLeftBound());
-    			stmt.setInt(4, group.getNodeRightBound());
-    			stmt.setInt(5, group.getNcbiTaxonomyId());
+    			stmt.setInt(3, group.getLeftBound());
+    			stmt.setInt(4, group.getRightBound());
+    			stmt.setInt(5, group.getTaxonId());
     			groupInsertedCount += stmt.executeUpdate();
     			stmt.clearParameters();
     		}
@@ -92,34 +92,31 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     }
 
     @Override
-    public String getLabel(HierarchicalGroupDAO.Attribute attribute)
-            throws IllegalArgumentException {
+    public String getLabel(HierarchicalGroupDAO.Attribute attribute) {
         log.entry(attribute);
-        if (attribute.equals(HierarchicalGroupDAO.Attribute.NODEID)) {
-            return log.exit("OMANodeId");
-        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.GROUPID)) {
-            return log.exit("OMAGroupId");
-        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.NODELEFTBOUND)) {
-            return log.exit("OMANodeLeftBound");
-        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.NODERIGHTBOUND)) {
-            return log.exit("OMANodeRightBound");
-        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.TAXONID)) {
-            return log.exit("taxonId");
-        }
-        throw log.throwing(new IllegalArgumentException(
-                "The attribute provided (" + attribute.toString() + ") is unknown for " +
-                MySQLHierarchicalGroupDAO.class.getName()));
+        
+        String label = null;
+        if (attribute.equals(HierarchicalGroupDAO.Attribute.ID)) {
+            label = "OMANodeId";
+        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.OMA_GROUP_ID)) {
+            label = "OMAGroupId";
+        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.LEFT_BOUND)) {
+            label = "OMANodeLeftBound";
+        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.RIGHT_BOUND)) {
+            label = "OMANodeRightBound";
+        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.TAXON_ID)) {
+            label = "taxonId";
+        } 
+        
+        return log.exit(label);
     }
-
+    
     @Override
-    protected String getSelectExpr(Collection<HierarchicalGroupDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
-    }
-
-    @Override
-    protected String getTableReferences(
-            Collection<HierarchicalGroupDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
+    public String getSQLExpr(HierarchicalGroupDAO.Attribute attribute) {
+        log.entry(attribute);
+        //no complex SQL expression in this DAO, we just build table_name.label
+        return log.exit(MySQLDAO.HIERARCHICAL_GROUP_TABLE_NAME + "." + 
+            this.getLabel(attribute));
     }
 
 //

@@ -92,35 +92,33 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     }
 
     @Override
-    public String getLabel(TaxonDAO.Attribute attribute) throws IllegalArgumentException {
+    public String getLabel(TaxonDAO.Attribute attribute) {
         log.entry(attribute);
+        
+        String label = null;
         if (attribute.equals(TaxonDAO.Attribute.ID)) {
-            return log.exit("taxonId");
+            label = "taxonId";
         } else if (attribute.equals(TaxonDAO.Attribute.COMMONNAME)) {
-            return log.exit("taxonCommonName");
+            label = "taxonCommonName";
         } else if (attribute.equals(TaxonDAO.Attribute.SCIENTIFICNAME)) {
-            return log.exit("taxonScientificName");
+            label = "taxonScientificName";
         } else if (attribute.equals(TaxonDAO.Attribute.LEFTBOUND)) {
-            return log.exit("taxonLeftBound");
+            label = "taxonLeftBound";
         } else if (attribute.equals(TaxonDAO.Attribute.RIGHTBOUND)) {
-            return log.exit("taxonRightBound");
+            label = "taxonRightBound";
         } else if (attribute.equals(TaxonDAO.Attribute.LEVEL)) {
-            return log.exit("taxonLevel");
+            label = "taxonLevel";
         } else if (attribute.equals(TaxonDAO.Attribute.LCA)) {
-            return log.exit("bgeeSpeciesLCA");
-        }
-        throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                attribute.toString() + ") is unknown for " + 
-                MySQLTaxonDAO.class.getName()));
+            label = "bgeeSpeciesLCA";
+        } 
+        
+        return log.exit(label);
     }
-
+    
     @Override
-    protected String getSelectExpr(Collection<TaxonDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
-    }
-
-    @Override
-    protected String getTableReferences(Collection<TaxonDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
+    public String getSQLExpr(TaxonDAO.Attribute attribute) {
+        log.entry(attribute);
+        //no complex SQL expression in this DAO, we just build table_name.label
+        return log.exit(MySQLDAO.TAXON_TABLE_NAME + "." + this.getLabel(attribute));
     }
 }

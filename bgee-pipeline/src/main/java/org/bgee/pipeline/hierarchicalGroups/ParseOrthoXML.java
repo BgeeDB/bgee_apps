@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
-import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
@@ -220,7 +220,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         
         log.info("Start getting species...");
         this.getSpeciesDAO().setAttributes(Arrays.asList(
-                SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.FAKEGENEIDPREFIX));
+                SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX));
         SpeciesTOResultSet rsSpecies = this.getSpeciesDAO().getAllSpecies();
         while (rsSpecies.next()) {
             SpeciesTO speciesTO = rsSpecies.getTO();

@@ -19,17 +19,21 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * obtained from this {@code SpeciesDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link SpeciesTO#getId()}.
-     * <li>{@code COMMONNAME}: corresponds to {@link SpeciesTO#getName()}.
+     * <li>{@code COMMON_NAME}: corresponds to {@link SpeciesTO#getName()}.
      * <li>{@code GENUS}: corresponds to {@link SpeciesTO#getGenus()}.
-     * <li>{@code SPECIESNAME}: corresponds to {@link SpeciesTO#getSpeciesName()}.
-     * <li>{@code PARENTTAXONID}: corresponds to {@link SpeciesTO#getParentTaxonId()}.
+     * <li>{@code SPECIES_NAME}: corresponds to {@link SpeciesTO#getSpeciesName()}.
+     * <li>{@code PARENT_TAXON_ID}: corresponds to {@link SpeciesTO#getParentTaxonId()}.
+     * <li>{@code GENOME_FILE_PATH}: corresponds to {@link SpeciesTO#getGenomeFilePath()}.
+     * <li>{@code GENOME_SPECIES_ID}: corresponds to {@link SpeciesTO#getGenomeSpeciesId()}.
+     * <li>{@code FAKE_GENE_ID_PREFIX}: corresponds to {@link SpeciesTO#getFakeGeneIdPrefix()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, COMMONNAME, GENUS, SPECIESNAME, PARENTTAXONID, FAKEGENEIDPREFIX;
+        ID, COMMON_NAME, GENUS, SPECIES_NAME, PARENT_TAXON_ID, GENOME_FILE_PATH, 
+        GENOME_SPECIES_ID, FAKE_GENE_ID_PREFIX;
     }
     
     /**
@@ -72,14 +76,14 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         /**
          * A {@code String} that is the species name of this species (for instance, 
          * <i>sapiens</i>). Corresponds to the DAO {@code Attribute} 
-         * {@link SpeciesDAO.Attribute SPECIESNAME}.
+         * {@link SpeciesDAO.Attribute SPECIES_NAME}.
          */
         private final String speciesName;
         /**
          * A {@code String} that is the ID of the parent taxon of this species (for instance, 
          * {@code 9605} for <i>homo</i>, if this species was "human"). 
          * Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-         * PARENTTAXONID}.
+         * PARENT_TAXON_ID}.
          */
         private final String parentTaxonId;
         
@@ -148,7 +152,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         /**
          * @return  The {@code String} that is the common name of this species. 
          *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-         *          COMMONNAME}. Returns {@code null} if value not set.
+         *          COMMON_NAME}. Returns {@code null} if value not set.
          */
         @Override
         public String getName() {
@@ -168,7 +172,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * @return  {@code String} that is the species name of this species 
          *          (for instance, <i>sapiens</i>).
          *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-         *          SPECIESNAME}. Returns {@code null} if value not set.
+         *          SPECIES_NAME}. Returns {@code null} if value not set.
          */
         public String getSpeciesName() {
             return speciesName;
@@ -177,7 +181,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * @return  the {@code String} that is the ID of the parent taxon of this species 
          *          (for instance, {@code 9605} for <i>homo</i>, if this species was "human").
          *          Corresponds to the DAO {@code Attribute} {@link SpeciesDAO.Attribute 
-         *          PARENTTAXONID}. Returns {@code null} if value not set.
+         *          PARENT_TAXON_ID}. Returns {@code null} if value not set.
          */
         public String getParentTaxonId() {
             return parentTaxonId;

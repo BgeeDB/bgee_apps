@@ -49,14 +49,14 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         log.entry();
         
         //Construct sql query
-        String sql = "SELECT " + this.getSelectExpr(this.getAttributes()) + " FROM " + 
+        String sql = "SELECT " + this.getSelectClause(this.getAttributes()) + " FROM " + 
                 MySQLDAO.GENE_TABLE_NAME;
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLGeneTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -69,21 +69,20 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         log.entry(genes, attributesToUpdate);
         int geneUpdatedCount = 0;
         //Construct sql query according to currents attributes
-        StringBuilder sql = new StringBuilder("UPDATE "); 
-        sql.append(MySQLDAO.GENE_TABLE_NAME);
-        sql.append(" SET ");
+        StringBuilder sql = new StringBuilder(); 
 
-        boolean isFirstIteration = true;
         for (GeneDAO.Attribute attribute: attributesToUpdate) {
-            if (isFirstIteration) {
-                isFirstIteration = false;
+            if (sql.length() == 0) {
+                sql.append("UPDATE ");
+                sql.append(MySQLDAO.GENE_TABLE_NAME);
+                sql.append(" SET ");
             } else {
                 sql.append(", ");
             }
-            sql.append(this.getLabel(attribute) + " = ?");
+            sql.append(this.getSQLExpr(attribute) + " = ?");
         }
         sql.append(" WHERE ");
-        sql.append(this.getLabel(GeneDAO.Attribute.ID));
+        sql.append(this.getSQLExpr(GeneDAO.Attribute.ID));
         sql.append(" = ?");
 
         try (BgeePreparedStatement stmt = 
@@ -118,52 +117,32 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     @Override
     public String getLabel(GeneDAO.Attribute attribute) {
         log.entry(attribute);
+        
+        String label = null;
         if (attribute.equals(GeneDAO.Attribute.ID)) {
-            return log.exit("geneId");
+            label = "geneId";
         } else if (attribute.equals(GeneDAO.Attribute.NAME)) {
-            return log.exit("geneName");
+            label = "geneName";
         } else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
-            return log.exit("geneDescription");
+            label = "geneDescription";
         } else if (attribute.equals(GeneDAO.Attribute.SPECIESID)) {
-            return log.exit("speciesId");
+            label = "speciesId";
         } else if (attribute.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
-            return log.exit("geneBioTypeId");
+            label = "geneBioTypeId";
         } else if (attribute.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
-            return log.exit("OMAParentNodeId");
+            label = "OMAParentNodeId";
         } else if (attribute.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
-            return log.exit("ensemblGene");
-        }
-        throw log.throwing(new IllegalArgumentException("The attribute provided ("
-                + attribute.toString() + ") is unknown for " + 
-                MySQLGeneDAO.class.getName()));
+            label = "ensemblGene";
+        } 
+        
+        return log.exit(label);
     }
-
+    
     @Override
-    protected String getSelectExpr(Collection<GeneDAO.Attribute> attributes) {
-        log.entry(attributes);
-        if (attributes == null || attributes.size() == 0) {
-            return log.exit(MySQLDAO.GENE_TABLE_NAME + ".*");
-        }
-        StringBuilder selectExpr = new StringBuilder();
-        boolean isFirstIteration = true;
-        for (GeneDAO.Attribute attribute: attributes) {
-            if (isFirstIteration) {
-                isFirstIteration = false;
-            } else {
-                selectExpr.append(", ");
-            }
-            selectExpr.append(MySQLDAO.GENE_TABLE_NAME);
-            selectExpr.append(".");
-            selectExpr.append(this.getLabel(attribute));
-        }
-        return log.exit(selectExpr.toString());        
-    }
-
-    @Override
-    protected String getTableReferences(Collection<GeneDAO.Attribute> attributes) {
-        log.entry(attributes);
-        throw log.throwing(
-                new UnsupportedOperationException("The method is not implemented yet"));
+    public String getSQLExpr(GeneDAO.Attribute attribute) {
+        log.entry(attribute);
+        //no complex SQL expression in this DAO, we just build table_name.label
+        return log.exit(MySQLDAO.GENE_TABLE_NAME + "." + this.getLabel(attribute));
     }
 
     /**

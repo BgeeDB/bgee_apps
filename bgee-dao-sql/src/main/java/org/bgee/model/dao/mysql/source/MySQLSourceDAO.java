@@ -3,18 +3,25 @@ package org.bgee.model.dao.mysql.source;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 
 public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements SourceDAO {
 
-    public MySQLSourceDAO(MySQLDAOManager manager)
-            throws IllegalArgumentException {
+    /**
+     * {@code Logger} of the class. 
+     */
+    private final static Logger log = 
+            LogManager.getLogger(MySQLTaxonDAO.class.getName());
+    
+    public MySQLSourceDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
-        // TODO Auto-generated constructor stub
     }
 
     @Override
@@ -37,17 +44,23 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
 
     @Override
     public String getLabel(SourceDAO.Attribute attribute) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
+        log.entry(attribute);
+        
+        String label = null;
+        if (attribute.equals(SourceDAO.Attribute.ID)) {
+            label = "dataSourceId";
+        } else if (attribute.equals(SourceDAO.Attribute.NAME)) {
+            label = "dataSourceName";
+        } 
+        
+        return log.exit(label);
     }
-
+    
     @Override
-    protected String getSelectExpr(Collection<SourceDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
-    }
-
-    @Override
-    protected String getTableReferences(Collection<SourceDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
+    public String getSQLExpr(SourceDAO.Attribute attribute) {
+        log.entry(attribute);
+        //no complex SQL expression in this DAO, we just build table_name.label
+        return log.exit(MySQLDAO.SOURCE_TABLE_NAME + "." + this.getLabel(attribute));
     }
     
 }

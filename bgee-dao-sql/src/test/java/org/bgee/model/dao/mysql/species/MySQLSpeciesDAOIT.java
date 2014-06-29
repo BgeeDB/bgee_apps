@@ -119,7 +119,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         // TODO Populate database if empty in a @BeforeClass
         // in MySQLITAncestor instead here
         try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                prepareStatement("select 1 from " + MySQLDAO.DATA_SOURCE_TABLE_NAME)) {
+                prepareStatement("select 1 from " + MySQLDAO.SOURCE_TABLE_NAME)) {
             if (!stmt.getRealPreparedStatement().executeQuery().next()) {
                 this.populateAndUseDatabase(System.getProperty(POPULATEDDBKEYKEY));
             }

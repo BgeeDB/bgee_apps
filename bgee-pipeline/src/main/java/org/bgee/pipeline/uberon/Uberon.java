@@ -705,6 +705,7 @@ public class Uberon {
                     throw log.throwing(new AssertionError("An OWLClass could not be removed: " + 
                            child));
                 }
+                log.debug("Child of {} removed: {}", parent, child);
             } 
         }
         

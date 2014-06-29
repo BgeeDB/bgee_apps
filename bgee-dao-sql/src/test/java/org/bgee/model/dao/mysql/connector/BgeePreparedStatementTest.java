@@ -95,6 +95,7 @@ public class BgeePreparedStatementTest extends TestAncestor
         method.invoke(stmt, false);
         //now, we set the flag while the query is being executed
         when(MockDriver.getMockStatement().executeQuery()).then(new Answer<Object>() {
+            @SuppressWarnings("unused")
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 method.invoke(stmt, true);

@@ -14,7 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
@@ -338,9 +338,9 @@ public class ParseOrthoXMLTest extends TestAncestor {
             (hg1.getName() == null && hg2.getName() == null || 
                 hg1.getName() != null && hg1.getName().equals(hg2.getName())) && 
              hg1.getOMAGroupId().equals(hg2.getOMAGroupId()) && 
-             hg1.getNodeLeftBound() == hg2.getNodeLeftBound() && 
-             hg1.getNodeRightBound() == hg2.getNodeRightBound() && 
-             hg1.getNcbiTaxonomyId() == hg2.getNcbiTaxonomyId()) {
+             hg1.getLeftBound() == hg2.getLeftBound() && 
+             hg1.getRightBound() == hg2.getRightBound() && 
+             hg1.getTaxonId() == hg2.getTaxonId()) {
             return log.exit(true);
         }
         log.debug("Hierarchical Group are not equivalent");

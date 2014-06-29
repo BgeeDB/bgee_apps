@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.hierarchicalgroup;
+package org.bgee.model.dao.api.gene;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -20,13 +20,13 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * {@code Enum} used to define the attributes to populate in the
      * {@code HierarchicalGroupTO}s obtained from this {@code HierarchicalGroupDAO}.
      * <ul>
-     * <li>{@code NODEID}: corresponds to {@link HierarchicalGroupTO#getNodeId()}.
-     * <li>{@code GROUPID}: corresponds to {@link HierarchicalGroupTO#getOMAGroupId()}.
-     * <li>{@code NODELEFTBOUND}:  corresponds to
-     *                             {@link HierarchicalGroupTO#getNodeLeftBound()}.
-     * <li>{@code NODERIGHTBOUND}: corresponds to
-     *                             {@link HierarchicalGroupTO#getNodeRightBound()}.
-     * <li>{@code TAXONID}: corresponds to {@link HierarchicalGroupTO#getNcbiTaxonomyId()}.
+     * <li>{@code ID}: corresponds to {@link HierarchicalGroupTO#getId()}.
+     * <li>{@code OMA_GROUP_ID}: corresponds to {@link HierarchicalGroupTO#getOMAGroupId()}.
+     * <li>{@code LEFT_BOUND}:  corresponds to
+     *                             {@link HierarchicalGroupTO#getLeftBound()}.
+     * <li>{@code RIGHT_BOUND}: corresponds to
+     *                             {@link HierarchicalGroupTO#getRightBound()}.
+     * <li>{@code TAXON_ID}: corresponds to {@link HierarchicalGroupTO#gettaxonId()}.
      * </ul>
      * 
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
@@ -34,7 +34,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        NODEID, GROUPID, NODELEFTBOUND, NODERIGHTBOUND, TAXONID;
+        ID, OMA_GROUP_ID, LEFT_BOUND, RIGHT_BOUND, TAXON_ID;
     }
 
 //    /**
@@ -49,7 +49,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
 //     * 
 //     * @param queryGene      A {@code String} representing the gene ID queried, whose
 //     *                       orthologous genes are to be retrieved.
-//     * @param ncbiTaxonomyId A {@code String} representing the NCBI taxonomy ID of the
+//     * @param taxonId A {@code String} representing the NCBI taxonomy ID of the
 //     *                       hierarchical level queried.
 //     * @return               A {@code Collection} of {@code String}s containing the IDs of
 //     *                       orthologous genes of the query gene corresponding to the 
@@ -57,7 +57,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
 //     * @throws DAOException  If an error occurred when accessing the data source.
 //     */
 //    public Collection<String> getHierarchicalOrthologousGenes(String queryGene,
-//            String ncbiTaxonomyId) throws DAOException;
+//            String taxonId) throws DAOException;
 //
 //    /**
 //     * Retrieves the orthologous genes corresponding to the queried gene at the taxonomy
@@ -72,7 +72,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
 //     * @param queryGene      A {@code String} representing the gene ID queried, whose
 //     *                       orthologous genes are to be retrieved.
 //     * 
-//     * @param ncbiTaxonomyId A {@code String} representing the NCBI taxonomy ID of the
+//     * @param taxonId A {@code String} representing the NCBI taxonomy ID of the
 //     *                       hierarchical level queried.
 //     * @param speciesIds     A {@code Collection} of {@code String}s containing the IDs of
 //     *                       the species the returned genes should belong to.
@@ -82,7 +82,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
 //     * @throws DAOException  If an error occurred when accessing the data source.
 //     */
 //    public Collection<String> getHierarchicalOrthologousGenesForSpecies(String queryGene,
-//            String ncbiTaxonomyId, Collection<String> speciesIds) throws DAOException;    
+//            String taxonId, Collection<String> speciesIds) throws DAOException;    
 
     /**
      * {@code DAOResultSet} specifics to {@code HierarchicalGroupTO}s
@@ -124,66 +124,66 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * An {@code int} representing the hierarchical left bound which is generated when
          * each hierarchical group is stored as a nested set.
          */
-        private final int nodeLeftBound;
+        private final int leftBound;
 
         /**
          * An {@code int} representing the hierarchical right bound which is generated
          * when each hierarchical group is stored as a nested set.
          */
-        private final int nodeRightBound;
+        private final int rightBound;
 
         /**
          * An {@code int} representing the NCBI taxonomy ID of the hierarchical level
          * queried.
          */
-        private final int ncbiTaxonomyId;
+        private final int taxonId;
 
         /**
          * Constructor providing the node ID, the OMA Group ID, and the hierarchical left
          * and right bounds.
          * 
-         * @param nodeId         An {@code int} that is the ID of a node in the tree of
+         * @param id         An {@code int} that is the ID of a node in the tree of
          *                       hierarchical groups
          * @param OMAGroupId     A {@code String} that is the ID for a particular OMA
          *                       group of orthologous genes
-         * @param nodeLeftBound  An {@code int} that is the hierarchical left bound of the
+         * @param leftBound  An {@code int} that is the hierarchical left bound of the
          *                       nested set.
-         * @param nodeRightBound An {@code int} that is the hierarchical right bound of
+         * @param rightBound An {@code int} that is the hierarchical right bound of
          *                       the nested set.
          */
-        public HierarchicalGroupTO(int nodeId, String OMAGroupId, int nodeLeftBound,
-                int nodeRightBound) {
-            this(nodeId, OMAGroupId, nodeLeftBound, nodeRightBound, 0);
+        public HierarchicalGroupTO(int id, String OMAGroupId, int leftBound,
+                int rightBound) {
+            this(id, OMAGroupId, leftBound, rightBound, 0);
         }
 
         /**
          * Constructor providing the node ID, the OMA Group ID, the hierarchical left and
          * right bounds, and the NCBI taxonomy ID.
          * 
-         * @param nodeId         An {@code int} that is the ID of a node in the tree of
+         * @param id         An {@code int} that is the ID of a node in the tree of
          *                       hierarchical groups
          * @param OMAGroupId     A {@code String} that is the ID for a particular OMA
          *                       group of orthologous genes
-         * @param nodeLeftBound  An {@code int} that is the hierarchical left bound of the
+         * @param leftBound  An {@code int} that is the hierarchical left bound of the
          *                       nested set.
-         * @param nodeRightBound An {@code int} that is the hierarchical right bound of
+         * @param rightBound An {@code int} that is the hierarchical right bound of
          *                       the nested set.
-         * @param ncbiTaxonomyId An {@code int} that is the NCBI taxonomy ID of the
+         * @param taxonId An {@code int} that is the NCBI taxonomy ID of the
          *                       hierarchical level queried.
          */
-        public HierarchicalGroupTO(int nodeId, String OMAGroupId, int nodeLeftBound,
-                int nodeRightBound, int ncbiTaxonomyId) {
-            super(String.valueOf(nodeId));
+        public HierarchicalGroupTO(int id, String OMAGroupId, int leftBound,
+                int rightBound, int taxonId) {
+            super(String.valueOf(id));
             this.OMAGroupId = OMAGroupId;
-            this.nodeLeftBound = nodeLeftBound;
-            this.nodeRightBound = nodeRightBound;
-            this.ncbiTaxonomyId = ncbiTaxonomyId;
+            this.leftBound = leftBound;
+            this.rightBound = rightBound;
+            this.taxonId = taxonId;
         }
 
         /**
          * @return A {@code String} that this the ID of a node in the tree of hierarchical
          *         groups. Corresponds to the DAO {@code Attribute}
-         *         {@link HierarchicalGroupDAO.Attribute NODEID}. Returns {@code null} if
+         *         {@link HierarchicalGroupDAO.Attribute ID}. Returns {@code null} if
          *         value not set.
          */
         @Override
@@ -193,20 +193,10 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         }
 
         /**
-         * @return An {@code int} that this an unique ID of a node in the tree of the
-         *         generated hierarchical groups. Corresponds to the DAO {@code Attribute}
-         *         {@link HierarchicalGroupDAO.Attribute NODEID}. Same as
-         *         {@link HierarchicalGroupTO#getId()} but return an {@code int} instead
-         *         of a {@code String}.
-         */
-        public int getNodeId() {
-            return Integer.parseInt(super.getId());
-        }
-
-        /**
          * @return A {@code String} that this the ID of a particular Hierarchical
-         *         Orthologous Group as provided by OMA. Corresponds to the DAO
-         *         {@code Attribute} {@link HierarchicalGroupDAO.Attribute GROUPID}.
+         *         Orthologous Group as provided by OMA. Only for XRef purpose. 
+         *         Corresponds to the DAO {@code Attribute} 
+         *         {@link HierarchicalGroupDAO.Attribute OMA_GROUP_ID}.
          */
         public String getOMAGroupId() {
             return this.OMAGroupId;
@@ -216,33 +206,34 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * @return An {@code int} representing the hierarchical left bound which is
          *         generated when each hierarchical group is stored as a nested set.
          */
-        public int getNodeLeftBound() {
-            return this.nodeLeftBound;
+        public int getLeftBound() {
+            return this.leftBound;
         }
 
         /**
          * @return An {@code int} representing the hierarchical right bound which is
          *         generated when each hierarchical group is stored as a nested set.
          */
-        public int getNodeRightBound() {
-            return this.nodeRightBound;
+        public int getRightBound() {
+            return this.rightBound;
         }
 
         /**
          * @return An {@code int} representing the NCBI taxonomy ID of the hierarchical
          *         level queried.
          */
-        public int getNcbiTaxonomyId() {
-            return this.ncbiTaxonomyId;
+        //TODO: more explanatory javadoc
+        public int getTaxonId() {
+            return this.taxonId;
         }
 
         @Override
         public String toString() {
             return "ID: " + this.getId() + " - Label: " + this.getName() + 
                    " - OMA Group Id: " + this.getOMAGroupId() + 
-                   " - Hierarchical left bound: " + this.getNodeLeftBound() + 
-                   " - Hierarchical right bound: " + this.getNodeRightBound() + 
-                   " - NCBI taxonomy ID: " + this.getNcbiTaxonomyId();
+                   " - Hierarchical left bound: " + this.getLeftBound() + 
+                   " - Hierarchical right bound: " + this.getRightBound() + 
+                   " - NCBI taxonomy ID: " + this.getTaxonId();
         }
     }
 }

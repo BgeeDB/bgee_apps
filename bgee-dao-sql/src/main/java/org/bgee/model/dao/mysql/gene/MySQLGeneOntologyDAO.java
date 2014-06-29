@@ -113,6 +113,7 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
         //to not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         //and because of laziness, we insert terms one at a time
         int relInsertedCount = 0;
+        //TODO: this is where the new system appears to suck... continue here.
         String sql = "Insert into geneOntologyRelation (goAllTargetId, goAllSourceId) " +
         		"values (?, ?) ";
         
@@ -161,28 +162,25 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
     }
 
     @Override
-    public String getLabel(GeneOntologyDAO.Attribute attribute)
-            throws IllegalArgumentException {
+    public String getLabel(GeneOntologyDAO.Attribute attribute) {
         log.entry(attribute);
+        
+        String label = null;
         if (attribute.equals(GeneOntologyDAO.Attribute.ID)) {
-            return log.exit("goId");
+            label = "goId";
         } else if (attribute.equals(GeneOntologyDAO.Attribute.LABEL)) {
-            return log.exit("goTerm");
+            label = "goTerm";
         } else if (attribute.equals(GeneOntologyDAO.Attribute.DOMAIN)) {
-            return log.exit("goDomain");
+            label = "goDomain";
         }
-        throw log.throwing(new IllegalArgumentException("The attribute provided ("+ 
-                attribute.toString() + ") is unknown for " + 
-                MySQLGeneOntologyDAO.class.getName()));
+        
+        return log.exit(label);
     }
-
+    
     @Override
-    protected String getSelectExpr(Collection<GeneOntologyDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
-    }
-
-    @Override
-    protected String getTableReferences(Collection<GeneOntologyDAO.Attribute> attributes) {
-        throw new UnsupportedOperationException("The method is not implemented yet");
+    public String getSQLExpr(GeneOntologyDAO.Attribute attribute) {
+        log.entry(attribute);
+        //no complex SQL expression in this DAO, we just build table_name.label
+        return log.exit(MySQLDAO.GO_TERM_TABLE_NAME + "." + this.getLabel(attribute));
     }
 }

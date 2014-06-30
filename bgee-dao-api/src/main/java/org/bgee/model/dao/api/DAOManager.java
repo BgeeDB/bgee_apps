@@ -806,6 +806,8 @@ public abstract class DAOManager implements AutoCloseable
     			"It is not possible to acquire a DAO after the DAOManager has been closed."));
     	}
     }
+    //TODO: change the names of the DAO getters, to make clear a new one is provided 
+    //at each call?
     /**
      * Get a new {@link org.bgee.model.dao.api.source.SourceDAO SourceDAO}, 
      * unless this {@code DAOManager} is already closed. 

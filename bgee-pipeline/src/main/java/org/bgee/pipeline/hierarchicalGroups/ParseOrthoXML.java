@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.management.modelmbean.XMLParseException;
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -25,7 +26,6 @@ import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
 
-import sbc.orthoxml.Gene;
 import sbc.orthoxml.Group;
 import sbc.orthoxml.io.OrthoXMLReader;
 
@@ -43,30 +43,43 @@ public class ParseOrthoXML extends MySQLDAOUser {
 
     private final static Logger log = LogManager.getLogger(ParseOrthoXML.class.getName());
     
+    
+    //TODO: I used to initiliatize attributes in constructor. No solution better than another.
+    
+    //TODO: javadoc
+    //TODO: why is it static??
+    //TODO: attributes don't start with a upper case letter
     private static int OMANodeId = 1;
+    //TODO: javadoc
     private int nestedSetId = 0;
     
     // A Set of HierarchicalGroupTOs to insert into the Bgee database
+    //TODO: javadoc
     private Set<HierarchicalGroupTO> hierarchicalGroupTOs = 
             new HashSet<HierarchicalGroupTO>();
     // A Set of GeneTOs to update into the Bgee database
+    //TODO: javadoc
     private Set<GeneTO> geneTOs = new HashSet<GeneTO>();
     
     // A Set of geneId presents into the Bgee database
-    private Set<String> genesInBgee = new HashSet<String>();
+    //TODO: javadoc
+    private Set<String> geneIdsInBgee = new HashSet<String>();
     // A Map of genomeSpeciesId-fakeGeneIdPrefix to be able to duplicate genes with the
     // fake prefix when a species using a genome of another species.
+    //TODO: javadoc
+    //TODO: what if the genome od a species is used for several other species? => Map<Integer, Set<String>>
     private Map<Integer, String> speciesPrefixes = new HashMap<Integer, String>();
     
     // A Map of geneId-OMANodeID to be able to check if the gene is present in two
     // different HOGs
+    //TODO: javadoc
     private Map<String, String> genesUpdated = new HashMap<String, String>();
 
     /**
      * Default constructor. 
      */
     public ParseOrthoXML() {
-        super();
+        this(null);
     }
     
     /**
@@ -77,6 +90,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      */
     public ParseOrthoXML(MySQLDAOManager manager) {
         super(manager);
+        //TODO: initialize class attributes (and declare them final?)
     }
 
     /**
@@ -122,12 +136,12 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * First, it retrieves genes id from Bgee to be able to check if OMA genes are in Bgee 
      * and to update OMAParentNodeId in gene table. Second it retrieves 
      * genomeSpeciesId-fakeGeneIdPrefix from Bgee to be able to duplicate genes with the
-     * fake prefix when a species using a genome of another species. Then, this method
+     * fake prefix when a species uses a genome of another species. Then, this method
      * reads the Hierarchical Orthologous Groups OrthoXML file, iterates through all the 
      * orthologous groups present in the file and builds a {@code Collection} of 
-     * {@code HierarchicalGroupTO}s as a nested set model and a {@code Collection} of 
-     * {@code GeneTO}s. After the data is added to the OMAHierarchicalGroup table and the 
-     * gene table is updated.
+     * {@code HierarchicalGroupTO}s as a nested set model, and a {@code Collection} of 
+     * {@code GeneTO}s, in order to inset data into the OMAHierarchicalGroup table and  
+     * to update data in the gene table.
      * 
      * @param orthoXMLFile      A {@code String} that is the path to the OMA groups file.
      * @throws DAOException             If an error occurred while getting or updating the 
@@ -149,11 +163,11 @@ public class ParseOrthoXML extends MySQLDAOUser {
         try {
             // Retrieve genes id of the Bgee database to be able to check if OMA genes are
             // in Bgee and to update OMAParentNodeId in gene table.
-            this.getGenesFromDb();
+            this.loadGenesFromDb();
 
             // Retrieve genomeSpeciesId-fakeGeneIdPrefix from Bgee to be able to duplicate
             // genes with the fake prefix when a species using a genome of  another species.
-            this.getSpeciesFromDb();
+            this.loadSpeciesFromDb();
             
             // Construct HierarchicalGroupTOs and GeneTOs
             this.generateTOsFromFile(orthoXMLFile);
@@ -161,12 +175,12 @@ public class ParseOrthoXML extends MySQLDAOUser {
             // Start a transaction to insert HierarchicalGroupTOs and update GeneTOs
             // in the Bgee data source. Note that we do not need to call rollback if
             // an error occurs, calling closeDAO will rollback any ongoing transaction.
-            int nbInsertedGenes = 0, nbUpdatedGenes = 0;
+            int nbInsertedGroups = 0, nbUpdatedGenes = 0;
 
             this.startTransaction(); 
 
             log.info("Start inserting of hierarchical groups...");
-            nbInsertedGenes = this.getHierarchicalGroupDAO()
+            nbInsertedGroups = this.getHierarchicalGroupDAO()
                     .insertHierarchicalGroups(hierarchicalGroupTOs);
             log.info("Done inserting hierarchical groups");
 
@@ -177,11 +191,11 @@ public class ParseOrthoXML extends MySQLDAOUser {
 
             this.commit();
             log.info("Done parsing of OrthoXML file: {} hierarchical groups inserted " +
-                    "and {} genes inserted.", nbInsertedGenes, nbUpdatedGenes);
+                    "and {} genes updated.", nbInsertedGroups, nbUpdatedGenes);
         } catch (IllegalStateException e) {
             log.catching(e);
             throw log.throwing(new IllegalArgumentException(
-                    "The OrthoXML provided is invalid", e));
+                    "The OrthoXML file provided is invalid", e));
         } finally {
             this.closeDAO();
         }
@@ -194,16 +208,20 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @throws DAOException     If an error occurred while getting the data from the Bgee
      *                          database.
      */
-    private void getGenesFromDb() throws DAOException {
+    //TODO: add @see to geneIdsInBgee?
+    private void loadGenesFromDb() throws DAOException {
         log.entry();
         
-        log.info("Start getting gene IDs...");
-        this.getGeneDAO().setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-        GeneTOResultSet rsGenes = this.getGeneDAO().getAllGenes();
+        log.info("Start retrieving gene IDs...");
+        //TODO: how did the previous version pass unit tests? It shouldn't have.
+        GeneDAO dao = this.getGeneDAO();
+        dao.setAttributes(GeneDAO.Attribute.ID);
+        GeneTOResultSet rsGenes = dao.getAllGenes();
         while (rsGenes.next()) {
-            genesInBgee.add(rsGenes.getTO().getId());
+            this.geneIdsInBgee.add(rsGenes.getTO().getId());
         }
-        log.info("Done getting gene IDs, {} genes found", genesInBgee.size());
+        //TODO: if (log.isInfoEnabled)?
+        log.info("Done retrieving gene IDs, {} genes found", geneIdsInBgee.size());
 
         log.exit();
     }
@@ -215,33 +233,44 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @throws DAOException     If an error occurred while getting the data from the Bgee
      *                          database.
      */
-    private void getSpeciesFromDb() throws DAOException {
+    //TODO: add @see to speciesPrefixes?
+    //TODO: this method does not load the species, only the fake prefixes. Modify method name and log.info
+    private void loadSpeciesFromDb() throws DAOException {
         log.entry();
         
-        log.info("Start getting species...");
-        this.getSpeciesDAO().setAttributes(Arrays.asList(
-                SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX));
-        SpeciesTOResultSet rsSpecies = this.getSpeciesDAO().getAllSpecies();
+        log.info("Start retrieving species...");
+        //TODO: how did the previous version pass unit tests? It shouldn't have.
+        SpeciesDAO speciesDAO = this.getSpeciesDAO();
+        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, 
+                SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX);
+        SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies();
         while (rsSpecies.next()) {
             SpeciesTO speciesTO = rsSpecies.getTO();
-            if (!speciesTO.getFakeGeneIdPrefix().equals("")) {
-                speciesPrefixes.put(
-                        Integer.valueOf(speciesTO.getGenomeSpeciesId()),
+            if (StringUtils.isNotBlank(speciesTO.getGenomeSpeciesId()) && 
+                    !speciesTO.getId().equals(speciesTO.getGenomeSpeciesId())) {
+                this.speciesPrefixes.put(Integer.parseInt(speciesTO.getGenomeSpeciesId()),
                         speciesTO.getFakeGeneIdPrefix());
+                log.debug("Added fake geneId prefix {} for species {}, using genome of species {}", 
+                        speciesTO.getFakeGeneIdPrefix(), speciesTO.getId(), 
+                        speciesTO.getGenomeSpeciesId());
             }
         }
-        log.info("Done getting species, {} species found", speciesPrefixes.size());
+        log.debug("Association betweeen species with fake genomes and their fake geneId prefix: {}", 
+                this.speciesPrefixes);
+        //TODO: if (log.isInfoEnabled)?
+        log.info("Done retrieving species, {} species found", speciesPrefixes.size());
 
         log.exit();
     }
 
     /**
-     * Extract all relevant information from the OrthoXML file and fill the
-     * {@code Collection} of {@code HierarchicalGroupTO}s as a nested set model and the
-     * {@code Collection} of {@code GeneTO}s.
+     * Extract all relevant information from the OrthoXML file. This method computes 
+     * a nested set model of the OMA groups, then generates a {@code Collection} 
+     * of {@code HierarchicalGroupTO}s and a {@code Collection} of {@code GeneTO}s 
+     * to store information into the database.
      * 
      * @param orthoXMLFile  A {@code String} that is the path to the OMA group file which 
-     *                      data will be retrieved.
+     *                      data will be retrieved from.
      * @throws FileNotFoundException    If some files could not be found.
      * @throws XMLStreamException       If there is an error in the well-formedness of the 
      *                                  XML or other unexpected processing errors.
@@ -250,13 +279,15 @@ public class ParseOrthoXML extends MySQLDAOUser {
      */
     private void generateTOsFromFile(String orthoXMLFile) throws FileNotFoundException,
             XMLStreamException, XMLParseException {
-        log.entry();
+        log.entry(orthoXMLFile);
+        //TODO: no need for a buffered reader or something like that?
         OrthoXMLReader reader = new OrthoXMLReader(new File(orthoXMLFile));
         Group group;
         // Read all the groups in the file iteratively
         while ((group = reader.next()) != null) {
             this.generateTOsFromGroup(group, group.getId());
-            nestedSetId++;
+            //TODO: comment to explain the use of this nestedSetId attribute
+            this.nestedSetId++;
         }
         log.info("Done retrieving hierarchical groups.");
         log.exit();
@@ -271,35 +302,51 @@ public class ParseOrthoXML extends MySQLDAOUser {
      *                      retrieved.
      * @param OMAGroupId    A {@code String} that the OMA group ID to use for subgroups.
      */
+    //TODO: inject the nestedSetId and OMANodeId as well?
     private void generateTOsFromGroup(Group group, String OMAGroupId) {
-        nestedSetId++;
+        log.entry(group, OMAGroupId);
+        //TODO: comment to explain the use of this nestedSetId attribute
+        this.nestedSetId++;
         // Add a HierarchicalGroupTO in collection.
+        //TODO: shouldn't it be added only if it is a taxon relevant to Bgee?
+        //TODO: what are the differences between nestedSetId, OMAGroupId, OMANodeId?
         this.addHierarchicalGroupTO(OMAGroupId, group.getProperty("TaxId"),
-                countGroups(group) - 1);
+                countGroups(group) - 1);//TODO: explain the -1
         if (group.getGenes() != null) {
-            for (Gene groupGene : group.getGenes()) {
-                List<String> genes = Arrays.asList(groupGene.getGeneIdentifier().split("; "));
+            log.debug("Retrieving genes from group {}", group);
+            for (sbc.orthoxml.Gene groupGene : group.getGenes()) {
+                log.debug("Retrieving gene {} with identifier {}", groupGene, 
+                        groupGene.getGeneIdentifier());
+                //TODO: define the splitting String as a final static attribute.
+                //Split the string in a dedicated method (in case it becomes more complex)
+                List<String> geneIds = Arrays.asList(groupGene.getGeneIdentifier().split("; "));
                 boolean isInBgee = false ;
-                for (String geneId : genes) {
+                for (String geneId : geneIds) {
+                    log.debug("Examining OMA geneId {}", geneId);
                     int taxId = groupGene.getSpecies().getNcbiTaxId();
-                    // Check if gene identifier is in our data source
-                    if (genesInBgee.contains(geneId)) {
+                    if (geneIdsInBgee.contains(geneId)) {
                         isInBgee = true;
-                        this.addGeneTO(new GeneTO(geneId, "", "", 0, 0, OMANodeId, true), 
+                        this.addGeneTO(new GeneTO(geneId, "", "", 0, 0, OMANodeId, true),
                                 OMAGroupId);
                     }
-                    // Check if duplicate gene identifier is in our data source
-                    String duplicate = "";
-                    if (speciesPrefixes.containsKey(taxId)) {
-                        // Duplicate genes replacing ENSXXXG by the fake prefix
-                        duplicate = geneId.replaceFirst("^ENS[A-Z][A-Z][A-Z]G", 
-                                speciesPrefixes.get(taxId));
+                    // Check if this taxon corresponds to a species for which we are using 
+                    //the genome of another species
+                    if (this.speciesPrefixes.containsKey(taxId)) {
+                        //Change prefix of the gene to create a fake gene ID.
+                        //TODO: not all gene IDs start with ENS
+                        //TODO: what if a species genome is used for several other species?
+                        String duplicate = geneId.replaceFirst("^ENS[A-Z][A-Z][A-Z]G", 
+                                this.speciesPrefixes.get(taxId));
+                        log.debug("Generating fake geneId from {} to {}, because belonging to species {}", 
+                                geneId, duplicate, taxId);
+                        if (this.addGeneTO(new GeneTO(duplicate, "", "", 0, 0, OMANodeId, true),
+                                OMAGroupId)) {
+                            isInBgee = true;
+                        }
                     }
-                    if (genesInBgee.contains(duplicate)) {
+                    if (this.addGeneTO(new GeneTO(geneId, "", "", 0, 0, OMANodeId, true), 
+                            OMAGroupId)) {
                         isInBgee = true;
-                        this.addGeneTO(
-                                new GeneTO(duplicate, "", "", 0, 0, OMANodeId, true), 
-                                OMAGroupId);
                     }
                 }
                 if (!isInBgee) {
@@ -318,6 +365,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 nestedSetId++;
             }
         }
+        log.exit();
     }
 
     /**
@@ -331,7 +379,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @param nbChild       An {@code int} that is the number of children of the
      *                      {@code HierarchicalGroupTO} to create.
      */
-    private int[] addHierarchicalGroupTO(String OMAGroupId, String taxId, int nbChild) {
+    //TODO: inject OMANodeId and nestedSetId?
+    private void addHierarchicalGroupTO(String OMAGroupId, String taxId, int nbChild) {
         log.entry(OMAGroupId, taxId, nbChild);
         // Left
         int left = nestedSetId;
@@ -339,11 +388,8 @@ public class ParseOrthoXML extends MySQLDAOUser {
         int right = nestedSetId + 2 * nbChild + 1;
         hierarchicalGroupTOs.add(
                 new HierarchicalGroupTO(OMANodeId, OMAGroupId, left, right, 
-                        (taxId == null ? 0: Integer.valueOf(taxId))));            
-        int[] bounds = new int[2];
-        bounds[0] = left;
-        bounds[1] = right;
-        return log.exit(bounds);
+                        (taxId == null ? 0: Integer.valueOf(taxId)))); 
+        log.exit();
     }
 
     /**
@@ -356,18 +402,27 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @param geneTO        A {@code GeneTO} to add. 
      * @param OMAGroupID    A {@code String} that is the OMA group ID.
      */
-    private void addGeneTO(GeneTO geneTO, String OMAGroupID) {
+    private boolean addGeneTO(GeneTO geneTO, String OMAGroupId) {
+        log.entry(geneTO, OMAGroupId);
+        
+        if (!this.geneIdsInBgee.contains(geneTO.getId())) {
+            log.debug("Gene discarded because not in Bgee: {}", geneTO.getId());
+            return log.exit(false);
+        }
+        
         if (genesUpdated.containsKey(geneTO.getId())
-                && !genesUpdated.get(geneTO.getId()).equals(OMAGroupID)) {
+                && !genesUpdated.get(geneTO.getId()).equals(OMAGroupId)) {
             log.warn("The gene {} is in diffent hierarchical orthologous groups: " +
                     "/{}/ and /{}/", geneTO.getId(), genesUpdated.get(geneTO.getId()),
-                    OMAGroupID);
-        } else {
-            genesUpdated.put(geneTO.getId(), OMAGroupID);
-            // Add new {@code GeneTO} to {@code Collection} of {@code GeneTO}s to be able 
-            // to update OMAGroupId in gene table.
-            geneTOs.add(geneTO);
-        }
+                    OMAGroupId);
+            return log.exit(false); 
+        } 
+        
+        this.genesUpdated.put(geneTO.getId(), OMAGroupId);
+        // Add new {@code GeneTO} to {@code Collection} of {@code GeneTO}s to be able 
+        // to update OMAGroupId in gene table.
+        this.geneTOs.add(geneTO);
+        return log.exit(true);
     }
 
     /**

@@ -30,7 +30,7 @@ public class ServletContextListener implements javax.servlet.ServletContextListe
 
 	@Override
 	public void contextInitialized(ServletContextEvent servletContextEvent) {
-		EntityFactoryProvider.loadStaticFactories();
+//		EntityFactoryProvider.loadStaticFactories();
 	}
 
 }

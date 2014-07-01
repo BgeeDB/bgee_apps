@@ -1,55 +1,60 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  
-  <parent>
-    <groupId>org.bgee</groupId>
-    <artifactId>bgee-applications</artifactId>
-    <version>13</version>
-  </parent>
-  
-  <artifactId>bgee-webapp</artifactId>
-  <packaging>war</packaging>
-  <name>bgee-webapp</name>
-  
-  <dependencies>
-  
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-core</artifactId>
-      <version>${project.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-dao-api</artifactId>
-      <version>${project.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    
-    <!-- as long as bgee-dao-sql is the only service provider for 
-         bgee-dao-api, we keep this dependency. When other service 
-         providers will be available, this dependency might be changed 
-         for another service provider -->
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-dao-sql</artifactId>
-      <version>${project.version}</version>
-      <scope>compile</scope>
-    </dependency>
-  
-    <dependency>
-      <groupId>org.apache.tomcat</groupId>
-      <artifactId>tomcat-servlet-api</artifactId>
-    </dependency>
-      
-  </dependencies>
-  
-  <build>
-    <finalName>bgee-webapp-${project.version}</finalName>
-  </build>
-  
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.bgee</groupId>
+		<artifactId>bgee-applications</artifactId>
+		<version>13</version>
+	</parent>
+
+	<artifactId>bgee-webapp</artifactId>
+	<packaging>war</packaging>
+	<name>bgee-webapp</name>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>bgee-core</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>bgee-dao-api</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- as long as bgee-dao-sql is the only service provider for bgee-dao-api, 
+			we keep this dependency. When other service providers will be available, 
+			this dependency might be changed for another service provider -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>bgee-dao-sql</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-servlet-api</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.3.4</version>
+			<scope>compile</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<finalName>bgee-webapp-${project.version}</finalName>
+	</build>
+
 </project>

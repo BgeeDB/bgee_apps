@@ -13,6 +13,7 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
@@ -72,6 +73,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Determine the behavior of consecutive calls to getTO().
         
         //TODO: test should be much much simpler, do not use all species in Bgee.
+        //TODO: Some species are presents in the fakeOMA file, and not in this list.
         when(mockSpeciesTORs.getTO()).thenReturn(
                 new SpeciesTO("9606", "human", "Homo", "sapiens", "1", 
                         "path/file9606", "9606", ""),
@@ -113,20 +115,19 @@ public class ParseOrthoXMLTest extends TestAncestor {
                         "path/file9606", "6239", ""));
         // Determine the behavior of consecutive calls to next().
         when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
-            //TODO: hmm, isn't currentIndex reinitialize at each call to thenAnswer?
-            int currentIndex = -1;
+            int counter = -1;
             @SuppressWarnings("unused")
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
                 // Return true while there is speciesTO to return 
-                return currentIndex++ < 19;
+                return counter++ < 19;
             }
         });
 
         // We need a mock MySQLGeneTOResultSet to mock the return of getAllGenes().
         MySQLGeneTOResultSet mockGeneTORs = mock(MySQLGeneTOResultSet.class);
         when(mockManager.mockGeneDAO.getAllGenes()).thenReturn(mockGeneTORs);
-        // Determine the behavior of consecutive calls to getTO().
-        //TODO: are there some genes present in the fakeOMA file, and not in this list?
+        // Determine the behavior of consecutive calls to getTO(). 
+        // Some genes are presents in the fakeOMA file, and not in this list.
         when(mockGeneTORs.getTO()).thenReturn(
                 new GeneTO("ENSACAG00000017588", "NAME17588", "DESC17588", 28377, 12, 0, true),
                 new GeneTO("ENSACAG00000017588", "NAME17588", "DESC17588", 28377, 12, 0, true),
@@ -154,12 +155,11 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 new GeneTO("ENSXETG00000024124", "NAME24124", "DESC24124", 8364, 12, 0, true));
         // Determine the behavior of consecutive calls to next().
         when(mockGeneTORs.next()).thenAnswer(new Answer<Boolean>() {
-            //TODO: hmm, isn't currentIndex reinitialize at each call to thenAnswer?
-            int currentIndex = -1;
+            int counter = -1;
             @SuppressWarnings("unused")
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
                 // Return true while there is geneTO to return 
-                return currentIndex++ < 24;
+                return counter++ < 24;
             }
         });
 
@@ -215,7 +215,8 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 new GeneTO("FBgn0003721", "", "", 0, 0, 12, true));
 
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
-        verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), anyList());//TODO: why anyList?
+        verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 
+                eq(Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID)));
         if (!this.areGeneTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue())) {
             throw new AssertionError("Incorrect GeneTOs generated to update genes, "+
                     "expected " + expectedGeneTOs + ", but was " + geneTOsArg.getValue());

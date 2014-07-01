@@ -2,8 +2,6 @@ package org.bgee.controller.servletutils;
 
 import javax.servlet.ServletContextEvent;
 
-import org.bgee.model.EntityFactoryProvider;
-
 /**
  * A {@code ServletContextListener} that properly shutdown the Bgee webapp. 
  * It removes local Thread for instance, to avoid memory leacks, or shutdown the cache, etc.

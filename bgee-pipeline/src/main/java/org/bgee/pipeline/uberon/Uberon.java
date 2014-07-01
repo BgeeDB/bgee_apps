@@ -159,15 +159,15 @@ public class Uberon {
      *   A key can be associated to several values. See {@link #setRelsBetweenToRemove(Map)}.
      *   </ol>
      *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
-     *   Uberon simplifyUberon ext.owl custom_ext classesRemoved.tsv 
-     *   UBERON:0001062,UBERON:0000465,UBERON:0000061,UBERON:0010000 
+     *   Uberon simplifyUberon composite-metazoan.owl custom_composite simplification_composite.tsv 
+     *   UBERON:0001062,UBERON:0000465,UBERON:0000061,UBERON:0010000,UBERON:0008979 
      *   BFO:0000050,RO:0002202,RO:0002494 
-     *   NBO:0000313,GO:0008150,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,NCBITaxon:1,CHEBI:24431,UBERON:0004458,UBERON:0000466 
-     *   UBERON:0013700,UBERON:0013702,UBERON:0011676,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0000468,GO:0005575
+     *   UBERON:0000467/UBERON:0000468,UBERON:0000475/UBERON:0000468,UBERON:0000479/UBERON:0000468,UBERON:0000480/UBERON:0000468,UBERON:0007688/UBERON:0000468,UBERON:0010707/UBERON:0000468,UBERON:0012641/UBERON:0000468,UBERON:0002199/UBERON:0000468,UBERON:0002416/UBERON:0000468,UBERON:0007376/UBERON:0000468,UBERON:0000463/UBERON:0000468,UBERON:0001048/UBERON:0000468,UBERON:0007567/UBERON:0000468,UBERON:0015119/UBERON:0000468 
+     *   NBO:0000313,GO:0008150,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,NCBITaxon:1,CHEBI:24431,UBERON:0004458,UBERON:0000466,SO:0000704 
+     *   UBERON:0013701,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0000468,GO:0005575 
      *   grouping_class,non_informative,ubprop:upper_level,upper_level 
-     *   UBERON:0013700,UBERON:0013702,UBERON:0011676 
-     *   UBERON:0000467/UBERON:0000468,UBERON:0000475/UBERON:0000468,UBERON:0000479/UBERON:0000468,UBERON:0000480/UBERON:0000468,UBERON:0001048/UBERON:0000468,UBERON:0007567/UBERON:0000468,UBERON:0007688/UBERON:0000468,UBERON:0000463/UBERON:0000468}
-     * 
+     *   UBERON:0013701,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0011676,GO:0005575
+     *   
      * <li>If the first element in {@code args} is "generateStageOntology", the action 
      * will be to extract from the Uberon ontology the developmental stages subgraph, 
      * and to save it to files in OBO and OWL formats, 
@@ -262,7 +262,7 @@ public class Uberon {
             ub.simplifyUberonAndSaveToFile();
             
         } else if (args[0].equalsIgnoreCase("generateStageOntology")) {
-            if (args.length != 11) {
+            if (args.length != 7) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
                         "7 arguments, " + args.length + " provided."));
@@ -686,15 +686,20 @@ public class Uberon {
     }
     
     /**
-     * Simplifies the Uberon ontology stored in {@code pathToUberonOnt}, and saves it in OWL 
-     * and OBO format using {@code modifiedOntPath}.
+     * Modify the Uberon ontology stored in the file provided through 
+     * {@link #setPathToUberonOnt(String)} to make a deelopmental stage ontology, and saves it 
+     * in OWL and OBO format in the path provided through {@link #setModifiedOntPath(String)}. 
      * <p>
-     * This method first calls  
-     * {@link #generateStageOntology(OWLOntology, Collection, Collection, Collection, 
-     * Collection)}, by loading the {@code OWLOntology} provided through {@code pathToUberonOnt}, 
-     * and using arguments of same names as in this method. The resulting {@code OWLOntology} 
-     * is then saved, in OBO (with a ".obo" extension to the path {@code modifiedOntPath}), 
-     * and in OWL (with a ".owl" extension to the path {@code modifiedOntPath}).
+     * This method calls {@link #generateStageOntology(OWLOntology)}, by loading the 
+     * {@code OWLOntology} provided, and using attributes set before calling this method. 
+     * Attributes that are used can be set prior to calling this method through the methods: 
+     * {@link #setClassIdsToRemove(Collection)}, {@link #setToRemoveSubgraphRootIds(Collection)}, 
+     * {@link #setToFilterSubgraphRootIds(Collection)}, and 
+     * {@link #setChildrenOfToRemove(Collection)}.
+     * <p>
+     * The resulting {@code OWLOntology} is then saved, in OBO (with a ".obo" extension 
+     * to the path provided through {@link #setModifiedOntPath(String)}), 
+     * and in OWL (with a ".owl" extension to the path {@link #setModifiedOntPath(String)}).
      * 
      * @throws IOException                      If an error occurred while reading the file 
      *                                          {@code pathToUberonOnt}.
@@ -723,45 +728,39 @@ public class Uberon {
         //save ontology
         OntologyUtils utils = new OntologyUtils(ont);
         utils.saveAsOWL(this.getModifiedOntPath() + ".owl");
-        utils.saveAsOBO(this.getModifiedOntPath() + ".obo");
+        utils.saveAsOBO(this.getModifiedOntPath() + ".obo", false);
         
         log.exit();
     }
     
     /**
-     * Generates a developmental stage ontology extracted from Uberon, then 
+     * Generates a developmental stage ontology extracted from {@code uberonOnt}, then 
      * removes the {@code OWLAnnotationAssertionAxiom}s that are problematic to convert 
      * the ontology in OBO (using 
      * {@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}). 
-     * This method is very similar to {@link #simplifyUberon(OWLOntology, Collection, 
-     * Collection, Collection, Collection, Collection)}, but the simplification process 
-     * for the developmental stages is much simpler, and thus requires less arguments. 
+     * This method is very similar to {@link #simplifyUberon(OWLOntology)}, 
+     * but the simplification process for the developmental stages is much simpler and faster. 
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
      * of the call to this method.
+     * <p>
+     * Operations that are performed, in order:
+     * <ul>
+     * <li>{@code OWLGraphManipulator#removeClassAndPropagateEdges(String)} on each of the 
+     * {@code String} part of the {@code Collection} returned by {@link #getClassIdsToRemove()}.
+     * <li>remove all children, reachable by any path in their graph closure, 
+     * of the {@code OWLClass}es with their OBO-like IDs returned by {@link #getChildrenOfToRemove()}. 
+     * <li>{@code OWLGraphManipulator#mapRelationsToParent(Collection)} using value returned by 
+     * {@link #getRelIds()}.
+     * <li>{@code OWLGraphManipulator#filterRelations(Collection, boolean)} using value 
+     * returned by {@link #getRelIds()}, with second argument {@code true}.
+     * <li>{@code OWLGraphManipulator#filterSubgraphs(Collection)} with value returned by 
+     * {@link #getToFilterSubgraphRootIds()}.
+     * <li>{@code OWLGraphManipulator#reducePartOfIsARelations()}
+     * <li>{@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}
      * 
      * @param uberonOnt                 The {@code OWLOntology} to extract 
      *                                  developmental stages from.
-     * @param classIdsToRemove          A {@code Collection} of {@code String}s that are 
-     *                                  the OBO-like IDs of {@code OWLClass}es 
-     *                                  to remove from the ontology, and to propagate 
-     *                                  their incoming edges to their outgoing edges. 
-                                        (see same argument in 
-     *                                  {@code OWLGraphManipulator.simplifies} method).
-     * @param childrenOfToRemove        A {@code Collection} of {@code String}s that are 
-     *                                  the OBO-like IDs of {@code OWLClass}es for which 
-     *                                  we want to remove all their children, 
-     *                                  reachable by any path in their graph closure. 
-     *                                  The {@code OWLClass}es will not be removed. 
-     * @param relIds                    A {@code Collection} of {@code String}s that 
-     *                                  are the OBO-like IDs or {@code IRI}s of relations 
-     *                                  to be filtered and mapped to parent relations 
-     * @param toFilterSubgraphRootIds    A {@code Collection} of {@code String}s that 
-     *                                   are the OBO-like IDs of the {@code OWLClass}es 
-     *                                   that are the roots of the subgraphs that 
-     *                                   will be kept in the ontology. Their ancestors 
-     *                                   will be kept as well. (see same argument in 
-     *                                   {@code OWLGraphManipulator.simplifies} method).
      */
     public void generateStageOntology(OWLOntology uberonOnt) {
         //we provide to the entry methods all class attributes that will be used 
@@ -818,7 +817,9 @@ public class Uberon {
                 this.classesRemoved.put(classIdRemoved, 
                         "Filtering of subgraph with root IDs" + toFilterSubgraphRootIds);
             }
-        }        
+        }   
+        
+        manipulator.reducePartOfIsARelations();
         
         //TODO: dependency injection?
         OntologyUtils utils = new OntologyUtils(manipulator.getOwlGraphWrapper());

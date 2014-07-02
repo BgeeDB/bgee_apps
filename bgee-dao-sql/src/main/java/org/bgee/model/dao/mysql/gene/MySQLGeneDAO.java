@@ -66,7 +66,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             sql.append(this.attributeToString(attribute));
         }
         sql.append(" FROM gene");
-        log.debug("SQL query: "+sql.toString());
+
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;

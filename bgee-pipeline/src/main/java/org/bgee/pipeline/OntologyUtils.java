@@ -977,4 +977,15 @@ public class OntologyUtils {
         }
         return this.wrapper;
     }
+    
+    @Override
+    public String toString() {
+        if (this.wrapper != null) {
+            return "[OntologyUtils wrapping " + this.wrapper.toString() + "]";
+        } 
+        if (this.ontology != null) {
+            return "[OntologyUtils wrapping " + this.ontology.toString() + "]";
+        } 
+        return super.toString();
+    }
 }

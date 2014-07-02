@@ -51,6 +51,8 @@ import org.supercsv.io.ICsvMapWriter;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
  * Class related to the use, and insertion into the database of the ontology Uberon.
@@ -870,13 +872,7 @@ public class Uberon {
                     OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID);
             overProps.add(immediatelyPreceded);
             
-            
             //first, check whether endStage is indeed preceeded by startStage at some point
-            log.debug(wrapper.getAncestors(endStage));
-            //problem with overProps not correctly defined, continue here
-            log.debug(wrapper.getAncestors(endStage, overProps));
-            log.debug(wrapper.getSubsumersFromClosure(endStage));
-            log.debug(wrapper.getOutgoingEdgesNamedClosureOverSupProps(endStage));
             if (wrapper.getAncestors(endStage, overProps).contains(startStage)) {
                 
                 stageIdsBetween.add(endStageId);

@@ -1,5 +1,6 @@
 format-version: 1.2
 ontology: startEndStages
+import: ro.obo
 
 [Term]
 id: MmulDv:0000000
@@ -14,106 +15,35 @@ is_a: MmulDv:0000000 ! rhesus life cycle stage
 id: MmulDv:0000002
 name: prenatal stage
 is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: part_of MmulDv:0000001 ! rhesus life cycle
+relationship: BFO:0000050 MmulDv:0000001 ! rhesus life cycle
 
 [Term]
 id: MmulDv:0000003
 name: immature stage
 is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: part_of MmulDv:0000001 ! rhesus life cycle
+relationship: BFO:0000050 MmulDv:0000001 ! rhesus life cycle
 relationship: RO:0002087 MmulDv:0000002 ! prenatal stage
 relationship: BFO:0000062 MmulDv:0000005
 
 [Term]
 id: MmulDv:0000004
 is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: part_of MmulDv:0000002 ! prenatal stage
+relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
 
 [Term]
 id: MmulDv:0000005
 is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: part_of MmulDv:0000002 ! prenatal stage
+relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
 relationship: RO:0002087 MmulDv:0000004 
 
 [Term]
 id: MmulDv:0000006
 is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: part_of MmulDv:0000003 ! immature stage
+relationship: BFO:0000050 MmulDv:0000003 ! immature stage
 relationship: RO:0002087 MmulDv:0000005 
 
 [Term]
 id: MmulDv:0000007
 is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: part_of MmulDv:0000003 ! immature stage
+relationship: BFO:0000050 MmulDv:0000003 ! immature stage
 relationship: RO:0002087 MmulDv:0000006 
-
-[Typedef]
-id: ends
-is_a: part_of
-is_a: RO:0002222
-inverse_of: RO:0002230
-
-[Typedef]
-id: existence_starts_during
-is_a: RO:0002496
-
-[Typedef]
-id: has_part
-is_transitive: true
-is_a: RO:0002131
-inverse_of: part_of
-
-[Typedef]
-id: RO:0002087
-name: immediately_preceded_by
-comment: X immediately_preceded_by Y iff: end(X) simultaneous_with start(Y)
-property_value: IAO:0000118 "starts_at_end_of" xsd:string
-is_a: BFO:0000062 ! preceded by
-inverse_of: RO:0002090 ! immediately_precedes
-
-[Typedef]
-id: part_of
-is_transitive: true
-is_a: RO:0002131
-
-[Typedef]
-id: RO:0002222
-name: temporally related to
-comment: A relation that holds between two occurrents. This is a grouping relation that collects together all the Allen relations.
-property_value: http://purl.org/dc/elements/1.1/source https://docs.google.com/document/d/1kBv1ep_9g3sTR-SD3jqzFqhuwo9TPNF-l-9fUDbO6rM/edit?pli=1 xsd:anyURI
-property_value: IAO:0000114 IAO:0000125
-property_value: IAO:0000119 "Allen" xsd:string
-property_value: IAO:0000232 "Do not use this relation directly. It is ended as a grouping for relations between occurrents involving the relative timing of their starts and ends." xsd:string
-
-[Typedef]
-id: RO:0002091
-name: starts_during
-comment: X starts_during Y iff: (start(Y) before_or_simultaneous_with start(X)) AND (start(X) before_or_simultaneous_with end(Y))
-property_value: IAO:0000118 "io" xsd:string
-is_a: RO:0002222 ! temporally related to
-
-[Typedef]
-id: RO:0002086
-name: ends_after
-comment: X ends_after Y iff: end(Y) before_or_simultaneous_with end(X)
-holds_over_chain: RO:0002093 BFO:0000062
-is_transitive: true
-is_a: RO:0002222 ! temporally related to
-
-[Typedef]
-id: BFO:0000062
-name: preceded by
-is_transitive: true
-is_a: RO:0002086
-holds_over_chain: RO:0002091 BFO:0000062
-holds_over_chain: RO:0002092 BFO:0000062
-is_transitive: true
-inverse_of: BFO:0000063
-xref: BFO:0000062
-
-[Typedef]
-id: starts_with
-is_transitive: true
-is_a: part_of
-is_a: RO:0002222
-inverse_of: RO:0002223

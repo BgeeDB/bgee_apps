@@ -235,6 +235,7 @@ public class UberonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         
         log.info(Uberon.getStageIdsBetween(utils, "MmulDv:0000005", "MmulDv:0000007"));
-        log.info(wrapper.getEdgesBetween(wrapper.getOWLClassByIdentifier("MmulDv:0000005"), wrapper.getOWLClassByIdentifier("MmulDv:0000007")));
+        log.info(wrapper.getEdgesBetween(wrapper.getOWLClassByIdentifier("MmulDv:0000005"), 
+                wrapper.getOWLClassByIdentifier("MmulDv:0000007")));
     }
 }

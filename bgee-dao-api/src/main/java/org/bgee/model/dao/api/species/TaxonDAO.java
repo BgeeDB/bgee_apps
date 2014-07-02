@@ -1,8 +1,11 @@
 package org.bgee.model.dao.api.species;
 
+import java.util.Collection;
+
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link TaxonTO}s. 
@@ -33,6 +36,30 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
         ID, COMMONNAME, SCIENTIFICNAME, LEFTBOUND, RIGHTBOUND, LEVEL, LCA;
     }
     
+    /**
+     * Inserts the provided taxa into the Bgee database, represented as 
+     * a {@code Collection} of {@code TaxonTO}s.
+     * 
+     * @param taxa      a {@code Collection} of {@code TaxonTO}s to be inserted 
+     *                  into the database.
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code taxa}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public int insertTaxa(Collection<TaxonTO> taxa);
+
+    /**
+     * Retrieve all taxa from data source.
+     * <p>
+     * The taxa are retrieved and returned as a {@code TaxonTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @return A {@code TaxonTOResultSet} containing all taxa from data source.
+     */
+    public TaxonTOResultSet getAllTaxa();
+
     /**
      * {@code DAOResultSet} specifics to {@code TaxonTO}s
      * 
@@ -98,23 +125,21 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          * @param id                A {@code String} that is the ID.
          * @param commonName        A {@code String} that is the common name of this taxon.
          * @param scientificName    A {@code String} that is the scientific name of this taxon.
-         * @param leftBound         An {@code Integer} that is the left bound of this taxon 
+         * @param leftBound         An {@code int} that is the left bound of this taxon 
          *                          in the nested set model representing the taxonomy.
-         * @param rightBound        An {@code Integer} that is the right bound of this taxon 
+         * @param rightBound        An {@code int} that is the right bound of this taxon 
          *                          in the nested set model representing the taxonomy.
-         * @param level             An {@code Integer} that is the level of this taxon 
+         * @param level             An {@code int} that is the level of this taxon 
          *                          in the nested set model representing the taxonomy.
-         * @param lca               A {@code boolean} defining whether this taxon is the least 
-         *                          common ancestor of two species used in Bgee. 
+         * @param lca               A {@code boolean} defining whether this taxon is the 
+         *                          least common ancestor of two species used in Bgee. 
          * @throws IllegalArgumentException If {@code id} is {@code null} or empty.
          */
         public TaxonTO(String id, String commonName, String scientificName, 
-                Integer leftBound, Integer rightBound, Integer level, Boolean lca) 
+                int leftBound, int rightBound, int level, Boolean lca) 
             throws IllegalArgumentException {
             super(id, commonName);
-            if (leftBound != null && leftBound <= 0 || 
-                    rightBound != null && rightBound <= 0 || 
-                    level != null && level <= 0) {
+            if (leftBound < 0 || rightBound < 0 || level < 0) {
                 throw new IllegalArgumentException("Integer parameters must be positive.");
             }
             this.scientificName = scientificName;
@@ -150,7 +175,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          *          Corresponds to the DAO {@code Attribute} {@link TaxonDAO.Attribute 
          *          LEFTBOUND}. Returns {@code null} if value not set.
          */
-        public Integer getLeftBound() {
+        public int getLeftBound() {
             return leftBound;
         }
         /**
@@ -159,7 +184,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          *          Corresponds to the DAO {@code Attribute} {@link TaxonDAO.Attribute 
          *          RIGHTBOUND}. Returns {@code null} if value not set.
          */
-        public Integer getRightBound() {
+        public int getRightBound() {
             return rightBound;
         }
         /**
@@ -168,7 +193,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          *          Corresponds to the DAO {@code Attribute} {@link TaxonDAO.Attribute 
          *          LEVEL}. Returns {@code null} if value not set.
          */
-        public Integer getLevel() {
+        public int getLevel() {
             return level;
         }
         /**

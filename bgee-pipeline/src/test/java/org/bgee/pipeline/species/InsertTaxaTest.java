@@ -225,12 +225,9 @@ public class InsertTaxaTest extends TestAncestor {
                     (t1.getScientificName() == null && t2.getScientificName() == null || 
                         t1.getScientificName() != null && 
                         t1.getScientificName().equals(t2.getScientificName())) && 
-                    (t1.getLeftBound() == null && t2.getLeftBound() == null || 
-                        t1.getLeftBound() != null && t1.getLeftBound().equals(t2.getLeftBound())) && 
-                    (t1.getRightBound() == null && t2.getRightBound() == null || 
-                        t1.getRightBound() != null && t1.getRightBound().equals(t2.getRightBound())) && 
-                    (t1.getLevel() == null && t2.getLevel() == null || 
-                        t1.getLevel() != null && t1.getLevel().equals(t2.getLevel())) && 
+                    (t1.getLeftBound() == t2.getLeftBound()) && 
+                    (t1.getRightBound() == t2.getRightBound()) && 
+                    (t1.getLevel() ==t2.getLevel()) && 
                     (t1.isLca() == null && t2.isLca() == null || 
                         t1.isLca() != null && t1.isLca().equals(t2.isLca())) && 
                     (t1.getDescription() == null && t2.getDescription() == null || 

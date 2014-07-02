@@ -5,11 +5,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
+import org.bgee.model.dao.api.species.TaxonDAO.TaxonTOResultSet;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
@@ -99,4 +103,108 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
             this.deleteFromTableAndUseDefaultDB(INSERTTABLENAME);
         }
     }
+    
+    /**
+     * Test the select method {@link MySQLTaxonDAO#shouldGetAllTaxa()}.
+     */
+    @Test
+    public void shouldGetAllTaxa() throws SQLException {
+        log.entry();
+        this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
+        // TODO Populate database if empty in a @BeforeClass in MySQLITAncestor instead here
+        try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                prepareStatement("select 1 from dataSource")) {
+            if (!stmt.getRealPreparedStatement().executeQuery().next()) {
+                this.populateAndUseDatabase(System.getProperty(POPULATEDDBKEYKEY));
+            }
+        }
+
+        // Generate result with the method
+        MySQLTaxonDAO dao = new MySQLTaxonDAO(this.getMySQLDAOManager());
+        dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.values()));
+        TaxonTOResultSet methResults = dao.getAllTaxa();
+
+        // Generate manually expected result
+        List<TaxonTO> expectedTaxa = Arrays.asList(
+                new TaxonTO("111", "taxCName111", "taxSName111", 1, 10, 1, true), 
+                new TaxonTO("211", "taxCName211", "taxSName211", 2, 3, 2, false), 
+                new TaxonTO("311", "taxCName311", "taxSName311", 4, 9, 2, false), 
+                new TaxonTO("411", "taxCName411", "taxSName411", 5, 6, 1, true), 
+                new TaxonTO("511", "taxCName511", "taxSName511", 7, 8, 1, true)); 
+
+        while (methResults.next()) {
+            boolean found = false;
+            TaxonTO methTaxon = methResults.getTO();
+            for (TaxonTO expTaxon: expectedTaxa) {
+                log.trace("Comparing {} to {}", methTaxon, expTaxon);
+                if (areTaxonTOsEqual(methTaxon, expTaxon)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log.debug("No equivalent taxon found for {}", methTaxon);
+                throw log.throwing(new AssertionError("Incorrect generated TO"));
+            }
+        }
+        methResults.close();
+
+        dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.ID));
+        methResults = dao.getAllTaxa();
+
+        // Generate manually expected result
+        expectedTaxa = Arrays.asList(
+                new TaxonTO("111", null, null, 0, 0, 0, false), 
+                new TaxonTO("211", null, null, 0, 0, 0, false), 
+                new TaxonTO("311", null, null, 0, 0, 0, false), 
+                new TaxonTO("411", null, null, 0, 0, 0, false), 
+                new TaxonTO("511", null, null, 0, 0, 0, false)); 
+
+        while (methResults.next()) {
+            boolean found = false;
+            TaxonTO methTaxon = methResults.getTO();
+            for (TaxonTO expTaxon: expectedTaxa) {
+                log.trace("Comparing {} to {}", methTaxon, expTaxon);
+                if (areTaxonTOsEqual(methTaxon, expTaxon)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log.debug("No equivalent taxon found for {}", methTaxon);
+                throw log.throwing(new AssertionError("Incorrect generated TO"));
+            }
+        }
+        methResults.close();
+
+        log.exit();
+    }
+
+    /**
+     * Method to compare two {@code TaxonTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code TaxonTO}s is solely
+     * based on their ID, not on other attributes.
+     * 
+     * @param taxonTO1 A {@code TaxonTO} to be compared to {@code taxonTO2}.
+     * @param taxonTO2 A {@code TaxonTO} to be compared to {@code taxonTO1}.
+     * @return {@code true} if {@code taxonTO1} and {@code taxonTO2} have all attributes
+     *         equal.
+     */
+    private boolean areTaxonTOsEqual(TaxonTO taxonTO1, TaxonTO taxonTO2) {
+        log.entry(taxonTO1, taxonTO2);
+        if (taxonTO1.getId().equals(taxonTO2.getId()) && 
+            (taxonTO1.getName() == null && taxonTO2.getName() == null || 
+              taxonTO1.getName() != null && taxonTO1.getName().equals(taxonTO2.getName())) && 
+            (taxonTO1.getScientificName() == null && taxonTO2.getScientificName() == null || 
+              taxonTO1.getScientificName() != null && taxonTO1.getScientificName().equals(taxonTO2.getScientificName())) && 
+            taxonTO1.getLeftBound() == taxonTO2.getLeftBound() && 
+            taxonTO1.getRightBound() == taxonTO2.getRightBound() && 
+            taxonTO1.getLevel() == taxonTO2.getLevel() && 
+            taxonTO1.isLca() == taxonTO2.isLca()) {
+            return log.exit(true);
+        }
+        log.debug("Taxa are not equivalent {}", taxonTO1.getId());
+        return log.exit(false);
+    }
+
 }

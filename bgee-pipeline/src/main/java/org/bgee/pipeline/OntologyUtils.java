@@ -103,7 +103,11 @@ public class OntologyUtils {
     /**
      * A {@code String} that is the OBO-like ID of the {@code preceded_by} relation.
      */
-    public final static String PRECEDED_BY = "BFO:0000062";
+    public final static String PRECEDED_BY_ID = "BFO:0000062";
+    /**
+     * A {@code String} that is the OBO-like ID of the {@code immediately_preceded_by} relation.
+     */
+    public final static String IMMEDIATELY_PRECEDED_BY_ID = "RO:0002087";
     //****************************
     // ANNOTATION PROPERTIES
     //****************************

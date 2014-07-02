@@ -29,6 +29,8 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
+import owltools.graph.OWLGraphWrapper;
+
 /**
  * Unit tests for {@link Uberon}.
  * 
@@ -216,5 +218,23 @@ public class UberonTest extends TestAncestor {
             }
         }
         assertEquals("Incorrect number of lines in TSV output", 6, i);
+    }
+    
+    /**
+     * Test the method {@link Uberon#getStageIdsBetween(OntologyUtils, String, String)}
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetStageIdsBetween() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/startEndStages.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        log.info(Uberon.getStageIdsBetween(utils, "MmulDv:0000005", "MmulDv:0000007"));
+        log.info(wrapper.getEdgesBetween(wrapper.getOWLClassByIdentifier("MmulDv:0000005"), wrapper.getOWLClassByIdentifier("MmulDv:0000007")));
     }
 }

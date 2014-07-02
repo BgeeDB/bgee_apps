@@ -6,11 +6,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,11 +34,13 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -199,7 +203,7 @@ public class Uberon {
      *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000 
      *   UBERON:0000069 
      *   BFO:0000050,BFO:0000062
-     *   UBERON:0000104 
+     *   UBERON:0000104,FBdv:00000000 
      *   
      * <li>If the first element in {@code args} is "extractXRefMappings", the action will be 
      * to retrieve mappings from XRef IDs to Uberon IDs from Uberon, and to save them 
@@ -811,7 +815,7 @@ public class Uberon {
             manipulator.filterRelations(this.getRelIds(), true);
         }
         
-        //potential subgraph root to keep: UBERON:0000104 life cycle
+        //potential subgraph root to keep: UBERON:0000104 life cycle, FBdv:00000000 Drosophila life 
         if (this.getToFilterSubgraphRootIds() != null && !this.getToFilterSubgraphRootIds().isEmpty()) {
             for (String classIdRemoved: manipulator.filterSubgraphs(toFilterSubgraphRootIds)) {
                 this.classesRemoved.put(classIdRemoved, 
@@ -826,6 +830,91 @@ public class Uberon {
         utils.removeOBOProblematicAxioms();
         
         log.exit();
+    }
+    
+    public static List<String> getStageIdsBetween(OntologyUtils ontUtils, 
+            String startStageId, String endStageId) {
+        log.entry(ontUtils, startStageId, endStageId);
+        
+        List<String> stageIdsBetween = new ArrayList<String>();
+        OWLGraphWrapper wrapper = ontUtils.getWrapper();
+
+        OWLClass startStage = ontUtils.getOWLClass(startStageId);
+        OWLClass endStage = ontUtils.getOWLClass(endStageId);
+        if (startStage == null) {
+            throw log.throwing(new IllegalArgumentException("Could not find any OWLClass " +
+            		"corresponding to " + startStageId));
+        }
+        if (endStage == null) {
+            throw log.throwing(new IllegalArgumentException("Could not find any OWLClass " +
+                    "corresponding to " + endStageId));
+        }
+        
+        //identity case
+        if (startStage.equals(endStage)) {
+            stageIdsBetween.add(startStageId);
+        } else {
+            
+            //to define the allowed properties to use to check for precedance. 
+            //suppress warning because the method getAncestors only accepts a raw type
+            @SuppressWarnings("rawtypes") 
+            Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>();
+            //part_of is needed for property chains
+            overProps.add(wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID));
+            @SuppressWarnings("rawtypes")
+            OWLPropertyExpression preceded = wrapper.getOWLObjectPropertyByIdentifier(
+                    OntologyUtils.PRECEDED_BY_ID);
+            overProps.add(preceded);
+            @SuppressWarnings("rawtypes")
+            OWLPropertyExpression immediatelyPreceded = wrapper.getOWLObjectPropertyByIdentifier(
+                    OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID);
+            overProps.add(immediatelyPreceded);
+            
+            
+            //first, check whether endStage is indeed preceeded by startStage at some point
+            log.debug(wrapper.getAncestors(endStage));
+            //problem with overProps not correctly defined, continue here
+            log.debug(wrapper.getAncestors(endStage, overProps));
+            log.debug(wrapper.getSubsumersFromClosure(endStage));
+            log.debug(wrapper.getOutgoingEdgesNamedClosureOverSupProps(endStage));
+            if (wrapper.getAncestors(endStage, overProps).contains(startStage)) {
+                
+                stageIdsBetween.add(endStageId);
+                
+                //now, try to find the exact path to startStage
+                Deque<OWLClass> stages = new ArrayDeque<OWLClass>();
+                stages.offerFirst(endStage);
+                OWLClass stageInspected;
+                
+                stages: while ((stageInspected = stages.pollFirst()) != null) {
+                    //find directly connected stages with precedance, over preceded_by relations
+                    for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdges(stageInspected)) {
+                        OWLObjectPropertyExpression edgeExpr = 
+                                outgoingEdge.getSingleQuantifiedProperty().getProperty();
+                        OWLObject target = outgoingEdge.getTarget();
+                        //if the edge is a preceded_by or related relation, leading to an OWLClass
+                        if (target instanceof OWLClass && edgeExpr != null && 
+                           (edgeExpr.equals(preceded) || edgeExpr.equals(immediatelyPreceded)) && 
+                           //and if the target is the startStage, or has the startStage on path
+                           (wrapper.getAncestors(target, overProps).contains(startStage) || 
+                                   target.equals(startStage))) {
+                            
+                            stageIdsBetween.add(0, wrapper.getIdentifier(target));
+                            if (!target.equals(startStage)) {
+                                stages.offerFirst((OWLClass) target);
+                                //break the outgoing edges loop
+                                continue stages;
+                            }
+                        }
+                    }
+                }
+            } else {
+                log.warn("{} is not found on the precedence path outgoing from {}", 
+                        startStageId, endStageId);
+            }
+        }
+        
+        return log.exit(stageIdsBetween);
     }
     
     /**

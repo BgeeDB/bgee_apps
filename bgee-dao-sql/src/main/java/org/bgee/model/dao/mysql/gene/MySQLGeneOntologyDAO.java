@@ -13,6 +13,15 @@ import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
+/**
+ * A {@code GeneOntologyDAO} for MySQL. 
+ * 
+ * @author Frederic Bastian
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @see org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO
+ * @since Bgee 13
+ */
 public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute> 
     implements GeneOntologyDAO {
     /**
@@ -90,7 +99,6 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
                 }
             }
             return log.exit(termInsertedCount);
-
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -157,30 +165,5 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
             throw new AssertionError("The domain " + domain + " is not recognised, " +
             		"or not used in the database"); 
         }
-            
-            
-    }
-
-    @Override
-    public String getLabel(GeneOntologyDAO.Attribute attribute) {
-        log.entry(attribute);
-        
-        String label = null;
-        if (attribute.equals(GeneOntologyDAO.Attribute.ID)) {
-            label = "goId";
-        } else if (attribute.equals(GeneOntologyDAO.Attribute.LABEL)) {
-            label = "goTerm";
-        } else if (attribute.equals(GeneOntologyDAO.Attribute.DOMAIN)) {
-            label = "goDomain";
-        }
-        
-        return log.exit(label);
-    }
-    
-    @Override
-    public String getSQLExpr(GeneOntologyDAO.Attribute attribute) {
-        log.entry(attribute);
-        //no complex SQL expression in this DAO, we just build table_name.label
-        return log.exit(MySQLDAO.GO_TERM_TABLE_NAME + "." + this.getLabel(attribute));
     }
 }

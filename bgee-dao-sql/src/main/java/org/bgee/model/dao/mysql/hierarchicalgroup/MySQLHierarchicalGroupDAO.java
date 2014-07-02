@@ -20,7 +20,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.species.HierarchicalGroupTO
+ * @see org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO
  * @since Bgee 13
  */
 public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Attribute>
@@ -66,13 +66,9 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 
     	// To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
     	// and because of laziness, we insert terms one at a time
-        String sql = "INSERT INTO OMAHierarchicalGroup ("
-                + getLabel(HierarchicalGroupDAO.Attribute.ID) + ", "
-                + getLabel(HierarchicalGroupDAO.Attribute.OMA_GROUP_ID) + ", "
-                + getLabel(HierarchicalGroupDAO.Attribute.LEFT_BOUND) + ", "
-                + getLabel(HierarchicalGroupDAO.Attribute.RIGHT_BOUND) + ", "
-                + getLabel(HierarchicalGroupDAO.Attribute.TAXON_ID)
-                + " values (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO OMAHierarchicalGroup " +
+                     "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) " +
+                     "values (?, ?, ?, ?, ?)";
 
     	try (BgeePreparedStatement stmt = 
     			this.getManager().getConnection().prepareStatement(sql)) {
@@ -89,34 +85,6 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     	} catch (SQLException e) {
     		throw log.throwing(new DAOException(e));
     	}
-    }
-
-    @Override
-    public String getLabel(HierarchicalGroupDAO.Attribute attribute) {
-        log.entry(attribute);
-        
-        String label = null;
-        if (attribute.equals(HierarchicalGroupDAO.Attribute.ID)) {
-            label = "OMANodeId";
-        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.OMA_GROUP_ID)) {
-            label = "OMAGroupId";
-        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.LEFT_BOUND)) {
-            label = "OMANodeLeftBound";
-        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.RIGHT_BOUND)) {
-            label = "OMANodeRightBound";
-        } else if (attribute.equals(HierarchicalGroupDAO.Attribute.TAXON_ID)) {
-            label = "taxonId";
-        } 
-        
-        return log.exit(label);
-    }
-    
-    @Override
-    public String getSQLExpr(HierarchicalGroupDAO.Attribute attribute) {
-        log.entry(attribute);
-        //no complex SQL expression in this DAO, we just build table_name.label
-        return log.exit(MySQLDAO.HIERARCHICAL_GROUP_TABLE_NAME + "." + 
-            this.getLabel(attribute));
     }
 
 //

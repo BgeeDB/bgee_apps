@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
-import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
@@ -52,7 +51,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         // TODO Populate database if empty in a @BeforeClass
         // in MySQLITAncestor instead here
         try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                prepareStatement("select 1 from " + MySQLDAO.SOURCE_TABLE_NAME)) {
+                prepareStatement("select 1 from dataSource")) {
             if (!stmt.getRealPreparedStatement().executeQuery().next()) {
                 this.populateAndUseDatabase(System.getProperty(POPULATEDDBKEYKEY));
             }
@@ -60,6 +59,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // Generate result with the method
         MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
+        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.values()));
         GeneTOResultSet methResults = dao.getAllGenes();
 
         // Generate manually expected result
@@ -84,6 +84,33 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             }
         }
         methResults.close();
+
+        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+        methResults = dao.getAllGenes();
+
+        // Generate manually expected result
+        expectedGenes = Arrays.asList(
+                new GeneTO("ID1", null, null, 0, 0, 0, false), 
+                new GeneTO("ID2", null, null, 0, 0, 0, false), 
+                new GeneTO("ID3", null, null, 0, 0, 0, false)); 
+
+        while (methResults.next()) {
+            boolean found = false;
+            GeneTO methGene = methResults.getTO();
+            for (GeneTO expGene: expectedGenes) {
+                log.trace("Comparing {} to {}", methGene, expGene);
+                if (areGeneTOsEqual(methGene, expGene)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log.debug("No equivalent gene found for {}", methGene);
+                throw log.throwing(new AssertionError("Incorrect generated TO"));
+            }
+        }
+        methResults.close();
+
         log.exit();
     }
 
@@ -139,10 +166,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                     dao.updateGenes(geneTOs, attributesToUpdate1));
 
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from " + MySQLDAO.GENE_TABLE_NAME + 
-                            " where " + dao.getLabel(GeneDAO.Attribute.ID) + " = ? and " +
-                            dao.getLabel(GeneDAO.Attribute.OMAPARENTNODEID) + "= ?")) {
-
+                    prepareStatement("select 1 from gene where geneId = ? " +
+                                     "and OMAParentNodeId = ?")) {
                 stmt.setString(1, "ID1");
                 stmt.setInt(2, 7);
                 assertTrue("GeneTO incorrectly updated", 
@@ -159,14 +184,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                     dao.updateGenes(geneTOs, attributesToUpdate2));
 
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                    prepareStatement("select 1 from " + MySQLDAO.GENE_TABLE_NAME + 
-                            " where " + dao.getLabel(GeneDAO.Attribute.ID) + " = ? and " +
-                            dao.getLabel(GeneDAO.Attribute.NAME) + "= ? and " + 
-                            dao.getLabel(GeneDAO.Attribute.DESCRIPTION) + " = ? and " +
-                            dao.getLabel(GeneDAO.Attribute.SPECIESID) + "= ? and " +
-                            dao.getLabel(GeneDAO.Attribute.GENEBIOTYPEID) + "= ? and " +
-                            dao.getLabel(GeneDAO.Attribute.OMAPARENTNODEID) + "= ? and " +
-                            dao.getLabel(GeneDAO.Attribute.ENSEMBLGENE) + " = ?")) {
+                    prepareStatement("select 1 from gene where " +  
+                            "geneId = ? and geneName = ? and geneDescription = ? and " +
+                            "speciesId = ? and geneBioTypeId = ? and OMAParentNodeId= ? and " +
+                            "ensemblGene = ?")) {
                 stmt.setString(1, "ID1");
                 stmt.setString(2, "GNMod1");
                 stmt.setString(3, "DescMod1");

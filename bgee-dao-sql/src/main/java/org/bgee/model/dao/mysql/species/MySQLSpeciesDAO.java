@@ -18,8 +18,9 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  * A {@code SpeciesDAO} for MySQL. 
  * 
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.species.SpeciesTO
+ * @see org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO
  * @since Bgee 01
  */
 public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> 
@@ -44,16 +45,30 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     public SpeciesTOResultSet getAllSpecies() {
         log.entry();
         
+        Collection<SpeciesDAO.Attribute> attributes = this.getAttributes();
+        if (attributes == null || attributes.size() == 0) {
+            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                    attributes.toString() + ") is unknown for " + MySQLSpeciesDAO.class.getName()));
+        }
+
         //Construct sql query
-        String sql = "SELECT " + this.getSelectClause(this.getAttributes()) + " FROM " + 
-                MySQLDAO.SPECIES_TABLE_NAME;
+        StringBuilder sql = new StringBuilder(); 
+        for (SpeciesDAO.Attribute attribute: attributes) {
+            if (sql.length() == 0) {
+                sql.append("SELECT ");
+            } else {
+                sql.append(", ");
+            }
+            sql.append(this.attributeToString(attribute));
+        }
+        sql.append(" FROM species");
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql);
-            return log.exit(new MySQLSpeciesTOResultSet(stmt, this));
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -79,23 +94,18 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     public int insertSpecies(Collection<SpeciesTO> specieTOs) throws DAOException {
         log.entry(specieTOs);
         
-        String sql = "INSERT INTO " + MySQLDAO.SPECIES_TABLE_NAME + 
-                "(" + this.getSQLExpr(SpeciesDAO.Attribute.ID) + ", " + 
-                this.getSQLExpr(SpeciesDAO.Attribute.GENUS) + ", " + 
-                this.getSQLExpr(SpeciesDAO.Attribute.SPECIES_NAME) + ", " + 
-                this.getSQLExpr(SpeciesDAO.Attribute.COMMON_NAME) + ", " + 
-                this.getSQLExpr(SpeciesDAO.Attribute.PARENT_TAXON_ID) + ", " + 
-                this.getSQLExpr(SpeciesDAO.Attribute.GENOME_FILE_PATH) + ", " + 
-                this.getSQLExpr(SpeciesDAO.Attribute.GENOME_SPECIES_ID) + ", " + 
-                this.getSQLExpr(SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX) + ") values ";
+        StringBuilder sql = new StringBuilder(); 
+        sql.append("INSERT INTO species" +  
+                   "(speciesId, genus, species, speciesCommonName, taxonId, " + 
+                   "genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) values ");
         for (int i = 0; i < specieTOs.size(); i++) {
             if (i > 0) {
-                sql += ", ";
+                sql.append(", ");
             }
-            sql += "(?, ?, ?, ?, ?, ?, ?, ?) ";
+            sql.append("(?, ?, ?, ?, ?, ?, ?, ?) ");
         }
         try (BgeePreparedStatement stmt = 
-                this.getManager().getConnection().prepareStatement(sql)) {
+                this.getManager().getConnection().prepareStatement(sql.toString())) {
             int paramIndex = 1;
             for (SpeciesTO speciesTO: specieTOs) {
                 stmt.setInt(paramIndex, Integer.parseInt(speciesTO.getId()));
@@ -132,8 +142,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         }
     }
 
-    @Override
-    public String getLabel(SpeciesDAO.Attribute attribute) {
+    private String attributeToString(SpeciesDAO.Attribute attribute) {
         log.entry(attribute);
         
         String label = null;
@@ -158,12 +167,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         return log.exit(label);
     }
     
-    @Override
-    public String getSQLExpr(SpeciesDAO.Attribute attribute) {
-        log.entry(attribute);
-        //no complex SQL expression in this DAO, we just build table_name.label
-        return log.exit(MySQLDAO.SPECIES_TABLE_NAME + "." + this.getLabel(attribute));
-    }
     
     /**
      * A {@code MySQLDAOResultSet} specific to {@code SpeciesTO}.
@@ -176,12 +179,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             implements SpeciesTOResultSet {
 
         /**
-         * The {@code MySQLSpeciesDAO} that produced this {@code MySQLSpeciesTOResultSet}. 
-         * Needed to obtain labels associated to {@code SpeciesDAO.Attributes} (see remarks 
-         * in {@link org.bgee.model.dao.mysql.MySQLDAO#getLabel(Enum)} javadoc).
-         */
-        private final MySQLSpeciesDAO speciesDAO;
-        /**
          * Default constructor.
          * 
          * @param statement     The first {@code BgeePreparedStatement} to execute a query on, 
@@ -193,10 +190,8 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
          *                      {@code MySQLSpeciesTOResultSet}. Needed to obtain labels 
          *                      associated to {@code SpeciesDAO.Attributes}.
          */
-        public MySQLSpeciesTOResultSet(BgeePreparedStatement statement, 
-                MySQLSpeciesDAO speciesDAO) {
+        public MySQLSpeciesTOResultSet(BgeePreparedStatement statement) {
             super(statement);
-            this.speciesDAO = speciesDAO;
         }
 
         @Override
@@ -209,34 +204,28 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
-                    if (this.speciesDAO.getLabel(SpeciesDAO.Attribute.ID).equals(
-                            column.getValue())) {
+                    if (column.getValue().equals("speciesId")) {
                         speciesId = currentResultSet.getString(column.getKey());
                         
-                    } else if (this.speciesDAO.getLabel(SpeciesDAO.Attribute.GENUS).equals(
-                            column.getValue())) {
+                    } else if (column.getValue().equals("genus")) {
                         genus = currentResultSet.getString(column.getKey());
                         
-                    } else if (this.speciesDAO.getLabel(SpeciesDAO.Attribute.SPECIES_NAME).equals(
-                            column.getValue())) {
+                    } else if (column.getValue().equals("species")) {
                         species = currentResultSet.getString(column.getKey());
                         
-                    } else if (this.speciesDAO.getLabel(SpeciesDAO.Attribute.COMMON_NAME).equals(
-                            column.getValue())) {
+                    } else if (column.getValue().equals("speciesCommonName")) {
                         speciesCommonName = currentResultSet.getString(column.getKey());
                         
-                    } else if (this.speciesDAO.getLabel(SpeciesDAO.Attribute.PARENT_TAXON_ID).equals(
-                            column.getValue())) {
+                    } else if (column.getValue().equals("taxonId")) {
                         taxonId = currentResultSet.getString(column.getKey());
                         
-                    } else if (this.speciesDAO.getLabel(SpeciesDAO.Attribute.GENOME_FILE_PATH).equals(
-                            column.getValue())) {
+                    } else if (column.getValue().equals("genomeFilePath")) {
                         genomeFilePath = currentResultSet.getString(column.getKey());
-                    } else if (this.speciesDAO.getLabel(SpeciesDAO.Attribute.GENOME_SPECIES_ID).equals(
-                            column.getValue())) {
+
+                    } else if (column.getValue().equals("genomeSpeciesId")) {
                         genomeSpeciesId = currentResultSet.getString(column.getKey());
-                    } else if (this.speciesDAO.getLabel(SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX).equals(
-                            column.getValue())) {
+
+                    } else if (column.getValue().equals("fakeGeneIdPrefix")) {
                         fakeGeneIdPrefix = currentResultSet.getString(column.getKey());
                     }
                 } catch (SQLException e) {

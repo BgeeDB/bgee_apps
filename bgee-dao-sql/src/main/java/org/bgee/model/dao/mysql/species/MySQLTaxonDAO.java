@@ -90,35 +90,4 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
             throw log.throwing(new DAOException(e));
         }
     }
-
-    @Override
-    public String getLabel(TaxonDAO.Attribute attribute) {
-        log.entry(attribute);
-        
-        String label = null;
-        if (attribute.equals(TaxonDAO.Attribute.ID)) {
-            label = "taxonId";
-        } else if (attribute.equals(TaxonDAO.Attribute.COMMONNAME)) {
-            label = "taxonCommonName";
-        } else if (attribute.equals(TaxonDAO.Attribute.SCIENTIFICNAME)) {
-            label = "taxonScientificName";
-        } else if (attribute.equals(TaxonDAO.Attribute.LEFTBOUND)) {
-            label = "taxonLeftBound";
-        } else if (attribute.equals(TaxonDAO.Attribute.RIGHTBOUND)) {
-            label = "taxonRightBound";
-        } else if (attribute.equals(TaxonDAO.Attribute.LEVEL)) {
-            label = "taxonLevel";
-        } else if (attribute.equals(TaxonDAO.Attribute.LCA)) {
-            label = "bgeeSpeciesLCA";
-        } 
-        
-        return log.exit(label);
-    }
-    
-    @Override
-    public String getSQLExpr(TaxonDAO.Attribute attribute) {
-        log.entry(attribute);
-        //no complex SQL expression in this DAO, we just build table_name.label
-        return log.exit(MySQLDAO.TAXON_TABLE_NAME + "." + this.getLabel(attribute));
-    }
 }

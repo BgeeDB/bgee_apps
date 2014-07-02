@@ -3,7 +3,7 @@ package org.bgee.model.dao.mysql.gene;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +19,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
+ * @see org.bgee.model.dao.api.gene.GeneDAO.GeneTO
  * @since Bgee 13
  */
 public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO {
@@ -48,15 +49,29 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     public GeneTOResultSet getAllGenes() throws DAOException {
         log.entry();
         
-        //Construct sql query
-        String sql = "SELECT " + this.getSelectClause(this.getAttributes()) + " FROM " + 
-                MySQLDAO.GENE_TABLE_NAME;
+        Collection<GeneDAO.Attribute> attributes = this.getAttributes();
+        if (attributes == null || attributes.size() == 0) {
+            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                    attributes.toString() + ") is unknown for " + MySQLGeneDAO.class.getName()));
+        }
 
+        //Construct sql query
+        StringBuilder sql = new StringBuilder(); 
+        for (GeneDAO.Attribute attribute: attributes) {
+            if (sql.length() == 0) {
+                sql.append("SELECT ");
+            } else {
+                sql.append(", ");
+            }
+            sql.append(this.attributeToString(attribute));
+        }
+        sql.append(" FROM gene");
+        log.debug("SQL query: "+sql.toString());
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql);
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
             return log.exit(new MySQLGeneTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -73,17 +88,13 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
         for (GeneDAO.Attribute attribute: attributesToUpdate) {
             if (sql.length() == 0) {
-                sql.append("UPDATE ");
-                sql.append(MySQLDAO.GENE_TABLE_NAME);
-                sql.append(" SET ");
+                sql.append("UPDATE gene SET ");
             } else {
                 sql.append(", ");
             }
-            sql.append(this.getSQLExpr(attribute) + " = ?");
+            sql.append(this.attributeToString(attribute) + " = ?");
         }
-        sql.append(" WHERE ");
-        sql.append(this.getSQLExpr(GeneDAO.Attribute.ID));
-        sql.append(" = ?");
+        sql.append(" WHERE geneId = ?");
 
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
@@ -114,8 +125,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
     }
 
-    @Override
-    public String getLabel(GeneDAO.Attribute attribute) {
+    private String attributeToString(GeneDAO.Attribute attribute) {
         log.entry(attribute);
         
         String label = null;
@@ -138,13 +148,6 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         return log.exit(label);
     }
     
-    @Override
-    public String getSQLExpr(GeneDAO.Attribute attribute) {
-        log.entry(attribute);
-        //no complex SQL expression in this DAO, we just build table_name.label
-        return log.exit(MySQLDAO.GENE_TABLE_NAME + "." + this.getLabel(attribute));
-    }
-
     /**
      * A {@code MySQLDAOResultSet} specific to {@code GeneTO}.
      * 
@@ -169,27 +172,32 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         public GeneTO getTO() {
             log.entry();
             ResultSet currentResultSet = this.getCurrentResultSet();
-            Map<Integer, String> currentColumnLabels = this.getColumnLabels();
             String geneId=null, geneName=null, geneDescription=null;
             int speciesId=0, geneBioTypeId=0, OMAParentNodeId=0;
             boolean ensemblGene=false;
             // Get results
-            for (String currentColumnLabel : currentColumnLabels.values()) {
+            for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
-                    if (currentColumnLabel.equals("geneId")) {
-                        geneId = currentResultSet.getString("geneId");
-                    } else if (currentColumnLabel.equals("geneName")) {
-                        geneName = currentResultSet.getString("geneName");
-                    } else if (currentColumnLabel.equals("geneDescription")) {
-                        geneDescription = currentResultSet.getString("geneDescription");
-                    } else if (currentColumnLabel.equals("speciesId")) {
-                        speciesId = currentResultSet.getInt("speciesId");
-                    } else if (currentColumnLabel.equals("geneBioTypeId")) {
-                        geneBioTypeId = currentResultSet.getInt("geneBioTypeId");
-                    } else if (currentColumnLabel.equals("OMAParentNodeId")) {
-                        OMAParentNodeId = currentResultSet.getInt("OMAParentNodeId");
-                    } else if (currentColumnLabel.equals("ensemblGene")) {
-                        ensemblGene = currentResultSet.getBoolean("ensemblGene");
+                    if (column.getValue().equals("geneId")) {
+                        geneId = currentResultSet.getString(column.getKey());
+
+                    } else if (column.getValue().equals("geneName")) {
+                        geneName = currentResultSet.getString(column.getKey());
+
+                    } else if (column.getValue().equals("geneDescription")) {
+                        geneDescription = currentResultSet.getString(column.getKey());
+
+                    } else if (column.getValue().equals("speciesId")) {
+                        speciesId = currentResultSet.getInt(column.getKey());
+
+                    } else if (column.getValue().equals("geneBioTypeId")) {
+                        geneBioTypeId = currentResultSet.getInt(column.getKey());
+
+                    } else if (column.getValue().equals("OMAParentNodeId")) {
+                        OMAParentNodeId = currentResultSet.getInt(column.getKey());
+
+                    } else if (column.getValue().equals("ensemblGene")) {
+                        ensemblGene = currentResultSet.getBoolean(column.getKey());
                     }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));

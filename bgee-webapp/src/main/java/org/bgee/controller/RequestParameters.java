@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Locale;
@@ -32,6 +33,7 @@ import org.bgee.utils.BgeeStringUtils;
  * For the moment, load the params from the URL and/or key
  * Store the storable params.
  * Provide the correct new URL by using the key.
+ * Now possible to set and get individual params
  */
 public class RequestParameters {
 
@@ -115,6 +117,10 @@ public class RequestParameters {
 	private static ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks= 
 			new ConcurrentHashMap<String, ReentrantReadWriteLock>();
 
+	private String parametersSeparator;
+
+	private String valuesSeparator;
+
 	/**
 	 * Default constructor. 
 	 */
@@ -144,13 +150,17 @@ public class RequestParameters {
 	{
 		// TODO set parameters properly
 		this.requestParametersStorageDirectory = "/tmp/";
-		this.encodeUrl = true;
+		this.encodeUrl = false;
+		this.parametersSeparator = "&";
+		this.valuesSeparator = ",";
 
 		try {
 			this.loadParameters(request);
 			if(request.getParameterMap().isEmpty() == false){
-				this.generateKey(this.generateParametersQuery("&",",",true,false,false));
-				this.store();
+				this.generateKey(this.generateParametersQuery(true,false,false));
+				if(BgeeStringUtils.isNotBlank(this.generatedKey)){
+					this.store();
+				}
 			}
 		} catch (RequestParametersNotFoundException | RequestParametersNotStorableException e) {
 			// TODO Auto-generated catch block
@@ -175,7 +185,8 @@ public class RequestParameters {
 	private void loadParameters(HttpServletRequest request) throws RequestParametersNotFoundException
 	{
 		//get the key, if set in the current URL
-		this.setGeneratedKey(BgeeStringUtils.secureString(request.getParameter(RequestParameters.getGeneratedKeyParameterName())));
+		this.setGeneratedKey(BgeeStringUtils.secureString(request.getParameter(
+				RequestParameters.getGeneratedKeyParameterName())));
 
 		if (StringUtils.isBlank(this.getGeneratedKey())) {
 			//no key set, get the parameters from the URL
@@ -225,88 +236,96 @@ public class RequestParameters {
 
 				if(values != null){
 
-					switch(p.getType().getCanonicalName()){
+					if(p.getType() == String.class){
 
-					case("java.lang.String") :
+						ArrayList<ArrayList<String>> firstLevelListString = 
+								new ArrayList<ArrayList<String>>();
 
-						ArrayList<ArrayList<String>> level1ListString = 
-						new ArrayList<ArrayList<String>>();
+						for(String s1:values){
 
-					for(String s1:values){
+							ArrayList<String> secondLevelListString = 
+									new ArrayList<String>();
 
-						ArrayList<String> level2ListString = 
-								new ArrayList<String>();
+							for(String s2:s1.split(",")){
+								secondLevelListString.add(
+										BgeeStringUtils.secureString(s2,p.getMaxSize(),p.getFormat()));
 
-						for(String s2:s1.split(",")){
-							level2ListString.add(
-									BgeeStringUtils.secureString(s2,p.getMaxSize(),p.getFormat()));
+								if(p.getStructure() == URLParameter.UNIQUE_VALUE
+										|| p.getStructure() == URLParameter.MULTIPLE_VALUE){
+									break;
+								}
+
+							}
+
+							firstLevelListString.add(secondLevelListString);
+
+							if(p.getStructure() == URLParameter.UNIQUE_VALUE 
+									|| p.getStructure() == URLParameter.UNIQUE_LIST){
+								break;
+							}
+
 						}
 
-						level1ListString.add(level2ListString);
+						stringParameters.put(p,firstLevelListString);
+
+					}
+					else if(p.getType() == Integer.class){
+
+
+						ArrayList<ArrayList<Integer>> firstLevelListInteger = 
+								new ArrayList<ArrayList<Integer>>();
+
+						for(String s1:values){
+
+							ArrayList<Integer> secondLevelListInteger = 
+									new ArrayList<Integer>();
+
+							for(String s2:s1.split(",")){
+								secondLevelListInteger.add(
+										Integer.valueOf(s2));
+							}
+
+							firstLevelListInteger.add(secondLevelListInteger);
+
+						}
+
+						integerParameters.put(p,firstLevelListInteger);
 
 					}
 
-					stringParameters.put(p,level1ListString);
+					else if(p.getType() == Boolean.class){
 
-					break;
+						ArrayList<ArrayList<Boolean>> firstLevelListBoolean = 
+								new ArrayList<ArrayList<Boolean>>();
 
-					case("java.lang.Integer") :
+						for(String s1:values){
 
-						ArrayList<ArrayList<Integer>> level1HashSetInteger = 
-						new ArrayList<ArrayList<Integer>>();
+							ArrayList<Boolean> secondLevelListBoolean = 
+									new ArrayList<Boolean>();
 
-					for(String s1:values){
+							for(String s2:s1.split(",")){
+								secondLevelListBoolean.add(
+										Boolean.valueOf(s2));
+							}
 
-						ArrayList<Integer> level2HashSetInteger = 
-								new ArrayList<Integer>();
+							firstLevelListBoolean.add(secondLevelListBoolean);
 
-						for(String s2:s1.split(",")){
-							level2HashSetInteger.add(
-									Integer.valueOf(s2));
 						}
 
-						level1HashSetInteger.add(level2HashSetInteger);
-
+						booleanParameters.put(p,firstLevelListBoolean);
 					}
 
-					integerParameters.put(p,level1HashSetInteger);
-
-					break;
-
-					case("java.lang.Boolean") :
-
-						ArrayList<ArrayList<Boolean>> level1HashSetBoolean = 
-						new ArrayList<ArrayList<Boolean>>();
-
-					for(String s1:values){
-
-						ArrayList<Boolean> level2HashSetBoolean = 
-								new ArrayList<Boolean>();
-
-						for(String s2:s1.split(",")){
-							level2HashSetBoolean.add(
-									Boolean.valueOf(s2));
-						}
-
-						level1HashSetBoolean.add(level2HashSetBoolean);
-
-					}
-
-					booleanParameters.put(p,level1HashSetBoolean);
-
-					break;
-
-					default:
+					else {
 						// TODO throw exception if this portion of code is reached
-						break;
+
 					}
-					
+
 				}
-				
+
 			}
-			
+
 		}
-		
+
 	}
 
 	/**
@@ -348,7 +367,7 @@ public class RequestParameters {
 
 				//here we create a fake HttpServletRequest using the query string we retrieved.
 				//this way we do not duplicate code to load parameters into this RequestParameters object.
-								
+
 				BgeeHttpServletRequest request = new BgeeHttpServletRequest(retrievedQueryString);
 				this.loadParametersFromRequest(request,true);
 			}
@@ -410,10 +429,10 @@ public class RequestParameters {
 
 			boolean encodeUrlValue = this.encodeUrl;
 			this.encodeUrl = false;
-			bufferedWriter.write(generateParametersQuery("&",",",true,false,false));
+			bufferedWriter.write(generateParametersQuery(true,false,false));
 			this.encodeUrl = encodeUrlValue;
 
-			
+
 			bufferedWriter.close();
 		} catch (IOException e) {
 			//delete the file if something went wrong
@@ -486,8 +505,8 @@ public class RequestParameters {
 		return this.requestParametersStorageDirectory;
 	}
 
-	private String generateParametersQuery(String parametersSeparator,String valueSeparator,
-			boolean includeStorable, boolean includeNonStorable, boolean includeKey){
+	private String generateParametersQuery(boolean includeStorable, boolean includeNonStorable, 
+			boolean includeKey){
 
 		String urlFragment = "";
 
@@ -496,74 +515,76 @@ public class RequestParameters {
 
 			if((includeStorable && p.isStorable()) || (includeNonStorable && p.isStorable() == false)){
 
-				switch(p.getType().getCanonicalName()){
+				if(p.getType() == String.class){
 
-				case("java.lang.String") :
+					ArrayList<ArrayList<String>> firstLevelListString = this.getValues(p);
 
-					ArrayList<ArrayList<String>> level1ListString = this.getValue(p);
+					if(firstLevelListString != null){
 
-				if(level1ListString != null){
-
-					for(ArrayList<String> level2ListString:level1ListString){
-						urlFragment += p.getName()+ "=";
-						for(String value :level2ListString){
-							if(StringUtils.isNotBlank(value)){
-								urlFragment += this.urlEncode(value + valueSeparator);
+						for(ArrayList<String> secondLevelListString:firstLevelListString){
+							urlFragment += p.getName()+ "=";
+							for(String value :secondLevelListString){
+								if(StringUtils.isNotBlank(value)){
+									urlFragment += this.urlEncode(value + valuesSeparator);
+								}
 							}
+							urlFragment = urlFragment.substring(0, urlFragment.length()-1);
+							urlFragment += parametersSeparator ;
 						}
-						urlFragment = urlFragment.substring(0, urlFragment.length()-1);
-						urlFragment += parametersSeparator ;
 					}
+
 				}
 
-				break;
+				else if(p.getType() == Integer.class){
 
-				case("java.lang.Integer") :
+					ArrayList<ArrayList<Integer>> firstLevelListInteger = this.getValues(p);
 
-					ArrayList<ArrayList<Integer>> level1HashSetInteger = this.getValue(p);
+					if(firstLevelListInteger != null){
 
-				if(level1HashSetInteger != null){
-
-					for(ArrayList<Integer> level2HashSetInteger:level1HashSetInteger){
-						urlFragment += p.getName()+ "=";
-						for(Integer value :level2HashSetInteger){
-							urlFragment +=  
-									this.urlEncode(value.toString() + valueSeparator);
+						for(ArrayList<Integer> secondLevelListInteger:firstLevelListInteger){
+							urlFragment += p.getName()+ "=";
+							for(Integer value :secondLevelListInteger){
+								urlFragment +=  
+										this.urlEncode(value.toString() + valuesSeparator);
+							}
+							urlFragment = urlFragment.substring(0, urlFragment.length()-1);
+							urlFragment += parametersSeparator ;
 						}
-						urlFragment = urlFragment.substring(0, urlFragment.length()-1);
-						urlFragment += parametersSeparator ;
 					}
+
 				}
 
-				break;
+				else if(p.getType() == Boolean.class){
 
-				case("java.lang.Boolean") :
+					ArrayList<ArrayList<Boolean>> firstLevelListBoolean = this.getValues(p);
 
-					ArrayList<ArrayList<Boolean>> level1HashSetBoolean = this.getValue(p);
+					if(firstLevelListBoolean != null){
 
-				if(level1HashSetBoolean != null){
-
-					for(ArrayList<Boolean> level2HashSetBoolean:level1HashSetBoolean){
-						urlFragment += p.getName()+ "=";
-						for(Boolean value :level2HashSetBoolean){
-							urlFragment +=  
-									this.urlEncode(value.toString() + valueSeparator);
+						for(ArrayList<Boolean> secondLevelListBoolean:firstLevelListBoolean){
+							urlFragment += p.getName()+ "=";
+							for(Boolean value :secondLevelListBoolean){
+								urlFragment +=  
+										this.urlEncode(value.toString() + valuesSeparator);
+							}
+							urlFragment = urlFragment.substring(0, urlFragment.length()-1);
+							urlFragment += parametersSeparator ;
 						}
-						urlFragment = urlFragment.substring(0, urlFragment.length()-1);
-						urlFragment += parametersSeparator ;
 					}
+
 				}
 
-				break;
-				default:
+				else {
 					// Throw exception if this portion of code is reached
 				}
 
 			}
+
 		}
 
+
 		if(includeKey){
-			urlFragment += RequestParameters.getGeneratedKeyParameterName() + "=" + this.getGeneratedKey();
+			urlFragment += RequestParameters.getGeneratedKeyParameterName() + 
+					"=" + this.getGeneratedKey();
 		}
 
 		return urlFragment ;
@@ -602,10 +623,10 @@ public class RequestParameters {
 
 	public String generateUrl(){
 		if(this.getGeneratedKey() != null){
-			return generateParametersQuery("&",",",false,true,true);
+			return generateParametersQuery(false,true,true);
 		}
 		else{
-			return generateParametersQuery("&",",",true,true,false);
+			return generateParametersQuery(true,true,false);
 		}
 	}
 
@@ -664,29 +685,421 @@ public class RequestParameters {
 		return "data";
 	}
 
-	@SuppressWarnings("unchecked") // TODO comment on this issue
-	public <T> T getValue(URLParameter p){
+	@SuppressWarnings({ "unchecked", "rawtypes" }) // TODO comment on this issue
+	public <T> ArrayList<ArrayList<T>> getValues(URLParameter p){
 
-		switch(p.getType().getCanonicalName()){
+		if(p.getType() == String.class){
 
-		case("java.lang.String") :
-
-			return (T) stringParameters.get(p);
-
-		case("java.lang.Integer") :
-
-			return (T) integerParameters.get(p);
-
-		case("java.lang.Boolean") :
-
-			return (T) booleanParameters.get(p);
-
-		// TODO, throw exception
+			return (ArrayList) stringParameters.get(p);
 
 		}
 
+		else if(p.getType() == Integer.class){
+
+			return (ArrayList) integerParameters.get(p);
+
+		}	
+
+		else if(p.getType() == Boolean.class){
+
+			return (ArrayList) booleanParameters.get(p);		
+
+		}
+
+		else {
+
+			// TODO, throw exception			
+
+		}
+
+
 		return null;
 
+	}
+
+	public <T> T getValue(URLParameter p){
+		return this.getValue(p,0,0);
+	}	
+
+	public <T> T getValue(URLParameter p,int instance){
+		return this.getValue(p,instance,0);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T getValue(URLParameter p,int instance, int index){
+
+		if(p.getType() == String.class){
+			try{
+				return (T) stringParameters.get(instance).get(index);
+			}
+			catch(NullPointerException e){
+				return null;
+			}
+		}
+		else if(p.getType() == Integer.class){
+			try{
+				return (T) integerParameters.get(instance).get(index);
+			}
+			catch(NullPointerException e){
+				return null;
+			}
+		}
+		else if(p.getType() == Boolean.class){
+			try{
+				return (T) booleanParameters.get(instance).get(index);
+			}
+			catch(NullPointerException e){
+				return null;
+			}
+		}
+		else{
+			// TODO except
+			return null;
+		}
+	}
+
+	public <T> void setValue(URLParameter p,T value){
+		this.setValue(p, value, 0);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> void setValue(URLParameter p,T value, int instance){
+
+		if(p.getType() == String.class){
+
+			ArrayList<T> secondLevel ;
+
+			if(p.getStructure() == URLParameter.UNIQUE_VALUE){
+				instance = 0;
+			}
+			else if(p.getStructure() == URLParameter.UNIQUE_LIST){
+				instance = 0;
+			}
+
+			secondLevel= new ArrayList<T>();
+
+			secondLevel.add(value);
+
+			if(value instanceof String){
+
+				ArrayList<ArrayList<String>> firstLevel ;
+
+				if(this.getValues(p) == null){
+					firstLevel= new ArrayList<ArrayList<String>>();
+				}
+				else{
+					firstLevel= this.getValues(p);
+				}
+
+				try{
+					firstLevel.set(instance, (ArrayList<String>) secondLevel);		
+				}
+				catch(IndexOutOfBoundsException e){
+					firstLevel.add(new ArrayList<String>());
+					firstLevel.set(firstLevel.size()-1, (ArrayList<String>) secondLevel);		
+				}
+
+				stringParameters.put(p, firstLevel);
+
+			}
+
+			else if(value instanceof Integer){
+				ArrayList<ArrayList<Integer>> firstLevel ;
+
+				if(this.getValues(p) == null){
+					firstLevel= new ArrayList<ArrayList<Integer>>();
+				}
+				else{
+					firstLevel= this.getValues(p);
+				}
+
+				try{
+					firstLevel.set(instance, (ArrayList<Integer>) secondLevel);		
+				}
+				catch(IndexOutOfBoundsException e){
+					firstLevel.add(new ArrayList<Integer>());
+					firstLevel.set(firstLevel.size()-1, (ArrayList<Integer>) secondLevel);		
+				}
+
+				integerParameters.put(p, firstLevel);
+
+			}
+
+			else if(value instanceof Boolean){
+				ArrayList<ArrayList<Boolean>> firstLevel ;
+
+				if(this.getValues(p) == null){
+					firstLevel= new ArrayList<ArrayList<Boolean>>();
+				}
+				else{
+					firstLevel= this.getValues(p);
+				}
+
+				try{
+					firstLevel.set(instance, (ArrayList<Boolean>) secondLevel);		
+				}
+				catch(IndexOutOfBoundsException e){
+					firstLevel.add(new ArrayList<Boolean>());
+					firstLevel.set(firstLevel.size()-1, (ArrayList<Boolean>) secondLevel);		
+				}
+
+				booleanParameters.put(p, firstLevel);
+
+			}
+
+		}
+		else{
+			// TODO throw exception
+		}
+
+		this.generateKey(this.generateParametersQuery(true, false, false));
+
+	}
+
+	public <T> void addValue(URLParameter p,T value){
+		this.addValue(p, value, 0);
+	}
+
+	public <T> void addValue(URLParameter p,T value, int instance){
+
+		if(p.getType() == String.class){
+
+			if(p.getStructure() == URLParameter.UNIQUE_VALUE 
+					|| p.getStructure() == URLParameter.MULTIPLE_VALUE){
+				this.setValue(p, value, instance);
+
+			}
+
+			else if(p.getStructure() == URLParameter.UNIQUE_LIST){
+				instance = 0;
+			}
+
+			else{
+				if(value instanceof String){
+
+					ArrayList<ArrayList<String>> firstLevel ;
+					ArrayList<String> secondLevel ;
+
+					if(this.getValues(p) == null){
+						firstLevel= new ArrayList<ArrayList<String>>();
+					}
+					else{
+						firstLevel= this.getValues(p);
+					}
+
+					if(firstLevel.get(instance) == null){
+						secondLevel= new ArrayList<String>();
+						firstLevel.add(secondLevel);
+					}
+					else{
+						secondLevel= firstLevel.get(instance);
+					}
+
+					secondLevel.add((String)value);
+
+					firstLevel.set(instance, (ArrayList<String>) secondLevel);
+
+					stringParameters.put(p,firstLevel);
+				}
+
+				else if(value instanceof Integer){
+					ArrayList<ArrayList<Integer>> firstLevel ;
+					ArrayList<Integer> secondLevel ;
+
+					if(this.getValues(p) == null){
+						firstLevel= new ArrayList<ArrayList<Integer>>();
+					}
+					else{
+						firstLevel= this.getValues(p);
+					}
+
+					if(firstLevel.get(instance) == null){
+						secondLevel= new ArrayList<Integer>();
+						firstLevel.add(secondLevel);
+					}
+					else{
+						secondLevel= firstLevel.get(instance);
+					}
+
+					secondLevel.add((Integer)value);
+
+					firstLevel.set(instance, (ArrayList<Integer>) secondLevel);
+
+					integerParameters.put(p,firstLevel);				
+				}
+
+				else if(value instanceof Boolean){
+					ArrayList<ArrayList<Boolean>> firstLevel ;
+					ArrayList<Boolean> secondLevel ;
+
+					if(this.getValues(p) == null){
+						firstLevel= new ArrayList<ArrayList<Boolean>>();
+					}
+					else{
+						firstLevel= this.getValues(p);
+					}
+
+					if(firstLevel.get(instance) == null){
+						secondLevel= new ArrayList<Boolean>();
+						firstLevel.add(secondLevel);
+					}
+					else{
+						secondLevel= firstLevel.get(instance);
+					}
+
+					secondLevel.add((Boolean)value);
+
+					firstLevel.set(instance, (ArrayList<Boolean>) secondLevel);
+
+					booleanParameters.put(p,firstLevel);				
+				}
+
+			}
+
+		}
+		else{
+			// TODO throw exception
+		}
+
+		this.generateKey(this.generateParametersQuery(true, false, false));
+
+	}
+
+	public void addInstance(URLParameter p){
+		if(p.getStructure() == URLParameter.MULTIPLE_VALUE 
+				|| p.getStructure() == URLParameter.MULTIPLE_LIST){
+
+			if(p.getType() == String.class){
+
+				if(stringParameters.get(p) == null){
+					stringParameters.put(p, new ArrayList<ArrayList<String>>());
+				}
+
+				stringParameters.get(p).add(new ArrayList<String>());
+
+
+			}
+
+			else if(p.getType() == Integer.class){
+
+				if(integerParameters.get(p) == null){
+					integerParameters.put(p, new ArrayList<ArrayList<Integer>>());
+				}
+
+				integerParameters.get(p).add(new ArrayList<Integer>());
+
+			}
+
+			if(p.getType() == Boolean.class){
+
+				if(booleanParameters.get(p) == null){
+					booleanParameters.put(p, new ArrayList<ArrayList<Boolean>>());
+				}
+
+				booleanParameters.get(p).add(new ArrayList<Boolean>());	
+
+			}
+
+			else{
+				//  do something, throw exception ?
+			}
+		}
+
+	}
+
+	public void resetValues(URLParameter p){
+
+		if(p.getType() == String.class){
+			stringParameters.put(p, null);
+		}
+		else if(p.getType() == Integer.class){
+			integerParameters.put(p, null);
+		}
+		else if(p.getType() == Boolean.class){
+			booleanParameters.put(p, null);
+		}
+		else{
+			// TODO THROW except
+		}
+
+	}
+
+	/**
+	 * Clone this <code>RequestParameters</code> object and return a new one, 
+	 * with all parameters copied. 
+	 * 
+	 * @return 	a new <code>RequestParameters</code> object, 
+	 * 			with all parameter copied.
+	 */
+	public RequestParameters cloneWithAllParameters()
+	{
+		//to avoid duplicating methods, 
+		//we we simulate a HttpServletRequest with parameters corresponding by a query string we provide 
+		//holding storable parameters of this object
+		String queryString = this.generateUrl();
+		BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
+		RequestParameters clonedRequestParameters = new RequestParameters();
+
+		clonedRequestParameters = new RequestParameters(request);
+
+		//server parameters
+		// TODO manage server parameters
+		// clonedRequestParameters.loadServerParameters(this);
+		//Note: we do not clone httpMethod
+
+		clonedRequestParameters.setGeneratedKey(this.getGeneratedKey());
+
+		return clonedRequestParameters;
+	}
+
+	/**
+	 * Clone this <code>RequestParameters</code> object and return a new one, 
+	 * but only with the "storable" parameters and server parameters copied. 
+	 * 
+	 * @return 	a new <code>RequestParameters</code> object, 
+	 * 			with the same values for "storable" and server parameters as this one, 
+	 * 			but with "non-storable" parameters simply initialized.
+	 */
+	public RequestParameters cloneWithStorableParameters()
+	{
+		//to avoid duplicating methods, 
+		//we we simulate a HttpServletRequest with parameters corresponding by a query string we provide 
+		//holding storable parameters of this object
+		String queryString = this.generateParametersQuery(true, false, false);
+		BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
+
+		RequestParameters clonedRequestParameters = new RequestParameters();
+		//the BgeeHttpServletRequest holds no non-storable parameters 
+		//(the query string used to instantiate it contains no non-storable parameters)
+		//so calling loadNonStorableParameters here just initialize the non-storable parameters
+
+		clonedRequestParameters = new RequestParameters(request);
+
+
+		//server parameters
+		// TODO manage server parameters
+		// clonedRequestParameters.loadServerParameters(this);
+		//Note: we do not clone httpMethod
+
+		clonedRequestParameters.setGeneratedKey(this.getGeneratedKey());
+
+		return clonedRequestParameters;
+	}
+
+	public String getParametersSeparator() {
+		return parametersSeparator;
+	}
+
+	public void setParametersSeparator(String parameterSeparator) {
+		this.parametersSeparator = parameterSeparator;
+	}
+
+	public String getvaluesSeparator() {
+		return valuesSeparator;
+	}
+
+	public void setvaluesSeparator(String valuesSeparator) {
+		this.valuesSeparator = valuesSeparator;
 	}
 }
 

@@ -10,55 +10,57 @@ package org.bgee.controller;
  */
 public enum URLParameter {
 
+	// TODO COMMENT MISSING... to be completed soon !
+	//
 	// TODO	 - Check that the name of each parameter makes sense
-	// 		 - Set the appropriate value for isStorable, isSecure and format if needed.
+	// 		 - Set the appropriate value for isStorable, isSecure, structure and format if needed.
 	// 		 - Add a comment for every parameter
 	
 	/**
 	 * DESCRIPTION PARAM
 	 */
-	ACTION ("action", true, false, String.class),
-	
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ALL_ORGANS ("all_organs", true, false, Boolean.class),
+	ACTION ("action", 4, false, false, String.class),
 
 	/**
 	 * DESCRIPTION PARAM
 	 */
-	ALL_STAGES  ("all_stages", true, false, Boolean.class),
-	
+	ALL_ORGANS ("all_organs", 2, false, false, Boolean.class),
+
 	/**
 	 * DESCRIPTION PARAM
 	 */
-	ANY_HOG ("any_hog", true, false, Boolean.class),	 
+	ALL_STAGES  ("all_stages", 3, false, false, Boolean.class),
+
+	/**
+	 * DESCRIPTION PARAM
+	 */
+	ANY_HOG ("any_hog", 4, true, false, Boolean.class),	 
 
 	/**
 	 * DESCRIPTION PARAM
 	 */
 	ANY_SPECIES ("any_species", true, false, Boolean.class),
-	
+
 	/**
 	 * DESCRIPTION PARAM
 	 */
 	ANY_STRUCTURES ("any_structures_", false, true, Boolean.class),
-	
+
 	/**
 	 * DESCRIPTION PARAM
 	 */
 	ATTRIBUTE_LIST ("attribute_list", false, true, String.class),
-	
+
 	/**
 	 * DESCRIPTION PARAM
 	 */
-	CAPTCHA ("captcha", true, false, String.class),
+	CAPTCHA ("captcha", false, false, String.class),
 
 	/**
 	 * DESCRIPTION PARAM
 	 */	
 	CHOSEN_DATA_TYPE("chosen_data_type", true, false, Integer.class),
-	
+
 	/**
 	 * DESCRIPTION PARAM
 	 */
@@ -108,10 +110,10 @@ public enum URLParameter {
 	 * DESCRIPTION PARAM
 	 */
 	GENE_ORGAN_STAGE_INFORMATION ("gene_organ_stage_information", false, true, Boolean.class),	
-	
+
 	/**
-	* DESCRIPTION PARAM
-	*/
+	 * DESCRIPTION PARAM
+	 */
 	HOG_ID ("hog_id", false, true, String.class),
 
 	/**
@@ -178,7 +180,7 @@ public enum URLParameter {
 	 * DESCRIPTION PARAM
 	 */	
 	ORGAN_LIST ("organ_list_", false, true, String.class),	 
-	
+
 	/**
 	 * DESCRIPTION PARAM
 	 */	
@@ -253,7 +255,7 @@ public enum URLParameter {
 	 * DESCRIPTION PARAM
 	 */	
 	STAGE_CHILDREN ("stage_children", false, true, Boolean.class),
-	
+
 	/**
 	 * DESCRIPTION PARAM
 	 */	
@@ -273,41 +275,71 @@ public enum URLParameter {
 	 * DESCRIPTION PARAM
 	 */
 	UNIPROT_ID ("uniprot_id", false, true, String.class);
-	
-		
-    /**
-     * A {@code String} that contains the name of the parameter as written in the URL.
-     */
+
+	/**
+	 * Constant to indicates that the parameters has to be a unique value, name=value
+	 */
+	public final static int UNIQUE_VALUE = 1 ;
+
+	/**
+	 * Constant to indicates that the parameters has to be a unique list, name=value1,value2,value3
+	 */
+	public final static int UNIQUE_LIST = 2 ;
+
+	/**
+	 * Constant to indicates that the parameters can have multiple value, name=value1&name=value2
+	 */
+	public final static int MULTIPLE_VALUE = 3 ;
+
+	/**
+	 * Constant to indicates that the parameters 
+	 * can be multiple lists, name=value1,value2&name=value3,value4
+	 */
+	public final static int MULTIPLE_LIST = 4 ;
+
+	/**
+	 * A {@code String} that contains the name of the parameter as written in the URL.
+	 */
 	private final String name ;
-		
-	 /**
-     * An {@code int} that represents the maximum size allowed for the parameter.
-     */
+
+	/**
+	 * An {@code int} that is one of the constants to indicates the structure possible for
+	 * this parameter.
+	 * @see UNIQUE_VALUE
+	 * @see UNIQUE_LIST
+	 * @see MULTIPLE_VALUE
+	 * @see MULTIPLE_LIST
+	 */
+	private final int structure ;
+
+	/**
+	 * An {@code int} that represents the maximum size allowed for the parameter.
+	 */
 	private final int maxSize ;
-	
-	 /**
-     * A {@code boolean} that indicates whether the parameter is storable or not.
-     */
+
+	/**
+	 * A {@code boolean} that indicates whether the parameter is storable or not.
+	 */
 	private final boolean isStorable ;
-	
-	 /**
-     * A {@code boolean} that indicates whether the parameter is secure, i.e. contains information that
-     * should not be kept or displayed in the URL such as a password.
-     */
+
+	/**
+	 * A {@code boolean} that indicates whether the parameter is secure, i.e. contains information that
+	 * should not be kept or displayed in the URL such as a password.
+	 */
 	private final boolean isSecure ;
-	
+
 	/**
 	 * A {@code Class<?>} that represents the data type of the parameter.
 	 */
 	private final Class<?> type ;
-	
+
 	/**
 	 * A {@code String} that contains the regular expression the parameter should match. 
 	 * Is {@code null} when the parameter is either a {@code String} without content restrictions
 	 * or a different data type.
 	 */
 	private final String format;
-	
+
 	/**
 	 * Default max length for a parameter.
 	 */
@@ -322,10 +354,10 @@ public enum URLParameter {
 	 */
 	URLParameter(String name, boolean isStorable, boolean isSecure,Class<?> type){
 
-		this(name,isStorable,isSecure,type,MAXLENGTH,null);
-		
+		this(name, URLParameter.MULTIPLE_LIST, isStorable,isSecure,type,MAXLENGTH,null);
+
 	}	
-	
+
 	/**
 	 * Constructor
 	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
@@ -336,10 +368,10 @@ public enum URLParameter {
 	 */
 	URLParameter(String name, boolean isStorable, boolean isSecure,Class<?> type, String format){
 
-		this(name,isStorable,isSecure,type,MAXLENGTH,format);
-		
+		this(name, URLParameter.MULTIPLE_LIST, isStorable,isSecure,type,MAXLENGTH,format);
+
 	}	
-	
+
 	/**
 	 * Constructor
 	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
@@ -350,42 +382,71 @@ public enum URLParameter {
 	 */
 	URLParameter(String name, boolean isStorable, boolean isSecure,Class<?> type, int maxSize){
 
-		this(name,isStorable,isSecure,type,maxSize,null);
-		
+		this(name, URLParameter.MULTIPLE_LIST, isStorable,isSecure,type,maxSize,null);
+
 	}		
+
 	/**
 	 * Constructor
 	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
+	 * @param structure		An {@code int} that is one of the constants to indicates the structure possible for
+	 * 						this parameter.
+	 * @param isStorable	A {@code boolean} that tells whether the parameter is storable or not 
+	 * @param isSecure		A {@code boolean} that tells whether the parameter is secure or not 
+	 * @param type			A {@code Class<?>} that represents the data type of the parameter.
+	 */
+	URLParameter(String name, Integer structure,boolean isStorable, boolean isSecure,Class<?> type){
+
+		this(name, structure, isStorable,isSecure,type,0,null);
+	}
+	/**
+	 * Constructor
+	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
+	 * @param structure		An {@code int} that is one of the constants to indicates the structure possible for
+	 * 						this parameter.
 	 * @param isStorable	A {@code boolean} that tells whether the parameter is storable or not 
 	 * @param isSecure		A {@code boolean} that tells whether the parameter is secure or not 
 	 * @param type			A {@code Class<?>} that represents the data type of the parameter.
 	 * @param int			An {@code int} that represents the maximum size allowed for the parameter.
 	 * @param format		A {@code String} that contains the regular expression that this parameter has to fit to
 	 */
-	URLParameter(String name, boolean isStorable, boolean isSecure,Class<?> type,int maxSize,String format){
+	URLParameter(String name, Integer structure,boolean isStorable, boolean isSecure,Class<?> type,int maxSize,String format){
 
 		this.name = name ;
+		this.structure = structure;
 		this.maxSize = maxSize ;
 		this.isStorable = isStorable ;
 		this.isSecure = isSecure ;
 		this.type = type ;
 		this.format = format ;
 	}
-		
+
 	/**
 	 * @return A {@code String} that contains the name of the parameter as it is written in an URL.
 	 */
 	public String getName() {
 		return name;
 	}
-	
+
+	/**
+	 * @return 	An {@code int} that is one of the constants to indicates the structure possible for
+	 * 			this parameter.
+	 * @see UNIQUE_VALUE
+	 * @see UNIQUE_LIST
+	 * @see MULTIPLE_VALUE
+	 * @see MULTIPLE_LIST
+	 */
+	public int getStructure() {
+		return structure;
+	}
+
 	/**
 	 * @return An {@code int} that represents the maximum size allowed for the parameter.
 	 */
 	public int getMaxSize() {
 		return maxSize;
 	}
-		
+
 	/**
 	 * @return	A {@code boolean} that indicates whether the parameter is storable or not.
 	 */

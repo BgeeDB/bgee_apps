@@ -10,14 +10,6 @@
             </genes>
         </database>
     </species>
-    <species name="ANOCA" NCBITaxId="28377">
-        <database name="ANOCA" version="Ensembl 70; AnoCar2.0; 11-DEC-2012">
-            <genes>
-                <gene id="10392" protId="ENSACAP00000017311" transcriptId="ENSACAT00000017651" geneId="ENSACAG00000017588"/>
-                <gene id="65782" protId="ENSACAP00000009174" transcriptId="ENSACAT00000009367" geneId="ENSACAG00000009373"/>
-            </genes>
-        </database>
-    </species>
     <species name="CAEEL" NCBITaxId="6239">
         <database name="CAEEL" version="Ensembl 73; WBcel235; 24-AUG-2013">
             <genes>
@@ -121,7 +113,6 @@
                     <orthologGroup >
                         <property name="TaxRange" value="Sauria"/>
                         <property name="TaxId" value="32561"/>
-                        <geneRef id="65782"/>
                         <geneRef id="140415"/>
                     </orthologGroup>
                 </orthologGroup>

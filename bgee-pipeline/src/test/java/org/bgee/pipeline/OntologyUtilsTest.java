@@ -419,4 +419,31 @@ public class OntologyUtilsTest extends TestAncestor {
         assertFalse(utils.isNonInformativeSubsetMember(
                 wrapper.getOWLClassByIdentifier("UBERON:0000002")));
     }
+    
+    /**
+     * Test the method {@link OntologyUtils#getOWLClass(String)}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetOWLClass() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/xRefMappings.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass expectedClass = wrapper.getOWLClassByIdentifier("ID:1");
+        
+        //Test OBO-like ID
+        assertEquals(expectedClass, utils.getOWLClass("ID:1"));
+        //test IRI
+        assertEquals(expectedClass, utils.getOWLClass("http://purl.obolibrary.org/obo/ID_1"));
+        //test xrefs
+        assertEquals(expectedClass, utils.getOWLClass("ALT_ID:1"));
+        assertEquals(expectedClass, utils.getOWLClass("ALT_ALT_ID:1"));
+        //if mapping is ambiguous, return null
+        assertNull(utils.getOWLClass("ALT_ID:2"));
+    }
 }

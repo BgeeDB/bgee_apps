@@ -763,6 +763,49 @@ public class OntologyUtils {
     }
     
     /**
+     * Obtains from the ontology wrapped in this object the {@code OWLClass} corresponding to 
+     * {@code id}. The {@code OWLClass} will be tried to be identified first by assuming 
+     * {@code id} is an OBO-like ID (using 
+     * {@code OWLGraphWrapperExtended.getOWLClassByIdentifier(String)}), then if not identified, 
+     * by assuming it is the {@code String} representation of an {@code IRI} (using 
+     * {@code OWLGraphWrapperExtended.getOWLClass(String)}), then if not identified, 
+     * by assuming it is an xref (in that case, xref mappings are retrieved calling 
+     * {@link #getXRefMappings()}, then if one and only one ID is associated to the xref, 
+     * the corresponding {@code OWLClass} is retrieved).
+     * 
+     * @param id    A {@code String} that can be either an OBO-like ID, or an {@code IRI}, 
+     *              or an XRef mapped to an {@code OWLClass}.
+     * @return      The {@code OWLClass} retrieved based on {@code id}.
+     */
+    public OWLClass getOWLClass(String id) {
+        log.entry(id);
+        
+        OWLClass cls = this.getWrapper().getOWLClassByIdentifier(id);
+        //if id was not an OBO-like ID, but an IRI
+        if (cls == null) {
+            cls = this.getWrapper().getOWLClass(id);
+        }
+        //in case the id provided was actually an xref
+        if (cls == null) {
+            Set<String> classIdsMapped = this.getXRefMappings().get(id);
+            if (classIdsMapped != null) {
+                if (classIdsMapped.size() == 1) {
+                    String idMapped = classIdsMapped.iterator().next();
+                    cls = this.getWrapper().getOWLClassByIdentifier(idMapped);
+                    if (cls == null) {
+                        cls = this.getWrapper().getOWLClass(idMapped);
+                    }
+                } else {
+                    log.warn("Xref {} mapped to more than one class ID, cannot choose: {}", 
+                            id, classIdsMapped);
+                }
+            }
+        }
+        
+        return log.exit(cls);
+    }
+    
+    /**
      * Obtains a unmodifiable mapping from OBO-like IDs of obsolete {@code OWLClass}es, 
      * present in the {@code OWLOntology} wrapped by this object, to the IDs associated to 
      * their {@code consider} annotation. Only obsolete {@code OWLClass}es are considered.
@@ -924,7 +967,7 @@ public class OntologyUtils {
      *                                          provided at instantiation, and an error 
      *                                          occurred while loading it.
      */
-    private OWLGraphWrapper getWrapper() throws UnknownOWLOntologyException {
+    public OWLGraphWrapper getWrapper() throws UnknownOWLOntologyException {
         if (this.wrapper == null) {
             this.wrapper = new OWLGraphWrapper(this.ontology);
         }

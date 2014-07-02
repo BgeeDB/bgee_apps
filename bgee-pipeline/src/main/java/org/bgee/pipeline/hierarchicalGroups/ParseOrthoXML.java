@@ -25,6 +25,9 @@ import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+import org.bgee.model.dao.api.species.TaxonDAO;
+import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
+import org.bgee.model.dao.api.species.TaxonDAO.TaxonTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
 
@@ -85,7 +88,15 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @see #loadGeneIdsFromDb()
      */
     private Set<String> geneIdsInBgee;
-    
+
+    /**
+     * A {@code Set} of {@code String}s containing taxon IDs of the Bgee database. See 
+     * this method for details.
+     * 
+     * @see #loadTaxonIdsFromDb()
+     */
+    private Set<String> taxonIdsInBgee;
+
     /**
      * A {@code Map} storing the mappings from genome species IDs to fake gene ID prefixes
      * of species using that genome. See this method for details.
@@ -123,6 +134,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         this.hierarchicalGroupTOs = new HashSet<HierarchicalGroupTO>();
         this.geneTOs = new HashSet<GeneTO>();
         this.geneIdsInBgee = new HashSet<String>();
+        this.taxonIdsInBgee = new HashSet<String>();
         this.speciesPrefixes = new HashMap<Integer, Set<String>>();
         this.genesUpdated = new HashMap<String, String>();
     }
@@ -167,24 +179,25 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * Performs the complete task of reading the Hierarchical Groups orthoxml file and
      * adding the data into the database.
      * <p>
-     * First, it retrieves genes id from Bgee to be able to check if OMA genes are in Bgee 
-     * and to update OMAParentNodeId in gene table. Second it retrieves 
+     * First, it retrieves gene IDs from Bgee to be able to check if OMA genes are in Bgee
+     * and to update OMAParentNodeId in gene table. Second, it retrieves taxon IDs to be
+     * able to check if OMA HOGs correspond to taxa present in Bgee. Third, it retrieves
      * genomeSpeciesId-fakeGeneIdPrefix from Bgee to be able to duplicate genes with the
      * fake prefix when a species uses a genome of another species. Then, this method
-     * reads the Hierarchical Orthologous Groups OrthoXML file, iterates through all the 
-     * orthologous groups present in the file and builds a {@code Collection} of 
-     * {@code HierarchicalGroupTO}s as a nested set model, and a {@code Collection} of 
-     * {@code GeneTO}s, in order to insert data into the OMAHierarchicalGroup table and  
-     * to update data in the gene table.
+     * reads the Hierarchical Orthologous Groups OrthoXML file, iterates through all the
+     * orthologous groups present in the file and builds a {@code Collection} of
+     * {@code HierarchicalGroupTO}s as a nested set model, and a {@code Collection} of
+     * {@code GeneTO}s, in order to insert data into the OMAHierarchicalGroup table and to
+     * update data in the gene table.
      * 
-     * @param orthoXMLFile      A {@code String} that is the path to the OMA groups file.
-     * @throws DAOException             If an error occurred while getting or updating the 
-     *                                  data into the Bgee database.
-     * @throws FileNotFoundException    If some files could not be found.
-     * @throws XMLStreamException       If there is an error in the well-formedness of the
-     *                                  XML or other unexpected processing errors.
-     * @throws XMLParseException        If there is an error in parsing the XML retrieved
-     *                                  by the OrthoXMLReader.
+     * @param orthoXMLFile A {@code String} that is the path to the OMA groups file.
+     * @throws DAOException If an error occurred while getting or updating the data into
+     *             the Bgee database.
+     * @throws FileNotFoundException If some files could not be found.
+     * @throws XMLStreamException If there is an error in the well-formedness of the XML
+     *             or other unexpected processing errors.
+     * @throws XMLParseException If there is an error in parsing the XML retrieved by the
+     *             OrthoXMLReader.
      */
     public void parseXML(String orthoXMLFile) throws DAOException, FileNotFoundException, 
             XMLStreamException, XMLParseException {  
@@ -195,10 +208,14 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // (a IllegalStateException would be generated because the OrthoXML groups
         // loaded from the file would be invalid, so it would be a wrong argument).
         try {
-            // Retrieve genes id of the Bgee database to be able to check if OMA genes are
+            // Retrieve gene IDs of the Bgee database to be able to check if OMA genes are
             // in Bgee and to update OMAParentNodeId in gene table.
             this.loadGeneIdsFromDb();
 
+            // Retrieve taxon IDs of the Bgee database to be able to check if OMA HOGs 
+            // correspond to taxa present in Bgee.
+            this.loadTaxonIdsFromDb();
+            
             // Retrieve genomeSpeciesId-fakeGeneIdPrefix from Bgee to be able to duplicate
             // genes with the fake prefix when a species using a genome of  another species.
             this.loadFakePrefixesFromDb();
@@ -261,6 +278,31 @@ public class ParseOrthoXML extends MySQLDAOUser {
     }
 
     /**
+     * Retrieves all taxon IDs present into the Bgee database.
+     * 
+     * @throws DAOException     If an error occurred while getting the data from the Bgee
+     *                          database.
+     * @see #taxonIdsInBgee
+     */
+    private void loadTaxonIdsFromDb() throws DAOException {
+        log.entry();
+        
+        log.info("Start retrieving taxon IDs...");
+        TaxonDAO dao = this.getTaxonDAO();
+        dao.setAttributes(TaxonDAO.Attribute.ID);
+        TaxonTOResultSet rsTaxa = dao.getAllTaxa();
+        while (rsTaxa.next()) {
+            TaxonTO t = rsTaxa.getTO();
+            this.taxonIdsInBgee.add(t.getId());
+        }
+        if (log.isInfoEnabled()) {
+            log.info("Done retrieving taxon IDs, {} taxa found", taxonIdsInBgee.size());
+        }
+    
+        log.exit();
+    }
+
+    /**
      * Retrieves genome species ID and fake gene ID prefixes of species using a genome of 
      * another species.
      * 
@@ -278,6 +320,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies();
         while (rsSpecies.next()) {
             SpeciesTO speciesTO = rsSpecies.getTO();
+            log.debug(speciesTO.getName()+" - "+speciesTO.getGenomeSpeciesId()+" - "+speciesTO.getFakeGeneIdPrefix());
             if (StringUtils.isNotBlank(speciesTO.getGenomeSpeciesId()) && 
                     !speciesTO.getId().equals(speciesTO.getGenomeSpeciesId())) {
                 int genomeSpeciesId = Integer.parseInt(speciesTO.getGenomeSpeciesId());
@@ -352,7 +395,11 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // to be inserted into the Bgee database.
         // The last argument is the number of children of the HierarchicalGroupTO to create. 
         // So, we need to remove 1 to countGroups() to subtract the current group.
+        
+        //TODO check if species or taxon
+        
         //TODO: shouldn't it be added only if it is a taxon relevant to Bgee?
+        
         //      what we do with gene of a taxon unrelevant to Bgee?
         this.addHierarchicalGroupTO(omaNodeId, omaXrefId, this.nestedSetBoundSeed,
                 group.getProperty("TaxId"), countGroups(group) - 1);

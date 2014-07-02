@@ -17,8 +17,10 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
+import org.bgee.model.dao.mysql.species.MySQLTaxonDAO.MySQLTaxonTOResultSet;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -99,6 +101,27 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 return counter++ < 8;
             }
         });
+        
+        // We need a mock MySQLTaxonTOResultSet to mock the return of getAllTaxa().
+        MySQLTaxonTOResultSet mockTaxonTORs = mock(MySQLTaxonTOResultSet.class);
+        when(mockManager.mockTaxonDAO.getAllTaxa()).thenReturn(mockTaxonTORs);
+        // Determine the behavior of consecutive calls to getTO().
+        when(mockTaxonTORs.getTO()).thenReturn(
+                new TaxonTO("111", "taxSName111", "taxCName111", 1, 10, 1, true),
+                new TaxonTO("211", "taxSName211", "taxCName211", 2, 3, 2, false),
+                new TaxonTO("311", "taxSName311", "taxCName311", 4, 9, 2, false),
+                new TaxonTO("411", "taxSName411", "taxCName411", 5, 6, 1, true),
+                new TaxonTO("511", "taxSName511", "taxCName511", 7, 8, 1, true));
+        // Determine the behavior of consecutive calls to next().
+        when(mockTaxonTORs.next()).thenAnswer(new Answer<Boolean>() {
+            int counter = -1;
+            @SuppressWarnings("unused")
+            public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+                // Return true while there is TaxonTO to return 
+                return counter++ < 5;
+            }
+        });
+
 
         // We need a mock MySQLGeneTOResultSet to mock the return of getAllGenes().
         MySQLGeneTOResultSet mockGeneTORs = mock(MySQLGeneTOResultSet.class);

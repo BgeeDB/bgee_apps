@@ -72,45 +72,22 @@ public class ParseOrthoXMLTest extends TestAncestor {
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
         // Determine the behavior of consecutive calls to getTO().
         
-        //TODO: test should be much much simpler, do not use all species in Bgee.
-        //TODO: Some species are presents in the fakeOMA file, and not in this list.
+        // Some species are presents in the fakeOMA file, and not in this list.
         when(mockSpeciesTORs.getTO()).thenReturn(
                 new SpeciesTO("9606", "human", "Homo", "sapiens", "1", 
                         "path/file9606", "9606", ""),
-                new SpeciesTO("10090", "mouse", "Mus", "musculus", "2",
-                        "path/file9606", "10090", ""),
                 new SpeciesTO("7955", "zebrafish", "Danio", "rerio", "3", 
                         "path/file9606", "7955", ""),
-                new SpeciesTO("8364", "xenopus", "Xenopus", "tropicalis", "4", 
-                        "path/file9606", "8364", ""),
                 new SpeciesTO("7227", "fruitfly", "Drosophila", "melanogaster", "5", 
                         "path/file9606", "7227", ""),
-                new SpeciesTO("9031", "chicken", "Gallus", "gallus", "6", 
-                        "path/file9606", "9031", ""),
-                new SpeciesTO("9593", "gorilla", "Gorilla", "gorilla", "7", 
-                        "path/file9606", "9593", ""),
-                new SpeciesTO("9544", "macaque", "Macaca", "mulatta", "8", 
-                        "path/file9606", "9544", ""),
-                new SpeciesTO("13616", "opossum", "Monodelphis", "domestica", "9", 
-                        "path/file9606", "13616", ""),
-                new SpeciesTO("9258", "platypus", "Ornithorhynchus", "anatinus", 
-                        "10", "path/file9606", "9258", ""),
                 new SpeciesTO("9598", "chimpanzee", "Pan", "troglodytes", "11", 
                         "path/file9606", "9598", ""),
                 new SpeciesTO("9597", "bonobo", "Pan", "paniscus", "12", 
                         "path/file9606", "9598", "PPAG"),
                 new SpeciesTO("9600", "orangutan", "Pongo", "pygmaeus", "13", 
                         "path/file9606", "9601", "PPYG"),
-                new SpeciesTO("9913", "cow", "Bos", "taurus", "14", 
-                        "path/file9606", "9913", ""),
-                new SpeciesTO("10116", "rat", "Rattus", "norvegicus", "15", 
-                        "path/file9606", "10116", ""),
                 new SpeciesTO("28377", "anolis", "Anolis", "carolinensis", "16", 
-                        "path/file9606", "28377", ""),
-                new SpeciesTO("99883", "tetraodon", "Tetraodon", "nigroviridis", "17", 
-                        "path/file9606", "99883", ""),
-                new SpeciesTO("9823", "pig", "Sus", "scrofa", "18", 
-                        "path/file9606", "9823", ""),
+                        "path/file9606", "9598", "ACAG"),
                 new SpeciesTO("6239", "c.elegans", "Caenorhabditis", "elegans", "19", 
                         "path/file9606", "6239", ""));
         // Determine the behavior of consecutive calls to next().
@@ -119,7 +96,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
             @SuppressWarnings("unused")
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
                 // Return true while there is speciesTO to return 
-                return counter++ < 19;
+                return counter++ < 8;
             }
         });
 
@@ -129,8 +106,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Determine the behavior of consecutive calls to getTO(). 
         // Some genes are presents in the fakeOMA file, and not in this list.
         when(mockGeneTORs.getTO()).thenReturn(
-                new GeneTO("ENSACAG00000017588", "NAME17588", "DESC17588", 28377, 12, 0, true),
-                new GeneTO("ENSACAG00000017588", "NAME17588", "DESC17588", 28377, 12, 0, true),
+                new GeneTO("ACAG00000010079", "NAME10079", "DESC10079", 28377, 12, 0, true),
                 new GeneTO("ENSBTAG00000019302", "NAME19302", "DESC19302", 9913, 12, 0, true),
                 new GeneTO("ENSGALG00000012885", "NAME12885", "DESC12885", 9031, 12, 0, true),
                 new GeneTO("ENSDARG00000089109", "NAME89109", "DESC89109", 7955, 12, 0, true),
@@ -139,11 +115,12 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 new GeneTO("FBgn0003721", "NAME3721", "DESC3721", 7227, 12, 0, true),
                 new GeneTO("ENSGGOG00000000790", "NAME790", "DESC790", 9595, 12, 0, true),
                 new GeneTO("ENSGGOG00000002173", "NAME2173", "DESC2173", 9595, 12, 0, true),
+                new GeneTO("ENSG00000268179", "NAME268179", "DESC268179", 9606, 12, 0, true),
                 new GeneTO("ENSG00000171791", "NAME171791", "DESC171791", 9606, 12, 0, true),
+                new GeneTO("ENSG00000027681", "NAME27681", "DESC27681", 9606, 12, 0, true),
+                new GeneTO("ENSG00000005242", "NAME05242", "DESC05242", 9606, 12, 0, true),
+                new GeneTO("ENSG00000029527", "NAME29527", "DESC29527", 9606, 12, 0, true),
                 new GeneTO("ENSMMUG00000006577", "NAME06577", "DESC06577", 9544, 12, 0, true),
-                new GeneTO("ENSMODG00000027681", "NAME27681", "DESC27681", 13616, 12, 0, true),
-                new GeneTO("ENSMODG00000005242", "NAME05242", "DESC05242", 13616, 12, 0, true),
-                new GeneTO("ENSMODG00000029527", "NAME29527", "DESC29527", 13616, 12, 0, true),
                 new GeneTO("ENSMUSG00000057329", "NAME57329", "DESC57329", 10090, 12, 0, true),
                 new GeneTO("ENSPTRG00000010079", "NAME10079", "DESC10079", 9598, 12, 0, true),
                 new GeneTO("PPAG00000010079", "NAME10079", "DESC10079", 9598, 12, 0, false),
@@ -152,14 +129,14 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 new GeneTO("PPYG00000014510", "NAME14510", "DESC14510", 9601, 12, 0, false),
                 new GeneTO("ENSRNOG00000002791", "NAME02791", "DESC02791", 10116, 12, 0, true),
                 new GeneTO("ENSTNIG00000000982", "NAME00982", "DESC00982", 99883, 12, 0, true),
-                new GeneTO("ENSXETG00000024124", "NAME24124", "DESC24124", 8364, 12, 0, true));
+                new GeneTO("ENSDARG00000024124", "NAME24124", "DESC24124", 8364, 12, 0, true));
         // Determine the behavior of consecutive calls to next().
         when(mockGeneTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
             @SuppressWarnings("unused")
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
                 // Return true while there is geneTO to return 
-                return counter++ < 24;
+                return counter++ < 23;
             }
         });
 
@@ -196,22 +173,20 @@ public class ParseOrthoXMLTest extends TestAncestor {
         
         // Generate the expected List of GeneTOs to verify the calls made to the DAO.
         List<GeneTO> expectedGeneTOs = Arrays.asList(
-                new GeneTO("ENSDARG00000087888", "", "", 0, 0, 1, true),
-                new GeneTO("ENSMODG00000027681", "", "", 0, 0, 2, true),
-                new GeneTO("ENSMODG00000029527", "", "", 0, 0, 2, true),
-                new GeneTO("ENSGGOG00000002173", "", "", 0, 0, 3, true),
+                new GeneTO("ENSDARG00000087888", "", "", 0, 0, 1, true),                
+                new GeneTO("ENSG00000027681", "", "", 0, 0, 2, true),
+                new GeneTO("ENSG00000029527", "", "", 0, 0, 2, true),                
                 new GeneTO("PPYG00000014510", "", "", 0, 0, 3, true),
                 new GeneTO("ENSPTRG00000010079", "", "", 0, 0, 3, true),
+                new GeneTO("ACAG00000010079", "", "", 0, 0, 3, true),
                 new GeneTO("PPAG00000010079", "", "", 0, 0, 3, true),
                 new GeneTO("ENSDARG00000025613", "", "", 0, 0, 5, true),
-                new GeneTO("ENSTNIG00000000982", "", "", 0, 0, 6, true),
                 new GeneTO("ENSDARG00000089109", "", "", 0, 0, 6, true),
-                new GeneTO("ENSXETG00000024124", "", "", 0, 0, 7, true),
+                new GeneTO("ENSDARG00000024124", "", "", 0, 0, 7, true),
                 new GeneTO("ENSG00000171791", "", "", 0, 0, 7, true),
                 new GeneTO("PPYG00000009212", "", "", 0, 0, 9, true),
-                new GeneTO("ENSMODG00000005242", "", "", 0, 0, 9, true),
-                new GeneTO("ENSGALG00000012885", "", "", 0, 0, 10, true),
-                new GeneTO("ENSACAG00000017588", "", "", 0, 0, 10, true),
+                new GeneTO("ENSG00000005242", "", "", 0, 0, 9, true),
+                new GeneTO("ENSG00000268179", "", "", 0, 0, 10, true),
                 new GeneTO("FBgn0003721", "", "", 0, 0, 12, true));
 
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);

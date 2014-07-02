@@ -185,6 +185,23 @@
 	<!-- Dependencies needed for some sub-projects -->
 	<dependencyManagement>
 		<dependencies>
+		
+		    <!-- bgee-dao-api, used by many modules -->
+		    <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>bgee-dao-api</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+		    <!-- test classes from bgee-dao-pi, used by any module using DAOs -->
+		    <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>bgee-dao-api</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+
 
 			<!-- Needed for the pipeline -->
 			<!-- Includes OWLools-Core, OBO2OWL, OWLAPI -->
@@ -623,6 +640,13 @@
                         </pluginExecutions>
                     </lifecycleMappingMetadata>
                 </configuration>
+            </plugin>
+            
+            <!-- to generate jar of test classes -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.5</version>
             </plugin>
            
           </plugins>

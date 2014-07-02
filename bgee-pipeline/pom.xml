@@ -17,11 +17,16 @@
     <!-- The API will be used to access he DAOManager and the TransferObjects, 
         otherwise, the MySQL layer will be used directly. -->
     <dependency>
-    <groupId>${project.groupId}</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>bgee-dao-api</artifactId>
-      <version>${project.version}</version>
-      <scope>compile</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bgee-dao-api</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    
     <!-- The pipeline is allowed to access directly the MySQL layer. 
          Notably, the insertion/update queries are not part of the API. -->
     <dependency>

@@ -174,6 +174,10 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         public HierarchicalGroupTO(int id, String OMAGroupId, int leftBound,
                 int rightBound, int taxonId) {
             super(String.valueOf(id));
+            if (leftBound < 0 || rightBound < 0 || taxonId < 0) {
+                throw new IllegalArgumentException("Integer parameters must be positive.");
+            }
+            
             this.OMAGroupId = OMAGroupId;
             this.leftBound = leftBound;
             this.rightBound = rightBound;

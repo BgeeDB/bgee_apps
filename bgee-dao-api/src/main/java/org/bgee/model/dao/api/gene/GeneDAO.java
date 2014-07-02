@@ -35,29 +35,29 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         ID, NAME, DESCRIPTION, SPECIESID, GENEBIOTYPEID, OMAPARENTNODEID, ENSEMBLGENE;
     }
     
-	/**
-	 * Retrieve all genes from data source.
-	 * <p>
-	 * The genes are retrieved and returned as a {@code GeneTOResultSet}. 
-	 * It is the responsibility of the caller to close this {@code DAOResultSet} once 
-	 * results are retrieved.
-	 * 
-	 * @return A {@code GeneTOResultSet} containing all genes from data source.
-	 */
-	public GeneTOResultSet getAllGenes();
+    /**
+     * Retrieve all genes from data source.
+     * <p>
+     * The genes are retrieved and returned as a {@code GeneTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @return A {@code GeneTOResultSet} containing all genes from data source.
+     */
+    public GeneTOResultSet getAllGenes();
     
-	/**
-	 * Update {@code Attribute}s of the provided of genes, which are represented as a 
-	 * {@code Collection} of {@code GeneTO}s
-	 * 
-	 * @param genes					A {@code Collection} of {@code GeneTO}s that is genes
-	 * 								to be updated into the data source.
-	 * @param attributesToUpdate	A {@code Collection} of {@code Attribute}s that is 
-	 * 								attributes to be updated into the data source.
-	 * @return	An {@code int} representing the number of genes updated.
-	 */
-	public int updateGenes(Collection<GeneTO> genes, Collection<GeneDAO.Attribute> attributesToUpdate);
-	
+    /**
+     * Update {@code Attribute}s of the provided of genes, which are represented as a 
+     * {@code Collection} of {@code GeneTO}s
+     * 
+     * @param genes                 A {@code Collection} of {@code GeneTO}s that is genes
+     *                              to be updated into the data source.
+     * @param attributesToUpdate    A {@code Collection} of {@code Attribute}s that is 
+     *                              attributes to be updated into the data source.
+     * @return An {@code int} representing the number of genes updated.
+     */
+    public int updateGenes(Collection<GeneTO> genes, Collection<GeneDAO.Attribute> attributesToUpdate);
+    
     /**
      * {@code DAOResultSet} specifics to {@code GeneTO}s
      * 
@@ -65,9 +65,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-	public interface GeneTOResultSet extends DAOResultSet<GeneTO> {
-		
-	}
+    public interface GeneTOResultSet extends DAOResultSet<GeneTO> {
+        
+    }
     
     /**
      * {@code EntityTO} representing a Gene in the Bgee database.
@@ -78,26 +78,26 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      */
     public class GeneTO extends EntityTO {
 
-    	private static final long serialVersionUID = -9011956802137411474L;
+        private static final long serialVersionUID = -9011956802137411474L;
 
-    	/**
+        /**
          * An {@code int} that is the species id of the species.
          */
-    	private final int speciesId;
+        private final int speciesId;
         
-    	
-    	/**
-    	 * An {@code int} that is the gene type ID (for instance,
-    	 * the ID for protein_coding)
-    	 */
-    	private final int geneBioTypeId;
+        
+        /**
+         * An {@code int} that is the gene type ID (for instance,
+         * the ID for protein_coding)
+         */
+        private final int geneBioTypeId;
        
-    	/**
-    	 * An {@code int} that is unique ID for each node inside an OMA 
-    	 * Hierarchical Orthologous Group. It can be null if the gene 
-    	 * does not belong to a hierarchical group a gene can belong 
-    	 * to one and only one group
-    	 */
+        /**
+         * An {@code int} that is unique ID for each node inside an OMA 
+         * Hierarchical Orthologous Group. It can be null if the gene 
+         * does not belong to a hierarchical group a gene can belong 
+         * to one and only one group
+         */
         private final int OMAParentNodeId;
         
         /**
@@ -107,7 +107,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          */
         private final boolean ensemblGene;
 
-    	/**
+        /**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), and the species ID of this gene.
          * <p>
@@ -118,34 +118,38 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * @param geneName  A {@code String} that is the name of this gene.
          * @param speciesId An {@code int} of the species which this gene belongs to.
          */
-    	public GeneTO(String geneId, String geneName, int speciesId) {
-    		this(geneId, geneName, null, speciesId, 0, 0, true);
-    	}
+        public GeneTO(String geneId, String geneName, Integer speciesId) {
+            this(geneId, geneName, null, speciesId, 0, 0, true);
+        }
 
         /**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), and the species id of this gene.
          * 
-         * @param geneId    		A {@code String} that is the ID of this gene.
-         * @param geneName  		A {@code String} that is the name of this gene.
-         * @param geneDescription	A {@code String} that is the desciption of this gene.
-         * @param speciesId			An {@code Integer} that is the species ID which this 
-         * 							gene belongs to.
-         * @param geneBioTypeId		An {@code Integer} that is the BioType of this gene.
-         * @param OMAParentNodeId	An {@code Integer} that is the ID of the OMA Hierarchical 
-         * 							Orthologous Group.
-         * @param ensemblGene		A {code boolean} defining whether this gene is present 
-         * 							in Ensembl. 
+         * @param geneId            A {@code String} that is the ID of this gene.
+         * @param geneName          A {@code String} that is the name of this gene.
+         * @param geneDescription   A {@code String} that is the desciption of this gene.
+         * @param speciesId         An {@code int} that is the species ID which this 
+         *                          gene belongs to.
+         * @param geneBioTypeId     An {@code int} that is the BioType of this gene.
+         * @param OMAParentNodeId   An {@code int} that is the ID of the OMA Hierarchical 
+         *                          Orthologous Group.
+         * @param ensemblGene       A {code boolean} defining whether this gene is present 
+         *                          in Ensembl. 
          */
-    	public GeneTO(String geneId, String geneName, String geneDescription, int speciesId,
-    			int geneBioTypeId, int OMAParentNodeId, boolean ensemblGene) {
-    		super(geneId, geneName, geneDescription);
-    		this.speciesId = speciesId;
-    		this.geneBioTypeId = geneBioTypeId;
-    		this.OMAParentNodeId = OMAParentNodeId;
-    		this.ensemblGene = ensemblGene;
-    	}
-    	
+        public GeneTO(String geneId, String geneName, String geneDescription, int speciesId,
+                int geneBioTypeId, int OMAParentNodeId, boolean ensemblGene) {
+            super(geneId, geneName, geneDescription);
+            if (speciesId < 0 || geneBioTypeId < 0 || OMAParentNodeId < 0) {
+                throw new IllegalArgumentException("Integer parameters must be positive.");
+            }
+
+            this.speciesId = speciesId;
+            this.geneBioTypeId = geneBioTypeId;
+            this.OMAParentNodeId = OMAParentNodeId;
+            this.ensemblGene = ensemblGene;
+        }
+
         /**
          * @return  The {@code String} that is the name of this gene 
          *          (for instance, "Hoxa5").

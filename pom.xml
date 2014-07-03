@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.bgee</groupId>
@@ -24,8 +25,8 @@
 	</developers>
 	<contributors>
 		<contributor>
-			<name/>
-			<email/>
+			<name />
+			<email />
 		</contributor>
 	</contributors>
 	<mailingLists>
@@ -33,97 +34,95 @@
 			<name>bgee@isb-sib.ch</name>
 		</mailingList>
 	</mailingLists>
-	
+
 	<parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		
-        <!-- We create the property skip.surefire.tests to override the property 
-             skipTests of the surefire plugin. This is because using skipTests=true 
-             also skips integration tests, while we would like to be able to run 
-             integration tests and to skip unit tests. So, to skip unit test, 
-             we would use the property skip.surefire.tests=true.
-             But in that case, using skipTests=true would not skip unit tests 
-             anymore. So we default skip.surefire.tests to skipTests, and 
-             everything is back to normal, we just have a new additional property 
-             allowing to skip unit tests but not integration tests.
-             See http://stackoverflow.com/a/17932772/1768736 -->
-        <skip.surefire.tests>${skipTests}</skip.surefire.tests>
-        <skipITs>${skipTests}</skipITs>
-		
+
+		<!-- We create the property skip.surefire.tests to override the property 
+			skipTests of the surefire plugin. This is because using skipTests=true also 
+			skips integration tests, while we would like to be able to run integration 
+			tests and to skip unit tests. So, to skip unit test, we would use the property 
+			skip.surefire.tests=true. But in that case, using skipTests=true would not 
+			skip unit tests anymore. So we default skip.surefire.tests to skipTests, 
+			and everything is back to normal, we just have a new additional property 
+			allowing to skip unit tests but not integration tests. See http://stackoverflow.com/a/17932772/1768736 -->
+		<skip.surefire.tests>${skipTests}</skip.surefire.tests>
+		<skipITs>${skipTests}</skipITs>
+
 		<!-- The following properties are used for integration tests -->
-		
-        <!-- Define here the JDBC Driver class name and connection URL 
-             for the sql-maven-plugin and for integration test classes. -->
-        <bgee.jdbc.driver.className>com.mysql.jdbc.Driver</bgee.jdbc.driver.className>
-        <!-- Do not put the database name nor any query string parameters, e.g., 
-             jdbc:mysql://[host][,failoverhost...][:port]/ -->
-        <bgee.jdbc.connectionURL>jdbc:mysql://127.0.0.1/</bgee.jdbc.connectionURL> 
-        
-        <!-- here, we provide the name of the test Bgee database that should be 
-             populated with test data for integration tests of SELECT statements 
-             (the database will be populated with data by the Java application). 
-             The default name of this database starts with the prefix 'bgeeIntegrationTest_', 
-             so that it will be automatically dropped by the sql-maven-plugin after 
-             integration tests. This prefix is not a property to be sure it cannot be changed, 
-             which could result in unexpected database deletions. 
-             You can override this property to provide your own database name, not starting 
-             with this prefix, so that this database will not be deleted after integration 
-             tests, allowing a much faster re-launch. In that case, you should disable 
-             the populating of the database by setting bgee.database.test.skip.populate 
-             to true (once it will have been populated of course). -->
-        <bgee.database.test.select.name>bgeeIntegrationTest_select</bgee.database.test.select.name>
-        <!-- Properties used to skip the creation and populating of the database 
-             ${bgee.database.test.select.name}. See this property documentation 
-             for more details. 
-             We make it default to ${skipTests}, so that this execution will be skipped  
-             if requested, as the other pre- and post-integration-test executions .-->
-        <bgee.database.test.skip.populate>${skipTests}</bgee.database.test.skip.populate>
-        
-        <!-- here, we provide the name of the empty test Bgee database, used to proceed to 
-             INSERT/UPDATE integration tests. This test database will be used by integration 
-             tests not overlapping. Java classes running integration tests that could overlap 
-             (by using common tables for instance) will create their own additional databases.
-             The default name of this database starts with the prefix 'bgeeIntegrationTest_', 
-             so that it will be automatically dropped by the sql-maven-plugin after 
-             integration tests. This prefix is not a property to be sure it cannot be changed, 
-             which could result in unexpected database deletions. 
-             You can override this property to provide your own database name, not starting 
-             with this prefix, so that this database will not be deleted after integration 
-             tests (should be totally useless, but maybe you are crazy and want to inspect 
-             the data inserted yourself). It will be automatically created, do not create 
-             it yourself before running the tests. There is no property defined to avoid 
-             creating this database, because it is really a useless feature. So you will 
-             need to remove this database yourself if you intend to reuse the same name 
-             afterwards. -->
-        <bgee.database.test.insert.name>bgeeIntegrationTest_insert</bgee.database.test.insert.name>
-        
-        <!-- Here we provide the paths to the SQL files to create the Bgee database 
-             The database will be populated with data by the Java application -->
-        <bgee.database.file.schema>
-            ${basedir}/../../pipeline/pipeline/db_creation/bgeeSchema.sql
-        </bgee.database.file.schema>
-        <bgee.database.file.constraint>
-	        ${basedir}/../../pipeline/pipeline/db_creation/bgeeConstraint.sql
-        </bgee.database.file.constraint>
-	    <bgee.database.file.index>
-		    ${basedir}/../../pipeline/pipeline/db_creation/bgeeIndex.sql
-	    </bgee.database.file.index>
-	    <bgee.database.file.foreignkey>
-		    ${basedir}/../../pipeline/pipeline/db_creation/bgeeForeignKey.sql
-	    </bgee.database.file.foreignkey>
-	    
-        <!-- Here we provide the path to a SQL file defining and calling a procedure 
-             to drop all databases used for integration tests. -->
-        <bgee.database.file.drop.procedure>
-            ${basedir}/src/test/resources/sql/dropTestDatabases.sql
-        </bgee.database.file.drop.procedure>
-        
+
+		<!-- Define here the JDBC Driver class name and connection URL for the 
+			sql-maven-plugin and for integration test classes. -->
+		<bgee.jdbc.driver.className>com.mysql.jdbc.Driver</bgee.jdbc.driver.className>
+		<!-- Do not put the database name nor any query string parameters, e.g., 
+			jdbc:mysql://[host][,failoverhost...][:port]/ -->
+		<bgee.jdbc.connectionURL>jdbc:mysql://127.0.0.1/</bgee.jdbc.connectionURL>
+
+		<!-- here, we provide the name of the test Bgee database that should be 
+			populated with test data for integration tests of SELECT statements (the 
+			database will be populated with data by the Java application). The default 
+			name of this database starts with the prefix 'bgeeIntegrationTest_', so that 
+			it will be automatically dropped by the sql-maven-plugin after integration 
+			tests. This prefix is not a property to be sure it cannot be changed, which 
+			could result in unexpected database deletions. You can override this property 
+			to provide your own database name, not starting with this prefix, so that 
+			this database will not be deleted after integration tests, allowing a much 
+			faster re-launch. In that case, you should disable the populating of the 
+			database by setting bgee.database.test.skip.populate to true (once it will 
+			have been populated of course). -->
+		<bgee.database.test.select.name>bgeeIntegrationTest_select</bgee.database.test.select.name>
+		<!-- Properties used to skip the creation and populating of the database 
+			${bgee.database.test.select.name}. See this property documentation for more 
+			details. We make it default to ${skipTests}, so that this execution will 
+			be skipped if requested, as the other pre- and post-integration-test executions 
+			. -->
+		<bgee.database.test.skip.populate>${skipTests}</bgee.database.test.skip.populate>
+
+		<!-- here, we provide the name of the empty test Bgee database, used to 
+			proceed to INSERT/UPDATE integration tests. This test database will be used 
+			by integration tests not overlapping. Java classes running integration tests 
+			that could overlap (by using common tables for instance) will create their 
+			own additional databases. The default name of this database starts with the 
+			prefix 'bgeeIntegrationTest_', so that it will be automatically dropped by 
+			the sql-maven-plugin after integration tests. This prefix is not a property 
+			to be sure it cannot be changed, which could result in unexpected database 
+			deletions. You can override this property to provide your own database name, 
+			not starting with this prefix, so that this database will not be deleted 
+			after integration tests (should be totally useless, but maybe you are crazy 
+			and want to inspect the data inserted yourself). It will be automatically 
+			created, do not create it yourself before running the tests. There is no 
+			property defined to avoid creating this database, because it is really a 
+			useless feature. So you will need to remove this database yourself if you 
+			intend to reuse the same name afterwards. -->
+		<bgee.database.test.insert.name>bgeeIntegrationTest_insert</bgee.database.test.insert.name>
+
+		<!-- Here we provide the paths to the SQL files to create the Bgee database 
+			The database will be populated with data by the Java application -->
+		<bgee.database.file.schema>
+			${basedir}/../../pipeline/pipeline/db_creation/bgeeSchema.sql
+		</bgee.database.file.schema>
+		<bgee.database.file.constraint>
+			${basedir}/../../pipeline/pipeline/db_creation/bgeeConstraint.sql
+		</bgee.database.file.constraint>
+		<bgee.database.file.index>
+			${basedir}/../../pipeline/pipeline/db_creation/bgeeIndex.sql
+		</bgee.database.file.index>
+		<bgee.database.file.foreignkey>
+			${basedir}/../../pipeline/pipeline/db_creation/bgeeForeignKey.sql
+		</bgee.database.file.foreignkey>
+
+		<!-- Here we provide the path to a SQL file defining and calling a procedure 
+			to drop all databases used for integration tests. -->
+		<bgee.database.file.drop.procedure>
+			${basedir}/src/test/resources/sql/dropTestDatabases.sql
+		</bgee.database.file.drop.procedure>
+
 	</properties>
 
 	<repositories>
@@ -135,15 +134,15 @@
 
 	<modules>
 		<module>bgee-core</module>
-        <module>bgee-dao-api</module>
-        <module>bgee-dao-sql</module>
-        <module>bgee-pipeline</module>
-        <module>bgee-webapp</module>
-  </modules>
+		<module>bgee-dao-api</module>
+		<module>bgee-dao-sql</module>
+		<module>bgee-pipeline</module>
+		<module>bgee-webapp</module>
+	</modules>
 
 	<!-- Dependencies needed for *all* sub-projects -->
 	<dependencies>
-        <!-- Logging system -->
+		<!-- Logging system -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
@@ -157,22 +156,22 @@
 			<scope>compile</scope>
 		</dependency>
 
-        <!-- General useful library (e.g., defines StringUtils) -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.1</version>
-            <scope>compile</scope>
-        </dependency>
-        
-        <!-- Unit testing -->
+		<!-- General useful library (e.g., defines StringUtils) -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.1</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- Unit testing -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
-        <!-- Mock object during unit testing -->
+		<!-- Mock object during unit testing -->
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
@@ -185,22 +184,22 @@
 	<!-- Dependencies needed for some sub-projects -->
 	<dependencyManagement>
 		<dependencies>
-		
-		    <!-- bgee-dao-api, used by many modules -->
-		    <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>bgee-dao-api</artifactId>
-                <version>${project.version}</version>
-                <scope>compile</scope>
-            </dependency>
-		    <!-- test classes from bgee-dao-pi, used by any module using DAOs -->
-		    <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>bgee-dao-api</artifactId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
+
+			<!-- bgee-dao-api, used by many modules -->
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>bgee-dao-api</artifactId>
+				<version>${project.version}</version>
+				<scope>compile</scope>
+			</dependency>
+			<!-- test classes from bgee-dao-pi, used by any module using DAOs -->
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>bgee-dao-api</artifactId>
+				<version>${project.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
 
 
 			<!-- Needed for the pipeline -->
@@ -212,35 +211,35 @@
 				<scope>compile</scope>
 			</dependency>
 			<!-- Used to generate our custom NCBI taxonomy ontology -->
-            <dependency>
-                <groupId>org.bbop</groupId>
-                <artifactId>OWLTools-ncbi</artifactId>
-                <version>0.2.1-SNAPSHOT</version>
-                <scope>compile</scope>
-            </dependency>
-            <!-- Used to least common ancestors of species used in Bgee -->
-            <dependency>
-                <groupId>org.bbop</groupId>
-                <artifactId>OWLTools-sim</artifactId>
-                <version>0.2.1-SNAPSHOT</version>
-                <scope>compile</scope>
-            </dependency>
-            
-            <!-- To parse the OMA HOG data file -->
+			<dependency>
+				<groupId>org.bbop</groupId>
+				<artifactId>OWLTools-ncbi</artifactId>
+				<version>0.2.1-SNAPSHOT</version>
+				<scope>compile</scope>
+			</dependency>
+			<!-- Used to least common ancestors of species used in Bgee -->
+			<dependency>
+				<groupId>org.bbop</groupId>
+				<artifactId>OWLTools-sim</artifactId>
+				<version>0.2.1-SNAPSHOT</version>
+				<scope>compile</scope>
+			</dependency>
+
+			<!-- To parse the OMA HOG data file -->
 			<dependency>
 				<groupId>sbc</groupId>
 				<artifactId>orthoxml</artifactId>
 				<version>0.1b</version>
 				<scope>compile</scope>
 			</dependency>
-			
+
 			<!-- To parse CSV/TSV files -->
 			<dependency>
-                <groupId>net.sf.supercsv</groupId>
-                <artifactId>super-csv</artifactId>
-                <version>2.1.0</version>
-                <scope>compile</scope>
-            </dependency>
+				<groupId>net.sf.supercsv</groupId>
+				<artifactId>super-csv</artifactId>
+				<version>2.1.0</version>
+				<scope>compile</scope>
+			</dependency>
 			<!-- End for pipeline -->
 
 			<!-- Needed for the webapp -->
@@ -250,6 +249,14 @@
 				<version>7.0.35</version>
 				<scope>provided</scope>
 			</dependency>
+
+			<dependency>
+				<groupId>org.apache.httpcomponents</groupId>
+				<artifactId>httpclient</artifactId>
+				<version>4.3.4</version>
+				<scope>compile</scope>
+			</dependency>
+
 			<!-- End for webapp -->
 
 			<!-- Needed for the core layer -->
@@ -262,10 +269,10 @@
 			</dependency>
 
 			<!-- End for the core layer -->
-			
+
 			<!-- Needed for the dao-api layer -->
-			
-            
+
+
 			<!-- End for the dao-api layer -->
 
 			<!-- Needed for the dao-sql layer -->
@@ -278,42 +285,43 @@
 			</dependency>
 			<!-- The JDBC connector -->
 			<dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-                <version>5.1.27</version>
-                <scope>compile</scope>
-            </dependency>
-		    
+				<groupId>mysql</groupId>
+				<artifactId>mysql-connector-java</artifactId>
+				<version>5.1.27</version>
+				<scope>compile</scope>
+			</dependency>
+
 			<!-- End for the dao-sql layer -->
-			
-			<!-- Used for integration test using a real MySQL database. --> 
-			<!-- Spring framework is used to execute the .sql files to create the database. -->
+
+			<!-- Used for integration test using a real MySQL database. -->
+			<!-- Spring framework is used to execute the .sql files to create the 
+				database. -->
 			<dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-test</artifactId>
-                <version>3.2.5.RELEASE</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-jdbc</artifactId>
-                <version>3.2.5.RELEASE</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-core</artifactId>
-                <version>3.2.5.RELEASE</version>
-                <scope>test</scope>
-            </dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-test</artifactId>
+				<version>3.2.5.RELEASE</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-jdbc</artifactId>
+				<version>3.2.5.RELEASE</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-core</artifactId>
+				<version>3.2.5.RELEASE</version>
+				<scope>test</scope>
+			</dependency>
 
 		</dependencies>
 	</dependencyManagement>
 
 	<build>
-        <!-- plugins needed for ALL sub-modules -->
+		<!-- plugins needed for ALL sub-modules -->
 		<plugins>
-            <!-- in order to compile with JDK 1.7 -->
+			<!-- in order to compile with JDK 1.7 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -323,333 +331,325 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
-			
+
 			<!-- unit tests -->
 			<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.14.1</version>
-                <configuration>
-                    <!-- Property createe to skip surefire tests without skipping failsafe tests.
-                         Property value is default to skipTests so that we can still skip 
-                         unit tests by using skipTests. See the documentation of the property 
-                         skip.surefire.tests in this file for more details. -->
-                    <skipTests>${skip.surefire.tests}</skipTests>
-                </configuration>
-            </plugin>
-            
-            <!-- Generates sources and javadoc -->
-            <plugin>
-	          <groupId>org.apache.maven.plugins</groupId>
-	          <artifactId>maven-source-plugin</artifactId>
-              <version>2.2.1</version>
-	          <executions>
-		        <execution>
-			      <id>attach-sources</id>
-			      <phase>install</phase>
-			      <goals>
-				    <goal>jar</goal>
-			      </goals>
-		        </execution>
-	         </executions>
-           </plugin>
-            <plugin>
-	          <groupId>org.apache.maven.plugins</groupId>
-	          <artifactId>maven-javadoc-plugin</artifactId>
-              <version>2.9.1</version>
-	          <executions>
-		        <execution>
-			      <id>attach-javadocs</id>
-			      <phase>install</phase>
-			      <goals>
-				    <goal>jar</goal>
-				    <goal>aggregate</goal>
-			      </goals>
-		        </execution>
-	         </executions>
-           </plugin>
-           
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.14.1</version>
+				<configuration>
+					<!-- Property createe to skip surefire tests without skipping failsafe 
+						tests. Property value is default to skipTests so that we can still skip unit 
+						tests by using skipTests. See the documentation of the property skip.surefire.tests 
+						in this file for more details. -->
+					<skipTests>${skip.surefire.tests}</skipTests>
+				</configuration>
+			</plugin>
+
+			<!-- Generates sources and javadoc -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>install</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<phase>install</phase>
+						<goals>
+							<goal>jar</goal>
+							<goal>aggregate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
-		
-		
+
+
 		<!-- Plugins needed for some sub-modules -->
 		<pluginManagement>
-		  <plugins>
-		    <!-- *******Used to generate executable JAR files with depedencies******** -->
-		    <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
-            </plugin>
-            
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-            </plugin>
-      
-            <!-- ******************** Integration tests *********************** -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.16</version>
-                
-                <configuration>
-                    <skipTests>${skipITs}</skipTests> 
-                    <systemPropertyVariables>
-                        <!-- Provides the System properties that the Bgee applications will use 
-                             to connect to a MySQL database as root during integration tests -->
-                             
-                        <!-- username and password should be provided in your settings.xml file, 
-                             the other properties are defined in this pom.xml file. -->
-                        <bgee.dao.jdbc.username>${bgee.database.root.username}</bgee.dao.jdbc.username>
-                        <bgee.dao.jdbc.password>${bgee.database.root.password}</bgee.dao.jdbc.password>
-                        <!-- Besides the usual database connector, we also use the log4jdbc-log4j2 Driver, 
-                             as logging SQL queries will be useful -->
-                        <bgee.dao.jdbc.driver.names>
-                            ${bgee.jdbc.driver.className},net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-                        </bgee.dao.jdbc.driver.names>
-                        <!-- The connection URL is modified to use log4jdbc-log4j2 -->
-                        <bgee.dao.jdbc.url>jdbc:log4${bgee.jdbc.connectionURL}</bgee.dao.jdbc.url>
-                        
-                        <!-- Name of the database populated with test data for test 
-                             of SELECT statements -->
-                        <bgee.database.test.select.name>
-                            ${bgee.database.test.select.name}
-                        </bgee.database.test.select.name>
-                        <!-- Name of the empty database used for testing of independent 
-                             INSERT statements -->
-                        <bgee.database.test.insert.name>
-                            ${bgee.database.test.insert.name}
-                        </bgee.database.test.insert.name>
-                        
-                        <!-- Here we provide the path to the SQL file to create the Bgee database. 
-                             This will be used by integrationt tests that need to create their own 
-                             database instance for INSERT testing. -->
-                        <bgee.database.file.schema>${bgee.database.file.schema}</bgee.database.file.schema>
-                        
-                    </systemPropertyVariables>
-                </configuration>
-                
-                <executions>
-                     <execution>
-                          <id>integration-test</id>
-                          <goals>
-                              <goal>integration-test</goal>
-                              <goal>verify</goal>
-                          </goals>
-                      </execution>
-                </executions>
-            </plugin>
-            
-            <!-- sql-maven-plugin used during the pre-integration-test and 
-                 post-integration-test phases of the Maven Failsafe Plugin. 
-                 This allows to initialize or clean the MySQL databases for integration 
-                 tests using a real MySQL database. -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>sql-maven-plugin</artifactId>
-                <version>1.5</version>
-                <dependencies>
-                    <!-- include the JDBC driver dependency here -->
-                    <dependency>
-                        <groupId>mysql</groupId>
-                        <artifactId>mysql-connector-java</artifactId>
-                        <version>5.1.27</version>
-                    </dependency>
-                </dependencies>
-                
-                <!-- common plugin configuration -->
-                <configuration>
-                    <!-- driver and url defined in this pom.xml -->
-                    <driver>${bgee.jdbc.driver.className}</driver>
-                    <!-- the URL should not include any database name, see this property 
-                         comments for more details -->
-                    <url>${bgee.jdbc.connectionURL}</url>
-                    <!-- username and password should be defined in your settings.xml file -->
-                    <username>${bgee.database.root.username}</username>
-                    <password>${bgee.database.root.password}</password>
-                </configuration>
-                
-                <executions>
-                    <!-- **************************************
-                         Executions bound to the pre-integration-test phase 
-                         of the maven-failsafe-plugin 
-                         ************************************** -->
-                    <!-- Drop any potential test database still existing (it should not).
-                         The name of the databases to drop must start with 'bgeeIntegrationTest_'.
-                         This prefix is not a property to be sure it cannot be changed, 
-                         which could result in unexpected database deletions. -->
-                     <execution>
-                         <id>pre-integration-test-drop-dbs</id>
-                         <phase>pre-integration-test</phase>
-                         <goals>
-                             <goal>execute</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${skipTests}</skip>
-                             <!-- we use the test database here, as we need to attach our procedure 
-                                  to drop all test databases to an existing database -->
-                             <url>${bgee.jdbc.connectionURL}test</url>
-                             <autocommit>true</autocommit>
-                             <delimiterType>row</delimiterType>
-                             <srcFiles>
-                                 <srcFile>${bgee.database.file.drop.procedure}</srcFile>
-                             </srcFiles>
-                         </configuration>
-                     </execution>
-                     
-                     <!-- Create the database used to test independent INSERT/UPDATE statements 
-                          with the name ${bgee.database.test.insert.name}. -->
-                     <execution>
-                         <id>pre-integration-test-create-insert-db</id>
-                         <phase>pre-integration-test</phase>
-                         <goals>
-                             <goal>execute</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${skipTests}</skip>
-                             <autocommit>true</autocommit>
-                             <sqlCommand>
-                                 CREATE DATABASE ${bgee.database.test.insert.name};
-                             </sqlCommand>
-                         </configuration>
-                     </execution>
-                     
-                     <!-- Insert tables into the database used to test INSERT/UPDATE statements 
-                          with the name ${bgee.database.test.insert.name}. -->
-                     <execution>
-                         <id>pre-integration-test-populate-insert-db</id>
-                         <phase>pre-integration-test</phase>
-                         <goals>
-                             <goal>execute</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${skipTests}</skip>
-                             <!-- change the URL to use the database -->
-                             <url>${bgee.jdbc.connectionURL}${bgee.database.test.insert.name}</url>
-                             <autocommit>true</autocommit>
-                             <srcFiles>
-                                 <srcFile>${bgee.database.file.schema}</srcFile>
-                             </srcFiles>
-                         </configuration>
-                     </execution>
-                     
-                     <!-- Create the database used to test SELECT statements 
-                          with the name ${bgee.database.test.select.name}, that will be 
-                          populated with data. We do not create it at the same time as 
-                          ${bgee.database.test.insert.name}, because its creation can be
-                          skipped, using the parameter ${bgee.database.test.skip.populate}. 
-                          See the documentation of the property ${bgee.database.test.select.name} 
-                          for more details. -->
-                     <execution>
-                         <id>pre-integration-test-create-select-db</id>
-                         <phase>pre-integration-test</phase>
-                         <goals>
-                             <goal>execute</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${bgee.database.test.skip.populate}</skip>
-                             <autocommit>true</autocommit>
-                             <sqlCommand>
-                                 CREATE DATABASE ${bgee.database.test.select.name};
-                             </sqlCommand>
-                         </configuration>
-                     </execution>
-                     
-                     <!-- Create the tables and constraints used to test SELECT statements 
-                          with the name ${bgee.database.test.select.name}. This step can be
-                          skipped by using the parameter ${bgee.database.test.skip.populate}. 
-                          See the documentation of the property ${bgee.database.test.select.name} 
-                          for more details.. -->
-                     <execution>
-                         <id>pre-integration-test-populate-select-db</id>
-                         <phase>pre-integration-test</phase>
-                         <goals>
-                             <goal>execute</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${bgee.database.test.skip.populate}</skip>
-                             <!-- change the URL to use the database -->
-                             <url>${bgee.jdbc.connectionURL}${bgee.database.test.select.name}</url>
-                             <autocommit>true</autocommit>
-                             <srcFiles>
-                                 <srcFile>${bgee.database.file.schema}</srcFile>
-                                 <srcFile>${bgee.database.file.constraint}</srcFile>
-                                 <srcFile>${bgee.database.file.index}</srcFile>
-                                 <srcFile>${bgee.database.file.foreignkey}</srcFile> 
-                             </srcFiles>
-                         </configuration>
-                     </execution>
-                     
-                     
-                    <!-- **************************************
-                         Executions bound to the post-integration-test phase 
-                         of the maven-failsafe-plugin 
-                         ************************************** -->
-                     <!-- Drop the test databases, including those that might have been created 
-                          by the Java integration tests. 
-                          The name of the databases to drop must start with 'bgeeIntegrationTest_'.
-                          This prefix is not a property to be sure it cannot be changed, 
-                          which could result in unexpected database deletions. -->
-                     <execution>
-                         <id>post-integration-test-drop-dbs</id>
-                         <phase>post-integration-test</phase>
-                         <goals>
-                             <goal>execute</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${skipTests}</skip>
-                             <!-- we use the test database here, as we need to attach our procedure 
-                                  to drop all test databases to an existing database -->
-                             <url>${bgee.jdbc.connectionURL}test</url>
-                             <autocommit>true</autocommit>
-                             <delimiterType>row</delimiterType>
-                             <srcFiles>
-                                 <srcFile>${bgee.database.file.drop.procedure}</srcFile>
-                             </srcFiles>
-                         </configuration>
-                     </execution>
-                     
-                 </executions>
-            </plugin>
-            <!-- *******************// END Integration tests ********************* -->
-            
-            
-            <!-- to get rid of the warning 'maven-enforcer-plugin (goal "enforce") 
-            is ignored by m2e' in Eclipse. See http://stackoverflow.com/a/13043842/1768736 -->
-            <plugin>
-                <groupId>org.eclipse.m2e</groupId>
-                <artifactId>lifecycle-mapping</artifactId>
-                <version>1.0.0</version>
-                <configuration>
-                    <lifecycleMappingMetadata>
-                        <pluginExecutions>
-                            <pluginExecution>
-                                <pluginExecutionFilter>
-                                    <groupId>org.apache.maven.plugins</groupId>
-                                    <artifactId>maven-enforcer-plugin</artifactId>
-                                    <versionRange>[1.0.0,)</versionRange>
-                                    <goals>
-                                        <goal>enforce</goal>
-                                    </goals>
-                                </pluginExecutionFilter>
-                                <action>
-                                    <ignore />
-                                </action>
-                            </pluginExecution>
-                        </pluginExecutions>
-                    </lifecycleMappingMetadata>
-                </configuration>
-            </plugin>
-            
-            <!-- to generate jar of test classes -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.5</version>
-            </plugin>
-           
-          </plugins>
+			<plugins>
+				<!-- *******Used to generate executable JAR files with depedencies******** -->
+				<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>2.4</version>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>2.3</version>
+				</plugin>
+
+				<!-- ******************** Integration tests *********************** -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-failsafe-plugin</artifactId>
+					<version>2.16</version>
+
+					<configuration>
+						<skipTests>${skipITs}</skipTests>
+						<systemPropertyVariables>
+							<!-- Provides the System properties that the Bgee applications will 
+								use to connect to a MySQL database as root during integration tests -->
+
+							<!-- username and password should be provided in your settings.xml 
+								file, the other properties are defined in this pom.xml file. -->
+							<bgee.dao.jdbc.username>${bgee.database.root.username}</bgee.dao.jdbc.username>
+							<bgee.dao.jdbc.password>${bgee.database.root.password}</bgee.dao.jdbc.password>
+							<!-- Besides the usual database connector, we also use the log4jdbc-log4j2 
+								Driver, as logging SQL queries will be useful -->
+							<bgee.dao.jdbc.driver.names>
+								${bgee.jdbc.driver.className},net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+							</bgee.dao.jdbc.driver.names>
+							<!-- The connection URL is modified to use log4jdbc-log4j2 -->
+							<bgee.dao.jdbc.url>jdbc:log4${bgee.jdbc.connectionURL}</bgee.dao.jdbc.url>
+
+							<!-- Name of the database populated with test data for test of SELECT 
+								statements -->
+							<bgee.database.test.select.name>
+								${bgee.database.test.select.name}
+							</bgee.database.test.select.name>
+							<!-- Name of the empty database used for testing of independent INSERT 
+								statements -->
+							<bgee.database.test.insert.name>
+								${bgee.database.test.insert.name}
+							</bgee.database.test.insert.name>
+
+							<!-- Here we provide the path to the SQL file to create the Bgee database. 
+								This will be used by integrationt tests that need to create their own database 
+								instance for INSERT testing. -->
+							<bgee.database.file.schema>${bgee.database.file.schema}</bgee.database.file.schema>
+
+						</systemPropertyVariables>
+					</configuration>
+
+					<executions>
+						<execution>
+							<id>integration-test</id>
+							<goals>
+								<goal>integration-test</goal>
+								<goal>verify</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+
+				<!-- sql-maven-plugin used during the pre-integration-test and post-integration-test 
+					phases of the Maven Failsafe Plugin. This allows to initialize or clean the 
+					MySQL databases for integration tests using a real MySQL database. -->
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>sql-maven-plugin</artifactId>
+					<version>1.5</version>
+					<dependencies>
+						<!-- include the JDBC driver dependency here -->
+						<dependency>
+							<groupId>mysql</groupId>
+							<artifactId>mysql-connector-java</artifactId>
+							<version>5.1.27</version>
+						</dependency>
+					</dependencies>
+
+					<!-- common plugin configuration -->
+					<configuration>
+						<!-- driver and url defined in this pom.xml -->
+						<driver>${bgee.jdbc.driver.className}</driver>
+						<!-- the URL should not include any database name, see this property 
+							comments for more details -->
+						<url>${bgee.jdbc.connectionURL}</url>
+						<!-- username and password should be defined in your settings.xml file -->
+						<username>${bgee.database.root.username}</username>
+						<password>${bgee.database.root.password}</password>
+					</configuration>
+
+					<executions>
+						<!-- ************************************** Executions bound to the 
+							pre-integration-test phase of the maven-failsafe-plugin ************************************** -->
+						<!-- Drop any potential test database still existing (it should not). 
+							The name of the databases to drop must start with 'bgeeIntegrationTest_'. 
+							This prefix is not a property to be sure it cannot be changed, which could 
+							result in unexpected database deletions. -->
+						<execution>
+							<id>pre-integration-test-drop-dbs</id>
+							<phase>pre-integration-test</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<skip>${skipTests}</skip>
+								<!-- we use the test database here, as we need to attach our procedure 
+									to drop all test databases to an existing database -->
+								<url>${bgee.jdbc.connectionURL}test</url>
+								<autocommit>true</autocommit>
+								<delimiterType>row</delimiterType>
+								<srcFiles>
+									<srcFile>${bgee.database.file.drop.procedure}</srcFile>
+								</srcFiles>
+							</configuration>
+						</execution>
+
+						<!-- Create the database used to test independent INSERT/UPDATE statements 
+							with the name ${bgee.database.test.insert.name}. -->
+						<execution>
+							<id>pre-integration-test-create-insert-db</id>
+							<phase>pre-integration-test</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<skip>${skipTests}</skip>
+								<autocommit>true</autocommit>
+								<sqlCommand>
+									CREATE DATABASE ${bgee.database.test.insert.name};
+								</sqlCommand>
+							</configuration>
+						</execution>
+
+						<!-- Insert tables into the database used to test INSERT/UPDATE statements 
+							with the name ${bgee.database.test.insert.name}. -->
+						<execution>
+							<id>pre-integration-test-populate-insert-db</id>
+							<phase>pre-integration-test</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<skip>${skipTests}</skip>
+								<!-- change the URL to use the database -->
+								<url>${bgee.jdbc.connectionURL}${bgee.database.test.insert.name}</url>
+								<autocommit>true</autocommit>
+								<srcFiles>
+									<srcFile>${bgee.database.file.schema}</srcFile>
+								</srcFiles>
+							</configuration>
+						</execution>
+
+						<!-- Create the database used to test SELECT statements with the name 
+							${bgee.database.test.select.name}, that will be populated with data. We do 
+							not create it at the same time as ${bgee.database.test.insert.name}, because 
+							its creation can be skipped, using the parameter ${bgee.database.test.skip.populate}. 
+							See the documentation of the property ${bgee.database.test.select.name} for 
+							more details. -->
+						<execution>
+							<id>pre-integration-test-create-select-db</id>
+							<phase>pre-integration-test</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<skip>${bgee.database.test.skip.populate}</skip>
+								<autocommit>true</autocommit>
+								<sqlCommand>
+									CREATE DATABASE ${bgee.database.test.select.name};
+								</sqlCommand>
+							</configuration>
+						</execution>
+
+						<!-- Create the tables and constraints used to test SELECT statements 
+							with the name ${bgee.database.test.select.name}. This step can be skipped 
+							by using the parameter ${bgee.database.test.skip.populate}. See the documentation 
+							of the property ${bgee.database.test.select.name} for more details.. -->
+						<execution>
+							<id>pre-integration-test-populate-select-db</id>
+							<phase>pre-integration-test</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<skip>${bgee.database.test.skip.populate}</skip>
+								<!-- change the URL to use the database -->
+								<url>${bgee.jdbc.connectionURL}${bgee.database.test.select.name}</url>
+								<autocommit>true</autocommit>
+								<srcFiles>
+									<srcFile>${bgee.database.file.schema}</srcFile>
+									<srcFile>${bgee.database.file.constraint}</srcFile>
+									<srcFile>${bgee.database.file.index}</srcFile>
+									<srcFile>${bgee.database.file.foreignkey}</srcFile>
+								</srcFiles>
+							</configuration>
+						</execution>
+
+
+						<!-- ************************************** Executions bound to the 
+							post-integration-test phase of the maven-failsafe-plugin ************************************** -->
+						<!-- Drop the test databases, including those that might have been 
+							created by the Java integration tests. The name of the databases to drop 
+							must start with 'bgeeIntegrationTest_'. This prefix is not a property to 
+							be sure it cannot be changed, which could result in unexpected database deletions. -->
+						<execution>
+							<id>post-integration-test-drop-dbs</id>
+							<phase>post-integration-test</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<skip>${skipTests}</skip>
+								<!-- we use the test database here, as we need to attach our procedure 
+									to drop all test databases to an existing database -->
+								<url>${bgee.jdbc.connectionURL}test</url>
+								<autocommit>true</autocommit>
+								<delimiterType>row</delimiterType>
+								<srcFiles>
+									<srcFile>${bgee.database.file.drop.procedure}</srcFile>
+								</srcFiles>
+							</configuration>
+						</execution>
+
+					</executions>
+				</plugin>
+				<!-- *******************// END Integration tests ********************* -->
+
+
+				<!-- to get rid of the warning 'maven-enforcer-plugin (goal "enforce") 
+					is ignored by m2e' in Eclipse. See http://stackoverflow.com/a/13043842/1768736 -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-enforcer-plugin</artifactId>
+										<versionRange>[1.0.0,)</versionRange>
+										<goals>
+											<goal>enforce</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+
+				<!-- to generate jar of test classes -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.5</version>
+				</plugin>
+
+			</plugins>
 		</pluginManagement>
 	</build>
 

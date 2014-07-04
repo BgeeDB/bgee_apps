@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -404,6 +405,38 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
+     * Test the method {@code OntologyUtils#isPrecededByRelation()}.
+     */
+    @Test
+    public void testIsPrecededByRelation() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/startEndStages.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass clsA = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
+        OWLClass clsB = wrapper.getOWLClassByIdentifier("MmulDv:0000001");
+        
+        OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PRECEDED_BY_ID), 
+                Quantifier.SOME, ont);
+        assertTrue("immediately preceded_by edge not recognized", 
+                utils.isPrecededByRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID), 
+                Quantifier.SOME, ont);
+        assertTrue("immediately preceded_by edge not recognized", 
+                utils.isPrecededByRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID), 
+                Quantifier.SOME, ont);
+        assertFalse("part_of edge incorrectly seen as preceded_by edge", 
+                utils.isPrecededByRelation(edge));
+        
+    }
+    
+    /**
      * Test the method {@link OntologyUtils#isNonInformativeSubsetMember(OWLObject)}.
      */
     @Test
@@ -445,5 +478,18 @@ public class OntologyUtilsTest extends TestAncestor {
         assertEquals(expectedClass, utils.getOWLClass("ALT_ALT_ID:1"));
         //if mapping is ambiguous, return null
         assertNull(utils.getOWLClass("ALT_ID:2"));
+    }
+    
+    /**
+     * Test the {@code Comparator} {@link OntologyUtils#ID_COMPARATOR}.
+     */
+    @Test
+    public void testIdComparator() {
+        List<String> idsUnsorted = Arrays.asList("ID:11", "ID:2", "ID:12", "ID_10", "ID:1", "ID1:1");
+        List<String> expectedSortdIds = Arrays.asList("ID1:1", "ID:1", "ID:2", "ID:11", "ID:12", 
+                "ID_10");
+        Collections.sort(idsUnsorted, OntologyUtils.ID_COMPARATOR);
+        assertEquals("IDs were not sorted according to their natural ordering", 
+                expectedSortdIds, idsUnsorted);
     }
 }

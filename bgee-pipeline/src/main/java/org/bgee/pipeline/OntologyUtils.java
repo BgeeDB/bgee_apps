@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
@@ -197,6 +198,41 @@ public class OntologyUtils {
      * @see #computeNestedSetModelParams(List)
      */
     public static final String LEVEL_KEY = "level";
+    
+    /**
+     * A {@code Comparator} allowing to order OBO-like IDs in ontologies according to 
+     * their natural ordering. This can be used for instance with the method 
+     * {@code Collections.sort} to order a {@code List} of OBO-like IDs.
+     */
+    public static final Comparator<String> ID_COMPARATOR = new Comparator<String>() {
+        //match classical IDs, e.g. ID:00001, but also weird IDs, e.g. Flybase:FBgn_00001, 
+        //and IDs with digits in their prefix, e.g. EHDAA2:00001
+        private final Pattern ID_PATTERN = Pattern.compile("^(.+?\\D)([0-9]+?)$");
+        @Override
+        public int compare(String id1, String id2) {
+            
+            Matcher m1 = ID_PATTERN.matcher(id1);
+            Matcher m2 = ID_PATTERN.matcher(id2);
+            if (!m1.matches()) {
+                throw log.throwing(new IllegalArgumentException("Malformed ID in ontology, " +
+                        "could not be parsed: " + id1));
+            }
+            if (!m2.matches()) {
+                throw log.throwing(new IllegalArgumentException("Malformed ID in ontology, " +
+                        "could not be parsed: " + id2));
+            }
+            
+            String prefix1 = m1.group(1);
+            String prefix2 = m2.group(1);
+            int numeric1 = Integer.parseInt(m1.group(2));
+            int numeric2 = Integer.parseInt(m2.group(2));
+            
+            if (!prefix1.equals(prefix2)) {
+                return prefix1.compareTo(prefix2);
+            }
+            return (numeric1-numeric2);
+        }
+      };
 
     /**
      * A {@code String} that is the prefix to add to the NCBI taxonomy IDs 
@@ -373,6 +409,17 @@ public class OntologyUtils {
      * @see #getIsAPartOfOutgoingEdges(OWLObject)
      */
     private Set<OWLObjectPropertyExpression> partOfRels;
+    /**
+     * A {@code Set} of {@code OWLObjectPropertyExpression}s containing 
+     * the sub-properties of the "preceded_by" property (for instance, "immediately_preceded_by"), 
+     * and the "preceded_by" property itself (see {@link #PRECEDED_BY_ID}).
+     * <p>
+     * This attribute is lazy loaded when {@link #isPrecededByRelation(OWLGraphEdge)} 
+     * is called. 
+     * 
+     * @see #isPrecededByRelation(OWLGraphEdge)
+     */
+    private Set<OWLObjectPropertyExpression> precededByRels;
     
     /**
      * Constructor providing the {@code OWLOntology} which operations 
@@ -385,6 +432,7 @@ public class OntologyUtils {
         this.wrapper = null;
         this.xRefMappings = null;
         this.partOfRels = null;
+        this.precededByRels = null;
     }
     /**
      * Constructor providing the {@code OWLGraphWrapper} wrapping 
@@ -394,9 +442,8 @@ public class OntologyUtils {
      *                  which operations should be performed on.
      */
     public OntologyUtils(OWLGraphWrapper wrapper) {
+        this(wrapper.getSourceOntology());
         this.wrapper = wrapper;
-        this.ontology = wrapper.getSourceOntology();
-        this.partOfRels = null;
     }
     /**
      * Constructor providing the path to the file storing the ontology  
@@ -563,7 +610,8 @@ public class OntologyUtils {
             //OWLClass already seen, the ontology is not a simple tree
             if (params.containsKey(child)) {
                 throw log.throwing(new IllegalStateException("The OWLOntology is not " +
-                        "a simple tree that can be represented as a nested set model."));
+                        "a simple tree that can be represented as a nested set model. " +
+                        "Class already seen: " + child));
             }
             
             //storing parameters for the current child;
@@ -805,6 +853,17 @@ public class OntologyUtils {
                 }
             }
         }
+        //or if it was an obsolete ID with a replaced_by annotation
+        if (cls == null) {
+            Set<String> replacedByIds = this.getReplacedByMappings().get(id);
+            if (replacedByIds != null && replacedByIds.size() == 1) {
+                String idMapped = replacedByIds.iterator().next();
+                cls = this.getWrapper().getOWLClassByIdentifier(idMapped);
+                if (cls == null) {
+                    cls = this.getWrapper().getOWLClass(idMapped);
+                }
+            }
+        }
         
         return log.exit(cls);
     }
@@ -916,12 +975,6 @@ public class OntologyUtils {
     public Set<OWLGraphEdge> getIsAPartOfOutgoingEdges(OWLObject object) {
         log.entry(object);
         
-        //lazy loading of part_of related OWLObjectProperties
-        if (this.partOfRels == null) {
-            this.partOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
-                    this.getWrapper().getOWLObjectPropertyByIdentifier(PART_OF_ID));
-        }
-        
         Set<OWLGraphEdge> isAPartOfEdges = new HashSet<OWLGraphEdge>();
         for (OWLGraphEdge edge: wrapper.getOutgoingEdges(object)) {
             //consider only named target
@@ -929,7 +982,7 @@ public class OntologyUtils {
                 continue;
             }
             if (//if it is a part_of related relation
-                (this.partOfRels.contains(
+                (this.getPartOfProps().contains(
                     edge.getSingleQuantifiedProperty().getProperty()) && 
                     edge.getSingleQuantifiedProperty().getQuantifier().equals(
                             Quantifier.SOME)) || 
@@ -943,6 +996,55 @@ public class OntologyUtils {
         }
         
         return log.exit(isAPartOfEdges);
+    }
+    
+    /**
+     * Get "part_of" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
+     * when needed. See {@link #partOfRels}.
+     * 
+     * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "part_of" 
+     *          {@code OWLObjectPropertyExpression}, and all its children.
+     */
+    private Set<OWLObjectPropertyExpression> getPartOfProps() {
+        log.entry();
+        if (this.partOfRels == null) {
+            this.partOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
+                    this.getWrapper().getOWLObjectPropertyByIdentifier(PART_OF_ID));
+        }
+        return log.exit(this.partOfRels);
+    }
+    
+    /**
+     * Determines whether {@code edge} is a preceded_by-related relation, meaning, 
+     * having a {@code OWLObjectProperty} corresponding to "preceded_by" (see 
+     * {@link #PRECEDED_BY_ID}) or any of its {@code OWLObjectProperty} children.
+     * 
+     * @param edge  The {@code OWLGraphEdge} to test for being a preceded_by-related relation.
+     * @return      {@code true} if {@code edge} is a preceded_by-related relation.
+     */
+    public boolean isPrecededByRelation(OWLGraphEdge edge) {
+        log.entry(edge);
+        
+        return log.exit(this.getPrecededByProps().contains(
+                    edge.getSingleQuantifiedProperty().getProperty()) && 
+                    edge.getSingleQuantifiedProperty().getQuantifier().equals(
+                            Quantifier.SOME));
+    }
+    
+    /**
+     * Get "preceded_by" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
+     * when needed. See {@link #precededByRels}.
+     * 
+     * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "preceded_by" 
+     *          {@code OWLObjectPropertyExpression}, and all its children.
+     */
+    private Set<OWLObjectPropertyExpression> getPrecededByProps() {
+        log.entry();
+        if (this.precededByRels == null) {
+            this.precededByRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
+                    this.getWrapper().getOWLObjectPropertyByIdentifier(PRECEDED_BY_ID));
+        }
+        return log.exit(this.precededByRels);
     }
     
     /**

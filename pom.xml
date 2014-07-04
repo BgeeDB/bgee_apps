@@ -217,13 +217,6 @@
 				<version>0.2.1-SNAPSHOT</version>
 				<scope>compile</scope>
 			</dependency>
-			<!-- Used to least common ancestors of species used in Bgee -->
-			<dependency>
-				<groupId>org.bbop</groupId>
-				<artifactId>OWLTools-sim</artifactId>
-				<version>0.2.1-SNAPSHOT</version>
-				<scope>compile</scope>
-			</dependency>
 
 			<!-- To parse the OMA HOG data file -->
 			<dependency>

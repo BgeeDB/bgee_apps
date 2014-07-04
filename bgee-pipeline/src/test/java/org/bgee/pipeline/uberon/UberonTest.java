@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,6 +21,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.supercsv.cellprocessor.Optional;
@@ -221,12 +223,61 @@ public class UberonTest extends TestAncestor {
     }
     
     /**
+     * Test method {@link Uberon#orderByPrecededBy(Set)}
+     */
+    @Test
+    public void shouldOrderByPrecededBy() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/startEndStages.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
+
+        OWLClass cls0 = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
+        
+        List<OWLClass> expectedOrderedClasses = Arrays.asList(cls1, cls2, cls3);
+        assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
+                uberon.orderByPrecededBy(
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1))));
+        
+        //test that we have an error if several immediately_preceded_by relations 
+        //to several sibling classes
+        try {
+            uberon.orderByPrecededBy(
+                    new HashSet<OWLClass>(Arrays.asList(cls4, cls3, cls2)));
+            //if we reach this point, test failed
+            throw new AssertionError("Several immediately_preceded_by relations to " +
+            		"to different sibling OWLClasses did not raison an exception");
+        } catch (IllegalStateException e) {
+            //test passed
+        }
+        
+
+        //test that we have an error if several classes have no preceded_by between them
+        try {
+            uberon.orderByPrecededBy(
+                    new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0)));
+            //if we reach this point, test failed
+            throw new AssertionError("Several OWLClasses with no precede_by relations " +
+            		"among them did not raison an exception");
+        } catch (IllegalStateException e) {
+            //test passed
+        }
+    }
+    
+    /**
      * Test the method {@link Uberon#getStageIdsBetween(OntologyUtils, String, String)}
      * @throws IOException 
      * @throws OBOFormatParserException 
      * @throws OWLOntologyCreationException 
      */
-    @Test
+    //@Test
     public void shouldGetStageIdsBetween() throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
@@ -238,5 +289,16 @@ public class UberonTest extends TestAncestor {
         log.info(uberon.getStageIdsBetween("MmulDv:0000005", "MmulDv:0000007"));
         log.info(wrapper.getEdgesBetween(wrapper.getOWLClassByIdentifier("MmulDv:0000005"), 
                 wrapper.getOWLClassByIdentifier("MmulDv:0000007")));
+    }
+    
+    //@Test
+    public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.obo");
+        OWLGraphManipulator manip = new OWLGraphManipulator(ont);
+        
+        manip.mapRelationsToParent(Arrays.asList("BFO:0000050", "RO:0002202", "RO:0002494"));
+        manip.filterRelations(Arrays.asList("BFO:0000050", "RO:0002202", "RO:0002494"), true);
+        
+        manip.removeSubgraphs(Arrays.asList("NBO:0000313"), true);
     }
 }

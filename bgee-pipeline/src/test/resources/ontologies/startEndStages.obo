@@ -23,7 +23,7 @@ name: immature stage
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000001 ! rhesus life cycle
 relationship: RO:0002087 MmulDv:0000002 ! prenatal stage
-relationship: BFO:0000062 MmulDv:0000005
+relationship: BFO:0000062 MmulDv:0000006
 
 [Term]
 id: MmulDv:0000004
@@ -39,11 +39,31 @@ relationship: RO:0002087 MmulDv:0000004
 [Term]
 id: MmulDv:0000006
 is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: BFO:0000050 MmulDv:0000003 ! immature stage
-relationship: RO:0002087 MmulDv:0000005 
+relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
+relationship: RO:0002087 MmulDv:0000005  
 
 [Term]
 id: MmulDv:0000007
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000003 ! immature stage
-relationship: RO:0002087 MmulDv:0000006 
+relationship: RO:0002087 MmulDv:0000006 ! this will check for capacity to not mix up non-siblings
+
+[Term]
+id: MmulDv:0000008
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000003 ! immature stage
+relationship: BFO:0000062 MmulDv:0000007 ! this will check for capacity to use either preceded_by
+
+[Term]
+id: MmulDv:0000009
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000003 ! immature stage
+relationship: RO:0002087 MmulDv:0000008 
+relationship: BFO:0000062 MmulDv:0000007 ! this will check for capacity to use in priority immediately_preceded_by
+
+[Term]
+id: MmulDv:0000010
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000003 ! immature stage
+relationship: RO:0002087 MmulDv:0000009 
+relationship: RO:0002087 MmulDv:0000008 ! to chec this will raise an error

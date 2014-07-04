@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,8 +50,6 @@ import org.supercsv.io.ICsvMapWriter;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
-import owltools.graph.OWLQuantifiedProperty;
-import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
  * Class related to the use, and insertion into the database of the ontology Uberon.
@@ -389,10 +386,27 @@ public class Uberon {
     private final Map<String, String> classesRemoved;
     
     /**
+     * The {@code OntologyUtils} used to perform operations, wrapping the Uberon ontology 
+     * that will be used. 
+     */
+    private final OntologyUtils ontUtils;
+    
+    /**
      * Default constructor.
      */
     public Uberon() {
+        this(null);
+    }
+    
+    /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used. 
+     * 
+     * @param ontUtils  the {@code OntologyUtils} that will be used. 
+     */
+    public Uberon(OntologyUtils ontUtils) {
         this.classesRemoved = new HashMap<String, String>();
+        this.ontUtils = ontUtils;
     }
     
     /**
@@ -597,36 +611,8 @@ public class Uberon {
         Set<String> filteredIds = new HashSet<String>(classesRemoved.keySet());
         //then, order the IDs. 
         List<String> orderedIds = new ArrayList<String>(filteredIds);
-        //To get a natural ordering, we order based on the prefix of the ID, 
-        //then based on the numeric part
-        Collections.sort(orderedIds, new Comparator<String>() {
-            @Override
-            public int compare(String id1, String id2) {
-                String splitPattern = ":";
-                String prefix1 = id1.split(splitPattern)[0];
-                String prefix2 = id2.split(splitPattern)[0];
-                if (!prefix1.equals(prefix2)) {
-                    return prefix1.compareTo(prefix2);
-                }
-                int numeric1 = 0;
-                int numeric2 = 0;
-                try {
-                    numeric1 = Integer.parseInt(id1.split(splitPattern)[1]);
-                } catch (NumberFormatException e) {
-                    throw log.throwing(new NumberFormatException(
-                            "A malformed ID caused a NumberFormatException when parsed: " + 
-                            id1 + " - " + e.getMessage()));
-                }
-                try {
-                    numeric2 = Integer.parseInt(id2.split(splitPattern)[1]);
-                } catch (NumberFormatException e) {
-                    throw log.throwing(new NumberFormatException(
-                            "A malformed ID caused a NumberFormatException when parsed: " + 
-                            id2 + " - " + e.getMessage()));
-                }
-                return (numeric1-numeric2);
-            }
-          });
+        //To get a natural ordering
+        Collections.sort(orderedIds, OntologyUtils.ID_COMPARATOR);
         //create the header of the file, and the conditions on the columns
         String[] header = new String[4];
         header[0] = UBERON_ENTITY_ID_COL;
@@ -834,15 +820,14 @@ public class Uberon {
         log.exit();
     }
     
-    public static List<String> getStageIdsBetween(OntologyUtils ontUtils, 
-            String startStageId, String endStageId) {
-        log.entry(ontUtils, startStageId, endStageId);
+    public List<String> getStageIdsBetween(String startStageId, String endStageId) {
+        log.entry(startStageId, endStageId);
         
         List<String> stageIdsBetween = new ArrayList<String>();
-        OWLGraphWrapper wrapper = ontUtils.getWrapper();
+        OWLGraphWrapper wrapper = this.ontUtils.getWrapper();
 
-        OWLClass startStage = ontUtils.getOWLClass(startStageId);
-        OWLClass endStage = ontUtils.getOWLClass(endStageId);
+        OWLClass startStage = this.ontUtils.getOWLClass(startStageId);
+        OWLClass endStage = this.ontUtils.getOWLClass(endStageId);
         if (startStage == null) {
             throw log.throwing(new IllegalArgumentException("Could not find any OWLClass " +
             		"corresponding to " + startStageId));
@@ -911,6 +896,31 @@ public class Uberon {
         }
         
         return log.exit(stageIdsBetween);
+    }
+    
+    public List<OWLClass> orderByPrecededBy(Set<OWLClass> classesToOrder) {
+        log.entry(classesToOrder);
+        
+        List<OWLClass> orderedClasses = new ArrayList<OWLClass>();
+        for (OWLClass classToOrder: classesToOrder) {
+            if (!orderedClasses.contains(classToOrder)) {
+                orderedClasses.add(classToOrder);
+            }
+            for (OWLGraphEdge edge: 
+                this.ontUtils.getWrapper().getOutgoingEdges(classToOrder)) {
+                if (this.ontUtils.isPrecededByRelation(edge)) {
+                    OWLObject target = edge.getTarget();
+                    if (classesToOrder.contains(target)) {
+                        //reorder target relative to classToOrder in the List
+                        orderedClasses.remove(target);
+                        orderedClasses.add(orderedClasses.indexOf(classToOrder), 
+                                (OWLClass) target);
+                    }
+                }
+            }
+        }
+        
+        return log.exit(orderedClasses);
     }
     
     /**

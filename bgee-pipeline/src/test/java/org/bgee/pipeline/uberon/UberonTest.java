@@ -233,8 +233,9 @@ public class UberonTest extends TestAncestor {
                 getResource("/ontologies/startEndStages.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
         
-        log.info(Uberon.getStageIdsBetween(utils, "MmulDv:0000005", "MmulDv:0000007"));
+        log.info(uberon.getStageIdsBetween("MmulDv:0000005", "MmulDv:0000007"));
         log.info(wrapper.getEdgesBetween(wrapper.getOWLClassByIdentifier("MmulDv:0000005"), 
                 wrapper.getOWLClassByIdentifier("MmulDv:0000007")));
     }

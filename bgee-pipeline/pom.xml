@@ -45,11 +45,6 @@
       <groupId>org.bbop</groupId>
       <artifactId>OWLTools-ncbi</artifactId>
     </dependency>
-  
-    <dependency>
-      <groupId>org.bbop</groupId>
-      <artifactId>OWLTools-sim</artifactId>
-    </dependency>
       
     <dependency>
       <groupId>sbc</groupId>

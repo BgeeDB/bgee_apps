@@ -421,8 +421,7 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
                 wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PRECEDED_BY_ID), 
                 Quantifier.SOME, ont);
-        assertTrue("immediately preceded_by edge not recognized", 
-                utils.isPrecededByRelation(edge));
+        assertTrue("preceded_by edge not recognized", utils.isPrecededByRelation(edge));
         edge = new OWLGraphEdge(clsB, clsA, 
                 wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID), 
                 Quantifier.SOME, ont);
@@ -433,6 +432,36 @@ public class OntologyUtilsTest extends TestAncestor {
                 Quantifier.SOME, ont);
         assertFalse("part_of edge incorrectly seen as preceded_by edge", 
                 utils.isPrecededByRelation(edge));
+        
+    }
+    
+    /**
+     * Test the method {@code OntologyUtils#isPartOfRelation()}.
+     */
+    @Test
+    public void testIsPartOfRelation() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/getIsAPartOfRelations.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass clsA = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass clsB = wrapper.getOWLClassByIdentifier("FOO:0002");
+        
+        OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID), 
+                Quantifier.SOME, ont);
+        assertTrue("part_of edge not recognized", utils.isPartOfRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier("in_deep_part_of"), 
+                Quantifier.SOME, ont);
+        assertTrue("in_deep_part_of edge not recognized", utils.isPartOfRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PRECEDED_BY_ID), 
+                Quantifier.SOME, ont);
+        assertFalse("preceded_by edge incorrectly seen as part_of edge", 
+                utils.isPartOfRelation(edge));
         
     }
     
@@ -485,9 +514,10 @@ public class OntologyUtilsTest extends TestAncestor {
      */
     @Test
     public void testIdComparator() {
-        List<String> idsUnsorted = Arrays.asList("ID:11", "ID:2", "ID:12", "ID_10", "ID:1", "ID1:1");
+        List<String> idsUnsorted = Arrays.asList("ID:11", "ID:2", "ID:12", "ID_10", 
+                "ID:1", "ID1:1", "ID:13f");
         List<String> expectedSortdIds = Arrays.asList("ID1:1", "ID:1", "ID:2", "ID:11", "ID:12", 
-                "ID_10");
+                "ID:13f", "ID_10");
         Collections.sort(idsUnsorted, OntologyUtils.ID_COMPARATOR);
         assertEquals("IDs were not sorted according to their natural ordering", 
                 expectedSortdIds, idsUnsorted);

@@ -206,8 +206,10 @@ public class OntologyUtils {
      */
     public static final Comparator<String> ID_COMPARATOR = new Comparator<String>() {
         //match classical IDs, e.g. ID:00001, but also weird IDs, e.g. Flybase:FBgn_00001, 
-        //and IDs with digits in their prefix, e.g. EHDAA2:00001
-        private final Pattern ID_PATTERN = Pattern.compile("^(.+?\\D)([0-9]+?)$");
+        //and IDs with digits in their prefix, e.g. EHDAA2:00001, and with letters 
+        //in their numeric part, e.g. AEO:0000119f (last letter note taken into account 
+        //in such cases)
+        private final Pattern ID_PATTERN = Pattern.compile("^(.+?\\D)([0-9]+?)\\D*$");
         @Override
         public int compare(String id1, String id2) {
             
@@ -982,10 +984,7 @@ public class OntologyUtils {
                 continue;
             }
             if (//if it is a part_of related relation
-                (this.getPartOfProps().contains(
-                    edge.getSingleQuantifiedProperty().getProperty()) && 
-                    edge.getSingleQuantifiedProperty().getQuantifier().equals(
-                            Quantifier.SOME)) || 
+                this.isPartOfRelation(edge) || 
                //or an is_a relation
                (edge.getSingleQuantifiedProperty().getProperty() == null && 
                             edge.getSingleQuantifiedProperty().getQuantifier().equals(
@@ -1026,6 +1025,23 @@ public class OntologyUtils {
         log.entry(edge);
         
         return log.exit(this.getPrecededByProps().contains(
+                    edge.getSingleQuantifiedProperty().getProperty()) && 
+                    edge.getSingleQuantifiedProperty().getQuantifier().equals(
+                            Quantifier.SOME));
+    }
+
+    /**
+     * Determines whether {@code edge} is a part_of-related relation, meaning, 
+     * having a {@code OWLObjectProperty} corresponding to "part_of" (see 
+     * {@link #PART_OF_ID}) or any of its {@code OWLObjectProperty} children.
+     * 
+     * @param edge  The {@code OWLGraphEdge} to test for being a part_of-related relation.
+     * @return      {@code true} if {@code edge} is a part_of-related relation.
+     */
+    public boolean isPartOfRelation(OWLGraphEdge edge) {
+        log.entry(edge);
+        
+        return log.exit(this.getPartOfProps().contains(
                     edge.getSingleQuantifiedProperty().getProperty()) && 
                     edge.getSingleQuantifiedProperty().getQuantifier().equals(
                             Quantifier.SOME));

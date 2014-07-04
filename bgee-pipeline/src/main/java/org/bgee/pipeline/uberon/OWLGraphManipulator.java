@@ -792,8 +792,8 @@ public class OWLGraphManipulator {
 		            if (this.removeEdge(outgoingEdgeToTest)) {
 		                relationsRemoved++;
                         outgoingEdgesRemoved.add(outgoingEdgeToTest);
-		                if (log.isTraceEnabled()) {
-		                    log.trace("Tested edge is redundant and is removed: " + 
+		                if (log.isDebugEnabled()) {
+		                    log.debug("Tested edge is redundant and is removed: " + 
 		                            outgoingEdgeToTest);
 		                }
 		            } else {

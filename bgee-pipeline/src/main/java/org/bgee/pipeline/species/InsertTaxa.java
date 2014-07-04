@@ -37,9 +37,9 @@ import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
 import owltools.graph.OWLGraphManipulator;
+import owltools.graph.OWLGraphUtil;
 import owltools.graph.OWLGraphWrapper;
 import owltools.graph.OWLGraphWrapper.ISynonym;
-import owltools.sim.SimEngine;
 
 /**
  * Class responsible for inserting species and related NCBI taxonomy into 
@@ -522,7 +522,6 @@ public class InsertTaxa extends MySQLDAOUser {
         //we get the least common ancestors of all possible pairs of species), 
         //in order to identify the important branching in the ontology for Bgee.
         Set<OWLClass> lcas = new HashSet<OWLClass>();
-        SimEngine se = new SimEngine(this.taxOntWrapper);
         
         for (int speciesId1: speciesIds) {
             OWLClass species1 = this.taxOntWrapper.getOWLClassByIdentifier(
@@ -533,7 +532,8 @@ public class InsertTaxa extends MySQLDAOUser {
                 if (species1 == species2) {
                     continue;
                 }
-                for (OWLObject lca: se.getLeastCommonSubsumers(species1, species2)) {
+                for (OWLObject lca: OWLGraphUtil.findLeastCommonAncestors(
+                        this.taxOntWrapper, species1, species2)) {
                     if (lca instanceof OWLClass) {
                         lcas.add((OWLClass) lca);
                     }

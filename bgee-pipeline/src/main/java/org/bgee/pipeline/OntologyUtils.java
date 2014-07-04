@@ -1014,6 +1014,24 @@ public class OntologyUtils {
     }
     
     /**
+     * Determines whether {@code edge} is a immediately_preceded_by relation (see 
+     * {@link #IMMEDIATELY_PRECEDED_BY_ID}).
+     * 
+     * @param edge  The {@code OWLGraphEdge} to test for being a immediately_preceded_by relation.
+     * @return      {@code true} if {@code edge} is a immediately_preceded_by-related relation.
+     */
+    public boolean isImmediatelyPrecededByRelation(OWLGraphEdge edge) {
+        log.entry(edge);
+        
+        return log.exit(this.getWrapper().getOWLObjectPropertyByIdentifier(
+                IMMEDIATELY_PRECEDED_BY_ID).equals(
+                        edge.getSingleQuantifiedProperty().getProperty()) &&
+                        
+                    edge.getSingleQuantifiedProperty().getQuantifier().equals(
+                            Quantifier.SOME));
+    }
+    
+    /**
      * Determines whether {@code edge} is a preceded_by-related relation, meaning, 
      * having a {@code OWLObjectProperty} corresponding to "preceded_by" (see 
      * {@link #PRECEDED_BY_ID}) or any of its {@code OWLObjectProperty} children.

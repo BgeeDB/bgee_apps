@@ -436,6 +436,33 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
+     * Test the method {@code OntologyUtils#isImmediatelyPrecededByRelation()}.
+     */
+    @Test
+    public void testIsImmediatelyPrecededByRelation() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/startEndStages.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass clsA = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
+        OWLClass clsB = wrapper.getOWLClassByIdentifier("MmulDv:0000001");
+        
+        OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PRECEDED_BY_ID), 
+                Quantifier.SOME, ont);
+        assertFalse("preceded_by edge incorrectly seen as immediately_preceded_by edge", 
+                utils.isImmediatelyPrecededByRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID), 
+                Quantifier.SOME, ont);
+        assertTrue("immediately preceded_by edge not recognized", 
+                utils.isPrecededByRelation(edge));
+        
+    }
+    
+    /**
      * Test the method {@code OntologyUtils#isPartOfRelation()}.
      */
     @Test

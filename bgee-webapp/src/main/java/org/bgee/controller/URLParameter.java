@@ -1,321 +1,42 @@
 package org.bgee.controller;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
- * This enum provides all the URL parameters used in Bgee and their properties
+ * This class is designed to wrap all parameters that can be received and sent through a HTTP request
+ * within the Bgee webapp. It contains several properties related to the parameter and its usage.
+ * However, it does not store the value contained by a parameter's instance. This role is fulfilled by 
+ * {@link RequestParameters} with the help of {@link URLParameters} that provides instances of
+ * {@code URLparameter} 
+ * <p>
+ * It uses generic types and therefore a specific data type corresponding to the parameter's value has 
+ * to be provided at instantiation.
+ * <p>
+ * This class has a protected constructor and is meant to be instantiated only by {@link URLParameters}
+ * which acts more or less as an enum of {@code URLparameter}
  * 
  * @author Mathieu Seppey
  * @version Bgee 13, Jul 2014
- * @see TODO
+ * @see RequestParameters
+ * @see URLParameters
  * @since Bgee 13
+ *
+ * @param <T> The data type of the parameter.
  */
-public enum URLParameter {
-
-	// TODO COMMENT MISSING... to be completed soon !
-	//
-	// TODO	 - Check that the name of each parameter makes sense
-	// 		 - Set the appropriate value for isStorable, isSecure, structure and format if needed.
-	// 		 - Add a comment for every parameter
+public class URLParameter<T> {
 	
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ACTION ("action", 4, false, false, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ALL_ORGANS ("all_organs", 2, false, false, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ALL_STAGES  ("all_stages", 3, false, false, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ANY_HOG ("any_hog", 4, true, false, Boolean.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ANY_SPECIES ("any_species", true, false, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ANY_STRUCTURES ("any_structures_", false, true, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ATTRIBUTE_LIST ("attribute_list", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	CAPTCHA ("captcha", false, false, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	CHOSEN_DATA_TYPE("chosen_data_type", true, false, Integer.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	CONFIRMED_PASSWORD ("confirmed_password", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	DISPLAY_TYPE ("display_type", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	EXPRESSION_ONLY ("expression_only", false, true, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	EXACT_MATCH ("exact_match", false, true, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	EMAIL("email", false, true, String.class,"[\\w\\._-]+@[\\w\\._-]+\\.[a-zA-Z][a-zA-Z][a-zA-Z]?$"),	
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	F_NAME ("f_name", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	GENE_FAMILY_ID ("gene_family_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	GENE_ID ("gene_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	GENE_INFORMATION ("gene_information", false, true, Integer.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	GENE_ORGAN_STAGE_INFORMATION ("gene_organ_stage_information", false, true, Boolean.class),	
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	HOG_ID ("hog_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	HOG_String ("hog_String", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	INSTITUTION ("institution", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	L_NAME ("l_name", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	LEVEL ("level", false, true, Integer.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	LOGIN ("login", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	MAILING_String ("mailing_String", false, true, Boolean.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	META_STAGE_ID ("meta_stage_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	METASTAGE_LIST ("metastage_list", false, true, String.class),	
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	ORDER_BY ("order_by", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	ORGAN_CHILDREN ("organ_children", false, true, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	ORGAN_CHILDREN_ ("organ_children_", false, true, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	ORGAN_ID ("organ_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	ORGAN_LIST ("organ_list_", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	PAGE ("page", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	PAGE_NUMBER  ("page_number", false, true, Integer.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	PASSWORD ("password", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	REGISTRATION_PASSWORD ("registration_password", false, true, String.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	REINIT_PASS ("reinit_pass", false, true, Boolean.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	RESULTS_PER_PAGE  ("results_per_page", false, true, Integer.class),	 
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	SEARCH ("search", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	SEARCH_BY ("search_by", false, true, Integer.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	SEARCH_ID ("search_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	SEARCH_NAME ("search_name", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	SEARCH_TYPE  ("search_type", false, true, Integer.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	SPECIES_DETAILS_ID ("species_details_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	SPECIES_ID ("species_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	SPECIES_LIST ("species_list", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	STAGE_CHILDREN ("stage_children", false, true, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	STAGE_CHILDREN_ ("stage_children_", false, true, Boolean.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	STAGE_ID_ ("stage_list_", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	STAGE_ID ("stage_id", false, true, String.class),
-
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	UNIPROT_ID ("uniprot_id", false, true, String.class);
-
-	/**
-	 * Constant to indicates that the parameters has to be a unique value, name=value
-	 */
-	public final static int UNIQUE_VALUE = 1 ;
-
-	/**
-	 * Constant to indicates that the parameters has to be a unique list, name=value1,value2,value3
-	 */
-	public final static int UNIQUE_LIST = 2 ;
-
-	/**
-	 * Constant to indicates that the parameters can have multiple value, name=value1&name=value2
-	 */
-	public final static int MULTIPLE_VALUE = 3 ;
-
-	/**
-	 * Constant to indicates that the parameters 
-	 * can be multiple lists, name=value1,value2&name=value3,value4
-	 */
-	public final static int MULTIPLE_LIST = 4 ;
-
+	private final static Logger log = LogManager.getLogger(URLParameter.class.getName());
+	
 	/**
 	 * A {@code String} that contains the name of the parameter as written in the URL.
 	 */
 	private final String name ;
 
 	/**
-	 * An {@code int} that is one of the constants to indicates the structure possible for
-	 * this parameter.
-	 * @see UNIQUE_VALUE
-	 * @see UNIQUE_LIST
-	 * @see MULTIPLE_VALUE
-	 * @see MULTIPLE_LIST
+	 * A {@code Boolean} that indicates whether the parameter accepts multiple values.
 	 */
-	private final int structure ;
-
-	/**
-	 * An {@code int} that represents the maximum size allowed for the parameter.
-	 */
-	private final int maxSize ;
+	private final boolean allowsMultipleValues ;
 
 	/**
 	 * A {@code boolean} that indicates whether the parameter is storable or not.
@@ -327,155 +48,100 @@ public enum URLParameter {
 	 * should not be kept or displayed in the URL such as a password.
 	 */
 	private final boolean isSecure ;
-
+	
 	/**
-	 * A {@code Class<?>} that represents the data type of the parameter.
+	 * An {@code int} that represents the maximum size allowed for the parameter.
 	 */
-	private final Class<?> type ;
-
+	private final int maxSize ;
+	
+	/**
+	 * A {@code Class<T>} that is the data type of the value to be store by this parameter.
+	 */
+	private final Class<T> type;
+	
 	/**
 	 * A {@code String} that contains the regular expression the parameter should match. 
 	 * Is {@code null} when the parameter is either a {@code String} without content restrictions
 	 * or a different data type.
 	 */
 	private final String format;
-
-	/**
-	 * Default max length for a parameter.
-	 */
-	private static final int MAXLENGTH = 128;
-
+	
 	/**
 	 * Constructor
 	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
+	 * @param allowsMultipleValues	A {@code Boolean} that indicates whether the parameter accepts 
+	 * 								multiple values.
 	 * @param isStorable	A {@code boolean} that tells whether the parameter is storable or not 
 	 * @param isSecure		A {@code boolean} that tells whether the parameter is secure or not 
-	 * @param type			A {@code Class<?>} that represents the data type of the parameter.
+	 * @param maxSize		An {@code int} that represents the maximum size allowed for the parameter.
+	 * @param format		A {@code String} that contains the regular expression that this parameter
+	 * 						has to fit to
+	 * @param type			A {@code Class<T>} that is the data type of the value to be store 
+	 * 						by this parameter.
 	 */
-	URLParameter(String name, boolean isStorable, boolean isSecure,Class<?> type){
-
-		this(name, URLParameter.MULTIPLE_LIST, isStorable,isSecure,type,MAXLENGTH,null);
-
-	}	
-
-	/**
-	 * Constructor
-	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
-	 * @param isStorable	A {@code boolean} that tells whether the parameter is storable or not 
-	 * @param isSecure		A {@code boolean} that tells whether the parameter is secure or not 
-	 * @param type			A {@code Class<?>} that represents the data type of the parameter.
-	 * @param format		A {@code String} that contains the regular expression that this parameter has to fit to
-	 */
-	URLParameter(String name, boolean isStorable, boolean isSecure,Class<?> type, String format){
-
-		this(name, URLParameter.MULTIPLE_LIST, isStorable,isSecure,type,MAXLENGTH,format);
-
-	}	
-
-	/**
-	 * Constructor
-	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
-	 * @param isStorable	A {@code boolean} that tells whether the parameter is storable or not 
-	 * @param isSecure		A {@code boolean} that tells whether the parameter is secure or not 
-	 * @param type			A {@code Class<?>} that represents the data type of the parameter.
-	 * @param int			An {@code int} that represents the maximum size allowed for the parameter.
-	 */
-	URLParameter(String name, boolean isStorable, boolean isSecure,Class<?> type, int maxSize){
-
-		this(name, URLParameter.MULTIPLE_LIST, isStorable,isSecure,type,maxSize,null);
-
-	}		
-
-	/**
-	 * Constructor
-	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
-	 * @param structure		An {@code int} that is one of the constants to indicates the structure possible for
-	 * 						this parameter.
-	 * @param isStorable	A {@code boolean} that tells whether the parameter is storable or not 
-	 * @param isSecure		A {@code boolean} that tells whether the parameter is secure or not 
-	 * @param type			A {@code Class<?>} that represents the data type of the parameter.
-	 */
-	URLParameter(String name, Integer structure,boolean isStorable, boolean isSecure,Class<?> type){
-
-		this(name, structure, isStorable,isSecure,type,0,null);
-	}
-	/**
-	 * Constructor
-	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
-	 * @param structure		An {@code int} that is one of the constants to indicates the structure possible for
-	 * 						this parameter.
-	 * @param isStorable	A {@code boolean} that tells whether the parameter is storable or not 
-	 * @param isSecure		A {@code boolean} that tells whether the parameter is secure or not 
-	 * @param type			A {@code Class<?>} that represents the data type of the parameter.
-	 * @param int			An {@code int} that represents the maximum size allowed for the parameter.
-	 * @param format		A {@code String} that contains the regular expression that this parameter has to fit to
-	 */
-	URLParameter(String name, Integer structure,boolean isStorable, boolean isSecure,Class<?> type,int maxSize,String format){
+	protected URLParameter(String name, Boolean allowsMultipleValues,boolean isStorable, 
+			boolean isSecure,int maxSize,String format,Class<T> type){
+		
+		log.entry(name,allowsMultipleValues,isStorable,isSecure,maxSize,format,type);
 
 		this.name = name ;
-		this.structure = structure;
-		this.maxSize = maxSize ;
+		this.allowsMultipleValues = allowsMultipleValues;
 		this.isStorable = isStorable ;
 		this.isSecure = isSecure ;
-		this.type = type ;
+		this.maxSize = maxSize ;
 		this.format = format ;
+		this.type = type ;
 	}
 
 	/**
-	 * @return A {@code String} that contains the name of the parameter as it is written in an URL.
+	 * @return	A {@code String} that is the name of the parameter as seen in an URL
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * @return 	An {@code int} that is one of the constants to indicates the structure possible for
-	 * 			this parameter.
-	 * @see UNIQUE_VALUE
-	 * @see UNIQUE_LIST
-	 * @see MULTIPLE_VALUE
-	 * @see MULTIPLE_LIST
+	 * @return	A {@code Boolean} that indicates whether the parameter accepts multiple values.
 	 */
-	public int getStructure() {
-		return structure;
+	public boolean allowsMultipleValues() {
+		return allowsMultipleValues;
 	}
 
 	/**
-	 * @return An {@code int} that represents the maximum size allowed for the parameter.
-	 */
-	public int getMaxSize() {
-		return maxSize;
-	}
-
-	/**
-	 * @return	A {@code boolean} that indicates whether the parameter is storable or not.
+	 * @return	A {@code boolean} that tells whether the parameter is storable or not
 	 */
 	public boolean isStorable() {
 		return isStorable;
 	}
 
 	/**
-	 * @return	A {@code boolean} that indicates whether the parameter is secure, i.e. contains 
-	 * information that should not be kept or displayed in the URL such as a password.
+	 * @return	A {@code boolean} that tells whether the parameter is secure or not
 	 */
 	public boolean isSecure() {
 		return isSecure;
 	}
-
+	
 	/**
-	 * @return  A {@code Class<?>} that represents the data type of the parameter.
+	 * @return	An {@code int} that represents the maximum size allowed for the parameter.
 	 */
-	public Class<?> getType() {
-		return type;
+	public int getMaxSize() {
+		return maxSize;
 	}
 
 	/**
-	 * @return	 A {@code String} that contains the regular expression the parameter should match.
+	 * @return	A {@code String} that contains the regular expression that this parameter
+	 * 			has to fit to
 	 */
 	public String getFormat() {
 		return format;
 	}
-
+	
+	/**
+	 * @return	A {@code Class<T>} that is the data type of the value to be store 
+	 * 			by this parameter.
+	 */	
+	public Class<T> getType() {
+		return type;
+	}
+	
 }
-
-

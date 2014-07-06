@@ -1146,10 +1146,13 @@ public class OWLGraphManipulatorTest
 		//add as a root to remove a term that is in the FOO:0006 subgraph, 
 		//to check if the ancestors check will not lead to keep erroneously FOO:0007
 		toRemove.add("FOO:0008");
-		int countRemoved = this.graphManipulator.removeSubgraphs(toRemove, true).size();
+		Set<String> expectedClassesRemoved = new HashSet<String>(
+		        Arrays.asList("FOO:0006", "FOO:0008", "FOO:0007", "FOO:0009", "FOO:0010", 
+		                "FOO:0012"));
+		Set<String> classesRemoved = this.graphManipulator.removeSubgraphs(toRemove, true);
 
-		//The test ontology is designed so that 7 classes should have been removed
-		assertEquals("Incorrect number of classes removed", 7, countRemoved);
+		//The test ontology is designed so that 6 classes should have been removed
+		assertEquals("Incorrect classes removed", expectedClassesRemoved, classesRemoved);
 		//test that these classes were actually removed from the ontology
 		allClasses = new HashSet<OWLClass>();
         for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
@@ -1157,7 +1160,7 @@ public class OWLGraphManipulatorTest
         }
         int newClassCount = allClasses.size();
 		assertEquals("removeSubgraph did not return the correct number of classes removed", 
-				classCount - newClassCount, countRemoved);
+				classCount - newClassCount, classesRemoved.size());
 
 		//Test that the terms part of both subgraphs, or part of independent subgraphs, 
 		//were not incorrectly removed.

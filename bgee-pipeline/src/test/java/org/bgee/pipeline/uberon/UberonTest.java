@@ -295,10 +295,11 @@ public class UberonTest extends TestAncestor {
     public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.obo");
         OWLGraphManipulator manip = new OWLGraphManipulator(ont);
+        OWLGraphWrapper wrapper = manip.getOwlGraphWrapper();
         
-        manip.mapRelationsToParent(Arrays.asList("BFO:0000050", "RO:0002202", "RO:0002494"));
-        manip.filterRelations(Arrays.asList("BFO:0000050", "RO:0002202", "RO:0002494"), true);
-        
-        manip.removeSubgraphs(Arrays.asList("NBO:0000313"), true);
+        OWLClass embryo = wrapper.getOWLClassByIdentifier("UBERON:0000922");
+        log.info(wrapper.getNamedAncestors(embryo));
+        log.info(wrapper.getEdgesBetween(wrapper.getOWLClassByIdentifier("UBERON:0000922"), 
+                wrapper.getOWLClassByIdentifier("NBO:0000313")));
     }
 }

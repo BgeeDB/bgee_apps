@@ -1525,24 +1525,24 @@ public class OWLGraphManipulator {
     				this.getOwlGraphWrapper().getOWLClassByIdentifier(rootId);
     		if (subgraphRoot == null) {
     		    if (log.isDebugEnabled()) {
-    			    log.debug("Discarded root class: " + rootId);
+    			    log.debug("Discarded root class, maybe already removed: " + rootId);
     		    }
     			continue rootLoop;
     		}
     		if (log.isDebugEnabled()) {
     		    log.debug("Examining subgraph from root: " + subgraphRoot);
     		}
+    		
+    		//we need all descendants of subgraphRoot, to determine the classes to remove
+    		Set<OWLClass> classesToDel = new HashSet<OWLClass>();
+            classesToDel.add(subgraphRoot);
+            classesToDel.addAll(this.getOwlGraphWrapper().getOWLClassDescendants(subgraphRoot));
         	
         	if (!keepSharedClasses) {
         		//this part is easy, simply remove all descendants of subgraphRoots 
-        		Set<OWLClass> classesToDel = new HashSet<OWLClass>();
-        		classesToDel.add(subgraphRoot);
-        		Set<OWLClass> descendants = 
-        				this.getOwlGraphWrapper().getOWLClassDescendants(subgraphRoot);
-        		classesToDel.addAll(descendants);
         		if (log.isDebugEnabled()) {
         		    log.debug("Subgraph being deleted, descendants of subgraph " +
-        		    		"root to remove: " + descendants);
+        		    		"root to remove: " + classesToDel);
         		}
                 for (OWLClass classRemoved: this.removeClasses(classesToDel)) {
                     classIdsRemoved.add(this.getOwlGraphWrapper().getIdentifier(classRemoved));
@@ -1639,7 +1639,14 @@ public class OWLGraphManipulator {
     			}
     		}
 
-    		for (OWLClass classRemoved: this.filterClasses(toKeep)) {
+    		//now, to be conservative, rather than calling this.filterClasses(toKeep), 
+    		//we substract toKeep from the Set of all descendants of all roots 
+    		//of subgraphs to remove
+    		classesToDel.removeAll(toKeep);
+    		if (log.isDebugEnabled()) {
+    		    log.debug("OWLClasses to keep: " + toKeep);
+    		}
+    		for (OWLClass classRemoved: this.removeClasses(classesToDel)) {
                 classIdsRemoved.add(this.getOwlGraphWrapper().getIdentifier(classRemoved));
             }
     	}
@@ -2163,6 +2170,9 @@ public class OWLGraphManipulator {
         if (this.applyChanges(remover.getChanges())) {
             if (log.isDebugEnabled()) {
                 log.debug("Removing OWLClass " + classToDel);
+                if (this.getOwlGraphWrapper().getIdentifier(classToDel).equals("UBERON:0000922")) {
+                    log.debug("Outgoing edges: " + this.getOwlGraphWrapper().getOutgoingEdges(classToDel));
+                }
             }
             this.triggerWrapperUpdate();
             return true;

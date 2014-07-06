@@ -529,7 +529,6 @@ public class Uberon {
         if (this.getClassIdsToRemove() != null) {
             for (String classIdToRemove: this.getClassIdsToRemove()) {
                 manipulator.removeClassAndPropagateEdges(classIdToRemove);
-                this.classesRemoved.put(classIdToRemove, "Remove class and propagate edges");
             }
         }
         
@@ -844,10 +843,11 @@ public class Uberon {
         } else {
             OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
                     OntologyUtils.PART_OF_ID);
+            Set<OWLPropertyExpression> overPartOf = 
+                    new HashSet<OWLPropertyExpression>(Arrays.asList(partOf));
             //first, get the least common ancestor of the two stages over part_of relation
             Set<OWLObject> lcas = OWLGraphUtil.findLeastCommonAncestors(wrapper, 
-                    startStage, endStage, 
-                    new HashSet<OWLPropertyExpression>(Arrays.asList(partOf)));
+                    startStage, endStage, overPartOf);
             //the part_of graph should be a tree, so, only one OWLClass lca
             if (lcas.size() != 1 || !(lcas.iterator().next() instanceof OWLClass)) {
                 throw log.throwing(new IllegalStateException("The developmental stages " +
@@ -867,6 +867,32 @@ public class Uberon {
                 }
             }
             List<OWLClass> orderedLcaDescendants = this.orderByPrecededBy(lcaDescendants);
+            //now we find the lca descendant leading to or being startStage, 
+            //and the lca descendant leading to or being endStage
+            int leadToStartIndex = 0;
+            int leadToEndIndex = 0;
+            //there is no method getDescendants over properties, so we get the ancestors 
+            //of startStage and endStage
+            Set<OWLObject> startAncestors = wrapper.getAncestors(startStage, overPartOf);
+            Set<OWLObject> endAncestors   = wrapper.getAncestors(endStage, overPartOf);
+            for (int i = 0; i < orderedLcaDescendants.size(); i++) {
+                OWLClass lcaDescendant = orderedLcaDescendants.get(i);
+                if (lcaDescendant.equals(startStage) || 
+                        startAncestors.contains(lcaDescendant)) {
+                    leadToStartIndex = i;
+                }
+                if (lcaDescendant.equals(endStage) || 
+                        endAncestors.contains(lcaDescendant)) {
+                    leadToEndIndex = i;
+                }
+            }
+            //now we find the distance between startStage and the LCA, and endStage and the LCA
+            
+            
+            
+            
+            
+            
             
             
             //to define the allowed properties to use to check for precedance. 

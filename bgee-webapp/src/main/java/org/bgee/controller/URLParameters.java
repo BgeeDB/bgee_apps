@@ -81,13 +81,19 @@ public class URLParameters {
 	/**
 	 * DESCRIPTION PARAM
 	 */
+	// This parameter is used in the unit tests and is expected to be a String and to have 
+	// a false allowsMultipleValues and a false isStorable value.
+	// If this has to be changed, another parameter has to be used in the unit tests instead.
 	public static final URLParameter<String> ACTION = new URLParameter<String>("action",
-			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+			false, false, DEFAULT_IS_SECURE, 
 			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,String.class);
 
 	/**
 	 * DESCRIPTION PARAM
 	 */
+	// This parameter is used in the unit tests and is expected to be a Boolean and to have 
+	// a true allowsMultipleValues and a true isStorable value.
+	// If this has to be changed, another parameter has to be used in the unit tests instead.
 	public static final URLParameter<Boolean> ALL_ORGANS = new URLParameter<Boolean>("all_organs",
 			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
 			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Boolean.class);
@@ -95,6 +101,9 @@ public class URLParameters {
 	/**
 	 * DESCRIPTION PARAM
 	 */	
+	// This parameter is used in the unit tests and is expected to be an Integer and to have 
+	// a true allowsMultipleValues and a true isStorable value.
+	// If this has to be changed, another parameter has to be used in the unit tests instead.
 	public static final URLParameter<Integer> CHOSEN_DATA_TYPE = new URLParameter<Integer>("chosen_data_type",
 			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
 			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Integer.class);

@@ -84,7 +84,9 @@ public class RequestParameters {
 	 * 
 	 * @see #isUrlTooLong(String)
 	 */
-	private static final int URLMAXLENGTH = 80;
+	// This value is expected to be 120 by the unit tests. If it is changed here, it has to be changed
+	// in the unit test
+	private static final int URLMAXLENGTH = 120;
 
 	/**
 	 * A {@code LinkedHashMap<URLParameter<?>, Object} that store the values of parameters as an
@@ -305,8 +307,7 @@ public class RequestParameters {
 							log.error("Illegal value or character for the parameter {} : {}",
 									parameter.getName(),valueFromUrl);
 
-							// If something bad happened with the value, just return null
-							parameterValues = null;
+							// If something bad happened with the value, just skip this value
 
 						}
 
@@ -767,7 +768,7 @@ public class RequestParameters {
 
 	/**
 	 * Return the value of the given {@code URLParameter<T>} for the given index
-	 * If the index is wrong, will return the first entry
+	 * If the index is wrong, will return the last entry
 	 * @param parameter the {@code URLParameter<T>} that corresponds to the value to be returned
 	 * @param index an {@code int} that is the index of the desired value
 	 * @return a {@code T}, the value
@@ -782,7 +783,8 @@ public class RequestParameters {
 			return log.exit(((ArrayList<T>) this.values.get(parameter)).get(index));
 		}
 		catch(IndexOutOfBoundsException e){
-			return log.exit(((ArrayList<T>) this.values.get(parameter)).get(0));			
+			ArrayList<T> listValues = (ArrayList<T>) this.values.get(parameter);
+			return log.exit(listValues.get(listValues.size()-1));			
 
 		}
 		catch(NullPointerException e){
@@ -901,8 +903,14 @@ public class RequestParameters {
 		//to avoid duplicating methods, 
 		//we we simulate a HttpServletRequest with parameters corresponding by a query string we provide 
 		//holding storable parameters of this object
-		String queryString = this.getParametersQuery();
+		
+		// disable temporarily the url encoding to generate a new BgeeHttpServletRequest using the url
+		boolean encodeUrlValue = this.encodeUrl;
+		this.encodeUrl = false;
+		String queryString = this.generateParametersQuery(true, true, false);
 		BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
+		this.encodeUrl = encodeUrlValue;
+
 		RequestParameters clonedRequestParameters = new RequestParameters();
 
 		clonedRequestParameters = new RequestParameters(request);
@@ -911,6 +919,7 @@ public class RequestParameters {
 		// TODO manage server parameters
 		// clonedRequestParameters.loadServerParameters(this);
 		//Note: we do not clone httpMethod
+
 
 		clonedRequestParameters.setGeneratedKey(this.getGeneratedKey());
 
@@ -936,8 +945,12 @@ public class RequestParameters {
 		//to avoid duplicating methods, 
 		//we we simulate a HttpServletRequest with parameters corresponding by a query string we provide 
 		//holding storable parameters of this object
+		// disable temporarily the url encoding to generate a new BgeeHttpServletRequest using the url
+		boolean encodeUrlValue = this.encodeUrl;
+		this.encodeUrl = false;
 		String queryString = this.generateParametersQuery(true, false, false);
 		BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
+		this.encodeUrl = encodeUrlValue;
 
 		RequestParameters clonedRequestParameters = new RequestParameters();
 		//the BgeeHttpServletRequest holds no non-storable parameters 

@@ -67,7 +67,7 @@ public class URLParameter<T> {
 	private final String format;
 	
 	/**
-	 * Constructor
+	 * Protected constructor to allow only {@link URLParameters} to create instances of this class
 	 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
 	 * @param allowsMultipleValues	A {@code Boolean} that indicates whether the parameter accepts 
 	 * 								multiple values.

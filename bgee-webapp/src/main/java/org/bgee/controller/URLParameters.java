@@ -1,9 +1,7 @@
 package org.bgee.controller;
 
-import java.util.ArrayList;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is designed to act like an enum of {@code URLParameter<T>} to provide a specific name to
@@ -29,8 +27,6 @@ import org.apache.logging.log4j.Logger;
  * @see	RequestPararmeters
  */
 public class URLParameters {
-	
-	private final static Logger log = LogManager.getLogger(URLParameters.class.getName());
 
 	// ********************************************************
 	//
@@ -125,22 +121,8 @@ public class URLParameters {
 	/**
 	 * An {@code ArrayList<URLParameter<T>>} to list all declared {@code URLParameter<T>}
 	 */
-	private static final ArrayList<URLParameter<?>> list = new ArrayList<URLParameter<?>>(){
-
-		private static final long serialVersionUID = -2814205136365213851L;
-
-		{
-			log.entry();
-			// Reminder : parameters are declared in alphabetic order in the class but added to 
-			// the list according to there desired order in the URL.
-			this.add(ACTION);
-			this.add(CHOSEN_DATA_TYPE);
-			this.add(STAGE_CHILDREN);
-			this.add(ALL_ORGANS);
-			this.add(EMAIL);
-
-		}
-	};
+	private static final List<URLParameter<?>> list = Arrays.<URLParameter<?>>asList(ACTION, 
+	        CHOSEN_DATA_TYPE, STAGE_CHILDREN, ALL_ORGANS, EMAIL);
 	
 	/**
 	 * Private constructor to prevent any instantiation of this class
@@ -150,7 +132,7 @@ public class URLParameters {
 	/**
 	 * @return An {@code ArrayList<URLParameter<T>>} to list all declared {@code URLParameter<T>}
 	 */
-	public static ArrayList<URLParameter<?>> getList() {
+	public static List<URLParameter<?>> getList() {
 		return list;
 	}
 

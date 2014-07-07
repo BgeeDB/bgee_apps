@@ -292,8 +292,9 @@ public class ParseOrthoXML extends MySQLDAOUser {
         dao.setAttributes(TaxonDAO.Attribute.ID);
         TaxonTOResultSet rsTaxa = dao.getAllTaxa();
         while (rsTaxa.next()) {
-            TaxonTO t = rsTaxa.getTO();
-            this.taxonIdsInBgee.add(t.getId());
+            TaxonTO taxonTO = rsTaxa.getTO();
+            log.debug(taxonTO.getName()+" - "+taxonTO.getId());
+            this.taxonIdsInBgee.add(taxonTO.getId());
         }
         if (log.isInfoEnabled()) {
             log.info("Done retrieving taxon IDs, {} taxa found", taxonIdsInBgee.size());
@@ -320,12 +321,14 @@ public class ParseOrthoXML extends MySQLDAOUser {
         SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies();
         while (rsSpecies.next()) {
             SpeciesTO speciesTO = rsSpecies.getTO();
-            log.debug(speciesTO.getName()+" - "+speciesTO.getGenomeSpeciesId()+" - "+speciesTO.getFakeGeneIdPrefix());
+            log.debug(speciesTO.getName()+" - "+speciesTO.getGenomeSpeciesId()+" - "+
+                    speciesTO.getFakeGeneIdPrefix());
             if (StringUtils.isNotBlank(speciesTO.getGenomeSpeciesId()) && 
                     !speciesTO.getId().equals(speciesTO.getGenomeSpeciesId())) {
                 int genomeSpeciesId = Integer.parseInt(speciesTO.getGenomeSpeciesId());
                 if (speciesPrefixes.get(genomeSpeciesId) == null) {
-                    this.speciesPrefixes.put(Integer.parseInt(speciesTO.getGenomeSpeciesId()),
+                    this.speciesPrefixes.put(
+                            Integer.parseInt(speciesTO.getGenomeSpeciesId()),
                             new HashSet<String>());
                 }
                 this.speciesPrefixes.get(genomeSpeciesId).add(speciesTO.getFakeGeneIdPrefix());
@@ -366,8 +369,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // Read all the groups in the file iteratively
         while ((group = reader.next()) != null) {
             this.generateTOsFromGroup(group, group.getId());
-            // We increment the nestedSetBoundSeed because we are at a leaf of the 
-            // nested set model
+            // We increment the nestedSetBoundSeed because we move to the next OMA group.
             this.nestedSetBoundSeed++;
         }
         log.info("Done retrieving hierarchical groups.");
@@ -383,27 +385,34 @@ public class ParseOrthoXML extends MySQLDAOUser {
      *                      retrieved.
      * @param omaXrefId     A {@code String} that the OMA cross-reference ID to use for
      *                      subgroups.
+     * @return              A {@code boolean} that is {@code true} if one
+     *                      {@code HierarchicalGroupTO} has been added representing 
+     *                      the given {@code Group}. 
      */
-    private void generateTOsFromGroup(Group group, String omaXrefId) {
+    private boolean generateTOsFromGroup(Group group, String omaXrefId) {
         log.entry(group, omaXrefId);
 
-        // First, we increment the nestedSetBoundSeed because we will create a new 
+        // First, we check if the group represents a taxon presents Bgee or if it's a 
+        // paralog group. If wrong, we don't insert a hierarchical groupTO.
+        String groupTaxId = group.getProperty("TaxId");
+        if (groupTaxId != null && !taxonIdsInBgee.contains(groupTaxId)) {
+            log.warn("{} ({}) isn't a taxon relevant to Bgee",
+                    group.getProperty("TaxRange"), groupTaxId);
+            return log.exit(false);
+        } 
+
+        // Second, we increment the nestedSetBoundSeed because we will create a new 
         // hierarchical group
         this.nestedSetBoundSeed++;
 
-        // Then, we add a HierarchicalGroupTO in collection containing hierarchical groups
-        // to be inserted into the Bgee database.
+        // We add a HierarchicalGroupTO in collection containing hierarchical groups to be 
+        // inserted into the Bgee database
         // The last argument is the number of children of the HierarchicalGroupTO to create. 
         // So, we need to remove 1 to countGroups() to subtract the current group.
-        
-        //TODO check if species or taxon
-        
-        //TODO: shouldn't it be added only if it is a taxon relevant to Bgee?
-        
-        //      what we do with gene of a taxon unrelevant to Bgee?
         this.addHierarchicalGroupTO(omaNodeId, omaXrefId, this.nestedSetBoundSeed,
                 group.getProperty("TaxId"), countGroups(group) - 1);
 
+        // Then, we retrieve gene data.
         if (group.getGenes() != null) {
             log.debug("Retrieving genes from group {}", group);
             for (sbc.orthoxml.Gene groupGene : group.getGenes()) {
@@ -413,34 +422,29 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 boolean isInBgee = false ;
                 for (String geneId : geneIds) {
                     log.debug("Examining OMA geneId {}", geneId);
-                    int taxId = groupGene.getSpecies().getNcbiTaxId();
-                    if (geneIdsInBgee.contains(geneId)) {
+                    int geneTaxId = groupGene.getSpecies().getNcbiTaxId();
+                    if (this.addGeneTO(new GeneTO(geneId, "", "", 0, 0, omaNodeId, true),
+                            omaXrefId)) {
                         isInBgee = true;
-                        this.addGeneTO(new GeneTO(geneId, "", "", 0, 0, omaNodeId, true),
-                                omaXrefId);
                     }
                     // Check if this taxon corresponds to a species for which we are using 
                     //the genome of another species
-                    if (this.speciesPrefixes.containsKey(taxId)) {
+                    if (this.speciesPrefixes.containsKey(geneTaxId)) {
                         // Change prefix of the gene to create a fake gene IDs of other
                         // species using this genome.
                         Matcher m = Pattern.compile("^([A-Za-z]+)(\\d.+)").matcher(geneId);
                         if (m.matches()) {
-                            for (String newGeneId: this.speciesPrefixes.get(taxId)) {
+                            for (String newGeneId: this.speciesPrefixes.get(geneTaxId)) {
                                 String duplicateId = newGeneId + m.group(2);
                                 log.debug("Generating fake geneId from {} to {}, " +
                                           "because belonging to species {}", 
-                                          geneId, duplicateId, taxId);
+                                          geneId, duplicateId, geneTaxId);
                                 if (this.addGeneTO(new GeneTO(duplicateId, "", "", 0, 0,
                                         omaNodeId, true), omaXrefId)) {
                                     isInBgee = true;
                                 }
                             }
                         }
-                    }
-                    if (this.addGeneTO(new GeneTO(geneId, "", "", 0, 0, omaNodeId, true),
-                            omaXrefId)) {
-                        isInBgee = true;
                     }
                 }
                 if (!isInBgee) {
@@ -449,17 +453,22 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 }
             }
         }
+
         // Incrementing the node ID. Done after to be able to set OMA parent node ID
         // into gene table
         omaNodeId++;
+        
         if (group.getChildren() != null && group.getChildren().size() > 0) {
             for (Group childGroup : group.getChildren()) {
                 // Recurse
-                generateTOsFromGroup(childGroup, omaXrefId);
-                this.nestedSetBoundSeed++;
+                if (generateTOsFromGroup(childGroup, omaXrefId)) {
+                    // We increment the nestedSetBoundSeed because we are at a leaf of the 
+                    // nested set model
+                    this.nestedSetBoundSeed++;
+                }
             }
         }
-        log.exit();
+        return log.exit(true);
     }
 
     /**
@@ -513,6 +522,9 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * 
      * @param geneTO        A {@code GeneTO} to add. 
      * @param omaXrefId     A {@code String} that is the OMA cross-reference ID.
+     * @return              A {@code boolean} that is {@code true} if the given 
+     *                      {@code GeneTO} has been added to the {@code Collection} of 
+     *                      {@code GeneTO}s to be update 
      */
     private boolean addGeneTO(GeneTO geneTO, String omaXrefId) {
         log.entry(geneTO, omaXrefId);
@@ -524,7 +536,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         
         if (genesUpdated.containsKey(geneTO.getId())
                 && !genesUpdated.get(geneTO.getId()).equals(omaXrefId)) {
-            log.warn("The gene {} is in diffent hierarchical orthologous groups: " +
+            log.warn("The gene {} is in different hierarchical orthologous groups: " +
                     "/{}/ and /{}/", geneTO.getId(), genesUpdated.get(geneTO.getId()),
                     omaXrefId);
             return log.exit(false); 
@@ -548,11 +560,17 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @return      An {@code int} giving the total number of {@code Group}s in the given
      *              {@code Group} including the provided {@code Group}.
      */
-    private static int countGroups(Group group) {
+    private int countGroups(Group group) {
         log.entry(group);
+        String groupTaxId = group.getProperty("TaxId");
+        // We check if the group represents a taxon presents Bgee or if it's a paralog group.
+        // If wrong, no hierarchical group is inserted, so, there is no group to count.
+        if (groupTaxId != null && !taxonIdsInBgee.contains(groupTaxId)) {
+            return log.exit(0);
+        }
         int c = 1;
         for (Group childGroup : group.getChildren()) {
-            c += countGroups(childGroup);
+            c += this.countGroups(childGroup);
         }
         return log.exit(c);
     }

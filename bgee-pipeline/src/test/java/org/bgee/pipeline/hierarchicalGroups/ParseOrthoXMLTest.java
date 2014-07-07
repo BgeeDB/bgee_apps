@@ -98,7 +98,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
             @SuppressWarnings("unused")
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
                 // Return true while there is speciesTO to return 
-                return counter++ < 8;
+                return counter++ < 7;
             }
         });
         
@@ -106,19 +106,23 @@ public class ParseOrthoXMLTest extends TestAncestor {
         MySQLTaxonTOResultSet mockTaxonTORs = mock(MySQLTaxonTOResultSet.class);
         when(mockManager.mockTaxonDAO.getAllTaxa()).thenReturn(mockTaxonTORs);
         // Determine the behavior of consecutive calls to getTO().
+        // The taxon Sauria is present in the fakeOMA file, and not in this list.
         when(mockTaxonTORs.getTO()).thenReturn(
-                new TaxonTO("111", "taxSName111", "taxCName111", 1, 10, 1, true),
-                new TaxonTO("211", "taxSName211", "taxCName211", 2, 3, 2, false),
-                new TaxonTO("311", "taxSName311", "taxCName311", 4, 9, 2, false),
-                new TaxonTO("411", "taxSName411", "taxCName411", 5, 6, 1, true),
-                new TaxonTO("511", "taxSName511", "taxCName511", 7, 8, 1, true));
+                new TaxonTO("9604", "Hominidae", "taxCName9604", 1, 10, 1, false),
+                new TaxonTO("33213", "Bilateria", "taxCName33213", 2, 3, 2, true),
+                new TaxonTO("32523", "Tetrapoda", "Tetrapoda", 7, 8, 1, true),
+                new TaxonTO("32524", "Amniota", "taxCName32524", 7, 8, 1, true),
+                new TaxonTO("32525", "Theria", "taxCName32525", 5, 6, 1, false),
+                new TaxonTO("117571", "Euteleostomi", "taxCName117571", 7, 8, 1, true),
+                new TaxonTO("186625", "Clupeocephala", "taxCName186625", 7, 8, 1, true),
+                new TaxonTO("1206794", "Ecdysozoa", "taxCName1206794", 1, 10, 1, false));
         // Determine the behavior of consecutive calls to next().
         when(mockTaxonTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
             @SuppressWarnings("unused")
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
                 // Return true while there is TaxonTO to return 
-                return counter++ < 5;
+                return counter++ < 7;
             }
         });
 
@@ -172,18 +176,17 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 new HierarchicalGroupTO(1, "HOG:SVYPSSI", 1, 4, 117571),
                 new HierarchicalGroupTO(2, "HOG:SVYPSSI", 2, 3, 0),
                 new HierarchicalGroupTO(3, "HOG:HADISHS", 5, 6, 9604),
-                new HierarchicalGroupTO(4, "HOG:AFFEFGG", 7, 20, 117571),
+                new HierarchicalGroupTO(4, "HOG:AFFEFGG", 7, 18, 117571),
                 new HierarchicalGroupTO(5, "HOG:AFFEFGG", 8, 11, 0),
                 new HierarchicalGroupTO(6, "HOG:AFFEFGG", 9, 10, 186625),
-                new HierarchicalGroupTO(7, "HOG:AFFEFGG", 12, 19, 32523),
-                new HierarchicalGroupTO(8, "HOG:AFFEFGG", 13, 18, 32524),
+                new HierarchicalGroupTO(7, "HOG:AFFEFGG", 12, 17, 32523),
+                new HierarchicalGroupTO(8, "HOG:AFFEFGG", 13, 16, 32524),
                 new HierarchicalGroupTO(9 , "HOG:AFFEFGG", 14, 15, 32525),
-                new HierarchicalGroupTO(10, "HOG:AFFEFGG", 16, 17, 32561),
-                new HierarchicalGroupTO(11, "HOG:RIQLVEE", 21, 30, 33213),
-                new HierarchicalGroupTO(12, "HOG:RIQLVEE", 22, 23, 0),
+                new HierarchicalGroupTO(10, "HOG:RIQLVEE", 19, 28, 33213),
+                new HierarchicalGroupTO(11, "HOG:RIQLVEE", 20, 21, 0),
+                new HierarchicalGroupTO(12, "HOG:RIQLVEE", 22, 23, 1206794),
                 new HierarchicalGroupTO(13, "HOG:RIQLVEE", 24, 25, 1206794),
-                new HierarchicalGroupTO(14, "HOG:RIQLVEE", 26, 27, 1206794),
-                new HierarchicalGroupTO(15, "HOG:RIQLVEE", 28, 29, 1206794));
+                new HierarchicalGroupTO(14, "HOG:RIQLVEE", 26, 27, 1206794));
 
         ArgumentCaptor<Set> hGroupsTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockHierarchicalGroupDAO).insertHierarchicalGroups(
@@ -201,16 +204,15 @@ public class ParseOrthoXMLTest extends TestAncestor {
                 new GeneTO("ENSG00000029527", "", "", 0, 0, 2, true),                
                 new GeneTO("PPYG00000014510", "", "", 0, 0, 3, true),
                 new GeneTO("ENSPTRG00000010079", "", "", 0, 0, 3, true),
-                new GeneTO("ACAG00000010079", "", "", 0, 0, 3, true),
                 new GeneTO("PPAG00000010079", "", "", 0, 0, 3, true),
+                new GeneTO("ACAG00000010079", "", "", 0, 0, 3, true),
                 new GeneTO("ENSDARG00000025613", "", "", 0, 0, 5, true),
                 new GeneTO("ENSDARG00000089109", "", "", 0, 0, 6, true),
                 new GeneTO("ENSDARG00000024124", "", "", 0, 0, 7, true),
                 new GeneTO("ENSG00000171791", "", "", 0, 0, 7, true),
                 new GeneTO("PPYG00000009212", "", "", 0, 0, 9, true),
                 new GeneTO("ENSG00000005242", "", "", 0, 0, 9, true),
-                new GeneTO("ENSG00000268179", "", "", 0, 0, 10, true),
-                new GeneTO("FBgn0003721", "", "", 0, 0, 12, true));
+                new GeneTO("FBgn0003721", "", "", 0, 0, 11, true));
 
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 

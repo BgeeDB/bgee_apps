@@ -106,7 +106,6 @@ public class Uberon {
      * @see #saveXRefMappingsToFile(String, String)
      */
     public static final String XREF_ID_COL = "XRef ID";
-
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -391,6 +390,12 @@ public class Uberon {
     private final OntologyUtils ontUtils;
     
     /**
+     * A {@code Set} of {@code OWLPropertyExpression} that can be conveniently used 
+     * to query for relations and/or relatives only over part_of relations,
+     */
+    private final Set<OWLPropertyExpression> overPartOf;
+    
+    /**
      * Default constructor private in purpose, an ontology should always be provided somehow.
      */
     @SuppressWarnings("unused")
@@ -419,6 +424,9 @@ public class Uberon {
     public Uberon(OntologyUtils ontUtils) {
         this.classesRemoved = new HashMap<String, String>();
         this.ontUtils = ontUtils;
+        this.overPartOf = Collections.unmodifiableSet(new HashSet<OWLPropertyExpression>(
+                Arrays.asList(this.ontUtils.getWrapper().getOWLObjectPropertyByIdentifier(
+                        OntologyUtils.PART_OF_ID))));
     }
     
     /**
@@ -868,9 +876,7 @@ public class Uberon {
         }
         
         return log.exit(this.ontUtils.computeNestedSetModelParams(root, globalOrdering, 
-                new HashSet<OWLPropertyExpression>(Arrays.asList(
-                        wrapper.getOWLObjectPropertyByIdentifier(
-                        OntologyUtils.PART_OF_ID)))));
+                this.overPartOf));
     }
     
     /**
@@ -913,14 +919,10 @@ public class Uberon {
         if (startStage.equals(endStage)) {
             stageIdsBetween.add(startStageId);
         } else {
-            Set<OWLPropertyExpression> overPartOf = 
-                    new HashSet<OWLPropertyExpression>(Arrays.asList(
-                            wrapper.getOWLObjectPropertyByIdentifier(
-                            OntologyUtils.PART_OF_ID)));
             
             //first, get the least common ancestor of the two stages over part_of relation
             Set<OWLClass> lcas = this.ontUtils.getLeastCommonAncestors(startStage, endStage, 
-                    overPartOf);
+                    this.overPartOf);
             
             //the part_of graph should be a tree, so, only one OWLClass lca
             if (lcas.size() != 1) {
@@ -964,7 +966,7 @@ public class Uberon {
             //the most precise and independent selected stages
             Set<OWLObject> ancestors = new HashSet<OWLObject>();
             for (OWLClass selectedStage: selectedStages) {
-                ancestors.addAll(wrapper.getAncestors(selectedStage, overPartOf));
+                ancestors.addAll(wrapper.getAncestors(selectedStage, this.overPartOf));
             }
             selectedStages.removeAll(ancestors);
             
@@ -1014,7 +1016,8 @@ public class Uberon {
             boolean last = true;
             for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(classToOrder)) {
                 if (this.ontUtils.isPrecededByRelation(incomingEdge) && 
-                        classesToOrder.contains(incomingEdge.getSource())) {
+                        this.getEqualOrParentBelongingTo(incomingEdge.getSource(), 
+                                classesToOrder) != null) {
                     last = false;
                     break;
                 }
@@ -1059,17 +1062,24 @@ public class Uberon {
             //check first the immediately_preceded_by relations, there should be only one 
             //leading to sibling OWLClasses
             for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdges(precedingClass)) {
-                if (this.ontUtils.isImmediatelyPrecededByRelation(outgoingEdge) && 
-                        classesToOrder.contains(outgoingEdge.getTarget())) {
+                if (this.ontUtils.isImmediatelyPrecededByRelation(outgoingEdge)) {
+                    
+                    OWLClass clsMatching = this.getEqualOrParentBelongingTo(
+                            outgoingEdge.getTarget(), classesToOrder);
+                    if (clsMatching == null) {
+                        continue;
+                    }
                     
                     if (potentialPrecedingClass != null) {
-                        //several immediately_preceded_by relations leading to different OWLClasses
-                        throw log.throwing(new IllegalStateException("An OWLClass has several " +
-                        		"immediately_preceded_by relations to several same level " +
-                        		"OWLClasses (" + precedingClass + "), among the following " +
-                        		"OWLClasses: " + classesToOrder));
+                        //several immediately_preceded_by relations leading to 
+                        //different OWLClasses
+                        throw log.throwing(new IllegalStateException(
+                                "An OWLClass has several " +
+                                        "immediately_preceded_by relations to several same level " +
+                                        "OWLClasses (" + precedingClass + "), among the following " +
+                                        "OWLClasses: " + classesToOrder));
                     }
-                    potentialPrecedingClass = (OWLClass) outgoingEdge.getTarget();
+                    potentialPrecedingClass = clsMatching;
                     log.debug("Preceding class found by immediately_preceded_by: {}", 
                             potentialPrecedingClass);
                     //continue iteration anyway to check for several immediately_preceded_by
@@ -1083,8 +1093,13 @@ public class Uberon {
                 //iterate once again the outgoing edges
                 for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdges(precedingClass)) {
                     //but check also for simple preceded_by relations 
-                    if (this.ontUtils.isPrecededByRelation(outgoingEdge) && 
-                            classesToOrder.contains(outgoingEdge.getTarget())) {
+                    if (this.ontUtils.isPrecededByRelation(outgoingEdge)) {
+                        
+                        OWLClass clsMatching = this.getEqualOrParentBelongingTo(
+                                outgoingEdge.getTarget(), classesToOrder);
+                        if (clsMatching == null) {
+                            continue;
+                        }
                         
                         if (potentialPrecedingClass != null) {
                             //several preceded_by relations leading to different OWLClasses, 
@@ -1096,7 +1111,7 @@ public class Uberon {
                                     precedingClass + "). Problem among " +
                                     "the following OWLClasses: " + classesToOrder));
                         }
-                        potentialPrecedingClass = (OWLClass) outgoingEdge.getTarget();
+                        potentialPrecedingClass = clsMatching;
                         log.debug("Preceding class found by preceded_by: {}", 
                                 potentialPrecedingClass);
                         //continue iteration anyway to check for several preceded_by
@@ -1117,6 +1132,42 @@ public class Uberon {
         }
         
         return log.exit(orderedClasses);
+    }
+    
+    /**
+     * Tests if {@code cls} is included in {@code classes} or is a child of one of 
+     * the {@code OWLClass}es in {@code classes} through part_of relations. 
+     * {@code classes} should represent sibling terms, member of a single partonomy tree.
+     * 
+     * @param cls       An {@code OWLObject} needed to be checked whether it belongs to 
+     *                  {@code classes}, itself or one of its ancestor through part_of relations.
+     * @param classes   A {@code Set} of {@code OWLClass}es for which we want to know 
+     *                  if {@code cls} is a member, or is a child through part_of relations 
+     *                  of one of the members.
+     * @return          {@code true} if {@code cls} belongs to {@code classes}, or is a child 
+     *                  through part_of relations of a member of {@code classes}.
+     */
+    private OWLClass getEqualOrParentBelongingTo(OWLObject cls, Set<OWLClass> classes) {
+        log.entry(cls, classes);
+        
+        if (classes.contains(cls)) {
+            return log.exit((OWLClass) cls);
+        }
+        //test if cls is a child of one of the OWLClasses in classes
+        Set<OWLObject> partOfAncestors = this.ontUtils.getWrapper().getAncestors(cls, 
+                this.overPartOf);
+        partOfAncestors.retainAll(classes);
+        //classes should represent sibling terms member of a single partonomy tree, 
+        //so partOfAncestors should now contain at most 1 element.
+        if (partOfAncestors.size() > 1) {
+            throw log.throwing(new IllegalStateException("The OWLClasses provided " +
+            		"are not sibling terms, or are not part of a single partonomy tree: " + 
+                    classes));
+        }
+        if (!partOfAncestors.isEmpty()) {
+            return log.exit((OWLClass) partOfAncestors.iterator().next());
+        }
+        return log.exit(null);
     }
     
     /**

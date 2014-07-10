@@ -117,7 +117,7 @@ id: MmulDv:0000008
 name: immature 2
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000003 ! immature stage
-relationship: BFO:0000062 MmulDv:0000007 ! this will check for capacity to use either preceded_by
+relationship: BFO:0000062 MmulDv:0000017 ! this will check for capacity to use either preceded_by, and ancestors over part_of
 comment: left 27 - right 28 - level 3
 
 [Term]

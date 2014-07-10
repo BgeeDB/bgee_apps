@@ -236,7 +236,6 @@ public class UberonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         Uberon uberon = new Uberon(utils);
 
-        OWLClass cls0 = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
         OWLClass cls1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
         OWLClass cls2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
         OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
@@ -246,18 +245,6 @@ public class UberonTest extends TestAncestor {
         assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
                 uberon.orderByPrecededBy(
                         new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4))));
-        
-
-        //test that we have an error if several classes have no preceded_by between them
-        try {
-            uberon.orderByPrecededBy(
-                    new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0)));
-            //if we reach this point, test failed
-            throw new AssertionError("Several OWLClasses with no precede_by relations " +
-            		"among them did not raison an exception");
-        } catch (IllegalStateException e) {
-            //test passed
-        }
     }
     
     /**

@@ -1010,36 +1010,42 @@ public class Uberon {
         List<OWLClass> orderedClasses = new ArrayList<OWLClass>();
         
         //first, we look for the last class, the only one with no preceded_by  
-        //or immediately_preceded_by relations incoming from other OWLClass in classesToOrder
-        OWLClass lastClass = null;
+        //or immediately_preceded_by relations incoming from other OWLClass in classesToOrder. 
+        //the subtlety is that the incoming preceded_by relation can actually be propagated 
+        //from a child.
+        Set<OWLClass> withSuccessors = new HashSet<OWLClass>();
         for (OWLClass classToOrder: classesToOrder) {
-            boolean last = true;
-            for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(classToOrder)) {
-                if (this.ontUtils.isPrecededByRelation(incomingEdge) && 
-                        this.getEqualOrParentBelongingTo(incomingEdge.getSource(), 
-                                classesToOrder) != null) {
-                    last = false;
-                    break;
+            log.trace("Examining OWLClass {}", classToOrder);
+            for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdges(classToOrder)) {
+                log.trace("Testing if edge is valid preceded_by relation: {}", 
+                        outgoingEdge);
+                if (this.ontUtils.isPrecededByRelation(outgoingEdge)) {
+                    OWLClass predecessor = this.getEqualOrParentBelongingTo(
+                            outgoingEdge.getTarget(), classesToOrder);
+                    if (predecessor != null) {
+                        withSuccessors.add(predecessor);
+                        log.trace("Valid preceded_by relation leading to predecessor: {}", 
+                                predecessor);
+                    }
                 }
-            }
-            if (last) {
-                if (lastClass != null) {
-                    //several OWLClasses with no preceded_by relation incoming from 
-                    //other OWLClasses, the ontology is missing some relations
-                    throw log.throwing(new IllegalStateException("The provided ontology " +
-                    		"is missing some preceded_by relations: several OWLClasses " +
-                    		"with no preceded_by relations incoming from same level OWLClasses " +
-                    		"among the following: " + classesToOrder));
-                }
-                lastClass = classToOrder;
-                //continue iterations anyway to check for missing preeded_by relations
             }
         }
-        if (lastClass == null) {
+        log.trace("All classes with successors: {}", withSuccessors);
+        
+        Set<OWLClass> classesSubstracted = new HashSet<OWLClass>(classesToOrder);
+        classesSubstracted.removeAll(withSuccessors);
+        if (classesSubstracted.size() > 1) {
+            throw log.throwing(new IllegalStateException("The provided ontology " +
+                    "is missing some preceded_by relations: several OWLClasses " +
+                    "with no preceded_by relations incoming from same level OWLClasses " +
+                    "among the following: " + classesToOrder));
+        }
+        if (classesSubstracted.isEmpty()) {
             throw log.throwing(new IllegalStateException("Cycle of preceded_by relations " +
-            		"among same level OWLClasses, not possible to determine the last one, " +
-            		"among: " + classesToOrder));
+                    "among same level OWLClasses, not possible to determine the last one, " +
+                    "among: " + classesToOrder));
         }
+        OWLClass lastClass = classesSubstracted.iterator().next();
         log.debug("Last class of the chain identified: {}", lastClass);
         
         //now, we walk from lastClass, following the preceded_by relations

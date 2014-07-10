@@ -126,7 +126,7 @@ name: immature 3
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000003 ! immature stage
 relationship: RO:0002087 MmulDv:0000008 
-relationship: BFO:0000062 MmulDv:0000007 ! this will check for capacity to use in priority immediately_preceded_by
+relationship: BFO:0000062 MmulDv:0000017 ! this will check for capacity to use in priority immediately_preceded_by
 comment: left 29 - right 30 - level 3
 
 [Term]

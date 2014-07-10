@@ -69,7 +69,7 @@ public class CommandRunnerTest extends TestAncestor {
             @Override
             public void run() {
                 try {
-                    CommandRunner.socketUberonStagesBetween(mockUberon, port);
+                    CommandRunner.socketUberonStagesBetween(mockUberon, "", port);
                 } catch (IOException e) {
                     exceptionThrown = e;
                 } 
@@ -80,8 +80,13 @@ public class CommandRunnerTest extends TestAncestor {
         try {
             test.start();
             //wait for this thread's turn
+            int i = 0;
             while (!CommandRunner.socketServerLaunched) {
+                if (i > 10) {
+                    throw new AssertionError("Could not launch the SocketServer.");
+                }
                 Thread.sleep(500);
+                i++;
             }
             //check that no exception was thrown in the second thread 
             if (test.exceptionThrown != null) {

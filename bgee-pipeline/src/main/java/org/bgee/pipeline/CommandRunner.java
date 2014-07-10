@@ -99,6 +99,11 @@ public class CommandRunner {
      * elements should be the arguments expected by the {@code main} method 
      * of the class performing the action. 
      * <p>
+     * An exception is if the first element in {@code args} is equal to 
+     * {@code socketUberonStagesBetween}. In that case, following arguments must be the path 
+     * to the Uberon developmental stage ontology, and the port number to use to connect 
+     * through sockets. 
+     * <p>
      * This {@code main} method does not parse {@code args} to allow the use 
      * of option names (as for instance, {@code -option myvalue}). So parameters 
      * must be provided in expected order. 
@@ -144,6 +149,10 @@ public class CommandRunner {
         case "Uberon": 
             Uberon.main(newArgs);
             break;
+        case "socketUberonStagesBetween": 
+            CommandRunner.socketUberonStagesBetween(new Uberon(), newArgs[0], 
+                    Integer.parseInt(newArgs[1]));
+            break;
             
         //---------- Similarity annotation -----------
         case "SimilarityAnnotation": 
@@ -167,6 +176,7 @@ public class CommandRunner {
         case "ParseOrthoXML":
             ParseOrthoXML.main(newArgs);
             break;
+            
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -182,17 +192,20 @@ public class CommandRunner {
      * the ontology can be kept loaded, answering several stage range queries. 
      * The method used to obtain stage ranges is 
      * {@link org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)}.
-     * @param uberon        The {@code Uberon} object used to retrieve stage ranges, 
-     *                      with its ontology already provided (using {@link 
-     *                      org.bgee.pipeline.uberon.Uberon#setPathToUberonOnt(String)}). 
-     * @param portNumber    An {@code int} that is the port to connect to. 
-     * @throws IOException  If an error occurred while reading from or writting to 
-     *                      the socket. 
+     * @param uberon            The {@code Uberon} instance that will be used to retrieve 
+     *                          stage ranges, with no parameters set (dependency injection),
+     * @param pathToUberonOnt   A {@code String} that is the path to the Uberon ontology 
+     *                          containing developmental stagse.
+     * @param portNumber        An {@code int} that is the port to connect to. 
+     * @throws IOException      If an error occurred while reading from or writting to 
+     *                          the socket. 
      * @see org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)
      */
-    public static void socketUberonStagesBetween(Uberon uberon, int portNumber) 
-            throws IOException {
-        log.entry(uberon, portNumber);
+    public static void socketUberonStagesBetween(Uberon uberon, String pathToUberonOnt, 
+            int portNumber) throws IOException {
+        log.entry(uberon, pathToUberonOnt, portNumber);
+        
+        uberon.setPathToUberonOnt(pathToUberonOnt);
         
         log.debug("Trying to launch ServerSocket");
         ServerSocket serverSocket = null;

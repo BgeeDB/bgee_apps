@@ -882,7 +882,8 @@ public class Uberon {
     /**
      * Retrieve the OBO-like IDs of the developmental stages occurring between the stages 
      * with IDs {@code startStageId} and {@code endStageId}. To achieve this task, 
-     * a nested set model is computed for the ontology wrapped by this object, 
+     * a nested set model is computed for the ontology wrapped by this object 
+     * (provided before calling this method through {@link #setPathToUberonOnt(String)}), 
      * starting from the least common ancestor of the start and end stages, using 
      * part_of relations for ancestry between stages, and immediately_preceded_by 
      * and preceded_by for chronological relations between stages (see {@link 

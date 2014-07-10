@@ -1,6 +1,7 @@
 package org.bgee.model.dao.mysql.hierarchicalgroup;
 
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
@@ -77,7 +78,12 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     			stmt.setString(2, group.getOMAGroupId());
     			stmt.setInt(3, group.getLeftBound());
     			stmt.setInt(4, group.getRightBound());
-    			stmt.setInt(5, group.getTaxonId());
+    			// taxonId could be null for paralogous groups
+    			if (group.getTaxonId() == 0) {
+    			    stmt.setNull(5, Types.INTEGER);
+    			} else {
+    			    stmt.setInt(5, group.getTaxonId());
+    			}
     			groupInsertedCount += stmt.executeUpdate();
     			stmt.clearParameters();
     		}

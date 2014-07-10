@@ -72,7 +72,7 @@
     <groups>
         <orthologGroup id="HOG:SVYPSSI">
             <property name="TaxRange" value="Euteleostomi"/>
-            <property name="TaxId" value="117571"/>
+            <property name="taxid" value="117571"/>
             <geneRef id="101189"/>
             <paralogGroup>
                 <geneRef id="202166"/>
@@ -81,38 +81,38 @@
         </orthologGroup>
         <orthologGroup id="HOG:HADISHS">
             <property name="TaxRange" value="Hominidae"/>
-            <property name="TaxId" value="9604"/>
+            <property name="taxid" value="9604"/>
             <geneRef id="183042"/>
             <geneRef id="314780"/>
             <geneRef id="269947"/>
         </orthologGroup>
         <orthologGroup id="HOG:AFFEFGG">
             <property name="TaxRange" value="Euteleostomi"/>
-            <property name="TaxId" value="117571"/>
+            <property name="taxid" value="117571"/>
             <paralogGroup>
                 <geneRef id="93252"/>
                 <orthologGroup >
                     <property name="TaxRange" value="Clupeocephala"/>
-                    <property name="TaxId" value="186625"/>
+                    <property name="taxid" value="186625"/>
                     <geneRef id="349954"/>
                     <geneRef id="87600"/>
                 </orthologGroup>
             </paralogGroup>
             <orthologGroup >
                 <property name="TaxRange" value="Tetrapoda"/>
-                <property name="TaxId" value="32523"/>
+                <property name="taxid" value="32523"/>
                 <orthologGroup >
                     <property name="TaxRange" value="Amniota"/>
-                    <property name="TaxId" value="32524"/>
+                    <property name="taxid" value="32524"/>
                     <orthologGroup >
                         <property name="TaxRange" value="Theria"/>
-                        <property name="TaxId" value="32525"/>
+                        <property name="taxid" value="32525"/>
                         <geneRef id="309922"/>
                         <geneRef id="205245"/>
                     </orthologGroup>
                     <orthologGroup >
                         <property name="TaxRange" value="Sauria"/>
-                        <property name="TaxId" value="32561"/>
+                        <property name="taxid" value="32561"/>
                         <geneRef id="140415"/>
                     </orthologGroup>
                 </orthologGroup>
@@ -123,7 +123,7 @@
         </orthologGroup>
         <orthologGroup id="HOG:RIQLVEE">
             <property name="TaxRange" value="Bilateria"/>
-            <property name="TaxId" value="33213"/>
+            <property name="taxid" value="33213"/>
             <paralogGroup>
                 <geneRef id="41227"/>
                 <geneRef id="41228"/>
@@ -132,19 +132,19 @@
             </paralogGroup>
             <orthologGroup >
                 <property name="TaxRange" value="Ecdysozoa"/>
-                <property name="TaxId" value="1206794"/>
+                <property name="taxid" value="1206794"/>
                 <geneRef id="41231"/>
                 <geneRef id="114024"/>
             </orthologGroup>
             <orthologGroup >
                 <property name="TaxRange" value="Ecdysozoa"/>
-                <property name="TaxId" value="1206794"/>
+                <property name="taxid" value="1206794"/>
                 <geneRef id="41229"/>
                 <geneRef id="114025"/>
             </orthologGroup>
             <orthologGroup >
                 <property name="TaxRange" value="Ecdysozoa"/>
-                <property name="TaxId" value="1206794"/>
+                <property name="taxid" value="1206794"/>
                 <geneRef id="41230"/>
                 <geneRef id="114021"/>
             </orthologGroup>

@@ -52,6 +52,14 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * A {@code String} that is the pattern use to split OMA Gene Identifiers.
      */
     private final static String GENE_ID_SPLIT_PATTERN = "; ";
+    /**
+     * A {@code String} that is the name of the attribute to retrieve the tax ID property.
+     */
+    private final static String TAX_ID_ATTRIBUTE = "taxid";
+    /**
+     * A {@code String} that is the name of the attribute to retrieve the tax range property.
+     */
+    private final static String TAX_RANGE_ATTRIBUTE = "TaxRange";
 
     /**
      * An {@code int} that is a unique ID for each node inside an OMA Hierarchical
@@ -394,10 +402,10 @@ public class ParseOrthoXML extends MySQLDAOUser {
 
         // First, we check if the group represents a taxon presents Bgee or if it's a 
         // paralog group. If wrong, we don't insert a hierarchical groupTO.
-        String groupTaxId = group.getProperty("TaxId");
+        String groupTaxId = group.getProperty(TAX_ID_ATTRIBUTE);
         if (groupTaxId != null && !this.taxonIdsInBgee.contains(groupTaxId)) {
             log.warn("{} ({}) isn't a taxon relevant to Bgee",
-                    group.getProperty("TaxRange"), groupTaxId);
+                    group.getProperty(TAX_RANGE_ATTRIBUTE), groupTaxId);
             return log.exit(false);
         } 
 
@@ -410,7 +418,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // The last argument is the number of children of the HierarchicalGroupTO to create. 
         // So, we need to remove 1 to countGroups() to subtract the current group.
         this.addHierarchicalGroupTO(this.omaNodeId, omaXrefId, this.nestedSetBoundSeed,
-                group.getProperty("TaxId"), countGroups(group) - 1);
+                group.getProperty(TAX_ID_ATTRIBUTE), countGroups(group) - 1);
 
         // Then, we retrieve gene data.
         if (group.getGenes() != null) {
@@ -566,7 +574,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      */
     private int countGroups(Group group) {
         log.entry(group);
-        String groupTaxId = group.getProperty("TaxId");
+        String groupTaxId = group.getProperty(TAX_ID_ATTRIBUTE);
         // We check if the group represents a taxon presents Bgee or if it's a paralog group.
         // If wrong, no hierarchical group is inserted, so, there is no group to count.
         if (groupTaxId != null && !this.taxonIdsInBgee.contains(groupTaxId)) {

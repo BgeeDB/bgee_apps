@@ -124,6 +124,19 @@ public class BgeePreparedStatement implements AutoCloseable {
         this.getRealPreparedStatement().setInt(parameterIndex, x);
     }
     /**
+     * Delegated to {@link java.sql.PreparedStatement#setNull(int, int)}.
+     * 
+     * @param parameterIndex    {@code int} that is the index of the parameter to set.
+     * @param sqlType           {@code int} that is the value of the parameter 
+     *                          to set.
+     * @throws SQLException     if parameterIndex does not correspond to a parameter 
+     *                          marker in the SQL statement; if a database access error 
+     *                          occurs or this method is called on a closed PreparedStatement.
+     */
+    public void setNull(int parameterIndex, int sqlType) throws SQLException {
+        this.getRealPreparedStatement().setNull(parameterIndex, sqlType);
+    }
+    /**
      * Delegated to {@link java.sql.PreparedStatement#setBoolean(int, boolean)}.
      * 
      * @param parameterIndex    {@code int} that is the index of the parameter to set.

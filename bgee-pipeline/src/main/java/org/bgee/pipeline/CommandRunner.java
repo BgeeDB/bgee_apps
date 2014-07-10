@@ -150,7 +150,7 @@ public class CommandRunner {
             Uberon.main(newArgs);
             break;
         case "socketUberonStagesBetween": 
-            CommandRunner.socketUberonStagesBetween(new Uberon(), newArgs[0], 
+            CommandRunner.socketUberonStagesBetween(new Uberon(newArgs[0]), 
                     Integer.parseInt(newArgs[1]));
             break;
             
@@ -201,11 +201,9 @@ public class CommandRunner {
      *                          the socket. 
      * @see org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)
      */
-    public static void socketUberonStagesBetween(Uberon uberon, String pathToUberonOnt, 
-            int portNumber) throws IOException {
-        log.entry(uberon, pathToUberonOnt, portNumber);
-        
-        uberon.setPathToUberonOnt(pathToUberonOnt);
+    public static void socketUberonStagesBetween(Uberon uberon, int portNumber) 
+            throws IOException {
+        log.entry(uberon, portNumber);
         
         log.debug("Trying to launch ServerSocket");
         ServerSocket serverSocket = null;
@@ -220,9 +218,9 @@ public class CommandRunner {
                  BufferedReader in = new BufferedReader(
                          new InputStreamReader(clientSocket.getInputStream()));) {
                 
-                try {
-                    String inputLine;
-                    while ((inputLine = in.readLine()) != null) {
+                String inputLine;
+                while ((inputLine = in.readLine()) != null) {
+                    try {
                         log.debug("Receiving query: " + inputLine);
                         
                         if (inputLine.equals("exit") || inputLine.equals("logout") || 
@@ -257,10 +255,10 @@ public class CommandRunner {
                         
                         log.debug("Sending response: {}", output);
                         out.println(output);
+                    } catch (Exception e) {
+                        log.catching(e);
+                        out.println(e);
                     }
-                } catch (Exception e) {
-                    log.catching(e);
-                    out.println(e);
                 }
             } 
         } finally {

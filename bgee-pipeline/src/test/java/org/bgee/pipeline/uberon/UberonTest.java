@@ -78,8 +78,8 @@ public class UberonTest extends TestAncestor {
         expectedTaxonIds.addAll(Arrays.asList(5, 6, 7, 8, 9, 10, 11, 12));
         
         assertEquals("Incorrect taxon IDs extracted", expectedTaxonIds, 
-                new Uberon().extractTaxonIds(
-                this.getClass().getResource("/uberon/uberonTaxonTest.owl").getPath()));
+            new Uberon(this.getClass().getResource("/uberon/uberonTaxonTest.owl").getPath()).
+            extractTaxonIds());
     }
     
     /**
@@ -91,7 +91,8 @@ public class UberonTest extends TestAncestor {
     @Test
     public void shouldSaveSimplificationInfo() throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
-        Uberon uberonTest = new Uberon();
+        Uberon uberonTest = 
+                new Uberon(this.getClass().getResource("/uberon/simplifyInfoTest.obo").getPath());
         OWLOntology uberonOnt = OntologyUtils.loadOntology(
                 this.getClass().getResource("/uberon/simplifyInfoTest.obo").getPath());
         
@@ -188,8 +189,8 @@ public class UberonTest extends TestAncestor {
         
         String tempFile = testFolder.newFile("xRefMappings.tsv").getPath();
         
-        new Uberon().saveXRefMappingsToFile(OntologyUtilsTest.class.
-                getResource("/ontologies/xRefMappings.obo").getFile(), tempFile);
+        new Uberon(UberonTest.class.getResource("/ontologies/xRefMappings.obo").getFile()).
+        saveXRefMappingsToFile(tempFile);
         
         //now, read the generated TSV file
         int i = 0;

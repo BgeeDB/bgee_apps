@@ -231,7 +231,7 @@ public class Uberon {
                         "3 arguments, " + args.length + " provided."));
             }
             
-            new Uberon().extractTaxonIds(args[1], args[2]);
+            new Uberon(args[1]).extractTaxonIds(args[2]);
 
 // NOTE May 13 2014: this method seems now completely useless, to remove if it is confirmed.
 //        } else if (args[0].equalsIgnoreCase("extractDevelopmentRelatedRelations")) {
@@ -250,8 +250,7 @@ public class Uberon {
                         "11 arguments, " + args.length + " provided."));
             }
             
-            Uberon ub = new Uberon();
-            ub.setPathToUberonOnt(args[1]);
+            Uberon ub = new Uberon(args[1]);
             ub.setModifiedOntPath(args[2]);
             ub.setClassesRemovedFilePath(args[3]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[4]));
@@ -272,8 +271,7 @@ public class Uberon {
                         "7 arguments, " + args.length + " provided."));
             }
             
-            Uberon ub = new Uberon();
-            ub.setPathToUberonOnt(args[1]);
+            Uberon ub = new Uberon(args[1]);
             ub.setModifiedOntPath(args[2]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[3]));
             ub.setChildrenOfToRemove(CommandRunner.parseListArgument(args[4]));
@@ -289,7 +287,7 @@ public class Uberon {
                         "Incorrect number of arguments provided, expected " + 
                         "3 arguments, " + args.length + " provided."));
             }
-            new Uberon().saveXRefMappingsToFile(args[1], args[2]);
+            new Uberon(args[1]).saveXRefMappingsToFile(args[2]);
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -393,12 +391,25 @@ public class Uberon {
     private final OntologyUtils ontUtils;
     
     /**
-     * Default constructor.
+     * Default constructor private in purpose, an ontology should always be provided somehow.
      */
-    public Uberon() {
-        this(null);
+    @SuppressWarnings("unused")
+    private Uberon() {
+        this((OntologyUtils) null);
     }
     
+    /**
+     * Constructor providing the path to the Uberon ontology to used to perforn operations.
+     * 
+     * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
+     * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
+     * @throws OBOFormatParserException     If the ontology is malformed.
+     * @throws IOException                  If the file could not be read. 
+     */
+    public Uberon(String pathToUberon) throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        this(new OntologyUtils(pathToUberon));
+    }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
      * wrapping the Uberon ontology that will be used. 
@@ -455,16 +466,13 @@ public class Uberon {
                 this.getToFilterSubgraphRootIds(), this.getSubsetNames(), 
                 this.getClassIdsExcludedFromSubsetRemoval());
         
-        OWLOntology ont = OntologyUtils.loadOntology(this.getPathToUberonOnt());
-        
-        this.simplifyUberon(ont);
+        this.simplifyUberon();
 
         //save ontology
-        OntologyUtils utils = new OntologyUtils(ont);
-        utils.saveAsOWL(this.getModifiedOntPath() + ".owl");
+        this.ontUtils.saveAsOWL(this.getModifiedOntPath() + ".owl");
         //we do not check the structure of the ontology to generate the OBO version, 
         //with the composite ontology there are too many problems.
-        utils.saveAsOBO(this.getModifiedOntPath() + ".obo", false);
+        this.ontUtils.saveAsOBO(this.getModifiedOntPath() + ".obo", false);
         
         //save information about the simplification process if requested
         if (StringUtils.isNotBlank(this.getClassesRemovedFilePath())) {
@@ -518,15 +526,15 @@ public class Uberon {
      *                                          the {@code uberonOnt} into an 
      *                                          {@code OWLGraphManipulator}.
      */
-    public void simplifyUberon(OWLOntology uberonOnt) throws UnknownOWLOntologyException {
+    public void simplifyUberon() throws UnknownOWLOntologyException {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
-        log.entry(uberonOnt, this.getClassIdsToRemove(), this.getRelsBetweenToRemove(), 
+        log.entry(this.getClassIdsToRemove(), this.getRelsBetweenToRemove(), 
                 this.getRelIds(), this.getToRemoveSubgraphRootIds(), 
                 this.getToFilterSubgraphRootIds(), this.getSubsetNames(), 
                 this.getClassIdsExcludedFromSubsetRemoval());
-        //TODO: dependency injection?
-        OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
+        
+        OWLGraphManipulator manipulator = new OWLGraphManipulator(this.ontUtils.getWrapper());
 
         if (this.getClassIdsToRemove() != null) {
             for (String classIdToRemove: this.getClassIdsToRemove()) {
@@ -575,9 +583,7 @@ public class Uberon {
                     this.getClassIdsExcludedFromSubsetRemoval());
         }
 
-        //TODO: dependency injection?
-        OntologyUtils utils = new OntologyUtils(manipulator.getOwlGraphWrapper());
-        utils.removeOBOProblematicAxioms();
+        this.ontUtils.removeOBOProblematicAxioms();
         
         log.exit();
     }
@@ -702,8 +708,6 @@ public class Uberon {
      * 
      * @throws IOException                      If an error occurred while reading the file 
      *                                          {@code pathToUberonOnt}.
-     * @throws OBOFormatParserException         If the ontology was provided in OBO format 
-     *                                          and a parser error occurred. 
      * @throws OWLOntologyCreationException     If an error occurred while loading 
      *                                          the ontology to modify it.
      * @throws UnknownOWLOntologyException      If an error occurred while loading 
@@ -712,22 +716,18 @@ public class Uberon {
      *                                          ontology in OWL.
      */
     public void generateStageOntologyAndSaveToFile() throws OWLOntologyCreationException, 
-            OBOFormatParserException, IOException, IllegalArgumentException, 
-            OWLOntologyStorageException {
+            IOException, IllegalArgumentException, OWLOntologyStorageException {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
         log.entry(this.getPathToUberonOnt(), this.getModifiedOntPath(), 
                 this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
-        OWLOntology ont = OntologyUtils.loadOntology(pathToUberonOnt);
-        
-        this.generateStageOntology(ont);
+        this.generateStageOntology();
 
         //save ontology
-        OntologyUtils utils = new OntologyUtils(ont);
-        utils.saveAsOWL(this.getModifiedOntPath() + ".owl");
-        utils.saveAsOBO(this.getModifiedOntPath() + ".obo", false);
+        this.ontUtils.saveAsOWL(this.getModifiedOntPath() + ".owl");
+        this.ontUtils.saveAsOBO(this.getModifiedOntPath() + ".obo", false);
         
         log.exit();
     }
@@ -757,18 +757,14 @@ public class Uberon {
      * {@link #getToFilterSubgraphRootIds()}.
      * <li>{@code OWLGraphManipulator#reducePartOfIsARelations()}
      * <li>{@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}
-     * 
-     * @param uberonOnt                 The {@code OWLOntology} to extract 
-     *                                  developmental stages from.
      */
-    public void generateStageOntology(OWLOntology uberonOnt) {
+    public void generateStageOntology() {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
-        log.entry(uberonOnt, this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
+        log.entry(this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
-        //TODO: dependency injection?
-        OWLGraphManipulator manipulator = new OWLGraphManipulator(uberonOnt);
+        OWLGraphManipulator manipulator = new OWLGraphManipulator(this.ontUtils.getWrapper());
 
         //potential terms to call this code on: 
         //UBERON:0000067 embryo stage part
@@ -820,9 +816,7 @@ public class Uberon {
         
         manipulator.reducePartOfIsARelations();
         
-        //TODO: dependency injection?
-        OntologyUtils utils = new OntologyUtils(manipulator.getOwlGraphWrapper());
-        utils.removeOBOProblematicAxioms();
+        this.ontUtils.removeOBOProblematicAxioms();
         
         log.exit();
     }
@@ -1133,7 +1127,6 @@ public class Uberon {
      * The IDs used are {@code Integer}s that are the NCBI IDs (for instance, 
      * 9606 for human), not the ontology IDs with a prefix ("NCBITaxon:").
      * 
-     * @param uberonFile    A {@code String} that is the path to the Uberon ontology file.
      * @param outputFile    A {@code String} that is the path to the file where 
      *                      to write IDs into.
      * @throws IllegalArgumentException     If {@code uberonFile} did not allow to obtain 
@@ -1145,12 +1138,11 @@ public class Uberon {
      * @throws IOException                  If {@code uberonFile} could not be read, 
      *                                      or the output could not be written in file.
      */
-    public void extractTaxonIds(String uberonFile, String outputFile) 
-            throws OWLOntologyCreationException, OBOFormatParserException, 
-            IllegalArgumentException, IOException {
-        log.entry(uberonFile, outputFile);
+    public void extractTaxonIds(String outputFile) 
+            throws IllegalArgumentException, IOException {
+        log.entry(outputFile);
         
-        Set<Integer> taxonIds = this.extractTaxonIds(uberonFile);
+        Set<Integer> taxonIds = this.extractTaxonIds();
         try(PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(outputFile), "utf-8")))) {
             for (int taxonId: taxonIds) {
@@ -1169,7 +1161,6 @@ public class Uberon {
      * that are the NCBI IDs (for instance, 9606 for human), not the ontology IDs 
      * with a prefix ("NCBITaxon:").
      * 
-     * @param uberonFile    A {@code String} that is the path to the Uberon ontology file.
      * @return              A {@code Set} of {@code Integer}s that are the NCBI IDs 
      *                      of the taxa used in Uberon as target of restrictions over 
      *                      "in taxon" object properties, or any sub-properties.
@@ -1181,13 +1172,11 @@ public class Uberon {
      *                                      the ontology.
      * @throws IOException                  If {@code uberonFile} could not be read.
      */
-    public Set<Integer> extractTaxonIds(String uberonFile) 
-            throws OWLOntologyCreationException, OBOFormatParserException, 
-            IOException, IllegalArgumentException {
-        log.entry(uberonFile);
+    public Set<Integer> extractTaxonIds() throws IllegalArgumentException {
+        log.entry();
 
-        OWLOntology ont = OntologyUtils.loadOntology(uberonFile);
-        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OWLOntology ont = this.ontUtils.getWrapper().getSourceOntology();
+        OWLGraphWrapper wrapper = this.ontUtils.getWrapper();
         
         Set<String> taxonIds = new HashSet<String>();
         
@@ -1262,15 +1251,12 @@ public class Uberon {
     }
     
     /**
-     * Retrieves mappings from XRef IDs to Uberon IDs from {@code uberonOnt}, and save them 
+     * Retrieves mappings from XRef IDs to Uberon IDs from the Uberon ontology, and save them 
      * to {@code outputFile}. {@code outputFile} will be a TSV file with a header, 
      * and two columns, that are in order: {@link #XREF_ID_COL} and 
      * {@link #UBERON_ENTITY_ID_COL}. The XRef mappings are obtained using the method 
      * {@link org.bgee.pipeline.OntologyUtils#getXRefMappings()}.
      * 
-     * @param pathToUberonOnt   A {@code String} that is the path to the file 
-     *                          storing the Uberon ontology (recommended version is OWL, 
-     *                          but OBO versions can be used as well).
      * @param outputFile        A {@code String} that is the path to the generated output file.
      * @throws IOException      If an error occurred while writing in the output file, 
      *                          or when reading the ontology file.
@@ -1281,9 +1267,9 @@ public class Uberon {
      * 
      * @see org.bgee.pipeline.OntologyUtils#getXRefMappings()
      */
-    public void saveXRefMappingsToFile(String pathToUberonOnt, String outputFile) 
-            throws IOException, OWLOntologyCreationException, OBOFormatParserException {
-        log.entry(pathToUberonOnt, outputFile);
+    public void saveXRefMappingsToFile(String outputFile) 
+            throws IOException {
+        log.entry(outputFile);
         
         //create the header of the file, and the conditions on the columns
         String[] header = new String[2];
@@ -1293,15 +1279,13 @@ public class Uberon {
         processors[0] = new NotNull();
         processors[1] = new NotNull();
         
-        //TODO: dependency injection?
-        OntologyUtils utils = new OntologyUtils(pathToUberonOnt);
-        
         try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
                 Utils.TSVCOMMENTED)) {
             
             mapWriter.writeHeader(header);
             
-            for (Entry<String, Set<String>> mappings: utils.getXRefMappings().entrySet()) {
+            for (Entry<String, Set<String>> mappings: 
+                this.ontUtils.getXRefMappings().entrySet()) {
                 for (String uberonId: mappings.getValue()) {
                     Map<String, Object> row = new HashMap<String, Object>();
                     row.put(header[0], mappings.getKey());

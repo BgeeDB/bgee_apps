@@ -69,7 +69,7 @@ public class CommandRunnerTest extends TestAncestor {
             @Override
             public void run() {
                 try {
-                    CommandRunner.socketUberonStagesBetween(mockUberon, "", port);
+                    CommandRunner.socketUberonStagesBetween(mockUberon, port);
                 } catch (IOException e) {
                     exceptionThrown = e;
                 } 

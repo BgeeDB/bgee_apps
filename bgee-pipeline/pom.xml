@@ -99,10 +99,18 @@
                           <goal>shade</goal>
                       </goals>
                       <configuration>
+                          <shadedArtifactAttached>true</shadedArtifactAttached>
+                          <shadedClassifierName>with-dependencies</shadedClassifierName>
                           <transformers>
+                              <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                                  <file>${project.groupId}:bgee-dao-sql:with-dependencies</file>
+                              </transformer>
                               <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                   <manifestEntries>
                                       <Main-Class>org.bgee.pipeline.CommandRunner</Main-Class>
+                                      <!-- in order to be able to modify logging levels 
+                                           from config files in same directors as the jar, 
+                                           without recompiling -->
                                       <Class-Path>./</Class-Path>
                                   </manifestEntries>
                               </transformer>

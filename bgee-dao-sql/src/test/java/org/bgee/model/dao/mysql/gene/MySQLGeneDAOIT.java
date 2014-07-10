@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
@@ -73,7 +74,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             GeneTO methGene = methResults.getTO();
             for (GeneTO expGene: expectedGenes) {
                 log.trace("Comparing {} to {}", methGene, expGene);
-                if (areGeneTOsEqual(methGene, expGene)) {
+                if (TOComparator.areGeneTOsEqual(methGene, expGene)) {
                     found = true;
                     break;
                 }
@@ -99,7 +100,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             GeneTO methGene = methResults.getTO();
             for (GeneTO expGene: expectedGenes) {
                 log.trace("Comparing {} to {}", methGene, expGene);
-                if (areGeneTOsEqual(methGene, expGene)) {
+                if (TOComparator.areGeneTOsEqual(methGene, expGene)) {
                     found = true;
                     break;
                 }
@@ -112,31 +113,6 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         methResults.close();
 
         log.exit();
-    }
-
-    /**
-     * Method to compare two {@code GeneTO}s, to check for complete equality of each
-     * attribute. This is because the {@code equals} method of {@code GeneTO}s is solely
-     * based on their ID, not on other attributes.
-     * 
-     * @param geneTO1 A {@code GeneTO} to be compared to {@code geneTO2}.
-     * @param geneTO2 A {@code GeneTO} to be compared to {@code geneTO1}.
-     * @return {@code true} if {@code geneTO1} and {@code geneTO2} have all attributes
-     *         equal.
-     */
-    private boolean areGeneTOsEqual(GeneTO geneTO1, GeneTO geneTO2) {
-        log.entry(geneTO1, geneTO2);
-        if (geneTO1.getId().equals(geneTO2.getId()) && 
-            (geneTO1.getName() == null && geneTO2.getName() == null || 
-              geneTO1.getName() != null && geneTO1.getName().equals(geneTO2.getName())) && 
-            geneTO1.getSpeciesId() == geneTO2.getSpeciesId() && 
-            geneTO1.getGeneBioTypeId() == geneTO2.getGeneBioTypeId() && 
-            geneTO1.getOMAParentNodeId() == geneTO2.getOMAParentNodeId() && 
-            geneTO1.isEnsemblGene() == geneTO2.isEnsemblGene()) {
-            return log.exit(true);
-        }
-        log.debug("Genes are not equivalent {}", geneTO1.getOMAParentNodeId());
-        return log.exit(false);
     }
 
     /**

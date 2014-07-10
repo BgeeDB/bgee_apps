@@ -6,12 +6,12 @@ import static org.mockito.Mockito.verify;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.ontologycommon.RelationTO;
@@ -92,7 +92,7 @@ public class InsertGOTest extends TestAncestor {
         
         ArgumentCaptor<Set> goTermTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneOntologyDAO).insertTerms(goTermTOsArg.capture());
-        if (!this.areGOTermTOCollectionsEqual(
+        if (!TOComparator.areGOTermTOCollectionsEqual(
                 expectedGOTermTOs, goTermTOsArg.getValue())) {
             throw new AssertionError("Incorrect GOTermTOs generated to insert GO terms, " +
                     "expected " + expectedGOTermTOs.toString() + ", but was " + 
@@ -119,49 +119,5 @@ public class InsertGOTest extends TestAncestor {
         //so we can directly use assertEquals
         assertEquals("Incorrect RelationTOs generated", expectedRelationTOs, 
                 relationTOsArg.getValue());
-    }
-    
-    /**
-     * Method to compare two {@code Collection}s of {@code GOTermTO}s, to check 
-     * for complete equality of each attribute of each {@code GOTermTO}. This is 
-     * because the {@code equals} method of {@code GOTermTO}s is solely based 
-     * on their ID, not on other attributes. Here we check for equality of each 
-     * attribute. 
-     * 
-     * @param c1    A {@code Collection} of {@code GOTermTO}s o be compared to {@code c2}.
-     * @param c2    A {@code Collection} of {@code GOTermTO}s o be compared to {@code c1}.
-     * @return      {@code true} if {@code c1} and {@code c2} contain the same number 
-     *              of {@code GOTermTO}s, and each {@code GOTermTO} of a {@code Collection} 
-     *              has an equivalent {@code GOTermTO} in the other {@code Collection}, 
-     *              with all attributes equal.
-     */
-    private boolean areGOTermTOCollectionsEqual(Collection<GOTermTO> c1, 
-            Collection<GOTermTO> c2) {
-        log.entry(c1, c2);
-        
-        if (c1.size() != c2.size()) {
-            log.debug("Non matching sizes, {} - {}", c1.size(), c2.size());
-            return log.exit(false);
-        }
-        for (GOTermTO s1: c1) {
-            boolean found = false;
-            for (GOTermTO s2: c2) {
-                log.trace("Comparing {} to {}", s1, s2);
-                if ((s1.getId() == null && s2.getId() == null || 
-                        s1.getId() != null && s1.getId().equals(s2.getId())) && 
-                    (s1.getName() == null && s2.getName() == null || 
-                        s1.getName() != null && s1.getName().equals(s2.getName())) && 
-                    (s1.getDomain() == null && s2.getDomain() == null || 
-                        s1.getDomain() != null && s1.getDomain().equals(s2.getDomain())) && 
-                    (s1.getAltIds().equals(s2.getAltIds())) ) {
-                    found = true;    
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent term found for {}", s1);
-                return log.exit(false);
-            }      
-        }
-        return log.exit(true);
     }
 }

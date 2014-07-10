@@ -12,6 +12,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -217,74 +218,10 @@ public class ParseOrthoXMLTest extends TestAncestor {
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 
                 eq(Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID)));
-        if (!this.areGeneTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue())) {
+        if (!TOComparator.areGeneTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue())) {
             throw new AssertionError("Incorrect GeneTOs generated to update genes, "+
                     "expected " + expectedGeneTOs + ", but was " + geneTOsArg.getValue());
         }
-    }
-
-    /**
-     * Method to compare two {@code Collection}s of {@code GeneTO}s, to check for complete
-     * equality of each attribute of each {@code GeneTO} calling {@link #areGeneTOEqual()}.
-     * This is because the {@code equals} method of {@code GeneTO}s is solely based on
-     * their ID, not on other attributes.
-     * 
-     * @param cGeneTO1 A {@code Collection} of {@code GeneTO}s to be compared to
-     *            {@code cGeneTO2}.
-     * @param cGeneTO2 A {@code Collection} of {@code GeneTO}s to be compared to
-     *            {@code cGeneTO1}.
-     * @return {@code true} if {@code cGeneTO1} and {@code cGeneTO2} contain the same
-     *         number of {@code GeneTO}s, and each {@code GeneTO} of a {@code Collection}
-     *         has an equivalent {@code GeneTO} in the other {@code Collection}, with all
-     *         attributes equal.
-     */
-    //TODO: we should externalize all these TO comparisons in an external util class.
-    private boolean areGeneTOCollectionsEqual(List<GeneTO> cGeneTO1, Set<GeneTO> cGeneTO2) {
-        log.entry(cGeneTO1, cGeneTO2);
-        
-        if (cGeneTO1.size() != cGeneTO2.size()) {
-            log.debug("Non matching sizes, {} - {}", cGeneTO1.size(), cGeneTO2.size());
-            return log.exit(false);
-        }
-        for (GeneTO g1: cGeneTO1) {
-            boolean found = false;
-            for (GeneTO g2: cGeneTO2) {
-                if (areGeneTOEqual(g1, g2)) {
-                    found = true;    
-                    break;
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent gene found for {}", g1.getId());
-                return log.exit(false);
-            }      
-        }
-        return log.exit(true);
-    }
-    
-    /**
-     * Method to compare two {@code GeneTO}s, to check for complete equality of each
-     * attribute. This is because the {@code equals} method of {@code GeneTO}s is solely
-     * based on their ID, not on other attributes.
-     * 
-     * @param g1    A {@code GeneTO}s to be compared to {@code g2}.
-     * @param g2    A {@code GeneTO}s to be compared to {@code g1}.
-     * @return      {@code true} if {@code g1} and {@code g2} have all attributes equal.
-     */
-    private boolean areGeneTOEqual(GeneTO g1, GeneTO g2) {
-        log.entry(g1, g2);
-        if ((g1.getId() == null && g2.getId() == null || 
-                g1.getId() != null && g1.getId().equals(g2.getId())) && 
-            (g1.getName() == null && g2.getName() == null || 
-                    g1.getName() != null && g1.getName().equals(g2.getName())) && 
-             g1.getSpeciesId() == g2.getSpeciesId() && 
-             g1.getGeneBioTypeId() == g2.getGeneBioTypeId() && 
-             g1.getOMAParentNodeId() == g2.getOMAParentNodeId() && 
-             g1.isEnsemblGene() == g2.isEnsemblGene()) {
-            return log.exit(true);
-        }
-        log.debug("Genes are not equivalent");
-        return log.exit(false);
     }
 
     /**

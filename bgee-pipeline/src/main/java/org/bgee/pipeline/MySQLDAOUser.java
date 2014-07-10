@@ -70,18 +70,7 @@ public abstract class MySQLDAOUser {
      *                              
      */
     public MySQLDAOUser() throws IllegalStateException {
-        String exceptMsg = "The properties provided " +
-                "either through System properties, or through a property file, " +
-                "did not allow to obtain a valid MySQLDAOManager";
-        try {
-            MySQLDAOManager manager = (MySQLDAOManager) DAOManager.getDAOManager();
-            if (manager == null) {
-                throw log.throwing(new IllegalStateException(exceptMsg));
-            }
-            this.manager = manager;
-        } catch (Throwable e) {
-            throw log.throwing(new IllegalStateException(exceptMsg, e));
-        }
+        this(null);
     }
     
     /**
@@ -92,12 +81,23 @@ public abstract class MySQLDAOUser {
      * 
      * @param manager   The {@code MySQLDAOManager} that will be used by this object.
      */
-    protected MySQLDAOUser(MySQLDAOManager manager) {
-        if (manager == null) {
-            throw log.throwing(new IllegalArgumentException("The MySQLDAOManager " +
-                    "cannot be null"));
+    protected MySQLDAOUser(MySQLDAOManager providedManager) {
+        if (providedManager == null) {
+            String exceptMsg = "The properties provided " +
+                    "either through System properties, or through a property file, " +
+                    "did not allow to obtain a valid MySQLDAOManager";
+            try {
+                MySQLDAOManager manager = (MySQLDAOManager) DAOManager.getDAOManager();
+                if (manager == null) {
+                    throw log.throwing(new IllegalStateException(exceptMsg));
+                }
+                this.manager = manager;
+            } catch (Throwable e) {
+                throw log.throwing(new IllegalStateException(exceptMsg, e));
+            }
+        } else {
+            this.manager = providedManager;
         }
-        this.manager = manager;
     }
     
     /**

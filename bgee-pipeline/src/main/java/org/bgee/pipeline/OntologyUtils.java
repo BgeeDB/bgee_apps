@@ -2,10 +2,12 @@ package org.bgee.pipeline;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,11 +35,13 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.model.UnloadableImportException;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.io.ParserWrapper;
 
@@ -467,6 +471,8 @@ public class OntologyUtils {
      * Equivalent to calling {@link #computeNestedSetModelParams(List)} 
      * with a {@code null} argument (no specific ordering requested).
      * 
+     * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
+     *              to start the computations from.
      * @return  See {@link #computeNestedSetModelParams(List)} 
      * @throws IllegalStateException    If the {@code OWLOntology} provided at instantiation 
      *                                  is not a simple tree.
@@ -479,11 +485,26 @@ public class OntologyUtils {
      * @see #computeNestedSetModelParams(List)
      */
     //TODO adapt as in org.bgee.pipeline.hierarchicalGroups.ParseOrthoXML.buildNestedSet(Node)
-    public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams() 
-            throws UnknownOWLOntologyException, IllegalStateException, 
-            OWLOntologyCreationException {
-        log.entry();
-        return log.exit(this.computeNestedSetModelParams(null));
+    public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root) 
+            throws UnknownOWLOntologyException, IllegalStateException {
+        log.entry(root);
+        return log.exit(this.computeNestedSetModelParams(root, null));
+    }
+    
+    /**
+     * Delegates to {@link #computeNestedSetModelParams(List, Set)} with the second 
+     * {@code Set} argument set to {@code null}.
+     * 
+     * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
+     *              to start the computations from.
+     * @param classOrder    See same argument in {@link #computeNestedSetModelParams(List, Set)}.
+     * @return              See returned value of {@link #computeNestedSetModelParams(List, Set)}
+     * @throws UnknownOWLOntologyException
+     */
+    public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root, 
+            List<OWLClass> classOrder) throws UnknownOWLOntologyException {
+        log.entry(root, classOrder);
+        return log.exit(this.computeNestedSetModelParams(root, classOrder, null));
     }
     
 
@@ -503,9 +524,14 @@ public class OntologyUtils {
      * that can be represented as a nested set model, an {@code IllegalStateException} 
      * is thrown. 
      * 
+     * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
+     *              to start the computations from.
      * @param classOrder    A {@code List} that is used to order children 
      *                      of a same {@code OWLClass}. If {@code null} or empty, 
      *                      no specific order is specified.
+     * @param overProps     A {@code Set} of {@code OWLPropertyExpression}s allowing 
+     *                      to restrain the relations considered to retrieved direct 
+     *                      descendants of {@code OWLClass}es.
      * @return              A {@code Map} associating {@code OWLClass}es of the ontology 
      *                      to a {@code Map} containing their left bound, right bound, 
      *                      and level.
@@ -518,25 +544,28 @@ public class OntologyUtils {
      *                                          provided at instantiation, and an error 
      *                                          occurred while loading it.
      */
-    public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(
-            List<OWLClass> classOrder) throws IllegalStateException, UnknownOWLOntologyException, 
-            OWLOntologyCreationException {
-        log.entry(classOrder);
+    public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root, 
+            List<OWLClass> classOrder, Set<OWLPropertyExpression> overProps) 
+                    throws UnknownOWLOntologyException {
+        log.entry(root, classOrder, overProps);
         
         Map<OWLClass, Map<String, Integer>> params = 
                 new HashMap<OWLClass, Map<String, Integer>>();
-        //get the root of the ontology, that should be unique.
-        Set<OWLClass> roots = this.getWrapper().getOntologyRoots();
-        if (roots.size() != 1) {
-            throw log.throwing(new IllegalStateException("Incorrect number of roots " +
-                    "in the taxonomy ontology"));
+        
+        if (root == null) {
+            //get the root of the ontology, that should be unique.
+            Set<OWLClass> roots = this.getWrapper().getOntologyRoots();
+            if (roots.size() != 1) {
+                throw log.throwing(new IllegalStateException("Incorrect number of roots " +
+                        "in the taxonomy ontology"));
+            }
+            root = roots.iterator().next();
         }
-        OWLClass root = roots.iterator().next();
         //we need to initialize the parameters for this root
         //right bound yet to be determined, after iterating all children
         params.put(root, this.getOWLClassNestedSetModelParams(1, 0, 1));
         //params will be populated along the walk
-        this.recursiveNestedSetModelParams(params, root, classOrder);
+        this.recursiveNestedSetModelParams(params, root, classOrder, overProps);
         
         return log.exit(params);
     }
@@ -561,6 +590,9 @@ public class OntologyUtils {
      * @param classOrder        A {@code List} allowing to order children 
      *                          of a same {@code OWLClass}, if not {@code null} 
      *                          nor empty.
+     * @param overProps         A {@code Set} of {@code OWLPropertyExpression}s allowing 
+     *                          to restrain the relations considered to retrieved direct 
+     *                          descendants of {@code OWLClass}es.
      * @throws IllegalStateException    If the {@code OWLOntology} wrapped into 
      *                                  {@link #wrapper} is not a simple tree that 
      *                                  can be represented by a nested set model.
@@ -573,12 +605,25 @@ public class OntologyUtils {
      */
     private void recursiveNestedSetModelParams(
             final Map<OWLClass, Map<String, Integer>> params, 
-            final OWLClass classInspected,  final List<OWLClass> classOrder) 
-        throws IllegalStateException, UnknownOWLOntologyException, OWLOntologyCreationException {
-        log.entry(params, classInspected, classOrder);
+            final OWLClass classInspected,  final List<OWLClass> classOrder, 
+            Set<OWLPropertyExpression> overProps) 
+        throws IllegalStateException, UnknownOWLOntologyException {
+        log.entry(params, classInspected, classOrder, overProps);
         
         //we will iterate children of classInspected. 
-        Set<OWLClass> children = this.getWrapper().getOWLClassDirectDescendants(classInspected);
+        Set<OWLClass> children = new HashSet<OWLClass>();
+        if (overProps != null && !overProps.isEmpty()) {
+            for (OWLGraphEdge incomingEdge: this.getWrapper().getIncomingEdges(classInspected)) {
+                OWLQuantifiedProperty qp = incomingEdge.getSingleQuantifiedProperty();
+                if (incomingEdge.isSourceNamedObject() && 
+                    qp.isSomeValuesFrom() && overProps.contains(qp.getProperty())) {
+                    
+                    children.add((OWLClass) incomingEdge.getSource());
+                }
+            }
+        } else {
+            children = this.getWrapper().getOWLClassDirectDescendants(classInspected);
+        }
         
         //if classOrder is not null nor empty, we use it to order the children. 
         if (classOrder != null && !classOrder.isEmpty()) {
@@ -621,7 +666,7 @@ public class OntologyUtils {
             params.put(child, 
                 this.getOWLClassNestedSetModelParams(currentChildLeftBound, 0, level + 1));
             //recursive call, will walk all children of current child
-            this.recursiveNestedSetModelParams(params, child, classOrder);
+            this.recursiveNestedSetModelParams(params, child, classOrder, overProps);
             //now we can get its right bound, to infer the left bound of the next child, 
             //or the right bound of classInspected if this is its last child
             int childRightBound = params.get(child).get(RIGHT_BOUND_KEY);
@@ -986,15 +1031,28 @@ public class OntologyUtils {
             if (//if it is a part_of related relation
                 this.isPartOfRelation(edge) || 
                //or an is_a relation
-               (edge.getSingleQuantifiedProperty().getProperty() == null && 
-                            edge.getSingleQuantifiedProperty().getQuantifier().equals(
-                                    Quantifier.SUBCLASS_OF))) {
+               this.isASubClassOfEdge(edge)) {
                 
                 isAPartOfEdges.add(edge);
             } 
         }
         
         return log.exit(isAPartOfEdges);
+    }
+    
+    /**
+     * Determines whether {@code edge} is a is_a relation (SubClassOf relation with no 
+     * {@code OWLObjectProperty}).
+     * 
+     * @param edge  The {@code OWLGraphEdge} to test for being a is_a relation.
+     * @return      {@code true} if {@code edge} is a is_a relation.
+     */
+    public boolean isASubClassOfEdge(OWLGraphEdge edge) {
+        log.entry(edge);
+        
+        return log.exit(edge.getSingleQuantifiedProperty().getProperty() == null && 
+                            edge.getSingleQuantifiedProperty().getQuantifier().equals(
+                                    Quantifier.SUBCLASS_OF));
     }
     
     /**
@@ -1093,6 +1151,114 @@ public class OntologyUtils {
         
         return log.exit(!Collections.disjoint(NON_INFORMATIVE_SUBSETS, 
                 this.getWrapper().getSubsets(object)));
+    }
+    
+    /**
+     * Returns the number of steps to walk on the shortest path from {@code source} to 
+     * {@code target}, following any relations if {@code overProps} is {@code null} 
+     * or empty, otherwise, following only relations specified by {@code overProps}.
+     * <p>
+     * For instance, if A is_a B is_a C, and A is_a B' is_a B'' is_a C, then then min 
+     * distance between A and C is 2.
+     * 
+     * @param source        The {@code OWLClass} which to start the walk from.
+     * @param target        The {@code OWLClass} which to finish the walk to.
+     * @param overProps     A {@code Set} of {@code OWLPropertyExpression}s allowing 
+     *                      to restrain the relations considered. 
+     * @return              An {@code int} that is the number of {@code OWLClass}es 
+     *                      to walk from {@code source} to {@code target} 
+     *                      on the shortest path.
+     */
+    public int getMinDistance(OWLClass source, OWLClass target, 
+            Set<OWLPropertyExpression> overProps) {
+        log.entry(source, target, overProps);
+        
+        //identity
+        if (source.equals(target)) {
+            return log.exit(0);
+        }
+        
+        //we will walk each OWLClass on the path from source to target, 
+        //and for each step, we will store the current OWLClass walked along with 
+        //the distance from source, using a singleton Map. 
+        Deque<Map<OWLClass, Integer>> walks = new ArrayDeque<Map<OWLClass, Integer>>();
+        walks.offerFirst(Collections.singletonMap(source, 0));
+        
+        Map<OWLClass, Integer> currentStep;
+        int minDistance = 0;
+        while ((currentStep = walks.pollFirst()) != null) {
+            OWLClass currentClass = currentStep.keySet().iterator().next();
+            int nextDistance = currentStep.values().iterator().next() + 1;
+            
+            for (OWLGraphEdge outgoingEdge: this.getWrapper().getOutgoingEdges(currentClass)) {
+                if (outgoingEdge.getQuantifiedPropertyList().size() > 1) {
+                    continue;
+                }
+                OWLQuantifiedProperty qp = outgoingEdge.getSingleQuantifiedProperty();
+                if (outgoingEdge.isTargetNamedObject() && 
+                        (overProps == null || overProps.isEmpty() || 
+                        (qp.isSomeValuesFrom() && overProps.contains(qp.getProperty())))) {
+                    
+                    OWLClass potentialNextStep = (OWLClass) outgoingEdge.getTarget();
+                    //reach target
+                    if (potentialNextStep.equals(target)) {
+                        //first time we reach target
+                        if (minDistance == 0) {
+                            minDistance = nextDistance;
+                        } else {
+                            //target already reached through another path, let's see 
+                            //what was the shortest path
+                            minDistance = Math.min(minDistance, nextDistance);
+                        }
+                    } else if (this.getWrapper().getAncestors(potentialNextStep, overProps).
+                            contains(target)) {
+                        //target on path, continue walk
+                        walks.offerFirst(Collections.singletonMap(potentialNextStep, 
+                                nextDistance));
+                    }
+                }
+            }
+        }
+        if (minDistance == 0) {
+            throw log.throwing(new IllegalArgumentException("The target " + target + 
+                    " is not reachable from source " + source));
+        }
+        
+        return log.exit(minDistance);
+    }
+    
+    /**
+     * Returns the least common ancestor of {@code cls1} and {@code cls2} over relations 
+     * specified by {@code overProps}. Only named {@code OWLClass} common ancestors  
+     * will be retrieved. If {@code overProps} is {@code null}, then any relations 
+     * are considered. 
+     * 
+     * @param cls1          An {@code OWLClass} for which we want the LCAs with {@code cls2}.
+     * @param cls2          An {@code OWLClass} for which we want the LCAs with {@code cls1}.
+     * @param overProps     A {@code Set} of {@code OWLPropertyExpression}s allowing 
+     *                      to restrain the relations considered.
+     * @return              A {@code Set} of {@code OWLClass}es that are the named 
+     *                      least common ancestors of {@code cls1} and {@code cls2}.
+     */
+    public Set<OWLClass> getLeastCommonAncestors(OWLClass cls1, OWLClass cls2, 
+            Set<OWLPropertyExpression> overProps) {
+        log.entry(cls1, cls2, overProps);
+        
+        Set<OWLClass> commonAncestors = new HashSet<OWLClass>();
+        Set<OWLObject> ancestorsStart = this.getWrapper().getAncestors(cls1, overProps);
+        Set<OWLObject> ancestorsEnd = this.getWrapper().getAncestors(cls2, overProps);
+        ancestorsStart.retainAll(ancestorsEnd);
+        for (OWLObject ancestor: ancestorsStart) {
+            if (ancestor instanceof OWLClass) {
+                commonAncestors.add((OWLClass) ancestor);
+            }
+        }
+        Set<OWLClass> lcas = new HashSet<OWLClass>(commonAncestors);
+        for (OWLObject ancestor: commonAncestors) {
+            lcas.removeAll(this.getWrapper().getAncestors(ancestor, overProps));
+        }
+        
+        return log.exit(lcas);
     }
     
     /**

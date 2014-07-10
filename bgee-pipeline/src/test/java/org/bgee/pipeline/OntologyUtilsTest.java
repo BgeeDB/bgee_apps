@@ -26,6 +26,7 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
@@ -135,7 +136,7 @@ public class OntologyUtilsTest extends TestAncestor {
      */
     @Test
     public void shouldComputeNestedSetModelParams() throws UnknownOWLOntologyException, 
-    IllegalStateException, OWLOntologyCreationException {
+    IllegalStateException {
         OntologyUtils utils = new OntologyUtils(wrapper);
         //get a List to order the ontology terms. We mess it a bit to test properly
         List<OWLClass> classOrder = new ArrayList<OWLClass>();
@@ -149,7 +150,7 @@ public class OntologyUtilsTest extends TestAncestor {
         classOrder.add(classC);
         
         Map<OWLClass, Map<String, Integer>> params = 
-                utils.computeNestedSetModelParams(classOrder);
+                utils.computeNestedSetModelParams(classRoot, classOrder);
         
         assertEquals("Incorrect number of OWLClass with parameters", 6, params.size());
         
@@ -201,8 +202,7 @@ public class OntologyUtilsTest extends TestAncestor {
      * a simple tree.
      */
     @Test
-    public void shouldFailComputeNestedSetModel() throws UnknownOWLOntologyException, 
-    OWLOntologyCreationException {
+    public void shouldFailComputeNestedSetModel() throws UnknownOWLOntologyException {
         //we add a subClassOf axiom in the ontology, that will make a class 
         //to have several parents, so the ontology would not be a tree anymore
         OWLDataFactory factory = wrapper.getManager().getOWLDataFactory();
@@ -213,7 +213,7 @@ public class OntologyUtilsTest extends TestAncestor {
             OntologyUtils utils = new OntologyUtils(wrapper);
             //an IllegalStateException should be thrown
             try {
-                utils.computeNestedSetModelParams();
+                utils.computeNestedSetModelParams(classRoot);
                 //if we reach this point, test failed
                 throw new AssertionError("The OntologyUtils should have thrown " +
                 		"an IllegalStateException");
@@ -548,5 +548,57 @@ public class OntologyUtilsTest extends TestAncestor {
         Collections.sort(idsUnsorted, OntologyUtils.ID_COMPARATOR);
         assertEquals("IDs were not sorted according to their natural ordering", 
                 expectedSortdIds, idsUnsorted);
+    }
+    
+    /**
+     * Test the method {@link #getMinDistance(OWLClass, OWLClass, Set)}
+     */
+    @Test
+    public void shouldGetMinDistance() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/minDistance.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass target = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass source = wrapper.getOWLClassByIdentifier("FOO:0006");
+        
+        assertEquals("Incorrect min distance asserted over any relation", 2, 
+                utils.getMinDistance(source, target, null));
+        
+        assertEquals("Incorrect min distance asserted over specified properties", 3, 
+                utils.getMinDistance(source, target, new HashSet<OWLPropertyExpression>(
+                        Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
+                                "in_deep_part_of")))));
+    }
+    
+    /**
+     * Test {@link OntologyUtils#getLeastCommonAncestors(OWLClass, OWLClass, Set)}.
+     */
+    @Test
+    public void shouldGetLeastCommonAncestors() throws OWLOntologyCreationException,
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/minDistance.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0006");
+        Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
+                Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
+                        OntologyUtils.PART_OF_ID), wrapper.getOWLObjectPropertyByIdentifier(
+                                    "in_deep_part_of")));
+        Set<OWLClass> expectedLcas = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("FOO:0002")));
+        
+        assertEquals("Incorrect least common ancestor", 
+                expectedLcas, 
+                utils.getLeastCommonAncestors(cls1, cls2, null));
+        
+        assertEquals("Incorrect least common ancestor", 
+                expectedLcas, 
+                utils.getLeastCommonAncestors(cls1, cls2, overProps));
     }
 }

@@ -208,6 +208,12 @@ public class OWLGraphManipulatorTest
                 0, ont.getAxioms(clsJ).size());
         assertEquals("Incorrect axioms generated: " + ont.getAxioms(clsG), 
                 0, ont.getAxioms(clsG).size());
+        
+        //obsolete classes removed
+        assertNull("An obsolete class was not removed", 
+            this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0012"));
+        assertNull("An obsolete class was not removed", 
+            this.graphManipulator.getOwlGraphWrapper().getOWLClassByIdentifier("FOO:0013"));
 	}
 	
     /**
@@ -1071,7 +1077,7 @@ public class OWLGraphManipulatorTest
 		toKeep.add("FOO:0014");
 		
 		Set<String> expectedClassesRemoved = new HashSet<String>(Arrays.asList("FOO:0100", 
-		        "FOO:0007", "FOO:0016", "FOO:0009", "FOO:0008", "FOO:0010", "FOO:0012"));
+		        "FOO:0007", "FOO:0009", "FOO:0008", "FOO:0010", "FOO:0012"));
 		Set<String> classesRemoved = this.graphManipulator.filterSubgraphs(toKeep);
 		
 		//The test ontology is designed so that 7 classes should have been removed
@@ -1122,7 +1128,7 @@ public class OWLGraphManipulatorTest
 	
 	/**
 	 * Test the functionalities of 
-	 * {@link OWLGraphManipulator#removeSubgraphs(Collection, boolean)}, 
+	 * {@link OWLGraphManipulator#removeSubgraphs(Collection, boolean, Collection)}, 
 	 * with the {@code boolean} parameter set to {@code true}.
 	 */
 	@Test
@@ -1146,12 +1152,14 @@ public class OWLGraphManipulatorTest
 		//add as a root to remove a term that is in the FOO:0006 subgraph, 
 		//to check if the ancestors check will not lead to keep erroneously FOO:0007
 		toRemove.add("FOO:0008");
+		//we will request to exclude from removal subgraph starting from FOO:0009, 
+		//so FOO:0009 and FOO:0010 should not be removed
 		Set<String> expectedClassesRemoved = new HashSet<String>(
-		        Arrays.asList("FOO:0006", "FOO:0008", "FOO:0007", "FOO:0009", "FOO:0010", 
-		                "FOO:0012"));
-		Set<String> classesRemoved = this.graphManipulator.removeSubgraphs(toRemove, true);
+		        Arrays.asList("FOO:0006", "FOO:0008", "FOO:0007", "FOO:0012"));
+		Set<String> classesRemoved = this.graphManipulator.removeSubgraphs(toRemove, true, 
+		        Arrays.asList("FOO:0009"));
 
-		//The test ontology is designed so that 6 classes should have been removed
+		//The test ontology is designed so that 4 classes should have been removed
 		assertEquals("Incorrect classes removed", expectedClassesRemoved, classesRemoved);
 		//test that these classes were actually removed from the ontology
 		allClasses = new HashSet<OWLClass>();
@@ -1194,10 +1202,20 @@ public class OWLGraphManipulatorTest
 		//remove the subgraph
 		Collection<String> toRemove = new ArrayList<String>();
 		toRemove.add("FOO:0006");
-		int countRemoved = this.graphManipulator.removeSubgraphs(toRemove, false).size();
+        //we will request to exclude from removal subgraph starting from FOO:0009, 
+        //so FOO:0009 and FOO:0010 should not be removed. 
+		//FOO:0014 is not exclusively part of subgraph to remove, 
+		//but here we don't keep shared classes so it should be removed. 
+		//FOO:0011 is also not exclusively part of a subgraph to remove and should be removed, 
+		//but it is also a descendant of FOO:0009, so at the end it will be kept
+        Set<String> expectedClassesRemoved = new HashSet<String>(
+                Arrays.asList("FOO:0006", "FOO:0008", "FOO:0007", "FOO:0012", 
+                        "FOO:0014"));
+        Set<String> classesRemoved = this.graphManipulator.removeSubgraphs(toRemove, false, 
+		        Arrays.asList("FOO:0009"));
 
-		//The test ontology is designed so that 8 classes should have been removed
-		assertEquals("Incorrect number of classes removed", 8, countRemoved);
+		//The test ontology is designed so that 6 classes should have been removed
+        assertEquals("Incorrect classes removed", expectedClassesRemoved, classesRemoved);
 		//test that these classes were actually removed from the ontology
 		allClasses = new HashSet<OWLClass>();
         for (OWLOntology ont: this.graphManipulator.getOwlGraphWrapper().getAllOntologies()) {
@@ -1205,7 +1223,7 @@ public class OWLGraphManipulatorTest
         }
         int newClassCount = allClasses.size();
 		assertEquals("removeSubgraph did not return the correct number of classes removed", 
-				classCount - newClassCount, countRemoved);
+				classCount - newClassCount, classesRemoved.size());
 	}
 	
 	/**

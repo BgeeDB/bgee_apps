@@ -68,6 +68,7 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  *   SplitSubClassAxioms</a>.
  *   <li>to remove any {@code OWLEquivalentClassesAxiom} or {@code OWLSubClassOfAxiom} using 
  *   an {@code OWLObjectUnionOf}.
+ *   <li>to remove ll obsoletd {@code OWLClass}es.
  * </ol>
  * These operations will then allow to remove specific edges between terms, 
  * without impacting other edges that would be associated to them, through 
@@ -203,6 +204,8 @@ public class OWLGraphManipulator {
      * Also, all imported ontologies are merged into the source ontology, then removed 
      * from the import closure, to be able to modify any relation or any class. 
      * <p>
+     * All obsoleted {@code OWLClass}es are removed.
+     * <p>
      * Methods called are, in order: 
      * <ol>
      *   <li>{@link #mergeImportClosure()}</li>
@@ -210,6 +213,7 @@ public class OWLGraphManipulator {
      *   <li>{@link #convertEquivalentClassesToSuperClasses()}
      *   <li>{@link #splitSubClassAxioms()}
      *   <li>{@link #removeOWLObjectUnionOfs()}
+     *   <li>{@link #removeObsoleteClasses()}
      * </ol>
      * 
      * @throws OWLOntologyCreationException     If an error occurred while merging 
@@ -221,6 +225,7 @@ public class OWLGraphManipulator {
      * @see #convertEquivalentClassesToSuperClasses()
      * @see #splitSubClassAxioms()
      * @see #removeOWLObjectUnionOfs()
+     * @see #removeObsoleteClasses()
      */
     private void performDefaultModifications() {
         this.mergeImportClosure();
@@ -228,6 +233,7 @@ public class OWLGraphManipulator {
         this.convertEquivalentClassesToSuperClasses();
         this.splitSubClassAxioms();
         this.removeOWLObjectUnionOfs();
+        this.removeObsoleteClasses();
         
         //check that all operations worked properly
         if (log.isEnabledFor(Level.WARN)) {
@@ -562,6 +568,24 @@ public class OWLGraphManipulator {
 
         this.triggerWrapperUpdate();
         log.info("Done removing OWLObjectUnionOfs");
+    }
+    
+    /**
+     * Removes all obsolete {@code OWLClass} from the ontologies.
+     * @return  A {@code Set} containing the {@code OWLClass}es that were removed 
+     *          as a result.
+     */
+    private Set<OWLClass> removeObsoleteClasses() {
+        Set<OWLClass> classesToRemove = new HashSet<OWLClass>();
+        for (OWLOntology ont : this.getOwlGraphWrapper().getAllOntologies()) {
+            for (OWLClass cls: ont.getClassesInSignature()) {
+                if (this.getOwlGraphWrapper().isObsolete(cls) || 
+                        this.getOwlGraphWrapper().getIsObsolete(cls)) {
+                    classesToRemove.add(cls);
+                }
+            }
+        }
+        return this.removeClasses(classesToRemove);
     }
 
 	//*********************************
@@ -1476,11 +1500,27 @@ public class OWLGraphManipulator {
     	
     	return classIdsRemoved;
     }
+    
+    /**
+     * Delegates to {@link #removeSubgraphs(Collection, boolean, Collection)}, 
+     * with the last {@code Collection} argument being {@code null}.
+     * 
+     * @param subgraphRootIds   See {@link #removeSubgraphs(Collection, boolean, Collection)}.
+     * @param keepSharedClasses See {@link #removeSubgraphs(Collection, boolean, Collection)}.
+     * @return                  {@link #removeSubgraphs(Collection, boolean, Collection)}.
+     * @see #removeSubgraphs(Collection, boolean, Collection)
+     */
+    public Set<String> removeSubgraphs(Collection<String> subgraphRootIds, 
+            boolean keepSharedClasses) {
+        return this.removeSubgraphs(subgraphRootIds, keepSharedClasses, null);
+    }
     /**
      * Remove from the ontology the subgraphs starting 
      * from the {@code OWLClass}es with their ID in {@code subgraphRootIds}. 
-     * {@code subgraphRootIds} contains the OBO-style IDs 
-     * of these subgraph roots as {@code String}s.
+     * The subgraph starting from the {@code OWLClass}es with their ID 
+     * in {@code allowedSubgraphRootIds} will not be removed, even if part of 
+     * subgraph to remove. {@code subgraphRootIds} and {@code allowedSubgraphRootIds} 
+     * contain the OBO-style IDs of {@code OWLClass}es. 
      * <p>
      * If a class is part of a subgraph to remove, but also of a subgraph not to be removed, 
      * it will be kept in the ontology if {@code keepSharedClasses} is {@code true}, 
@@ -1492,18 +1532,23 @@ public class OWLGraphManipulator {
      * <p>
      * This is the opposite method of {@code filterSubgraphs(Collection<String>)}.
      * 
-     * @param subgraphRootIds 		A {@code Collection} of {@code String}s 
-     * 								representing the OBO-style IDs of the {@code OWLClass}es 
-     * 								that are the roots of the subgraphs to be removed. 
-     * @param keepSharedClasses 	A {@code boolean} defining whether classes part both of 
-     * 								a subgraph to remove and a subgraph not to be removed,  
-     * 								should be deleted. If {@code true}, they will be kept, 
-     * 								otherwise, they will be deleted. 
+     * @param subgraphRootIds 		    A {@code Collection} of {@code String}s 
+     * 								    representing the OBO-style IDs of the {@code OWLClass}es 
+     * 								    that are the roots of the subgraphs to be removed. 
+     * @param keepSharedClasses 	    A {@code boolean} defining whether classes part both of 
+     * 								    a subgraph to remove and a subgraph not to be removed,  
+     * 								    should be deleted. If {@code true}, they will be kept, 
+     * 								    otherwise, they will be deleted.
+     * @param allowedSubgraphRootIds    A {@code Collection} of {@code String}s 
+     *                                  representing the OBO-style IDs of the 
+     *                                  {@code OWLClass}es that are the roots of the 
+     *                                  subgraphs that are excluded from removal. 
      * @return 						A {@code Collection} of {@code String}s that are 
      *                              the OBO-like ID of the {@code OWLClass}es removed.
      * @see #filterSubgraphs(Collection)
      */
-    public Set<String> removeSubgraphs(Collection<String> subgraphRootIds, boolean keepSharedClasses) {
+    public Set<String> removeSubgraphs(Collection<String> subgraphRootIds, 
+            boolean keepSharedClasses, Collection<String> allowedSubgraphRootIds) {
         int classCount   = 0;
         if (log.isInfoEnabled()) {
     	    log.info("Start removing subgraphs of undesired roots: " + subgraphRootIds);
@@ -1518,6 +1563,26 @@ public class OWLGraphManipulator {
     	if (keepSharedClasses) {
     		ontRoots = this.getOwlGraphWrapper().getOntologyRoots();
     	}
+
+        //subgraphs excluded from removal
+    	Set<OWLClass> excudedFromRemoval = new HashSet<OWLClass>();
+        if (allowedSubgraphRootIds != null) {
+            for (String allowedSubgraphRootId: allowedSubgraphRootIds) {
+                OWLClass allowedSubgraphRoot = 
+                        this.getOwlGraphWrapper().getOWLClassByIdentifier(allowedSubgraphRootId);
+                if (allowedSubgraphRoot == null) {
+                    throw new IllegalArgumentException(allowedSubgraphRootId + " was requested " +
+                    		"to be kept in the ontology, but it does not exist.");
+                }
+                excudedFromRemoval.add(allowedSubgraphRoot);
+                excudedFromRemoval.addAll(
+                        this.getOwlGraphWrapper().getOWLClassDescendants(allowedSubgraphRoot));
+            }
+            if (log.isDebugEnabled()) {
+                log.debug("OWLClasses excluded from removal: " + excudedFromRemoval);
+            }
+        }
+        
     	
     	Set<String> classIdsRemoved = new HashSet<String>();
     	rootLoop: for (String rootId: subgraphRootIds) {
@@ -1537,6 +1602,8 @@ public class OWLGraphManipulator {
     		Set<OWLClass> classesToDel = new HashSet<OWLClass>();
             classesToDel.add(subgraphRoot);
             classesToDel.addAll(this.getOwlGraphWrapper().getOWLClassDescendants(subgraphRoot));
+            //subgraphs excluded from removal
+            classesToDel.removeAll(excudedFromRemoval);
         	
         	if (!keepSharedClasses) {
         		//this part is easy, simply remove all descendants of subgraphRoots 
@@ -1639,9 +1706,8 @@ public class OWLGraphManipulator {
     			}
     		}
 
-    		//now, to be conservative, rather than calling this.filterClasses(toKeep), 
-    		//we substract toKeep from the Set of all descendants of all roots 
-    		//of subgraphs to remove
+    		//remove shared classes from removal (subgraph excluded from removal 
+    		//have already been removed from classesToDel)
     		classesToDel.removeAll(toKeep);
     		if (log.isDebugEnabled()) {
     		    log.debug("OWLClasses to keep: " + toKeep);
@@ -2170,9 +2236,6 @@ public class OWLGraphManipulator {
         if (this.applyChanges(remover.getChanges())) {
             if (log.isDebugEnabled()) {
                 log.debug("Removing OWLClass " + classToDel);
-                if (this.getOwlGraphWrapper().getIdentifier(classToDel).equals("UBERON:0000922")) {
-                    log.debug("Outgoing edges: " + this.getOwlGraphWrapper().getOutgoingEdges(classToDel));
-                }
             }
             this.triggerWrapperUpdate();
             return true;

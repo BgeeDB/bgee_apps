@@ -241,22 +241,10 @@ public class UberonTest extends TestAncestor {
         OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
         OWLClass cls4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
         
-        List<OWLClass> expectedOrderedClasses = Arrays.asList(cls1, cls2, cls3);
+        List<OWLClass> expectedOrderedClasses = Arrays.asList(cls1, cls2, cls3, cls4);
         assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
                 uberon.orderByPrecededBy(
-                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1))));
-        
-        //test that we have an error if several immediately_preceded_by relations 
-        //to several sibling classes
-        try {
-            uberon.orderByPrecededBy(
-                    new HashSet<OWLClass>(Arrays.asList(cls4, cls3, cls2)));
-            //if we reach this point, test failed
-            throw new AssertionError("Several immediately_preceded_by relations to " +
-            		"to different sibling OWLClasses did not raison an exception");
-        } catch (IllegalStateException e) {
-            //test passed
-        }
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4))));
         
 
         //test that we have an error if several classes have no preceded_by between them
@@ -272,12 +260,206 @@ public class UberonTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link Uberon#getStageIdsBetween(OntologyUtils, String, String)}
+     * Test method {@link Uberon#generateStageNestedSetModel(OWLClass)}.
+     */
+    @Test
+    public void shouldGenerateStageNestedSetModel() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/startEndStages.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
+
+        OWLClass lifeCycle = wrapper.getOWLClassByIdentifier("MmulDv:0000001");
+        OWLClass prenatal = wrapper.getOWLClassByIdentifier("MmulDv:0000002");
+        OWLClass immature = wrapper.getOWLClassByIdentifier("MmulDv:0000003");
+        OWLClass prenatal1 = wrapper.getOWLClassByIdentifier("MmulDv:0000004");
+        OWLClass prenatal2 = wrapper.getOWLClassByIdentifier("MmulDv:0000005");
+        OWLClass prenatal3 = wrapper.getOWLClassByIdentifier("MmulDv:0000006");
+        OWLClass immature1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
+        OWLClass immature2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
+        OWLClass immature3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
+        OWLClass immature4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
+        OWLClass prenatal1_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000011");
+        OWLClass prenatal1_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000012");
+        OWLClass prenatal2_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000013");
+        OWLClass prenatal2_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000014");
+        OWLClass immature1_1 = wrapper.getOWLClassByIdentifier("MmulDv:0000015");
+        OWLClass immature1_2 = wrapper.getOWLClassByIdentifier("MmulDv:0000016");
+        OWLClass immature1_3 = wrapper.getOWLClassByIdentifier("MmulDv:0000017");
+        
+        Map<OWLClass, Map<String, Integer>> expectedModel = 
+                new HashMap<OWLClass, Map<String, Integer>>();
+        
+        Map<String, Integer> params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 1);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 34);
+        params.put(OntologyUtils.LEVEL_KEY, 1);
+        expectedModel.put(lifeCycle, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 2);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 17);
+        params.put(OntologyUtils.LEVEL_KEY, 2);
+        expectedModel.put(prenatal, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 3);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 8);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(prenatal1, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 4);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 5);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(prenatal1_1, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 6);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 7);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(prenatal1_2, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 9);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 14);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(prenatal2, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 10);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 11);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(prenatal2_1, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 12);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 13);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(prenatal2_2, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 15);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 16);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(prenatal3, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 18);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 33);
+        params.put(OntologyUtils.LEVEL_KEY, 2);
+        expectedModel.put(immature, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 19);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 26);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(immature1, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 20);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 21);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(immature1_1, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 22);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 23);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(immature1_2, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 24);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 25);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(immature1_3, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 27);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 28);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(immature2, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 29);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 30);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(immature3, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 31);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 32);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(immature4, params);
+        
+        assertEquals("Incorrect developmental stage nested set model", expectedModel, 
+                uberon.generateStageNestedSetModel(lifeCycle));
+        
+        
+        expectedModel = new HashMap<OWLClass, Map<String, Integer>>();
+       
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 1);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 16);
+        params.put(OntologyUtils.LEVEL_KEY, 1);
+        expectedModel.put(immature, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 2);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 9);
+        params.put(OntologyUtils.LEVEL_KEY, 2);
+        expectedModel.put(immature1, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 3);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 4);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(immature1_1, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 5);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 6);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(immature1_2, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 7);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 8);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(immature1_3, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 10);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 11);
+        params.put(OntologyUtils.LEVEL_KEY, 2);
+        expectedModel.put(immature2, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 12);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 13);
+        params.put(OntologyUtils.LEVEL_KEY, 2);
+        expectedModel.put(immature3, params);
+        
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 14);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 15);
+        params.put(OntologyUtils.LEVEL_KEY, 2);
+        expectedModel.put(immature4, params);
+
+        assertEquals("Incorrect developmental stage nested set model from root MmulDv:0000003", 
+                expectedModel, 
+                uberon.generateStageNestedSetModel(immature));
+    }
+    
+    /**
+     * Test the method {@link Uberon#getStageIdsBetween(String, String)}
      * @throws IOException 
      * @throws OBOFormatParserException 
      * @throws OWLOntologyCreationException 
      */
-    //@Test
+    @Test
     public void shouldGetStageIdsBetween() throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
@@ -286,9 +468,31 @@ public class UberonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         Uberon uberon = new Uberon(utils);
         
-        log.info(uberon.getStageIdsBetween("MmulDv:0000005", "MmulDv:0000007"));
-        log.info(wrapper.getEdgesBetween(wrapper.getOWLClassByIdentifier("MmulDv:0000005"), 
-                wrapper.getOWLClassByIdentifier("MmulDv:0000007")));
+        List<String> expectedList = Arrays.asList("MmulDv:0000004", "MmulDv:0000005", 
+                "MmulDv:0000006", "MmulDv:0000007", "MmulDv:0000008", 
+                "MmulDv:0000009", "MmulDv:0000010");
+        assertEquals("incorrect stages retrieved between start and end", expectedList, 
+                uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000010"));
+        
+        expectedList = Arrays.asList("MmulDv:0000002", "MmulDv:0000003");
+        assertEquals("incorrect stages retrieved between start and end", expectedList, 
+                uberon.getStageIdsBetween("MmulDv:0000002", "MmulDv:0000003"));
+        
+        expectedList = Arrays.asList("MmulDv:0000002", 
+                "MmulDv:0000015", "MmulDv:0000016", "MmulDv:0000017");
+        assertEquals("incorrect stages retrieved between start and end", expectedList, 
+                uberon.getStageIdsBetween("MmulDv:0000002", "MmulDv:0000017"));
+        
+        expectedList = Arrays.asList("MmulDv:0000004", 
+                "MmulDv:0000013", "MmulDv:0000014", "MmulDv:0000006", 
+                "MmulDv:0000015", "MmulDv:0000016", "MmulDv:0000017");
+        assertEquals("incorrect stages retrieved between start and end", expectedList, 
+                uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000017"));
+        
+        expectedList = Arrays.asList("MmulDv:0000004", "MmulDv:0000005", "MmulDv:0000006", 
+                "MmulDv:0000007");
+        assertEquals("incorrect stages retrieved between start and end", expectedList, 
+                uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000007"));
     }
     
     //@Test

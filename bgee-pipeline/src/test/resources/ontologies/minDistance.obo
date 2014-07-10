@@ -1,0 +1,58 @@
+format-version: 1.4
+ontology: foo
+
+[Term]
+id: FOO:0001
+name: A
+
+[Term]
+id: FOO:0002
+name: B
+is_a: FOO:0001 ! A
+
+[Term]
+id: FOO:0003
+name: C
+relationship: part_of FOO:0002 ! B
+is_a: FOO:0001 ! A
+
+[Term]
+id: FOO:0004
+name: D
+relationship: in_deep_part_of FOO:0002 ! B
+
+[Term]
+id: FOO:0005
+name: E
+relationship: in_deep_part_of FOO:0004 ! D
+is_a: FOO:0001 ! A
+
+[Term]
+id: FOO:0006
+name: F
+relationship: in_deep_part_of FOO:0005 ! E
+relationship: in_deep_part_of FOO:0003 ! C
+
+[Typedef]
+id: has_part
+name: has_part
+namespace: anatomical_entity_ontology
+is_transitive: true
+inverse_of: part_of  ! part of
+xref: BFO:0000051
+xref: OBO_REL:has_part
+is_a: overlaps  ! overlaps
+
+[Typedef]
+id: part_of
+name: part of
+is_transitive: true
+xref: BFO:0000050
+xref: OBO_REL:part_of
+is_a: overlaps ! overlaps
+
+[Typedef]
+id: in_deep_part_of
+name: in_deep_part_of
+namespace: uberon
+is_a: part_of ! part of

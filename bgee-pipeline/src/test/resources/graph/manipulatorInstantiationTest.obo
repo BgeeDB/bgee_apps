@@ -69,6 +69,19 @@ name: J
 comment: tests OWLEquivalentClassesAxiom split.
 equivalent_to: FOO:0008 ! G
 
+[Term]
+id: FOO:0012
+name: K
+comment: test removal of obsolete classes
+is_obsolete: true
+is_a: FOO:0001 ! root
+
+[Term]
+id: FOO:0013
+name: L
+comment: test removal of obsolete classes
+is_obsolete: true
+
 [Typedef]
 id: overlaps
 name: overlaps

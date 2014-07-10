@@ -1,5 +1,11 @@
 package org.bgee.pipeline;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +48,20 @@ public class CommandRunner {
      */
     private final static Logger log = 
             LogManager.getLogger(CommandRunner.class.getName());
+    
+    /**
+     * A {@code volatile} {@code boolean} to allow other {@code Thread}s to determine 
+     * whether the socket server is launched (see {@link #socketUberonStagesBetween(Uberon, 
+     * int)})
+     */
+    public static volatile boolean socketServerLaunched = false;
+    
+    /**
+     * A {@code String} that is used to separate elements from a list when providing 
+     * a response to a socket client (see {@link #socketUberonStagesBetween(Uberon, 
+     * int)}).
+     */
+    public static final String SOCKET_RESPONSE_SEPARATOR = "\t";
     
     /**
      * A {@code String} that is the separator between elements of a same list, 
@@ -150,6 +170,91 @@ public class CommandRunner {
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
+        }
+        
+        log.exit();
+    }
+    
+    /**
+     * Use sockets to obtain stages between a start and a end stage from Uberon. 
+     * This method is written so that external applications can query for stage ranges, 
+     * without needing to reload the ontology for each query. Using sockets, 
+     * the ontology can be kept loaded, answering several stage range queries. 
+     * The method used to obtain stage ranges is 
+     * {@link org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)}.
+     * @param uberon        The {@code Uberon} object used to retrieve stage ranges, 
+     *                      with its ontology already provided (using {@link 
+     *                      org.bgee.pipeline.uberon.Uberon#setPathToUberonOnt(String)}). 
+     * @param portNumber    An {@code int} that is the port to connect to. 
+     * @throws IOException  If an error occurred while reading from or writting to 
+     *                      the socket. 
+     * @see org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)
+     */
+    public static void socketUberonStagesBetween(Uberon uberon, int portNumber) 
+            throws IOException {
+        log.entry(uberon, portNumber);
+        
+        log.debug("Trying to launch ServerSocket");
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket(portNumber);
+            CommandRunner.socketServerLaunched = true;
+            log.debug("Socket server launched, listening to port {}", portNumber);
+            
+            try (Socket clientSocket = serverSocket.accept();
+                 PrintWriter out =
+                         new PrintWriter(clientSocket.getOutputStream(), true);
+                 BufferedReader in = new BufferedReader(
+                         new InputStreamReader(clientSocket.getInputStream()));) {
+                
+                try {
+                    String inputLine;
+                    while ((inputLine = in.readLine()) != null) {
+                        log.debug("Receiving query: " + inputLine);
+                        
+                        if (inputLine.equals("exit") || inputLine.equals("logout") || 
+                                inputLine.equals("quit") || inputLine.equals("bye")) {
+                            out.println("Bye.");
+                            log.debug("Exiting.");
+                            break;
+                        }
+                        
+                        List<String> params = CommandRunner.parseListArgument(inputLine);
+                        if (params.size() != 2) {
+                            out.println("Incorrect number of stage IDs provided, try again.");
+                            continue;
+                        }
+                        log.debug("Start stage retrieved: {} - End stage retrieved: {}", 
+                                params.get(0), params.get(1));
+                        
+                        List<String> stageIds = uberon.getStageIdsBetween(params.get(0), 
+                                params.get(1));
+                        String output = "";
+                        for (String stageId: stageIds) {
+                            if (StringUtils.isNotBlank(output)) {
+                                output += CommandRunner.SOCKET_RESPONSE_SEPARATOR;
+                            }
+                            output += stageId;
+                        }
+                        
+                        if (StringUtils.isBlank(output)) {
+                            output = "No results for provided start and end stages (" + 
+                                    params.get(0) + " - " + params.get(1) + ")";
+                        }
+                        
+                        log.debug("Sending response: {}", output);
+                        out.println(output);
+                    }
+                } catch (Exception e) {
+                    log.catching(e);
+                    out.println(e);
+                }
+            } 
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
+            CommandRunner.socketServerLaunched = false;
         }
         
         log.exit();

@@ -10,12 +10,67 @@ name: rhesus life cycle stage
 id: MmulDv:0000001
 name: rhesus life cycle
 is_a: MmulDv:0000000 ! rhesus life cycle stage
+comment: left 1 - right 34 - level 1
 
 [Term]
 id: MmulDv:0000002
 name: prenatal stage
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000001 ! rhesus life cycle
+comment: left 2 - right 17 - level 2
+
+[Term]
+id: MmulDv:0000004
+name: prenatal 1
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
+comment: left 3 - right 8 - level 3
+
+[Term]
+id: MmulDv:0000011
+name: prenatal 1_1
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000004
+comment: left 4 - right 5 - level 4
+
+[Term]
+id: MmulDv:0000012
+name: prenatal 1_2
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000004
+relationship: RO:0002087 MmulDv:0000011
+comment: left 6 - right 7 - level 4
+
+[Term]
+id: MmulDv:0000005
+name: prenatal 2
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
+relationship: RO:0002087 MmulDv:0000004 
+comment: left 9 - right 14 - level 3
+
+[Term]
+id: MmulDv:0000013
+name: prenatal 2_1
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000005
+comment: left 10 - right 11 - level 4
+
+[Term]
+id: MmulDv:0000014
+name: prenatal 2_2
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000005
+relationship: RO:0002087 MmulDv:0000013
+comment: left 12 - right 13 - level 4
+
+[Term]
+id: MmulDv:0000006
+name: prenatal 3
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
+relationship: RO:0002087 MmulDv:0000005  
+comment: left 15 - right 16 - level 3
 
 [Term]
 id: MmulDv:0000003
@@ -24,46 +79,60 @@ is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000001 ! rhesus life cycle
 relationship: RO:0002087 MmulDv:0000002 ! prenatal stage
 relationship: BFO:0000062 MmulDv:0000006
-
-[Term]
-id: MmulDv:0000004
-is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
-
-[Term]
-id: MmulDv:0000005
-is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
-relationship: RO:0002087 MmulDv:0000004 
-
-[Term]
-id: MmulDv:0000006
-is_a: MmulDv:0000000 ! rhesus life cycle stage
-relationship: BFO:0000050 MmulDv:0000002 ! prenatal stage
-relationship: RO:0002087 MmulDv:0000005  
+comment: left 18 - right 33 - level 2
 
 [Term]
 id: MmulDv:0000007
+name: immature 1
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000003 ! immature stage
 relationship: RO:0002087 MmulDv:0000006 ! this will check for capacity to not mix up non-siblings
+comment: left 19 - right 26 - level 3
+
+[Term]
+id: MmulDv:0000015
+name: immature 1_1
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000007
+comment: left 20 - right 21 - level 4
+
+[Term]
+id: MmulDv:0000016
+name: immature 1_2
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000007
+relationship: RO:0002087 MmulDv:0000015
+comment: left 22 - right 23 - level 4
+
+[Term]
+id: MmulDv:0000017
+name: immature 1_3
+is_a: MmulDv:0000000 ! rhesus life cycle stage
+relationship: BFO:0000050 MmulDv:0000007
+relationship: RO:0002087 MmulDv:0000016
+comment: left 24 - right 25 - level 4
 
 [Term]
 id: MmulDv:0000008
+name: immature 2
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000003 ! immature stage
 relationship: BFO:0000062 MmulDv:0000007 ! this will check for capacity to use either preceded_by
+comment: left 27 - right 28 - level 3
 
 [Term]
 id: MmulDv:0000009
+name: immature 3
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000003 ! immature stage
 relationship: RO:0002087 MmulDv:0000008 
 relationship: BFO:0000062 MmulDv:0000007 ! this will check for capacity to use in priority immediately_preceded_by
+comment: left 29 - right 30 - level 3
 
 [Term]
 id: MmulDv:0000010
+name: immature 4
 is_a: MmulDv:0000000 ! rhesus life cycle stage
 relationship: BFO:0000050 MmulDv:0000003 ! immature stage
 relationship: RO:0002087 MmulDv:0000009 
-relationship: RO:0002087 MmulDv:0000008 ! to chec this will raise an error
+comment: left 31 - right 32 - level 3

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,7 +50,6 @@ import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
 
 import owltools.graph.OWLGraphEdge;
-import owltools.graph.OWLGraphUtil;
 import owltools.graph.OWLGraphWrapper;
 
 /**
@@ -170,7 +170,7 @@ public class Uberon {
      *   NBO:0000313,GO:0008150,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,NCBITaxon:1,CHEBI:24431,UBERON:0004458,UBERON:0000466,SO:0000704 
      *   UBERON:0013701,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0000468,GO:0005575 
      *   grouping_class,non_informative,ubprop:upper_level,upper_level 
-     *   UBERON:0013701,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0011676,GO:0005575
+     *   UBERON:0013701,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0011676,GO:0005575}
      *   
      * <li>If the first element in {@code args} is "generateStageOntology", the action 
      * will be to extract from the Uberon ontology the developmental stages subgraph, 
@@ -203,7 +203,7 @@ public class Uberon {
      *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000 
      *   UBERON:0000069 
      *   BFO:0000050,BFO:0000062
-     *   UBERON:0000104,FBdv:00000000 
+     *   UBERON:0000104,FBdv:00000000}
      *   
      * <li>If the first element in {@code args} is "extractXRefMappings", the action will be 
      * to retrieve mappings from XRef IDs to Uberon IDs from Uberon, and to save them 
@@ -419,7 +419,7 @@ public class Uberon {
      * {@code #saveSimplificationInfo} method). This attribute can be left {@code null} 
      * or blank if this information does not need to be stored. 
      * <p>
-     * This method calls {@link #simplifyUberon()}, by loading the {@code OWLOntology} 
+     * This method calls {@link #simplifyUberon(OWLOntology)}, by loading the {@code OWLOntology} 
      * provided, and using attributes set before calling this method. Attributes that are used 
      * can be set prior to calling this method through the methods: 
      * {@link #setClassIdsToRemove(Collection)}, {@link #setToRemoveSubgraphRootIds(Collection)}, 
@@ -432,7 +432,7 @@ public class Uberon {
      * and in OWL (with a ".owl" extension to the path {@link #setModifiedOntPath(String)}).
      * 
      * @throws IOException                      If an error occurred while reading the file 
-     *                                          returned by {@link getPathToUberonOnt()}.
+     *                                          returned by {@link #getPathToUberonOnt()}.
      * @throws OBOFormatParserException         If the ontology was provided in OBO format 
      *                                          and a parser error occurred. 
      * @throws OWLOntologyCreationException     If an error occurred while loading 
@@ -501,8 +501,10 @@ public class Uberon {
      * {@link #getRelIds()}.
      * <li>{@code OWLGraphManipulator#filterRelations(Collection, boolean)} using value 
      * returned by {@link #getRelIds()}, with second argument {@code true}.
-     * <li>{@code OWLGraphManipulator#removeSubgraphs(Collection, boolean)} with value returned by 
-     * {@link #getToRemoveSubgraphRootIds()}, with second argument {@code true}.
+     * <li>{@code OWLGraphManipulator#removeSubgraphs(Collection, boolean, Collection)} 
+     * with value returned by {@link #getToRemoveSubgraphRootIds()} as first argument, 
+     * with second argument {@code true}, and with value returned by 
+     * {@link #getToFilterSubgraphRootIds()} as third argument.
      * <li>{@code OWLGraphManipulator#filterSubgraphs(Collection)} with value returned by 
      * {@link #getToFilterSubgraphRootIds()}.
      * <li>{@code OWLGraphManipulator#removeRelsToSubsets(Collection, Collection)} using 
@@ -551,14 +553,19 @@ public class Uberon {
         if (this.getToRemoveSubgraphRootIds() != null) {
             for (String subgraphRootId: this.getToRemoveSubgraphRootIds()) {
                 for (String classIdRemoved: 
-                    manipulator.removeSubgraphs(Arrays.asList(subgraphRootId), true)) {
+                    manipulator.removeSubgraphs(Arrays.asList(subgraphRootId), true, 
+                            this.getToFilterSubgraphRootIds())) {
                     this.classesRemoved.put(classIdRemoved, 
-                            "Removal of subgraph with root ID " + subgraphRootId);
+                            "Removal of subgraph with root ID " + subgraphRootId + 
+                            " - subgraphs excluded from removal: " + 
+                            this.getToFilterSubgraphRootIds());
                 }
             }
         }
-        if (this.getToFilterSubgraphRootIds() != null && !this.getToFilterSubgraphRootIds().isEmpty()) {
-            for (String classIdRemoved: manipulator.filterSubgraphs(this.getToFilterSubgraphRootIds())) {
+        if (this.getToFilterSubgraphRootIds() != null && 
+                !this.getToFilterSubgraphRootIds().isEmpty()) {
+            for (String classIdRemoved: 
+                manipulator.filterSubgraphs(this.getToFilterSubgraphRootIds())) {
                 this.classesRemoved.put(classIdRemoved, 
                         "Filtering of subgraph with root IDs: " + this.getToFilterSubgraphRootIds());
             }
@@ -820,6 +827,76 @@ public class Uberon {
         log.exit();
     }
     
+    /**
+     * Compute a nested set model from a developmental stage ontology. The stage ontology 
+     * should have been provided at instantiation. {@code root} will be considered 
+     * as the root which to start nested set model computations from (as if it was 
+     * the actual root of the ontology). {@code OWLClass}es will be ordered 
+     * according to their immediately_preceded_by and preceded_by relations, and 
+     * the nested set model computed using the method {@link 
+     * org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)}.
+     * 
+     * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
+     *              to start the conputations from.
+     * @return      See {@link org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)} 
+     *              for details about values returned. 
+     * @see org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)
+     */
+    public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) {
+        log.entry(root);
+        
+        OWLGraphWrapper wrapper = this.ontUtils.getWrapper();
+        
+        //get the ordering between sibling OWLClasses according to preceded_by relations. 
+        //This is enough to compute the nested set model. To do that, we walk each level 
+        //starting from root, using a Deque
+        Deque<OWLClass> walker = new ArrayDeque<OWLClass>();
+        walker.add(root);
+        //we don't care of the ordering of non-sibling taxa, 
+        //as long as sibling taxa are ordered. 
+        List<OWLClass> globalOrdering = new ArrayList<OWLClass>();
+        OWLClass classWalked = null;
+        while ((classWalked = walker.pollFirst()) != null) {
+            //order the direct children
+            Set<OWLClass> children = new HashSet<OWLClass>();
+            for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(classWalked)) {
+                if (this.ontUtils.isPartOfRelation(incomingEdge) && 
+                        incomingEdge.isSourceNamedObject()) {
+                  
+                    OWLClass child = (OWLClass) incomingEdge.getSource();
+                    children.add(child);
+                    walker.offerLast(child);
+                }
+            }
+            if (!children.isEmpty()) {
+                globalOrdering.addAll(this.orderByPrecededBy(children));
+            }
+        }
+        
+        return log.exit(this.ontUtils.computeNestedSetModelParams(root, globalOrdering, 
+                new HashSet<OWLPropertyExpression>(Arrays.asList(
+                        wrapper.getOWLObjectPropertyByIdentifier(
+                        OntologyUtils.PART_OF_ID)))));
+    }
+    
+    /**
+     * Retrieve the OBO-like IDs of the developmental stages occurring between the stages 
+     * with IDs {@code startStageId} and {@code endStageId}. To achieve this task, 
+     * a nested set model is computed for the ontology wrapped by this object, 
+     * starting from the least common ancestor of the start and end stages, using 
+     * part_of relations for ancestry between stages, and immediately_preceded_by 
+     * and preceded_by for chronological relations between stages (see {@link 
+     * #generateStageNestedSetModel(OWLClass)}). 
+     * 
+     * @param startStageId  A {@code String} that is the OBO-like ID of the start  
+     *                      developmental stage.
+     * @param endStageId    A {@code String} that is the OBO-like ID of the end  
+     *                      developmental stage.
+     * @return              A {@code List} of {@code String}s that are the OBO-like IDs 
+     *                      of stages occurring between start and end stages, ordered 
+     *                      by chronological order. 
+     * @see #generateStageNestedSetModel(OWLClass)
+     */
     public List<String> getStageIdsBetween(String startStageId, String endStageId) {
         log.entry(startStageId, endStageId);
         
@@ -841,110 +918,74 @@ public class Uberon {
         if (startStage.equals(endStage)) {
             stageIdsBetween.add(startStageId);
         } else {
-            OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
-                    OntologyUtils.PART_OF_ID);
             Set<OWLPropertyExpression> overPartOf = 
-                    new HashSet<OWLPropertyExpression>(Arrays.asList(partOf));
+                    new HashSet<OWLPropertyExpression>(Arrays.asList(
+                            wrapper.getOWLObjectPropertyByIdentifier(
+                            OntologyUtils.PART_OF_ID)));
+            
             //first, get the least common ancestor of the two stages over part_of relation
-            Set<OWLObject> lcas = OWLGraphUtil.findLeastCommonAncestors(wrapper, 
-                    startStage, endStage, overPartOf);
+            Set<OWLClass> lcas = this.ontUtils.getLeastCommonAncestors(startStage, endStage, 
+                    overPartOf);
+            
             //the part_of graph should be a tree, so, only one OWLClass lca
-            if (lcas.size() != 1 || !(lcas.iterator().next() instanceof OWLClass)) {
+            if (lcas.size() != 1) {
                 throw log.throwing(new IllegalStateException("The developmental stages " +
                 		"used does not represent a tree over part_of relations, " +
-                		"cannot continue."));
+                		"cannot continue. Least common ancestors of start and end stages :" + 
+                		lcas));
             }
-            OWLClass lca = (OWLClass) lcas.iterator().next();
+            OWLClass lca = lcas.iterator().next();
             
-            //now, we need the order, according to preceded_by relations, 
-            //of the direct children of this LCA by part_of relations
-            Set<OWLClass> lcaDescendants = new HashSet<OWLClass>();
-            for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(lca)) {
-                if (this.ontUtils.isPartOfRelation(incomingEdge) && 
-                        incomingEdge.isSourceNamedObject()) {
+            //now we obtain a nested set model starting from this LCA
+            //this nested set model will be used in a comparator, we make it final.
+            final Map<OWLClass, Map<String, Integer>> nestedModel = 
+                    this.generateStageNestedSetModel(lca);
+            //get the parameters related to startStage and endStage
+            int startLeftBound = nestedModel.get(startStage).get(OntologyUtils.LEFT_BOUND_KEY);
+            int startRightBound = nestedModel.get(startStage).get(OntologyUtils.RIGHT_BOUND_KEY);
+            int startLevel = nestedModel.get(startStage).get(OntologyUtils.LEVEL_KEY);
+            int endLeftBound = nestedModel.get(endStage).get(OntologyUtils.LEFT_BOUND_KEY);
+            int endRightBound = nestedModel.get(endStage).get(OntologyUtils.RIGHT_BOUND_KEY);
+            int endLevel = nestedModel.get(endStage).get(OntologyUtils.LEVEL_KEY);
+            int maxLevel = Math.max(startLevel, endLevel);
+            
+            //now we get all stages between start and end stages, with a level not greater 
+            //than the max level between start and end stage. 
+            Set<OWLClass> selectedStages = new HashSet<OWLClass>();
+            for (Entry<OWLClass, Map<String, Integer>> entry: nestedModel.entrySet()) {
+                OWLClass stage = entry.getKey();
+                Map<String, Integer> params = entry.getValue();
+                if (params.get(OntologyUtils.LEFT_BOUND_KEY) >= startLeftBound && 
+                        params.get(OntologyUtils.LEFT_BOUND_KEY) <= endLeftBound && 
+                    params.get(OntologyUtils.RIGHT_BOUND_KEY) >= startRightBound && 
+                            params.get(OntologyUtils.RIGHT_BOUND_KEY) <= endRightBound && 
+                    params.get(OntologyUtils.LEVEL_KEY) <= maxLevel) {
                     
-                    lcaDescendants.add((OWLClass) incomingEdge.getSource());
+                    selectedStages.add(stage);
                 }
             }
-            List<OWLClass> orderedLcaDescendants = this.orderByPrecededBy(lcaDescendants);
-            //now we find the lca descendant leading to or being startStage, 
-            //and the lca descendant leading to or being endStage
-            int leadToStartIndex = 0;
-            int leadToEndIndex = 0;
-            //there is no method getDescendants over properties, so we get the ancestors 
-            //of startStage and endStage
-            Set<OWLObject> startAncestors = wrapper.getAncestors(startStage, overPartOf);
-            Set<OWLObject> endAncestors   = wrapper.getAncestors(endStage, overPartOf);
-            for (int i = 0; i < orderedLcaDescendants.size(); i++) {
-                OWLClass lcaDescendant = orderedLcaDescendants.get(i);
-                if (lcaDescendant.equals(startStage) || 
-                        startAncestors.contains(lcaDescendant)) {
-                    leadToStartIndex = i;
-                }
-                if (lcaDescendant.equals(endStage) || 
-                        endAncestors.contains(lcaDescendant)) {
-                    leadToEndIndex = i;
-                }
+            
+            //now remove the ancestors of the selected stages, so that we keep only 
+            //the most precise and independent selected stages
+            Set<OWLObject> ancestors = new HashSet<OWLObject>();
+            for (OWLClass selectedStage: selectedStages) {
+                ancestors.addAll(wrapper.getAncestors(selectedStage, overPartOf));
             }
-            //now we find the distance between startStage and the LCA, and endStage and the LCA
+            selectedStages.removeAll(ancestors);
             
-            
-            
-            
-            
-            
-            
-            
-            //to define the allowed properties to use to check for precedance. 
-            //suppress warning because the method getAncestors only accepts a raw type
-            @SuppressWarnings("rawtypes") 
-            Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>();
-            //part_of is needed for property chains
-            overProps.add(partOf);
-            @SuppressWarnings("rawtypes")
-            OWLPropertyExpression preceded = wrapper.getOWLObjectPropertyByIdentifier(
-                    OntologyUtils.PRECEDED_BY_ID);
-            overProps.add(preceded);
-            @SuppressWarnings("rawtypes")
-            OWLPropertyExpression immediatelyPreceded = wrapper.getOWLObjectPropertyByIdentifier(
-                    OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID);
-            overProps.add(immediatelyPreceded);
-            
-            //first, check whether endStage is indeed preceeded by startStage at some point
-            if (wrapper.getAncestors(endStage, overProps).contains(startStage)) {
-                
-                stageIdsBetween.add(endStageId);
-                
-                //now, try to find the exact path to startStage
-                Deque<OWLClass> stages = new ArrayDeque<OWLClass>();
-                stages.offerFirst(endStage);
-                OWLClass stageInspected;
-                
-                stages: while ((stageInspected = stages.pollFirst()) != null) {
-                    //find directly connected stages with precedance, over preceded_by relations
-                    for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdges(stageInspected)) {
-                        OWLObjectPropertyExpression edgeExpr = 
-                                outgoingEdge.getSingleQuantifiedProperty().getProperty();
-                        OWLObject target = outgoingEdge.getTarget();
-                        //if the edge is a preceded_by or related relation, leading to an OWLClass
-                        if (target instanceof OWLClass && edgeExpr != null && 
-                           (edgeExpr.equals(preceded) || edgeExpr.equals(immediatelyPreceded)) && 
-                           //and if the target is the startStage, or has the startStage on path
-                           (wrapper.getAncestors(target, overProps).contains(startStage) || 
-                                   target.equals(startStage))) {
-                            
-                            stageIdsBetween.add(0, wrapper.getIdentifier(target));
-                            if (!target.equals(startStage)) {
-                                stages.offerFirst((OWLClass) target);
-                                //break the outgoing edges loop
-                                continue stages;
-                            }
-                        }
-                    }
+            //finally, order the stages using their left bound
+            List<OWLClass> sortedStages = new ArrayList<OWLClass>(selectedStages);
+            Collections.sort(sortedStages, new Comparator<OWLClass>() {
+                @Override
+                public int compare(OWLClass o1, OWLClass o2) {
+                    return nestedModel.get(o1).get(OntologyUtils.LEFT_BOUND_KEY) - 
+                            nestedModel.get(o2).get(OntologyUtils.LEFT_BOUND_KEY);
                 }
-            } else {
-                log.warn("{} is not found on the precedence path outgoing from {}", 
-                        startStageId, endStageId);
+              });
+            
+            //transform the List of OWLClasses into a List of Strings
+            for (OWLClass sortedStage: sortedStages) {
+                stageIdsBetween.add(wrapper.getIdentifier(sortedStage));
             }
         }
         

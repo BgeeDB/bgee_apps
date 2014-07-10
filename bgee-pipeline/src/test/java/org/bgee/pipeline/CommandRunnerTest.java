@@ -1,7 +1,15 @@
 package org.bgee.pipeline;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,6 +19,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.uberon.Uberon;
 import org.junit.Test;
 
 /**
@@ -35,6 +44,67 @@ public class CommandRunnerTest extends TestAncestor {
     @Override
     protected Logger getLogger() {
         return log;
+    }
+    
+    /**
+     * Test the method {@link CommandRunner#socketUberonStagesBetween(Uberon, int)}
+     * @throws UnknownHostException
+     * @throws IOException
+     */
+    @Test
+    public void testSocketUberonStagesBetween() throws Exception {
+        
+        final int port = 15555;
+        final String host = "127.0.0.1";
+        final Uberon mockUberon = mock(Uberon.class);
+        when(mockUberon.getStageIdsBetween(eq("ID1"), eq("ID3"))).thenReturn(
+                Arrays.asList("ID1", "ID2", "ID3"));
+        
+        /**
+         * An anonymous class to launch the Socket Server from another thread, 
+         * to proceed with the test.
+         */
+        class ThreadTest extends Thread {
+            public volatile Exception exceptionThrown = null;
+            @Override
+            public void run() {
+                try {
+                    CommandRunner.socketUberonStagesBetween(mockUberon, port);
+                } catch (IOException e) {
+                    exceptionThrown = e;
+                } 
+            }
+        }
+
+        ThreadTest test = new ThreadTest();
+        try {
+            test.start();
+            //wait for this thread's turn
+            while (!CommandRunner.socketServerLaunched) {
+                Thread.sleep(500);
+            }
+            //check that no exception was thrown in the second thread 
+            if (test.exceptionThrown != null) {
+                throw test.exceptionThrown;
+            }
+            
+            try (Socket echoSocket = new Socket(host, port);
+                    PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
+                    BufferedReader in = new BufferedReader(
+                            new InputStreamReader(echoSocket.getInputStream()));
+                    ) {
+                
+                out.println("ID1,ID3");
+                assertEquals("Incorrect value returned through socket", "ID1" + 
+                   CommandRunner.SOCKET_RESPONSE_SEPARATOR + "ID2" + 
+                   CommandRunner.SOCKET_RESPONSE_SEPARATOR + "ID3", 
+                        in.readLine());
+                out.println("quit");
+            }
+        } catch (InterruptedException e) {
+            test.interrupt();
+            Thread.currentThread().interrupt();
+        } 
     }
 
     /**

@@ -570,8 +570,8 @@ public class InsertTaxa extends MySQLDAOUser {
         try {
             //need an OntologyUtils to perform the operations
             OntologyUtils utils = new OntologyUtils(this.taxOntWrapper);
-            nestedSetModelParams = utils.computeNestedSetModelParams(classOrder);
-        } catch (UnknownOWLOntologyException | OWLOntologyCreationException e) {
+            nestedSetModelParams = utils.computeNestedSetModelParams(null, classOrder);
+        } catch (UnknownOWLOntologyException e) {
           //should not be thrown, OntologyUtils has been provided directly with 
             //an OWLGraphWrapper
             throw log.throwing(new IllegalStateException("An OWLGraphWrapper should " +

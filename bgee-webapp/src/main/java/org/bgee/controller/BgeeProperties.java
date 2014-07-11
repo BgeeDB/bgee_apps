@@ -20,7 +20,7 @@ import org.apache.logging.log4j.Logger;
  * Of note, an additional property allows to change the name of the property file 
  * to use (corresponds to the property {@code bgee.properties.file}).
  * <p>
- * TODO provide the properties list
+ * TODO provide the properties list with comments
  * <p>
  * This class has been inspired from {@code net.sf.log4jdbc.DriverSpy} 
  * developed by Arthur Blake.
@@ -103,6 +103,41 @@ public class BgeeProperties
 	 * @see model.Parameters
 	 */
 	private static String topOBOResultsUrlRootDirectory;
+	
+	/**
+	 * Define max length of URLs. Typically, if the URL exceeds the max length, 
+	 * a key is generated to store and retrieve a query string, 
+	 * holding the "storable" parameters. The "storable" parameters are removed from the URL, 
+	 * and replaced by the generated key.
+	 * <p>
+	 * The max length of URL is currently 2,083 characters, 
+	 * because of limitations of IE9. Just to be sure, 
+	 * because of potential server limitations, the limit should be 1,500 characters.
+	 * <p>
+	 * Anyway, we use a much lower limitation, as we do not want too long URL.
+	 * @see org.bgee.RequestParameters.java
+	 */
+	private static Integer urlMaxLength;
+	
+	/**
+	 * A <code>boolean</code> defining whether parameters should be url encoded 
+	 * by the <code>encodeUrl</code> method.
+	 * If <code>false</code>, then the <code>encodeUrl</code> method returns 
+	 * Strings with no modifications, otherwise, they are url encoded if needed 
+	 * (it does not necessarily mean they will. For index, if there are no 
+	 * special chars to encode in the submitted String).
+	 * <parameter>
+	 * Default value is <code>true</code>.
+	 * 
+	 * @see #urlEncode(String)
+	 */
+	private static boolean encodeUrl;
+
+	/**
+	 * A {@code String} that defines the character used to separate parameters 
+	 * in the URL
+	 */
+	private static String parametersSeparator;
 
 	/**
 	 * Static initializer. 
@@ -165,7 +200,16 @@ public class BgeeProperties
 		
 		topOBOResultsUrlRootDirectory  = getStringOption(sysProps, fileProps, 
 				"org.bgee.webapp.topOBOResultsUrlRootDirectory", null);
-
+		
+		urlMaxLength  = getIntegerOption(sysProps, fileProps, 
+				"org.bgee.webapp.urlMaxLength", 120);
+		
+		encodeUrl  = getBooleanOption(sysProps, fileProps, 
+				"org.bgee.webapp.encodeUrl", true);
+		
+		parametersSeparator  = getStringOption(sysProps, fileProps, 
+				"org.bgee.webapp.parametersSeparator", "&");
+			
 		log.info("Initialization done.");
 		
 		log.exit();
@@ -219,6 +263,86 @@ public class BgeeProperties
 
 		return log.exit(propValue);
 	}
+	
+    /**
+     * Try to retrieve the property corresponding to {@code key}, 
+     * first from the System properties ({@code sysProps}), 
+     * then, if undefined or empty, from properties retrieved from the Bgee property file 
+     * ({@code fileProps}), and cast it into a {@code int} value.
+     * If the property is undefined or empty in both {@code fileProps} 
+     * and {@code sysProps}, return {@code defaultValue}.
+     *
+     * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
+     * 						where {@code key} is first searched in.
+     * @param fileProps	 	{@code java.sql.Properties} retrieved 
+     * 						from the Bgee properties file, 
+     * 						where {@code key} is searched in if the property 
+     * 						was undefined or empty in {@code sysProps}. 
+     * 						Can be {@code null} if no properties file was found.
+     * @param defaultValue	default value that will be returned if the property 
+     * 						is undefined or empty in both {@code Properties}.
+     *
+     * @return 			An {@code int} corresponding to the value
+     * 					for that property key.
+     * 					Or {@code defaultValue} if not defined or empty.
+     */
+    private static int getIntegerOption(java.util.Properties sysProps, 
+            java.util.Properties fileProps, String key, 
+            int defaultValue)
+    {
+        log.entry(fileProps, sysProps, key, defaultValue);
+
+        String propValue = getStringOption(sysProps, fileProps, key, null);
+        int val = defaultValue;
+        if (propValue != null) {
+            val= Integer.valueOf(propValue);
+        }
+
+        return log.exit(val);
+    }
+    
+    /**
+     * Try to retrieve the property corresponding to {@code key}, 
+     * first from the System properties ({@code sysProps}), 
+     * then, if undefined or empty, from properties retrieved from the Bgee property file 
+     * ({@code fileProps}), and cast it into a {@code boolean} 
+     * (if the value of the property is set, and equal to "true", "yes", or "on", 
+     * the returned boolean will be {@code true}, {@code false} otherwise). 
+     * If the property is undefined or empty in both {@code fileProps} 
+     * and {@code sysProps}, return {@code defaultValue}.
+     *
+     * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
+     * 						where {@code key} is first searched in.
+     * @param fileProps	 	{@code java.sql.Properties} retrieved 
+     * 						from the Bgee properties file, 
+     * 						where {@code key} is searched in if the property 
+     * 						was undefined or empty in {@code sysProps}. 
+     * 						Can be {@code null} if no properties file was found.
+     * @param defaultValue	default value that will be returned if the property 
+     * 						is undefined or empty in both {@code Properties}.
+     *
+     * @return 			A {@code boolean} corresponding to the value
+     * 					for that property key (if the value of the property is set and equal 
+     * 					to "true", "yes", or "on", the returned boolean 
+     * 					will be {@code true}, {@code false} otherwise). 
+     * 					Or {@code defaultValue} if not defined or empty.
+     */
+    private static boolean getBooleanOption(java.util.Properties sysProps, 
+            java.util.Properties fileProps, String key, 
+            boolean defaultValue)
+    {
+        log.entry(fileProps, sysProps, key, defaultValue);
+    
+        String propValue = getStringOption(sysProps, fileProps, key, null);
+        boolean val = defaultValue;
+        if (propValue != null) {
+            val= "true".equals(propValue) ||
+                    "yes".equals(propValue) || 
+                    "on".equals(propValue);
+        }
+    
+        return log.exit(val);
+    }
 
 	//*********************************
 	// INSTANCE METHODS
@@ -286,6 +410,30 @@ public class BgeeProperties
 	 */
 	public static String getTopOBOResultsUrlRootDirectory() {
 		return topOBOResultsUrlRootDirectory;
+	}
+
+	/**
+	 * TODO
+	 * @return
+	 */
+	public static Integer getUrlMaxLength() {
+		return urlMaxLength;
+	}
+	
+	/**
+	 * TODO
+	 * @return
+	 */
+	public static boolean isEncodeUrl() {
+		return encodeUrl;
+	}
+
+	/**
+	 * TODO
+	 * @return
+	 */
+	public static String getParametersSeparator() {
+		return parametersSeparator;
 	}
 
 }

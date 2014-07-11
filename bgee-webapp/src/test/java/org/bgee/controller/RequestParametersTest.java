@@ -1,24 +1,26 @@
 package org.bgee.controller;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
+import java.util.List;
 
+import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link RequestParameters}.
- * It tests indirectly {@link URLParameters} and {@link URLParameter} which do not have public methods
- * As it is not possible to declare other {@code URLParameter} than those instantiated by 
- * {@code URLParameters} and it would be not relevant to mock our own classes, the tests use the real
- * parameters ACTION, CHOSEN_DATA_TYPE and ALL_ORGANS. If these parameters have their properties 
- * modified in {@code URLParameters} for any reason, the unit tests have to be checked.
+ * It obtains the test parameters from {@link TestURLParameters} that
+ * extends {@link URLParameters} 
  * 
  * @author Mathieu Seppey
  * @version Bgee 13
@@ -29,267 +31,443 @@ public class RequestParametersTest {
 	/**
 	 * A mock {@code BgeeHttpServletRequest}
 	 */
-	private BgeeHttpServletRequest mockHttpServletRequest ;
-
-	/**
-	 * Default Constructor. 
-	 * @throws RequestParametersNotStorableException 
-	 * @throws RequestParametersNotFoundException 
-	 */
-	public RequestParametersTest() throws RequestParametersNotFoundException, 
-	RequestParametersNotStorableException
-	{}
+	private BgeeHttpServletRequest mockHttpServletRequest;
 	
 	/**
-	 * @return A mock {@code BgeeHttpServletRequest}
+	 * The instance of {@code URLParameters} that provides the parameters
 	 */
-	public BgeeHttpServletRequest getMockHttpServletRequest() {
-		return mockHttpServletRequest;
+	private static TestURLParameters testURLParameters;
+	
+	/**
+	 * An instance of {@link RequestParameters} to do the tests on.
+	 */
+	private RequestParameters requestParametersWithNoKey;
+	
+	/**
+	 * An instance of {@link RequestParameters} to do the tests on.
+	 */
+	private RequestParameters requestParametersHavingAKey;
+	
+	/**
+	 * Default Constructor. 
+	 */
+	public RequestParametersTest() {}
+		
+	/**
+	 * Load the object that will provide the parameters
+	 */
+	@BeforeClass
+	public static void loadParameters(){
+		
+		testURLParameters = new TestURLParameters();	
+	
 	}
 
 	/**
-	 * To do before each test, configure the mock {@code BgeeHttpServletRequest}
+	 * To do before each test, (re)set the mock 
+	 * {@code BgeeHttpServletRequest} and the {@link RequestParameters} instances
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
+	 * @throws RequestParametersNotFoundException 
 	 */
 	@Before
-	public void loadMockRequest(){
-
+	public void loadMockRequest() throws RequestParametersNotFoundException,
+	RequestParametersNotStorableException, MultipleValuesNotAllowedException{
+	
 		mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
 
-		when(mockHttpServletRequest.getParameter("action"))
-		.thenReturn("v1").thenReturn("v2").thenReturn("v3");
+		// note : test_string cannot contain uppercase letters to be valid
+		when(mockHttpServletRequest.getParameterValues("test_string"))
+		.thenReturn(new String[]{"string1"}) // for new RequestParameters
+		.thenReturn(new String[]{"string1"}) // for requestParametersWithNoKey
+		.thenReturn(new String[]{"string1"}) // for requestParametersHavingAKey
+		.thenReturn(new String[]{"string1","explode"}) // for testLoadTooMuchValue
+		.thenReturn(new String[]{"STRING1"}); // for testLoadWrongFormatValue
 
-		when(mockHttpServletRequest.getParameterValues("action"))
-		.thenReturn(new String[]{"v1","v2","v3"});
+		when(mockHttpServletRequest.getParameterValues("test_boolean"))
+		.thenReturn(new String[]{"true","false"});
 
-		when(mockHttpServletRequest.getParameter("all_organs"))
-		.thenReturn("true").thenReturn("false").thenReturn("stringvalue");
-
-		when(mockHttpServletRequest.getParameterValues("all_organs"))
-		.thenReturn(new String[]{"true","false","stringvalue"});
-
-		when(mockHttpServletRequest.getParameter("chosen_data_type"))
-		.thenReturn("1").thenReturn("2").thenReturn("stringvalue");
-
-		// "stringvalue" should generate an error in the log system, this is expected
-		when(mockHttpServletRequest.getParameterValues("chosen_data_type"))
-		.thenReturn(new String[]{"1","2","stringvalue"});
+		when(mockHttpServletRequest.getParameterValues("test_integer"))
+		.thenReturn(new String[]{"1234","2345"});
 
 		// the first time, do not return a key, the second time provide a key.
-		// see testGetParametersQuery
 		when(mockHttpServletRequest.getParameter("data"))
-		.thenReturn(null).thenReturn("14b58eb5c131f18236f7b8845b51cbf2d0e61265");
-
+		.thenReturn(null) // for new RequestParameters
+		.thenReturn(null) // for requestParametersWithNoKey
+		.thenReturn("7ebf4a8a9365930d16773b7b202f166bcebd6efa");
+		// for requestParametersHavingAKey
+		
+		// TO ensure that the key is generated and written on the disk, generate
+		// a request parameter with parameters corresponding to the key
+		new RequestParameters(this.mockHttpServletRequest,
+				RequestParametersTest.testURLParameters).addValue(
+				testURLParameters.getParamTestInteger(),987654321);
+		
+		this.requestParametersWithNoKey = new RequestParameters(
+				this.mockHttpServletRequest,
+				RequestParametersTest.testURLParameters);
+		
+		this.requestParametersHavingAKey= new RequestParameters(
+				this.mockHttpServletRequest,
+				RequestParametersTest.testURLParameters);
 	}
 
 	/**
 	 * Test of the method getParametersQuery()
-	 * @throws RequestParametersNotFoundException
-	 * @throws RequestParametersNotStorableException
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
+	 * @throws RequestParametersNotFoundException 
 	 */
 	@Test
-	public void testGetParametersQuery() throws RequestParametersNotFoundException,
-	RequestParametersNotStorableException {
-
-		RequestParameters rp = new RequestParameters(this.mockHttpServletRequest);
+	public void testGetParametersQuery() throws RequestParametersNotStorableException,
+	MultipleValuesNotAllowedException, RequestParametersNotFoundException{
 
 		// Check that the query returned corresponds to the parameters declared in
-		// the mockHttpServletRequest. Note that the parameter action allows only
-		// one value despite several values provided in the url and is not storable.
-		assertEquals("Incorrect query returned ", 
-				"action=v1%26chosen_data_type=1%26chosen_data_type=2%26all_organs=true"
-						+ "%26all_organs=false%26all_organs=false%2", 
-						rp.getParametersQuery());
+		// the mockHttpServletRequest.
+		assertEquals("Incorrect query returned ","test_string=string1%26test_integer="
+				+ "1234%26test_integer=2345%26test_boolean=true%26test_boolean="
+				+ "false%2",this.requestParametersWithNoKey.getParametersQuery());
 
-		// Add a parameter to exceed the threshold over which a key is used, and check that
-		// indeed a key is present after a new call of getParametersQuery()
-		rp.addValue(URLParameters.ACTION, "longlonglonglonglongstring");
-
-		assertEquals("Incorrect query returned ", 
-				"action=longlonglonglonglongstring%26data=14b58eb5c131f18236f7b8845b51cbf2d0e61265", 
-				rp.getParametersQuery());
-
-		// Declare a second RequestParameters that this time will get a key from the 
-		// mockHttpServletRequest and check that getParametersQuery() returns it.
-		RequestParameters rp2 = new RequestParameters(this.mockHttpServletRequest);
+		// Add a parameter value to exceed the threshold over which a key is used
+		// (110 for tests),
+		// and check that indeed, a key is present after a new call of 
+		// getParametersQuery(), with still test_string written because
+		// it is non storable
+		this.requestParametersWithNoKey.addValue(
+				testURLParameters.getParamTestInteger(),987654321);
 
 		assertEquals("Incorrect query returned ", 
-				"action=v1%26data=14b58eb5c131f18236f7b8845b51cbf2d0e61265", 
-				rp2.getParametersQuery());
+				"test_string=string1"
+				+ "%26data=7ebf4a8a9365930d16773b7b202f166bcebd6efa%2", 
+				this.requestParametersWithNoKey.getParametersQuery());
+
+
+		// Check that the storable parameters are loaded correctly from the 
+		// provided key
+		// and that getParametersQuery() returns it correctly with the 
+		// non storable parameters as well.
+
+		assertEquals("Incorrect query returned ", 
+				"test_string=string1"
+				+ "%26data=7ebf4a8a9365930d16773b7b202f166bcebd6efa%2", 
+				this.requestParametersHavingAKey.getParametersQuery());
 
 	}
 
 	/**
 	 * Test getValues() 
-	 * @throws RequestParametersNotFoundException
-	 * @throws RequestParametersNotStorableException
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
 	 */
 	@Test
-	public void testGetValues() throws RequestParametersNotFoundException, 
-	RequestParametersNotStorableException {
+	public void testGetValues() throws RequestParametersNotStorableException, 
+	MultipleValuesNotAllowedException {
 
-		RequestParameters rp = new RequestParameters(this.mockHttpServletRequest);
+		// Check for each type that the object returned is a list of the correct
+		// data type and that contains the values provided by the request
+		
+		List<String> testString = this.requestParametersWithNoKey.getValues(
+				testURLParameters.getParamTestString());
+		assertTrue("Incorrect data type returned",testString.get(0) 
+				instanceof String);		
+		assertEquals("Incorrect list returned ", "[string1]",
+				testString.toString());
 
-		ArrayList<String> action = rp.getValues(URLParameters.ACTION);
+		List<Integer> testInteger = requestParametersWithNoKey.getValues(
+				testURLParameters.getParamTestInteger());
+		assertTrue("Incorrect data type returned",testInteger.get(0)  
+				instanceof Integer);		
+		assertEquals("Incorrect list returned ", "[1234, 2345]",
+				testInteger.toString());		
 
-		// Action allows only one value
-		assertTrue("Incorrect data type returned",action.get(0) instanceof String);		
-		assertEquals("Incorrect list returned ", "[v1]",action.toString());
-
-		ArrayList<Integer> chosen_data_type = rp.getValues(URLParameters.CHOSEN_DATA_TYPE);
-
-		// The value stringvalue was excluded because not an Integer
-		assertTrue("Incorrect data type returned",chosen_data_type.get(0) instanceof Integer);		
-		assertEquals("Incorrect list returned ", "[1, 2]",chosen_data_type.toString());		
-
-		ArrayList<Boolean> all_organs = rp.getValues(URLParameters.ALL_ORGANS);
-
-		assertTrue("Incorrect data type returned",all_organs .get(0) instanceof Boolean);		
-		assertEquals("Incorrect list returned ", "[true, false, false]",all_organs.toString());		
+		List<Boolean> testBoolean = requestParametersWithNoKey.getValues(
+				testURLParameters.getParamTestBoolean());
+		assertTrue("Incorrect data type returned",testBoolean.get(0)  
+				instanceof Boolean);		
+		assertEquals("Incorrect list returned ", "[true, false]",
+				testBoolean.toString());	
+		
+		// Check that getValues return a copy of the list and not 
+		// the list itself. As all objects contained within the list should be
+		// immutable stuff, there is no need to care whether the content of the 
+		// list is a copy or a reference
+		
+		List<Boolean> testBoolean2 = requestParametersWithNoKey.getValues(
+				testURLParameters.getParamTestBoolean());
+		
+		assertFalse("The method did not return a copy of the original object",
+				testBoolean == testBoolean2);
+		
+		// Test that an empty parameter returns null
+		requestParametersWithNoKey.resetValues(
+				testURLParameters.getParamTestBoolean());
+		
+		assertNull("The value returned is not null as expected",
+				requestParametersWithNoKey.getValues(
+				testURLParameters.getParamTestBoolean()));
 
 	}
 
 	/**
-	 * Test getValue() with and without a provided index
-	 * @throws RequestParametersNotFoundException
-	 * @throws RequestParametersNotStorableException
+	 * Test getFirstValue()
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
 	 */
 	@Test
-	public void testGetValue() throws RequestParametersNotFoundException,
-	RequestParametersNotStorableException {
+	public void testGetFirstValue() throws RequestParametersNotStorableException,
+	MultipleValuesNotAllowedException{
 
-		RequestParameters rp = new RequestParameters(this.mockHttpServletRequest);
-
-		// Action allows only one value and thus return always a unique value
-		String action1 = rp.getValue(URLParameters.ACTION);
-		String action2 = rp.getValue(URLParameters.ACTION,1);
-		assertEquals("Incorrect value returned ", "v1",action1.toString());
-		assertEquals("Incorrect value returned ", "v1",action2.toString());
-
-		Integer chosen_data_type1 = rp.getValue(URLParameters.CHOSEN_DATA_TYPE);
-		Integer chosen_data_type2 = rp.getValue(URLParameters.CHOSEN_DATA_TYPE,1);
-		assertEquals("Incorrect value returned ","1",chosen_data_type1.toString());
-		assertEquals("Incorrect value returned ","2",chosen_data_type2.toString());	
-
-		// if the index provided does not exit, it returns the last value
-		Boolean all_organs1 = rp.getValue(URLParameters.ALL_ORGANS);
-		Boolean all_organs2 = rp.getValue(URLParameters.ALL_ORGANS,99);
-		assertEquals("Incorrect value returned ","true",all_organs1.toString());
-		assertEquals("Incorrect value returned ","false",all_organs2.toString());		
+		// Test that the value is indeed the first one
+		int integerValue = this.requestParametersWithNoKey
+				.getFirstValue(testURLParameters.getParamTestInteger());
+		
+		assertEquals("Incorrect value returned ",1234,integerValue);
+		
+		// Test that an empty parameter return null
+		requestParametersWithNoKey.resetValues(
+				testURLParameters.getParamTestBoolean());
+		
+		assertNull("The value returned is not null as expected",
+				requestParametersWithNoKey.getFirstValue(
+				testURLParameters.getParamTestBoolean()));
+	
 	}
 
 	/**
-	 * Test setValue() with and without a provided index
-	 * @throws RequestParametersNotFoundException
-	 * @throws RequestParametersNotStorableException
+	 * Test addValue()
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
 	 */
 	@Test
-	public void testSetValue() throws RequestParametersNotStorableException,
-	RequestParametersNotFoundException {
+	public void testAddValue() throws RequestParametersNotStorableException,
+	MultipleValuesNotAllowedException {
 
-		// Action allows only one parameter, thus replace always the unique value
-		RequestParameters rp = new RequestParameters(this.mockHttpServletRequest);
-		rp.setValue(URLParameters.ACTION, "v4");
-		ArrayList<String> action = rp.getValues(URLParameters.ACTION);
-		assertEquals("Incorrect list returned after setting the value", "[v4]",action.toString());
-		rp.setValue(URLParameters.ACTION, "v5",3);
-		action = rp.getValues(URLParameters.ACTION);
-		assertEquals("Incorrect list returned after setting the value", "[v5]",action.toString());
-
-		// Test the setting of the value with and without index when they were no previous values
-		// If the index is incorrect, add the value at the end
-		RequestParameters rp2 = new RequestParameters();
-		rp2.setValue(URLParameters.CHOSEN_DATA_TYPE, 10);
-		rp2.setValue(URLParameters.CHOSEN_DATA_TYPE, 11,1);
-		rp2.setValue(URLParameters.CHOSEN_DATA_TYPE, 12,1);
-		rp2.setValue(URLParameters.CHOSEN_DATA_TYPE, 13,99);
-		ArrayList<Integer> chosen_data_type = rp2.getValues(URLParameters.CHOSEN_DATA_TYPE);
-		assertEquals("Incorrect list returned after setting the value ", "[10, 12, 13]",
-				chosen_data_type.toString());
-
+		// Add two values and check that they are there
+		this.requestParametersWithNoKey.addValue(
+				testURLParameters.getParamTestInteger(), 20);
+		
+		this.requestParametersWithNoKey.addValue(
+				testURLParameters.getParamTestInteger(), 21);
+		
+		List<Integer> integerList = this.requestParametersWithNoKey.getValues(
+				testURLParameters.getParamTestInteger());
+		assertEquals("Incorrect list returned after setting the value ", 
+				"[1234, 2345, 20, 21]",
+				integerList.toString());
+		
+		// Check that adding a value on an empty parameter works
+		requestParametersWithNoKey.resetValues(
+				testURLParameters.getParamTestInteger());
+		
+		this.requestParametersWithNoKey.addValue(
+				testURLParameters.getParamTestInteger(), 21);
+		
+		integerList = this.requestParametersWithNoKey.getValues(
+				testURLParameters.getParamTestInteger());
+		assertEquals("Incorrect list returned after setting the value ", 
+				"[21]",
+				integerList.toString());
+		
 	}
-
+	
 	/**
-	 * Test addValue() that actually simply call setValue with an inexistant index
-	 * @throws RequestParametersNotFoundException
-	 * @throws RequestParametersNotStorableException
+	 * Test addValue() with too much values
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
 	 */
-	@Test
-	public void testAddValues() throws RequestParametersNotFoundException, 
-	RequestParametersNotStorableException {
-		RequestParameters rp = new RequestParameters(this.mockHttpServletRequest);
-		// As action allows only one value, the existing value is replaced
-		rp.addValue(URLParameters.ACTION, "v6");
-		ArrayList<String> action = rp.getValues(URLParameters.ACTION);
-		assertEquals("Incorrect list returned after adding the value ", "[v6]",
-				action.toString());
-		rp.addValue(URLParameters.CHOSEN_DATA_TYPE, 20);
-		ArrayList<Integer> chosen_data_type = rp.getValues(URLParameters.CHOSEN_DATA_TYPE);
-		assertEquals("Incorrect list returned after setting the value ", "[1, 2, 20]",
-				chosen_data_type.toString());
+	@Test (expected=MultipleValuesNotAllowedException.class)
+	public void testAddTooMuchValue() throws RequestParametersNotStorableException,
+	MultipleValuesNotAllowedException {
+
+		// Try to add to much param when it is not allowed,
+		// i.e test_string does not allow multiple values => exception
+		this.requestParametersWithNoKey.addValue(
+				testURLParameters.getParamTestString(), "explode");
+		
 	}
 
 	/**
 	 * Test resetValues()
-	 * @throws RequestParametersNotFoundException
-	 * @throws RequestParametersNotStorableException
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
 	 */
 	@Test
-	public void testResetValues() throws RequestParametersNotFoundException,
-	RequestParametersNotStorableException {
-		RequestParameters rp = new RequestParameters(this.mockHttpServletRequest);
-		rp.resetValues(URLParameters.CHOSEN_DATA_TYPE);
-		assertNull(rp.getValue(URLParameters.CHOSEN_DATA_TYPE));
+	public void testResetValues() throws RequestParametersNotStorableException, 
+	MultipleValuesNotAllowedException {
+		this.requestParametersWithNoKey.resetValues(
+				testURLParameters.getParamTestInteger());
+		assertNull(this.requestParametersWithNoKey.getFirstValue(
+				testURLParameters.getParamTestInteger()));
 	}
 
 	/**
 	 * Test testcloneWithAllParameters()
-	 * @throws RequestParametersNotFoundException
-	 * @throws RequestParametersNotStorableException
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
+	 * @throws RequestParametersNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
 	 */
 	@Test
-	public void testcloneWithAllParameters() throws RequestParametersNotFoundException,
-	RequestParametersNotStorableException {
-		// Test that the cloned parameters has exactly the same behavior as the source
-		// when there is no key
-		RequestParameters rp1 = new RequestParameters(this.mockHttpServletRequest);
-		RequestParameters rp2 = rp1.cloneWithAllParameters();
-		assertEquals("Wrong state of the parameters of the cloned object",rp2.getParametersQuery(),
-				rp1.getParametersQuery());
+	public void testcloneWithAllParameters() throws InstantiationException, 
+	IllegalAccessException, RequestParametersNotFoundException, 
+	RequestParametersNotStorableException, MultipleValuesNotAllowedException {
 		
 		// Test that the cloned parameters has exactly the same behavior as the source
+		// when there is no key
+		
+		RequestParameters clone = this.requestParametersWithNoKey
+				.cloneWithAllParameters();
+		
+		assertEquals("Wrong state of the parameters of the cloned object",
+				this.requestParametersWithNoKey.getParametersQuery(),
+				clone.getParametersQuery());
+		
+
+		// Test that the cloned parameters has exactly the same behavior as the source
 		// when there is a key
-		rp1.addValue(URLParameters.ACTION, "longlonglonglonglonglongstring");
-		rp2 = rp1.cloneWithAllParameters();
-		assertEquals("Wrong state of the parameters of the cloned object",rp2.getParametersQuery(),
-				rp1.getParametersQuery());
+		
+		RequestParameters clone2 = this.requestParametersHavingAKey
+				.cloneWithAllParameters();
+				
+		assertEquals("Wrong state of the parameters of the cloned object",
+				clone2.getParametersQuery(),
+				this.requestParametersHavingAKey.getParametersQuery());
 				
 	}
 
 	/**
 	 * Test cloneWithStorableParameters()
-	 * @throws RequestParametersNotFoundException
-	 * @throws RequestParametersNotStorableException
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
+	 * @throws RequestParametersNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
 	 */
 	@Test
-	public void cloneWithStorableParameters() throws RequestParametersNotFoundException, 
-	RequestParametersNotStorableException {
+	public void cloneWithStorableParameters() throws InstantiationException, 
+	IllegalAccessException, RequestParametersNotFoundException, 
+	RequestParametersNotStorableException, MultipleValuesNotAllowedException {
 		
-		// Test that the cloned parameters has kept only the storable when there is no key
-		RequestParameters rp1 = new RequestParameters(this.mockHttpServletRequest);
-		RequestParameters rp2 = rp1.cloneWithStorableParameters();
-		assertEquals("Wrong state of the parameters of the cloned object",rp2.getParametersQuery(),
-				"chosen_data_type=1%26chosen_data_type=2%26all_organs=true%26"
-				+ "all_organs=false%26all_organs=false%2");
+		// Test that the cloned parameters return the same storable parameters
+		// only as the source when there is no key
 		
-		// Test that the cloned parameters has kept only the storable parameters when there is a key,
-		// which means that the key is the only parameter in the url
-		rp1.addValue(URLParameters.ACTION, "longlonglonglonglonglongstring");
-		rp1.addValue(URLParameters.CHOSEN_DATA_TYPE, 123456890);
+		RequestParameters clone = this.requestParametersWithNoKey
+				.cloneWithStorableParameters();
+		
+		// After cloning, remove the non storable parameter of the source to do the 
+		// comparison (as there were already a key, it will continue to use it
+		// if even if it is now shorter than the limit)
+		this.requestParametersWithNoKey.resetValues(
+				testURLParameters.getParamTestString());
+		
+		assertEquals("Wrong state of the parameters of the cloned object",
+				this.requestParametersWithNoKey.getParametersQuery(),
+				clone.getParametersQuery());
+		
+
+		// Test that the cloned parameters return only the same storable parameters
+		// as the source when there is a key
+		
+		RequestParameters clone2 = this.requestParametersHavingAKey
+				.cloneWithStorableParameters();
+		
+		
+		// After cloning, remove the non storable parameter of the source to do the 
+		// comparison (as there were already a key, it will continue to use it
+		// if even if it is now shorter than the limit)
+		this.requestParametersHavingAKey.resetValues(
+				testURLParameters.getParamTestString());
 				
-		rp2 = rp1.cloneWithStorableParameters();
-		assertEquals("Wrong state of the parameters of the cloned object",rp2.getParametersQuery(),
-				"data=b56ee6efcc66305cfe620b2381bae78d4722238a");
+		assertEquals("Wrong state of the parameters of the cloned object",
+				this.requestParametersHavingAKey.getParametersQuery(),
+				clone2.getParametersQuery()
+				);
 	}
+	
+	/**
+	 * Test that trying to load too much values for a param that does not
+	 * allow multiple values throws an exception
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
+	 * @throws RequestParametersNotFoundException 
+	 */
+	@Test (expected=MultipleValuesNotAllowedException.class)
+	public void testLoadTooMuchValue() throws RequestParametersNotFoundException,
+	RequestParametersNotStorableException, MultipleValuesNotAllowedException{
+		
+		// This is actually the forth time a request parameter is instantiated
+		// for this test => see the @before loadMockRequest, thus it tries to load 
+		// too much params for test_string (string1,explode) => exception
+		
+		new RequestParameters(
+				this.mockHttpServletRequest,
+				RequestParametersTest.testURLParameters);
+	}
+	
+	/**
+	 * Check that loading a value that does not match the format is not 
+	 * accepted 
+	 * @throws RequestParametersNotStorableException 
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotFoundException 
+	 */
+	@Test
+	public void testLoadWrongFormatValue() throws MultipleValuesNotAllowedException, 
+	RequestParametersNotStorableException, RequestParametersNotFoundException{
+		
+		// Load the forth instance of RequestParameters that is used in
+		// testLoadTooMuchValue and just ignore the exception that is not
+		// interesting here. That's ugly and should be handled in a different
+		// way
+		try{
+		new RequestParameters(
+				this.mockHttpServletRequest,
+				RequestParametersTest.testURLParameters);
+		}
+		catch(Exception e){
+			// Do nothing
+		}
+		
+		// This is the forth time a request parameter is instantiated
+		// for this test => see the @before loadMockRequest, thus it tries to load 
+		// a wrong params for test_string (STRING1) => null
+		
+		RequestParameters rp = new RequestParameters(
+				this.mockHttpServletRequest,
+				RequestParametersTest.testURLParameters);
+		
+		assertNull("An unauthorized value has been added",
+				rp.getFirstValue(
+						testURLParameters.getParamTestString())
+				);
+				
+	}
+	
+	/**
+	 * Check that adding a value that does not match the format is not 
+	 * accepted 
+	 * @throws RequestParametersNotStorableException 
+	 * @throws MultipleValuesNotAllowedException 
+	 */
+	@Test
+	public void testAddWrongFormatValue() throws MultipleValuesNotAllowedException, 
+	RequestParametersNotStorableException{
+		
+		// test_string does not accept upper case
+				
+		this.requestParametersWithNoKey.resetValues(
+				testURLParameters.getParamTestString());
+		
+		this.requestParametersWithNoKey.addValue(
+				testURLParameters.getParamTestString(),"STRING1");
+	
+		assertNull("An unauthorized value has been added",
+				this.requestParametersWithNoKey.getFirstValue(
+						testURLParameters.getParamTestString())
+				);
 
-
+				
+	}
+	
 }

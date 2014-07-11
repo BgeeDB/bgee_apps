@@ -42,7 +42,6 @@ import org.semanticweb.owlapi.model.UnloadableImportException;
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
 import owltools.graph.OWLQuantifiedProperty;
-import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.io.ParserWrapper;
 
 /**
@@ -1051,8 +1050,7 @@ public class OntologyUtils {
         log.entry(edge);
         
         return log.exit(edge.getSingleQuantifiedProperty().getProperty() == null && 
-                            edge.getSingleQuantifiedProperty().getQuantifier().equals(
-                                    Quantifier.SUBCLASS_OF));
+                            edge.getSingleQuantifiedProperty().isSubClassOf());
     }
     
     /**
@@ -1081,12 +1079,13 @@ public class OntologyUtils {
     public boolean isImmediatelyPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
         
-        return log.exit(this.getWrapper().getOWLObjectPropertyByIdentifier(
+        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+                
+                this.getWrapper().getOWLObjectPropertyByIdentifier(
                 IMMEDIATELY_PRECEDED_BY_ID).equals(
                         edge.getSingleQuantifiedProperty().getProperty()) &&
                         
-                    edge.getSingleQuantifiedProperty().getQuantifier().equals(
-                            Quantifier.SOME));
+                    edge.getSingleQuantifiedProperty().isSomeValuesFrom());
     }
     
     /**
@@ -1100,10 +1099,10 @@ public class OntologyUtils {
     public boolean isPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
         
-        return log.exit(this.getPrecededByProps().contains(
+        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+                this.getPrecededByProps().contains(
                     edge.getSingleQuantifiedProperty().getProperty()) && 
-                    edge.getSingleQuantifiedProperty().getQuantifier().equals(
-                            Quantifier.SOME));
+                    edge.getSingleQuantifiedProperty().isSomeValuesFrom());
     }
 
     /**
@@ -1117,10 +1116,12 @@ public class OntologyUtils {
     public boolean isPartOfRelation(OWLGraphEdge edge) {
         log.entry(edge);
         
-        return log.exit(this.getPartOfProps().contains(
+        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+                
+                this.getPartOfProps().contains(
                     edge.getSingleQuantifiedProperty().getProperty()) && 
-                    edge.getSingleQuantifiedProperty().getQuantifier().equals(
-                            Quantifier.SOME));
+                    
+                    edge.getSingleQuantifiedProperty().isSomeValuesFrom());
     }
     
     /**

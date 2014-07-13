@@ -36,8 +36,9 @@ public class MultipleValuesNotAllowedException extends Exception
 	 * 						understandable, as it will be displayed to the user. 
 	 */
 	public MultipleValuesNotAllowedException(String message)
-	{
-		super(message);
+	{		
+		super("You tried to set several values for the parameter "
+				+ message + " that does not accept multiple values.");
 	}
 	
 	/**

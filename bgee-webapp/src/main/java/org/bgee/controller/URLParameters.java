@@ -115,6 +115,14 @@ public class URLParameters {
 			"chosen_data_type",
 			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
 			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Integer.class);
+	
+	/**
+	 * DESCRIPTION PARAM
+	 */
+	private static final Parameter<String> DISPLAY_TYPE = new Parameter<String>("display_type",
+			false, false, DEFAULT_IS_SECURE, 
+			DEFAULT_MAX_SIZE, 
+			DEFAULT_FORMAT,String.class);
 
 	/**
 	 * DESCRIPTION PARAM
@@ -123,6 +131,14 @@ public class URLParameters {
 			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
 			DEFAULT_MAX_SIZE, 
 			"[\\w\\._-]+@[\\w\\._-]+\\.[a-zA-Z][a-zA-Z][a-zA-Z]?$",String.class);
+	
+	/**
+	 * DESCRIPTION PARAM
+	 */
+	private static final Parameter<String> PAGE = new Parameter<String>("page",
+			false, false, DEFAULT_IS_SECURE, 
+			DEFAULT_MAX_SIZE, 
+			DEFAULT_FORMAT,String.class);
 
 	/**
 	 * DESCRIPTION PARAM
@@ -138,11 +154,13 @@ public class URLParameters {
 	 */
 	protected final List<Parameter<?>> list = 
 			new ArrayList<Parameter<?>>(Arrays.<Parameter<?>>asList(
+					PAGE,
 					ACTION,
 					ALL_ORGANS,
 					CHOSEN_DATA_TYPE,
 					EMAIL,
 					STAGE_CHILDREN,
+					DISPLAY_TYPE,
 					DATA
 					));
 	
@@ -178,12 +196,26 @@ public class URLParameters {
 	public Parameter<Integer> getParamChosenDataType(){
 		return CHOSEN_DATA_TYPE;
 	}
+	
+	/**
+	 * @return TODO description of the param
+	 */
+	public Parameter<String> getParamDisplayType(){
+		return DISPLAY_TYPE;
+	}
 
 	/**
 	 * @return TODO description of the param
 	 */
 	public Parameter<String> getParamEmail(){
 		return EMAIL;
+	}
+	
+	/**
+	 * @return TODO description of the param
+	 */
+	public Parameter<String> getParamPage(){
+		return PAGE;
 	}
 
 	/**

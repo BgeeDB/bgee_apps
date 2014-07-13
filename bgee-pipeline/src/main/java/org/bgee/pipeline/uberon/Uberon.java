@@ -18,8 +18,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -51,6 +54,7 @@ import org.supercsv.io.ICsvMapWriter;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
  * Class related to the use, and insertion into the database of the ontology Uberon.
@@ -396,6 +400,20 @@ public class Uberon {
     private final Set<OWLPropertyExpression> overPartOf;
     
     /**
+     * The {@code Pattern} used to parse comments of {@code OWLClass}es to search for 
+     * temporal ordering in comments (used in FBdv). The group conrresponding to 
+     * the ordering value is {@link #TEMPORAL_COMMENT_GROUP}.
+     * @see #generateStageOntology()
+     */
+    public final static Pattern TEMPORAL_COMMENT_PATTERN = 
+            Pattern.compile(".*?Temporal ordering number - ([0-9]+?).*?");
+    /**
+     * An {@code int} that is the index of the group capturing the temporal ordering 
+     * in the {@code Pattern} {@link #TEMPORAL_COMMENT_PATTERN}.
+     */
+    public final static int TEMPORAL_COMMENT_GROUP = 1;
+    
+    /**
      * Default constructor private in purpose, an ontology should always be provided somehow.
      */
     @SuppressWarnings("unused")
@@ -542,7 +560,7 @@ public class Uberon {
                 this.getToFilterSubgraphRootIds(), this.getSubsetNames(), 
                 this.getClassIdsExcludedFromSubsetRemoval());
         
-        OWLGraphManipulator manipulator = new OWLGraphManipulator(this.ontUtils.getWrapper());
+        OWLGraphManipulator manipulator = this.ontUtils.getManipulator();
 
         if (this.getClassIdsToRemove() != null) {
             for (String classIdToRemove: this.getClassIdsToRemove()) {
@@ -772,7 +790,7 @@ public class Uberon {
         log.entry(this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
-        OWLGraphManipulator manipulator = new OWLGraphManipulator(this.ontUtils.getWrapper());
+        OWLGraphManipulator manipulator = this.ontUtils.getManipulator();
 
         //potential terms to call this code on: 
         //UBERON:0000067 embryo stage part
@@ -822,9 +840,61 @@ public class Uberon {
             }
         }   
         
+        this.generatePrecededByFromComments();
+        
+        manipulator.reduceRelations();
         manipulator.reducePartOfIsARelations();
         
         this.ontUtils.removeOBOProblematicAxioms();
+        
+        log.exit();
+    }
+    
+    /**
+     * Generate preceded_by relation from temporal ordering in comments. This is the only way 
+     * to properly order FBdv classes. The comment pattern to retrieve is 
+     * {@link #TEMPORAL_COMMENT_PATTERN}. The {@code OWLOntology} wrapped by this object 
+     * will be modified as a result, with added preceded_by relations.
+     */
+    public void generatePrecededByFromComments() {
+        log.entry();
+        
+        OWLGraphManipulator manipulator = this.ontUtils.getManipulator();
+        
+        //now, we transform temporal ordering in comments into preceded_by relations 
+        //(it is the only way to correctly use FBdv)
+        NavigableMap<Integer, OWLClass> commentOrdering = new TreeMap<Integer, OWLClass>();
+        for (OWLClass cls: this.ontUtils.getWrapper().getAllOWLClasses()) {
+             String comment = this.ontUtils.getWrapper().getComment(cls);
+             if (StringUtils.isNotBlank(comment)) {
+                 log.trace("Examining comment to search for temporal ordering: {}", 
+                         comment);
+                 Matcher m = Uberon.TEMPORAL_COMMENT_PATTERN.matcher(comment);
+                 if (m.matches()) {
+                     int order = Integer.parseInt(m.group(Uberon.TEMPORAL_COMMENT_GROUP));
+                     commentOrdering.put(order, cls);
+                     log.trace("Valid comment, order extracted: {}", order);
+                 }
+             }
+        }
+        log.trace("Classes ordered from comments: {}", commentOrdering);
+        
+        //create the relations by iterating in reversed order. Wd don't use 
+        //a descendingMap, because we will need to use a List anyway, to retrieve 
+        //an OWLClass along with its predecessor.
+        List<OWLClass> orderedClasses = new ArrayList<OWLClass>(commentOrdering.values());
+        OWLObjectPropertyExpression precededBy = 
+                manipulator.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(
+                        OntologyUtils.PRECEDED_BY_ID);
+        Set<OWLGraphEdge> edgesToAdd = new HashSet<OWLGraphEdge>();
+        for (int i = orderedClasses.size() - 1; i > 0; i--) {
+            edgesToAdd.add(new OWLGraphEdge(
+                    orderedClasses.get(i), orderedClasses.get(i-1), 
+                    precededBy, Quantifier.SOME, 
+                    manipulator.getOwlGraphWrapper().getSourceOntology()));
+        }
+        log.trace("{} edges to add: {}", edgesToAdd.size(), edgesToAdd);
+        manipulator.addEdges(edgesToAdd);
         
         log.exit();
     }
@@ -1011,42 +1081,8 @@ public class Uberon {
         
         //first, we look for the last class, the only one with no preceded_by  
         //or immediately_preceded_by relations incoming from other OWLClass in classesToOrder. 
-        //the subtlety is that the incoming preceded_by relation can actually be propagated 
-        //from a child.
-        Set<OWLClass> withSuccessors = new HashSet<OWLClass>();
-        for (OWLClass classToOrder: classesToOrder) {
-            log.trace("Examining OWLClass {}", classToOrder);
-            for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdgesClosure(classToOrder)) {
-                log.trace("Testing if edge is valid preceded_by relation: {}", 
-                        outgoingEdge);
-                if (this.ontUtils.isPrecededByRelation(outgoingEdge)) {
-                    Set<OWLClass> predecessors = this.getEqualOrParentsBelongingTo(
-                            outgoingEdge.getTarget(), classesToOrder);
-                    if (!predecessors.isEmpty()) {
-                        withSuccessors.addAll(predecessors);
-                        log.trace("Valid preceded_by relation leading to predecessors: {}", 
-                                predecessors);
-                    }
-                }
-            }
-        }
-        log.trace("All classes with successors: {}", withSuccessors);
-        
-        Set<OWLClass> classesSubstracted = new HashSet<OWLClass>(classesToOrder);
-        classesSubstracted.removeAll(withSuccessors);
-        if (classesSubstracted.size() > 1) {
-            throw log.throwing(new IllegalStateException("The provided ontology " +
-                    "is missing some preceded_by relations: several OWLClasses " +
-                    "with no preceded_by relations incoming from same level OWLClasses: " +
-                    classesSubstracted + " (among the following: " + classesToOrder + ")"));
-        }
-        if (classesSubstracted.isEmpty()) {
-            throw log.throwing(new IllegalStateException("Cycle of preceded_by relations " +
-                    "among same level OWLClasses, not possible to determine the last one, " +
-                    "among: " + classesToOrder));
-        }
-        OWLClass lastClass = classesSubstracted.iterator().next();
-        log.debug("Last class of the chain identified: {}", lastClass);
+        //getLastClassByPrecededBy never returns null, it throws and exception otherwise.
+        OWLClass lastClass = this.getLastClassByPrecededBy(classesToOrder);
         
         //now, we walk from lastClass, following the preceded_by relations
         OWLClass precedingClass = lastClass;
@@ -1059,93 +1095,222 @@ public class Uberon {
             }
             
             orderedClasses.add(0, precedingClass);
-            
             //we check everything even if we have reached the beginning of the chain 
             //(classesToOrder.size() == orderedClasses.size()), to be sure there is 
             //no cycle of preceded_by relations
+            log.trace("All ordered classes so far ({}/{}): {}", orderedClasses.size(), 
+                    classesToOrder.size(), orderedClasses);
+            
             OWLClass potentialPrecedingClass = null;
-            
-            //check first the immediately_preceded_by relations, there should be only one 
-            //leading to sibling OWLClasses
-            for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdgesClosure(precedingClass)) {
-                if (this.ontUtils.isImmediatelyPrecededByRelation(outgoingEdge)) {
-                    
-                    Set<OWLClass> classesMatching = this.getEqualOrParentsBelongingTo(
-                            outgoingEdge.getTarget(), classesToOrder);
-                    if (classesMatching.isEmpty()) {
-                        continue;
-                    }
-                    boolean problem = false;
-                    if (classesMatching.size() > 1) {
-                        problem = true;
-                    } else {
-                        OWLClass clsMatching = classesMatching.iterator().next();
-                        if (potentialPrecedingClass != null && 
-                                !potentialPrecedingClass.equals(clsMatching)) {
-                            problem = true;
-                        }
-                        potentialPrecedingClass = clsMatching;
-                    }
-                    if (problem) {
-                        //several immediately_preceded_by relations leading to 
-                        //different OWLClasses
-                        throw log.throwing(new IllegalStateException(
-                                "An OWLClass has several " +
-                                        "immediately_preceded_by relations to several same level " +
-                                        "OWLClasses (" + precedingClass + "), among the following " +
-                                        "OWLClasses: " + classesToOrder));
-                    }
-                    
-                    log.debug("Preceding class found by immediately_preceded_by: {}", 
-                            potentialPrecedingClass);
-                    //continue iteration anyway to check for several immediately_preceded_by
+            //again, we want to use direct outgoing edges, but sometimes we need to check 
+            //also indirect outgoing edges (this is slow). So we'll try indirect edges 
+            //only if conditions are not satisfied with direct edges.
+            boolean directEdgesAlreadyTried = false;
+            //- if potentialPrecedingClass is still null after having tried indirect edges, 
+            //while we haven't reach the end of the chain 
+            //(classesToOrder.size() != orderedClasses.size()), an exception will be thrown.
+            //- if we have reached the end of the chain 
+            //(classesToOrder.size() == orderedClasses.size()), we still want to do a last 
+            //iteration on the first class to make sure there are no cycles. The loop 
+            //will be break if potentialPrecedingClass is null just after having tried 
+            //direct edges, if classesToOrder.size() == orderedClasses.size()
+            potentialPrecedingClass: while (potentialPrecedingClass == null) {
+                log.trace("Trying to find predecessor for {} (using indirect edges? {})", 
+                        precedingClass, directEdgesAlreadyTried);
+                Set<OWLGraphEdge> outgoingEdges;
+                if (!directEdgesAlreadyTried) {
+                    outgoingEdges = wrapper.getOutgoingEdges(precedingClass);
+                } else {
+                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupProps(precedingClass);
                 }
-            }
-            
-            //no immediately_preceded_by to sibling OWLClasses, maybe we have 
-            //simple preceded_by relations?
-            if (potentialPrecedingClass == null) {
-                log.debug("No preceding class identified by immediately_preceded_by, checking preceded_by");
-                Set<OWLClass> allPrecededBy = new HashSet<OWLClass>();
-                //iterate once again the outgoing edges
-                for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdgesClosure(precedingClass)) {
-                    //but check also for simple preceded_by relations 
-                    if (this.ontUtils.isPrecededByRelation(outgoingEdge)) {
+                
+                //check first the immediately_preceded_by relations, there should be only one 
+                //leading to sibling OWLClasses
+                for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+                    if (this.ontUtils.isImmediatelyPrecededByRelation(outgoingEdge)) {
                         
                         Set<OWLClass> classesMatching = this.getEqualOrParentsBelongingTo(
                                 outgoingEdge.getTarget(), classesToOrder);
-                        if (!classesMatching.isEmpty()) {
-                            allPrecededBy.addAll(classesMatching);
-                            log.debug("Potential preceding class found by preceded_by: {}", 
-                                    classesMatching);
+                        if (classesMatching.isEmpty()) {
+                            continue;
                         }
+                        boolean problem = false;
+                        if (classesMatching.size() > 1) {
+                            problem = true;
+                        } else {
+                            OWLClass clsMatching = classesMatching.iterator().next();
+                            if (potentialPrecedingClass != null && 
+                                    !potentialPrecedingClass.equals(clsMatching)) {
+                                problem = true;
+                            }
+                            potentialPrecedingClass = clsMatching;
+                        }
+                        if (problem) {
+                            //several immediately_preceded_by relations leading to 
+                            //different OWLClasses; this is bad whatever it is 
+                            //with direct or indirect edges
+                            throw log.throwing(new IllegalStateException(
+                                    "An OWLClass has several immediately_preceded_by relations " +
+                                    "to several same level OWLClasses (" + precedingClass + 
+                                    "), among the following OWLClasses: " + classesToOrder));
+                        }
+                        
+                        log.debug("Preceding class found by immediately_preceded_by (through indirect edges?: {}): {}", 
+                                directEdgesAlreadyTried, potentialPrecedingClass);
+                        //continue iteration anyway to check for several immediately_preceded_by
                     }
                 }
-                if (allPrecededBy.size() == 1) {
-                    potentialPrecedingClass = allPrecededBy.iterator().next();
-                } else if (allPrecededBy.size() > 1) {
-                    log.debug("Several potential preceding classes, use recursivity to find the last one.");
-                    //we can have preceded_by relations to several terms. In that case, we need 
-                    //to know what is the last of these stages. Use recursivity.
-                    List<OWLClass> allPrecededByOrdered = this.orderByPrecededBy(allPrecededBy);
-                    potentialPrecedingClass = allPrecededByOrdered.get(
-                            allPrecededByOrdered.size() - 1);
+                
+                //no immediately_preceded_by to sibling OWLClasses, maybe we have 
+                //simple preceded_by relations? Check only if we haven't reach the end 
+                //of the chain (classesToOrder.size() != orderedClasses.size())
+                if (potentialPrecedingClass == null && 
+                        classesToOrder.size() != orderedClasses.size()) {
+                    log.debug("No preceding class identified by immediately_preceded_by, checking preceded_by");
+                    Set<OWLClass> allPrecededBy = new HashSet<OWLClass>();
+                    //iterate once again the outgoing edges
+                    for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+                        //but check also for simple preceded_by relations 
+                        if (this.ontUtils.isPrecededByRelation(outgoingEdge)) {
+                            
+                            Set<OWLClass> classesMatching = this.getEqualOrParentsBelongingTo(
+                                    outgoingEdge.getTarget(), classesToOrder);
+                            if (!classesMatching.isEmpty()) {
+                                allPrecededBy.addAll(classesMatching);
+                                log.debug("Potential preceding class found by preceded_by: {}", 
+                                        classesMatching);
+                            }
+                        }
+                    }
+                    if (allPrecededBy.size() == 1) {
+                        potentialPrecedingClass = allPrecededBy.iterator().next();
+                    } else if (allPrecededBy.size() > 1) {
+                        log.debug("Several potential preceding classes, try to find the last one.");
+                        //we can have preceded_by relations to several terms. In that case, we need 
+                        //to know what is the last of these stages. 
+                        potentialPrecedingClass = this.getLastClassByPrecededBy(allPrecededBy);
+                    }
+                    if (potentialPrecedingClass != null) {
+                        log.debug("Preceding class found by preceded_by (through indirect edges?: {}): {}", 
+                                directEdgesAlreadyTried, potentialPrecedingClass);
+                    }
+                }
+                
+                
+                //if we haven't found any predecessor, while it is not yet the end 
+                //of the chain, and while we have already tested both direct and indirect 
+                //edges, then it means we have a problem
+                if (potentialPrecedingClass == null && 
+                        classesToOrder.size() != orderedClasses.size() && 
+                        directEdgesAlreadyTried) {
+                    throw log.throwing(new IllegalStateException(
+                            "An OWLClass has no preceded_by relations " +
+                                    "to same level OWLClasses (" + precedingClass + "), " +
+                                    "among the following " + classesToOrder));
+                }
+                
+                
+                //otherwise, if we haven't found any predecessor here, and if it was 
+                //the end of the chain, it means it was the last iteration to check for cycles, 
+                //that there was none and we can break the loop
+                if (potentialPrecedingClass == null && 
+                        classesToOrder.size() == orderedClasses.size()) {
+                    log.trace("End of the chain, everything is fine.");
+                    precedingClass = potentialPrecedingClass;//set precedingClass to null
+                    break potentialPrecedingClass;
+                } else if (potentialPrecedingClass == null) {
+                    //here it means that it is not the end of the chain, but we haven't try 
+                    //indirect edges yet, the potentialPrecedingClass loop will now 
+                    //be iterated once again to use indirect edges
+                    log.trace("No predecessor found, trying with indirect edges...");
+                    directEdgesAlreadyTried = true;
+                } else {
+                    //otherwise, we have found a predecessor, potentialPrecedingClass loop 
+                    //will exit
+                    precedingClass = potentialPrecedingClass;
+                    log.trace("Predecessor found: {}", precedingClass);
                 }
             }
-            
-            //here, it means we have reached the beginning of the chain, 
-            //otherwise it means we have a problem
-            if (potentialPrecedingClass == null && 
-                    classesToOrder.size() != orderedClasses.size()) {
-                throw log.throwing(new IllegalStateException("An OWLClass has no preceded_by " +
-                		"relations to same level OWLClasses (" + precedingClass + "), " +
-                	    "among the following " + classesToOrder));
-            }
-            
-            precedingClass = potentialPrecedingClass;
         }
         
         return log.exit(orderedClasses);
+    }
+    
+    /**
+     * Identify the last {@code OWLClass} according to preceded_by relations 
+     * among {@code classesToOrder}. The last class is the only one with no preceded_by  
+     * or immediately_preceded_by relations incoming from other {@code OWLClass}es 
+     * in {@code classesToOrder}. A subtlety is that the incoming preceded_by 
+     * relations can actually be propagated from a child.
+     * @param classesToOrder    A {@code Set} of {@code OWLClass}es for which we want 
+     *                          to identify the last one according to 
+     *                          their immediately_preceded_by or preceded_by relations.
+     * @return                  The {@code OWLClass} that is the last occurring one 
+     *                          among {@code classesToOrder}. This returned value 
+     *                          is never {@code null} (an exception would be thrown otherwise).  
+     */
+    public OWLClass getLastClassByPrecededBy(Set<OWLClass> classesToOrder) {
+        log.entry(classesToOrder);
+        
+        OWLGraphWrapper wrapper = this.ontUtils.getWrapper();
+        
+        OWLClass lastClass = null;
+        //we want to use direct outgoing edges, but sometimes we need to check 
+        //also indirect outgoing edges (this is slow). So we'll try indirect edges 
+        //only if conditions are not satisfied with direct edges.
+        boolean directEdgesAlreadyTried = false;
+        //if lastClass is still null after having tried both direct and indirect edges,
+        //an exception will be thrown
+        while (lastClass == null) {
+            Set<OWLClass> withSuccessors = new HashSet<OWLClass>();
+            for (OWLClass classToOrder: classesToOrder) {
+                log.trace("Examining OWLClass {} - Second try with indirect edges: {}", 
+                        classToOrder, directEdgesAlreadyTried);
+                Set<OWLGraphEdge> outgoingEdges;
+                if (!directEdgesAlreadyTried) {
+                    outgoingEdges = wrapper.getOutgoingEdges(classToOrder);
+                } else {
+                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupProps(classToOrder);
+                }
+                for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+                    log.trace("Testing if edge is valid preceded_by relation: {}", 
+                            outgoingEdge);
+                    if (this.ontUtils.isPrecededByRelation(outgoingEdge)) {
+                        Set<OWLClass> predecessors = this.getEqualOrParentsBelongingTo(
+                                outgoingEdge.getTarget(), classesToOrder);
+                        if (!predecessors.isEmpty()) {
+                            withSuccessors.addAll(predecessors);
+                            log.trace("Valid preceded_by relation leading to predecessors: {}", 
+                                    predecessors);
+                        }
+                    }
+                }
+            }
+            log.trace("All classes with successors: {}", withSuccessors);
+            
+            Set<OWLClass> classesSubstracted = new HashSet<OWLClass>(classesToOrder);
+            classesSubstracted.removeAll(withSuccessors);
+            log.trace("Potential last classes: {}", classesSubstracted);
+            
+            if (classesSubstracted.size() > 1 && directEdgesAlreadyTried) {
+                throw log.throwing(new IllegalStateException("The provided ontology " +
+                        "is missing some preceded_by relations: several OWLClasses " +
+                        "with no preceded_by relations incoming from same level OWLClasses: " +
+                        classesSubstracted + " (among the following: " + classesToOrder + ")"));
+            }
+            //this one is bad whatever the try is with direct or indirect edges
+            if (classesSubstracted.isEmpty()) {
+                throw log.throwing(new IllegalStateException("Cycle of preceded_by relations " +
+                        "among same level OWLClasses, not possible to determine the last one, " +
+                        "among: " + classesToOrder));
+            }
+            if (classesSubstracted.size() == 1) {
+                lastClass = classesSubstracted.iterator().next();
+                log.debug("Last class of the chain identified: {}", lastClass);
+            }
+            directEdgesAlreadyTried = true;
+        }
+        return log.exit(lastClass);
     }
     
     /**

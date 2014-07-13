@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.uberon.OWLGraphManipulator;
 import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
@@ -379,6 +380,11 @@ public class OntologyUtils {
      * should be performed on.
      */
     private OWLGraphWrapper wrapper;
+    /**
+     * The {@code OWLGraphManipulator} wrapping the {@code OWLOntology} which operations 
+     * should be performed on to modify it.
+     */
+    private OWLGraphManipulator manipulator;
     /**
      * The {@code OWLOntology} which operations should be performed on.
      */
@@ -1099,10 +1105,37 @@ public class OntologyUtils {
     public boolean isPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
         
-        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
-                this.getPrecededByProps().contains(
+        if (edge.getQuantifiedPropertyList().size() == 1) {
+            return log.exit(this.getPrecededByProps().contains(
                     edge.getSingleQuantifiedProperty().getProperty()) && 
                     edge.getSingleQuantifiedProperty().isSomeValuesFrom());
+        } 
+        if (edge.getQuantifiedPropertyList().size() > 1) {
+            //if we have only part_of, subClassOf, preceded_by or immediately_preceded_by 
+            //relations, with at least one preceded_by or immediately_preeded_by relation, 
+            //then it is valid (I don't know why those properties are not compacted). 
+            boolean atLeastOnePrecededBy = false;
+            for (OWLQuantifiedProperty qp: edge.getQuantifiedPropertyList()) {
+                log.trace("QP examined: {}", qp);
+                if ((qp.getProperty() == null && qp.isSubClassOf()) || //subClassOf
+                    //part_of or preceded_by or immediately_preceded_by
+                    (qp.getProperty() != null && qp.isSomeValuesFrom() && 
+                            (this.getPartOfProps().contains(qp.getProperty()) || 
+                            this.getPrecededByProps().contains(qp.getProperty())))
+                 ) {
+                    log.trace("Valid QP");
+                    if (this.getPrecededByProps().contains(qp.getProperty())) {
+                        atLeastOnePrecededBy = true;
+                    }
+                } else {
+                    log.trace("Invalid QP");
+                    return log.exit(false);
+                }
+            }
+            return log.exit(atLeastOnePrecededBy);
+        }
+        
+        return log.exit(false);
     }
 
     /**
@@ -1270,15 +1303,32 @@ public class OntologyUtils {
      * 
      * @return  the {@code OWLGraphWrapper} wrapping the ontology on which operations 
      *          should be performed.
-     * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
-     *                                          provided at instantiation, and an error 
-     *                                          occurred while loading it.
      */
-    public OWLGraphWrapper getWrapper() throws UnknownOWLOntologyException {
+    public OWLGraphWrapper getWrapper() {
         if (this.wrapper == null) {
-            this.wrapper = new OWLGraphWrapper(this.ontology);
+            if (this.manipulator != null) {
+                this.wrapper = this.manipulator.getOwlGraphWrapper();
+            } else {
+                this.wrapper = new OWLGraphWrapper(this.ontology);
+            }
         }
         return this.wrapper;
+    }
+    
+    /**
+     * Return the {@code OWLGraphManipulator} wrapping the ontology on which operations 
+     * should be performed. If not provided at instantiation, it will be automatically 
+     * loaded the first time this method is called, from the {@code OWLOntology} provided 
+     * at instantiation.
+     * 
+     * @return  the {@code OWLGraphManipulator} wrapping the ontology on which operations 
+     *          should be performed.
+     */
+    public OWLGraphManipulator getManipulator() {
+        if (this.manipulator == null) {
+            this.manipulator = new OWLGraphManipulator(this.getWrapper());
+        }
+        return this.manipulator;
     }
     
     @Override

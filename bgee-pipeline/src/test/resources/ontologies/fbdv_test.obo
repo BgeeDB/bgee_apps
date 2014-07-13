@@ -1,0 +1,27 @@
+format-version: 1.2
+ontology: fbdv_test
+import: ro.obo
+
+[Term]
+id: FBdv:00000000
+name: root
+comment: Temporal ordering number - 1.
+
+[Term]
+id: FBdv:00000001
+name: A
+comment: Temporal ordering number - 2.
+relationship: part_of FBdv:00000000
+
+[Term]
+id: FBdv:00000002
+name: B
+comment: Temporal ordering number - 3.
+relationship: part_of FBdv:00000000
+relationship: RO:0002087 FBdv:00000001
+
+[Term]
+id: FBdv:00000003
+name: C
+comment: Temporal ordering number - 4.
+relationship: part_of FBdv:00000000

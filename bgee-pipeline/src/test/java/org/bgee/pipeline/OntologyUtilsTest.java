@@ -32,6 +32,7 @@ import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 /**
@@ -431,6 +432,29 @@ public class OntologyUtilsTest extends TestAncestor {
                 wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID), 
                 Quantifier.SOME, ont);
         assertFalse("part_of edge incorrectly seen as preceded_by edge", 
+                utils.isPrecededByRelation(edge));
+        
+        //test composed relations with more than one QuantifiedProperty
+        edge = new OWLGraphEdge(clsB, clsA, 
+                Arrays.asList(new OWLQuantifiedProperty(
+                        wrapper.getOWLObjectPropertyByIdentifier(
+                                OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID), 
+                        Quantifier.SOME), 
+                        new OWLQuantifiedProperty(
+                                wrapper.getOWLObjectPropertyByIdentifier(
+                                        OntologyUtils.PART_OF_ID), 
+                                Quantifier.SOME), 
+                        new OWLQuantifiedProperty(null, Quantifier.SUBCLASS_OF))
+                , ont);
+        assertTrue("immediately preceded_by edge not recognized", 
+                utils.isPrecededByRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                Arrays.asList(new OWLQuantifiedProperty(
+                            wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID), 
+                            Quantifier.SOME), 
+                        new OWLQuantifiedProperty(null, Quantifier.SUBCLASS_OF))
+                , ont);
+        assertFalse("part_of composed edge incorrectly seen as preceded_by edge", 
                 utils.isPrecededByRelation(edge));
         
     }

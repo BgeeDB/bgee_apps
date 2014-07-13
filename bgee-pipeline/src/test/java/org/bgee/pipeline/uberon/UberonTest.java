@@ -22,6 +22,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.supercsv.cellprocessor.Optional;
@@ -236,6 +238,7 @@ public class UberonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         Uberon uberon = new Uberon(utils);
 
+        OWLClass cls0 = wrapper.getOWLClassByIdentifier("MmulDv:0000002");
         OWLClass cls1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
         OWLClass cls2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
         OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
@@ -245,6 +248,96 @@ public class UberonTest extends TestAncestor {
         assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
                 uberon.orderByPrecededBy(
                         new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4))));
+        
+        expectedOrderedClasses = Arrays.asList(cls0, cls2, cls3, cls4);
+        assertEquals("Incorrect ordering of sibling OWLClasses", expectedOrderedClasses, 
+                uberon.orderByPrecededBy(
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4))));
+    }
+    
+    /**
+     * Test the method {@link Uberon#getLastClassByPrecededBy(Set)}.
+     */
+    @Test
+    public void shouldGetLastClassByPrecededBy() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/startEndStages.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
+
+        OWLClass cls0 = wrapper.getOWLClassByIdentifier("MmulDv:0000000");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("MmulDv:0000007");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("MmulDv:0000008");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier("MmulDv:0000009");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier("MmulDv:0000010");
+        
+        assertEquals("Incorrect last class returned", cls4, 
+                uberon.getLastClassByPrecededBy(
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1, cls4))));
+        assertEquals("Incorrect last class returned", cls4, 
+                uberon.getLastClassByPrecededBy(
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls0, cls4))));
+        assertEquals("Incorrect last class returned", cls3, 
+                uberon.getLastClassByPrecededBy(
+                        new HashSet<OWLClass>(Arrays.asList(cls3, cls2, cls1))));
+        assertEquals("Incorrect last class returned", cls2, 
+                uberon.getLastClassByPrecededBy(
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1))));
+        
+        //test via indirect edges
+        assertEquals("Incorrect last class returned", cls4, 
+                uberon.getLastClassByPrecededBy(
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls1, cls4))));
+        assertEquals("Incorrect last class returned", cls4, 
+                uberon.getLastClassByPrecededBy(
+                        new HashSet<OWLClass>(Arrays.asList(cls2, cls0, cls4))));
+    }
+    
+    /**
+     * Test the method {@link Uberon#generatePrecededByFromComments()}.
+     */
+    @Test
+    public void shouldGeneratePrecededByFromComments() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(UberonTest.class.
+                getResource("/ontologies/fbdv_test.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
+        
+        uberon.generatePrecededByFromComments();
+        
+        //check that the desired edges were created. 
+        OWLDataFactory factory = ont.getOWLOntologyManager().getOWLDataFactory();
+        OWLObjectProperty precededBy = 
+            wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PRECEDED_BY_ID);
+        OWLObjectProperty immPrecededBy = 
+            wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID);
+        
+        assertTrue("missing preceded_by relations generated from comments", 
+                ont.containsAxiom(factory.getOWLSubClassOfAxiom(
+                    wrapper.getOWLClassByIdentifier("FBdv:00000003"), 
+                    factory.getOWLObjectSomeValuesFrom(precededBy, 
+                        wrapper.getOWLClassByIdentifier("FBdv:00000002")))));
+        assertTrue("missing preceded_by relations generated from comments", 
+                ont.containsAxiom(factory.getOWLSubClassOfAxiom(
+                    wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
+                    factory.getOWLObjectSomeValuesFrom(precededBy, 
+                        wrapper.getOWLClassByIdentifier("FBdv:00000001")))));
+        assertTrue("missing preceded_by relations generated from comments", 
+                ont.containsAxiom(factory.getOWLSubClassOfAxiom(
+                    wrapper.getOWLClassByIdentifier("FBdv:00000001"), 
+                    factory.getOWLObjectSomeValuesFrom(precededBy, 
+                        wrapper.getOWLClassByIdentifier("FBdv:00000000")))));
+        
+        //check that the already existing immediately_preceded_by relation was not removed
+        assertTrue("An existing relation was incorrectly removed", 
+                ont.containsAxiom(factory.getOWLSubClassOfAxiom(
+                    wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
+                    factory.getOWLObjectSomeValuesFrom(immPrecededBy, 
+                        wrapper.getOWLClassByIdentifier("FBdv:00000001")))));
     }
     
     /**
@@ -441,6 +534,15 @@ public class UberonTest extends TestAncestor {
                 uberon.generateStageNestedSetModel(immature));
     }
     
+    //@Test
+    public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/dev_stage_ontology.obo");
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
+        
+        uberon.getStageIdsBetween("FBdv:00005369", "FBdv:00007026");
+    }
     /**
      * Test the method {@link Uberon#getStageIdsBetween(String, String)}
      * @throws IOException 
@@ -481,17 +583,5 @@ public class UberonTest extends TestAncestor {
                 "MmulDv:0000007");
         assertEquals("incorrect stages retrieved between start and end", expectedList, 
                 uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000007"));
-    }
-    
-    //@Test
-    public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.obo");
-        OWLGraphManipulator manip = new OWLGraphManipulator(ont);
-        OWLGraphWrapper wrapper = manip.getOwlGraphWrapper();
-        
-        OWLClass embryo = wrapper.getOWLClassByIdentifier("UBERON:0000922");
-        log.info(wrapper.getNamedAncestors(embryo));
-        log.info(wrapper.getEdgesBetween(wrapper.getOWLClassByIdentifier("UBERON:0000922"), 
-                wrapper.getOWLClassByIdentifier("NBO:0000313")));
     }
 }

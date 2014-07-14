@@ -406,7 +406,7 @@ public class Uberon {
      * @see #generateStageOntology()
      */
     public final static Pattern TEMPORAL_COMMENT_PATTERN = 
-            Pattern.compile(".*?Temporal ordering number - ([0-9]+?).*?");
+            Pattern.compile(".*?Temporal ordering number - ([0-9]+?)\\D*?$");
     /**
      * An {@code int} that is the index of the group capturing the temporal ordering 
      * in the {@code Pattern} {@link #TEMPORAL_COMMENT_PATTERN}.
@@ -840,8 +840,6 @@ public class Uberon {
             }
         }   
         
-        this.generatePrecededByFromComments();
-        
         manipulator.reduceRelations();
         manipulator.reducePartOfIsARelations();
         
@@ -854,17 +852,21 @@ public class Uberon {
      * Generate preceded_by relation from temporal ordering in comments. This is the only way 
      * to properly order FBdv classes. The comment pattern to retrieve is 
      * {@link #TEMPORAL_COMMENT_PATTERN}. The {@code OWLOntology} wrapped by this object 
-     * will be modified as a result, with added preceded_by relations.
+     * will be modified as a result, by adding preceded_by relations between 
+     * {@code OWLClass}es in {@code classesToOrder}.
+     * 
+     * @param classesToOrder    A {@code Set} of {@code OWLClass}es that needs to be ordered 
+     *                          thanks to temporal ordering in comments. 
      */
-    public void generatePrecededByFromComments() {
-        log.entry();
+    public void generatePrecededByFromComments(Set<OWLClass> classesToOrder) {
+        log.entry(classesToOrder);
         
         OWLGraphManipulator manipulator = this.ontUtils.getManipulator();
         
         //now, we transform temporal ordering in comments into preceded_by relations 
         //(it is the only way to correctly use FBdv)
         NavigableMap<Integer, OWLClass> commentOrdering = new TreeMap<Integer, OWLClass>();
-        for (OWLClass cls: this.ontUtils.getWrapper().getAllOWLClasses()) {
+        for (OWLClass cls: classesToOrder) {
              String comment = this.ontUtils.getWrapper().getComment(cls);
              if (StringUtils.isNotBlank(comment)) {
                  log.trace("Examining comment to search for temporal ordering: {}", 
@@ -932,7 +934,8 @@ public class Uberon {
             //order the direct children
             Set<OWLClass> children = new HashSet<OWLClass>();
             for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(classWalked)) {
-                if (this.ontUtils.isPartOfRelation(incomingEdge) && 
+                if ((this.ontUtils.isPartOfRelation(incomingEdge) || 
+                        this.ontUtils.isASubClassOfEdge(incomingEdge)) && 
                         incomingEdge.isSourceNamedObject()) {
                   
                     OWLClass child = (OWLClass) incomingEdge.getSource();
@@ -1066,6 +1069,9 @@ public class Uberon {
      * But it can be used with any {@code Set} of {@code OWLClass}es, as long as relations 
      * are consistent (no cycles of preceded_by, no missing preceded_by between the provided 
      * {@code OWLClass}es, etc).
+     * <p>
+     * Additionnaly, additional preceded_by relations are faked thanks to temporal ordering 
+     * in comments (see {@link #generatePrecededByFromComments(Set)})
      * 
      * @param classesToOrder    A {@code Set} of {@code OWLClass}es to order according to 
      *                          their immediately_preceded_by or preceded_by relations.
@@ -1078,6 +1084,8 @@ public class Uberon {
         
         OWLGraphWrapper wrapper = this.ontUtils.getWrapper();
         List<OWLClass> orderedClasses = new ArrayList<OWLClass>();
+        
+        this.generatePrecededByFromComments(classesToOrder);
         
         //first, we look for the last class, the only one with no preceded_by  
         //or immediately_preceded_by relations incoming from other OWLClass in classesToOrder. 

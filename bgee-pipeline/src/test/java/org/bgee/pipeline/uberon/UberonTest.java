@@ -307,7 +307,11 @@ public class UberonTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         Uberon uberon = new Uberon(utils);
         
-        uberon.generatePrecededByFromComments();
+        uberon.generatePrecededByFromComments(new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("FBdv:00000000"), 
+                wrapper.getOWLClassByIdentifier("FBdv:00000001"), 
+                wrapper.getOWLClassByIdentifier("FBdv:00000002"), 
+                wrapper.getOWLClassByIdentifier("FBdv:00000003"))));
         
         //check that the desired edges were created. 
         OWLDataFactory factory = ont.getOWLOntologyManager().getOWLDataFactory();
@@ -534,7 +538,7 @@ public class UberonTest extends TestAncestor {
                 uberon.generateStageNestedSetModel(immature));
     }
     
-    //@Test
+    @Test
     public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/dev_stage_ontology.obo");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);

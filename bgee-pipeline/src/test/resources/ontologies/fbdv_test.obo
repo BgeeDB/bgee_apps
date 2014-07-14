@@ -23,5 +23,5 @@ relationship: RO:0002087 FBdv:00000001
 [Term]
 id: FBdv:00000003
 name: C
-comment: Temporal ordering number - 4.
+comment: Temporal ordering number - 10.
 relationship: part_of FBdv:00000000

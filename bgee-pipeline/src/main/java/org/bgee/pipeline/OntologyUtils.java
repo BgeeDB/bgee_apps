@@ -621,7 +621,8 @@ public class OntologyUtils {
             for (OWLGraphEdge incomingEdge: this.getWrapper().getIncomingEdges(classInspected)) {
                 OWLQuantifiedProperty qp = incomingEdge.getSingleQuantifiedProperty();
                 if (incomingEdge.isSourceNamedObject() && 
-                    qp.isSomeValuesFrom() && overProps.contains(qp.getProperty())) {
+                    (qp.isSomeValuesFrom() && overProps.contains(qp.getProperty()) || 
+                            this.isASubClassOfEdge(incomingEdge))) {
                     
                     children.add((OWLClass) incomingEdge.getSource());
                 }

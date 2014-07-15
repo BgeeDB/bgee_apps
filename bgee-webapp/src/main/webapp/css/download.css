@@ -1,0 +1,236 @@
+/**** Bgee: a dataBase for Gene Expression Evolution ****/
+
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	min-width: 600px;
+}
+
+/****BGEE CONTAINER****/
+
+#bgee_container {
+	position: relative;
+	padding: 0;
+	margin: 0;
+	top: 0;
+	left: 0;
+	min-height: 100%;
+	width: 100%;
+	background-color: #F7F8FA;
+}
+
+/****BGEE HEADER****/
+
+#bgee_header {
+	position: relative;
+	background: #F7F8FA url(img/sib_header_bkgd.png) repeat-x top left;
+	height: 75px;
+	width: 100%;
+	color: #282828;
+	z-index: 2;
+}
+#bgee_header h1 {
+	position: relative;
+	color: #282828;
+	text-align: center;
+	white-space: nowrap;
+	top: 20px;
+	margin: 0 250px;
+	font: 36px  Helvetica,Verdana, sans-serif;
+}
+#bgee_header #bgee_title {
+	padding: 0 75px;
+	margin: 0;
+	top: 0;
+	height: 50px;
+}
+
+/****BGEE BODY****/
+#bgee_body {
+	position: relative;
+	padding: 18px 18px 78px 18px;
+	background: #F7F8FA url(img/sib_body_bkgd.png) repeat-x top left;
+	min-height: 420px;
+	font-family: Helvetica;
+	color: #626262;
+	font-size: 12px;
+	z-index: 1;
+}
+
+#bgee_body h1, #bgee_body h2 {
+	position: relative;
+	color: #282828;
+	text-align: center;
+	white-space: nowrap;
+}
+#bgee_body h1 {
+	top: 15px;
+	margin: 0 250px;
+	font: 36px  Helvetica,Verdana, sans-serif;
+}
+#bgee_body h2 {
+	top: 5px;
+	margin: 10 150px;
+	font: 18px  Helvetica,Verdana, sans-serif;
+}
+
+
+/****BGEE FIELDSET****/
+#bgee_fieldset {
+    font-weight:bold;
+    padding: 0.5%;
+	border: 2px #920209 solid;
+	border-radius: 10px;
+    color:#920209;
+    width: 95%;
+    margin-left: 2%;
+    margin-bottom: 5px;
+    text-align: center;
+    display: inline-block;
+    vertical-align:top;
+    text-align:left;
+}
+
+#bgee_fieldset div {
+    position: relative;
+    float:left;
+    width: 100%;
+}
+
+#bgee_fieldset legend {
+	font: 18px  Helvetica,Verdana, sans-serif;
+    font-weight:bold;
+}
+
+#bgee_fieldset figure {
+    margin: 3px;
+    float:left;
+}
+
+#bgee_fieldset figure img {
+    width: 90px;
+}
+
+#bgee_fieldset figcaption {
+    color:#282828;
+	font: 12px  Helvetica,Verdana, sans-serif;
+    text-align: center;
+}
+
+
+/****BGEE DATASELECTION****/
+
+#bgee_data_selection {
+    position: relative;
+	background-color: black;
+    padding: 30px;
+	width: 90%;
+    height: 360px;
+}
+
+#bgee_data_selection_left {
+    float: left;
+    width: 300px;
+}
+
+#bgee_data_selection_left img {
+    height: 300px;
+}
+
+#bgee_data_selection_right {
+    margin-left: 330px;
+}
+
+#bgee_data_selection_right h1, #bgee_data_selection_right h2 {
+    text-align: left;
+	color: #DBDBDB;
+}
+
+#bgee_data_selection_right h1 {
+	font: 36px  Helvetica,Verdana, sans-serif;
+}
+
+#bgee_data_selection_right h2 {
+	font: 18px  Helvetica,Verdana, sans-serif;
+}
+
+#bgee_data_selection_right ul {
+    list-style-image: url(img/);
+}
+#bgee_data_selection_right ul.ul {
+	list-style-type: circle;
+}
+
+
+/****LOGOS****/
+
+#bgee_header #sib_logo {
+	position: absolute;
+	top:8px;
+	left: 18px;
+	width: 78px;
+	height: 59px;
+	background: transparent url(img/sibLogo.png) no-repeat top left;
+}
+#bgee_header #bgee_logo {
+	position: absolute;
+    top: 8px;
+	left: 100px;
+	width: 122px;
+	height: 38px;
+	height: 59px;
+	background: transparent url(img/bgeeBannerLogoSmall.png) no-repeat top left;
+}
+
+/****BGEE FOOTER****/
+#bgee_footer {
+	position: absolute;
+	bottom: 0px;
+	height: 40px;
+	background-color: #1E2425;
+	width: 100%;
+	color: #F7F8FA;
+	letter-spacing: 1px;
+	font-family: Verdana;
+	font-size: 10px;
+	font-weight: normal;
+	z-index: 2;
+}
+#bgee_footer_content {
+	position: relative;
+	padding: 9px 36px 0px 36px;
+	padding-right: 300px;
+}
+#bgee_footer a {
+	text-decoration: none;
+	color: #F7F8FA;
+}
+#bgee_footer a:hover {
+	color: #F7F8FA;
+	text-decoration: underline;
+}
+#bgee_footer a img,#bgee_header a img {
+	border: none;
+	vertical-align: middle;
+	padding-right: 5px;
+}
+#bgee_footer_right {
+	position: absolute;
+	right: 18px;
+	width: 400px;
+	top: 9px;
+	text-align: right;
+}
+#bgee_footer_right a {
+	padding-left: 10px;
+}
+#bgee_footer_right a:hover img {
+	text-decoration: none;
+	border: none;
+}
+#bgee_footer_gototop {
+	background: transparent url(img/triangle_hover.png) no-repeat top left;
+	padding-left: 10px;
+	margin-right: 10px;
+}

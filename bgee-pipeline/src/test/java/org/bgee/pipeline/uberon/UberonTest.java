@@ -538,15 +538,18 @@ public class UberonTest extends TestAncestor {
                 uberon.generateStageNestedSetModel(immature));
     }
     
-    //@Test
+    @Test
     public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
-                getResource("/dev_stage_ontology.obo").getFile());
+                getResource("/ontologies/dev_stage_ontology.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         Uberon uberon = new Uberon(utils);
         
         uberon.getStageIdsBetween("FBdv:00005303", "FBdv:00007026");
+        uberon.getStageIdsBetween("FBdv:00005303", "FBdv:00007026");
+        uberon.getStageIdsBetween("FBdv:00005306", "FBdv:00005336");
+        uberon.getStageIdsBetween("FBdv:00005304", "FBdv:00005321");
     }
     /**
      * Test the method {@link Uberon#getStageIdsBetween(String, String)}

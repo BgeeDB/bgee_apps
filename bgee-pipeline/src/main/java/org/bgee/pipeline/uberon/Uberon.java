@@ -939,12 +939,24 @@ public class Uberon {
     public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) {
         log.entry(root);
         
+        //check if we have a nested set model in cache for this root
         Map<OWLClass, Map<String, Integer>> nestedSetModel = this.nestedSetModels.get(root);
         if (nestedSetModel != null) {
-            log.trace("Retrieving nested set model from cache");
+            log.trace("Retrieving nested set model from cache of class {}", root);
             return log.exit(nestedSetModel);
         }
+        //then check if we have a nested set model in cache for one of its ancestor
+        Set<OWLObject> ancestors = 
+                this.ontUtils.getWrapper().getAncestors(root, this.overPartOf);
+        ancestors.retainAll(this.nestedSetModels.keySet());
+        if (!ancestors.isEmpty()) {
+            //select any ancestor with a nested set model in cache
+            OWLObject ancestor = ancestors.iterator().next();
+            log.trace("Retrieving nested set model from cache of class {}", ancestor);
+            return log.exit(this.nestedSetModels.get(ancestor));
+        }
         
+        //otherwise, let's compute the nested set model for this root.
         OWLGraphWrapper wrapper = this.ontUtils.getWrapper();
         
         //get the ordering between sibling OWLClasses according to preceded_by relations. 

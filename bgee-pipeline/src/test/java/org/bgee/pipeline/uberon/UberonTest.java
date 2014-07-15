@@ -538,7 +538,7 @@ public class UberonTest extends TestAncestor {
                 uberon.generateStageNestedSetModel(immature));
     }
     
-    @Test
+    //@Test
     public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/dev_stage_ontology.obo");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);

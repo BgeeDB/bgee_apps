@@ -59,6 +59,10 @@ public class RequestParametersTest {
 	@BeforeClass
 	public static void loadParameters(){
 		
+		System.getProperties().setProperty(
+				"org.bgee.webapp.requestParametersStorageDirectory",
+				System.getProperty("java.io.tmpdir"));
+		
 		testURLParameters = new TestURLParameters();	
 	
 	}

@@ -478,7 +478,7 @@ public class OntologyUtils {
      * 
      * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
      *              to start the computations from.
-     * @return  See {@link #computeNestedSetModelParams(List)} 
+     * @return  See {@link #computeNestedSetModelParams(OWLClass, List)} 
      * @throws IllegalStateException    If the {@code OWLOntology} provided at instantiation 
      *                                  is not a simple tree.
      * @throws UnknownOWLOntologyException      If an {@code OWLGraphWrapper} was not 
@@ -487,7 +487,7 @@ public class OntologyUtils {
      * @throws OWLOntologyCreationException     If an {@code OWLGraphWrapper} was not 
      *                                          provided at instantiation, and an error 
      *                                          occurred while loading it.
-     * @see #computeNestedSetModelParams(List)
+     * @see #computeNestedSetModelParams(OWLClass, List)
      */
     //TODO adapt as in org.bgee.pipeline.hierarchicalGroups.ParseOrthoXML.buildNestedSet(Node)
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root) 
@@ -497,13 +497,13 @@ public class OntologyUtils {
     }
     
     /**
-     * Delegates to {@link #computeNestedSetModelParams(List, Set)} with the second 
+     * Delegates to {@link #computeNestedSetModelParams(OWLClass, List, Set)} with the second 
      * {@code Set} argument set to {@code null}.
      * 
      * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
      *              to start the computations from.
-     * @param classOrder    See same argument in {@link #computeNestedSetModelParams(List, Set)}.
-     * @return              See returned value of {@link #computeNestedSetModelParams(List, Set)}
+     * @param classOrder    See same argument in {@link #computeNestedSetModelParams(OWLClass, List, Set)}.
+     * @return              See returned value of {@link #computeNestedSetModelParams(OWLClass, List, Set)}
      * @throws UnknownOWLOntologyException
      */
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root, 
@@ -549,8 +549,10 @@ public class OntologyUtils {
      *                                          provided at instantiation, and an error 
      *                                          occurred while loading it.
      */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root, 
-            List<OWLClass> classOrder, Set<OWLPropertyExpression> overProps) 
+            List<OWLClass> classOrder, @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) 
                     throws UnknownOWLOntologyException {
         log.entry(root, classOrder, overProps);
         
@@ -608,10 +610,12 @@ public class OntologyUtils {
      *                                          provided at instantiation, and an error 
      *                                          occurred while loading it.
      */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
     private void recursiveNestedSetModelParams(
             final Map<OWLClass, Map<String, Integer>> params, 
             final OWLClass classInspected,  final List<OWLClass> classOrder, 
-            Set<OWLPropertyExpression> overProps) 
+            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) 
         throws IllegalStateException, UnknownOWLOntologyException {
         log.entry(params, classInspected, classOrder, overProps);
         
@@ -1204,8 +1208,10 @@ public class OntologyUtils {
      *                      to walk from {@code source} to {@code target} 
      *                      on the shortest path.
      */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
     public int getMinDistance(OWLClass source, OWLClass target, 
-            Set<OWLPropertyExpression> overProps) {
+            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
         log.entry(source, target, overProps);
         
         //identity
@@ -1275,8 +1281,10 @@ public class OntologyUtils {
      * @return              A {@code Set} of {@code OWLClass}es that are the named 
      *                      least common ancestors of {@code cls1} and {@code cls2}.
      */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
     public Set<OWLClass> getLeastCommonAncestors(OWLClass cls1, OWLClass cls2, 
-            Set<OWLPropertyExpression> overProps) {
+            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
         log.entry(cls1, cls2, overProps);
         
         Set<OWLClass> commonAncestors = new HashSet<OWLClass>();

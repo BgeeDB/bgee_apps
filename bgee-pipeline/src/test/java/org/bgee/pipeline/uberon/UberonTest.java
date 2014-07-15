@@ -540,12 +540,13 @@ public class UberonTest extends TestAncestor {
     
     //@Test
     public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/dev_stage_ontology.obo");
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/dev_stage_ontology.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         Uberon uberon = new Uberon(utils);
         
-        uberon.getStageIdsBetween("FBdv:00005369", "FBdv:00007026");
+        uberon.getStageIdsBetween("FBdv:00005303", "FBdv:00007026");
     }
     /**
      * Test the method {@link Uberon#getStageIdsBetween(String, String)}

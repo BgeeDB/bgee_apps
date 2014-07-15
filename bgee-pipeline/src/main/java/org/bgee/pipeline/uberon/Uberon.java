@@ -377,6 +377,16 @@ public class Uberon {
     private Collection<String> childrenOfToRemove;
     
     /**
+     * A {@code Map} associating a nested set model (as values), to the least common ancestor 
+     * it was computed for (as keys). This will allow to avoid recomputing a nested set model 
+     * for each query.
+     * @see #generateStageNestedSetModel(OWLClass)
+     */
+    //TODO: create a NestedSetModel class, rather than this ugly 
+    //Map<OWLClass, Map<String, Integer>>
+    private final Map<OWLClass, Map<OWLClass, Map<String, Integer>>> nestedSetModels;
+    
+    /**
      * A {@code Map} where keys are {@code String}s that are the OBO-like IDs 
      * of {@code OWLClass}es removed as a result of the simplification process, 
      * the associated values being {@code String}s representing the reason 
@@ -397,6 +407,9 @@ public class Uberon {
      * A {@code Set} of {@code OWLPropertyExpression} that can be conveniently used 
      * to query for relations and/or relatives only over part_of relations,
      */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
+    @SuppressWarnings("rawtypes")
     private final Set<OWLPropertyExpression> overPartOf;
     
     /**
@@ -439,9 +452,13 @@ public class Uberon {
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
      */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
+    @SuppressWarnings("rawtypes")
     public Uberon(OntologyUtils ontUtils) {
         this.classesRemoved = new HashMap<String, String>();
         this.ontUtils = ontUtils;
+        this.nestedSetModels = new HashMap<OWLClass, Map<OWLClass, Map<String, Integer>>>();
         this.overPartOf = Collections.unmodifiableSet(new HashSet<OWLPropertyExpression>(
                 Arrays.asList(this.ontUtils.getWrapper().getOWLObjectPropertyByIdentifier(
                         OntologyUtils.PART_OF_ID))));
@@ -909,6 +926,9 @@ public class Uberon {
      * according to their immediately_preceded_by and preceded_by relations, and 
      * the nested set model computed using the method {@link 
      * org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)}.
+     * <p>
+     * THe generated nested set models will be stored, associated to {@code root}, 
+     * to avoid recomputing them for each query.
      * 
      * @param root  An {@code OWLClass} that will be considered as the root of the ontology 
      *              to start the conputations from.
@@ -918,6 +938,12 @@ public class Uberon {
      */
     public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) {
         log.entry(root);
+        
+        Map<OWLClass, Map<String, Integer>> nestedSetModel = this.nestedSetModels.get(root);
+        if (nestedSetModel != null) {
+            log.trace("Retrieving nested set model from cache");
+            return log.exit(nestedSetModel);
+        }
         
         OWLGraphWrapper wrapper = this.ontUtils.getWrapper();
         
@@ -948,13 +974,31 @@ public class Uberon {
             }
         }
         
-        return log.exit(this.ontUtils.computeNestedSetModelParams(root, globalOrdering, 
-                this.overPartOf));
+        nestedSetModel = this.ontUtils.computeNestedSetModelParams(root, globalOrdering, 
+                this.overPartOf);
+        this.nestedSetModels.put(root, nestedSetModel);
+        
+        return log.exit(nestedSetModel);
+    }
+    
+    /**
+     * Delegates to {@link #getStageIdsBetween(String, String, Map)} with the last {@code Map} 
+     * parameter {@code null}. In that case, the nested set model will be computed directly 
+     * (see documentation of delegate method). 
+     * 
+     * @param startStageId  See same argument in {@link #getStageIdsBetween(String, String, Map)}
+     * @param endStageId    See same argument in {@link #getStageIdsBetween(String, String, Map)}
+     * @return              See returned value in {@link #getStageIdsBetween(String, String, Map)}
+     */
+    public List<String> getStageIdsBetween(String startStageId, String endStageId) {
+        log.entry(startStageId, endStageId);
+        return log.exit(this.getStageIdsBetween(startStageId, endStageId, null));
     }
     
     /**
      * Retrieve the OBO-like IDs of the developmental stages occurring between the stages 
      * with IDs {@code startStageId} and {@code endStageId}. To achieve this task, 
+     * either the {@code providedNestedModel} will be used, or, if {@code null}, 
      * a nested set model is computed for the ontology wrapped by this object 
      * (provided before calling this method through {@link #setPathToUberonOnt(String)}), 
      * starting from the least common ancestor of the start and end stages, using 
@@ -966,12 +1010,19 @@ public class Uberon {
      *                      developmental stage.
      * @param endStageId    A {@code String} that is the OBO-like ID of the end  
      *                      developmental stage.
+     * @param providedNestedModel   A {@code Map} associating {@code OWLClass}es 
+     *                              of the ontology to a {@code Map} containing 
+     *                              their left bound, right bound, and level, see 
+     *                              {@link org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(
+     *                              OWLClass, List, Set)} 
+     *                              for more details.
      * @return              A {@code List} of {@code String}s that are the OBO-like IDs 
      *                      of stages occurring between start and end stages, ordered 
      *                      by chronological order. 
      * @see #generateStageNestedSetModel(OWLClass)
      */
-    public List<String> getStageIdsBetween(String startStageId, String endStageId) {
+    public List<String> getStageIdsBetween(String startStageId, String endStageId, 
+            Map<OWLClass, Map<String, Integer>> providedNestedModel) {
         log.entry(startStageId, endStageId);
         
         List<String> stageIdsBetween = new ArrayList<String>();
@@ -992,24 +1043,27 @@ public class Uberon {
         if (startStage.equals(endStage)) {
             stageIdsBetween.add(startStageId);
         } else {
-            
-            //first, get the least common ancestor of the two stages over part_of relation
-            Set<OWLClass> lcas = this.ontUtils.getLeastCommonAncestors(startStage, endStage, 
-                    this.overPartOf);
-            
-            //the part_of graph should be a tree, so, only one OWLClass lca
-            if (lcas.size() != 1) {
-                throw log.throwing(new IllegalStateException("The developmental stages " +
-                		"used does not represent a tree over part_of relations, " +
-                		"cannot continue. Least common ancestors of start and end stages :" + 
-                		lcas));
-            }
-            OWLClass lca = lcas.iterator().next();
-            
-            //now we obtain a nested set model starting from this LCA
+            //now we obtain a nested set model 
             //this nested set model will be used in a comparator, we make it final.
-            final Map<OWLClass, Map<String, Integer>> nestedModel = 
-                    this.generateStageNestedSetModel(lca);
+            final Map<OWLClass, Map<String, Integer>> nestedModel;
+            if (providedNestedModel != null) {
+                nestedModel = providedNestedModel;
+            } else {
+                //first, get the least common ancestor of the two stages over part_of relation
+                Set<OWLClass> lcas = this.ontUtils.getLeastCommonAncestors(startStage, endStage, 
+                        this.overPartOf);
+                
+                //the part_of graph should be a tree, so, only one OWLClass lca
+                if (lcas.size() != 1) {
+                    throw log.throwing(new IllegalStateException("The developmental stages " +
+                            "used does not represent a tree over part_of relations, " +
+                            "cannot continue. Least common ancestors of start and end stages :" + 
+                            lcas));
+                }
+                OWLClass lca = lcas.iterator().next();
+                
+                nestedModel = this.generateStageNestedSetModel(lca);
+            }
             //get the parameters related to startStage and endStage
             int startLeftBound = nestedModel.get(startStage).get(OntologyUtils.LEFT_BOUND_KEY);
             int startRightBound = nestedModel.get(startStage).get(OntologyUtils.RIGHT_BOUND_KEY);
@@ -1838,6 +1892,13 @@ public class Uberon {
      */
     public void setChildrenOfToRemove(Collection<String> childrenOfToRemove) {
         this.childrenOfToRemove = childrenOfToRemove;
+    }
+    
+    /**
+     * @return  The {@code OntologyUtils} used by this object. 
+     */
+    public OntologyUtils getOntologyUtils() {
+        return this.ontUtils;
     }
     
     

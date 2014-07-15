@@ -1,5 +1,14 @@
 package org.bgee.controller;
 
+/**
+ * Controller that handles requests related to download pages
+ *  
+ * @author 	Mathieu Seppey
+ * @version Bgee 13 Jul 2014
+ * @since 	Bgee 13
+ *
+ */
+
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;

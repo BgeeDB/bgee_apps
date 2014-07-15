@@ -20,7 +20,51 @@ import org.apache.logging.log4j.Logger;
  * Of note, an additional property allows to change the name of the property file 
  * to use (corresponds to the property {@code bgee.properties.file}).
  * <p>
- * TODO provide the properties list with comments
+ * The properties are
+ * - requestParametersStorageDirectory	 A <code>String</code> that defines the directory 
+ * 										 where query strings holding storable parameters  
+ * 										 from previous large queries are stored. 
+ * 
+ * - bgeeRootDirectory					 A <code>String</code> that defines the root of URLs to Bgee, 
+ * 										 for instance, "http://bgee.unil.ch/bgee/bgee".
+ * 
+ * - downloadRootDirectory				 A <code>String</code> that defines the root directory where are located files
+ * 										 available for download, 
+ *										 to be added to the <code>bgeeRootDirectory</code>
+ *										 to generate URL to download files.
+ *										 
+ * - javascriptFilesRootDirectory		 A <code>String</code> that defines the root directory where are located javascript files, 
+ *										 to be added to the <code>bgeeRootDirectory</code>
+ *										 to generate URL to obtain javascript files.
+ *										
+ * - cssFilesRootDirectory			 	 A <code>String</code> that defines the root directory where are located css files, 
+ *										 to be added to the <code>bgeeRootDirectory</code> 
+ *										 to generate URL to obtain css files.
+ *
+ * - imagesRootDirectory				 A <code>String</code> that defines the root directory where are located images, 
+ *									 	 to be added to the <code>bgeeRootDirectory</code> 
+ *									 	 to generate URL to obtain images.
+ *									 	 
+ * - topOBOResultsUrlRootDirectory		 A <code>String</code> that defines the directory where are stored TopOBO result files, 
+ * 										 to be added to the <code>bgeeRootDirectory</code>
+ * 										 to generate URL to obtain result files.
+ * 
+ * - urlMaxLength						 An <code>Integer</code> that defines  max length of URLs. Typically, if the URL exceeds the max length, 
+ * 										 a key is generated to store and retrieve a query string, 
+ * 										 holding the "storable" parameters. The "storable" parameters are removed from the URL, 
+ * 										 and replaced by the generated key.
+ * 
+ * - encodeUrl							 A <code>boolean</code> that defines whether parameters should be url encoded 
+ * 										 by the <code>encodeUrl</code> method.
+ * 										 If <code>false</code>, then the <code>encodeUrl</code> method returns 
+ * 										 Strings with no modifications, otherwise, they are url encoded if needed 
+ * 										 (it does not necessarily mean they will. For index, if there are no 
+ * 										 special chars to encode in the submitted String).
+ * 										 <parameter>
+ * 										 Default value is <code>true</code>.
+ * 
+ * - parametersSeparator				 A {@code String} that defines the character used to separate parameters 
+ * 								   		 in the URL
  * <p>
  * This class has been inspired from {@code net.sf.log4jdbc.DriverSpy} 
  * developed by Arthur Blake.
@@ -42,70 +86,49 @@ public class BgeeProperties
 	//Server parameters
 	//*************************
 	/**
-	 * <code>String</code> defining the directory where query strings holding storable parameters  
+	 * <code>String</code> that defines the directory where query strings holding storable parameters  
 	 * from previous large queries are stored. 
-	 * Category: server parameters.
-	 * @see #loadStorableParametersFromKey()
-	 * @see #store()
 	 */
 	private static String requestParametersStorageDirectory;
 
 	/**
-	 * Define the root of URLs to Bgee, 
+	 * A <code>String</code> that defines the root of URLs to Bgee, 
 	 * for instance, "http://bgee.unil.ch/bgee/bgee".
-	 * This parameters is loaded by retrieving the value from the server parameters object, 
-	 * <code>model.Parameters</code>.
-	 * @see model.Parameters
 	 */
 	private static String bgeeRootDirectory;
 
 	/**
-	 * Define the root directory where are located files available for download, 
+	 * A <code>String</code> that defines the root directory where are located files available for download, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to download files.
-	 * This parameters is loaded by retrieving the value from the server parameters object, 
-	 * <code>model.Parameters</code>.
-	 * @see model.Parameters
 	 */
 	private static String downloadRootDirectory;
 
 	/**
-	 * Define the root directory where are located javascript files, 
+	 * A <code>String</code> that defines the root directory where are located javascript files, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to obtain javascript files.
-	 * This parameters is loaded by retrieving the value from the server parameters object, 
-	 * <code>model.Parameters</code>.
-	 * @see model.Parameters
 	 */
 	private static String javascriptFilesRootDirectory;
 
 	/**
-	 * Define the root directory where are located css files, 
+	 * A <code>String</code> that defines the root directory where are located css files, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to obtain css files.
-	 * This parameters is loaded by retrieving the value from the server parameters object, 
-	 * <code>model.Parameters</code>.
-	 * @see model.Parameters
 	 */
 	private static String cssFilesRootDirectory;
 
 	/**
-	 * Define the root directory where are located images, 
+	 * A <code>String</code> that defines the root directory where are located images, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to obtain images.
-	 * This parameters is loaded by retrieving the value from the server parameters object, 
-	 * <code>model.Parameters</code>.
-	 * @see model.Parameters
 	 */
 	private static String imagesRootDirectory;
 
 	/**
-	 * Define the directory where are stored TopOBO result files, 
+	 * A <code>String</code> that defines the directory where are stored TopOBO result files, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to obtain result files.
-	 * This parameters is loaded by retrieving the value from the server parameters object, 
-	 * <code>model.Parameters</code>.
-	 * @see model.Parameters
 	 */
 	private static String topOBOResultsUrlRootDirectory;
-	
+
 	/**
-	 * Define max length of URLs. Typically, if the URL exceeds the max length, 
+	 * An <code>Integer</code> that definesmax length of URLs. Typically, if the URL exceeds the max length, 
 	 * a key is generated to store and retrieve a query string, 
 	 * holding the "storable" parameters. The "storable" parameters are removed from the URL, 
 	 * and replaced by the generated key.
@@ -118,9 +141,9 @@ public class BgeeProperties
 	 * @see org.bgee.RequestParameters.java
 	 */
 	private static Integer urlMaxLength;
-	
+
 	/**
-	 * A <code>boolean</code> defining whether parameters should be url encoded 
+	 * A <code>boolean</code> that defines whether parameters should be url encoded 
 	 * by the <code>encodeUrl</code> method.
 	 * If <code>false</code>, then the <code>encodeUrl</code> method returns 
 	 * Strings with no modifications, otherwise, they are url encoded if needed 
@@ -128,8 +151,6 @@ public class BgeeProperties
 	 * special chars to encode in the submitted String).
 	 * <parameter>
 	 * Default value is <code>true</code>.
-	 * 
-	 * @see #urlEncode(String)
 	 */
 	private static boolean encodeUrl;
 
@@ -184,34 +205,34 @@ public class BgeeProperties
 				"org.bgee.webapp.requestParametersStorageDirectory", "/tmp/");
 
 		bgeeRootDirectory  = getStringOption(sysProps, fileProps, 
-				"org.bgee.webapp.bgeeRootDirectory", null);
+				"org.bgee.webapp.bgeeRootDirectory", "/");
 
 		downloadRootDirectory  = getStringOption(sysProps, fileProps, 
-				"org.bgee.webapp.requestParametersStorageDirectory", null);
+				"org.bgee.webapp.requestParametersStorageDirectory", "download/");
 
 		javascriptFilesRootDirectory  = getStringOption(sysProps, fileProps, 
-				"org.bgee.webapp.downloadRootDirectory", null);
-		
+				"org.bgee.webapp.downloadRootDirectory", "js/");
+
 		cssFilesRootDirectory  = getStringOption(sysProps, fileProps, 
-				"org.bgee.webapp.cssFilesRootDirectory", null);
-		
+				"org.bgee.webapp.cssFilesRootDirectory", "css/");
+
 		imagesRootDirectory  = getStringOption(sysProps, fileProps, 
-				"org.bgee.webapp.imagesRootDirectory", null);
-		
+				"org.bgee.webapp.imagesRootDirectory", "img/");
+
 		topOBOResultsUrlRootDirectory  = getStringOption(sysProps, fileProps, 
 				"org.bgee.webapp.topOBOResultsUrlRootDirectory", null);
-		
+
 		urlMaxLength  = getIntegerOption(sysProps, fileProps, 
 				"org.bgee.webapp.urlMaxLength", 120);
-		
+
 		encodeUrl  = getBooleanOption(sysProps, fileProps, 
 				"org.bgee.webapp.encodeUrl", true);
-		
+
 		parametersSeparator  = getStringOption(sysProps, fileProps, 
 				"org.bgee.webapp.parametersSeparator", "&");
-			
+
 		log.info("Initialization done.");
-		
+
 		log.exit();
 
 	}
@@ -243,7 +264,7 @@ public class BgeeProperties
 			String defaultValue)
 	{
 		log.entry(fileProps, sysProps, key, defaultValue);
-		
+
 		String propValue = sysProps.getProperty(key);
 
 		if (StringUtils.isNotBlank(propValue)) {
@@ -263,86 +284,86 @@ public class BgeeProperties
 
 		return log.exit(propValue);
 	}
-	
-    /**
-     * Try to retrieve the property corresponding to {@code key}, 
-     * first from the System properties ({@code sysProps}), 
-     * then, if undefined or empty, from properties retrieved from the Bgee property file 
-     * ({@code fileProps}), and cast it into a {@code int} value.
-     * If the property is undefined or empty in both {@code fileProps} 
-     * and {@code sysProps}, return {@code defaultValue}.
-     *
-     * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
-     * 						where {@code key} is first searched in.
-     * @param fileProps	 	{@code java.sql.Properties} retrieved 
-     * 						from the Bgee properties file, 
-     * 						where {@code key} is searched in if the property 
-     * 						was undefined or empty in {@code sysProps}. 
-     * 						Can be {@code null} if no properties file was found.
-     * @param defaultValue	default value that will be returned if the property 
-     * 						is undefined or empty in both {@code Properties}.
-     *
-     * @return 			An {@code int} corresponding to the value
-     * 					for that property key.
-     * 					Or {@code defaultValue} if not defined or empty.
-     */
-    private static int getIntegerOption(java.util.Properties sysProps, 
-            java.util.Properties fileProps, String key, 
-            int defaultValue)
-    {
-        log.entry(fileProps, sysProps, key, defaultValue);
 
-        String propValue = getStringOption(sysProps, fileProps, key, null);
-        int val = defaultValue;
-        if (propValue != null) {
-            val= Integer.valueOf(propValue);
-        }
+	/**
+	 * Try to retrieve the property corresponding to {@code key}, 
+	 * first from the System properties ({@code sysProps}), 
+	 * then, if undefined or empty, from properties retrieved from the Bgee property file 
+	 * ({@code fileProps}), and cast it into a {@code int} value.
+	 * If the property is undefined or empty in both {@code fileProps} 
+	 * and {@code sysProps}, return {@code defaultValue}.
+	 *
+	 * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
+	 * 						where {@code key} is first searched in.
+	 * @param fileProps	 	{@code java.sql.Properties} retrieved 
+	 * 						from the Bgee properties file, 
+	 * 						where {@code key} is searched in if the property 
+	 * 						was undefined or empty in {@code sysProps}. 
+	 * 						Can be {@code null} if no properties file was found.
+	 * @param defaultValue	default value that will be returned if the property 
+	 * 						is undefined or empty in both {@code Properties}.
+	 *
+	 * @return 			An {@code int} corresponding to the value
+	 * 					for that property key.
+	 * 					Or {@code defaultValue} if not defined or empty.
+	 */
+	private static int getIntegerOption(java.util.Properties sysProps, 
+			java.util.Properties fileProps, String key, 
+			int defaultValue)
+	{
+		log.entry(fileProps, sysProps, key, defaultValue);
 
-        return log.exit(val);
-    }
-    
-    /**
-     * Try to retrieve the property corresponding to {@code key}, 
-     * first from the System properties ({@code sysProps}), 
-     * then, if undefined or empty, from properties retrieved from the Bgee property file 
-     * ({@code fileProps}), and cast it into a {@code boolean} 
-     * (if the value of the property is set, and equal to "true", "yes", or "on", 
-     * the returned boolean will be {@code true}, {@code false} otherwise). 
-     * If the property is undefined or empty in both {@code fileProps} 
-     * and {@code sysProps}, return {@code defaultValue}.
-     *
-     * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
-     * 						where {@code key} is first searched in.
-     * @param fileProps	 	{@code java.sql.Properties} retrieved 
-     * 						from the Bgee properties file, 
-     * 						where {@code key} is searched in if the property 
-     * 						was undefined or empty in {@code sysProps}. 
-     * 						Can be {@code null} if no properties file was found.
-     * @param defaultValue	default value that will be returned if the property 
-     * 						is undefined or empty in both {@code Properties}.
-     *
-     * @return 			A {@code boolean} corresponding to the value
-     * 					for that property key (if the value of the property is set and equal 
-     * 					to "true", "yes", or "on", the returned boolean 
-     * 					will be {@code true}, {@code false} otherwise). 
-     * 					Or {@code defaultValue} if not defined or empty.
-     */
-    private static boolean getBooleanOption(java.util.Properties sysProps, 
-            java.util.Properties fileProps, String key, 
-            boolean defaultValue)
-    {
-        log.entry(fileProps, sysProps, key, defaultValue);
-    
-        String propValue = getStringOption(sysProps, fileProps, key, null);
-        boolean val = defaultValue;
-        if (propValue != null) {
-            val= "true".equals(propValue) ||
-                    "yes".equals(propValue) || 
-                    "on".equals(propValue);
-        }
-    
-        return log.exit(val);
-    }
+		String propValue = getStringOption(sysProps, fileProps, key, null);
+		int val = defaultValue;
+		if (propValue != null) {
+			val= Integer.valueOf(propValue);
+		}
+
+		return log.exit(val);
+	}
+
+	/**
+	 * Try to retrieve the property corresponding to {@code key}, 
+	 * first from the System properties ({@code sysProps}), 
+	 * then, if undefined or empty, from properties retrieved from the Bgee property file 
+	 * ({@code fileProps}), and cast it into a {@code boolean} 
+	 * (if the value of the property is set, and equal to "true", "yes", or "on", 
+	 * the returned boolean will be {@code true}, {@code false} otherwise). 
+	 * If the property is undefined or empty in both {@code fileProps} 
+	 * and {@code sysProps}, return {@code defaultValue}.
+	 *
+	 * @param sysProps 		{@code java.sql.Properties} retrieved from System properties, 
+	 * 						where {@code key} is first searched in.
+	 * @param fileProps	 	{@code java.sql.Properties} retrieved 
+	 * 						from the Bgee properties file, 
+	 * 						where {@code key} is searched in if the property 
+	 * 						was undefined or empty in {@code sysProps}. 
+	 * 						Can be {@code null} if no properties file was found.
+	 * @param defaultValue	default value that will be returned if the property 
+	 * 						is undefined or empty in both {@code Properties}.
+	 *
+	 * @return 			A {@code boolean} corresponding to the value
+	 * 					for that property key (if the value of the property is set and equal 
+	 * 					to "true", "yes", or "on", the returned boolean 
+	 * 					will be {@code true}, {@code false} otherwise). 
+	 * 					Or {@code defaultValue} if not defined or empty.
+	 */
+	private static boolean getBooleanOption(java.util.Properties sysProps, 
+			java.util.Properties fileProps, String key, 
+			boolean defaultValue)
+	{
+		log.entry(fileProps, sysProps, key, defaultValue);
+
+		String propValue = getStringOption(sysProps, fileProps, key, null);
+		boolean val = defaultValue;
+		if (propValue != null) {
+			val= "true".equals(propValue) ||
+					"yes".equals(propValue) || 
+					"on".equals(propValue);
+		}
+
+		return log.exit(val);
+	}
 
 	//*********************************
 	// INSTANCE METHODS
@@ -357,7 +378,7 @@ public class BgeeProperties
 	private BgeeProperties(){}
 
 	/**
-	 * @return 	A <code>String</code> defining the directory where query strings holding storable parameters  
+	 * @return 	A <code>String</code> that defines the directory where query strings holding storable parameters  
 	 * from previous large queries are stored. 
 	 */
 	public static String getRequestParametersStorageDirectory() {
@@ -365,7 +386,7 @@ public class BgeeProperties
 	}
 
 	/**
-	 * @return A <code>String</code> defining the root of URLs to Bgee, 
+	 * @return A <code>String</code> that defines the root of URLs to Bgee, 
 	 * for instance, "http://bgee.unil.ch/bgee/bgee".
 	 */
 	public static String getBgeeRootDirectory() {
@@ -373,7 +394,7 @@ public class BgeeProperties
 	}
 
 	/**
-	 * @return A <code>String</code> defining the root directory where are located files available for download, 
+	 * @return A <code>String</code> that defines the root directory where are located files available for download, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to download files
 	 */
 	public static String getDownloadRootDirectory() {
@@ -381,7 +402,7 @@ public class BgeeProperties
 	}
 
 	/**
-	 * @return A <code>String</code> defining the root directory where are located javascript files, 
+	 * @return A <code>String</code> that defines the root directory where are located javascript files, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to obtain javascript files.
 	 */
 	public static String getJavascriptFilesRootDirectory() {
@@ -389,7 +410,7 @@ public class BgeeProperties
 	}
 
 	/**
-	 * @return A <code>String</code> defining the root directory where are located css files, 
+	 * @return A <code>String</code> that defines the root directory where are located css files, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to obtain css files.
 	 */
 	public static String getCssFilesRootDirectory() {
@@ -397,7 +418,7 @@ public class BgeeProperties
 	}
 
 	/**
-	 * @return A <code>String</code> defining the root directory where are located images, 
+	 * @return A <code>String</code> that defines the root directory where are located images, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to obtain images.
 	 */
 	public static String getImagesRootDirectory() {
@@ -405,7 +426,7 @@ public class BgeeProperties
 	}
 
 	/**
-	 * @return A <code>String</code> defining the directory where are stored TopOBO result files, 
+	 * @return A <code>String</code> that defines the directory where are stored TopOBO result files, 
 	 * to be added to the <code>bgeeRootDirectory</code> to generate URL to obtain result files.
 	 */
 	public static String getTopOBOResultsUrlRootDirectory() {
@@ -413,24 +434,26 @@ public class BgeeProperties
 	}
 
 	/**
-	 * TODO
-	 * @return
+	 * @return	An <code>Integer</code> that definesmax length of URLs. Typically, if the URL exceeds the max length, 
+	 * 			a key is generated to store and retrieve a query string, 
+	 * 			holding the "storable" parameters. The "storable" parameters are removed from the URL, 
+	 * 			and replaced by the generated key.
 	 */
 	public static Integer getUrlMaxLength() {
 		return urlMaxLength;
 	}
-	
+
 	/**
-	 * TODO
-	 * @return
+	 * @return	A <code>boolean</code> that defines whether parameters should be url encoded 
+	 * 			by the <code>encodeUrl</code> method.
 	 */
 	public static boolean isEncodeUrl() {
 		return encodeUrl;
 	}
 
 	/**
-	 * TODO
-	 * @return
+	 * @return	A {@code String} that defines the character used to separate parameters 
+	 * 			in the URL
 	 */
 	public static String getParametersSeparator() {
 		return parametersSeparator;

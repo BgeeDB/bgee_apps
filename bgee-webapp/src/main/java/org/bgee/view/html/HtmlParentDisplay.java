@@ -38,10 +38,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 	@Override
 	public void startDisplay(String page, String title)
     {
+		this.writeln("<html><body>");
     }
 	
 	public void endDisplay()
     {
+		this.writeln("</body></html>");
     }
     
 	// TODO move into BgeeStringUtils ??? 
@@ -162,4 +164,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 		// TODO Auto-generated method stub
 		
 	}
+	
+	protected void includeJs(String filename){
+		this.writeln("<script src=\""+filename+"\" />");
+	}
+	
 }

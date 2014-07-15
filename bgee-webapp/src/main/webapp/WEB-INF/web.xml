@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 
-<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
-    version="2.4">
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
 
-    <display-name>BGee: a dataBase for Gene Expression Evolution</display-name>
-    <description>
+	<display-name>BGee: a dataBase for Gene Expression Evolution</display-name>
+	<description>
       BGee is a database to compare gene expression patterns
       between animal species, by referencing expression data
       from different types on anatomical and developmental
@@ -14,14 +13,34 @@
       ontologies to allow species comparison.
     </description>
 
-    <servlet>
-        <servlet-name>FrontController</servlet-name>
-        <servlet-class>org.bgee.controller.FrontController</servlet-class>
-    </servlet>
+	<servlet>
+		<servlet-name>FrontController</servlet-name>
+		<servlet-class>org.bgee.controller.FrontController</servlet-class>
+	</servlet>
 
-    <servlet-mapping>
-        <servlet-name>FrontController</servlet-name>
-        <url-pattern>/</url-pattern>
-    </servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>FrontController</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.js</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.css</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.png</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.jpg</url-pattern>
+	</servlet-mapping>
 
 </web-app>  

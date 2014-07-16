@@ -482,7 +482,15 @@ public class UberonTest extends TestAncestor {
         assertEquals("Incorrect developmental stage nested set model", expectedModel, 
                 uberon.generateStageNestedSetModel(lifeCycle));
         
+        //calling again the method on a child should return the same nested set model 
+        //in cache
+        assertEquals("Incorrect developmental stage nested set model from cache", 
+                expectedModel, 
+                uberon.generateStageNestedSetModel(immature));
         
+        
+        //now we reinit Uberon to get the actual nested set model 
+        uberon = new Uberon(utils);
         expectedModel = new HashMap<OWLClass, Map<String, Integer>>();
        
         params = new HashMap<String, Integer>();
@@ -538,18 +546,52 @@ public class UberonTest extends TestAncestor {
                 uberon.generateStageNestedSetModel(immature));
     }
     
+    /**
+     * Test the method {@link Uberon#getStageIdsBetween(String, String)} on an actual 
+     * tricky messy stage ontology. 
+     * 
+     * @throws OWLOntologyCreationException
+     * @throws OBOFormatParserException
+     * @throws IOException
+     */
     @Test
-    public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+    public void shouldGetComplexStageIdsBetween() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
                 getResource("/ontologies/dev_stage_ontology.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         Uberon uberon = new Uberon(utils);
         
-        uberon.getStageIdsBetween("FBdv:00005303", "FBdv:00007026");
-        uberon.getStageIdsBetween("FBdv:00005303", "FBdv:00007026");
-        uberon.getStageIdsBetween("FBdv:00005306", "FBdv:00005336");
-        uberon.getStageIdsBetween("FBdv:00005304", "FBdv:00005321");
+        //FBdv:00005289: embryonic stage
+        //FBdv:00007026: mature adult stage
+        List<String> expectedStageIds = Arrays.asList("FBdv:00005289", "FBdv:00005336", 
+                "FBdv:00007001", "FBdv:00005369", "FBdv:00007026");
+        assertEquals("Incorrect stage range returned", expectedStageIds, 
+                uberon.getStageIdsBetween("FBdv:00005289", "FBdv:00007026"));
+        
+        //reinit uberon to recompute the nested set model
+        uberon = new Uberon(utils);
+        //FBdv:00005304: blastoderm stage
+        //FBdv:00005333: late embryonic stage
+        expectedStageIds = Arrays.asList("FBdv:00005304", "FBdv:00005317", 
+                "FBdv:00005321", "FBdv:00005331", "FBdv:00005333");
+        assertEquals("Incorrect stage range returned", expectedStageIds, 
+                uberon.getStageIdsBetween("FBdv:00005304", "FBdv:00005333"));
+        
+        //reinit uberon to recompute the nested set model
+        uberon = new Uberon(utils);
+        //FBdv:00005294: embryonic cycle 2
+        //FBdv:00005333: late embryonic stage
+        expectedStageIds = Arrays.asList("FBdv:00005294", "FBdv:00005295", "FBdv:00005296", 
+                "FBdv:00005297", "FBdv:00005298", "FBdv:00005299", "FBdv:00005300", 
+                "FBdv:00005302", "FBdv:00005303", "FBdv:00005307", "FBdv:00005308", 
+                "FBdv:00005309", "FBdv:00005311", "FBdv:00005318", "FBdv:00005319", 
+                "FBdv:00005322", "FBdv:00005323", "FBdv:00005324", "FBdv:00005325", 
+                "FBdv:00005327", "FBdv:00005328", "FBdv:00005330", "FBdv:00005332", 
+                "FBdv:00005333");
+        assertEquals("Incorrect stage range returned", expectedStageIds, 
+                uberon.getStageIdsBetween("FBdv:00005294", "FBdv:00005333"));
     }
     /**
      * Test the method {@link Uberon#getStageIdsBetween(String, String)}

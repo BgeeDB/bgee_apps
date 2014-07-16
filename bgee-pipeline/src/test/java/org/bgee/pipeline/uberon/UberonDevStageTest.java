@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
-import org.bgee.pipeline.ontologycommon.OntologyUtilsTest;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -57,7 +56,7 @@ public class UberonDevStageTest extends TestAncestor {
     public void shouldOrderByPrecededBy() throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
         
-        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
                 getResource("/ontologies/startEndStages.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
@@ -86,7 +85,7 @@ public class UberonDevStageTest extends TestAncestor {
     @Test
     public void shouldGetLastClassByPrecededBy() throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
                 getResource("/ontologies/startEndStages.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
@@ -126,7 +125,7 @@ public class UberonDevStageTest extends TestAncestor {
     @Test
     public void shouldGeneratePrecededByFromComments() throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology(UberonTest.class.
+        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
                 getResource("/ontologies/fbdv_test.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
@@ -175,7 +174,7 @@ public class UberonDevStageTest extends TestAncestor {
     @Test
     public void shouldGenerateStageNestedSetModel() throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
                 getResource("/ontologies/startEndStages.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
@@ -382,7 +381,7 @@ public class UberonDevStageTest extends TestAncestor {
     @Test
     public void shouldGetComplexStageIdsBetween() throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
                 getResource("/ontologies/dev_stage_ontology.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
@@ -427,7 +426,7 @@ public class UberonDevStageTest extends TestAncestor {
     @Test
     public void shouldGetStageIdsBetween() throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
                 getResource("/ontologies/startEndStages.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);

@@ -86,9 +86,6 @@ public class UberonDevStage extends UberonCommon {
      *   all their children, reachable by any path in their graph closure. 
      *   The {@code OWLClass}es themselves will not be removed. 
      *   See {@link #setChildrenOfToRemove(Collection)}.
-     *   <li>A list of OBO-like IDs or {@code IRI}s of relations to be filtered 
-     *   and mapped to parent relations. These IDs must be separated by the {@code String} 
-     *   {@link CommandRunner#LIST_SEPARATOR}. See {@link #setRelIds(Collection)}.
      *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
      *   of the subgraphs that will be kept in the ontology. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
@@ -98,7 +95,6 @@ public class UberonDevStage extends UberonCommon {
      *   Uberon generateStageOntology ext.owl dev_stage_ont  
      *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000 
      *   UBERON:0000069 
-     *   BFO:0000050,BFO:0000062
      *   UBERON:0000104,FBdv:00000000}
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -112,18 +108,17 @@ public class UberonDevStage extends UberonCommon {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("generateStageOntology")) {
-            if (args.length != 7) {
+            if (args.length != 6) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "7 arguments, " + args.length + " provided."));
+                        "6 arguments, " + args.length + " provided."));
             }
             
             UberonDevStage ub = new UberonDevStage(args[1]);
             ub.setModifiedOntPath(args[2]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[3]));
             ub.setChildrenOfToRemove(CommandRunner.parseListArgument(args[4]));
-            ub.setRelIds(CommandRunner.parseListArgument(args[5]));
-            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[6]));
+            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[5]));
             
             
             ub.generateStageOntologyAndSaveToFile();
@@ -258,10 +253,6 @@ public class UberonDevStage extends UberonCommon {
      * {@code String} part of the {@code Collection} returned by {@link #getClassIdsToRemove()}.
      * <li>remove all children, reachable by any path in their graph closure, 
      * of the {@code OWLClass}es with their OBO-like IDs returned by {@link #getChildrenOfToRemove()}. 
-     * <li>{@code OWLGraphManipulator#mapRelationsToParent(Collection)} using value returned by 
-     * {@link #getRelIds()}.
-     * <li>{@code OWLGraphManipulator#filterRelations(Collection, boolean)} using value 
-     * returned by {@link #getRelIds()}, with second argument {@code true}.
      * <li>{@code OWLGraphManipulator#filterSubgraphs(Collection)} with value returned by 
      * {@link #getToFilterSubgraphRootIds()}.
      * <li>{@code OWLGraphManipulator#reducePartOfIsARelations()}
@@ -305,14 +296,6 @@ public class UberonDevStage extends UberonCommon {
                 }
                 log.debug("Child of {} removed: {}", parent, child);
             } 
-        }
-        
-        //potential rel IDs to keep: 
-        //OntologyUtils.PART_OF_ID
-        //OntologyUtils.PRECEDED_BY
-        if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
-            manipulator.mapRelationsToParent(this.getRelIds());
-            manipulator.filterRelations(this.getRelIds(), true);
         }
         
         //potential subgraph root to keep: UBERON:0000104 life cycle, FBdv:00000000 Drosophila life 
@@ -393,30 +376,23 @@ public class UberonDevStage extends UberonCommon {
      * the nested set model computed using the method {@link 
      * org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)}.
      * <p>
-     * As the developmental stage ontology can include several species, {@code taxonConstraints} 
-     * is provided so that stages from different species are not tried to be ordered 
-     * relative to each others (they will not have any precedence relations between them). 
-     * If {@code taxonConstraints} is {@code null}, then it should be possible to order 
-     * all stages relative to each others. 
+     * As the developmental stage ontology can include several species, 
+     * {@link #getTaxonConstraints()} will be used so that stages from different species 
+     * are not tried to be ordered relative to each others (they will not have any precedence 
+     * relations between them). If {@link #getTaxonConstraints()} returns {@code null}, 
+     * then it should be possible to order all stages relative to each others. 
      * <p>
      * The generated nested set models will be stored, associated to {@code root}, 
      * to avoid recomputing them for each query. 
      * 
      * @param root              An {@code OWLClass} that will be considered as the root 
      *                          of the ontology to start the conputations from.
-     * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 
-     *                          {@code OWLClass}es, and values are {@code Set}s 
-     *                          of {@code Integer}s containing the IDs of taxa 
-     *                          in which the {@code OWLClass} exists. This will allow 
-     *                          to not try ordering stages of different species, that will not 
-     *                          have any precedence relations between them.
      * @return      See {@link org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)} 
      *              for details about values returned. 
      * @see org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(List)
      */
-    public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root/*, 
-            Map<String, Set<Integer>> taxonConstraints*/) {
-        log.entry(root/*, taxonConstraints*/);
+    public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) {
+        log.entry(root, this.getTaxonConstraints());
         
         //check if we have a nested set model in cache for this root
         Map<OWLClass, Map<String, Integer>> nestedSetModel = this.nestedSetModels.get(root);
@@ -448,25 +424,41 @@ public class UberonDevStage extends UberonCommon {
         List<OWLClass> globalOrdering = new ArrayList<OWLClass>();
         OWLClass classWalked = null;
         while ((classWalked = walker.pollFirst()) != null) {
-            //order the direct children
-            Set<OWLClass> children = new HashSet<OWLClass>();
+            //order the direct children of a same species, or multi-species children together.
+            //store the children associated to their NCBI tax ID (or to null, if they are 
+            //multi-species children)
+            Map<Integer, Set<OWLClass>> children = new HashMap<Integer, Set<OWLClass>>();
             for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(classWalked)) {
                 if ((this.getOntologyUtils().isPartOfRelation(incomingEdge) || 
                         this.getOntologyUtils().isASubClassOfEdge(incomingEdge)) && 
                         incomingEdge.isSourceNamedObject()) {
                   
                     OWLClass child = (OWLClass) incomingEdge.getSource();
-                    children.add(child);
+                    Set<Integer> speciesIds = null;
+                    if (this.getTaxonConstraints() != null) {
+                        speciesIds = this.getTaxonConstraints().get(
+                            this.getOntologyUtils().getWrapper().getIdentifier(child));
+                    }
+                    Integer speciesKey = null;
+                    if (speciesIds != null && speciesIds.size() == 1) {
+                        speciesKey = speciesIds.iterator().next();
+                    }
+                    if (!children.containsKey(speciesKey)) {
+                        children.put(speciesKey, new HashSet<OWLClass>());
+                    }
+                    children.get(speciesKey).add(child);
                     walker.offerLast(child);
                 }
             }
             if (!children.isEmpty()) {
-                globalOrdering.addAll(this.orderByPrecededBy(children));
+                for (Set<OWLClass> sameSpeciesChildren: children.values()) {
+                    globalOrdering.addAll(this.orderByPrecededBy(sameSpeciesChildren));
+                }
             }
         }
         
-        nestedSetModel = this.getOntologyUtils().computeNestedSetModelParams(root, globalOrdering, 
-                this.overPartOf);
+        nestedSetModel = this.getOntologyUtils().computeNestedSetModelParams(root, 
+                globalOrdering, this.overPartOf);
         this.nestedSetModels.put(root, nestedSetModel);
         
         return log.exit(nestedSetModel);

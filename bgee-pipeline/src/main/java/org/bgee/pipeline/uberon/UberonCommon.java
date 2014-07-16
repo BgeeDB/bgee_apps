@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 //currently never used
 //import org.apache.logging.log4j.LogManager;
@@ -19,7 +20,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class UberonCommon {
+abstract class UberonCommon {
     /**
      * {@code Logger} of the class.
      */
@@ -113,6 +114,12 @@ public class UberonCommon {
      */
     private String classesRemovedFilePath;
     /**
+     * A {@code Map} where keys are OBO-like IDs of the Uberon {@code OWLClass}es, 
+     * and values are {@code Set}s of {@code Integer}s containing the IDs of taxa 
+     * in which the {@code OWLClass} exists. 
+     */
+    private Map<String, Set<Integer>> taxonConstraints;
+    /**
      * A {@code Map} where keys are {@code String}s that are the OBO-like IDs 
      * of {@code OWLClass}es removed as a result of the simplification process, 
      * the associated values being {@code String}s representing the reason 
@@ -158,6 +165,7 @@ public class UberonCommon {
     public UberonCommon(OntologyUtils ontUtils) {
         this.ontUtils = ontUtils;
         this.classesRemoved = new HashMap<String, String>();
+        this.setTaxonConstraints(null);
     }
 
 
@@ -280,6 +288,26 @@ public class UberonCommon {
             Collection<String> toFilterSubgraphRootIds) {
         this.toFilterSubgraphRootIds = toFilterSubgraphRootIds;
     }
+    /**
+     * @return  A {@code Map} where keys are OBO-like IDs of the Uberon {@code OWLClass}es, 
+     *          and values are {@code Set}s of {@code Integer}s containing the IDs of taxa 
+     *          in which the {@code OWLClass} exists. 
+     */
+    public Map<String, Set<Integer>> getTaxonConstraints() {
+        return taxonConstraints;
+    }
+    /**
+     * Set taxon constraints.
+     * 
+     * @param taxonConstraints  A {@code Map} where keys are OBO-like IDs of the Uberon 
+     *                          {@code OWLClass}es, and values are {@code Set}s of 
+     *                          {@code Integer}s containing the IDs of taxa 
+     *                          in which the {@code OWLClass} exists. 
+     */
+    public void setTaxonConstraints(Map<String, Set<Integer>> taxonConstraints) {
+        this.taxonConstraints = taxonConstraints;
+    }
+
     /**
      * @return  A {@code Map} where keys are {@code String}s that are the OBO-like IDs 
      *          of {@code OWLClass}es removed as a result of the simplification process, 

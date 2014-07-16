@@ -371,6 +371,21 @@ public class UberonDevStageTest extends TestAncestor {
     }
     
     /**
+     * Test method {@link Uberon#generateStageNestedSetModel(OWLClass)} when using 
+     * taxon constraints.
+     */
+    @Test
+    public void shouldGenerateStageNestedSetModelWithTaxonConstraints() 
+            throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
+                getResource("/ontologies/startEndStagesWithTaxonConstraints.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        UberonDevStage uberon = new UberonDevStage(utils);
+        
+    }
+    
+    /**
      * Test the method {@link Uberon#getStageIdsBetween(String, String)} on an actual 
      * tricky messy stage ontology. 
      * 

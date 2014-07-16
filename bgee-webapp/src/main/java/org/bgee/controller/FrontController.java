@@ -16,8 +16,7 @@ import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
 
-public class FrontController extends HttpServlet
-{
+public class FrontController extends HttpServlet {
 	private final static Logger log = LogManager.getLogger(FrontController.class.getName());
 
 	/**
@@ -29,20 +28,17 @@ public class FrontController extends HttpServlet
 	/**
 	 * Class constructor.
 	 */
-	public FrontController()
-	{
+	public FrontController() {
 
 	}
 
-	public void doRequest(HttpServletRequest request, HttpServletResponse response, boolean postData) 
-	{ 
-
+	public void doRequest(HttpServletRequest request, HttpServletResponse response, 
+	        boolean postData) { 
+	    log.entry(request, response);
+	    
 		URLParameters urlParameters = new URLParameters();
-		
 		RequestParameters requestParameters = null;
-
 		GeneralDisplay generalDisplay = null;
-
 		ViewFactory factory = null;
 
 		try {
@@ -61,13 +57,11 @@ public class FrontController extends HttpServlet
 						
 			//in order to display error message in catch clauses. 
 			//we do it in the try clause, because getting a view can throw an IOException.
-			//so here we get the default view from the default factory before any exception can be thrown.
-			
+			//so here we get the default view from the default factory before any exception 
+		    //can be thrown.
 			generalDisplay = factory.getGeneralDisplay();
-
 			request.setCharacterEncoding("UTF-8");
-
-			requestParameters = new RequestParameters(request,urlParameters);
+			requestParameters = new RequestParameters(request, urlParameters);
 			
 			log.info("Analyzed URL: " + requestParameters.getRequestURL());
 
@@ -116,14 +110,12 @@ public class FrontController extends HttpServlet
 	}
 
 	@Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response)
-	{
+	public void doGet(HttpServletRequest request, HttpServletResponse response) {
 		doRequest(request, response, false);
 	}
 
 	@Override
-	public void doPost(HttpServletRequest request, HttpServletResponse response)
-	{
+	public void doPost(HttpServletRequest request, HttpServletResponse response) {
 		doRequest(request, response, true);
 	}
 

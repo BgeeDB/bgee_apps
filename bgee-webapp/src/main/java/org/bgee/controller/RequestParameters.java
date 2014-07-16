@@ -108,7 +108,9 @@ public class RequestParameters {
 
 	/**
 	 * An instance of {@code URLParameters} that provides all the
-	 * {@URLParameters.Parameter} that can be present in the request
+	 * {@URLParameters.Parameter} that can be present in the request. This follows the pattern 
+	 * of dependency injection.
+	 * 
 	 * @see URLParameters
 	 */
 	private final URLParameters URLParametersInstance;
@@ -145,9 +147,9 @@ public class RequestParameters {
 	 * 													or to write the query string in a file
 	 * @throws MultipleValuesNotAllowedException 
 	 */
-	public RequestParameters(URLParameters URLParametersInstance) throws 
-	RequestParametersNotFoundException, 
-	RequestParametersNotStorableException, MultipleValuesNotAllowedException{
+	public RequestParameters(URLParameters URLParametersInstance) 
+	        throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
+	        MultipleValuesNotAllowedException {
 		// call the constructor with an empty request
 		this(new BgeeHttpServletRequest(), URLParametersInstance);
 	}
@@ -174,9 +176,9 @@ public class RequestParameters {
 	 * 													or to write the query string in a file
 	 * @throws MultipleValuesNotAllowedException 
 	 */
-	public RequestParameters(HttpServletRequest request, URLParameters URLParametersInstance) throws RequestParametersNotFoundException, 
-	RequestParametersNotStorableException, MultipleValuesNotAllowedException
-	{
+	public RequestParameters(HttpServletRequest request, URLParameters URLParametersInstance) 
+	        throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
+	        MultipleValuesNotAllowedException {
 		log.entry(request, URLParametersInstance);
 
 		this.URLParametersInstance = URLParametersInstance;
@@ -208,10 +210,9 @@ public class RequestParameters {
 	 * @see 	#loadParametersFromRequest
 	 * @see		#loadStorableParametersFromKey
 	 */
-	private void loadParameters(HttpServletRequest request) throws 
-	RequestParametersNotFoundException, 
-	RequestParametersNotStorableException, MultipleValuesNotAllowedException
-	{
+	private void loadParameters(HttpServletRequest request) 
+	        throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
+	        MultipleValuesNotAllowedException {
 
 		log.entry(request);
 
@@ -249,77 +250,60 @@ public class RequestParameters {
 	/**
 	 * Load the parameters from the <code>HttpServletRequest</code> object 
 	 * 
-	 * @param 	request							the <code>HttpServletRequest</code> object 
-	 * 											representing the current request to the server.
+	 * @param request          the <code>HttpServletRequest</code> object representing 
+	 *                         the current request to the server.
 	 * 
-	 * @param	loadStorable					a {@Code boolean} that indicates whether the storable 
-	 * 											parameters have to be loaded from the request. 
-	 * 											For example, if the storable parameters were
-	 * 											loaded from the key, this method will be called to load
-	 * 											the non-storable parameter only.
+	 * @param loadStorable     a {@code boolean} that indicates whether the storable 
+	 *                         parameters have to be loaded from the request. 
+	 *                         For example, if the storable parameters were
+	 *                         loaded from the key, this method will be called to load
+	 *                         the non-storable parameter only.
 	 * @throws MultipleValuesNotAllowedException 
 	 * @see #loadStorableParametersFromKey
 	 * @see #loadParameters
 	 */
-	private void loadParametersFromRequest(HttpServletRequest request, 
-			boolean loadStorable) throws MultipleValuesNotAllowedException {
-
+	private void loadParametersFromRequest(HttpServletRequest request, boolean loadStorable) 
+	        throws MultipleValuesNotAllowedException {
 		log.entry(request, loadStorable);
-
+		
 		// Browse all available parameters
-		for (URLParameters.Parameter<?> parameter : this.URLParametersInstance.getList()){			
-
+		for (URLParameters.Parameter<?> parameter : this.URLParametersInstance.getList()){	
+		    
 			// If it is a param that has the desired isStorable status, proceed...
-			if(loadStorable || parameter.isStorable() == false){
-
+			if (loadStorable || !parameter.isStorable()){
 				// Fetch the string values from the URL
 				String[] valuesFromUrl = request.getParameterValues(parameter.getName());
-
 				// If the param is set, initialize an List to receive the values 
 				// and browse them
 				if(valuesFromUrl != null){
-
-					if(parameter.allowsMultipleValues() == false 
-							&& valuesFromUrl.length > 1){
-						throw(new MultipleValuesNotAllowedException(
-								parameter.getName()));
+					if(!parameter.allowsMultipleValues() && valuesFromUrl.length > 1){
+						throw(new MultipleValuesNotAllowedException(parameter.getName()));
 					}
-
 					List<Object> parameterValues = new ArrayList<Object>();
 
-					for(String valueFromUrl : valuesFromUrl){
-
+					for (String valueFromUrl : valuesFromUrl){
 						// Convert the string values into the appropriate type and add it to
 						// the list
-						if(parameter.getType() == String.class){
-
+						if(parameter.getType().equals(String.class)){
 							// In the case of a String, secure it before storing it.
-							parameterValues.add(BgeeStringUtils.secureString(
-									valueFromUrl, 
+							parameterValues.add(BgeeStringUtils.secureString(valueFromUrl, 
 									parameter.getMaxSize(), parameter.getFormat()));
-
-						} else if(parameter.getType() == Integer.class){
-
+							
+						} else if(parameter.getType().equals(Integer.class)){
+						    
 							parameterValues.add(Integer.valueOf(valueFromUrl));
-
-						} else if(parameter.getType() == Boolean.class){
-
+							
+						} else if(parameter.getType().equals(Boolean.class)){
+						    
 							parameterValues.add(Boolean.valueOf(valueFromUrl));
-
 						}
-
 					}
-
 					// store the list of values in the HashMap using
 					// the parameter itself as a key
-					log.debug("Set {} as values for the param {}",
-							parameterValues, parameter);
+					log.debug("Set {} as values for the param {}", parameterValues, parameter);
 					this.values.put(parameter, parameterValues);
-
-				}	
-
+				}
 			}
-
 		}
 
 		log.exit();
@@ -339,10 +323,8 @@ public class RequestParameters {
 	 * @see #loadParametersFromRequest
 	 */
 	private void loadStorableParametersFromKey(String key) throws IOException, 
-	MultipleValuesNotAllowedException 
-	{
-
-		log.entry();
+	MultipleValuesNotAllowedException {
+		log.entry(key);
 
 		ReentrantReadWriteLock lock = this.getReadWriteLock(key);
 		try {
@@ -355,25 +337,23 @@ public class RequestParameters {
 				lock.readLock().lock();
 			}
 
-			BufferedReader br = new BufferedReader(new FileReader(
-					BgeeProperties.getRequestParametersStorageDirectory() + key));
+			try (BufferedReader br = new BufferedReader(new FileReader(
+					BgeeProperties.getRequestParametersStorageDirectory() + key))) {
 
-			String retrievedQueryString;
-			//just one line in the file, a query string including storable parameters, 
-			//that will be used to recover storable parameters
-			if ((retrievedQueryString = br.readLine()) != null) {
+			    String retrievedQueryString;
+			    //just one line in the file, a query string including storable parameters, 
+			    //that will be used to recover storable parameters
+			    if ((retrievedQueryString = br.readLine()) != null) {
+			        //here we create a fake HttpServletRequest using the query 
+			        // string we retrieved.
+			        //this way we do not duplicate code to load parameters into 
+			        // this RequestParameters object.
 
-
-				//here we create a fake HttpServletRequest using the query 
-				// string we retrieved.
-				//this way we do not duplicate code to load parameters into 
-				// this RequestParameters object.
-
-				BgeeHttpServletRequest request = new BgeeHttpServletRequest(
-						retrievedQueryString);
-				this.loadParametersFromRequest(request, true);
+			        BgeeHttpServletRequest request = new BgeeHttpServletRequest(
+			                retrievedQueryString);
+			        this.loadParametersFromRequest(request, true);
+			    }
 			}
-			br.close();
 
 		} finally {
 			lock.readLock().unlock();
@@ -389,7 +369,6 @@ public class RequestParameters {
 	 * get the part of the query string containing "storable" parameters 
 	 * (by calling <code>getCompleteStorableParametersQueryString()</code>), 
 	 * generate a key based on that string, and store the string in a file named as the key.
-	 * <parameter>
 	 * This allows to store parameters too lengthy to be put in URL, to replace these parameters 
 	 * by the key, which is stored in the {@code URLParameters.Parameter} DATA 
 	 * and to store these parameters to retrieve them at later pages 
@@ -400,12 +379,11 @@ public class RequestParameters {
 	 * @see #generateParametersQuery()
 	 * @see URLParameters#getParamData
 	 */
-	private void store() throws RequestParametersNotStorableException
-	{
-
+	private void store() throws RequestParametersNotStorableException {
 		log.entry();
 
-		if (BgeeStringUtils.isBlank(this.getFirstValue(this.URLParametersInstance.getParamData()))) {
+		if (BgeeStringUtils.isBlank(this.getFirstValue(
+		        this.URLParametersInstance.getParamData()))) {
 			throw new RequestParametersNotStorableException("No key generated before storing a "
 					+ "RequestParameters object");
 		}
@@ -420,9 +398,7 @@ public class RequestParameters {
 
 		ReentrantReadWriteLock lock = this.getReadWriteLock(this.getFirstValue(
 				this.URLParametersInstance.getParamData()));
-		BufferedWriter bufferedWriter = null;
 		try {
-
 			lock.writeLock().lock();
 
 			while (readWriteLocks.get(this.getFirstValue(
@@ -435,17 +411,15 @@ public class RequestParameters {
 				lock.writeLock().lock();
 			}
 
-			bufferedWriter = new BufferedWriter(
+			try (BufferedWriter bufferedWriter = new BufferedWriter(
 					new FileWriter(BgeeProperties.getRequestParametersStorageDirectory() 
-							+ this.getFirstValue(this.URLParametersInstance.getParamData())));
+							+ this.getFirstValue(this.URLParametersInstance.getParamData())))) {
 
-			boolean encodeUrlValue = this.encodeUrl;
-			this.encodeUrl = false;
-			bufferedWriter.write(generateParametersQuery(true, false));
-			this.encodeUrl = encodeUrlValue;
-
-
-			bufferedWriter.close();
+			    boolean encodeUrlValue = this.encodeUrl;
+			    this.encodeUrl = false;
+			    bufferedWriter.write(generateParametersQuery(true, false));
+			    this.encodeUrl = encodeUrlValue;
+	        }
 
 		} catch (IOException e) {
 			//delete the file if something went wrong
@@ -466,8 +440,8 @@ public class RequestParameters {
 
 	/**
 	 * Try to remove the <code>ReentrantReadWriteLock</code> corresponding to 
-	 * the param <code>key</code>, 
-	 * from the <code>ConcurrentHashMap</code> <code>readWriteLocks</code>.
+	 * the argument <code>key</code>, from the <code>ConcurrentHashMap</code> 
+	 * {@link #readWriteLocks}.
 	 * The lock will be removed from the map only if there are no read or write locks, 
 	 * and no ongoing request for a read or write lock.
 	 * <p>
@@ -486,10 +460,8 @@ public class RequestParameters {
 	 * @see 		#generateKey()
 	 * @see 		#readWriteLocks
 	 */
-	private void removeLockIfPossible(String key)
-	{
-
-		log.entry(key);
+	private void removeLockIfPossible(String key) {
+	    log.entry(key);
 
 		//check if there is already a lock stored for this key
 		ReentrantReadWriteLock lock = readWriteLocks.get(key);
@@ -520,9 +492,7 @@ public class RequestParameters {
 	 * @see 					#generateKey()
 	 * @see 					#readWriteLocks
 	 */
-	private ReentrantReadWriteLock getReadWriteLock(String key)
-	{
-
+	private ReentrantReadWriteLock getReadWriteLock(String key) {
 		log.entry(key);
 
 		//check if there is already a lock stored for this key
@@ -552,13 +522,12 @@ public class RequestParameters {
 	 * @throws MultipleValuesNotAllowedException 
 	 */
 	private void generateParametersQuery() throws RequestParametersNotStorableException,
-	MultipleValuesNotAllowedException{
-
+	MultipleValuesNotAllowedException {
 		log.entry();
 
 		// If there is a key already present, continue to work with a key
 		if(BgeeStringUtils.isNotBlank(this.getFirstValue(
-				this.URLParametersInstance.getParamData()))){
+		        this.URLParametersInstance.getParamData()))){
 
 			// Regenerate the key in case a storable param has changed
 			this.generateKey(this.generateParametersQuery(true, false));
@@ -607,13 +576,13 @@ public class RequestParameters {
 
 			// If it is one of the param to include, proceed...
 			if((includeStorable && parameter.isStorable()) || (includeNonStorable 
-					&& parameter.isStorable() == false)){
+					&& !parameter.isStorable())){
 
 				// Fetch the values of this param and generate a query with all
 				// its values
 				List<?> parameterValues = this.getValues(parameter);
 
-				if(parameterValues != null && parameterValues.isEmpty() == false){
+				if(parameterValues != null && !parameterValues.isEmpty()){
 					for(Object parameterValue : parameterValues){
 						if(parameterValue != null && BgeeStringUtils.isNotBlank(
 								parameterValue.toString())){
@@ -646,16 +615,13 @@ public class RequestParameters {
 	 * 				<code>false</code> otherwise.
 	 * @see   		BgeeProperties#getUrlMaxLength
 	 */
-	private boolean isUrlTooLong()
-	{
+	private boolean isUrlTooLong() {
 
 		log.entry();
 
 		if (this.parametersQuery.length() > BgeeProperties.getUrlMaxLength()) {
-			log.debug("Checking URL length, is too long: {}", this.parametersQuery);
 			return log.exit(true);
 		}
-		log.debug("Checking URL length, is not too long: {}", this.parametersQuery);
 		return log.exit(false);
 	}
 
@@ -679,25 +645,20 @@ public class RequestParameters {
 	 * @see 	#store()
 	 */
 	private void generateKey(String urlFragment) throws RequestParametersNotStorableException,
-	MultipleValuesNotAllowedException 
-	{
-
+	MultipleValuesNotAllowedException {
 		log.entry(urlFragment);
 
-		log.info("Trying to generate a key based on urlFragment: {}", 
-				urlFragment);
+		log.info("Trying to generate a key based on urlFragment: {}", urlFragment);
 
 		if (BgeeStringUtils.isNotBlank(urlFragment)) {
-
 			// Reset the present key and add the new one
 			this.resetValues(this.URLParametersInstance.getParamData());
 			this.addValue(this.URLParametersInstance.getParamData(), 
 					DigestUtils.sha1Hex(urlFragment.toLowerCase(Locale.ENGLISH)));
-
 		}
 
 		log.info("Key generated: {}", this.getFirstValue(
-				this.URLParametersInstance.getParamData()));
+		        this.URLParametersInstance.getParamData()));
 
 		log.exit();
 	}
@@ -742,22 +703,22 @@ public class RequestParameters {
 	 * to the values to be returned
 	 * @return an {@code List<T>} of values
 	 */
-	@SuppressWarnings("unchecked") // Because the data type of URLParameters.Parameter is always checked 
-	// when the value is stored, it should be safe.
 	public <T> List<T> getValues(URLParameters.Parameter<T> parameter){
 
-		ArrayList<T> values = (ArrayList<T>) this.values.get(parameter);
+	    // Because the data type of URLParameters.Parameter is always checked 
+	    // when the value is stored, it is safe to not check.
+		@SuppressWarnings("unchecked")
+        ArrayList<T> values = (ArrayList<T>) this.values.get(parameter);
 
 		try{
 			// Return a copy of the list and not the original list
 			// As the values contained are only immutable object, such as String
 			// Integer, Boolean, Long, there is no need to clone the content
 			return new ArrayList<T>(values);
-		}
-		catch(NullPointerException e){
+			
+		} catch(NullPointerException e){
 			return null;
 		}
-
 	}
 
 	/**
@@ -775,8 +736,8 @@ public class RequestParameters {
 
 		try{
 			return log.exit(((List<T>) this.values.get(parameter)).get(0));
-		}
-		catch(IndexOutOfBoundsException | NullPointerException e){
+			
+		} catch(IndexOutOfBoundsException | NullPointerException e){
 			return log.exit(null);			
 		}
 	}
@@ -790,16 +751,12 @@ public class RequestParameters {
 	 */	
 	@SuppressWarnings("unchecked")
 	public <T> void addValue(URLParameters.Parameter<T> parameter, T value) 
-			throws MultipleValuesNotAllowedException, 
-			RequestParametersNotStorableException{
-
+			throws MultipleValuesNotAllowedException, RequestParametersNotStorableException {
 		log.entry(parameter,value);
 
 		// In case of string, secure the value
-		if(parameter.getType() == String.class){
-
-			value = (T) BgeeStringUtils.secureString((String) value,
-					parameter.getMaxSize(),
+		if(parameter.getType().equals(String.class)){
+			value = (T) BgeeStringUtils.secureString((String) value, parameter.getMaxSize(),
 					parameter.getFormat());
 		}
 
@@ -807,15 +764,12 @@ public class RequestParameters {
 		List<T> parameterValues = (List<T>) this.values.get(parameter);
 
 		try{
-
 			// Throw an exception if the param does not allow 
 			// multiple values and has already one
-			if(parameter.allowsMultipleValues() == false &&	parameterValues.get(0) != null){
+			if (!parameter.allowsMultipleValues() && parameterValues.get(0) != null){
 				throw(new MultipleValuesNotAllowedException(parameter.getName()));
 			}
-
 			parameterValues.add(value);
-
 		}
 		// If nullpointer, it means that there were no previous values at all, 
 		// create the list
@@ -825,12 +779,11 @@ public class RequestParameters {
 		}
 
 		// regenerate the value of the param url
-		if(parameter != this.URLParametersInstance.getParamData()){
+		if(parameter != this.URLParametersInstance.getParamData()) {
 			this.generateParametersQuery();
 		}
 
 		this.values.put(parameter, parameterValues);
-
 	}
 
 	/**
@@ -863,9 +816,7 @@ public class RequestParameters {
 	 */
 	public RequestParameters cloneWithAllParameters() throws InstantiationException,
 	IllegalAccessException, RequestParametersNotFoundException,
-	RequestParametersNotStorableException, MultipleValuesNotAllowedException
-	{
-
+	RequestParametersNotStorableException, MultipleValuesNotAllowedException {
 		log.entry();
 
 		//to avoid duplicating methods, 
@@ -900,9 +851,7 @@ public class RequestParameters {
 	 */
 	public RequestParameters cloneWithStorableParameters() throws RequestParametersNotFoundException, 
 	RequestParametersNotStorableException, MultipleValuesNotAllowedException, 
-	InstantiationException, IllegalAccessException
-	{
-
+	InstantiationException, IllegalAccessException {
 		log.entry();
 
 		//to avoid duplicating methods, 
@@ -917,8 +866,8 @@ public class RequestParameters {
 		BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
 		this.encodeUrl = encodeUrlValue;
 
-		RequestParameters clonedRequestParameters 
-		= new RequestParameters(request,  this.URLParametersInstance.getClass().newInstance());
+		RequestParameters clonedRequestParameters = new RequestParameters(request, 
+		        this.URLParametersInstance.getClass().newInstance());
 
 		// Add the key which is not a storable parameters and was not included
 		clonedRequestParameters.addValue(this.URLParametersInstance.getParamData(), 
@@ -942,8 +891,7 @@ public class RequestParameters {
 	 * @return A {@boolean} to tell whether the display is Xml or not
 	 */
 	public boolean isXmlDisplayType() {
-		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType())
-				== "xml"){
+		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("xml")){
 			return true;
 		}
 		return false;
@@ -953,8 +901,7 @@ public class RequestParameters {
 	 * @return A {@boolean} to tell whether the display is Csv or not
 	 */
 	public boolean isCsvDisplayType() {
-		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType())
-				== "csv"){
+		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("csv")){
 			return true;
 		}
 		return false;
@@ -964,8 +911,7 @@ public class RequestParameters {
 	 * @return A {@boolean} to tell whether the display is Tsv or not
 	 */
 	public boolean isTsvDisplayType() {
-		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType())
-				== "tsv"){
+		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("tsv")){
 			return true;
 		}
 		return false;

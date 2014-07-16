@@ -1,5 +1,8 @@
 package org.bgee.controller;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * This class extends {@link URLParameters} to provide
  * the additional parameters used for unit tests
@@ -38,15 +41,20 @@ public class TestURLParameters extends URLParameters {
 			128, null,Boolean.class);
 	
 	/**
+     * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
+     * in the order they will appear in the URL
+     */
+    private final List<Parameter<?>> list;
+	
+	/**
 	 * Constructor, update the inherited Parameter list
 	 */
 	protected TestURLParameters(){
-		list.remove(this.getParamData());
-		list.add(TEST_STRING);
-		list.add(TEST_INTEGER);
-		list.add(TEST_BOOLEAN);
-		list.add(this.getParamData());
-		
+	    this.list = Arrays.<Parameter<?>>asList(
+	            TEST_STRING,
+	            TEST_INTEGER,
+	            TEST_BOOLEAN,
+	            super.getParamData());
 	}
 	
 	/**
@@ -73,4 +81,8 @@ public class TestURLParameters extends URLParameters {
 		return TEST_BOOLEAN;
 	}
 
+	@Override
+	public List<Parameter<?>> getList() {
+	    return this.list;
+	}
 }

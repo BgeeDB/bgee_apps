@@ -131,13 +131,12 @@ public class BgeeHttpServletRequest implements HttpServletRequest
 	 * 						to set the <code>queryString</code> attribute of this class.
 	 * @param encoding 		a <code>String</code> representing the encoding to use while parsing the <code>queryString</code>
 	 */
-	public BgeeHttpServletRequest(String queryString, String encoding)
-	{
+	public BgeeHttpServletRequest(String queryString, String encoding) {
 		try {
 			this.setCharacterEncoding(encoding);
 		} catch (UnsupportedEncodingException e) {
 			//here we just do nothing, because we haven't implement 
-			//a check of the character encoding yet. An exception wil never be thrown then.
+			//a check of the character encoding yet. An exception will never be thrown then.
 		}
 		this.setMethod("GET");
 		//if this is not a query string, but an URL, filter it

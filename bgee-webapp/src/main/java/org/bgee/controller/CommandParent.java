@@ -28,8 +28,7 @@ import org.bgee.view.ViewFactory;
  * @since 	Bgee 1
  *
  */
-abstract class CommandParent 
-{
+abstract class CommandParent {
 	/**
 	 * Concrete factory providing classes from the <code>view</code> package. 
 	 * This concrete factory implements the <code>ViewFactory</code> interface.
@@ -86,8 +85,7 @@ abstract class CommandParent
 	 * @see 	#processRequest()
 	 * @see 	FrontController#doRequest(HttpServletRequest, HttpServletResponse, boolean)
 	 */
-	public boolean preprocessRequestAndCheckIfContinue() throws Exception
-	{
+	public boolean preprocessRequestAndCheckIfContinue() {
 		return false;
 	}
 	

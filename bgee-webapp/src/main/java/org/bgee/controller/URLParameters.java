@@ -1,6 +1,5 @@
 package org.bgee.controller;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,22 +12,22 @@ import org.apache.logging.log4j.Logger;
  * instantiated anywhere else.
  * <p>
  * Note that this class does not store the values
- * contained by a specific occurrence of a parameter and this role is fulfilled
+ * contained by a specific occurrence of a parameter, and this role is fulfilled
  * by {@link RequestParameters}.
  * <p>
  * This class provides methods to access individually to all parameters and also
- * maintains a {@code List<Parameter<T>} to allow operations on all
- * parameters without explicitly calling them.
+ * maintains a {@code List<Parameter<T>>} to allow operations on all
+ * parameters without explicitly calling them (see {@link #getList()}).
  * <p>
  * An instance of this class has to be injected to the constructor of 
- * {@code RequestParameters}
+ * {@code RequestParameters} (dependency injection).
  * <p>
  * The getters that return the parameters appear in alphabetical order 
- * in the form of getParamName.
+ * in the form of getParam{@code Name}.
  * <p>
  * However, the parameters are stored in the {@code List<Parameter<T>}
  * in their order of importance that will define their order in the URL. 
- * The list is accessible through the method {@code getList}
+ * The list is accessible through the method {@link #getList()}.
  *
  * @author Mathieu Seppey
  * @version Bgee 13, Jul 2014
@@ -50,27 +49,27 @@ public class URLParameters {
 	 * A {@code boolean} that contains the default value to use for
 	 * {@link URLParameter#allowsMultipleValues}
 	 */
-	protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = true ;
+	protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = true;
 
 	/**
 	 * A {@code boolean} that contains the default value for {@link URLParameter#isStorable}
 	 */
-	protected static final boolean DEFAULT_IS_STORABLE = true ;
+	protected static final boolean DEFAULT_IS_STORABLE = true;
 
 	/**
 	 * A {@code boolean} that contains the default value for {@link URLParameter#isSecure}
 	 */
-	protected static final boolean DEFAULT_IS_SECURE = false ;
+	protected static final boolean DEFAULT_IS_SECURE = false;
 
 	/**
 	 * An {@code int} that contains the default value for {@link URLParameter#maxSize}
 	 */
-	protected static final int DEFAULT_MAX_SIZE = 128 ;
+	protected static final int DEFAULT_MAX_SIZE = 128;
 
 	/**
 	 * A {@code String} that contains the default value for {@link URLParameter#format}
 	 */
-	protected static final String DEFAULT_FORMAT = null ;
+	protected static final String DEFAULT_FORMAT = null;
 
 	// *************************************
 	//
@@ -91,14 +90,14 @@ public class URLParameters {
 	 */
 	private static final Parameter<String> DATA = new Parameter<String>("data",
 			false, false , DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,String.class);
+			DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 	
 	/**
 	 * DESCRIPTION PARAM
 	 */
 	private static final Parameter<String> ACTION = new Parameter<String>("action",
 			DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,String.class);
+			DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
 	/**
 	 * DESCRIPTION PARAM
@@ -106,7 +105,7 @@ public class URLParameters {
 	private static final Parameter<Boolean> ALL_ORGANS = new Parameter<Boolean>(
 			"all_organs",
 			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Boolean.class);
+			DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Boolean.class);
 
 	/**
 	 * DESCRIPTION PARAM
@@ -114,7 +113,7 @@ public class URLParameters {
 	private static final Parameter<Integer> CHOSEN_DATA_TYPE = new Parameter<Integer>(
 			"chosen_data_type",
 			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Integer.class);
+			DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 	
 	/**
 	 * DESCRIPTION PARAM
@@ -152,8 +151,7 @@ public class URLParameters {
 	 * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
 	 * in the order they will appear in the URL
 	 */
-	protected final List<Parameter<?>> list = 
-			new ArrayList<Parameter<?>>(Arrays.<Parameter<?>>asList(
+	private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
 					PAGE,
 					ACTION,
 					ALL_ORGANS,
@@ -162,7 +160,7 @@ public class URLParameters {
 					STAGE_CHILDREN,
 					DISPLAY_TYPE,
 					DATA
-					));
+					);
 	
 	/**
 	 * Default constructor
@@ -236,7 +234,7 @@ public class URLParameters {
 
 	/**
 	 * This class is designed to wrap all parameters that can be received and sent
-	 * through a HTTP request within the Bgee webapp. 
+	 * through an HTTP request within the Bgee webapp. 
 	 * It contains several properties related to the parameter and its usage.
 	 * However, it does not store the value contained by a parameter's instance.
 	 * This role is fulfilled by {@link RequestParameters}.
@@ -297,17 +295,24 @@ public class URLParameters {
 		private final String format;		
 
 		/**
-		 * private constructor to allow only {@link URLParameters} to create instances of this class
-		 * @param name 			A {@code String} that is the name of the parameter as seen in an URL
-		 * @param allowsMultipleValues	A {@code Boolean} that indicates whether the parameter accepts 
-		 * 								multiple values.
-		 * @param isStorable	A {@code boolean} that tells whether the parameter is storable or not 
-		 * @param isSecure		A {@code boolean} that tells whether the parameter is secure or not 
-		 * @param maxSize		An {@code int} that represents the maximum size allowed for the parameter.
-		 * @param format		A {@code String} that contains the regular expression that this parameter
-		 * 						has to fit to
-		 * @param type			A {@code Class<T>} that is the data type of the value to be store 
-		 * 						by this parameter.
+		 * Protected constructor to allow only {@link URLParameters} to create instances 
+		 * of this class.
+		 * 
+		 * @param name                    A {@code String} that is the name of the parameter 
+		 *                                as seen in an URL
+		 * @param allowsMultipleValues    A {@code Boolean} that indicates whether 
+		 *                                the parameter accepts multiple values.
+		 * @param isStorable              A {@code boolean} defining whether the parameter 
+		 *                                is storable.
+		 * @param isSecure		          A {@code boolean} defining whether the parameter 
+		 *                                is secure.
+		 * @param maxSize                 An {@code int} that represents the maximum number 
+		 *                                of characters allowed if the type of this 
+		 *                                {@code Parameter} is a {@code String}.
+		 * @param format                  A {@code String} that contains the regular expression 
+		 *                                that this parameter has to fit to.
+		 * @param type                    A {@code Class<T>} that is the data type of the value 
+		 *                                to be store by this parameter.
 		 */
 		protected Parameter(String name, Boolean allowsMultipleValues,boolean isStorable, 
 				boolean isSecure,int maxSize,String format,Class<T> type){
@@ -338,21 +343,22 @@ public class URLParameters {
 		}
 
 		/**
-		 * @return	A {@code boolean} that tells whether the parameter is storable or not
+		 * @return	A {@code boolean} defining whether the parameter is storable or not
 		 */
 		public boolean isStorable() {
 			return isStorable;
 		}
 
 		/**
-		 * @return	A {@code boolean} that tells whether the parameter is secure or not
+		 * @return	A {@code boolean} defining whether the parameter is secure or not
 		 */
 		public boolean isSecure() {
 			return isSecure;
 		}
 
 		/**
-		 * @return	An {@code int} that represents the maximum size allowed for the parameter.
+		 * @return    An {@code int} that represents the maximum number of characters allowed 
+		 *            if the type of this {@code Parameter} is a {@code String}.
 		 */
 		public int getMaxSize() {
 			return maxSize;

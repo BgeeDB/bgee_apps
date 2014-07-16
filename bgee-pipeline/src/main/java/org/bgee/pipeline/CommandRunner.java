@@ -150,6 +150,9 @@ public class CommandRunner {
         case "Uberon": 
             Uberon.main(newArgs);
             break;
+        case "UberonDevStage": 
+            UberonDevStage.main(newArgs);
+            break;
         case "socketUberonStagesBetween": 
             CommandRunner.socketUberonStagesBetween(new UberonDevStage(newArgs[0]), 
                     Integer.parseInt(newArgs[1]));

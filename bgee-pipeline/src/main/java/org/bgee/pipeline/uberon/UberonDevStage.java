@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -43,11 +44,25 @@ import owltools.graph.OWLQuantifiedProperty.Quantifier;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class UberonDevStage extends Uberon {
+public class UberonDevStage extends UberonCommon {
     /**
      * {@code Logger} of the class.
      */
     private final static Logger log = LogManager.getLogger(UberonDevStage.class.getName());
+    
+    /**
+     * The {@code Pattern} used to parse comments of {@code OWLClass}es to search for 
+     * temporal ordering in comments (used in FBdv). The group conrresponding to 
+     * the ordering value is {@link #TEMPORAL_COMMENT_GROUP}.
+     * @see #generateStageOntology()
+     */
+    public final static Pattern TEMPORAL_COMMENT_PATTERN = 
+            Pattern.compile(".*?Temporal ordering number - ([0-9]+?)\\D*?$");
+    /**
+     * An {@code int} that is the index of the group capturing the temporal ordering 
+     * in the {@code Pattern} {@link #TEMPORAL_COMMENT_PATTERN}.
+     */
+    public final static int TEMPORAL_COMMENT_GROUP = 1;
     
     /**
      * Several actions can be launched from this main method, depending on the first 
@@ -339,9 +354,9 @@ public class UberonDevStage extends Uberon {
              if (StringUtils.isNotBlank(comment)) {
                  log.trace("Examining comment to search for temporal ordering: {}", 
                          comment);
-                 Matcher m = Uberon.TEMPORAL_COMMENT_PATTERN.matcher(comment);
+                 Matcher m = UberonDevStage.TEMPORAL_COMMENT_PATTERN.matcher(comment);
                  if (m.matches()) {
-                     int order = Integer.parseInt(m.group(Uberon.TEMPORAL_COMMENT_GROUP));
+                     int order = Integer.parseInt(m.group(UberonDevStage.TEMPORAL_COMMENT_GROUP));
                      commentOrdering.put(order, cls);
                      log.trace("Valid comment, order extracted: {}", order);
                  }

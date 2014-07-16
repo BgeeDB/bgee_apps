@@ -891,7 +891,8 @@ public class RequestParameters {
 	 * @return A {@boolean} to tell whether the display is Xml or not
 	 */
 	public boolean isXmlDisplayType() {
-		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("xml")){
+		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()) != null &&
+				this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("xml")){
 			return true;
 		}
 		return false;
@@ -901,7 +902,8 @@ public class RequestParameters {
 	 * @return A {@boolean} to tell whether the display is Csv or not
 	 */
 	public boolean isCsvDisplayType() {
-		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("csv")){
+		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()) != null &&
+				this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("csv")){
 			return true;
 		}
 		return false;
@@ -911,7 +913,8 @@ public class RequestParameters {
 	 * @return A {@boolean} to tell whether the display is Tsv or not
 	 */
 	public boolean isTsvDisplayType() {
-		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("tsv")){
+		if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()) != null &&
+				this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("tsv")){
 			return true;
 		}
 		return false;

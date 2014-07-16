@@ -1,4 +1,4 @@
-package org.bgee.pipeline;
+package org.bgee.pipeline.ontologycommon;
 
 import static org.junit.Assert.*;
 
@@ -14,6 +14,8 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.TestAncestor;
+import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;

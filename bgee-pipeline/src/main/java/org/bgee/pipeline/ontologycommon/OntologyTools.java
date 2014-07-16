@@ -11,7 +11,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.pipeline.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -27,6 +26,7 @@ import owltools.graph.OWLGraphWrapper;
  * @version Bgee 13
  * @since Bgee 13
  */
+//TODO: merge this class with OntologyUtils
 public class OntologyTools {
     /**
      * {@code Logger} of the class. 

@@ -17,8 +17,8 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.pipeline.OntologyUtils;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.elk.owlapi.ElkReasonerConfiguration;

@@ -1,4 +1,4 @@
-package org.bgee.pipeline;
+package org.bgee.pipeline.ontologycommon;
 
 import java.io.File;
 import java.io.IOException;

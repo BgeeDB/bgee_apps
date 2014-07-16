@@ -24,7 +24,7 @@ html, body {
 
 #bgee_header {
 	position: relative;
-	background: #F7F8FA url(img/sib_header_bkgd.png) repeat-x top left;
+	background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
 	height: 75px;
 	width: 100%;
 	color: #282828;
@@ -50,7 +50,7 @@ html, body {
 #bgee_body {
 	position: relative;
 	padding: 18px 18px 78px 18px;
-	background: #F7F8FA url(img/sib_body_bkgd.png) repeat-x top left;
+	background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
 	min-height: 420px;
 	font-family: Helvetica;
 	color: #626262;
@@ -108,7 +108,7 @@ html, body {
     float:left;
 }
 
-#bgee_fieldset figure img {
+#bgee_fieldset figure img{
     width: 90px;
 }
 
@@ -134,7 +134,7 @@ html, body {
     width: 300px;
 }
 
-#bgee_data_selection_left img {
+#bgee_data_selection_left img{
     height: 300px;
 }
 
@@ -156,7 +156,7 @@ html, body {
 }
 
 #bgee_data_selection_right ul {
-    list-style-image: url(img/);
+    list-style-image: url(../img/);
 }
 #bgee_data_selection_right ul.ul {
 	list-style-type: circle;
@@ -171,7 +171,7 @@ html, body {
 	left: 18px;
 	width: 78px;
 	height: 59px;
-	background: transparent url(img/sibLogo.png) no-repeat top left;
+	background: transparent url(../img/sibLogo.png) no-repeat top left;
 }
 #bgee_header #bgee_logo {
 	position: absolute;
@@ -180,7 +180,7 @@ html, body {
 	width: 122px;
 	height: 38px;
 	height: 59px;
-	background: transparent url(img/bgeeBannerLogoSmall.png) no-repeat top left;
+	background: transparent url(../img/bgeeBannerLogoSmall.png) no-repeat top left;
 }
 
 /****BGEE FOOTER****/
@@ -210,7 +210,7 @@ html, body {
 	color: #F7F8FA;
 	text-decoration: underline;
 }
-#bgee_footer a img,#bgee_header a img {
+#bgee_footer a ../img,#bgee_header a img{
 	border: none;
 	vertical-align: middle;
 	padding-right: 5px;
@@ -225,12 +225,12 @@ html, body {
 #bgee_footer_right a {
 	padding-left: 10px;
 }
-#bgee_footer_right a:hover img {
+#bgee_footer_right a:hover img{
 	text-decoration: none;
 	border: none;
 }
 #bgee_footer_gototop {
-	background: transparent url(img/triangle_hover.png) no-repeat top left;
+	background: transparent url(../img/triangle_hover.png) no-repeat top left;
 	padding-left: 10px;
 	margin-right: 10px;
 }

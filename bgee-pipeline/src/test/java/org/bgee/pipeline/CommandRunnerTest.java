@@ -19,7 +19,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.pipeline.uberon.Uberon;
+import org.bgee.pipeline.uberon.UberonDevStage;
 import org.junit.Test;
 
 /**
@@ -56,7 +56,7 @@ public class CommandRunnerTest extends TestAncestor {
         
         final int port = 15555;
         final String host = "127.0.0.1";
-        final Uberon mockUberon = mock(Uberon.class);
+        final UberonDevStage mockUberon = mock(UberonDevStage.class);
         when(mockUberon.getStageIdsBetween(eq("ID1"), eq("ID3"))).thenReturn(
                 Arrays.asList("ID1", "ID2", "ID3"));
         

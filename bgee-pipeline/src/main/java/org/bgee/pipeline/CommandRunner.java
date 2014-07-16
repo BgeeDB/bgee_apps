@@ -25,6 +25,7 @@ import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.bgee.pipeline.uberon.Uberon;
+import org.bgee.pipeline.uberon.UberonDevStage;
 
 /**
  * Entry point of the Bgee pipeline. It is a really basic tool, only used to dispatch 
@@ -150,7 +151,7 @@ public class CommandRunner {
             Uberon.main(newArgs);
             break;
         case "socketUberonStagesBetween": 
-            CommandRunner.socketUberonStagesBetween(new Uberon(newArgs[0]), 
+            CommandRunner.socketUberonStagesBetween(new UberonDevStage(newArgs[0]), 
                     Integer.parseInt(newArgs[1]));
             break;
             
@@ -201,7 +202,7 @@ public class CommandRunner {
      *                          the socket. 
      * @see org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)
      */
-    public static void socketUberonStagesBetween(Uberon uberon, int portNumber) 
+    public static void socketUberonStagesBetween(UberonDevStage uberon, int portNumber) 
             throws IOException {
         log.entry(uberon, portNumber);
         

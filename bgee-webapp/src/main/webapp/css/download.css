@@ -127,6 +127,7 @@ html, body {
     padding: 30px;
 	width: 90%;
     height: 360px;
+    display: none;
 }
 
 #bgee_data_selection_left {

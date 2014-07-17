@@ -49,7 +49,7 @@ public class URLParameters {
 	 * A {@code boolean} that contains the default value to use for
 	 * {@link URLParameter#allowsMultipleValues}
 	 */
-	protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = true;
+	protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = false;
 
 	/**
 	 * A {@code boolean} that contains the default value for {@link URLParameter#isStorable}

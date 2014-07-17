@@ -1,4 +1,4 @@
-package org.bgee.utils;
+package org.bgee.controller.utils;
 
 import org.apache.commons.lang3.StringUtils;
 

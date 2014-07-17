@@ -5,8 +5,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.bgee.model.data.sql.Database;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
@@ -105,7 +103,7 @@ public class FrontController extends HttpServlet {
 			}
 			log.error("Other Exception", e);
 		} finally {
-			Database.destructAll();
+			//Database.destructAll();
 		}
 	}
 

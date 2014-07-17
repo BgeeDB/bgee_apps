@@ -3,4 +3,4 @@
  * anywhere in the webapp.
  * @author Mathieu Seppey
  */
-package org.bgee.utils;
+package org.bgee.controller.utils;

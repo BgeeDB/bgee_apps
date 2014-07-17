@@ -23,7 +23,7 @@ import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
-import org.bgee.utils.BgeeStringUtils;
+import org.bgee.controller.utils.BgeeStringUtils;
 
 /**
  * This class is intended to hold parameters of a query to the server, 
@@ -126,7 +126,7 @@ public class RequestParameters {
 	 * @see 	#store()
 	 * @see 	#loadStorableParametersFromKey()
 	 */
-	private static ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks= 
+	private static final ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks= 
 			new ConcurrentHashMap<String, ReentrantReadWriteLock>();
 
 	/**

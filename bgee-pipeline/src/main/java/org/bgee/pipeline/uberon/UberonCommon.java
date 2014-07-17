@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-//currently never used
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 /**
@@ -24,8 +24,7 @@ abstract class UberonCommon {
     /**
      * {@code Logger} of the class.
      */
-    //currently never used
-    //private final static Logger log = LogManager.getLogger(UberonCommon.class.getName());
+    private final static Logger log = LogManager.getLogger(UberonCommon.class.getName());
     
     /**
      * A {@code String} that is the name of the column containing the anatomical entity IDs 
@@ -306,6 +305,38 @@ abstract class UberonCommon {
      */
     public void setTaxonConstraints(Map<String, Set<Integer>> taxonConstraints) {
         this.taxonConstraints = taxonConstraints;
+    }
+    
+    /**
+     * Determines whether {@code cls} belongs to the taxon with ID {@code taxonId}. 
+     * This can be determined only if taxon constraints have been provided (see 
+     * {@link #setTaxonConstraints(Map)}). If no taxon contraints have been provided, 
+     * or {@code taxonId} is equal to 0, this method will always return {@code true}. 
+     * If some taxon constraints have been provided, but none are defined for {@code cls}, 
+     * this method will also return {@code true}. If some taxon constraints have been provided, 
+     * that some are defined for {@code cls}, and if {@code taxonId} is different from 0, 
+     * then this method will return {@code true} if {@code cls} belongs to the taxon, 
+     * {@code false} otherwise. 
+     * 
+     * @param cls           An {@code OWLClass} for which we want to determine whether 
+     *                      it belongs to the taxon with ID {@code taxonId}.
+     * @param taxonId       An {@code int} that is the NCBI ID of the taxon for which 
+     *                      we want to know if {@code cls} belongs to.
+     * @return              {@code false} if it is shown that {@code cls} doesa not belong to 
+     *                      taxon with ID {@code taxonId}, {@code false} otherwise. 
+     */
+    public boolean existsInSpecies(OWLClass cls, int taxonId) {
+        log.entry(cls, taxonId);
+        if (this.getTaxonConstraints() == null || taxonId == 0) {
+            return log.exit(true);
+        }
+        Set<Integer> validSpecies = this.getTaxonConstraints().get(
+                this.getOntologyUtils().getWrapper().getIdentifier(cls));
+        if (validSpecies != null && !validSpecies.isEmpty() && 
+                !validSpecies.contains(taxonId)) {
+            return log.exit(false);
+        }
+        return log.exit(true);
     }
 
     /**

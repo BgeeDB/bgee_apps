@@ -583,21 +583,13 @@ public class UberonDevStage extends UberonCommon {
             throw log.throwing(new IllegalArgumentException("Could not find any OWLClass " +
                     "corresponding to " + endStageId));
         }
-        if (this.getTaxonConstraints() != null && speciesId != 0) {
-            Set<Integer> validSpecies = this.getTaxonConstraints().get(
-                    this.getOntologyUtils().getWrapper().getIdentifier(startStage));
-            if (validSpecies != null && !validSpecies.isEmpty() && 
-                    !validSpecies.contains(speciesId)) {
-                throw log.throwing(new IllegalArgumentException("Start stage " + startStageId + 
-                        " does not belong to the requested species " + speciesId));
-            }
-            validSpecies = this.getTaxonConstraints().get(
-                    this.getOntologyUtils().getWrapper().getIdentifier(endStage));
-            if (validSpecies != null && !validSpecies.isEmpty() && 
-                    !validSpecies.contains(speciesId)) {
-                throw log.throwing(new IllegalArgumentException("End stage " + endStageId + 
-                        " does not belong to the requested species " + speciesId));
-            }
+        if (!this.existsInSpecies(startStage, speciesId)) {
+            throw log.throwing(new IllegalArgumentException("Start stage " + startStageId + 
+                    " does not belong to the requested species " + speciesId));
+        }
+        if (!this.existsInSpecies(endStage, speciesId)) {
+            throw log.throwing(new IllegalArgumentException("End stage " + endStageId + 
+                    " does not belong to the requested species " + speciesId));
         }
         
         //identity case
@@ -634,13 +626,15 @@ public class UberonDevStage extends UberonCommon {
             int endLevel = nestedModel.get(endStage).get(OntologyUtils.LEVEL_KEY);
             int maxLevel = Math.max(startLevel, endLevel);
             
-            //now we get all stages between start and end stages, with a level not greater 
+            //now we get all stages belonging to the requested species, 
+            //between start and end stages, with a level not greater 
             //than the max level between start and end stage. 
             Set<OWLClass> selectedStages = new HashSet<OWLClass>();
             for (Entry<OWLClass, Map<String, Integer>> entry: nestedModel.entrySet()) {
                 OWLClass stage = entry.getKey();
                 Map<String, Integer> params = entry.getValue();
-                if (params.get(OntologyUtils.LEFT_BOUND_KEY) >= startLeftBound && 
+                if (this.existsInSpecies(stage, speciesId) && 
+                    params.get(OntologyUtils.LEFT_BOUND_KEY) >= startLeftBound && 
                         params.get(OntologyUtils.LEFT_BOUND_KEY) <= endLeftBound && 
                     params.get(OntologyUtils.RIGHT_BOUND_KEY) >= startRightBound && 
                             params.get(OntologyUtils.RIGHT_BOUND_KEY) <= endRightBound && 

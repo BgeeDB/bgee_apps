@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -381,8 +382,125 @@ public class UberonDevStageTest extends TestAncestor {
                 getResource("/ontologies/startEndStagesWithTaxonConstraints.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
-        UberonDevStage uberon = new UberonDevStage(utils);
         
+        Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
+        taxonConstraints.put("ID:0000000", new HashSet<Integer>(Arrays.asList(1, 2)));
+        taxonConstraints.put("ID:0000001", new HashSet<Integer>(Arrays.asList(1, 2)));
+        taxonConstraints.put("ID:0000002", new HashSet<Integer>(Arrays.asList(1, 2)));
+        taxonConstraints.put("ID:0000003", new HashSet<Integer>(Arrays.asList(1, 2)));
+        taxonConstraints.put("SPE1:0000004", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("SPE1:0000011", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("SPE1:0000012", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("SPE1:0000005", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("SPE1:0000013", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("SPE1:0000014", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("SPE1:0000007", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("SPE1:0000008", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("SPE2:0000006", new HashSet<Integer>(Arrays.asList(2)));
+        taxonConstraints.put("SPE2:0000106", new HashSet<Integer>(Arrays.asList(2)));
+        taxonConstraints.put("SPE2:0000009", new HashSet<Integer>(Arrays.asList(2)));
+        taxonConstraints.put("SPE2:0000010", new HashSet<Integer>(Arrays.asList(2)));
+        
+        UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
+        
+        OWLClass id1 = wrapper.getOWLClassByIdentifier("ID:0000001");
+        OWLClass id2 = wrapper.getOWLClassByIdentifier("ID:0000002");
+        OWLClass id3 = wrapper.getOWLClassByIdentifier("ID:0000003");
+        OWLClass spe1_4 = wrapper.getOWLClassByIdentifier("SPE1:0000004");
+        OWLClass spe1_11 = wrapper.getOWLClassByIdentifier("SPE1:0000011");
+        OWLClass spe1_12 = wrapper.getOWLClassByIdentifier("SPE1:0000012");
+        OWLClass spe1_5 = wrapper.getOWLClassByIdentifier("SPE1:0000005");
+        OWLClass spe1_13 = wrapper.getOWLClassByIdentifier("SPE1:0000013");
+        OWLClass spe1_14 = wrapper.getOWLClassByIdentifier("SPE1:0000014");
+        OWLClass spe1_7 = wrapper.getOWLClassByIdentifier("SPE1:0000007");
+        OWLClass spe1_8 = wrapper.getOWLClassByIdentifier("SPE1:0000008");
+        OWLClass spe2_6 = wrapper.getOWLClassByIdentifier("SPE2:0000006");
+        OWLClass spe2_106 = wrapper.getOWLClassByIdentifier("SPE2:0000106");
+        OWLClass spe2_9 = wrapper.getOWLClassByIdentifier("SPE2:0000009");
+        OWLClass spe2_10 = wrapper.getOWLClassByIdentifier("SPE2:0000010");
+        
+        Map<OWLClass, Map<String, Integer>> expectedModel = 
+                new HashMap<OWLClass, Map<String, Integer>>();
+        
+        Map<String, Integer> params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 1);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 30);
+        params.put(OntologyUtils.LEVEL_KEY, 1);
+        expectedModel.put(id1, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 2);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 19);
+        params.put(OntologyUtils.LEVEL_KEY, 2);
+        expectedModel.put(id2, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 3);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 8);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(spe1_4, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 4);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 5);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(spe1_11, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 6);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 7);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(spe1_12, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 9);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 14);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(spe1_5, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 10);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 11);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(spe1_13, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 12);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 13);
+        params.put(OntologyUtils.LEVEL_KEY, 4);
+        expectedModel.put(spe1_14, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 15);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 16);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(spe2_6, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 17);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 18);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(spe2_106, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 20);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 29);
+        params.put(OntologyUtils.LEVEL_KEY, 2);
+        expectedModel.put(id3, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 21);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 22);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(spe1_7, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 23);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 24);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(spe1_8, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 25);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 26);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(spe2_9, params);
+        params = new HashMap<String, Integer>();
+        params.put(OntologyUtils.LEFT_BOUND_KEY, 27);
+        params.put(OntologyUtils.RIGHT_BOUND_KEY, 28);
+        params.put(OntologyUtils.LEVEL_KEY, 3);
+        expectedModel.put(spe2_10, params);
+
+        
+        assertEquals("Incorrect developmental stage nested set model", expectedModel, 
+                uberon.generateStageNestedSetModel(id1));
     }
     
     /**

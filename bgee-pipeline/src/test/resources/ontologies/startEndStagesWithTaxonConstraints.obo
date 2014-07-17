@@ -10,24 +10,28 @@ name: life cycle stage
 id: ID:0000001
 name: life cycle
 is_a: ID:0000000 ! life cycle stage
+comment: left: 1 - right: 30 - level: 1
 
 [Term]
 id: ID:0000002
 name: prenatal stage
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000001 ! life cycle
+comment: left: 2 - right: 19 - level: 2
 
 [Term]
 id: SPE1:0000004
 name: species 1 prenatal 1
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000002 ! prenatal stage
+comment: left: 3 - right: 8 - level: 3
 
 [Term]
 id: SPE1:0000011
 name: species 1 prenatal 1_1
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 SPE1:0000004
+comment: left: 4 - right: 5 - level: 4
 
 [Term]
 id: SPE1:0000012
@@ -35,6 +39,7 @@ name: species 1 prenatal 1_2
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 SPE1:0000004
 relationship: RO:0002087 SPE1:0000011
+comment: left: 6 - right: 7 - level: 4
 
 [Term]
 id: SPE1:0000005
@@ -42,12 +47,14 @@ name: species 1 prenatal 2
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000002 ! prenatal stage
 relationship: RO:0002087 SPE1:0000004 
+comment: left: 9 - right: 14 - level: 3
 
 [Term]
 id: SPE1:0000013
 name: species 1 prenatal 2_1
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 SPE1:0000005
+comment: left: 10 - right: 11 - level: 4
 
 [Term]
 id: SPE1:0000014
@@ -55,12 +62,14 @@ name: species 1 prenatal 2_2
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 SPE1:0000005
 relationship: RO:0002087 SPE1:0000013
+comment: left: 12 - right: 13 - level: 4
 
 [Term]
 id: SPE2:0000006
 name: species 2 prenatal 1
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000002 ! prenatal stage
+comment: left: 15 - right: 16 - level: 3
 
 [Term]
 id: SPE2:0000106
@@ -68,6 +77,7 @@ name: species 2 prenatal 2
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000002 ! prenatal stage
 relationship: RO:0002087 SPE2:0000006
+comment: left: 17 - right: 18 - level: 3
 
 [Term]
 id: ID:0000003
@@ -75,12 +85,14 @@ name: immature stage
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000001 ! life cycle
 relationship: RO:0002087 ID:0000002 ! prenatal stage
+comment: left: 20 - right: 29 - level: 2
 
 [Term]
 id: SPE1:0000007
 name: species 1 immature 1
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000003 ! immature stage
+comment: left: 21 - right: 22 - level: 3
 
 [Term]
 id: SPE1:0000008
@@ -88,16 +100,19 @@ name: species 1 immature 2
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000003 ! immature stage
 relationship: BFO:0000062 SPE1:0000007
+comment: left: 23 - right: 24 - level: 3
 
 [Term]
 id: SPE2:0000009
 name: species 2 immature 1
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000003 ! immature stage
+comment: left: 25 - right: 26 - level: 3
 
 [Term]
 id: SPE2:0000010
 name: species 2 immature 2
 is_a: ID:0000000 ! life cycle stage
 relationship: BFO:0000050 ID:0000003 ! immature stage
-relationship: RO:0002087 SPE2:0000009 
+relationship: RO:0002087 SPE2:0000009
+comment: left: 27 - right: 28 - level: 3 

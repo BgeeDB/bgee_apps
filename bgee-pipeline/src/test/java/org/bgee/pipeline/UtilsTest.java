@@ -5,11 +5,13 @@ import static org.mockito.Mockito.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -139,5 +141,24 @@ public class UtilsTest extends TestAncestor {
         new Utils().parseColumnAsInteger(
                 this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
                 "column3", new ParseInt());
+    }
+    
+    /**
+     * Test the method {@link AnnotationCommon#localizeColumn(String[], List)}.
+     */
+    @Test
+    public void shouldLocalizeColumn() {
+        String[] header = new String[3];
+        header[0] = "col1";
+        header[1] = "col2";
+        header[2] = "col3";
+        assertEquals("Incorrect column index returned", 2, 
+                Utils.localizeColumn(header, Arrays.asList("col3", "col1")));
+        assertEquals("Incorrect column index returned", 0, 
+                Utils.localizeColumn(header, Arrays.asList("col1", "col3")));
+        assertEquals("Incorrect column index returned", 1, 
+                Utils.localizeColumn(header, Arrays.asList("noMatch1", "col2")));
+        assertEquals("Incorrect column index returned", -1, 
+                Utils.localizeColumn(header, Arrays.asList("noMatch1", "noMatch2")));
     }
 }

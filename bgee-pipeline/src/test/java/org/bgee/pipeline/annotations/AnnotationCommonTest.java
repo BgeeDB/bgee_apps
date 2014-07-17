@@ -247,24 +247,4 @@ public class AnnotationCommonTest extends TestAncestor {
                     expectedRowCount, i);
         }
     }
-    
-    /**
-     * Test the method {@link AnnotationCommon#localizeColumn(String[], List)}.
-     */
-    @Test
-    public void shouldLocalizeColumn() {
-        String[] header = new String[3];
-        header[0] = "col1";
-        header[1] = "col2";
-        header[2] = "col3";
-        assertEquals("Incorrect column index returned", 2, 
-                AnnotationCommon.localizeColumn(header, Arrays.asList("col3", "col1")));
-        assertEquals("Incorrect column index returned", 0, 
-                AnnotationCommon.localizeColumn(header, Arrays.asList("col1", "col3")));
-        assertEquals("Incorrect column index returned", 1, 
-                AnnotationCommon.localizeColumn(header, Arrays.asList("noMatch1", "col2")));
-        assertEquals("Incorrect column index returned", -1, 
-                AnnotationCommon.localizeColumn(header, Arrays.asList("noMatch1", "noMatch2")));
-    }
-
 }

@@ -71,7 +71,7 @@ public class InsertTaxa extends MySQLDAOUser {
      * and that is also the name of the column to retrieve these IDs from the TSV file 
      * storing the species used in Bgee.
      */
-    public static final String SPECIES_ID_KEY = Utils.TAXONCOLUMNNAME;
+    public static final String SPECIES_ID_KEY = "taxon ID";
     /**
      * A {@code String} that is the key to retrieve the genus name (for instance, 
      * "homo") of the species used in Bgee from the {@code Map}s returned by 

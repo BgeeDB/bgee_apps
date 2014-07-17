@@ -178,17 +178,53 @@ public class UberonDevStage extends UberonCommon {
         this(new OntologyUtils(pathToUberon));
     }
     /**
+     * Constructor providing the path to the Uberon ontology to used to perform operations, 
+     * and the path the a file containing taxon constraints, as parsable by 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}.
+     * 
+     * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
+     * @param pathToUberon  A {@code String} that is the path to the taxon constraints. 
+     * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
+     * @throws OBOFormatParserException     If the ontology is malformed.
+     * @throws IOException                  If the file could not be read. 
+     */
+    public UberonDevStage(String pathToUberon, String pathToTaxonConstraints) 
+            throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+        this(new OntologyUtils(pathToUberon), 
+                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints));
+    }
+    /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
      * wrapping the Uberon ontology that will be used. 
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
      */
     public UberonDevStage(OntologyUtils ontUtils) {
+        this(ontUtils, null);
+    }
+    /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used, and the taxon constraints 
+     * that will be used to identify to which species stages belong. It is not necessary 
+     * to provide those if the ontology contains only one species.  
+     * 
+     * @param ontUtils          the {@code OntologyUtils} that will be used. 
+     * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 
+     *                          {@code OWLClass}es, and values are {@code Set}s 
+     *                          of {@code Integer}s containing the IDs of taxa 
+     *                          in which the {@code OWLClass} exists.
+     */
+    //suppress warning because OWLGraphWrapper uses non-parameterized generic types, 
+    //so we need to do the same.
+    @SuppressWarnings("rawtypes")
+    public UberonDevStage(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) {
         super(ontUtils);
         this.nestedSetModels = new HashMap<OWLClass, Map<OWLClass, Map<String, Integer>>>();
         this.overPartOf = Collections.unmodifiableSet(new HashSet<OWLPropertyExpression>(
                 Arrays.asList(this.getOntologyUtils().getWrapper().
                         getOWLObjectPropertyByIdentifier(OntologyUtils.PART_OF_ID))));
+        
+        this.setTaxonConstraints(taxonConstraints);
     }
     
     
@@ -426,8 +462,9 @@ public class UberonDevStage extends UberonCommon {
         while ((classWalked = walker.pollFirst()) != null) {
             //order the direct children of a same species, or multi-species children together.
             //store the children associated to their NCBI tax ID (or to null, if they are 
-            //multi-species children)
-            Map<Integer, Set<OWLClass>> children = new HashMap<Integer, Set<OWLClass>>();
+            //multi-species children).
+            //Use a TreeMap so that ordering between species is predictable
+            Map<Integer, Set<OWLClass>> children = new TreeMap<Integer, Set<OWLClass>>();
             for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(classWalked)) {
                 if ((this.getOntologyUtils().isPartOfRelation(incomingEdge) || 
                         this.getOntologyUtils().isASubClassOfEdge(incomingEdge)) && 
@@ -439,7 +476,7 @@ public class UberonDevStage extends UberonCommon {
                         speciesIds = this.getTaxonConstraints().get(
                             this.getOntologyUtils().getWrapper().getIdentifier(child));
                     }
-                    Integer speciesKey = null;
+                    Integer speciesKey = 0;
                     if (speciesIds != null && speciesIds.size() == 1) {
                         speciesKey = speciesIds.iterator().next();
                     }
@@ -465,22 +502,41 @@ public class UberonDevStage extends UberonCommon {
     }
     
     /**
-     * Delegates to {@link #getStageIdsBetween(String, String, Map)} with the last {@code Map} 
-     * parameter {@code null}. In that case, the nested set model will be computed directly 
-     * (see documentation of delegate method). 
+     * Delegates to {@link #getStageIdsBetween(String, String, int)} with the last {@code int} 
+     * parameter equals to 0. In that case, the returned stage IDs will belong to any species. 
      * 
-     * @param startStageId  See same argument in {@link #getStageIdsBetween(String, String, Map)}
-     * @param endStageId    See same argument in {@link #getStageIdsBetween(String, String, Map)}
-     * @return              See returned value in {@link #getStageIdsBetween(String, String, Map)}
+     * @param startStageId  See same argument in {@link #getStageIdsBetween(String, String, int)}
+     * @param endStageId    See same argument in {@link #getStageIdsBetween(String, String, int)}
+     * @return              See returned value in {@link #getStageIdsBetween(String, String, int)}
      */
     public List<String> getStageIdsBetween(String startStageId, String endStageId) {
         log.entry(startStageId, endStageId);
-        return log.exit(this.getStageIdsBetween(startStageId, endStageId, null));
+        return log.exit(this.getStageIdsBetween(startStageId, endStageId, 0));
+    }
+    
+    /**
+     * Delegates to {@link #getStageIdsBetween(String, String, Map, int)} with the last {@code Map} 
+     * parameter {@code null}. This method allows to specify to which species 
+     * the stage IDs returned should belong to. And, as the {@code Map} argument 
+     * will be {@code null}, the nested set model will be computed directly 
+     * (see documentation of delegate method). 
+     * 
+     * @param startStageId  See same argument in {@link #getStageIdsBetween(String, String, Map, int)}
+     * @param endStageId    See same argument in {@link #getStageIdsBetween(String, String, Map, int)}
+     * @param speciesId     See same argument in {@link #getStageIdsBetween(String, String, Map, int)}
+     * @return              See returned value in {@link #getStageIdsBetween(String, String, Map, int)}
+     */
+    public List<String> getStageIdsBetween(String startStageId, String endStageId, 
+            int speciesId) {
+        log.entry(startStageId, endStageId, speciesId);
+        return log.exit(this.getStageIdsBetween(startStageId, endStageId, null, speciesId));
     }
     
     /**
      * Retrieve the OBO-like IDs of the developmental stages occurring between the stages 
-     * with IDs {@code startStageId} and {@code endStageId}. To achieve this task, 
+     * with IDs {@code startStageId} and {@code endStageId}, and belonging to species 
+     * with ID {@code speciesId}. If {@code speciesId} is equal to 0, then stages 
+     * from any species will be returned. To achieve this task, 
      * either the {@code providedNestedModel} will be used, or, if {@code null}, 
      * a nested set model is computed for the ontology wrapped by this object 
      * (provided before calling this method through {@link #setPathToUberonOnt(String)}), 
@@ -488,6 +544,10 @@ public class UberonDevStage extends UberonCommon {
      * part_of relations for ancestry between stages, and immediately_preceded_by 
      * and preceded_by for chronological relations between stages (see {@link 
      * #generateStageNestedSetModel(OWLClass)}). 
+     * <p>
+     * Note that if it is needed to compute a nested set model, taxon constraints 
+     * should have been provided, unless the ontology used contains only one species. 
+     * See {@link #generateStageNestedSetModel(OWLClass)} for more details.
      * 
      * @param startStageId  A {@code String} that is the OBO-like ID of the start  
      *                      developmental stage.
@@ -499,14 +559,16 @@ public class UberonDevStage extends UberonCommon {
      *                              {@link org.bgee.pipeline.OntologyUtils#computeNestedSetModelParams(
      *                              OWLClass, List, Set)} 
      *                              for more details.
+     * @param speciesId     An {@code int} that is the NCBI ID of the species for which 
+     *                      we want to retrieve stages. 
      * @return              A {@code List} of {@code String}s that are the OBO-like IDs 
      *                      of stages occurring between start and end stages, ordered 
      *                      by chronological order. 
      * @see #generateStageNestedSetModel(OWLClass)
      */
     public List<String> getStageIdsBetween(String startStageId, String endStageId, 
-            Map<OWLClass, Map<String, Integer>> providedNestedModel) {
-        log.entry(startStageId, endStageId);
+            Map<OWLClass, Map<String, Integer>> providedNestedModel, int speciesId) {
+        log.entry(startStageId, endStageId, providedNestedModel, speciesId);
         
         List<String> stageIdsBetween = new ArrayList<String>();
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
@@ -520,6 +582,22 @@ public class UberonDevStage extends UberonCommon {
         if (endStage == null) {
             throw log.throwing(new IllegalArgumentException("Could not find any OWLClass " +
                     "corresponding to " + endStageId));
+        }
+        if (this.getTaxonConstraints() != null && speciesId != 0) {
+            Set<Integer> validSpecies = this.getTaxonConstraints().get(
+                    this.getOntologyUtils().getWrapper().getIdentifier(startStage));
+            if (validSpecies != null && !validSpecies.isEmpty() && 
+                    !validSpecies.contains(speciesId)) {
+                throw log.throwing(new IllegalArgumentException("Start stage " + startStageId + 
+                        " does not belong to the requested species " + speciesId));
+            }
+            validSpecies = this.getTaxonConstraints().get(
+                    this.getOntologyUtils().getWrapper().getIdentifier(endStage));
+            if (validSpecies != null && !validSpecies.isEmpty() && 
+                    !validSpecies.contains(speciesId)) {
+                throw log.throwing(new IllegalArgumentException("End stage " + endStageId + 
+                        " does not belong to the requested species " + speciesId));
+            }
         }
         
         //identity case

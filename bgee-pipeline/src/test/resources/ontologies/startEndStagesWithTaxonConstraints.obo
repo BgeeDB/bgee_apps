@@ -2,3 +2,102 @@ format-version: 1.2
 ontology: startEndStagesWithTaxonConstraints
 import: ro.obo
 
+[Term]
+id: ID:0000000
+name: life cycle stage
+
+[Term]
+id: ID:0000001
+name: life cycle
+is_a: ID:0000000 ! life cycle stage
+
+[Term]
+id: ID:0000002
+name: prenatal stage
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000001 ! life cycle
+
+[Term]
+id: SPE1:0000004
+name: species 1 prenatal 1
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000002 ! prenatal stage
+
+[Term]
+id: SPE1:0000011
+name: species 1 prenatal 1_1
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 SPE1:0000004
+
+[Term]
+id: SPE1:0000012
+name: species 1 prenatal 1_2
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 SPE1:0000004
+relationship: RO:0002087 SPE1:0000011
+
+[Term]
+id: SPE1:0000005
+name: species 1 prenatal 2
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000002 ! prenatal stage
+relationship: RO:0002087 SPE1:0000004 
+
+[Term]
+id: SPE1:0000013
+name: species 1 prenatal 2_1
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 SPE1:0000005
+
+[Term]
+id: SPE1:0000014
+name: species 1 prenatal 2_2
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 SPE1:0000005
+relationship: RO:0002087 SPE1:0000013
+
+[Term]
+id: SPE2:0000006
+name: species 2 prenatal 1
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000002 ! prenatal stage
+
+[Term]
+id: SPE2:0000106
+name: species 2 prenatal 2
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000002 ! prenatal stage
+relationship: RO:0002087 SPE2:0000006
+
+[Term]
+id: ID:0000003
+name: immature stage
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000001 ! life cycle
+relationship: RO:0002087 ID:0000002 ! prenatal stage
+
+[Term]
+id: SPE1:0000007
+name: species 1 immature 1
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000003 ! immature stage
+
+[Term]
+id: SPE1:0000008
+name: species 1 immature 2
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000003 ! immature stage
+relationship: BFO:0000062 SPE1:0000007
+
+[Term]
+id: SPE2:0000009
+name: species 2 immature 1
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000003 ! immature stage
+
+[Term]
+id: SPE2:0000010
+name: species 2 immature 2
+is_a: ID:0000000 ! life cycle stage
+relationship: BFO:0000050 ID:0000003 ! immature stage
+relationship: RO:0002087 SPE2:0000009 

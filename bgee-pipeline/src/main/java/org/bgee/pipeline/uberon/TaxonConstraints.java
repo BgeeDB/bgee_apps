@@ -825,7 +825,7 @@ public class TaxonConstraints {
      * @throws IOException              If {@code taxonConstraintsFile} could not 
      *                                  be read.
      */
-    public Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile) 
+    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile) 
             throws FileNotFoundException, IOException {
         log.entry(taxonConstraintsFile);
         

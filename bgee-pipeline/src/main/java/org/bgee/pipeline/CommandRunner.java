@@ -155,7 +155,7 @@ public class CommandRunner {
             break;
         case "socketUberonStagesBetween": 
             CommandRunner.socketUberonStagesBetween(new UberonDevStage(newArgs[0]), 
-                    Integer.parseInt(newArgs[1]));
+                    Integer.parseInt(newArgs[1]), Integer.parseInt(newArgs[2]));
             break;
             
         //---------- Similarity annotation -----------
@@ -197,17 +197,19 @@ public class CommandRunner {
      * The method used to obtain stage ranges is 
      * {@link org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)}.
      * @param uberon            The {@code Uberon} instance that will be used to retrieve 
-     *                          stage ranges, with no parameters set (dependency injection),
-     * @param pathToUberonOnt   A {@code String} that is the path to the Uberon ontology 
-     *                          containing developmental stagse.
-     * @param portNumber        An {@code int} that is the port to connect to. 
+     *                          stage ranges (dependency injection), with the ontology to use 
+     *                          already defined (at instantiation), as well as, if needed, 
+     *                          taxon constraints (also at instantiation).
+     * @param speciesId         An {@code int} that is the NCBI ID of the species for which 
+     *                          we want to retrieve stages.
+     * @param portNumber        An {@code int} that is the port to connect to.  
      * @throws IOException      If an error occurred while reading from or writting to 
      *                          the socket. 
      * @see org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)
      */
-    public static void socketUberonStagesBetween(UberonDevStage uberon, int portNumber) 
-            throws IOException {
-        log.entry(uberon, portNumber);
+    public static void socketUberonStagesBetween(UberonDevStage uberon, int speciesId, 
+            int portNumber) throws IOException {
+        log.entry(uberon, speciesId, portNumber);
         
         log.debug("Trying to launch ServerSocket");
         ServerSocket serverSocket = null;
@@ -243,7 +245,7 @@ public class CommandRunner {
                                 params.get(0), params.get(1));
                         
                         List<String> stageIds = uberon.getStageIdsBetween(params.get(0), 
-                                params.get(1));
+                                params.get(1), speciesId);
                         String output = "";
                         for (String stageId: stageIds) {
                             if (StringUtils.isNotBlank(output)) {

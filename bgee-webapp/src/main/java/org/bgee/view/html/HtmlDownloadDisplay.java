@@ -73,13 +73,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		this.writeln("<ul>");
 		this.writeln("<li><h2>Presence and absence of expression</h2>");
 		this.writeln("<ul>");
-		this.writeln("<li><a href='http://www.isb-sib.ch/' alt='Presence and absence of expression in a simple file'>Simple file</a></li>");
-		this.writeln("<li><a href='http://www.isb-sib.ch/' alt='Presence and absence of expression in a complete file'>Complete file</a></li>");
+		this.writeln("<li><a id='simple_pres_abs' href='http://www.isb-sib.ch/' alt='Presence and absence of expression in a simple file'>Simple file</a></li>");
+		this.writeln("<li><a id='complete_pres_abs' href='http://www.isb-sib.ch/' alt='Presence and absence of expression in a complete file'>Complete file</a></li>");
 		this.writeln("</ul></li>");
 		this.writeln("<li><h2>Over- and under-expression</h2>");
 		this.writeln("<ul>");
-		this.writeln("<li><a href='http://www.isb-sib.ch/' alt='Over- and under-expression in a simple file'>Simple file</a></li>");
-		this.writeln("<li><a href='http://www.isb-sib.ch/' alt='Over- and under-expression in a complete file'>Complete file</a></li>");
+		this.writeln("<li><a id='simple_over_under' href='http://www.isb-sib.ch/' alt='Over- and under-expression in a simple file'>Simple file</a></li>");
+		this.writeln("<li><a id='complete_over_under' href='http://www.isb-sib.ch/' alt='Over- and under-expression in a complete file'>Complete file</a></li>");
 		this.writeln("</ul>");
 		this.writeln("</li>");
 		this.writeln("</ul>");

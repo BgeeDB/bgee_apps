@@ -47,7 +47,7 @@ public class CommandRunnerTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link CommandRunner#socketUberonStagesBetween(Uberon, int)}
+     * Test the method {@link CommandRunner#socketUberonStagesBetween(Uberon, int, int)}
      * @throws UnknownHostException
      * @throws IOException
      */
@@ -57,7 +57,7 @@ public class CommandRunnerTest extends TestAncestor {
         final int port = 15555;
         final String host = "127.0.0.1";
         final UberonDevStage mockUberon = mock(UberonDevStage.class);
-        when(mockUberon.getStageIdsBetween(eq("ID1"), eq("ID3"))).thenReturn(
+        when(mockUberon.getStageIdsBetween(eq("ID1"), eq("ID3"), eq(0))).thenReturn(
                 Arrays.asList("ID1", "ID2", "ID3"));
         
         /**
@@ -69,7 +69,7 @@ public class CommandRunnerTest extends TestAncestor {
             @Override
             public void run() {
                 try {
-                    CommandRunner.socketUberonStagesBetween(mockUberon, port);
+                    CommandRunner.socketUberonStagesBetween(mockUberon, 0, port);
                 } catch (IOException e) {
                     exceptionThrown = e;
                 } 

@@ -297,7 +297,7 @@ public class TaxonConstraintsTest extends TestAncestor {
         expectedConstraints.put(clsId4, new HashSet<Integer>(Arrays.asList(10)));
         expectedConstraints.put(clsId5, new HashSet<Integer>());
         
-        assertEquals(expectedConstraints, new TaxonConstraints().extractTaxonConstraints(
+        assertEquals(expectedConstraints, TaxonConstraints.extractTaxonConstraints(
                 this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
     }
     

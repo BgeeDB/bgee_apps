@@ -28,6 +28,8 @@ import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
@@ -52,6 +54,16 @@ public class AnnotationCommon {
      */
     private final static Logger log = 
             LogManager.getLogger(AnnotationCommon.class.getName());
+    
+
+    /**
+     * An unmodifiable {@code List} of {@code String}s that are the potential names 
+     * of columns containing taxon IDs, in the files containing the taxa or species used in Bgee.
+     * We allow multiple values because maybe this is inconsistent in the various 
+     * annotation files. These values are ordered by order of preference of use.
+     */
+    public static final List<String> TAXON_COL_NAMES = Collections.unmodifiableList(
+            Arrays.asList("taxon ID", "species ID", "taxonID", "speciesID"));
     
     /**
      * An unmodifiable {@code List} of {@code String}s that are the potential names 
@@ -150,6 +162,39 @@ public class AnnotationCommon {
         }
         
         log.exit();
+    }
+
+    
+    /**
+     * Get IDs of taxa from the TSV file named {@code taxonFile}.
+     * The IDs are {@code Integer}s corresponding to the NCBI ID, for instance, 
+     * "9606" for human. The first line should be a header line, defining a column 
+     * to get IDs from, named exactly "taxon ID" (other columns are optional 
+     * and will be ignored).
+     * 
+     * @param taxonFile     A {@code String} that is the path to the TSV file 
+     *                      containing the list of taxon IDs.
+     * @return              A {@code Set} of {Integer}s that are the NCBI IDs 
+     *                      of the taxa present in {@code taxonFile}.
+     * @throws FileNotFoundException    If {@code taxonFile} could not be found.
+     * @throws IOException              If {@code taxonFile} could not be read.
+     * @throws IllegalArgumentException If the file located at {@code taxonFile} 
+     *                                  did not allow to obtain any valid taxon ID.
+     */
+    public static Set<Integer> getTaxonIds(String taxonFile) throws IllegalArgumentException, 
+        FileNotFoundException, IOException {
+        log.entry(taxonFile);
+        
+        CellProcessor processor = new NotNull();
+        Set<Integer> taxonIds = new HashSet<Integer>(Utils.parseColumnAsInteger(taxonFile, 
+                TAXON_COL_NAMES, processor));
+        
+        if (taxonIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The taxon file " +
+                    taxonFile + " did not contain any valid taxon ID"));
+        }
+        
+        return log.exit(taxonIds);
     }
     
     /**

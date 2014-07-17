@@ -54,6 +54,20 @@ public class AnnotationCommonTest extends TestAncestor {
     }
     
     /**
+     * Tests {@link AnnotationCommon.getTaxonIds(String)}.
+     */
+    @Test
+    public void shouldGetTaxonIds() throws IllegalArgumentException, 
+        FileNotFoundException, IOException {
+        Set<Integer> speciesIds = AnnotationCommon.getTaxonIds(
+                this.getClass().getResource("/species/species.tsv").getFile());
+        assertTrue("Incorrect species IDs returned: " + speciesIds, 
+                speciesIds.size() == 3 && 
+                speciesIds.contains(8) && speciesIds.contains(13) && 
+                speciesIds.contains(15));
+    }
+    
+    /**
      * Test {@link AnnotationCommon#parseMultipleEntitiesColumn(String)}
      */
     @Test

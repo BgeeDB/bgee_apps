@@ -301,7 +301,7 @@ public class TaxonConstraintsTest extends TestAncestor {
                 this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
     }
     
-    @Test
+    //@Test
     public void test() throws UnknownOWLOntologyException, OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
         TaxonConstraints tc = new TaxonConstraints(

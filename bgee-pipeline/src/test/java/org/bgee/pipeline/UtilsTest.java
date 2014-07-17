@@ -7,11 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -45,20 +43,6 @@ public class UtilsTest extends TestAncestor {
     }
     
     /**
-     * Tests {@link Utils.getTaxonIds(String)}.
-     */
-    @Test
-    public void shouldGetTaxonIds() throws IllegalArgumentException, 
-        FileNotFoundException, IOException {
-        Set<Integer> speciesIds = new Utils().getTaxonIds(
-                this.getClass().getResource("/species/species.tsv").getFile());
-        assertTrue("Incorrect species IDs returned: " + speciesIds, 
-                speciesIds.size() == 3 && 
-                speciesIds.contains(8) && speciesIds.contains(13) && 
-                speciesIds.contains(15));
-    }
-    
-    /**
      * Tests {@link Utils.parseColumnAsString(String, String, CellProcessor)}.
      */
     @Test
@@ -74,7 +58,7 @@ public class UtilsTest extends TestAncestor {
                 }
         });
         
-        List<String> values = new Utils().parseColumnAsString(
+        List<String> values = Utils.parseColumnAsString(
                 this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
                 "column2", processor);
         //the column to read in the second line is empty, it is in purpose 
@@ -87,7 +71,7 @@ public class UtilsTest extends TestAncestor {
         //an IllegalArgumentException should be thrown if no column with the provided 
         //name could be found.
         try {
-            new Utils().parseColumnAsString(
+            Utils.parseColumnAsString(
                     this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
                     "fakeColumn", processor);
             //if we reach this point, test failed
@@ -114,7 +98,7 @@ public class UtilsTest extends TestAncestor {
                 }
         });
         
-        List<Integer> values = new Utils().parseColumnAsInteger(
+        List<Integer> values = Utils.parseColumnAsInteger(
                 this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
                 "column3", processor);
         assertEquals("Incorrect values returned", 3, values.size());
@@ -126,7 +110,7 @@ public class UtilsTest extends TestAncestor {
         //an IllegalArgumentException should be thrown if no column with the provided 
         //name could be found.
         try {
-            new Utils().parseColumnAsString(
+            Utils.parseColumnAsString(
                     this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
                     "fakeColumn", processor);
             //if we reach this point, test failed
@@ -138,7 +122,7 @@ public class UtilsTest extends TestAncestor {
         
         //we check if everything works fine even if we provide a ParseInt CellProcessor 
         //(regression test)
-        new Utils().parseColumnAsInteger(
+        Utils.parseColumnAsInteger(
                 this.getClass().getResource("/utils/tsvTestFile.tsv").getFile(), 
                 "column3", new ParseInt());
     }

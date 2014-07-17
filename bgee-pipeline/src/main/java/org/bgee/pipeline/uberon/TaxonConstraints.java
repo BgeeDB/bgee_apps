@@ -18,6 +18,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
@@ -410,7 +411,7 @@ public class TaxonConstraints {
         
         log.entry(taxonIdFile, outputFile, storeOntologyDir);
         
-        Set<Integer> taxonIds = new Utils().getTaxonIds(taxonIdFile);
+        Set<Integer> taxonIds = AnnotationCommon.getTaxonIds(taxonIdFile);
         Map<String, Set<Integer>> constraints = 
                 this.generateTaxonConstraints(taxonIds, storeOntologyDir);
         this.writeToFile(constraints, taxonIds, outputFile);

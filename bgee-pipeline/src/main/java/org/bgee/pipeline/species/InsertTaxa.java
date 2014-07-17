@@ -21,6 +21,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -251,7 +252,7 @@ public class InsertTaxa extends MySQLDAOUser {
         log.entry(speciesFile, taxonFile, ncbiOntFile);
         
         this.insertSpeciesAndTaxa(this.getSpeciesFromFile(speciesFile), 
-                new Utils().getTaxonIds(taxonFile), 
+                AnnotationCommon.getTaxonIds(taxonFile), 
                 OntologyUtils.loadOntology(ncbiOntFile));
         
         log.exit();

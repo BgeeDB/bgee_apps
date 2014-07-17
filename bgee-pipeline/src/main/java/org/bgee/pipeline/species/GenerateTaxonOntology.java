@@ -10,7 +10,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.semanticweb.owlapi.model.AddAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -149,7 +149,7 @@ public class GenerateTaxonOntology {
         log.entry(taxDataFile, taxonFile, outputFile);
         
         OWLOntology ont = this.generateOntology(taxDataFile, 
-                new Utils().getTaxonIds(taxonFile));
+                AnnotationCommon.getTaxonIds(taxonFile));
         //save in OWL
         new OntologyUtils(ont).saveAsOWL(outputFile);
         

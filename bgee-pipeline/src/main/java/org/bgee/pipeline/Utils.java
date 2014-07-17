@@ -5,15 +5,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.supercsv.cellprocessor.Optional;
-import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.comment.CommentStartsWith;
 import org.supercsv.io.CsvListReader;
@@ -35,14 +31,6 @@ public class Utils {
      */
     private final static Logger log = 
             LogManager.getLogger(Utils.class.getName());
-    /**
-     * An unmodifiable {@code List} of {@code String}s that are the potential names 
-     * of columns containing taxon IDs, in the files containing the taxa or species used in Bgee.
-     * We allow multiple values because maybe this is inconsistent in the various 
-     * annotation files. These values are ordered by order of preference of use.
-     */
-    public static final List<String> TAXON_COL_NAMES = Collections.unmodifiableList(
-            Arrays.asList("taxon ID", "species ID", "taxonID", "speciesID"));
     
     /**
      * A {@code CsvPreference} used to parse TSV files allowing commented line, 
@@ -56,39 +44,6 @@ public class Utils {
      * CR stands for Carriage Return.
      */
     public final static String CR = System.getProperty("line.separator");
-
-    
-    /**
-     * Get IDs of taxa from the TSV file named {@code taxonFile}.
-     * The IDs are {@code Integer}s corresponding to the NCBI ID, for instance, 
-     * "9606" for human. The first line should be a header line, defining a column 
-     * to get IDs from, named exactly "taxon ID" (other columns are optional 
-     * and will be ignored).
-     * 
-     * @param taxonFile     A {@code String} that is the path to the TSV file 
-     *                      containing the list of taxon IDs.
-     * @return              A {@code Set} of {Integer}s that are the NCBI IDs 
-     *                      of the taxa present in {@code taxonFile}.
-     * @throws FileNotFoundException    If {@code taxonFile} could not be found.
-     * @throws IOException              If {@code taxonFile} could not be read.
-     * @throws IllegalArgumentException If the file located at {@code taxonFile} 
-     *                                  did not allow to obtain any valid taxon ID.
-     */
-    public Set<Integer> getTaxonIds(String taxonFile) throws IllegalArgumentException, 
-        FileNotFoundException, IOException {
-        log.entry(taxonFile);
-        
-        CellProcessor processor = new NotNull();
-        Set<Integer> taxonIds = new HashSet<Integer>(this.parseColumnAsInteger(taxonFile, 
-                TAXON_COL_NAMES, processor));
-        
-        if (taxonIds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The taxon file " +
-                    taxonFile + " did not contain any valid taxon ID"));
-        }
-        
-        return log.exit(taxonIds);
-    }
     
     /**
      * Parse {@code tsvFile} and retrieve the values in the column named  
@@ -111,11 +66,11 @@ public class Utils {
      * @throws IOException              If {@code tsvFile} could not be read.
      * @see #parseColumnAsString(String, String, CellProcessor)
      */
-    public List<String> parseColumnAsString(String tsvFile, String columnName) 
+    public static List<String> parseColumnAsString(String tsvFile, String columnName) 
             throws IllegalArgumentException, FileNotFoundException, IOException {
         log.entry(tsvFile, columnName);
         
-        return log.exit(this.parseColumnAsString(tsvFile, columnName, null));
+        return log.exit(parseColumnAsString(tsvFile, columnName, null));
     }
     
     /**
@@ -141,11 +96,43 @@ public class Utils {
      * @throws FileNotFoundException    If {@code tsvFile} could not be found.
      * @throws IOException              If {@code tsvFile} could not be read.
      */
-    public List<String> parseColumnAsString(String tsvFile, String columnName, 
+    public static List<String> parseColumnAsString(String tsvFile, String columnName, 
             CellProcessor columnProcessor) throws IllegalArgumentException, 
             FileNotFoundException, IOException {
         log.entry(tsvFile, columnName, columnProcessor);
-        return log.exit(this.parseColumn(tsvFile, columnName, columnProcessor, 
+        return log.exit(parseColumnAsString(tsvFile, Arrays.asList(columnName), 
+                columnProcessor));
+    }
+    
+    /**
+     * Parse {@code tsvFile} and retrieve the values in the column whose name is present in   
+     * {@code columnNames} (case insensitive), as {@code String}s. To define how 
+     * the column should be processed, a {@code CellProcessor} is provided. 
+     * Comment lines starting with "//" are allowed in {@code tsvFile}. 
+     * <p>
+     * This method returned the values retrieved from the specified column in 
+     * the order they were read from the file.
+     * 
+     * @param tsvFile           A {@code String} that is the path to a TSV file 
+     *                          to parse.
+     * @param columnNames       A {@code List} of {@code String}s that are the potential names 
+     *                          of the column to parse. These {@code String}s are ordered 
+     *                          by order of preference of use. The comparison to find 
+     *                          the column is case-insensitive.
+     * @param columnProcessor   A {@code CellProcessor} defining how to parse 
+     *                          the specify column.
+     * @return  A {@code List} of {@code String}s that the value in the column specified, 
+     *          in the order they were read from {@code tsvFiles}.
+     * @throws IllegalArgumentException If {@code columnName} was not found 
+     *                                  in the headers of {@code tsvFile}.
+     * @throws FileNotFoundException    If {@code tsvFile} could not be found.
+     * @throws IOException              If {@code tsvFile} could not be read.
+     */
+    public static List<String> parseColumnAsString(String tsvFile, List<String> columnNames, 
+            CellProcessor columnProcessor) throws IllegalArgumentException, 
+            FileNotFoundException, IOException {
+        log.entry(tsvFile, columnNames, columnProcessor);
+        return log.exit(parseColumn(tsvFile, columnNames, columnProcessor, 
                 String.class));
     }
    
@@ -171,11 +158,11 @@ public class Utils {
      * @throws IOException              If {@code tsvFile} could not be read.
      * @see #parseColumnAsString(String, String, CellProcessor)
      */
-    public List<Integer> parseColumnAsInteger(String tsvFile, String columnName) 
+    public static List<Integer> parseColumnAsInteger(String tsvFile, String columnName) 
             throws IllegalArgumentException, FileNotFoundException, IOException {
         log.entry(tsvFile, columnName);
         
-        return log.exit(this.parseColumnAsInteger(tsvFile, columnName, null));
+        return log.exit(parseColumnAsInteger(tsvFile, columnName, null));
     }
     
     /**
@@ -202,18 +189,52 @@ public class Utils {
      * @throws FileNotFoundException    If {@code tsvFile} could not be found.
      * @throws IOException              If {@code tsvFile} could not be read.
      */
-    public List<Integer> parseColumnAsInteger(String tsvFile, String columnName, 
+    public static List<Integer> parseColumnAsInteger(String tsvFile, String columnName, 
             CellProcessor columnProcessor) throws IllegalArgumentException, 
             FileNotFoundException, IOException {
         log.entry(tsvFile, columnName, columnProcessor);
         
-        return log.exit(this.parseColumn(tsvFile, columnName, columnProcessor, 
+        return log.exit(parseColumnAsInteger(tsvFile, Arrays.asList(columnName), 
+                columnProcessor));
+    }
+
+    /**
+     * Parse {@code tsvFile} and retrieve the values in the column whose name is present  
+     * in {@code columnName}s (case insensitive), as {@code Integer}s. To define how 
+     * the column should be processed, a {@code CellProcessor} is provided. 
+     * It is not necessary to provide the {@code ParseInt} {@code CellProcessor}.
+     * Comment lines starting with "//" are allowed in {@code tsvFile}. 
+     * <p>
+     * This method returned the values retrieved from the specified column in 
+     * the order they were read from the file.
+     * 
+     * @param tsvFile           A {@code String} that is the path to a TSV file 
+     *                          to parse.
+     * @param columnNames       A {@code List} of {@code String}s that are the potential names 
+     *                          of the column to parse. These {@code String}s are ordered 
+     *                          by order of preference of use. The comparison to find 
+     *                          the column is case-insensitive.
+     * @param columnProcessor   A {@code CellProcessor} defining how to parse 
+     *                          the specify column.
+     * @return  A {@code List} of {@code Integer}s that the value in the column specified, 
+     *          in the order they were read from {@code tsvFiles}.
+     * @throws IllegalArgumentException If {@code columnName} was not found 
+     *                                  in the headers of {@code tsvFile}.
+     * @throws FileNotFoundException    If {@code tsvFile} could not be found.
+     * @throws IOException              If {@code tsvFile} could not be read.
+     */
+    public static List<Integer> parseColumnAsInteger(String tsvFile, List<String> columnNames, 
+            CellProcessor columnProcessor) throws IllegalArgumentException, 
+            FileNotFoundException, IOException {
+        log.entry(tsvFile, columnNames, columnProcessor);
+        
+        return log.exit(parseColumn(tsvFile, columnNames, columnProcessor, 
                 Integer.class));
     }
     
     /**
-     * Parse {@code tsvFile} and retrieve the values in the column named  
-     * {@code columnName} (case insensitive), with the class type{@code cls}. 
+     * Parse {@code tsvFile} and retrieve the values in the column whose name matches   
+     * one of the {@code columnNames} (case insensitive), with the class type {@code cls}. 
      * As of Bgee 13, only {@code Integer.class} and {@code String.class} are allowed.
      * To define how the column should be processed, a {@code CellProcessor} 
      * is provided. {@code null} values are discarded (unless the {@code CellProcessor} 
@@ -227,9 +248,10 @@ public class Utils {
      * 
      * @param tsvFile           A {@code String} that is the path to a TSV file 
      *                          to parse.
-     * @param columnName        A {@code String} that is the name of the column  
-     *                          to parse. The comparison to find the column is 
-     *                          case-insensitive.
+     * @param columnNames        A {@code List} of {@code String}s that are the potential names 
+     *                          of the column to parse. These {@code String}s are ordered 
+     *                          by order of preference of use. The comparison to find 
+     *                          the column is case-insensitive.
      * @param columnProcessor   A {@code CellProcessor} defining how to parse 
      *                          the specify column.
      * @param cls               A {@code Class<T>} that in which class type we want 
@@ -241,25 +263,20 @@ public class Utils {
      * @throws FileNotFoundException    If {@code tsvFile} could not be found.
      * @throws IOException              If {@code tsvFile} could not be read.
      */
-    private <T> List<T> parseColumn(String tsvFile, String columnName, 
+    private static <T> List<T> parseColumn(String tsvFile, List<String> columnNames, 
             CellProcessor columnProcessor, Class<T> cls) throws FileNotFoundException, 
             IOException {
-        log.entry(tsvFile, columnName, columnProcessor, cls);
+        log.entry(tsvFile, columnNames, columnProcessor, cls);
         
         try (ICsvListReader listReader = new CsvListReader(
                 new FileReader(tsvFile), TSVCOMMENTED)) {
             //find the index of the column with name columnName
             String[] headers = listReader.getHeader(true);
-            int columnIndex = -1;
-            for (int i = 0; i < headers.length; i++) {
-                if (headers[i] != null && headers[i].equalsIgnoreCase(columnName)) {
-                    columnIndex = i;
-                    break;
-                } 
-            }
+            int columnIndex = Utils.localizeColumn(headers, columnNames);
             if (columnIndex == -1) {
-                throw log.throwing(new IllegalArgumentException(columnName + 
-                        " could not be found in the headers: " + Arrays.toString(headers)));
+                throw log.throwing(new IllegalArgumentException("Any column names " +
+                        columnNames + " could be found in the file " + 
+                        tsvFile + " - headers: " + Arrays.toString(headers)));
             }
             
             List<T> values = new ArrayList<T>();
@@ -304,7 +321,7 @@ public class Utils {
      * @return          {@code true} if {@code toTest} contained any white space 
      *                  characters, {@code false} otherwise.
      */
-    public boolean containsWhiteSpace(String toTest) {
+    public static boolean containsWhiteSpace(String toTest) {
         log.entry(toTest);
         if(toTest != null){
             for(int i = 0; i < toTest.length(); i++){
@@ -324,7 +341,8 @@ public class Utils {
      * an equal value in {@code allowedColumnNames}, then the element whose matching value 
      * has the lowest index in {@code allowedColumnNames} is considered. Index returned 
      * starts from 0. If no element could be found in {@code header} with a matching value 
-     * in {@code allowedColumnNames}, then -1 is returned. 
+     * in {@code allowedColumnNames}, then -1 is returned. The comparisons are case 
+     * insensitive.
      * <p>
      * The aim is to localize, in the header of a TSV file, the column with the preferred 
      * name, when several column names are allowed to describe a same type of data, 
@@ -358,7 +376,7 @@ public class Utils {
         //iterate potential column names in order of preference
         columnLoop: for (String columnName: allowedColumnNames) {
             for (int i = 0; i < header.length; i++) {
-                if (columnName.equals(header[i])) {
+                if (columnName.equalsIgnoreCase(header[i])) {
                     columnIndex = i;
                     break columnLoop;
                 } 

@@ -619,7 +619,7 @@ public class SimilarityAnnotation {
         TaxonConstraints extractor = new TaxonConstraints();
         Set<Integer> taxonIds = extractor.extractTaxonIds(taxonConstraintsFile);
         Map<String, Set<Integer>> taxonConstraints = 
-                extractor.extractTaxonConstraints(taxonConstraintsFile);
+                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile);
         OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
                 OntologyUtils.loadOntology(uberonOntFile));
         OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
@@ -1490,7 +1490,7 @@ public class SimilarityAnnotation {
             throws IllegalArgumentException, FileNotFoundException, IOException {
         log.entry(annotFile);
         
-        Set<Integer> taxonIds = new HashSet<Integer>(new Utils().parseColumnAsInteger(
+        Set<Integer> taxonIds = new HashSet<Integer>(Utils.parseColumnAsInteger(
                 annotFile, TAXON_COL_NAME, new NotNull()));
         
         if (taxonIds.isEmpty()) {

@@ -41,9 +41,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 	public void startDisplay(String page, String title)
 	{
 		this.writeln("<!DOCTYPE html>");
-		this.writeln("<html>");
+		this.writeln("<html lang='en'>");
 		this.writeln("<head>");
-		this.writeln("<meta charset='UTF-8'>");
+		this.writeln("<meta charset='utf-8'>");
 		this.writeln("<title>"+title+"</title>");
 		this.writeln("<meta name='description' content='Bgee allows to automatically"
 				+ " compare gene expression patterns between species, by referencing"
@@ -53,9 +53,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 				+ "evolution, ontology, anatomy, development, evo-devo database, "
 				+ "anatomical ontology, developmental ontology, gene expression "
 				+ "evolution'/>");
-		this.writeln("<meta name='copyright' content='Bgee copyright 2007/2014 UNIL' />");
-		this.writeln("<meta http-equiv='Content-Style-Type' content='text/css' />");
-		this.writeln("<meta http-equiv='Content-Script-Type' content='text/javascript' />");
+		this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2014 UNIL' />");
 		this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
 				+BgeeProperties.getImagesRootDirectory()+"favicon.ico'/>");
 		this.writeln("<link rel='stylesheet' type='text/css' href='"
@@ -66,26 +64,23 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 		this.writeln("<body>");
 		this.displayBgeeMenu();
 		this.writeln("<div id='bgee_top'><a name='TOP'></a></div>");
-		this.writeln("<div id='bgee_container'>");
+        this.writeln("<div id='sib_container'>");
 	}
 
 	public void endDisplay()
 	{
-		this.writeln("<div id = 'bgee_footer'>");
-		this.writeln("<div id = 'bgee_footer_content'>");
-		this.writeln("<!-- TODO:  adapt the following line AFTER the link to "
-				+ "the SIB Web site -->");
-		this.writeln("<a href = 'http://www.isb-sib.ch'>Swiss Institute of "
-				+ "Bioinformatics</a>&nbsp;|&nbsp;<a href = './'>Contact Us</a>");
-		this.writeln("<div id = 'bgee_footer_right'>");
-		this.writeln("<a href='#TOP' id = 'bgee_footer_gototop'><span style "
-				+ "= 'padding-left: 10px'>Back to the Top</span></a>");
-		this.writeln("</div>");
-		this.writeln("</div>");
-		this.writeln("</div>");
-		this.writeln("</div>");
-		this.writeln("</body>");
-		this.writeln("</html>");
+	    this.writeln("<div id = 'sib_footer'>");
+	    this.writeln("<div id = 'sib_footer_content'>");
+	    this.writeln("<a href = 'http://www.isb-sib.ch'>Swiss Institute of Bioinformatics</a>");
+	    this.writeln("<div id = 'sib_footer_right'>");
+	    this.writeln("<a href='#TOP' id = 'sib_footer_gototop'>"
+	            + "<span style = 'padding-left: 10px'>Back to the Top</span></a>");
+	    this.writeln("</div>");
+	    this.writeln("</div>");
+	    this.writeln("</div>");
+	    this.writeln("</div>");
+	    this.writeln("</body>");
+	    this.writeln("</html>");
 	}
 
 	// TODO move into BgeeStringUtils ??? 
@@ -203,13 +198,24 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 
 	@Override
 	public void displayBgeeMenu() {
-
-		this.writeln("<div id='bgee_header'>");
-		this.writeln("<div><a href='http://www.isb-sib.ch/' id='sib_logo' alt='SIB logo' title='SIB Swiss Institute of Bioinformatics'></a></div>");
-		this.writeln("<div><a href='http://bgee.unil.ch/bgee/bgee' id='bgee_logo' alt='Bgee logo' title='Bgee: a dataBase for Gene Expression Evolution'></a></div>");
-		this.writeln("<div class='bgee_title'><h1>Bgee: Gene Expression Evolution</h1></div>");
-		this.writeln("</div>");
-
+		this.writeln("<div id='sib_header'>");
+        // Bgee logo
+		this.writeln("<div>");
+		this.writeln("<a href='http://bgee.unil.ch/bgee/bgee' id='sib_other_logo' "
+		        + "title='Bgee: a dataBase for Gene Expression Evolution'></a>");
+        this.writeln("</div>");
+        // Title
+        this.writeln("<div>");
+		this.writeln("<a href='http://bgee.unil.ch/bgee/bgee'>"
+		        + "<h1>Bgee: Gene Expression Evolution</h1>"
+		        + "<h2>Temporary interface to access to new data</h2></a>");
+        this.writeln("</div>");
+        // SIB logo
+        this.writeln("<div>");
+		this.writeln("<a href='http://www.isb-sib.ch/' id='sib_logo' "
+		        + "title='SIB Swiss Institute of Bioinformatics'></a>");
+        this.writeln("</div>");
+        this.writeln("</div>");
 	}
 
 	protected void includeJs(){
@@ -217,7 +223,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 	}
 
 	protected void includeJs(String filename){
-		this.writeln("<script  type='text/javascript' src='"+BgeeProperties.getJavascriptFilesRootDirectory()+filename+".js'></script>");
+		this.writeln("<script  type='text/javascript' src='"+
+		        BgeeProperties.getJavascriptFilesRootDirectory()+filename+".js'></script>");
 	}
 
 }

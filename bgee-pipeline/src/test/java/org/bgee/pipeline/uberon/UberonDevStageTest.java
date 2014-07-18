@@ -22,6 +22,7 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import owltools.graph.OWLGraphWrapper;
 
@@ -511,14 +512,17 @@ public class UberonDevStageTest extends TestAncestor {
      * @throws OBOFormatParserException
      * @throws IOException
      */
-    @Test
+    //@Test
     public void shouldGetComplexStageIdsBetween() throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
                 getResource("/ontologies/dev_stage_ontology.obo").getFile());
+        Map<String, Set<Integer>> taxonConstraints = 
+                TaxonConstraints.extractTaxonConstraints(UberonDevStageTest.class.
+                getResource("/uberon/devTaxonConstraints.tsv").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
-        UberonDevStage uberon = new UberonDevStage(utils);
+        UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
         
         //FBdv:00005289: embryonic stage
         //FBdv:00007026: mature adult stage
@@ -528,7 +532,7 @@ public class UberonDevStageTest extends TestAncestor {
                 uberon.getStageIdsBetween("FBdv:00005289", "FBdv:00007026"));
         
         //reinit uberon to recompute the nested set model
-        uberon = new UberonDevStage(utils);
+        uberon = new UberonDevStage(utils, taxonConstraints);
         //FBdv:00005304: blastoderm stage
         //FBdv:00005333: late embryonic stage
         expectedStageIds = Arrays.asList("FBdv:00005304", "FBdv:00005317", 
@@ -537,7 +541,7 @@ public class UberonDevStageTest extends TestAncestor {
                 uberon.getStageIdsBetween("FBdv:00005304", "FBdv:00005333"));
         
         //reinit uberon to recompute the nested set model
-        uberon = new UberonDevStage(utils);
+        uberon = new UberonDevStage(utils, taxonConstraints);
         //FBdv:00005294: embryonic cycle 2
         //FBdv:00005333: late embryonic stage
         expectedStageIds = Arrays.asList("FBdv:00005294", "FBdv:00005295", "FBdv:00005296", 
@@ -590,5 +594,16 @@ public class UberonDevStageTest extends TestAncestor {
                 "MmulDv:0000007");
         assertEquals("incorrect stages retrieved between start and end", expectedList, 
                 uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000007"));
+    }
+    
+    //@Test
+    public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException, IllegalArgumentException, OWLOntologyStorageException {
+        UberonDevStage uberon = new UberonDevStage("/Users/admin/Desktop/composite-metazoan.owl");
+        uberon.setModifiedOntPath("/Users/admin/Desktop/dev_stage_ont");
+        uberon.setClassIdsToRemove(Arrays.asList("UBERON:0000067", "UBERON:0000071", 
+                "UBERON:0000105", "UBERON:0000000", "BFO:0000003"));
+        uberon.setRelIds(Arrays.asList("BFO:0000050", "BFO:0000062", "RO:0002087"));
+        uberon.setToFilterSubgraphRootIds(Arrays.asList("UBERON:0000104", "FBdv:00000000"));
+        uberon.generateStageOntologyAndSaveToFile();
     }
 }

@@ -1,0 +1,951 @@
+Uberon ID	Uberon name	6239	7227	7955	8090	8364	9031	9258	9544	9593	9597	9598	9600	9606	9823	9913	10090	10116	13616	28377	99883
+AcarDv:0000006	aged stage (anolis)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F
+BtauDv:0000006	aged stage (cow)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F
+EHDAA2:0004523	heart associated veins (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+EMAPA:31864	4-cell stage embryo (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+FBdv:00004450	late extended germ band stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005290	pre-blastoderm stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005291	embryonic stage 1 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005292	embryonic cycle 1 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005293	embryonic stage 2 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005294	embryonic cycle 2 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005295	embryonic cycle 3 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005296	embryonic cycle 4 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005297	embryonic cycle 5 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005298	embryonic cycle 6 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005299	embryonic cycle 7 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005300	embryonic cycle 8 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005301	embryonic stage 3 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005302	embryonic cycle 9 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005303	embryonic cycle 10 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005304	blastoderm stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005306	embryonic stage 4 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005307	embryonic cycle 11 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005308	embryonic cycle 12 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005309	embryonic cycle 13 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005311	embryonic stage 5 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005312	embryonic cycle 14 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005313	embryonic cycle 14A (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005314	embryonic cycle 14B (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005315	embryonic cycle 15 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005316	embryonic cycle 16 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005318	embryonic stage 6 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005319	embryonic stage 7 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005321	extended germ band stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005322	embryonic stage 8 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005323	embryonic stage 9 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005324	embryonic stage 10 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005325	embryonic stage 11 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005327	embryonic stage 12 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005328	embryonic stage 13 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005330	embryonic stage 14 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005331	dorsal closure stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005332	embryonic stage 15 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005334	embryonic stage 16 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005335	embryonic stage 17 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005337	first instar larval stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005338	second instar larval stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005339	third instar larval stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005340	early third instar larval stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005341	wandering third instar larval stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005342	prepupal stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005343	prepupal stage P1 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005344	prepupal stage P2 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005345	prepupal stage P3 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005346	prepupal stage P4 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005347	prepupal stage P4(i) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005348	prepupal stage P4(ii) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005350	pupal stage P5 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005351	pupal stage P5(i) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005352	pupal stage P5(ii) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005353	pupal stage P6 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005354	pupal stage P7 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005355	pharate adult stage P8 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005356	pharate adult stage P9 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005357	pharate adult stage P10 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005358	pharate adult stage P11 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005359	pharate adult stage P11(i) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005360	pharate adult stage P11(ii) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005361	pharate adult stage P12 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005362	pharate adult stage P12(i) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005363	pharate adult stage P12(ii) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005364	pharate adult stage P13 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005365	pharate adult stage P14 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005366	pharate adult stage P15 (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005367	pharate adult stage P15(i) (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005368	pharate adult stage P15(ii) (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00005370	adult stage A1 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00005371	adult stage A2 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00006011	pharate adult stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00006012	adult stage A3 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007001	P-stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00007004	third instar larval stage L1 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007005	third instar larval stage L2 (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007007	late third instar larval stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007015	embryonic stage 17(i) (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00007016	embryonic stage 17(ii) (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00007017	embryonic stage 17(iii) (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00007018	embryonic stage 17(iv) (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+FBdv:00007019	third instar - uncleared gut stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007020	third instar - partially cleared gut stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007021	third instar - cleared gut stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007025	immature adult stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007026	mature adult stage (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007075	day 0 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007076	day 1 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007077	day 2 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007078	day 3 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007079	day 4 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007080	day 5 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007081	day 6 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007082	day 7 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007083	day 8 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007084	day 9 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007085	day 10 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007086	day 11 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007087	day 12 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007088	day 13 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007089	day 14 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007090	day 15 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007091	day 16 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007092	day 17 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007093	day 18 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007094	day 19 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007095	day 20 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007096	day 21 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007097	day 22 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007098	day 23 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007099	day 24 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007100	day 25 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007101	day 26 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007102	day 27 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007103	day 28 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007104	day 29 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007105	day 30 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007106	day 31 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007107	day 32 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007108	day 33 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007109	day 34 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007110	day 35 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007111	day 36 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007112	day 37 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007113	day 38 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007114	day 39 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007115	day 40 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007116	day 41 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007117	day 42 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007118	day 43 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007119	day 44 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007120	day 45 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007121	day 46 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007122	day 47 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007123	day 48 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007124	day 49 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007125	day 50 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007126	day 51 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007127	day 52 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007128	day 53 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007129	day 54 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007130	day 55 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007131	day 56 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007132	day 57 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007133	day 58 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007134	day 59 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00007135	day 60 of adulthood (Drosophila)	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+FBdv:00014201	early extended germ band stage (Drosophila)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+GgalDv:0000004	hatchling stage (chicken)	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+GgalDv:0000005	juvenile stage (chicken)	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+GgalDv:0000007	early adult stage (chicken)	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+GgalDv:0000008	1-year-old chicken stage (chicken)	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+GgalDv:0000009	2-year-old and over chicken stage (chicken)	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000004	nursing stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000005	juvenile stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000008	aged stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000009	30-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000010	31-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000011	32-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000012	33-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000013	34-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000014	35-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000015	36-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000016	37-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000017	38-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000018	39-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000019	40-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000020	41-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000021	42-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000022	43-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000023	44-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000024	45-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000025	46-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000026	47-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000027	48-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000028	49-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000029	50-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000030	51-year-old stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+GgorDv:0000031	52-year-old and over stage (gorilla)	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F
+HsapDv:0000002	embryonic human stage (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000003	Carnegie stage 01 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000005	Carnegie stage 02 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000006	blastula stage (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000007	Carnegie stage 03 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000008	CS04 (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000009	Carnegie stage 05 (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000011	Carnegie stage 06 (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000013	Carnegie stage 07 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000014	Carnegie stage 08 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000015	organogenesis stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000016	CS09 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000017	Carnegie stage 10 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000018	Carnegie stage 11 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000019	CS12 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000020	Carnegie stage 13 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000021	CS14 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000022	CS15 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000023	Carnegie stage 16 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000024	CS17 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000025	Carnegie stage 18 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000026	Carnegie stage 19 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000027	CS20 (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000028	Carnegie stage 21 (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000029	Carnegie stage 22 (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000030	Carnegie stage 23 (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000031	Carnegie stage 05a (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000032	Carnegie stage 05b (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000033	CS05c (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000034	Carnegie stage 06a (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000035	Carnegie stage 06b (human)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+HsapDv:0000046	9th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000047	10th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000048	11th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000049	12th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000050	13th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000051	14th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000052	15th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000053	16th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000054	17th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000055	18th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000056	19th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000057	20th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000058	21st week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000059	22nd week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000060	23rd week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000061	24th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000062	25th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000063	26th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000064	27th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000065	28th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000066	29th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000067	30th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000068	31st week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000069	32nd week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000070	33rd week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000071	34th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000072	35th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000073	36th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000074	37th week post-fertilization human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000075	38th week post-fertilization and over human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000081	child stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000082	newborn human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000083	infant stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000084	2-5 year-old child stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000085	6-12 year-old child stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000086	adolescent stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000087	human adult stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000088	human early adulthood stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000089	young adult stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000090	25-44 year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000091	human late adulthood stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000092	human middle aged stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000093	human aged stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000094	65-79 year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000095	80 year-old and over human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000096	2-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000097	3-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000098	4-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000099	5-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000100	6-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000101	7-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000102	8-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000103	9-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000104	10-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000105	11-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000106	12-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000107	13-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000108	14-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000109	15-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000110	16-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000111	17-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000112	18-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000113	19-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000114	20-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000115	21-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000116	22-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000117	23-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000118	24-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000119	25-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000120	26-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000121	27-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000122	28-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000123	29-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000124	30-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000125	31-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000126	32-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000127	33-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000128	34-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000129	35-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000130	36-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000131	37-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000132	38-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000133	39-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000134	40-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000135	41-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000136	42-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000137	43-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000138	44-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000139	45-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000140	46-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000141	47-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000142	48-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000143	49-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000144	50-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000145	51-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000146	52-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000147	53-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000148	54-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000149	55-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000150	56-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000151	57-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000152	58-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000153	59-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000154	60-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000155	61-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000156	62-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000157	63-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000158	64-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000159	65-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000160	66-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000161	67-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000162	68-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000163	69-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000164	70-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000165	71-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000166	72-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000167	73-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000168	74-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000169	75-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000170	76-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000171	77-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000172	78-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000173	79-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000174	1 month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000175	2-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000176	3-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000177	4-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000178	5-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000179	6-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000180	7-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000181	8-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000182	9-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000183	10-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000184	11-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000185	12-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000186	13-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000187	14-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000188	15-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000189	16-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000190	17-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000191	18-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000192	19-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000193	20-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000194	21-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000195	22-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000196	23-month-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000197	third LMP month human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000198	fourth LMP month human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000199	fifth LMP month human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000200	sixth LMP month human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000201	seventh LMP month human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000202	eighth LMP month human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000203	ninth LMP month human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000205	morula stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000206	80-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000207	81-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000208	82-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000209	83-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000210	84-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000211	85-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000212	86-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000213	87-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000214	88-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000215	89-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000216	90-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000217	91-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000218	92-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000219	93-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000220	94-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000221	95-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000222	96-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000223	97-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000224	98-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+HsapDv:0000225	99-year-old human stage (human)	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F
+MdomDv:0000004	pouch young stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000005	juvenile stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000008	4-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000009	5-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000010	6-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000011	7-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000012	8-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000013	9-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000014	10-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000015	11-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000016	12-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000017	13-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000018	14-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000019	15-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000020	16-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000021	17-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000022	18-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000023	19-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000024	20-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000025	aged stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000026	21-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000027	22-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000028	23-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000029	24-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000030	25-month-old stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MdomDv:0000031	26-month-old and over stage (opossum)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F
+MmulDv:0000004	nursing stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000005	1-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000006	2-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000007	3-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000008	4-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000009	5-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000010	6-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000011	7-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000012	8-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000013	9-month-old nursing stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000014	juvenile stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000015	9-month-old weaning stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000016	10-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000017	11-month-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000018	1-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000019	2-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000020	3-year-old immature stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000023	3-year-old mature stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000024	4-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000025	5-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000026	6-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000027	7-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000028	8-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000029	9-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000030	10-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000031	11-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000032	12-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000033	13-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000034	14-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000035	15-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000036	16-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000037	17-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000038	18-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000039	19-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000040	20-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000041	21-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000042	22-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000043	23-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000044	24-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000045	aged stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000046	newborn stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000047	25-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000048	26-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000049	27-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000050	28-year-old stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmulDv:0000051	29 year-old and over stage (macaque)	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F
+MmusDv:0000002	embryonic mouse stage (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000005	Theiler stage 02 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000006	Theiler stage 03 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000007	blastula stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000008	Theiler stage 04 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000009	Theiler stage 05 (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000010	Theiler stage 06 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000011	Theiler stage 07 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000012	Theiler stage 08 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000014	Theiler stage 09 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000015	Theiler stage 10 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000017	Theiler stage 11 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000018	organogenesis stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000019	Theiler stage 12 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000020	Theiler stage 13 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000021	Theiler stage 14 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000022	Theiler stage 15 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000023	Theiler stage 16 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000024	Theiler stage 17 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000025	Theiler stage 18 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000026	Theiler stage 19 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000027	Theiler stage 20 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000028	Theiler stage 21 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000029	Theiler stage 22 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000032	Theiler stage 23 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000033	Theiler stage 24 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000034	Theiler stage 25 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000035	Theiler stage 26 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000036	Theiler stage 27 (mouse)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+MmusDv:0000038	infant stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000041	unknown (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000044	1-7 days (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000045	1 week (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000046	2 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000047	3 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000048	4 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000049	5 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000050	6 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000051	7 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000052	8 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000053	9 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000054	10 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000055	11 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000056	12 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000057	13 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000058	14 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000059	15 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000061	early adult stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000062	2 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000063	3 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000064	4 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000065	16 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000066	17 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000067	18 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000068	19 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000069	5 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000070	20 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000071	21 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000072	22 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000073	23 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000074	24 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000075	middle aged stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000076	aged adult stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000077	6 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000078	7 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000079	8 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000080	9 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000081	10 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000082	11 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000083	12 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000084	13 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000085	14 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000086	15 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000087	16 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000088	17 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000089	18 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000090	19 month-old stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000091	20 month-old stage and over (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000093	Theiler stage 11b (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000094	Theiler stage 11c (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000095	Theiler stage 11d (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000096	early immature stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000097	late adult stage (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000098	25 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000099	26 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000100	27 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000101	28 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000102	29 weeks (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000103	Theiler stage 09a (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000104	Theiler stage 09b (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000105	Theiler stage 10a (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000106	Theiler stage 10b (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000107	Theiler stage 10c (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000108	Theiler stage 12a (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000109	Theiler stage 12b (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+MmusDv:0000111	Theiler stage 11a (mouse)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F
+OanaDv:0000006	aged stage (platypus)	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000004	nursing stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000005	juvenile stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000006	21-month-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000007	22-month-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000008	23-month-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000009	2-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000010	3-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000011	4-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000012	5-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000013	6-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000014	7-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000015	8-year-old immature stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000018	8-year-old mature stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000019	9-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000020	10-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000021	11-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000022	12-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000023	13-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000024	14-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000025	15-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000026	16-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000027	17-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000028	18-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000029	19-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000030	20-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000031	21-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000032	22-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000033	23-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000034	24-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000035	25-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000036	26-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000037	27-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000038	28-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000039	29-year-old stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpanDv:0000040	aged stage (bonobo)	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F
+PpygDv:0000004	nursing stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000005	juvenile stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000008	7-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000009	8-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000010	9-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000011	10-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000012	11-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000013	12-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000014	13-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000015	14-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000016	15-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000017	16-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000018	17-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000019	18-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000020	19-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000021	20-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000022	21-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000023	22-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000024	23-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000025	24-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000026	25-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000027	26-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000028	27-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000029	28-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000030	29-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000031	30-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000032	31-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000033	32-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000034	33-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000035	34-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000036	aged stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000037	35-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000038	36-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000039	37-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000040	38-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000041	39-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000042	40-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000043	41-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000044	42-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000045	43-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000046	44-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000047	45-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000048	46-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000049	47-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000050	48-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000051	49-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000052	50-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000053	51-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000054	52-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000055	53-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000056	54-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000057	55-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000058	56-year-old stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PpygDv:0000059	57-year-old and over stage (orangutan)	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F
+PtroDv:0000004	nursing stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000005	juvenile stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000006	3-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000007	4-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000008	5-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000009	6-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000010	7-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000013	8-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000014	9-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000015	10-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000016	11-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000017	12-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000018	13-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000019	14-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000020	15-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000021	16-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000022	17-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000023	18-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000024	19-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000025	20-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000026	21-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000027	22-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000028	23-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000029	24-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000030	25-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000031	26-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000032	27-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000033	28-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000034	29-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000035	30-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000036	31-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000037	32-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000038	33-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000039	aged stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000040	34-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000041	35-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000042	36-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000043	37-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000044	38-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000045	39-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000046	40-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000047	41-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000048	42-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000049	43-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000050	44-year-old stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+PtroDv:0000051	45-year-old and over stage (chimpanzee)	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F	F	F	F
+RnorDv:00000010	metamorphosing embryo stage (rat)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F
+RnorDv:0000003	embryonic stage (rat)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+RnorDv:0000004	cleavage and blastula stage (rat)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+RnorDv:0000006	primitive streak stage (rat)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+RnorDv:0000008	tail bud embryo stage (rat)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F
+RnorDv:0000009	complete embryo stage (rat)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F
+RnorDv:0000013	early immature stage (rat)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F
+RnorDv:0000014	infant stage (rat)	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F
+SscrDv:0000004	suckling stage (pig)	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F
+SscrDv:0000005	juvenile stage (pig)	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F
+SscrDv:0000008	aged stage (pig)	F	F	F	F	F	F	F	F	F	F	F	F	F	T	F	F	F	F	F	F
+UBERON:0000066	fully formed stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000068	embryo stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000069	larval stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000070	pupal stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000092	post-embryonic stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000104	life cycle	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000106	zygote stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000107	cleavage stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000108	blastula stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000109	gastrula stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000110	neurula stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000111	organogenesis stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000112	sexually immature stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0000113	post-juvenile adult stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0004707	pharyngula stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0004728	amphibian larval stage	F	F	F	F	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0004729	nematode larval stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0004730	instar larval stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0007220	late embryonic stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0007221	neonate stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0007222	late adult stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0007232	2 cell stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0007233	4 cell stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0007234	4-8 cell stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0007236	8 cell stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0008264	echinopluteus larval stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0009849	tadpole stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0014405	nymph stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0014406	nauplius stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014856	cysticercus stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014857	zoea stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014858	crustacean post-larval stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014859	megalopa stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014860	copepodite stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014861	glaucothoe stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014862	trochophore stage	T	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014863	veliger stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0014864	caterpillar stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+UBERON:0018241	prime adult stage	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+UBERON:0018378	crustacean larval stage	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000004	proliferating embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000006	1-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000007	2-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000008	4-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000009	28-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000011	51-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000012	88-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000013	enclosing embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000014	late cleavage stage embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000015	elongating embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000016	bean embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000017	comma embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000018	1.5-fold embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000019	2-fold embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000020	3-fold embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000021	fully-elongated embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000024	L1 larva Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000025	L1-L2 lethargus Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000026	L1-L2 molt Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000027	L2 larva Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000028	L2-L3 lethargus Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000029	L2-L3 molt Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000030	L2d-dauer lethargus Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000031	L2d-dauer molt Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000032	dauer larva Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000033	postdauer-L4 lethargus Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000034	postdauer-L4 molt Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000035	L3 larva Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000036	L3-L4 lethargus Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000037	L3-L4 molt Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000038	L4 larva Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000039	L4-adult lethargus Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000040	L4-adult molt Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000042	L1-L2 ecdysis Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000043	L1-L2d molt Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000044	L1-L2d lethargus Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000045	L1-L2d ecdysis Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000046	L2d larva Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000047	L2-L3 ecdysis Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000048	L2d-dauer ecdysis Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000049	L3-L4 ecdysis Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000050	L4-adult ecdysis (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000051	postdauer-L4 ecdysis Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000052	post dauer stage Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000053	L2d-L3 molt Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000054	L2d-L3 lethargus Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000055	L2d-L3 ecdysis Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000056	adult male Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000057	adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000058	pre-reproductive stage adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000060	reproductive stage adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000061	oocyte-laying stage adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000062	post-reproductive stage adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000063	newly molted young adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000064	1-day post-L4 adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000065	2-days post-L4 adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000066	3-days post-L4 adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000067	4-days post-L4 adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000068	5-days post-L4 adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000069	4-7 days post-L4 adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000070	7-10 days post-L4 adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000071	8-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000072	12-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000073	L4 larva male Ce (C elegans)	T	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F	F
+WBls:0000074	11-15 days post-L4 adult hermaphrodite (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000077	sheathed microfilaria Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000078	unsheathed microfilariae Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000079	L1 larva Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000080	L2 larva Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000081	L3 larva Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000082	L4 larva Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000083	adult Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000084	14-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000085	24-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000086	44-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000087	68-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000088	86-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000089	190-cells embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000090	96-cell embryo Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000094	early embryo Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000095	middle embryo Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000096	late embryo Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000097	larva Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000098	vector-derived L3 Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000099	post-infection L3 Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000100	young adult Bma (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000104	adult nematode (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000105	larva nematode (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000106	L1 larva nematode (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000107	L2 larva nematode (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000108	L3 larva nematode (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000109	L4 larva nematode (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000110	sheathed microfilaria nematode (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+WBls:0000111	16-18 days post-L4 adult hermaphrodite Ce (C elegans)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000002	early tailbud stage (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000007	tailbud stage (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000015	NF stage 5 (16-cell) (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000016	NF stage 6 (32-cell) (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000017	NF stage 7 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000018	NF stage 8 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000019	NF stage 9 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000020	NF stage 10 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000021	NF stage 11 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000022	NF stage 12 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000023	NF stage 13 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000024	NF stage 14 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000025	NF stage 15 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000026	NF stage 16 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000027	NF stage 17 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000028	NF stage 2- (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000029	NF stage 6.5 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000030	NF stage 10.25 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000031	NF stage 10.5 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000032	NF stage 11.5 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000033	NF stage 12.5 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000034	NF stage 18 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000035	NF stage 19 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000036	NF stage 20 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000037	NF stage 21 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000038	NF stage 22 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000039	NF stage 23 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000040	NF stage 24 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000041	NF stage 25 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000042	NF stage 26 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000043	NF stage 27 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000044	NF stage 28 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000045	NF stage 29 and 30 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000046	NF stage 31 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000047	NF stage 32 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000048	NF stage 33 and 34 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000049	NF stage 35 and 36 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000050	NF stage 37 and 38 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000051	NF stage 39 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000052	NF stage 40 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000053	NF stage 41 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000054	NF stage 42 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000055	NF stage 43 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000056	NF stage 44 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000057	NF stage 45 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000058	NF stage 46 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000059	NF stage 47 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000060	NF stage 48 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000061	NF stage 49 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000062	NF stage 50 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000063	NF stage 51 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000064	NF stage 52 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000065	NF stage 53 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000066	NF stage 54 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000067	NF stage 55 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000068	NF stage 56 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000069	NF stage 57 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000070	NF stage 58 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000071	NF stage 59 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000072	NF stage 60 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000073	NF stage 61 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000074	NF stage 62 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000075	NF stage 63 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000076	NF stage 64 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000077	NF stage 65 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000078	NF stage 66 (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000079	metamorphosing tadpole stage (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000080	late tailbud stage (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000089	premetamorphosis stage (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000090	prometamorphosis stage (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+XAO:1000091	climax stage (Xenopus)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000005	Cleavage:16-cell (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000006	Cleavage:32-cell (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000007	Cleavage:64-cell (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000008	Blastula:128-cell (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000009	Blastula:256-cell (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000010	Blastula:512-cell (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000011	Blastula:1k-cell (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000012	Blastula:High (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000013	Blastula:Oblong (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000014	Blastula:Sphere (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000015	Blastula:Dome (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000016	Blastula:30%-epiboly (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000017	Gastrula:50%-epiboly (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000018	Gastrula:Germ-ring (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000019	Gastrula:Shield (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000020	Gastrula:75%-epiboly (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000021	Gastrula:90%-epiboly (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000022	Gastrula:Bud (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000023	Segmentation:1-4 somites (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000024	Segmentation:5-9 somites (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000025	Segmentation:10-13 somites (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000026	Segmentation:14-19 somites (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000027	Segmentation:20-25 somites (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000028	Segmentation:26+ somites (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000029	Pharyngula:Prim-5 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000030	Pharyngula:Prim-15 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000031	Pharyngula:Prim-25 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000032	Pharyngula:High-pec (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000033	Hatching:Long-pec (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000034	Hatching:Pec-fin (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000035	Larval:Protruding-mouth (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000036	Larval:Day 4 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000037	Larval:Day 5 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000038	Larval:Day 6 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000039	Larval:Days 7-13 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000040	Larval:Days 14-20 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000041	Larval:Days 21-29 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000042	Juvenile:Days 30-44 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000043	Juvenile:Days 45-89 (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T
+ZFS:0000049	segmentation (Danio)	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T	T

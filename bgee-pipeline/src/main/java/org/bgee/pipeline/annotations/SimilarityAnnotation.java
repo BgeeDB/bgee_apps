@@ -1491,7 +1491,7 @@ public class SimilarityAnnotation {
         log.entry(annotFile);
         
         Set<Integer> taxonIds = new HashSet<Integer>(Utils.parseColumnAsInteger(
-                annotFile, TAXON_COL_NAME, new NotNull()));
+                annotFile, TAXON_COL_NAME, null));
         
         if (taxonIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The annotation file " +

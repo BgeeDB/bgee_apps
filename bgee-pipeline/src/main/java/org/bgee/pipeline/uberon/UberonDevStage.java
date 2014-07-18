@@ -25,9 +25,11 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
@@ -91,10 +93,13 @@ public class UberonDevStage extends UberonCommon {
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
      *   See {@link #setToFilterSubgraphRootIds(Collection)}.
      *   </ol>
-     *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
+     *   Example of command line usage for this task (assuming taxon constraints were 
+     *   already generated, so that you don't need the "in_taxon" relations): 
+     *   {@code java -Xmx2g -jar myJar 
      *   Uberon generateStageOntology ext.owl dev_stage_ont  
      *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000 
      *   UBERON:0000069 
+     *   BFO:0000050,BFO:0000062,RO:0002087
      *   UBERON:0000104,FBdv:00000000}
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -108,17 +113,18 @@ public class UberonDevStage extends UberonCommon {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("generateStageOntology")) {
-            if (args.length != 6) {
+            if (args.length != 7) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "6 arguments, " + args.length + " provided."));
+                        "7 arguments, " + args.length + " provided."));
             }
             
             UberonDevStage ub = new UberonDevStage(args[1]);
             ub.setModifiedOntPath(args[2]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[3]));
             ub.setChildrenOfToRemove(CommandRunner.parseListArgument(args[4]));
-            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[5]));
+            ub.setRelIds(CommandRunner.parseListArgument(args[5]));
+            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[6]));
             
             
             ub.generateStageOntologyAndSaveToFile();
@@ -279,6 +285,10 @@ public class UberonDevStage extends UberonCommon {
      * {@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}). 
      * This method is very similar to {@link #simplifyUberon(OWLOntology)}, 
      * but the simplification process for the developmental stages is much simpler and faster. 
+     * Also, all {@code OWLEquivalentClassesAxiom}s are removed before modifying the ontology.
+     * This is because there is a bug /where species-specific stages are dangling 
+     * because of their EC axioms. By removing these axioms, these classes will be removed 
+     * during graph filtering.
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
      * of the call to this method.
@@ -300,6 +310,19 @@ public class UberonDevStage extends UberonCommon {
         log.entry(this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
+        //before using OWLGraphManipulator, we remove all EquivalentClass axioms. 
+        //This is because there is a bug 
+        //where species-specific stages are dangling thanks to their EC axioms. 
+        //they will be converted by the manipulator as is_a relations, while we want 
+        //to merge these classes, so, to make them disappear.
+        log.debug("Removing all OWLEquivalentClassesAxioms...");
+        for (OWLOntology ont: this.getOntologyUtils().getWrapper().getAllOntologies()) {
+            ont.getOWLOntologyManager().removeAxioms(ont, 
+                    ont.getAxioms(AxiomType.EQUIVALENT_CLASSES));
+        }
+        log.debug("Done removing OWLEquivalentClassesAxioms.");
+        
+        //now, we can safely use the manipulator
         OWLGraphManipulator manipulator = this.getOntologyUtils().getManipulator();
 
         //potential terms to call this code on: 
@@ -307,31 +330,45 @@ public class UberonDevStage extends UberonCommon {
         //UBERON:0000071 death stage
         //UBERON:0000105 life cycle stage
         //UBERON:0000000 processual entity
-        for (String classIdToRemove: this.getClassIdsToRemove()) {
-            manipulator.removeClassAndPropagateEdges(classIdToRemove);
+        if (this.getClassIdsToRemove() != null) {
+            for (String classIdToRemove: this.getClassIdsToRemove()) {
+                manipulator.removeClassAndPropagateEdges(classIdToRemove);
+            }
         }
         
         //remove all children of childrenOfToRemove
         //potential terms to call this code on: UBERON:0000069 "larval stage"
-        for (String parentId: this.getChildrenOfToRemove()) {
-            OWLClass parent = manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(parentId);
-            //in case it was an IRI and not an OBO-like ID
-            if (parent == null) {
-                parent = manipulator.getOwlGraphWrapper().getOWLClass(parentId);
-            }
-            if (parent == null) {
-                throw log.throwing(new IllegalArgumentException("A parent term whose children " +
-                        "shoud be removed could not be found: " + parentId));
-            }
-            
-            //remove children
-            for (OWLClass child: manipulator.getOwlGraphWrapper().getOWLClassDescendants(parent)) {
-                if (!manipulator.removeClass(child)) {
-                    throw log.throwing(new AssertionError("An OWLClass could not be removed: " + 
-                           child));
+        if (this.getChildrenOfToRemove() != null) {
+            for (String parentId: this.getChildrenOfToRemove()) {
+                OWLClass parent = manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(parentId);
+                //in case it was an IRI and not an OBO-like ID
+                if (parent == null) {
+                    parent = manipulator.getOwlGraphWrapper().getOWLClass(parentId);
                 }
-                log.debug("Child of {} removed: {}", parent, child);
-            } 
+                if (parent == null) {
+                    throw log.throwing(new IllegalArgumentException("A parent term whose children " +
+                            "shoud be removed could not be found: " + parentId));
+                }
+                
+                //remove children
+                for (OWLClass child: manipulator.getOwlGraphWrapper().getOWLClassDescendants(parent)) {
+                    if (!manipulator.removeClass(child)) {
+                        throw log.throwing(new AssertionError("An OWLClass could not be removed: " + 
+                                child));
+                    }
+                    log.debug("Child of {} removed: {}", parent, child);
+                } 
+            }
+        }
+        
+        //potential rel IDs to keep (assuming taxon constraints were already generated, 
+        //so that you don't need the "in_taxon" relations): 
+        //OntologyUtils.PART_OF_ID
+        //OntologyUtils.PRECEDED_BY_ID
+        //OntologyUtils.IMMEDIATELY_PRECEDED_BY_ID
+        if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
+            manipulator.mapRelationsToParent(this.getRelIds());
+            manipulator.filterRelations(this.getRelIds(), true);
         }
         
         //potential subgraph root to keep: UBERON:0000104 life cycle, FBdv:00000000 Drosophila life 
@@ -480,6 +517,7 @@ public class UberonDevStage extends UberonCommon {
                     if (speciesIds != null && speciesIds.size() == 1) {
                         speciesKey = speciesIds.iterator().next();
                     }
+                    log.trace("Child {} assigned to species key {}", child, speciesKey);
                     if (!children.containsKey(speciesKey)) {
                         children.put(speciesKey, new HashSet<OWLClass>());
                     }

@@ -290,7 +290,7 @@ public class TaxonConstraintsTest extends TestAncestor {
         String clsId2 = "id2";
         String clsId3 = "id3";
         String clsId4 = "id4";
-        String clsId5 = "id5";
+        String clsId5 = "id5_1_5";
         expectedConstraints.put(clsId1, new HashSet<Integer>(Arrays.asList(10, 15, 16, 19)));
         expectedConstraints.put(clsId2, new HashSet<Integer>(Arrays.asList(10, 15, 16)));
         expectedConstraints.put(clsId3, new HashSet<Integer>(Arrays.asList(10, 15)));
@@ -301,12 +301,43 @@ public class TaxonConstraintsTest extends TestAncestor {
                 this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
     }
     
-    //@Test
-    public void test() throws UnknownOWLOntologyException, OWLOntologyCreationException, 
-    OBOFormatParserException, IOException {
-        TaxonConstraints tc = new TaxonConstraints(
-                TaxonConstraintsTest.class.getResource("/ontologies/dev_stage_ontology.obo").getPath(), 
-                "/Users/admin/Desktop/bgee_ncbitaxon.owl");
+    /**
+     * Test the method {@link TaxonConstraints#extractTaxonConstraints(String, Map)}
+     */
+    @Test
+    public void shouldExtractTaxonConstraintsWithReplacement() 
+            throws FileNotFoundException, IOException {
+        Map<String, Set<Integer>> expectedConstraints = new HashMap<String, Set<Integer>>();
+        String clsId1 = "id1";
+        String clsId2 = "id2";
+        String clsId3 = "id3";
+        String clsId4 = "id4";
+        String clsId5 = "id5_1_5";
+        expectedConstraints.put(clsId1, new HashSet<Integer>(Arrays.asList(10, 15, 16, 19)));
+        expectedConstraints.put(clsId2, new HashSet<Integer>(Arrays.asList(10, 15, 16)));
+        expectedConstraints.put(clsId3, new HashSet<Integer>(Arrays.asList(10, 15)));
+        expectedConstraints.put(clsId4, new HashSet<Integer>(Arrays.asList(10)));
+        expectedConstraints.put(clsId5, new HashSet<Integer>(Arrays.asList(10)));
         
+        Map<String, Set<Integer>> replacementConstrains = new HashMap<String, Set<Integer>>();
+        replacementConstrains.put("id5", new HashSet<Integer>(Arrays.asList(10, 15)));
+        replacementConstrains.put("id5_1", new HashSet<Integer>(Arrays.asList(10)));
+        
+        assertEquals(expectedConstraints, TaxonConstraints.extractTaxonConstraints(
+                this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath(), 
+                replacementConstrains));
+    }
+    
+    //@Test
+    public void test() throws UnknownOWLOntologyException, OWLOntologyCreationException, OBOFormatParserException, IOException {
+        TaxonConstraints tc = new TaxonConstraints(
+                "/Users/admin/Desktop/composite-metazoan.owl", 
+                "/Users/admin/Desktop/bgee_ncbitaxon.owl");
+//        log.info(tc.explainTaxonExistence(Arrays.asList("FBdv:00005342", "FBdv:00005343"), 
+//                Arrays.asList(7227)));
+//        log.info(tc.explainTaxonExistence(Arrays.asList("HsapDv:0000009"), 
+//                Arrays.asList(9606)));
+        log.info(tc.explainTaxonExistence(Arrays.asList("HsapDv:0000011", "HsapDv:0000013"), 
+                Arrays.asList(9606)));
     }
 }

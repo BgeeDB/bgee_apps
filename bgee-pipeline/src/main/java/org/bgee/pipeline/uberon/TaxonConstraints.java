@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -807,16 +808,45 @@ public class TaxonConstraints {
     }
     
     /**
-     * Extracts taxon constraints from the file {@code taxonConstraintsFile}. 
+     * Delegates to {@link #extractTaxonConstraints(String, Map)} with the {@code Map} 
+     * argument {@code null} (no replacement of taxon constaints, just get them from the file).
+     * 
+     * @param taxonConstraintsFile  See same name argument in 
+     *                              {@link #extractTaxonConstraints(String, Map)}
+     * @return                      See returned value in 
+     *                              {@link #extractTaxonConstraints(String, Map)}
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile) 
+            throws FileNotFoundException, IOException {
+        log.entry(taxonConstraintsFile);
+        return log.exit(TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, null));
+    }
+    
+    /**
+     * Extracts taxon constraints from the file {@code taxonConstraintsFile} and potentially 
+     * overrides some of them. 
      * The returned {@code Map} contains the OBO-like IDs of all Uberon terms 
      * present in the file, as keys, associated to a {@code Set} of {@code Integer}s, 
      * that are the IDs of the taxa in which it exists, among the taxa present in the file. 
      * If the {@code Set} is empty, then it means that the {@code OWLClass} existed 
      * in none of the taxa. IDs of the taxa are {@code Integer}s representing 
      * their NCBI IDs (for instance, 9606 for human).
+     * <p>
+     * When {@code idStartsToOverridenTaxonIds} is not null, it allows to override constraints 
+     * retrieved from the file: when the OBO-like ID of an Uberon terms starts with 
+     * one of the key of {@code idStartsToOverridenTaxonIds}, its taxon constraints 
+     * are replaced with the associated value. If the start of the OBO-like ID matches 
+     * several keys, then the longest match will be considered. 
      * 
-     * @param taxonConstraintsFile      A {@code String} that is the path to the 
-     *                                  tqxon constraints file.
+     * @param taxonConstraintsFile          A {@code String} that is the path to the 
+     *                                      taxon constraints file.
+     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
+     *                                      representing prefixes of uberon terms to match, 
+     *                                      the associated value being a {@code Set} 
+     *                                      of {@code Integer}s to replace taxon constraints 
+     *                                      of matching terms.
      * @return                          A {@code Map} where keys are IDs of the Uberon 
      *                                  {@code OWLClass}es, and values are {@code Set}s 
      *                                  of {@code Integer}s containing the IDs of taxa 
@@ -826,9 +856,10 @@ public class TaxonConstraints {
      * @throws IOException              If {@code taxonConstraintsFile} could not 
      *                                  be read.
      */
-    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile) 
-            throws FileNotFoundException, IOException {
-        log.entry(taxonConstraintsFile);
+    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile, 
+            Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
+                throws FileNotFoundException, IOException {
+        log.entry(taxonConstraintsFile, idStartsToOverridenTaxonIds);
         
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(taxonConstraintsFile), 
                 Utils.TSVCOMMENTED)) {
@@ -850,13 +881,36 @@ public class TaxonConstraints {
             while( (lineMap = mapReader.read(header, processors)) != null ) {
                 
                 String uberonId = (String) lineMap.get(UBERON_ID_COLUMN_NAME);
-                constraints.put(uberonId, new HashSet<Integer>());
+                Set<Integer> replacementConstraints = null;
+                String matchingPrefix = "";
+                if (idStartsToOverridenTaxonIds != null) {
+                    for (Entry<String, Set<Integer>> idStartToTaxonIds: 
+                        idStartsToOverridenTaxonIds.entrySet()) {
+                        
+                        if (uberonId.startsWith(idStartToTaxonIds.getKey()) && 
+                                idStartToTaxonIds.getKey().length() > matchingPrefix.length()) {
+                            matchingPrefix = idStartToTaxonIds.getKey();
+                            log.trace("Uberon ID {} matching prefix {}, taxon constraints overriden: {}", 
+                                    uberonId, matchingPrefix, idStartToTaxonIds.getValue());
+                            replacementConstraints = 
+                                    new HashSet<Integer>(idStartToTaxonIds.getValue());
+                            //continue iterations anyway in case there is a longest match
+                        }
+                    }
+                }
                 
-                for (int i = 0; i < header.length; i++) {
-                    if (!header[i].equals(UBERON_ID_COLUMN_NAME) && 
-                            !header[i].equals(UBERON_NAME_COLUMN_NAME)) {
-                        if ((Boolean) lineMap.get(header[i])) {
-                            constraints.get(uberonId).add(Integer.parseInt(header[i]));
+                if (replacementConstraints != null) {
+                    constraints.put(uberonId, replacementConstraints);
+                } else {
+                    Set<Integer> existingConstraints = new HashSet<Integer>();
+                    constraints.put(uberonId, existingConstraints);
+                    
+                    for (int i = 0; i < header.length; i++) {
+                        if (!header[i].equals(UBERON_ID_COLUMN_NAME) && 
+                                !header[i].equals(UBERON_NAME_COLUMN_NAME)) {
+                            if ((Boolean) lineMap.get(header[i])) {
+                                existingConstraints.add(Integer.parseInt(header[i]));
+                            }
                         }
                     }
                 }

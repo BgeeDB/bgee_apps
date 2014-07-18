@@ -101,6 +101,10 @@ p {
     font-weight:bold;
     font: 16px  Helvetica,Verdana, sans-serif;
 }
+figure {
+	cursor: pointer; 
+	cursor: hand;
+}
 figure img {
     margin: 0 auto;
 }
@@ -155,6 +159,9 @@ img {
 #bgee_multi_species figure.highligth {
     padding: 3px;
 }
+.invisible {
+    display: none;
+}
 
 /****BGEE SEARCH BOX****/
 
@@ -189,6 +196,8 @@ input[type="image"] {
     left: -3%;
     width: 106%;
     margin: 5px 0;
+    clear:left;
+    display:none;
 }
 #bgee_data_selection_img { 
     position: absolute;
@@ -197,8 +206,9 @@ input[type="image"] {
     width: 360px;
 }
 #bgee_data_selection_img img {
-    position :absolute;
-    margin: 30px;
+    position :relative;
+    float:left;
+    margin: 30px 0px 0px 30px;
     width: 300px;
     height: 300px;
 }

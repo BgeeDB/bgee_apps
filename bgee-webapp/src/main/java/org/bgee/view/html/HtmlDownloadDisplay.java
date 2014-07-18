@@ -59,7 +59,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<h3>Download complete file:&nbsp;</h3>");
         this.writeln("<a id='expr_complete_tsv' class='sib_link' href='./data/fake-file.tsv' download='bgee_homo_sapiens_isExpressed_complete.tsv'>TSV</a>");
         this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='expr_complete_tsv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_isExpressed_complete.csv'>CSV</a>");
+        this.writeln("<a id='expr_complete_csv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_isExpressed_complete.csv'>CSV</a>");
         this.writeln("</li>");
         this.writeln("<li><h2 >Over-/Under-expression</h2>");
         this.writeln("<h3>Download simple file:&nbsp;</h3>");
@@ -67,9 +67,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("&nbsp;&nbsp;");
         this.writeln("<a id='overunder_simple_csv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_overUnderExpr_simple.tsv'>CSV</a>");
         this.writeln("<h3>Download complete file:&nbsp;</h3>");
-        this.writeln("<a id='overunder_simple_tsv' class='sib_link' href='./data/fake-file.tsv' download='bgee_homo_sapiens_overUnderExpr_complete.tsv'>TSV</a>");
+        this.writeln("<a id='overunder_complete_tsv' class='sib_link' href='./data/fake-file.tsv' download='bgee_homo_sapiens_overUnderExpr_complete.tsv'>TSV</a>");
         this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='overunder_simple_Csv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_overUnderExpr_complete.tsv'>CSV</a>");
+        this.writeln("<a id='overunder_complete_csv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_overUnderExpr_complete.tsv'>CSV</a>");
         this.writeln("</li>");
         this.writeln("</ul>");
         this.writeln("</div>");
@@ -96,11 +96,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<p>Multi species</p>");
         this.writeln("<div id='bgee_multi_species'>");
         this.writeln("<div class='biggroup'>");
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1"));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2"));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 9597, 9258, 9593),
-                "Group 3"));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 4"));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1",true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2",true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 9597, 9258, 9593, 9593, 9258, 9593, 9597, 9258, 9593, 9597, 9258, 9593, 9593),
+                "Group 3",true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 4",true));
         this.writeln("</div>");
 		this.writeln("</div>");
 		
@@ -111,11 +111,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	}
 	
 	private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption) {
+		return generateSpeciesFigure(speciesIds,figcaption,false);
+	}
+	
+	private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption, boolean isGroup) {
 	    StringBuilder images = new StringBuilder();
 	    if (speciesIds == null || speciesIds.size() == 0) {
 	        return ("");
 	    }
 	    String name=null, commonName=null, shortName=null;
+	    // Hidden info, to improve the jQuery search, allow to look for any of the name, short,
+	    // or common name, even if not displayed... for example droso.
+	    String hiddenInfo="";
 	    for (Integer speciesId: speciesIds) {
 	            switch(speciesId) {
 	                case 9606: 
@@ -216,6 +223,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	                default:
 	                    return ("");
 	            }
+	            if(isGroup){
+	            	hiddenInfo = hiddenInfo.concat(name + ", " + commonName + ", ");
+	            }
+	            else{
+	            	hiddenInfo = name;
+	            }
 	            images.append(generateSpeciesImg(speciesId, name, commonName, true));
         }
         if (StringUtils.isBlank(figcaption)) {
@@ -226,9 +239,16 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             newFigcaption.append(commonName);
             newFigcaption.append("</p>");
             figcaption=newFigcaption.toString();
+            
         }
 	    StringBuilder figure = new StringBuilder();
-	    figure.append("<figure>");
+	    if(isGroup){
+	    	figure.append("<figure data-bgeegroupname='" + figcaption + "'>");
+	    }
+	    else{
+	    	figure.append("<figure>");
+	    }
+	    figcaption = figcaption.concat(" <span class='invisible'>" + hiddenInfo + "</span>");
 	    figure.append(images);
 	    figure.append("<figcaption>");
         figure.append(figcaption);

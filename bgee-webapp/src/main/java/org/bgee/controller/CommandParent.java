@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.lang3.StringUtils;
-import org.bgee.model.Parameters;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -56,10 +55,9 @@ abstract class CommandParent {
     	this.requestParameters = requestParameters;
     	this.setFactory();
     	
-    	Parameters serverParam = Parameters.getParameters();
-    	this.serverRoot = serverParam.getServerRoot();
-    	this.homePage   = serverParam.getHomePage();
-    	this.bgeeRoot   = serverParam.getBgeeRoot();
+    	this.serverRoot = BgeeProperties.getBgeeRootDirectory();
+    	this.homePage   = BgeeProperties.getBgeeRootDirectory();
+    	this.bgeeRoot   = BgeeProperties.getBgeeRootDirectory();
     }
 	
 	/**

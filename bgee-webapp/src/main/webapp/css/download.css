@@ -7,231 +7,298 @@ html, body {
 	min-width: 600px;
 }
 
-/****BGEE CONTAINER****/
+/****SIB CONTAINER****/
 
-#bgee_container {
-	position: relative;
-	padding: 0;
-	margin: 0;
-	top: 0;
-	left: 0;
-	min-height: 100%;
-	width: 100%;
-	background-color: #F7F8FA;
-}
-
-/****BGEE HEADER****/
-
-#bgee_header {
-	position: relative;
-	background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
-	height: 75px;
-	width: 100%;
-	color: #282828;
-	z-index: 2;
-}
-#bgee_header h1 {
-	position: relative;
-	color: #282828;
-	text-align: center;
-	white-space: nowrap;
-	top: 20px;
-	margin: 0 250px;
-	font: 36px  Helvetica,Verdana, sans-serif;
-}
-#bgee_header #bgee_title {
-	padding: 0 75px;
-	margin: 0;
-	top: 0;
-	height: 50px;
+#sib_container{
+    position: relative;
+    padding: 0;
+    margin: 0;
+    top: 0;
+    left: 0;
+    min-height: 100%;
+    width: 100%;
+    background-color: #F7F8FA;
+    overflow: hidden;
 }
 
-/****BGEE BODY****/
-#bgee_body {
-	position: relative;
-	padding: 18px 18px 78px 18px;
-	background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
-	min-height: 420px;
-	font-family: Helvetica;
-	color: #626262;
-	font-size: 12px;
-	z-index: 1;
-}
+/****SIB HEADER****/
 
-#bgee_body h1, #bgee_body h2 {
-	position: relative;
-	color: #282828;
-	text-align: center;
-	white-space: nowrap;
+#sib_header{
+    position: relative;
+    background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
+    height: 100px;
+    width: 100%;
+    color: #282828;
+    z-index: 2;
 }
-#bgee_body h1 {
-	top: 15px;
-	margin: 0 250px;
-	font: 36px  Helvetica,Verdana, sans-serif;
-}
-#bgee_body h2 {
-	top: 5px;
-	margin: 10 150px;
-	font: 18px  Helvetica,Verdana, sans-serif;
-}
-
-
-/****BGEE FIELDSET****/
-#bgee_fieldset {
-    font-weight:bold;
-    padding: 0.5%;
-	border: 2px #920209 solid;
-	border-radius: 10px;
-    color:#920209;
-    width: 95%;
-    margin-left: 2%;
-    margin-bottom: 5px;
+#sib_header h1{
+    position: relative;
+    top: 15px;
+    margin: 0 220px;
+    color: #282828;
     text-align: center;
+    font: 32px  Helvetica,Verdana, sans-serif;
+    white-space: nowrap;
+    font-size: 27px;
+}
+#sib_header h2{
+    position: relative;
+    top: 25px;
+    margin: 0 220px;
+    color: #282828;
+    text-align: center;
+    font: 19px  Helvetica,Verdana, sans-serif;
+    white-space: nowrap;
+}
+#sib_header a{
+    text-decoration: none;
+    color: #282828;
+}
+
+/****SIB BODY****/
+
+#sib_body {
+    position: relative;
+    padding-bottom: 78px;
+    /*padding: 18px 18px 78px 18px;*/
+    background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
+    min-height: 420px;
+    font-family: Helvetica;
+    color: #626262;
+    font-size: 12px;
+    z-index: 1;
+}
+
+/****LINKS****/
+#sib_body a.sib_link, #sib_body a.sib_link:visited {
+    color: #d6161d;
+    font-size: 12px;
+    font-family: Helvetica;
+    text-decoration: none;
+}
+#sib_body a.sib_link:hover {
+    text-decoration: underline;
+}
+#sib_body a.sib_link:visited {
+    color: #920209;
+}
+a, a:visited {
+    color: #D6161D;
+    text-decoration: none;
+}
+a:visited {
+    color: #920209;
+}
+a:hover, a:hover:visited {
+    text-decoration: underline;
+}
+
+/****BGEE SPECIFIC STUFF****/
+
+p {
+    margin: 10px 2% 0px 2%;
+    color:#920209;
+    font-weight:bold;
+    font: 16px  Helvetica,Verdana, sans-serif;
+}
+figure img {
+    margin: 0 auto;
+}
+div.biggroup {
+    position: relative;
     display: inline-block;
-    vertical-align:top;
+    width: 95%;
+    margin: 0 2%;
+    border: 1px #920209 solid;
+    border-radius: 8px;
+    padding: 0.5%;
     text-align:left;
 }
-
-#bgee_fieldset div {
-    position: relative;
-    float:left;
-    width: 100%;
+div.biggroup figcaption p {
+    text-align: center;
+    color: #515151;
+    font: 12px  Helvetica,Verdana, sans-serif;
+    margin: 0;
 }
-
-#bgee_fieldset legend {
-	font: 18px  Helvetica,Verdana, sans-serif;
-    font-weight:bold;
+img {
+    border-radius: 8px;
 }
-
-#bgee_fieldset figure {
-    margin: 3px;
-    float:left;
+#bgee_uniq_species img{
+    width: 88px;
 }
-
-#bgee_fieldset figure img{
-    width: 90px;
+#bgee_multi_species img{
+    width: 50px;
 }
-
-#bgee_fieldset figcaption {
-    color:#282828;
-	font: 12px  Helvetica,Verdana, sans-serif;
+#bgee_uniq_species figure, #bgee_multi_species figure {
+    float: left;
+}
+#bgee_uniq_species figure {
+    margin: 0;
+    padding: 4px;
+}
+#bgee_multi_species figure {
+    margin: 6px;
+    border: 1px #920209 solid;
+    border-radius: 8px;
+    padding: 6px;
+    color:#515151;
     text-align: center;
 }
+#bgee_uniq_species figure.highligth, #bgee_multi_species figure.highligth {
+    border: 4px #319DD3 solid;
+    border-radius: 12px;
+    padding: 0px;
+}
+#bgee_uniq_species figure.highligth{
+    padding: 0px;
+}
+#bgee_multi_species figure.highligth {
+    padding: 3px;
+}
 
+/****BGEE SEARCH BOX****/
+
+#bgee_search_box {
+    position: relative;
+    display: inline-block;
+    vertical-align:top;
+    margin: 0 2% 0 2%;
+    text-align:left;
+}
+input[type="image"] {
+  margin-top: -1px;
+  vertical-align: middle;
+}
+#sib_body input.sib_text {
+    font-size: 11px;
+    font-weight: normal;
+    width: 124px;
+    background: #FFF;
+    border-color: #7C7C7C #C3C3C3 #C3C3C3 #7C7C7C;
+    border-style: solid;
+    border-width: 1px;
+    color: #406981;
+}
 
 /****BGEE DATASELECTION****/
 
 #bgee_data_selection {
     position: relative;
-	background-color: black;
+    background-color: #282828;
     padding: 30px;
-	width: 90%;
-    height: 360px;
-    display: none;
+    left: -3%;
+    width: 106%;
+    margin: 5px 0;
 }
-
-#bgee_data_selection_left {
-    float: left;
+#bgee_data_selection_img { 
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+}
+#bgee_data_selection_img img {
+    position :absolute;
+    margin: 30px;
     width: 300px;
-}
-
-#bgee_data_selection_left img{
     height: 300px;
 }
-
-#bgee_data_selection_right {
-    margin-left: 330px;
+#bgee_data_selection_text {
+    padding-left: 370px;
+    height: 300px;
 }
-
-#bgee_data_selection_right h1, #bgee_data_selection_right h2 {
+#bgee_data_selection_text h1, #bgee_data_selection_text h2, #bgee_data_selection_text h3 {
+    white-space: nowrap;
     text-align: left;
-	color: #DBDBDB;
+    color: #DBDBDB;
 }
-
-#bgee_data_selection_right h1 {
-	font: 36px  Helvetica,Verdana, sans-serif;
+#bgee_data_selection_text h1 {
+    font: italic 36px  Helvetica,Verdana, sans-serif;
+    margin-top: 11px;
 }
-
-#bgee_data_selection_right h2 {
-	font: 18px  Helvetica,Verdana, sans-serif;
+#bgee_data_selection_text h2 {
+    font: 20px  Helvetica,Verdana, sans-serif;
 }
-
-#bgee_data_selection_right ul {
-    list-style-image: url(../img/);
+#bgee_data_selection_text h3 {
+    font: 14px  Helvetica,Verdana, sans-serif;
+    margin-bottom: 2px;
 }
-#bgee_data_selection_right ul.ul {
-	list-style-type: circle;
+#bgee_data_selection_text ul {
+    height: 15px;
+    width: 25px;
+    white-space: nowrap;
+    list-style-image: url(../img/arrow.png);
 }
-
+#bgee_data_selection_text a {
+    text-decoration: none;
+    white-space: nowrap;
+    color: #BF161D;
+    font: 16px  Helvetica,Verdana, sans-serif;
+}
+#bgee_data_selection_text a:hover {
+    color: #BF161D;
+    text-decoration: underline;
+}
 
 /****LOGOS****/
 
-#bgee_header #sib_logo {
-	position: absolute;
-	top:8px;
-	left: 18px;
-	width: 78px;
-	height: 59px;
-	background: transparent url(../img/sibLogo.png) no-repeat top left;
-}
-#bgee_header #bgee_logo {
-	position: absolute;
+#sib_header #sib_logo{
+    position: absolute;
     top: 8px;
-	left: 100px;
-	width: 122px;
-	height: 38px;
-	height: 59px;
-	background: transparent url(../img/bgeeBannerLogoSmall.png) no-repeat top left;
+    width: 141px;
+    height: 75px;
+    background: transparent url(../img/sib_logo_141x75.png) no-repeat top left;
+    min-margin: 500px;
+    margin-left: 80%;
 }
 
-/****BGEE FOOTER****/
-#bgee_footer {
-	position: absolute;
-	bottom: 0px;
-	height: 40px;
-	background-color: #1E2425;
-	width: 100%;
-	color: #F7F8FA;
-	letter-spacing: 1px;
-	font-family: Verdana;
-	font-size: 10px;
-	font-weight: normal;
-	z-index: 2;
+#sib_header #sib_other_logo{
+    position: absolute;
+    top:8px;
+    width: 186px;
+    height: 75px;
+    background: transparent url(../img/bgee_logo.png) no-repeat top left;
+    left: 16px;
 }
-#bgee_footer_content {
-	position: relative;
-	padding: 9px 36px 0px 36px;
-	padding-right: 300px;
+
+/****SIB FOOTER****/
+#sib_footer{
+    position: absolute;
+    bottom: 0;
+    height: 40px;
+    background-color: #1E2425;
+    width: 100%;
+    color: #F7F8FA;
+    letter-spacing: 1px;
+    font-family: Verdana;
+    font-size: 10px;
+    font-weight: normal;
+    z-index: 2;
+}                     
+#sib_footer_content{    
+    position: relative;
+    padding: 9px 36px 0px 36px;
+    padding-right: 300px;
 }
-#bgee_footer a {
-	text-decoration: none;
-	color: #F7F8FA;
+#sib_footer a{
+    text-decoration: none;
+    color: #F7F8FA;
 }
-#bgee_footer a:hover {
-	color: #F7F8FA;
-	text-decoration: underline;
+#sib_footer a:hover{
+    color: #F7F8FA;
+    text-decoration: underline;
 }
-#bgee_footer a ../img,#bgee_header a img{
-	border: none;
-	vertical-align: middle;
-	padding-right: 5px;
+#sib_footer_right{
+    position: absolute;
+    right: 18px;
+    width: 400px;
+    top: 9px;
+    text-align: right;
 }
-#bgee_footer_right {
-	position: absolute;
-	right: 18px;
-	width: 400px;
-	top: 9px;
-	text-align: right;
+#sib_footer_right a{
+    padding-left: 10px;
 }
-#bgee_footer_right a {
-	padding-left: 10px;
-}
-#bgee_footer_right a:hover img{
-	text-decoration: none;
-	border: none;
-}
-#bgee_footer_gototop {
-	background: transparent url(../img/triangle_hover.png) no-repeat top left;
-	padding-left: 10px;
-	margin-right: 10px;
+#sib_footer_gototop{
+    background: transparent url(../img/triangle_hover.png) no-repeat top left;
+    padding-left: 10px;
+    margin-right: 10px;
 }

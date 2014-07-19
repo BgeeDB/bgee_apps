@@ -1,5 +1,4 @@
 /**** Bgee: a dataBase for Gene Expression Evolution ****/
-
 html, body {
 	height: 100%;
 	margin: 0;
@@ -8,307 +7,365 @@ html, body {
 }
 
 /****SIB CONTAINER****/
-
-#sib_container{
-    position: relative;
-    padding: 0;
-    margin: 0;
-    top: 0;
-    left: 0;
-    min-height: 100%;
-    width: 100%;
-    background-color: #F7F8FA;
-    overflow: hidden;
+#sib_container {
+	position: relative;
+	padding: 0;
+	margin: 0;
+	top: 0;
+	left: 0;
+	min-height: 100%;
+	width: 100%;
+	background-color: #F7F8FA;
+	overflow: hidden;
 }
 
 /****SIB HEADER****/
+#sib_header {
+	position: relative;
+	background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
+	height: 100px;
+	width: 100%;
+	color: #282828;
+	z-index: 2;
+}
 
-#sib_header{
-    position: relative;
-    background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
-    height: 100px;
-    width: 100%;
-    color: #282828;
-    z-index: 2;
+#sib_header h1 {
+	position: relative;
+	top: 15px;
+	margin: 0 220px;
+	color: #282828;
+	text-align: center;
+	font: 32px Helvetica, Verdana, sans-serif;
+	white-space: nowrap;
+	font-size: 27px;
 }
-#sib_header h1{
-    position: relative;
-    top: 15px;
-    margin: 0 220px;
-    color: #282828;
-    text-align: center;
-    font: 32px  Helvetica,Verdana, sans-serif;
-    white-space: nowrap;
-    font-size: 27px;
+
+#sib_header h2 {
+	position: relative;
+	top: 25px;
+	margin: 0 220px;
+	color: #282828;
+	text-align: center;
+	font: 19px Helvetica, Verdana, sans-serif;
+	white-space: nowrap;
 }
-#sib_header h2{
-    position: relative;
-    top: 25px;
-    margin: 0 220px;
-    color: #282828;
-    text-align: center;
-    font: 19px  Helvetica,Verdana, sans-serif;
-    white-space: nowrap;
-}
-#sib_header a{
-    text-decoration: none;
-    color: #282828;
+
+#sib_header a {
+	text-decoration: none;
+	color: #282828;
 }
 
 /****SIB BODY****/
-
 #sib_body {
-    position: relative;
-    padding-bottom: 78px;
-    /*padding: 18px 18px 78px 18px;*/
-    background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
-    min-height: 420px;
-    font-family: Helvetica;
-    color: #626262;
-    font-size: 12px;
-    z-index: 1;
+	position: relative;
+	padding-bottom: 78px;
+	/*padding: 18px 18px 78px 18px;*/
+	background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
+	min-height: 420px;
+	font-family: Helvetica;
+	color: #626262;
+	font-size: 12px;
+	z-index: 1;
 }
 
 /****LINKS****/
 #sib_body a.sib_link, #sib_body a.sib_link:visited {
-    color: #d6161d;
-    font-size: 12px;
-    font-family: Helvetica;
-    text-decoration: none;
+	color: #d6161d;
+	font-size: 12px;
+	font-family: Helvetica;
+	text-decoration: none;
 }
+
 #sib_body a.sib_link:hover {
-    text-decoration: underline;
+	text-decoration: underline;
 }
+
 #sib_body a.sib_link:visited {
-    color: #920209;
+	color: #920209;
 }
+
 a, a:visited {
-    color: #D6161D;
-    text-decoration: none;
+	color: #D6161D;
+	text-decoration: none;
 }
+
 a:visited {
-    color: #920209;
+	color: #920209;
 }
+
 a:hover, a:hover:visited {
-    text-decoration: underline;
+	text-decoration: underline;
 }
 
 /****BGEE SPECIFIC STUFF****/
-
 p {
-    margin: 10px 2% 0px 2%;
-    color:#920209;
-    font-weight:bold;
-    font: 16px  Helvetica,Verdana, sans-serif;
+	margin: 10px 2% 0px 2%;
+	color: #920209;
+	font-weight: bold;
+	font: 16px Helvetica, Verdana, sans-serif;
 }
+
 figure {
-	cursor: pointer; 
+	cursor: pointer;
 	cursor: hand;
 }
+
 figure img {
-    margin: 0 auto;
+	margin: 0 auto;
 }
+
 div.biggroup {
-    position: relative;
-    display: inline-block;
-    width: 95%;
-    margin: 0 2%;
-    border: 1px #920209 solid;
-    border-radius: 8px;
-    padding: 0.5%;
-    text-align:left;
+	position: relative;
+	display: inline-block;
+	width: 95%;
+	margin: 0 2%;
+	border: 1px #920209 solid;
+	border-radius: 8px;
+	padding: 0.5%;
+	text-align: left;
 }
+
 div.biggroup figcaption p {
-    text-align: center;
-    color: #515151;
-    font: 12px  Helvetica,Verdana, sans-serif;
-    margin: 0;
+	text-align: center;
+	color: #515151;
+	font: 12px Helvetica, Verdana, sans-serif;
+	margin: 0;
 }
+
+div.biggroup.highlight {
+    border: 1px #D6161D solid; /* blue color ??? #319DD3 */
+}
+
 img {
-    border-radius: 8px;
+	border-radius: 8px;
 }
-#bgee_uniq_species img{
-    width: 88px;
+
+#bgee_uniq_species img {
+	width: 88px;
 }
-#bgee_multi_species img{
-    width: 50px;
+
+#bgee_multi_species img {
+	width: 50px;
+	margin: 0px 1px;
 }
+
 #bgee_uniq_species figure, #bgee_multi_species figure {
-    float: left;
+	float: left;
 }
+
 #bgee_uniq_species figure {
-    margin: 0;
-    padding: 4px;
+	margin: 0;
+	padding: 4px;
 }
+
 #bgee_multi_species figure {
-    margin: 6px;
-    border: 1px #920209 solid;
-    border-radius: 8px;
-    padding: 6px;
-    color:#515151;
-    text-align: center;
+	margin: 6px;
+	border: 1px #920209 solid;
+	border-radius: 8px;
+	padding: 6px;
+	color: #515151;
+	text-align: center;
 }
-#bgee_uniq_species figure.highligth, #bgee_multi_species figure.highligth {
-    border: 4px #319DD3 solid;
-    border-radius: 12px;
-    padding: 0px;
+
+#bgee_uniq_species figure.highlight, #bgee_multi_species figure.highlight
+	{
+	border: 4px #D6161D solid; /* blue color ??? #319DD3 */
+	border-radius: 12px;
+	padding: 0px;
 }
-#bgee_uniq_species figure.highligth{
-    padding: 0px;
+
+#bgee_uniq_species figure.highlight {
+	padding: 0px;
 }
-#bgee_multi_species figure.highligth {
-    padding: 3px;
+
+#bgee_multi_species figure.highlight {
+	padding: 3px;
 }
+
+#bgee_uniq_species figure.selected, #bgee_multi_species figure.selected
+	{
+	border: 4px #920209 solid;
+	border-bottom: 0px;
+	border-radius: 12px;
+	padding: 0px;
+}
+
+#bgee_uniq_species figure.selected {
+	padding: 0px;
+}
+
+#bgee_multi_species figure.selected {
+	padding: 3px;
+}
+
 .invisible {
-    display: none;
+	display: none;
 }
 
 /****BGEE SEARCH BOX****/
-
 #bgee_search_box {
-    position: relative;
-    display: inline-block;
-    vertical-align:top;
-    margin: 0 2% 0 2%;
-    text-align:left;
+	position: relative;
+	display: inline-block;
+	vertical-align: top;
+	margin: 0 2% 0 2%;
+	text-align: left;
 }
+
 input[type="image"] {
-  margin-top: -1px;
-  vertical-align: middle;
+	margin-top: -1px;
+	vertical-align: middle;
 }
+
 #sib_body input.sib_text {
-    font-size: 11px;
-    font-weight: normal;
-    width: 124px;
-    background: #FFF;
-    border-color: #7C7C7C #C3C3C3 #C3C3C3 #7C7C7C;
-    border-style: solid;
-    border-width: 1px;
-    color: #406981;
+	font-size: 11px;
+	font-weight: normal;
+	width: 124px;
+	background: #FFF;
+	border-color: #7C7C7C #C3C3C3 #C3C3C3 #7C7C7C;
+	border-style: solid;
+	border-width: 1px;
+	color: #406981;
 }
 
 /****BGEE DATASELECTION****/
-
 #bgee_data_selection {
-    position: relative;
-    background-color: #282828;
-    padding: 30px;
-    left: -3%;
-    width: 106%;
-    margin: 5px 0;
-    clear:left;
-    display:none;
+	position: relative;
+	background-color: #282828;
+	padding: 30px;
+	left: -3%;
+	width: 106%;
+	margin: 5px 0;
+	clear: left;
+	display: none;
 }
-#bgee_data_selection_img { 
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 360px;
+
+#bgee_data_selection_img {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 360px;
 }
+
 #bgee_data_selection_img img {
-    position :relative;
-    float:left;
-    margin: 30px 0px 0px 30px;
-    width: 300px;
-    height: 300px;
+	position: relative;
+	float: left;
+	margin: 30px 0px 0px 30px;
+	width: 300px;
+	height: 300px;
 }
+
 #bgee_data_selection_text {
-    padding-left: 370px;
-    height: 300px;
+	padding-left: 370px;
+	height: 300px;
 }
-#bgee_data_selection_text h1, #bgee_data_selection_text h2, #bgee_data_selection_text h3 {
-    white-space: nowrap;
-    text-align: left;
-    color: #DBDBDB;
+
+#bgee_data_selection_text h1, #bgee_data_selection_text h2,
+	#bgee_data_selection_text h3 {
+	white-space: nowrap;
+	text-align: left;
+	color: #DBDBDB;
 }
+
 #bgee_data_selection_text h1 {
-    font: italic 36px  Helvetica,Verdana, sans-serif;
-    margin-top: 11px;
+	font: italic 36px Helvetica, Verdana, sans-serif;
+	margin-top: 11px;
 }
+
 #bgee_data_selection_text h2 {
-    font: 20px  Helvetica,Verdana, sans-serif;
+	font: 20px Helvetica, Verdana, sans-serif;
 }
+
 #bgee_data_selection_text h3 {
-    font: 14px  Helvetica,Verdana, sans-serif;
-    margin-bottom: 2px;
+	font: 14px Helvetica, Verdana, sans-serif;
+	margin-bottom: 2px;
 }
+
 #bgee_data_selection_text ul {
-    height: 15px;
-    width: 25px;
-    white-space: nowrap;
-    list-style-image: url(../img/arrow.png);
+	height: 15px;
+	width: 25px;
+	white-space: nowrap;
+	list-style-image: url(../img/arrow.png);
 }
+
 #bgee_data_selection_text a {
-    text-decoration: none;
-    white-space: nowrap;
-    color: #BF161D;
-    font: 16px  Helvetica,Verdana, sans-serif;
+	text-decoration: none;
+	white-space: nowrap;
+	color: #BF161D;
+	font: 16px Helvetica, Verdana, sans-serif;
 }
+
 #bgee_data_selection_text a:hover {
-    color: #BF161D;
-    text-decoration: underline;
+	color: #BF161D;
+	text-decoration: underline;
 }
 
 /****LOGOS****/
-
-#sib_header #sib_logo{
-    position: absolute;
-    top: 8px;
-    width: 141px;
-    height: 75px;
-    background: transparent url(../img/sib_logo_141x75.png) no-repeat top left;
-    min-margin: 500px;
-    margin-left: 80%;
+#sib_header #sib_logo {
+	position: absolute;
+	top: 8px;
+	width: 141px;
+	height: 75px;
+	background: transparent url(../img/sib_logo_141x75.png) no-repeat top
+		left;
+	min-margin: 500px;
+	margin-left: 80%;
 }
 
-#sib_header #sib_other_logo{
-    position: absolute;
-    top:8px;
-    width: 186px;
-    height: 75px;
-    background: transparent url(../img/bgee_logo.png) no-repeat top left;
-    left: 16px;
+#sib_header #sib_other_logo {
+	position: absolute;
+	top: 8px;
+	width: 186px;
+	height: 75px;
+	background: transparent url(../img/bgee_logo.png) no-repeat top left;
+	left: 16px;
 }
 
 /****SIB FOOTER****/
-#sib_footer{
-    position: absolute;
-    bottom: 0;
-    height: 40px;
-    background-color: #1E2425;
-    width: 100%;
-    color: #F7F8FA;
-    letter-spacing: 1px;
-    font-family: Verdana;
-    font-size: 10px;
-    font-weight: normal;
-    z-index: 2;
-}                     
-#sib_footer_content{    
-    position: relative;
-    padding: 9px 36px 0px 36px;
-    padding-right: 300px;
+#sib_footer {
+	position: absolute;
+	bottom: 0;
+	height: 40px;
+	background-color: #1E2425;
+	width: 100%;
+	color: #F7F8FA;
+	letter-spacing: 1px;
+	font-family: Verdana;
+	font-size: 10px;
+	font-weight: normal;
+	z-index: 2;
 }
-#sib_footer a{
-    text-decoration: none;
-    color: #F7F8FA;
+
+#sib_footer_content {
+	position: relative;
+	padding: 9px 36px 0px 36px;
+	padding-right: 300px;
 }
-#sib_footer a:hover{
-    color: #F7F8FA;
-    text-decoration: underline;
+
+#sib_footer a {
+	text-decoration: none;
+	color: #F7F8FA;
 }
-#sib_footer_right{
-    position: absolute;
-    right: 18px;
-    width: 400px;
-    top: 9px;
-    text-align: right;
+
+#sib_footer a:hover {
+	color: #F7F8FA;
+	text-decoration: underline;
 }
-#sib_footer_right a{
-    padding-left: 10px;
+
+#sib_footer_right {
+	position: absolute;
+	right: 18px;
+	width: 400px;
+	top: 9px;
+	text-align: right;
 }
-#sib_footer_gototop{
-    background: transparent url(../img/triangle_hover.png) no-repeat top left;
-    padding-left: 10px;
-    margin-right: 10px;
+
+#sib_footer_right a {
+	padding-left: 10px;
+}
+
+#sib_footer_gototop {
+	background: transparent url(../img/triangle_hover.png) no-repeat top
+		left;
+	padding-left: 10px;
+	margin-right: 10px;
 }

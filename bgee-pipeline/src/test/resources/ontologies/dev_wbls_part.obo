@@ -1,0 +1,633 @@
+
+
+[Term]
+id: WBls:0000004
+name: proliferating embryo Ce (C elegans)
+def: "0-350min after first cleavage at 20 Centigrade. Proliferate from 1 cell to 560 cells. From start of first cleavage till cleavage is over." [wb:wjc]
+relationship: part_of UBERON:0000068 ! embryo stage
+
+[Term]
+id: WBls:0000006
+name: 1-cell embryo Ce (C elegans)
+def: "Also called zygote. -50min till 0min of first cleavage at 20 Centigrade. Contains 1 cell." [wb:wjc]
+relationship: part_of UBERON:0000108 ! blastula stage
+
+[Term]
+id: WBls:0000007
+name: 2-cell embryo Ce (C elegans)
+def: "0-20min after first cleavage at 20 Centigrade.  Contains 2 cells." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000006 ! 1-cell embryo Ce (C elegans)
+relationship: part_of UBERON:0000108 ! blastula stage
+
+[Term]
+id: WBls:0000008
+name: 4-cell embryo Ce (C elegans)
+def: "20-40min after first cleavage at 20 Centigrade.  Contains 4 cells." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000007 ! 2-cell embryo Ce (C elegans)
+relationship: part_of UBERON:0000108 ! blastula stage
+
+[Term]
+id: WBls:0000009
+name: 28-cell embryo Ce (C elegans)
+def: "100-105 min after first cleaveage at 20 Centigrade. Contains 28 cells." [wb:wjc]
+relationship: part_of UBERON:0000109 ! gastrula stage
+
+[Term]
+id: WBls:0000011
+name: 51-cell embryo Ce (C elegans)
+def: "120-135 min after first cleavage at 20 Centigrade. Contains 51 cells." [wb:wjc]
+relationship: part_of UBERON:0000109 ! gastrula stage
+relationship: preceded_by WBls:0000086 ! 44-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000012
+name: 88-cell embryo Ce (C elegans)
+def: "145-150 min after first cleavage at 20 Centigrade. Contains 88 cells." [wb:wjc]
+relationship: part_of UBERON:0000109 ! gastrula stage
+relationship: preceded_by WBls:0000088 ! 86-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000013
+name: enclosing embryo Ce (C elegans)
+def: "290-350min after first cleavage at 20 Centigrade. Proliferate from 421 cells to 560 cells. The stage when embryo just finished gastulation and is enclosing." [wb:wjc]
+relationship: immediately_preceded_by UBERON:0000109 ! gastrula stage
+relationship: part_of WBls:0000014 ! late cleavage stage embryo Ce (C elegans)
+relationship: preceded_by WBls:0000014 ! late cleavage stage embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000014
+name: late cleavage stage embryo Ce (C elegans)
+def: "210-350min after first cleavage at 20 Centigrade. Proliferate from 421 cells to 560 cells. The stage before the fast cleavage of cells finishes." [wb:wjc]
+relationship: part_of WBls:0000004 ! proliferating embryo Ce (C elegans)
+relationship: preceded_by UBERON:0000109 ! gastrula stage
+
+[Term]
+id: WBls:0000015
+name: elongating embryo Ce (C elegans)
+def: "350-620min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The stage that embryo starts elongation till elongation is over." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000004 ! proliferating embryo Ce (C elegans)
+relationship: part_of UBERON:0000068 ! embryo stage
+relationship: preceded_by UBERON:0000109 ! gastrula stage
+
+[Term]
+id: WBls:0000016
+name: bean embryo Ce (C elegans)
+def: "350-390min after first cleavage at 20 Centigrade.  Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. Emrbyo elongation started but have not formed comma shape yet. The shape of embryo looks like a lima bean. A stage right before comma embryo. Also called lima embryo or lima bean stage." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000013 ! enclosing embryo Ce (C elegans)
+relationship: immediately_preceded_by WBls:0000014 ! late cleavage stage embryo Ce (C elegans)
+relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000017
+name: comma embryo Ce (C elegans)
+def: "390-420min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The shape of embryo looks like a comma. A stage between bean embryo and 1.5-fold embryo." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000016 ! bean embryo Ce (C elegans)
+relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000018
+name: 1.5-fold embryo Ce (C elegans)
+def: "420-460min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The shape of embryo is elongated and fold back 50%. A stage between comma embryo and 2-fold embryo." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000017 ! comma embryo Ce (C elegans)
+relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000019
+name: 2-fold embryo Ce (C elegans)
+def: "460-520min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The shape of embryo is elongated and double fold. A stage between 1.5-fold embryo and 3-fold embryo." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000018 ! 1.5-fold embryo Ce (C elegans)
+relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000020
+name: 3-fold embryo Ce (C elegans)
+def: "520-620min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The shape of embryo is elongated and tripple fold. A stage between 2-fold embryo and fully-elongated embryo. Also called pretzel embryo or pretzel stage." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000019 ! 2-fold embryo Ce (C elegans)
+relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000021
+name: fully-elongated embryo Ce (C elegans)
+def: "620-800min(hatch) after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. A stage after elongation is over. The last stage of embryogenesis. Also called pre-hatched embryo, late embryo or morphogenetic embryo." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000015 ! elongating embryo Ce (C elegans)
+relationship: immediately_preceded_by WBls:0000020 ! 3-fold embryo Ce (C elegans)
+relationship: part_of UBERON:0000068 ! embryo stage
+
+[Term]
+id: WBls:0000024
+name: L1 larva Ce (C elegans)
+def: "The first stage larva. At 25 Centigrade, it ranges 14-25.5 hours after fertilization, 0-11.5 hours after hatch." [wb:wjc]
+relationship: immediately_preceded_by UBERON:0000068 ! embryo stage
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000025
+name: L1-L2 lethargus Ce (C elegans)
+def: "The stage during L1-L2 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
+relationship: part_of WBls:0000026 ! L1-L2 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000026
+name: L1-L2 molt Ce (C elegans)
+def: "The stage when an animal shifts from L1 larva to L2 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000024 ! L1 larva Ce (C elegans)
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000027
+name: L2 larva Ce (C elegans)
+def: "The second stage larva. At 25 Centigrade, it ranges 25.5-32.5 hours after fertilization, 11.5-18.5 hours after hatch." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000026 ! L1-L2 molt Ce (C elegans)
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000028
+name: L2-L3 lethargus Ce (C elegans)
+def: "The stage during L2-L3 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
+relationship: part_of WBls:0000029 ! L2-L3 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000029
+name: L2-L3 molt Ce (C elegans)
+def: "The stage when an animal shifts from L2 larva to L3 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000027 ! L2 larva Ce (C elegans)
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000030
+name: L2d-dauer lethargus Ce (C elegans)
+def: "The stage during L2d-dauer molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
+relationship: part_of WBls:0000031 ! L2d-dauer molt Ce (C elegans)
+
+[Term]
+id: WBls:0000031
+name: L2d-dauer molt Ce (C elegans)
+def: "The stage when an animal shifts from L2d larva to dauer larva. It includes the synthesis of new cuticle, cease of pharyngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000032
+name: dauer larva Ce (C elegans)
+def: "A third stage larva specialized for dispersal and long term survival." [ISBN:0-87969-433-5]
+relationship: part_of UBERON:0004729 ! nematode larval stage
+relationship: preceded_by WBls:0000027 ! L2 larva Ce (C elegans)
+
+[Term]
+id: WBls:0000033
+name: postdauer-L4 lethargus Ce (C elegans)
+def: "The stage during postdauer-L4 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
+relationship: part_of WBls:0000034 ! postdauer-L4 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000034
+name: postdauer-L4 molt Ce (C elegans)
+def: "The stage when an animal shifts from post dauer stage to L4 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
+relationship: part_of WBls:0000052 ! post dauer stage Ce (C elegans)
+
+[Term]
+id: WBls:0000035
+name: L3 larva Ce (C elegans)
+def: "The third stage larva. At 25 Centigrade, it ranges 32.5-40 hours after fertilization, 18.5-26 hours after hatch." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000029 ! L2-L3 molt Ce (C elegans)
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000036
+name: L3-L4 lethargus Ce (C elegans)
+def: "The stage during L3-L4 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
+relationship: part_of WBls:0000037 ! L3-L4 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000037
+name: L3-L4 molt Ce (C elegans)
+def: "The stage when an animal shifts from L3 larva to L4 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000035 ! L3 larva Ce (C elegans)
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000038
+name: L4 larva Ce (C elegans)
+def: "The fourth stage larva. At 25 Centigrade, it ranges 40-49.5 hours after fertilization, 26-35.5 hours after hatch." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000032 ! dauer larva Ce (C elegans)
+relationship: immediately_preceded_by WBls:0000037 ! L3-L4 molt Ce (C elegans)
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000039
+name: L4-adult lethargus Ce (C elegans)
+def: "The stage during L4-adult molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
+relationship: part_of WBls:0000040 ! L4-adult molt Ce (C elegans)
+
+[Term]
+id: WBls:0000040
+name: L4-adult molt Ce (C elegans)
+def: "The stage when an animal shifts from L4 larva to adult. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000038 ! L4 larva Ce (C elegans)
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000042
+name: L1-L2 ecdysis Ce (C elegans)
+def: "The stage during L1-L2 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000025 ! L1-L2 lethargus Ce (C elegans)
+relationship: part_of WBls:0000026 ! L1-L2 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000043
+name: L1-L2d molt Ce (C elegans)
+def: "The stage when an animal shifts from L1 larva to L2d larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000044
+name: L1-L2d lethargus Ce (C elegans)
+def: "The stage during L1-L2d molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
+relationship: part_of WBls:0000043 ! L1-L2d molt Ce (C elegans)
+
+[Term]
+id: WBls:0000045
+name: L1-L2d ecdysis Ce (C elegans)
+def: "The stage during L1-L2d molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
+relationship: part_of WBls:0000043 ! L1-L2d molt Ce (C elegans)
+
+[Term]
+id: WBls:0000046
+name: L2d larva Ce (C elegans)
+def: "A special second stage larva with altered physiology and developmental potential that leads to formation of dauer larva. At 25 Centigrade, it ranges 25.5-32.5 hours after fertilization, 11.5-18.5 hours after hatch." [ISBN:0-87969-433-5]
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000047
+name: L2-L3 ecdysis Ce (C elegans)
+def: "The stage during L2-L3 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000028 ! L2-L3 lethargus Ce (C elegans)
+relationship: part_of WBls:0000029 ! L2-L3 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000048
+name: L2d-dauer ecdysis Ce (C elegans)
+def: "The stage during L2d-dauer molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
+relationship: part_of WBls:0000031 ! L2d-dauer molt Ce (C elegans)
+
+[Term]
+id: WBls:0000049
+name: L3-L4 ecdysis Ce (C elegans)
+def: "The stage during L3-L4 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000036 ! L3-L4 lethargus Ce (C elegans)
+relationship: part_of WBls:0000037 ! L3-L4 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000050
+name: L4-adult ecdysis (C elegans)
+def: "The stage during L4-adult molt, after the brief lethargus period, when an animal shed off old cuticle." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000039 ! L4-adult lethargus Ce (C elegans)
+relationship: part_of WBls:0000040 ! L4-adult molt Ce (C elegans)
+
+[Term]
+id: WBls:0000051
+name: postdauer-L4 ecdysis Ce (C elegans)
+def: "The stage during postdauer-L4 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
+relationship: part_of WBls:0000034 ! postdauer-L4 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000052
+name: post dauer stage Ce (C elegans)
+def: "The stage right after an animal recovered from dauer but has not started transformation to L4 larva yet." [wb:wjc]
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000053
+name: L2d-L3 molt Ce (C elegans)
+def: "The stage when an animal shifts from L2d larva to L3 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
+relationship: part_of WBls:0000046 ! L2d larva Ce (C elegans)
+
+[Term]
+id: WBls:0000054
+name: L2d-L3 lethargus Ce (C elegans)
+def: "The stage during L2d-L3 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
+relationship: part_of WBls:0000053 ! L2d-L3 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000055
+name: L2d-L3 ecdysis Ce (C elegans)
+def: "The stage during L2d-L3 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
+relationship: part_of WBls:0000053 ! L2d-L3 molt Ce (C elegans)
+
+[Term]
+id: WBls:0000056
+name: adult male Ce (C elegans)
+def: "The stage after an male animal is fully-developed and reaches maturity." [wb:wjc]
+is_a: UBERON:0000066 ! fully formed stage
+
+[Term]
+id: WBls:0000057
+name: adult hermaphrodite Ce (C elegans)
+def: "The stage after an hermaphrodite animal is fully-developed and reaches maturity." [wb:wjc]
+is_a: UBERON:0000066 ! fully formed stage
+
+[Term]
+id: WBls:0000058
+name: pre-reproductive stage adult hermaphrodite Ce (C elegans)
+def: "Very young adult hermaphrodites that do not have eggs in the uterus yet. At 20 Centigrade: 0 - 13 hours after L4-adult molt. 3 days after first cleaveage." [wb:wjc]
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000060
+name: reproductive stage adult hermaphrodite Ce (C elegans)
+def: "Adult hermaphrodites continuously laying fertilized eggs. Hermaphrodite in egg laying stages--usually up to 4/5 days after L4-adult molt at Centigrade. From the first fertilized egg is laid, till all sperms are used. At 20 Centigrade: 13 hours after L4-adult molt until about 5.4 days after the L4-adult molt. 3-8.4 days after first cleavage." [wb:wjc]
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000061
+name: oocyte-laying stage adult hermaphrodite Ce (C elegans)
+def: "When egg-laying is still going on but intermittent and during which a significant number of oocytes are laid. Included in reproductive stage adult hermaphrodite." [wb:wjc]
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000062
+name: post-reproductive stage adult hermaphrodite Ce (C elegans)
+def: "Adult hermaphrodites that contain no more sperm, thus stop egg-laying, but still alive. At 20 Centigrade: 5.4 days after L4-adult molt until the death. 8.4 - 13.2 (average wild type life span) days after first cleavage." [wb:wjc]
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000063
+name: newly molted young adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 0-24 hours after L4-adult molt." [wb:wjc]
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000064
+name: 1-day post-L4 adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 24-48 hours after L4-adult molt. 4-5 days after first cleavage." [wb:wjc]
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000065
+name: 2-days post-L4 adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 48-72 hours after L4-adult molt. 5-6 days after first cleavage." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000064 ! 1-day post-L4 adult hermaphrodite Ce (C elegans)
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000066
+name: 3-days post-L4 adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 72-96 hours after L4-adult molt. 6-7 days after first cleavage." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000065 ! 2-days post-L4 adult hermaphrodite Ce (C elegans)
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000067
+name: 4-days post-L4 adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 96-120 hours after L4-adult molt. 7-8 days after first cleavage." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000066 ! 3-days post-L4 adult hermaphrodite Ce (C elegans)
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000068
+name: 5-days post-L4 adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 5-6 days after L4-adult molt. 8-9 days after first cleavage." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000067 ! 4-days post-L4 adult hermaphrodite Ce (C elegans)
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000069
+name: 4-7 days post-L4 adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 4-7 days after L4-adult molt. 7-10 days after first cleavage." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000068 ! 5-days post-L4 adult hermaphrodite Ce (C elegans)
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000070
+name: 7-10 days post-L4 adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 7-10 days after L4-adult molt. 10-13 days after first cleavage." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000069 ! 4-7 days post-L4 adult hermaphrodite Ce (C elegans)
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000071
+name: 8-cell embryo Ce (C elegans)
+def: "~50 min after first cleavage at 20 Centigrade.  Contains 8 cells." [wb:wjc]
+relationship: immediately_preceded_by WBls:0000008 ! 4-cell embryo Ce (C elegans)
+relationship: part_of UBERON:0000108 ! blastula stage
+
+[Term]
+id: WBls:0000072
+name: 12-cell embryo Ce (C elegans)
+def: "~55 min after first cleavage at 20 Centigrade.  Contains 12 cells." [wb:wjc]
+relationship: part_of UBERON:0000108 ! blastula stage
+relationship: preceded_by WBls:0000071 ! 8-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000073
+name: L4 larva male Ce (C elegans)
+def: "The fourth stage larva male. At 25 Centigrade, it ranges 40-49.5 hours after fertilization, 26-35.5 hours after hatch." [wb:wjc]
+is_a: WBls:0000038 ! L4 larva Ce (C elegans)
+
+[Term]
+id: WBls:0000074
+name: 11-15 days post-L4 adult hermaphrodite (C elegans)
+def: "At 20 Centigrade: 11-15 days after L4-adult molt. 14-18 days after first cleavage." [wb:dr]
+relationship: immediately_preceded_by WBls:0000070 ! 7-10 days post-L4 adult hermaphrodite Ce (C elegans)
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
+
+[Term]
+id: WBls:0000077
+name: sheathed microfilaria Bma (C elegans)
+def: "Microfilaria is the stage which develops from the egg and precedes the L1 stage. The larvae are surrounded by a membrane thought to be derived from the vitelline membrane." [wb:dr&mb]
+synonym: "microfilaria" EXACT []
+relationship: part_of WBls:0000097 ! larva Bma (C elegans)
+
+[Term]
+id: WBls:0000078
+name: unsheathed microfilariae Bma (C elegans)
+def: "In the mosquito, the microfilariae shed sheaths, penetrate the midgut, and migrate to the thoracic muscles were the microfilariae increase in size, molt, and develop into infective larvae (L1 and L3) over a span of 7-21 days." [WB:dr&mb]
+relationship: immediately_preceded_by WBls:0000077 ! sheathed microfilaria Bma (C elegans)
+relationship: part_of WBls:0000097 ! larva Bma (C elegans)
+
+[Term]
+id: WBls:0000079
+name: L1 larva Bma (C elegans)
+def: "The first stage larva." [WB:dr&mb]
+relationship: immediately_preceded_by WBls:0000078 ! unsheathed microfilariae Bma (C elegans)
+relationship: part_of WBls:0000097 ! larva Bma (C elegans)
+
+[Term]
+id: WBls:0000080
+name: L2 larva Bma (C elegans)
+def: "The second stage larva. Derived from flight muscles of vector host; some development in vitro, with L1 to L2 moulting, has been demonstrated but rarely; these are often staged by hours or days post blood meal." [wb:dr&mb]
+relationship: immediately_preceded_by WBls:0000079 ! L1 larva Bma (C elegans)
+relationship: part_of WBls:0000097 ! larva Bma (C elegans)
+
+[Term]
+id: WBls:0000081
+name: L3 larva Bma (C elegans)
+def: "The third stage larva." [wb:dr&mb]
+relationship: immediately_preceded_by WBls:0000080 ! L2 larva Bma (C elegans)
+relationship: part_of WBls:0000097 ! larva Bma (C elegans)
+
+[Term]
+id: WBls:0000082
+name: L4 larva Bma (C elegans)
+def: "The fourth stage larva. Should be conditioned by days post infection; as moulting is not synchronous, some samples are defined as L3/L4, indicating a mix of individuals as late L3, moulting, and early L4." [wb:dr&mb]
+relationship: immediately_preceded_by WBls:0000081 ! L3 larva Bma (C elegans)
+relationship: part_of WBls:0000097 ! larva Bma (C elegans)
+
+[Term]
+id: WBls:0000083
+name: adult Bma (C elegans)
+def: "Adults (or at least adult females) can live for 10 years in a human host, and can outlive their rodent laboratory hosts; it is usual to state the chronological age of the nematodes in days or months post-infection, and occasionally post-patency (the production of first microfilariae)." [WB:dr&mb]
+relationship: immediately_preceded_by WBls:0000100 ! young adult Bma (C elegans)
+relationship: part_of UBERON:0000066
+
+[Term]
+id: WBls:0000084
+name: 14-cell embryo Ce (C elegans)
+def: "E-cell has divided into Ea and Ep. Contains 14 cells." [wb:dr]
+relationship: part_of UBERON:0000108 ! blastula stage
+relationship: preceded_by WBls:0000072 ! 12-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000085
+name: 24-cell embryo Ce (C elegans)
+def: "Fourth cleavage of the AB lineage. Contains 24 cells." [wb:dr]
+relationship: part_of UBERON:0000108 ! blastula stage
+relationship: preceded_by WBls:0000084 ! 14-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000086
+name: 44-cell embryo Ce (C elegans)
+def: "Fifth cleavage of the AB lineage. Contains 44 cells." [wb:dr]
+relationship: part_of UBERON:0000109 ! gastrula stage
+relationship: preceded_by WBls:0000009 ! 28-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000087
+name: 68-cell embryo Ce (C elegans)
+def: "Sixth cleavage of the AB lineage. Contains 68 cells." [wb:dr]
+relationship: part_of UBERON:0000109 ! gastrula stage
+relationship: preceded_by WBls:0000011 ! 51-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000088
+name: 86-cell embryo Ce (C elegans)
+def: "Seventh cleavage of the AB lineage. Contains 86 cells." [wb:dr]
+relationship: part_of UBERON:0000109 ! gastrula stage
+relationship: preceded_by WBls:0000087 ! 68-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000089
+name: 190-cells embryo Ce (C elegans)
+def: "P4 and M cells have finished migrating. Contains 190 cells." [wb:dr]
+relationship: part_of UBERON:0000109 ! gastrula stage
+relationship: preceded_by WBls:0000090 ! 96-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000090
+name: 96-cell embryo Ce (C elegans)
+def: "155-165 min after first cleavage at 20 Centigrade. Contains 96 cells." [wb:dr]
+relationship: part_of UBERON:0000109 ! gastrula stage
+relationship: preceded_by WBls:0000012 ! 88-cell embryo Ce (C elegans)
+
+[Term]
+id: WBls:0000094
+name: early embryo Bma (C elegans)
+def: "Proliferates from 1 to 100 cells. As the Brugia female reproductive tract is long (>10 cm), it is possible to dissect it and select early embryos just by isolating early parts of the post-spermatheca uterus." [WB:dr&mb]
+relationship: part_of UBERON:0000068 ! embryo stage
+
+[Term]
+id: WBls:0000095
+name: middle embryo Bma (C elegans)
+def: "Proliferates from 100 cells to Lima bean stage." [WB:dr&mb]
+relationship: immediately_preceded_by WBls:0000094 ! early embryo Bma (C elegans)
+relationship: part_of UBERON:0000068 ! embryo stage
+
+[Term]
+id: WBls:0000096
+name: late embryo Bma (C elegans)
+def: "From Lima bean to hatching." [WB:dr&mb]
+relationship: immediately_preceded_by WBls:0000095 ! middle embryo Bma (C elegans)
+relationship: part_of UBERON:0000068 ! embryo stage
+
+[Term]
+id: WBls:0000097
+name: larva Bma (C elegans)
+def: "From the time after hatch till becomes adult." [WB:dr]
+relationship: immediately_preceded_by UBERON:0000068 ! embryo stage
+relationship: part_of UBERON:0004729 ! nematode larval stage
+! relationship: preceded_by WBls:0000104 ! adult nematode (C elegans) - hack to deal with different types of nematodes
+
+[Term]
+id: WBls:0000098
+name: vector-derived L3 Bma (C elegans)
+def: "Also known as infective L3, or iL3; i.e. isolated from the vector salivary glands; these samples may-should be conditioned by age, which is usually counted in days from the blood meal." [wb:dr&mb]
+synonym: "iL3" RELATED []
+synonym: "infective L3" RELATED []
+relationship: part_of WBls:0000081 ! L3 larva Bma (C elegans)
+
+[Term]
+id: WBls:0000099
+name: post-infection L3 Bma (C elegans)
+def: "Derived from the host after reintroduction by vector feeding or manual inoculation; these piL3 samples are often-should be conditioned by age (hours or days post-infection)." [wb:dr&mb]
+synonym: "piL3" RELATED []
+relationship: part_of WBls:0000081 ! L3 larva Bma (C elegans)
+
+[Term]
+id: WBls:0000100
+name: young adult Bma (C elegans)
+def: "The animals have a significant \"prepatent\" period in the host, where they have moulted to adults but not yet started producing eggs or sperm; this stage is usually-should be conditioned by days post infection, with day 26 to approximately day 60 being the \"young adult\" in most systems - but note that the speed of development is different in different host genotypes." [wb:dr&mb]
+relationship: immediately_preceded_by WBls:0000082 ! L4 larva Bma (C elegans)
+relationship: part_of UBERON:0000066 ! fully formed stage
+
+[Term]
+id: WBls:0000104
+name: adult nematode (C elegans)
+def: "The stage after an animal is fully-developed and reaches maturity." [wb:dr]
+relationship: immediately_preceded_by WBls:0000105 ! larva nematode (C elegans)
+relationship: part_of UBERON:0000066 ! fully formed stage
+
+[Term]
+id: WBls:0000105
+name: larva nematode (C elegans)
+def: "From the time after hatch till becomes adult." [wb:dr]
+relationship: part_of UBERON:0004729 ! nematode larval stage
+
+[Term]
+id: WBls:0000106
+name: L1 larva nematode (C elegans)
+def: "The first stage larva." [wb:dr]
+relationship: immediately_preceded_by WBls:0000110 ! sheathed microfilaria nematode (C elegans)
+relationship: part_of WBls:0000105 ! larva nematode (C elegans)
+
+[Term]
+id: WBls:0000107
+name: L2 larva nematode (C elegans)
+def: "The second stage larva." [wb:dr]
+relationship: immediately_preceded_by WBls:0000106 ! L1 larva nematode (C elegans)
+relationship: part_of WBls:0000105 ! larva nematode (C elegans)
+
+[Term]
+id: WBls:0000108
+name: L3 larva nematode (C elegans)
+def: "The third stage larva." [wb:dr]
+relationship: immediately_preceded_by WBls:0000107 ! L2 larva nematode (C elegans)
+relationship: part_of WBls:0000105 ! larva nematode (C elegans)
+
+[Term]
+id: WBls:0000109
+name: L4 larva nematode (C elegans)
+def: "The fourth stage larva." [wb:dr]
+relationship: immediately_preceded_by WBls:0000108 ! L3 larva nematode (C elegans)
+relationship: part_of WBls:0000105 ! larva nematode (C elegans)
+
+[Term]
+id: WBls:0000110
+name: sheathed microfilaria nematode (C elegans)
+def: "Microfilaria is the stage which develops from the egg and precedes the L1 stage. The larvae are surrounded by a membrane thought to be derived from the vitelline membrane." [wb:dr]
+relationship: part_of WBls:0000105 ! larva nematode (C elegans)
+
+[Term]
+id: WBls:0000111
+name: 16-18 days post-L4 adult hermaphrodite Ce (C elegans)
+def: "At 20 Centigrade: 16-18 days after L4-adult molt. 18-21 days after first cleavage." [wb:dr]
+relationship: immediately_preceded_by WBls:0000074 ! 11-15 days post-L4 adult hermaphrodite (C elegans)
+relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)

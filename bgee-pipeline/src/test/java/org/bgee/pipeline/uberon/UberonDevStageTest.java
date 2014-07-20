@@ -512,7 +512,7 @@ public class UberonDevStageTest extends TestAncestor {
      * @throws OBOFormatParserException
      * @throws IOException
      */
-    //@Test
+    @Test
     public void shouldGetComplexStageIdsBetween() throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
@@ -605,6 +605,9 @@ public class UberonDevStageTest extends TestAncestor {
         //UBERON:0014862 trochophore stage currently in no species
         overridenTaxonConstraints.put("UBERON:0014862", 
                 new HashSet<Integer>());
+        //UBERON:0014864 caterpillar stage currently in no species
+        overridenTaxonConstraints.put("UBERON:0014864", 
+                new HashSet<Integer>());
         //what is a UBERON:0007221 neonate in ZFS?
         overridenTaxonConstraints.put("UBERON:0007221", 
                 new HashSet<Integer>(Arrays.asList(9606, 10090, 8364, 7227, 9031, 
@@ -636,10 +639,10 @@ public class UberonDevStageTest extends TestAncestor {
         
         //FBdv:00005289: embryonic stage
         //FBdv:00007026: mature adult stage
-        List<String> expectedStageIds = Arrays.asList("FBdv:00005289", "FBdv:00005336", 
-                "FBdv:00007001", "FBdv:00005369", "FBdv:00007026");
+        List<String> expectedStageIds = Arrays.asList("UBERON:0000068", "UBERON:0000092", 
+                "FBdv:00007026");
         assertEquals("Incorrect stage range returned", expectedStageIds, 
-                uberon.getStageIdsBetween("FBdv:00005289", "FBdv:00007026"));
+                uberon.getStageIdsBetween("FBdv:00005289", "FBdv:00007026", 7227));
     /*    
         //reinit uberon to recompute the nested set model
         uberon = new UberonDevStage(utils, taxonConstraints);

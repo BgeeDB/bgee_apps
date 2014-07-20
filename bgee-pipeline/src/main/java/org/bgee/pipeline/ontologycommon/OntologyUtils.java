@@ -634,6 +634,7 @@ public class OntologyUtils {
         } else {
             children = this.getWrapper().getOWLClassDirectDescendants(classInspected);
         }
+        log.trace("Asserted children of {}: {}", classInspected, children);
         
         //if classOrder is not null nor empty, we use it to order the children. 
         if (classOrder != null && !classOrder.isEmpty()) {

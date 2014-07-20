@@ -132,7 +132,7 @@ name: pre-blastoderm stage (Drosophila)
 def: "Embryonic stage 1-3." [FBC:DOS]
 synonym: "pre-blastoderm" RELATED []
 relationship: immediately_preceded_by UBERON:0000106 ! zygote stage
-relationship: part_of UBERON:0000068 ! embryo stage
+relationship: part_of UBERON:0000107 ! cleavage stage
 
 [Term]
 id: FBdv:00005291
@@ -140,7 +140,6 @@ name: embryonic stage 1 (Drosophila)
 def: "The embryonic stage that lasts from the end of fertilization to the end of the second nuclear division.. Duration at 25 degrees C\\: approximately 25 minutes (0-25 minutes after egg laying)." [FlyBase:FBrf0064779, FlyBase:FBrf0089570]
 relationship: immediately_preceded_by UBERON:0000106 ! zygote stage
 relationship: part_of FBdv:00005290 ! pre-blastoderm stage (Drosophila)
-relationship: part_of UBERON:0000107 ! cleavage stage
 
 [Term]
 id: FBdv:00005292
@@ -155,7 +154,6 @@ name: embryonic stage 2 (Drosophila)
 def: "Nuclear divisions 3-8. The egg cytoplasm contracts  producing a clear separation from the vitelline membrane and empty spaces at the anterior and posterior. The cleavage nuclei migrate towards the periphery. Duration at 25 degrees C approximately 40 minutes (25-65 minutes AEL)." [FlyBase:FBrf0089570]
 relationship: immediately_preceded_by FBdv:00005291 ! embryonic stage 1 (Drosophila)
 relationship: part_of FBdv:00005290 ! pre-blastoderm stage (Drosophila)
-relationship: part_of UBERON:0000107 ! cleavage stage
 
 [Term]
 id: FBdv:00005294
@@ -214,7 +212,6 @@ def: "Nuclear division 9. The cleavage nuclei complete their migration to the pe
 relationship: immediately_preceded_by FBdv:00005293 ! embryonic stage 2 (Drosophila)
 relationship: immediately_preceded_by FBdv:00005300 ! embryonic cycle 8 (Drosophila)
 relationship: part_of FBdv:00005290 ! pre-blastoderm stage (Drosophila)
-relationship: part_of UBERON:0000107 ! cleavage stage
 
 [Term]
 id: FBdv:00005302
@@ -237,9 +234,9 @@ id: FBdv:00005304
 name: blastoderm stage (Drosophila)
 def: "Embryonic stages 4 and 5." [FBC:DOS]
 synonym: "blastoderm" RELATED []
-relationship: immediately_preceded_by FBdv:00005290 ! pre-blastoderm stage (Drosophila)
+relationship: preceded_by FBdv:00005290 ! pre-blastoderm stage (Drosophila)
 relationship: immediately_preceded_by FBdv:00005301 ! embryonic stage 3 (Drosophila)
-relationship: part_of UBERON:0000068 ! embryo stage
+relationship: part_of UBERON:0000108 ! blastula stage
 
 [Term]
 id: FBdv:00005306
@@ -247,11 +244,10 @@ name: embryonic stage 4 (Drosophila)
 def: "Nuclear division 10-13. Polar buds divide twice and become tightly grouped at the posterior pole by the end of this stage. Nuclei visible at the rim of the embryo. Stage 4 ends with the beginning of cellularization. Duration at 25 degrees C: approx. 50 minutes (80-130 minutes after egg laying)." [FlyBase:FBrf0089570]
 synonym: "syncytial blastoderm" RELATED []
 synonym: "syncytial blastoderm stage" RELATED []
-relationship: immediately_preceded_by FBdv:00005290 ! pre-blastoderm stage (Drosophila)
+relationship: preceded_by FBdv:00005290 ! pre-blastoderm stage (Drosophila)
 relationship: immediately_preceded_by FBdv:00005301 ! embryonic stage 3 (Drosophila)
 relationship: immediately_preceded_by FBdv:00005302 ! embryonic cycle 9 (Drosophila)
 relationship: part_of FBdv:00005304 ! blastoderm stage (Drosophila)
-relationship: part_of UBERON:0000107 ! cleavage stage
 
 [Term]
 id: FBdv:00005307
@@ -281,50 +277,14 @@ def: "Cellularization. Stage 5 begins when cellularization starts. Near the end 
 synonym: "cellular blastoderm" RELATED []
 synonym: "cellular blastoderm stage" RELATED []
 relationship: immediately_preceded_by FBdv:00005306 ! embryonic stage 4 (Drosophila)
-relationship: immediately_preceded_by UBERON:0000107 ! cleavage stage
+relationship: preceded_by UBERON:0000107 ! cleavage stage
 relationship: part_of FBdv:00005304 ! blastoderm stage (Drosophila)
-
-[Term]
-id: FBdv:00005312
-name: embryonic cycle 14 (Drosophila)
-def: "The 14th mitotic cell cycle of embryogenesis. This is the first round of nuclear division to occur in a cellularized embryo, so this is the first round of cell division. embryonic cycle 14 mitosis is asynchronous across the embryo, but occurs synchronously within discrete domains, known as mitotic domains." [FlyBase:FBrf0049535, FlyBase:FBrf0089570]
-synonym: "first blastoderm mitosis" EXACT [FlyBase:FBrf0089570]
-relationship: immediately_preceded_by FBdv:00005309 ! embryonic cycle 13 (Drosophila)
-relationship: part_of UBERON:0000068 ! embryo stage
-
-[Term]
-id: FBdv:00005313
-name: embryonic cycle 14A (Drosophila)
-def: "The interphase of embryonic cycle 14.  This begins at the same time as cellularization and is of variable length depending on cell identity: embryonic cycle 14 M phase (14B) is asynchronous across the embryo, but occurs synchronously within discrete domains, known as mitotic domains." [[FlyBase:FBrf0039741]
-synonym: "embryonic cycle 14 interphase" EXACT [FBC:DOS]
-relationship: part_of FBdv:00005312 ! embryonic cycle 14 (Drosophila)
-
-[Term]
-id: FBdv:00005314
-name: embryonic cycle 14B (Drosophila)
-def: "The M-phase of embryonic cycle 14. This is asynchronous across the embryo, but occurs synchronously within discrete domains, known as mitotic domains." [FlyBase:FBrf0039741]
-synonym: "embryonic cycle 14 M-phase" EXACT [FBC:DOS]
-relationship: part_of FBdv:00005312 ! embryonic cycle 14 (Drosophila)
-
-[Term]
-id: FBdv:00005315
-name: embryonic cycle 15 (Drosophila)
-def: "The 15th cell cycle of embryogenesis. Asynchronous." [FlyBase:FBrf0089570]
-synonym: "second blastoderm mitosis" EXACT [FlyBase:FBrf0089570]
-relationship: part_of UBERON:0000068 ! embryo stage
-
-[Term]
-id: FBdv:00005316
-name: embryonic cycle 16 (Drosophila)
-def: "The 16th cell cycle division of embryogenesis. Asynchronous." [FlyBase:FBrf0089570]
-synonym: "third blastoderm mitosis" RELATED [FlyBase:FBrf0089570]
-relationship: part_of UBERON:0000068 ! embryo stage
 
 [Term]
 id: FBdv:00005318
 name: embryonic stage 6 (Drosophila)
 def: "Stage 6 begins when the ventral furrow becomes apparent, an event which is followed rapidly by the formation of the cephalic furrow. Stage 6 ends when the pole cells have adopted a dorsal (horizontal) position at the posterior. Duration at 25 degrees C: approximately 10 minutes (170-180 minutes after egg laying)." [FlyBase:FBrf0089570]
-relationship: immediately_preceded_by FBdv:00005304 ! blastoderm stage (Drosophila)
+relationship: preceded_by FBdv:00005304 ! blastoderm stage (Drosophila)
 relationship: immediately_preceded_by FBdv:00005311 ! embryonic stage 5 (Drosophila)
 relationship: part_of UBERON:0000109 ! gastrula stage
 
@@ -783,6 +743,7 @@ id: FBdv:00007007
 name: late third instar larval stage (Drosophila)
 def: "Third instar larva from the beginning of wandering to the beginning of puparium formation." [FBC:DOS]
 relationship: part_of FBdv:00005339 ! third instar larval stage (Drosophila)
+relationship: immediately_preceded_by FBdv:00005340 ! early third instar larval stage (Drosophila)
 
 [Term]
 id: FBdv:00007015
@@ -1293,6 +1254,7 @@ name: hatchling stage (chicken)
 namespace: chicken_developmental_stage
 def: "Chicken developmental stage that covers the period from hatching until 4 weeks old, during which individuals have no feathers." [Bgee:curator]
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: preceded_by UBERON:0007221 ! neonate stage
 property_value: end_mph "1.0" xsd:float
 property_value: start_dpf "21.0" xsd:float
 property_value: start_mph "0.0" xsd:float
@@ -1343,6 +1305,7 @@ namespace: gorilla_developmental_stage
 def: "Gorilla developmental stage that covers the period from birth until about 2 years old, at which point individuals usually wean." [Bgee:curator]
 comment: Age of weaning is 834 days (see http://genomics.senescence.info/species/entry.php?species=Gorilla_gorilla).
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: preceded_by UBERON:0007221 ! neonate stage
 property_value: end_ypb "2.3" xsd:float
 property_value: start_dpf "256.0" xsd:float
 property_value: start_mpf "8.5" xsd:float
@@ -1360,22 +1323,12 @@ property_value: end_ypb "7.8" xsd:float
 property_value: start_ypb "2.3" xsd:float
 
 [Term]
-id: GgorDv:0000008
-name: aged stage (gorilla)
-namespace: gorilla_developmental_stage
-def: "Mature stage that refers to a gorilla who is over 30 years old." [Bgee:curator]
-comment: Geriatric gorillas are defined as animals with 30 years of age and older (see http://link.springer.com/article/10.1007%2Fs10764-006-9097-1). Maximum longevity is officially 55.4 years (see http://genomics.senescence.info/species/entry.php?species=Gorilla_gorilla).
-relationship: immediately_preceded_by UBERON:0018241 ! prime adult stage
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-property_value: start_ypb "30.0" xsd:float
-
-[Term]
 id: GgorDv:0000009
 name: 30-year-old stage (gorilla)
 namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 30 and under 31 years old." [Bgee:curator]
 subset: granular_stage
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "31.0" xsd:float
 property_value: start_ypb "30.0" xsd:float
 
@@ -1386,7 +1339,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 31 and under 32 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000009 ! 30-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "32.0" xsd:float
 property_value: start_ypb "31.0" xsd:float
 
@@ -1397,7 +1350,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 32 and under 33 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000010 ! 31-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "33.0" xsd:float
 property_value: start_ypb "32.0" xsd:float
 
@@ -1408,7 +1361,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 33 and under 34 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000011 ! 32-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "34.0" xsd:float
 property_value: start_ypb "33.0" xsd:float
 
@@ -1419,7 +1372,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 34 and under 35 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000012 ! 33-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "35.0" xsd:float
 property_value: start_ypb "34.0" xsd:float
 
@@ -1430,7 +1383,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 35 and under 36 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000013 ! 34-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "36.0" xsd:float
 property_value: start_ypb "35.0" xsd:float
 
@@ -1441,7 +1394,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 36 and under 37 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000014 ! 35-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "37.0" xsd:float
 property_value: start_ypb "36.0" xsd:float
 
@@ -1452,7 +1405,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 37 and under 38 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000015 ! 36-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "38.0" xsd:float
 property_value: start_ypb "37.0" xsd:float
 
@@ -1463,7 +1416,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 38 and under 39 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000016 ! 37-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "39.0" xsd:float
 property_value: start_ypb "38.0" xsd:float
 
@@ -1474,7 +1427,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 39 and under 40 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000017 ! 38-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "40.0" xsd:float
 property_value: start_ypb "39.0" xsd:float
 
@@ -1485,7 +1438,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 40 and under 41 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000018 ! 39-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "41.0" xsd:float
 property_value: start_ypb "40.0" xsd:float
 
@@ -1496,7 +1449,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 41 and under 42 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000019 ! 40-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "42.0" xsd:float
 property_value: start_ypb "41.0" xsd:float
 
@@ -1507,7 +1460,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 42 and under 43 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000020 ! 41-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "43.0" xsd:float
 property_value: start_ypb "42.0" xsd:float
 
@@ -1518,7 +1471,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 43 and under 44 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000021 ! 42-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "44.0" xsd:float
 property_value: start_ypb "43.0" xsd:float
 
@@ -1529,7 +1482,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 44 and under 45 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000022 ! 43-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "45.0" xsd:float
 property_value: start_ypb "44.0" xsd:float
 
@@ -1540,7 +1493,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 45 and under 46 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000023 ! 44-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "46.0" xsd:float
 property_value: start_ypb "45.0" xsd:float
 
@@ -1551,7 +1504,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 46 and under 47 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000024 ! 45-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "47.0" xsd:float
 property_value: start_ypb "46.0" xsd:float
 
@@ -1562,7 +1515,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 47 and under 48 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000025 ! 46-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "48.0" xsd:float
 property_value: start_ypb "47.0" xsd:float
 
@@ -1573,7 +1526,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 48 and under 49 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000026 ! 47-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "49.0" xsd:float
 property_value: start_ypb "48.0" xsd:float
 
@@ -1584,7 +1537,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 49 and under 50 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000027 ! 48-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "50.0" xsd:float
 property_value: start_ypb "49.0" xsd:float
 
@@ -1595,7 +1548,7 @@ namespace: gorilla_developmental_stage
 def: "Aged stage that refers to a gorilla who is over 50 and under 51 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000028 ! 49-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "51.0" xsd:float
 property_value: start_ypb "50.0" xsd:float
 
@@ -1606,7 +1559,7 @@ namespace: gorilla_developmental_stage
 def: "Mature stage that refers to a gorilla who is over 51 and under 52 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000029 ! 50-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "52.0" xsd:float
 property_value: start_ypb "51.0" xsd:float
 
@@ -1617,34 +1570,8 @@ namespace: gorilla_developmental_stage
 def: "Mature stage that refers to a gorilla who is over 52 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by GgorDv:0000030 ! 51-year-old stage (gorilla)
-relationship: part_of GgorDv:0000008 ! aged stage (gorilla)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: start_ypb "52.0" xsd:float
-
-[Term]
-id: HsapDv:0000002
-name: embryonic human stage (human)
-namespace: human_developmental_stage
-def: "Prenatal stage that starts with fertilization and ends with a fully formed embryo, before undergoing last development during the fetal stage." [Bgee:curator]
-comment: By embryo we mean in the sense of up to the 8th week postfertilization (over 7 and under 8 weeks), we treat fetus as a separate stage.
-synonym: "embryo stage" RELATED []
-synonym: "first trimester" RELATED [http://en.wikipedia.org/wiki/Gestational_age]
-xref: EV:0300001
-relationship: part_of UBERON:0000068 ! embryo stage
-property_value: end_dpf "56.0" xsd:float
-property_value: start_dpf "0.0" xsd:float
-
-[Term]
-id: HsapDv:0000003
-name: Carnegie stage 01 (human)
-namespace: human_developmental_stage
-def: "Embryonic stage defined by a fertilized oocyte and presence of pronuclei." [http://embryology.med.unsw.edu.au/embryology/index.php?title=Carnegie_stage_table]
-comment: Starts at day 1 post-fertilization, beginning of the first week.
-synonym: "CS01" EXACT [EHDAA2:CS01]
-xref: EHDAA2:CS01
-xref: XUO:0000130
-relationship: part_of HsapDv:0000002 ! embryonic human stage (human)
-property_value: start_dpf "0.0" xsd:float
-property_value: start_dpf "0.0" xsd:float
 
 [Term]
 id: HsapDv:0000005
@@ -1655,19 +1582,10 @@ comment: Usually starts between day 2 and day 3 post-fertilization.
 synonym: "CS02" EXACT [EHDAA2:CS02]
 xref: EHDAA2:CS02
 xref: XUO:0000131
-relationship: part_of HsapDv:0000002 ! embryonic human stage (human)
-relationship: preceded_by HsapDv:0000003 ! Carnegie stage 01 (human)
+relationship: part_of UBERON:0000107 ! cleavage stage
+relationship: preceded_by UBERON:0000106 ! zygote stage
 property_value: start_dpf "2.5" xsd:float
 property_value: start_dpf "2.5" xsd:float
-
-[Term]
-id: HsapDv:0000006
-name: blastula stage (human)
-namespace: human_developmental_stage
-def: "Embryonic stage that is an early stage of embryonic development in animals and is produced by cleavage of a fertilized ovum, with formation of a central fluid-filled cavity called the blastocoel." [UBERON:0000108]
-comment: The blastula follows the morula and precedes the gastrula in the developmental sequence.
-relationship: part_of HsapDv:0000002 ! embryonic human stage (human)
-relationship: preceded_by HsapDv:0000005 ! Carnegie stage 02 (human)
 
 [Term]
 id: HsapDv:0000007
@@ -1681,7 +1599,7 @@ xref: XUO:0000132
 relationship: has_stage_marker GO:0001835
 relationship: has_stage_marker GO:0001835
 relationship: immediately_preceded_by HsapDv:0000205 ! morula stage (human)
-relationship: part_of HsapDv:0000006 ! blastula stage (human)
+relationship: part_of UBERON:0000108 ! blastula stage
 relationship: part_of UBERON:0000108 ! blastula stage
 property_value: start_dpf "4.5" xsd:float
 property_value: start_dpf "4.5" xsd:float
@@ -1696,7 +1614,7 @@ synonym: "CS04" EXACT [EHDAA2:CS04]
 xref: EHDAA2:CS04
 xref: XUO:0000133
 relationship: immediately_preceded_by HsapDv:0000007 ! Carnegie stage 03 (human)
-relationship: part_of HsapDv:0000006 ! blastula stage (human)
+relationship: part_of UBERON:0000108 ! blastula stage
 relationship: part_of UBERON:0000108 ! blastula stage
 property_value: editor_notes "Note that GO treats blastocyst attachment and implantation (CS05) as synonymous" xsd:string
 property_value: editor_notes "Note that GO treats blastocyst attachment and implantation (CS05) as synonymous" xsd:string
@@ -1714,7 +1632,7 @@ xref: XUO:0000134
 relationship: has_stage_marker GO:0007566
 relationship: has_stage_marker GO:0007566
 relationship: immediately_preceded_by HsapDv:0000008 ! CS04 (human)
-relationship: part_of HsapDv:0000006 ! blastula stage (human)
+relationship: part_of UBERON:0000108 ! blastula stage
 relationship: part_of UBERON:0000108 ! blastula stage
 property_value: start_dpf "7.0" xsd:float
 property_value: start_dpf "7.0" xsd:float
@@ -1772,14 +1690,6 @@ property_value: start_dpf "17.0" xsd:float
 property_value: start_dpf "17.0" xsd:float
 
 [Term]
-id: HsapDv:0000015
-name: organogenesis stage (human)
-namespace: human_developmental_stage
-def: "Embryonic stage at which the ectoderm, endoderm, and mesoderm develop into the internal organs of the organism." [UBERON:0000111]
-relationship: part_of HsapDv:0000002 ! embryonic human stage (human)
-relationship: preceded_by UBERON:0000110 ! neurula stage
-
-[Term]
 id: HsapDv:0000016
 name: CS09 (human)
 namespace: human_developmental_stage
@@ -1799,7 +1709,7 @@ relationship: has_stage_marker EHDAA2:0001850
 relationship: has_stage_marker EHDAA2:0001851
 relationship: has_stage_marker EHDAA2:0001851
 relationship: immediately_preceded_by HsapDv:0000014 ! Carnegie stage 08 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "19.0" xsd:float
 property_value: start_dpf "19.0" xsd:float
@@ -1834,7 +1744,7 @@ relationship: has_stage_marker EHDAA2:0001860
 relationship: has_stage_marker GO:0001843
 relationship: has_stage_marker GO:0001843
 relationship: immediately_preceded_by HsapDv:0000016 ! CS09 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "22.0" xsd:float
 property_value: start_dpf "22.0" xsd:float
@@ -1865,7 +1775,7 @@ relationship: has_stage_marker EHDAA2:0001867
 relationship: has_stage_marker EHDAA2:0001868
 relationship: has_stage_marker EHDAA2:0001868
 relationship: immediately_preceded_by HsapDv:0000017 ! Carnegie stage 10 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "23.0" xsd:float
 property_value: start_dpf "23.0" xsd:float
@@ -1900,7 +1810,7 @@ relationship: has_stage_marker EHDAA2:0001877
 relationship: has_stage_marker GO:0021507
 relationship: has_stage_marker GO:0021507
 relationship: immediately_preceded_by HsapDv:0000018 ! Carnegie stage 11 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "26.0" xsd:float
 property_value: start_dpf "26.0" xsd:float
@@ -1921,7 +1831,7 @@ relationship: has_stage_marker EHDAA2:0001033
 relationship: has_stage_marker EHDAA2:0001878
 relationship: has_stage_marker EHDAA2:0001878
 relationship: immediately_preceded_by HsapDv:0000019 ! CS12 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "28.0" xsd:float
 property_value: start_dpf "28.0" xsd:float
@@ -1940,7 +1850,7 @@ relationship: has_stage_marker EHDAA2:0000981
 relationship: has_stage_marker EHDAA2:0001303
 relationship: has_stage_marker EHDAA2:0001303
 relationship: immediately_preceded_by HsapDv:0000020 ! Carnegie stage 13 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "31.0" xsd:float
 property_value: start_dpf "31.0" xsd:float
@@ -1965,7 +1875,7 @@ relationship: has_stage_marker UBERON:0005870
 relationship: has_stage_marker UBERON:0006875
 relationship: has_stage_marker UBERON:0006875
 relationship: immediately_preceded_by HsapDv:0000021 ! CS14 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "35.0" xsd:float
 property_value: start_dpf "35.0" xsd:float
@@ -1986,7 +1896,7 @@ relationship: has_stage_marker EHDAA2:0000546
 relationship: has_stage_marker UBERON:0006871
 relationship: has_stage_marker UBERON:0006871
 relationship: immediately_preceded_by HsapDv:0000022 ! CS15 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "37.0" xsd:float
 property_value: start_dpf "37.0" xsd:float
@@ -2001,7 +1911,7 @@ synonym: "CS17" EXACT [EHDAA2:CS17]
 xref: EHDAA2:CS17
 xref: XUO:0000146
 relationship: immediately_preceded_by HsapDv:0000023 ! Carnegie stage 16 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "42.0" xsd:float
 property_value: start_dpf "42.0" xsd:float
@@ -2018,7 +1928,7 @@ xref: XUO:0000147
 relationship: has_stage_marker GO:0001503
 relationship: has_stage_marker GO:0001503
 relationship: immediately_preceded_by HsapDv:0000024 ! CS17 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "44.0" xsd:float
 property_value: start_dpf "44.0" xsd:float
@@ -2033,7 +1943,7 @@ synonym: "CS19" EXACT [EHDAA2:CS19]
 xref: EHDAA2:CS19
 xref: XUO:0000148
 relationship: immediately_preceded_by HsapDv:0000025 ! Carnegie stage 18 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "48.0" xsd:float
 property_value: start_dpf "48.0" xsd:float
@@ -2048,7 +1958,7 @@ synonym: "CS20" EXACT [EHDAA2:CS20]
 xref: EHDAA2:CS20
 xref: XUO:0000149
 relationship: immediately_preceded_by HsapDv:0000026 ! Carnegie stage 19 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "51.0" xsd:float
 property_value: start_dpf "51.0" xsd:float
@@ -2062,7 +1972,7 @@ comment: Usually starts between day 53 and day 54 post-fertilization.
 synonym: "CS21" EXACT []
 xref: XUO:0000150
 relationship: immediately_preceded_by HsapDv:0000027 ! CS20 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "53.0" xsd:float
 property_value: start_dpf "53.0" xsd:float
@@ -2080,7 +1990,7 @@ relationship: has_stage_marker EHDAA2:0000462
 relationship: has_stage_marker UBERON:0001711
 relationship: has_stage_marker UBERON:0001711
 relationship: immediately_preceded_by HsapDv:0000028 ! Carnegie stage 21 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "54.0" xsd:float
 property_value: start_dpf "54.0" xsd:float
@@ -2094,7 +2004,7 @@ comment: Usually starts between day 56 and day 60 post-fertilization.
 synonym: "CS23" EXACT []
 xref: XUO:0000152
 relationship: immediately_preceded_by HsapDv:0000029 ! Carnegie stage 22 (human)
-relationship: part_of HsapDv:0000015 ! organogenesis stage (human)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpf "56.0" xsd:float
 property_value: start_dpf "56.0" xsd:float
@@ -2595,6 +2505,7 @@ namespace: human_developmental_stage
 def: "Immature stage that refers to child who is over 2 and under 13 years old." [Bgee:curator]
 synonym: "2-12 years" EXACT []
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: immediately_preceded_by HsapDv:0000083 ! infant stage
 property_value: end_ypb "13.0" xsd:float
 property_value: end_ypb "13.0" xsd:float
 property_value: start_ypb "2.0" xsd:float
@@ -2609,6 +2520,7 @@ synonym: "0-1 month" EXACT []
 synonym: "neonatal stage" RELATED []
 synonym: "neonate" RELATED []
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: preceded_by UBERON:0007221 ! neonate stage
 property_value: end_mpb "1.0" xsd:float
 property_value: end_ypb "0.083" xsd:float
 property_value: start_mpb "0.0" xsd:float
@@ -2622,6 +2534,7 @@ def: "Immature stage that refers to an infant who is over 31 days and is under 2
 synonym: "1-23 months" EXACT []
 synonym: "infantile stage" EXACT []
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: immediately_preceded_by HsapDv:0000082 ! newborn human stage
 property_value: end_mpb "24.0" xsd:float
 property_value: end_mpb "24.0" xsd:float
 property_value: end_ypb "2.0" xsd:float
@@ -2650,6 +2563,7 @@ namespace: human_developmental_stage
 def: "Child stage that refers to a child who is over 6 and under 13 years old." [Bgee:curator]
 synonym: "prepubescent" RELATED []
 relationship: part_of HsapDv:0000081 ! child stage (human)
+relationship: immediately_preceded_by HsapDv:0000084 ! 2-5 year-old child stage
 property_value: end_ypb "13.0" xsd:float
 property_value: end_ypb "13.0" xsd:float
 property_value: start_ypb "6.0" xsd:float
@@ -2676,6 +2590,7 @@ namespace: human_developmental_stage
 def: "Human developmental stage that refers to an adult who is over 19." [Bgee:curator]
 synonym: "19+ years" EXACT []
 relationship: part_of UBERON:0000113 ! post-juvenile adult stage
+relationship: immediately_preceded_by HsapDv:0000086 ! adolescent stage
 property_value: start_ypb "19.0" xsd:float
 property_value: start_ypb "19.0" xsd:float
 
@@ -2709,6 +2624,7 @@ name: 25-44 year-old human stage (human)
 namespace: human_developmental_stage
 def: "Early adulthood that refers to an adult who is over 25 and under 45." [Bgee:curator]
 relationship: part_of HsapDv:0000088 ! human early adulthood stage (human)
+relationship: immediately_preceded_by HsapDv:0000089 ! young adult stage
 property_value: end_ypb "45.0" xsd:float
 property_value: end_ypb "45.0" xsd:float
 property_value: start_ypb "25.0" xsd:float
@@ -2722,6 +2638,7 @@ def: "Adult stage that refers to an adult who is over 45." [Bgee:curator]
 synonym: "45+ years" EXACT []
 synonym: "Middle Aged + Aged" RELATED []
 relationship: part_of HsapDv:0000087 ! human adult stage (human)
+relationship: immediately_preceded_by HsapDv:0000088 ! human early adulthood stage
 property_value: start_ypb "45.0" xsd:float
 property_value: start_ypb "45.0" xsd:float
 
@@ -2745,6 +2662,7 @@ def: "Late adulthood that refers to an adult who is over 65." [Bgee:curator]
 synonym: "65+ years" EXACT []
 synonym: "elderly" RELATED []
 relationship: part_of HsapDv:0000091 ! human late adulthood stage (human)
+relationship: immediately_preceded_by HsapDv:0000092 ! human middle aged stage
 property_value: start_ypb "65.0" xsd:float
 
 [Term]
@@ -2754,7 +2672,6 @@ namespace: human_developmental_stage
 def: "Aged stage that refers to an adult who is under 80." [Bgee:curator]
 synonym: "elderly" RELATED []
 relationship: part_of HsapDv:0000093 ! human aged stage (human)
-relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "80.0" xsd:float
 property_value: end_ypb "80.0" xsd:float
 property_value: start_ypb "65.0" xsd:float
@@ -2767,7 +2684,6 @@ namespace: human_developmental_stage
 def: "Aged stage that refers to an adult who is over 80." [Bgee:curator]
 relationship: immediately_preceded_by HsapDv:0000173 ! 79-year-old human stage (human)
 relationship: part_of HsapDv:0000093 ! human aged stage (human)
-relationship: part_of UBERON:0007222 ! late adult stage
 property_value: start_ypb "80.0" xsd:float
 property_value: start_ypb "80.0" xsd:float
 
@@ -3883,6 +3799,7 @@ def: "Infant stage that refers to an infant who is over 2 and under 3 months old
 subset: granular_stage
 xref: EV:0300040
 relationship: part_of HsapDv:0000083 ! infant stage (human)
+relationship: immediately_preceded_by HsapDv:0000174 ! 1 month-old human stage
 property_value: end_mpb "3.0" xsd:float
 property_value: end_mpb "3.0" xsd:float
 property_value: start_mpb "2.0" xsd:float
@@ -4530,22 +4447,11 @@ property_value: start_ypb "99.0" xsd:float
 property_value: start_ypb "99.0" xsd:float
 
 [Term]
-id: MdomDv:0000004
-name: pouch young stage (opossum)
-namespace: opossum_developmental_stage
-def: "Immature stage that refers to the first 2 weeks period when the young is permanently attached to the nipple." [Bgee:curator]
-comment: Immediately after birth, the neonate is attached to the nipple for 2 weeks before being transferred to the nest or carried on the mother's back (see http://www.faunaparaguay.com/mamm10Monodelphisdomestica.pdf). While Monodelphis domestica is a pouch-less marsupial, literature talks about pouch youngs for this marsupial species (see http://www.ncbi.nlm.nih.gov/pubmed/?term=7750642).
-relationship: part_of UBERON:0000112 ! sexually immature stage
-property_value: end_wpb "2.0" xsd:float
-property_value: start_dpf "15.0" xsd:float
-property_value: start_wpb "0.0" xsd:float
-
-[Term]
 id: MdomDv:0000005
 name: juvenile stage (opossum)
 namespace: opossum_developmental_stage
 def: "Immature stage that covers the period from 2 weeks old, when the hair growth begins, until 4 months old." [Bgee:curator]
-relationship: immediately_preceded_by MdomDv:0000004 ! pouch young stage (opossum)
+relationship: immediately_preceded_by UBERON:0007221 ! neonate stage
 relationship: part_of UBERON:0000112 ! sexually immature stage
 property_value: end_mpb "4.0" xsd:float
 property_value: start_mpb "0.5" xsd:float
@@ -4762,7 +4668,7 @@ name: 22-month-old stage (opossum)
 namespace: opossum_developmental_stage
 def: "Aged stage that refers to a opossum which is over 22 and under 23 months old." [Bgee:curator]
 subset: granular_stage
-relationship: immediately_preceded_by MdomDv:0000016 ! 12-month-old stage (opossum)
+relationship: immediately_preceded_by MdomDv:0000026 ! 21 month-old stage
 relationship: part_of MdomDv:0000025 ! aged stage (opossum)
 property_value: end_mpb "23.0" xsd:float
 property_value: start_mpb "22.0" xsd:float
@@ -4773,7 +4679,7 @@ name: 23-month-old stage (opossum)
 namespace: opossum_developmental_stage
 def: "Aged stage that refers to a opossum which is over 23 and under 24 months old." [Bgee:curator]
 subset: granular_stage
-relationship: immediately_preceded_by MdomDv:0000017 ! 13-month-old stage (opossum)
+relationship: immediately_preceded_by MdomDv:0000027 ! 22-month-old stage (opossum)
 relationship: part_of MdomDv:0000025 ! aged stage (opossum)
 property_value: end_mpb "24.0" xsd:float
 property_value: start_mpb "23.0" xsd:float
@@ -4784,7 +4690,7 @@ name: 24-month-old stage (opossum)
 namespace: opossum_developmental_stage
 def: "Aged stage that refers to a opossum which is over 24 and under 25 months old." [Bgee:curator]
 subset: granular_stage
-relationship: immediately_preceded_by MdomDv:0000018 ! 14-month-old stage (opossum)
+relationship: immediately_preceded_by MdomDv:0000028 ! 23-month-old stage (opossum)
 relationship: part_of MdomDv:0000025 ! aged stage (opossum)
 property_value: end_mpb "25.0" xsd:float
 property_value: start_mpb "24.0" xsd:float
@@ -4795,7 +4701,7 @@ name: 25-month-old stage (opossum)
 namespace: opossum_developmental_stage
 def: "Aged stage that refers to a opossum which is over 25 and under 26 months old." [Bgee:curator]
 subset: granular_stage
-relationship: immediately_preceded_by MdomDv:0000019 ! 15-month-old stage (opossum)
+relationship: immediately_preceded_by MdomDv:0000029 ! 24-month-old stage (opossum)
 relationship: part_of MdomDv:0000025 ! aged stage (opossum)
 property_value: end_mpb "26.0" xsd:float
 property_value: start_mpb "25.0" xsd:float
@@ -4806,7 +4712,7 @@ name: 26-month-old and over stage (opossum)
 namespace: opossum_developmental_stage
 def: "Aged stage that refers to a opossum which is over 26 months old." [Bgee:curator]
 subset: granular_stage
-relationship: immediately_preceded_by MdomDv:0000020 ! 16-month-old stage (opossum)
+relationship: immediately_preceded_by MdomDv:0000030 ! 25-month-old stage (opossum)
 relationship: part_of MdomDv:0000025 ! aged stage (opossum)
 property_value: start_mpb "26.0" xsd:float
 
@@ -4817,6 +4723,7 @@ namespace: rhesus_macaque_developmental_stage
 def: "Rhesus developmental stage that covers the period from birth until about 9 months old, at which point individuals usually wean." [Bgee:curator]
 comment: Age of weaning is 292 days, so close to 9.7 months (see http://genomics.senescence.info/species/entry.php?species=Macaca_mulatta).
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: preceded_by UBERON:0007221 ! neonate stage
 property_value: end_mpb "9.7" xsd:float
 property_value: end_ypb "0.8" xsd:float
 property_value: start_dpf "165.0" xsd:float
@@ -5230,15 +5137,6 @@ property_value: end_ypb "25.0" xsd:float
 property_value: start_ypb "24.0" xsd:float
 
 [Term]
-id: MmulDv:0000045
-name: aged stage (macaque)
-namespace: rhesus_macaque_developmental_stage
-def: "Mature stage that refers to a rhesus who is over 25 years old, the usual upper limit for breeding age." [Bgee:curator]
-comment: The females of this species reach menopause at about the age of 25 (see http://genomics.senescence.info/species/entry.php?species=Macaca_mulatta). We decided to consider this age as the starting time for geriatric age.
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-property_value: start_ypb "25.0" xsd:float
-
-[Term]
 id: MmulDv:0000046
 name: newborn stage (macaque)
 namespace: rhesus_macaque_developmental_stage
@@ -5254,7 +5152,7 @@ namespace: rhesus_macaque_developmental_stage
 def: "Aged stage stage that refers to a rhesus who is over 25 and under 26 years old." [Bgee:curator]
 comment: The females of this species reach menopause at about the age of 25 (see http://genomics.senescence.info/species/entry.php?species=Macaca_mulatta). We decided to consider this age as the starting time for geriatric age.
 subset: granular_stage
-relationship: part_of MmulDv:0000045 ! aged stage (macaque)
+relationship: part_of UBERON:0007222 ! aged stage
 property_value: end_ypb "26.0" xsd:float
 property_value: start_ypb "25.0" xsd:float
 
@@ -5266,7 +5164,7 @@ def: "Aged stage stage that refers to a rhesus who is over 26 and under 27 years
 comment: The females of this species reach menopause at about the age of 25 (see http://genomics.senescence.info/species/entry.php?species=Macaca_mulatta). We decided to consider this age as the starting time for geriatric age.
 subset: granular_stage
 relationship: immediately_preceded_by MmulDv:0000047 ! 25-year-old stage (macaque)
-relationship: part_of MmulDv:0000045 ! aged stage (macaque)
+relationship: part_of UBERON:0007222 ! aged stage
 property_value: end_ypb "27.0" xsd:float
 property_value: start_ypb "26.0" xsd:float
 
@@ -5277,7 +5175,7 @@ namespace: rhesus_macaque_developmental_stage
 def: "Aged stage stage that refers to a rhesus who is over 27 and under 28 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by MmulDv:0000048 ! 26-year-old stage (macaque)
-relationship: part_of MmulDv:0000045 ! aged stage (macaque)
+relationship: part_of UBERON:0007222 ! aged stage
 property_value: end_ypb "28.0" xsd:float
 property_value: start_ypb "27.0" xsd:float
 
@@ -5288,7 +5186,7 @@ namespace: rhesus_macaque_developmental_stage
 def: "Aged stage stage that refers to a rhesus who is over 28 and under 29 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by MmulDv:0000049 ! 27-year-old stage (macaque)
-relationship: part_of MmulDv:0000045 ! aged stage (macaque)
+relationship: part_of UBERON:0007222 ! aged stage
 property_value: end_ypb "29.0" xsd:float
 property_value: start_ypb "28.0" xsd:float
 
@@ -5299,20 +5197,8 @@ namespace: rhesus_macaque_developmental_stage
 def: "Aged stage stage that refers to a rhesus who is over 29 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by MmulDv:0000050 ! 28-year-old stage (macaque)
-relationship: part_of MmulDv:0000045 ! aged stage (macaque)
+relationship: part_of UBERON:0007222 ! aged stage
 property_value: start_ypb "29.0" xsd:float
-
-[Term]
-id: MmusDv:0000002
-name: embryonic mouse stage (mouse)
-namespace: mouse_developmental_stage
-def: "Prenatal stage that starts with fertilization and ends with a fully formed embryo, before undergoing last development during the fetal stage." [Bgee:curator]
-comment: By embryo we mean in the sense of up to the 2nd week postfertilization (beginning of Theiler stage 23), we treat fetus as a separate stage.
-relationship: part_of UBERON:0000068 ! embryo stage
-property_value: start_dpc "0.45" xsd:float
-property_value: start_dpc "0.45" xsd:float
-property_value: start_dpf "0.0" xsd:float
-property_value: start_dpf "0.0" xsd:float
 
 [Term]
 id: MmusDv:0000005
@@ -5349,14 +5235,6 @@ property_value: start_dpc "2.0" xsd:float
 property_value: start_dpc "2.0" xsd:float
 
 [Term]
-id: MmusDv:0000007
-name: blastula stage (mouse)
-namespace: mouse_developmental_stage
-def: "Embryonic stage that is an early stage of embryonic development in animals and is produced by cleavage of a fertilized ovum, with formation of a central fluid-filled cavity called the blastocoel." [UBERON:0000108]
-comment: The blastula follows the morula and precedes the gastrula in the developmental sequence.
-relationship: part_of MmusDv:0000002 ! embryonic mouse stage (mouse)
-
-[Term]
 id: MmusDv:0000008
 name: Theiler stage 04 (mouse)
 namespace: mouse_developmental_stage
@@ -5369,7 +5247,7 @@ synonym: "TS04 (E2-4)" RELATED [EMAPA:TS04]
 xref: EMAPA:TS04
 xref: XUO:0000048
 relationship: immediately_preceded_by MmusDv:0000006 ! Theiler stage 03 (mouse)
-relationship: part_of MmusDv:0000007 ! blastula stage (mouse)
+relationship: part_of UBERON:0000108 ! blastula stage
 property_value: start_dpc "3.0" xsd:float
 property_value: start_dpc "3.0" xsd:float
 
@@ -5387,7 +5265,7 @@ xref: EMAPA:TS05
 xref: XUO:0000049
 relationship: has_stage_marker GO:0001835
 relationship: immediately_preceded_by MmusDv:0000008 ! Theiler stage 04 (mouse)
-relationship: part_of MmusDv:0000007 ! blastula stage (mouse)
+relationship: part_of UBERON:0000108 ! blastula stage
 property_value: has_stage_marker GO:0001835
 property_value: start_dpc "4.0" xsd:float
 property_value: start_dpc "4.0" xsd:float
@@ -5405,7 +5283,7 @@ synonym: "TS06 (E4-5.5)" RELATED [EMAPA:TS06]
 xref: EMAPA:TS06
 xref: XUO:0000050
 relationship: immediately_preceded_by MmusDv:0000009 ! Theiler stage 05 (mouse)
-relationship: part_of MmusDv:0000007 ! blastula stage (mouse)
+relationship: part_of UBERON:0000108 ! blastula stage
 property_value: start_dpc "4.5" xsd:float
 property_value: start_dpc "4.5" xsd:float
 
@@ -5423,7 +5301,7 @@ xref: EMAPA:TS07
 xref: XUO:0000051
 relationship: has_stage_marker GO:0007566
 relationship: immediately_preceded_by MmusDv:0000010 ! Theiler stage 06 (mouse)
-relationship: part_of MmusDv:0000007 ! blastula stage (mouse)
+relationship: part_of UBERON:0000108 ! blastula stage
 property_value: has_stage_marker GO:0007566
 property_value: start_dpc "5.0" xsd:float
 property_value: start_dpc "5.0" xsd:float
@@ -5441,7 +5319,7 @@ synonym: "TS08 (E5-6.5)" RELATED [EMAPA:TS08]
 xref: EMAPA:TS08
 xref: XUO:0000052
 relationship: immediately_preceded_by MmusDv:0000011 ! Theiler stage 07 (mouse)
-relationship: part_of MmusDv:0000007 ! blastula stage (mouse)
+relationship: part_of UBERON:0000108 ! blastula stage
 property_value: start_dpc "6.0" xsd:float
 property_value: start_dpc "6.0" xsd:float
 
@@ -5487,32 +5365,6 @@ property_value: start_dpc "7.0" xsd:float
 property_value: start_dpc "7.0" xsd:float
 
 [Term]
-id: MmusDv:0000017
-name: Theiler stage 11 (mouse)
-namespace: mouse_developmental_stage
-def: "Embryonic stage called presomite stage and defined by the formation of the neural plate." [http://php.med.unsw.edu.au/embryology/index.php?title=Mouse_Stages#Theiler_Stage_11]
-comment: This stage starts the emergence of the central nervous system at embryonic age 7.5 dpc (day post coitum).
-synonym: "E7.25-8" EXACT []
-synonym: "neurula stage" RELATED []
-synonym: "TS11" EXACT []
-synonym: "TS11 (E7.25-8)" RELATED [EMAPA:TS11]
-xref: EMAPA:TS11
-xref: XUO:0000055
-relationship: has_stage_marker UBERON:0003075
-relationship: immediately_preceded_by MmusDv:0000015 ! Theiler stage 10 (mouse)
-relationship: part_of MmusDv:0000002 ! embryonic mouse stage (mouse)
-property_value: has_stage_marker UBERON:0003075
-property_value: start_dpc "7.5" xsd:float
-property_value: start_dpc "7.5" xsd:float
-
-[Term]
-id: MmusDv:0000018
-name: organogenesis stage (mouse)
-namespace: mouse_developmental_stage
-def: "Embryonic stage at which the ectoderm, endoderm, and mesoderm develop into the internal organs of the organism." [UBERON:0000111]
-relationship: part_of MmusDv:0000002 ! embryonic mouse stage (mouse)
-
-[Term]
 id: MmusDv:0000019
 name: Theiler stage 12 (mouse)
 namespace: mouse_developmental_stage
@@ -5524,8 +5376,8 @@ synonym: "TS12 (E7.5-8.75)" RELATED [EMAPA:TS12]
 xref: EMAPA:TS12
 xref: XUO:0000056
 relationship: has_stage_marker EMAPA:16173
-relationship: immediately_preceded_by MmusDv:0000017 ! Theiler stage 11 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: immediately_preceded_by UBERON:0000110 ! neurula stage
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: has_stage_marker EMAPA:16173
 property_value: start_dpc "8.0" xsd:float
 property_value: start_dpc "8.0" xsd:float
@@ -5545,7 +5397,7 @@ relationship: has_stage_marker EMAPA:16441
 relationship: has_stage_marker EMAPA:16445
 relationship: has_stage_marker EMAPA:16449
 relationship: immediately_preceded_by MmusDv:0000019 ! Theiler stage 12 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: has_stage_marker EMAPA:16441
 property_value: has_stage_marker EMAPA:16445
 property_value: has_stage_marker EMAPA:16449
@@ -5568,7 +5420,7 @@ relationship: has_stage_marker EMAPA:16449
 relationship: has_stage_marker EMAPA:16453
 relationship: has_stage_marker EMAPA:16457
 relationship: immediately_preceded_by MmusDv:0000020 ! Theiler stage 13 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: has_stage_marker EMAPA:16445
 property_value: has_stage_marker EMAPA:16449
 property_value: has_stage_marker EMAPA:16453
@@ -5589,7 +5441,7 @@ xref: EMAPA:TS15
 xref: XUO:0000059
 relationship: has_stage_marker UBERON:0005417
 relationship: immediately_preceded_by MmusDv:0000021 ! Theiler stage 14 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: has_stage_marker UBERON:0005417
 property_value: start_dpc "9.5" xsd:float
 property_value: start_dpc "9.5" xsd:float
@@ -5607,7 +5459,7 @@ xref: EMAPA:TS16
 xref: XUO:0000060
 relationship: has_stage_marker UBERON:0005418
 relationship: immediately_preceded_by MmusDv:0000022 ! Theiler stage 15 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: has_stage_marker UBERON:0005418
 property_value: start_dpc "10.0" xsd:float
 property_value: start_dpc "10.0" xsd:float
@@ -5626,7 +5478,7 @@ xref: XUO:0000061
 relationship: has_stage_marker EMAPA:18411
 relationship: has_stage_marker UBERON:0006259
 relationship: immediately_preceded_by MmusDv:0000023 ! Theiler stage 16 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: has_stage_marker EMAPA:18411
 property_value: has_stage_marker UBERON:0006259
 property_value: start_dpc "10.5" xsd:float
@@ -5645,7 +5497,7 @@ xref: EMAPA:TS18
 xref: XUO:0000062
 relationship: has_stage_marker UBERON:0005870
 relationship: immediately_preceded_by MmusDv:0000024 ! Theiler stage 17 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: has_stage_marker UBERON:0005870
 property_value: start_dpc "11.0" xsd:float
 property_value: start_dpc "11.0" xsd:float
@@ -5662,7 +5514,7 @@ synonym: "TS19 (E11-12.25)" RELATED [EMAPA:TS19]
 xref: EMAPA:TS19
 xref: XUO:0000063
 relationship: immediately_preceded_by MmusDv:0000025 ! Theiler stage 18 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpc "11.5" xsd:float
 property_value: start_dpc "11.5" xsd:float
 
@@ -5678,7 +5530,7 @@ synonym: "TS20 (E11.5-13)" RELATED [EMAPA:TS20]
 xref: EMAPA:TS20
 xref: XUO:0000064
 relationship: immediately_preceded_by MmusDv:0000026 ! Theiler stage 19 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpc "12.0" xsd:float
 property_value: start_dpc "12.0" xsd:float
 
@@ -5694,7 +5546,7 @@ synonym: "TS21 (E12.5-14)" RELATED [EMAPA:TS21]
 xref: EMAPA:TS21
 xref: XUO:0000065
 relationship: immediately_preceded_by MmusDv:0000027 ! Theiler stage 20 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: start_dpc "13.0" xsd:float
 property_value: start_dpc "13.0" xsd:float
 
@@ -5711,7 +5563,7 @@ xref: EMAPA:TS22
 xref: XUO:0000066
 relationship: has_stage_marker UBERON:0003606
 relationship: immediately_preceded_by MmusDv:0000028 ! Theiler stage 21 (mouse)
-relationship: part_of MmusDv:0000018 ! organogenesis stage (mouse)
+relationship: part_of UBERON:0000111 ! organogenesis stage
 property_value: has_stage_marker UBERON:0003606
 property_value: start_dpc "14.0" xsd:float
 property_value: start_dpc "14.0" xsd:float
@@ -5793,7 +5645,7 @@ synonym: "TS27" RELATED [EMAPA:TS27]
 xref: EMAPA:TS27
 xref: XUO:0000071
 relationship: immediately_preceded_by MmusDv:0000035 ! Theiler stage 26 (mouse)
-relationship: part_of MmusDv:0000096 ! early immature stage (mouse)
+relationship: part_of UBERON:0007221 ! neonate stage
 property_value: start_dpc "19.0" xsd:float
 property_value: start_dpc "19.0" xsd:float
 property_value: start_wpb "0.0" xsd:float
@@ -5807,23 +5659,19 @@ def: "Immature stage that refers to a mouse which is over 1 week and under 6 wee
 comment: This stage describes the age at which mice are usually used as infant mouse models in the literature.
 synonym: "1-5 weeks" EXACT []
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: immediately_preceded_by UBERON:0007221 ! neonate stage
 property_value: end_wpb "6.0" xsd:float
 property_value: end_wpb "6.0" xsd:float
 property_value: start_wpb "1.0" xsd:float
 property_value: start_wpb "1.0" xsd:float
-
-[Term]
-id: MmusDv:0000041
-name: unknown (mouse)
-namespace: mouse_developmental_stage
-relationship: part_of UBERON:0000104 ! life cycle
 
 [Term]
 id: MmusDv:0000044
 name: 1-7 days (mouse)
 namespace: mouse_developmental_stage
 def: "Early immature stage that refers to the newborn mouse which is over 1 and under 8 days old." [Bgee:curator]
-relationship: part_of MmusDv:0000096 ! early immature stage (mouse)
+relationship: part_of UBERON:0007221 ! neonate stage
+relationship: immediately_preceded_by MmusDv:0000036 ! Theiler stage 27
 property_value: end_wpb "1.143" xsd:float
 property_value: end_wpb "1.143" xsd:float
 property_value: start_wpb "0.143" xsd:float
@@ -5897,7 +5745,7 @@ namespace: mouse_developmental_stage
 def: "Early stage that refers to a mouse which is over 42 days and under 50 days old." [Bgee:curator]
 comment: This stage is commonly considered in the literature as the milestone that distinguishes between sexually immmature and mature stages (see http://www.ahc.umn.edu/rar/breeding.html).
 relationship: immediately_preceded_by MmusDv:0000049 ! 5 weeks (mouse)
-relationship: part_of MmusDv:0000061 ! early adult stage (mouse)
+relationship: part_of UBERON:0018241 ! prime adult stage
 property_value: end_wpb "7.0" xsd:float
 property_value: end_wpb "7.0" xsd:float
 property_value: start_wpb "6.0" xsd:float
@@ -5909,7 +5757,7 @@ name: 7 weeks (mouse)
 namespace: mouse_developmental_stage
 def: "Early adult stage that refers to a mouse which is over 49 days and under 57 days old." [Bgee:curator]
 relationship: immediately_preceded_by MmusDv:0000050 ! 6 weeks (mouse)
-relationship: part_of MmusDv:0000061 ! early adult stage (mouse)
+relationship: part_of UBERON:0018241 ! prime adult stage
 property_value: end_wpb "8.0" xsd:float
 property_value: end_wpb "8.0" xsd:float
 property_value: start_wpb "7.0" xsd:float
@@ -6016,27 +5864,12 @@ property_value: start_wpb "15.0" xsd:float
 property_value: start_wpb "15.0" xsd:float
 
 [Term]
-id: MmusDv:0000061
-name: early adult stage (mouse)
-namespace: mouse_developmental_stage
-def: "Mature stage that refers to a adult mouse which is over 6 weeks and under 7 months old." [http://research.jax.org/faculty/harrison/ger1vLifespan1.html#VD]
-comment: Mice under 7 months of age are commonly considered as young adult in the literature, without loss of functional capability like hearing (see http://www.ncbi.nlm.nih.gov/pubmed/18259074).
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-property_value: end_mpb "7.0" xsd:float
-property_value: end_mpb "7.0" xsd:float
-property_value: end_wpb "30.0" xsd:float
-property_value: end_wpb "30.0" xsd:float
-property_value: start_mpb "1.5" xsd:float
-property_value: start_mpb "1.5" xsd:float
-property_value: start_wpb "6.0" xsd:float
-property_value: start_wpb "6.0" xsd:float
-
-[Term]
 id: MmusDv:0000062
 name: 2 month-old stage (mouse)
 namespace: mouse_developmental_stage
 def: "Early adult stage that refers to a mouse which is over 2 and under 3 months old." [Bgee:curator]
-relationship: part_of MmusDv:0000061 ! early adult stage (mouse)
+relationship: part_of UBERON:0018241 ! prime adult stage
+relationship: immediately_preceded_by MmusDv:0000051 ! 7 weeks
 property_value: end_mpb "3.0" xsd:float
 property_value: end_mpb "3.0" xsd:float
 property_value: end_wpb "12.0" xsd:float
@@ -6052,7 +5885,7 @@ name: 3 month-old stage (mouse)
 namespace: mouse_developmental_stage
 def: "Early adult stage that refers to a mouse which is over 3 and under 4 months old." [Bgee:curator]
 relationship: immediately_preceded_by MmusDv:0000062 ! 2 month-old stage (mouse)
-relationship: part_of MmusDv:0000061 ! early adult stage (mouse)
+relationship: part_of UBERON:0018241 ! prime adult stage
 property_value: end_mpb "4.0" xsd:float
 property_value: end_mpb "4.0" xsd:float
 property_value: end_wpb "16.0" xsd:float
@@ -6068,7 +5901,7 @@ name: 4 month-old stage (mouse)
 namespace: mouse_developmental_stage
 def: "Early adult stage that refers to a mouse which is over 4 and under 5 months old." [Bgee:curator]
 relationship: immediately_preceded_by MmusDv:0000063 ! 3 month-old stage (mouse)
-relationship: part_of MmusDv:0000061 ! early adult stage (mouse)
+relationship: part_of UBERON:0018241 ! prime adult stage
 property_value: end_mpb "5.0" xsd:float
 property_value: end_mpb "5.0" xsd:float
 property_value: end_wpb "21.0" xsd:float
@@ -6136,7 +5969,7 @@ name: 5 month-old stage (mouse)
 namespace: mouse_developmental_stage
 def: "Early adult stage that refers to a mouse which is over 5 and under 6 months old." [Bgee:curator]
 relationship: immediately_preceded_by MmusDv:0000064 ! 4 month-old stage (mouse)
-relationship: part_of MmusDv:0000061 ! early adult stage (mouse)
+relationship: part_of UBERON:0018241 ! prime adult stage
 property_value: end_mpb "6.0" xsd:float
 property_value: end_mpb "6.0" xsd:float
 property_value: end_wpb "25.0" xsd:float
@@ -6217,7 +6050,7 @@ name: middle aged stage (mouse)
 namespace: mouse_developmental_stage
 def: "Late adult stage that refers to a mouse which is over 7 and under 15 months old." [http://research.jax.org/faculty/harrison/ger1vLifespan1.html#VD]
 comment: This stage is commonly considered in the literature as the stage during which first evidence of loss of functional capability like hearing occurs in wild type mouse strain (see http://www.ncbi.nlm.nih.gov/pubmed/18259074).
-relationship: part_of MmusDv:0000097 ! late adult stage (mouse)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_mpb "15.0" xsd:float
 property_value: end_mpb "15.0" xsd:float
 property_value: start_mpb "7.0" xsd:float
@@ -6230,7 +6063,8 @@ id: MmusDv:0000076
 name: aged adult stage (mouse)
 namespace: mouse_developmental_stage
 def: "Late adult stage that refers to a mouse which is over 15 months old." [http://research.jax.org/faculty/harrison/ger1vLifespan1.html#VD]
-relationship: part_of MmusDv:0000097 ! late adult stage (mouse)
+relationship: part_of UBERON:0007222 ! late adult stage
+relationship: immediately_preceded_by MmusDv:0000075 ! middle aged stage
 property_value: start_mpb "15.0" xsd:float
 property_value: start_mpb "15.0" xsd:float
 
@@ -6240,7 +6074,7 @@ name: 6 month-old stage (mouse)
 namespace: mouse_developmental_stage
 def: "Early adult stage that refers to a mouse which is over 6 and under 7 months old." [Bgee:curator]
 relationship: immediately_preceded_by MmusDv:0000069 ! 5 month-old stage (mouse)
-relationship: part_of MmusDv:0000061 ! early adult stage (mouse)
+relationship: part_of UBERON:0018241 ! prime adult stage
 property_value: end_mpb "7.0" xsd:float
 property_value: end_mpb "7.0" xsd:float
 property_value: end_wpb "30.0" xsd:float
@@ -6428,6 +6262,7 @@ namespace: mouse_developmental_stage
 def: "Aged adult stage that refers to a mouse which is over 20 months old." [Bgee:curator]
 subset: granular_stage
 relationship: part_of MmusDv:0000076 ! aged adult stage (mouse)
+relationship: immediately_preceded_by MmusDv:0000090 ! 19 month-old stage
 property_value: start_mpb "20.0" xsd:float
 property_value: start_mpb "20.0" xsd:float
 
@@ -6438,7 +6273,7 @@ namespace: mouse_developmental_stage
 def: "Embryonic neurula stage during which the neural plate formation occurs and the allantoic bud elongates ." [http://php.med.unsw.edu.au/embryology/index.php?title=Mouse_Stages#Theiler_Stage_11]
 synonym: "TS11b" EXACT []
 relationship: immediately_preceded_by MmusDv:0000111 ! Theiler stage 11a (mouse)
-relationship: part_of MmusDv:0000017 ! Theiler stage 11 (mouse)
+relationship: part_of UBERON:0000110 ! neurula stage
 
 [Term]
 id: MmusDv:0000094
@@ -6447,7 +6282,7 @@ namespace: mouse_developmental_stage
 def: "Embryonic neurula stage during which the neural plate formation occurs and the head folds are formed while the neural groove becomes visible." [http://php.med.unsw.edu.au/embryology/index.php?title=Mouse_Stages#Theiler_Stage_11]
 synonym: "TS11c" EXACT []
 relationship: immediately_preceded_by MmusDv:0000093 ! Theiler stage 11b (mouse)
-relationship: part_of MmusDv:0000017 ! Theiler stage 11 (mouse)
+relationship: part_of UBERON:0000110 ! neurula stage
 
 [Term]
 id: MmusDv:0000095
@@ -6456,32 +6291,7 @@ namespace: mouse_developmental_stage
 def: "Embryonic neurula stage during which the neural plate formation occurs and the head folds continue to enlarge while the foregut pocket begins to form." [http://php.med.unsw.edu.au/embryology/index.php?title=Mouse_Stages#Theiler_Stage_11]
 synonym: "TS11d" EXACT []
 relationship: immediately_preceded_by MmusDv:0000094 ! Theiler stage 11c (mouse)
-relationship: part_of MmusDv:0000017 ! Theiler stage 11 (mouse)
-
-[Term]
-id: MmusDv:0000096
-name: early immature stage (mouse)
-namespace: mouse_developmental_stage
-def: "Immature stage that covers the period from birth until end of the first week." [Bgee:curator]
-comment: This stage groups the first seven days of the mouse life as described in K.Theiler's book, The House Mouse, Atlas of Embryonic Development, Springer-Verlag (second printing 1989).
-relationship: part_of UBERON:0000112 ! sexually immature stage
-property_value: end_wpb "1.0" xsd:float
-property_value: end_wpb "1.0" xsd:float
-property_value: start_dpc "19.0" xsd:float
-property_value: start_dpc "19.0" xsd:float
-property_value: start_wpb "0.0" xsd:float
-property_value: start_wpb "0.0" xsd:float
-
-[Term]
-id: MmusDv:0000097
-name: late adult stage (mouse)
-namespace: mouse_developmental_stage
-def: "Mature stage that refers to an adult mouse which is over 7 months old." [http://research.jax.org/faculty/harrison/ger1vLifespan1.html#VD]
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-property_value: start_mpb "7.0" xsd:float
-property_value: start_mpb "7.0" xsd:float
-property_value: start_wpb "30.0" xsd:float
-property_value: start_wpb "30.0" xsd:float
+relationship: part_of UBERON:0000110 ! neurula stage
 
 [Term]
 id: MmusDv:0000098
@@ -6621,17 +6431,7 @@ name: Theiler stage 11a (mouse)
 namespace: mouse_developmental_stage
 def: "Embryonic neurula stage during which the neural plate formation occurs and the amniotic cavity is sealed off into three distinct cavities - the amniotic cavity, the exocoelom and the ectoplacental cleft." [http://php.med.unsw.edu.au/embryology/index.php?title=Mouse_Stages#Theiler_Stage_11]
 synonym: "TS11a" EXACT []
-relationship: part_of MmusDv:0000017 ! Theiler stage 11 (mouse)
-
-[Term]
-id: OanaDv:0000006
-name: aged stage (platypus)
-namespace: platypus_developmental_stage
-def: "Mature stage that refers to a adult platypus which is over 10 years." [Bgee:curator]
-comment: There is little information on the longevity of platypuses. They can live up to 12 years in the wild (see http://www.mspca.org/programs/wildlife-resources/species-information/about-platypuss.html) and one captive specimen was at least 22.6 years old when it died (see http://genomics.senescence.info/species/entry.php?species=Ornithorhynchus_anatinus). Over 10 years old is usually no more a breeding age.
-relationship: immediately_preceded_by UBERON:0018241 ! prime adult stage
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-property_value: start_mph "120.0" xsd:float
+relationship: part_of UBERON:0000110 ! neurula stage
 
 [Term]
 id: PpanDv:0000004
@@ -6640,6 +6440,7 @@ namespace: bonobo_developmental_stage
 def: "Bonobo developmental stage that covers the period from birth until about 21 months old, at which point individuals wean." [Bgee:curator]
 comment: Age of weaning is 635 days (see http://genomics.senescence.info/species/entry.php?species=Pan_paniscus).
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: preceded_by UBERON:0007221 ! neonate stage
 property_value: end_mpb "21.0" xsd:float
 property_value: start_dpf "232.0" xsd:float
 property_value: start_mpb "0.0" xsd:float
@@ -6675,6 +6476,7 @@ namespace: bonobo_developmental_stage
 def: "Juvenile stage that refers to a bonobo who is over 22 and under 23 months old." [Bgee:curator]
 subset: granular_stage
 relationship: part_of PpanDv:0000005 ! juvenile stage (bonobo)
+relationship: immediately_preceded_by PpanDv:0000006 ! 21-month-old stage
 property_value: end_mpb "23.0" xsd:float
 property_value: start_mpb "22.0" xsd:float
 
@@ -7012,22 +6814,13 @@ property_value: end_ypb "30.0" xsd:float
 property_value: start_ypb "29.0" xsd:float
 
 [Term]
-id: PpanDv:0000040
-name: aged stage (bonobo)
-namespace: bonobo_developmental_stage
-def: "Mature stage that refers to a bonobo who is over 30 years old." [Bgee:curator]
-comment: Geriatric bonobos are usually defined as animals with 30 years of age and older (see http://www.ncbi.nlm.nih.gov/pubmed/?term=23523480 and http://www.dispatch.com/content/stories/local/2011/08/14/jungle-geriatrics.html).
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-relationship: preceded_by UBERON:0018241 ! prime adult stage
-property_value: start_ypb "30.0" xsd:float
-
-[Term]
 id: PpygDv:0000004
 name: nursing stage (orangutan)
 namespace: orangutan_developmental_stage
 def: "Orangutan developmental stage that covers the period from birth until about 3 years old, at which point individuals wean." [Bgee:curator]
 comment: Age of weaning is 1003 days (see http://genomics.senescence.info/species/entry.php?species=Pongo_pygmaeus).
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: preceded_by UBERON:0007221 ! neonate stage
 property_value: end_ypb "2.75" xsd:float
 property_value: start_dpf "229.0" xsd:float
 property_value: start_mpf "7.5" xsd:float
@@ -7352,20 +7145,12 @@ property_value: end_ypb "35.0" xsd:float
 property_value: start_ypb "34.0" xsd:float
 
 [Term]
-id: PpygDv:0000036
-name: aged stage (orangutan)
-namespace: orangutan_developmental_stage
-def: "Mature stage that refers to a orangutan who is over 35 years old." [Bgee:curator]
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-property_value: start_ypb "35.0" xsd:float
-
-[Term]
 id: PpygDv:0000037
 name: 35-year-old stage (orangutan)
 namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 35 and under 36 years old." [Bgee:curator]
 subset: granular_stage
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "36.0" xsd:float
 property_value: start_ypb "35.0" xsd:float
 
@@ -7376,7 +7161,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 36 and under 37 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000037 ! 35-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "37.0" xsd:float
 property_value: start_ypb "36.0" xsd:float
 
@@ -7387,7 +7172,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 37 and under 38 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000038 ! 36-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "38.0" xsd:float
 property_value: start_ypb "37.0" xsd:float
 
@@ -7398,7 +7183,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 38 and under 39 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000039 ! 37-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "39.0" xsd:float
 property_value: start_ypb "38.0" xsd:float
 
@@ -7409,7 +7194,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 39 and under 40 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000040 ! 38-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "40.0" xsd:float
 property_value: start_ypb "39.0" xsd:float
 
@@ -7420,7 +7205,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 40 and under 41 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000041 ! 39-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "41.0" xsd:float
 property_value: start_ypb "40.0" xsd:float
 
@@ -7431,7 +7216,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 41 and under 42 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000042 ! 40-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "42.0" xsd:float
 property_value: start_ypb "41.0" xsd:float
 
@@ -7442,7 +7227,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 42 and under 43 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000043 ! 41-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "43.0" xsd:float
 property_value: start_ypb "42.0" xsd:float
 
@@ -7453,7 +7238,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 43 and under 44 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000044 ! 42-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "44.0" xsd:float
 property_value: start_ypb "43.0" xsd:float
 
@@ -7464,7 +7249,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 44 and under 45 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000045 ! 43-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "45.0" xsd:float
 property_value: start_ypb "44.0" xsd:float
 
@@ -7475,7 +7260,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 45 and under 46 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000046 ! 44-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "46.0" xsd:float
 property_value: start_ypb "45.0" xsd:float
 
@@ -7486,7 +7271,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 46 and under 47 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000047 ! 45-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "47.0" xsd:float
 property_value: start_ypb "46.0" xsd:float
 
@@ -7497,7 +7282,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 47 and under 48 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000048 ! 46-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "48.0" xsd:float
 property_value: start_ypb "47.0" xsd:float
 
@@ -7508,7 +7293,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 48 and under 49 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000049 ! 47-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "49.0" xsd:float
 property_value: start_ypb "48.0" xsd:float
 
@@ -7519,7 +7304,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 49 and under 50 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000050 ! 48-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "50.0" xsd:float
 property_value: start_ypb "49.0" xsd:float
 
@@ -7530,7 +7315,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 50 and under 51 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000051 ! 49-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "51.0" xsd:float
 property_value: start_ypb "50.0" xsd:float
 
@@ -7541,7 +7326,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 51 and under 52 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000052 ! 50-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "52.0" xsd:float
 property_value: start_ypb "51.0" xsd:float
 
@@ -7552,7 +7337,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 52 and under 53 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000053 ! 51-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "53.0" xsd:float
 property_value: start_ypb "52.0" xsd:float
 
@@ -7563,7 +7348,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 53 and under 54 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000054 ! 52-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "54.0" xsd:float
 property_value: start_ypb "53.0" xsd:float
 
@@ -7574,7 +7359,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 54 and under 55 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000055 ! 53-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "55.0" xsd:float
 property_value: start_ypb "54.0" xsd:float
 
@@ -7585,7 +7370,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who over 55 and under 56 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000056 ! 54-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "56.0" xsd:float
 property_value: start_ypb "55.0" xsd:float
 
@@ -7596,7 +7381,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who is over 56 and under 57 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000057 ! 55-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: end_ypb "57.0" xsd:float
 property_value: start_ypb "56.0" xsd:float
 
@@ -7607,7 +7392,7 @@ namespace: orangutan_developmental_stage
 def: "Aged stage that refers to a orangutan who is over 57 years old." [Bgee:curator]
 subset: granular_stage
 relationship: immediately_preceded_by PpygDv:0000058 ! 56-year-old stage (orangutan)
-relationship: part_of PpygDv:0000036 ! aged stage (orangutan)
+relationship: part_of UBERON:0007222 ! late adult stage
 property_value: start_ypb "57.0" xsd:float
 
 [Term]
@@ -7617,6 +7402,7 @@ namespace: chimpanzee_developmental_stage
 def: "Chimpanzee developmental stage that covers the period from birth until 3 years old, at which point individuals wean." [Bgee:curator]
 comment: Age of weaning is 1111 days (see http://genomics.senescence.info/species/entry.php?species=Pan_troglodytes).
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: preceded_by UBERON:0007221 ! neonate stage
 property_value: end_ypb "3.0" xsd:float
 property_value: start_dpf "229.0" xsd:float
 property_value: start_mpf "7.5" xsd:float
@@ -7973,16 +7759,6 @@ property_value: end_ypb "34.0" xsd:float
 property_value: start_ypb "33.0" xsd:float
 
 [Term]
-id: PtroDv:0000039
-name: aged stage (chimpanzee)
-namespace: chimpanzee_developmental_stage
-def: "Mature stage that refers to a chimpanzee who is over 34 years old." [Bgee:curator]
-comment: Geriatric chimpanzees were originally defined as animals with 34 years of age and older. Maximum longevity is officially 59.4 years (see http://genomics.senescence.info/species/entry.php?species=Pan_troglodytes).
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-relationship: preceded_by PtroDv:0000007 ! 4-year-old stage (chimpanzee)
-property_value: start_ypb "34.0" xsd:float
-
-[Term]
 id: PtroDv:0000040
 name: 34-year-old stage (chimpanzee)
 namespace: chimpanzee_developmental_stage
@@ -8119,20 +7895,9 @@ namespace: rat_developmental_stage
 def: "Embryonic stage during which somites 43-45 (caudal) up to somite 65 (usually this is last caudal) appear." [http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Development_Stages]
 comment: This stage corresponds to Standard Witschi Stage 26 up to 33 (see http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Timeline). Refers to human Carnegie stage 15 up to 22 (see http://books.google.ch/books?id=yr1ZRO8H0ysC&printsec=frontcover&hl=fr#v=onepage&q&f=false "Table 12.17, p.510")
 relationship: immediately_preceded_by RnorDv:0000009 ! complete embryo stage (rat)
-relationship: part_of RnorDv:0000003 ! embryonic stage (rat)
+relationship: part_of UBERON:0000068 ! embryonic stage
 property_value: end_dpc "16.0" xsd:float
 property_value: start_dpc "12.5" xsd:float
-
-[Term]
-id: RnorDv:0000003
-name: embryonic stage (rat)
-namespace: rat_developmental_stage
-def: "Prenatal stage that starts with fertilization and ends with a fully formed embryo, before undergoing last development during the fetal stage." [Bgee:curator]
-comment: This stage covers the first 16 days of the embryonic development, from Standard Witschi Stage 1 until Standard Witschi Stage 33 (see http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Timeline), we treat fetus as a separate stage.
-relationship: part_of UBERON:0000068 ! embryo stage
-property_value: end_dpc "16.0" xsd:float
-property_value: start_dpc "0.45" xsd:float
-property_value: start_dpf "0.0" xsd:float
 
 [Term]
 id: RnorDv:0000004
@@ -8140,7 +7905,7 @@ name: cleavage and blastula stage (rat)
 namespace: rat_developmental_stage
 def: "Embryonic stage that starts with the one-cell zygote in the oviduct and ends with the free blastocyst in the uterus." [Bgee:curator]
 comment: This stage covers the first 5 days of the embryonic development, from Standard Witschi Stage 1 up to 7 (see http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Timeline). Refers to human Carnegie stage 1 up to 4 (see http://books.google.ch/books?id=yr1ZRO8H0ysC&printsec=frontcover&hl=fr#v=onepage&q&f=false "Table 12.17, p.510")
-relationship: part_of RnorDv:0000003 ! embryonic stage (rat)
+relationship: part_of UBERON:0000068 ! embryonic stage
 property_value: end_dpc "5.0" xsd:float
 property_value: start_dpc "0.45" xsd:float
 
@@ -8151,20 +7916,9 @@ namespace: rat_developmental_stage
 def: "Embryonic stage during which the primitive streak appears." [Bgee:curator]
 comment: This stage corresponds to Standard Witschi Stage 12 (see http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Timeline). Refers to human Carnegie stage 6 up to 7 (see http://books.google.ch/books?id=yr1ZRO8H0ysC&printsec=frontcover&hl=fr#v=onepage&q&f=false "Table 12.17, p.510")
 relationship: immediately_preceded_by UBERON:0000109 ! gastrula stage
-relationship: part_of RnorDv:0000003 ! embryonic stage (rat)
+relationship: part_of UBERON:0000068 ! embryonic stage
 property_value: end_dpc "8.5" xsd:float
 property_value: start_dpc "7.75" xsd:float
-
-[Term]
-id: RnorDv:0000008
-name: tail bud embryo stage (rat)
-namespace: rat_developmental_stage
-def: "Embryonic stage during which somites 26-28(upper lumbar) up to somites 39-40(caudal) appear." [http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Development_Stages]
-comment: This stage corresponds to Standard Witschi Stage 18 up to 24 (see http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Timeline). Refers to human Carnegie stage 12 up to 13 (see http://books.google.ch/books?id=yr1ZRO8H0ysC&printsec=frontcover&hl=fr#v=onepage&q&f=false "Table 12.17, p.510")
-relationship: immediately_preceded_by UBERON:0000110 ! neurula stage
-relationship: part_of RnorDv:0000003 ! embryonic stage (rat)
-property_value: end_dpc "12.375" xsd:float
-property_value: start_dpc "11.0" xsd:float
 
 [Term]
 id: RnorDv:0000009
@@ -8172,22 +7926,10 @@ name: complete embryo stage (rat)
 namespace: rat_developmental_stage
 def: "Embryonic stage during which somites 41-42(caudal) appear and tail and allantoic stalk rise to the placenta." [http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Development_Stages]
 comment: This stage corresponds to Standard Witschi Stage 25 (see http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Timeline). Refers to human Carnegie stage 14 (see http://books.google.ch/books?id=yr1ZRO8H0ysC&printsec=frontcover&hl=fr#v=onepage&q&f=false "Table 12.17, p.510")
-relationship: immediately_preceded_by RnorDv:0000008 ! tail bud embryo stage (rat)
-relationship: part_of RnorDv:0000003 ! embryonic stage (rat)
+relationship: immediately_preceded_by UBERON:0000111 ! organogenesis stage
+relationship: part_of UBERON:0000068 ! embryonic stage
 property_value: end_dpc "12.5" xsd:float
 property_value: start_dpc "12.375" xsd:float
-
-[Term]
-id: RnorDv:0000013
-name: early immature stage (rat)
-namespace: rat_developmental_stage
-def: "Immature stage that covers the period from birth until 16 days of age." [Bgee:curator]
-comment: This stage describes the post-natal period when the fetus becomes a breathing and suckling nestling during the first 16 days (22 to 38 days total age), while eyelids remain sealed and external ear ducts are plugged with periderm (see http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Timeline).
-relationship: part_of UBERON:0000112 ! sexually immature stage
-property_value: end_dpc "38.0" xsd:float
-property_value: end_wpb "2.0" xsd:float
-property_value: start_dpc "22.0" xsd:float
-property_value: start_wpb "0.0" xsd:float
 
 [Term]
 id: RnorDv:0000014
@@ -8195,7 +7937,7 @@ name: infant stage (rat)
 namespace: rat_developmental_stage
 def: "Immature stage that refers to a rat which is over 2 weeks and under 10 weeks old." [Bgee:curator]
 comment: This stage starts with the period at which periderm seals of ears and eyelids vanish, and ends when the rat becomes sexually mature (see http://php.med.unsw.edu.au/embryology/index.php?title=Rat_Timeline and http://genomics.senescence.info/species/entry.php?species=Rattus_norvegicus).
-relationship: immediately_preceded_by RnorDv:0000013 ! early immature stage (rat)
+relationship: immediately_preceded_by UBERON:0007221 ! neonate stage
 relationship: part_of UBERON:0000112 ! sexually immature stage
 property_value: end_wpb "10.0" xsd:float
 property_value: start_wpb "2.0" xsd:float
@@ -8207,6 +7949,7 @@ namespace: pig_developmental_stage
 def: "Pig developmental stage that covers the period from birth until about 2 months old, at which point individuals wean." [Bgee:curator]
 comment: Age of weaning is 56 days (see http://genomics.senescence.info/species/entry.php?species=Sus_scrofa). Piglets are highly precocious and neonates appear with open eyes, good muscle tone and well developed skin and hair (see http://www.ncbi.nlm.nih.gov/pubmed/?term=23874755). Within minutes of being born, or sometimes seconds, they will attempt to suckle. The piglets are born with sharp teeth and fight to develop a teat order as the anterior teats produce a greater quantity of milk (see http://en.wikipedia.org/wiki/Piglet_%28animal%29).
 relationship: part_of UBERON:0000112 ! sexually immature stage
+relationship: preceded_by UBERON:0007221 ! neonate stage
 property_value: end_mpb "1.85" xsd:float
 property_value: start_dpf "115.0" xsd:float
 property_value: start_mpf "3.8" xsd:float
@@ -8222,16 +7965,6 @@ relationship: immediately_preceded_by SscrDv:0000004 ! suckling stage (pig)
 relationship: part_of UBERON:0000112 ! sexually immature stage
 property_value: end_ypb "0.9" xsd:float
 property_value: start_mpb "1.85" xsd:float
-
-[Term]
-id: SscrDv:0000008
-name: aged stage (pig)
-namespace: pig_developmental_stage
-def: "Mature stage that refers to a pig who is over 8 years old." [Bgee:curator]
-comment: Geriatric pigs are usually defined as animals with 8 years of age and older (see http://www.ncbi.nlm.nih.gov/pubmed/?term=12762388).
-relationship: immediately_preceded_by UBERON:0018241 ! prime adult stage
-relationship: part_of UBERON:0000113 ! post-juvenile adult stage
-property_value: start_ypb "8.0" xsd:float
 
 [Term]
 id: UBERON:0000066
@@ -8250,6 +7983,7 @@ xref: WBls:0000041
 xref: XtroDO:0000084
 relationship: part_of UBERON:0000092 ! post-embryonic stage
 relationship: preceded_by UBERON:0000111 ! organogenesis stage
+relationship: preceded_by UBERON:0000070 ! pupal stage - TODO: need GCI here
 
 [Term]
 id: UBERON:0000068
@@ -8262,6 +7996,7 @@ xref: BilaDO:0000002
 xref: EV:0300001
 xref: FBdv:00005289
 xref: HsapDv:0000002
+xref: RnorDv:0000003
 xref: http://www.snomedbrowser.com/Codes/Details/296280003
 xref: MmusDv:0000002
 xref: OGES:000000
@@ -8397,6 +8132,7 @@ xref: PdumDv:0000100
 xref: VHOG:0000745
 xref: XAO:1000001
 xref: ZFS:0000001
+xref: HsapDv:0000003
 relationship: part_of UBERON:0000068 ! embryo stage
 property_value: homology_notes "As in all metazoans, eumetazoan development begins with a fertilized egg, or zygote.[well established][VHOG]" xsd:string {date_retrieved="2012-09-17", external_class="VHOG:0000745", ontology="VHOG", source="ISBN:978-0030259821 Ruppert EE, Fox RS, Barnes RD, Invertebrate zoology: a functional evolutionary approach (2003) p.107", source="http://bgee.unil.ch/"}
 
@@ -8442,6 +8178,7 @@ xref: XAO:1000003
 xref: ZFS:0000045
 relationship: part_of UBERON:0000068 ! embryo stage
 relationship: preceded_by UBERON:0000107 ! cleavage stage
+relationship: preceded_by HsapDv:0000005 ! Carnegie stage 02 - TODO: GCI
 property_value: editor_note "consider adding a preceding stage 'morula stage' as part of cleavage" xsd:string
 
 [Term]
@@ -8469,6 +8206,7 @@ xref: XAO:1000005
 xref: ZFS:0000047
 relationship: part_of UBERON:0000068 ! embryo stage
 relationship: preceded_by UBERON:0000108 ! blastula stage
+relationship: preceded_by RnorDv:0000004 ! cleavage and blastula stage - TODO: need CGI here
 
 [Term]
 id: UBERON:0000110
@@ -8482,6 +8220,7 @@ xref: MmusDv:0000017
 xref: XAO:1000006
 relationship: part_of UBERON:0000068 ! embryo stage
 relationship: preceded_by UBERON:0000109 ! gastrula stage
+relationship: preceded_by RnorDv:0000006 ! primitive streak stage - TODO: CGI needed here
 
 [Term]
 id: UBERON:0000111
@@ -8496,6 +8235,7 @@ xref: http://en.wikipedia.org/wiki/Organogenesis
 xref: MmusDv:0000018
 xref: OGES:000005
 xref: OGES:000032
+xref: RnorDv:0000008
 relationship: part_of UBERON:0000068 ! embryo stage
 relationship: preceded_by UBERON:0000110 ! neurula stage
 
@@ -8554,7 +8294,8 @@ xref: http://en.wikipedia.org/wiki/Pharyngula
 xref: OGES:000006
 xref: ZFS:0000050
 relationship: part_of UBERON:0000068 ! embryo stage
-relationship: preceded_by UBERON:0000110 ! neurula stage
+relationship: preceded_by UBERON:0000111 ! organogenesis stage
+relationship: immediately_preceded_by ZFS:0000049 ! segmentation (Danio) - TODO: GCI
 
 [Term]
 id: UBERON:0004728
@@ -8606,7 +8347,13 @@ xref: http://www.snomedbrowser.com/Codes/Details/367619004
 xref: MIAA:0000399
 xref: MmusDv:0000031
 xref: OGES:000023
+xref: RnorDv:0000011
 relationship: part_of UBERON:0000068 ! embryo stage
+relationship: preceded_by UBERON:0004707 ! pharyngula stage
+relationship: preceded_by UBERON:0000111 ! organogenesis stage
+relationship: immediately_preceded_by FBdv:00005331 ! dorsal closure stage (Drosophila) - TODO: CGI
+relationship: preceded_by FBdv:00005316 ! INCORRECT but we need it - TODO: CGI
+relationship: preceded_by RnorDv:00000010 ! metamorphosing embryo stage - TODO: need CGI here
 
 [Term]
 id: UBERON:0007221
@@ -8632,6 +8379,8 @@ xref: http://en.wikipedia.org/wiki/Infant
 xref: MmusDv:0000096
 xref: NIF_Organism:birnlex_695
 xref: OGES:000025
+xref: RnorDv:0000013
+xref: MdomDv:0000004
 relationship: part_of UBERON:0000112 ! sexually immature stage
 property_value: editor_note "consider splitting infant/newborn" xsd:string
 
@@ -8645,6 +8394,14 @@ synonym: "geriatric" RELATED [EV:0300123]
 synonym: "geriatric stage" RELATED [EV:0300123]
 xref: EV:0300123
 xref: HsapDv:0000093
+xref: MmusDv:0000097
+xref: PpygDv:0000036
+xref: PtroDv:0000039
+xref: PpanDv:0000040
+xref: OanaDv:0000006
+xref: SscrDv:0000008
+xref: MmulDv:0000045
+xref: GgorDv:0000008
 xref: http://linkedlifedata.com/resource/umls/id/C0001792
 xref: http://ncicb.nci.nih.gov/xml/owl/EVS/Elderly
 xref: NIF_Organism:birnlex_691
@@ -8663,6 +8420,7 @@ xref: XAO:1000011
 xref: XtroDO:0000006
 xref: ZFS:0000002
 relationship: immediately_preceded_by UBERON:0000106 ! zygote stage
+relationship: immediately_preceded_by XAO:1000028 ! NF stage 2- (Xenopus) - TODO: GCI
 relationship: part_of UBERON:0000107 ! cleavage stage
 
 [Term]
@@ -8714,7 +8472,7 @@ namespace: uberon
 def: "wholly aquatic larval stage in the life cycle of an amphibian, particularly of a frog or toad[WP]. XAO: The stages from feeding to the end of metamorphosis. Encompasses Weisz's first-form tadpole (equivalent to NF stages 45 to 49), second-form tadpole (NF 49 to 56) and third-form tadpole (NF 56 to 60-plus) stages." [http://en.wikipedia.org/wiki/Tadpole, ISBN:0471209627, ISSN:0003-276X]
 xref: http://en.wikipedia.org/wiki/Tadpole
 xref: XAO:1000008
-is_a: UBERON:0000069 ! larval stage
+is_a: UBERON:0004728 ! amphibian larval stage
 
 [Term]
 id: UBERON:0014405
@@ -8826,6 +8584,7 @@ is_a: UBERON:0000069 ! larval stage
 id: UBERON:0018241
 name: prime adult stage
 namespace: uberon
+xref: MmusDv:0000061
 def: "A life cycle stage that starts at completion of development and growth of the sexually mature adult animal, and ends before senescence." [Bgee:AN, https://github.com/obophenotype/uberon/issues/496]
 synonym: "adulthood stage" RELATED []
 relationship: part_of UBERON:0000113 ! post-juvenile adult stage
@@ -8836,637 +8595,6 @@ name: crustacean larval stage
 namespace: uberon
 def: "The larval stage of a crustacean, the stages of which are separated my moults. Typically this goes through a nauplius - zoea - post-larval cycle." [http://en.wikipedia.org/wiki/Crustacean_larvae]
 is_a: UBERON:0000069 ! larval stage
-
-[Term]
-id: WBls:0000004
-name: proliferating embryo Ce (C elegans)
-def: "0-350min after first cleavage at 20 Centigrade. Proliferate from 1 cell to 560 cells. From start of first cleavage till cleavage is over." [wb:wjc]
-relationship: part_of UBERON:0000068 ! embryo stage
-
-[Term]
-id: WBls:0000006
-name: 1-cell embryo Ce (C elegans)
-def: "Also called zygote. -50min till 0min of first cleavage at 20 Centigrade. Contains 1 cell." [wb:wjc]
-relationship: part_of UBERON:0000108 ! blastula stage
-
-[Term]
-id: WBls:0000007
-name: 2-cell embryo Ce (C elegans)
-def: "0-20min after first cleavage at 20 Centigrade.  Contains 2 cells." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000006 ! 1-cell embryo Ce (C elegans)
-relationship: part_of UBERON:0000108 ! blastula stage
-
-[Term]
-id: WBls:0000008
-name: 4-cell embryo Ce (C elegans)
-def: "20-40min after first cleavage at 20 Centigrade.  Contains 4 cells." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000007 ! 2-cell embryo Ce (C elegans)
-relationship: part_of UBERON:0000108 ! blastula stage
-
-[Term]
-id: WBls:0000009
-name: 28-cell embryo Ce (C elegans)
-def: "100-105 min after first cleaveage at 20 Centigrade. Contains 28 cells." [wb:wjc]
-relationship: part_of UBERON:0000109 ! gastrula stage
-
-[Term]
-id: WBls:0000011
-name: 51-cell embryo Ce (C elegans)
-def: "120-135 min after first cleavage at 20 Centigrade. Contains 51 cells." [wb:wjc]
-relationship: part_of UBERON:0000109 ! gastrula stage
-relationship: preceded_by WBls:0000086 ! 44-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000012
-name: 88-cell embryo Ce (C elegans)
-def: "145-150 min after first cleavage at 20 Centigrade. Contains 88 cells." [wb:wjc]
-relationship: part_of UBERON:0000109 ! gastrula stage
-relationship: preceded_by WBls:0000088 ! 86-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000013
-name: enclosing embryo Ce (C elegans)
-def: "290-350min after first cleavage at 20 Centigrade. Proliferate from 421 cells to 560 cells. The stage when embryo just finished gastulation and is enclosing." [wb:wjc]
-relationship: immediately_preceded_by UBERON:0000109 ! gastrula stage
-relationship: part_of WBls:0000014 ! late cleavage stage embryo Ce (C elegans)
-relationship: preceded_by WBls:0000014 ! late cleavage stage embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000014
-name: late cleavage stage embryo Ce (C elegans)
-def: "210-350min after first cleavage at 20 Centigrade. Proliferate from 421 cells to 560 cells. The stage before the fast cleavage of cells finishes." [wb:wjc]
-relationship: part_of WBls:0000004 ! proliferating embryo Ce (C elegans)
-relationship: preceded_by UBERON:0000109 ! gastrula stage
-
-[Term]
-id: WBls:0000015
-name: elongating embryo Ce (C elegans)
-def: "350-620min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The stage that embryo starts elongation till elongation is over." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000004 ! proliferating embryo Ce (C elegans)
-relationship: part_of UBERON:0000068 ! embryo stage
-relationship: preceded_by UBERON:0000109 ! gastrula stage
-
-[Term]
-id: WBls:0000016
-name: bean embryo Ce (C elegans)
-def: "350-390min after first cleavage at 20 Centigrade.  Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. Emrbyo elongation started but have not formed comma shape yet. The shape of embryo looks like a lima bean. A stage right before comma embryo. Also called lima embryo or lima bean stage." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000013 ! enclosing embryo Ce (C elegans)
-relationship: immediately_preceded_by WBls:0000014 ! late cleavage stage embryo Ce (C elegans)
-relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000017
-name: comma embryo Ce (C elegans)
-def: "390-420min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The shape of embryo looks like a comma. A stage between bean embryo and 1.5-fold embryo." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000016 ! bean embryo Ce (C elegans)
-relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000018
-name: 1.5-fold embryo Ce (C elegans)
-def: "420-460min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The shape of embryo is elongated and fold back 50%. A stage between comma embryo and 2-fold embryo." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000017 ! comma embryo Ce (C elegans)
-relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000019
-name: 2-fold embryo Ce (C elegans)
-def: "460-520min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The shape of embryo is elongated and double fold. A stage between 1.5-fold embryo and 3-fold embryo." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000018 ! 1.5-fold embryo Ce (C elegans)
-relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000020
-name: 3-fold embryo Ce (C elegans)
-def: "520-620min after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. The shape of embryo is elongated and tripple fold. A stage between 2-fold embryo and fully-elongated embryo. Also called pretzel embryo or pretzel stage." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000019 ! 2-fold embryo Ce (C elegans)
-relationship: part_of WBls:0000015 ! elongating embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000021
-name: fully-elongated embryo Ce (C elegans)
-def: "620-800min(hatch) after first cleavage at 20 Centigrade. Cell number remains at ~560 cells, with some new cells generated and some cells go through programmed cell death. A stage after elongation is over. The last stage of embryogenesis. Also called pre-hatched embryo, late embryo or morphogenetic embryo." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000015 ! elongating embryo Ce (C elegans)
-relationship: immediately_preceded_by WBls:0000020 ! 3-fold embryo Ce (C elegans)
-relationship: part_of UBERON:0000068 ! embryo stage
-
-[Term]
-id: WBls:0000024
-name: L1 larva Ce (C elegans)
-def: "The first stage larva. At 25 Centigrade, it ranges 14-25.5 hours after fertilization, 0-11.5 hours after hatch." [wb:wjc]
-relationship: immediately_preceded_by UBERON:0000068 ! embryo stage
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000025
-name: L1-L2 lethargus Ce (C elegans)
-def: "The stage during L1-L2 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
-relationship: part_of WBls:0000026 ! L1-L2 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000026
-name: L1-L2 molt Ce (C elegans)
-def: "The stage when an animal shifts from L1 larva to L2 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000024 ! L1 larva Ce (C elegans)
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000027
-name: L2 larva Ce (C elegans)
-def: "The second stage larva. At 25 Centigrade, it ranges 25.5-32.5 hours after fertilization, 11.5-18.5 hours after hatch." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000026 ! L1-L2 molt Ce (C elegans)
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000028
-name: L2-L3 lethargus Ce (C elegans)
-def: "The stage during L2-L3 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
-relationship: part_of WBls:0000029 ! L2-L3 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000029
-name: L2-L3 molt Ce (C elegans)
-def: "The stage when an animal shifts from L2 larva to L3 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000027 ! L2 larva Ce (C elegans)
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000030
-name: L2d-dauer lethargus Ce (C elegans)
-def: "The stage during L2d-dauer molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
-relationship: part_of WBls:0000031 ! L2d-dauer molt Ce (C elegans)
-
-[Term]
-id: WBls:0000031
-name: L2d-dauer molt Ce (C elegans)
-def: "The stage when an animal shifts from L2d larva to dauer larva. It includes the synthesis of new cuticle, cease of pharyngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000032
-name: dauer larva Ce (C elegans)
-def: "A third stage larva specialized for dispersal and long term survival." [ISBN:0-87969-433-5]
-relationship: part_of UBERON:0004729 ! nematode larval stage
-relationship: preceded_by WBls:0000027 ! L2 larva Ce (C elegans)
-
-[Term]
-id: WBls:0000033
-name: postdauer-L4 lethargus Ce (C elegans)
-def: "The stage during postdauer-L4 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
-relationship: part_of WBls:0000034 ! postdauer-L4 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000034
-name: postdauer-L4 molt Ce (C elegans)
-def: "The stage when an animal shifts from post dauer stage to L4 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
-relationship: part_of WBls:0000052 ! post dauer stage Ce (C elegans)
-
-[Term]
-id: WBls:0000035
-name: L3 larva Ce (C elegans)
-def: "The third stage larva. At 25 Centigrade, it ranges 32.5-40 hours after fertilization, 18.5-26 hours after hatch." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000029 ! L2-L3 molt Ce (C elegans)
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000036
-name: L3-L4 lethargus Ce (C elegans)
-def: "The stage during L3-L4 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
-relationship: part_of WBls:0000037 ! L3-L4 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000037
-name: L3-L4 molt Ce (C elegans)
-def: "The stage when an animal shifts from L3 larva to L4 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000035 ! L3 larva Ce (C elegans)
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000038
-name: L4 larva Ce (C elegans)
-def: "The fourth stage larva. At 25 Centigrade, it ranges 40-49.5 hours after fertilization, 26-35.5 hours after hatch." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000032 ! dauer larva Ce (C elegans)
-relationship: immediately_preceded_by WBls:0000037 ! L3-L4 molt Ce (C elegans)
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000039
-name: L4-adult lethargus Ce (C elegans)
-def: "The stage during L4-adult molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
-relationship: part_of WBls:0000040 ! L4-adult molt Ce (C elegans)
-
-[Term]
-id: WBls:0000040
-name: L4-adult molt Ce (C elegans)
-def: "The stage when an animal shifts from L4 larva to adult. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000038 ! L4 larva Ce (C elegans)
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000042
-name: L1-L2 ecdysis Ce (C elegans)
-def: "The stage during L1-L2 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000025 ! L1-L2 lethargus Ce (C elegans)
-relationship: part_of WBls:0000026 ! L1-L2 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000043
-name: L1-L2d molt Ce (C elegans)
-def: "The stage when an animal shifts from L1 larva to L2d larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000044
-name: L1-L2d lethargus Ce (C elegans)
-def: "The stage during L1-L2d molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
-relationship: part_of WBls:0000043 ! L1-L2d molt Ce (C elegans)
-
-[Term]
-id: WBls:0000045
-name: L1-L2d ecdysis Ce (C elegans)
-def: "The stage during L1-L2d molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
-relationship: part_of WBls:0000043 ! L1-L2d molt Ce (C elegans)
-
-[Term]
-id: WBls:0000046
-name: L2d larva Ce (C elegans)
-def: "A special second stage larva with altered physiology and developmental potential that leads to formation of dauer larva. At 25 Centigrade, it ranges 25.5-32.5 hours after fertilization, 11.5-18.5 hours after hatch." [ISBN:0-87969-433-5]
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000047
-name: L2-L3 ecdysis Ce (C elegans)
-def: "The stage during L2-L3 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000028 ! L2-L3 lethargus Ce (C elegans)
-relationship: part_of WBls:0000029 ! L2-L3 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000048
-name: L2d-dauer ecdysis Ce (C elegans)
-def: "The stage during L2d-dauer molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
-relationship: part_of WBls:0000031 ! L2d-dauer molt Ce (C elegans)
-
-[Term]
-id: WBls:0000049
-name: L3-L4 ecdysis Ce (C elegans)
-def: "The stage during L3-L4 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000036 ! L3-L4 lethargus Ce (C elegans)
-relationship: part_of WBls:0000037 ! L3-L4 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000050
-name: L4-adult ecdysis (C elegans)
-def: "The stage during L4-adult molt, after the brief lethargus period, when an animal shed off old cuticle." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000039 ! L4-adult lethargus Ce (C elegans)
-relationship: part_of WBls:0000040 ! L4-adult molt Ce (C elegans)
-
-[Term]
-id: WBls:0000051
-name: postdauer-L4 ecdysis Ce (C elegans)
-def: "The stage during postdauer-L4 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
-relationship: part_of WBls:0000034 ! postdauer-L4 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000052
-name: post dauer stage Ce (C elegans)
-def: "The stage right after an animal recovered from dauer but has not started transformation to L4 larva yet." [wb:wjc]
-relationship: part_of UBERON:0004729 ! nematode larval stage
-
-[Term]
-id: WBls:0000053
-name: L2d-L3 molt Ce (C elegans)
-def: "The stage when an animal shifts from L2d larva to L3 larva. It includes the synthesis of new cuticle, cease of phrayngeal pumping during a lethargus stage, and the shed off of old cuticle." [wb:wjc]
-relationship: part_of WBls:0000046 ! L2d larva Ce (C elegans)
-
-[Term]
-id: WBls:0000054
-name: L2d-L3 lethargus Ce (C elegans)
-def: "The stage during L2d-L3 molt when an animal becomes lethargic, ceases pharyngeal pumping and synthesizes new cuticle under the old." [wb:wjc]
-relationship: part_of WBls:0000053 ! L2d-L3 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000055
-name: L2d-L3 ecdysis Ce (C elegans)
-def: "The stage during L2d-L3 molt, after the brief lethargus period, when an animal sheds off old cuticle." [wb:wjc]
-relationship: part_of WBls:0000053 ! L2d-L3 molt Ce (C elegans)
-
-[Term]
-id: WBls:0000056
-name: adult male Ce (C elegans)
-def: "The stage after an male animal is fully-developed and reaches maturity." [wb:wjc]
-is_a: UBERON:0000066 ! fully formed stage
-
-[Term]
-id: WBls:0000057
-name: adult hermaphrodite Ce (C elegans)
-def: "The stage after an hermaphrodite animal is fully-developed and reaches maturity." [wb:wjc]
-is_a: UBERON:0000066 ! fully formed stage
-
-[Term]
-id: WBls:0000058
-name: pre-reproductive stage adult hermaphrodite Ce (C elegans)
-def: "Very young adult hermaphrodites that do not have eggs in the uterus yet. At 20 Centigrade: 0 - 13 hours after L4-adult molt. 3 days after first cleaveage." [wb:wjc]
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000060
-name: reproductive stage adult hermaphrodite Ce (C elegans)
-def: "Adult hermaphrodites continuously laying fertilized eggs. Hermaphrodite in egg laying stages--usually up to 4/5 days after L4-adult molt at Centigrade. From the first fertilized egg is laid, till all sperms are used. At 20 Centigrade: 13 hours after L4-adult molt until about 5.4 days after the L4-adult molt. 3-8.4 days after first cleavage." [wb:wjc]
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000061
-name: oocyte-laying stage adult hermaphrodite Ce (C elegans)
-def: "When egg-laying is still going on but intermittent and during which a significant number of oocytes are laid. Included in reproductive stage adult hermaphrodite." [wb:wjc]
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000062
-name: post-reproductive stage adult hermaphrodite Ce (C elegans)
-def: "Adult hermaphrodites that contain no more sperm, thus stop egg-laying, but still alive. At 20 Centigrade: 5.4 days after L4-adult molt until the death. 8.4 - 13.2 (average wild type life span) days after first cleavage." [wb:wjc]
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000063
-name: newly molted young adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 0-24 hours after L4-adult molt." [wb:wjc]
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000064
-name: 1-day post-L4 adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 24-48 hours after L4-adult molt. 4-5 days after first cleavage." [wb:wjc]
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000065
-name: 2-days post-L4 adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 48-72 hours after L4-adult molt. 5-6 days after first cleavage." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000064 ! 1-day post-L4 adult hermaphrodite Ce (C elegans)
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000066
-name: 3-days post-L4 adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 72-96 hours after L4-adult molt. 6-7 days after first cleavage." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000065 ! 2-days post-L4 adult hermaphrodite Ce (C elegans)
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000067
-name: 4-days post-L4 adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 96-120 hours after L4-adult molt. 7-8 days after first cleavage." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000066 ! 3-days post-L4 adult hermaphrodite Ce (C elegans)
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000068
-name: 5-days post-L4 adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 5-6 days after L4-adult molt. 8-9 days after first cleavage." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000067 ! 4-days post-L4 adult hermaphrodite Ce (C elegans)
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000069
-name: 4-7 days post-L4 adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 4-7 days after L4-adult molt. 7-10 days after first cleavage." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000068 ! 5-days post-L4 adult hermaphrodite Ce (C elegans)
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000070
-name: 7-10 days post-L4 adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 7-10 days after L4-adult molt. 10-13 days after first cleavage." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000069 ! 4-7 days post-L4 adult hermaphrodite Ce (C elegans)
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000071
-name: 8-cell embryo Ce (C elegans)
-def: "~50 min after first cleavage at 20 Centigrade.  Contains 8 cells." [wb:wjc]
-relationship: immediately_preceded_by WBls:0000008 ! 4-cell embryo Ce (C elegans)
-relationship: part_of UBERON:0000108 ! blastula stage
-
-[Term]
-id: WBls:0000072
-name: 12-cell embryo Ce (C elegans)
-def: "~55 min after first cleavage at 20 Centigrade.  Contains 12 cells." [wb:wjc]
-relationship: part_of UBERON:0000108 ! blastula stage
-relationship: preceded_by WBls:0000071 ! 8-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000073
-name: L4 larva male Ce (C elegans)
-def: "The fourth stage larva male. At 25 Centigrade, it ranges 40-49.5 hours after fertilization, 26-35.5 hours after hatch." [wb:wjc]
-is_a: WBls:0000038 ! L4 larva Ce (C elegans)
-
-[Term]
-id: WBls:0000074
-name: 11-15 days post-L4 adult hermaphrodite (C elegans)
-def: "At 20 Centigrade: 11-15 days after L4-adult molt. 14-18 days after first cleavage." [wb:dr]
-relationship: immediately_preceded_by WBls:0000070 ! 7-10 days post-L4 adult hermaphrodite Ce (C elegans)
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
-
-[Term]
-id: WBls:0000077
-name: sheathed microfilaria Bma (C elegans)
-def: "Microfilaria is the stage which develops from the egg and precedes the L1 stage. The larvae are surrounded by a membrane thought to be derived from the vitelline membrane." [wb:dr&mb]
-synonym: "microfilaria" EXACT []
-relationship: part_of WBls:0000097 ! larva Bma (C elegans)
-
-[Term]
-id: WBls:0000078
-name: unsheathed microfilariae Bma (C elegans)
-def: "In the mosquito, the microfilariae shed sheaths, penetrate the midgut, and migrate to the thoracic muscles were the microfilariae increase in size, molt, and develop into infective larvae (L1 and L3) over a span of 7-21 days." [WB:dr&mb]
-relationship: immediately_preceded_by WBls:0000077 ! sheathed microfilaria Bma (C elegans)
-relationship: part_of WBls:0000097 ! larva Bma (C elegans)
-
-[Term]
-id: WBls:0000079
-name: L1 larva Bma (C elegans)
-def: "The first stage larva." [WB:dr&mb]
-relationship: immediately_preceded_by WBls:0000078 ! unsheathed microfilariae Bma (C elegans)
-relationship: part_of WBls:0000097 ! larva Bma (C elegans)
-
-[Term]
-id: WBls:0000080
-name: L2 larva Bma (C elegans)
-def: "The second stage larva. Derived from flight muscles of vector host; some development in vitro, with L1 to L2 moulting, has been demonstrated but rarely; these are often staged by hours or days post blood meal." [wb:dr&mb]
-relationship: immediately_preceded_by WBls:0000079 ! L1 larva Bma (C elegans)
-relationship: part_of WBls:0000097 ! larva Bma (C elegans)
-
-[Term]
-id: WBls:0000081
-name: L3 larva Bma (C elegans)
-def: "The third stage larva." [wb:dr&mb]
-relationship: immediately_preceded_by WBls:0000080 ! L2 larva Bma (C elegans)
-relationship: part_of WBls:0000097 ! larva Bma (C elegans)
-
-[Term]
-id: WBls:0000082
-name: L4 larva Bma (C elegans)
-def: "The fourth stage larva. Should be conditioned by days post infection; as moulting is not synchronous, some samples are defined as L3/L4, indicating a mix of individuals as late L3, moulting, and early L4." [wb:dr&mb]
-relationship: immediately_preceded_by WBls:0000081 ! L3 larva Bma (C elegans)
-relationship: part_of WBls:0000097 ! larva Bma (C elegans)
-
-[Term]
-id: WBls:0000083
-name: adult Bma (C elegans)
-def: "Adults (or at least adult females) can live for 10 years in a human host, and can outlive their rodent laboratory hosts; it is usual to state the chronological age of the nematodes in days or months post-infection, and occasionally post-patency (the production of first microfilariae)." [WB:dr&mb]
-relationship: immediately_preceded_by WBls:0000100 ! young adult Bma (C elegans)
-relationship: part_of UBERON:0000092 ! post-embryonic stage
-
-[Term]
-id: WBls:0000084
-name: 14-cell embryo Ce (C elegans)
-def: "E-cell has divided into Ea and Ep. Contains 14 cells." [wb:dr]
-relationship: part_of UBERON:0000108 ! blastula stage
-relationship: preceded_by WBls:0000072 ! 12-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000085
-name: 24-cell embryo Ce (C elegans)
-def: "Fourth cleavage of the AB lineage. Contains 24 cells." [wb:dr]
-relationship: part_of UBERON:0000108 ! blastula stage
-relationship: preceded_by WBls:0000084 ! 14-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000086
-name: 44-cell embryo Ce (C elegans)
-def: "Fifth cleavage of the AB lineage. Contains 44 cells." [wb:dr]
-relationship: part_of UBERON:0000109 ! gastrula stage
-relationship: preceded_by WBls:0000009 ! 28-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000087
-name: 68-cell embryo Ce (C elegans)
-def: "Sixth cleavage of the AB lineage. Contains 68 cells." [wb:dr]
-relationship: part_of UBERON:0000109 ! gastrula stage
-relationship: preceded_by WBls:0000011 ! 51-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000088
-name: 86-cell embryo Ce (C elegans)
-def: "Seventh cleavage of the AB lineage. Contains 86 cells." [wb:dr]
-relationship: part_of UBERON:0000109 ! gastrula stage
-relationship: preceded_by WBls:0000087 ! 68-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000089
-name: 190-cells embryo Ce (C elegans)
-def: "P4 and M cells have finished migrating. Contains 190 cells." [wb:dr]
-relationship: part_of UBERON:0000109 ! gastrula stage
-relationship: preceded_by WBls:0000090 ! 96-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000090
-name: 96-cell embryo Ce (C elegans)
-def: "155-165 min after first cleavage at 20 Centigrade. Contains 96 cells." [wb:dr]
-relationship: part_of UBERON:0000109 ! gastrula stage
-relationship: preceded_by WBls:0000012 ! 88-cell embryo Ce (C elegans)
-
-[Term]
-id: WBls:0000094
-name: early embryo Bma (C elegans)
-def: "Proliferates from 1 to 100 cells. As the Brugia female reproductive tract is long (>10 cm), it is possible to dissect it and select early embryos just by isolating early parts of the post-spermatheca uterus." [WB:dr&mb]
-relationship: part_of UBERON:0000068 ! embryo stage
-
-[Term]
-id: WBls:0000095
-name: middle embryo Bma (C elegans)
-def: "Proliferates from 100 cells to Lima bean stage." [WB:dr&mb]
-relationship: immediately_preceded_by WBls:0000094 ! early embryo Bma (C elegans)
-relationship: part_of UBERON:0000068 ! embryo stage
-
-[Term]
-id: WBls:0000096
-name: late embryo Bma (C elegans)
-def: "From Lima bean to hatching." [WB:dr&mb]
-relationship: immediately_preceded_by WBls:0000095 ! middle embryo Bma (C elegans)
-relationship: part_of UBERON:0000068 ! embryo stage
-
-[Term]
-id: WBls:0000097
-name: larva Bma (C elegans)
-def: "From the time after hatch till becomes adult." [WB:dr]
-relationship: immediately_preceded_by UBERON:0000068 ! embryo stage
-relationship: part_of UBERON:0000092 ! post-embryonic stage
-
-[Term]
-id: WBls:0000098
-name: vector-derived L3 Bma (C elegans)
-def: "Also known as infective L3, or iL3; i.e. isolated from the vector salivary glands; these samples may-should be conditioned by age, which is usually counted in days from the blood meal." [wb:dr&mb]
-synonym: "iL3" RELATED []
-synonym: "infective L3" RELATED []
-relationship: part_of WBls:0000081 ! L3 larva Bma (C elegans)
-
-[Term]
-id: WBls:0000099
-name: post-infection L3 Bma (C elegans)
-def: "Derived from the host after reintroduction by vector feeding or manual inoculation; these piL3 samples are often-should be conditioned by age (hours or days post-infection)." [wb:dr&mb]
-synonym: "piL3" RELATED []
-relationship: part_of WBls:0000081 ! L3 larva Bma (C elegans)
-
-[Term]
-id: WBls:0000100
-name: young adult Bma (C elegans)
-def: "The animals have a significant \"prepatent\" period in the host, where they have moulted to adults but not yet started producing eggs or sperm; this stage is usually-should be conditioned by days post infection, with day 26 to approximately day 60 being the \"young adult\" in most systems - but note that the speed of development is different in different host genotypes." [wb:dr&mb]
-relationship: immediately_preceded_by WBls:0000082 ! L4 larva Bma (C elegans)
-relationship: part_of UBERON:0000092 ! post-embryonic stage
-
-[Term]
-id: WBls:0000104
-name: adult nematode (C elegans)
-def: "The stage after an animal is fully-developed and reaches maturity." [wb:dr]
-relationship: immediately_preceded_by WBls:0000105 ! larva nematode (C elegans)
-relationship: part_of UBERON:0000092 ! post-embryonic stage
-
-[Term]
-id: WBls:0000105
-name: larva nematode (C elegans)
-def: "From the time after hatch till becomes adult." [wb:dr]
-relationship: part_of UBERON:0000092 ! post-embryonic stage
-
-[Term]
-id: WBls:0000106
-name: L1 larva nematode (C elegans)
-def: "The first stage larva." [wb:dr]
-relationship: immediately_preceded_by WBls:0000110 ! sheathed microfilaria nematode (C elegans)
-relationship: part_of WBls:0000105 ! larva nematode (C elegans)
-
-[Term]
-id: WBls:0000107
-name: L2 larva nematode (C elegans)
-def: "The second stage larva." [wb:dr]
-relationship: immediately_preceded_by WBls:0000106 ! L1 larva nematode (C elegans)
-relationship: part_of WBls:0000105 ! larva nematode (C elegans)
-
-[Term]
-id: WBls:0000108
-name: L3 larva nematode (C elegans)
-def: "The third stage larva." [wb:dr]
-relationship: immediately_preceded_by WBls:0000107 ! L2 larva nematode (C elegans)
-relationship: part_of WBls:0000105 ! larva nematode (C elegans)
-
-[Term]
-id: WBls:0000109
-name: L4 larva nematode (C elegans)
-def: "The fourth stage larva." [wb:dr]
-relationship: immediately_preceded_by WBls:0000108 ! L3 larva nematode (C elegans)
-relationship: part_of WBls:0000105 ! larva nematode (C elegans)
-
-[Term]
-id: WBls:0000110
-name: sheathed microfilaria nematode (C elegans)
-def: "Microfilaria is the stage which develops from the egg and precedes the L1 stage. The larvae are surrounded by a membrane thought to be derived from the vitelline membrane." [wb:dr]
-relationship: part_of WBls:0000105 ! larva nematode (C elegans)
-
-[Term]
-id: WBls:0000111
-name: 16-18 days post-L4 adult hermaphrodite Ce (C elegans)
-def: "At 20 Centigrade: 16-18 days after L4-adult molt. 18-21 days after first cleavage." [wb:dr]
-relationship: immediately_preceded_by WBls:0000074 ! 11-15 days post-L4 adult hermaphrodite (C elegans)
-relationship: part_of WBls:0000057 ! adult hermaphrodite Ce (C elegans)
 
 [Term]
 id: XAO:1000002
@@ -9480,6 +8608,7 @@ id: XAO:1000007
 name: tailbud stage (Xenopus)
 def: "Embryonic stage during which neurulation is completed and tail formation begins, visible by an emerging tail primordium; comprising Nieuwkoop and Faber stages 22 to 44 (feeding), including the beginning of hatching (NF stage 35/36)." [ISBN:0815318960, WWW:www.nature.com/nrg/journal/v5/n6/glossary/nrg1347.html]
 is_a: UBERON:0000068 ! embryo stage
+relationship: preceded_by UBERON:0000111 ! organogenesis stage
 
 [Term]
 id: XAO:1000015
@@ -9940,6 +9069,7 @@ id: XAO:1000079
 name: metamorphosing tadpole stage (Xenopus)
 def: "Tadpole stage during which toe differentiation and rapid hindlimb growth continue, followed by tail resorption; comprising Nieuwkoop and Faber stages 54 to 66." [Bgee:curator, ISBN:0815318960]
 synonym: "metamorphosing tadpole" EXACT []
+relationship: immediately_preceded_by XAO:1000089 ! premetamorphosis stage (Xenopus)
 is_a: UBERON:0009849 ! tadpole stage
 
 [Term]
@@ -9948,6 +9078,7 @@ name: late tailbud stage (Xenopus)
 def: "Tailbud stage that refers to the later events associated with this stage, comprising Nieuwkoop and Faber stages 29/30 to 44." [Bgee:curator, ISBN:0815318960]
 synonym: "late tailbud" EXACT []
 is_a: XAO:1000007 ! tailbud stage (Xenopus)
+relationship: preceded_by XAO:1000002 ! early tailbud stage (Xenopus)
 
 [Term]
 id: XAO:1000089
@@ -9969,6 +9100,7 @@ name: climax stage (Xenopus)
 def: "Metamorphosing tadpole stage during which tail resorption occurs, comprising Nieuwkoop and Faber stages 58 to 66." [ISBN:0124554032]
 synonym: "climax" EXACT []
 is_a: XAO:1000079 ! metamorphosing tadpole stage (Xenopus)
+relationship: immediately_preceded_by XAO:1000090 ! prometamorphosis stage (Xenopus)
 
 [Term]
 id: ZFS:0000005

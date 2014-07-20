@@ -154,8 +154,9 @@ public class CommandRunner {
             UberonDevStage.main(newArgs);
             break;
         case "socketUberonStagesBetween": 
-            CommandRunner.socketUberonStagesBetween(new UberonDevStage(newArgs[0]), 
-                    Integer.parseInt(newArgs[1]), Integer.parseInt(newArgs[2]));
+            CommandRunner.socketUberonStagesBetween(new UberonDevStage(newArgs[0], newArgs[1], 
+                    CommandRunner.parseMapArgumentAsInteger(newArgs[2])), 
+                    Integer.parseInt(newArgs[3]), Integer.parseInt(newArgs[4]));
             break;
             
         //---------- Similarity annotation -----------
@@ -305,22 +306,48 @@ public class CommandRunner {
     }
     
     /**
+     * Delegates to {@link #parseMapArgument(String, Class)} with {@code Class} argument 
+     * being {@code String.class}.
+     * 
+     * @param mapArg    See same name argument in {@link #parseMapArgument(String, Class)}.
+     * @return          See returned value in {@link #parseMapArgument(String, Class)}.
+     */
+    public static Map<String, Set<String>> parseMapArgument(String mapArg) {
+        log.entry(mapArg);
+        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class));
+    }
+    /**
+     * Delegates to {@link #parseMapArgument(String, Class)} with {@code Class} argument 
+     * being {@code Integer.class}.
+     * 
+     * @param mapArg    See same name argument in {@link #parseMapArgument(String, Class)}.
+     * @return          See returned value in {@link #parseMapArgument(String, Class)}.
+     */
+    public static Map<String, Set<Integer>> parseMapArgumentAsInteger(String mapArg) {
+        log.entry(mapArg);
+        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class));
+    }
+    
+    /**
      * Split {@code mapArg} representing a map in a command line argument, where 
      * key-value pairs are separated by {@link #LIST_SEPARATOR}, and keys  
      * are separated from their associated value by {@link #KEY_VALUE_SEPARATOR}. 
      * A same key can be associated to several values, this why values of the returned 
-     * {@code Map} are {@code Set}s of {@code String}s.
+     * {@code Map} are {@code Set}s of {@code T}s. Values will be casted to the same type 
+     * as {@code type}. Are currently supported: {@code String.class}, {@code Integer.class}, 
+     * {@code Boolean.class}. 
      * 
      * @param mapArg    A {@code String} corresponding to a map, see {@link #KEY_VALUE_SEPARATOR} 
      *                  for an example.
+     * @param type      The desired returned type of values.
      * @return          A {@code Map} resulting from the split of {@code mapArg}, where keys 
-     *                  are {@code String}s that are ssociated to a {@code Set} of {@code String}s.
+     *                  are {@code String}s that are associated to a {@code Set} of {@code T}s.
      * @see #KEY_VALUE_SEPARATOR
      */
-    public static Map<String, Set<String>> parseMapArgument(String mapArg) {
-        log.entry(mapArg);
+    private static <T> Map<String, Set<T>> parseMapArgument(String mapArg, Class<T> type) {
+        log.entry(mapArg, type);
         
-        Map<String, Set<String>> resultingMap = new HashMap<String, Set<String>>();
+        Map<String, Set<T>> resultingMap = new HashMap<String, Set<T>>();
         mapArg = mapArg.trim();
         if (!mapArg.equals(EMPTY_LIST)) {
             for (String arg: mapArg.split(LIST_SEPARATOR)) {
@@ -336,12 +363,18 @@ public class CommandRunner {
                         
                     String key = keyValue[0].trim();
                     String value = keyValue[1].trim();
-                    Set<String> existingValues = resultingMap.get(key);
+                    Set<T> existingValues = resultingMap.get(key);
                     if (existingValues == null) {
-                        existingValues = new HashSet<String>();
+                        existingValues = new HashSet<T>();
                         resultingMap.put(key, existingValues);
                     }
-                    existingValues.add(value);
+                    if (type.equals(Integer.class)) {
+                        existingValues.add(type.cast(Integer.parseInt(value)));
+                    } else if (type.equals(Boolean.class)) {
+                        existingValues.add(type.cast(Boolean.parseBoolean(value)));
+                    } else {
+                        existingValues.add(type.cast(value));
+                    }
                 }
             }
         }

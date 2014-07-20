@@ -97,8 +97,8 @@ public class UberonDevStage extends UberonCommon {
      *   already generated, so that you don't need the "in_taxon" relations): 
      *   {@code java -Xmx2g -jar myJar 
      *   Uberon generateStageOntology ext.owl dev_stage_ont  
-     *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000 
-     *   UBERON:0000069 
+     *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000,BFO:0000003,MmusDv:0000041 
+     *   -
      *   BFO:0000050,BFO:0000062,RO:0002087
      *   UBERON:0000104,FBdv:00000000}
      * </ul>
@@ -185,19 +185,30 @@ public class UberonDevStage extends UberonCommon {
     }
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
-     * and the path the a file containing taxon constraints, as parsable by 
-     * {@link TaxonConstraints#extractTaxonConstraints(String)}.
+     * the path the a file containing taxon constraints, as parsable by 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}, and 
+     * {@code idStartsToOverridenTaxonIds}, allowing to override constraints 
+     * retrieved from the file (see {@link TaxonConstraints#extractTaxonConstraints(String, Map)}). 
+     * This argument can be {@code null}, but as usage of the developmental stage ontology 
+     * requires precise taxon constraints, this is unlikely. 
      * 
-     * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
-     * @param pathToUberon  A {@code String} that is the path to the taxon constraints. 
+     * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
+     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
+     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
+     *                                      representing prefixes of uberon terms to match, 
+     *                                      the associated value being a {@code Set} 
+     *                                      of {@code Integer}s to replace taxon constraints 
+     *                                      of matching terms.
      * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(String pathToUberon, String pathToTaxonConstraints) 
+    public UberonDevStage(String pathToUberon, String pathToTaxonConstraints, 
+            Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         this(new OntologyUtils(pathToUberon), 
-                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints));
+                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints, 
+                        idStartsToOverridenTaxonIds));
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
@@ -508,25 +519,44 @@ public class UberonDevStage extends UberonCommon {
                         incomingEdge.isSourceNamedObject()) {
                   
                     OWLClass child = (OWLClass) incomingEdge.getSource();
-                    Set<Integer> speciesIds = null;
                     if (this.getTaxonConstraints() != null) {
-                        speciesIds = this.getTaxonConstraints().get(
+                        Set<Integer> speciesIds = this.getTaxonConstraints().get(
                             this.getOntologyUtils().getWrapper().getIdentifier(child));
+                        if (speciesIds == null || speciesIds.isEmpty()) {
+                            log.warn("Discarding stage {} because no taxon constraints defined, or does not exist in any taxon", 
+                                    child);
+                        } else {
+                            for (int speciesId: speciesIds) {
+                                log.trace("Child {} assigned to species key {}", child, speciesId);
+                                if (!children.containsKey(speciesId)) {
+                                    children.put(speciesId, new HashSet<OWLClass>());
+                                }
+                                children.get(speciesId).add(child);
+                            }
+                            walker.offerLast(child);
+                        }
+                    } else {
+                        int speciesId = 0;
+                        log.trace("Child {} assigned to species key {}", child, speciesId);
+                        if (!children.containsKey(speciesId)) {
+                            children.put(speciesId, new HashSet<OWLClass>());
+                        }
+                        children.get(speciesId).add(child);
+                        walker.offerLast(child);
                     }
-                    Integer speciesKey = 0;
-                    if (speciesIds != null && speciesIds.size() == 1) {
-                        speciesKey = speciesIds.iterator().next();
-                    }
-                    log.trace("Child {} assigned to species key {}", child, speciesKey);
-                    if (!children.containsKey(speciesKey)) {
-                        children.put(speciesKey, new HashSet<OWLClass>());
-                    }
-                    children.get(speciesKey).add(child);
-                    walker.offerLast(child);
+                    
                 }
             }
             if (!children.isEmpty()) {
-                for (Set<OWLClass> sameSpeciesChildren: children.values()) {
+                //filtering identical Sets associated to different species
+                Map<Integer, Set<OWLClass>> filteredChildren = new HashMap<Integer, Set<OWLClass>>();
+                for (Entry<Integer, Set<OWLClass>> sameSpeciesChildren: children.entrySet()) {
+                    if (!filteredChildren.values().contains(sameSpeciesChildren.getValue())) {
+                        filteredChildren.put(sameSpeciesChildren.getKey(), 
+                                sameSpeciesChildren.getValue());
+                    }
+                }
+                for (Set<OWLClass> sameSpeciesChildren: filteredChildren.values()) {
                     globalOrdering.addAll(this.orderByPrecededBy(sameSpeciesChildren));
                 }
             }
@@ -861,7 +891,8 @@ public class UberonDevStage extends UberonCommon {
                     throw log.throwing(new IllegalStateException(
                             "An OWLClass has no preceded_by relations " +
                                     "to same level OWLClasses (" + precedingClass + "), " +
-                                    "among the following " + classesToOrder));
+                                    "among the following " + classesToOrder + 
+                                    " (classes already ordered: " + orderedClasses + ") "));
                 }
                 
                 

@@ -332,8 +332,7 @@ abstract class UberonCommon {
         }
         Set<Integer> validSpecies = this.getTaxonConstraints().get(
                 this.getOntologyUtils().getWrapper().getIdentifier(cls));
-        if (validSpecies != null && !validSpecies.isEmpty() && 
-                !validSpecies.contains(taxonId)) {
+        if (validSpecies == null || !validSpecies.contains(taxonId)) {
             return log.exit(false);
         }
         return log.exit(true);

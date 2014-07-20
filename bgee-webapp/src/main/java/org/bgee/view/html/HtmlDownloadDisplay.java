@@ -321,8 +321,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	@Override
 	public void includeJs()
 	{
-		this.includeJs("jquery");
-		this.includeJs("download");
+		this.includeJs("jquery.js");
+		this.includeJs("download.js");
 	}
 
 }

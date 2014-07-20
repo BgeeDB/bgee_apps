@@ -36,8 +36,8 @@ public class BgeeStringUtils extends org.apache.commons.lang3.StringUtils {
 	 * Perform security controls and prepare the submitted <code>String</code> for use. It includes
 	 * a check of the <code>String</code> length and the format of the <code>String</code>.
 	 * 
-	 * @param  	stringToCheck	stringToCheck a {@code String} to be checked 
-	 * @param 	lengthToCheck 	an <code>int</code> defining the max allowed length of 
+	 * @param stringToCheck		a {@code String} to be checked 
+	 * @param lengthToCheck 	an <code>int</code> defining the max allowed length of 
 	 * 							<code>stringToCheck</code>.
 	 * 							If <code>stringToCheck</code> is greater than 0, and if the length of
 	 * 							 <code>stringToCheck</code> is greater than <code>lengthToCheck</code>, 
@@ -45,12 +45,14 @@ public class BgeeStringUtils extends org.apache.commons.lang3.StringUtils {
 	 * 							If <code>stringToCheck</code> is equal to 0, no control are performed 
 	 * 							on string length (but other modifications are still performed, 
 	 * 							such as triming the <code>String</code>). 
-	 * @param	format			A {@code String} that contains the regular expression the 
+	 * @param format			A {@code String} that contains the regular expression the 
 	 * 							{@code String} should match.
-	 * @return 	a secured and prepared <code>String</code>. Return an empty String if security checks
-	 * 			have failed, or if the stringToCheck was null, or of its length was greater than 
-	 * 			<code>lengthToCheck</code>.
-	 * TODO 	log message if the String is discarded.
+	 * @return 					a secured and prepared <code>String</code>. Return an empty String
+	 * 							 if security checks
+	 * 							have failed, or if the stringToCheck was null, or of its length 
+	 * 							was greater than 
+	 * 							<code>lengthToCheck</code>.
+	 * 							TODO 	log message if the String is discarded.
 	 */
 	public static String secureString(String stringToCheck, int lengthToCheck, String format)
 	{
@@ -67,11 +69,11 @@ public class BgeeStringUtils extends org.apache.commons.lang3.StringUtils {
 	 * Perform security controls and prepare the submitted <code>String</code> for use, 
 	 * without checking length of <code>stringToCheck</code> (<code>MAXSTRINGLENGTH</code>).
 	 * 
-	 * @param  	stringToCheck
-	 * @return 	a secured and prepared <code>String</code>. Return an empty String if security checks
-	 * 			 have failed, or if the stringToCheck was null.
-	 * @see 	#secureString(String)
-	 * TODO 	log message if the String is discarded.
+	 * @param stringToCheck
+	 * @return 		a secured and prepared <code>String</code>. Return an empty String if security checks
+	 * 			 	have failed, or if the stringToCheck was null.
+	 * @see #secureString(String)
+	 * TODO 		log message if the String is discarded.
 	 */
 	public static String secureStringWithoutLengthCheck(String stringToCheck)
 	{

@@ -20,52 +20,6 @@ import org.apache.logging.log4j.Logger;
  * Of note, an additional property allows to change the name of the property file 
  * to use (corresponds to the property {@code bgee.properties.file}).
  * <p>
- * The properties are
- * - requestParametersStorageDirectory	 A <code>String</code> that defines the directory 
- * 										 where query strings holding storable parameters  
- * 										 from previous large queries are stored. 
- * 
- * - bgeeRootDirectory					 A <code>String</code> that defines the root of URLs to Bgee, 
- * 										 for instance, "http://bgee.unil.ch/bgee/bgee".
- * 
- * - downloadRootDirectory				 A <code>String</code> that defines the root directory where are located files
- * 										 available for download, 
- *										 to be added to the <code>bgeeRootDirectory</code>
- *										 to generate URL to download files.
- *										 
- * - javascriptFilesRootDirectory		 A <code>String</code> that defines the root directory where are located javascript files, 
- *										 to be added to the <code>bgeeRootDirectory</code>
- *										 to generate URL to obtain javascript files.
- *										
- * - cssFilesRootDirectory			 	 A <code>String</code> that defines the root directory where are located css files, 
- *										 to be added to the <code>bgeeRootDirectory</code> 
- *										 to generate URL to obtain css files.
- *
- * - imagesRootDirectory				 A <code>String</code> that defines the root directory where are located images, 
- *									 	 to be added to the <code>bgeeRootDirectory</code> 
- *									 	 to generate URL to obtain images.
- *									 	 
- * - topOBOResultsUrlRootDirectory		 A <code>String</code> that defines the directory where are stored TopOBO result files, 
- * 										 to be added to the <code>bgeeRootDirectory</code>
- * 										 to generate URL to obtain result files.
- * 
- * - urlMaxLength						 An <code>Integer</code> that defines  max length of URLs. Typically, if the URL exceeds the max length, 
- * 										 a key is generated to store and retrieve a query string, 
- * 										 holding the "storable" parameters. The "storable" parameters are removed from the URL, 
- * 										 and replaced by the generated key.
- * 
- * - encodeUrl							 A <code>boolean</code> that defines whether parameters should be url encoded 
- * 										 by the <code>encodeUrl</code> method.
- * 										 If <code>false</code>, then the <code>encodeUrl</code> method returns 
- * 										 Strings with no modifications, otherwise, they are url encoded if needed 
- * 										 (it does not necessarily mean they will. For index, if there are no 
- * 										 special chars to encode in the submitted String).
- * 										 <parameter>
- * 										 Default value is <code>true</code>.
- * 
- * - parametersSeparator				 A {@code String} that defines the character used to separate parameters 
- * 								   		 in the URL
- * <p>
  * This class has been inspired from {@code net.sf.log4jdbc.DriverSpy} 
  * developed by Arthur Blake.
  * 

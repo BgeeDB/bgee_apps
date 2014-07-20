@@ -224,7 +224,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 
 	protected void includeJs(String filename){
 		this.writeln("<script  type='text/javascript' src='"+
-		        BgeeProperties.getJavascriptFilesRootDirectory()+filename+".js'></script>");
+		        BgeeProperties.getJavascriptFilesRootDirectory()+filename+"'></script>");
 	}
 
 }

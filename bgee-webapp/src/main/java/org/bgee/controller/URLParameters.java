@@ -15,9 +15,12 @@ import org.apache.logging.log4j.Logger;
  * contained by a specific occurrence of a parameter, and this role is fulfilled
  * by {@link RequestParameters}.
  * <p>
- * This class provides methods to access individually to all parameters and also
+ * This class provides public instance methods to access individually to all parameters and also
  * maintains a {@code List<Parameter<T>>} to allow operations on all
  * parameters without explicitly calling them (see {@link #getList()}).
+ * With the instance method that wrap the parameter, an instance of this class can be
+ * injected when an object that need to use it is created. This is why the static parameters are
+ * not directly accessible.
  * <p>
  * An instance of this class has to be injected to the constructor of 
  * {@code RequestParameters} (dependency injection).
@@ -135,7 +138,7 @@ public class URLParameters {
 	 * DESCRIPTION PARAM
 	 */
 	private static final Parameter<String> PAGE = new Parameter<String>("page",
-			false, false, DEFAULT_IS_SECURE, 
+			DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
 			DEFAULT_MAX_SIZE, 
 			DEFAULT_FORMAT,String.class);
 

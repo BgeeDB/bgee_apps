@@ -77,14 +77,9 @@ public class UberonCommonTest extends TestAncestor {
         assertFalse(uberon.existsInSpecies(cls, 3));
         
         cls = wrapper.getOWLClassByIdentifier("ID:4");
-        assertTrue(uberon.existsInSpecies(cls, 1));
-        assertTrue(uberon.existsInSpecies(cls, 2));
-        assertTrue(uberon.existsInSpecies(cls, 3));
-        
-        cls = wrapper.getOWLClassByIdentifier("ID:4");
-        assertTrue(uberon.existsInSpecies(cls, 1));
-        assertTrue(uberon.existsInSpecies(cls, 2));
-        assertTrue(uberon.existsInSpecies(cls, 3));
+        assertFalse(uberon.existsInSpecies(cls, 1));
+        assertFalse(uberon.existsInSpecies(cls, 2));
+        assertFalse(uberon.existsInSpecies(cls, 3));
     }
 
 }

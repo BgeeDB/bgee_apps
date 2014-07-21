@@ -523,7 +523,7 @@ public class UberonDevStage extends UberonCommon {
                         Set<Integer> speciesIds = this.getTaxonConstraints().get(
                             this.getOntologyUtils().getWrapper().getIdentifier(child));
                         if (speciesIds == null || speciesIds.isEmpty()) {
-                            log.warn("Discarding stage {} because no taxon constraints defined, or does not exist in any taxon", 
+                            log.debug("Discarding stage {} because no taxon constraints defined, or does not exist in any taxon", 
                                     child);
                         } else {
                             for (int speciesId: speciesIds) {
@@ -557,7 +557,10 @@ public class UberonDevStage extends UberonCommon {
                     }
                 }
                 for (Set<OWLClass> sameSpeciesChildren: filteredChildren.values()) {
-                    globalOrdering.addAll(this.orderByPrecededBy(sameSpeciesChildren));
+                    List<OWLClass> orderedSameSpeciesChildren = 
+                            this.orderByPrecededBy(sameSpeciesChildren);
+                    globalOrdering = OntologyUtils.mergeLists(globalOrdering, 
+                            orderedSameSpeciesChildren);
                 }
             }
         }
@@ -693,6 +696,11 @@ public class UberonDevStage extends UberonCommon {
             int endRightBound = nestedModel.get(endStage).get(OntologyUtils.RIGHT_BOUND_KEY);
             int endLevel = nestedModel.get(endStage).get(OntologyUtils.LEVEL_KEY);
             int maxLevel = Math.max(startLevel, endLevel);
+            
+            if (startLeftBound >= endLeftBound) {
+                throw log.throwing(new IllegalStateException("The start stage provided " +
+                		"is actually a successor of the end stage provided"));
+            }
             
             //now we get all stages belonging to the requested species, 
             //between start and end stages, with a level not greater 

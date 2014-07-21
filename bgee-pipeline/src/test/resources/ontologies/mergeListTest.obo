@@ -1,0 +1,30 @@
+format-version: 1.4
+ontology: foo
+
+[Term]
+id: FOO:0001
+name: root
+
+[Term]
+id: FOO:0002
+name: A
+
+[Term]
+id: FOO:0003
+name: B
+
+[Term]
+id: FOO:0004
+name: C
+
+[Term]
+id: FOO:0005
+name: D
+
+[Term]
+id: FOO:0006
+name: E
+
+[Term]
+id: FOO:0007
+name: F

@@ -8353,7 +8353,7 @@ relationship: part_of UBERON:0000068 ! embryo stage
 relationship: preceded_by UBERON:0004707 ! pharyngula stage
 relationship: preceded_by UBERON:0000111 ! organogenesis stage
 relationship: immediately_preceded_by FBdv:00005331 ! dorsal closure stage (Drosophila) - TODO: CGI
-relationship: preceded_by FBdv:00005316 ! INCORRECT but we need it - TODO: CGI
+relationship: immediately_preceded_by FBdv:00005332 ! embryonic stage 15 (Drosophila) - TODO: CGI
 relationship: preceded_by RnorDv:00000010 ! metamorphosing embryo stage - TODO: need CGI here
 
 [Term]

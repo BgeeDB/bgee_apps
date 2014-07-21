@@ -144,6 +144,9 @@ public class CommandRunnerTest extends TestAncestor {
         expectedMap.put("key1", new HashSet<String>(Arrays.asList("value1", "value2")));
         expectedMap.put("key2", new HashSet<String>(Arrays.asList("value2")));
         expectedMap.put("key3", new HashSet<String>(Arrays.asList("value3")));
+        expectedMap.put("key4", new HashSet<String>(Arrays.asList("value4_1", 
+                "value4_2", "value4_3")));
+        expectedMap.put("key5", new HashSet<String>());
         assertEquals("Incorrect parsing of string as map", 
                 expectedMap, 
                 CommandRunner.parseMapArgument(
@@ -156,7 +159,13 @@ public class CommandRunnerTest extends TestAncestor {
                         "key1" + CommandRunner.KEY_VALUE_SEPARATOR + "value2" + 
                             CommandRunner.LIST_SEPARATOR + 
                         "key3" + CommandRunner.KEY_VALUE_SEPARATOR + "value3" + 
-                            CommandRunner.LIST_SEPARATOR));
+                            CommandRunner.LIST_SEPARATOR + 
+                        "key4" + CommandRunner.KEY_VALUE_SEPARATOR + "value4_1" + 
+                            CommandRunner.VALUE_SEPARATOR + "value4_2" + 
+                            CommandRunner.VALUE_SEPARATOR + "value4_3" + 
+                            CommandRunner.LIST_SEPARATOR + 
+                        "key5" + CommandRunner.KEY_VALUE_SEPARATOR + 
+                            CommandRunner.EMPTY_LIST));
         
         expectedMap.clear();
         expectedMap.put("key1", new HashSet<String>(Arrays.asList("value1")));
@@ -175,6 +184,7 @@ public class CommandRunnerTest extends TestAncestor {
         expectedMap.put("key1", new HashSet<Integer>(Arrays.asList(1, 2)));
         expectedMap.put("key2", new HashSet<Integer>(Arrays.asList(2)));
         expectedMap.put("key3", new HashSet<Integer>(Arrays.asList(3)));
+        expectedMap.put("key4", new HashSet<Integer>(Arrays.asList(4, 5, 6)));
         assertEquals("Incorrect parsing of string as map", 
                 expectedMap, 
                 CommandRunner.parseMapArgumentAsInteger(
@@ -187,7 +197,10 @@ public class CommandRunnerTest extends TestAncestor {
                         "key1" + CommandRunner.KEY_VALUE_SEPARATOR + "2" + 
                             CommandRunner.LIST_SEPARATOR + 
                         "key3" + CommandRunner.KEY_VALUE_SEPARATOR + "3" + 
-                            CommandRunner.LIST_SEPARATOR));
+                            CommandRunner.LIST_SEPARATOR + 
+                        "key4" + CommandRunner.KEY_VALUE_SEPARATOR + "4" + 
+                            CommandRunner.VALUE_SEPARATOR + "5" + 
+                            CommandRunner.VALUE_SEPARATOR + "6"));
         
         expectedMap.clear();
         expectedMap.put("key1", new HashSet<Integer>(Arrays.asList(1)));

@@ -3,6 +3,7 @@ package org.bgee.pipeline.ontologycommon;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -713,6 +714,72 @@ public class OntologyUtils {
         params.put(RIGHT_BOUND_KEY, rightBound);
         params.put(LEVEL_KEY, level);
         return params;
+    }
+
+    /**
+     * Merge {@code list1} and {@code list2} by identifying common {@code OWLClass}es 
+     * and keeping the order consistent for both provided lists. So for instance, 
+     * if {@code list1} contains {@code cls1}, {@code cls2}, and {@code cls3}, and 
+     * if {@code list1} contains {@code cls4}, {@code cls2}, and {@code cls5}, 
+     * then the resulted mergeds list would be: {@code cls1}, {@code cls4}, 
+     * {@code cls2}, {@code cls3}, {@code cls5}.
+     * 
+     * @param list1 A first {@code List} of {@code OWLClass}es to be merged. 
+     * @param list2 A second {@code List} of {@code OWLClass}es to be merged. 
+     * @return      The resulting merged {@code List} of {@code OWLClass}es properly 
+     *              ordered. 
+     * @throw IllegalArgumentException  If some of the {@code List}s contains several 
+     *                                  equal elements. 
+     */
+    public static <T> List<T> mergeLists(List<T> list1, List<T> list2) 
+        throws IllegalArgumentException {
+        log.entry(list1, list2);
+        
+        List<T> mergedList = new ArrayList<T>();
+        
+        //we need to identify at least one common element, other common element will be considered 
+        //during recursive iterations.
+        Set<T> set1 = new HashSet<T>(list1);
+        if (set1.size() != list1.size()) {
+            throw log.throwing(new IllegalArgumentException("The following list contains " +
+            		"non-unique elements: " + list1));
+        }
+        Set<T> set2 = new HashSet<T>(list2);
+        if (set2.size() != list2.size()) {
+            throw log.throwing(new IllegalArgumentException("The following list contains " +
+                    "non-unique elements: " + list2));
+        }
+        set1.retainAll(set2);
+        
+        //now, reorder the elements that are before and after the common elements
+        if (!set1.isEmpty()) {
+            log.trace("Elements in common.");
+            //get any common element
+            T commonElement = set1.iterator().next();
+            log.trace("Element in common used as anchor: {}", commonElement);
+            
+            int commonClassIndex1 = list1.indexOf(commonElement);
+            List<T> firstPartList1 = list1.subList(0, commonClassIndex1);
+            List<T> secondPartList1 = list1.subList(commonClassIndex1 + 1, list1.size());
+            int commonClassIndex2 = list2.indexOf(commonElement);
+            List<T> firstPartList2 = list2.subList(0, commonClassIndex2);
+            List<T> secondPartList2 = list2.subList(commonClassIndex2 + 1, list2.size());
+            log.trace("First part list 1: {} - first part list 2: {} --- second part list1 {} - second part list2: {}", 
+                    firstPartList1, firstPartList2, secondPartList1, secondPartList2);
+            
+            //merge the first parts and the seconds parts, add the common element in between
+            List<T> firstPart = OntologyUtils.mergeLists(firstPartList1, firstPartList2);
+            List<T> secondPart = OntologyUtils.mergeLists(secondPartList1, secondPartList2);
+            mergedList.addAll(firstPart);
+            mergedList.add(commonElement);
+            mergedList.addAll(secondPart);
+        } else {
+            log.trace("No elements in common, simply adding the two lists.");
+            mergedList.addAll(list1);
+            mergedList.addAll(list2);
+        }
+        
+        return log.exit(mergedList);
     }
     
     /**

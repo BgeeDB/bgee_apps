@@ -312,11 +312,10 @@ abstract class UberonCommon {
      * This can be determined only if taxon constraints have been provided (see 
      * {@link #setTaxonConstraints(Map)}). If no taxon contraints have been provided, 
      * or {@code taxonId} is equal to 0, this method will always return {@code true}. 
-     * If some taxon constraints have been provided, but none are defined for {@code cls}, 
-     * this method will also return {@code true}. If some taxon constraints have been provided, 
-     * that some are defined for {@code cls}, and if {@code taxonId} is different from 0, 
+     * If some taxon constraints have been provided, and if {@code taxonId} is different from 0, 
      * then this method will return {@code true} if {@code cls} belongs to the taxon, 
-     * {@code false} otherwise. 
+     * {@code false} otherwise (if the taxon does not belong to the set of taxon IDs 
+     * associated to the class). 
      * 
      * @param cls           An {@code OWLClass} for which we want to determine whether 
      *                      it belongs to the taxon with ID {@code taxonId}.

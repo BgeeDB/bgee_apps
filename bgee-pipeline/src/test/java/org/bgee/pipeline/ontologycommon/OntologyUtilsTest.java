@@ -579,6 +579,7 @@ public class OntologyUtilsTest extends TestAncestor {
     /**
      * Test the method {@link #getMinDistance(OWLClass, OWLClass, Set)}
      */
+    @SuppressWarnings("rawtypes")
     @Test
     public void shouldGetMinDistance() throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
@@ -612,6 +613,7 @@ public class OntologyUtilsTest extends TestAncestor {
         
         OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0004");
         OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0006");
+        @SuppressWarnings("rawtypes")
         Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
                 Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
                         OntologyUtils.PART_OF_ID), wrapper.getOWLObjectPropertyByIdentifier(
@@ -626,5 +628,32 @@ public class OntologyUtilsTest extends TestAncestor {
         assertEquals("Incorrect least common ancestor", 
                 expectedLcas, 
                 utils.getLeastCommonAncestors(cls1, cls2, overProps));
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#mergeLists(List, List)}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldMergeLists() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/mergeListTest.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+        OWLClass cls6 = wrapper.getOWLClassByIdentifier("FOO:0006");
+        OWLClass cls7 = wrapper.getOWLClassByIdentifier("FOO:0007");
+        
+        assertEquals("Incorrect merge of List of OWLClasses", 
+                Arrays.asList(cls1, cls5, cls2, cls4, cls3, cls6, cls7), 
+                OntologyUtils.mergeLists(Arrays.asList(cls1, cls2, cls3, cls6), 
+                        Arrays.asList(cls5, cls2, cls4, cls3, cls6, cls7)));
     }
 }

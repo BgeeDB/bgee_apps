@@ -85,6 +85,14 @@ public class CommandRunner {
      */
     public static final String KEY_VALUE_SEPARATOR = "/";
     /**
+     * A {@code String} that is the separator between different values associated to a same key, 
+     * in a list of key-value pairs of a map, 
+     * when a map needs to be provided as a single argument for a command line usage. 
+     * 
+     * @see #KEY_VALUE_SEPARATOR
+     */
+    public static final String VALUE_SEPARATOR = "--";
+    /**
      * A {@code String} that represents the character to provide an empty list, as argument 
      * of command line usage.
      * 
@@ -362,18 +370,21 @@ public class CommandRunner {
                     }
                         
                     String key = keyValue[0].trim();
-                    String value = keyValue[1].trim();
                     Set<T> existingValues = resultingMap.get(key);
                     if (existingValues == null) {
                         existingValues = new HashSet<T>();
                         resultingMap.put(key, existingValues);
                     }
-                    if (type.equals(Integer.class)) {
-                        existingValues.add(type.cast(Integer.parseInt(value)));
-                    } else if (type.equals(Boolean.class)) {
-                        existingValues.add(type.cast(Boolean.parseBoolean(value)));
-                    } else {
-                        existingValues.add(type.cast(value));
+                    if (!keyValue[1].trim().equals(EMPTY_LIST)) {
+                        for (String value: keyValue[1].trim().split(VALUE_SEPARATOR)) {
+                            if (type.equals(Integer.class)) {
+                                existingValues.add(type.cast(Integer.parseInt(value)));
+                            } else if (type.equals(Boolean.class)) {
+                                existingValues.add(type.cast(Boolean.parseBoolean(value)));
+                            } else {
+                                existingValues.add(type.cast(value));
+                            }
+                        }
                     }
                 }
             }

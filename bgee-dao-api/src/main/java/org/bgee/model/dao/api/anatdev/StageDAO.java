@@ -55,7 +55,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
      *                          do not expose these kind of implementation details).
      */
-    public int insertTaxa(Collection<StageTO> stages);
+    public int insertStages(Collection<StageTO> stages);
     
 
     /**

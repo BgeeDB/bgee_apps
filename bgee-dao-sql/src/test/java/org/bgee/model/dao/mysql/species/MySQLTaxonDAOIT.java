@@ -45,7 +45,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
     }
     
     /**
-     * Test the insertion method {@link MySQLSpeciesDAO#insertTaxa(Collection)}.
+     * Test the insertion method {@link MySQLTaxonDAO#insertTaxa(Collection)}.
      */
     @Test
     public void shouldInsertTaxa() throws SQLException {

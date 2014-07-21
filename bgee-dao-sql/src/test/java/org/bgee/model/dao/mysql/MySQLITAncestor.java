@@ -350,6 +350,16 @@ public abstract class MySQLITAncestor extends TestAncestor{
                     "'FAKEPREFIX'), " +
                 "(31, 'gen31', 'sp31', 'spCName31', 311, 'path/genome31', 0, '')");
         stmt.executeUpdate();
+        // stage table
+        stmt = con.prepareStatement(
+                "INSERT INTO stage (stageId, stageName, stageDescription, " +
+                "stageLeftBound, stageRightBound, stageLevel, " +
+                "tooGranular, groupingStage) VALUES " +
+                "('Stage_id1', 'stageN1', 'stage Desc 1', 1, 6, 1, false, true), " +
+                "('Stage_id2', 'stageN2', 'stage Desc 2', 2, 3, 2, true, false), " +
+                "('Stage_id3', 'stageN3', 'stage Desc 3', 4, 5, 2, false, false)");
+        stmt.executeUpdate();
+        
         // gene table
         stmt = con.prepareStatement(
                 "INSERT INTO gene (geneId, geneName, geneDescription, speciesId, " +

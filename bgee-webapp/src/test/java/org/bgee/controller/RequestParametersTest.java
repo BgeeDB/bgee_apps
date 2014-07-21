@@ -128,9 +128,9 @@ public class RequestParametersTest {
 
 		// Check that the query returned corresponds to the parameters declared in
 		// the mockHttpServletRequest.
-		assertEquals("Incorrect query returned ","?test_string=string1%26test_integer="
+		assertEquals("Incorrect query returned ","test_string=string1%26test_integer="
 				+ "1234%26test_integer=2345%26test_boolean=true%26test_boolean="
-				+ "false%2",this.requestParametersWithNoKey.getRequestURL());
+				+ "false%2",this.requestParametersWithNoKey.getRequestURL("&"));
 
 		// Add a parameter value to exceed the threshold over which a key is used
 		// (110 for tests),
@@ -141,9 +141,9 @@ public class RequestParametersTest {
 				testURLParameters.getParamTestInteger(),987654321);
 
 		assertEquals("Incorrect query returned ", 
-				"?test_string=string1"
+				"test_string=string1"
 				+ "%26data=7ebf4a8a9365930d16773b7b202f166bcebd6efa%2", 
-				this.requestParametersWithNoKey.getRequestURL());
+				this.requestParametersWithNoKey.getRequestURL("&"));
 
 
 		// Check that the storable parameters are loaded correctly from the 
@@ -152,9 +152,9 @@ public class RequestParametersTest {
 		// non storable parameters as well.
 
 		assertEquals("Incorrect query returned ", 
-				"?test_string=string1"
+				"test_string=string1"
 				+ "%26data=7ebf4a8a9365930d16773b7b202f166bcebd6efa%2", 
-				this.requestParametersHavingAKey.getRequestURL());
+				this.requestParametersHavingAKey.getRequestURL("&"));
 
 	}
 
@@ -324,8 +324,8 @@ public class RequestParametersTest {
 				.cloneWithAllParameters();
 		
 		assertEquals("Wrong state of the parameters of the cloned object",
-				this.requestParametersWithNoKey.getRequestURL(),
-				clone.getRequestURL());
+				this.requestParametersWithNoKey.getRequestURL("&"),
+				clone.getRequestURL("&"));
 		
 
 		// Test that the cloned parameters has exactly the same behavior as the source
@@ -335,8 +335,8 @@ public class RequestParametersTest {
 				.cloneWithAllParameters();
 				
 		assertEquals("Wrong state of the parameters of the cloned object",
-				clone2.getRequestURL(),
-				this.requestParametersHavingAKey.getRequestURL());
+				clone2.getRequestURL("&"),
+				this.requestParametersHavingAKey.getRequestURL("&"));
 				
 	}
 
@@ -366,8 +366,8 @@ public class RequestParametersTest {
 				testURLParameters.getParamTestString());
 		
 		assertEquals("Wrong state of the parameters of the cloned object",
-				this.requestParametersWithNoKey.getRequestURL(),
-				clone.getRequestURL());
+				this.requestParametersWithNoKey.getRequestURL("&"),
+				clone.getRequestURL("&"));
 		
 
 		// Test that the cloned parameters return only the same storable parameters
@@ -384,8 +384,8 @@ public class RequestParametersTest {
 				testURLParameters.getParamTestString());
 				
 		assertEquals("Wrong state of the parameters of the cloned object",
-				this.requestParametersHavingAKey.getRequestURL(),
-				clone2.getRequestURL()
+				this.requestParametersHavingAKey.getRequestURL("&"),
+				clone2.getRequestURL("&")
 				);
 	}
 	

@@ -61,7 +61,7 @@ public class FrontController extends HttpServlet {
 			request.setCharacterEncoding("UTF-8");
 			requestParameters = new RequestParameters(request, urlParameters);
 			
-			log.info("Analyzed URL: " + requestParameters.getRequestURL());
+			log.info("Analyzed URL: " + requestParameters.getRequestURL("&"));
 
 			HttpSession session = request.getSession();
 			session.setMaxInactiveInterval(86400);
@@ -82,7 +82,7 @@ public class FrontController extends HttpServlet {
 			
 			controller.processRequest();
 
-			session.setAttribute("previousPage", requestParameters.getRequestURL());
+			session.setAttribute("previousPage", requestParameters.getRequestURL("&"));
 			
 		} catch(RequestParametersNotFoundException e) {
 			generalDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(

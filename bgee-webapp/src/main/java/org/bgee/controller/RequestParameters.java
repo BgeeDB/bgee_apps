@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.URLParameters.Parameter;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
@@ -185,9 +186,6 @@ public class RequestParameters {
 		// Load the parameters
 		this.loadParameters(request);
 
-		// Generate the value of the URL for the present state of the request parameters
-		this.generateParametersQuery();
-
 		log.exit();
 
 	}
@@ -216,7 +214,7 @@ public class RequestParameters {
 		log.entry(request);
 
 		if (BgeeStringUtils.isBlank(request.getParameter(
-				this.URLParametersInstance.getParamData().getName()))) {
+				this.getKeyParam().getName()))) {
 			log.debug("The key is blank, load params from request");
 			//no key set, get the parameters from the URL
 			this.loadParametersFromRequest(request, true);
@@ -226,17 +224,17 @@ public class RequestParameters {
 
 			//we need to store the key, 
 			//because setting storable parameters reset the generatedKey
-			String key = this.getFirstValue(this.URLParametersInstance.getParamData());
+			String key = this.getFirstValue(this.getKeyParam());
 			try {
 				this.loadStorableParametersFromKey(request.getParameter(
-						this.URLParametersInstance.getParamData().getName()));
+						this.getKeyParam().getName()));
 			} catch (IOException e) {
 				throw new RequestParametersNotFoundException(e);
 			}
 			//we need to set again the key, 
 			//because setting storable parameters reset the key
 
-			this.addValue(this.URLParametersInstance.getParamData(), key);
+			this.addValue(this.getKeyParam(), key);
 
 			// load the non storable params
 			this.loadParametersFromRequest(request, false);
@@ -335,7 +333,6 @@ public class RequestParameters {
 
 			try (BufferedReader br = new BufferedReader(new FileReader(
 					BgeeProperties.getRequestParametersStorageDirectory() + key))) {
-
 				String retrievedQueryString;
 				//just one line in the file, a query string including storable parameters, 
 				//that will be used to recover storable parameters
@@ -379,48 +376,48 @@ public class RequestParameters {
 		log.entry();
 
 		if (BgeeStringUtils.isBlank(this.getFirstValue(
-				this.URLParametersInstance.getParamData()))) {
+				this.getKeyParam()))) {
 			throw new RequestParametersNotStorableException("No key generated before storing a "
 					+ "RequestParameters object");
 		}
 
 		//first check whether these parameters have already been serialized
 		File storageFile = new File(BgeeProperties.getRequestParametersStorageDirectory() 
-				+ this.getFirstValue(this.URLParametersInstance.getParamData()));
+				+ this.getFirstValue(this.getKeyParam()));
 		if (storageFile.exists()) {
 			//file already exists, no need to continue
 			return;
 		}
 
 		ReentrantReadWriteLock lock = this.getReadWriteLock(this.getFirstValue(
-				this.URLParametersInstance.getParamData()));
+				this.getKeyParam()));
 		try {
 			lock.writeLock().lock();
 
 			while (readWriteLocks.get(this.getFirstValue(
-					this.URLParametersInstance.getParamData())) == null ||  
+					this.getKeyParam())) == null ||  
 					!readWriteLocks.get(this.getFirstValue(
-							this.URLParametersInstance.getParamData())).equals(lock)) {
+							this.getKeyParam())).equals(lock)) {
 
 				lock = this.getReadWriteLock(this.getFirstValue(
-						this.URLParametersInstance.getParamData()));
+						this.getKeyParam()));
 				lock.writeLock().lock();
 			}
 
 			try (BufferedWriter bufferedWriter = new BufferedWriter(
 					new FileWriter(BgeeProperties.getRequestParametersStorageDirectory() 
-							+ this.getFirstValue(this.URLParametersInstance.getParamData())))) {
+							+ this.getFirstValue(this.getKeyParam())))) {
 
 				boolean encodeUrlValue = this.encodeUrl;
 				this.encodeUrl = false;
-				bufferedWriter.write(generateParametersQuery(true, false));
+				bufferedWriter.write(generateParametersQuery(true, false, "&"));
 				this.encodeUrl = encodeUrlValue;
 			}
 
 		} catch (IOException e) {
 			//delete the file if something went wrong
 			storageFile = new File(BgeeProperties.getRequestParametersStorageDirectory() 
-					+ this.getFirstValue(this.URLParametersInstance.getParamData()));
+					+ this.getFirstValue(this.getKeyParam()));
 			if (storageFile.exists()) {
 				storageFile.delete();
 			}
@@ -428,7 +425,7 @@ public class RequestParameters {
 		} finally {
 			lock.writeLock().unlock();
 			this.removeLockIfPossible(this.getFirstValue(
-					this.URLParametersInstance.getParamData()));
+					this.getKeyParam()));
 		}
 
 		log.exit();
@@ -512,38 +509,40 @@ public class RequestParameters {
 
 	/**
 	 * Generate the query from the current state of the parameters 
+	 * @param parametersSeparator	A {@code} String that is used as parameters separator in the URL
 	 * @throws RequestParametersNotStorableException if an error occur while trying to use the key 
 	 * 													or to write the query string in a file
 	 * @throws RequestParametersNotStorableException
 	 * @throws MultipleValuesNotAllowedException 
 	 */
-	private void generateParametersQuery() throws RequestParametersNotStorableException,
+	private void generateParametersQuery(String parametersSeparator) throws 
+	RequestParametersNotStorableException,
 	MultipleValuesNotAllowedException {
 		log.entry();
 
 		// If there is a key already present, continue to work with a key
 		if(BgeeStringUtils.isNotBlank(this.getFirstValue(
-				this.URLParametersInstance.getParamData()))){
+				this.getKeyParam()))){
 
 			// Regenerate the key in case a storable param has changed
-			this.generateKey(this.generateParametersQuery(true, false));
+			this.generateKey(this.generateParametersQuery(true, false,parametersSeparator));
 
-			// Regenerate the paramters query, with the non storable that include
+			// Regenerate the parameters query, with the non storable that include
 			// the key parameter
-			this.parametersQuery = generateParametersQuery(false, true);
+			this.parametersQuery = generateParametersQuery(false, true,parametersSeparator);
 
 
 		} else{
 			// No key for the moment, generate the query and then evaluate if its
 			// length is still under the threshold at which the key is used
-			this.parametersQuery = generateParametersQuery(true, true);
+			this.parametersQuery = generateParametersQuery(true, true,parametersSeparator);
 			if(this.isUrlTooLong()){
 				// Generate the key, store the values and regenerate the query
-				this.generateKey(this.generateParametersQuery(true, false));
+				this.generateKey(this.generateParametersQuery(true, false,parametersSeparator));
 				if(BgeeStringUtils.isNotBlank(this.getFirstValue(
-						this.URLParametersInstance.getParamData()))){
+						this.getKeyParam()))){
 					this.store();
-					this.generateParametersQuery();
+					this.generateParametersQuery(parametersSeparator);
 				}
 			}	
 		}
@@ -554,6 +553,7 @@ public class RequestParameters {
 	/**
 	 * Generate the query from the current state of the parameters and can 
 	 * include or not some elements depending on the given params.
+	 * @param parametersSeparator	A {@code} String that is used as parameters separator in the URL
 	 * @param includeStorable	A {@code boolean} to indicate whether to include
 	 * 											 the storable parameters
 	 * @param includeNonStorable 	A {@code boolean} to indicate whether to include
@@ -561,7 +561,7 @@ public class RequestParameters {
 	 * @return					A {@code String} that is the generated query
 	 */
 	private String generateParametersQuery(boolean includeStorable, 
-			boolean includeNonStorable){
+			boolean includeNonStorable, String parametersSeparator){
 
 		log.entry(includeStorable, includeNonStorable);
 
@@ -584,7 +584,7 @@ public class RequestParameters {
 								parameterValue.toString())){
 							urlFragment += parameter.getName()+ "=";
 							urlFragment += this.urlEncode(parameterValue.toString() 
-									+ BgeeProperties.getParametersSeparator());
+									+ parametersSeparator);
 						}
 					}
 				}
@@ -647,13 +647,13 @@ public class RequestParameters {
 
 		if (BgeeStringUtils.isNotBlank(urlFragment)) {
 			// Reset the present key and add the new one
-			this.resetValues(this.URLParametersInstance.getParamData());
-			this.addValue(this.URLParametersInstance.getParamData(), 
+			this.resetValues(this.getKeyParam());
+			this.addValue(this.getKeyParam(), 
 					DigestUtils.sha1Hex(urlFragment.toLowerCase(Locale.ENGLISH)));
 		}
 
 		log.info("Key generated: {}", this.getFirstValue(
-				this.URLParametersInstance.getParamData()));
+				this.getKeyParam()));
 
 		log.exit();
 	}
@@ -682,13 +682,25 @@ public class RequestParameters {
 		}
 		return log.exit(url);
 	}
+	
+	/**
+	 * @return The Parameter<String> that contains the key used to store the storable parameters
+	 */
+	private Parameter<String> getKeyParam(){
+		return this.URLParametersInstance.getParamData();
+	}
 
 	/**
+	 * @param parametersSeparator	A {@code} String that is used as parameters separator in the URL
 	 * @return A String that contains the URL corresponding to the present state of the request. 
 	 * It will change every time a parameter is modified
+	 * @throws MultipleValuesNotAllowedException 
+	 * @throws RequestParametersNotStorableException 
 	 */
-	public String getRequestURL(){
-		return "?"+this.parametersQuery;
+	public String getRequestURL(String parametersSeparator) throws RequestParametersNotStorableException,
+	MultipleValuesNotAllowedException{
+		this.generateParametersQuery(parametersSeparator);
+		return this.parametersQuery;
 	}
 
 	/**
@@ -771,10 +783,7 @@ public class RequestParameters {
 			parameterValues = new ArrayList<T>();
 			parameterValues.add(value);
 		}
-		// regenerate the value of the param url
-		if(parameter != this.URLParametersInstance.getParamData()) {
-			this.generateParametersQuery();
-		}
+
 		this.values.put(parameter, parameterValues);
 	}
 
@@ -788,9 +797,6 @@ public class RequestParameters {
 	RequestParametersNotStorableException, MultipleValuesNotAllowedException{
 		log.entry(parameter);
 		this.values.put(parameter, null);
-		if(parameter != this.URLParametersInstance.getParamData()){
-			this.generateParametersQuery();
-		}
 		log.exit();
 	}
 
@@ -818,7 +824,7 @@ public class RequestParameters {
 		// disable temporarily the url encoding to generate a new BgeeHttpServletRequest using the url
 		boolean encodeUrlValue = this.encodeUrl;
 		this.encodeUrl = false;
-		String queryString = this.generateParametersQuery(true, true);
+		String queryString = this.generateParametersQuery(true, true, "&");
 		BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
 		this.encodeUrl = encodeUrlValue;
 
@@ -854,7 +860,7 @@ public class RequestParameters {
 		// using the url
 		boolean encodeUrlValue = this.encodeUrl;
 		this.encodeUrl = false;
-		String queryString = this.generateParametersQuery(true, false);
+		String queryString = this.generateParametersQuery(true, false, "&");
 		BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
 		this.encodeUrl = encodeUrlValue;
 
@@ -862,11 +868,8 @@ public class RequestParameters {
 				this.URLParametersInstance.getClass().newInstance());
 
 		// Add the key which is not a storable parameters and was not included
-		clonedRequestParameters.addValue(this.URLParametersInstance.getParamData(), 
-				this.getFirstValue(this.URLParametersInstance.getParamData()));
-
-		// Regenerate the query to take account of the key
-		clonedRequestParameters.generateParametersQuery();
+		clonedRequestParameters.addValue(this.getKeyParam(), 
+				this.getFirstValue(this.getKeyParam()));
 
 		return log.exit(clonedRequestParameters);
 	}

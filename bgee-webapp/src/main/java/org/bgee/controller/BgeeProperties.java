@@ -109,12 +109,6 @@ public class BgeeProperties
 	private static boolean encodeUrl;
 
 	/**
-	 * A {@code String} that defines the character used to separate parameters 
-	 * in the URL
-	 */
-	private static String parametersSeparator;
-
-	/**
 	 * Static initializer. 
 	 * 
 	 * Try to load the properties from a properties file, 
@@ -181,9 +175,6 @@ public class BgeeProperties
 
 		encodeUrl  = getBooleanOption(sysProps, fileProps, 
 				"org.bgee.webapp.encodeUrl", true);
-
-		parametersSeparator  = getStringOption(sysProps, fileProps, 
-				"org.bgee.webapp.parametersSeparator", "&");
 
 		log.info("Initialization done.");
 
@@ -403,14 +394,6 @@ public class BgeeProperties
 	 */
 	public static boolean isEncodeUrl() {
 		return encodeUrl;
-	}
-
-	/**
-	 * @return	A {@code String} that defines the character used to separate parameters 
-	 * 			in the URL
-	 */
-	public static String getParametersSeparator() {
-		return parametersSeparator;
 	}
 
 }

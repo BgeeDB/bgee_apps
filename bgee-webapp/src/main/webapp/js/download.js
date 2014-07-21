@@ -41,7 +41,8 @@ $( document ).ready(function() {
 			search($bgeeSearchBox.val());
 		}
 	});
-	// Fetch the search box in the DOM
+	// Fetch the search form and box in the DOM
+	var $bgeeSearchForm = $( "#bgee_search_box form" );
 	var $bgeeSearchBox = $( "#bgee_search_box input" );
 	// Add a listener to several event to trigger the search
 	$bgeeSearchBox.bind( "keyup change paste cut", function() {
@@ -51,6 +52,10 @@ $( document ).ready(function() {
 	$bgeeSearchBox.focus(function() {
 		$( this ).val( "" );
 		search($( this ).val());
+	});
+	// Block the submit action to avoid the page to be reloaded
+	$bgeeSearchForm.submit(function() {
+		return false;
 	});
 
 	/**

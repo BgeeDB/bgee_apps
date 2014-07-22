@@ -58,7 +58,7 @@ html, body {
 /****SIB BODY****/
 #sib_body {
     position: relative;
-    padding: 10px 0 78px 0;
+    padding: 10px 0 50px 0;
     background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
     min-height: 420px;
     font-family: Helvetica;
@@ -349,6 +349,27 @@ figure.selected {
     height: 75px;
     background: transparent url(../img/bgee_logo.png) no-repeat top left;
     left: 16px;
+}
+
+/****BGEE CREATIVE COMMONS****/
+div.creativecommons p {
+    font: 10px Helvetica, Verdana, sans-serif;
+    margin: 1px 2%;
+    color: #515151;
+}
+
+div.creativecommons a {
+    color: #920209;
+    margin: 1px 0;
+    text-decoration: underline;
+}
+
+div.creativecommons a:hover {
+    color: #d6161d;
+}
+
+div.creativecommons p.creativecommons_title {
+    font-weight: bold;
 }
 
 /****SIB FOOTER****/

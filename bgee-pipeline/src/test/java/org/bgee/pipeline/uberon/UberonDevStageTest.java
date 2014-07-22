@@ -649,6 +649,10 @@ public class UberonDevStageTest extends TestAncestor {
                         "FBdv:00005328", "FBdv:00005330", "FBdv:00005332", "FBdv:00005334", 
                         "FBdv:00005335"), 
                 uberon.getStageIdsBetween("FBdv:00005324", "FBdv:00005335", 7227));
+        
+        assertEquals("Incorrect stage range returned", 
+                Arrays.asList("ZFS:0000027", "ZFS:0000028", "ZFS:0000029"), 
+                uberon.getStageIdsBetween("ZFS:0000027", "ZFS:0000029", 7955));
     /*    
         //reinit uberon to recompute the nested set model
         uberon = new UberonDevStage(utils, taxonConstraints);

@@ -343,6 +343,7 @@
 						tests by using skipTests. See the documentation of the property skip.surefire.tests 
 						in this file for more details. -->
 					<skipTests>${skip.surefire.tests}</skipTests>
+					<argLine>-Xmx512m</argLine>
 				</configuration>
 			</plugin>
 

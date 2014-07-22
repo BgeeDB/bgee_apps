@@ -201,12 +201,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 		this.writeln("<div id='sib_header'>");
         // Bgee logo
 		this.writeln("<div>");
-		this.writeln("<a href='http://bgee.unil.ch/bgee/bgee' id='sib_other_logo' "
+		this.writeln("<a href='#' id='sib_other_logo' "
 		        + "title='Bgee: a dataBase for Gene Expression Evolution'></a>");
         this.writeln("</div>");
         // Title
         this.writeln("<div>");
-		this.writeln("<a href='http://bgee.unil.ch/bgee/bgee'>"
+		this.writeln("<a href='#'>"
 		        + "<h1>Bgee: Gene Expression Evolution</h1>"
 		        + "<h2>Download release 13</h2></a>");
         this.writeln("</div>");

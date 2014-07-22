@@ -445,7 +445,7 @@ relationship: immediately_preceded_by FBdv:00005339 ! third instar larval stage 
 relationship: immediately_preceded_by FBdv:00007005 ! third instar larval stage L2 (Drosophila)
 relationship: immediately_preceded_by FBdv:00007007 ! late third instar larval stage (Drosophila)
 relationship: immediately_preceded_by UBERON:0004730 ! instar larval stage
-relationship: part_of FBdv:00007001 ! P-stage (Drosophila)
+relationship: part_of UBERON:0000070 ! pupal stage
 
 [Term]
 id: FBdv:00005343
@@ -684,7 +684,7 @@ def: "Newly eclosed adult stage. Animal free of pupal case. Runs rapidly to find
 synonym: "adult stage I" RELATED []
 relationship: immediately_preceded_by FBdv:00005368 ! pharate adult stage P15(ii) (Drosophila)
 relationship: immediately_preceded_by FBdv:00006011 ! pharate adult stage (Drosophila)
-relationship: immediately_preceded_by FBdv:00007001 ! P-stage (Drosophila)
+relationship: immediately_preceded_by UBERON:0000070 ! pupal stage
 relationship: part_of FBdv:00007025 ! immature adult stage (Drosophila)
 
 [Term]
@@ -699,8 +699,8 @@ relationship: part_of FBdv:00007025 ! immature adult stage (Drosophila)
 id: FBdv:00006011
 name: pharate adult stage (Drosophila)
 def: "The developing adult after pupal-adult apolysis , i.e.- from stage P8 (when yellow eye color first becomes visible through the pupal case), to eclosion. Duration at 25 degrees C: approximately 55.7 hours (164.3-220 hours after egg laying; 44.3-100 hours after puparium formation)." [FlyBase:FBrf0036849, FlyBase:FBrf0048355, FlyBase:FBrf0049147]
-relationship: immediately_preceded_by UBERON:0000070 ! pupal stage
-relationship: part_of FBdv:00007001 ! P-stage (Drosophila)
+relationship: immediately_preceded_by FBdv:00005354 ! pupal stage P7 (Drosophila)
+relationship: part_of UBERON:0000070 ! pupal stage
 
 [Term]
 id: FBdv:00006012
@@ -709,17 +709,6 @@ def: "Adult stage immediately after wing expansion, during which tanning of the 
 synonym: "adult stage III" RELATED []
 relationship: immediately_preceded_by FBdv:00005371 ! adult stage A2 (Drosophila)
 relationship: part_of FBdv:00007025 ! immature adult stage (Drosophila)
-
-[Term]
-id: FBdv:00007001
-name: P-stage (Drosophila)
-def: "The stage of the Drosophila life-cycle from the formation of the puparium (beginning of the prepupal stage) to eclosion." [FBC:DOS]
-synonym: "metamorphosis" BROAD []
-synonym: "pupal stage" RELATED []
-relationship: immediately_preceded_by FBdv:00005339 ! third instar larval stage (Drosophila)
-relationship: immediately_preceded_by FBdv:00007005 ! third instar larval stage L2 (Drosophila)
-relationship: immediately_preceded_by FBdv:00007007 ! late third instar larval stage (Drosophila)
-relationship: immediately_preceded_by UBERON:0004730 ! instar larval stage
 
 [Term]
 id: FBdv:00007004
@@ -799,7 +788,7 @@ id: FBdv:00007025
 name: immature adult stage (Drosophila)
 def: "The developmental stage that lasts from eclosion of the adult from the pupal case until tanning is complete (the end of adult stage A3)." [FBC:DOS]
 relationship: immediately_preceded_by FBdv:00006011 ! pharate adult stage (Drosophila)
-relationship: immediately_preceded_by FBdv:00007001 ! P-stage (Drosophila)
+relationship: immediately_preceded_by UBERON:0000070 ! pupal stage
 relationship: part_of FBdv:00007075 ! day 0 of adulthood (Drosophila)
 
 [Term]
@@ -818,7 +807,7 @@ def: "The day of eclosion." [FBC:DOS]
 relationship: immediately_preceded_by FBdv:00005366 ! pharate adult stage P15 (Drosophila)
 relationship: immediately_preceded_by FBdv:00005368 ! pharate adult stage P15(ii) (Drosophila)
 relationship: immediately_preceded_by FBdv:00006011 ! pharate adult stage (Drosophila)
-relationship: immediately_preceded_by FBdv:00007001 ! P-stage (Drosophila)
+relationship: immediately_preceded_by UBERON:0000070 ! pupal stage
 relationship: part_of UBERON:0000066 ! fully formed stage
 
 [Term]
@@ -8071,6 +8060,7 @@ synonym: "chrysalides stage" NARROW [http://en.wikipedia.org/wiki/Pupa, NCBITaxo
 synonym: "chrysalis stage" NARROW [http://en.wikipedia.org/wiki/Pupa, NCBITaxon:37572]
 synonym: "pupa stage" EXACT []
 xref: FBdv:00005349
+xref: FBdv:00007001
 xref: http://en.wikipedia.org/wiki/Pupa
 relationship: immediately_preceded_by UBERON:0000069 ! larval stage
 relationship: part_of UBERON:0000092 ! post-embryonic stage
@@ -9420,6 +9410,7 @@ id: ZFS:0000049
 name: segmentation (Danio)
 namespace: zebrafish_stages
 relationship: immediately_preceded_by UBERON:0000109 ! gastrula stage
+relationship: part_of UBERON:0000068 ! embryo stage
 
 [Typedef]
 id: action_notes

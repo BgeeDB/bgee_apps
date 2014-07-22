@@ -549,14 +549,14 @@ public class UberonDevStageTest extends TestAncestor {
         //pupal stage only in fbdv 
         overridenTaxonConstraints.put("UBERON:0000070", 
                 new HashSet<Integer>(Arrays.asList(7227)));
-        //no mapping to neurula and organogenesis in FBdv
+        //no mapping to neurula and organogenesis in FBdv and zfs
         overridenTaxonConstraints.put("UBERON:0000111", 
-                new HashSet<Integer>(Arrays.asList(9606, 10090, 7955, 8364, 9031, 
+                new HashSet<Integer>(Arrays.asList(9606, 10090, 8364, 9031, 
                         9593, 9544, 13616, 9258, 9598, 9597, 9600, 9913, 28377, 99883, 
                         9823, 6239, 10116)));
         //no mapping to neurula and organogenesis in FBdv
         overridenTaxonConstraints.put("UBERON:0000110", 
-                new HashSet<Integer>(Arrays.asList(9606, 10090, 7955, 8364, 9031, 
+                new HashSet<Integer>(Arrays.asList(9606, 10090, 8364, 9031, 
                         9593, 9544, 13616, 9258, 9598, 9597, 9600, 9913, 28377, 99883, 
                         9823, 6239, 10116)));
         //no cleavage/blastula stages in rat (they are grouped in rat)
@@ -640,8 +640,8 @@ public class UberonDevStageTest extends TestAncestor {
         //FBdv:00005289: embryonic stage
         //FBdv:00007026: mature adult stage
         assertEquals("Incorrect stage range returned", 
-                Arrays.asList("UBERON:0000068", "UBERON:0004730", "FBdv:00005350", 
-                        "FBdv:00005353", "FBdv:00005354", "FBdv:00007075", "FBdv:00007026"), 
+                Arrays.asList("UBERON:0000068", "UBERON:0004730", "FBdv:00005342", "FBdv:00005350", 
+                        "FBdv:00005353", "FBdv:00005354", "FBdv:00006011", "FBdv:00007075", "FBdv:00007026"), 
                 uberon.getStageIdsBetween("FBdv:00005289", "FBdv:00007026", 7227));
         
         assertEquals("Incorrect stage range returned", 

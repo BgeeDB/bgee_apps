@@ -681,7 +681,8 @@ public class UberonDevStage extends UberonCommon {
                 if (lcas.size() != 1) {
                     throw log.throwing(new IllegalStateException("The developmental stages " +
                             "used does not represent a tree over part_of relations, " +
-                            "cannot continue. Least common ancestors of start and end stages :" + 
+                            "cannot continue. Least common ancestors of start stage " + 
+                            startStageId + " and end stage " + endStageId + ": " + 
                             lcas));
                 }
                 OWLClass lca = lcas.iterator().next();

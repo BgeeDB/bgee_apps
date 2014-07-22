@@ -78,7 +78,8 @@ $( document ).ready(function() {
 		var urls = getUrls( id );
 		// Fetch all DOM elements to be updated
 		var $bgeeDataSelectionImg = $( "#bgee_data_selection_img" );
-		var $bgeeDataSelectionText = $( "#bgee_data_selection_text h1" );
+		var $bgeeDataSelectionTextScientific = $( "#bgee_data_selection_text h1.scientificname" );
+		var $bgeeDataSelectionTextCommon = $( "#bgee_data_selection_text h1.commonname" );
 		var $exprSimpleCsv = $( "#expr_simple_csv" );
 		var $exprSimpleTsv = $( "#expr_simple_tsv" );
 		var $exprCompleteCsv = $( "#expr_complete_csv" );		
@@ -109,10 +110,12 @@ $( document ).ready(function() {
 		});
 		// if it is a group, use the group name as label, else the species name
 		if(bgeeGroupName){
-			$bgeeDataSelectionText.text(bgeeGroupName);
+			$bgeeDataSelectionTextScientific.text("");
+			$bgeeDataSelectionTextCommon.text(bgeeGroupName);
 		}
 		else {
-			$bgeeDataSelectionText.text(bgeeSpeciesName);
+			$bgeeDataSelectionTextScientific.text(bgeeSpeciesName);
+			$bgeeDataSelectionTextCommon.text("("+bgeeSpeciesCommonNames+")");
 		}
 		// Update the values of the download links 
 		$exprSimpleCsv.attr("href",urls["expr_simple_csv"]);

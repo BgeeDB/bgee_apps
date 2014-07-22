@@ -1,6 +1,7 @@
 /**** Bgee: a dataBase for Gene Expression Evolution ****/
 html, body {
     height: 100%;
+    min-height: 800px;
     margin: 0;
     padding: 0;
     min-width: 600px;
@@ -60,7 +61,8 @@ html, body {
     position: relative;
     padding: 10px 0 50px 0;
     background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
-    min-height: 420px;
+    min-height: 800px;
+    height: 100%;
     font-family: Helvetica;
     color: #626262;
     font-size: 12px;
@@ -166,6 +168,16 @@ img {
     margin-top: 4px;
     color: #515151;
     text-align: center;
+}
+
+/****BGEE INTRODUCTION****/
+#bgee_introduction {
+    padding: 10px 0; 
+    text-align: center;
+}
+#bgee_introduction p {
+    font: 14px Helvetica, Verdana, sans-serif;
+    color: #515151;
 }
 
 /****BGEE SEARCH BOX****/
@@ -302,7 +314,6 @@ figure.selected {
     background: #282828;
     border-radius: 12px 12px 0 0;
     padding: 0px;
-    color: #DBDBDB;
 }
 
 #bgee_uniq_species figure.selected {
@@ -310,14 +321,13 @@ figure.selected {
 }
 
 #bgee_uniq_species figure.selected p {
-    color: #DBDBDB;
+    color: #282828;
 }
 #bgee_multi_species figure.selected div {
     border: 0;
-    color: #DBDBDB;
 }
 #bgee_multi_species figure.selected figcaption {
-    color: #DBDBDB;
+    color: #282828;
 }
 
 #bgee_multi_species figure.selected {

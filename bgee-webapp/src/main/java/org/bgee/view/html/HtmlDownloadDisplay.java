@@ -26,6 +26,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 				+ "Gene Expression Evolution");
 
 		this.writeln("<div id='sib_body'>");
+		
+		// Introduction
+		this.writeln("<div id='bgee_introduction'>");
+		this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
+		this.writeln("It currently provides &quot;presence/absence of expression&quot; and &quot;over-/under-expression&quot; data files.</p>");
+		this.writeln("<p>This page is a download page containing pre-computed files of Bgee release 13 (based on Ensembl 75). ");
+		this.writeln("Bgee release 12 (based on Ensembl 69) is always available <a href='http://bgee.unil.ch/bgee/bgee'>here</a>.</p>");
+		this.writeln("</div>");
+		
 		// Search box
 		this.writeln("<div id='bgee_search_box'>");
 		this.writeln("<form action='/' method='get'>");
@@ -33,6 +42,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		this.writeln("<input class='sib_text' type='text' id='search_label2' name='search'/>");
 		this.writeln("</form>");
 		this.writeln("</div>");
+		
 		// Single species part
 		this.writeln("<p>Species</p>");
 		this.writeln("<div id='bgee_uniq_species'>");
@@ -56,14 +66,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		this.writeln(generateSpeciesFigure(28377));
 		this.writeln(generateSpeciesFigure(8364));
 		this.writeln(generateSpeciesFigure(99883));
+		
+		// Black banner when a species or a group is selected
 		this.writeln("<div id='bgee_data_selection'>");
         this.writeln("<div id='bgee_data_selection_img'>");
         this.writeln(generateSpeciesImg(9606, "Homo sapiens", "human", false));
         this.writeln("</div>");
         this.writeln("<div id='bgee_data_selection_text'>");
-        this.writeln("<h1 class='scientificname'>Homo sapiens</h1>"
-                + "&nbsp;&nbsp;"
-                + "<h1 class='commonname'>(human)</h1>");
+        this.writeln("<h1 class='scientificname'>Homo sapiens</h1>&nbsp;&nbsp;<h1 class='commonname'>(human)</h1>");
         this.writeln("<ul>");
         this.writeln("<li><h2>Presence/absence of expression</h2>");
         this.writeln("<a id='expr_simple_csv' class='download_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_isExpressed_simple.csv'>Download simple file</a>");
@@ -81,7 +91,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>");
         this.writeln("</div>");
         
-        // Multi species part
+        // Multi-species part
         this.writeln("<p>Multi-species</p>");
         this.writeln("<div id='bgee_multi_species'>");
         this.writeln("<div class='biggroup'>");
@@ -93,6 +103,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>");
 		this.writeln("</div>");
 		
+        // Images source
         this.writeln("<div class='creativecommons'>");
         this.writeln("<p class='creativecommons_title'>Images from Wikimedia Commons. See author images.</p>");
         this.writeln("<p>Homo sapiens by Yves Picq http://veton.picq.fr (Own work) [<a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3ALaos-lenten0264a.jpg'>via Wikimedia Commons</a></p>");
@@ -117,7 +128,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
 		// 
 		this.writeln("</div>");
-
 		this.endDisplay();
 	}
 	

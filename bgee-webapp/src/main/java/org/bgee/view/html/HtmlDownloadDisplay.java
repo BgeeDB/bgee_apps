@@ -28,79 +28,68 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		this.writeln("<div id='sib_body'>");
 		// Search box
 		this.writeln("<div id='bgee_search_box'>");
-		this.writeln("<form action='.' method='get'>");
-		this.writeln("<label><p>Search</p></label>");
-		this.writeln("<input class='sib_text' type='text' id='search_label2' "
-		        + "name='search'/>&nbsp;&nbsp;<input type='image' alt='Submit' "
-		        + "value='Submit' src='"+BgeeProperties.getImagesRootDirectory()+"submit_button.png'/>");
+		this.writeln("<form action='/' method='get'>");
+		this.writeln("<label>Search species</label>");
+		this.writeln("<input class='sib_text' type='text' id='search_label2' name='search'/>");
 		this.writeln("</form>");
 		this.writeln("</div>");
 		// Single species part
 		this.writeln("<p>Species</p>");
 		this.writeln("<div id='bgee_uniq_species'>");
 		this.writeln("<div class='biggroup'>");
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(10090), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(7955), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(8364), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(7227), null));
-        this.writeln("<div id='bgee_data_selection'>");
+		this.writeln(generateSpeciesFigure(9606));
+		this.writeln(generateSpeciesFigure(10090));
+		this.writeln(generateSpeciesFigure(7955));
+		this.writeln(generateSpeciesFigure(7227));
+		this.writeln(generateSpeciesFigure(6239));
+		this.writeln(generateSpeciesFigure(9597));
+		this.writeln(generateSpeciesFigure(9598));
+		this.writeln(generateSpeciesFigure(9593));
+		this.writeln(generateSpeciesFigure(9600));
+		this.writeln(generateSpeciesFigure(9544));
+		this.writeln(generateSpeciesFigure(10116));
+		this.writeln(generateSpeciesFigure(9913));
+		this.writeln(generateSpeciesFigure(9823));
+		this.writeln(generateSpeciesFigure(13616));
+		this.writeln(generateSpeciesFigure(9258));
+		this.writeln(generateSpeciesFigure(9031));
+		this.writeln(generateSpeciesFigure(28377));
+		this.writeln(generateSpeciesFigure(8364));
+		this.writeln(generateSpeciesFigure(99883));
+		this.writeln("<div id='bgee_data_selection'>");
         this.writeln("<div id='bgee_data_selection_img'>");
         this.writeln(generateSpeciesImg(9606, "Homo sapiens", "human", false));
         this.writeln("</div>");
         this.writeln("<div id='bgee_data_selection_text'>");
-        this.writeln("<h1>Homo sapiens</h1>");
+        this.writeln("<h1 class='scientificname'>Homo sapiens</h1>"
+                + "&nbsp;&nbsp;"
+                + "<h1 class='commonname'>(human)</h1>");
         this.writeln("<ul>");
         this.writeln("<li><h2>Presence/absence of expression</h2>");
-        this.writeln("<h3>Download simple file:&nbsp;</h3>");
-        this.writeln("<a id='expr_simple_tsv' class='sib_link' href='./data/fake-file.tsv' download='bgee_homo_sapiens_isExpressed_simple.tsv'>TSV</a>");
+        this.writeln("<a id='expr_simple_csv' class='download_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_isExpressed_simple.csv'>Download simple file</a>");
         this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='expr_simple_csv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_isExpressed_simple.csv'>CSV</a>");
-        this.writeln("<h3>Download complete file:&nbsp;</h3>");
-        this.writeln("<a id='expr_complete_tsv' class='sib_link' href='./data/fake-file.tsv' download='bgee_homo_sapiens_isExpressed_complete.tsv'>TSV</a>");
-        this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='expr_complete_csv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_isExpressed_complete.csv'>CSV</a>");
+        this.writeln("<a id='expr_complete_csv' class='download_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_isExpressed_complete.csv'>Download complete file</a>");
         this.writeln("</li>");
         this.writeln("<li><h2 >Over-/Under-expression</h2>");
-        this.writeln("<h3>Download simple file:&nbsp;</h3>");
-        this.writeln("<a id='overunder_simple_tsv' class='sib_link' href='./data/fake-file.tsv' download='bgee_homo_sapiens_overUnderExpr_simple.tsv'>TSV</a>");
+        this.writeln("<a id='overunder_simple_csv' class='download_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_overUnderExpr_simple.tsv'>Download simple file</a>");
         this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='overunder_simple_csv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_overUnderExpr_simple.tsv'>CSV</a>");
-        this.writeln("<h3>Download complete file:&nbsp;</h3>");
-        this.writeln("<a id='overunder_complete_tsv' class='sib_link' href='./data/fake-file.tsv' download='bgee_homo_sapiens_overUnderExpr_complete.tsv'>TSV</a>");
-        this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='overunder_complete_csv' class='sib_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_overUnderExpr_complete.tsv'>CSV</a>");
+        this.writeln("<a id='overunder_complete_csv' class='download_link' href='./data/fake-file.csv' download='bgee_homo_sapiens_overUnderExpr_complete.tsv'>Download complete file</a>");
         this.writeln("</li>");
         this.writeln("</ul>");
         this.writeln("</div>");
         this.writeln("</div>");
-
-        this.writeln(generateSpeciesFigure(Arrays.asList(9031), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9593), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9544), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(13616), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9258), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9598), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9597), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9600), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9913), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(10116), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(28377), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(99883), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9823), null));
-        this.writeln(generateSpeciesFigure(Arrays.asList(6239), null));
         this.writeln("</div>");
         this.writeln("</div>");
         
         // Multi species part
-        this.writeln("<p>Multi species</p>");
+        this.writeln("<p>Multi-species</p>");
         this.writeln("<div id='bgee_multi_species'>");
         this.writeln("<div class='biggroup'>");
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1",true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2",true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 9597, 9258, 9593, 9593, 9258, 9593, 9597, 9258, 9593, 9597, 9258, 9593, 9593),
-                "Group 3",true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 4",true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1", true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2", true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883),
+                "Group 3 (16 sp.)",true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 4", true));
         this.writeln("</div>");
 		this.writeln("</div>");
 		
@@ -111,6 +100,19 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	}
 	
     /**
+     * Generate the HTML figure tag with a figcaption tag from a {@code int} that is a 
+     * species ID.
+     * 
+     * @param speciesId     An {@code int} that is the species ID of the species to be 
+     *                      diplayed.
+     * @return             A {@String} that is the  HTML figure tag generated from the 
+     *                     provided {@code int} of a species ID.
+     */
+    private String generateSpeciesFigure(int speciesId) {
+        return generateSpeciesFigure(Arrays.asList(speciesId), null, false);
+    }
+	
+    /**
      * Generate the HTML figure tag from a {@code List} of species IDs.
      * 
      * @param speciesIds   A {@code List} of {@code Integer} containing the species IDs to
@@ -119,7 +121,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                     or {@code null}, it's generated with the last species of the 
      *                     {@code List}.
      * @return             A {@String} that is the  HTML figure tag generated from the 
-     *                     provided {@code List} of species IDs
+     *                     provided {@code List} of species IDs.
      */
 	private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption) {
 		return generateSpeciesFigure(speciesIds, figcaption, false);
@@ -136,7 +138,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	 * @param isGroup      A {@code boolean} that is {@code true} if the figure represents 
 	 *                     a group of species.
 	 * @return             A {@String} that is the  HTML figure tag generated from the 
-	 *                     provided {@code List} of species IDs
+	 *                     provided {@code List} of species IDs.
 	 */
 	private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption, 
 	        boolean isGroup) {
@@ -273,7 +275,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	    	figure.append("<figure>");
 	    }
 	    figcaption = figcaption.concat(" <span class='invisible'>" + hiddenInfo + "</span>");
-	    figure.append(images);
+	    figure.append("<div>"+images+"</div>");
 	    figure.append("<figcaption>");
         figure.append(figcaption);
         figure.append("</figcaption>");

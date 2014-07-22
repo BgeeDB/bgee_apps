@@ -43,7 +43,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 		this.writeln("<!DOCTYPE html>");
 		this.writeln("<html lang='en'>");
 		this.writeln("<head>");
-		this.writeln("<meta charset='utf-8'>");
+		this.writeln("<meta http-equiv='content-type' content='text/html; utf-8'>");
 		this.writeln("<title>"+title+"</title>");
 		this.writeln("<meta name='description' content='Bgee allows to automatically"
 				+ " compare gene expression patterns between species, by referencing"
@@ -59,11 +59,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 		this.writeln("<link rel='stylesheet' type='text/css' href='"
 				+BgeeProperties.getCssFilesRootDirectory()+page+".css' />");
 		this.includeJs();
-		this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
 		this.writeln("</head>");
 		this.writeln("<body>");
+        this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
 		this.displayBgeeMenu();
-		this.writeln("<div id='bgee_top'><a name='TOP'></a></div>");
+		this.writeln("<div id='bgee_top'><a id='TOP'></a></div>");
         this.writeln("<div id='sib_container'>");
 	}
 
@@ -208,7 +208,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
         this.writeln("<div>");
 		this.writeln("<a href='http://bgee.unil.ch/bgee/bgee'>"
 		        + "<h1>Bgee: Gene Expression Evolution</h1>"
-		        + "<h2>Temporary interface to access to new data</h2></a>");
+		        + "<h2>Download release 13</h2></a>");
         this.writeln("</div>");
         // SIB logo
         this.writeln("<div>");

@@ -1,0 +1,63 @@
+format-version: 1.2
+subsetdef: granular_stage "Subset consisting of classes describing highly granular developmental stages (for instance, '23-year-old'). Such stages might be useful for annotation purpose, but might be folded into less granular parents for display purpose."
+ontology: startEndStages
+
+
+[Term]
+id: UBERON:1
+name: stage 1
+def: "def stage 1"
+comment: left bound: 1 - right bound: 10 - level: 1
+
+[Term]
+id: UBERON:2
+name: stage 2
+def: "def stage 2"
+relationship: BFO:0000050 UBERON:1 ! stage 1
+comment: left bound: 2 - right bound: 7 - level: 2
+
+[Term]
+id: UBERON:3
+name: stage 3
+relationship: BFO:0000050 UBERON:1 ! stage 1
+relationship: BFO:0000062 UBERON:2
+comment: left bound: 8 - right bound: 9 - level: 2
+
+[Term]
+id: ID:4
+name: stage 4
+def: "def stage 4"
+relationship: BFO:0000050 UBERON:2
+comment: left bound: 3 - right bound: 4 - level: 3
+
+[Term]
+id: ID:5
+name: stage 5
+def: "def stage 5"
+relationship: BFO:0000050 UBERON:2
+relationship: BFO:0000062 ID:4
+subset: granular_stage
+comment: left bound: 5 - right bound: 6 - level: 3
+
+[Term]
+id: ID:6
+name: stage 6
+def: "def stage 6"
+comment: we will exclude this one through custom taxon contraints.
+relationship: BFO:0000050 UBERON:3
+
+[Typedef]
+id: BFO:0000062
+name: preceded by
+is_transitive: true
+
+[Typedef]
+id: RO:0002087
+name: immediately_preceded_by
+comment: X immediately_preceded_by Y iff: end(X) simultaneous_with start(Y)
+is_a: BFO:0000062 ! preceded by
+
+[Typedef]
+id: BFO:0000050
+name: part of
+is_transitive: true

@@ -2,6 +2,7 @@ package org.bgee.model.dao.api;
 
 import java.util.Properties;
 
+import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
@@ -103,5 +104,9 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected HierarchicalGroupDAO getNewHierarchicalGroupDAO() {
         return this.instanceMockManager.getNewHierarchicalGroupDAO();
+    }
+    @Override
+    protected StageDAO getNewStageDAO() {
+        return this.instanceMockManager.getNewStageDAO();
     }
 }

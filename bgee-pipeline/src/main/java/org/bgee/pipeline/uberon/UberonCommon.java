@@ -3,6 +3,7 @@ package org.bgee.pipeline.uberon;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -157,7 +158,8 @@ abstract class UberonCommon {
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
-     * wrapping the Uberon ontology that will be used. 
+     * wrapping the Uberon ontology that will be used, and the {@code MySQLDAOManager} 
+     * to interract with the data source. 
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
      */
@@ -323,6 +325,7 @@ abstract class UberonCommon {
      *                      we want to know if {@code cls} belongs to.
      * @return              {@code false} if it is shown that {@code cls} doesa not belong to 
      *                      taxon with ID {@code taxonId}, {@code false} otherwise. 
+     * @see #existsInAtLeastOneSpecies(OWLClass, Collection)
      */
     public boolean existsInSpecies(OWLClass cls, int taxonId) {
         log.entry(cls, taxonId);
@@ -335,6 +338,46 @@ abstract class UberonCommon {
             return log.exit(false);
         }
         return log.exit(true);
+    }
+    
+    /**
+     * Determines whether {@code cls} belongs to at least one taxon with ID in {@code taxonIds}. 
+     * This can be determined only if taxon constraints have been provided (see 
+     * {@link #setTaxonConstraints(Map)}). If no taxon contraints have been provided, 
+     * or if {@code taxonIds} contains 0, this method will always return {@code true}. 
+     * If some taxon constraints have been provided, and if {@code taxonIds} does not contain 0, 
+     * then this method will return {@code true} if {@code cls} belongs to one of the taxa, 
+     * {@code false} otherwise. 
+     * 
+     * @param cls           An {@code OWLClass} for which we want to determine whether 
+     *                      it belongs to one of the taxa with ID in {@code taxonIds}.
+     * @param taxonId       A {@code Collection} of {@code Integer}s that are the NCBI IDs 
+     *                      of the taxon for which we want to know if {@code cls} belongs to any.
+     * @return              {@code false} if it is shown that {@code cls} does not belong to 
+     *                      any taxon with ID in {@code taxonIds}, {@code false} otherwise. 
+     * @throw IllegalArgumentException  If {@code taxonIds} is empty, as this method would then 
+     *                                  only return {@code false}.
+     * @see #existsInSpecies(OWLClass, int)
+     */
+    public boolean existsInAtLeastOneSpecies(OWLClass cls, Collection<Integer> taxonIds) {
+        log.entry(cls, taxonIds);
+        if (this.getTaxonConstraints() == null || taxonIds.contains(0)) {
+            return log.exit(true);
+        }
+        if (taxonIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided Collection of taxon IDs " + 
+                               "is empty, this method will always return false"));
+        }
+        Set<Integer> copiedTaxonIds = new HashSet<Integer>(taxonIds);
+        Set<Integer> validSpecies = this.getTaxonConstraints().get(
+                this.getOntologyUtils().getWrapper().getIdentifier(cls));
+        if (validSpecies == null) {
+            return log.exit(false);
+        }
+        copiedTaxonIds.retainAll(validSpecies);
+        
+        //if there is an intersection => valid cls
+        return log.exit(!copiedTaxonIds.isEmpty());
     }
 
     /**

@@ -136,6 +136,19 @@ public class CommandRunnerTest extends TestAncestor {
     }
 
     /**
+     * Test method {@link CommandRunner#parseListArgumentAsInt(String)}.
+     */
+    @Test
+    public void shouldParseListArgumentAsInt() {
+        assertEquals("Incorrect parsing of string as list", 
+                Arrays.asList(1, 2, 3), 
+                CommandRunner.parseListArgumentAsInt(
+                        "1" + CommandRunner.LIST_SEPARATOR + 
+                        "2" + CommandRunner.LIST_SEPARATOR + 
+                        "3" + CommandRunner.LIST_SEPARATOR));
+    }
+
+    /**
      * Test method {@link CommandRunner#parseMapArgument(String)}.
      */
     @Test

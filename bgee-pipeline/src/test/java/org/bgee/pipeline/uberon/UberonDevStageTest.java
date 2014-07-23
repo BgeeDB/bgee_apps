@@ -22,7 +22,6 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import owltools.graph.OWLGraphWrapper;
 
@@ -725,16 +724,5 @@ public class UberonDevStageTest extends TestAncestor {
                 uberon.getStageIdsBetween("MmulDv:0000002", "MmulDv:0000004"));
         assertEquals("incorrect stages retrieved between start and end", expectedList, 
                 uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000002"));
-    }
-    
-    //@Test
-    public void test() throws OWLOntologyCreationException, OBOFormatParserException, IOException, IllegalArgumentException, OWLOntologyStorageException {
-        UberonDevStage uberon = new UberonDevStage("/Users/admin/Desktop/composite-metazoan.owl");
-        uberon.setModifiedOntPath("/Users/admin/Desktop/dev_stage_ont");
-        uberon.setClassIdsToRemove(Arrays.asList("UBERON:0000067", "UBERON:0000071", 
-                "UBERON:0000105", "UBERON:0000000", "BFO:0000003"));
-        uberon.setRelIds(Arrays.asList("BFO:0000050", "BFO:0000062", "RO:0002087"));
-        uberon.setToFilterSubgraphRootIds(Arrays.asList("UBERON:0000104", "FBdv:00000000"));
-        uberon.generateStageOntologyAndSaveToFile();
     }
 }

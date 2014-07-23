@@ -81,5 +81,37 @@ public class UberonCommonTest extends TestAncestor {
         assertFalse(uberon.existsInSpecies(cls, 2));
         assertFalse(uberon.existsInSpecies(cls, 3));
     }
+    
+    /**
+     * Test the method {@link UberonCommon#existsInAtLeastOneSpecies(OWLClass, Collection)}, 
+     * using the {@code UberonDevStage} class ({@code UberonCommon} is abstract).
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void testExistsInAtLeastOneSpecies() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
+        taxonConstraints.put("ID:1", new HashSet<Integer>(Arrays.asList(1, 2)));
+        taxonConstraints.put("ID:2", new HashSet<Integer>(Arrays.asList(1)));
+        taxonConstraints.put("ID:3", new HashSet<Integer>(Arrays.asList(2)));
+        taxonConstraints.put("ID:4", new HashSet<Integer>());
+        
+        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
+                getResource("/ontologies/testExistsInSpecies.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
+        
+        OWLClass cls = wrapper.getOWLClassByIdentifier("ID:1");
+        assertTrue(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(2, 3)));
+        assertTrue(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(1, 2, 3)));
+        assertTrue(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(1, 2)));
+        assertFalse(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(3)));
+        
+        cls = wrapper.getOWLClassByIdentifier("ID:4");
+        assertFalse(uberon.existsInAtLeastOneSpecies(cls, Arrays.asList(1, 2, 3)));
+    }
 
 }

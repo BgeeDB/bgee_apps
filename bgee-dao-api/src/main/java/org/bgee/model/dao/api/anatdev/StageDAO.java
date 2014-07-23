@@ -148,6 +148,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
         @Override
         public String toString() {
             return "ID: " + this.getId() + " - Name: " + this.getName() + 
+                    " - Desc: " + this.getDescription() + 
                     " - Left bound: " + this.getLeftBound() + " - Right bound: " + 
                     this.getRightBound() + " - Level: " + this.getLevel() + 
                     " - Is too granular: " + this.isTooGranular() + 

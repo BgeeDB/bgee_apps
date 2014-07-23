@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
@@ -78,6 +79,8 @@ public abstract class TestAncestor
         public final MySQLGeneDAO mockGeneDAO = mock(MySQLGeneDAO.class);
         public final MySQLHierarchicalGroupDAO mockHierarchicalGroupDAO = 
         		mock(MySQLHierarchicalGroupDAO.class);
+        public final MySQLStageDAO mockStageDAO = 
+                mock(MySQLStageDAO.class);
         
         public MockDAOManager() {
             
@@ -129,6 +132,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLHierarchicalGroupDAO getNewHierarchicalGroupDAO() {
             return this.mockHierarchicalGroupDAO;
+        }
+        @Override
+        protected MySQLStageDAO getNewStageDAO() {
+            return this.mockStageDAO;
         }
 	}
 }

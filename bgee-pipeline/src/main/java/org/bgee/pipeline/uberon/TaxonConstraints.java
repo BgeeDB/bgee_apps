@@ -787,7 +787,7 @@ public class TaxonConstraints {
      * @throws IOException              If {@code taxonConstraintsFile} could not 
      *                                  be read.
      */
-    public Set<Integer> extractTaxonIds(String taxonConstraintsFile) 
+    public static Set<Integer> extractTaxonIds(String taxonConstraintsFile) 
             throws FileNotFoundException, IOException {
         log.entry(taxonConstraintsFile);
         try (ICsvListReader listReader = new CsvListReader(

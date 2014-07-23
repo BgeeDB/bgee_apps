@@ -616,8 +616,7 @@ public class SimilarityAnnotation {
         //now, get all the information required to perform correctness checks 
         //on the annotations, and to add additional information (names corresponding 
         //to uberon IDs, etc).
-        TaxonConstraints extractor = new TaxonConstraints();
-        Set<Integer> taxonIds = extractor.extractTaxonIds(taxonConstraintsFile);
+        Set<Integer> taxonIds = TaxonConstraints.extractTaxonIds(taxonConstraintsFile);
         Map<String, Set<Integer>> taxonConstraints = 
                 TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile);
         OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(

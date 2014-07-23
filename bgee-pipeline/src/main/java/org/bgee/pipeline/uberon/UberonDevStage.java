@@ -67,6 +67,12 @@ public class UberonDevStage extends UberonCommon {
     public final static int TEMPORAL_COMMENT_GROUP = 1;
     
     /**
+     * A {@code String} that is the name of the subset whose too granular stages 
+     * belong to.
+     */
+    public final static String TOO_GRANULAR_SUBSET = "granular_stage";
+    
+    /**
      * Several actions can be launched from this main method, depending on the first 
      * element in {@code args}: 
      * <ul>
@@ -223,7 +229,7 @@ public class UberonDevStage extends UberonCommon {
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
      * wrapping the Uberon ontology that will be used, and the taxon constraints 
      * that will be used to identify to which species stages belong. It is not necessary 
-     * to provide those if the ontology contains only one species.  
+     * to provide taxon constraints if the ontology contains only one species.  
      * 
      * @param ontUtils          the {@code OntologyUtils} that will be used. 
      * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 
@@ -1053,7 +1059,6 @@ public class UberonDevStage extends UberonCommon {
         }
         return log.exit(matches);
     }
-
 
     /**
      * @return  A {@code Collection} of {@code String}s that are the OBO-like IDs 

@@ -553,7 +553,8 @@ public class OntologyUtils {
     //suppress warning because the getAncestors method of owltools uses unparameterized 
     //generic OWLPropertyExpression, so we need to do the same. 
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root, 
-            List<OWLClass> classOrder, @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) 
+            List<OWLClass> classOrder, 
+            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) 
                     throws UnknownOWLOntologyException {
         log.entry(root, classOrder, overProps);
         
@@ -565,7 +566,7 @@ public class OntologyUtils {
             Set<OWLClass> roots = this.getWrapper().getOntologyRoots();
             if (roots.size() != 1) {
                 throw log.throwing(new IllegalStateException("Incorrect number of roots " +
-                        "in the taxonomy ontology"));
+                        "in the ontology: " + roots.size() + " - " + roots));
             }
             root = roots.iterator().next();
         }
@@ -634,6 +635,10 @@ public class OntologyUtils {
             }
         } else {
             children = this.getWrapper().getOWLClassDirectDescendants(classInspected);
+        }
+        //we discard children that are not in classOrder
+        if (classOrder != null) {
+            children.retainAll(classOrder);
         }
         log.trace("Asserted children of {}: {}", classInspected, children);
         

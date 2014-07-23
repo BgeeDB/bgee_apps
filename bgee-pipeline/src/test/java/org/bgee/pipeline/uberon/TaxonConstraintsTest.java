@@ -276,7 +276,7 @@ public class TaxonConstraintsTest extends TestAncestor {
     @Test
     public void shouldExtractTaxonIds() throws FileNotFoundException, IOException {
         Set<Integer> expectedTaxonIds = new HashSet<Integer>(Arrays.asList(10, 15, 16, 19));
-        assertEquals(expectedTaxonIds, new TaxonConstraints().extractTaxonIds(
+        assertEquals(expectedTaxonIds, TaxonConstraints.extractTaxonIds(
                 this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
     }
     

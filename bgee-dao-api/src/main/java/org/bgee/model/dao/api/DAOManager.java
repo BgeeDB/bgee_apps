@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
@@ -886,6 +887,19 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.exit(this.getNewHierarchicalGroupDAO());
     }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.anatdev.StageDAO 
+     * StageDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code StageDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.anatdev.StageDAO StageDAO
+     */
+    public final StageDAO getStageDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewStageDAO());
+    }
 
     
     //*****************************************
@@ -1028,4 +1042,12 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code HierarchicalGroupDAO}
      */
     protected abstract HierarchicalGroupDAO getNewHierarchicalGroupDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.anatdev.StageDAO 
+     * StageDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code StageDAO}
+     */
+    protected abstract StageDAO getNewStageDAO();
 }

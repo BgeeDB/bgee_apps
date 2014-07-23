@@ -23,6 +23,7 @@ import org.bgee.pipeline.hierarchicalGroups.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
+import org.bgee.pipeline.uberon.InsertUberon;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.bgee.pipeline.uberon.Uberon;
 import org.bgee.pipeline.uberon.UberonDevStage;
@@ -161,6 +162,9 @@ public class CommandRunner {
         case "UberonDevStage": 
             UberonDevStage.main(newArgs);
             break;
+        case "InsertUberon": 
+            InsertUberon.main(newArgs);
+            break;
         case "socketUberonStagesBetween": 
             CommandRunner.socketUberonStagesBetween(new UberonDevStage(newArgs[0], newArgs[1], 
                     CommandRunner.parseMapArgumentAsInteger(newArgs[2])), 
@@ -287,25 +291,57 @@ public class CommandRunner {
     }
     
     /**
-     * Split {@code listArg} based on {@link #LIST_SEPARATOR}. The resulting {@code String}s 
+     * Delegates to {@link #parseListArgument(String, Class)} with {@code Class} argument 
+     * being {@code String.class}.
+     * 
+     * @param listArg    See same name argument in {@link #parseListArgument(String, Class)}.
+     * @return           See returned value in {@link #parseListArgument(String, Class)}.
+     */
+    public static List<String> parseListArgument(String listArg) {
+        log.entry(listArg);
+        
+        return log.exit(CommandRunner.parseListArgument(listArg, String.class));
+    }
+    /**
+     * Delegates to {@link #parseListArgument(String, Class)} with {@code Class} argument 
+     * being {@code Integer.class}.
+     * 
+     * @param listArg    See same name argument in {@link #parseListArgument(String, Class)}.
+     * @return           See returned value in {@link #parseListArgument(String, Class)}.
+     */
+    public static List<Integer> parseListArgumentAsInt(String listArg) {
+        log.entry(listArg);
+        
+        return log.exit(CommandRunner.parseListArgument(listArg, Integer.class));
+    }
+    /**
+     * Split {@code listArg} based on {@link #LIST_SEPARATOR}. The resulting {@code value}s
+     * casted to type {@code T} 
      * are returned as a {@code List}, in the order they were obtained from {@code listArg}.
      * This method is used when a list needs to be provided as a single argument, 
      * for a command line usage. 
      * 
      * @param listArg   A {@code String} corresponding to a list of elements separated by 
      *                  {@link #LIST_SEPARATOR}.
-     * @return          A {@code List} of {@code String}s that are the result of the split 
+     * @return          A {@code List} of {@code T}s that are the result of the split 
      *                  of {@code listArg}, according to {@code LIST_SEPARATOR}.
      */
-    public static List<String> parseListArgument(String listArg) {
-        log.entry(listArg);
+    private static <T> List<T> parseListArgument(String listArg, Class<T> type) {
+        log.entry(listArg, type);
         
-        List<String> resultingList = new ArrayList<String>();
+        List<T> resultingList = new ArrayList<T>();
         listArg = listArg.trim();
         if (!listArg.equals(EMPTY_LIST)) {
             for (String arg: listArg.split(LIST_SEPARATOR)) {
                 if (StringUtils.isNotBlank(arg)) {
-                    resultingList.add(arg.trim());
+                    String value = arg.trim();
+                    if (type.equals(Integer.class)) {
+                        resultingList.add(type.cast(Integer.parseInt(value)));
+                    } else if (type.equals(Boolean.class)) {
+                        resultingList.add(type.cast(Boolean.parseBoolean(value)));
+                    } else {
+                        resultingList.add(type.cast(value));
+                    }
                 }
             }
         }

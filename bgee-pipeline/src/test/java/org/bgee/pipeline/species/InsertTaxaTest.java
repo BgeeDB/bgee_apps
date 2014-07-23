@@ -186,7 +186,8 @@ public class InsertTaxaTest extends TestAncestor {
                         s1.getGenomeSpeciesId() != null && s1.getGenomeSpeciesId().equals(s2.getGenomeSpeciesId())) && 
                     (s1.getFakeGeneIdPrefix() == null && s2.getFakeGeneIdPrefix() == null || 
                         s1.getFakeGeneIdPrefix() != null && s1.getFakeGeneIdPrefix().equals(s2.getFakeGeneIdPrefix())) ) {
-                    found = true;    
+                    found = true;   
+                    break;
                 }
             }
             if (!found) {
@@ -232,7 +233,8 @@ public class InsertTaxaTest extends TestAncestor {
                         t1.isLca() != null && t1.isLca().equals(t2.isLca())) && 
                     (t1.getDescription() == null && t2.getDescription() == null || 
                         t1.getDescription() != null && t1.getDescription().equals(t2.getDescription())) ) {
-                    found = true;    
+                    found = true; 
+                    break;
                 }
             }
             if (!found) {

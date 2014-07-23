@@ -14,15 +14,16 @@ html, body {
     margin: 0;
     top: 0;
     left: 0;
-    min-height: 100%;
     width: 100%;
+    min-height: 100%;
     background-color: #F7F8FA;
     overflow: hidden;
 }
 
 /****SIB HEADER****/
-#sib_header {
+header {
     position: relative;
+    display: inline-block;
     background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
     height: 100px;
     width: 100%;
@@ -30,30 +31,46 @@ html, body {
     z-index: 2;
 }
 
-#sib_header h1 {
-    position: relative;
-    top: 15px;
-    margin: 0 220px;
-    color: #282828;
-    text-align: center;
-    font: 32px Helvetica, Verdana, sans-serif;
+header h1, header h2  {
+	position: relative;
+    margin: 0 auto;
+    width: 430px;
+	color: #282828;
+	text-align: center;
+    font-family: Helvetica, Verdana, sans-serif;
+    font-weight: normal;
     white-space: nowrap;
+}
+
+header h1 {
+    top: 20px;
     font-size: 27px;
 }
 
-#sib_header h2 {
-    position: relative;
+header h2 {
     top: 25px;
-    margin: 0 220px;
-    color: #282828;
-    text-align: center;
-    font: 19px Helvetica, Verdana, sans-serif;
-    white-space: nowrap;
+    font-size: 19px;
 }
 
-#sib_header a {
-    text-decoration: none;
-    color: #282828;
+/****LOGOS****/
+header img {
+    border-radius: 0px;
+}
+
+#sib_logo {
+    position: absolute;
+    width: 141px;
+    height: 75px;
+    top: 8px;
+    right: 2%;
+}
+
+#sib_other_logo {
+    position: absolute;
+    top: 8px;
+    left : 2%;    
+    width: 186px;
+    height: 75px;
 }
 
 /****SIB BODY****/
@@ -101,12 +118,13 @@ a:hover, a:hover:visited {
 /****BGEE SPECIFIC STUFF****/
 p, label {
     color: #920209;
-    font-weight: bold;
     font: 16px Helvetica, Verdana, sans-serif;
 }
+
 p {
     margin: 0 2%;
 }
+
 figure {
     cursor: pointer;
     cursor: hand;
@@ -126,6 +144,12 @@ div.biggroup {
     border-radius: 8px;
     padding: 0.5%;
     text-align: left;
+}
+
+#sib_body h1 {
+    margin: 0 2%;
+    color: #920209;
+    font: 16px Helvetica, Verdana, sans-serif;
 }
 
 div.biggroup figcaption p {
@@ -171,33 +195,38 @@ img {
 }
 
 /****BGEE INTRODUCTION****/
+
 #bgee_introduction {
-    padding: 10px 0; 
-    text-align: center;
+    padding: 0; 
+    text-align: left;
 }
 #bgee_introduction p {
+    margin: 0 0.5%;
     font: 14px Helvetica, Verdana, sans-serif;
     color: #515151;
 }
 
 /****BGEE SEARCH BOX****/
 #bgee_search_box {
-    width: 600px;
+    width: 670px;
     height: 25px;
-    margin: 0 auto 5px auto;
+    margin: 0 auto ;
     padding: 10px; 
     background-color: #D9DDE1;
     border-radius: 8px;
+}
+#bgee_search_box form {
+    display: inline-block;
 }
 
 input[type="image"] {
     margin-top: -1px;
     vertical-align: middle;
+    border-radius: 8px;
 }
 
 #sib_body input.sib_text {
-    float: right;
-    width: 480px;
+    width: 470px;
     font-size: 11px;
     font-weight: normal;
     background: #FFF;
@@ -208,7 +237,7 @@ input[type="image"] {
 }
 
 div#results_nb{
-	text-align:center;
+    text-align:center;
 }
 
 #bgee_more_results_up{
@@ -281,13 +310,21 @@ figure.highlight {
     background-color: #282828;
     padding: 30px;
     left: -3%;
-    width: 106%;
+    width: 101%;
     margin: 5px 0;
     clear: left;
     display: none;
 }
 
+#bgee_data_selection p {
+    font-size: 14px;
+    color: #DBDBDB;
+    width : 80%;
+    margin:0;
+}
+
 #bgee_data_selection h1, #bgee_data_selection h2 {
+    margin: 0px;
     white-space: nowrap;
     text-align: left;
     color: #DBDBDB;
@@ -300,11 +337,11 @@ figure.highlight {
 }
 
 #bgee_data_selection h1.scientificname {
-    font: italic 36px Helvetica, Verdana, sans-serif;
+    font-style: italic;
 }
 
 #bgee_data_selection h2 {
-    margin: 40px  0 20px;
+    margin: 30px  0 20px;
     font: 20px Helvetica, Verdana, sans-serif;
 }
 
@@ -314,6 +351,16 @@ figure.highlight {
     white-space: nowrap;
     list-style-image: url(../img/arrow.png);
 }
+
+#bgee_data_selection_cross img {
+	position: absolute;
+    top: 30px;
+	right: 30px;
+    height: 20px;
+	width: 20px;
+    z-index: 2;
+}
+
 
 #bgee_data_selection_img {
     position: absolute;
@@ -383,52 +430,31 @@ figure.selected {
     display: none;
 }
 
-/****LOGOS****/
-#sib_header #sib_logo {
-    position: absolute;
-    top: 8px;
-    width: 141px;
-    height: 75px;
-    background: transparent url(../img/sib_logo_141x75.png) no-repeat top
-        left;
-    min-margin: 500px;
-    margin-left: 80%;
-}
-
-#sib_header #sib_other_logo {
-    position: absolute;
-    top: 8px;
-    width: 186px;
-    height: 75px;
-    background: transparent url(../img/bgee_logo.png) no-repeat top left;
-    left: 16px;
-}
-
 /****BGEE CREATIVE COMMONS****/
-div.creativecommons p {
+#creativecommons_title {
+    color: #515151;
+    font: bold 10px Helvetica, Verdana, sans-serif;
+}
+
+#creativecommons p {
     font: 10px Helvetica, Verdana, sans-serif;
-    margin: 1px 2%;
+    margin: 2px 2%;
     color: #515151;
 }
 
-div.creativecommons a {
+#creativecommons a {
     color: #920209;
-    margin: 1px 0;
     text-decoration: underline;
 }
 
-div.creativecommons a:hover {
+#creativecommons a:hover {
     color: #d6161d;
 }
 
-div.creativecommons p.creativecommons_title {
-    font-weight: bold;
-}
-
 /****SIB FOOTER****/
-#sib_footer {
+footer {
     position: absolute;
-    bottom: 0;
+    bottom: 0px;
     height: 40px;
     background-color: #1E2425;
     width: 100%;
@@ -440,37 +466,30 @@ div.creativecommons p.creativecommons_title {
     z-index: 2;
 }
 
+#sib_footer_content a, #sib_footer_right a {
+    color: #F7F8FA;
+    text-decoration: none;
+}
+
+#sib_footer_content a:hover, #sib_footer_right a:hover {
+    text-decoration: underline;
+}
+
 #sib_footer_content {
     position: relative;
     padding: 9px 36px 0px 36px;
     padding-right: 300px;
 }
 
-#sib_footer a {
-    text-decoration: none;
-    color: #F7F8FA;
-}
-
-#sib_footer a:hover {
-    color: #F7F8FA;
-    text-decoration: underline;
-}
-
 #sib_footer_right {
     position: absolute;
-    right: 18px;
+    right: 2%;
     width: 400px;
     top: 9px;
     text-align: right;
 }
 
-#sib_footer_right a {
-    padding-left: 10px;
-}
-
 #sib_footer_gototop {
-    background: transparent url(../img/triangle_hover.png) no-repeat top
-        left;
+    background: transparent url(../img/triangle_hover.png) no-repeat top left;
     padding-left: 10px;
-    margin-right: 10px;
 }

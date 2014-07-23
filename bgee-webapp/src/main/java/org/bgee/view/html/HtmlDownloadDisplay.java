@@ -27,6 +27,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
 		this.writeln("<div id='sib_body'>");
 		
+		this.writeln("<div id='bgee_more_results_up'> &uarr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
+		this.writeln("<div id='bgee_more_results_down'> &darr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
+		
 		// Introduction
 		this.writeln("<div id='bgee_introduction'>");
 		this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
@@ -39,7 +42,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		this.writeln("<div id='bgee_search_box'>");
 		this.writeln("<form action='/' method='get'>");
 		this.writeln("<label>Search species</label>");
-		this.writeln("<input class='sib_text' type='text' id='search_label2' name='search'/>");
+		this.writeln("<input class='sib_text' type='text' id='search_label2' name='search'/>"
+				+ "<div id='results_nb'></div>");
 		this.writeln("</form>");
 		this.writeln("</div>");
 		
@@ -70,7 +74,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		// Black banner when a species or a group is selected
 		this.writeln("<div id='bgee_data_selection'>");
         this.writeln("<div id='bgee_data_selection_img'>");
-        this.writeln(generateSpeciesImg(9606, "Homo sapiens", "human", false));
+        this.writeln(generateSpeciesImg(9606, "Homo sapiens", "human", null, false));
         this.writeln("</div>");
         this.writeln("<div id='bgee_data_selection_text'>");
         this.writeln("<h1 class='scientificname'>Homo sapiens</h1>&nbsp;&nbsp;<h1 class='commonname'>(human)</h1>");
@@ -128,6 +132,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
 		// 
 		this.writeln("</div>");
+
 		this.endDisplay();
 	}
 	
@@ -178,7 +183,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	    if (speciesIds == null || speciesIds.size() == 0) {
 	        return ("");
 	    }
-	    String name=null, commonName=null, shortName=null;
+	    String name=null, commonName=null, shortName=null, alternateNames=null;
 	    // Hidden info, to improve the jQuery search, allow to look for any of the name, short,
 	    // or common name, even if not displayed... for example droso.
 	    String hiddenInfo="";
@@ -188,96 +193,115 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	                    name="Homo sapiens";
 	                    shortName="H. sapiens";
 	                    commonName="human";
+	                    alternateNames="";
 	                    break;
 	                case 10090: 
 	                    name="Mus musculus";
 	                    shortName="M. musculus";
                         commonName="mouse";
+	                    alternateNames="";
 	                    break;
 	                case 7955: 
 	                    name="Danio rerio";
 	                    shortName="D. rerio";
                         commonName="zebrafish";
+	                    alternateNames="";
 	                    break;
 	                case 8364: 
 	                    name="Xenopus tropicalis";
 	                    shortName="X. tropicalis";
                         commonName="xenopus";
+	                    alternateNames="";
 	                    break;
 	                case 7227: 
 	                    name="Drosophila melanogaster";
 	                    shortName="D. melanogaster";
                         commonName="fruitfly";
+	                    alternateNames="";
 	                    break;
 	                case 9031: 
 	                    name="Gallus gallus";
 	                    shortName="G. gallus";
                         commonName="chicken";
+	                    alternateNames="";
 	                    break;
 	                case 9593: 
 	                    name="Gorilla gorilla";
 	                    shortName="G. gorilla";
                         commonName="gorilla";
+	                    alternateNames="";
 	                    break;
 	                case 9544: 
 	                    name="Macaca mulatta";
 	                    shortName="M. mulatta";
                         commonName="macaque";
+	                    alternateNames="rhesus";
 	                    break;
 	                case 13616: 
 	                    name="Monodelphis domestica";
 	                    shortName="M. domestica";
                         commonName="opossum";
+	                    alternateNames="";
 	                    break;
 	                case 9258: 
 	                    name="Ornithorhynchus anatinus";
 	                    shortName="O. anatinus";
                         commonName="platypus";
+	                    alternateNames="";
 	                    break;
 	                case 9598: 
 	                    name="Pan troglodytes";
 	                    shortName="P. troglodytes";
                         commonName="chimpanzee";
+	                    alternateNames="";
 	                    break;
 	                case 9597: 
 	                    name="Pan paniscus";
 	                    shortName="P. paniscus";
                         commonName="bonobo";
+	                    alternateNames="";
 	                    break;
 	                case 9600: 
 	                    name="Pongo pygmaeus";
 	                    shortName="P. pygmaeus";
                         commonName="orangutan";
+	                    alternateNames="";
 	                    break;
 	                case 9913: 
 	                    name="Bos taurus";
 	                    shortName="B. taurus";
                         commonName="cow";
+	                    alternateNames="";
 	                    break;
 	                case 10116: 
 	                    name="Rattus norvegicus";
 	                    shortName="R. norvegicus";
                         commonName="rat";
+	                    alternateNames="";
 	                    break;
 	                case 28377: 
 	                    name="Anolis carolinensis";
 	                    shortName="A. carolinensis";
                         commonName="anolis";
+	                    alternateNames="";
 	                    break;
 	                case 99883: 
 	                    name="Tetraodon nigroviridis";
 	                    shortName="T. nigroviridis";
                         commonName="tetraodon";
+	                    alternateNames="";
 	                    break;
 	                case 9823: 
 	                    name="Sus scrofa";
 	                    shortName="S. scrofa";
                         commonName="pig";
+	                    alternateNames="";
 	                    break;
 	                case 6239: 
 	                    name="Caenorhabditis elegans";
 	                    shortName="C. elegans";
                         commonName="worm";
+                        alternateNames="nematode";
 	                    break;
 	                default:
 	                    return ("");
@@ -288,7 +312,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	            else{
 	            	hiddenInfo = name;
 	            }
-	            images.append(generateSpeciesImg(speciesId, name, commonName, true));
+	            images.append(generateSpeciesImg(speciesId, name, commonName, alternateNames,true));
         }
         if (StringUtils.isBlank(figcaption)) {
             StringBuilder newFigcaption = new StringBuilder();
@@ -331,7 +355,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                     data.
 	 */
 	private String generateSpeciesImg(int id, String name, String commonName, 
-	        boolean lightImg) {
+			String alternateNames, boolean lightImg) {
 	    StringBuilder image = new StringBuilder();
 	    image.append("<img src='");
 	    image.append(BgeeProperties.getImagesRootDirectory());
@@ -348,6 +372,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	    image.append(name);
 	    image.append("' data-bgeespeciescommonname='");
 	    image.append(commonName);
+	    image.append("' data-bgeespeciesalternatenames='");
+	    image.append(alternateNames);
 	    image.append("' />");
 	    return (image.toString());
 	}
@@ -356,6 +382,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	public void includeJs()
 	{
 		this.includeJs("jquery.js");
+		this.includeJs("jquery.visible.js");
 		this.includeJs("download.js");
 	}
 

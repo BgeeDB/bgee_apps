@@ -183,7 +183,8 @@ img {
 /****BGEE SEARCH BOX****/
 #bgee_search_box {
     width: 600px;
-    margin: 0 auto;
+    height: 25px;
+    margin: 0 auto 5px auto;
     padding: 10px; 
     background-color: #D9DDE1;
     border-radius: 8px;
@@ -204,6 +205,52 @@ input[type="image"] {
     border-style: solid;
     border-width: 1px;
     color: #406981;
+}
+
+div#results_nb{
+	text-align:center;
+}
+
+#bgee_more_results_up{
+    position: fixed;
+    text-align:center;
+    background-color:#D6161D;
+    border: 3px solid #F7F8FA;
+    border-top:0px;
+    border-left:0px;
+    border-radius:0px 0px 12px 0px ;
+    padding:10px;
+    height:15px;
+    width:100px;
+    left:0%;
+    top:0%;
+    color:white;
+    font-weight:900;
+    z-index:10;
+    display:none;
+    cursor: pointer;
+    cursor: hand;
+}
+
+#bgee_more_results_down{
+    position: fixed;
+    text-align:center;
+    background-color:#D6161D;
+    border: 3px solid #F7F8FA;
+    border-bottom:0px;
+    border-left:0px;
+    border-radius:0px 12px 0px 0px ;
+    padding:10px;
+    height:15px;
+    width:100px;
+    left:0%;
+    bottom:0%;
+    color:white;
+    font-weight:900;
+    z-index:10;
+    display:none;
+    cursor: pointer;
+    cursor: hand;
 }
 
 figure.highlight {

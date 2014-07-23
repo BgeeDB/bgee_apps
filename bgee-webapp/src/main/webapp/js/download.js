@@ -8,54 +8,103 @@
  */
 $( document ).ready(function() {
 
+	// Fetch the top level container to play with scroll.
+	var $container = $("html, body");
 	// Fetch all the figure tag that represent the species or groups
 	var $species = $( "figure" );
 	// Fetch the detail box
 	var $bgeeDataSelection = $( "#bgee_data_selection" );
 	// Generate the correct id from the bgeespeciesid contained in the images
-	$species.each(function() {
-		var id = "";
-		$( this ).find( "img" ).each(function() {
-			id = id + $( this ).data( "bgeespeciesid" ) + "_";
-		});
-		id = id.slice( 0, - 1 ); // Remove the extra _
-		$( this ).attr( "id", id );
-	});
+
+	// Declare a var that will contains the searchable datas
+	var searchContent = [];
+
+	// Generate ids and search datas
+	generateIdsAndSearchData();
+
 	// Read the id in the hash of the URL and load the corresponding details if present
-	var speciesId = window.location.hash.substr( 3 ); // Remove 'id' before the real id that was  
-	if( speciesId ){								  // added to avoid the automatic anchor behavior
+	var hash = window.location.hash;
+	if(hash.slice(0, 3) == "#id"){
+		var speciesId = hash.substr( 3 ); // Remove 'id' before the real id that was 
+		// added to avoid the automatic anchor behavior
+	}
+	if( speciesId ){								  
 		var $currentSpecies = $( "#"+speciesId );
 		loadDetails( $currentSpecies );
 	}
 	// Add a click listener to every figures to load the corresponding details or to hide it
 	$species.click(function() {
 		if($( this ).hasClass( "selected" )){
+			// Hide the detail box and unselected the current species.
 			$( this ).removeClass("selected");
 			$bgeeDataSelection.hide( "blind" );
 			window.location.hash = ""; 
 		}
 		else{
 			loadDetails($( this ));
-			// Reset the search
-			$bgeeSearchBox.val( "" );
-			search($bgeeSearchBox.val());
+			resetSearch(false);
 		}
 	});
-	// Fetch the search form and box in the DOM
+	// Fetch the search elements in the DOM
 	var $bgeeSearchForm = $( "#bgee_search_box form" );
 	var $bgeeSearchBox = $( "#bgee_search_box input" );
+	var $bgeeSearchResults = $( "#results_nb" );
+	var $bgeeMoreResultsDown = $( "#bgee_more_results_down" );
+	var $bgeeMoreResultsUp = $( "#bgee_more_results_up" );
 	// Add a listener to several event to trigger the search
 	$bgeeSearchBox.bind( "keyup change paste cut", function() {
 		search( $( this ).val() );
+		// Hide the detail box and unselected the current species.
+		$species.removeClass("selected");
+		$bgeeDataSelection.hide( "blind" );
+		window.location.hash = ""; 
 	});
 	// And to reset the search in the case of the event focus
 	$bgeeSearchBox.focus(function() {
-		$( this ).val( "" );
-		search($( this ).val());
+		resetSearch(false);
 	});
-	// Block the submit action to avoid the page to be reloaded
+	// Block the submit action to avoid the page to be reloaded and display a flash effect 
+	// when the enter key is pressed
 	$bgeeSearchForm.submit(function() {
+		$( "figure.highlight" ).fadeIn(100).fadeOut(100).fadeIn(100);
+		$bgeeSearchResults.fadeIn(100).fadeOut(100).fadeIn(100);
+		if(!($bgeeMoreResultsDown.css("display") == 'none')){
+			$bgeeMoreResultsDown.fadeIn(100).fadeOut(100).fadeIn(100);
+		}
 		return false;
+	});
+
+	// Add a listener to the scroll to evaluate whether the "more results" boxes should be displayed
+	$( window ).scroll(function() {
+		var position = $( window ).scrollTop();
+		// Do it every 10px only
+//		if(position % 10 == 0){
+		$bgeeMoreResultsUp.hide();
+		$bgeeMoreResultsDown.hide();
+		$(".highlight").each(function() {
+			if(! $(this).visible()){
+				if($( this ).offset().top > position){
+					$bgeeMoreResultsDown.show();
+				} else if($( this ).offset().top < position){
+					$bgeeMoreResultsUp.show();
+				}
+			}
+		});		
+//		}
+	});
+
+	$bgeeMoreResultsUp.click(function() {
+		$container.animate({
+			scrollTop: 0
+		},{duration:300}
+		);				
+	});
+
+	$bgeeMoreResultsDown.click(function() {
+		$container.animate({
+			scrollTop: $container.height()
+		},{duration:300}
+		);				
 	});
 
 	/**
@@ -81,13 +130,9 @@ $( document ).ready(function() {
 		var $bgeeDataSelectionTextScientific = $( "#bgee_data_selection_text h1.scientificname" );
 		var $bgeeDataSelectionTextCommon = $( "#bgee_data_selection_text h1.commonname" );
 		var $exprSimpleCsv = $( "#expr_simple_csv" );
-		var $exprSimpleTsv = $( "#expr_simple_tsv" );
 		var $exprCompleteCsv = $( "#expr_complete_csv" );		
-		var $exprCompleteTsv = $( "#expr_complete_tsv" );	
 		var $overUnderSimpleCsv = $( "#overunder_simple_csv" );
-		var $overUnderSimpleTsv = $( "#overunder_simple_tsv" );
 		var $overUnderCompleteCsv = $( "#overunder_complete_csv" );		
-		var $overUnderCompleteTsv = $( "#overunder_complete_tsv" );
 		// Proceed to the update
 		$bgeeDataSelectionImg.empty();
 		$images.each( function(){
@@ -102,9 +147,6 @@ $( document ).ready(function() {
 			// Calculate the height so it would allow the images to fit into the space.
 			// Divide the height by 1 for 1 image, by 2 for 2,3,4 img, by 3 for 5,6,7,8,9 and etc.
 			var newHeight = $newElement.height() / (Math.ceil(Math.sqrt(quantity))); 
-			if(quantity > 1){
-				newHeight = newHeight * 0.8; // Make the img a bit smaller because of the margins
-			}
 			// Assume that the image is a square, so height and width are the same
 			$newElement.css("height",newHeight).css("width",newHeight);			
 		});
@@ -119,13 +161,9 @@ $( document ).ready(function() {
 		}
 		// Update the values of the download links 
 		$exprSimpleCsv.attr("href",urls["expr_simple_csv"]);
-		$exprSimpleTsv.attr("href",urls["expr_simple_tsv"]);
 		$exprCompleteCsv.attr("href",urls["expr_complete_csv"]);		
-		$exprCompleteTsv.attr("href",urls["expr_complete_tsv"]);	
 		$overUnderSimpleCsv.attr("href",urls["overunder_simple_csv"]);
-		$overUnderSimpleTsv.attr("href",urls["overunder_simple_tsv"]);
 		$overUnderCompleteCsv.attr("href",urls["overunder_complete_csv"]);		
-		$overUnderCompleteTsv.attr("href",urls["overunder_complete_tsv"]);	
 
 		// Set the 'selected' css class to the current species figure and display the detail 
 		// box with a visual effect
@@ -154,7 +192,6 @@ $( document ).ready(function() {
 		}
 
 		// Display the detail box and scroll to it
-		var $container = $("html, body");
 		$bgeeDataSelection.show( 120,function() {
 			$container.animate({
 				scrollTop: $bgeeDataSelection.offset().top - $container.offset().top 
@@ -163,7 +200,7 @@ $( document ).ready(function() {
 			},{duration:500}
 			);			
 		});
-		
+
 		// Update the URL with the id, to allow the link to be copied and sent
 		// Add 'id' in front to avoid the automatic anchor behavior that would mess up the scroll
 		window.location.hash = "#id"+id; 
@@ -176,31 +213,48 @@ $( document ).ready(function() {
 	 * @param text	The text to search, that should come from the search box
 	 */
 	function search(text) {
-		// Remove the highlight class everywhere it could be.
+		// Remove the highlight class everywhere it could be and hide the more results box
 		$species.removeClass("highlight");
-		$species.parent().removeClass("highlight");
-		if(text){
+		$bgeeMoreResultsDown.hide();
+		if(text.length > 1){
 			// Add the class wherever it matches the text 
-			$( "figcaption:containsIN('"+text.toLowerCase()+"')" ).each(function (){ 
-				$( this ).parent().addClass("highlight");
-				$( this ).parent().parent().addClass("highlight");
+			$species.each(function (){
+				if(searchContent[$( this ).attr( "id" )].contains(text.toLowerCase())){
+					$( this ).addClass("highlight");
+				}
 			});
+			// Update the number of results
+			$bgeeSearchResults.text($("figure.highlight").size()+ " result(s)");
 		}
+		else{
+			resetSearch(true);
+		}
+		$(".highlight").each(function() {
+			if(! $(this).visible()){
+				$bgeeMoreResultsDown.show();
+			}
+		}
+		);
 	};
 
 	/**
-	 * This function extends the jQuery contains function to make it case insensitive, it does
-	 * seems to exist natively
-	 * 
-	 * @author http://jsfiddle.net/bipen/dyfRa/
-	 * 
+	 * This function reset the search elements
+	 * @param keepValue    A boolean to indicate whether the value has to be kept in the field
+	 * 					   This is useful when one character is present in the input.
+	 * 					   In this case, no result is provided and if the user is erasing, there
+	 * 					   is the need to reset the search... but if the user is currently writing
+	 * 					   this single letter has to be kept.
 	 */
-	$.extend($.expr[":"], {
-		"containsIN": function(elem, i, match, array) {
-			return (elem.textContent || elem.innerText || "").toLowerCase().indexOf((match[3] 
-			|| "").toLowerCase()) >= 0;
+	function resetSearch(keepValue) {
+		if(! keepValue){
+			$bgeeSearchBox.val( "" );
 		}
-	});
+		$bgeeSearchResults.text( "" );
+		$bgeeMoreResultsDown.hide();
+		$bgeeMoreResultsUp.hide();		
+		// Remove the highlight class everywhere it could be.
+		$species.removeClass("highlight");
+	}
 
 	/**
 	 * This function contains a table with all the download URL and return a subset 
@@ -216,24 +270,16 @@ $( document ).ready(function() {
 				"9606":
 				{
 					"expr_simple_csv" : "http://www.isb-sib.ch/?1",
-					"expr_simple_tsv" : "http://www.isb-sib.ch/?2",
 					"expr_complete_csv" : "http://www.isb-sib.ch/?3",
-					"expr_complete_tsv" : "http://www.isb-sib.ch/?4",
 					"overunder_simple_csv" : "http://www.isb-sib.ch/?5",
-					"overunder_simple_tsv" : "http://www.isb-sib.ch/?6",
 					"overunder_complete_csv" : "http://www.isb-sib.ch/?7",
-					"overunder_complete_tsv" : "http://www.isb-sib.ch/?8"
 				},
 				"10090":
 				{
 					"expr_simple_csv" : "http://www.isb-sib.ch/?9",
-					"expr_simple_tsv" : "http://www.isb-sib.ch/?10",
 					"expr_complete_csv" : "http://www.isb-sib.ch/?11",
-					"expr_complete_tsv" : "http://www.isb-sib.ch/?12",
 					"overunder_simple_csv" : "http://www.isb-sib.ch/?13",
-					"overunder_simple_tsv" : "http://www.isb-sib.ch/?14",
 					"overunder_complete_csv" : "http://www.isb-sib.ch/?15",
-					"overunder_complete_tsv" : "http://www.isb-sib.ch/?16",
 				}
 		}
 
@@ -243,6 +289,47 @@ $( document ).ready(function() {
 		}
 
 		return urls[id];
+	}
+
+	function generateIdsAndSearchData() {
+		// Generate ids
+		$species.each(function() {
+			var id = "";
+			var names = "";
+			var commonNames = "";
+			var alternateNames = "";
+			var groupName = $( this ).data("bgeegroupname");
+			if(! groupName){
+				groupName = "";
+			}
+			else{
+				groupName = groupName.toLowerCase();
+			}
+
+			$( this ).find( "img" ).each(function() {
+				id = id + $( this ).data( "bgeespeciesid" ) + "_";
+				names = names +  $( this ).data('bgeespeciesname').toLowerCase(); + " ";
+				commonNames = commonNames +  
+				$( this ).data('bgeespeciescommonname').toLowerCase(); + " ";
+				alternateNames = alternateNames +  
+				$( this ).data('bgeespeciesalternatenames').toLowerCase();
+				+ " ";
+			});
+			id = id.slice( 0, - 1 ); // Remove the extra _
+			$( this ).attr( "id", id );
+
+			// Generate search content for the current species
+			searchContent[id] = id.replace("_"," ")
+			+ " " + names
+			+ " " + commonNames
+			+ " " + groupName
+			+ " " + alternateNames ;
+			
+			searchContent[id] = searchContent[id].replace("  "," ");
+
+//			console.log(searchContent[id]);
+		});	
+
 	}
 
 });

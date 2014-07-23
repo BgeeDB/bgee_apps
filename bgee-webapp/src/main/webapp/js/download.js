@@ -61,10 +61,6 @@ $( document ).ready(function() {
 		$bgeeDataSelection.hide( "blind" );
 		window.location.hash = ""; 
 	});
-	// And to reset the search in the case of the event focus
-	$bgeeSearchBox.focus(function() {
-		resetSearch(false);
-	});
 	// Block the submit action to avoid the page to be reloaded and display a flash effect 
 	// when the enter key is pressed
 	$bgeeSearchForm.submit(function() {
@@ -82,7 +78,6 @@ $( document ).ready(function() {
 		},
 		close: function( event, ui ) {
 			$( this ).trigger( "change" );
-			$( this ).trigger( "blur" );
 		},
 		source: autocompletionList
 	});
@@ -101,6 +96,9 @@ $( document ).ready(function() {
 				}
 			}
 		});		
+		if(! ($bgeeSearchBox.visible(true,false,'vertical'))){
+			$bgeeSearchBox.trigger("blur");
+		}
 	});
 
 	/**
@@ -307,26 +305,30 @@ $( document ).ready(function() {
 			$( this ).find( "img" ).each(function() {
 				id = id + $( this ).data( "bgeespeciesid" ) + "_";
 				var currentName = $( this ).data('bgeespeciesname').toLowerCase();
-				names = names +  currentName + " ";
+				if(currentName){
+					names = names +  currentName + " ";
+				}
 				addToAutoCompletionList(currentName);
 				var currentCommonName = $( this ).data('bgeespeciescommonname').toLowerCase();
-				commonNames = commonNames + currentCommonName + " ";
+				if(currentCommonName){
+					commonNames = commonNames + currentCommonName + " ";
+				}
 				addToAutoCompletionList(currentCommonName);
 				var currentAlternateNames = $( this ).data('bgeespeciesalternatenames').toLowerCase();
-				alternateNames = alternateNames + currentAlternateNames	+ " ";
+				if(currentAlternateNames){
+					alternateNames = alternateNames + currentAlternateNames	+ " ";
+				}
 				addToAutoCompletionList(currentAlternateNames);
 			});
 			id = id.slice( 0, - 1 ); // Remove the extra _
 			$( this ).attr( "id", id );
 
 			// Generate search content for the current species
-			searchContent[id] = id.replace("_"," ")
-			+ " " + names
-			+ " " + commonNames
-			+ " " + groupName
-			+ " " + alternateNames ;
-
-			searchContent[id] = searchContent[id].replace("  "," ");
+			searchContent[id] = id.replace(/_/g, " ") + " "
+			+ names
+			+ commonNames
+			+ groupName
+			+ alternateNames ;
 
 			autocompletionList.sort();
 

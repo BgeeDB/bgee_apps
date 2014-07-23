@@ -377,6 +377,23 @@ figure.highlight {
     height: 300px;
 }
 
+#bgee_multi_species #bgee_data_selection_img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin:30px 0px 0px 30px;
+    width: 360px;
+}
+
+#bgee_multi_species #bgee_data_selection_img img {
+    position: relative;
+    float: left;
+    margin: 0px;
+    width: 300px;
+    height: 300px;
+    border-radius: 0px;
+}
+
 #bgee_data_selection_text {
     padding-left: 370px;
     height: 300px;

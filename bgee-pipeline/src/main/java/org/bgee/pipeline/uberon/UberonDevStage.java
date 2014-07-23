@@ -697,27 +697,43 @@ public class UberonDevStage extends UberonCommon {
             int endRightBound = nestedModel.get(endStage).get(OntologyUtils.RIGHT_BOUND_KEY);
             int endLevel = nestedModel.get(endStage).get(OntologyUtils.LEVEL_KEY);
             int maxLevel = Math.max(startLevel, endLevel);
-            
-            if (startLeftBound >= endLeftBound) {
-                throw log.throwing(new IllegalStateException("The start stage provided " +
-                		"is actually a successor of the end stage provided"));
-            }
-            
+
             //now we get all stages belonging to the requested species, 
             //between start and end stages, with a level not greater 
             //than the max level between start and end stage. 
             Set<OWLClass> selectedStages = new HashSet<OWLClass>();
-            for (Entry<OWLClass, Map<String, Integer>> entry: nestedModel.entrySet()) {
-                OWLClass stage = entry.getKey();
-                Map<String, Integer> params = entry.getValue();
-                if (this.existsInSpecies(stage, speciesId) && 
-                    params.get(OntologyUtils.LEFT_BOUND_KEY) >= startLeftBound && 
-                        params.get(OntologyUtils.LEFT_BOUND_KEY) <= endLeftBound && 
-                    params.get(OntologyUtils.RIGHT_BOUND_KEY) >= startRightBound && 
+            
+            //if one of the start or end stage is the parent of the other, keep only the parent, 
+            //log a warning
+            if (startLeftBound < endLeftBound && startRightBound > endRightBound || 
+                    endLeftBound < startLeftBound && endRightBound > startRightBound) {
+                OWLClass parent = startStage;
+                OWLClass child = endStage;
+                if (endLeftBound < startLeftBound) {
+                    parent = endStage;
+                    child = startStage;
+                }
+                selectedStages.add(parent);
+                log.warn("The provided stage ({}) is the parent of the other stage ({}). Only the parent will be returned.", 
+                       parent, child);
+            } else if (startLeftBound > endLeftBound) {
+                //illogical
+                throw log.throwing(new IllegalStateException("The start stage provided " +
+                		"is actually a successor of the end stage provided"));
+            } else {
+                //retrieve actual stage range
+                for (Entry<OWLClass, Map<String, Integer>> entry: nestedModel.entrySet()) {
+                    OWLClass stage = entry.getKey();
+                    Map<String, Integer> params = entry.getValue();
+                    if (this.existsInSpecies(stage, speciesId) && 
+                            params.get(OntologyUtils.LEFT_BOUND_KEY) >= startLeftBound && 
+                            params.get(OntologyUtils.LEFT_BOUND_KEY) <= endLeftBound && 
+                            params.get(OntologyUtils.RIGHT_BOUND_KEY) >= startRightBound && 
                             params.get(OntologyUtils.RIGHT_BOUND_KEY) <= endRightBound && 
-                    params.get(OntologyUtils.LEVEL_KEY) <= maxLevel) {
-                    
-                    selectedStages.add(stage);
+                            params.get(OntologyUtils.LEVEL_KEY) <= maxLevel) {
+
+                        selectedStages.add(stage);
+                    }
                 }
             }
             

@@ -445,7 +445,7 @@ relationship: immediately_preceded_by FBdv:00005339 ! third instar larval stage 
 relationship: immediately_preceded_by FBdv:00007005 ! third instar larval stage L2 (Drosophila)
 relationship: immediately_preceded_by FBdv:00007007 ! late third instar larval stage (Drosophila)
 relationship: immediately_preceded_by UBERON:0004730 ! instar larval stage
-relationship: part_of UBERON:0000070 ! pupal stage
+relationship: part_of UBERON:0000092 ! post-embryonic stage
 
 [Term]
 id: FBdv:00005343
@@ -8062,7 +8062,8 @@ synonym: "pupa stage" EXACT []
 xref: FBdv:00005349
 xref: FBdv:00007001
 xref: http://en.wikipedia.org/wiki/Pupa
-relationship: immediately_preceded_by UBERON:0000069 ! larval stage
+relationship: preceded_by UBERON:0000069 ! larval stage
+relationship: immediately_preceded_by FBdv:00005342 ! prepupal stage (Drosophila) - TODO: GCI
 relationship: part_of UBERON:0000092 ! post-embryonic stage
 
 [Term]

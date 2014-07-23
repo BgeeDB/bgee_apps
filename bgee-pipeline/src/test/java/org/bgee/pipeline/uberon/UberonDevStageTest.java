@@ -640,7 +640,8 @@ public class UberonDevStageTest extends TestAncestor {
         //FBdv:00005289: embryonic stage
         //FBdv:00007026: mature adult stage
         assertEquals("Incorrect stage range returned", 
-                Arrays.asList("UBERON:0000068", "UBERON:0004730", "FBdv:00005342", "FBdv:00005350", 
+                Arrays.asList("UBERON:0000068", "UBERON:0004730", "FBdv:00005343", "FBdv:00005344", 
+                        "FBdv:00005345", "FBdv:00005346", "FBdv:00005350", 
                         "FBdv:00005353", "FBdv:00005354", "FBdv:00006011", "FBdv:00007075", "FBdv:00007026"), 
                 uberon.getStageIdsBetween("FBdv:00005289", "FBdv:00007026", 7227));
         
@@ -717,6 +718,13 @@ public class UberonDevStageTest extends TestAncestor {
                 "MmulDv:0000007");
         assertEquals("incorrect stages retrieved between start and end", expectedList, 
                 uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000007"));
+        
+        //if one of the stage is the parent of the other one, only the parent should be returned
+        expectedList = Arrays.asList("MmulDv:0000002");
+        assertEquals("incorrect stages retrieved between start and end", expectedList, 
+                uberon.getStageIdsBetween("MmulDv:0000002", "MmulDv:0000004"));
+        assertEquals("incorrect stages retrieved between start and end", expectedList, 
+                uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000002"));
     }
     
     //@Test

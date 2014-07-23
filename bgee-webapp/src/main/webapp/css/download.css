@@ -228,8 +228,6 @@ div#results_nb{
     font-weight:900;
     z-index:10;
     display:none;
-    cursor: pointer;
-    cursor: hand;
 }
 
 #bgee_more_results_down{
@@ -249,8 +247,6 @@ div#results_nb{
     font-weight:900;
     z-index:10;
     display:none;
-    cursor: pointer;
-    cursor: hand;
 }
 
 figure.highlight {

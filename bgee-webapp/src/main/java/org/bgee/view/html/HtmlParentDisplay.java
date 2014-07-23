@@ -58,6 +58,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 				+BgeeProperties.getImagesRootDirectory()+"favicon.ico'/>");
 		this.writeln("<link rel='stylesheet' type='text/css' href='"
 				+BgeeProperties.getCssFilesRootDirectory()+page+".css' />");
+		this.writeln("<link rel='stylesheet' type='text/css' href='"
+				+BgeeProperties.getCssFilesRootDirectory()+"jquery-ui.css' />");
 		this.includeJs();
 		this.writeln("</head>");
 		this.writeln("<body>");

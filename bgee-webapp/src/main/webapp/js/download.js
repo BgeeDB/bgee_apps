@@ -16,8 +16,10 @@ $( document ).ready(function() {
 	var $bgeeDataSelection = $( "#bgee_data_selection" );
 	// Generate the correct id from the bgeespeciesid contained in the images
 
-	// Declare a var that will contains the searchable datas
+	// Declare a var that will contains the searchable datas and another for the autocompletion
+	// list
 	var searchContent = [];
+	var autocompletionList = [];
 
 	// Generate ids and search datas
 	generateIdsAndSearchData();
@@ -74,15 +76,24 @@ $( document ).ready(function() {
 		return false;
 	});
 
+	$bgeeSearchBox.autocomplete({
+		select: function( event, ui ) {
+			$( this ).val( ui.item.value );
+		},
+		close: function( event, ui ) {
+			$( this ).trigger( "change" );
+			$( this ).trigger( "blur" );
+		},
+		source: autocompletionList
+	});
+
 	// Add a listener to the scroll to evaluate whether the "more results" boxes should be displayed
 	$( window ).scroll(function() {
 		var position = $( window ).scrollTop();
-		// Do it every 10px only
-//		if(position % 10 == 0){
 		$bgeeMoreResultsUp.hide();
 		$bgeeMoreResultsDown.hide();
 		$(".highlight").each(function() {
-			if(! $(this).visible()){
+			if(! $(this).visible(true,false,'vertical')){
 				if($( this ).offset().top > position){
 					$bgeeMoreResultsDown.show();
 				} else if($( this ).offset().top < position){
@@ -90,21 +101,6 @@ $( document ).ready(function() {
 				}
 			}
 		});		
-//		}
-	});
-
-	$bgeeMoreResultsUp.click(function() {
-		$container.animate({
-			scrollTop: 0
-		},{duration:300}
-		);				
-	});
-
-	$bgeeMoreResultsDown.click(function() {
-		$container.animate({
-			scrollTop: $container.height()
-		},{duration:300}
-		);				
 	});
 
 	/**
@@ -219,7 +215,7 @@ $( document ).ready(function() {
 		if(text.length > 1){
 			// Add the class wherever it matches the text 
 			$species.each(function (){
-				if(searchContent[$( this ).attr( "id" )].contains(text.toLowerCase())){
+				if(searchContent[$( this ).attr( "id" )].indexOf(text.toLowerCase()) > -1){
 					$( this ).addClass("highlight");
 				}
 			});
@@ -230,7 +226,7 @@ $( document ).ready(function() {
 			resetSearch(true);
 		}
 		$(".highlight").each(function() {
-			if(! $(this).visible()){
+			if(! $(this).visible(true,false,'vertical')){
 				$bgeeMoreResultsDown.show();
 			}
 		}
@@ -291,6 +287,7 @@ $( document ).ready(function() {
 		return urls[id];
 	}
 
+	// TODO split in two functions
 	function generateIdsAndSearchData() {
 		// Generate ids
 		$species.each(function() {
@@ -304,16 +301,20 @@ $( document ).ready(function() {
 			}
 			else{
 				groupName = groupName.toLowerCase();
+				addToAutoCompletionList(groupName);
 			}
 
 			$( this ).find( "img" ).each(function() {
 				id = id + $( this ).data( "bgeespeciesid" ) + "_";
-				names = names +  $( this ).data('bgeespeciesname').toLowerCase(); + " ";
-				commonNames = commonNames +  
-				$( this ).data('bgeespeciescommonname').toLowerCase(); + " ";
-				alternateNames = alternateNames +  
-				$( this ).data('bgeespeciesalternatenames').toLowerCase();
-				+ " ";
+				var currentName = $( this ).data('bgeespeciesname').toLowerCase();
+				names = names +  currentName + " ";
+				addToAutoCompletionList(currentName);
+				var currentCommonName = $( this ).data('bgeespeciescommonname').toLowerCase();
+				commonNames = commonNames + currentCommonName + " ";
+				addToAutoCompletionList(currentCommonName);
+				var currentAlternateNames = $( this ).data('bgeespeciesalternatenames').toLowerCase();
+				alternateNames = alternateNames + currentAlternateNames	+ " ";
+				addToAutoCompletionList(currentAlternateNames);
 			});
 			id = id.slice( 0, - 1 ); // Remove the extra _
 			$( this ).attr( "id", id );
@@ -324,12 +325,18 @@ $( document ).ready(function() {
 			+ " " + commonNames
 			+ " " + groupName
 			+ " " + alternateNames ;
-			
+
 			searchContent[id] = searchContent[id].replace("  "," ");
 
-//			console.log(searchContent[id]);
+			autocompletionList.sort();
+
 		});	
 
+	}
+	function addToAutoCompletionList(value){
+		if(autocompletionList.indexOf(value) == -1){
+			autocompletionList.push(value);
+		}
 	}
 
 });

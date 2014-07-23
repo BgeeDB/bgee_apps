@@ -383,6 +383,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 	{
 		this.includeJs("jquery.js");
 		this.includeJs("jquery.visible.js");
+		this.includeJs("jquery-ui.js");
 		this.includeJs("download.js");
 	}
 

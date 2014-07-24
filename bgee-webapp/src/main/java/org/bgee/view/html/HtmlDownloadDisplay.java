@@ -123,7 +123,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>");
         
         // Images source
-        this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show informations about original images.</a></p>");
+        this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Hide information about original images.</a></p>");
         this.writeln("<div id='creativecommons'>");
         this.writeln("<p><i>Homo sapiens</i> picture by Yves Picq http://veton.picq.fr (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ALaos-lenten0264a.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
         this.writeln("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");

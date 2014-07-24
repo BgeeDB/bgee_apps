@@ -126,11 +126,11 @@ $( document ).ready(function() {
 
 	$( "#creativecommons_title a").click( function(){
 		$( "#creativecommons" ).toggle( "blind" );
-		if($( this ).text().indexOf("Show") > -1){
-			$( this ).text($( this ).text().replace("Show","Hide"));
+		if($( this ).text().indexOf("Hide") > -1){
+			$( this ).text($( this ).text().replace("Hide","Show"));
 		}
 		else{
-			$( this ).text($( this ).text().replace("Hide","Show"));
+			$( this ).text($( this ).text().replace("Show","Hide"));
 		}
 	});
 
@@ -180,7 +180,7 @@ $( document ).ready(function() {
 			// Assume that the image is a square, so height and width are the same
 			$newElement.css("height",newHeight).css("width",newHeight);		
 			numberOfSpecies++;
-			namesOfAllSpecies = namesOfAllSpecies + $( this ).data( "bgeespeciesname" )
+			namesOfAllSpecies = namesOfAllSpecies + $( this ).data( "bgeespeciesshortname" )
 			+ ", ";
 		});
 		namesOfAllSpecies = namesOfAllSpecies.slice( 0, - 2 ); // Remove the extra  ,

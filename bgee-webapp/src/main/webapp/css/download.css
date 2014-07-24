@@ -1,10 +1,10 @@
 /**** Bgee: a dataBase for Gene Expression Evolution ****/
 html, body {
     height: 100%;
-    min-height: 800px;
     margin: 0;
     padding: 0;
     min-width: 600px;
+    font: 100% Helvetica, Verdana, sans-serif;
 }
 
 /****SIB CONTAINER****/
@@ -37,19 +37,18 @@ header h1, header h2  {
     width: 430px;
 	color: #282828;
 	text-align: center;
-    font-family: Helvetica, Verdana, sans-serif;
     font-weight: normal;
     white-space: nowrap;
 }
 
 header h1 {
     top: 20px;
-    font-size: 27px;
+    font-size: 1.7em;
 }
 
 header h2 {
     top: 25px;
-    font-size: 19px;
+    font-size: 1.2em;
 }
 
 /****LOGOS****/
@@ -68,7 +67,7 @@ header img {
 #sib_other_logo {
     position: absolute;
     top: 8px;
-    left : 2%;    
+    left: 2%;    
     width: 186px;
     height: 75px;
 }
@@ -78,47 +77,26 @@ header img {
     position: relative;
     padding: 10px 0 50px 0;
     background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
+    background-size: 100% 100%;
     min-height: 800px;
-    height: 100%;
-    font-family: Helvetica;
     color: #626262;
-    font-size: 12px;
     z-index: 1;
 }
 
 /****LINKS****/
-#sib_body a.sib_link, #sib_body a.sib_link:visited {
-    color: #d6161d;
-    font-size: 12px;
-    font-family: Helvetica;
+a {
+    color: #920209;
     text-decoration: none;
 }
 
-#sib_body a.sib_link:hover {
-    text-decoration: underline;
-}
-
-#sib_body a.sib_link:visited {
-    color: #920209;
-}
-
-a, a:visited {
-    color: #D6161D;
-    text-decoration: none;
-}
-
-a:visited {
-    color: #920209;
-}
-
-a:hover, a:hover:visited {
+a:hover {
+	color: #D6161D;
     text-decoration: underline;
 }
 
 /****BGEE SPECIFIC STUFF****/
 p, label {
     color: #920209;
-    font: 16px Helvetica, Verdana, sans-serif;
 }
 
 p {
@@ -127,7 +105,6 @@ p {
 
 figure {
     cursor: pointer;
-    cursor: hand;
     float: left;
 }
 
@@ -149,13 +126,14 @@ div.biggroup {
 #sib_body h1 {
     margin: 0 2%;
     color: #920209;
-    font: 16px Helvetica, Verdana, sans-serif;
+    font-size: 1em;
+	font-weight: normal;
 }
 
 div.biggroup figcaption p {
     text-align: center;
     color: #515151;
-    font: 12px Helvetica, Verdana, sans-serif;
+    font-size: 0.75em;
     margin: 0;
 }
 
@@ -192,6 +170,7 @@ img {
     margin-top: 4px;
     color: #515151;
     text-align: center;
+    font-size: 0.75em;
 }
 
 /****BGEE INTRODUCTION****/
@@ -202,19 +181,20 @@ img {
 }
 #bgee_introduction p {
     margin: 0 0.5%;
-    font: 14px Helvetica, Verdana, sans-serif;
+    font-size: 0.85em;
     color: #515151;
 }
 
 /****BGEE SEARCH BOX****/
 #bgee_search_box {
-    width: 670px;
+    width: 680px;
     height: 25px;
     margin: 0 auto ;
     padding: 10px; 
     background-color: #D9DDE1;
     border-radius: 8px;
 }
+
 #bgee_search_box form {
     display: inline-block;
 }
@@ -227,55 +207,45 @@ input[type="image"] {
 
 #sib_body input.sib_text {
     width: 470px;
-    font-size: 11px;
-    font-weight: normal;
-    background: #FFF;
+    font-size: 0.7em;
+    background: #FFFFFF;
     border-color: #7C7C7C #C3C3C3 #C3C3C3 #7C7C7C;
     border-style: solid;
     border-width: 1px;
     color: #406981;
 }
 
-div#results_nb{
-    text-align:center;
+div#results_nb {
+	text-align: center;
 }
 
-#bgee_more_results_up{
-    position: fixed;
-    text-align:center;
-    background-color:#D6161D;
-    border: 3px solid #F7F8FA;
-    border-top:0px;
-    border-left:0px;
-    border-radius:0px 0px 12px 0px ;
-    padding:10px;
-    height:15px;
-    width:100px;
-    left:0%;
-    top:0%;
-    color:white;
-    font-weight:900;
-    z-index:10;
-    display:none;
+#bgee_more_results_up, #bgee_more_results_down  {
+	position: fixed;
+	text-align: center;
+	background-color: #D6161D;
+	border: 3px solid #F7F8FA;
+	border-left: 0px;
+	padding: 6px;
+	height: 15px;
+	width: 100px;
+	left: 0%;
+	color: white;
+	font-size: 0.75em;
+	font-weight: 900;
+	z-index: 10;
+	display: none;
 }
 
-#bgee_more_results_down{
-    position: fixed;
-    text-align:center;
-    background-color:#D6161D;
-    border: 3px solid #F7F8FA;
-    border-bottom:0px;
-    border-left:0px;
-    border-radius:0px 12px 0px 0px ;
-    padding:10px;
-    height:15px;
-    width:100px;
-    left:0%;
-    bottom:0%;
-    color:white;
-    font-weight:900;
-    z-index:10;
-    display:none;
+#bgee_more_results_up {
+	border-top: 0px;
+	border-radius: 0px 0px 12px 0px;
+	top: 0%;
+}
+
+#bgee_more_results_down {
+	border-bottom: 0px;
+	border-radius: 0px 12px 0px 0px;
+	bottom: 0%;
 }
 
 figure.highlight {
@@ -290,9 +260,8 @@ figure.highlight {
 }
 
 #bgee_uniq_species figure.highlight {
-        border: 4px #D6161D solid;
-    
-    padding: 0px;
+    border: 4px #D6161D solid;
+	padding: 0px;
 }
 
 #bgee_multi_species figure.highlight {
@@ -317,10 +286,10 @@ figure.highlight {
 }
 
 #bgee_data_selection p {
-    font-size: 14px;
+    font-size: 0.8em;
     color: #DBDBDB;
-    width : 80%;
-    margin:0;
+    width: 90%;
+    margin: 4px 0 0 8px;
 }
 
 #bgee_data_selection h1, #bgee_data_selection h2 {
@@ -332,8 +301,7 @@ figure.highlight {
 
 #bgee_data_selection h1 {
     display: inline;
-    font: 36px Helvetica, Verdana, sans-serif;
-    margin-top: 11px 0;
+    font-size: 2.2em;
 }
 
 #bgee_data_selection h1.scientificname {
@@ -341,8 +309,9 @@ figure.highlight {
 }
 
 #bgee_data_selection h2 {
-    margin: 30px  0 20px;
-    font: 20px Helvetica, Verdana, sans-serif;
+    font-weight: normal;
+    margin: 1.4em 0 1em;
+    font-size: 1.25em;
 }
 
 #bgee_data_selection ul {
@@ -360,7 +329,6 @@ figure.highlight {
 	width: 20px;
     z-index: 2;
 }
-
 
 #bgee_data_selection_img {
     position: absolute;
@@ -395,6 +363,7 @@ figure.highlight {
 }
 
 #bgee_data_selection_text {
+/*     padding-top: 5px; */
     padding-left: 370px;
     height: 300px;
 }
@@ -405,8 +374,9 @@ figure.highlight {
     border: 1px solid black;
     border-radius: 3px;
     padding: 8px;
-    color:#dbdbdb;
-    font: bold 14px Helvetica, Verdana, sans-serif;
+    color: #DBDBDB;
+    font-weight: bold;
+    font-size: 0.9em;
     text-decoration: none;
     white-space: nowrap;
 }
@@ -454,22 +424,15 @@ figure.selected {
 /****BGEE CREATIVE COMMONS****/
 #creativecommons_title {
     color: #515151;
-    font: bold 10px Helvetica, Verdana, sans-serif;
+    font-weight: bold;
+    font-size: 0.6em;
 }
 
 #creativecommons p {
-    font: 10px Helvetica, Verdana, sans-serif;
+	display: none;
+    font-size: 0.6em;
     margin: 2px 2%;
     color: #515151;
-}
-
-#creativecommons a {
-    color: #920209;
-    text-decoration: underline;
-}
-
-#creativecommons a:hover {
-    color: #d6161d;
 }
 
 /****SIB FOOTER****/
@@ -481,9 +444,7 @@ footer {
     width: 100%;
     color: #F7F8FA;
     letter-spacing: 1px;
-    font-family: Verdana;
-    font-size: 10px;
-    font-weight: normal;
+    font: 0.7em Verdana;
     z-index: 2;
 }
 
@@ -513,4 +474,122 @@ footer {
 #sib_footer_gototop {
     background: transparent url(../img/triangle_hover.png) no-repeat top left;
     padding-left: 10px;
+}
+
+/*! jQuery UI - v1.11.0 - 2014-06-26
+* http://jqueryui.com
+* Includes part of: core.css, autocomplete.css, menu.css, theme.css
+* Copyright 2014 jQuery Foundation and other contributors; Licensed MIT */
+
+/* Layout helpers
+----------------------------------*/
+.ui-helper-hidden-accessible {
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+
+.ui-helper-hidden {
+    display: none;
+}
+
+.ui-helper-reset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    line-height: 1.3;
+    text-decoration: none;
+    font-size: 1em;
+    list-style: none;
+}
+
+.ui-helper-clearfix:before,
+.ui-helper-clearfix:after {
+    content: "";
+    display: table;
+    border-collapse: collapse;
+}
+
+.ui-helper-clearfix:after {
+    clear: both;
+}
+
+.ui-helper-clearfix {
+    min-height: 0; /* support: IE7 */
+}
+
+.ui-helper-zfix {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: absolute;
+    opacity: 0;
+    filter:Alpha(Opacity=0);
+}
+
+.ui-front {
+    z-index: 100;
+}
+
+/* Misc visuals: Overlays
+----------------------------------*/
+
+.ui-autocomplete {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: default;
+    max-height: 250px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.ui-menu {
+    padding: 0;
+    margin: 0;
+    display: block;
+}
+
+.ui-menu .ui-menu-item {
+    position: relative;
+    margin: 0;
+    padding: 3px 1em 3px .4em;
+    cursor: pointer;
+    min-height: 0;
+}
+
+.ui-menu .ui-state-focus {
+    margin-top: -1px;
+    margin-bottom: -1px;
+}
+
+/* Component containers
+----------------------------------*/
+.ui-widget {
+    font-size: 0.8em;
+}
+
+.ui-widget-content {
+    border-color: #7C7C7C #C3C3C3 #C3C3C3 #7C7C7C;
+    border-style: solid;
+    border-width: 2px;
+    background-color: #F7F8FA;
+    color: #333;
+}
+
+/* Interaction states
+----------------------------------*/
+.ui-state-focus,.ui-widget-content .ui-state-focus {
+    border-color: #920209;
+    border-style: solid;
+    border-width: 1px 0;
+    background-color: #D9DDE1;
+    color: #920209;
 }

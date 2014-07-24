@@ -28,14 +28,17 @@ $( document ).ready(function() {
 	// Read the id in the hash of the URL and load the corresponding details if present
 	var hash = window.location.hash;
 	if(hash.slice(0, 3) == "#id"){
-		var speciesId = hash.substr( 3 ); // Remove 'id' before the real id that was 
+		var speciesId = hash.substr( 3 ); // Remove "id" before the real id that was 
 		// added to avoid the automatic anchor behavior
 	}
 	if( speciesId ){								  
 		var $currentSpecies = $( "#"+speciesId );
-		loadDetails( $currentSpecies );
+		if($currentSpecies.length > 0){
+			loadDetails( $currentSpecies );
+		}
 	}
-	// Add a click listener to every figures to load the corresponding details or to hide it
+
+//	Add a click listener to every figures to load the corresponding details or to hide it
 	$species.click(function() {
 		if($( this ).hasClass( "selected" )){
 			// Hide the detail box and unselected the current species.
@@ -48,26 +51,27 @@ $( document ).ready(function() {
 			resetSearch(false);
 		}
 	});
-	// Fetch the search elements in the DOM
+//	Fetch the search elements in the DOM
 	var $bgeeSearchForm = $( "#bgee_search_box form" );
 	var $bgeeSearchBox = $( "#bgee_search_box input" );
 	var $bgeeSearchResults = $( "#results_nb" );
 	var $bgeeMoreResultsDown = $( "#bgee_more_results_down" );
 	var $bgeeMoreResultsUp = $( "#bgee_more_results_up" );
-	// Add a listener to several event to trigger the search
+//	Add a listener to several event to trigger the search
 	$bgeeSearchBox.on( "input", function() {
+		// Todo sortir ce code en une fonction
 		search( $( this ).val() );
 		// Hide the detail box and unselected the current species.
 		$species.removeClass("selected");
 		$bgeeDataSelection.hide( "blind" );
 		window.location.hash = ""; 
 	});
-	// Block the submit action to avoid the page to be reloaded and display a flash effect 
-	// when the enter key is pressed
+//	Block the submit action to avoid the page to be reloaded and display a flash effect 
+//	when the enter key is pressed
 	$bgeeSearchForm.submit(function() {
 		$( "figure.highlight" ).fadeIn(100).fadeOut(100).fadeIn(100);
 		$bgeeSearchResults.fadeIn(100).fadeOut(100).fadeIn(100);
-		if(!($bgeeMoreResultsDown.css("display") == 'none')){
+		if(!($bgeeMoreResultsDown.css("display") == "none")){
 			$bgeeMoreResultsDown.fadeIn(100).fadeOut(100).fadeIn(100);
 		}
 		return false;
@@ -78,18 +82,23 @@ $( document ).ready(function() {
 			$( this ).val( ui.item.value );
 		},
 		close: function( event, ui ) {
-			$( this ).trigger( "input" );
+			// Todo sortir ce code en une fonction
+			search( $( this ).val() );
+			// Hide the detail box and unselected the current species.
+			$species.removeClass("selected");
+			$bgeeDataSelection.hide( "blind" );
+			window.location.hash = ""; 
 		},
 		source: autocompletionList
 	});
 
-	// Add a listener to the scroll to evaluate whether the "more results" boxes should be displayed
+//	Add a listener to the scroll to evaluate whether the "more results" boxes should be displayed
 	$( window ).scroll(function() {
 		var position = $( window ).scrollTop();
 		$bgeeMoreResultsUp.hide();
 		$bgeeMoreResultsDown.hide();
 		$(".highlight").each(function() {
-			if(! $(this).visible(true,false,'vertical')){
+			if(! $(this).visible(true,false,"vertical")){
 				if($( this ).offset().top > position){
 					$bgeeMoreResultsDown.show();
 				} else if($( this ).offset().top < position){
@@ -97,12 +106,9 @@ $( document ).ready(function() {
 				}
 			}
 		});		
-		if(! ($bgeeSearchBox.visible(true,false,'vertical'))){
-			$bgeeSearchBox.trigger("blur");
-		}
 	});
-	
-	// Add a listener to the cross to close the detail box
+
+//	Add a listener to the cross to close the detail box
 	$bgeeDataSelectionCross.click(function(){
 		// Hide the detail box and unselected the current species.
 		// TODO close method
@@ -110,11 +116,21 @@ $( document ).ready(function() {
 		$bgeeDataSelection.hide( "blind" );
 		window.location.hash = ""; 		
 	});
-	
+
 	var defaultText = $bgeeSearchBox.val();
 	$bgeeSearchBox.click(function() {
 		if($( this ).val() == defaultText){
 			$( this ).val( "" );
+		}
+	});
+
+	$( "#creativecommons_title a").click( function(){
+		$( "#creativecommons" ).toggle( "blind" );
+		if($( this ).text().indexOf("Show") > -1){
+			$( this ).text($( this ).text().replace("Show","Hide"));
+		}
+		else{
+			$( this ).text($( this ).text().replace("Hide","Show"));
 		}
 	});
 
@@ -140,10 +156,13 @@ $( document ).ready(function() {
 		var $bgeeDataSelectionImg = $( "#bgee_data_selection_img" );
 		var $bgeeDataSelectionTextScientific = $( "#bgee_data_selection_text h1.scientificname" );
 		var $bgeeDataSelectionTextCommon = $( "#bgee_data_selection_text h1.commonname" );
+		var $bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
 		var $exprSimpleCsv = $( "#expr_simple_csv" );
 		var $exprCompleteCsv = $( "#expr_complete_csv" );		
 		var $overUnderSimpleCsv = $( "#overunder_simple_csv" );
 		var $overUnderCompleteCsv = $( "#overunder_complete_csv" );		
+		var numberOfSpecies = 0 ;
+		var namesOfAllSpecies = "";
 		// Proceed to the update
 		$bgeeDataSelectionImg.empty();
 		$images.each( function(){
@@ -159,16 +178,23 @@ $( document ).ready(function() {
 			// Divide the height by 1 for 1 image, by 2 for 2,3,4 img, by 3 for 5,6,7,8,9 and etc.
 			var newHeight = $newElement.height() / (Math.ceil(Math.sqrt(quantity))); 
 			// Assume that the image is a square, so height and width are the same
-			$newElement.css("height",newHeight).css("width",newHeight);			
+			$newElement.css("height",newHeight).css("width",newHeight);		
+			numberOfSpecies++;
+			namesOfAllSpecies = namesOfAllSpecies + $( this ).data( "bgeespeciesname" )
+			+ ", ";
 		});
+		namesOfAllSpecies = namesOfAllSpecies.slice( 0, - 2 ); // Remove the extra  ,
 		// if it is a group, use the group name as label, else the species name
 		if(bgeeGroupName){
 			$bgeeDataSelectionTextScientific.text("");
 			$bgeeDataSelectionTextCommon.text(bgeeGroupName);
+			$bgeeGroupDescription.text(numberOfSpecies + " species: ");
+			$bgeeGroupDescription.append( $( "<i></i>" ).append( namesOfAllSpecies ) );
 		}
 		else {
 			$bgeeDataSelectionTextScientific.text(bgeeSpeciesName);
 			$bgeeDataSelectionTextCommon.text("("+bgeeSpeciesCommonNames+")");
+			$bgeeGroupDescription.text("");
 		}
 		// Update the values of the download links 
 		$exprSimpleCsv.attr("href",urls["expr_simple_csv"]);
@@ -176,7 +202,7 @@ $( document ).ready(function() {
 		$overUnderSimpleCsv.attr("href",urls["overunder_simple_csv"]);
 		$overUnderCompleteCsv.attr("href",urls["overunder_complete_csv"]);		
 
-		// Set the 'selected' css class to the current species figure and display the detail 
+		// Set the "selected" css class to the current species figure and display the detail 
 		// box with a visual effect
 		$species.removeClass("selected");
 		$currentSpecies.addClass("selected");
@@ -213,7 +239,7 @@ $( document ).ready(function() {
 		});
 
 		// Update the URL with the id, to allow the link to be copied and sent
-		// Add 'id' in front to avoid the automatic anchor behavior that would mess up the scroll
+		// Add "id" in front to avoid the automatic anchor behavior that would mess up the scroll
 		window.location.hash = "#id"+id; 
 
 	}
@@ -241,7 +267,7 @@ $( document ).ready(function() {
 			resetSearch(true);
 		}
 		$(".highlight").each(function() {
-			if(! $(this).visible(true,false,'vertical')){
+			if(! $(this).visible(true,false,"vertical")){
 				$bgeeMoreResultsDown.show();
 			}
 		}
@@ -302,12 +328,13 @@ $( document ).ready(function() {
 		return urls[id];
 	}
 
-	// TODO split in two functions
+//	TODO split in two functions
 	function generateIdsAndSearchData() {
 		// Generate ids
 		$species.each(function() {
 			var id = "";
 			var names = "";
+			var shortNames = "";
 			var commonNames = "";
 			var alternateNames = "";
 			var groupName = $( this ).data("bgeegroupname");
@@ -315,27 +342,34 @@ $( document ).ready(function() {
 				groupName = "";
 			}
 			else{
-				groupName = groupName.toLowerCase();
+				groupName = groupName.toLowerCase() + " ";
 				addToAutoCompletionList(groupName);
 			}
 
 			$( this ).find( "img" ).each(function() {
 				id = id + $( this ).data( "bgeespeciesid" ) + "_";
-				var currentName = $( this ).data('bgeespeciesname').toLowerCase();
+				var currentName = $( this ).data("bgeespeciesname").toLowerCase();
 				if(currentName){
 					names = names +  currentName + " ";
 				}
 				addToAutoCompletionList(currentName);
-				var currentCommonName = $( this ).data('bgeespeciescommonname').toLowerCase();
+				var currentShortName = $( this ).data("bgeespeciesshortname").toLowerCase();
+				if(currentShortName){
+					shortNames = shortNames +  currentShortName + " ";
+				}
+				addToAutoCompletionList(currentShortName);
+				var currentCommonName = $( this ).data("bgeespeciescommonname").toLowerCase();
 				if(currentCommonName){
 					commonNames = commonNames + currentCommonName + " ";
 				}
 				addToAutoCompletionList(currentCommonName);
-				var currentAlternateNames = $( this ).data('bgeespeciesalternatenames').toLowerCase();
+				var currentAlternateNames = $( this ).data("bgeespeciesalternatenames").toLowerCase();
 				if(currentAlternateNames){
-					alternateNames = alternateNames + currentAlternateNames	+ " ";
+					currentAlternateNames.split(", ").forEach(function(element){
+						addToAutoCompletionList(element);
+						alternateNames = alternateNames + element + " ";
+					});
 				}
-				addToAutoCompletionList(currentAlternateNames);
 			});
 			id = id.slice( 0, - 1 ); // Remove the extra _
 			$( this ).attr( "id", id );
@@ -343,6 +377,7 @@ $( document ).ready(function() {
 			// Generate search content for the current species
 			searchContent[id] = id.replace(/_/g, " ") + " "
 			+ names
+			+ shortNames
 			+ commonNames
 			+ groupName
 			+ alternateNames ;

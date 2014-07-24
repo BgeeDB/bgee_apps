@@ -114,36 +114,36 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='bgee_multi_species'>");
         this.writeln("<h1>Multi-species</h1>");
         this.writeln("<div class='biggroup'>");
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1 (2 sp.)", true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2 (3 sp.)", true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883),
-                "Group 3 (16 sp.)",true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 28377, 10116), "Group 4 (5 sp.)", true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1", true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2", true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883,9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883),
+                "Group 3",true));
+        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 28377, 10116), "Group 4", true));
         this.writeln("</div>");
         this.writeln("</div>");
         
         // Images source
-        this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. See author images.</p>");
+        this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show informations about original images.</a></p>");
         this.writeln("<div id='creativecommons'>");
-        this.writeln("<p><i>Homo sapiens</i> picture by Yves Picq http://veton.picq.fr (Own work) [<a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>]. <a href='http://commons.wikimedia.org/wiki/File%3ALaos-lenten0264a.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Mus musculus</i> picture by Rasbak [<a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
-        this.writeln("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Homo sapiens</i> picture by Yves Picq http://veton.picq.fr (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ALaos-lenten0264a.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Caenorhabditis elegans</i> picture by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/ (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ACelegansGoldsteinLabUNC.jpg'>See <i>C. elegans</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Pan paniscus</i> picture by Ltshears (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ABonobo1_CincinnatiZoo.jpg'>See <i>P. paniscus</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Pan troglodytes</i> picture by Thomas Lersch (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASchimpanse_Zoo_Leipzig.jpg'>See <i>P. troglodytes</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Gorilla gorilla</i> picture by Brocken Inaglory (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a> or <a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMale_gorilla_in_SF_zoo.jpg'>See <i>G. gorilla</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Macaca mulatta</i> picture by Aiwok (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AMacaca_mulatta_3.JPG'>See <i>M. mulatta</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Rattus norvegicus</i> picture by Reg Mckenna (originally posted to Flickr as Wild Rat) [<a target='_blank' href='http://creativecommons.org/licenses/by/2.0'>CC-BY-2.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AWildRat.jpg'>See <i>R. norvegicus</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Bos taurus</i> picture by User Robert Merkel on en.wikipedia (US Department of Agriculture) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AHereford_bull_large.jpg'>See <i>B. taurus</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Sus scrofa</i> picture by Joshua Lutz (Own work) [Public domain], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ASus_scrofa_scrofa.jpg'>See <i>S. scrofa</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Monodelphis domestica</i> picture by <i>Marsupial Genome Sheds Light on the Evolution of Immunity.</i> Hill E, PLoS Biology Vol. 4/3/2006, e75 <a rel='nofollow' href='http://dx.doi.org/10.1371/journal.pbio.0040075'>http://dx.doi.org/10.1371/journal.pbio.0040075</a> [<a target='_blank' href='http://creativecommons.org/licenses/by/2.5'>CC-BY-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOpossum_with_young.png'>See <i>M. domestica</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Ornithorhynchus anatinus</i> picture by Dr. Philip Bethge (private) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AOrnithorhynchus.jpg'>See <i>O. anatinus</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Gallus gallus</i> picture by Subramanya C K (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ARed_jungle_fowl.png'>See <i>G. gallus</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Anolis carolinensis</i> picture by PiccoloNamek (Moved from Image:P1010027.jpg) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AAnolis_carolinensis.jpg'>See <i>A. carolinensis</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
         this.writeln("</div>");
 
         // 
@@ -213,13 +213,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                         name="Mus musculus";
                         shortName="M. musculus";
                         commonName="mouse";
-                        alternateNames="house mouse mice";
+                        alternateNames="house mouse, mice";
                         break;
                     case 7955: 
                         name="Danio rerio";
                         shortName="D. rerio";
                         commonName="zebrafish";
-                        alternateNames="leopard danio zebra danio";
+                        alternateNames="leopard danio, zebra danio";
                         break;
                     case 7227: 
                         name="Drosophila melanogaster";
@@ -231,7 +231,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                         name="Caenorhabditis elegans";
                         shortName="C. elegans";
                         commonName="worm";
-                        alternateNames="nematode roundworm";
+                        alternateNames="nematode, roundworm";
                         break;
                     case 9597: 
                         name="Pan paniscus";
@@ -255,7 +255,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                         name="Pongo pygmaeus";
                         shortName="P. pygmaeus";
                         commonName="orangutan";
-                        alternateNames="orang utan orang-utan";
+                        alternateNames="orang utan, orang-utan";
                         break;
                     case 9544: 
                         name="Macaca mulatta";
@@ -273,37 +273,37 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                         name="Bos taurus";
                         shortName="B. taurus";
                         commonName="cow";
-                        alternateNames="domestic cow domestic cattle bovine cow";
+                        alternateNames="domestic cow, domestic cattle, bovine cow";
                         break;
                     case 9823: 
                         name="Sus scrofa";
                         shortName="S. scrofa";
                         commonName="pig";
-                        alternateNames="domestic pig swine";
+                        alternateNames="domestic pig, swine";
                         break;
                     case 13616: 
                         name="Monodelphis domestica";
                         shortName="M. domestica";
                         commonName="opossum";
-                        alternateNames="gray short-tailed opossum gray short tailed opossum";
+                        alternateNames="gray short-tailed opossum, gray short tailed opossum";
                         break;
                     case 9258: 
                         name="Ornithorhynchus anatinus";
                         shortName="O. anatinus";
                         commonName="platypus";
-                        alternateNames="duckbill platypus duck-billed platypus";
+                        alternateNames="duckbill platypus, duck-billed platypus";
                         break;
                     case 9031: 
                         name="Gallus gallus";
                         shortName="G. gallus";
                         commonName="chicken";
-                        alternateNames="bantam red junglefowl red jungle fowl";
+                        alternateNames="bantam red junglefowl, red jungle fowl";
                         break;
                     case 28377: 
                         name="Anolis carolinensis";
                         shortName="A. carolinensis";
                         commonName="anolis";
-                        alternateNames="green anole carolina anole";
+                        alternateNames="green anole, carolina anole";
                         break;
                     case 8364: 
                         name="Xenopus tropicalis";
@@ -401,6 +401,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.includeJs("jquery.visible.js");
         this.includeJs("jquery-ui.min.js");
         this.includeJs("download.js");
+    }
+    
+    @Override
+    public void includeCss(){
+    	this.includeCss("jquery-ui.css"); // TODO remove me when this css is removed
     }
 
 }

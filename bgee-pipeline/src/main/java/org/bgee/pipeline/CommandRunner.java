@@ -1,11 +1,5 @@
 package org.bgee.pipeline;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +21,7 @@ import org.bgee.pipeline.uberon.InsertUberon;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.bgee.pipeline.uberon.Uberon;
 import org.bgee.pipeline.uberon.UberonDevStage;
+import org.bgee.pipeline.uberon.UberonSocketTool;
 
 /**
  * Entry point of the Bgee pipeline. It is a really basic tool, only used to dispatch 
@@ -50,13 +45,6 @@ public class CommandRunner {
      */
     private final static Logger log = 
             LogManager.getLogger(CommandRunner.class.getName());
-    
-    /**
-     * A {@code volatile} {@code boolean} to allow other {@code Thread}s to determine 
-     * whether the socket server is launched (see {@link #socketUberonStagesBetween(Uberon, 
-     * int)})
-     */
-    public static volatile boolean socketServerLaunched = false;
     
     /**
      * A {@code String} that is used to separate elements from a list when providing 
@@ -165,10 +153,8 @@ public class CommandRunner {
         case "InsertUberon": 
             InsertUberon.main(newArgs);
             break;
-        case "socketUberonStagesBetween": 
-            CommandRunner.socketUberonStagesBetween(new UberonDevStage(newArgs[0], newArgs[1], 
-                    CommandRunner.parseMapArgumentAsInteger(newArgs[2])), 
-                    Integer.parseInt(newArgs[3]), Integer.parseInt(newArgs[4]));
+        case "UberonSocketTool": 
+            UberonSocketTool.main(newArgs);
             break;
             
         //---------- Similarity annotation -----------
@@ -197,94 +183,6 @@ public class CommandRunner {
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
-        }
-        
-        log.exit();
-    }
-    
-    /**
-     * Use sockets to obtain stages between a start and a end stage from Uberon. 
-     * This method is written so that external applications can query for stage ranges, 
-     * without needing to reload the ontology for each query. Using sockets, 
-     * the ontology can be kept loaded, answering several stage range queries. 
-     * The method used to obtain stage ranges is 
-     * {@link org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)}.
-     * @param uberon            The {@code Uberon} instance that will be used to retrieve 
-     *                          stage ranges (dependency injection), with the ontology to use 
-     *                          already defined (at instantiation), as well as, if needed, 
-     *                          taxon constraints (also at instantiation).
-     * @param speciesId         An {@code int} that is the NCBI ID of the species for which 
-     *                          we want to retrieve stages.
-     * @param portNumber        An {@code int} that is the port to connect to.  
-     * @throws IOException      If an error occurred while reading from or writting to 
-     *                          the socket. 
-     * @see org.bgee.pipeline.uberon.Uberon#getStageIdsBetween(String, String)
-     */
-    public static void socketUberonStagesBetween(UberonDevStage uberon, int speciesId, 
-            int portNumber) throws IOException {
-        log.entry(uberon, speciesId, portNumber);
-        
-        log.debug("Trying to launch ServerSocket");
-        ServerSocket serverSocket = null;
-        try {
-            serverSocket = new ServerSocket(portNumber);
-            CommandRunner.socketServerLaunched = true;
-            log.debug("Socket server launched, listening to port {}", portNumber);
-            
-            try (Socket clientSocket = serverSocket.accept();
-                 PrintWriter out =
-                         new PrintWriter(clientSocket.getOutputStream(), true);
-                 BufferedReader in = new BufferedReader(
-                         new InputStreamReader(clientSocket.getInputStream()));) {
-                
-                String inputLine;
-                while ((inputLine = in.readLine()) != null) {
-                    try {
-                        log.debug("Receiving query: " + inputLine);
-                        
-                        if (inputLine.equals("exit") || inputLine.equals("logout") || 
-                                inputLine.equals("quit") || inputLine.equals("bye")) {
-                            out.println("Bye.");
-                            log.debug("Exiting.");
-                            break;
-                        }
-                        
-                        List<String> params = CommandRunner.parseListArgument(inputLine);
-                        if (params.size() != 2) {
-                            out.println("Incorrect number of stage IDs provided, try again.");
-                            continue;
-                        }
-                        log.debug("Start stage retrieved: {} - End stage retrieved: {}", 
-                                params.get(0), params.get(1));
-                        
-                        List<String> stageIds = uberon.getStageIdsBetween(params.get(0), 
-                                params.get(1), speciesId);
-                        String output = "";
-                        for (String stageId: stageIds) {
-                            if (StringUtils.isNotBlank(output)) {
-                                output += CommandRunner.SOCKET_RESPONSE_SEPARATOR;
-                            }
-                            output += stageId;
-                        }
-                        
-                        if (StringUtils.isBlank(output)) {
-                            output = "No results for provided start and end stages (" + 
-                                    params.get(0) + " - " + params.get(1) + ")";
-                        }
-                        
-                        log.debug("Sending response: {}", output);
-                        out.println(output);
-                    } catch (Exception e) {
-                        log.catching(e);
-                        out.println(e);
-                    }
-                }
-            } 
-        } finally {
-            if (serverSocket != null) {
-                serverSocket.close();
-            }
-            CommandRunner.socketServerLaunched = false;
         }
         
         log.exit();

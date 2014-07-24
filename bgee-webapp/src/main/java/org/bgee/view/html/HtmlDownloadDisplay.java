@@ -213,55 +213,31 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                         name="Mus musculus";
                         shortName="M. musculus";
                         commonName="mouse";
-                        alternateNames="";
+                        alternateNames="house mouse mice";
                         break;
                     case 7955: 
                         name="Danio rerio";
                         shortName="D. rerio";
                         commonName="zebrafish";
-                        alternateNames="";
-                        break;
-                    case 8364: 
-                        name="Xenopus tropicalis";
-                        shortName="X. tropicalis";
-                        commonName="xenopus";
-                        alternateNames="";
+                        alternateNames="leopard danio zebra danio";
                         break;
                     case 7227: 
                         name="Drosophila melanogaster";
                         shortName="D. melanogaster";
                         commonName="fruitfly";
-                        alternateNames="";
+                        alternateNames="vinegar fly";
                         break;
-                    case 9031: 
-                        name="Gallus gallus";
-                        shortName="G. gallus";
-                        commonName="chicken";
-                        alternateNames="";
+                    case 6239: 
+                        name="Caenorhabditis elegans";
+                        shortName="C. elegans";
+                        commonName="worm";
+                        alternateNames="nematode roundworm";
                         break;
-                    case 9593: 
-                        name="Gorilla gorilla";
-                        shortName="G. gorilla";
-                        commonName="gorilla";
-                        alternateNames="";
-                        break;
-                    case 9544: 
-                        name="Macaca mulatta";
-                        shortName="M. mulatta";
-                        commonName="macaque";
-                        alternateNames="rhesus";
-                        break;
-                    case 13616: 
-                        name="Monodelphis domestica";
-                        shortName="M. domestica";
-                        commonName="opossum";
-                        alternateNames="";
-                        break;
-                    case 9258: 
-                        name="Ornithorhynchus anatinus";
-                        shortName="O. anatinus";
-                        commonName="platypus";
-                        alternateNames="";
+                    case 9597: 
+                        name="Pan paniscus";
+                        shortName="P. paniscus";
+                        commonName="bonobo";
+                        alternateNames="pygmy chimpanzee";
                         break;
                     case 9598: 
                         name="Pan troglodytes";
@@ -269,53 +245,77 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                         commonName="chimpanzee";
                         alternateNames="";
                         break;
-                    case 9597: 
-                        name="Pan paniscus";
-                        shortName="P. paniscus";
-                        commonName="bonobo";
-                        alternateNames="";
+                    case 9593: 
+                        name="Gorilla gorilla";
+                        shortName="G. gorilla";
+                        commonName="gorilla";
+                        alternateNames="western gorilla";
                         break;
                     case 9600: 
                         name="Pongo pygmaeus";
                         shortName="P. pygmaeus";
                         commonName="orangutan";
-                        alternateNames="";
+                        alternateNames="orang utan orang-utan";
                         break;
-                    case 9913: 
-                        name="Bos taurus";
-                        shortName="B. taurus";
-                        commonName="cow";
-                        alternateNames="";
+                    case 9544: 
+                        name="Macaca mulatta";
+                        shortName="M. mulatta";
+                        commonName="macaque";
+                        alternateNames="rhesus monkey";
                         break;
                     case 10116: 
                         name="Rattus norvegicus";
                         shortName="R. norvegicus";
                         commonName="rat";
-                        alternateNames="";
+                        alternateNames="brown rat";
                         break;
-                    case 28377: 
-                        name="Anolis carolinensis";
-                        shortName="A. carolinensis";
-                        commonName="anolis";
-                        alternateNames="";
-                        break;
-                    case 99883: 
-                        name="Tetraodon nigroviridis";
-                        shortName="T. nigroviridis";
-                        commonName="tetraodon";
-                        alternateNames="";
+                    case 9913: 
+                        name="Bos taurus";
+                        shortName="B. taurus";
+                        commonName="cow";
+                        alternateNames="domestic cow domestic cattle bovine cow";
                         break;
                     case 9823: 
                         name="Sus scrofa";
                         shortName="S. scrofa";
                         commonName="pig";
-                        alternateNames="";
+                        alternateNames="domestic pig swine";
                         break;
-                    case 6239: 
-                        name="Caenorhabditis elegans";
-                        shortName="C. elegans";
-                        commonName="worm";
-                        alternateNames="nematode";
+                    case 13616: 
+                        name="Monodelphis domestica";
+                        shortName="M. domestica";
+                        commonName="opossum";
+                        alternateNames="gray short-tailed opossum gray short tailed opossum";
+                        break;
+                    case 9258: 
+                        name="Ornithorhynchus anatinus";
+                        shortName="O. anatinus";
+                        commonName="platypus";
+                        alternateNames="duckbill platypus duck-billed platypus";
+                        break;
+                    case 9031: 
+                        name="Gallus gallus";
+                        shortName="G. gallus";
+                        commonName="chicken";
+                        alternateNames="bantam red junglefowl red jungle fowl";
+                        break;
+                    case 28377: 
+                        name="Anolis carolinensis";
+                        shortName="A. carolinensis";
+                        commonName="anolis";
+                        alternateNames="green anole carolina anole";
+                        break;
+                    case 8364: 
+                        name="Xenopus tropicalis";
+                        shortName="X. tropicalis";
+                        commonName="xenopus";
+                        alternateNames="western clawed frog";
+                        break;
+                    case 99883: 
+                        name="Tetraodon nigroviridis";
+                        shortName="T. nigroviridis";
+                        commonName="tetraodon";
+                        alternateNames="spotted green pufferfish";
                         break;
                     default:
                         return ("");

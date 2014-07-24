@@ -416,6 +416,10 @@ figure.highlight {
     background-color:#717171;
 }
 
+.download_link:visited {
+    color: #282828;
+}
+
 figure.selected {
     border: 4px #282828 solid;
     background: #282828;

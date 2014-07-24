@@ -15,6 +15,7 @@ $( document ).ready(function() {
 	// Fetch the detail box
 	var $bgeeDataSelection = $( "#bgee_data_selection" );
 	// Generate the correct id from the bgeespeciesid contained in the images
+	var $bgeeDataSelectionCross = $( "#bgee_data_selection_cross" );
 
 	// Declare a var that will contains the searchable datas and another for the autocompletion
 	// list
@@ -54,7 +55,7 @@ $( document ).ready(function() {
 	var $bgeeMoreResultsDown = $( "#bgee_more_results_down" );
 	var $bgeeMoreResultsUp = $( "#bgee_more_results_up" );
 	// Add a listener to several event to trigger the search
-	$bgeeSearchBox.bind( "keyup change paste cut", function() {
+	$bgeeSearchBox.on( "input", function() {
 		search( $( this ).val() );
 		// Hide the detail box and unselected the current species.
 		$species.removeClass("selected");
@@ -77,7 +78,7 @@ $( document ).ready(function() {
 			$( this ).val( ui.item.value );
 		},
 		close: function( event, ui ) {
-			$( this ).trigger( "change" );
+			$( this ).trigger( "input" );
 		},
 		source: autocompletionList
 	});
@@ -98,6 +99,22 @@ $( document ).ready(function() {
 		});		
 		if(! ($bgeeSearchBox.visible(true,false,'vertical'))){
 			$bgeeSearchBox.trigger("blur");
+		}
+	});
+	
+	// Add a listener to the cross to close the detail box
+	$bgeeDataSelectionCross.click(function(){
+		// Hide the detail box and unselected the current species.
+		// TODO close method
+		$( "figure.selected" ).removeClass("selected");
+		$bgeeDataSelection.hide( "blind" );
+		window.location.hash = ""; 		
+	});
+	
+	var defaultText = $bgeeSearchBox.val();
+	$bgeeSearchBox.click(function() {
+		if($( this ).val() == defaultText){
+			$( this ).val( "" );
 		}
 	});
 

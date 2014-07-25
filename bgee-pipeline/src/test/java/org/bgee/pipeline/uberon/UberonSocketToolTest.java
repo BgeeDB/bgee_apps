@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -140,11 +141,16 @@ public class UberonSocketToolTest extends TestAncestor {
         final int port = 15556;
         final String host = "127.0.0.1";
         final OntologyUtils mockUtils = mock(OntologyUtils.class);
-        OWLClass mockClass = mock(OWLClass.class);
-        when(mockUtils.getOWLClass(eq("ID1"))).thenReturn(mockClass);
+        OWLClass mockClass1 = mock(OWLClass.class);
+        OWLClass mockClass2 = mock(OWLClass.class);
+        when(mockUtils.getOWLClasses(eq("ID:0"), eq(false))).thenReturn(
+                new HashSet<OWLClass>(Arrays.asList(mockClass1)));
+        when(mockUtils.getOWLClasses(eq("ID_BIS:0"), eq(false))).thenReturn(
+                new HashSet<OWLClass>(Arrays.asList(mockClass1, mockClass2)));
+        
         OWLGraphWrapper mockWrapper = mock(OWLGraphWrapper.class);
         when(mockUtils.getWrapper()).thenReturn(mockWrapper);
-        when(mockWrapper.getIdentifier(eq(mockClass))).thenReturn("ID:2");
+        when(mockWrapper.getIdentifier(eq(mockClass1))).thenReturn("ID:1");
         
         /**
          * An anonymous class to launch the Socket Server from another thread, 
@@ -157,14 +163,10 @@ public class UberonSocketToolTest extends TestAncestor {
             public void run() {
                 ServerSocket server = null;
                 try {
-                    getLogger().debug("Trying to launch ServerSocket...");
                     server = new ServerSocket(port);
-                    getLogger().debug("ServerSocket launched: {}", server);
-                    getLogger().debug("Trying to instantiate UberonSocketTool...");
                     UberonSocketTool tool = new UberonSocketTool(mockUtils, server);
                     this.socketTool = tool; //to be sure it is initialized before being set
                     this.socketTool.startListening();
-                    getLogger().debug("ServerSocket launched: {}", this.socketTool);
                 } catch (IOException e) {
                     exceptionThrown = e;
                 } finally {
@@ -207,8 +209,12 @@ public class UberonSocketToolTest extends TestAncestor {
                             new InputStreamReader(echoSocket.getInputStream()));
                     ) {
                 
-                out.println("ID1");
-                assertEquals("Incorrect value returned through socket", "ID:2", 
+                out.println("ID:0");
+                assertEquals("Incorrect value returned through socket", "ID:1", 
+                        in.readLine());
+                //ambiguous mapping, should return nothing
+                out.println("ID_BIS:0");
+                assertEquals("Incorrect value returned through socket", "", 
                         in.readLine());
                 out.println("quit");
             }

@@ -27,6 +27,7 @@ consider: ID_CONSIDER:4
 consider: ID_CONSIDER_BIS:4
 replaced_by: ID_REPLACED:4
 replaced_by: ID_REPLACED_BIS:4
+replaced_by: ABSENT_ID:1
 
 [Term]
 id: ID:5
@@ -34,5 +35,11 @@ name: test E
 is_obsolete: true
 consider: ID_CONSIDER:5
 consider: ID_CONSIDER_BIS:5
-replaced_by: ID_REPLACED:5
-replaced_by: ID_REPLACED_BIS:5
+replaced_by: ID:1
+
+[Term]
+id: ID_REPLACED:4
+
+[Term]
+id: ID_REPLACED_BIS_XREF:4
+xref: ID_REPLACED_BIS:4

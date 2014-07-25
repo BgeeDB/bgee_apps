@@ -96,7 +96,8 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Determine the behavior of consecutive calls to next().
         when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
-            public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Boolean answer(@SuppressWarnings("unused") InvocationOnMock invocationOnMock) 
+                    throws Throwable {
                 // Return true while there is speciesTO to return 
                 return counter++ < 7;
             }
@@ -119,7 +120,8 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Determine the behavior of consecutive calls to next().
         when(mockTaxonTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
-            public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Boolean answer(@SuppressWarnings("unused") InvocationOnMock invocationOnMock) 
+                    throws Throwable {
                 // Return true while there is TaxonTO to return 
                 return counter++ < 7;
             }
@@ -159,7 +161,8 @@ public class ParseOrthoXMLTest extends TestAncestor {
         // Determine the behavior of consecutive calls to next().
         when(mockGeneTORs.next()).thenAnswer(new Answer<Boolean>() {
             int counter = -1;
-            public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Boolean answer(@SuppressWarnings("unused") InvocationOnMock invocationOnMock) 
+                    throws Throwable {
                 // Return true while there is geneTO to return 
                 return counter++ < 23;
             }

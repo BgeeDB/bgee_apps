@@ -19,7 +19,6 @@ import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import owltools.graph.OWLGraphWrapper;
 
@@ -65,8 +64,7 @@ public class InsertUberon extends MySQLDAOUser {
      *                                  correct information.
      */
     public static void main(String[] args) throws OWLOntologyCreationException, 
-        OBOFormatParserException, IOException, IllegalArgumentException, 
-        OWLOntologyStorageException {
+        OBOFormatParserException, IOException, IllegalArgumentException {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("insertStages")) {

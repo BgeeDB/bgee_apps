@@ -208,13 +208,14 @@ public class UberonTest extends TestAncestor {
                         xRefId.equals("ALT_ID:3") && uberonId.equals("ID:3") || 
                         xRefId.equals("ALT_ALT_ID:3") && uberonId.equals("ID:3") || 
                         xRefId.equals("ALT_ID:2") && uberonId.equals("ID:1") || 
-                        xRefId.equals("ALT_ID:2") && uberonId.equals("ID:2"))) {
+                        xRefId.equals("ALT_ID:2") && uberonId.equals("ID:2") || 
+                        xRefId.equals("ID_REPLACED_BIS:4") && uberonId.equals("ID_REPLACED_BIS_XREF:4"))) {
                     throw new AssertionError("Incorrect line: " + mapReader.getUntokenizedRow());
                 }
                 i++;
                 
             }
         }
-        assertEquals("Incorrect number of lines in TSV output", 6, i);
+        assertEquals("Incorrect number of lines in TSV output", 7, i);
     }
 }

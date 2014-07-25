@@ -319,6 +319,8 @@ public class OntologyUtilsTest extends TestAncestor {
                 new HashSet<String>(Arrays.asList("ID:3")));
         expectedMappings.put("ALT_ID:2", 
                 new HashSet<String>(Arrays.asList("ID:1", "ID:2")));
+        expectedMappings.put("ID_REPLACED_BIS:4", 
+                new HashSet<String>(Arrays.asList("ID_REPLACED_BIS_XREF:4")));
         
         assertEquals("Incorrect XRef mapping returned", expectedMappings, 
                 utils.getXRefMappings());
@@ -362,9 +364,10 @@ public class OntologyUtilsTest extends TestAncestor {
         
         Map<String, Set<String>> expectedMappings = new HashMap<String, Set<String>>();
         expectedMappings.put("ID:4", 
-                new HashSet<String>(Arrays.asList("ID_REPLACED:4", "ID_REPLACED_BIS:4")));
+                new HashSet<String>(Arrays.asList("ID_REPLACED:4", "ID_REPLACED_BIS:4", 
+                        "ABSENT_ID:1")));
         expectedMappings.put("ID:5", 
-                new HashSet<String>(Arrays.asList("ID_REPLACED:5", "ID_REPLACED_BIS:5")));
+                new HashSet<String>(Arrays.asList("ID:1")));
         
         assertEquals("Incorrect consider mapping returned", expectedMappings, 
                 utils.getReplacedByMappings());
@@ -560,6 +563,36 @@ public class OntologyUtilsTest extends TestAncestor {
         assertEquals(expectedClass, utils.getOWLClass("ALT_ALT_ID:1"));
         //if mapping is ambiguous, return null
         assertNull(utils.getOWLClass("ALT_ID:2"));
+        //test obsolete class replaced_by another
+        assertEquals(expectedClass, utils.getOWLClass("ID:5"));
+        //if mapping ambiguous over replaced_by, return null
+        assertNull(utils.getOWLClass("ID:4"));
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#getOWLClasses(String, boolean)} 
+     * with the {@code boolean} argument {@code false}.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetOWLClasses() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/xRefMappings.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        Set<OWLClass> expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("ID:1"), 
+                wrapper.getOWLClassByIdentifier("ID:2")));
+        assertEquals(expectedClasses, utils.getOWLClasses("ALT_ID:2", false));
+        
+        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("ID_REPLACED:4"), 
+                wrapper.getOWLClassByIdentifier("ID_REPLACED_BIS_XREF:4")));
+        assertEquals(expectedClasses, utils.getOWLClasses("ID:4", false));
     }
     
     /**
@@ -628,6 +661,48 @@ public class OntologyUtilsTest extends TestAncestor {
         assertEquals("Incorrect least common ancestor", 
                 expectedLcas, 
                 utils.getLeastCommonAncestors(cls1, cls2, overProps));
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#retainLeafClasses(Set, Set)}
+     */
+    @Test
+    public void shouldRetainLeafClasses() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/minDistance.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        @SuppressWarnings("rawtypes")
+        Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
+                Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
+                        OntologyUtils.PART_OF_ID)));
+        
+
+        Set<OWLClass> setToModify = new HashSet<OWLClass>(Arrays.asList(cls1, cls2));
+        Set<OWLClass> expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls2));
+        utils.retainLeafClasses(setToModify, null);
+        assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls1, cls2, cls4));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls4));
+        utils.retainLeafClasses(setToModify, null);
+        assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls1, cls2, cls3, cls4));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls3, cls4));
+        utils.retainLeafClasses(setToModify, null);
+        assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls1, cls2, cls4));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls2, cls4));
+        utils.retainLeafClasses(setToModify, overProps);
+        assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
     }
     
     /**

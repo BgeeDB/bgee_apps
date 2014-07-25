@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -220,6 +221,7 @@ public class UberonSocketTool {
             while ((inputLine = in.readLine()) != null) {
                 try {
                     log.debug("Receiving query: " + inputLine);
+                    inputLine = inputLine.trim();
 
                     if (inputLine.equals("exit") || inputLine.equals("logout") || 
                             inputLine.equals("quit") || inputLine.equals("bye")) {
@@ -293,7 +295,7 @@ public class UberonSocketTool {
     
     /**
      * Extract from {@code input} the ID provided and try to retrieve the Uberon ID 
-     * to actually use using {@link OntologyUtils#getOWLClass(String)}.
+     * to actually use using {@link OntologyUtils#getOWLClasses(String, boolean)}.
      * The {@code OntologyUtils} object should be provided at instantiation. 
      * The OBO-like ID of the {@code OWLClass} returned by {@code OntologyUtils} is returned 
      * as a {@code String}. 
@@ -304,13 +306,22 @@ public class UberonSocketTool {
     private String idMappingQuery(String input) {
         log.entry(input);
         
-        String output = "";
+        Set<OWLClass> classes = this.ontUtils.getOWLClasses(input, false);
+        this.ontUtils.retainLeafClasses(classes, this.ontUtils.getGenericPartOfProps());
         
-        OWLClass cls = this.ontUtils.getOWLClass(input);
-        if (cls != null) {
-            output = this.ontUtils.getWrapper().getIdentifier(cls);
+        if (classes.size() == 1) {
+            return log.exit(
+                    this.ontUtils.getWrapper().getIdentifier(classes.iterator().next()));
+        } 
+        if (log.isWarnEnabled()) {
+            if (classes.isEmpty()) {
+                log.warn("Could not find any OWLClass corresponding to: {}", input);
+            } else {
+                log.warn("ID {} mapped to more than one class, cannot choose: {}", 
+                        input, classes);
+            }
         }
         
-        return log.exit(output);
+        return log.exit("");
     }
 }

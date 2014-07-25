@@ -945,57 +945,118 @@ public class OntologyUtils {
     }
     
     /**
-     * Obtains from the ontology wrapped in this object the {@code OWLClass} corresponding to 
-     * {@code id}. The {@code OWLClass} will be tried to be identified first by assuming 
-     * {@code id} is an OBO-like ID (using 
-     * {@code OWLGraphWrapperExtended.getOWLClassByIdentifier(String)}), then if not identified, 
-     * by assuming it is the {@code String} representation of an {@code IRI} (using 
-     * {@code OWLGraphWrapperExtended.getOWLClass(String)}), then if not identified, 
-     * by assuming it is an xref (in that case, xref mappings are retrieved calling 
-     * {@link #getXRefMappings()}, then if one and only one ID is associated to the xref, 
-     * the corresponding {@code OWLClass} is retrieved).
+     * Delegates to {@link #getOWLClasses(String, boolean)} with the {@code boolean} 
+     * argument set to {@code true}, and returns either the {@code OWLClass} contained 
+     * in the returned {@code Set}, or {@code null} if it is empty. 
      * 
-     * @param id    A {@code String} that can be either an OBO-like ID, or an {@code IRI}, 
-     *              or an XRef mapped to an {@code OWLClass}.
-     * @return      The {@code OWLClass} retrieved based on {@code id}.
+     * @param id    See same name argument in {@link #getOWLClasses(String, boolean)}
+     * @return      The {@code OWLClass} retrieved based on {@code id}, or {@code null} 
+     *              if none were retrieved.
+     * @see #getOWLClasses(String, boolean)
      */
     public OWLClass getOWLClass(String id) {
         log.entry(id);
+        
+        Set<OWLClass> potentialClasses = this.getOWLClasses(id, true);
+        if (potentialClasses.size() == 1) {
+            return log.exit(potentialClasses.iterator().next());
+        } 
+        return log.exit(null);
+    }
+    
+    /**
+     * Obtains from the ontology wrapped in this object the {@code OWLClass}es corresponding to 
+     * {@code id}. The {@code OWLClass}es will be tried to be identified: first by assuming 
+     * {@code id} is an OBO-like ID (using 
+     * {@code OWLGraphWrapperExtended.getOWLClassByIdentifier(String)}); then, if not identified, 
+     * by assuming it is the {@code String} representation of an {@code IRI} (using 
+     * {@code OWLGraphWrapperExtended.getOWLClass(String)}); then, if not identified, 
+     * by assuming it is an xref (in that case, xref mappings are retrieved calling 
+     * {@link #getXRefMappings()}; then, if not identified, by checking whether {@code id} 
+     * maps to an obsolete {@code OWLClass}, in which case the "replaced_by" mappings 
+     * will be returned (replaced_by mappings are retrieved by calling 
+     * {@link #getReplacedByMappings()}). If {@code isStrict} is {@code true}, 
+     * then only the {@code OWLClass} uniquely mapped to an xref or by a replaced_by annotation  
+     * will be considered, and if the xref or replaced_by annotations map to several 
+     * {@code OWLClass}es, they will be discarded. If {@code isStrict} 
+     * is {@code false}, then ambiguously mapped {@code OWLClass}es will all be returned. 
+     * <p>
+     * If an {@code OWLClass} is retrieved by its OBO-like ID or its IRI, then 
+     * the returned {@code Set} will contain only one {@code OWLClass}. If {@code isStrict} 
+     * is {@code true}, the returned {@code Set} will always contain 
+     * either 0 or 1 {@code OWLClass} (this is similar to calling 
+     * {@link #getOWLClass(String)}). If {@code isStrict} is {@code false}, 
+     * the returned {@code Set} can contain any number of elements. 
+     * 
+     * @param id    A {@code String} that can be either the OBO-like ID or the {@code IRI} 
+     *              of an {@code OWLClass}, or an XRef mapped to some {@code OWLClass}es, 
+     *              or the OBO-like ID or {@code IRI} of an obsolete {@code OWLClass}, 
+     *              for which to retrieve the {@code OWLClass}es to use as replacement.
+     * @param isStrict  A {@code boolean} defining whether only unambiguous xref 
+     *                  or replaced_by mappings should be considered. In that case, 
+     *                  the returned {@code Set} will contain at most 1 element.
+     * @return          A {@code Set} of {@code OWLClass}es that were retrieved 
+     *                  from {@code id}.
+     * @see #getOWLClass(String)
+     */
+    public Set<OWLClass> getOWLClasses(String id, boolean isStrict) {
+        log.entry(id, isStrict);
+        
+        Set<OWLClass> potentialClasses = new HashSet<OWLClass>();
         
         OWLClass cls = this.getWrapper().getOWLClassByIdentifier(id);
         //if id was not an OBO-like ID, but an IRI
         if (cls == null) {
             cls = this.getWrapper().getOWLClass(id);
         }
-        //in case the id provided was actually an xref
-        if (cls == null) {
-            Set<String> classIdsMapped = this.getXRefMappings().get(id);
-            if (classIdsMapped != null) {
-                if (classIdsMapped.size() == 1) {
-                    String idMapped = classIdsMapped.iterator().next();
-                    cls = this.getWrapper().getOWLClassByIdentifier(idMapped);
-                    if (cls == null) {
-                        cls = this.getWrapper().getOWLClass(idMapped);
+        if (cls != null) {
+            //if it is not an obsolete class, it is valid
+            if (!this.getWrapper().isObsolete(cls) && 
+                !this.getWrapper().getIsObsolete(cls)) {
+                potentialClasses.add(cls);
+            } else {
+                //otherwise, we need to use the replaced_by annotations
+                Set<String> replacedByIds = this.getReplacedByMappings().get(
+                        this.getWrapper().getIdentifier(cls));
+                if (replacedByIds != null) {
+                    Set<OWLClass> classesMapped = new HashSet<OWLClass>();
+                    //we iterate all IDs even if isStrict is true: maybe several replaced_by 
+                    //annotations will end up pointing to the same OWLClass
+                    for (String idMapped: replacedByIds) {
+                        //use recursivity in case the replaced_by annotation is itself pointing 
+                        //to an obsolete class or an xref
+                        Set<OWLClass> tempClassesMapped = this.getOWLClasses(idMapped, isStrict);
+                        if (tempClassesMapped.isEmpty()) {
+                            log.warn("A replaced_by annotation from OWLClass {} did not allow to retrieve an OWLClass: {}", 
+                                    id, idMapped);
+                        }
+                        classesMapped.addAll(tempClassesMapped);
                     }
-                } else {
-                    log.warn("Xref {} mapped to more than one class ID, cannot choose: {}", 
-                            id, classIdsMapped);
+                    if (classesMapped.size() == 1 || !isStrict) {
+                        potentialClasses.addAll(classesMapped);
+                    }
                 }
             }
-        }
-        //or if it was an obsolete ID with a replaced_by annotation
-        if (cls == null) {
-            Set<String> replacedByIds = this.getReplacedByMappings().get(id);
-            if (replacedByIds != null && replacedByIds.size() == 1) {
-                String idMapped = replacedByIds.iterator().next();
-                cls = this.getWrapper().getOWLClassByIdentifier(idMapped);
-                if (cls == null) {
-                    cls = this.getWrapper().getOWLClass(idMapped);
+        } 
+        //in case the id provided was actually an xref (even if it pointed to an obsolete class 
+        //with replaced_by annotations, maybe it was not properly obsoleted and we can still 
+        //find a xref)
+        if (potentialClasses.isEmpty()) {
+            Set<String> classIdsMapped = this.getXRefMappings().get(id);
+            if (classIdsMapped != null) {
+                if (classIdsMapped.size() == 1 || !isStrict) {
+                    for (String idMapped: classIdsMapped) {
+                        OWLClass clsMapped = this.getWrapper().getOWLClassByIdentifier(idMapped);
+                        if (clsMapped == null) {
+                            clsMapped = this.getWrapper().getOWLClass(idMapped);
+                        }
+                        potentialClasses.add(clsMapped);
+                    }
                 }
             }
         }
         
-        return log.exit(cls);
+        return log.exit(potentialClasses);
     }
     
     /**
@@ -1144,13 +1205,29 @@ public class OntologyUtils {
      * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "part_of" 
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
-    private Set<OWLObjectPropertyExpression> getPartOfProps() {
+    public Set<OWLObjectPropertyExpression> getPartOfProps() {
         log.entry();
         if (this.partOfRels == null) {
             this.partOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(PART_OF_ID));
         }
         return log.exit(this.partOfRels);
+    }
+    
+    /**
+     * Return the {@code Set} returned by {@link #getPartOfProps()} as a {@code Set} 
+     * of {@code OWLPropertyExpression}s (rather than {@code OWLObjectPropertyExpression}s).
+     * 
+     * @return  A {@code Set} of {@code OWLPropertyExpression}s containing the "part_of" 
+     *          {@code OWLObjectPropertyExpression}, and all its children.
+     */
+    public Set<OWLPropertyExpression> getGenericPartOfProps() {
+        log.entry();
+        Set<OWLPropertyExpression> props = new HashSet<OWLPropertyExpression>();
+        for (OWLObjectPropertyExpression prop: this.getPartOfProps()) {
+            props.add(prop);
+        }
+        return log.exit(props);
     }
     
     /**
@@ -1375,6 +1452,38 @@ public class OntologyUtils {
         }
         
         return log.exit(lcas);
+    }
+
+    /**
+     * Retain only independent leaf {@code OWLClass}es over the specified properties 
+     * from the provided {@code Set} {@code classes}. This method will remove 
+     * from {@code classes} any {@code OWLClass} that is the ancestor of one of 
+     * the other {@code OWLClass}es in the {@code Set}, over the properties {@code overProps}.
+     * 
+     * @param classes       A {@code Set} of {@code OWLClass}es to filter to remove 
+     *                      ancestors of other {@code OWLClass}es in the {@code Set}.
+     * @param overProps     A {@code Set} of {@code OWLPropertyExpression}s allowing 
+     *                      to restrain the relations considered. Can be {@code null} 
+     *                      for no restrictions.
+     */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
+    public void retainLeafClasses(Set<OWLClass> classes,  
+            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
+        log.entry(classes, overProps);
+        
+        Set<OWLObject> toRemove = new HashSet<OWLObject>();
+        for (OWLClass cls: classes) {
+            Set<OWLObject> ancestors = this.getWrapper().getAncestors(cls, overProps);
+            //just to be sure, in case of cycles?
+            ancestors.remove(cls);
+            log.trace("Ancestors retrieved for {}: {}", cls, ancestors);
+            toRemove.addAll(ancestors);
+        }
+        classes.removeAll(toRemove);
+        log.trace("Resulting Set after filtering: {}", classes);
+        
+        log.exit();
     }
     
     /**

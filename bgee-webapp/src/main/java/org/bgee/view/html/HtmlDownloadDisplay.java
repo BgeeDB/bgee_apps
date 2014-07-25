@@ -402,11 +402,5 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.includeJs("jquery-ui.min.js");
         this.includeJs("download.js");
     }
-    
-    @Override
-    public void includeCss(){
-    	this.includeCss("jquery-ui.css"); // TODO remove me when this css is removed
-    }
-
 }
 

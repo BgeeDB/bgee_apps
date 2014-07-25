@@ -428,8 +428,11 @@ figure.selected {
     font-size: 0.6em;
 }
 
+#creativecommons {
+    display: none;
+}
+
 #creativecommons p {
-	display: none;
     font-size: 0.6em;
     margin: 2px 2%;
     color: #515151;

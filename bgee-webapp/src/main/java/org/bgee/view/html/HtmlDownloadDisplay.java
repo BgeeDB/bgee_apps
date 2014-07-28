@@ -297,7 +297,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                         name="Gallus gallus";
                         shortName="G. gallus";
                         commonName="chicken";
-                        alternateNames="bantam red junglefowl, red jungle fowl";
+                        alternateNames="bantam, red junglefowl, red jungle fowl";
                         break;
                     case 28377: 
                         name="Anolis carolinensis";

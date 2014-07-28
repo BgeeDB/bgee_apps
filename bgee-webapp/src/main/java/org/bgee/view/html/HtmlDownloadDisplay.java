@@ -112,7 +112,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         // Multi-species part
         this.writeln("<div id='bgee_multi_species'>");
-        this.writeln("<h1>Multi-species</h1>");
+        this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
         this.writeln("<div class='biggroup'>");
         this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1", true));
         this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2", true));

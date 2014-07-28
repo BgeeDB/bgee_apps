@@ -124,7 +124,8 @@ div.biggroup {
 }
 
 #sib_body h1 {
-    margin: 0 2%;
+    display: inline-block; 
+    margin: 0 0 0 2%;
     color: #920209;
     font-size: 1em;
     font-weight: normal;
@@ -139,6 +140,10 @@ div.biggroup figcaption p {
 
 img {
     border-radius: 8px;
+}
+
+#bgee_multi_species span {
+    font-size: 0.85em;
 }
 
 #bgee_uniq_species img {

@@ -74,8 +74,8 @@ public class UberonSocketTool {
         if (args[0].equalsIgnoreCase("stageRange")) {
             UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(args[1], args[2], 
                     CommandRunner.parseMapArgumentAsInteger(args[3])), 
-                    Integer.parseInt(args[3]), 
-                    new ServerSocket(Integer.parseInt(args[4])));
+                    Integer.parseInt(args[4]), 
+                    new ServerSocket(Integer.parseInt(args[5])));
             tool.startListening();
         } else if (args[0].equalsIgnoreCase("idMapping")) {
             UberonSocketTool tool = new UberonSocketTool(new OntologyUtils(args[1]), 

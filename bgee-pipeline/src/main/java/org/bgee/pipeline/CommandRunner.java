@@ -293,6 +293,7 @@ public class CommandRunner {
         mapArg = mapArg.trim();
         if (!mapArg.equals(EMPTY_LIST)) {
             for (String arg: mapArg.split(LIST_SEPARATOR)) {
+                log.trace("Map entry parsed: {}", arg);
                 if (StringUtils.isNotBlank(arg)) {
                     String[] keyValue = arg.split(KEY_VALUE_SEPARATOR);
                     
@@ -309,8 +310,10 @@ public class CommandRunner {
                         existingValues = new HashSet<T>();
                         resultingMap.put(key, existingValues);
                     }
+                    log.trace("Key: {} - values to parse: {}", key, keyValue[1]);
                     if (!keyValue[1].trim().equals(EMPTY_LIST)) {
                         for (String value: keyValue[1].trim().split(VALUE_SEPARATOR)) {
+                            log.trace("Value parsed: {}", value);
                             if (type.equals(Integer.class)) {
                                 existingValues.add(type.cast(Integer.parseInt(value)));
                             } else if (type.equals(Boolean.class)) {

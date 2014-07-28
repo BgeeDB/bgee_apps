@@ -32,11 +32,11 @@ header {
 }
 
 header h1, header h2  {
-	position: relative;
+    position: relative;
     margin: 0 auto;
     width: 430px;
-	color: #282828;
-	text-align: center;
+    color: #282828;
+    text-align: center;
     font-weight: normal;
     white-space: nowrap;
 }
@@ -67,7 +67,7 @@ header img {
 #sib_other_logo {
     position: absolute;
     top: 8px;
-    left: 2%;    
+    left: 2%;
     width: 186px;
     height: 75px;
 }
@@ -90,7 +90,7 @@ a {
 }
 
 a:hover {
-	color: #D6161D;
+    color: #D6161D;
     text-decoration: underline;
 }
 
@@ -127,7 +127,7 @@ div.biggroup {
     margin: 0 2%;
     color: #920209;
     font-size: 1em;
-	font-weight: normal;
+    font-weight: normal;
 }
 
 div.biggroup figcaption p {
@@ -187,9 +187,9 @@ img {
 
 /****BGEE SEARCH BOX****/
 #bgee_search_box {
-    width: 680px;
+    width: 690px;
     height: 25px;
-    margin: 0 auto ;
+    margin: 0 auto;
     padding: 10px; 
     background-color: #D9DDE1;
     border-radius: 8px;
@@ -216,36 +216,37 @@ input[type="image"] {
 }
 
 div#results_nb {
-	text-align: center;
+    font-size: 0.8em;
+    text-align: center;
 }
 
 #bgee_more_results_up, #bgee_more_results_down  {
-	position: fixed;
-	text-align: center;
-	background-color: #D6161D;
-	border: 3px solid #F7F8FA;
-	border-left: 0px;
-	padding: 6px;
-	height: 15px;
-	width: 100px;
-	left: 0%;
-	color: white;
-	font-size: 0.75em;
-	font-weight: 900;
-	z-index: 10;
-	display: none;
+    position: fixed;
+    text-align: center;
+    background-color: #D6161D;
+    border: 3px solid #F7F8FA;
+    border-left: 0px;
+    padding: 6px;
+    height: 15px;
+    width: 100px;
+    left: 0%;
+    color: white;
+    font-size: 0.75em;
+    font-weight: 900;
+    z-index: 10;
+    display: none;
 }
 
 #bgee_more_results_up {
-	border-top: 0px;
-	border-radius: 0px 0px 12px 0px;
-	top: 0%;
+    border-top: 0px;
+    border-radius: 0px 0px 12px 0px;
+    top: 0%;
 }
 
 #bgee_more_results_down {
-	border-bottom: 0px;
-	border-radius: 0px 12px 0px 0px;
-	bottom: 0%;
+    border-bottom: 0px;
+    border-radius: 0px 12px 0px 0px;
+    bottom: 0%;
 }
 
 figure.highlight {
@@ -261,7 +262,7 @@ figure.highlight {
 
 #bgee_uniq_species figure.highlight {
     border: 4px #D6161D solid;
-	padding: 0px;
+    padding: 0px;
 }
 
 #bgee_multi_species figure.highlight {
@@ -280,15 +281,14 @@ figure.highlight {
     padding: 30px;
     left: -3%;
     width: 101%;
-    margin: 5px 0;
     clear: left;
     display: none;
 }
 
 #bgee_data_selection p {
-    font-size: 0.8em;
+    font-size: 0.7em;
     color: #DBDBDB;
-    width: 90%;
+    width: 95%;
     margin: 4px 0 0 8px;
 }
 
@@ -322,11 +322,12 @@ figure.highlight {
 }
 
 #bgee_data_selection_cross img {
-	position: absolute;
+    position: absolute;
+    cursor: pointer;
     top: 30px;
-	right: 30px;
+    right: 30px;
     height: 20px;
-	width: 20px;
+    width: 20px;
     z-index: 2;
 }
 
@@ -334,37 +335,24 @@ figure.highlight {
     position: absolute;
     left: 0;
     top: 0;
-    width: 360px;
+    width: 300px;
+    margin: 30px 0px 0px 30px;
 }
 
 #bgee_data_selection_img img {
     position: relative;
     float: left;
-    margin: 30px 0px 0px 30px;
     width: 300px;
     height: 300px;
-}
-
-#bgee_multi_species #bgee_data_selection_img {
-    position: absolute;
-    left: 0;
-    top: 0;
-    margin:30px 0px 0px 30px;
-    width: 360px;
 }
 
 #bgee_multi_species #bgee_data_selection_img img {
-    position: relative;
-    float: left;
     margin: 0px;
-    width: 300px;
-    height: 300px;
     border-radius: 0px;
 }
 
 #bgee_data_selection_text {
-/*     padding-top: 5px; */
-    padding-left: 370px;
+    padding-left: 330px;
     height: 300px;
 }
 

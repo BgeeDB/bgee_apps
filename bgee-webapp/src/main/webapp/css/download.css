@@ -234,7 +234,7 @@ div#results_nb {
     border-left: 0px;
     padding: 6px;
     height: 15px;
-    width: 100px;
+    width: 120px;
     left: 0%;
     color: white;
     font-size: 0.75em;
@@ -420,6 +420,10 @@ figure.selected {
     color: #515151;
     font-weight: bold;
     font-size: 0.6em;
+}
+
+#creativecommons_title a {
+    cursor: pointer;
 }
 
 #creativecommons {

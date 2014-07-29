@@ -156,7 +156,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * 
      * @param speciesId     An {@code int} that is the species ID of the species to be 
      *                      diplayed.
-     * @return             A {@String} that is the  HTML figure tag generated from the 
+     * @return             A {@code String} that is the  HTML figure tag generated from the 
      *                     provided {@code int} of a species ID.
      */
     private String generateSpeciesFigure(int speciesId) {
@@ -168,27 +168,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * 
      * @param speciesIds   A {@code List} of {@code Integer} containing the species IDs to
      *                     be diplayed.
-     * @param figcaption   A {@String} that is the fieldcaption of the figure. If empty 
-     *                     or {@code null}, it's generated with the last species of the 
-     *                     {@code List}.
-     * @return             A {@String} that is the  HTML figure tag generated from the 
-     *                     provided {@code List} of species IDs.
-     */
-    private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption) {
-        return generateSpeciesFigure(speciesIds, figcaption, false);
-    }
-    
-    /**
-     * Generate the HTML figure tag from a {@code List} of species IDs.
-     * 
-     * @param speciesIds   A {@code List} of {@code Integer} containing the species IDs to
-     *                     be diplayed.
-     * @param figcaption   A {@String} that is the fieldcaption of the figure. If empty 
+     * @param figcaption   A {@code String} that is the fieldcaption of the figure. If empty 
      *                     or {@code null}, it's generated with the last species of the 
      *                     {@code List}.
      * @param isGroup      A {@code boolean} that is {@code true} if the figure represents 
      *                     a group of species.
-     * @return             A {@String} that is the  HTML figure tag generated from the 
+     * @return             A {@code String} that is the  HTML figure tag generated from the 
      *                     provided {@code List} of species IDs.
      */
     private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption, 
@@ -356,16 +341,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     /**
      * Generate the HTML img tag of one species.
      * 
-     * @param isGroup      A {@code boolean} that is true if the figure represents a 
-     *                     group of species.
-     * @return             A {@String} that is the  HTML figure tag generated from the 
+     * @return             A {@code String} that is the  HTML figure tag generated from the 
      *                     provided {@code List} of species IDs
      * @param id           An {@code int} of the species IDs to be diplayed.
      * @param name         A {@code String} that is the species name.
      * @param commonName   A {@code String} that is the species common name.
      * @param lightImg     A {@code boolean} that is {@code true} if the image to use is 
      *                     the light one.
-     * @return             A {@String} that is the  HTML img tag of the provided species 
+     * @return             A {@code String} that is the  HTML img tag of the provided species 
      *                     data.
      */
     private String generateSpeciesImg(int id, String name, String shortName, 

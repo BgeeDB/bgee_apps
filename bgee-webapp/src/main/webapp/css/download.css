@@ -193,7 +193,7 @@ img {
 /****BGEE SEARCH BOX****/
 #bgee_search_box {
     width: 690px;
-    height: 25px;
+    height: 28px;
     margin: 0 auto;
     padding: 10px; 
     background-color: #D9DDE1;
@@ -221,6 +221,7 @@ input[type="image"] {
 }
 
 div#results_nb {
+    width: 110px;
     font-size: 0.8em;
     text-align: center;
 }

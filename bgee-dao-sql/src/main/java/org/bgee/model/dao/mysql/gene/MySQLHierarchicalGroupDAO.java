@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.hierarchicalgroup;
+package org.bgee.model.dao.mysql.gene;
 
 import java.sql.SQLException;
 import java.sql.Types;

@@ -1,4 +1,4 @@
-package org.bgee.pipeline.hierarchicalGroups;
+package org.bgee.pipeline.gene;
 
 import static org.mockito.Mockito.*;
 

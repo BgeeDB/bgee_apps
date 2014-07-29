@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.gene.InsertGO;
-import org.bgee.pipeline.hierarchicalGroups.ParseOrthoXML;
+import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;

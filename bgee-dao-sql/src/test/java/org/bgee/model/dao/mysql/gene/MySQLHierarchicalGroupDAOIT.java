@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.hierarchicalGroup;
+package org.bgee.model.dao.mysql.gene;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.bgee.model.dao.mysql.hierarchicalgroup.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

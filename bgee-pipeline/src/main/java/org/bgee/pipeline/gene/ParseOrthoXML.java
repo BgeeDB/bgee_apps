@@ -1,4 +1,4 @@
-package org.bgee.pipeline.hierarchicalGroups;
+package org.bgee.pipeline.gene;
 
 import java.io.File;
 import java.io.FileNotFoundException;

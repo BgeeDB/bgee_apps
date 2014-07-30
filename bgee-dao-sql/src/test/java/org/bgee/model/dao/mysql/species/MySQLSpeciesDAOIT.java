@@ -115,15 +115,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
     @Test
     public void shouldGetAllSpecies() throws SQLException {
         log.entry();
-        this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
-        // TODO Populate database if empty in a @BeforeClass
-        // in MySQLITAncestor instead here
-        try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                prepareStatement("select 1 from dataSource")) {
-            if (!stmt.getRealPreparedStatement().executeQuery().next()) {
-                this.populateAndUseDatabase(System.getProperty(POPULATEDDBKEYKEY));
-            }
-        }
+        this.useSelectDB();
 
         // Generate result with the method
         MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());

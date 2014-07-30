@@ -138,6 +138,26 @@ public class BgeeConnection implements AutoCloseable {
     }
     
     /**
+     * Creates a {@code BgeeCallableStatement} object for for calling database stored 
+     * procedures. 
+     * 
+     * @param sql   an SQL statement that may contain one or more '?' parameter 
+     *              placeholders. Typically this statement is specified using JDBC call 
+     *              escape syntax.
+     * @return      a new {@code BgeeCallableStatement} object containing the pre-compiled 
+     *              SQL statement.
+     * @throws      SQLException if a database access error occurs or this method is 
+     *              called on a closed connection.
+     */
+    public BgeeCallableStatement prepareCall(String sql) throws SQLException {
+        log.entry(sql);
+        BgeeCallableStatement bgeeCallStmt = new BgeeCallableStatement(this, 
+                this.getRealConnection().prepareCall(sql));
+        this.preparedStatements.add(bgeeCallStmt);
+        return log.exit(bgeeCallStmt);
+    }
+    
+    /**
      * Starts a transaction with default isolation level. If {@code close} is called 
      * before this transaction was commit, it will be rollback. If a transaction 
      * is already ongoing, an {@code IllegalStateException} is thrown. It will 

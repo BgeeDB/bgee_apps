@@ -48,15 +48,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     @Test
     public void shouldGetAllGenes() throws SQLException {
         log.entry();
-        this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
-        // TODO Populate database if empty in a @BeforeClass
-        // in MySQLITAncestor instead here
-        try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                prepareStatement("select 1 from dataSource")) {
-            if (!stmt.getRealPreparedStatement().executeQuery().next()) {
-                this.populateAndUseDatabase(System.getProperty(POPULATEDDBKEYKEY));
-            }
-        }
+        
+        this.useSelectDB();
 
         // Generate result with the method
         MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
@@ -122,7 +115,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     @Test
     public void shouldUpdateGenes() throws SQLException {
         log.entry();
-        this.populateAndUseDatabase(System.getProperty(EMPTYDBKEY));
+        this.useEmptyDB();
+        this.populateAndUseDatabase();
 
         Collection<GeneTO> geneTOs = Arrays.asList(
                 new GeneTO("ID1", "GNMod1", "DescMod1", 31, 12, 7, true),

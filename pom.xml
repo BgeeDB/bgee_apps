@@ -77,6 +77,7 @@
 			database by setting bgee.database.test.skip.populate to true (once it will 
 			have been populated of course). -->
 		<bgee.database.test.select.name>bgeeIntegrationTest_select</bgee.database.test.select.name>
+		
 		<!-- Properties used to skip the creation and populating of the database 
 			${bgee.database.test.select.name}. See this property documentation for more 
 			details. We make it default to ${skipTests}, so that this execution will 
@@ -102,7 +103,14 @@
 			intend to reuse the same name afterwards. -->
 		<bgee.database.test.insert.name>bgeeIntegrationTest_insert</bgee.database.test.insert.name>
 
-		<!-- Here we provide the paths to the SQL files to create the Bgee database 
+		<!-- here, we provide the name of the store procedures that should be used to
+			populate or emty SELECT/INSERT/UPDATE databases with test data for integration
+            tests of SELECT/INSERT/UPDATE statements (the database will be populated by
+            calling the procedure by the Java application). -->
+		<bgee.database.test.populate.db.procedure.name>populateTestDBs</bgee.database.test.populate.db.procedure.name>
+		<bgee.database.test.empty.table.procedure.name>emptyTestDBs</bgee.database.test.empty.table.procedure.name>
+
+		<!-- Here we provide the paths to the SQL files to create the Bgee database
 			The database will be populated with data by the Java application -->
 		<bgee.database.file.schema>
 			${basedir}/../../pipeline/pipeline/db_creation/bgeeSchema.sql
@@ -119,6 +127,12 @@
 
 		<!-- Here we provide the path to a SQL file defining and calling a procedure 
 			to drop all databases used for integration tests. -->
+		<bgee.database.file.populate.db.procedure>
+			${basedir}/src/test/resources/sql/testPopulateDBProcedure.sql
+		</bgee.database.file.populate.db.procedure>
+		<bgee.database.file.empty.table.procedure>
+			${basedir}/src/test/resources/sql/testEmptyTableProcedure.sql
+		</bgee.database.file.empty.table.procedure>
 		<bgee.database.file.drop.procedure>
 			${basedir}/src/test/resources/sql/dropTestDatabases.sql
 		</bgee.database.file.drop.procedure>
@@ -202,11 +216,11 @@
 			</dependency>
 			
 			<dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>bgee-dao-sql</artifactId>
-                <version>${project.version}</version>
-                <scope>compile</scope>
-            </dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>bgee-dao-sql</artifactId>
+				<version>${project.version}</version>
+				<scope>compile</scope>
+			</dependency>
 
 
 			<!-- Needed for the pipeline -->
@@ -425,7 +439,17 @@
 							<bgee.database.test.select.name>
 								${bgee.database.test.select.name}
 							</bgee.database.test.select.name>
-							<!-- Name of the empty database used for testing of independent INSERT 
+                            <!-- Name of the name of the store procedure that should be used to
+                             populate SELECT/INSERT/UPDATE databases -->
+							<bgee.database.test.populate.db.procedure.name>
+								${bgee.database.test.populate.db.procedure.name}
+							</bgee.database.test.populate.db.procedure.name>
+                            <!-- Name of the name of the store procedure that should be used to
+                             populate SELECT/INSERT/UPDATE databases -->
+							<bgee.database.test.empty.table.procedure.name>
+								${bgee.database.test.empty.table.procedure.name}
+							</bgee.database.test.empty.table.procedure.name>
+							<!-- Name of the empty database used for testing of independent INSERT
 								statements -->
 							<bgee.database.test.insert.name>
 								${bgee.database.test.insert.name}
@@ -504,7 +528,7 @@
 							</configuration>
 						</execution>
 
-						<!-- Create the database used to test independent INSERT/UPDATE statements 
+						<!-- Create the database used to test independent INSERT statements 
 							with the name ${bgee.database.test.insert.name}. -->
 						<execution>
 							<id>pre-integration-test-create-insert-db</id>
@@ -521,7 +545,7 @@
 							</configuration>
 						</execution>
 
-						<!-- Insert tables into the database used to test INSERT/UPDATE statements 
+						<!-- Insert tables into the database used to test INSERT statements 
 							with the name ${bgee.database.test.insert.name}. -->
 						<execution>
 							<id>pre-integration-test-populate-insert-db</id>
@@ -539,8 +563,30 @@
 								</srcFiles>
 							</configuration>
 						</execution>
+                        <!-- Create the strore procedure used to test SELECT with the name
+                         ${bgee.database.test.insert.name}. We do not create it at the same
+                         time as insertion of tables, because we need the delimiterType.-->
+						<execution>
+							<id>pre-integration-test-add-procedure-insert-db</id>
+							<phase>pre-integration-test</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<skip>${skipTests}</skip>
+								<!-- change the URL to use the database -->
+								<url>${bgee.jdbc.connectionURL}${bgee.database.test.insert.name}</url>
+								<autocommit>true</autocommit>
+								<delimiterType>row</delimiterType>
+								<srcFiles>
+									<srcFile>${bgee.database.file.populate.db.procedure}</srcFile>
+									<srcFile>${bgee.database.file.empty.table.procedure}</srcFile>
+								</srcFiles>
+							</configuration>
+						</execution>
 
-						<!-- Create the database used to test SELECT statements with the name 
+
+						<!-- Create the database used to test SELECT statements with the name
 							${bgee.database.test.select.name}, that will be populated with data. We do 
 							not create it at the same time as ${bgee.database.test.insert.name}, because 
 							its creation can be skipped, using the parameter ${bgee.database.test.skip.populate}. 
@@ -561,9 +607,9 @@
 							</configuration>
 						</execution>
 
-						<!-- Create the tables and constraints used to test SELECT statements 
-							with the name ${bgee.database.test.select.name}. This step can be skipped 
-							by using the parameter ${bgee.database.test.skip.populate}. See the documentation 
+						<!-- Create the tables and constraints used to test SELECT statements
+							with the name ${bgee.database.test.select.name}. This step can be skipped
+							by using the parameter ${bgee.database.test.skip.populate}. See the documentation
 							of the property ${bgee.database.test.select.name} for more details.. -->
 						<execution>
 							<id>pre-integration-test-populate-select-db</id>
@@ -581,6 +627,29 @@
 									<srcFile>${bgee.database.file.constraint}</srcFile>
 									<srcFile>${bgee.database.file.index}</srcFile>
 									<srcFile>${bgee.database.file.foreignkey}</srcFile>
+								</srcFiles>
+							</configuration>
+						</execution>
+						
+						<!-- Create the strore procedure used to test SELECT with the name 
+                            ${bgee.database.test.select.name}. We do not create it at the
+                            same time as creation of tables and constraints, because we
+                            need the delimiterType. See the documentation of the property 
+                            ${bgee.database.test.select.name} for more details. -->
+						<execution>
+							<id>pre-integration-test-add-procedure-select-db</id>
+							<phase>pre-integration-test</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<skip>${bgee.database.test.skip.populate}</skip>
+								<!-- change the URL to use the database -->
+								<url>${bgee.jdbc.connectionURL}${bgee.database.test.select.name}</url>
+								<autocommit>true</autocommit>
+								<delimiterType>row</delimiterType>
+								<srcFiles>
+									<srcFile>${bgee.database.file.populate.db.procedure}</srcFile>
 								</srcFiles>
 							</configuration>
 						</execution>

@@ -299,7 +299,13 @@ public class BgeePreparedStatement implements AutoCloseable {
     public PreparedStatement getRealPreparedStatement() {
         return realPreparedStatement;
     }
-    
+    /**
+     * @return {@code BgeeConnection} that was used  to obtain this 
+     * {@code BgeePreparedStatement}.    
+     */
+    protected BgeeConnection getBgeeConnection() {
+        return bgeeConnection;
+    }   
     /**
      * Returns the {@code boolean} determining if the method {@code cancel} was called. 
      * A {@code BgeePreparedStatement} should then launch a {@code QueryInterruptedException} 
@@ -329,8 +335,9 @@ public class BgeePreparedStatement implements AutoCloseable {
     /**
      * @param executed  set {@link #execute}.
      */
-    private void setExecuted(boolean executed) {
+    protected void setExecuted(boolean executed) {
         this.executed = executed;
-    }	
+    }   
 
+    
 }

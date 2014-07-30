@@ -3,6 +3,7 @@ package org.bgee.model.dao.mysql;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import javax.sql.DataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.mysql.connector.BgeeCallableStatement;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -33,11 +35,17 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * <li>Property associated to the key {@link #POPULATEDDBKEY} to specify 
  * the name of the test database populated with test data, to run integration tests 
  * of SELECT statements. 
+ * <li>Property associated to the key {@link #POPULATEPROCEDUREKEY} to specify 
+ * the name of the store procedure that should be used to populate SELECT/UPDATE
+ * databases, to run integration tests of SELECT/UPDATE statements. 
  * <li>Property associated to the key {@link #EMPTYDBKEY} to specify 
  * the name of the empty test database, used to run independent integration tests 
- * of INSERT statements. Tests that might overlap, using the same tables, 
+ * of INSERT/UPDATE statements. Tests that might overlap, using the same tables, 
  * should create and drop their own database instance (see 
  * {@link #createAndUseDatabase(String)} and {@link #dropDatabase(String)}).
+ * <li>Property associated to the key {@link #EMPTYPROCEDUREKEY} to specify 
+ * the name of the store procedure that should be used to empty INSERT/UPDATE
+ * database, to run integration tests of INSERT/UPDATE statements. 
  * <li>Property associated to the key {@link #SCHEMAFILEKEY} to specify 
  * the path to the SQL file allowing to create the Bgee database. This will be used 
  * to create independent instances of the database to perform insertion tests.
@@ -56,20 +64,22 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * <h3>Test databases requested</h3>
  * The integration tests for SELECT statements will assume that it exists a database 
  * (with the name provided through System property associated to the key 
- * {@link #POPULATEDDBKEY}) that already contains the expected 
- * test data. The dump containing the test data to load is located at 
- * {@code src/test/resources/sql/testDataDump.sql}. 
- * This database will be automatically created and populated before the tests 
+ * {@link #POPULATEDDBKEY}) but that doesn't already contains the expected 
+ * test data. {@link #populateAndUseDatabase(String)} should be call called before using 
+ * the database. The dump containing the test data to load is located at 
+ * {@code src/test/resources/sql/testPopulateDBProcedure.sql}. 
+ * The store procedure will be automatically created before the tests 
  * if you run the tests through Maven, as the {@code maven-failsafe-plugin} 
- * is configured to do it. (and it will be automatically dropped after the tests 
+ * is configured to do it (and it will be automatically dropped after the tests 
  * as well). This behavior can be modified, see {@code bgee-applicatioons/pom.xml}.
  * <p>
- * The integration tests for INSERT statements will assume that it exists an empty 
+ * The integration tests for INSERT/UPDATE statements will assume that it exists an empty 
  * database, with only tables already created (with the name provided through 
- * System property associated to the key {@link #EMPTYDBKEY}). 
- * This database will be automatically created before the tests and dropped after 
- * the tests if you run the tests through Maven. This behavior can be modified, 
- * see {@code bgee-applicatioons/pom.xml}.
+ * System property associated to the key {@link #EMPTYDBKEY}). For integration tests for 
+ * INSERT statements, the database could be populate calling 
+ * {@link #populateAndUseDatabase(String)}. This database will be automatically created
+ * before the tests and dropped after the tests if you run the tests through Maven. 
+ * This behavior can be modified, see {@code bgee-applicatioons/pom.xml}.
  * 
  * <h3>Cleaning after tests</h3>
  * If some tests failed, the databases created for running the tests might not have 
@@ -78,6 +88,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * {@code maven-failsafe-plugin} is configured to do it.
  * 
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @since Bgee 13
  */
@@ -93,7 +104,16 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * the name of the test Bgee database populated with test data, in order 
      * to run integration tests of SELECT statements.
      */
-    protected static final String POPULATEDDBKEYKEY = "bgee.database.test.select.name";
+    protected static final String POPULATEDDBKEY = "bgee.database.test.select.name";
+    
+    /**
+     * A {@code String} that is the key to retrieve from the System properties the name of
+     * the store procedure used to populate SELECT/UPDATE databases, in order to run 
+     * integration tests of SELECT/UPDATE statements.
+     */
+    protected static final String POPULATEPROCEDUREKEY = 
+            "bgee.database.test.populate.db.procedure.name";
+    
     /**
      * A {@code String} that is the key to retrieve from the System properties 
      * the name of the empty test Bgee database, used to run integration tests 
@@ -104,6 +124,14 @@ public abstract class MySQLITAncestor extends TestAncestor{
      */
     protected static final String EMPTYDBKEY = "bgee.database.test.insert.name";
     
+    /**
+     * A {@code String} that is the key to retrieve from the System properties the name of
+     * the store procedure used to populate UPDATE database, in order to run integration
+     * tests of UPDATE statements.
+     */
+    protected static final String EMPTYPROCEDUREKEY = 
+            "bgee.database.test.empty.table.procedure.name";
+
     /**
      * A {@code String} that is the key to retrieve from the System properties 
      * the path to the SQL file containing the schema of the Bgee database, 
@@ -135,44 +163,17 @@ public abstract class MySQLITAncestor extends TestAncestor{
         //if some of the existing properties are missing, then the tests will 
         //just fail, so we do not check.
     }
+    
     @Override
     protected Logger getLogger() {
         return log;
     }
     
-//    @BeforeClass
-    /**
-     * Populates select test database if it's empty.
-     * <p>
-     * To verify if the select test database is empty, we look inside the dataSource
-     * table.
-     * 
-     * @throws SQLException  If an error occurs while filling the database.
-     */
-    protected void doBeforeClass() throws SQLException {
-        log.entry();
-        this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEYKEY));
-        //here we assume that the table dataSource is always filled with some test data 
-        //when the test database is already loaded
-        try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
-                prepareStatement("select 1 from dataSource")) { 
-            if (!stmt.getRealPreparedStatement().executeQuery().next()) {
-                this.populateAndUseDatabase(POPULATEDDBKEYKEY);
-            }
-        }
-        log.exit();
-    }
-
     /**
      * Configures the {@code MySQLDAOManager} of the current thread to return 
      * {@code BgeeConnection}s connected to the empty test Bgee database, 
-     * used to run integration tests of independent INSERT statements (the database 
+     * used to run integration tests of independent INSERT/UPDATE statements (the database 
      * name should be associated to the key {@link #EMPTYDBKEY} is System properties).
-     * <p>
-     * The {@code MySQLDAOManager} can be set back to use the default database specified 
-     * by the JDBC connection URL by calling {@link #useDefaultDB()}.
-     * 
-     * @see #useDefaultDB()
      */
     protected void useEmptyDB() {
         log.entry();
@@ -181,50 +182,64 @@ public abstract class MySQLITAncestor extends TestAncestor{
     }
     
     /**
-     * Delete all rows from the table named {@code tableName} in the database 
-     * currently used, and configure the {@code DAOManager} to stop using 
-     * this database and to use the default database specified by the JDBC connection 
-     * URL, if any.
+     * Configures the {@code MySQLDAOManager} of the current thread to return 
+     * {@code BgeeConnection}s connected to the populated test Bgee database, 
+     * used to run integration tests of independent SELECT statements (the database 
+     * name should be associated to the key {@link #POPULATEDDBKEY} is System properties).
      * 
-     * @param tablebName    A {@code String} that is the name of the table 
-     *                      to delete data from.
-     * @throws SQLException If an error occurs while deleting the database.
+     * @throws SQLException     If an error occurs while updating the database.
+     */
+    protected void useSelectDB() throws SQLException {
+        log.entry();
+        this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEY));
+        this.populateAndUseDatabase();
+        log.exit();
+    }
+
+    /**
+     * Delete all rows from the table named {@code tableName} in the database currently 
+     * used, and configure the {@code DAOManager} to stop using this database and to use 
+     * the default database specified by the JDBC connection URL, if any.
+     * 
+     * @param tablebName      A {@code String} that is the name of the table 
+     *                        to delete data from.
+     * @throws SQLException   If an error occurs while deleting the database.
      */
     protected void deleteFromTableAndUseDefaultDB(String tableName) throws SQLException {
         log.entry(tableName);
-        
+
         this.deleteFromTablesAndUseDefaultDB(Arrays.asList(tableName));
         
         log.exit();
     }
     
     /**
-     * Delete all rows from the tables in {@code tableNames} in the database 
-     * currently used, and configure the {@code DAOManager} to stop using 
-     * this database and to use the default database specified by the JDBC connection 
-     * URL, if any. The names of the tables are ordered according to the order tables 
-     * should be emptied (it is important because of foreign key constraints).
+     * Delete all rows from the tables in {@code tableNames} in the database currently 
+     * used, and configure the {@code DAOManager} to stop using this database and to use
+     * the default database specified by the JDBC connection URL, if any. The names of 
+     * the tables are ordered according to the order tables should be emptied 
+     * (it is important because of foreign key constraints).
      * 
-     * @param tablebNames    A {@code List} of {@code String}s that are the names 
-     *                       of the tables to delete data from, in the order they 
-     *                       should be deleted.
-     * @throws SQLException If an error occurs while deleting the database.
+     * @param tablebNames     A {@code List} of {@code String}s that are the names 
+     *                        of the tables to delete data from, in the order they 
+     *                        should be deleted.
+     * @throws SQLException   If an error occurs while deleting the database.
      */
     protected void deleteFromTablesAndUseDefaultDB(List<String> tableNames) 
             throws SQLException {
         log.entry(tableNames);
         
-        MySQLDAOManager manager = this.getMySQLDAOManager();
-        
-        //cannot prepare statements for table queries
         for (String tableName: tableNames) {
-            try (BgeePreparedStatement stmt = manager.getConnection().prepareStatement(
-                "delete from " + tableName)) {
-                stmt.executeUpdate();
+            BgeeConnection con = this.getMySQLDAOManager().getConnection();
+            try (BgeeCallableStatement callStmt = con.prepareCall(
+                    "{call " + System.getProperty(EMPTYPROCEDUREKEY) + "(?)}")) {
+                callStmt.setString(1, tableName);
+                callStmt.executeUpdate();
             }
+            con.close();
         }
         
-        manager.setDatabaseToUse(null);
+        this.getMySQLDAOManager().setDatabaseToUse(null);
         
         log.exit();
     }
@@ -246,9 +261,8 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * It is not necessary to append the prefix when calling {@code dropDatabase(String)}. 
      * This modification should be invisible to callers.
      * 
-     * @param dbName    A {@code String} that is the name of the database to create.
-     * @throws SQLException                 If an error occurred while creating 
-     *                                      the database.
+     * @param dbName          A {@code String} that is the name of the database to create.
+     * @throws SQLException   If an error occurred while creating the database.
      */
     protected void createAndUseDatabase(String dbName) throws SQLException  {
         log.entry(dbName);
@@ -287,118 +301,55 @@ public abstract class MySQLITAncestor extends TestAncestor{
     }
 
     /**
-     * Populates with test data the database with the name {@code dbName}, that are used 
-     * for the integration tests of SELECT and UPDATE statements.
+     * Populates the configured database in the {@code MySQLDAOManager} with test data, 
+     * used to run integration tests of SELECT and UPDATE statements.
      * <p>
-     * This method is used by tests of select and update statements. After performing 
-     * update tests, the caller should use {@link #emptyAndUseDefaultDB(String)}.
+     * After performing update tests, the caller should use 
+     * {@link #emptyAndUseDefaultDB(String)}.
      * 
-     * @param dbName            A {@code String} that is the name of the database to drop.
      * @throws SQLException     If an error occurs while updating the database.
      */
-    //TODO: use a stored procedure to populte the DB. This stored procedure 
-    //could be defined in a SQL file, loaded by Maven into the SELECT/UPDATE databases. 
-    //A property could provide the name of the procedure, so that we can call it 
-    //from the Java code.
-    protected void populateAndUseDatabase(String dbName) throws SQLException {
-        log.entry(dbName);
-        MySQLDAOManager manager = this.getMySQLDAOManager();
-        manager.setDatabaseToUse(dbName);
-        BgeeConnection con = manager.getConnection();
-        // Insert test data
-        // dataSource table
-        BgeePreparedStatement stmt = con.prepareStatement(
-                "INSERT INTO dataSource (dataSourceId, dataSourceName, XRefUrl, " +
-                "experimentUrl, evidenceUrl, baseUrl, releaseDate, releaseVersion, " +
-                "dataSourceDescription, toDisplay, category, displayOrder) VALUES " +
-                "(1, 'First DataSource', 'XRefUrl', 'experimentUrl', 'evidenceUrl', " +
-                    "'baseUrl', NOW(), '1.0', 'My custom data source', 1, " +
-                    "'Genomics database', 1)");
-        stmt.executeUpdate();
-        // geneBioType table
-        stmt = con.prepareStatement(
-                "INSERT INTO geneBioType (geneBioTypeId, geneBioTypeName) VALUES "
-                + "(12, 'geneBioTypeName12')");
-        stmt.executeUpdate();
-        // taxon table 
-        stmt = con.prepareStatement(
-                "INSERT INTO taxon (taxonId, taxonScientificName, taxonCommonName, " +
-                "taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA) VALUES "+
-                "(111, 'taxSName111', 'taxCName111', 1, 10, 1, 1), " +
-                "(211, 'taxSName211', 'taxCName211', 2, 3, 2, 0), " +
-                "(311, 'taxSName311', 'taxCName311', 4, 9, 2, 0), " +
-                "(411, 'taxSName411', 'taxCName411', 5, 6, 1, 1), " +
-                "(511, 'taxSName511', 'taxCName511', 7, 8, 1, 1)");
-        stmt.executeUpdate();
-        // OMAHierarchicalGroup table
-        stmt = con.prepareStatement(
-                "INSERT INTO OMAHierarchicalGroup " +
-                "(OMANodeId, OMAGroupId, OMANodeLeftBound, OMANodeRightBound, taxonId) VALUES (1, 99, 1, 8, 111), " +
-                "(2, 'HOG:NAILDQY', 2, 3, 211), " +
-                "(3, 'HOG:NAILDQY', 4, 7, 311), " +
-                "(4, 'HOG:NAILDQY', 5, 6, 411), " +
-                "(5, 'HOG:VALEWID', 9, 14, 111), " +
-                "(6, 'HOG:VALEWID', 10, 13, 211), " +
-                "(7, 'HOG:VALEWID', 11, 12, 511)");
-        stmt.executeUpdate();
-        // species table
-        stmt = con.prepareStatement(
-                "INSERT INTO species (speciesId, genus, species, speciesCommonName, " +
-                "taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix) VALUES " +
-                "(11, 'gen11', 'sp11', 'spCName11', 111, 'path/genome11', 0, ''), " +
-                "(21, 'gen21', 'sp21', 'spCName21', 211, 'path/genome21', 52, " +
-                    "'FAKEPREFIX'), " +
-                "(31, 'gen31', 'sp31', 'spCName31', 311, 'path/genome31', 0, '')");
-        stmt.executeUpdate();
-        // stage table
-        stmt = con.prepareStatement(
-                "INSERT INTO stage (stageId, stageName, stageDescription, " +
-                "stageLeftBound, stageRightBound, stageLevel, " +
-                "tooGranular, groupingStage) VALUES " +
-                "('Stage_id1', 'stageN1', 'stage Desc 1', 1, 6, 1, false, true), " +
-                "('Stage_id2', 'stageN2', 'stage Desc 2', 2, 3, 2, true, false), " +
-                "('Stage_id3', 'stageN3', 'stage Desc 3', 4, 5, 2, false, false)");
-        stmt.executeUpdate();
-        
-        // gene table
-        stmt = con.prepareStatement(
-                "INSERT INTO gene (geneId, geneName, geneDescription, speciesId, " +
-                "geneBioTypeId, OMAParentNodeId, ensemblGene) VALUES " +
-                "('ID1', 'genN1', 'genDesc1', 11, 12, 2, true), " +
-                "('ID2', 'genN2', 'genDesc2', 21, null, null, true), " +
-                "('ID3', 'genN3', 'genDesc3', 31, null, 3, false)");
-        stmt.executeUpdate();
+    protected void populateAndUseDatabase() throws SQLException {
+        log.entry();
+        // We don't populate the database if already filled.
+        try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                prepareStatement("select 1 from dataSource")) {
+            if (!stmt.getRealPreparedStatement().executeQuery().next()) {
+                BgeeConnection con = this.getMySQLDAOManager().getConnection();
+                try (BgeeCallableStatement callStmt = con.prepareCall(
+                        "{call " + System.getProperty(POPULATEPROCEDUREKEY) + "()}")) {
+                    callStmt.executeUpdate();
+                }
+                con.close();
+            }
+        }
         log.exit();
    }
    
     /**
-     * Delete all rows from all tables in the database named {@code dbName}, and configure
-     * the {@code DAOManager} to stop using this database, and to use the default database
-     * specified by the JDBC connection URL, if any.
+     * Delete all rows from all tables in the configured database in the 
+     * {@code MySQLDAOManager}, and configure the {@code MySQLDAOManager} to stop using 
+     * this database, and to use the default database specified by the JDBC connection
+     * URL, if any.
      *
-     * @param dbName           A {@code String} that is the name of the database to empty.
      * @throws SQLException    If an error occurred while deleting the database.
      */
-    //TODO: use a stored procedure to empty all tables. This stored procedure 
-    //could be defined in a SQL file, loaded by Maven into the INSERT/UPDATE databases. 
-    //A property could provide the name of the procedure, so that we can call it 
-    //from the Java code.
     protected void emptyAndUseDefaultDB() throws SQLException {
         log.entry();
-        MySQLDAOManager manager = this.getMySQLDAOManager();
-        BgeeConnection con = manager.getConnection();
+
+        BgeeConnection con = this.getMySQLDAOManager().getConnection();
         DatabaseMetaData meta = con.getRealConnection().getMetaData();
         ResultSet res = meta.getTables(null, null, null, new String[] {"TABLE"});
+        List<String> tableNames = new ArrayList<>();
         while (res.next()) {
-            try (BgeePreparedStatement stmt = manager.getConnection().prepareStatement(
-                    "delete from " + res.getString("TABLE_NAME"))) {
-                stmt.executeUpdate();
-            }
+            tableNames.add(res.getString("TABLE_NAME"));
         }
         res.close();
         con.close();
-
-        manager.setDatabaseToUse(null);
+        this.deleteFromTablesAndUseDefaultDB(tableNames);
+        
+        this.getMySQLDAOManager().setDatabaseToUse(null);
+        
         log.exit();
     }
        

@@ -35,355 +35,355 @@ import org.apache.logging.log4j.Logger;
  * @author Mathieu Seppey
  * @version Bgee 13, Jul 2014
  * @since Bgee 13
- * @see URLParameters#Parameter
+ * @see URLParameters.Parameter
  * @see	RequestParameters
  */
 public class URLParameters {
 
-	private final static Logger log = LogManager.getLogger(URLParameters.class.getName());
+    private final static Logger log = LogManager.getLogger(URLParameters.class.getName());
 
-	// ********************************************************
-	//
-	//	Constants to provide URLParameter's default values 
-	//
-	// ********************************************************
+    // ********************************************************
+    //
+    //	Constants to provide URLParameter's default values 
+    //
+    // ********************************************************
 
-	/**
-	 * A {@code boolean} that contains the default value to use for
-	 * {@link URLParameter#allowsMultipleValues}
-	 */
-	protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = false;
+    /**
+     * A {@code boolean} that contains the default value to use for
+     * {@link URLParameters.Parameter#allowsMultipleValues}
+     */
+    protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = false;
 
-	/**
-	 * A {@code boolean} that contains the default value for {@link URLParameter#isStorable}
-	 */
-	protected static final boolean DEFAULT_IS_STORABLE = true;
+    /**
+     * A {@code boolean} that contains the default value for {@link URLParameters.Parameter#isStorable}
+     */
+    protected static final boolean DEFAULT_IS_STORABLE = true;
 
-	/**
-	 * A {@code boolean} that contains the default value for {@link URLParameter#isSecure}
-	 */
-	protected static final boolean DEFAULT_IS_SECURE = false;
+    /**
+     * A {@code boolean} that contains the default value for {@link URLParameters.Parameter#isSecure}
+     */
+    protected static final boolean DEFAULT_IS_SECURE = false;
 
-	/**
-	 * An {@code int} that contains the default value for {@link URLParameter#maxSize}
-	 */
-	protected static final int DEFAULT_MAX_SIZE = 128;
+    /**
+     * An {@code int} that contains the default value for {@link URLParameters.Parameter#maxSize}
+     */
+    protected static final int DEFAULT_MAX_SIZE = 128;
 
-	/**
-	 * A {@code String} that contains the default value for {@link URLParameter#format}
-	 */
-	protected static final String DEFAULT_FORMAT = null;
+    /**
+     * A {@code String} that contains the default value for {@link URLParameters.Parameter#format}
+     */
+    protected static final String DEFAULT_FORMAT = null;
 
-	// *************************************
-	//
-	// Parameters declaration
-	//
-	// Reminder : parameters are declared in alphabetic order in the class but added to 
-	// the list according to there desired order in the URL.
-	//	
-	//
-	// !!!! DON'T FORGET TO ADD ANY NEW PARAMS TO List<Parameter<?>> list !!!!
-	// 
-	//	TODO Complete the list and add description for every declared parameters.
-	//
-	// *************************************
+    // *************************************
+    //
+    // Parameters declaration
+    //
+    // Reminder : parameters are declared in alphabetic order in the class but added to 
+    // the list according to there desired order in the URL.
+    //	
+    //
+    // !!!! DON'T FORGET TO ADD ANY NEW PARAMS TO List<Parameter<?>> list !!!!
+    // 
+    //	TODO Complete the list and add description for every declared parameters.
+    //
+    // *************************************
 
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	private static final Parameter<String> DATA = new Parameter<String>("data",
-			false, false , DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
-	
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	private static final Parameter<String> ACTION = new Parameter<String>("action",
-			DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * DESCRIPTION PARAM
+     */
+    private static final Parameter<String> DATA = new Parameter<String>("data",
+            false, false , DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	private static final Parameter<Boolean> ALL_ORGANS = new Parameter<Boolean>(
-			"all_organs",
-			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * DESCRIPTION PARAM
+     */
+    private static final Parameter<String> ACTION = new Parameter<String>("action",
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	private static final Parameter<Integer> CHOSEN_DATA_TYPE = new Parameter<Integer>(
-			"chosen_data_type",
-			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
-	
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	private static final Parameter<String> DISPLAY_TYPE = new Parameter<String>("display_type",
-			false, false, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, 
-			DEFAULT_FORMAT,String.class);
+    /**
+     * DESCRIPTION PARAM
+     */
+    private static final Parameter<Boolean> ALL_ORGANS = new Parameter<Boolean>(
+            "all_organs",
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Boolean.class);
 
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	private static final Parameter<String> EMAIL = new Parameter<String>("email",
-			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, 
-			"[\\w\\._-]+@[\\w\\._-]+\\.[a-zA-Z][a-zA-Z][a-zA-Z]?$",String.class);
-	
-	/**
-	 * DESCRIPTION PARAM
-	 */
-	private static final Parameter<String> PAGE = new Parameter<String>("page",
-			DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, 
-			DEFAULT_FORMAT,String.class);
+    /**
+     * DESCRIPTION PARAM
+     */	
+    private static final Parameter<Integer> CHOSEN_DATA_TYPE = new Parameter<Integer>(
+            "chosen_data_type",
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 
-	/**
-	 * DESCRIPTION PARAM
-	 */	
-	private static final Parameter<Boolean> STAGE_CHILDREN = new Parameter<Boolean>(
-			"stage_children",
-			DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-			DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Boolean.class);
+    /**
+     * DESCRIPTION PARAM
+     */
+    private static final Parameter<String> DISPLAY_TYPE = new Parameter<String>("display_type",
+            false, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, 
+            DEFAULT_FORMAT,String.class);
 
-	/**
-	 * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
-	 * in the order they will appear in the URL
-	 */
-	private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
-					PAGE,
-					ACTION,
-					ALL_ORGANS,
-					CHOSEN_DATA_TYPE,
-					EMAIL,
-					STAGE_CHILDREN,
-					DISPLAY_TYPE,
-					DATA
-					);
-	
-	/**
-	 * Default constructor
-	 */
-	public URLParameters(){}
+    /**
+     * DESCRIPTION PARAM
+     */
+    private static final Parameter<String> EMAIL = new Parameter<String>("email",
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, 
+            "[\\w\\._-]+@[\\w\\._-]+\\.[a-zA-Z][a-zA-Z][a-zA-Z]?$",String.class);
 
-	/**
-	 * @return A {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
-	 */
-	public List<Parameter<?>> getList() {
-		return list;
-	}
+    /**
+     * DESCRIPTION PARAM
+     */
+    private static final Parameter<String> PAGE = new Parameter<String>("page",
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, false, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, 
+            DEFAULT_FORMAT,String.class);
 
-	/**
-	 * @return TODO description of the param
-	 */
-	public Parameter<String> getParamAction(){
-		return ACTION;
-	}
+    /**
+     * DESCRIPTION PARAM
+     */	
+    private static final Parameter<Boolean> STAGE_CHILDREN = new Parameter<Boolean>(
+            "stage_children",
+            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Boolean.class);
 
-	/**
-	 * @return TODO description of the param
-	 */
-	public Parameter<Boolean> getParamAllOrgans(){
-		return ALL_ORGANS;
-	}
+    /**
+     * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
+     * in the order they will appear in the URL
+     */
+    private final List<Parameter<?>> list = Arrays.<Parameter<?>>asList(
+            PAGE,
+            ACTION,
+            ALL_ORGANS,
+            CHOSEN_DATA_TYPE,
+            EMAIL,
+            STAGE_CHILDREN,
+            DISPLAY_TYPE,
+            DATA
+            );
 
-	/**
-	 * @return TODO description of the param
-	 */
-	public Parameter<Integer> getParamChosenDataType(){
-		return CHOSEN_DATA_TYPE;
-	}
-	
-	/**
-	 * @return TODO description of the param
-	 */
-	public Parameter<String> getParamDisplayType(){
-		return DISPLAY_TYPE;
-	}
+    /**
+     * Default constructor
+     */
+    public URLParameters(){}
 
-	/**
-	 * @return TODO description of the param
-	 */
-	public Parameter<String> getParamEmail(){
-		return EMAIL;
-	}
-	
-	/**
-	 * @return TODO description of the param
-	 */
-	public Parameter<String> getParamPage(){
-		return PAGE;
-	}
+    /**
+     * @return A {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
+     */
+    public List<Parameter<?>> getList() {
+        return list;
+    }
 
-	/**
-	 * @return TODO description of the param
-	 */
-	public Parameter<Boolean> getParamStageChildren(){
-		return STAGE_CHILDREN;
-	}
+    /**
+     * @return TODO description of the param
+     */
+    public Parameter<String> getParamAction(){
+        return ACTION;
+    }
 
-	/**
-	 * @return A {@code Parameter<String>} that contains the value used
-	 * as key to store parameters on the disk. It does not allow multiple value
-	 * and has to be reset before adding a value.
-	 */
-	public Parameter<String> getParamData(){
-		return DATA;
-	}
+    /**
+     * @return TODO description of the param
+     */
+    public Parameter<Boolean> getParamAllOrgans(){
+        return ALL_ORGANS;
+    }
 
-	/**
-	 * This class is designed to wrap all parameters that can be received and sent
-	 * through an HTTP request within the Bgee webapp. 
-	 * It contains several properties related to the parameter and its usage.
-	 * However, it does not store the value contained by a parameter's instance.
-	 * This role is fulfilled by {@link RequestParameters}.
-	 * <p>
-	 * It uses generic types and therefore a specific data type corresponding to
-	 * the parameter's value has to be provided at instantiation.
-	 * <p>
-	 * This class has a protected constructor and is meant to be instantiated 
-	 * only by an instance of {@link URLParameters} or a class that extends it.
-	 * 
-	 * @author Mathieu Seppey
-	 * @version Bgee 13, Jul 2014
-	 * @see RequestParameters
-	 * @see URLParameters
-	 * @since Bgee 13
-	 *
-	 * @param <T> The data type of the parameter.
-	 */
-	public static class Parameter<T> {
+    /**
+     * @return TODO description of the param
+     */
+    public Parameter<Integer> getParamChosenDataType(){
+        return CHOSEN_DATA_TYPE;
+    }
 
-		/**
-		 * A {@code String} that contains the name of the parameter as written in the URL.
-		 */
-		private final String name ;
+    /**
+     * @return TODO description of the param
+     */
+    public Parameter<String> getParamDisplayType(){
+        return DISPLAY_TYPE;
+    }
 
-		/**
-		 * A {@code Boolean} that indicates whether the parameter accepts multiple values.
-		 */
-		private final boolean allowsMultipleValues ;
+    /**
+     * @return TODO description of the param
+     */
+    public Parameter<String> getParamEmail(){
+        return EMAIL;
+    }
 
-		/**
-		 * A {@code boolean} that indicates whether the parameter is storable or not.
-		 */
-		private final boolean isStorable ;
+    /**
+     * @return TODO description of the param
+     */
+    public Parameter<String> getParamPage(){
+        return PAGE;
+    }
 
-		/**
-		 * A {@code boolean} that indicates whether the parameter is secure, 
-		 * i.e. contains information that should not be kept or displayed in 
-		 * the URL such as a password.
-		 */
-		private final boolean isSecure ;
+    /**
+     * @return TODO description of the param
+     */
+    public Parameter<Boolean> getParamStageChildren(){
+        return STAGE_CHILDREN;
+    }
 
-		/**
-		 * An {@code int} that represents the maximum size allowed for the parameter.
-		 */
-		private final int maxSize ;
+    /**
+     * @return A {@code Parameter<String>} that contains the value used
+     * as key to store parameters on the disk. It does not allow multiple value
+     * and has to be reset before adding a value.
+     */
+    public Parameter<String> getParamData(){
+        return DATA;
+    }
 
-		/**
-		 * A {@code Class<T>} that is the data type of the value to be store by this parameter.
-		 */
-		private final Class<T> type;
+    /**
+     * This class is designed to wrap all parameters that can be received and sent
+     * through an HTTP request within the Bgee webapp. 
+     * It contains several properties related to the parameter and its usage.
+     * However, it does not store the value contained by a parameter's instance.
+     * This role is fulfilled by {@link RequestParameters}.
+     * <p>
+     * It uses generic types and therefore a specific data type corresponding to
+     * the parameter's value has to be provided at instantiation.
+     * <p>
+     * This class has a protected constructor and is meant to be instantiated 
+     * only by an instance of {@link URLParameters} or a class that extends it.
+     * 
+     * @author Mathieu Seppey
+     * @version Bgee 13, Jul 2014
+     * @see RequestParameters
+     * @see URLParameters
+     * @since Bgee 13
+     *
+     * @param <T> The data type of the parameter.
+     */
+    public static class Parameter<T> {
 
-		/**
-		 * A {@code String} that contains the regular expression the parameter should match. 
-		 * Is {@code null} when the parameter is either a {@code String} without
-		 * content restrictions or a different data type.
-		 */
-		private final String format;		
+        /**
+         * A {@code String} that contains the name of the parameter as written in the URL.
+         */
+        private final String name ;
 
-		/**
-		 * Protected constructor to allow only {@link URLParameters} to create instances 
-		 * of this class.
-		 * 
-		 * @param name                    A {@code String} that is the name of the parameter 
-		 *                                as seen in an URL
-		 * @param allowsMultipleValues    A {@code Boolean} that indicates whether 
-		 *                                the parameter accepts multiple values.
-		 * @param isStorable              A {@code boolean} defining whether the parameter 
-		 *                                is storable.
-		 * @param isSecure		          A {@code boolean} defining whether the parameter 
-		 *                                is secure.
-		 * @param maxSize                 An {@code int} that represents the maximum number 
-		 *                                of characters allowed if the type of this 
-		 *                                {@code Parameter} is a {@code String}.
-		 * @param format                  A {@code String} that contains the regular expression 
-		 *                                that this parameter has to fit to.
-		 * @param type                    A {@code Class<T>} that is the data type of the value 
-		 *                                to be store by this parameter.
-		 */
-		protected Parameter(String name, Boolean allowsMultipleValues,boolean isStorable, 
-				boolean isSecure,int maxSize,String format,Class<T> type){
+        /**
+         * A {@code Boolean} that indicates whether the parameter accepts multiple values.
+         */
+        private final boolean allowsMultipleValues ;
 
-			log.entry(name,allowsMultipleValues,isStorable,isSecure,maxSize,format,type);
+        /**
+         * A {@code boolean} that indicates whether the parameter is storable or not.
+         */
+        private final boolean isStorable ;
 
-			this.name = name ;
-			this.allowsMultipleValues = allowsMultipleValues;
-			this.isStorable = isStorable ;
-			this.isSecure = isSecure ;
-			this.maxSize = maxSize ;
-			this.format = format ;
-			this.type = type ;
-		}
+        /**
+         * A {@code boolean} that indicates whether the parameter is secure, 
+         * i.e. contains information that should not be kept or displayed in 
+         * the URL such as a password.
+         */
+        private final boolean isSecure ;
 
-		/**
-		 * @return	A {@code String} that is the name of the parameter as seen in an URL
-		 */
-		public String getName() {
-			return name;
-		}
+        /**
+         * An {@code int} that represents the maximum size allowed for the parameter.
+         */
+        private final int maxSize ;
 
-		/**
-		 * @return	A {@code Boolean} that indicates whether the parameter accepts multiple values.
-		 */
-		public boolean allowsMultipleValues() {
-			return allowsMultipleValues;
-		}
+        /**
+         * A {@code Class<T>} that is the data type of the value to be store by this parameter.
+         */
+        private final Class<T> type;
 
-		/**
-		 * @return	A {@code boolean} defining whether the parameter is storable or not
-		 */
-		public boolean isStorable() {
-			return isStorable;
-		}
+        /**
+         * A {@code String} that contains the regular expression the parameter should match. 
+         * Is {@code null} when the parameter is either a {@code String} without
+         * content restrictions or a different data type.
+         */
+        private final String format;		
 
-		/**
-		 * @return	A {@code boolean} defining whether the parameter is secure or not
-		 */
-		public boolean isSecure() {
-			return isSecure;
-		}
+        /**
+         * Protected constructor to allow only {@link URLParameters} to create instances 
+         * of this class.
+         * 
+         * @param name                    A {@code String} that is the name of the parameter 
+         *                                as seen in an URL
+         * @param allowsMultipleValues    A {@code Boolean} that indicates whether 
+         *                                the parameter accepts multiple values.
+         * @param isStorable              A {@code boolean} defining whether the parameter 
+         *                                is storable.
+         * @param isSecure		          A {@code boolean} defining whether the parameter 
+         *                                is secure.
+         * @param maxSize                 An {@code int} that represents the maximum number 
+         *                                of characters allowed if the type of this 
+         *                                {@code Parameter} is a {@code String}.
+         * @param format                  A {@code String} that contains the regular expression 
+         *                                that this parameter has to fit to.
+         * @param type                    A {@code Class<T>} that is the data type of the value 
+         *                                to be store by this parameter.
+         */
+        protected Parameter(String name, Boolean allowsMultipleValues,boolean isStorable, 
+                boolean isSecure,int maxSize,String format,Class<T> type){
 
-		/**
-		 * @return    An {@code int} that represents the maximum number of characters allowed 
-		 *            if the type of this {@code Parameter} is a {@code String}.
-		 */
-		public int getMaxSize() {
-			return maxSize;
-		}
+            log.entry(name,allowsMultipleValues,isStorable,isSecure,maxSize,format,type);
 
-		/**
-		 * @return	A {@code String} that contains the regular expression that this parameter
-		 * 			has to fit to
-		 */
-		public String getFormat() {
-			return format;
-		}
+            this.name = name ;
+            this.allowsMultipleValues = allowsMultipleValues;
+            this.isStorable = isStorable ;
+            this.isSecure = isSecure ;
+            this.maxSize = maxSize ;
+            this.format = format ;
+            this.type = type ;
+        }
 
-		/**
-		 * @return	A {@code Class<T>} that is the data type of the value to be store 
-		 * 			by this parameter.
-		 */	
-		public Class<T> getType() {
-			return type;
-		}
+        /**
+         * @return	A {@code String} that is the name of the parameter as seen in an URL
+         */
+        public String getName() {
+            return name;
+        }
 
-	}
+        /**
+         * @return	A {@code Boolean} that indicates whether the parameter accepts multiple values.
+         */
+        public boolean allowsMultipleValues() {
+            return allowsMultipleValues;
+        }
+
+        /**
+         * @return	A {@code boolean} defining whether the parameter is storable or not
+         */
+        public boolean isStorable() {
+            return isStorable;
+        }
+
+        /**
+         * @return	A {@code boolean} defining whether the parameter is secure or not
+         */
+        public boolean isSecure() {
+            return isSecure;
+        }
+
+        /**
+         * @return    An {@code int} that represents the maximum number of characters allowed 
+         *            if the type of this {@code Parameter} is a {@code String}.
+         */
+        public int getMaxSize() {
+            return maxSize;
+        }
+
+        /**
+         * @return	A {@code String} that contains the regular expression that this parameter
+         * 			has to fit to
+         */
+        public String getFormat() {
+            return format;
+        }
+
+        /**
+         * @return	A {@code Class<T>} that is the data type of the value to be store 
+         * 			by this parameter.
+         */	
+        public Class<T> getType() {
+            return type;
+        }
+
+    }
 
 
 }

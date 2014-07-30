@@ -16,55 +16,55 @@ package org.bgee.controller.exception;
  * 
  * @author Frederic Bastian
  * @version Bgee 11, May 2012
- * @see controller.RequestParameters
+ * @see org.bgee.controller.RequestParameters
  * @since Bgee 11
  *
  */
 public class RequestParametersNotStorableException extends Exception
 {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -4587049017135736170L;
-	
-	/**
-	 * Default constructor.
-	 */
-	public RequestParametersNotStorableException()
-	{
-		super();
-	}
-	
-	/**
-	 * Constructor with an additional <code>message</code> argument. 
-	 * 
-	 * @param message 		a <code>String</code> giving details about the exception.
-	 */
-	public RequestParametersNotStorableException(String message)
-	{
-		super(message);
-	}
-	
-	/**
-	 * Constructor with an additional <code>cause</code> argument. 
-	 * 
-	 * @param cause 		a <code>Throwable</code> giving the cause of the exception.
-	 */
-	public RequestParametersNotStorableException(Throwable cause)
-	{
-		super(cause);
-	}
-	
-	/**
-	 * Constructor with additional <code>message</code> and <code>cause</code> arguments. 
-	 * 
-	 * @param message 		a <code>String</code> giving details about the exception.
-	 * @param cause 		a <code>Throwable</code> giving the cause of the exception.
-	 */
-	public RequestParametersNotStorableException(String message, Throwable cause)
-	{
-		super(message, cause);
-	}
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -4587049017135736170L;
+
+    /**
+     * Default constructor.
+     */
+    public RequestParametersNotStorableException()
+    {
+        super();
+    }
+
+    /**
+     * Constructor with an additional <code>message</code> argument. 
+     * 
+     * @param message 		a <code>String</code> giving details about the exception.
+     */
+    public RequestParametersNotStorableException(String message)
+    {
+        super(message);
+    }
+
+    /**
+     * Constructor with an additional <code>cause</code> argument. 
+     * 
+     * @param cause 		a <code>Throwable</code> giving the cause of the exception.
+     */
+    public RequestParametersNotStorableException(Throwable cause)
+    {
+        super(cause);
+    }
+
+    /**
+     * Constructor with additional <code>message</code> and <code>cause</code> arguments. 
+     * 
+     * @param message 		a <code>String</code> giving details about the exception.
+     * @param cause 		a <code>Throwable</code> giving the cause of the exception.
+     */
+    public RequestParametersNotStorableException(String message, Throwable cause)
+    {
+        super(message, cause);
+    }
 
 }

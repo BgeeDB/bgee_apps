@@ -105,18 +105,18 @@ public class RequestParametersTest {
         // a request parameter with parameters corresponding to the
         // key 7ebf4a8a9365930d16773b7b202f166bcebd6efa and call getRequestURL
         RequestParameters rp = new RequestParameters(this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters);
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
         rp.addValue(testURLParameters.getParamTestInteger(),987654321);
         rp.getRequestURL("&");
 
 
         this.requestParametersWithNoKey = new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters);
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
 
         this.requestParametersHavingAKey= new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters);
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
     }
 
     /**
@@ -409,7 +409,7 @@ public class RequestParametersTest {
 
         new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters);
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
     }
 
     /**
@@ -430,7 +430,7 @@ public class RequestParametersTest {
         try{
             new RequestParameters(
                     this.mockHttpServletRequest,
-                    RequestParametersTest.testURLParameters);
+                    RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
         }
         catch(Exception e){
             // Do nothing
@@ -442,7 +442,7 @@ public class RequestParametersTest {
 
         RequestParameters rp = new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters);
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
 
         assertNull("An unauthorized value has been added",
                 rp.getFirstValue(

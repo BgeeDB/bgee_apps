@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.bgee.controller.BgeeProperties;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
@@ -19,13 +20,13 @@ public class DsvFactory extends ViewFactory
 	}
 
 	@Override
-	public DownloadDisplay getDownloadDisplay() throws IOException {
+	public DownloadDisplay getDownloadDisplay(BgeeProperties prop) throws IOException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public GeneralDisplay getGeneralDisplay() throws IOException {
+	public GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException {
 		// TODO Auto-generated method stub
 		return null;
 	}

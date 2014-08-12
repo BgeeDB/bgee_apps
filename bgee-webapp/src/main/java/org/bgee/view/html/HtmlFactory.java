@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.GeneralDisplay;
@@ -19,14 +20,14 @@ public class HtmlFactory extends ViewFactory
     }
     
 	@Override
-	public DownloadDisplay getDownloadDisplay()  throws IOException
+	public DownloadDisplay getDownloadDisplay(BgeeProperties prop)  throws IOException
 	{
-		return new HtmlDownloadDisplay(this.response, this.requestParameters);
+		return new HtmlDownloadDisplay(this.response, this.requestParameters, prop);
 	}
 
 	@Override
-	public GeneralDisplay getGeneralDisplay() throws IOException {
-		return new HtmlGeneralDisplay(this.response, this.requestParameters);
+	public GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException {
+		return new HtmlGeneralDisplay(this.response, this.requestParameters, prop);
 	}
     
 }

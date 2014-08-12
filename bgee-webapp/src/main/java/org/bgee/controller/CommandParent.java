@@ -46,18 +46,21 @@ abstract class CommandParent {
     protected String homePage;
     protected String bgeeRoot;
 
+    protected BgeeProperties prop;
+
 
     public CommandParent(HttpSession session, HttpServletResponse response, 
-            RequestParameters requestParameters)
+            RequestParameters requestParameters, BgeeProperties prop)
     {
         this.response = response;
         this.session  = session;
         this.requestParameters = requestParameters;
+        this.prop = prop;
         this.setFactory();
 
-        this.serverRoot = BgeeProperties.getBgeeRootDirectory();
-        this.homePage   = BgeeProperties.getBgeeRootDirectory();
-        this.bgeeRoot   = BgeeProperties.getBgeeRootDirectory();
+        this.serverRoot = prop.getBgeeRootDirectory();
+        this.homePage   = prop.getBgeeRootDirectory();
+        this.bgeeRoot   = prop.getBgeeRootDirectory();
     }
 
     /**

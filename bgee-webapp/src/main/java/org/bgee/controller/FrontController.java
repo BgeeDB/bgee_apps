@@ -27,7 +27,21 @@ public class FrontController extends HttpServlet {
      * Class constructor.
      */
     public FrontController() {
+        this(null);
+    }
 
+    private final BgeeProperties prop ;
+
+    /**
+     * Class constructor.
+     */
+    public FrontController(BgeeProperties prop) {
+        if(prop == null){
+            this.prop = BgeeProperties.getBgeeProperties();
+        }
+        else{
+            this.prop = prop;
+        }
     }
 
     public void doRequest(HttpServletRequest request, HttpServletResponse response, 
@@ -39,7 +53,7 @@ public class FrontController extends HttpServlet {
         GeneralDisplay generalDisplay = null;
         ViewFactory factory = null;
 
-        requestParameters = new RequestParameters(urlParameters);
+        requestParameters = new RequestParameters(urlParameters, this.prop);
 
         factory = ViewFactory.getFactory(response, requestParameters);
 
@@ -50,9 +64,9 @@ public class FrontController extends HttpServlet {
             //we do it in the try clause, because getting a view can throw an IOException.
             //so here we get the default view from the default factory before any exception 
             //can be thrown.
-            generalDisplay = factory.getGeneralDisplay();
+            generalDisplay = factory.getGeneralDisplay(prop);
             request.setCharacterEncoding("UTF-8");
-            requestParameters = new RequestParameters(request, urlParameters);
+            requestParameters = new RequestParameters(request, urlParameters, this.prop);
 
             log.info("Analyzed URL: " + requestParameters.getRequestURL("&"));
 
@@ -66,11 +80,11 @@ public class FrontController extends HttpServlet {
             CommandParent controller = null;
 
             if (requestParameters.isADownloadPageCategory()) {
-                controller = new CommandDownload(session, response, requestParameters);
+                controller = new CommandDownload(session, response, requestParameters, this.prop);
             }
 
             if (controller == null) {
-                controller = new CommandHome(session, response, requestParameters);
+                controller = new CommandHome(session, response, requestParameters, this.prop);
             }
 
             controller.processRequest();

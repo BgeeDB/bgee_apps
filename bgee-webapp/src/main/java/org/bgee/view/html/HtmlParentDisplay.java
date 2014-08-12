@@ -16,9 +16,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 	protected RequestParameters requestParameters;
 	protected final static String parametersSeparator = "&amp;";
 
-	public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters) throws IOException
+	public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop) throws IOException
 	{
-		super(response);
+		super(response,prop);
 		this.uniqueId = 0;
 		this.requestParameters = requestParameters;
 	}
@@ -55,7 +55,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 				+ "evolution'/>");
 		this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2014 UNIL' />");
 		this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
-				+BgeeProperties.getImagesRootDirectory()+"favicon.ico'/>");
+				+this.prop.getImagesRootDirectory()+"favicon.ico'/>");
 		this.includeCss(page+".css"); // default css for every pages
 		this.includeCss(); // additional css if override
 		this.includeJs();// add js if override
@@ -203,7 +203,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 
 		// Bgee logo
 		this.writeln("<a href='#' title='Go to Bgee home page'>"
-				+ "<img id='sib_other_logo' src='"+BgeeProperties.getImagesRootDirectory()+"bgee_logo.png' "
+				+ "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()+"bgee_logo.png' "
 				+ "title='Bgee: a dataBase for Gene Expression Evolution' "
 				+ "alt='Bgee: a dataBase for Gene Expression Evolution' /> "
 				+ "</a>");
@@ -215,7 +215,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 
 		// SIB logo
 		this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' title='Link to the Swiss Institute of Bioinformatics' >"
-				+ "<img id='sib_logo' src='"+BgeeProperties.getImagesRootDirectory()+"sib_logo_141x75.png' "
+				+ "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+"sib_logo_141x75.png' "
 				+ "title='Bgee is part of the Swiss Institute of Bioinformatics' "
 				+ "alt='SIB Swiss Institute of Bioinformatics' /> "
 				+ "</a>");
@@ -229,7 +229,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 
 	protected void includeJs(String filename){
 		this.writeln("<script  type='text/javascript' src='"+
-				BgeeProperties.getJavascriptFilesRootDirectory()+filename+"'></script>");
+				this.prop.getJavascriptFilesRootDirectory()+filename+"'></script>");
 	}
 
 	protected void includeCss(){
@@ -238,7 +238,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 
 	protected void includeCss(String filename){
 		this.writeln("<link rel='stylesheet' type='text/css' href='"
-				+ BgeeProperties.getCssFilesRootDirectory() + filename + "'/>");
+				+ this.prop.getCssFilesRootDirectory() + filename + "'/>");
 	}
 
 }

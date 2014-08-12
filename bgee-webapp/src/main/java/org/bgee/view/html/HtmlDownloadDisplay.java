@@ -13,10 +13,10 @@ import org.bgee.view.DownloadDisplay;
 
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay
 {
-
-    public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters) throws IOException
+ 
+    public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop) throws IOException
     {
-        super(response,requestParameters);
+        super(response,requestParameters, prop);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<input id='search_label' class='sib_text' type='text' name='search' "
                 + "value='Scientific name, common name...'/>&nbsp;&nbsp;");
         this.writeln("<input type='image' alt='Submit' "
-                + "src='"+BgeeProperties.getImagesRootDirectory()+"submit_button.png'/>");
+                + "src='"+prop.getImagesRootDirectory()+"submit_button.png'/>");
         this.writeln("<div id='results_nb'></div>");
         this.writeln("</form>");
         this.writeln("</div>");
@@ -80,7 +80,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='bgee_data_selection'>");
 
         this.writeln("<div id='bgee_data_selection_cross'>");
-        this.writeln("<img src='"+BgeeProperties.getImagesRootDirectory()+"cross.png' "
+        this.writeln("<img src='"+this.prop.getImagesRootDirectory()+"cross.png' "
                 + "title='Close banner' alt='Close banner' /> ");
         this.writeln("</div>");
         this.writeln("<div id='bgee_data_selection_img'>");
@@ -355,7 +355,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             String commonName, String alternateNames, boolean lightImg) {
         StringBuilder image = new StringBuilder();
         image.append("<img src='");
-        image.append(BgeeProperties.getImagesRootDirectory());
+        image.append(this.prop.getImagesRootDirectory());
         image.append("species/");
         image.append(commonName);
         if (lightImg) {

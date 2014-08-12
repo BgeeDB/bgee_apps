@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.dsv.DsvFactory;
 import org.bgee.view.html.HtmlFactory;
@@ -104,8 +105,8 @@ public abstract class ViewFactory
         return new HtmlFactory(response, requestParameters);
     }
 
-    public abstract GeneralDisplay getGeneralDisplay() throws IOException;
+    public abstract GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException;
 
-    public abstract DownloadDisplay getDownloadDisplay() throws IOException;
+    public abstract DownloadDisplay getDownloadDisplay(BgeeProperties prop) throws IOException;
 
 }

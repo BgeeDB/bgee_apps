@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.bgee.controller.BgeeProperties;
+
 public abstract class ConcreteDisplayParent 
 {
     protected HttpServletResponse response;
@@ -19,8 +21,10 @@ public abstract class ConcreteDisplayParent
     protected boolean headersAlreadySent;
     protected boolean displayAlreadyStarted;
     
+    protected BgeeProperties prop;
     
-	public ConcreteDisplayParent(HttpServletResponse response) throws IOException
+    
+	public ConcreteDisplayParent(HttpServletResponse response,BgeeProperties prop) throws IOException
     {
 		this.response = response;
 			
@@ -31,6 +35,7 @@ public abstract class ConcreteDisplayParent
 		
         this.headersAlreadySent = false;
         this.displayAlreadyStarted = false;
+        this.prop = prop;
     }
 	
 	public void writeln(String stringToWrite)

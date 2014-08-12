@@ -79,6 +79,11 @@ public class RequestParameters {
     private final static Logger log = LogManager.getLogger(RequestParameters.class.getName());
 
     /**
+     * A {@code BgeeProperties} instance to provide the properties values
+     */
+    private final BgeeProperties prop ;
+
+    /**
      * A {@code HashMap<URLParameters.Parameter<?>, Object} that store the
      * values of parameters as an {@code Object} using a 
      * {URLParameters.Parameter<T>} instance as key
@@ -99,7 +104,7 @@ public class RequestParameters {
      * 
      * @see #urlEncode(String)
      */
-    private boolean encodeUrl = BgeeProperties.isEncodeUrl();
+    private boolean encodeUrl ;
 
     /**
      * A {@code String} that contains the URL corresponding to the present state
@@ -136,8 +141,11 @@ public class RequestParameters {
      * 								     is injected to provide the available parameters
      * 								     list. 
      */
-    public RequestParameters(URLParameters URLParametersInstance)  {
+    public RequestParameters(URLParameters URLParametersInstance, BgeeProperties prop)  {
         log.entry(URLParametersInstance);
+
+        this.prop = prop;
+        this.encodeUrl = prop.isEncodeUrl();
 
         this.URLParametersInstance = URLParametersInstance;
         //to avoid duplicating methods, 
@@ -179,11 +187,13 @@ public class RequestParameters {
      * 													or to write the query string in a file
      * @throws MultipleValuesNotAllowedException 
      */
-    public RequestParameters(HttpServletRequest request, URLParameters URLParametersInstance) 
-            throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
-            MultipleValuesNotAllowedException {
+    public RequestParameters(HttpServletRequest request, URLParameters URLParametersInstance,
+            BgeeProperties prop)
+                    throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
+                    MultipleValuesNotAllowedException {
         log.entry(request, URLParametersInstance);
-
+        this.prop = prop;
+        this.encodeUrl = prop.isEncodeUrl();
         this.URLParametersInstance = URLParametersInstance;
         this.constructor(request);
 
@@ -197,8 +207,8 @@ public class RequestParameters {
      * @param request   The HttpServletRequest object corresponding to the current 
      *                  request to the server.
      *                  
-     * @see #RequestParameters(URLParameters)
-     * @see #RequestParameters(HttpServletRequest, URLParameters)
+     * @see #RequestParameters(URLParameters, BgeeProperties)
+     * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeProperties)
      *                  
      * @throws RequestParametersNotFoundException   if a {@code generatedKey} is set in the URL, 
      *                                              meaning that a stored query string should be 
@@ -364,7 +374,7 @@ public class RequestParameters {
             }
 
             try (BufferedReader br = new BufferedReader(new FileReader(
-                    BgeeProperties.getRequestParametersStorageDirectory() + key))) {
+                    prop.getRequestParametersStorageDirectory() + key))) {
                 String retrievedQueryString;
                 //just one line in the file, a query string including storable parameters, 
                 //that will be used to recover storable parameters
@@ -414,7 +424,7 @@ public class RequestParameters {
         }
 
         //first check whether these parameters have already been serialized
-        File storageFile = new File(BgeeProperties.getRequestParametersStorageDirectory() 
+        File storageFile = new File(prop.getRequestParametersStorageDirectory() 
                 + this.getFirstValue(this.getKeyParam()));
         if (storageFile.exists()) {
             //file already exists, no need to continue
@@ -437,7 +447,7 @@ public class RequestParameters {
             }
 
             try (BufferedWriter bufferedWriter = new BufferedWriter(
-                    new FileWriter(BgeeProperties.getRequestParametersStorageDirectory() 
+                    new FileWriter(prop.getRequestParametersStorageDirectory() 
                             + this.getFirstValue(this.getKeyParam())))) {
 
                 boolean encodeUrlValue = this.encodeUrl;
@@ -448,7 +458,7 @@ public class RequestParameters {
 
         } catch (IOException e) {
             //delete the file if something went wrong
-            storageFile = new File(BgeeProperties.getRequestParametersStorageDirectory() 
+            storageFile = new File(prop.getRequestParametersStorageDirectory() 
                     + this.getFirstValue(this.getKeyParam()));
             if (storageFile.exists()) {
                 storageFile.delete();
@@ -647,7 +657,7 @@ public class RequestParameters {
 
         log.entry();
 
-        if (this.parametersQuery.length() > BgeeProperties.getUrlMaxLength()) {
+        if (this.parametersQuery.length() > prop.getUrlMaxLength()) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -861,7 +871,7 @@ public class RequestParameters {
         this.encodeUrl = encodeUrlValue;
 
         RequestParameters clonedRequestParameters = 
-                new RequestParameters(request, this.URLParametersInstance.getClass().newInstance());
+                new RequestParameters(request, this.URLParametersInstance.getClass().newInstance(),this.prop);
 
         return log.exit(clonedRequestParameters);
     }
@@ -897,7 +907,7 @@ public class RequestParameters {
         this.encodeUrl = encodeUrlValue;
 
         RequestParameters clonedRequestParameters = new RequestParameters(request, 
-                this.URLParametersInstance.getClass().newInstance());
+                this.URLParametersInstance.getClass().newInstance(),this.prop);
 
         // Add the key which is not a storable parameters and was not included
         clonedRequestParameters.addValue(this.getKeyParam(), 

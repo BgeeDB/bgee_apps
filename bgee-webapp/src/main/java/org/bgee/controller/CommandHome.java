@@ -20,25 +20,25 @@ import org.bgee.view.GeneralDisplay;
 
 public class CommandHome extends CommandParent
 {
-	
+
     public CommandHome(HttpSession session, HttpServletResponse response, 
-    		RequestParameters requestParameters)
+            RequestParameters requestParameters, BgeeProperties prop)
     {
-    	super(session, response, requestParameters);
+        super(session, response, requestParameters, prop);
     }
-	
-	@Override
-	public void processRequest() throws IOException, PageNotFoundException 
-	{
-	    
-		GeneralDisplay display = this.viewFactory.getGeneralDisplay();
-		
-		 if (requestParameters.isTheHomePage()) {
-			display.displayAbout();
-		} else {
-			throw new PageNotFoundException("Wrong parameters");
-		}
-		
-	}
+
+    @Override
+    public void processRequest() throws IOException, PageNotFoundException 
+    {
+
+        GeneralDisplay display = this.viewFactory.getGeneralDisplay(prop);
+
+        if (requestParameters.isTheHomePage()) {
+            display.displayAbout();
+        } else {
+            throw new PageNotFoundException("Wrong parameters");
+        }
+
+    }
 
 }

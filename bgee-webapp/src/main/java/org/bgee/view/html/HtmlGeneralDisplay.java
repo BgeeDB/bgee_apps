@@ -4,14 +4,15 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.GeneralDisplay;
 
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay
 {
-	public HtmlGeneralDisplay(HttpServletResponse response, RequestParameters requestParameters) throws IOException
+	public HtmlGeneralDisplay(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop) throws IOException
 	{
-		super(response, requestParameters);
+		super(response, requestParameters, prop);
 	}
 
 	public void serviceUnavailable()

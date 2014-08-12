@@ -19,17 +19,18 @@ import org.bgee.view.DownloadDisplay;
 public class CommandDownload extends CommandParent
 {
 
-	public CommandDownload
-	(HttpSession session, HttpServletResponse response, RequestParameters requestParameters) 
-	{
-		super(session, response, requestParameters);
-	}
+    public CommandDownload
+    (HttpSession session, HttpServletResponse response, RequestParameters requestParameters, 
+            BgeeProperties prop) 
+    {
+        super(session, response, requestParameters, prop);
+    }
 
-	@Override
-	public void processRequest() throws IOException 
-	{
-       	DownloadDisplay display = this.viewFactory.getDownloadDisplay();
+    @Override
+    public void processRequest() throws IOException 
+    {
+        DownloadDisplay display = this.viewFactory.getDownloadDisplay(prop);
 
-       	display.displayDownloadPage();
-	}
+        display.displayDownloadPage();
+    }
 }

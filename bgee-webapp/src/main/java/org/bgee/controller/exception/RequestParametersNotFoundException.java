@@ -1,8 +1,9 @@
 package org.bgee.controller.exception;
 
 /**
- * An exception thrown when a stored <code>RequestParameters</code> object is requested based on an indexed key value, 
- * but no <code>RequestParameters</code> object can be retrieved using that key.
+ * An exception thrown when a stored {@code RequestParameters} object is requested based
+ * on an indexed key value, 
+ * but no {@code RequestParameters} object can be retrieved using that key.
  * 
  * @author 	Frederic Bastian
  * @version Bgee 11, May 2012
@@ -28,9 +29,9 @@ public class RequestParametersNotFoundException extends Exception
     }
 
     /**
-     * Constructor with an additional <code>message</code> argument. 
+     * Constructor with an additional {@code message} argument. 
      * 
-     * @param message 		a <code>String</code> giving details about the exception.
+     * @param message 		a {@code String} giving details about the exception.
      */
     public RequestParametersNotFoundException(String message)
     {
@@ -38,9 +39,9 @@ public class RequestParametersNotFoundException extends Exception
     }
 
     /**
-     * Constructor with an additional <code>cause</code> argument. 
+     * Constructor with an additional {@code cause} argument. 
      * 
-     * @param cause 		a <code>Throwable</code> giving the cause of the exception.
+     * @param cause 		a {@code Throwable} giving the cause of the exception.
      */
     public RequestParametersNotFoundException(Throwable cause)
     {
@@ -48,10 +49,10 @@ public class RequestParametersNotFoundException extends Exception
     }
 
     /**
-     * Constructor with additional <code>message</code> and <code>cause</code> arguments. 
+     * Constructor with additional {@code message} and {@code cause} arguments. 
      * 
-     * @param message 		a <code>String</code> giving details about the exception.
-     * @param cause 		a <code>Throwable</code> giving the cause of the exception.
+     * @param message 		a {@code String} giving details about the exception.
+     * @param cause 		a {@code Throwable} giving the cause of the exception.
      */
     public RequestParametersNotFoundException(String message, Throwable cause)
     {

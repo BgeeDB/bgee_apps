@@ -12,19 +12,17 @@ package org.bgee.controller;
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.bgee.controller.exception.PageNotFoundException;
-
 import org.bgee.view.GeneralDisplay;
 
 public class CommandHome extends CommandParent
 {
 
-    public CommandHome(HttpSession session, HttpServletResponse response, 
+    public CommandHome(HttpServletResponse response, 
             RequestParameters requestParameters, BgeeProperties prop)
     {
-        super(session, response, requestParameters, prop);
+        super(response, requestParameters, prop);
     }
 
     @Override

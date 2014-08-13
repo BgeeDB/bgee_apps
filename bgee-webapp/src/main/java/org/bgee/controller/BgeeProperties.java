@@ -318,7 +318,7 @@ public class BgeeProperties
      *          calling this method currently holds a {@code BgeeProperties}, 
      *          {@code false} otherwise. 
      */
-    public final static boolean hasBgeeProperties() {
+    public static boolean hasBgeeProperties() {
         log.entry();
         return log.exit(bgeeProperties.containsKey(Thread.currentThread().getId()));
     }
@@ -346,7 +346,7 @@ public class BgeeProperties
      *                      for that property key. 
      *                      Or {@code defaultValue} if not defined or empty.
      */
-    private static String getStringOption(Properties prop, Properties sysProps, 
+    private String getStringOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, 
             String defaultValue)
     {
@@ -405,13 +405,13 @@ public class BgeeProperties
      *                     for that property key.
      *                     Or {@code defaultValue} if not defined or empty.
      */
-    private static int getIntegerOption(Properties prop, Properties sysProps, 
+    private int getIntegerOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, 
             int defaultValue)
     {
         log.entry(prop, fileProps, sysProps, key, defaultValue);
 
-        String propValue = getStringOption(prop,sysProps, fileProps, key, null);
+        String propValue = this.getStringOption(prop,sysProps, fileProps, key, null);
         int val = defaultValue;
         if (propValue != null) {
             val= Integer.valueOf(propValue);
@@ -447,13 +447,13 @@ public class BgeeProperties
      *                     will be {@code true}, {@code false} otherwise). 
      *                     Or {@code defaultValue} if not defined or empty.
      */
-    private static boolean getBooleanOption(Properties prop, Properties sysProps, 
+    private boolean getBooleanOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, 
             boolean defaultValue)
     {
         log.entry(fileProps, sysProps, key, defaultValue);
 
-        String propValue = getStringOption(prop, sysProps, fileProps, key, null);
+        String propValue = this.getStringOption(prop, sysProps, fileProps, key, null);
         boolean val = defaultValue;
         if (propValue != null) {
             val= "true".equals(propValue) ||

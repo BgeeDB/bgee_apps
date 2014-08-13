@@ -4,9 +4,7 @@ import java.io.Writer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import org.apache.commons.lang3.StringUtils;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -36,7 +34,6 @@ abstract class CommandParent {
     protected ViewFactory viewFactory;
     protected Writer out;
     protected HttpServletResponse response;
-    protected HttpSession session;
     /**
      * Stores the parameters of the current request.
      */
@@ -49,11 +46,10 @@ abstract class CommandParent {
     protected BgeeProperties prop;
 
 
-    public CommandParent(HttpSession session, HttpServletResponse response, 
+    public CommandParent(HttpServletResponse response, 
             RequestParameters requestParameters, BgeeProperties prop)
     {
         this.response = response;
-        this.session  = session;
         this.requestParameters = requestParameters;
         this.prop = prop;
         this.setFactory();
@@ -141,14 +137,5 @@ abstract class CommandParent {
     protected void failedRequest()
     {
 
-    }
-
-    protected String getPreviousPage()
-    {
-        String previousPage = (String) this.session.getAttribute("previousPage");
-        if (StringUtils.isNotBlank(previousPage)) {
-            return previousPage;
-        }
-        return this.bgeeRoot;
     }
 }

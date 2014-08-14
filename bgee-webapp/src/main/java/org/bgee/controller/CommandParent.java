@@ -11,25 +11,25 @@ import org.bgee.view.ViewFactory;
  * Parent class of all controllers. It achieves operations that are common to all subclasses, 
  * and defines methods that subclasses must implement.
  * 
- * Notably, it defines the abstract method <code>processRequest</code>, 
+ * Notably, it defines the abstract method {@code processRequest}, 
  * that is the main method of all controllers, 
- * launching actions on the <code>model</code> layer, 
- * and display from the <code>view</code> layer.
+ * launching actions on the {@code model} layer, 
+ * and display from the {@code view} layer.
  * <p>
  * This class is not instantiable, as all concrete controllers must provide at least 
- * their own implementation of <code>processRequest()</code>.
+ * their own implementation of {@code processRequest()}.
  * 
  * @author 	Frederic Bastian
- * @version Bgee 11 Mar 2012
+ * @author  Mathieu Seppey
+ * @version Bgee 13 Aug 2014
  * @see 	#processRequest()
  * @since 	Bgee 1
  *
  */
 abstract class CommandParent {
     /**
-     * Concrete factory providing classes from the <code>view</code> package. 
-     * This concrete factory implements the <code>ViewFactory</code> interface.
-     * @see #setFactory()
+     * Concrete factory providing classes from the {@code view} package. 
+     * This concrete factory implements the {@code ViewFactory} interface.
      */
     protected ViewFactory viewFactory;
     protected Writer out;
@@ -47,13 +47,12 @@ abstract class CommandParent {
 
 
     public CommandParent(HttpServletResponse response, 
-            RequestParameters requestParameters, BgeeProperties prop)
+            RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory)
     {
         this.response = response;
         this.requestParameters = requestParameters;
         this.prop = prop;
-        this.setFactory();
-
+        this.viewFactory = viewFactory;
         this.serverRoot = prop.getBgeeRootDirectory();
         this.homePage   = prop.getBgeeRootDirectory();
         this.bgeeRoot   = prop.getBgeeRootDirectory();
@@ -61,12 +60,12 @@ abstract class CommandParent {
 
     /**
      * This method is responsible for pre-processing a request, 
-     * and returns <code>true</code> if the application can continue 
-     * and call the <code>processRequest()</code> method.
+     * and returns {@code true} if the application can continue 
+     * and call the {@code processRequest()} method.
      * 
      * A pre-processing step is, for instance, redirecting to another page, 
      * filtering a parameter... In the case of a redirection, the method should 
-     * return <code>false</code> so that the application is aware that 
+     * return {@code false} so that the application is aware that 
      * the request should not be processed further.
      * <p>
      * Concrete controllers can override this method to provide 
@@ -75,10 +74,10 @@ abstract class CommandParent {
      * unless their pre-processing steps overlap (for instance, performing a redirection 
      * in the concrete controller, while this parent controller also perform a redirection). 
      * 
-     * @return 	<code>true</code> if the request can be further processed, 
-     * 			<code>false</code> otherwise (<code>processRequest()</code> should then not been called).
+     * @return 	{@code true} if the request can be further processed, 
+     * 			{@code false} otherwise ({@code processRequest()} should then not been called).
      * @throws 	Exception 	any exception not-caught during the process of the request 
-     * 						is thrown to be caught by the <code>FrontController</code>.
+     * 						is thrown to be caught by the {@code FrontController}.
      * @see 	#processRequest()
      * @see 	FrontController#doRequest(HttpServletRequest, HttpServletResponse, boolean)
      */
@@ -88,46 +87,16 @@ abstract class CommandParent {
 
     /**
      * Main method of all controllers, responsible for analyzing the query, 
-     * and triggering the appropriate actions on the <code>model</code> layer 
-     * and the <code>view</code> layer.
+     * and triggering the appropriate actions on the {@code model} layer 
+     * and the {@code view} layer.
      * 
      * Each concrete controller must provide its own implementation of this method.
      * 
      * @throws  Exception 	any exception not-caught during the process of the request 
-     * 						is thrown to be caught by the <code>FrontController</code>.
+     * 						is thrown to be caught by the {@code FrontController}.
      * @see 	FrontController#doRequest(HttpServletRequest, HttpServletResponse, boolean)
      */
     public abstract void processRequest() throws Exception;
-
-    /**
-     * Chooses the appropriate concrete view factory.
-     * 
-     * This concrete view factory, implements the interface <code>ViewFactory</code>, 
-     * and provides concrete classes from a specific sub-package 
-     * of the <code>view</code>: either <code>view.xml</code>, or <code>view.html</code>, 
-     * or <code>view.dsv</code>. It allows the controllers to be provided with classes 
-     * to generate outputs, without being aware which type of output they generate 
-     * (Abstract Factory Pattern).
-     * <p>
-     * the default concrete factory is the <code>HtmlFactory</code>.
-     * 
-     * @see org.bgee.view.ViewFactory
-     * @see org.bgee.view.html.HtmlFactory
-     * @see org.bgee.view.xml.XmlFactory
-     * @see org.bgee.view.dsv.DsvFactory
-     */
-    protected void setFactory()
-    {
-        int displayType = ViewFactory.DEFAULT;
-        if (this.requestParameters.isXmlDisplayType()) {
-            displayType = ViewFactory.XML;
-        } else if (this.requestParameters.isCsvDisplayType()) {
-            displayType = ViewFactory.CSV;
-        } else if (this.requestParameters.isTsvDisplayType()) {
-            displayType = ViewFactory.TSV;
-        }
-        this.viewFactory = ViewFactory.getFactory(this.response, displayType, this.requestParameters);
-    }
 
     protected void pageNotFound()
     {

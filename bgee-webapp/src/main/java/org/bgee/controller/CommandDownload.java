@@ -14,15 +14,16 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.view.DownloadDisplay;
+import org.bgee.view.ViewFactory;
 
 public class CommandDownload extends CommandParent
 {
 
     public CommandDownload
     (HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop) 
+            BgeeProperties prop, ViewFactory viewFactory) 
     {
-        super(response, requestParameters, prop);
+        super(response, requestParameters, prop, viewFactory);
     }
 
     @Override

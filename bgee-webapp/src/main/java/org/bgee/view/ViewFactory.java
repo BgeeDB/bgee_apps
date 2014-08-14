@@ -10,44 +10,68 @@ import org.bgee.view.dsv.DsvFactory;
 import org.bgee.view.html.HtmlFactory;
 import org.bgee.view.xml.XmlFactory;
 
-
+/**
+ * This class returns the appropriate view depending on the {@code RequestParameters}
+ * 
+ * @author Mathieu Seppey
+ * @author Frederic Bastian
+ * @version Bgee 13 Aug 2014
+ * @since   Bgee 1
+ */
 public abstract class ViewFactory 
 {
-    public static final int HTML = 1;
-    public static final int XML  = 2;
-    public static final int CSV  = 3;
-    public static final int TSV  = 4;
+    /**
+     * An {@code enum} of the different display types
+     */
+    public static enum displayTypes {
+        HTML, XML, CSV, TSV;
+    }
 
+    /**
+     * The {@code displayTypes} used as default
+     */
+    public static final displayTypes DEFAULT = displayTypes.HTML;
 
-    public static final int DEFAULT = HTML;
-
+    /**
+     * The {@code HttpServletResponse} used to return the result to the client
+     */
     protected HttpServletResponse response;
+    
+    /**
+     * The {@code RequestParameters} handling the parameters of the current request, 
+     * to determine the requested displayType, and for display purposes.
+     */
     protected RequestParameters requestParameters;
 
+    /**
+     * Constructor with injected {@code RequestParameters}
+     * 
+     * @param response          The {@code HttpServletResponse} where the outputs of the view
+     *                          classes will be written
+     * @param requestParameters The {@code RequestParameters} handling the parameters of the 
+     *                          current request, to determine the requested displayType, 
+     *                          and for display purposes.
+     */
     public ViewFactory(HttpServletResponse response, RequestParameters requestParameters)
     {
         this.response = response;
         this.requestParameters = requestParameters;
     }
 
-    public ViewFactory(HttpServletResponse response)
-    {
-        this.response = response;
-        this.requestParameters = null;
-    }
-
     /**
-     * Return the appropriate <code>ViewFactory</code> 
-     * (either <code>HtmlFactory</code>, <code>XmlFactory</code>, 
-     * or <code>DsvFactory</code>), based on the display type requested 
-     * in the provided <code>requestParameters</code>
-
-     * @param response 	the <code>HttpServletResponse</code> where the outputs of the view classes will be written
-     * @param requestParameters 	the <code>RequestParameters</code> handling the parameters of the current request, 
-     * 								to determine the requested displayType, and for display purposes.
-     * @return 	the appropriate <code>ViewFactory</code> 
-     * 			(either <code>HtmlFactory</code>, <code>XmlFactory</code>, 
-     * 			or <code>DsvFactory</code>)
+     * Return the appropriate {@code ViewFactory} 
+     * (either {@code HtmlFactory}, {@code XmlFactory}, 
+     * or {@code DsvFactory}), based on the display type requested 
+     * in the provided {@code requestParameters}
+     *
+     * @param response          the {@code HttpServletResponse} where the outputs of the view 
+     *                          classes will be written
+     * @param requestParameters the {@code RequestParameters} handling the parameters of the 
+     *                          current request, 
+     *                          to determine the requested displayType, and for display purposes.
+     * @return  the appropriate {@code ViewFactory} (either {@code HtmlFactory},
+     *          {@code XmlFactory}, or {@code DsvFactory})
+     *          
      * @see org.bgee.view.html.HtmlFactory
      * @see org.bgee.view.xml.XmlFactory
      * @see org.bgee.view.dsv.DsvFactory
@@ -56,57 +80,72 @@ public abstract class ViewFactory
     public static synchronized ViewFactory getFactory(HttpServletResponse response, 
             RequestParameters requestParameters)
     {
-        int displayType = DEFAULT;
+        displayTypes displayType = DEFAULT;
         if (requestParameters.isXmlDisplayType()) {
-            displayType = XML;
+            displayType = displayTypes.XML;
         } else if (requestParameters.isCsvDisplayType()) {
-            displayType = CSV;
+            displayType = displayTypes.CSV;
         } else if (requestParameters.isTsvDisplayType()) {
-            displayType = TSV;
+            displayType = displayTypes.TSV;
         }
         return getFactory(response, displayType, requestParameters);
     }
 
     /**
-     * Return the appropriate <code>ViewFactory</code> 
-     * (either <code>HtmlFactory</code>, <code>XmlFactory</code>, 
-     * or <code>DsvFactory</code>), based on the display type requested 
-     * by the <code>displayType</code> parameter.
+     * Return the appropriate {@code ViewFactory} (either {@code HtmlFactory}, 
+     * {@code XmlFactory}, or {@code DsvFactory}), based on the display type requested 
+     * by the {@code displayType} parameter.
      * 
-     * @param response 	the <code>HttpServletResponse</code> where the outputs of the view classes will be written
-     * @param displayType 	an <code>int</code> specifying the requested display type, corresponding to either 
-     * 						<code>HTML</code>, <code>XML</code>, <code>TSV</code>, or <code>CSV</code>.
-     * @param requestParameters 	the <code>RequestParameters</code> handling the parameters of the current request, 
-     * 								for display purposes.
-     * @return 	the appropriate <code>ViewFactory</code> 
-     * 			(either <code>HtmlFactory</code>, <code>XmlFactory</code>, 
-     * 			or <code>DsvFactory</code>)
-     * @see #HTML
-     * @see #XML
-     * @see #TSV
-     * @see #CSV
+     * @param response          the {@code HttpServletResponse} where the outputs of the view 
+     *                          classes will be written
+     * @param displayType       an {@code int} specifying the requested display type, 
+     *                          corresponding to either 
+     *                          {@code HTML}, {@code XML}, {@code TSV}, or {@code CSV}.
+     * @param requestParameters the {@code RequestParameters} handling the parameters of the 
+     *                          current request, for display purposes.
+     * @return     the appropriate {@code ViewFactory}(either {@code HtmlFactory},
+     *             {@code XmlFactory}, or {@code DsvFactory})
+
      * @see org.bgee.view.html.HtmlFactory
      * @see org.bgee.view.xml.XmlFactory
      * @see org.bgee.view.dsv.DsvFactory
      */
     public static synchronized ViewFactory getFactory(HttpServletResponse response, 
-            int displayType, 
+            displayTypes displayType, 
             RequestParameters requestParameters)
     {
-        if (displayType == XML) {
-            return new XmlFactory(response);
+        if (displayType == displayTypes.XML) {
+            return new XmlFactory(response, requestParameters);
         }
-        if (displayType == CSV) {
-            return new DsvFactory(response, ",");
+        if (displayType == displayTypes.CSV) {
+            return new DsvFactory(response, ",", requestParameters);
         }
-        if (displayType == TSV) {
-            return new DsvFactory(response, "\t");
+        if (displayType == displayTypes.TSV) {
+            return new DsvFactory(response, "\t", requestParameters);
         }
         return new HtmlFactory(response, requestParameters);
     }
 
+    /**
+     * @param prop                  An instance of {@code BgeeProperties}  that is injected to 
+     *                              provide the all the properties values
+     *                              
+     * @return A {@code GeneralDisplay} instance that is the view to be used
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
     public abstract GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException;
 
+    /**
+     * @param prop                  An instance of {@code BgeeProperties}  that is injected to 
+     *                              provide the all the properties values
+     *                              
+     * @return A {@code DownloadDisplay} instance that is the view to be used
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
     public abstract DownloadDisplay getDownloadDisplay(BgeeProperties prop) throws IOException;
 
 }

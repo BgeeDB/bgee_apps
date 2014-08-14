@@ -15,14 +15,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.view.GeneralDisplay;
+import org.bgee.view.ViewFactory;
 
 public class CommandHome extends CommandParent
 {
 
     public CommandHome(HttpServletResponse response, 
-            RequestParameters requestParameters, BgeeProperties prop)
+            RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory)
     {
-        super(response, requestParameters, prop);
+        super(response, requestParameters, prop, viewFactory);
     }
 
     @Override

@@ -146,11 +146,11 @@ public class FrontController extends HttpServlet {
             CommandParent controller = null;
             // call the correct controller depending on the page type
             if (requestParameters.isADownloadPageCategory()) {
-                controller = new CommandDownload(response, requestParameters, this.prop);
+                controller = new CommandDownload(response, requestParameters, this.prop, factory);
             }
 
             if (controller == null) {
-                controller = new CommandHome(response, requestParameters, this.prop);
+                controller = new CommandHome(response, requestParameters, this.prop, factory);
             }
             controller.processRequest();
         // Display the error pages

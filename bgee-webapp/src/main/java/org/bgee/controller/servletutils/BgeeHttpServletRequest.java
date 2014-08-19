@@ -34,23 +34,23 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
 /**
- * This class implements the <code>HttpServletRequest</code> for mainly two purposes: 
+ * This class implements the {@code HttpServletRequest} for mainly two purposes: 
  * first, allowing to perform tests on the Bgee application in a servlet context, 
  * without the need of actually using a servlet container (i.e., tomcat); 
- * second, to load parameters into a <code>RequestParameters</code> object, 
- * as if they were coming from a regular <code>HttpServletRequest</code>, 
+ * second, to load parameters into a {@code RequestParameters} object, 
+ * as if they were coming from a regular {@code HttpServletRequest}, 
  * while they actually come from a query string stored in a file 
  * (when parameters are too long to be put in a URL, because of URL length restrictions, 
  * they are stored in a file on the server, the file is associated to a key, 
  * and the key is put in the URL; parameters are then retrieved from this query string stored in a file.
- * See the <code>RequestParameters</code> class for more information).
- * This strategy avoid to duplicate, in <code>RequestParameters</code>, 
- * the methods to retrieve parameters from a <code>HttpServletRequest</code>: 
+ * See the {@code RequestParameters} class for more information).
+ * This strategy avoid to duplicate, in {@code RequestParameters}, 
+ * the methods to retrieve parameters from a {@code HttpServletRequest}: 
  * we do not need to write methods retrieving them from a query string.
  * <p>
- * The <code>RequestParameters</code> class only uses the methods 
- * <code>getParameter(String)</code>, and <code>getParameterValues(String)</code> 
- * from the <code>HttpServletRequest</code>. As of Bgee 11, these are the only methods implemented here.
+ * The {@code RequestParameters} class only uses the methods 
+ * {@code getParameter(String)}, and {@code getParameterValues(String)} 
+ * from the {@code HttpServletRequest}. As of Bgee 11, these are the only methods implemented here.
  * They use a query string provided to this class, in order to simulate the behavior of these methods.
  * Other methods will be implemented in the future, to use this class for test purposes.
  * 
@@ -62,22 +62,22 @@ import org.apache.http.client.utils.URLEncodedUtils;
 public class BgeeHttpServletRequest implements HttpServletRequest
 {
     /**
-     * A regular query string, that will be used to load <code>parameterMap</code>, 
-     * that will allow to simulate the behavior of <code>getParameterMap()</code>, 
-     * and from there, <code>getParameter(String)</code>, <code>getParameterValues(String)</code>, etc.
+     * A regular query string, that will be used to load {@code parameterMap}, 
+     * that will allow to simulate the behavior of {@code getParameterMap()}, 
+     * and from there, {@code getParameter(String)}, {@code getParameterValues(String)}, etc.
      */
     private String queryString;
     /**
-     * A <code>String</code> containing the name of the character encoding 
-     * of the <code>queryString</code>.
+     * A {@code String} containing the name of the character encoding 
+     * of the {@code queryString}.
      * 
      * @see #queryString
      * @see #loadParameterMap()
      */
     private String characterEncoding;
     /**
-     * A <code>Map</code> of the parameters contained in <code>queryString</code>, 
-     * where keys are parameters names, and values are <code>String</code> <code>vectors</code> 
+     * A {@code Map} of the parameters contained in {@code queryString}, 
+     * where keys are parameters names, and values are {@code String} {@code vectors} 
      * representing the values corresponding to a parameter name. 
      * Values are URL decoded.
      * @see #loadParameterMap()
@@ -85,7 +85,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
      */
     private Map<String, String[]> parameterMap;
     /**
-     * A <code>String</code> to simulate <code>getMethod()</code>, 
+     * A {@code String} to simulate {@code getMethod()}, 
      * that should contain the name of the HTTP method 
      * with which this request was made, for example, GET, POST, or PUT.
      * 
@@ -103,15 +103,15 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     }
 
     /**
-     * A public constructor taking as a parameter a <code>String</code>, 
+     * A public constructor taking as a parameter a {@code String}, 
      * that should be a regular query string of a URL. 
-     * It will be used to set the <code>queryString</code> attribute of this class. 
-     * This attribute is then used to simulate regular <code>HttpServletRequest</code> 
-     * functionalities, such as <code>getParameter(String)</code>, etc.
+     * It will be used to set the {@code queryString} attribute of this class. 
+     * This attribute is then used to simulate regular {@code HttpServletRequest} 
+     * functionalities, such as {@code getParameter(String)}, etc.
      * Parameters in this query string are assumed to be URL encoded with an UTF-8 encoding. 
      * 
-     * @param queryString 	a <code>String</code> representing the query string part of an URL, 
-     * 						to set the <code>queryString</code> attribute of this class, 
+     * @param queryString 	a {@code String} representing the query string part of an URL, 
+     * 						to set the {@code queryString} attribute of this class, 
      * 						with values of parameters URL encoded in UTF-8.
      */
     public BgeeHttpServletRequest(String queryString)
@@ -120,16 +120,16 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     }
 
     /**
-     * A public constructor taking as a parameter a <code>String</code>, 
+     * A public constructor taking as a parameter a {@code String}, 
      * that should be a regular query string of a URL. 
-     * It will be used to set the <code>queryString</code> attribute of this class. 
-     * This attribute is then used to simulate regular <code>HttpServletRequest</code> 
-     * functionalities, such as <code>getParameter(String)</code>, etc.
-     * Parameters in this query string are URL encoded with the <code>encoding</code> provided. 
+     * It will be used to set the {@code queryString} attribute of this class. 
+     * This attribute is then used to simulate regular {@code HttpServletRequest} 
+     * functionalities, such as {@code getParameter(String)}, etc.
+     * Parameters in this query string are URL encoded with the {@code encoding} provided. 
      * 
-     * @param queryString 	a <code>String</code> representing the query string part of an URL, 
-     * 						to set the <code>queryString</code> attribute of this class.
-     * @param encoding 		a <code>String</code> representing the encoding to use while parsing the <code>queryString</code>
+     * @param queryString 	a {@code String} representing the query string part of an URL, 
+     * 						to set the {@code queryString} attribute of this class.
+     * @param encoding 		a {@code String} representing the encoding to use while parsing the {@code queryString}
      */
     public BgeeHttpServletRequest(String queryString, String encoding) {
         try {
@@ -150,8 +150,8 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     }
 
     /**
-     * Set the <code>queryString</code> and load the parameters <code>Map</code> 
-     * from it, to be able to use <code>getParameterMap</code>.
+     * Set the {@code queryString} and load the parameters {@code Map} 
+     * from it, to be able to use {@code getParameterMap}.
      * @param 	queryString the queryString to set
      * @see 	#queryString
      * @see 	#loadParameterMap()
@@ -163,8 +163,8 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     }
 
     /**
-     * Populate <code>parameterMap</code> using the <code>queryString</code>, 
-     * in order to implement <code>getParameterMap()</code>.
+     * Populate {@code parameterMap} using the {@code queryString}, 
+     * in order to implement {@code getParameterMap()}.
      * 
      * @see #parameterMap
      * @see #getParameterMap()
@@ -205,7 +205,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     }
 
     /**
-     * @param method   the <code>method</code> to set
+     * @param method   the {@code method} to set
      * @see #method
      */
     private void setMethod(String method) {

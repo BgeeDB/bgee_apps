@@ -14,9 +14,10 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
+import org.bgee.view.ViewFactoryProvider;
 
 /**
- * This is the entry point of bgee-webapp. It can be directely mapped as the main servlet in
+ * This is the entry point of bgee-webapp. It can be directly mapped as the main servlet in
  * {@code web.xml}
  * and thus responds to a call to the root "/" of the application
  * 
@@ -47,23 +48,30 @@ public class FrontController extends HttpServlet {
      * within the application
      */
     private final URLParameters urlParameters ;
+    
+    /**
+     * The {@code ViewFactoryProvider} instance that will provide the appropriate 
+     * {@code ViewFactory} depending on the display type
+     */
+    private final ViewFactoryProvider viewFactoryProvider ;
 
     /**
-     * Default constructor. It will use the default {@code BgeeProperties} instance
-     * and the default {@code URLParameters} instance
+     * Default constructor. It will use the default {@code BgeeProperties} class,
+     * the default {@code URLParameters} class and the default {@code ViewFactoryProvider} class.
      * 
      * @see BgeeProperties
      * @see URLParameters
+     * @see ViewFactory
      */
     public FrontController() {
-        this(BgeeProperties.getBgeeProperties(), new URLParameters());
+        this(BgeeProperties.getBgeeProperties(), new URLParameters(), new ViewFactoryProvider());
     }
 
     /**
-     * Constructor that takes as parameter a {@code java.util.Properties} instance that 
-     * will be used to instantiate a {@code BgeeProperties} object which will be be used in the whole
-     * application and injected in all classes that will need it eventually.
-     * It will use the default {@code URLParameters} instance
+     * Constructor that takes as parameter a {@code java.util.Properties} instance that
+     * will be used to create a custom {@code BgeeProperties} instance.
+     * It will use the default {@code URLParameters} class and
+     * the default {@code ViewFactoryProvider} class.
      * 
      * @param prop  A {@code java.util.Properties} that will be use to get an instance of
      *              {@code BgeeProperties}
@@ -72,23 +80,31 @@ public class FrontController extends HttpServlet {
      * @see URLParameters
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), new URLParameters());
+        this(BgeeProperties.getBgeeProperties(prop), new URLParameters(), new ViewFactoryProvider());
     }
 
     /**
-     * Constructor that takes as parameters a custom {@code BgeeProperties} instance and a custom 
-     * {@code URLParameters} instance that will be injected further in all classes that use them.
+     * Constructor that takes as parameters a custom {@code BgeeProperties} instance, a custom 
+     * {@code URLParameters} instance and a custom {@code viewFactoryProvider} that will be 
+     * injected further in all classes that use them.
      * 
-     * @param prop              A {@code BgeeProperties} instance to be used in the whole 
-     *                          application and injected in all classes that will need it
-     *                          eventually.
-     * @param urlParameters     A {@code urlParameters} instance to be used in the whole 
-     *                          application and injected in all classes that will need it
-     *                          eventually.
+     * @param prop                  A {@code BgeeProperties} instance to be used in the whole 
+     *                              application and injected in all classes that will need it
+     *                              eventually.
+     *                              
+     * @param urlParameters         A {@code urlParameters} instance to be used in the whole 
+     *                              application and injec
+     * 
+     * @param viewFactoryProvider   A {@code ViewFactoryProvider} instance to provide 
+     *                              the appropriate {@code ViewFactory} depending on the
+     *                              display type
+     *
+     *
      * @see BgeeProperties
      * @see URLParameters
      */
-    public FrontController(BgeeProperties prop,URLParameters urlParameters) {
+    public FrontController(BgeeProperties prop, URLParameters urlParameters, 
+            ViewFactoryProvider viewFactoryProvider) {
         if(prop == null){
             // If the bgee prop object is null, just get the default instance from BgeeProperties
             this.prop = BgeeProperties.getBgeeProperties();
@@ -103,6 +119,13 @@ public class FrontController extends HttpServlet {
         }
         else{
             this.urlParameters = urlParameters;
+        }
+        if(viewFactoryProvider == null){
+            // If the viewFactoryProvider object is null, just use a new instance
+            this.viewFactoryProvider = new ViewFactoryProvider();
+        }
+        else{
+            this.viewFactoryProvider = viewFactoryProvider;
         }
     }
 
@@ -126,7 +149,7 @@ public class FrontController extends HttpServlet {
                 this.urlParameters, this.prop);
         //need the default factory here in case an exception is thrown 
         // before we get the correct display type
-        ViewFactory factory = ViewFactory.getFactory(response, requestParameters);
+        ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
         GeneralDisplay generalDisplay = null;
 
         //then let's start the real job!
@@ -142,7 +165,7 @@ public class FrontController extends HttpServlet {
             //in order to display error message in catch clauses. 
             //we redo it here to get the correct display type and correct user, 
             // if no exception was thrown yet
-            factory = ViewFactory.getFactory(response, requestParameters);
+            factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             CommandParent controller = null;
             // call the correct controller depending on the page type
             if (requestParameters.isADownloadPageCategory()) {

@@ -83,9 +83,8 @@ public class URLParameters {
     //	
     //
     // !!!! DON'T FORGET TO ADD ANY NEW PARAMS TO List<Parameter<?>> list !!!!
-    // 
-    //	TODO Complete the list and add description for every declared parameters.
     //
+    // 
     // *************************************
 
     /**
@@ -178,58 +177,85 @@ public class URLParameters {
     }
 
     /**
-     * @return TODO description of the param
+     * @return  A {@code Parameter<String>} defining what action should take the selected controller.
+     *          Category of the parameter: controller parameter. Corresponds to the URL 
+     *          parameter "action".
      */
     public Parameter<String> getParamAction(){
         return ACTION;
     }
 
     /**
-     * @return TODO description of the param
+     * @return  A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
+     *          an ontology should be displayed. (and not only structures with the parent manually
+     *          expanded by the user). Category of the parameter: ontology display parameter.
+     *          Corresponds to the URL parameter "all_organs".
      */
     public Parameter<Boolean> getParamAllOrgans(){
         return ALL_ORGANS;
     }
 
     /**
-     * @return TODO description of the param
+     * @return  A {@code Parameter<Integer>} defining for which data types 
+     *          (i.e., EST, Affy, in situ, RNA-Seq) expression data should be computed. 
+     *          It is used when we need to focus on a specific data types (e.g., 
+     *          when following a link to display only EST raw data), 
+     *          without modifying the data type originally requested by the user. 
+     *          Basically, it allows to override model.data.expressionData.DataTypeTO#dataType, 
+     *          without needing to eventually regenerate a key because it is a storable parameter.
+     *          Values correspond to values defined for 
+     *          {@code model.data.expressionData.DataTypeTO#dataType}
+     *          Category of the parameter: query engines parameters. 
+     *          Corresponds to the URL parameter "chosen_data_type".
      */
     public Parameter<Integer> getParamChosenDataType(){
         return CHOSEN_DATA_TYPE;
     }
 
     /**
-     * @return TODO description of the param
+     *  @return A {@code Parameter<String>} defining the type of output: html, xml, csv, tsv.
+     *          Category of the parameter: controller parameter.
+     *          Corresponds to the URL parameter "display_type".
      */
     public Parameter<String> getParamDisplayType(){
         return DISPLAY_TYPE;
     }
 
     /**
-     * @return TODO description of the param
+     * @return  A {@code Parameter<String>} defining the email of a user, 
+     *          used at registration time.
+     *          Category of the parameter: user registration.
+     *          Corresponds to the URL parameter "email".
      */
     public Parameter<String> getParamEmail(){
         return EMAIL;
     }
 
     /**
-     * @return TODO description of the param
+     * @return  A {@code Parameter<String>} defining which controller should take care of the 
+     *          request.
+     *          Category of the parameter: controller parameter.
+     *          Corresponds to the URL parameter "page".
      */
     public Parameter<String> getParamPage(){
         return PAGE;
     }
 
     /**
-     * @return TODO description of the param
+     * @return  A {@code Parameter<Boolean>} most of the time used to define whether algorithms
+     *          should include substages of a developmental stage, when computing its 
+     *          expression data. Used for ontology display, but also for expression search engines.
+     *          Category of the parameter: ontology display parameter and query engines parameters. 
+     *          Corresponds to the URL parameter "stage_children".
      */
     public Parameter<Boolean> getParamStageChildren(){
         return STAGE_CHILDREN;
     }
 
     /**
-     * @return A {@code Parameter<String>} that contains the value used
-     * as key to store parameters on the disk. It does not allow multiple value
-     * and has to be reset before adding a value.
+     * @return  A {@code Parameter<String>} that contains the value used
+     *          as key to store parameters on the disk. It does not allow multiple value
+     *          and has to be reset before adding a value.
      */
     public Parameter<String> getParamData(){
         return DATA;

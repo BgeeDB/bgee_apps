@@ -2,6 +2,8 @@ package org.bgee.view;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.dsv.DsvFactory;
 import org.bgee.view.html.HtmlFactory;
@@ -16,6 +18,8 @@ import org.bgee.view.xml.XmlFactory;
  */
 public class ViewFactoryProvider
 {
+    
+    private final static Logger log = LogManager.getLogger(ViewFactoryProvider.class.getName());
     
     /**
      * An {@code enum} of the different display types
@@ -59,6 +63,7 @@ public class ViewFactoryProvider
     public ViewFactory getFactory(HttpServletResponse response, 
             RequestParameters requestParameters)
     {        
+        log.entry(response, requestParameters);
         displayTypes displayType = DEFAULT;
         if (requestParameters.isXmlDisplayType()) {
             displayType = displayTypes.XML;
@@ -67,7 +72,7 @@ public class ViewFactoryProvider
         } else if (requestParameters.isTsvDisplayType()) {
             displayType = displayTypes.TSV;
         }
-        return getFactory(response, displayType, requestParameters);
+        return log.exit(getFactory(response, displayType, requestParameters));
     }
 
     /**
@@ -93,6 +98,7 @@ public class ViewFactoryProvider
             displayTypes displayType, 
             RequestParameters requestParameters)
     {
+        log.entry(response, displayType, requestParameters);
         if (displayType == displayTypes.XML) {
             return new XmlFactory(response, requestParameters);
         }
@@ -102,7 +108,7 @@ public class ViewFactoryProvider
         if (displayType == displayTypes.TSV) {
             return new DsvFactory(response, "\t", requestParameters);
         }
-        return new HtmlFactory(response, requestParameters);
+        return log.exit(new HtmlFactory(response, requestParameters));
     }
 
 }

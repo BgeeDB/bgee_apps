@@ -12,6 +12,7 @@ import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
+import org.bgee.controller.exception.WrongFormatException;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
 import org.bgee.view.ViewFactoryProvider;
@@ -48,7 +49,7 @@ public class FrontController extends HttpServlet {
      * within the application
      */
     private final URLParameters urlParameters ;
-    
+
     /**
      * The {@code ViewFactoryProvider} instance that will provide the appropriate 
      * {@code ViewFactory} depending on the display type
@@ -105,6 +106,7 @@ public class FrontController extends HttpServlet {
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
             ViewFactoryProvider viewFactoryProvider) {
+        log.entry(prop, urlParameters, viewFactoryProvider);
         if(prop == null){
             // If the bgee prop object is null, just get the default instance from BgeeProperties
             this.prop = BgeeProperties.getBgeeProperties();
@@ -127,6 +129,7 @@ public class FrontController extends HttpServlet {
         else{
             this.viewFactoryProvider = viewFactoryProvider;
         }
+        log.exit();
     }
 
     /**
@@ -142,7 +145,6 @@ public class FrontController extends HttpServlet {
     public void doRequest(HttpServletRequest request, HttpServletResponse response, 
             boolean postData) { 
         log.entry(request, response, postData);
-
         //in order to display error message in catch clauses
         //we get  "fake" RequestParameters so that no exception is thrown already.
         RequestParameters requestParameters = new RequestParameters(
@@ -176,7 +178,7 @@ public class FrontController extends HttpServlet {
                 controller = new CommandHome(response, requestParameters, this.prop, factory);
             }
             controller.processRequest();
-        // Display the error pages
+            // Display the error pages
         } catch(RequestParametersNotFoundException e) {
             generalDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
                     this.urlParameters.getParamData()));
@@ -190,6 +192,9 @@ public class FrontController extends HttpServlet {
         } catch(MultipleValuesNotAllowedException e) {
             generalDisplay.displayMultipleParametersNotAllowed(e.getMessage());
             log.error("MultipleValuesNotAllowedException", e);
+        } catch(WrongFormatException e) {
+            generalDisplay.displayWrongFormat(e.getMessage());
+            log.error("WrongFormatException", e);
         } catch(Exception e) {
             if (generalDisplay != null) {
                 generalDisplay.displayUnexpectedError();
@@ -198,6 +203,7 @@ public class FrontController extends HttpServlet {
         } finally {
             //Database.destructAll();
         }
+        log.exit();
     }
 
     @Override

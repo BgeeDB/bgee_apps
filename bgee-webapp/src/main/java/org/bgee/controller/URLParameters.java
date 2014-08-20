@@ -355,6 +355,8 @@ public class URLParameters {
             this.maxSize = maxSize ;
             this.format = format ;
             this.type = type ;
+            
+            log.exit();
         }
 
         /**

@@ -32,6 +32,8 @@ import javax.servlet.http.Part;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class implements the {@code HttpServletRequest} for mainly two purposes: 
@@ -61,6 +63,8 @@ import org.apache.http.client.utils.URLEncodedUtils;
  */
 public class BgeeHttpServletRequest implements HttpServletRequest
 {
+    private final static Logger log = LogManager.getLogger(BgeeHttpServletRequest.class.getName());
+    
     /**
      * A regular query string, that will be used to load {@code parameterMap}, 
      * that will allow to simulate the behavior of {@code getParameterMap()}, 
@@ -132,6 +136,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
      * @param encoding 		a {@code String} representing the encoding to use while parsing the {@code queryString}
      */
     public BgeeHttpServletRequest(String queryString, String encoding) {
+        log.entry(queryString, encoding);
         try {
             this.setCharacterEncoding(encoding);
         } catch (UnsupportedEncodingException e) {
@@ -147,6 +152,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         } else {
             assert false: "Error, could not match query string: " + queryString;
         }
+        log.exit();
     }
 
     /**
@@ -158,8 +164,10 @@ public class BgeeHttpServletRequest implements HttpServletRequest
      */
     private void setQueryString(String queryString) 
     {
+        log.entry(queryString);
         this.queryString = queryString;
         this.loadParameterMap();
+        log.exit();
     }
 
     /**
@@ -172,6 +180,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
      */
     private void loadParameterMap()
     {
+        log.entry();
         this.parameterMap = new HashMap<String, String[]>();
         if (StringUtils.isBlank(this.queryString)){
             return;
@@ -202,6 +211,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         for (String key : mapOfLists.keySet()) {
             this.getParameterMap().put(key, mapOfLists.get(key).toArray(new String[] {}));
         }
+        log.exit();
     }
 
     /**
@@ -230,11 +240,12 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     @Override
     public String getParameter(String parameterName) 
     {
+        log.entry(parameterName);
         String[] values = this.getParameterValues(parameterName);
         if (values != null && values.length > 0) {
-            return values[0];
+            return log.exit(values[0]);
         }
-        return null;
+        return log.exit(null);
     }
 
     @Override

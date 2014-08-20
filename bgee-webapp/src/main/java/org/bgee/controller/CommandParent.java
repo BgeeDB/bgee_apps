@@ -5,6 +5,8 @@ import java.io.Writer;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.view.ViewFactory;
 
 /**
@@ -27,6 +29,9 @@ import org.bgee.view.ViewFactory;
  *
  */
 abstract class CommandParent {
+    
+    private final static Logger log = LogManager.getLogger(CommandParent.class.getName());
+
     /**
      * Concrete factory providing classes from the {@code view} package. 
      * This concrete factory implements the {@code ViewFactory} interface.
@@ -49,6 +54,7 @@ abstract class CommandParent {
     public CommandParent(HttpServletResponse response, 
             RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory)
     {
+        log.entry(response, requestParameters, prop, viewFactory);
         this.response = response;
         this.requestParameters = requestParameters;
         this.prop = prop;
@@ -56,6 +62,7 @@ abstract class CommandParent {
         this.serverRoot = prop.getBgeeRootDirectory();
         this.homePage   = prop.getBgeeRootDirectory();
         this.bgeeRoot   = prop.getBgeeRootDirectory();
+        log.exit();
     }
 
     /**
@@ -82,7 +89,8 @@ abstract class CommandParent {
      * @see 	FrontController#doRequest(HttpServletRequest, HttpServletResponse, boolean)
      */
     public boolean preprocessRequestAndCheckIfContinue() {
-        return false;
+        log.entry();
+        return log.exit(false);
     }
 
     /**

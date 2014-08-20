@@ -11,14 +11,11 @@ import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
 
 public class DsvFactory extends ViewFactory
-{
-    private String delimiter;
-	
+{	
 	public DsvFactory(HttpServletResponse response, String localDelimiter,
 	        RequestParameters requestParameters) 
 	{
 		super(response, requestParameters);
-		this.delimiter = localDelimiter;
 	}
 
 	@Override

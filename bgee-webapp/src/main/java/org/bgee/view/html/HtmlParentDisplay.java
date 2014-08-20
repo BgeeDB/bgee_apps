@@ -5,6 +5,8 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ConcreteDisplayParent;
@@ -12,6 +14,9 @@ import org.bgee.view.DisplayParentInterface;
 
 public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayParentInterface
 {
+    
+    private final static Logger log = LogManager.getLogger(HtmlParentDisplay.class.getName());
+    
 	private int uniqueId;
 	protected RequestParameters requestParameters;
 	protected final static String parametersSeparator = "&amp;";
@@ -25,21 +30,25 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 
 	protected int getUniqueId()
 	{
+	    log.entry();
 		//need to return 0 the first time this method is called;
 		int idToReturn = this.uniqueId;
 		this.uniqueId++;
-		return idToReturn;
+		return log.exit(idToReturn);
 	}
 
 	@Override
 	public void emptyDisplay()
 	{
+	    log.entry();
 		this.sendHeaders(true);
 		this.writeln("");
+		log.exit();
 	}
 	@Override
 	public void startDisplay(String page, String title)
 	{
+	    log.entry(page, title);
 		this.writeln("<!DOCTYPE html>");
 		this.writeln("<html lang='en'>");
 		this.writeln("<head>");
@@ -65,10 +74,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 		this.displayBgeeMenu();
 		this.writeln("<div id='bgee_top'><a id='TOP'></a></div>");
 		this.writeln("<div id='sib_container'>");
+		log.exit();
 	}
 
 	public void endDisplay()
 	{
+	    log.entry();
 		this.writeln("</div>");
 		this.writeln("<footer>");
 		this.writeln("<div id = 'sib_footer_content'>");
@@ -82,31 +93,33 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 		this.writeln("</div>");
 		this.writeln("</body>");
 		this.writeln("</html>");
+		log.exit();
 	}
 
-	// TODO move into BgeeStringUtils ??? 
 	public static String htmlEntities(String stringToWrite)
 	{
+	    log.entry(stringToWrite);
 		try {                            
-			// TODO check if new version, HTML5
-			return StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;");
+		    return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
 		} catch (Exception e) {
-			return "";
+			return log.exit("");
 		}
 	}
 
 	public String nl2br(String string)
 	{
+	    log.entry(string);
 		String localString = string;
 		localString = localString.replaceAll("\r\n", "\n");
 		localString = localString.replaceAll("\r",   "\n");    
 		localString = localString.replaceAll("\n",   "<br/>");
-		return localString;
+		return log.exit(localString);
 	}
 
 	@Override
 	public void sendHeaders(boolean ajax)
 	{
+	    log.exit(ajax);
 		if (this.response == null) {
 			return;
 		}
@@ -121,10 +134,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 			}
 			this.headersAlreadySent = true;
 		}
+		log.exit();
 	}
 
 	public void sendServiceUnavailableHeaders()
 	{
+	    log.entry();
 		if (this.response == null) {
 			return;
 		}
@@ -133,10 +148,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 			this.response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
 			this.headersAlreadySent = true;
 		}
+		log.exit();
 	}
 
 	protected void sendBadRequestHeaders()
 	{
+	    log.entry();
 		if (this.response == null) {
 			return;
 		}
@@ -145,10 +162,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 			this.response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			this.headersAlreadySent = true;
 		}
+		log.exit();
 	}
 
 	protected void sendPageNotFoundHeaders()
 	{
+	    log.entry();
 		if (this.response == null) {
 			return;
 		}
@@ -157,10 +176,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 			this.response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			this.headersAlreadySent = true;
 		}
+		log.exit();
 	}
 
 	protected void sendInternalErrorHeaders()
 	{
+	    log.entry();
 		if (this.response == null) {
 			return;
 		}
@@ -169,12 +190,14 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 			this.response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			this.headersAlreadySent = true;
 		}
+		log.exit();
 	}
 
 	public String urlEncode(String string)
 	{
+	    log.entry(string);
 		if (string == null) {
-			return null;
+			return log.exit(null);
 		}
 		String encodeString = string;
 		try {
@@ -184,21 +207,24 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 		} catch (Exception e) {
 
 		}
-		return encodeString;
+		return log.exit(encodeString);
 	}
 
 	protected String displayHelpLink(String cat, String display)
 	{
-		return "<span class='help'><a href='#' class='help|" + 
-				cat + "'>" + display + "</a></span>";
+	    log.entry(cat, display);
+		return log.exit("<span class='help'><a href='#' class='help|" + 
+				cat + "'>" + display + "</a></span>");
 	}
 	protected String displayHelpLink(String cat)
 	{
-		return this.displayHelpLink(cat, "[?]");
+	    log.entry(cat);
+		return log.exit(this.displayHelpLink(cat, "[?]"));
 	}
 
 	@Override
 	public void displayBgeeMenu() {
+	    log.entry();
 		this.writeln("<header>");
 
 		// Bgee logo
@@ -221,6 +247,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 				+ "</a>");
 
 		this.writeln("</header>");
+		log.exit();
 	}
 
 	protected void includeJs(){
@@ -228,8 +255,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 	}
 
 	protected void includeJs(String filename){
+	    log.entry(filename);
 		this.writeln("<script  type='text/javascript' src='"+
 				this.prop.getJavascriptFilesRootDirectory()+filename+"'></script>");
+		log.exit();
 	}
 
 	protected void includeCss(){
@@ -237,8 +266,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
 	}
 
 	protected void includeCss(String filename){
+	    log.entry(filename);
 		this.writeln("<link rel='stylesheet' type='text/css' href='"
 				+ this.prop.getCssFilesRootDirectory() + filename + "'/>");
+		log.exit();
 	}
 
 }

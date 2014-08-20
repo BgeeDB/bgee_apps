@@ -36,4 +36,8 @@ public interface GeneralDisplay extends DisplayParentInterface
      * Display an error message when the number of parameters is not correct
      */
     public void displayRequestParametersNotStorable(String message);
+    /**
+     * Display an error message when the format of parameters is not correct
+     */
+    public void displayWrongFormat(String message);
 }

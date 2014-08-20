@@ -7,6 +7,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DownloadDisplay;
@@ -14,7 +16,10 @@ import org.bgee.view.DownloadDisplay;
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay
 {
  
-    public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop) throws IOException
+    private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
+    
+    public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, 
+            BgeeProperties prop) throws IOException
     {
         super(response,requestParameters, prop);
     }
@@ -22,6 +27,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     @Override
     public void displayDownloadPage()
     {
+        log.entry();
         this.startDisplay("download", "Bgee release 13 download page");
 
         this.writeln("<div id='sib_body'>");
@@ -148,6 +154,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         // 
         this.endDisplay();
+        log.exit();
     }
     
     /**
@@ -160,7 +167,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                     provided {@code int} of a species ID.
      */
     private String generateSpeciesFigure(int speciesId) {
-        return generateSpeciesFigure(Arrays.asList(speciesId), null, false);
+        log.entry(speciesId);
+        return log.exit(generateSpeciesFigure(Arrays.asList(speciesId), null, false));
     }
     
     /**
@@ -178,6 +186,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption, 
             boolean isGroup) {
+        log.entry(speciesIds, figcaption, isGroup);
         StringBuilder images = new StringBuilder();
         if (speciesIds == null || speciesIds.size() == 0) {
             return ("");
@@ -335,7 +344,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         figure.append(figcaption);
         figure.append("</figcaption>");
         figure.append("</figure>");
-        return (figure.toString());
+        return log.exit(figure.toString());
     }
     
     /**
@@ -353,6 +362,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String generateSpeciesImg(int id, String name, String shortName, 
             String commonName, String alternateNames, boolean lightImg) {
+        log.entry(id, name, shortName, commonName, alternateNames, lightImg);
         StringBuilder image = new StringBuilder();
         image.append("<img src='");
         image.append(this.prop.getImagesRootDirectory());
@@ -374,16 +384,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         image.append("' data-bgeespeciesalternatenames='");
         image.append(alternateNames);
         image.append("' />");
-        return (image.toString());
+        return log.exit(image.toString());
     }
 
     @Override
     public void includeJs()
     {
+        log.entry();
         this.includeJs("jquery.min.js");
         this.includeJs("jquery.visible.js");
         this.includeJs("jquery-ui.min.js");
         this.includeJs("download.js");
+        log.exit();
     }
 }
 

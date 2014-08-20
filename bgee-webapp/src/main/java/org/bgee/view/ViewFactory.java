@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 
@@ -24,6 +26,9 @@ import org.bgee.controller.RequestParameters;
  */
 public abstract class ViewFactory
 {
+    
+    private final static Logger log = LogManager.getLogger(ViewFactory.class.getName());
+    
     /**
      * The {@code HttpServletResponse} used to return the result to the client
      */
@@ -46,8 +51,10 @@ public abstract class ViewFactory
      */
     public ViewFactory(HttpServletResponse response, RequestParameters requestParameters)
     {
+        log.entry(response, requestParameters);
         this.response = response;
         this.requestParameters = requestParameters;
+        log.exit();
     }
 
     /**

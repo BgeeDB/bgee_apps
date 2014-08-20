@@ -12,6 +12,7 @@ import java.util.List;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
+import org.bgee.controller.exception.WrongFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -73,10 +74,11 @@ public class RequestParametersTest {
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
+     * @throws WrongFormatException 
      */
     @Before
     public void loadMockRequest() throws RequestParametersNotFoundException,
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException{
+    RequestParametersNotStorableException, MultipleValuesNotAllowedException, WrongFormatException{
 
         mockHttpServletRequest = mock(BgeeHttpServletRequest.class);
 
@@ -126,10 +128,11 @@ public class RequestParametersTest {
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
+     * @throws WrongFormatException 
      */
     @Test
     public void testgetRequestURL() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException, RequestParametersNotFoundException{
+    MultipleValuesNotAllowedException, RequestParametersNotFoundException, WrongFormatException{
 
         // Check that the query returned corresponds to the parameters declared in
         // the mockHttpServletRequest.
@@ -246,10 +249,11 @@ public class RequestParametersTest {
      * Test addValue()
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
+     * @throws WrongFormatException 
      */
     @Test
     public void testAddValue() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException {
+    MultipleValuesNotAllowedException, WrongFormatException {
 
         // Add two values and check that they are there
         this.requestParametersWithNoKey.addValue(
@@ -283,10 +287,11 @@ public class RequestParametersTest {
      * Test addValue() with too much values
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
+     * @throws WrongFormatException 
      */
     @Test (expected=MultipleValuesNotAllowedException.class)
     public void testAddTooMuchValue() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException {
+    MultipleValuesNotAllowedException, WrongFormatException {
 
         // Try to add to much param when it is not allowed,
         // i.e test_string does not allow multiple values => exception
@@ -400,10 +405,11 @@ public class RequestParametersTest {
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
+     * @throws WrongFormatException 
      */
     @Test (expected=MultipleValuesNotAllowedException.class)
     public void testLoadTooMuchValue() throws RequestParametersNotFoundException,
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException{
+    RequestParametersNotStorableException, MultipleValuesNotAllowedException, WrongFormatException{
 
         // This is actually the forth time a request parameter is instantiated
         // for this test => see the @before loadMockRequest, thus it tries to load 
@@ -420,10 +426,11 @@ public class RequestParametersTest {
      * @throws RequestParametersNotStorableException 
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotFoundException 
+     * @throws WrongFormatException 
      */
-    @Test
+    @Test (expected=WrongFormatException.class)
     public void testLoadWrongFormatValue() throws MultipleValuesNotAllowedException, 
-    RequestParametersNotStorableException, RequestParametersNotFoundException{
+    RequestParametersNotStorableException, RequestParametersNotFoundException, WrongFormatException{
 
         // Load the forth instance of RequestParameters that is used in
         // testLoadTooMuchValue and just ignore the exception that is not
@@ -440,16 +447,11 @@ public class RequestParametersTest {
 
         // This is the forth time a request parameter is instantiated
         // for this test => see the @before loadMockRequest, thus it tries to load 
-        // a wrong params for test_string (STRING1) => null
+        // a wrong params for test_string (STRING1) => exception
 
-        RequestParameters rp = new RequestParameters(
+        new RequestParameters(
                 this.mockHttpServletRequest,
                 RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
-
-        assertNull("An unauthorized value has been added",
-                rp.getFirstValue(
-                        testURLParameters.getParamTestString())
-                );
 
     }
 
@@ -458,24 +460,19 @@ public class RequestParametersTest {
      * accepted 
      * @throws RequestParametersNotStorableException 
      * @throws MultipleValuesNotAllowedException 
+     * @throws WrongFormatException 
      */
-    @Test
+    @Test (expected=WrongFormatException.class)
     public void testAddWrongFormatValue() throws MultipleValuesNotAllowedException, 
-    RequestParametersNotStorableException{
+    RequestParametersNotStorableException, WrongFormatException{
 
-        // test_string does not accept upper case
+        // test_string does not accept upper case => exception
 
         this.requestParametersWithNoKey.resetValues(
                 testURLParameters.getParamTestString());
 
         this.requestParametersWithNoKey.addValue(
                 testURLParameters.getParamTestString(),"STRING1");
-
-        assertNull("An unauthorized value has been added",
-                this.requestParametersWithNoKey.getFirstValue(
-                        testURLParameters.getParamTestString())
-                );
-
 
     }
 

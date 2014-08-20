@@ -23,6 +23,7 @@ import org.bgee.controller.URLParameters.Parameter;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
+import org.bgee.controller.exception.WrongFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.controller.utils.BgeeStringUtils;
 
@@ -154,7 +155,7 @@ public class RequestParameters {
         try {
             this.constructor(request);
         } catch (RequestParametersNotFoundException | RequestParametersNotStorableException | 
-                MultipleValuesNotAllowedException e) {
+                MultipleValuesNotAllowedException | WrongFormatException e) {
             //here we do nothing, 
             //because we provide a "blank" HttpServletRequest, so none of the declared exception
             //is expected
@@ -196,11 +197,15 @@ public class RequestParameters {
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
+     *                                                  
+     * @throws WrongFormatException                     The value in the {@code request} does not
+     *                                                  fit the format requirement for related
+     *                                                  {@link URLParameters.Parameter}
      */
     public RequestParameters(HttpServletRequest request, URLParameters URLParametersInstance,
             BgeeProperties prop)
                     throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
-                    MultipleValuesNotAllowedException {
+                    MultipleValuesNotAllowedException, WrongFormatException {
         log.entry(request, URLParametersInstance, prop);
 
         // set the properties and then call the constructor method.
@@ -236,11 +241,15 @@ public class RequestParameters {
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
      *                                                  
+     * @throws WrongFormatException                     The value in the {@code request} does not
+     *                                                  fit the format requirement for related
+     *                                                  {@link URLParameters.Parameter}
+     *                                                  
      * @see #RequestParameters(URLParameters, BgeeProperties)
      * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeProperties)
      */
     private void constructor(HttpServletRequest request) throws RequestParametersNotFoundException,
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException{
+    RequestParametersNotStorableException, MultipleValuesNotAllowedException, WrongFormatException{
         log.entry(request);
 
         this.loadParameters(request);
@@ -276,13 +285,17 @@ public class RequestParameters {
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
+     *                                                  
+     * @throws WrongFormatException                     The value in the {@code request} does not
+     *                                                  fit the format requirement for related
+     *                                                  {@link URLParameters.Parameter}
      * 
      * @see #loadParametersFromRequest
      * @see #loadStorableParametersFromKey
      */
     private void loadParameters(HttpServletRequest request) 
             throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
-            MultipleValuesNotAllowedException{
+            MultipleValuesNotAllowedException, WrongFormatException{
         log.entry(request);
 
         //Get the key
@@ -326,12 +339,16 @@ public class RequestParameters {
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
+     *                                                  
+     * @throws WrongFormatException                     The value in the {@code request} does not
+     *                                                  fit the format requirement for related
+     *                                                  {@link URLParameters.Parameter}
      * 
      * @see #loadStorableParametersFromKey
      * @see #loadParameters
      */
     private void loadParametersFromRequest(HttpServletRequest request, boolean loadStorable) 
-            throws MultipleValuesNotAllowedException {
+            throws MultipleValuesNotAllowedException, WrongFormatException {
         log.entry(request, loadStorable);
 
         // Browse all available parameters
@@ -351,8 +368,12 @@ public class RequestParameters {
                         // Convert the string values into the appropriate type and add it to
                         // the list
                         // First secure the string
-                        valueFromUrl = BgeeStringUtils.secureString(valueFromUrl, 
-                                parameter.getMaxSize(), parameter.getFormat());
+                        try {
+                            valueFromUrl = BgeeStringUtils.secureString(valueFromUrl, 
+                                    parameter.getMaxSize(), parameter.getFormat());
+                        } catch (WrongFormatException e) {
+                            throw new WrongFormatException(parameter.getName());
+                        }
                         if(parameter.getType().equals(String.class)){
                             parameterValues.add(valueFromUrl);
                         } else if(parameter.getType().equals(Integer.class)){
@@ -385,13 +406,16 @@ public class RequestParameters {
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
+     * @throws WrongFormatException                     The value in the {@code request} does not
+     *                                                  fit the format requirement for related
+     *                                                  {@link URLParameters.Parameter}
      * 
      * @see #loadParameters
      * @see #loadParametersFromRequest
      * 
      */
     private void loadStorableParametersFromKey(String key) throws IOException, 
-    MultipleValuesNotAllowedException {
+    MultipleValuesNotAllowedException, WrongFormatException {
         log.entry(key);
 
         ReentrantReadWriteLock lock = this.getReadWriteLock(key);
@@ -713,7 +737,8 @@ public class RequestParameters {
             try {
                 this.addValue(this.getKeyParam(), 
                         DigestUtils.sha1Hex(urlFragment.toLowerCase(Locale.ENGLISH)));
-            } catch (MultipleValuesNotAllowedException | RequestParametersNotStorableException e) {
+            } catch (MultipleValuesNotAllowedException | RequestParametersNotStorableException
+                    | WrongFormatException e) {
                 // In this particular case, should never be thrown.
                 assert false: "Unreachable code reached in generateKey";
             }
@@ -841,10 +866,14 @@ public class RequestParameters {
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
      *                                                  that does not allow multiple values.
+     *                                                  
+     * @throws WrongFormatException                     The value in the {@code request} does not
+     *                                                  fit the format requirement for related
+     *                                                  {@link URLParameters.Parameter}
      */    
     @SuppressWarnings("unchecked")
     public <T> void addValue(URLParameters.Parameter<T> parameter, T value) 
-            throws MultipleValuesNotAllowedException, RequestParametersNotStorableException {
+            throws MultipleValuesNotAllowedException, RequestParametersNotStorableException, WrongFormatException {
         log.entry(parameter,value);
 
         // Secure the value
@@ -913,7 +942,7 @@ public class RequestParameters {
                     this.URLParametersInstance.getClass().newInstance(),this.prop);
         } catch ( RequestParametersNotFoundException
                 | RequestParametersNotStorableException
-                | MultipleValuesNotAllowedException e) {
+                | MultipleValuesNotAllowedException | WrongFormatException e) {
             // In this particular case, should never be thrown.
             assert false: "Unreachable code reached in cloneWithAllParameters";
         } catch (InstantiationException | IllegalAccessException e) {
@@ -959,11 +988,10 @@ public class RequestParameters {
                 | MultipleValuesNotAllowedException e) {
             // In this particular case, should never be thrown.
             assert false: "Unreachable code reached in cloneWithStorableParameters";
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException | WrongFormatException e) {
             // Do nothing but log the event
             log.throwing(e);
         }
-
         return log.exit(clonedRequestParameters);
     }
 

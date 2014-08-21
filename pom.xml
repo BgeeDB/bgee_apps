@@ -439,13 +439,13 @@
 							<bgee.database.test.select.name>
 								${bgee.database.test.select.name}
 							</bgee.database.test.select.name>
-                            <!-- Name of the name of the store procedure that should be used to
-                             populate SELECT/INSERT/UPDATE databases -->
+                            <!-- Name of the store procedure that should be used to populate
+                              SELECT and INSERT/UPDATE databases -->
 							<bgee.database.test.populate.db.procedure.name>
 								${bgee.database.test.populate.db.procedure.name}
 							</bgee.database.test.populate.db.procedure.name>
-                            <!-- Name of the name of the store procedure that should be used to
-                             populate SELECT/INSERT/UPDATE databases -->
+                            <!-- Name of the store procedure that should be used to empty
+                              SELECT and INSERT/UPDATE databases -->
 							<bgee.database.test.empty.table.procedure.name>
 								${bgee.database.test.empty.table.procedure.name}
 							</bgee.database.test.empty.table.procedure.name>

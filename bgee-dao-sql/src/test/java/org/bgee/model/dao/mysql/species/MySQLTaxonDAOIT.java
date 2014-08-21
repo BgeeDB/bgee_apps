@@ -30,12 +30,6 @@ import org.junit.Test;
 public class MySQLTaxonDAOIT extends MySQLITAncestor {
     private final static Logger log = LogManager.getLogger(MySQLTaxonDAOIT.class.getName());
     
-    /**
-     * A {@code String} that is the name of the table into which data are inserted 
-     * during testing of {@link MySQLTaxonDAO} methods inserting data.
-     */
-    private final static String INSERTTABLENAME = "taxon";
-    
     public MySQLTaxonDAOIT() {
         super();
     }
@@ -100,7 +94,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
         } finally {
-            this.deleteFromTableAndUseDefaultDB(INSERTTABLENAME);
+            this.emptyAndUseDefaultDB();
         }
     }
     

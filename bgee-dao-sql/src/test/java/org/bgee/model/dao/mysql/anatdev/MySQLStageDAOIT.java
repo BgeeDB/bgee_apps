@@ -25,13 +25,7 @@ import org.junit.Test;
  */
 public class MySQLStageDAOIT extends MySQLITAncestor {
     private final static Logger log = LogManager.getLogger(MySQLStageDAOIT.class.getName());
-    
-    /**
-     * A {@code String} that is the name of the table into which data are inserted 
-     * during testing of {@link MySQLStageDAO} methods inserting data.
-     */
-    private final static String INSERT_TABLE_NAME = "stage";
-    
+        
     public MySQLStageDAOIT() {
         super();
     }
@@ -99,7 +93,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
         } finally {
-            this.deleteFromTableAndUseDefaultDB(INSERT_TABLE_NAME);
+            this.emptyAndUseDefaultDB();
         }
     }
 }

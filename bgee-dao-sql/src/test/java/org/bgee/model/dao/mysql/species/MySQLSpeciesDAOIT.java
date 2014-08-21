@@ -29,12 +29,6 @@ import org.junit.Test;
 public class MySQLSpeciesDAOIT extends MySQLITAncestor {
     private final static Logger log = LogManager.getLogger(MySQLSpeciesDAOIT.class.getName());
     
-    /**
-     * A {@code String} that is the name of the table into which data are inserted 
-     * during testing of {@link MySQLSpeciesDAO} methods inserting data.
-     */
-    private final static String INSERTTABLENAME = "species";
-    
     public MySQLSpeciesDAOIT() {
         super();
     }
@@ -105,7 +99,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
         } finally {
-            this.deleteFromTableAndUseDefaultDB(INSERTTABLENAME);
+            this.emptyAndUseDefaultDB();
         }
     }
     

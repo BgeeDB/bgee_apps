@@ -1,11 +1,6 @@
 package org.bgee.model.dao.mysql;
 
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -36,7 +31,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * the name of the test database populated with test data, to run integration tests 
  * of SELECT statements. 
  * <li>Property associated to the key {@link #POPULATEPROCEDUREKEY} to specify 
- * the name of the store procedure that should be used to populate SELECT/UPDATE
+ * the name of the store procedure that should be used to populate SELECT and INSERT/UPDATE
  * databases, to run integration tests of SELECT/UPDATE statements. 
  * <li>Property associated to the key {@link #EMPTYDBKEY} to specify 
  * the name of the empty test database, used to run independent integration tests 
@@ -197,54 +192,6 @@ public abstract class MySQLITAncestor extends TestAncestor{
     }
 
     /**
-     * Delete all rows from the table named {@code tableName} in the database currently 
-     * used, and configure the {@code DAOManager} to stop using this database and to use 
-     * the default database specified by the JDBC connection URL, if any.
-     * 
-     * @param tablebName      A {@code String} that is the name of the table 
-     *                        to delete data from.
-     * @throws SQLException   If an error occurs while deleting the database.
-     */
-    protected void deleteFromTableAndUseDefaultDB(String tableName) throws SQLException {
-        log.entry(tableName);
-
-        this.deleteFromTablesAndUseDefaultDB(Arrays.asList(tableName));
-        
-        log.exit();
-    }
-    
-    /**
-     * Delete all rows from the tables in {@code tableNames} in the database currently 
-     * used, and configure the {@code DAOManager} to stop using this database and to use
-     * the default database specified by the JDBC connection URL, if any. The names of 
-     * the tables are ordered according to the order tables should be emptied 
-     * (it is important because of foreign key constraints).
-     * 
-     * @param tablebNames     A {@code List} of {@code String}s that are the names 
-     *                        of the tables to delete data from, in the order they 
-     *                        should be deleted.
-     * @throws SQLException   If an error occurs while deleting the database.
-     */
-    protected void deleteFromTablesAndUseDefaultDB(List<String> tableNames) 
-            throws SQLException {
-        log.entry(tableNames);
-        
-        for (String tableName: tableNames) {
-            BgeeConnection con = this.getMySQLDAOManager().getConnection();
-            try (BgeeCallableStatement callStmt = con.prepareCall(
-                    "{call " + System.getProperty(EMPTYPROCEDUREKEY) + "(?)}")) {
-                callStmt.setString(1, tableName);
-                callStmt.executeUpdate();
-            }
-            con.close();
-        }
-        
-        this.getMySQLDAOManager().setDatabaseToUse(null);
-        
-        log.exit();
-    }
-    
-    /**
      * Create an instance of the Bgee database with the name {@code dbName}, and configure  
      * the {@code DAOManager} to use this database. The path to the file containing 
      * the Bgee schema should be provided in a System property associated to the key 
@@ -315,12 +262,10 @@ public abstract class MySQLITAncestor extends TestAncestor{
         try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                 prepareStatement("select 1 from dataSource")) {
             if (!stmt.getRealPreparedStatement().executeQuery().next()) {
-                BgeeConnection con = this.getMySQLDAOManager().getConnection();
-                try (BgeeCallableStatement callStmt = con.prepareCall(
-                        "{call " + System.getProperty(POPULATEPROCEDUREKEY) + "()}")) {
+                try (BgeeCallableStatement callStmt = this.getMySQLDAOManager().getConnection().
+                        prepareCall("{call " + System.getProperty(POPULATEPROCEDUREKEY) + "()}")) {
                     callStmt.executeUpdate();
                 }
-                con.close();
             }
         }
         log.exit();
@@ -337,17 +282,11 @@ public abstract class MySQLITAncestor extends TestAncestor{
     protected void emptyAndUseDefaultDB() throws SQLException {
         log.entry();
 
-        BgeeConnection con = this.getMySQLDAOManager().getConnection();
-        DatabaseMetaData meta = con.getRealConnection().getMetaData();
-        ResultSet res = meta.getTables(null, null, null, new String[] {"TABLE"});
-        List<String> tableNames = new ArrayList<>();
-        while (res.next()) {
-            tableNames.add(res.getString("TABLE_NAME"));
+        try (BgeeCallableStatement callStmt = this.getMySQLDAOManager().getConnection().prepareCall(
+                "{call " + System.getProperty(EMPTYPROCEDUREKEY) + "()}")) {
+            callStmt.executeUpdate();
         }
-        res.close();
-        con.close();
-        this.deleteFromTablesAndUseDefaultDB(tableNames);
-        
+
         this.getMySQLDAOManager().setDatabaseToUse(null);
         
         log.exit();

@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,20 +24,13 @@ import org.junit.Test;
  * important information.
  * 
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @since Bgee 13
  */
 public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
     private final static Logger log = LogManager.getLogger(MySQLGeneOntologyDAO.class.getName());
-    
-    /**
-     * A {@code List} of {@code String}s that are the names of the tables into which data 
-     * are inserted during testing of {@link MySQLGeneOntologyDAO} methods inserting data. 
-     * They are ordered according to the order tables should be emptied. 
-     */
-    private final static List<String> INSERTTABLENAMES = 
-            Arrays.asList("geneOntologyTerm", "geneOntologyTermAltId", "geneOntologyRelation");
-    
+        
     public MySQLGeneOntologyDAOIT() {
         super();
     }
@@ -124,7 +116,7 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
             }
             
         } finally {
-            this.deleteFromTablesAndUseDefaultDB(INSERTTABLENAMES);
+            this.emptyAndUseDefaultDB();
         }
     }
     
@@ -168,7 +160,7 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
             }
             
         } finally {
-            this.deleteFromTablesAndUseDefaultDB(INSERTTABLENAMES);
+            this.emptyAndUseDefaultDB();
         }
     }
 }

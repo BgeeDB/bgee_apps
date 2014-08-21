@@ -2,9 +2,7 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,15 +27,7 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
     protected Logger getLogger() {
         return log;
     }
-    
-    /**
-     * A {@code List} of {@code String}s that are the names of the tables into which data 
-     * are inserted during testing of {@link MySQLHierarchicalGroupDAO} methods inserting data. 
-     * They are ordered according to the order tables should be emptied. 
-     */
-    private final static List<String> INSERTTABLENAMES = 
-            Arrays.asList("OMAHierarchicalGroup");
-    
+        
     /**
      * Test the select method {@link MySQLHierarchicalGroupDAO#insertHierarchicalGroups()}.
      */
@@ -93,7 +83,7 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
         } finally {
-            this.deleteFromTablesAndUseDefaultDB(INSERTTABLENAMES);
+            this.emptyAndUseDefaultDB();
         }
 	}
 }

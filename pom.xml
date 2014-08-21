@@ -104,9 +104,9 @@
 		<bgee.database.test.insert.name>bgeeIntegrationTest_insert</bgee.database.test.insert.name>
 
 		<!-- here, we provide the name of the store procedures that should be used to
-			populate or emty SELECT/INSERT/UPDATE databases with test data for integration
-            tests of SELECT/INSERT/UPDATE statements (the database will be populated by
-            calling the procedure by the Java application). -->
+			populate or empty SELECT and INSERT/UPDATE databases with test data for integration
+			tests of SELECT/INSERT/UPDATE statements (the database will be populated by
+			calling the procedure by the Java application). -->
 		<bgee.database.test.populate.db.procedure.name>populateTestDBs</bgee.database.test.populate.db.procedure.name>
 		<bgee.database.test.empty.table.procedure.name>emptyTestDBs</bgee.database.test.empty.table.procedure.name>
 
@@ -127,12 +127,9 @@
 
 		<!-- Here we provide the path to a SQL file defining and calling a procedure 
 			to drop all databases used for integration tests. -->
-		<bgee.database.file.populate.db.procedure>
-			${basedir}/src/test/resources/sql/testPopulateDBProcedure.sql
-		</bgee.database.file.populate.db.procedure>
-		<bgee.database.file.empty.table.procedure>
-			${basedir}/src/test/resources/sql/testEmptyTableProcedure.sql
-		</bgee.database.file.empty.table.procedure>
+		<bgee.database.test.data.test.procedures.name>
+			${basedir}/src/test/resources/sql/testDataProcedures.sql
+		</bgee.database.test.data.test.procedures.name>
 		<bgee.database.file.drop.procedure>
 			${basedir}/src/test/resources/sql/dropTestDatabases.sql
 		</bgee.database.file.drop.procedure>
@@ -434,23 +431,22 @@
 							<!-- The connection URL is modified to use log4jdbc-log4j2 -->
 							<bgee.dao.jdbc.url>jdbc:log4${bgee.jdbc.connectionURL}</bgee.dao.jdbc.url>
 
-							<!-- Name of the database populated with test data for test of SELECT 
+							<!-- Name of the database to populate with test data for test of SELECT 
 								statements -->
 							<bgee.database.test.select.name>
 								${bgee.database.test.select.name}
 							</bgee.database.test.select.name>
-                            <!-- Name of the store procedure that should be used to populate
-                              SELECT and INSERT/UPDATE databases -->
+							<!-- Name of the store procedures that should be used to populate or 
+							  empty SELECT and INSERT/UPDATE databases -->
 							<bgee.database.test.populate.db.procedure.name>
-								${bgee.database.test.populate.db.procedure.name}
-							</bgee.database.test.populate.db.procedure.name>
-                            <!-- Name of the store procedure that should be used to empty
-                              SELECT and INSERT/UPDATE databases -->
+                                ${bgee.database.test.populate.db.procedure.name}
+                            </bgee.database.test.populate.db.procedure.name>
 							<bgee.database.test.empty.table.procedure.name>
-								${bgee.database.test.empty.table.procedure.name}
-							</bgee.database.test.empty.table.procedure.name>
+                                ${bgee.database.test.empty.table.procedure.name}
+                            </bgee.database.test.empty.table.procedure.name>
+
 							<!-- Name of the empty database used for testing of independent INSERT
-								statements -->
+								statements or to populate for testing UPDATE statements-->
 							<bgee.database.test.insert.name>
 								${bgee.database.test.insert.name}
 							</bgee.database.test.insert.name>
@@ -563,9 +559,9 @@
 								</srcFiles>
 							</configuration>
 						</execution>
-                        <!-- Create the strore procedure used to test SELECT with the name
-                         ${bgee.database.test.insert.name}. We do not create it at the same
-                         time as insertion of tables, because we need the delimiterType.-->
+						<!-- Create the strore procedures used to test INSERT and UPDATE statements 
+						 with the name ${bgee.database.test.insert.name}. We do not create it at the
+						 same time as insertion of tables, because we need the delimiterType.-->
 						<execution>
 							<id>pre-integration-test-add-procedure-insert-db</id>
 							<phase>pre-integration-test</phase>
@@ -579,8 +575,7 @@
 								<autocommit>true</autocommit>
 								<delimiterType>row</delimiterType>
 								<srcFiles>
-									<srcFile>${bgee.database.file.populate.db.procedure}</srcFile>
-									<srcFile>${bgee.database.file.empty.table.procedure}</srcFile>
+									<srcFile>${bgee.database.test.data.test.procedures.name}</srcFile>
 								</srcFiles>
 							</configuration>
 						</execution>
@@ -631,11 +626,10 @@
 							</configuration>
 						</execution>
 						
-						<!-- Create the strore procedure used to test SELECT with the name 
-                            ${bgee.database.test.select.name}. We do not create it at the
-                            same time as creation of tables and constraints, because we
-                            need the delimiterType. See the documentation of the property 
-                            ${bgee.database.test.select.name} for more details. -->
+						<!-- Create the strore procedures used to test SELECT statements with the 
+							name ${bgee.database.test.select.name}. We do not create it at the
+							same time as creation of tables and constraints, because we
+							need the delimiterType -->
 						<execution>
 							<id>pre-integration-test-add-procedure-select-db</id>
 							<phase>pre-integration-test</phase>
@@ -649,7 +643,7 @@
 								<autocommit>true</autocommit>
 								<delimiterType>row</delimiterType>
 								<srcFiles>
-									<srcFile>${bgee.database.file.populate.db.procedure}</srcFile>
+									<srcFile>${bgee.database.test.data.test.procedures.name}</srcFile>
 								</srcFiles>
 							</configuration>
 						</execution>

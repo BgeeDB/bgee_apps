@@ -48,9 +48,24 @@ abstract class CommandParent {
     protected String homePage;
     protected String bgeeRoot;
 
+    /**
+     * A {@code BgeeProperties} instance that contains the properties
+     * to use.
+     */
     protected BgeeProperties prop;
 
-
+    /**
+     * Constructor
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     *                          page to the client
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     *                          current request.
+     * @param prop              A {@code BgeeProperties} instance that contains the properties
+     *                          to use.
+     * @param viewFactory       A {@code ViewFactory} that provides the display for the correct
+     *                          {@code displayTypes}
+     */
     public CommandParent(HttpServletResponse response, 
             RequestParameters requestParameters, BgeeProperties prop, ViewFactory viewFactory)
     {
@@ -106,11 +121,17 @@ abstract class CommandParent {
      */
     public abstract void processRequest() throws Exception;
 
+    /**
+     * Method that is called in case of HTTP 404 error
+     */
     protected void pageNotFound()
     {
 
     }
 
+    /**
+     * Method that is called in case of HTTP 500 error
+     */
     protected void failedRequest()
     {
 

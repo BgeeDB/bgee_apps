@@ -3,7 +3,7 @@
     xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
     version="2.4">
 
-    <!--  Deployement descriptor for Bgee webapp -->
+    <!-- Deployement descriptor for Bgee webapp -->
     <display-name>BGee: a dataBase for Gene Expression Evolution</display-name>
     <description>
       BGee is a database to compare gene expression patterns
@@ -12,7 +12,7 @@
       ontologies, and designing homology links across these
       ontologies to allow species comparison.
     </description>
-    
+
     <!-- Main servlet -->
     <servlet>
         <display-name>Bgee</display-name>
@@ -21,10 +21,21 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
-    <!-- Map the servlet to the root -->
+    <!-- Map FrontController to the root -->
     <servlet-mapping>
         <servlet-name>FrontController</servlet-name>
         <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!-- Map FrontController to the dynamically generated javascripts -->
+    <servlet-mapping>
+        <servlet-name>FrontController</servlet-name>
+        <url-pattern>/js/bgeeproperties.js</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>FrontController</servlet-name>
+        <url-pattern>/js/urlparameters.js</url-pattern>
     </servlet-mapping>
 
     <!-- Use the default servlet to serve static image, css, js -->

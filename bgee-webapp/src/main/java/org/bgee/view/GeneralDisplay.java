@@ -1,6 +1,13 @@
 package org.bgee.view;
 
-
+/**
+ * Interface that defines the methods a display for the general category (i.e. page= nothing 
+ * that corresponds to another category) has to implements
+ * 
+ * @author  Mathieu Seppey
+ * @version Bgee 13 Aug 2014
+ * @since   Bgee 1
+ */
 public interface GeneralDisplay extends DisplayParentInterface
 {
     public void displayAbout();

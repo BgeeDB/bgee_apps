@@ -22,12 +22,30 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
     private final static Logger log = LogManager.getLogger(HtmlGeneralDisplay.class.getName());
 
+    /**
+     * Constructor
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     *                          page to the client
+     *                          
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     *                          current request.
+     *                          
+     * @param prop              A {@code BgeeProperties} instance that contains the properties
+     *                          to use.
+     * 
+     * @throws IOException      If there is an issue when trying to get or to use the
+     *                          {@code PrintWriter} 
+     */
     public HtmlGeneralDisplay(HttpServletResponse response, RequestParameters requestParameters,
             BgeeProperties prop) throws IOException
     {
         super(response, requestParameters, prop);
     }
 
+    /**
+     * Display the output expected in the case of a HTTP error 503
+     */
     public void serviceUnavailable()
     {
         log.entry();
@@ -44,6 +62,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.exit();
     }
 
+    /**
+     * Display the home page
+     */
     public void displayHomePage() 
     {
         log.entry();

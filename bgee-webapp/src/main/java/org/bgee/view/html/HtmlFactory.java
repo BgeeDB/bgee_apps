@@ -12,11 +12,26 @@ import org.bgee.view.DownloadDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
 
-
+/**
+ * {@code ViewFactory} that returns all displays for the {@code displayTypes} HTML
+ * 
+ * @author  Mathieu Seppey
+ * @version Bgee 13 Aug 2014
+ * @since   Bgee 13
+ */
 public class HtmlFactory extends ViewFactory
 {
     private final static Logger log = LogManager.getLogger(HtmlFactory.class.getName());
     
+    /**
+     * Constructor 
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the page to 
+     *                          the client
+     *                          
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     *                          current request.
+     */
 	public HtmlFactory(HttpServletResponse response, RequestParameters requestParameters)
     {
     	super(response, requestParameters);

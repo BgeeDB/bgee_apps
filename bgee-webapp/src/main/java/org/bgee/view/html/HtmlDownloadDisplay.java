@@ -13,11 +13,33 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.DownloadDisplay;
 
+/**
+ * This class displays the page having the category "download", i.e. with the parameter
+ * page=download for the {@code displayTypes} HTML
+ * 
+ * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
+ * @version Bgee 13 Aug 2014
+ * @since   Bgee 13
+ */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay
 {
  
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
     
+    /**
+     * Constructor
+     * 
+     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     *                          page to the client
+     * @param requestParameters The {@code RequestParameters} handling the parameters of the 
+     *                          current request, to determine the requested displayType, 
+     *                          and for display purposes.
+     * @param prop              A {@code BgeeProperties} instance that contains the properties
+     *                          to use.
+     * @throws IOException      If there is an issue when trying to get or to use the
+     *                          {@code PrintWriter} 
+     */
     public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop) throws IOException
     {

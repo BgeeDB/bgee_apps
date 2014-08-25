@@ -169,12 +169,14 @@ public class FrontController extends HttpServlet {
             // if no exception was thrown yet
             factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             CommandParent controller = null;
-            // call the correct controller depending on the page type
-            if (requestParameters.isADownloadPageCategory()) {
+            // Call the correct controller depending on the page type   
+            if(requestParameters.isAJavascriptFile()){
+                controller = new CommandJavascript(response, requestParameters, this.prop,factory);
+            }
+            else if (requestParameters.isADownloadPageCategory()) {
                 controller = new CommandDownload(response, requestParameters, this.prop, factory);
             }
-
-            if (controller == null) {
+            else if (controller == null) {
                 controller = new CommandHome(response, requestParameters, this.prop, factory);
             }
             controller.processRequest();

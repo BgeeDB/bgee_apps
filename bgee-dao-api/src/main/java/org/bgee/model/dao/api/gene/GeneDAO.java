@@ -109,7 +109,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
 
         /**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
-         * the name (for instance, {@code Hoxa5}), and the species ID of this gene.
+         * the name (for instance, {@code Hoxa5}), the description and the species ID of this gene.
          * <p>
          * The BioType and the ID of the OMA Hierarchical Orthologous Group of this gene are
          * set to default value, i.e. they are set to 0.
@@ -124,7 +124,9 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
 
         /**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
-         * the name (for instance, {@code Hoxa5}), and the species id of this gene.
+         * the name (for instance, {@code Hoxa5}), the description, the species ID, the BioType, 
+         * the ID of the OMA Hierarchical Orthologous Group, whether this gene is present in 
+         * Ensembl (see {@link #isEnsemblGene()}).  
          * 
          * @param geneId            A {@code String} that is the ID of this gene.
          * @param geneName          A {@code String} that is the name of this gene.

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TestAncestor;
 import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.junit.Test;
 
 import static org.mockito.Mockito.*;
@@ -251,6 +252,8 @@ public class CallParamsTest extends TestAncestor {
         params.setUseDevDescendants(true);
         params.addGeneId(id1);
         paramsToCompare.addGeneId(id1);
+        params.addSpeciesId(id1);
+        paramsToCompare.addSpeciesId(id1);
         
         mergedParams = new FakeCallParams();
         params.merge(paramsToCompare, mergedParams);
@@ -305,39 +308,47 @@ public class CallParamsTest extends TestAncestor {
         params.addGeneId(id);
         assertEquals("incorrect number of parameters that are different", 3, 
                 params.getDifferentParametersCount(paramsToCompare));
-        
-        params.setUseAnatDescendants(true);
+
+        params.addSpeciesId(id);
         assertEquals("incorrect number of parameters that are different", 4, 
+                params.getDifferentParametersCount(paramsToCompare));
+
+        params.setUseAnatDescendants(true);
+        assertEquals("incorrect number of parameters that are different", 5, 
                 params.getDifferentParametersCount(paramsToCompare));
         
         params.setUseDevDescendants(true);
-        assertEquals("incorrect number of parameters that are different", 5, 
+        assertEquals("incorrect number of parameters that are different", 6, 
                 params.getDifferentParametersCount(paramsToCompare));
         
         params.setAllDataTypes(true);
-        assertEquals("incorrect number of parameters that are different", 5, 
+        assertEquals("incorrect number of parameters that are different", 6, 
                 params.getDifferentParametersCount(paramsToCompare));
         //allDataTypes is considered only if at least 2 data types are set
         params.setESTData(DataState.LOWQUALITY);
         params.setAffymetrixData(DataState.LOWQUALITY);
-        assertEquals("incorrect number of parameters that are different", 6, 
+        assertEquals("incorrect number of parameters that are different", 7, 
                 params.getDifferentParametersCount(paramsToCompare));
         
         
         
         
         paramsToCompare.addAnatEntityId(id);
-        assertEquals("incorrect number of parameters that are different", 5, 
+        assertEquals("incorrect number of parameters that are different", 6, 
                 params.getDifferentParametersCount(paramsToCompare));
         
         paramsToCompare.addDevStageId(id);
-        assertEquals("incorrect number of parameters that are different", 4, 
+        assertEquals("incorrect number of parameters that are different", 5, 
                 params.getDifferentParametersCount(paramsToCompare));
         
         paramsToCompare.addGeneId(id);
+        assertEquals("incorrect number of parameters that are different", 4, 
+                params.getDifferentParametersCount(paramsToCompare));
+
+        paramsToCompare.addSpeciesId(id);
         assertEquals("incorrect number of parameters that are different", 3, 
                 params.getDifferentParametersCount(paramsToCompare));
-        
+
         paramsToCompare.setUseAnatDescendants(true);
         assertEquals("incorrect number of parameters that are different", 2, 
                 params.getDifferentParametersCount(paramsToCompare));
@@ -441,7 +452,14 @@ public class CallParamsTest extends TestAncestor {
         params.clearGeneIds();
         assertFalse("hasDataRestriction returned true, while no parameter was set", 
                 params.hasDataRestrictions());
-        
+
+        params.addSpeciesId("test");
+        assertTrue("hasDataRestriction returned false, while a parameter was set", 
+                params.hasDataRestrictions());
+        params.clearSpeciesIds();
+        assertFalse("hasDataRestriction returned true, while no parameter was set", 
+                params.hasDataRestrictions());
+    
         //---------- plays with each data type individually ---------------
         
         DataState dataState = DataState.HIGHQUALITY;
@@ -502,6 +520,7 @@ public class CallParamsTest extends TestAncestor {
         params.addAnatEntityId("test");
         params.addDevStageId("test2");
         params.addGeneId("test3");
+        params.addSpeciesId("test4");
         params.setRNASeqData(dataState);
         params.setRelaxedInSituData(dataState);
         assertTrue("hasDataRestriction returned false, while a parameter was set", 
@@ -909,7 +928,16 @@ public class CallParamsTest extends TestAncestor {
         assertEquals("Incorrect geneId set/get", new HashSet<String>(), 
                 params.getGeneIds());
         
-        
+        params.addAllSpeciesIds(twoElementSet);
+        assertEquals("Incorrect geneIds set/get", twoElementSet, 
+                params.getSpeciesIds());
+        params.addSpeciesId(thirdElement);
+        assertEquals("Incorrect geneIds set/get", threeElementSet, 
+                params.getSpeciesIds());
+        params.clearSpeciesIds();
+        assertEquals("Incorrect geneId set/get", new HashSet<String>(), 
+                params.getSpeciesIds());
+
         
         DataState state = DataState.HIGHQUALITY;
         
@@ -939,5 +967,4 @@ public class CallParamsTest extends TestAncestor {
         //to be sure to not interfere with other setters in case of bug
         params.setRNASeqData(null);
     }
-    
-}
+ }

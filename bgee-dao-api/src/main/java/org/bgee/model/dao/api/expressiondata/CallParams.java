@@ -13,7 +13,7 @@ import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
 
 /**
  * This class allows to provide the parameters to filter the calls used, when 
- * retrieving information related to expression/no-expression/differential expression 
+ * retrieving information rsvn di elated to expression/no-expression/differential expression 
  * calls generated in the Bgee database.
  * 
  * @author Frederic Bastian
@@ -163,6 +163,16 @@ public abstract class CallParams {
      */
     private final Set<String> geneIds;
 
+    //****************************************
+    // SPECIES FILTERING
+    //****************************************
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of species allowing to filter 
+     * the calls to use. Only calls with a species ID equals to one of the ID in 
+     * this {@code Set} will be used. 
+     */
+    private final Set<String> speciesIds;
+
     
     /**
      * Default constructor providing the reference {@code CallTO} which some methods 
@@ -186,6 +196,8 @@ public abstract class CallParams {
         this.setUseDevDescendants(false);
         
         this.geneIds      = new HashSet<String>();
+        
+        this.speciesIds   = new HashSet<String>();
     }
     
     /**
@@ -412,6 +424,11 @@ public abstract class CallParams {
             newResultingParams.addAllGeneIds(paramsToMerge.getGeneIds());
         }
         
+        if (!this.getSpeciesIds().isEmpty() && !paramsToMerge.getSpeciesIds().isEmpty()) {
+            newResultingParams.addAllSpeciesIds(this.getSpeciesIds());
+            newResultingParams.addAllSpeciesIds(paramsToMerge.getSpeciesIds());
+        }
+        
         log.exit();
     }
     
@@ -476,7 +493,7 @@ public abstract class CallParams {
         }
         
         //count the number of filters on IDs that differ 
-        //(geneIds, anatEntityIds, devStageIds)
+        //(geneIds, speciesIds, anatEntityIds, devStageIds)
         int diffParamCount = this.getDifferentParametersCount(paramsToMerge);
         //if there is absolutely no difference between the parameters used 
         //to filter anat entities, dev stages, and genes, then at this point 
@@ -538,7 +555,8 @@ public abstract class CallParams {
         }
         if (!this.getAnatEntityIds().isEmpty() || 
                 !this.getDevStageIds().isEmpty() || 
-                !this.getGeneIds().isEmpty()) {
+                !this.getGeneIds().isEmpty() || 
+                !this.getSpeciesIds().isEmpty()) {
             return log.exit(true);
         }
         
@@ -571,6 +589,9 @@ public abstract class CallParams {
             diff++;
         }
         if (!this.getGeneIds().equals(otherParams.getGeneIds())) {
+            diff++;
+        }
+        if (!this.getSpeciesIds().equals(otherParams.getSpeciesIds())) {
             diff++;
         }
         if ((this.isUseAnatDescendants() && !this.getAnatEntityIds().isEmpty()) != 
@@ -1133,6 +1154,51 @@ public abstract class CallParams {
      */
     public void clearGeneIds() {
         this.geneIds.clear();
+    }
+    
+    //****************************************
+    // SPECIES FILTERING
+    //****************************************
+    /**
+     * Add {@code id} to the {@code Set} of {@code String}s that are the IDs 
+     * of species allowing to filter the calls to use. 
+     * Only calls with a species ID equals to one of the ID in this {@code Set} will be used. 
+     * 
+     * @param id    A {@code String} to be added to the IDs of species 
+     *              used to filter the calls to use.
+     */
+    public void addSpeciesId(String id) {
+        this.speciesIds.add(id);
+    }
+    /**
+     * Add {@code ids} to the {@code Set} of {@code String}s that are the IDs 
+     * of species allowing to filter the calls to use. 
+     * Only calls with a species ID equals to one of the ID in this {@code Set} will be used. 
+     * 
+     * @param ids   A {@code Collection} of {@code String}s that are the IDs 
+     *              of species used to filter the calls to use.
+     */
+    public void addAllSpeciesIds(Collection<String> ids) {
+        this.speciesIds.addAll(ids);
+    }
+    /**
+     * Returns the unmodifiable {@code Set} of {@code String}s that are the IDs 
+     * of species allowing to filter the calls to use. 
+     * Only calls with a species ID equals to one of the ID in this {@code Set} will be used. 
+     * 
+     * @return      An unmodifiable {@code Collection} of {@code String}s that are the IDs 
+     *              of species used to filter the calls to use.
+     */
+    public Set<String> getSpeciesIds() {
+        return Collections.unmodifiableSet(this.speciesIds);
+    }
+    /**
+     * Clears the {@code Set} of {@code String}s that are the IDs 
+     * of species allowing to filter the calls to use. 
+     * @see #getSpeciesIds()
+     */
+    public void clearSpeciesIds() {
+        this.speciesIds.clear();
     }
     
     //****************************************

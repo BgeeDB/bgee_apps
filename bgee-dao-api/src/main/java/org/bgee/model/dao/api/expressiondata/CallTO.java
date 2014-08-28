@@ -108,6 +108,42 @@ public abstract class CallTO implements TransferObject {
         this.setRNASeqData(DataState.NODATA);
     }
     
+    /**
+     * Constructor providing the gene ID, the anatomical entity ID, the developmental stage ID,  
+     * the contribution of Affymetrix, EST, <em>in situ</em>, "relaxed" <em>in situ</em> and, 
+     * RNA-Seq data to the generation of this call.
+     * 
+     * @param geneId               A {@code String} that is the ID of the gene associated to 
+     *                             this call.
+     * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
+     *                             associated to this call. 
+     * @param devStageId           A {@code String} that is the ID of the developmental stage 
+     *                             associated to this call. 
+     * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix data 
+     *                             to the generation of this call.
+     * @param estData              A {@code DataSate} that is the contribution of EST data
+     *                             to the generation of this call.
+     * @param inSituData           A {@code DataSate} that is the contribution of <em>in situ</em>
+     *                             data to the generation of this call.
+     * @param relaxedInSituData    A {@code DataSate} that is the contribution of "relaxed" 
+     *                             <em>in situ</em> data to the generation of this call.
+     * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
+     *                             to the generation of this call.
+     */
+    public CallTO(String geneId, String anatEntityId, String devStageId, DataState affymetrixData,
+            DataState estData, DataState inSituData, DataState relaxedInSituData, 
+            DataState rnaSeqData) {
+        super();
+        this.setGeneId(geneId);
+        this.setAnatEntityId(anatEntityId);
+        this.setDevStageId(devStageId);
+        this.setAffymetrixData(affymetrixData);
+        this.setESTData(estData);
+        this.setInSituData(inSituData);
+        this.setRelaxedInSituData(relaxedInSituData);
+        this.setRNASeqData(rnaSeqData);
+    }
+
     //**************************************
     // GETTERS/SETTERS
     //**************************************

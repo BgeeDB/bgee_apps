@@ -2,6 +2,7 @@ package org.bgee.model.dao.api.expressiondata;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
 
 /**

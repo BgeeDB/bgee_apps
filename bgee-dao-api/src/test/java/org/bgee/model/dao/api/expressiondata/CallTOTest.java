@@ -8,6 +8,7 @@ import org.bgee.model.dao.api.TestAncestor;
 import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.DiffCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.junit.Test;
 
 /**

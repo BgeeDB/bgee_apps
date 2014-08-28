@@ -109,6 +109,7 @@
 			calling the procedure by the Java application). -->
 		<bgee.database.test.populate.db.procedure.name>populateTestDBs</bgee.database.test.populate.db.procedure.name>
 		<bgee.database.test.empty.table.procedure.name>emptyTestDBs</bgee.database.test.empty.table.procedure.name>
+		<bgee.database.get.expression.procedure.name>getAllExpression</bgee.database.get.expression.procedure.name>
 
 		<!-- Here we provide the paths to the SQL files to create the Bgee database
 			The database will be populated with data by the Java application -->
@@ -125,11 +126,18 @@
 			${basedir}/../../pipeline/pipeline/db_creation/bgeeForeignKey.sql
 		</bgee.database.file.foreignkey>
 
-		<!-- Here we provide the path to a SQL file defining and calling a procedure 
-			to drop all databases used for integration tests. -->
-		<bgee.database.test.data.test.procedures.name>
+		<!-- Here we provide the path to a SQL file defining and calling procedures to
+			get data in databases. -->
+		<bgee.database.file.select.procedures>
+			${basedir}/../../pipeline/pipeline/db_creation/bgeeSelectProcedures.sql
+		</bgee.database.file.select.procedures>
+
+		<!-- Here we provide the path to a SQL file defining and calling procedures to
+			populate or empty SELECT and INSERT/UPDATE databases, to drop all databases
+			used for integration tests. -->
+		<bgee.database.file.data.test.procedures.name>
 			${basedir}/src/test/resources/sql/testDataProcedures.sql
-		</bgee.database.test.data.test.procedures.name>
+		</bgee.database.file.data.test.procedures.name>
 		<bgee.database.file.drop.procedure>
 			${basedir}/src/test/resources/sql/dropTestDatabases.sql
 		</bgee.database.file.drop.procedure>
@@ -436,6 +444,12 @@
 							<bgee.database.test.select.name>
 								${bgee.database.test.select.name}
 							</bgee.database.test.select.name>
+							<!-- Name of the store procedures that should be used to get data in
+                             databases -->
+							<bgee.database.get.expression.procedure.name>
+                                ${bgee.database.get.expression.procedure.name}
+                            </bgee.database.get.expression.procedure.name>
+                            
 							<!-- Name of the store procedures that should be used to populate or 
 							  empty SELECT and INSERT/UPDATE databases -->
 							<bgee.database.test.populate.db.procedure.name>
@@ -575,7 +589,8 @@
 								<autocommit>true</autocommit>
 								<delimiterType>row</delimiterType>
 								<srcFiles>
-									<srcFile>${bgee.database.test.data.test.procedures.name}</srcFile>
+									<srcFile>${bgee.database.file.data.test.procedures.name}</srcFile>
+									<srcFile>${bgee.database.file.select.procedures}</srcFile>
 								</srcFiles>
 							</configuration>
 						</execution>
@@ -643,7 +658,8 @@
 								<autocommit>true</autocommit>
 								<delimiterType>row</delimiterType>
 								<srcFiles>
-									<srcFile>${bgee.database.test.data.test.procedures.name}</srcFile>
+									<srcFile>${bgee.database.file.data.test.procedures.name}</srcFile>
+                                    <srcFile>${bgee.database.file.select.procedures}</srcFile>
 								</srcFiles>
 							</configuration>
 						</execution>

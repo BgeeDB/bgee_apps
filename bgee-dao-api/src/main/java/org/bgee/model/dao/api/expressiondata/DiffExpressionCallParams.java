@@ -2,9 +2,10 @@ package org.bgee.model.dao.api.expressiondata;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.DiffCallType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffCallType;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.Factor;
 
 /**
  * This class allows to provide the parameters specific to differential expression 

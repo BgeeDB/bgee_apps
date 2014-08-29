@@ -7,8 +7,8 @@ import static org.mockito.Mockito.when;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TestAncestor;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.DiffCallType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallTO.Factor;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffCallType;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.Factor;
 import org.junit.Test;
 
 /**

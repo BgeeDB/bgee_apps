@@ -2,7 +2,8 @@ package org.bgee.model.dao.api.expressiondata;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 
 /**
  * This class allows to provide the parameters specific to no-expression calls 
@@ -45,12 +46,12 @@ public class NoExpressionCallParams extends CallParams {
         super(new NoExpressionCallTO());
         this.setIncludeParentStructures(false);
     }
-    
+
     @Override
     protected NoExpressionCallTO getReferenceCallTO() {
         return (NoExpressionCallTO) super.getReferenceCallTO();
     }
-
+    
     //****************************************
     // MERGE METHODS
     //****************************************

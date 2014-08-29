@@ -2,6 +2,8 @@ package org.bgee.model.dao.mysql.expressiondata;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -15,8 +17,10 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLineType;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
-import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 
 /**
  * A {@code ExpressionCallDAO} for MySQL. 
@@ -48,7 +52,6 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     @Override
     public ExpressionCallTOResultSet getAllExpressionCalls(ExpressionCallParams params) 
             throws DAOException {
-        log.entry(params);
 
         String sql = "{call getAllExpression(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
@@ -61,10 +64,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             callStmt.setString(2, this.createStringFromSet(params.getAnatEntityIds()));
             callStmt.setString(3, this.createStringFromSet(params.getDevStageIds()));
             callStmt.setString(4, this.createStringFromSet(params.getSpeciesIds()));
-            callStmt.setInt(5, this.getMinLevelData(params.getAffymetrixData()));
-            callStmt.setInt(6, this.getMinLevelData(params.getESTData()));
-            callStmt.setInt(7, this.getMinLevelData(params.getInSituData()));
-            callStmt.setInt(8, this.getMinLevelData(params.getRNASeqData()));
+            callStmt.setInt(5, CallTO.getMinLevelData(params.getAffymetrixData()));
+            callStmt.setInt(6, CallTO.getMinLevelData(params.getESTData()));
+            callStmt.setInt(7, CallTO.getMinLevelData(params.getInSituData()));
+            callStmt.setInt(8, CallTO.getMinLevelData(params.getRNASeqData()));
             callStmt.setBoolean(9, params.isIncludeSubStages());
             callStmt.setBoolean(10, params.isIncludeSubstructures());
             callStmt.setBoolean(11, params.isAllDataTypes());
@@ -74,23 +77,167 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
+    }
 
+    public ExpressionCallTOResultSet getAllExpressionCalls(Set<String> speciesId) 
+            throws DAOException {
+        log.entry(speciesId);
+
+        Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
+        if (attributes == null || attributes.size() == 0) {
+            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                    attributes.toString() + ") is unknown for " + 
+                    ExpressionCallDAO.class.getName()));
+        }
+
+        //Construct sql query
+        StringBuilder sql = new StringBuilder(); 
+        for (ExpressionCallDAO.Attribute attribute: attributes) {
+            if (sql.length() == 0) {
+                sql.append("SELECT ");
+            } else {
+                sql.append(", ");
+            }
+            sql.append("expression." + this.attributeToString(attribute));
+        }
+        sql.append(" FROM expression");
+         if (speciesId != null && speciesId.size() > 0) {
+             sql.append(" INNER JOIN gene ON (gene.geneId = expression.geneId)");
+             sql.append(" WHERE gene.speciesId IN ("+this.createStringFromSet(speciesId)+")");
+             sql.append(" ORDER BY gene.speciesId, expression.geneId, expression.anatEntityId, expression.stageId");
+         } else {
+             sql.append(" ORDER BY expression.geneId, expression.anatEntityId, expression.stageId");
+         }
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLExpressionCallTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
     
-    /**
-     * Return the index of the given {@code DataState}.
-     * <p>
-     * Note that it returns the index starting with 1 according to MySQL enum.
+    /** 
+     * Returns a {@code String} that correspond to the given {@code ExpressionCallDAO.Attribute}.
      * 
-     * @param dataState The {@code DataState} defining the requested minimum contribution 
-     *                  to the generation of the calls to be used.
-     * @return
+     * @param attribute   An {code ExpressionCallDAO.Attribute} that is the attribute to
+     *                    convert in a {@code String}.
+     * @return            A {@code String} that correspond to the given 
+     *                    {@code ExpressionCallDAO.Attribute}
      */
-    private int getMinLevelData(DataState dataState) {
-        log.entry(dataState);
-        return log.exit(DataState.valueOf(dataState.toString()).ordinal() + 1);
+    private String attributeToString(ExpressionCallDAO.Attribute attribute) {
+        log.entry(attribute);
+
+        String label = null;
+        if (attribute.equals(ExpressionCallDAO.Attribute.ID)) {
+            label = "expressionId";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.GENEID)) {
+            label = "geneId";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.DEVSTAGEID)) {
+            label = "stageId";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.ANATENTITYID)) {
+            label = "anatEntityId";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIXDATA)) {
+            label = "affymetrixData";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.ESTDATA)) {
+            label = "estData";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.INSITUDATA)) {
+            label = "inSituData";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.RNASEQDATA)) {
+            label = "rnaSeqData";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.ORIGINOFLINE)) {
+            label = "originOfLine";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.RELAXEDINSITUDATA)) {
+            throw log.throwing(new IllegalStateException("No relaxed in situ data in data "+
+                                                   "source for the moment"));
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES) ||
+                attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTAGES)) {
+            throw log.throwing(new IllegalStateException(attribute.toString() +
+                    "is not a column of the expression table"));
+        } else {
+            throw log.throwing(new IllegalStateException("The attribute provided (" +
+                    attribute.toString() + ") is unknown for " + ExpressionCallDAO.class.getName()));
+        }
+        
+        return log.exit(label);
     }
 
+    @Override
+    public int insertExpressionCalls(Collection<ExpressionCallTO> expressionCalls) {
+        log.entry(expressionCalls);
+        
+        int callInsertedCount = 0;
+
+        // According to isIncludeSubstructures(), the ExpressionCallTO is inserted in 
+        // expression or globalExpression table. As prepared statement is for the 
+        // column values not for table name, we need to separate ExpressionCallTOs into
+        // two separated collections. 
+        Collection<ExpressionCallTO> toInsertInExpression = new ArrayList<ExpressionCallTO>();
+        Collection<ExpressionCallTO> toInsertInGlobalExpression = new ArrayList<ExpressionCallTO>();
+        for (ExpressionCallTO call: expressionCalls) {
+            if (call.isIncludeSubstructures()) {
+                toInsertInGlobalExpression.add(call);
+            } else {
+                toInsertInExpression.add(call);
+            }
+        }
+
+        // And we need to build two different queries. 
+        String sqlExpression = "INSERT INTO expression " +
+                "(expressionId, geneId, anatEntityId, stageId, "+
+                "estData, affymetrixData, inSituData, rnaSeqData) " +
+                "values (?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        // To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
+        // and because of laziness, we insert expression calls one at a time
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlExpression)) {
+            for (ExpressionCallTO call: toInsertInExpression) {
+                stmt.setInt(1, Integer.parseInt(call.getId()));
+                stmt.setString(2, call.getGeneId());
+                stmt.setString(3, call.getAnatEntityId());
+                stmt.setString(4, call.getDevStageId());
+                stmt.setString(5, CallTO.convertDataStateToDataSourceQuality(call.getESTData()));
+                stmt.setString(6, CallTO.convertDataStateToDataSourceQuality(call.getAffymetrixData()));
+                stmt.setString(7, CallTO.convertDataStateToDataSourceQuality(call.getInSituData()));
+                stmt.setString(8, CallTO.convertDataStateToDataSourceQuality(call.getRNASeqData()));
+                callInsertedCount += stmt.executeUpdate();
+                stmt.clearParameters();
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        String sqlGlobalExpression = "INSERT INTO globalExpression " +
+                "(globalExpressionId, geneId, anatEntityId, stageId, "+
+                "estData, affymetrixData, inSituData, rnaSeqData, originOfLine) " +
+                "values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlGlobalExpression)) {
+            for (ExpressionCallTO call: toInsertInGlobalExpression) {
+                stmt.setInt(1, Integer.parseInt(call.getId()));
+                stmt.setString(2, call.getGeneId());
+                stmt.setString(3, call.getAnatEntityId());
+                stmt.setString(4, call.getDevStageId());
+                stmt.setString(5, CallTO.convertDataStateToDataSourceQuality(call.getESTData()));
+                stmt.setString(6, CallTO.convertDataStateToDataSourceQuality(call.getAffymetrixData()));
+                stmt.setString(7, CallTO.convertDataStateToDataSourceQuality(call.getInSituData()));
+                stmt.setString(8, CallTO.convertDataStateToDataSourceQuality(call.getRNASeqData()));
+                stmt.setString(9, ExpressionCallTO.
+                        convertOriginOfLineTypeToDatasourceEnum(call.getOriginOfLine()));
+                callInsertedCount += stmt.executeUpdate();
+                stmt.clearParameters();
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+        return log.exit(callInsertedCount);
+    }
+
+    //TODO move in correct class
     /**
      * Create a {@code String} composed with all {@code String}s of a {@code Set} separated 
      * by a coma.
@@ -144,16 +291,21 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         public ExpressionCallTO getTO() throws DAOException {
             log.entry();
 
-            String geneId = null, anatEntityId = null, devStageId = null;
+            String id = null, geneId = null, anatEntityId = null, devStageId = null;
             DataState affymetrixData = DataState.NODATA, estData = DataState.NODATA, 
                     inSituData = DataState.NODATA, relaxedInSituData = DataState.NODATA, 
                     rnaSeqData = DataState.NODATA;
-            boolean includeSubstructures = false, includeSubStages = false; 
+            boolean includeSubstructures = false, includeSubStages = false;
+            OriginOfLineType originOfLine = OriginOfLineType.SELF;
 
+            boolean isGlobalExpression = false;
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
-                    if (column.getValue().equals("geneId")) {
+                    if (column.getValue().equals("expressionId")) {
+                        id = currentResultSet.getString(column.getKey());
+
+                    } else if (column.getValue().equals("geneId")) {
                         geneId = currentResultSet.getString(column.getKey());
 
                     } else if (column.getValue().equals("anatEntityId")) {
@@ -163,55 +315,43 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                         devStageId = currentResultSet.getString(column.getKey());
 
                     } else if (column.getValue().equals("affymetrixData")) {
-                        affymetrixData = convertBgeeDataQualityToDataState(
+                        affymetrixData = CallTO.convertDataSourceQualityToDataState(
                                 currentResultSet.getString(column.getKey()));
 
                     } else if (column.getValue().equals("estData")) {
-                        estData = convertBgeeDataQualityToDataState(
+                        estData = CallTO.convertDataSourceQualityToDataState(
                                 currentResultSet.getString(column.getKey()));
 
                     } else if (column.getValue().equals("inSituData")) {
-                        inSituData = convertBgeeDataQualityToDataState(
+                        inSituData = CallTO.convertDataSourceQualityToDataState(
                                 currentResultSet.getString(column.getKey()));
 
                     } else if (column.getValue().equals("rnaSeqData")) {
-                        rnaSeqData = convertBgeeDataQualityToDataState(
+                        rnaSeqData = CallTO.convertDataSourceQualityToDataState(
                                 currentResultSet.getString(column.getKey()));
+                        
+                    } else if (column.getValue().equals("originOfLine")) {
+                        originOfLine = ExpressionCallTO.convertDatasourceEnumToOriginOfLineType(
+                                currentResultSet.getString(column.getKey()));
+                        isGlobalExpression = true;
                     }
 
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));
                 }
             }
-            log.debug("geneId="+geneId+", anatEntityId="+anatEntityId+", devStageId="+devStageId+", "+
-                    "affymetrixData="+affymetrixData+", estData="+estData+", inSituData="+inSituData+", " +
-                    "relaxedInSituData="+relaxedInSituData+", rnaSeqData="+rnaSeqData+", "+
-                    "includeSubstructures="+includeSubstructures+", includeSubStages="+includeSubStages);
-            //TODO set good includeSubstructures, includeSubStages
-            return log.exit(new ExpressionCallTO(geneId, anatEntityId, devStageId,
+            
+            if (isGlobalExpression) {
+                includeSubstructures = true;
+            }
+            
+            //TODO manage includeSubStages
+            return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, devStageId,
                     affymetrixData, estData, inSituData, relaxedInSituData, rnaSeqData,
-                    includeSubstructures, includeSubStages));
+                    includeSubstructures, includeSubStages, originOfLine));
         }
         
-        /**
-         * Convert Bgee database expression data qualities into {@code DataState}.
-         * 
-         * @param databaseEnum
-         * @return
-         */
-        private DataState convertBgeeDataQualityToDataState(String databaseEnum) {
-            log.entry(databaseEnum);
-            
-            DataState dataState = null;
-            if (databaseEnum.equals("no data")) {
-                dataState = DataState.NODATA;
-            } else if (databaseEnum.equals("poor quality")) {
-                dataState = DataState.LOWQUALITY;
-            } else if (databaseEnum.equals("high quality")) {
-                dataState = DataState.HIGHQUALITY;
-            } 
-            
-            return log.exit(dataState);
-        }
-    }
+
+}
+
 }

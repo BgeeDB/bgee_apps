@@ -2,8 +2,8 @@ package org.bgee.model.dao.api.expressiondata;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
 
 /**
  * This class allows to provide the parameters specific to expression calls, 

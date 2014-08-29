@@ -12,7 +12,8 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TestAncestor;
-import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.junit.Test;
 

@@ -9,7 +9,8 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 
 /**
  * This class allows to provide the parameters to filter the calls used, when 
@@ -51,7 +52,7 @@ public abstract class CallParams {
      * {@code protected} methods. Subclasses should then increase the visibility 
      * of the methods corresponding to their appropriate data types.
      */
-    private final CallTO referenceCallTO;
+    private CallTO referenceCallTO;
     /**
      * A {@code boolean} defining whether, when there are conditions on the data types
      * that should have contributed to the generation of the calls to be used, 
@@ -85,7 +86,7 @@ public abstract class CallParams {
      * 
      * @see #useAnatDescendants
      */
-    private final Set<String> anatEntityIds;
+    private Set<String> anatEntityIds;
     /**
      * A {@code boolean} defining whether calls for descendants of 
      * {@link #anatEntityIds} should also be used. It is used when {@link 
@@ -128,7 +129,7 @@ public abstract class CallParams {
      * 
      * @see #useDevDescendants
      */
-    private final Set<String> devStageIds;
+    private Set<String> devStageIds;
     /**
      * A {@code boolean} defining whether calls for descendants of 
      * {@link #devStageIds} should also be used. It is used when {@link 
@@ -161,7 +162,7 @@ public abstract class CallParams {
      * the calls to use. Only calls with a gene ID equals to one of the ID in 
      * this {@code Set} will be used. 
      */
-    private final Set<String> geneIds;
+    private Set<String> geneIds;
 
     //****************************************
     // SPECIES FILTERING
@@ -171,7 +172,7 @@ public abstract class CallParams {
      * the calls to use. Only calls with a species ID equals to one of the ID in 
      * this {@code Set} will be used. 
      */
-    private final Set<String> speciesIds;
+    private Set<String> speciesIds;
 
     
     /**

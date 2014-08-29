@@ -109,7 +109,9 @@ BEGIN
                (4,'ID2','Anat_id2','Stage_id18','high quality','high quality','high quality','high quality'),
                (5,'ID1','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','poor quality'),
                (6,'ID2','Anat_id11','Stage_id12','poor quality','high quality','no data','high quality'),
-               (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data');
+               (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data'),
+               (8,'ID3','Anat_id3','Stage_id1','high quality','no data','poor quality','no data'),
+               (9,'ID2','Anat_id1','Stage_id9','poor quality','high quality','no data','high quality');
 
         INSERT INTO globalExpressionToExpression (expressionId,globalExpressionId) 
         VALUES (1,1),
@@ -121,6 +123,8 @@ BEGIN
                (1,13),
                (1,14),
                (1,15),
+               (1,22),
+               (1,23),
                (4,4),
                (4,16),
                (4,17),
@@ -137,7 +141,6 @@ BEGIN
                (5,'ID1','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','poor quality','self'),
                (6,'ID2','Anat_id11','Stage_id12','poor quality','high quality','no data','high quality','self'),
                (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data','self'),
-               
                (8,'ID3','Anat_id2','Stage_id1','no data','poor quality','high quality','high quality','descent'),
                (9,'ID3','Anat_id3','Stage_id1','no data','poor quality','high quality','high quality','descent'),
                (10,'ID3','Anat_id4','Stage_id1','no data','poor quality','high quality','high quality','descent'),
@@ -146,7 +149,8 @@ BEGIN
                (13,'ID3','Anat_id9','Stage_id1','no data','poor quality','high quality','high quality','descent'),
                (14,'ID3','Anat_id10','Stage_id1','no data','poor quality','high quality','high quality','descent'),
                (15,'ID3','Anat_id11','Stage_id1','no data','poor quality','high quality','high quality','descent'),
-               
+               (22,'ID3','Anat_id3','Stage_id1','high quality','no data','poor quality','no data','descent'),
+               (23,'ID2','Anat_id1','Stage_id1','poor quality','high quality','no data','high quality','descent'),
                (16,'ID2','Anat_id3','Stage_id18','high quality','high quality','high quality','high quality','descent'),
                (17,'ID2','Anat_id4','Stage_id18','high quality','high quality','high quality','high quality','descent'),
                (18,'ID2','Anat_id5','Stage_id18','high quality','high quality','high quality','high quality','descent'),

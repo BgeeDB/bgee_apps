@@ -1,0 +1,28 @@
+<!-- Default Ehcache configuration to use BigMemory GO as only storage space. 
+    It is intended to serve as web page cache. Its name has to match the one 
+    declared in web.xml -->
+<!-- It uses exclusively the off heap storage (i.e. BigMemory) and never 
+    write in the java heap nor on the disk. To be functional, a valid terracotta-license.key 
+    file has to be present in the resources folder -->
+<!-- The default ttl for the cache is one day (86400 sec). IMPORTANT: the 
+    size of the BigMemory storage (maxBytesLocalOffHeap) is set here to a value 
+    that should not crash the developper's environment (100M) but it can (it 
+    has to) be set up to 32G when deployed in production. 32G is the maximum 
+    value for a free use. -->
+<!-- Note : maxBytesLocalHeap cannot be set to 0, so it is 1 byte -->
+<!-- See http://terracotta.org/ for more info about ehcache entreprise edition 
+    and bigmemory GO. -->
+<!-- See BgeeWebCache.java and web.xml for more info about the web cache 
+    filter. -->
+<!-- You can declare additional caches here, for example if a JDBC request 
+    caching is needed -->
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="ehcache.xsd" updateCheck="true"
+    monitoring="autodetect" dynamicConfig="true">
+    <diskStore path="java.io.tmpdir" />
+    <cache name="BgeeWebCache" maxBytesLocalOffHeap="100M"
+        maxBytesLocalHeap="1b" maxEntriesLocalDisk="0" eternal="false"
+        timeToLiveSeconds="86400" memoryStoreEvictionPolicy="LFU"
+        overflowToOffHeap="true">
+    </cache>
+</ehcache>

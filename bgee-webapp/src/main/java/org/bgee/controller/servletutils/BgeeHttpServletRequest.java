@@ -36,10 +36,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * This class implements the {@code HttpServletRequest} for mainly two purposes: 
- * first, allowing to perform tests on the Bgee application in a servlet context, 
- * without the need of actually using a servlet container (i.e., tomcat); 
- * second, to load parameters into a {@code RequestParameters} object, 
+ * This class implements the {@code HttpServletRequest} to be able to load parameters into a 
+ * {@code RequestParameters} object, 
  * as if they were coming from a regular {@code HttpServletRequest}, 
  * while they actually come from a query string stored in a file 
  * (when parameters are too long to be put in a URL, because of URL length restrictions, 
@@ -50,7 +48,7 @@ import org.apache.logging.log4j.Logger;
  * the methods to retrieve parameters from a {@code HttpServletRequest}: 
  * we do not need to write methods retrieving them from a query string.
  * <p>
- * The {@code RequestParameters} class only uses the methods 
+ * The {@code RequestParameters} class only uses the methods
  * {@code getParameter(String)}, and {@code getParameterValues(String)} 
  * from the {@code HttpServletRequest}. As of Bgee 11, these are the only methods implemented here.
  * They use a query string provided to this class, in order to simulate the behavior of these methods.
@@ -514,77 +512,65 @@ public class BgeeHttpServletRequest implements HttpServletRequest
 
     @Override
     public ServletContext getServletContext() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public AsyncContext startAsync() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public AsyncContext startAsync(ServletRequest servletRequest,
             ServletResponse servletResponse) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public boolean isAsyncStarted() {
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public boolean isAsyncSupported() {
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public AsyncContext getAsyncContext() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public DispatcherType getDispatcherType() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public boolean authenticate(HttpServletResponse response)
             throws IOException, ServletException {
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public void login(String username, String password) throws ServletException {
-        // TODO Auto-generated method stub
 
     }
 
     @Override
     public void logout() throws ServletException {
-        // TODO Auto-generated method stub
 
     }
 
     @Override
     public Collection<Part> getParts() throws IOException,
     IllegalStateException, ServletException {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Part getPart(String name) throws IOException, IllegalStateException,
     ServletException {
-        // TODO Auto-generated method stub
         return null;
     }
 

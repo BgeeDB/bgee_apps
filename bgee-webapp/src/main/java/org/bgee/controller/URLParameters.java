@@ -52,7 +52,7 @@ public class URLParameters {
      * A {@code boolean} that contains the default value to use for
      * {@link URLParameters.Parameter#allowsMultipleValues}
      */
-    protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = true; // Only for tests, should be false
+    protected static final boolean DEFAULT_ALLOWS_MULTIPLE_VALUES = false;
 
     /**
      * A {@code boolean} that contains the default value for {@link URLParameters.Parameter#isStorable}

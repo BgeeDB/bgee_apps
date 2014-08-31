@@ -20,13 +20,11 @@ public class DsvFactory extends ViewFactory
 
 	@Override
 	public DownloadDisplay getDownloadDisplay(BgeeProperties prop) throws IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

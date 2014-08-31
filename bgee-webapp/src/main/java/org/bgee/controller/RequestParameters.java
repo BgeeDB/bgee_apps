@@ -122,10 +122,10 @@ public class RequestParameters {
     private final URLParameters URLParametersInstance;
 
     /**
-     * A {@code String} that contains the name of the javascript file, in the case the current
-     * {@code HttpServletRequest} is a call for a javascript file. Else, is set to {@code null}
+     * Name of the HTTP method with which this request was made, for example, GET, POST, or PUT.
+     * @see javax.servlet.http.HttpServletRequest#getMethod()
      */
-    private final String javascriptFileName;
+    private final String httpMethod;
 
     /**
      * {@code ConcurrentMap} used to manage concurrent access to 
@@ -157,11 +157,11 @@ public class RequestParameters {
         this.prop = prop;
         this.encodeUrl = prop.isEncodeUrl();
         this.URLParametersInstance = URLParametersInstance;
-        this.javascriptFileName = null;
         //to avoid duplicating methods, 
         //here we simulate a HttpServletRequest with an empty query string, 
         //so that all parameters will be initialized empty
-        BgeeHttpServletRequest request = new BgeeHttpServletRequest();
+        HttpServletRequest request = new BgeeHttpServletRequest();
+        this.httpMethod = request.getMethod();
         try {
             this.constructor(request);
         } catch (RequestParametersNotFoundException | RequestParametersNotStorableException | 
@@ -222,37 +222,10 @@ public class RequestParameters {
         this.prop = prop;
         this.encodeUrl = prop.isEncodeUrl();
         this.URLParametersInstance = URLParametersInstance;
-        this.javascriptFileName = this.setJavascriptFileName(request);
+        this.httpMethod = request.getMethod();
         this.constructor(request);
 
         log.exit();
-    }
-
-    /**
-     * Check if the current request is a call to a javascript file, return the file name if
-     * it is, return {@code null} in other cases.
-     * @param request   The HttpServletRequest object corresponding to the current 
-     *                  request to the server.
-     * @return  A {@code String} that is the file name, or {@code null} if the this is not a
-     *          call to a javascript file
-     */
-    private String setJavascriptFileName(HttpServletRequest request){
-        String url = request.getRequestURL().toString();
-        // An url that end with .js and contains the js root folder should be a javascript.
-        if(url.length() > 3 && url.substring(url.length()-3).equals(".js")
-                && url.contains(this.prop.getJavascriptFilesRootDirectory())){
-            return log.exit(url.split("/")[url.split("/").length-1]);
-        }
-        return(null);
-    }
-    
-    /**
-     * @return  A {@code String} that contains the name of the javascript file, in the case the
-     *          current {@code HttpServletRequest} is a call for a javascript file.
-     *          Else, return {@code null}
-     */
-    public String getJavascriptFileName(){
-        return this.javascriptFileName;
     }
 
     /**
@@ -475,7 +448,7 @@ public class RequestParameters {
                     // string we retrieved.
                     //this way we do not duplicate code to load parameters into 
                     // this RequestParameters object.
-                    BgeeHttpServletRequest request = new BgeeHttpServletRequest(
+                    HttpServletRequest request = new BgeeHttpServletRequest(
                             retrievedQueryString);
                     this.loadParametersFromRequest(request, true);
                 }
@@ -1043,6 +1016,15 @@ public class RequestParameters {
     }
 
     /**
+     * @return  A {@code String } that is the name of the HTTP method with which this request
+     *          was made, for example, GET, POST, or PUT.
+     * @see javax.servlet.http.HttpServletRequest#getMethod()
+     */
+    public String getHttpMethod() {
+        return this.httpMethod;
+    }
+
+    /**
      * @return  A {@code boolean} to tell whether the display is Xml or not
      */
     public boolean isXmlDisplayType() {
@@ -1079,6 +1061,24 @@ public class RequestParameters {
     }
 
     /**
+     * Allow to know if this request has been performed through AJAX. 
+     * It is currently simply based on the fact that, in Bgee, all AJAX actions 
+     * starts by "ajax_". It should be kept that way ;)
+     * 
+     * @return  {@code true} if this request was performed through AJAX
+     */
+    public boolean isAnAjaxRequest()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamAction()) != null &&
+                this.getFirstValue(this.URLParametersInstance.getParamAction()).toLowerCase()
+                .startsWith("ajax_")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
      * @return  A {@code boolean} to tell whether the page corresponds to the homepage
      */
     public boolean isTheHomePage(){
@@ -1091,7 +1091,64 @@ public class RequestParameters {
     }
 
     /**
-     * @return  A {@code boolean} to tell whether the page corresponds a download page
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "about"
+     */
+    public boolean isAnAboutPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("about")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "admin"
+     */
+    public boolean isAnAdminPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("admin")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "anatomy"
+     */
+    public boolean isAnAnatomyPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("anatomy")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "documentation"
+     */
+    public boolean isADocumentationPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("documentation")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "download"
      */
     public boolean isADownloadPageCategory(){
         log.entry();
@@ -1103,14 +1160,169 @@ public class RequestParameters {
     }    
 
     /**
-     * Test whether the page is a javascript file
-     * file. This is useful to handle the javascript that are dynamically generated by Bgee.
-     * @return  A {@code boolean} to tell whether the page corresponds a javascript file
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "expression"
      */
-    public boolean isAJavascriptFile(){
+    public boolean isAnExpressionPageCategory()
+    {
         log.entry();
-        return log.exit(this.javascriptFileName != null);
-    }    
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("expression")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "gene"
+     */
+    public boolean isAGenePageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("gene")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "gene_family"
+     */
+    public boolean isAGeneFamilyPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("gene_family")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "log"
+     */
+    public boolean isALogPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("log")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "news"
+     */
+    public boolean isANewsPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("news")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "registration"
+     */
+    public boolean isARegistrationPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("registration")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "search"
+     */
+    public boolean isASearchPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("search")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "top_anat"
+     */
+    public boolean isATopOBOPageCategory()
+    {
+        log.entry();
+        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("top_anat")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Determine whether the requested page contains sensitive information, 
+     * such as passwords.
+     * Such pages should then not be cached, or the URL be stored in the database, etc.
+     * 
+     * @return  {@code true} if the page contains sensitive information, {@code false} otherwise.
+     */
+    public boolean isASecuredPage() 
+    {
+        log.entry();
+        if (this.isALogPageCategory() || this.isARegistrationPageCategory()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+ 
+    /**
+     * Determine whether the output of the current request can be stored by the web-cache.
+     * Some responses should never be cached, following, e.g., a user identification request, 
+     * or a HEAD request (would lead to cache a blank page). 
+     * At the opposite, we might be interested in caching only some pages 
+     * (e.g., computation-intensive pages are always computed following an AJAX request, 
+     * in order to display a waiting message; we could then only cache AJAX requests).
+     * <p>
+     * Also, some cookies should never be put in cache, because specific to a user.
+     * so that a cache will never send cookies. ( This has still to be done (TODO identify these
+     * pages/cookies) )
+     * 
+     * @return  {@code true} if the response following the current request should be cached
+     */
+    public boolean isACacheableRequest()
+    {
+        log.entry();
+        // Do not cache pages containing sensitive information
+        if (this.isASecuredPage()) {
+            return log.exit(false);
+        }
+        // Do not cache responses to HEAD requests, would lead to cache blank page
+        // for security, we only accept POST and GET requests to be cached.
+        // @see org.bgee.controller.servletUtils.BgeeWebCache#calculateKey(HttpServletRequest)
+        if (!this.getHttpMethod().equalsIgnoreCase("get") && 
+                !this.getHttpMethod().equalsIgnoreCase("post")) {
+            return log.exit(false);
+        }
+        //do not cache POST request that are not AJAX requets: 
+        //they should never send any response, and redirect the user to another page 
+        //to avoid warning messages when pressing the back button.
+        if(! this.isAnAjaxRequest() && this.getHttpMethod().equalsIgnoreCase("post")){
+            return log.exit(false);
+        }
+        return log.exit(true);
+    }
 
 }
 

@@ -89,8 +89,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
                 +this.prop.getImagesRootDirectory()+"favicon.ico'/>");
         this.includeCss(page+".css"); // default css for every pages
-        this.includeCss(); // additional css if override
-        this.includeJs();// add js if override
+        this.includeCss(); // additional css
+        this.includeJs();// add js
         this.writeln("</head>");
         this.writeln("<body>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
@@ -269,10 +269,17 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
     }
     /**
      * Method that loads the javascript files. Has to be override by a child class that needs
-     * custom javascripts.
+     * custom javascripts. Don't forget to call super.includeJs() at the beginning of the overridden
+     * method, unless it is a special page that does not use the standard js.
      */
     protected void includeJs(){
-        // Nothing loaded by default here. 
+        this.includeJs("lib/jquery.min.js");
+        this.includeJs("lib/jquery.visible.js");
+        this.includeJs("lib/jquery-ui.min.js");
+        this.includeJs("common.js");
+        this.includeJs("requestparameters.js");
+        this.includeJs("urlparameters.js");
+        this.includeJs("bgeeutils.js");
     }
     /**
      * Method that loads the provided javascript file.
@@ -287,10 +294,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
     }
     /**
      * Method that loads the css files. Has to be override by a child class that needs
-     * custom css.
+     * custom css. Don't forget to call super.includeCss() at the beginning of the overridden
+     * method, unless it is a special page that does not use the standard css.
      */
     protected void includeCss(){
-        // Nothing loaded by default here. 
+        // Nothing loaded by default here for the moment 
     }
     /**
      * Method that loads the provided css file.

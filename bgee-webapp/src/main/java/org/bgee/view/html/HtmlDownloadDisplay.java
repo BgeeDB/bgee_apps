@@ -26,7 +26,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 {
  
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
-    
+
     /**
      * Constructor
      * 
@@ -53,10 +53,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.startDisplay("download", "Bgee release 13 download page");
 
         this.writeln("<div id='sib_body'>");
-        
+
         this.writeln("<div id='bgee_more_results_up'> &uarr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
         this.writeln("<div id='bgee_more_results_down'> &darr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
-        
+
         // Introduction
         this.writeln("<div id='bgee_introduction'>");
         this.writeln("<h1>Welcome to the Bgee release 13 download page</h1>");
@@ -67,7 +67,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12 (based on Ensembl 69) is always available here</a>.</p>");
         this.writeln("</div>");
         this.writeln("</div>");
-        
+
         // Search box
         this.writeln("<div id='bgee_search_box'>");
         this.writeln("<form action='/' method='get'>");
@@ -79,7 +79,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='results_nb'></div>");
         this.writeln("</form>");
         this.writeln("</div>");
-        
+
         // Single species part
         this.writeln("<div id='bgee_uniq_species'> ");
         this.writeln("<h1>Species</h1>");
@@ -103,7 +103,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(generateSpeciesFigure(28377));
         this.writeln(generateSpeciesFigure(8364));
         this.writeln(generateSpeciesFigure(99883));
-        
+
         // Black banner when a species or a group is selected
         this.writeln("<div id='bgee_data_selection'>");
 
@@ -137,7 +137,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>");
         this.writeln("</div>");
         this.writeln("</div>");
-        
+
         // Multi-species part
         this.writeln("<div id='bgee_multi_species'>");
         this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
@@ -149,7 +149,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 28377, 10116), "Group 4", true));
         this.writeln("</div>");
         this.writeln("</div>");
-        
+
         // Images source
         this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
         this.writeln("<div id='creativecommons'>");
@@ -178,7 +178,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.endDisplay();
         log.exit();
     }
-    
+
     /**
      * Generate the HTML figure tag with a figcaption tag from a {@code int} that is a 
      * species ID.
@@ -192,7 +192,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry(speciesId);
         return log.exit(generateSpeciesFigure(Arrays.asList(speciesId), null, false));
     }
-    
+
     /**
      * Generate the HTML figure tag from a {@code List} of species IDs.
      * 
@@ -218,131 +218,131 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // or common name, even if not displayed... for example droso.
         String hiddenInfo="";
         for (Integer speciesId: speciesIds) {
-                switch(speciesId) {
-                    case 9606: 
-                        name="Homo sapiens";
-                        shortName="H. sapiens";
-                        commonName="human";
-                        alternateNames="";
-                        break;
-                    case 10090: 
-                        name="Mus musculus";
-                        shortName="M. musculus";
-                        commonName="mouse";
-                        alternateNames="house mouse, mice";
-                        break;
-                    case 7955: 
-                        name="Danio rerio";
-                        shortName="D. rerio";
-                        commonName="zebrafish";
-                        alternateNames="leopard danio, zebra danio";
-                        break;
-                    case 7227: 
-                        name="Drosophila melanogaster";
-                        shortName="D. melanogaster";
-                        commonName="fruitfly";
-                        alternateNames="vinegar fly";
-                        break;
-                    case 6239: 
-                        name="Caenorhabditis elegans";
-                        shortName="C. elegans";
-                        commonName="worm";
-                        alternateNames="nematode, roundworm";
-                        break;
-                    case 9597: 
-                        name="Pan paniscus";
-                        shortName="P. paniscus";
-                        commonName="bonobo";
-                        alternateNames="pygmy chimpanzee";
-                        break;
-                    case 9598: 
-                        name="Pan troglodytes";
-                        shortName="P. troglodytes";
-                        commonName="chimpanzee";
-                        alternateNames="";
-                        break;
-                    case 9593: 
-                        name="Gorilla gorilla";
-                        shortName="G. gorilla";
-                        commonName="gorilla";
-                        alternateNames="western gorilla";
-                        break;
-                    case 9600: 
-                        name="Pongo pygmaeus";
-                        shortName="P. pygmaeus";
-                        commonName="orangutan";
-                        alternateNames="orang utan, orang-utan";
-                        break;
-                    case 9544: 
-                        name="Macaca mulatta";
-                        shortName="M. mulatta";
-                        commonName="macaque";
-                        alternateNames="rhesus monkey";
-                        break;
-                    case 10116: 
-                        name="Rattus norvegicus";
-                        shortName="R. norvegicus";
-                        commonName="rat";
-                        alternateNames="brown rat";
-                        break;
-                    case 9913: 
-                        name="Bos taurus";
-                        shortName="B. taurus";
-                        commonName="cow";
-                        alternateNames="domestic cow, domestic cattle, bovine cow";
-                        break;
-                    case 9823: 
-                        name="Sus scrofa";
-                        shortName="S. scrofa";
-                        commonName="pig";
-                        alternateNames="domestic pig, swine";
-                        break;
-                    case 13616: 
-                        name="Monodelphis domestica";
-                        shortName="M. domestica";
-                        commonName="opossum";
-                        alternateNames="gray short-tailed opossum, gray short tailed opossum";
-                        break;
-                    case 9258: 
-                        name="Ornithorhynchus anatinus";
-                        shortName="O. anatinus";
-                        commonName="platypus";
-                        alternateNames="duckbill platypus, duck-billed platypus";
-                        break;
-                    case 9031: 
-                        name="Gallus gallus";
-                        shortName="G. gallus";
-                        commonName="chicken";
-                        alternateNames="bantam, red junglefowl, red jungle fowl";
-                        break;
-                    case 28377: 
-                        name="Anolis carolinensis";
-                        shortName="A. carolinensis";
-                        commonName="anolis";
-                        alternateNames="green anole, carolina anole";
-                        break;
-                    case 8364: 
-                        name="Xenopus tropicalis";
-                        shortName="X. tropicalis";
-                        commonName="xenopus";
-                        alternateNames="western clawed frog";
-                        break;
-                    case 99883: 
-                        name="Tetraodon nigroviridis";
-                        shortName="T. nigroviridis";
-                        commonName="tetraodon";
-                        alternateNames="spotted green pufferfish";
-                        break;
-                    default:
-                        return ("");
-                }
-                if(isGroup){
-                    hiddenInfo = hiddenInfo.concat(name + ", " + commonName + ", ");
-                }
-                else{
-                    hiddenInfo = name;
-                }
-                images.append(generateSpeciesImg(speciesId, name, shortName, commonName, alternateNames,true));
+            switch(speciesId) {
+            case 9606: 
+                name="Homo sapiens";
+                shortName="H. sapiens";
+                commonName="human";
+                alternateNames="";
+                break;
+            case 10090: 
+                name="Mus musculus";
+                shortName="M. musculus";
+                commonName="mouse";
+                alternateNames="house mouse, mice";
+                break;
+            case 7955: 
+                name="Danio rerio";
+                shortName="D. rerio";
+                commonName="zebrafish";
+                alternateNames="leopard danio, zebra danio";
+                break;
+            case 7227: 
+                name="Drosophila melanogaster";
+                shortName="D. melanogaster";
+                commonName="fruitfly";
+                alternateNames="vinegar fly";
+                break;
+            case 6239: 
+                name="Caenorhabditis elegans";
+                shortName="C. elegans";
+                commonName="worm";
+                alternateNames="nematode, roundworm";
+                break;
+            case 9597: 
+                name="Pan paniscus";
+                shortName="P. paniscus";
+                commonName="bonobo";
+                alternateNames="pygmy chimpanzee";
+                break;
+            case 9598: 
+                name="Pan troglodytes";
+                shortName="P. troglodytes";
+                commonName="chimpanzee";
+                alternateNames="";
+                break;
+            case 9593: 
+                name="Gorilla gorilla";
+                shortName="G. gorilla";
+                commonName="gorilla";
+                alternateNames="western gorilla";
+                break;
+            case 9600: 
+                name="Pongo pygmaeus";
+                shortName="P. pygmaeus";
+                commonName="orangutan";
+                alternateNames="orang utan, orang-utan";
+                break;
+            case 9544: 
+                name="Macaca mulatta";
+                shortName="M. mulatta";
+                commonName="macaque";
+                alternateNames="rhesus monkey";
+                break;
+            case 10116: 
+                name="Rattus norvegicus";
+                shortName="R. norvegicus";
+                commonName="rat";
+                alternateNames="brown rat";
+                break;
+            case 9913: 
+                name="Bos taurus";
+                shortName="B. taurus";
+                commonName="cow";
+                alternateNames="domestic cow, domestic cattle, bovine cow";
+                break;
+            case 9823: 
+                name="Sus scrofa";
+                shortName="S. scrofa";
+                commonName="pig";
+                alternateNames="domestic pig, swine";
+                break;
+            case 13616: 
+                name="Monodelphis domestica";
+                shortName="M. domestica";
+                commonName="opossum";
+                alternateNames="gray short-tailed opossum, gray short tailed opossum";
+                break;
+            case 9258: 
+                name="Ornithorhynchus anatinus";
+                shortName="O. anatinus";
+                commonName="platypus";
+                alternateNames="duckbill platypus, duck-billed platypus";
+                break;
+            case 9031: 
+                name="Gallus gallus";
+                shortName="G. gallus";
+                commonName="chicken";
+                alternateNames="bantam, red junglefowl, red jungle fowl";
+                break;
+            case 28377: 
+                name="Anolis carolinensis";
+                shortName="A. carolinensis";
+                commonName="anolis";
+                alternateNames="green anole, carolina anole";
+                break;
+            case 8364: 
+                name="Xenopus tropicalis";
+                shortName="X. tropicalis";
+                commonName="xenopus";
+                alternateNames="western clawed frog";
+                break;
+            case 99883: 
+                name="Tetraodon nigroviridis";
+                shortName="T. nigroviridis";
+                commonName="tetraodon";
+                alternateNames="spotted green pufferfish";
+                break;
+            default:
+                return ("");
+            }
+            if(isGroup){
+                hiddenInfo = hiddenInfo.concat(name + ", " + commonName + ", ");
+            }
+            else{
+                hiddenInfo = name;
+            }
+            images.append(generateSpeciesImg(speciesId, name, shortName, commonName, alternateNames,true));
         }
         if (StringUtils.isBlank(figcaption)) {
             StringBuilder newFigcaption = new StringBuilder();
@@ -368,7 +368,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         figure.append("</figure>");
         return log.exit(figure.toString());
     }
-    
+
     /**
      * Generate the HTML img tag of one species.
      * 
@@ -413,9 +413,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     public void includeJs()
     {
         log.entry();
-        this.includeJs("jquery.min.js");
-        this.includeJs("jquery.visible.js");
-        this.includeJs("jquery-ui.min.js");
+        super.includeJs();
         this.includeJs("download.js");
         log.exit();
     }

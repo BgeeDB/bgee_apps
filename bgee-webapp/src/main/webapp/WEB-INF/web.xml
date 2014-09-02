@@ -48,7 +48,9 @@
         <filter-name>BgeeWebCache</filter-name>
         <filter-class>org.bgee.controller.servletutils.BgeeWebCache</filter-class>
         <init-param>
-            <!-- provide here a cache name that is declared in ehcache.xml -->
+            <!-- provide here a cache name that is declared in ehcache-production.xml 
+                 in the resources folder
+            -->
             <param-name>cacheName</param-name>
             <param-value>BgeeWebCache</param-value>
         </init-param>

@@ -35,6 +35,7 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
 
 import owltools.graph.OWLGraphEdge;
+import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
 import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
@@ -106,7 +107,7 @@ public class UberonDevStage extends UberonCommon {
      *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000,BFO:0000003,MmusDv:0000041 
      *   -
      *   BFO:0000050,BFO:0000062,RO:0002087
-     *   UBERON:0000104,FBdv:00000000}
+     *   UBERON:0000104,FBdv:00000000,NCBITaxon:1}
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
@@ -388,7 +389,8 @@ public class UberonDevStage extends UberonCommon {
             manipulator.filterRelations(this.getRelIds(), true);
         }
         
-        //potential subgraph root to keep: UBERON:0000104 life cycle, FBdv:00000000 Drosophila life 
+        //potential subgraph root to keep: UBERON:0000104 life cycle, FBdv:00000000 Drosophila life, 
+        //NCBITaxon:1
         if (this.getToFilterSubgraphRootIds() != null && !this.getToFilterSubgraphRootIds().isEmpty()) {
             for (String classIdRemoved: manipulator.filterSubgraphs(this.getToFilterSubgraphRootIds())) {
                 this.getClassesRemoved().put(classIdRemoved, 
@@ -671,7 +673,7 @@ public class UberonDevStage extends UberonCommon {
         
         //identity case
         if (startStage.equals(endStage)) {
-            stageIdsBetween.add(startStageId);
+            stageIdsBetween.add(wrapper.getIdentifier(startStage));
         } else {
             //now we obtain a nested set model 
             //this nested set model will be used in a comparator, we make it final.

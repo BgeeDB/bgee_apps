@@ -717,6 +717,17 @@ public class UberonDevStageTest extends TestAncestor {
                 "MmulDv:0000007");
         assertEquals("incorrect stages retrieved between start and end", expectedList, 
                 uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000007"));
+        //using a xref should return the actual ID
+        assertEquals("incorrect stages retrieved between start with xref", expectedList, 
+                uberon.getStageIdsBetween("XREF_ID:1", "MmulDv:0000007"));
+        
+        //identity case
+        expectedList = Arrays.asList("MmulDv:0000004");
+        assertEquals("incorrect stage retrieved from identical stage", expectedList, 
+                uberon.getStageIdsBetween("MmulDv:0000004", "MmulDv:0000004"));
+        assertEquals("incorrect stage retrieved from identical stage using xref", expectedList, 
+                uberon.getStageIdsBetween("XREF_ID:1", "XREF_ID:1"));
+        
         
         //if one of the stage is the parent of the other one, only the parent should be returned
         expectedList = Arrays.asList("MmulDv:0000002");

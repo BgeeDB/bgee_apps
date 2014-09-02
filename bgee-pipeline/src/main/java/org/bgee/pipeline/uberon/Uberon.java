@@ -45,6 +45,7 @@ import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
 
 import owltools.graph.OWLGraphEdge;
+import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
 
 /**
@@ -122,43 +123,10 @@ public class Uberon extends UberonCommon {
      *   UBERON:0001062,UBERON:0000465,UBERON:0000061,UBERON:0010000,UBERON:0008979 
      *   BFO:0000050,RO:0002202,RO:0002494 
      *   UBERON:0000467/UBERON:0000468,UBERON:0000475/UBERON:0000468,UBERON:0000479/UBERON:0000468,UBERON:0000480/UBERON:0000468,UBERON:0007688/UBERON:0000468,UBERON:0010707/UBERON:0000468,UBERON:0012641/UBERON:0000468,UBERON:0002199/UBERON:0000468,UBERON:0002416/UBERON:0000468,UBERON:0007376/UBERON:0000468,UBERON:0000463/UBERON:0000468,UBERON:0001048/UBERON:0000468,UBERON:0007567/UBERON:0000468,UBERON:0015119/UBERON:0000468 
-     *   NBO:0000313,GO:0008150,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,NCBITaxon:1,CHEBI:24431,UBERON:0004458,UBERON:0000466,SO:0000704 
+     *   NBO:0000313,GO:0008150,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,CHEBI:24431,UBERON:0004458,UBERON:0000466,SO:0000704 
      *   UBERON:0013701,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0000468,GO:0005575 
      *   grouping_class,non_informative,ubprop:upper_level,upper_level 
      *   UBERON:0013701,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0011676,GO:0005575}
-     *   
-     * <li>If the first element in {@code args} is "generateStageOntology", the action 
-     * will be to extract from the Uberon ontology the developmental stages subgraph, 
-     * and to save it to files in OBO and OWL formats, 
-     * see {@link #generateStageOntologyAndSaveToFile()}.
-     * Following elements in {@code args} must then be: 
-     *   <ol>
-     *   <li>path to the file storing the Uberon ontology, see {@link #setPathToUberonOnt(String)}.
-     *   <li>path to use to generate the files storing the resulting 
-     *   ontology in OBO and OWL. The prefixes ".owl" or ".obo" will be automatically added. 
-     *   See {@link #setModifiedOntPath(String)}.
-     *   <li>A list of OBO-like IDs of {@code OWLClass}es to remove from the ontology, 
-     *   and to propagate their incoming edges to their outgoing edges. These IDs must be 
-     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
-     *   See {@link #setClassIdsToRemove(Collection)}.
-     *   <li>A list of OBO-like IDs of {@code OWLClass}es for which we want to remove 
-     *   all their children, reachable by any path in their graph closure. 
-     *   The {@code OWLClass}es themselves will not be removed. 
-     *   See {@link #setChildrenOfToRemove(Collection)}.
-     *   <li>A list of OBO-like IDs or {@code IRI}s of relations to be filtered 
-     *   and mapped to parent relations. These IDs must be separated by the {@code String} 
-     *   {@link CommandRunner#LIST_SEPARATOR}. See {@link #setRelIds(Collection)}.
-     *   <li>A list of OBO-like IDs of the {@code OWLClass}es that are the roots 
-     *   of the subgraphs that will be kept in the ontology. These IDs must be 
-     *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
-     *   See {@link #setToFilterSubgraphRootIds(Collection)}.
-     *   </ol>
-     *   Example of command line usage for this task: {@code java -Xmx2g -jar myJar 
-     *   Uberon generateStageOntology ext.owl dev_stage_ont  
-     *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000 
-     *   UBERON:0000069 
-     *   BFO:0000050,BFO:0000062
-     *   UBERON:0000104,FBdv:00000000}
      *   
      * <li>If the first element in {@code args} is "extractXRefMappings", the action will be 
      * to retrieve mappings from XRef IDs to Uberon IDs from Uberon, and to save them 
@@ -616,59 +584,61 @@ public class Uberon extends UberonCommon {
     public Set<Integer> extractTaxonIds() throws IllegalArgumentException {
         log.entry();
 
-        OWLOntology ont = this.getOntologyUtils().getWrapper().getSourceOntology();
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
-        
         Set<String> taxonIds = new HashSet<String>();
         
-        //will get taxon IDs from axioms over object properties "in_taxon", 
-        //"evolved_multiple_times_in" (or any sub-properties)
-        Set<OWLObjectPropertyExpression> objectProps = this.getTaxonObjectProperties(wrapper);
-        //will also get the taxon IDs from annotation axioms over annotation properties
-        //"ambiguous_for_taxon", "dubious_for_taxon", "homologous_in","never_in_taxon", 
-        //"RO:0002161", "present_in_taxon", "taxon" (or any sub-properties)
-        Set<OWLAnnotationProperty> annotProps = this.getTaxonAnnotationProperties(wrapper);
-        
-        for (OWLClass cls: ont.getClassesInSignature()) {
-            //try to get taxa from any object properties that can lead to a taxon
-            for (OWLGraphEdge edge: wrapper.getOutgoingEdges(cls)) {
-                
-                if (!edge.getQuantifiedPropertyList().isEmpty() && 
-                    edge.getFinalQuantifiedProperty().isSomeValuesFrom() && 
-                    objectProps.contains(edge.getFinalQuantifiedProperty().getProperty()) && 
-                    edge.getTarget() instanceof OWLClass) {
-                    log.trace("Taxon {} captured through object property in axiom {}", 
-                            edge.getTarget(), edge.getAxioms());
-                    taxonIds.add(wrapper.getIdentifier(edge.getTarget()));
+        for (OWLOntology ont: wrapper.getAllOntologies()) {
+            //will get taxon IDs from axioms over object properties "in_taxon", 
+            //"evolved_multiple_times_in" (or any sub-properties)
+            Set<OWLObjectPropertyExpression> objectProps = this.getTaxonObjectProperties(wrapper);
+            //will also get the taxon IDs from annotation axioms over annotation properties
+            //"ambiguous_for_taxon", "dubious_for_taxon", "homologous_in","never_in_taxon", 
+            //"RO:0002161", "present_in_taxon", "taxon" (or any sub-properties)
+            Set<OWLAnnotationProperty> annotProps = this.getTaxonAnnotationProperties(wrapper);
+            
+            for (OWLClass cls: ont.getClassesInSignature()) {
+                //try to get taxa from any object properties that can lead to a taxon.
+                //this is will also capture taxon used in equivalence axioms to owl:nothing 
+                //(formal way of representing never_in_taxon in owl)
+                for (OWLGraphEdge edge: wrapper.getOutgoingEdges(cls)) {
+                    
+                    if (!edge.getQuantifiedPropertyList().isEmpty() && 
+                            edge.getFinalQuantifiedProperty().isSomeValuesFrom() && 
+                            objectProps.contains(edge.getFinalQuantifiedProperty().getProperty()) && 
+                            edge.getTarget() instanceof OWLClass) {
+                        log.trace("Taxon {} captured through object property in axiom {}", 
+                                edge.getTarget(), edge.getAxioms());
+                        taxonIds.add(wrapper.getIdentifier(edge.getTarget()));
+                    }
+                }
+                //and from any annotation properties that can lead to a taxon
+                for (OWLAnnotation annot: cls.getAnnotations(ont)) {
+                    if (annotProps.contains(annot.getProperty()) && 
+                            annot.getValue() instanceof IRI) {
+                        log.trace("Taxon {} captured through annotation property in annotation {}", 
+                                annot.getValue(), annot);
+                        taxonIds.add(wrapper.getIdentifier(annot.getValue()));
+                    }
                 }
             }
-            //and from any annotation properties that can lead to a taxon
-            for (OWLAnnotation annot: cls.getAnnotations(ont)) {
-                if (annotProps.contains(annot.getProperty()) && 
-                    annot.getValue() instanceof IRI) {
-                    log.trace("Taxon {} captured through annotation property in annotation {}", 
-                            annot.getValue(), annot);
-                    taxonIds.add(wrapper.getIdentifier(annot.getValue()));
-                }
-            }
-        }
-        
-        //now we get the "treat-xrefs-as-reverse-genus-differentia" ontology annotations
-        OWLAnnotationProperty genusDifferentia = wrapper.getManager().getOWLDataFactory().
-                getOWLAnnotationProperty(OntologyUtils.GENUS_DIFFERENTIA_IRI);
-        for (OWLAnnotation annot: ont.getAnnotations()) {
-            if (annot.getProperty().equals(genusDifferentia)) {
-                String value = ((OWLLiteral) annot.getValue()).getLiteral();
-                Matcher m = OntologyUtils.GENUS_DIFFERENTIA_LITERAL_PATTERN.matcher(value);
-                if (m.matches()) {
-                    String taxId = m.group(OntologyUtils.GENUS_DIFFERENTIA_TAXON_GROUP);
-                    log.trace("Taxon {} captured through treat-xrefs-as-reverse-genus-differentia {}", 
-                            taxId, value);
-                    taxonIds.add(m.group(OntologyUtils.GENUS_DIFFERENTIA_TAXON_GROUP));
-                } else {
-                    throw log.throwing(new IllegalArgumentException("The provided ontology " +
-                    		"contains genus-differentia annotations that does not match " +
-                    		"the expected pattern"));
+            
+            //now we get the "treat-xrefs-as-reverse-genus-differentia" ontology annotations
+            OWLAnnotationProperty genusDifferentia = wrapper.getManager().getOWLDataFactory().
+                    getOWLAnnotationProperty(OntologyUtils.GENUS_DIFFERENTIA_IRI);
+            for (OWLAnnotation annot: ont.getAnnotations()) {
+                if (annot.getProperty().equals(genusDifferentia)) {
+                    String value = ((OWLLiteral) annot.getValue()).getLiteral();
+                    Matcher m = OntologyUtils.GENUS_DIFFERENTIA_LITERAL_PATTERN.matcher(value);
+                    if (m.matches()) {
+                        String taxId = m.group(OntologyUtils.GENUS_DIFFERENTIA_TAXON_GROUP);
+                        log.trace("Taxon {} captured through treat-xrefs-as-reverse-genus-differentia {}", 
+                                taxId, value);
+                        taxonIds.add(m.group(OntologyUtils.GENUS_DIFFERENTIA_TAXON_GROUP));
+                    } else {
+                        throw log.throwing(new IllegalArgumentException("The provided ontology " +
+                                "contains genus-differentia annotations that does not match " +
+                                "the expected pattern"));
+                    }
                 }
             }
         }

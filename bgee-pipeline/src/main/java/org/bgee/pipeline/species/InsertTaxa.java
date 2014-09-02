@@ -652,7 +652,7 @@ public class InsertTaxa extends MySQLDAOUser {
             owlClassesToKeep.addAll(this.taxOntWrapper.getOWLClassAncestors(taxClass));
         }
         OWLGraphManipulator manipulator = new OWLGraphManipulator(this.taxOntWrapper);
-        int taxonRemovedCount = manipulator.filterClasses(owlClassesToKeep);
+        int taxonRemovedCount = manipulator.filterClasses(owlClassesToKeep).size();
         
         log.trace("Done filtering, {} taxa removed", taxonRemovedCount);
         log.exit();

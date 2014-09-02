@@ -4,9 +4,6 @@
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %level %class{36} %L %M - %m%ex%n"/>
     </Console>
-    <File name="test_file" fileName="/Users/admin/Desktop/test.out">
-      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %level %class{36} %L %M - %m%ex%n"/>
-    </File>
   </appenders>
   <loggers>
     <root level="off">
@@ -14,7 +11,6 @@
     </root>  
     <logger name="org.bgee.pipeline" level="trace" additivity="false">
       <appender-ref ref="Console"/>
-      <appender-ref ref="test_file"/>
     </logger>
   </loggers>
 </configuration>

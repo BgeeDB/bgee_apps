@@ -90,6 +90,16 @@ public class InsertUberon extends MySQLDAOUser {
         
         log.exit();
     }
+    
+    /**
+     * A {@code Collection} of {@code String}s that are the OBO-like IDs 
+     * of the {@code OWLClass}es that are the roots of subgraphs to ignore. 
+     * This is useful for instance for OBO GCI relations: they make use of taxon classes, 
+     * so that it is not possible to remove the taxonomy from the ontology; yet, 
+     * when inserting anatomy or developmental stages, we do not want to consider them; 
+     * the root of the taxonomy would then define a subgraph to ignore.
+     */
+    private Collection<String> toIgnoreSubgraphRootIds;
 
     /**
      * Default constructor using default {@code MySQLDAOManager}.
@@ -168,5 +178,28 @@ public class InsertUberon extends MySQLDAOUser {
         }
         
         log.exit();
+    }
+
+
+    /**
+     * @return  A {@code Collection} of {@code String}s that are the OBO-like IDs 
+     *          of the {@code OWLClass}es that are the roots of subgraphs to ignore. 
+     *          This is useful for instance for OBO GCI relations: they make use of taxon classes, 
+     *          so that it is not possible to remove the taxonomy from the ontology; yet, 
+     *          when inserting anatomy or developmental stages, we do not want to consider them; 
+     *          the root of the taxonomy would then define a subgraph to ignore.
+     * @see #setToIgnoreSubgraphRootIds(Collection)
+     */
+    public Collection<String> getToIgnoreSubgraphRootIds() {
+        return toIgnoreSubgraphRootIds;
+    }
+    /**
+     * Sets the parameter returned by {@link #getToIgnoreSubgraphRootIds()}.
+     * 
+     * @param toIgnoreSubgraphRootIds   See {@link #getToIgnoreSubgraphRootIds()}.
+     * @see #getToIgnoreSubgraphRootIds()
+     */
+    public void setToIgnoreSubgraphRootIds( Collection<String> toIgnoreSubgraphRootIds) {
+        this.toIgnoreSubgraphRootIds = toIgnoreSubgraphRootIds;
     }
 }

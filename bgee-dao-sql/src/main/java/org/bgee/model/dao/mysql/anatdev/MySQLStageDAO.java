@@ -29,7 +29,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     }
 
     @Override
-    public int insertStages(Collection<StageTO> stageTOs) {
+    public int insertStages(Collection<StageTO> stageTOs) throws DAOException {
         log.entry(stageTOs);
         
         StringBuilder sql = new StringBuilder(); 

@@ -289,6 +289,7 @@ abstract class UberonCommon {
             Collection<String> toFilterSubgraphRootIds) {
         this.toFilterSubgraphRootIds = toFilterSubgraphRootIds;
     }
+    
     /**
      * @return  A {@code Map} where keys are OBO-like IDs of the Uberon {@code OWLClass}es, 
      *          and values are {@code Set}s of {@code Integer}s containing the IDs of taxa 

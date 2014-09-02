@@ -2,10 +2,20 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 
+/**
+ * DAO defining queries using or retrieving {@link NoExpressionCallDAO}s. 
+ * 
+ * @author Valentine Rech de Laval
+ * @version 
+ * @since 
+ */
 public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> {
 
     /**
@@ -17,9 +27,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * <li>{@code DEVSTAGEID: corresponds to {@link CallTO#getDevStageId()}.
      * <li>{@code ANATENTITYID: corresponds to {@link CallTO#getAnatEntityId()}.
      * <li>{@code AFFYMETRIXDATA: corresponds to {@link CallTO#getAffymetrixData()}.
-     * <li>{@code ESTDATA: corresponds to {@link CallTO#getESTData()}.
      * <li>{@code INSITUDATA: corresponds to {@link CallTO#getInSituData()}.
-     * <li>{@code RELAXEDINSITUDATA: corresponds to {@link CallTO#getRelaxedInSituData()}.
      * <li>{@code RNASEQDATA;: corresponds to {@link CallTO#getRNASeqData()}.
      * <li>{@code INCLUDEPARENTSTRUCTURES}: corresponds to 
      * {@link NoExpressionCallTO#isIncludeParentStructures()}.
@@ -30,40 +38,47 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, GENEID, DEVSTAGEID, ANATENTITYID, 
-        AFFYMETRIXDATA, ESTDATA, INSITUDATA, RELAXEDINSITUDATA, RNASEQDATA,
+        ID, GENEID, DEVSTAGEID, ANATENTITYID, AFFYMETRIXDATA, INSITUDATA, RNASEQDATA,
         INCLUDEPARENTSTRUCTURES, ORIGINOFLINE;
     }
 
     /**
-     * Retrieve all no expression calls from data source according {@code NoExpressionCallParams}.
+     * Retrieve all no-expression calls from data source according {@code NoExpressionCallParams}.
      * <p>
-     * The no expression calls are retrieved and returned as a {@code NoExpressionCallTOResultSet}. 
+     * The no-expression calls are retrieved and returned as a {@code NoExpressionCallTOResultSet}. 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
      * @param params  An {@code NoExpressionCallParams} that provide the parameters specific 
-     *                to no expression calls
-     * @return        An {@code NoExpressionCallTOResultSet} containing all no expression calls 
+     *                to no-expression calls
+     * @return        An {@code NoExpressionCallTOResultSet} containing all no-expression calls 
      *                from data source.
      */
     public NoExpressionCallTOResultSet getAllNoExpressionCalls(NoExpressionCallParams params);
     
     /**
-     * Inserts the provided no expression calls into the Bgee database, 
+     * Inserts the provided no-expression calls into the Bgee database, 
      * represented as a {@code Collection} of {@code NoExpressionCallTO}s. 
-     * <p>
-     * The expression calls are retrieved and returned as a {@code NoExpressionCallTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
-     * results are retrieved.
      * 
      * @param noExpressionCalls A {@code Collection} of {@code NoExpressionCallTO}s 
      *                          to be inserted into the database.
-     * @return                  An {@code int} that is the number of inserted 
-     *                          no expression calls.
+     * @return                  An {@code int} that is the number of inserted no-expression calls.
      */
     public int insertNoExpressionCalls(Collection<NoExpressionCallTO> noExpressionCalls);
 
+    /**
+     * Inserts the provided correspondence between global no-expression and no-expression IDs into 
+     * the Bgee database, represented as a {@code Collection} of 
+     * {@code GlobalNoExpressionToNoExpressionTO}s. 
+     * 
+     * @param globalNoExpressionToNoExpression  A {@code Collection} of 
+     *                                          {@code globalNoExpressionToNoExpressionTO}s to be 
+     *                                          inserted into the database.
+     * @return                                  An {@code int} that is the number of inserted 
+     *                                          correspondences.
+     */
+    public int insertGlobalNoExpressionToNoExpression(
+            Collection<GlobalNoExpressionToNoExpressionTO> globalNoExpressionToNoExpression);
 
     /**
      * {@code DAOResultSet} specifics to {@code NoExpressionCallTO}s
@@ -86,11 +101,18 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * calls.
      * 
      * @author Frederic Bastian
+     * @author Valentine Rech de Laval
      * @version Bgee 13
      * @since Bgee 13
      */
     public final class NoExpressionCallTO extends CallTO {
         private static final long serialVersionUID = 5793434647776540L;
+        
+        /**
+         * {@code Logger} of the class. 
+         */
+        private final static Logger log = LogManager.getLogger(NoExpressionCallTO.class.getName());
+
         /**
          * A {@code boolean} defining whether this no-expression call was generated 
          * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
@@ -105,9 +127,9 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         /**
          * An {@code Enum} used to define the origin of line.
          * <ul>
-         * <li>{@code SELF}: this no expression call exists in itself.
-         * <li>{@code PARENT}: this no expression call exists in one of its parents.
-         * <li>{@code BOTH}: this no expression call exists in itself, AND in one parent at the 
+         * <li>{@code SELF}: this no-expression call exists in itself.
+         * <li>{@code PARENT}: this no-expression call exists in one of its parents.
+         * <li>{@code BOTH}: this no-expression call exists in itself, AND in one parent at the 
          * same time.
          * </ul>
          */
@@ -133,29 +155,73 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         }
 
         /**
-         * Default constructor.
+         * Constructor providing the gene ID, the anatomical entity ID, the developmental stage ID,  
+         * the contribution of Affymetrix, <em>in situ</em> and, RNA-Seq data to the generation of 
+         * this call, whether this no-expression call was generated using data from the anatomical 
+         * entity with the ID alone, or by also considering all parents by is_a or part_of 
+         * relations, even indirect.
+         * 
+         * @param geneId               A {@code String} that is the ID of the gene associated to 
+         *                             this call.
+         * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
+         *                             associated to this call. 
+         * @param devStageId           A {@code String} that is the ID of the developmental stage 
+         *                             associated to this call. 
+         * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
+         *                             data to the generation of this call.
+         * @param inSituData           A {@code DataSate} that is the contribution of 
+         *                             <em>in situ</em> data to the generation of this call.
+         * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
+         *                             to the generation of this call.
+         * @param includeParentStructures
+         *                             A {@code boolean} defining whether this no-expression call 
+         *                             was generated using data from the anatomical entity with the 
+         *                             ID alone, or by also considering all parents by is_a or 
+         *                             part_of relations, even indirect.
          */
-        NoExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId,
-                DataState affymetrixData, DataState estData, DataState inSituData, 
-                DataState relaxedInSituData, DataState rnaSeqData, boolean includeParentStructures) {
-            super(id, geneId, anatEntityId, devStageId, affymetrixData, estData, inSituData, 
-                    relaxedInSituData, rnaSeqData);
+        public NoExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId,
+                DataState affymetrixData, DataState inSituData, DataState rnaSeqData, 
+                boolean includeParentStructures) {
+            super(id, geneId, anatEntityId, devStageId, affymetrixData, DataState.NODATA, inSituData, 
+                    DataState.NODATA, rnaSeqData);
             this.includeParentStructures = includeParentStructures;
             originOfLine = OriginOfLineType.SELF;
-       }
+        }
 
         /**
-         * Default constructor.
+         * Constructor providing the gene ID, the anatomical entity ID, the developmental stage ID,  
+         * the contribution of Affymetrix, <em>in situ</em> and, RNA-Seq data to the generation of 
+         * this call, whether this no-expression call was generated using data from the anatomical 
+         * entity with the ID alone, or by also considering all parents by is_a or part_of 
+         * relations, even indirect, and, the origin of line
+         * 
+         * @param geneId               A {@code String} that is the ID of the gene associated to 
+         *                             this call.
+         * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
+         *                             associated to this call. 
+         * @param devStageId           A {@code String} that is the ID of the developmental stage 
+         *                             associated to this call. 
+         * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
+         *                             data to the generation of this call.
+         * @param inSituData           A {@code DataSate} that is the contribution of 
+         *                             <em>in situ</em> data to the generation of this call.
+         * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
+         *                             to the generation of this call.
+         * @param includeParentStructures
+         *                             A {@code boolean} defining whether this no-expression call 
+         *                             was generated using data from the anatomical entity with the 
+         *                             ID alone, or by also considering all parents by is_a or 
+         *                             part_of relations, even indirect.
+         * @param originOfLine         A {@code OriginOfLineType} defining the origin of line.
          */
-        NoExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId,
-                DataState affymetrixData, DataState estData, DataState inSituData, 
-                DataState relaxedInSituData, DataState rnaSeqData, boolean includeParentStructures,
-                OriginOfLineType originOfLine) {
-            super(id, geneId, anatEntityId, devStageId, affymetrixData, estData, inSituData, 
-                    relaxedInSituData, rnaSeqData);
+        public NoExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId,
+                DataState affymetrixData, DataState inSituData, DataState rnaSeqData, 
+                boolean includeParentStructures, OriginOfLineType originOfLine) {
+            super(id, geneId, anatEntityId, devStageId, affymetrixData, DataState.NODATA, inSituData, 
+                    DataState.NODATA, rnaSeqData);
             this.includeParentStructures = includeParentStructures;
             this.originOfLine = originOfLine;
-      }
+        }
 
         /**
          * Returns the {@code boolean} defining whether this no-expression call was generated 
@@ -209,5 +275,126 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
                     " - Include Parent Structures: " + this.isIncludeParentStructures() +
                     " - Origin Of Line: " + this.getOriginOfLine();
         }
-}
+        
+        /**
+         * Convert the origin of call from the data source into an {@code OriginOfLineType}.
+         * 
+         * @param databaseEnum  A {@code String} that is origin of call from the data source.
+         * @return              An {@code OriginOfLineType} representing the given {@code String}. 
+         */
+        public static OriginOfLineType convertDatasourceEnumToOriginOfLineType(String databaseEnum) {
+            log.entry(databaseEnum);
+            
+            OriginOfLineType originType = null;
+            if (databaseEnum.equals("self")) {
+                originType = OriginOfLineType.SELF;
+            } else if (databaseEnum.equals("parent")) {
+                originType = OriginOfLineType.PARENT;
+            } else if (databaseEnum.equals("both")) {
+                originType = OriginOfLineType.BOTH;
+            }
+            
+            return log.exit(originType);
+        }
+
+        /**
+         * Convert the origin of call from the data source into an {@code OriginOfLineType}.
+         * 
+         * @param databaseEnum  A {@code String} that is origin of call from the data source.
+         * @return              An {@code OriginOfLineType} representing the given {@code String}. 
+         */
+        public static String convertOriginOfLineTypeToDatasourceEnum(OriginOfLineType dataType) {
+            log.entry(dataType);
+            
+            String databaseEnum = null;
+            if (dataType == OriginOfLineType.SELF) {
+                databaseEnum = "self";
+            } else if (dataType == OriginOfLineType.PARENT) {
+                databaseEnum = "parent";
+            } else if (dataType == OriginOfLineType.BOTH) {
+                databaseEnum = "both";
+            }
+            
+            return log.exit(databaseEnum);
+        }
+    }
+    
+    /**
+     * {@code DAOResultSet} specifics to {@code GlobalNoExpressionToNoExpressionTO}s
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public interface GlobalNoExpressionToNoExpressionTOResultSet 
+                        extends DAOResultSet<GlobalNoExpressionToNoExpressionTO> {
+    }
+
+    /**
+     * A {@code TransferObject} representing relation between no-expression table and 
+     * globalNoExpression table in the Bgee data source.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public final class GlobalNoExpressionToNoExpressionTO implements TransferObject {
+
+        private static final long serialVersionUID = -5283534395161770005L;
+
+        /**
+         * A {@code String} representing the ID of the no-expression call.
+         */
+        private String noExpressionId;
+
+        /**
+         * A {@code String} representing the ID of the global no-expression call.
+         */
+        private String globalNoExpressionId;
+
+        /**
+         * Default constructor.
+         */
+        GlobalNoExpressionToNoExpressionTO() {
+            super();
+        }
+
+        /**
+         * Constructor providing the no-expression call ID and the global no-expression call ID.  
+         **/
+        public GlobalNoExpressionToNoExpressionTO(String noExpressionId, String globalNoExpressionId) {
+            super();
+            this.setNoExpressionId(noExpressionId);
+            this.setGlobalNoExpressionId(globalNoExpressionId);
+        }
+
+        /**
+         * @return  the {@code String} representing the ID of the no-expression call.
+         */
+        public String getNoExpressionId() {
+            return noExpressionId;
+        }
+
+        /**
+         * @param noExpressionId  the {@code String} representing the ID of the no-expression call.
+         */
+        void setNoExpressionId(String noExpressionId) {
+            this.noExpressionId = noExpressionId;
+        }
+
+        /**
+         * @return  the {@code String} representing the ID of the global no-expression call.
+         */
+        public String getGlobalNoExpressionId() {
+            return globalNoExpressionId;
+        }
+
+        /**
+         * @param globalNoExpressionId  the {@code String} representing the ID of the global 
+         *                              no-expression call.
+         */
+        void setGlobalNoExpressionId(String globalNoExpressionId) {
+            this.globalNoExpressionId = globalNoExpressionId;
+        }
+    }
 }

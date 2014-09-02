@@ -158,6 +158,46 @@ BEGIN
                (20,'ID2','Anat_id10','Stage_id18','high quality','high quality','high quality','high quality','descent'),
                (21,'ID2','Anat_id11','Stage_id18','high quality','high quality','high quality','high quality','descent');
 
+        INSERT INTO noExpression(noExpressionId,geneId,anatEntityId,stageId,noExpressionAffymetrixData,noExpressionInSituData,noExpressionRnaSeqData)
+        VALUES (1,'ID2','Anat_id5','Stage_id13','poor quality','high quality','high quality'),
+               (2,'ID1','Anat_id1','Stage_id1','high quality','high quality','poor quality'),
+               (3,'ID3','Anat_id6','Stage_id6','no data','no data','poor quality'),
+               (4,'ID2','Anat_id11','Stage_id11','high quality','high quality','high quality'),
+               (5,'ID3','Anat_id8','Stage_id10','poor quality','poor quality','poor quality'),
+               (6,'ID3','Anat_id6','Stage_id7','poor quality','no data','high quality'),
+               (7,'ID3','Anat_id5','Stage_id6','high quality','no data','high quality'),
+               (8,'ID3','Anat_id5','Stage_id14','poor quality','high quality','no data');
+
+        INSERT INTO globalNoExpressionToNoExpression (noExpressionId,globalNoExpressionId) 
+        VALUES (1,1),
+               (1,2),
+               (1,3),
+               (3,4),
+               (3,5),
+               (3,6),
+               (4,7),
+               (4,8),
+               (4,9),
+               (5,10),
+               (5,11),
+               (6,12),
+               (6,13);
+
+        INSERT INTO globalNoExpression(globalNoExpressionId,geneId,anatEntityId,stageId,noExpressionAffymetrixData,noExpressionInSituData,noExpressionRnaSeqData,noExpressionOriginOfLine)
+        VALUES (1,'ID2','Anat_id5','Stage_id13','poor quality','high quality','high quality','self'),
+               (2,'ID2','Anat_id2','Stage_id13','poor quality','high quality','high quality','parent'),
+               (3,'ID2','Anat_id1','Stage_id13','poor quality','high quality','high quality','parent'),
+               (4,'ID3','Anat_id6','Stage_id6','no data','no data','poor quality','self'),
+               (5,'ID3','Anat_id5','Stage_id6','high quality','no data','high quality','both'),
+               (6,'ID3','Anat_id1','Stage_id6','no data','no data','poor quality','parent'),
+               (7,'ID2','Anat_id11','Stage_id11','high quality','high quality','high quality','self'),
+               (8,'ID2','Anat_id10','Stage_id11','high quality','high quality','high quality','parent'),
+               (9,'ID2','Anat_id1','Stage_id11','high quality','high quality','high quality','parent'),
+               (10,'ID3','Anat_id8','Stage_id10','poor quality','poor quality','poor quality','self'),
+               (11,'ID3','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','parent'),
+               (12,'ID3','Anat_id6','Stage_id7','poor quality','no data','high quality','self'),
+               (13,'ID3','Anat_id1','Stage_id7','poor quality','no data','high quality','parent');
+
     END IF; 
 END
 ;

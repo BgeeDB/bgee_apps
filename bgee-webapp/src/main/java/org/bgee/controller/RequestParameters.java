@@ -17,6 +17,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.URLParameters.Parameter;
@@ -25,7 +26,6 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.WrongFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
-import org.bgee.controller.utils.BgeeStringUtils;
 
 /**
  * This class is intended to hold parameters of a query to the server, 
@@ -311,7 +311,7 @@ public class RequestParameters {
 
         //Get the key
         String key = request.getParameter(this.getKeyParam().getName());
-        if (BgeeStringUtils.isBlank(key)) {
+        if (StringUtils.isBlank(key)) {
             log.debug("The key is blank, load params from request");
             //no key set, get the parameters from the URL
             this.loadParametersFromRequest(request, true);
@@ -380,7 +380,7 @@ public class RequestParameters {
                         // the list
                         // First secure the string
                         try {
-                            valueFromUrl = BgeeStringUtils.secureString(valueFromUrl, 
+                            valueFromUrl = this.secureString(valueFromUrl, 
                                     parameter.getMaxSize(), parameter.getFormat());
                         } catch (WrongFormatException e) {
                             throw new WrongFormatException(parameter.getName());
@@ -481,7 +481,7 @@ public class RequestParameters {
     private void store() throws RequestParametersNotStorableException {
         log.entry();
 
-        if (BgeeStringUtils.isBlank(this.getFirstValue(
+        if (StringUtils.isBlank(this.getFirstValue(
                 this.getKeyParam()))) {
             throw new RequestParametersNotStorableException("No key generated before storing a "
                     + "RequestParameters object");
@@ -619,7 +619,7 @@ public class RequestParameters {
         log.entry(parametersSeparator);
 
         // If there is a key already present, continue to work with a key
-        if(BgeeStringUtils.isNotBlank(this.getFirstValue(
+        if(StringUtils.isNotBlank(this.getFirstValue(
                 this.getKeyParam()))){
             // Regenerate the key in case a storable param has changed
             // Always use & as separator to generate the key, so the key is the same for 
@@ -637,7 +637,7 @@ public class RequestParameters {
                 // Always use & as separator to generate the key, so the key is the same for 
                 // the same parameters, no matter the separator provided
                 this.generateKey(this.generateParametersQuery(true, false,"&"));
-                if(BgeeStringUtils.isNotBlank(this.getFirstValue(
+                if(StringUtils.isNotBlank(this.getFirstValue(
                         this.getKeyParam()))){
                     this.store();
                     this.generateParametersQuery(parametersSeparator);
@@ -680,7 +680,7 @@ public class RequestParameters {
                 List<?> parameterValues = this.getValues(parameter);
                 if(parameterValues != null && !parameterValues.isEmpty()){
                     for(Object parameterValue : parameterValues){
-                        if(parameterValue != null && BgeeStringUtils.isNotBlank(
+                        if(parameterValue != null && StringUtils.isNotBlank(
                                 parameterValue.toString())){
                             urlFragment += parameter.getName()+ "=";
                             urlFragment += this.urlEncode(parameterValue.toString() 
@@ -691,7 +691,7 @@ public class RequestParameters {
             }
         }
         // Remove the extra separator at the end 
-        if(BgeeStringUtils.isNotBlank(urlFragment)){
+        if(StringUtils.isNotBlank(urlFragment)){
             urlFragment = urlFragment.substring(0, urlFragment.length()-1);
         }
 
@@ -742,7 +742,7 @@ public class RequestParameters {
 
         log.info("Trying to generate a key based on urlFragment: {}", urlFragment);
 
-        if (BgeeStringUtils.isNotBlank(urlFragment)) {
+        if (StringUtils.isNotBlank(urlFragment)) {
             // Reset the present key and add the new one
             this.resetValues(this.getKeyParam());
             try {
@@ -778,11 +778,16 @@ public class RequestParameters {
     private String urlEncode(String url){
 
         log.entry(url);
+        String encodeString = url;
 
-        if(this.encodeUrl){
-            return BgeeStringUtils.urlEncode(url);
+        try {
+            // warning, you need to add an attribut to the connector in server.xml  
+            // in order to get the utf-8 encoding working : URIEncoding="UTF-8"
+            encodeString = java.net.URLEncoder.encode(url, "ISO-8859-1");
+        } catch (Exception e) {
+            log.error("Error while URLencoding", e);
         }
-        return log.exit(url);
+        return log.exit(encodeString);
     }
 
     /**
@@ -889,7 +894,7 @@ public class RequestParameters {
 
         // Secure the value
         if(value != null){
-            value = (T) BgeeStringUtils.secureString(value.toString(), parameter.getMaxSize(),
+            value = (T) this.secureString(value.toString(), parameter.getMaxSize(),
                     parameter.getFormat());
         }
 
@@ -1286,7 +1291,7 @@ public class RequestParameters {
         }
         return log.exit(false);
     }
- 
+
     /**
      * Determine whether the output of the current request can be stored by the web-cache.
      * Some responses should never be cached, following, e.g., a user identification request, 
@@ -1296,8 +1301,8 @@ public class RequestParameters {
      * in order to display a waiting message; we could then only cache AJAX requests).
      * <p>
      * Also, some cookies should never be put in cache, because specific to a user.
-     * so that a cache will never send cookies. ( This has still to be done (TODO identify these
-     * pages/cookies) )
+     * so that a cache will never send cookies. ( TODO : Probably no cookies in the future, but
+     * developers have to be aware of the problem. Now your are ! )
      * 
      * @return  {@code true} if the response following the current request should be cached
      */
@@ -1324,6 +1329,119 @@ public class RequestParameters {
         return log.exit(true);
     }
 
+    /**
+     * Perform security controls and prepare the submitted {@code String} for use
+     * 
+     * @param stringToCheck    a {@code String} to be checked 
+     * @return a secured and prepared {@code String}. Return an empty String if security checks 
+     *         have failed.
+     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
+     */
+    public String secureString(String stringToCheck) throws WrongFormatException
+    {
+        return secureString(stringToCheck, 0, null);
+    }
+
+    /**
+     * Perform security controls and prepare the submitted {@code String} for use. It includes
+     * a check of the {@code String} length and the format of the {@code String}.
+     * 
+     * @param stringToCheck    a {@code String} to be checked 
+     * @param lengthToCheck    an {@code int} defining the max allowed length of 
+     *                         {@code stringToCheck}. If {@code stringToCheck} is greater 
+     *                         than 0, and if the length of {@code stringToCheck} is greater
+     *                         than {@code lengthToCheck}, this method returns an empty string. 
+     *                         If {@code stringToCheck} is equal to 0, no control are performed 
+     *                         on string length (but other modifications are still performed, 
+     *                         such as triming the {@code String}). 
+     * @param format           A {@code String} that contains the regular expression the 
+     *                         {@code String} should match.
+     * @return a secured and prepared {@code String}. Return an empty String if security checks
+     *         have failed, or if the stringToCheck was null, or of its length was greater than 
+     *         {@code lengthToCheck}.
+     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
+     *
+     *              
+     */
+    public String secureString(String stringToCheck, int lengthToCheck, String format)
+            throws WrongFormatException
+    {
+        log.entry(stringToCheck, lengthToCheck, format);
+        if (stringToCheck == null) {
+            return "";
+        }
+        else if(lengthToCheck != 0 && stringToCheck.length() > lengthToCheck){
+            log.info("The string {} cannot be validated because it is too long ({})", 
+                    stringToCheck, stringToCheck.length());
+            throw(new WrongFormatException());
+        }
+        else if(format != null && stringToCheck.matches(format) == false){
+            log.info("The string {} cannot be validated because it does not match the format {}", 
+                    stringToCheck, format);
+            throw(new WrongFormatException());
+        }
+        return log.exit(stringToCheck.trim());
+    }
+
+    /**
+     * Perform security controls and prepare the submitted {@code String} for use, 
+     * without checking length of {@code stringToCheck} ({@code MAXSTRINGLENGTH}).
+     * 
+     * @param stringToCheck
+     * @return  a secured and prepared {@code String}. Return an empty String if security checks
+     *          have failed, or if the stringToCheck was null.
+     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
+     * @see #secureString(String)
+     */
+    public String secureStringWithoutLengthCheck(String stringToCheck) throws WrongFormatException
+    {
+        return secureString(stringToCheck, 0, null);
+    }
+
+    /**
+     * Perform security controls on the submitted {@code String} and transform it to a boolean.
+     * 
+     * @param stringToCheck a {@code String} to be checked 
+     * @return  a {@code boolean} corresponding to the {@code stringToCheck}. 
+     *          Return also {@code false} if {@code stringToCheck} was null, empty,
+     *          or not secured.
+     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
+     */
+    public boolean secureStringAndCastToBoolean(String stringToCheck) throws WrongFormatException
+    {
+        log.entry(stringToCheck);
+        String tempStringToCheck = secureString(stringToCheck);
+
+        if (tempStringToCheck.equalsIgnoreCase("on") || 
+                tempStringToCheck.equalsIgnoreCase("true")) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Perform security controls on the submitted {@code String} and transform it to an int.
+     * 
+     * @param stringToCheck a {@code String} to be checked 
+     * @return  an {@code int} corresponding to the {@code stringToCheck}. 
+     *          Return also 0 if {@code stringToCheck} was null, empty, or not secured.
+     * @throws WrongFormatException The {@code String} to secure does not fit the requirement
+     */
+    public int secureStringAndCastToInt(String stringToCheck) throws WrongFormatException
+    {
+        log.entry(stringToCheck);
+        String tempStringToCheck = secureString(stringToCheck);
+
+        int castInt = 0;
+        if (StringUtils.isNotBlank(tempStringToCheck)) {
+            try {
+                castInt = Integer.parseInt(tempStringToCheck);
+            } catch(NumberFormatException e) {
+                castInt = 0;
+            }
+        }
+        return log.exit(castInt);
+    }
 }
 
 

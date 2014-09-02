@@ -7,6 +7,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 
@@ -168,6 +169,33 @@ public class TOComparator {
             return log.exit(true);
         }
         log.debug("Expression calls {} and {} are not equivalent", exprCallTO1, exprCallTO2);
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code NoExpressionCallTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code NoExpressionCallTO}s is 
+     * solely based on their ID, not on other attributes.
+     * 
+     * @param exprCallTO1   A {@code NoExpressionCallTO} to be compared to {@code exprCallTO2}.
+     * @param exprCallTO2   A {@code NoExpressionCallTO} to be compared to {@code exprCallTO1}.
+     * @return              {@code true} if {@code exprCallTO1} and {@code exprCallTO2} have all 
+     *                      attributes equal.
+     */
+    public static boolean areNoExpressionCallTOsEqual(
+            NoExpressionCallTO exprCallTO1, NoExpressionCallTO exprCallTO2) {
+        log.entry(exprCallTO1, exprCallTO2);
+        if (exprCallTO1.getGeneId().equals(exprCallTO1.getGeneId()) &&
+            exprCallTO1.getDevStageId().equals(exprCallTO1.getDevStageId()) &&
+            exprCallTO1.getAnatEntityId().equals(exprCallTO1.getAnatEntityId()) &&
+            exprCallTO1.getAffymetrixData() == exprCallTO2.getAffymetrixData() &&
+            exprCallTO1.getInSituData() == exprCallTO2.getInSituData() &&
+            exprCallTO1.getRNASeqData() == exprCallTO2.getRNASeqData() &&
+            exprCallTO1.getAffymetrixData() == exprCallTO2.getAffymetrixData() &&
+            exprCallTO1.isIncludeParentStructures() == exprCallTO2.isIncludeParentStructures()) {
+            return log.exit(true);
+        }
+        log.debug("No-expression calls {} and {} are not equivalent", exprCallTO1, exprCallTO2);
         return log.exit(false);
     }
 

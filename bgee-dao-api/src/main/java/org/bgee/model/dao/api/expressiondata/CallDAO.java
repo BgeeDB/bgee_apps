@@ -1,6 +1,8 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -183,7 +185,7 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
             this.affymetrixData = affymetrixData;
             this.estData = estData;
             this.inSituData = inSituData;
-            this.relaxedInSituData = inSituData;
+            this.relaxedInSituData = relaxedInSituData;
             this.rnaSeqData = rnaSeqData;
         }
         
@@ -401,6 +403,38 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
                     " - Contribution of <em>in situ</em> data: " + this.getInSituData() +
                     " - Contribution of relaxed <em>in situ</em> data: " + this.getRelaxedInSituData() +
                     " - Contribution of RNA-Seq data: " + this.getRNASeqData();
+        }
+        
+        /**
+         * Create a {@code String} composed with all {@code String}s of a {@code Set} separated 
+         * by the given separator.
+         * <p>
+         * That methods is useful for passing a list of {@code String} (for instance, IDs) to a store
+         * procedure that does not accept {@code Collection} or array.
+         * 
+         * @param set       A {@code Set} of {@code String}s that must be put into a single 
+         *                  {@code String}.
+         * @param separator A {@code char} that id the separator to use.
+         * @return          A {@code String} composed with all {@code String}s of a {@code Set} 
+         *                  separated by the given separator. If {@code Set} is null or empty, 
+         *                  returns an empty {@code String}.
+         */
+        public static String createStringFromSet(Set<String> set, char separator) {
+            log.entry(set);
+            if (set == null || set.size() ==0) {
+                return log.exit("");
+            }
+            StringBuilder myString = new StringBuilder();
+            Iterator<String> i= set.iterator();
+            boolean isFirst = true;
+            while(i.hasNext() ) {
+                if (!isFirst && set.size() > 1) {
+                    myString.append(separator);
+                }
+                myString.append(i.next());
+                isFirst = false;
+            }
+            return log.exit(myString.toString());
         }
     }
 }

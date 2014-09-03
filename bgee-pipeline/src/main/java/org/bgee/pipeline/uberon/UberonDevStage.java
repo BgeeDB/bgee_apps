@@ -103,7 +103,7 @@ public class UberonDevStage extends UberonCommon {
      *   Example of command line usage for this task (assuming taxon constraints were 
      *   already generated, so that you don't need the "in_taxon" relations): 
      *   {@code java -Xmx2g -jar myJar 
-     *   Uberon generateStageOntology ext.owl dev_stage_ont  
+     *   UberonDevStage generateStageOntology ext.owl dev_stage_ont  
      *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000,BFO:0000003,MmusDv:0000041 
      *   -
      *   BFO:0000050,BFO:0000062,RO:0002087
@@ -673,6 +673,8 @@ public class UberonDevStage extends UberonCommon {
         
         //identity case
         if (startStage.equals(endStage)) {
+            //do not use startStageId, it could have been mapped to another stage 
+            //by getOWLClass
             stageIdsBetween.add(wrapper.getIdentifier(startStage));
         } else {
             //now we obtain a nested set model 

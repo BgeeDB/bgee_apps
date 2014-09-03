@@ -1221,6 +1221,7 @@ public class OntologyUtils {
      * @return  A {@code Set} of {@code OWLPropertyExpression}s containing the "part_of" 
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
+    @SuppressWarnings("rawtypes")
     public Set<OWLPropertyExpression> getGenericPartOfProps() {
         log.entry();
         Set<OWLPropertyExpression> props = new HashSet<OWLPropertyExpression>();

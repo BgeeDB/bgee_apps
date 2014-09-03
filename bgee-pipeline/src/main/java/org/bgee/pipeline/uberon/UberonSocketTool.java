@@ -214,7 +214,7 @@ public class UberonSocketTool {
                 PrintWriter out =
                         new PrintWriter(clientSocket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(
-                        new InputStreamReader(clientSocket.getInputStream()));) {
+                        new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));) {
 
             log.debug("Client socket acquired.");
             String inputLine;

@@ -387,6 +387,27 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
+            
+            <!-- Install in our local maven repository libraries that are not on Maven -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.3.2</version>
+                <!-- set inherited to do it only once, and not for each sub-module -->
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>install-libraries</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>${basedir}/m2_local_repository/mvn-install-file.sh</executable>
+                </configuration>
+            </plugin>
 
             <!-- unit tests -->
             <plugin>

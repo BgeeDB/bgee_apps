@@ -123,17 +123,27 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             } else {
                 sql.append(", ");
             }
-            sql.append(tableName + "." + this.attributeToString(attribute, isIncludeSubstructures));
+            sql.append(tableName);
+            sql.append(".");
+            sql.append(this.attributeToString(attribute, isIncludeSubstructures));
         }
-        sql.append(" FROM " + tableName);
+        sql.append(" FROM ");
+        sql.append(tableName);
          if (speciesIds != null && speciesIds.size() > 0) {
-             sql.append(" INNER JOIN gene ON (gene.geneId = " + tableName + ".geneId)");
-             sql.append(" WHERE gene.speciesId IN (" + CallTO.createStringFromSet(speciesIds, ',') + ")");
-             sql.append(" ORDER BY gene.speciesId, " + tableName + ".geneId, " +  
-                                   tableName +".anatEntityId, " + tableName + ".stageId");
+             sql.append(" INNER JOIN gene ON (gene.geneId = ");
+             sql.append(tableName + ".geneId)");
+             sql.append(" WHERE gene.speciesId IN (");
+             sql.append(CallTO.createStringFromSet(speciesIds, ','));
+             sql.append(")");
+             sql.append(" ORDER BY gene.speciesId, ");
+             sql.append(tableName + ".geneId, ");
+             sql.append(tableName + ".anatEntityId, ");
+             sql.append(tableName + ".stageId");
          } else {
-             sql.append(" ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, "+
-                                       tableName + ".stageId");
+             sql.append(" ORDER BY ");
+             sql.append(tableName + ".geneId, ");
+             sql.append(tableName + ".anatEntityId, ");
+             sql.append(tableName + ".stageId");
          }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -385,7 +395,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 includeSubstructures = true;
             }
             
-            //TODO manage includeSubStages
+            //TODO manage includeSubStages when complete query will be write
             return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, devStageId,
                     affymetrixData, estData, inSituData, relaxedInSituData, rnaSeqData,
                     includeSubstructures, includeSubStages, originOfLine));

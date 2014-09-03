@@ -99,17 +99,26 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             } else {
                 sql.append(", ");
             }
-            sql.append(tableName + "." + this.attributeToString(attribute, isIncludeParentStructures));
+            sql.append(tableName);
+            sql.append(".");
+            sql.append(this.attributeToString(attribute, isIncludeParentStructures));
         }
         sql.append(" FROM " + tableName);
          if (speciesIds != null && speciesIds.size() > 0) {
-             sql.append(" INNER JOIN gene ON (gene.geneId = " + tableName + ".geneId)");
-             sql.append(" WHERE gene.speciesId IN (" + CallTO.createStringFromSet(speciesIds, ',') + ")");
-             sql.append(" ORDER BY gene.speciesId, " + tableName + ".geneId, " +  
-                                   tableName +".anatEntityId, " + tableName + ".stageId");
+             sql.append(" INNER JOIN gene ON (gene.geneId = ");
+             sql.append(tableName + ".geneId)");
+             sql.append(" WHERE gene.speciesId IN (");
+             sql.append(CallTO.createStringFromSet(speciesIds, ','));
+             sql.append(")");
+             sql.append(" ORDER BY gene.speciesId, ");
+             sql.append(tableName + ".geneId, ");
+             sql.append(tableName + ".anatEntityId, ");
+             sql.append(tableName + ".stageId");
          } else {
-             sql.append(" ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, "+
-                                       tableName + ".stageId");
+             sql.append(" ORDER BY ");
+             sql.append(tableName + ".geneId, ");
+             sql.append(tableName + ".anatEntityId, ");
+             sql.append(tableName + ".stageId");
          }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -183,7 +192,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         // column values not for table name, we need to separate NoExpressionCallTOs into
         // two separated collections. 
         Collection<NoExpressionCallTO> toInsertInNoExpression = new ArrayList<NoExpressionCallTO>();
-        Collection<NoExpressionCallTO> toInsertInGlobalNoExpression = new ArrayList<NoExpressionCallTO>();
+        Collection<NoExpressionCallTO> toInsertInGlobalNoExpression = 
+                new ArrayList<NoExpressionCallTO>();
         for (NoExpressionCallTO call: noExpressionCalls) {
             if (call.isIncludeParentStructures()) {
                 toInsertInGlobalNoExpression.add(call);

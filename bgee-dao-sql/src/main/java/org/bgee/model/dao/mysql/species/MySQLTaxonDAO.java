@@ -90,20 +90,19 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         log.entry();
         
         Collection<TaxonDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
-            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                    attributes.toString() + ") is unknown for " + MySQLTaxonDAO.class.getName()));
-        }
-
         //Construct sql query
         StringBuilder sql = new StringBuilder(); 
-        for (TaxonDAO.Attribute attribute: attributes) {
-            if (sql.length() == 0) {
-                sql.append("SELECT ");
-            } else {
-                sql.append(", ");
+        if (attributes == null || attributes.size() == 0) {
+            sql.append("SELECT *");
+        } else {
+            for (TaxonDAO.Attribute attribute: attributes) {
+                if (sql.length() == 0) {
+                    sql.append("SELECT ");
+                } else {
+                    sql.append(", ");
+                }
+                sql.append(this.attributeToString(attribute));
             }
-            sql.append(this.attributeToString(attribute));
         }
         sql.append(" FROM taxon");
 

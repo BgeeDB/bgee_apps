@@ -80,28 +80,26 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             boolean isIncludeParentStructures) throws DAOException {
         log.entry(speciesIds, isIncludeParentStructures);
 
-        Collection<NoExpressionCallDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
-            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                    attributes.toString() + ") is unknown for " + 
-                    NoExpressionCallDAO.class.getName()));
-        }
-        
+        Collection<NoExpressionCallDAO.Attribute> attributes = this.getAttributes();        
         String tableName = "noExpression";
         if (isIncludeParentStructures) {
             tableName = "globalNoExpression";
         }
         //Construct sql query
         StringBuilder sql = new StringBuilder(); 
-        for (NoExpressionCallDAO.Attribute attribute: attributes) {
-            if (sql.length() == 0) {
-                sql.append("SELECT ");
-            } else {
-                sql.append(", ");
+        if (attributes == null || attributes.size() == 0) {
+            sql.append("SELECT *");
+        } else {
+            for (NoExpressionCallDAO.Attribute attribute: attributes) {
+                if (sql.length() == 0) {
+                    sql.append("SELECT ");
+                } else {
+                    sql.append(", ");
+                }
+                sql.append(tableName);
+                sql.append(".");
+                sql.append(this.attributeToString(attribute, isIncludeParentStructures));
             }
-            sql.append(tableName);
-            sql.append(".");
-            sql.append(this.attributeToString(attribute, isIncludeParentStructures));
         }
         sql.append(" FROM " + tableName);
          if (speciesIds != null && speciesIds.size() > 0) {

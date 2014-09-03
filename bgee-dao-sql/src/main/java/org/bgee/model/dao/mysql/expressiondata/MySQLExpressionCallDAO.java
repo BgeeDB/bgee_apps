@@ -105,11 +105,6 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         log.entry(speciesIds, isIncludeSubstructures);
 
         Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
-            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                    attributes.toString() + ") is unknown for " + 
-                    ExpressionCallDAO.class.getName()));
-        }
         
         String tableName = "expression";
         if (isIncludeSubstructures) {
@@ -117,15 +112,19 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         }
         //Construct sql query
         StringBuilder sql = new StringBuilder(); 
-        for (ExpressionCallDAO.Attribute attribute: attributes) {
-            if (sql.length() == 0) {
-                sql.append("SELECT ");
-            } else {
-                sql.append(", ");
+        if (attributes == null || attributes.size() == 0) {
+            sql.append("SELECT *");
+        } else {
+            for (ExpressionCallDAO.Attribute attribute: attributes) {
+                if (sql.length() == 0) {
+                    sql.append("SELECT ");
+                } else {
+                    sql.append(", ");
+                }
+                sql.append(tableName);
+                sql.append(".");
+                sql.append(this.attributeToString(attribute, isIncludeSubstructures));
             }
-            sql.append(tableName);
-            sql.append(".");
-            sql.append(this.attributeToString(attribute, isIncludeSubstructures));
         }
         sql.append(" FROM ");
         sql.append(tableName);

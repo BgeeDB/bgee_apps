@@ -46,20 +46,19 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         log.entry();
         
         Collection<SpeciesDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
-            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                    attributes.toString() + ") is unknown for " + MySQLSpeciesDAO.class.getName()));
-        }
-
         //Construct sql query
         StringBuilder sql = new StringBuilder(); 
-        for (SpeciesDAO.Attribute attribute: attributes) {
-            if (sql.length() == 0) {
-                sql.append("SELECT ");
-            } else {
-                sql.append(", ");
+        if (attributes == null || attributes.size() == 0) {
+            sql.append("SELECT *");
+        } else {
+            for (SpeciesDAO.Attribute attribute: attributes) {
+                if (sql.length() == 0) {
+                    sql.append("SELECT ");
+                } else {
+                    sql.append(", ");
+                }
+                sql.append(this.attributeToString(attribute));
             }
-            sql.append(this.attributeToString(attribute));
         }
         sql.append(" FROM species");
 

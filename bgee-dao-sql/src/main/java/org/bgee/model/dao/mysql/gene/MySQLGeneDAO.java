@@ -50,20 +50,19 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         log.entry();
         
         Collection<GeneDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
-            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                    attributes.toString() + ") is unknown for " + MySQLGeneDAO.class.getName()));
-        }
-
         //Construct sql query
         StringBuilder sql = new StringBuilder(); 
-        for (GeneDAO.Attribute attribute: attributes) {
-            if (sql.length() == 0) {
-                sql.append("SELECT ");
-            } else {
-                sql.append(", ");
+        if (attributes == null || attributes.size() == 0) {
+            sql.append("SELECT *");
+        } else {
+            for (GeneDAO.Attribute attribute: attributes) {
+                if (sql.length() == 0) {
+                    sql.append("SELECT ");
+                } else {
+                    sql.append(", ");
+                }
+                sql.append(this.attributeToString(attribute));
             }
-            sql.append(this.attributeToString(attribute));
         }
         sql.append(" FROM gene");
 

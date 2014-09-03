@@ -9,7 +9,14 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
 
-
+/**
+ * DAO defining queries using or retrieving {@link CallTO}s. 
+ * 
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @see CallTO
+ * @since Bgee 13
+ */
 public interface CallDAO extends DAO<CallDAO.Attribute> {
     
     /**
@@ -53,6 +60,7 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
      * @since Bgee 13
      */
     public abstract class CallTO implements TransferObject {
+        // TODO modify the class to be immutable.
         private static final long serialVersionUID = 2157139618099008406L;
         
         /**
@@ -163,12 +171,12 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          *                             associated to this call. 
          * @param devStageId           A {@code String} that is the ID of the developmental stage 
          *                             associated to this call. 
-         * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix data 
-         *                             to the generation of this call.
+         * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
+         *                             data to the generation of this call.
          * @param estData              A {@code DataSate} that is the contribution of EST data
          *                             to the generation of this call.
-         * @param inSituData           A {@code DataSate} that is the contribution of <em>in situ</em>
-         *                             data to the generation of this call.
+         * @param inSituData           A {@code DataSate} that is the contribution of 
+         *                             <em>in situ</em> data to the generation of this call.
          * @param relaxedInSituData    A {@code DataSate} that is the contribution of "relaxed" 
          *                             <em>in situ</em> data to the generation of this call.
          * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
@@ -393,28 +401,16 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
             this.rnaSeqData = rnaSeqData;
         }
         
-        @Override
-        public String toString() {
-            return "ID: " + this.getId() + " - Gene ID: " + this.getGeneId() + 
-                    " - Developmental stage ID: " + this.getDevStageId() +
-                    " - Anatomical entity ID: " + this.getAnatEntityId() +
-                    " - Contribution of Affymetrix data: " + this.getAffymetrixData() +
-                    " - Contribution of EST data: " + this.getESTData() +
-                    " - Contribution of <em>in situ</em> data: " + this.getInSituData() +
-                    " - Contribution of relaxed <em>in situ</em> data: " + this.getRelaxedInSituData() +
-                    " - Contribution of RNA-Seq data: " + this.getRNASeqData();
-        }
-        
         /**
          * Create a {@code String} composed with all {@code String}s of a {@code Set} separated 
          * by the given separator.
          * <p>
-         * That methods is useful for passing a list of {@code String} (for instance, IDs) to a store
-         * procedure that does not accept {@code Collection} or array.
+         * That methods is useful for passing a {@code Set} of {@code String} (for instance, IDs) 
+         * to a store procedure that does not accept {@code Collection} or array.
          * 
          * @param set       A {@code Set} of {@code String}s that must be put into a single 
          *                  {@code String}.
-         * @param separator A {@code char} that id the separator to use.
+         * @param separator A {@code char} that is the separator to use.
          * @return          A {@code String} composed with all {@code String}s of a {@code Set} 
          *                  separated by the given separator. If {@code Set} is null or empty, 
          *                  returns an empty {@code String}.
@@ -425,7 +421,7 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
                 return log.exit("");
             }
             StringBuilder myString = new StringBuilder();
-            Iterator<String> i= set.iterator();
+            Iterator<String> i = set.iterator();
             boolean isFirst = true;
             while(i.hasNext() ) {
                 if (!isFirst && set.size() > 1) {
@@ -435,6 +431,69 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
                 isFirst = false;
             }
             return log.exit(myString.toString());
+        }
+
+        @Override
+        public String toString() {
+            return "ID: " + this.getId() + " - Gene ID: " + this.getGeneId() + 
+                " - Developmental stage ID: " + this.getDevStageId() +
+                " - Anatomical entity ID: " + this.getAnatEntityId() +
+                " - Contribution of Affymetrix data: " + this.getAffymetrixData() +
+                " - Contribution of EST data: " + this.getESTData() +
+                " - Contribution of <em>in situ</em> data: " + this.getInSituData() +
+                " - Contribution of relaxed <em>in situ</em> data: " + this.getRelaxedInSituData() +
+                " - Contribution of RNA-Seq data: " + this.getRNASeqData();
+        }
+        
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            if (id != null) {
+                return (prime * result + id.hashCode());
+            } else if (geneId != null && devStageId != null && anatEntityId != null) {
+                result = prime * result + ((geneId == null) ? 0 : geneId.hashCode());
+                result = prime * result + ((devStageId == null) ? 0 : devStageId.hashCode());
+                result = prime * result + ((anatEntityId == null) ? 0 : anatEntityId.hashCode());
+                return result;
+            }
+            return super.hashCode();
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            CallTO other = (CallTO) obj;
+            
+            if (id != null) {
+                if (!id.equals(other.id)) {
+                    return false;
+                }
+                return true;
+            } else if (geneId != null && devStageId != null && anatEntityId != null) {
+                if (!geneId.equals(other.geneId)) {
+                    return false;
+                }
+                if (!devStageId.equals(other.devStageId)) {
+                    return false;
+                }
+                if (!anatEntityId.equals(other.anatEntityId)) {
+                    return false;
+                }
+                return true;
+            }
+            return super.equals(obj);
         }
     }
 }

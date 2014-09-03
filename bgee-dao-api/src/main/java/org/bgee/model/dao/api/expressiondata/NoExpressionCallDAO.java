@@ -106,6 +106,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @since Bgee 13
      */
     public final class NoExpressionCallTO extends CallTO {
+        // TODO modify the class to be immutable.
         private static final long serialVersionUID = 5793434647776540L;
         
         /**
@@ -217,9 +218,8 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         public NoExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId,
                 DataState affymetrixData, DataState inSituData, DataState rnaSeqData, 
                 boolean includeParentStructures, OriginOfLineType originOfLine) {
-            super(id, geneId, anatEntityId, devStageId, affymetrixData, DataState.NODATA, inSituData, 
-                    DataState.NODATA, rnaSeqData);
-            this.includeParentStructures = includeParentStructures;
+            this(id, geneId, anatEntityId, devStageId, affymetrixData, inSituData, rnaSeqData, 
+                    includeParentStructures);
             this.originOfLine = originOfLine;
         }
 
@@ -339,7 +339,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @since Bgee 13
      */
     public final class GlobalNoExpressionToNoExpressionTO implements TransferObject {
-
+        // TODO modify the class to be immutable.
         private static final long serialVersionUID = -5283534395161770005L;
 
         /**
@@ -395,6 +395,45 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          */
         void setGlobalNoExpressionId(String globalNoExpressionId) {
             this.globalNoExpressionId = globalNoExpressionId;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * 
+                    result + ((globalNoExpressionId == null) ? 0 : globalNoExpressionId.hashCode());
+            result = prime * result + ((noExpressionId == null) ? 0 : noExpressionId.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            GlobalNoExpressionToNoExpressionTO other = (GlobalNoExpressionToNoExpressionTO) obj;
+            if (globalNoExpressionId == null) {
+                if (other.globalNoExpressionId != null) {
+                    return false;
+                }
+            } else if (!globalNoExpressionId.equals(other.globalNoExpressionId)) {
+                return false;
+            }
+            if (noExpressionId == null) {
+                if (other.noExpressionId != null) {
+                    return false;
+                }
+            } else if (!noExpressionId.equals(other.noExpressionId)) {
+                return false;
+            }
+            return true;
         }
     }
 }

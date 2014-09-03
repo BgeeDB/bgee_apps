@@ -72,6 +72,8 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
      * @since Bgee 13
      */
     public final class DiffExpressionCallTO extends CallTO {
+        // TODO modify the class to be immutable.
+
         private static final long serialVersionUID = 1130761423323249175L;
         /**
          * Represents different types of differential expression calls obtained 

@@ -8,6 +8,7 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.EntityTO;
 
 /**
  * DAO defining queries using or retrieving {@link ExpressionCallTO}s. 
@@ -108,6 +109,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @since Bgee 13
      */
     public final class ExpressionCallTO extends CallTO {
+        // TODO modify the class to be immutable.
+
         private static final long serialVersionUID = 1198652013999835872L;
         
         /**
@@ -247,7 +250,6 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
                 OriginOfLineType originOfLine) {
             this(id, geneId, anatEntityId, devStageId, affymetrixData, estData, inSituData, 
                     relaxedInSituData, rnaSeqData, includeSubstructures, includeSubStages);
-            this.includeSubstructures = includeSubstructures;
             this.originOfLine = originOfLine;
         }
 
@@ -376,15 +378,21 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
     }
 
     /**
-     * A {@code TransferObject} representing relation between expression table and globalExpression 
-     * table in the Bgee data source.
+     * A {@code TransferObject} representing relation between an expression call and a global
+     * expression call in the Bgee database.
+     * <p>
+     * This class defines a expression call ID (see {@link #getExpressionId()} 
+     * and a global expression call (see {@link #getGlobalExpressionId()}).
+     * <p>
+     * Note that this class is one of the few {@code TransferObject}s that are not 
+     * an {@link EntityTO}.
      * 
      * @author Valentine Rech de Laval
      * @version Bgee 13
      * @since Bgee 13
      */
     public final class GlobalExpressionToExpressionTO implements TransferObject {
-
+        // TODO modify the class to be immutable.
         private static final long serialVersionUID = -46963749760698289L;
 
         /**
@@ -405,7 +413,12 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
 
         /**
-         * Constructor providing the expression call ID and the global expression call ID.  
+         * Constructor providing the expression call ID (see {@link #getExpressionId()}) and 
+         * the global expression call ID (see {@link #getGlobalExpressionId()}).
+         * 
+         * @param expressionId          A {@code String} that is the ID of the expression call.
+         * @param globalExpressionId    A {@code String} that is the ID of the global expression 
+         *                              call.
          **/
         public GlobalExpressionToExpressionTO(String expressionId, String globalExpressionId) {
             super();
@@ -440,6 +453,45 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          */
         void setGlobalExpressionId(String globalExpressionId) {
             this.globalExpressionId = globalExpressionId;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((expressionId == null) ? 0 : expressionId.hashCode());
+            result = prime * result + 
+                    ((globalExpressionId == null) ? 0 : globalExpressionId.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            GlobalExpressionToExpressionTO other = (GlobalExpressionToExpressionTO) obj;
+            if (expressionId == null) {
+                if (other.expressionId != null) {
+                    return false;
+                }
+            } else if (!expressionId.equals(other.expressionId)) {
+                return false;
+            }
+            if (globalExpressionId == null) {
+                if (other.globalExpressionId != null) {
+                    return false;
+                }
+            } else if (!globalExpressionId.equals(other.globalExpressionId)) {
+                return false;
+            }
+            return true;
         }
     }
 }

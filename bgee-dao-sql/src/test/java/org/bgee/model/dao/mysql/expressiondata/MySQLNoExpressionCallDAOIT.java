@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
@@ -152,7 +151,8 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
     }
     
     /**
-     * Compare a {@code NoExpressionCallTOResultSet} with a {@code List} of {@code NoExpressionCallTO}.
+     * Compare a {@code NoExpressionCallTOResultSet} with a {@code List} of 
+     * {@code NoExpressionCallTO}.
      * 
      * @param noExpressionResultSet A {@code NoExpressionCallTOResultSet} to be compared to 
      *                              {@code expectedNoExprCalls}.
@@ -172,13 +172,14 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 NoExpressionCallTO methNoExprCall = methResults.getTO();
                 countMethNoExprCalls++;
                 for (NoExpressionCallTO expNoExprCall: expectedNoExprCalls) {
-                    if (TOComparator.areNoExpressionCallTOsEqual(methNoExprCall, expNoExprCall)) {
+                    if (this.areNoExpressionCallTOsEqual(methNoExprCall, expNoExprCall)) {
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    log.debug("No equivalent NoExpressionCallTO found for {}", methNoExprCall.toString());
+                    log.debug("No equivalent NoExpressionCallTO found for {}",
+                            methNoExprCall.toString());
                     throw log.throwing(new AssertionError("Incorrect generated TO"));
                 }
             }
@@ -193,6 +194,34 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         }
 
         log.exit();
+    }
+
+    /**
+     * Method to compare two {@code NoExpressionCallTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code NoExpressionCallTO}s is 
+     * solely based on their ID, gene ID, developmental stage ID, and anatomical entity ID, not on 
+     * other attributes.
+     * 
+     * @param exprCallTO1   A {@code NoExpressionCallTO} to be compared to {@code exprCallTO2}.
+     * @param exprCallTO2   A {@code NoExpressionCallTO} to be compared to {@code exprCallTO1}.
+     * @return              {@code true} if {@code exprCallTO1} and {@code exprCallTO2} have all 
+     *                      attributes equal.
+     */
+    private boolean areNoExpressionCallTOsEqual(
+            NoExpressionCallTO exprCallTO1, NoExpressionCallTO exprCallTO2) {
+        log.entry(exprCallTO1, exprCallTO2);
+        if (exprCallTO1.getGeneId().equals(exprCallTO1.getGeneId()) &&
+            exprCallTO1.getDevStageId().equals(exprCallTO1.getDevStageId()) &&
+            exprCallTO1.getAnatEntityId().equals(exprCallTO1.getAnatEntityId()) &&
+            exprCallTO1.getAffymetrixData() == exprCallTO2.getAffymetrixData() &&
+            exprCallTO1.getInSituData() == exprCallTO2.getInSituData() &&
+            exprCallTO1.getRNASeqData() == exprCallTO2.getRNASeqData() &&
+            exprCallTO1.getAffymetrixData() == exprCallTO2.getAffymetrixData() &&
+            exprCallTO1.isIncludeParentStructures() == exprCallTO2.isIncludeParentStructures()) {
+            return log.exit(true);
+        }
+        log.debug("No-expression calls {} and {} are not equivalent", exprCallTO1, exprCallTO2);
+        return log.exit(false);
     }
 
     /**
@@ -223,7 +252,8 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("select 1 from noExpression where " +
                       "noExpressionId = ? and geneId = ? and anatEntityId = ? and stageId = ? " +
-                      "and noExpressionAffymetrixData = ? and noExpressionInSituData = ? and noExpressionRnaSeqData = ?")) {
+                      "and noExpressionAffymetrixData = ? and noExpressionInSituData = ? and " +
+                      "noExpressionRnaSeqData = ?")) {
                 
                 stmt.setString(1, "1");
                 stmt.setString(2, "ID3");
@@ -292,7 +322,8 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
     }
     
     /**
-     * Test the select method {@link MySQLNoExpressionCallDAO#insertGlobalNoExpressionToNoExpression()}.
+     * Test the select method 
+     * {@link MySQLNoExpressionCallDAO#insertGlobalNoExpressionToNoExpression()}.
      * @throws SQLException 
      */
     @Test

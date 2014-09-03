@@ -31,8 +31,13 @@ import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -62,6 +67,10 @@ public class OntologyUtils {
     private final static Logger log = 
             LogManager.getLogger(OntologyUtils.class.getName());
     
+    /**
+     * A {@code String} that is the OBO-like ID of the root of the NCBI taxonomy ontology.
+     */
+    public final static String TAXONOMY_ROOT_ID = "NCBITaxon:1";
     /**
      * An unmodifiable {@code Set} of {@code String}s that are the names 
      * of non-informative subsets in Uberon.
@@ -1009,6 +1018,62 @@ public class OntologyUtils {
         if (cls == null) {
             cls = this.getWrapper().getOWLClass(id);
         }
+        //check that this class is not actually equivalent to the intersection 
+        //of an Uberon class in a given taxon, in which case we would return 
+        //the Uberon equivalent class
+        if (cls != null) {
+            OWLObjectProperty partOf = 
+                    this.getWrapper().getOWLObjectPropertyByIdentifier(PART_OF_ID);
+            OWLClass taxonomyRoot = 
+                    this.getWrapper().getOWLClassByIdentifier(TAXONOMY_ROOT_ID);
+            ontology: for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
+                //we search for Equivalent Classes Axioms where one of the class expressions 
+                //is cls, the other expression being an OWLObjectIntersectionOf. 
+                //We expect one of its operands to be an Uberon class, and the other 
+                //operand to be an OWLObjectSomeValuesFrom. The OWLObjectSomeValuesFrom 
+                //should have a taxon as filler, and a part_of as property.
+                for (OWLEquivalentClassesAxiom eca: ont.getEquivalentClassesAxioms(cls)) {
+                    if (eca.getClassExpressions().size() != 2) {
+                        continue;
+                    }
+                    OWLClassExpression otherClassExpression = 
+                            eca.getClassExpressionsMinus(cls).iterator().next();
+                    OWLClass clsOperand = null;
+                    OWLObjectPropertyExpression gciRel = null;
+                    OWLClass filler = null;
+                    if (otherClassExpression instanceof OWLObjectIntersectionOf) {
+                        if (((OWLObjectIntersectionOf) otherClassExpression).
+                                getOperands().size() != 2) {
+                            continue;
+                        }
+                        
+                        for (OWLClassExpression operand: 
+                            ((OWLObjectIntersectionOf) otherClassExpression).getOperands()) {
+                            if (operand instanceof OWLClass) {
+                                clsOperand = (OWLClass) operand;
+                            } else if (operand instanceof OWLObjectSomeValuesFrom &&
+                                    ((OWLObjectSomeValuesFrom)operand).getFiller()
+                                    instanceof OWLClass) {
+                                filler = (OWLClass) ((OWLObjectSomeValuesFrom)operand).getFiller();
+                                gciRel = ((OWLObjectSomeValuesFrom)operand).getProperty();
+                            }
+                        }
+                    }
+                    //If the ECA satisfies all requirements (notably, that the filler 
+                    //is indeed a taxon)
+                    if (clsOperand != null && filler != null && partOf.equals(gciRel) && 
+                            this.getAncestorsThroughIsA(filler).contains(taxonomyRoot)) {
+                        //in that case, we replace the requested class with 
+                        //the equivalent class
+                        log.trace("{} is equivalent to {} in taxon {}", 
+                                cls, clsOperand, filler);
+                        cls = clsOperand;
+                        break ontology;
+                    }
+                }
+            }
+        }
+        
         if (cls != null) {
             //if it is not an obsolete class, it is valid
             if (!this.getWrapper().isObsolete(cls) && 
@@ -1196,6 +1261,50 @@ public class OntologyUtils {
         
         return log.exit(edge.getSingleQuantifiedProperty().getProperty() == null && 
                             edge.getSingleQuantifiedProperty().isSubClassOf());
+    }
+    
+    /**
+     * Retrieve {@code OWLClass} ancestors of {@code x} only using "is_a" ({@code SubClassOf) 
+     * relations.
+     * 
+     * @param x An {@code OWLObject} for which we want to retrieve {@code OWLClass} ancestors 
+     *          through "is_a" relations, even indirect.
+     * @return  A {@code Set} of {@code OWLClass}es that are the ancestors of {@code x} 
+     *          through "is_a" relations.
+     */
+    public Set<OWLClass> getAncestorsThroughIsA(OWLObject x) {
+        log.entry(x);
+        
+        Set<OWLClass> ancestors = new HashSet<OWLClass>();
+        //protect against cycles
+        Set<OWLObject> visited = new HashSet<OWLObject>();
+        //avoid recursivity by using a Deque
+        Deque<OWLObject> walkAncestors = new ArrayDeque<OWLObject>();
+        //seed the Deque with the starting OWLObject
+        walkAncestors.addFirst(x);
+        OWLObject iteratedRelative;
+        while ((iteratedRelative = walkAncestors.pollFirst()) != null) {
+            for (OWLGraphEdge edge: 
+                this.getWrapper().getOutgoingEdgesWithGCI(iteratedRelative)) {
+                
+                if (!this.isASubClassOfEdge(edge)) {
+                    continue;
+                }
+                OWLObject relative = edge.getTarget();
+                //protect against cycles
+                if (visited.contains(relative)) {
+                    continue;
+                }
+                visited.add(relative);
+                //we only want OWLClasses
+                if (relative instanceof OWLClass) {
+                    ancestors.add((OWLClass) relative);
+                }
+                walkAncestors.addLast(relative);
+            }
+        }
+        
+        return log.exit(ancestors);
     }
     
     /**

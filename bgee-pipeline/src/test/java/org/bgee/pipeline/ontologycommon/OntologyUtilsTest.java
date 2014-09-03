@@ -596,6 +596,29 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
+     * Test the method {@link OntologyUtils#getOWLClasses(String, boolean)} 
+     * with the {@code boolean} argument {@code false}, to retrieve taxonomic equivalent 
+     * classes.
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetEquivalentOWLClasses() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/gci_equivalent.owl").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        Set<OWLClass> expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("UBERON:0000104")));
+        assertEquals(expectedClasses, utils.getOWLClasses("HsapDv:0000001", false));
+        
+        assertEquals(expectedClasses, utils.getOWLClasses("UBERON:0000104", false));
+    }
+    
+    /**
      * Test the {@code Comparator} {@link OntologyUtils#ID_COMPARATOR}.
      */
     @Test
@@ -730,5 +753,33 @@ public class OntologyUtilsTest extends TestAncestor {
                 Arrays.asList(cls1, cls5, cls2, cls4, cls3, cls6, cls7), 
                 OntologyUtils.mergeLists(Arrays.asList(cls1, cls2, cls3, cls6), 
                         Arrays.asList(cls5, cls2, cls4, cls3, cls6, cls7)));
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#getAncestorsThroughIsA(OWLObject)}
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetIsAAncestors() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/is_a_ancestors_test.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        
+        Set<OWLClass> expectedAncestors = new HashSet<OWLClass>();
+        expectedAncestors.add(cls2);
+        expectedAncestors.add(cls1);
+        assertEquals("Incorrect ancestors through is_a returned", expectedAncestors, 
+                utils.getAncestorsThroughIsA(cls3));
+        expectedAncestors = new HashSet<OWLClass>();
+        assertEquals("Incorrect ancestors through is_a returned", expectedAncestors, 
+                utils.getAncestorsThroughIsA(cls4));
     }
 }

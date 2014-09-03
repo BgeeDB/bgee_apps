@@ -353,17 +353,9 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         private String globalNoExpressionId;
 
         /**
-         * Default constructor.
-         */
-        GlobalNoExpressionToNoExpressionTO() {
-            super();
-        }
-
-        /**
          * Constructor providing the no-expression call ID and the global no-expression call ID.  
          **/
         public GlobalNoExpressionToNoExpressionTO(String noExpressionId, String globalNoExpressionId) {
-            super();
             this.setNoExpressionId(noExpressionId);
             this.setGlobalNoExpressionId(globalNoExpressionId);
         }

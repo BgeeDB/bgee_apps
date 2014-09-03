@@ -406,13 +406,6 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         private String globalExpressionId;
 
         /**
-         * Default constructor.
-         */
-        GlobalExpressionToExpressionTO() {
-            super();
-        }
-
-        /**
          * Constructor providing the expression call ID (see {@link #getExpressionId()}) and 
          * the global expression call ID (see {@link #getGlobalExpressionId()}).
          * 
@@ -421,7 +414,6 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          *                              call.
          **/
         public GlobalExpressionToExpressionTO(String expressionId, String globalExpressionId) {
-            super();
             this.setExpressionId(expressionId);
             this.setGlobalExpressionId(globalExpressionId);
         }

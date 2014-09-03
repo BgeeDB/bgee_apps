@@ -23,6 +23,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.TaxonDAO;
@@ -900,7 +901,19 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.exit(this.getNewStageDAO());
     }
-
+    /**
+     * Get a new {@link org.bgee.model.dao.api.ontologycommon.RelationDAO RelationDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code RelationDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.ontologycommon.RelationDAO RelationDAO
+     */
+    public final RelationDAO getRelationDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewRelationDAO());
+    }
     
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
@@ -1050,4 +1063,11 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code StageDAO}
      */
     protected abstract StageDAO getNewStageDAO();
+    /**
+     * Service provider must return a new {@link org.bgee.model.dao.api.ontologycommon.RelationDAO 
+     * RelationDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code RelationDAO}
+     */
+    protected abstract RelationDAO getNewRelationDAO();
 }

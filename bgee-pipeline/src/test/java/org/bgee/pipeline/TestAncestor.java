@@ -12,6 +12,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
@@ -74,13 +75,12 @@ public abstract class TestAncestor
 	    public final MySQLSourceDAO mockSourceDAO = mock(MySQLSourceDAO.class);
         public final MySQLSpeciesDAO mockSpeciesDAO = mock(MySQLSpeciesDAO.class);
         public final MySQLTaxonDAO mockTaxonDAO = mock(MySQLTaxonDAO.class);
-        public final MySQLGeneOntologyDAO mockGeneOntologyDAO = 
-                mock(MySQLGeneOntologyDAO.class);
+        public final MySQLGeneOntologyDAO mockGeneOntologyDAO = mock(MySQLGeneOntologyDAO.class);
         public final MySQLGeneDAO mockGeneDAO = mock(MySQLGeneDAO.class);
         public final MySQLHierarchicalGroupDAO mockHierarchicalGroupDAO = 
         		mock(MySQLHierarchicalGroupDAO.class);
-        public final MySQLStageDAO mockStageDAO = 
-                mock(MySQLStageDAO.class);
+        public final MySQLStageDAO mockStageDAO = mock(MySQLStageDAO.class);
+        public final MySQLRelationDAO mockRelationDAO = mock(MySQLRelationDAO.class);
         
         public MockDAOManager() {
             
@@ -136,6 +136,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLStageDAO getNewStageDAO() {
             return this.mockStageDAO;
+        }
+        @Override
+        protected MySQLRelationDAO getNewRelationDAO() {
+            return this.mockRelationDAO;
         }
 	}
 }

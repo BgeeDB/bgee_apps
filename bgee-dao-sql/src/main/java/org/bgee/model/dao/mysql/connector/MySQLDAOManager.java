@@ -30,6 +30,7 @@ import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.bgee.model.dao.mysql.source.MySQLSourceDAO;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO;
 import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
@@ -895,5 +896,10 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLStageDAO getNewStageDAO() {
         log.entry();
         return log.exit(new MySQLStageDAO(this));
+    }
+    @Override
+    protected MySQLRelationDAO getNewRelationDAO() {
+        log.entry();
+        return log.exit(new MySQLRelationDAO(this));
     }
 }

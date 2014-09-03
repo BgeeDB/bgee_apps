@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
@@ -137,6 +138,13 @@ public abstract class MySQLDAOUser {
     protected MySQLStageDAO getStageDAO() {
         return (MySQLStageDAO) this.manager.getStageDAO();
     }
+    /**
+     * @return  A {@code MySQLRelationDAO}.
+     */
+    protected RelationDAO getRelationDAO() {
+        return (RelationDAO) this.manager.getRelationDAO();
+    }
+
     
     /**
      * Start a transaction with the MySQL database. We wrap the potential 

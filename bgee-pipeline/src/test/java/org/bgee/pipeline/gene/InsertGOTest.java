@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
-import org.bgee.model.dao.api.ontologycommon.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -114,7 +114,7 @@ public class InsertGOTest extends TestAncestor {
         expectedRelationTOs.add(new RelationTO("GO:4", "GO:3"));
         
         ArgumentCaptor<Set> relationTOsArg = ArgumentCaptor.forClass(Set.class);
-        verify(mockManager.mockGeneOntologyDAO).insertRelations(relationTOsArg.capture());
+        verify(mockManager.mockRelationDAO).insertGeneOntologyRelations(relationTOsArg.capture());
         //RelationTO is not an EntityTO, and implements hashCode and equals, 
         //so we can directly use assertEquals
         assertEquals("Incorrect RelationTOs generated", expectedRelationTOs, 

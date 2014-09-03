@@ -13,9 +13,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
-import org.bgee.model.dao.api.ontologycommon.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO;
 import org.junit.Test;
 
 /**
@@ -132,9 +133,9 @@ public class MySQLGeneOntologyDAOIT extends MySQLITAncestor {
         relTOs.add(new RelationTO("GO:1", "GO:3"));
         relTOs.add(new RelationTO("GO:2", "GO:3"));
         try {
-            MySQLGeneOntologyDAO dao = new MySQLGeneOntologyDAO(this.getMySQLDAOManager());
+            MySQLRelationDAO dao = new MySQLRelationDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 
-                    dao.insertRelations(relTOs));
+                    dao.insertGeneOntologyRelations(relTOs));
             
             //we manually verify the insertion, as we do not want to rely on other methods 
             //that are tested elsewhere.

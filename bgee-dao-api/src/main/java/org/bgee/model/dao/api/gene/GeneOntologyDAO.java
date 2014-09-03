@@ -8,6 +8,7 @@ import java.util.Set;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link GOTermTO}s. 
@@ -34,6 +35,20 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID, LABEL, DOMAIN;
     }
+    
+    /**
+     * Inserts the provided Gene Ontology terms into the Bgee database, represented as 
+     * a {@code Collection} of {@code GOTermTO}s. Note that this method will also 
+     * insert the alternative IDs of each term, if any (see {@code GOTermTO#getAltIds()}).
+     * 
+     * @param terms     a {@code Collection} of {@code GOTermTO}s to be inserted 
+     *                  into the database.
+     * @throws DAOException     If a {@code SQLException} occurred while trying 
+     *                          to insert {@code terms}. The {@code SQLException} 
+     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                          do not expose these kind of implementation details).
+     */
+    public int insertTerms(Collection<GOTermTO> terms) throws DAOException;
     
     /**
      * {@code DAOResultSet} specifics to {@code GOTermTO}s

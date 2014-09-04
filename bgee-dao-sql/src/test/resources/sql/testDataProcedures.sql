@@ -77,6 +77,21 @@ BEGIN
                ('Anat_id10','hindbrain','hindbrain desc','Stage_id8','Stage_id17'),
                ('Anat_id11','cerebellum','cerebellum desc','Stage_id9','Stage_id13');
 
+        INSERT INTO anatEntityTaxonConstraint(anatEntityId,speciesId)
+        VALUES ('Anat_id1',null),
+               ('Anat_id2',11),
+               ('Anat_id2',21),
+               ('Anat_id3',31),
+               ('Anat_id4',31),
+               ('Anat_id5',21),
+               ('Anat_id6',null),
+               ('Anat_id7',21),
+               ('Anat_id7',31),
+               ('Anat_id8',11),
+               ('Anat_id9',21),
+               ('Anat_id10',31),
+               ('Anat_id11',null);
+               
         INSERT INTO anatEntityRelation(anatEntityRelationId,anatEntitySourceId,anatEntityTargetId,relationType,relationStatus)
         VALUES (1,'Anat_id1','Anat_id1','is_a part_of','reflexive'),
                (2,'Anat_id2','Anat_id2','is_a part_of','reflexive'),
@@ -102,7 +117,32 @@ BEGIN
                (22,'Anat_id10','Anat_id5','is_a part_of','direct'),
                (23,'Anat_id11','Anat_id10','is_a part_of','direct');
                
-        INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData)
+        INSERT INTO anatEntityRelationTaxonConstraint(anatEntityRelationId,speciesId)
+        VALUES (1,null),
+               (2,11),(2,21),
+               (3,31),
+               (4,11),
+               (5,null),
+               (6,31),
+               (7,21),(7,31),
+               (8,11),
+               (9,31),
+               (10,null),
+               (11,21),
+               (12,21),(12,11),
+               (13,31),
+               (14,11),
+               (15,null),
+               (16,31),
+               (17,31),
+               (18,11),(18,21),
+               (19,null),
+               (20,31),
+               (21,21),
+               (22,31),
+               (23,null);
+
+               INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData)
         VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality'),
                (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality'),
                (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality'),
@@ -270,12 +310,15 @@ DELETE FROM geneOntologyTerm;
 DELETE FROM OMAHierarchicalGroup;
 
 -- ANATOMY AND DEVELOPMENT
+DELETE FROM anatEntityRelationTaxonConstraint;
 DELETE FROM anatEntityRelation;
 DELETE FROM anatEntityNameSynonym;
 DELETE FROM anatEntityXRef;
+DELETE FROM anatEntityTaxonConstraint;
 DELETE FROM anatEntity;
 DELETE FROM stageXRef;
 DELETE FROM stageNameSynonym;
+DELETE FROM stageTaxonConstraint;
 DELETE FROM stage;
 
 -- TAXONOMY

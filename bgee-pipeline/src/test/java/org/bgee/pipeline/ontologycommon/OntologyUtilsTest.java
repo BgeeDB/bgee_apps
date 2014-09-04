@@ -321,6 +321,14 @@ public class OntologyUtilsTest extends TestAncestor {
                 new HashSet<String>(Arrays.asList("ID:1", "ID:2")));
         expectedMappings.put("ID_REPLACED_BIS:4", 
                 new HashSet<String>(Arrays.asList("ID_REPLACED_BIS_XREF:4")));
+        expectedMappings.put("ID_XREF_OBSOLETE:1", 
+                new HashSet<String>(Arrays.asList("ID:1")));
+        expectedMappings.put("ID_XREF_OBSOLETE:5", 
+                new HashSet<String>(Arrays.asList("ID:5")));
+        expectedMappings.put("ID_XREF_OBSOLETE:6", 
+                new HashSet<String>(Arrays.asList("ID:4", "ID:5")));
+        expectedMappings.put("ID:7", 
+                new HashSet<String>(Arrays.asList("ID:6")));
         
         assertEquals("Incorrect XRef mapping returned", expectedMappings, 
                 utils.getXRefMappings());
@@ -368,8 +376,10 @@ public class OntologyUtilsTest extends TestAncestor {
                         "ABSENT_ID:1")));
         expectedMappings.put("ID:5", 
                 new HashSet<String>(Arrays.asList("ID:1")));
+        expectedMappings.put("ID:6", 
+                new HashSet<String>(Arrays.asList("ID:7")));
         
-        assertEquals("Incorrect consider mapping returned", expectedMappings, 
+        assertEquals("Incorrect replaced_by mapping returned", expectedMappings, 
                 utils.getReplacedByMappings());
     }
     
@@ -593,6 +603,26 @@ public class OntologyUtilsTest extends TestAncestor {
                 wrapper.getOWLClassByIdentifier("ID_REPLACED:4"), 
                 wrapper.getOWLClassByIdentifier("ID_REPLACED_BIS_XREF:4")));
         assertEquals(expectedClasses, utils.getOWLClasses("ID:4", false));
+        
+        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("ID:1")));
+        assertEquals(expectedClasses, utils.getOWLClasses("ID_XREF_OBSOLETE:5", false));
+        
+        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("ID:1")));
+        assertEquals(expectedClasses, utils.getOWLClasses("ID_XREF_OBSOLETE:1", false));
+        
+        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("ID_REPLACED:4"), 
+                wrapper.getOWLClassByIdentifier("ID_REPLACED_BIS_XREF:4"),
+                wrapper.getOWLClassByIdentifier("ID:1")));
+        assertEquals(expectedClasses, utils.getOWLClasses("ID_XREF_OBSOLETE:6", false));
+        
+        expectedClasses = new HashSet<OWLClass>();
+        assertEquals(expectedClasses, utils.getOWLClasses("ID:7", false));
+        
+        expectedClasses = new HashSet<OWLClass>();
+        assertEquals(expectedClasses, utils.getOWLClasses("ID:6", false));
     }
     
     /**

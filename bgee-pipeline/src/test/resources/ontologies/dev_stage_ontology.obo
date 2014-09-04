@@ -8098,6 +8098,18 @@ xref: HsapDv:0000001
 xref: http://ncicb.nci.nih.gov/xml/owl/EVS/Life
 xref: MmusDv:0000001
 xref: OGES:000011
+xref: BILS:0000105
+xref: Developmental:Stage
+xref: EFO:0000399
+xref: FBdv:00007012
+xref: HsapDv:0000000
+xref: MmusDv:0000000
+xref: OlatDv:0000010
+xref: PdumDv:0000090
+xref: WBls:0000002
+xref: XAO:1000000
+xref: ZFS:0000000
+xref: ZFS:0100000
 
 [Term]
 id: UBERON:0000106

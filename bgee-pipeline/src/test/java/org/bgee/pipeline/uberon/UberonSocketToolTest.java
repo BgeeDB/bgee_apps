@@ -138,7 +138,7 @@ public class UberonSocketToolTest extends TestAncestor {
     @Test
     public void testSocketUberonIdMappings() throws Exception {
         
-        final int port = 15556;
+        final int port = 15557;
         final String host = "127.0.0.1";
         final OntologyUtils mockUtils = mock(OntologyUtils.class);
         OWLClass mockClass1 = mock(OWLClass.class);

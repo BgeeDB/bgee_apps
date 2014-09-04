@@ -7,6 +7,7 @@ name: test A
 xref: ALT_ID:1
 xref: ALT_ALT_ID:1
 xref: ALT_ID:2
+xref: ID_XREF_OBSOLETE:1
 
 [Term]
 id: ID:2
@@ -28,6 +29,8 @@ consider: ID_CONSIDER_BIS:4
 replaced_by: ID_REPLACED:4
 replaced_by: ID_REPLACED_BIS:4
 replaced_by: ABSENT_ID:1
+xref: ID_XREF_OBSOLETE:1
+xref: ID_XREF_OBSOLETE:6
 
 [Term]
 id: ID:5
@@ -35,6 +38,8 @@ name: test E
 is_obsolete: true
 consider: ID_CONSIDER:5
 consider: ID_CONSIDER_BIS:5
+xref: ID_XREF_OBSOLETE:5
+xref: ID_XREF_OBSOLETE:6
 replaced_by: ID:1
 
 [Term]
@@ -43,3 +48,9 @@ id: ID_REPLACED:4
 [Term]
 id: ID_REPLACED_BIS_XREF:4
 xref: ID_REPLACED_BIS:4
+
+[Term]
+id: ID:6
+is_obsolete: true
+replaced_by: ID:7
+xref: ID:7

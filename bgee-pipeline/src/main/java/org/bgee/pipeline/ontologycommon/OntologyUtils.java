@@ -927,18 +927,50 @@ public class OntologyUtils {
             //first, we obtained the mappings, then we will make them unmodifiable
             Map<String, Set<String>> modifiableXRefMappings = 
                     new HashMap<String, Set<String>>();
-            for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
-                
-                String clsId = this.getWrapper().getIdentifier(cls);
-                for (String xref: this.getWrapper().getXref(cls)) {
-                    Set<String> associatedClassIds = modifiableXRefMappings.get(xref);
-                    if (associatedClassIds == null) {
-                        associatedClassIds = new HashSet<String>();
-                        modifiableXRefMappings.put(xref, associatedClassIds);
+            for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
+                for (OWLClass cls: ont.getClassesInSignature()) {
+
+                    String clsId = this.getWrapper().getIdentifier(cls);
+                    for (String xref: this.getWrapper().getXref(cls)) {
+                        Set<String> associatedClassIds = modifiableXRefMappings.get(xref);
+                        if (associatedClassIds == null) {
+                            associatedClassIds = new HashSet<String>();
+                            modifiableXRefMappings.put(xref, associatedClassIds);
+                        }
+                        associatedClassIds.add(clsId);
                     }
-                    associatedClassIds.add(clsId);
                 }
             }
+            log.trace("Original XRef mapping: {}", modifiableXRefMappings);
+            
+            //now, we review each xref mapping: if an xref mapped to several classes, 
+            //we check whether it maps to at least one non-obsolete OWLClass, and in that case 
+            //we remove all mappings to obsolete classes; if there is no mapping to 
+            //non-obsolete class, we keep everything
+            for (Entry<String, Set<String>> mapping: modifiableXRefMappings.entrySet()) {
+                Set<String> associatedClassIds = mapping.getValue();
+                if (associatedClassIds.size() > 1) {
+                    Set<String> nonObsoleteClassIds = new HashSet<String>();
+                    Set<String> obsoleteClassIds = new HashSet<String>();
+                    for (String clsId: associatedClassIds) {
+                        OWLClass cls = this.getWrapper().getOWLClassByIdentifier(clsId);
+                        if (cls == null) {
+                            cls = this.getWrapper().getOWLClass(clsId);
+                        }
+                        if (this.getWrapper().isObsolete(cls) || 
+                                this.getWrapper().getIsObsolete(cls)) {
+                            obsoleteClassIds.add(clsId);
+                        } else {
+                            nonObsoleteClassIds.add(clsId);
+                        }
+                    }
+                    
+                    if (!nonObsoleteClassIds.isEmpty()) {
+                        mapping.setValue(nonObsoleteClassIds);
+                    }
+                }
+            }
+            log.trace("XRef mapping filtered for obsolete terms: {}", modifiableXRefMappings);
 
             this.xRefMappings = new HashMap<String, Set<String>>();
             //now, perform a deep transformation of the mappings to be unmodifiable
@@ -1009,9 +1041,32 @@ public class OntologyUtils {
      * @see #getOWLClass(String)
      */
     public Set<OWLClass> getOWLClasses(String id, boolean isStrict) {
-        log.entry(id, isStrict);
-        
+        return this.getOWLClasses(id, isStrict, null);
+    }
+    
+    /**
+     * Same as {@link #getOWLClasses(String, boolean)}, with an additional argument 
+     * {@code visitedIds}, to protect against infinite cycles when calling this method 
+     * recursively. 
+     * 
+     * @param id            See {@link #getOWLClasses(String, boolean)}
+     * @param isStrict      See {@link #getOWLClasses(String, boolean)}
+     * @param visitedIds    A {@code Set} of {@code String}s storing IDs already visited 
+     *                      when calling this method recursively.
+     * @return              See {@link #getOWLClasses(String, boolean)}
+     */
+    private Set<OWLClass> getOWLClasses(String id, boolean isStrict, Set<String> visitedIds) {
+        log.entry(id, isStrict, visitedIds);
+
         Set<OWLClass> potentialClasses = new HashSet<OWLClass>();
+        
+        if (visitedIds == null) {
+            visitedIds = new HashSet<String>();
+        }
+        if (visitedIds.contains(id)) {
+            return potentialClasses;
+        }
+        visitedIds.add(id);
         
         OWLClass cls = this.getWrapper().getOWLClassByIdentifier(id);
         //if id was not an OBO-like ID, but an IRI
@@ -1074,15 +1129,36 @@ public class OntologyUtils {
             }
         }
         
+        
         if (cls != null) {
-            //if it is not an obsolete class, it is valid
-            if (!this.getWrapper().isObsolete(cls) && 
-                !this.getWrapper().getIsObsolete(cls)) {
-                potentialClasses.add(cls);
-            } else {
+            potentialClasses.add(cls);
+        } else {
+            //in case the id provided was actually an xref
+            Set<String> classIdsMapped = this.getXRefMappings().get(id);
+            if (classIdsMapped != null) {
+                Set<OWLClass> classesMapped = new HashSet<OWLClass>();
+                for (String idMapped: classIdsMapped) {
+                    //recursivity to get the class corresponding to the xref
+                    classesMapped.addAll(this.getOWLClasses(idMapped, isStrict, visitedIds));
+                }
+                if (classesMapped.size() == 1 || !isStrict) {
+                    potentialClasses.addAll(classesMapped);
+                }
+            }
+        }
+        
+        //iterate a copy of potentialClasses to be able to modify it.
+        //here, we check for obsolete classes replaced by another class
+        for (OWLClass potentialClass: new HashSet<OWLClass>(potentialClasses)) {
+            //if the class is obsolete, search for replaced_by annotations
+            if (this.getWrapper().isObsolete(potentialClass) || 
+                this.getWrapper().getIsObsolete(potentialClass)) {
+                
+                potentialClasses.remove(potentialClass);
+
                 //otherwise, we need to use the replaced_by annotations
                 Set<String> replacedByIds = this.getReplacedByMappings().get(
-                        this.getWrapper().getIdentifier(cls));
+                        this.getWrapper().getIdentifier(potentialClass));
                 if (replacedByIds != null) {
                     Set<OWLClass> classesMapped = new HashSet<OWLClass>();
                     //we iterate all IDs even if isStrict is true: maybe several replaced_by 
@@ -1090,7 +1166,7 @@ public class OntologyUtils {
                     for (String idMapped: replacedByIds) {
                         //use recursivity in case the replaced_by annotation is itself pointing 
                         //to an obsolete class or an xref
-                        Set<OWLClass> tempClassesMapped = this.getOWLClasses(idMapped, isStrict);
+                        Set<OWLClass> tempClassesMapped = this.getOWLClasses(idMapped, isStrict, visitedIds);
                         if (tempClassesMapped.isEmpty()) {
                             log.warn("A replaced_by annotation from OWLClass {} did not allow to retrieve an OWLClass: {}", 
                                     id, idMapped);
@@ -1103,23 +1179,6 @@ public class OntologyUtils {
                 }
             }
         } 
-        //in case the id provided was actually an xref (even if it pointed to an obsolete class 
-        //with replaced_by annotations, maybe it was not properly obsoleted and we can still 
-        //find a xref)
-        if (potentialClasses.isEmpty()) {
-            Set<String> classIdsMapped = this.getXRefMappings().get(id);
-            if (classIdsMapped != null) {
-                if (classIdsMapped.size() == 1 || !isStrict) {
-                    for (String idMapped: classIdsMapped) {
-                        OWLClass clsMapped = this.getWrapper().getOWLClassByIdentifier(idMapped);
-                        if (clsMapped == null) {
-                            clsMapped = this.getWrapper().getOWLClass(idMapped);
-                        }
-                        potentialClasses.add(clsMapped);
-                    }
-                }
-            }
-        }
         
         return log.exit(potentialClasses);
     }
@@ -1199,10 +1258,16 @@ public class OntologyUtils {
                 }
                 
                 String clsId = this.getWrapper().getIdentifier(cls);
-                this.replacedByMappings.put(clsId, Collections.unmodifiableSet(
-                                new HashSet<String>(this.getWrapper().getReplacedBy(cls))));
-                this.considerMappings.put(clsId, Collections.unmodifiableSet(
-                                new HashSet<String>(this.getWrapper().getConsider(cls))));
+                List<String> replacedBy = this.getWrapper().getReplacedBy(cls);
+                if (!replacedBy.isEmpty()) {
+                    this.replacedByMappings.put(clsId, Collections.unmodifiableSet(
+                            new HashSet<String>(replacedBy)));
+                }
+                List<String> consider = this.getWrapper().getConsider(cls);
+                if (!consider.isEmpty()) {
+                    this.considerMappings.put(clsId, Collections.unmodifiableSet(
+                            new HashSet<String>(consider)));
+                }
             }
         }
         this.replacedByMappings = Collections.unmodifiableMap(this.replacedByMappings);

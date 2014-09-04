@@ -23,6 +23,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
 import org.bgee.controller.exception.MultipleValuesNotAllowedException;
+import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.WrongFormatException;
@@ -96,9 +97,20 @@ public class BgeeWebCache extends CachingFilter
             LockTimeoutException, IOException, ServletException, Exception
     {
         log.entry(request, response, chain);
-        // Call the protected that actually does the job, with a RequestParameters
-        doFilter(request, response, chain, 
-                new RequestParameters(request,new URLParameters(),BgeeProperties.getBgeeProperties()));
+        // Call the protected doFilter method that actually does the job, with an
+        // additional parameter : a RequestParameters for the current request
+        try{
+            doFilter(request, response, chain, 
+                    new RequestParameters(request,new URLParameters(),BgeeProperties.getBgeeProperties()));
+        }
+        catch (RequestParametersNotFoundException | WrongFormatException
+                | RequestParametersNotStorableException
+                | MultipleValuesNotAllowedException | PageNotFoundException e) {
+            // If an Exception is thrown by the RequestParameter, call the next element in chain
+            // and leave the caching process. The corresponding error page will be displayed and
+            // nothing will be kept in cache.
+            chain.doFilter(request, response);
+        }  
         log.exit();
     }
 
@@ -118,7 +130,8 @@ public class BgeeWebCache extends CachingFilter
      */
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, 
             FilterChain chain, RequestParameters requestParameter) 
-                    throws AlreadyCommittedException, AlreadyGzippedException, FilterNonReentrantException,
+                    throws AlreadyCommittedException, AlreadyGzippedException,
+                    FilterNonReentrantException,
                     LockTimeoutException, IOException, ServletException, Exception
     {
         log.entry(request, response, chain, requestParameter);
@@ -131,7 +144,7 @@ public class BgeeWebCache extends CachingFilter
                 chain.doFilter(request, response);
             }
         } catch (RequestParametersNotFoundException | WrongFormatException | RequestParametersNotStorableException
-                | MultipleValuesNotAllowedException e) {
+                | MultipleValuesNotAllowedException | PageNotFoundException e) {
             // If an Exception is thrown by the RequestParameter, call the next element in chain
             // and leave the caching process. The corresponding error page will be displayed and
             // nothing will be kept in cache.

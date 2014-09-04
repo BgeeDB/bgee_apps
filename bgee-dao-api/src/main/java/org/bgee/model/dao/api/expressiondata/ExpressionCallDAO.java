@@ -339,7 +339,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
 
         /**
-         * Convert the origin of call from the data source into an {@code OriginOfLineType}.
+         * Convert data source origin of call into a {@code OriginOfLineType}.
          * 
          * @param databaseEnum  A {@code String} that is origin of call from the data source.
          * @return              An {@code OriginOfLineType} representing the given {@code String}. 
@@ -358,10 +358,10 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
 
         /**
-         * Convert the origin of call from the data source into an {@code OriginOfLineType}.
+         * Convert an {@code OriginOfLineType} into a data source origin of line.
          * 
-         * @param databaseEnum  A {@code String} that is origin of call from the data source.
-         * @return              An {@code OriginOfLineType} representing the given {@code String}. 
+         * @param dataType  An {@code OriginOfLineType} that is origin of line to convert.
+         * @return          A {@code String} representing the given {@code OriginOfLineType}. 
          */
         public static String convertOriginOfLineTypeToDatasourceEnum(OriginOfLineType dataType) {
             log.entry(dataType);

@@ -106,7 +106,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
              sql.append(" INNER JOIN gene ON (gene.geneId = ");
              sql.append(tableName + ".geneId)");
              sql.append(" WHERE gene.speciesId IN (");
-             sql.append(CallTO.createStringFromSet(speciesIds, ','));
+             sql.append(createStringFromSet(speciesIds, ','));
              sql.append(")");
              sql.append(" ORDER BY gene.speciesId, ");
              sql.append(tableName + ".geneId, ");

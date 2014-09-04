@@ -61,10 +61,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 //        BgeeCallableStatement callStmt = null;
 //        try {
 //            callStmt = this.getManager().getConnection().prepareCall(sql);
-//            callStmt.setString(1, this.createStringFromSet(params.getGeneIds(), '|'));
-//            callStmt.setString(2, this.createStringFromSet(params.getAnatEntityIds(), '|'));
-//            callStmt.setString(3, this.createStringFromSet(params.getDevStageIds(), '|'));
-//            callStmt.setString(4, this.createStringFromSet(params.getSpeciesIds(), '|'));
+//            callStmt.setString(1, createStringFromSet(params.getGeneIds(), '|'));
+//            callStmt.setString(2, createStringFromSet(params.getAnatEntityIds(), '|'));
+//            callStmt.setString(3, createStringFromSet(params.getDevStageIds(), '|'));
+//            callStmt.setString(4, createStringFromSet(params.getSpeciesIds(), '|'));
 //            callStmt.setInt(5, CallTO.getMinLevelData(params.getAffymetrixData(), '|'));
 //            callStmt.setInt(6, CallTO.getMinLevelData(params.getESTData()));
 //            callStmt.setInt(7, CallTO.getMinLevelData(params.getInSituData()));
@@ -132,7 +132,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
              sql.append(" INNER JOIN gene ON (gene.geneId = ");
              sql.append(tableName + ".geneId)");
              sql.append(" WHERE gene.speciesId IN (");
-             sql.append(CallTO.createStringFromSet(speciesIds, ','));
+             sql.append(createStringFromSet(speciesIds, ','));
              sql.append(")");
              sql.append(" ORDER BY gene.speciesId, ");
              sql.append(tableName + ".geneId, ");

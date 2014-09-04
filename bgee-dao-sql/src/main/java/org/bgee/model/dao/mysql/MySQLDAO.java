@@ -3,6 +3,7 @@ package org.bgee.model.dao.mysql;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -137,5 +138,37 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         }
         resultSet.close();
         return log.exit(allTOs);
+    }
+    
+    /**
+     * Create a {@code String} composed with all {@code String}s of a {@code Set} separated 
+     * by the given separator.
+     * <p>
+     * That methods is useful for passing a {@code Set} of {@code String} (for instance, IDs) 
+     * to a store procedure that does not accept {@code Collection} or array.
+     * 
+     * @param set       A {@code Set} of {@code String}s that must be put into a single 
+     *                  {@code String}.
+     * @param separator A {@code char} that is the separator to use.
+     * @return          A {@code String} composed with all {@code String}s of a {@code Set} 
+     *                  separated by the given separator. If {@code Set} is null or empty, 
+     *                  returns an empty {@code String}.
+     */
+    public String createStringFromSet(Set<String> set, char separator) {
+        log.entry(set);
+        if (set == null || set.size() ==0) {
+            return log.exit("");
+        }
+        StringBuilder myString = new StringBuilder();
+        Iterator<String> i = set.iterator();
+        boolean isFirst = true;
+        while(i.hasNext() ) {
+            if (!isFirst && set.size() > 1) {
+                myString.append(separator);
+            }
+            myString.append(i.next());
+            isFirst = false;
+        }
+        return log.exit(myString.toString());
     }
 }

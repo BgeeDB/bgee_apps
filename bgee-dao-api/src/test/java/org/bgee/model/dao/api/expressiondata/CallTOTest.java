@@ -2,9 +2,6 @@ package org.bgee.model.dao.api.expressiondata;
 
 import static org.junit.Assert.*;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TestAncestor;
@@ -133,21 +130,5 @@ public class CallTOTest extends TestAncestor {
         int count = 10;
         callTO.setMinConditionCount(count);
         assertEquals("Incorrect minConditionCount set/get", count, callTO.getMinConditionCount());
-    }
-    
-    /**
-     * Test the method {@link CallTO#createStringFromSet()}.
-     */
-    @Test
-    public void shouldCreateStringFromSet() {
-        Set <String> set = new LinkedHashSet<String>();
-        assertEquals("Incorrect created string", "", CallTO.createStringFromSet(set, ','));
-
-        set.add("ID1");
-        assertEquals("Incorrect created string", "ID1", CallTO.createStringFromSet(set, ','));
-
-        set.add("ID2");
-        assertEquals("Incorrect created string", "ID1,ID2", CallTO.createStringFromSet(set, ','));
-
     }
 }

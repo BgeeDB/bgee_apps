@@ -121,7 +121,7 @@ public interface TaxonConstraintDAO {
          * @param speciesId     A {@code String} that is the ID of the species that define the 
          *                      taxon constraint.
          */
-        protected TaxonConstraintTO(String entityId, String speciesId) {
+        public TaxonConstraintTO(String entityId, String speciesId) {
             this.entityId = entityId;
             this.speciesId = speciesId;
         }

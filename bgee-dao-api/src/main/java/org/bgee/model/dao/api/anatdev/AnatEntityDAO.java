@@ -110,7 +110,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          * @param startStageId  A {@code String} that is the start stage of this anatomical entity.
          * @param endStageId    A {@code String} that is the end stage of this anatomical entity.
          */
-        protected AnatEntityTO(String id, String name, String description, 
+        public AnatEntityTO(String id, String name, String description, 
                 String startStageId, String endStageId) {
             super(id, name, description);
             this.startStageId = startStageId;

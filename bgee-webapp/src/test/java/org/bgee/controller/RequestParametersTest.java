@@ -100,12 +100,12 @@ public class RequestParametersTest {
         when(mockHttpServletRequest.getParameter("data"))
         .thenReturn(null) // for new RequestParameters
         .thenReturn(null) // for requestParametersWithNoKey
-        .thenReturn("7ebf4a8a9365930d16773b7b202f166bcebd6efa");
+        .thenReturn("cde384a208277a175428167464e49bf9ee3ee831");
         //for requestParametersHavingAKey
 
         // To ensure that the key is generated and written on the disk, generate
         // a request parameter with parameters corresponding to the
-        // key 7ebf4a8a9365930d16773b7b202f166bcebd6efa and call getRequestURL
+        // key cde384a208277a175428167464e49bf9ee3ee831 and call getRequestURL
         // The separator used in the tests is not the default separator "&", but the key 
         // still corresponds to the hash of the value with "&" between parameters.
         // This checks that the key is always generated with "&", no matter which separator
@@ -138,7 +138,7 @@ public class RequestParametersTest {
         // the mockHttpServletRequest.
         assertEquals("Incorrect query returned ","test_string=string1%2Btest_integer="
                 + "1234%2Btest_integer=2345%2Btest_boolean=true%2Btest_boolean="
-                + "false%2",this.requestParametersWithNoKey.getRequestURL("+"));
+                + "false",this.requestParametersWithNoKey.getRequestURL("+"));
 
         // Add a parameter value to exceed the threshold over which a key is used
         // (110 for tests),
@@ -150,7 +150,7 @@ public class RequestParametersTest {
 
         assertEquals("Incorrect query returned ", 
                 "test_string=string1"
-                        + "%2Bdata=7ebf4a8a9365930d16773b7b202f166bcebd6efa%2", 
+                        + "%2Bdata=cde384a208277a175428167464e49bf9ee3ee831", 
                         this.requestParametersWithNoKey.getRequestURL("+"));
 
 
@@ -161,7 +161,7 @@ public class RequestParametersTest {
 
         assertEquals("Incorrect query returned ", 
                 "test_string=string1"
-                        + "%2Bdata=7ebf4a8a9365930d16773b7b202f166bcebd6efa%2", 
+                        + "%2Bdata=cde384a208277a175428167464e49bf9ee3ee831", 
                         this.requestParametersHavingAKey.getRequestURL("+"));
 
     }

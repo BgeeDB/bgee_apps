@@ -508,10 +508,9 @@ public class RequestParameters {
             try (BufferedWriter bufferedWriter = new BufferedWriter(
                     new FileWriter(prop.getRequestParametersStorageDirectory() 
                             + this.getFirstValue(this.getKeyParam())))) {
-                boolean encodeUrlValue = this.encodeUrl;
-                this.encodeUrl = false;
-                bufferedWriter.write(generateParametersQuery(true, false, "&"));
-                this.encodeUrl = encodeUrlValue;
+                // decode the parameters, so the value written is the real encoding independent
+                // value.
+                bufferedWriter.write(this.urlDecode(generateParametersQuery(true, false, "&")));
             }
         } catch (IOException e) {
             //delete the file if something went wrong
@@ -690,9 +689,11 @@ public class RequestParameters {
                 }
             }
         }
+
         // Remove the extra separator at the end 
         if(StringUtils.isNotBlank(urlFragment)){
-            urlFragment = urlFragment.substring(0, urlFragment.length()-1);
+            int paramSeparatorLength = this.urlEncode(parametersSeparator).length();
+            urlFragment = urlFragment.substring(0, urlFragment.length()-paramSeparatorLength);
         }
 
         return log.exit(urlFragment);
@@ -778,8 +779,12 @@ public class RequestParameters {
     private String urlEncode(String url){
 
         log.entry(url);
+
         String encodeString = url;
 
+        if (!this.encodeUrl) {
+            return encodeString;
+        }
         try {
             // warning, you need to add an attribut to the connector in server.xml  
             // in order to get the utf-8 encoding working : URIEncoding="UTF-8"
@@ -788,6 +793,27 @@ public class RequestParameters {
             log.error("Error while URLencoding", e);
         }
         return log.exit(encodeString);
+    }
+
+    /**
+     * Decode String that was received through the URL.
+     * 
+     * @param url   the {@code String} to be decoded.
+     * @return  a {@code String} decoded
+     * 
+     * @see #encodeUrl
+     */
+    private String urlDecode(String url){
+
+        log.entry(url);
+        String decodeString = url;
+
+        try {
+            decodeString = java.net.URLDecoder.decode(url, "ISO-8859-1");
+        } catch (Exception e) {
+            log.error("Error while URLdecoding", e);
+        }
+        return log.exit(decodeString);
     }
 
     /**
@@ -946,12 +972,8 @@ public class RequestParameters {
         //we we simulate a HttpServletRequest with parameters corresponding by a query string we provide 
         //holding storable parameters of this object
 
-        // disable temporarily the url encoding to generate a new BgeeHttpServletRequest using the url
-        boolean encodeUrlValue = this.encodeUrl;
-        this.encodeUrl = false;
         String queryString = this.generateParametersQuery(true, true, "&");
-        BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
-        this.encodeUrl = encodeUrlValue;
+        BgeeHttpServletRequest request = new BgeeHttpServletRequest(this.urlDecode(queryString));
 
         RequestParameters clonedRequestParameters = null;
         try {
@@ -985,13 +1007,9 @@ public class RequestParameters {
         //we we simulate a HttpServletRequest with parameters corresponding by 
         // a query string we provide 
         //holding storable parameters of this object
-        // disable temporarily the url encoding to generate a new BgeeHttpServletRequest
-        // using the url
-        boolean encodeUrlValue = this.encodeUrl;
-        this.encodeUrl = false;
+
         String queryString = this.generateParametersQuery(true, false, "&");
-        BgeeHttpServletRequest request = new BgeeHttpServletRequest(queryString);
-        this.encodeUrl = encodeUrlValue;
+        BgeeHttpServletRequest request = new BgeeHttpServletRequest(this.urlDecode(queryString));
 
         RequestParameters clonedRequestParameters = null;
         try {

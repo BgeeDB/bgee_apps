@@ -192,7 +192,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
         ArgumentCaptor<Set> hGroupsTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockHierarchicalGroupDAO).insertHierarchicalGroups(
                 hGroupsTOsArg.capture());
-        if (!this.areHGroupTOCollectionsEqual(expectedHGroupTOs, hGroupsTOsArg.getValue())) {
+        if (!TOComparator.areHGroupTOCollectionsEqual(expectedHGroupTOs, hGroupsTOsArg.getValue())) {
             throw new AssertionError("Incorrect HierarchicalGroupTOs generated to insert "
                     + "hierarchical groups, expected " + expectedHGroupTOs.toString() + 
                     ", but was " + hGroupsTOsArg.getValue());
@@ -223,72 +223,4 @@ public class ParseOrthoXMLTest extends TestAncestor {
                     "expected " + expectedGeneTOs + ", but was " + geneTOsArg.getValue());
         }
     }
-
-    /**
-     * Method to compare two {@code Collection}s of {@code HierarchicalGroupTO}s, to check
-     * for complete equality of each attribute of each {@code HierarchicalGroupTO}. This
-     * is because the {@code equals} method of {@code HierarchicalGroupTO}s is solely
-     * based on their ID, not on other attributes. Here we check for equality of each
-     * attribute.
-     * 
-     * @param cHGroupTO1    A {@code Collection} of {@code HierarchicalGroupTO}s o be
-     *                      compared to {@code cHGroupTO2}.
-     * @param cHGroupTO2    A {@code Collection} of {@code HierarchicalGroupTO}s o be
-     *                      compared to {@code cHGroupTO1}.
-     * @return              {@code true} if {@code cHGroupTO1} and {@code cHGroupTO2} 
-     *                      contain the same number of {@code HierarchicalGroupTO}s, and 
-     *                      each {@code HierarchicalGroupTO} of a {@code Collection} has 
-     *                      an equivalent {@code HierarchicalGroupTO} in the other 
-     *                      {@code Collection}, with all attributes equal.
-     */
-    private boolean areHGroupTOCollectionsEqual(
-           List<HierarchicalGroupTO> cHGroupTO1, Set<HierarchicalGroupTO> cHGroupTO2) {
-        log.entry(cHGroupTO1, cHGroupTO2);
-        
-        if (cHGroupTO1.size() != cHGroupTO2.size()) {
-            log.debug("Non matching sizes, {} - {}", cHGroupTO1.size(), cHGroupTO2.size());
-            return log.exit(false);
-        }
-        for (HierarchicalGroupTO hg1: cHGroupTO1) {
-            boolean found = false;
-            for (HierarchicalGroupTO hg2: cHGroupTO2) {
-                if (areHierarchicalGroupTOEqual(hg1, hg2)) {
-                    found = true;   
-                    break;
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent hierarchical group found for {}", hg1.getId());
-                return log.exit(false);
-            }      
-        }
-        return log.exit(true);
-    }
-    
-    /**
-     * Method to compare two {@code HierarchicalGroupTO}s, to check for complete equality
-     * of each attribute. This is because the {@code equals} method of
-     * {@code HierarchicalGroupTO}s is solely based on their ID, not on other attributes.
-     * 
-     * @param hg1   A {@code HierarchicalGroupTO}s to be compared to {@code hg1}.
-     * @param hg2   A {@code HierarchicalGroupTO}s to be compared to {@code hg1}.
-     * @return      {@code true} if {@code hg1} and {@code hg1} have all attributes equal.
-     */
-    private boolean areHierarchicalGroupTOEqual(
-            HierarchicalGroupTO hg1, HierarchicalGroupTO hg2) {
-        log.entry(hg1, hg2);
-        if ((hg1.getId() == null && hg2.getId() == null || 
-                hg1.getId() != null && hg1.getId().equals(hg2.getId())) && 
-            (hg1.getName() == null && hg2.getName() == null || 
-                hg1.getName() != null && hg1.getName().equals(hg2.getName())) && 
-             hg1.getOMAGroupId().equals(hg2.getOMAGroupId()) && 
-             hg1.getLeftBound() == hg2.getLeftBound() && 
-             hg1.getRightBound() == hg2.getRightBound() && 
-             hg1.getTaxonId() == hg2.getTaxonId()) {
-            return log.exit(true);
-        }
-        log.debug("Hierarchical Group are not equivalent");
-        return log.exit(false);
-    }
-
 }

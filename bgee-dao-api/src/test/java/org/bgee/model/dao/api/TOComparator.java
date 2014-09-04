@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 
@@ -226,6 +227,73 @@ public class TOComparator {
             return log.exit(true);
         }
         log.debug("Entities {} and {} are not equivalent", entity1, entity2);
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code Collection}s of {@code HierarchicalGroupTO}s, to check
+     * for complete equality of each attribute of each {@code HierarchicalGroupTO}. This
+     * is because the {@code equals} method of {@code HierarchicalGroupTO}s is solely
+     * based on their ID, not on other attributes. Here we check for equality of each
+     * attribute.
+     * 
+     * @param cHGroupTO1    A {@code Collection} of {@code HierarchicalGroupTO}s o be
+     *                      compared to {@code cHGroupTO2}.
+     * @param cHGroupTO2    A {@code Collection} of {@code HierarchicalGroupTO}s o be
+     *                      compared to {@code cHGroupTO1}.
+     * @return              {@code true} if {@code cHGroupTO1} and {@code cHGroupTO2} 
+     *                      contain the same number of {@code HierarchicalGroupTO}s, and 
+     *                      each {@code HierarchicalGroupTO} of a {@code Collection} has 
+     *                      an equivalent {@code HierarchicalGroupTO} in the other 
+     *                      {@code Collection}, with all attributes equal.
+     */
+    public static boolean areHGroupTOCollectionsEqual(
+           List<HierarchicalGroupTO> cHGroupTO1, Set<HierarchicalGroupTO> cHGroupTO2) {
+        log.entry(cHGroupTO1, cHGroupTO2);
+        
+        if (cHGroupTO1.size() != cHGroupTO2.size()) {
+            log.debug("Non matching sizes, {} - {}", cHGroupTO1.size(), cHGroupTO2.size());
+            return log.exit(false);
+        }
+        for (HierarchicalGroupTO hg1: cHGroupTO1) {
+            boolean found = false;
+            for (HierarchicalGroupTO hg2: cHGroupTO2) {
+                if (areHierarchicalGroupTOEqual(hg1, hg2)) {
+                    found = true;   
+                    break;
+                }
+            }
+            if (!found) {
+                log.debug("No equivalent hierarchical group found for {}", hg1.getId());
+                return log.exit(false);
+            }      
+        }
+        return log.exit(true);
+    }
+    
+    /**
+     * Method to compare two {@code HierarchicalGroupTO}s, to check for complete equality
+     * of each attribute. This is because the {@code equals} method of
+     * {@code HierarchicalGroupTO}s is solely based on their ID, not on other attributes.
+     * 
+     * @param hg1   A {@code HierarchicalGroupTO}s to be compared to {@code hg1}.
+     * @param hg2   A {@code HierarchicalGroupTO}s to be compared to {@code hg1}.
+     * @return      {@code true} if {@code hg1} and {@code hg1} have all attributes equal.
+     */
+    private static boolean areHierarchicalGroupTOEqual(
+            HierarchicalGroupTO hg1, HierarchicalGroupTO hg2) {
+        log.entry(hg1, hg2);
+        if ((hg1.getId() == null && hg2.getId() == null || 
+                hg1.getId() != null && hg1.getId().equals(hg2.getId())) && 
+            (hg1.getName() == null && hg2.getName() == null || 
+                hg1.getName() != null && hg1.getName().equals(hg2.getName())) && 
+             hg1.getOMAGroupId().equals(hg2.getOMAGroupId()) && 
+             hg1.getLeftBound() == hg2.getLeftBound() && 
+             hg1.getRightBound() == hg2.getRightBound() && 
+             hg1.getTaxonId() == hg2.getTaxonId()) {
+            return log.exit(true);
+        }
+        log.debug("Hierarchical Group are not equivalent");
         return log.exit(false);
     }
 }

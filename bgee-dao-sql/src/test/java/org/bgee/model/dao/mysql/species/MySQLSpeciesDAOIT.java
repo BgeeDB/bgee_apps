@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
@@ -23,6 +24,7 @@ import org.junit.Test;
  * important information.
  * 
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @since Bgee 13
  */
@@ -129,7 +131,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
             SpeciesTO methSpecies = methResults.getTO();
             for (SpeciesTO expSpecies: expectedSpecies) {
                 log.trace("Comparing {} to {}", methSpecies, expSpecies);
-                if (areSpeciesTOsEqual(methSpecies, expSpecies)) {
+                if (TOComparator.areSpeciesTOsEqual(methSpecies, expSpecies)) {
                     found = true;
                     break;
                 }
@@ -142,40 +144,4 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         methResults.close();
         log.exit();
     }
-    
-    /**
-     * Method to compare two {@code SpeciesTO}s, to check for complete equality of each
-     * attribute. This is because the {@code equals} method of {@code SpeciesTO}s is 
-     * solely based on their ID, not on other attributes.
-     * 
-     * @param spTO1     A {@code SpeciesTO} to be compared to {@code spTO2}.
-     * @param spTO2     A {@code SpeciesTO} to be compared to {@code spTO1}.
-     * @return          {@code true} if {@code spTO1} and {@code spTO2} have all 
-     *                  attributes equal.
-     *                  
-                String fakeGeneIdPrefix
-     */
-    private boolean areSpeciesTOsEqual(SpeciesTO spTO1, SpeciesTO spTO2) {
-            log.entry(spTO1, spTO2);
-            if (spTO1.getId().equals(spTO2.getId()) && 
-                (spTO1.getName() == null && spTO2.getName() == null || 
-                    spTO1.getName() != null && spTO1.getName().equals(spTO2.getName())) && 
-                (spTO1.getGenus() == null && spTO2.getGenus() == null || 
-                    spTO1.getGenus() != null && spTO1.getGenus().equals(spTO2.getGenus())) && 
-                (spTO1.getSpeciesName() == null && spTO2.getSpeciesName() == null || 
-                    spTO1.getSpeciesName() != null && spTO1.getSpeciesName().equals(spTO2.getSpeciesName())) && 
-                (spTO1.getParentTaxonId() == null && spTO2.getParentTaxonId() == null || 
-                    spTO1.getParentTaxonId() != null && spTO1.getParentTaxonId().equals(spTO2.getParentTaxonId())) && 
-                (spTO1.getGenomeFilePath() == null && spTO2.getGenomeFilePath() == null || 
-                    spTO1.getGenomeFilePath() != null && spTO1.getGenomeFilePath().equals(spTO2.getGenomeFilePath())) && 
-                (spTO1.getGenomeSpeciesId() == null && spTO2.getGenomeSpeciesId() == null || 
-                    spTO1.getGenomeSpeciesId() != null && spTO1.getGenomeSpeciesId().equals(spTO2.getGenomeSpeciesId())) &&
-                (spTO1.getFakeGeneIdPrefix()== null && spTO2.getFakeGeneIdPrefix() == null || 
-                        spTO1.getFakeGeneIdPrefix() != null && spTO1.getFakeGeneIdPrefix().equals(spTO2.getFakeGeneIdPrefix()))) {
-                return log.exit(true);
-            }
-            log.debug("Species are not equivalent {}", spTO1.getId());
-            return log.exit(false);
-    }
-
 }

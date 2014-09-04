@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTOResultSet;
@@ -125,7 +126,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
             TaxonTO methTaxon = methResults.getTO();
             for (TaxonTO expTaxon: expectedTaxa) {
                 log.trace("Comparing {} to {}", methTaxon, expTaxon);
-                if (areTaxonTOsEqual(methTaxon, expTaxon)) {
+                if (TOComparator.areTaxonTOsEqual(methTaxon, expTaxon)) {
                     found = true;
                     break;
                 }
@@ -153,7 +154,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
             TaxonTO methTaxon = methResults.getTO();
             for (TaxonTO expTaxon: expectedTaxa) {
                 log.trace("Comparing {} to {}", methTaxon, expTaxon);
-                if (areTaxonTOsEqual(methTaxon, expTaxon)) {
+                if (TOComparator.areTaxonTOsEqual(methTaxon, expTaxon)) {
                     found = true;
                     break;
                 }
@@ -167,32 +168,4 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
 
         log.exit();
     }
-
-    /**
-     * Method to compare two {@code TaxonTO}s, to check for complete equality of each
-     * attribute. This is because the {@code equals} method of {@code TaxonTO}s is solely
-     * based on their ID, not on other attributes.
-     * 
-     * @param taxonTO1 A {@code TaxonTO} to be compared to {@code taxonTO2}.
-     * @param taxonTO2 A {@code TaxonTO} to be compared to {@code taxonTO1}.
-     * @return {@code true} if {@code taxonTO1} and {@code taxonTO2} have all attributes
-     *         equal.
-     */
-    private boolean areTaxonTOsEqual(TaxonTO taxonTO1, TaxonTO taxonTO2) {
-        log.entry(taxonTO1, taxonTO2);
-        if (taxonTO1.getId().equals(taxonTO2.getId()) && 
-            (taxonTO1.getName() == null && taxonTO2.getName() == null || 
-              taxonTO1.getName() != null && taxonTO1.getName().equals(taxonTO2.getName())) && 
-            (taxonTO1.getScientificName() == null && taxonTO2.getScientificName() == null || 
-              taxonTO1.getScientificName() != null && taxonTO1.getScientificName().equals(taxonTO2.getScientificName())) && 
-            taxonTO1.getLeftBound() == taxonTO2.getLeftBound() && 
-            taxonTO1.getRightBound() == taxonTO2.getRightBound() && 
-            taxonTO1.getLevel() == taxonTO2.getLevel() && 
-            taxonTO1.isLca() == taxonTO2.isLca()) {
-            return log.exit(true);
-        }
-        log.debug("Taxa are not equivalent {}", taxonTO1.getId());
-        return log.exit(false);
-    }
-
 }

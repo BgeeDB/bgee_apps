@@ -4,10 +4,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 
 
 /**
@@ -23,6 +27,55 @@ public class TOComparator {
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(TOComparator.class.getName());
+
+    /**
+     * Method to compare two {@code SpeciesTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code SpeciesTO}s is 
+     * solely based on their ID, not on other attributes.
+     * 
+     * @param spTO1     A {@code SpeciesTO} to be compared to {@code spTO2}.
+     * @param spTO2     A {@code SpeciesTO} to be compared to {@code spTO1}.
+     * @return          {@code true} if {@code spTO1} and {@code spTO2} have all 
+     *                  attributes equal.
+     */
+    public static boolean areSpeciesTOsEqual(SpeciesTO spTO1, SpeciesTO spTO2) {
+            log.entry(spTO1, spTO2);
+            if (TOComparator.areEntityTOsEqual(spTO1, spTO2) && 
+                    StringUtils.equals(spTO1.getGenus(), spTO2.getGenus()) &&
+                    StringUtils.equals(spTO1.getSpeciesName(), spTO2.getSpeciesName()) &&
+                    StringUtils.equals(spTO1.getParentTaxonId(), spTO2.getParentTaxonId()) &&
+                    StringUtils.equals(spTO1.getGenomeFilePath(), spTO2.getGenomeFilePath()) &&
+                    StringUtils.equals(spTO1.getGenomeSpeciesId(), spTO2.getGenomeSpeciesId()) &&
+                    StringUtils.equals(spTO1.getFakeGeneIdPrefix(), spTO2.getFakeGeneIdPrefix())) {
+                return log.exit(true);
+            }
+            log.debug("Species are not equivalent {}", spTO1.getId());
+            return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code TaxonTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code TaxonTO}s is solely
+     * based on their ID, not on other attributes.
+     * 
+     * @param taxonTO1 A {@code TaxonTO} to be compared to {@code taxonTO2}.
+     * @param taxonTO2 A {@code TaxonTO} to be compared to {@code taxonTO1}.
+     * @return {@code true} if {@code taxonTO1} and {@code taxonTO2} have all attributes
+     *         equal.
+     */
+    public static boolean areTaxonTOsEqual(TaxonTO taxonTO1, TaxonTO taxonTO2) {
+        log.entry(taxonTO1, taxonTO2);
+        if (TOComparator.areEntityTOsEqual(taxonTO1, taxonTO2) && 
+                StringUtils.equals(taxonTO1.getScientificName(), taxonTO2.getScientificName()) &&
+                taxonTO1.getLeftBound() == taxonTO2.getLeftBound() && 
+                taxonTO1.getRightBound() == taxonTO2.getRightBound() && 
+                taxonTO1.getLevel() == taxonTO2.getLevel() && 
+                taxonTO1.isLca() == taxonTO2.isLca()) {
+            return log.exit(true);
+        }
+        log.debug("Taxa are not equivalent {}", taxonTO1.getId());
+        return log.exit(false);
+    }
 
     /**
      * Method to compare two {@code Collection}s of {@code GOTermTO}s, to check 
@@ -121,10 +174,7 @@ public class TOComparator {
      */
     public static boolean areGeneTOsEqual(GeneTO geneTO1, GeneTO geneTO2) {
         log.entry(geneTO1, geneTO2);
-        if ((geneTO1.getId() == null && geneTO2.getId() == null || 
-                geneTO1.getId() != null && geneTO1.getId().equals(geneTO2.getId())) && 
-            (geneTO1.getName() == null && geneTO2.getName() == null || 
-                    geneTO1.getName() != null && geneTO1.getName().equals(geneTO2.getName())) && 
+        if (TOComparator.areEntityTOsEqual(geneTO1, geneTO2) && 
              geneTO1.getSpeciesId() == geneTO2.getSpeciesId() && 
              geneTO1.getGeneBioTypeId() == geneTO2.getGeneBioTypeId() && 
              geneTO1.getOMAParentNodeId() == geneTO2.getOMAParentNodeId() && 
@@ -132,6 +182,50 @@ public class TOComparator {
             return log.exit(true);
         }
         log.debug("Genes {} and {} are not equivalent", geneTO1, geneTO2);
+        return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code AnatEntityTO}s, to check for complete equality of each
+     * attribute. This is because the {@code equals} method of {@code AnatEntityTO}s is solely
+     * based on their ID, not on other attributes.
+     * 
+     * @param anatEntity1   An {@code AnatEntityTO} to be compared to {@code entity2}.
+     * @param anatEntity2   An {@code AnatEntityTO} to be compared to {@code entity1}.
+     * @return          {@code true} if {@code entity1} and {@code entity2} have all 
+     *                  attributes equal.
+     */
+    public static boolean areAnatEntityTOsEqual(AnatEntityTO anatEntity1, AnatEntityTO anatEntity2) {
+        log.entry(anatEntity1, anatEntity2);
+        
+        if (TOComparator.areEntityTOsEqual(anatEntity1, anatEntity2) && 
+                StringUtils.equals(anatEntity1.getStartStageId(), anatEntity2.getStartStageId()) &&
+                StringUtils.equals(anatEntity1.getEndStageId(), anatEntity2.getEndStageId())) {
+            return log.exit(true);
+        }
+        log.debug("Anatomical entities {} and {} are not equivalent", anatEntity1, anatEntity2);
+        
+        return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code EntityTO}s, to check for complete equality of each attribute.
+     * This is because the {@code equals} method of {@code EntityTO}s is solely based 
+     * on their ID, not on other attributes.
+     * 
+     * @param entity1   An {@code EntityTO} to be compared to {@code entity2}.
+     * @param entity2   An {@code EntityTO} to be compared to {@code entity1}.
+     * @return          {@code true} if {@code entity1} and {@code entity2} have 
+     *                  all attributes equal.
+     */
+    private static boolean areEntityTOsEqual(EntityTO entity1, EntityTO entity2) {
+        log.entry(entity1, entity2);
+        if (StringUtils.equals(entity1.getId(), entity2.getId()) &&
+                StringUtils.equals(entity1.getName(), entity2.getName()) &&
+                StringUtils.equals(entity1.getDescription(), entity2.getDescription())) {
+            return log.exit(true);
+        }
+        log.debug("Entities {} and {} are not equivalent", entity1, entity2);
         return log.exit(false);
     }
 }

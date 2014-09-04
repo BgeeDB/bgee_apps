@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.Properties;
 
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,21 +19,22 @@ import org.junit.rules.Timeout;
  * @since Bgee 13
  */
 public class BgeePropertiesTest {
+ 
+    /**
+     * A {@code Timeout} whose only purpose is to force JUnit to run independent thread
+     * for each test, which is important because of the "per-thread singleton" behavior of
+     * some important classes such as BgeeProperties
+     */
+    @Rule
+    public Timeout globalTimeout= new Timeout(99999);
     
     /**
      * A {@code BgeeProperties} instance to run the tests on.
      */
     private BgeeProperties bgeeProp;
-    
-    /**
-     * A {@code Timeout} whose only purpose is to force JUnit to run independent thread
-     * for each test, which is important because of the "per-thread singleton" behavior.
-     */
-    @Rule
-    public Timeout globalTimeout= new Timeout(99999);
 
     /**
-     * Reset the properties with the default expected values
+     * Set the properties with the default expected values for these tests
      */
     @Before
     public void initTests(){
@@ -44,6 +46,17 @@ public class BgeePropertiesTest {
                 "30");
         System.setProperty(BgeeProperties.encodeUrlKey, 
                 "false");
+    }
+    
+    /**
+     * Reset the properties to avoid to disturb other tests
+     */
+    @AfterClass
+    public static void resetProperties(){
+        System.clearProperty(BgeeProperties.propertiesFileNameKey);
+        System.clearProperty(BgeeProperties.bgeeRootDirectoryKey);
+        System.clearProperty(BgeeProperties.urlMaxLengthKey);
+        System.clearProperty(BgeeProperties.encodeUrlKey);
     }
     
     /**

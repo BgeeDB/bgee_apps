@@ -14,9 +14,12 @@ import org.bgee.controller.exception.RequestParametersNotFoundException;
 import org.bgee.controller.exception.RequestParametersNotStorableException;
 import org.bgee.controller.exception.WrongFormatException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * Unit tests for {@link RequestParameters}.
@@ -28,6 +31,14 @@ import org.junit.Test;
  * @since Bgee 13
  */
 public class RequestParametersTest {
+    
+    /**
+     * A {@code Timeout} whose only purpose is to force JUnit to run independent thread
+     * for each test, which is important because of the "per-thread singleton" behavior of
+     * some important classes such as BgeeProperties
+     */
+    @Rule
+    public Timeout globalTimeout= new Timeout(99999);
 
     /**
      * A mock {@code BgeeHttpServletRequest}
@@ -66,6 +77,17 @@ public class RequestParametersTest {
 
         testURLParameters = new TestURLParameters();	
 
+    }
+    
+    /**
+     * Reset the properties to avoid to disturb other tests
+     */
+    @AfterClass
+    public static void resetProperties(){
+        System.clearProperty(BgeeProperties.propertiesFileNameKey);
+        System.clearProperty(BgeeProperties.bgeeRootDirectoryKey);
+        System.clearProperty(BgeeProperties.urlMaxLengthKey);
+        System.clearProperty(BgeeProperties.encodeUrlKey);
     }
 
     /**
@@ -131,7 +153,7 @@ public class RequestParametersTest {
      * @throws WrongFormatException 
      */
     @Test
-    public void testgetRequestURL() throws RequestParametersNotStorableException,
+    public void testGetRequestURL() throws RequestParametersNotStorableException,
     MultipleValuesNotAllowedException, RequestParametersNotFoundException, WrongFormatException{
 
         // Check that the query returned corresponds to the parameters declared in
@@ -323,7 +345,7 @@ public class RequestParametersTest {
      * @throws InstantiationException 
      */
     @Test
-    public void testcloneWithAllParameters() throws InstantiationException, 
+    public void testCloneWithAllParameters() throws InstantiationException, 
     IllegalAccessException, RequestParametersNotFoundException, 
     RequestParametersNotStorableException, MultipleValuesNotAllowedException {
 
@@ -359,7 +381,7 @@ public class RequestParametersTest {
      * @throws InstantiationException 
      */
     @Test
-    public void cloneWithStorableParameters() throws InstantiationException, 
+    public void testCloneWithStorableParameters() throws InstantiationException, 
     IllegalAccessException, RequestParametersNotFoundException, 
     RequestParametersNotStorableException, MultipleValuesNotAllowedException {
 

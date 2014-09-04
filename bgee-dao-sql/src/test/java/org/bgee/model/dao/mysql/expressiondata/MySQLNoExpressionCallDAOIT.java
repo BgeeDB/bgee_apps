@@ -31,7 +31,7 @@ import org.junit.Test;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO
+ * @see org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO
  * @since Bgee 13
  */
 public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {

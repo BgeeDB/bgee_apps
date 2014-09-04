@@ -51,7 +51,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
      * Test the select method {@link MySQLExpressionCallDAO#getAllExpressionCalls()}.
      */
     @Test
-    public void shouldGetAllExpression() throws SQLException {
+    public void shouldGetAllExpressionCalls() throws SQLException {
         log.entry();
         
         this.useSelectDB();
@@ -93,7 +93,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("8","ID3", "Anat_id3", "Stage_id1", DataState.NODATA, DataState.HIGHQUALITY,DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, false, false),
                 new ExpressionCallTO("9","ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, DataState.LOWQUALITY,DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, false, false)); 
         // Compare
-        compareTOResultSetAndTOList(dao.getAllExpressionCalls(params), expectedExprCalls);
+        this.compareTOResultSetAndTOList(dao.getAllExpressionCalls(params), expectedExprCalls);
 
         // With speciesIds but not include substructures 
         // Generate parameters
@@ -104,7 +104,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("3","ID1", "Anat_id6", "Stage_id7", DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, false),
                 new ExpressionCallTO("5","ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY,DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false)); 
         // Compare
-        compareTOResultSetAndTOList(dao.getAllExpressionCalls(params), expectedExprCalls);
+        this.compareTOResultSetAndTOList(dao.getAllExpressionCalls(params), expectedExprCalls);
         
         // On global expression table 
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.ID, 
@@ -125,7 +125,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, true, false, OriginOfLineType.SELF),
                 new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, false, OriginOfLineType.SELF));
         // Compare
-        compareTOResultSetAndTOList(dao.getAllExpressionCalls(params), expectedExprCalls);
+        this.compareTOResultSetAndTOList(dao.getAllExpressionCalls(params), expectedExprCalls);
         
         // Without species filter but include substructures
         // Generate parameters
@@ -156,7 +156,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("20", "ID2", "Anat_id10", "Stage_id18", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, false, OriginOfLineType.DESCENT),
                 new ExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, false, OriginOfLineType.DESCENT));
         // Compare
-        compareTOResultSetAndTOList(dao.getAllExpressionCalls(params), expectedExprCalls);
+        this.compareTOResultSetAndTOList(dao.getAllExpressionCalls(params), expectedExprCalls);
     }
     
     private void compareTOResultSetAndTOList(ExpressionCallTOResultSet methResults,
@@ -226,7 +226,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
      * Test the select method {@link MySQLExpressionCallDAO#insertExpressionCalls()}.
      */
     @Test
-    public void shouldInsertExpression() throws SQLException {
+    public void shouldInsertExpressionCalls() throws SQLException {
         log.entry();
         this.useEmptyDB();
         //create a Collection of ExpressionCallTO to be inserted

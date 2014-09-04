@@ -14,6 +14,16 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+/**
+ * Integration tests for {@link MySQLHierarchicalGroupDAO}, performed on a real MySQL database. 
+ * See the documentation of {@link org.bgee.model.dao.mysql.MySQLITAncestor} for 
+ * important information.
+ * 
+ * @author 
+ * @version Bgee 13
+ * @see org.bgee.model.dao.api.gene.HierarchicalGroupDAO
+ * @since Bgee 13
+ */
 public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
 
     private final static Logger log = 

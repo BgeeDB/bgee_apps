@@ -25,6 +25,7 @@ import org.junit.Test;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
+ * @see org.bgee.model.dao.api.gene.GeneDAO
  * @since Bgee 13
  */
 

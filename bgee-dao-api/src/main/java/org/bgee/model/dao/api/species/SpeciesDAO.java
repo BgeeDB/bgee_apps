@@ -3,6 +3,7 @@ package org.bgee.model.dao.api.species;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link SpeciesTO}s. 
@@ -44,8 +45,9 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * results are retrieved.
      * 
      * @return A {@code SpeciesTOResultSet} containing all species from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public SpeciesTOResultSet getAllSpecies();
+    public SpeciesTOResultSet getAllSpecies() throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code SpeciesTO}s

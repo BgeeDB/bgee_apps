@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.EntityTO;
 
@@ -58,8 +59,10 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      *                to expression calls
      * @return        An {@code ExpressionCallTOResultSet} containing all expression calls 
      *                from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public ExpressionCallTOResultSet getAllExpressionCalls(ExpressionCallParams params);
+    public ExpressionCallTOResultSet getAllExpressionCalls(ExpressionCallParams params) 
+            throws DAOException;
     
     /**
      * Inserts the provided expression calls into the Bgee database, 
@@ -68,8 +71,13 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @param expressionCalls   A {@code Collection} of {@code ExpressionCallTO}s 
      *                          to be inserted into the database.
      * @return                  An {@code int} that is the number of inserted expression calls.
+     * @throws DAOException If a {@code SQLException} occurred while trying to insert expression 
+     *                      calls. The {@code SQLException} will be wrapped into a 
+     *                      {@code DAOException} ({@code DAOs} do not expose these kind of 
+     *                      implementation details).
      */
-    public int insertExpressionCalls(Collection<ExpressionCallTO> expressionCalls);
+    public int insertExpressionCalls(Collection<ExpressionCallTO> expressionCalls) 
+            throws DAOException;
 
     /**
      * Inserts the provided correspondence between global expression and expression IDs into 
@@ -81,9 +89,12 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      *                                      into the database.
      * @return                              An {@code int} that is the number of inserted 
      *                                      correspondences.
+     * @throws DAOException If a {@code SQLException} occurred while trying to insert row.
+     *                      The {@code SQLException} will be wrapped into a  {@code DAOException} 
+     *                      ({@code DAOs} do not expose these kind of implementation details).
      */
-    public int insertGlobalExpressionToExpression(
-            Collection<GlobalExpressionToExpressionTO> globalExpressionToExpression);
+    public int insertGlobalExpressionToExpression(Collection<GlobalExpressionToExpressionTO> 
+                                                  globalExpressionToExpression) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ExpressionCallTO}s

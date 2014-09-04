@@ -53,7 +53,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
      *                          do not expose these kind of implementation details).
      */
-    public int insertTaxa(Collection<TaxonTO> taxa);
+    public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException ;
 
     /**
      * Retrieve all taxa from data source.
@@ -63,8 +63,9 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      * results are retrieved.
      * 
      * @return A {@code TaxonTOResultSet} containing all taxa from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public TaxonTOResultSet getAllTaxa();
+    public TaxonTOResultSet getAllTaxa() throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code TaxonTO}s

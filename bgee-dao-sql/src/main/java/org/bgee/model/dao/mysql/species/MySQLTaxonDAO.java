@@ -86,7 +86,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     }
     
     @Override
-    public TaxonTOResultSet getAllTaxa() {
+    public TaxonTOResultSet getAllTaxa() throws DAOException {
         log.entry();
         
         Collection<TaxonDAO.Attribute> attributes = this.getAttributes();

@@ -79,7 +79,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     
     @Override
     public int updateGenes(Collection<GeneTO> genes, 
-            Collection<GeneDAO.Attribute> attributesToUpdate) {
+            Collection<GeneDAO.Attribute> attributesToUpdate) throws DAOException {
         log.entry(genes, attributesToUpdate);
         int geneUpdatedCount = 0;
         //Construct sql query according to currents attributes

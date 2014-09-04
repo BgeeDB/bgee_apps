@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 
 /**
  * DAO defining queries using or retrieving {@link GeneTO}s. 
@@ -43,6 +44,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * results are retrieved.
      * 
      * @return A {@code GeneTOResultSet} containing all genes from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
      */
     public GeneTOResultSet getAllGenes();
     

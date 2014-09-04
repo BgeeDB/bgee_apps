@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 
 /**
@@ -53,8 +54,10 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                to no-expression calls
      * @return        An {@code NoExpressionCallTOResultSet} containing all no-expression calls 
      *                from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public NoExpressionCallTOResultSet getAllNoExpressionCalls(NoExpressionCallParams params);
+    public NoExpressionCallTOResultSet getAllNoExpressionCalls(NoExpressionCallParams params)
+            throws DAOException;
     
     /**
      * Inserts the provided no-expression calls into the Bgee database, 
@@ -63,8 +66,13 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @param noExpressionCalls A {@code Collection} of {@code NoExpressionCallTO}s 
      *                          to be inserted into the database.
      * @return                  An {@code int} that is the number of inserted no-expression calls.
+     * @throws DAOException If a {@code SQLException} occurred while trying to insert no-expression 
+     *                      calls. The {@code SQLException} will be wrapped into a 
+     *                      {@code DAOException} ({@code DAOs} do not expose these kind of 
+     *                      implementation details).
      */
-    public int insertNoExpressionCalls(Collection<NoExpressionCallTO> noExpressionCalls);
+    public int insertNoExpressionCalls(Collection<NoExpressionCallTO> noExpressionCalls)
+            throws DAOException;
 
     /**
      * Inserts the provided correspondence between global no-expression and no-expression IDs into 
@@ -76,9 +84,12 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                                          inserted into the database.
      * @return                                  An {@code int} that is the number of inserted 
      *                                          correspondences.
+     * @throws DAOException If a {@code SQLException} occurred while trying to insert row. 
+     *                      The {@code SQLException} will be wrapped into a  {@code DAOException} 
+     *                      ({@code DAOs} do not expose these kind of implementation details).
      */
-    public int insertGlobalNoExpressionToNoExpression(
-            Collection<GlobalNoExpressionToNoExpressionTO> globalNoExpressionToNoExpression);
+    public int insertGlobalNoExpressionToNoExpression(Collection<GlobalNoExpressionToNoExpressionTO> 
+                                              globalNoExpressionToNoExpression) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code NoExpressionCallTO}s

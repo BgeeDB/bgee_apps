@@ -3,6 +3,8 @@ package org.bgee.model.dao.api.ontologycommon;
 import java.util.Collection;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
@@ -112,6 +114,12 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
     public class RelationTO implements TransferObject {
 
         private static final long serialVersionUID = 6320202680108735124L;
+
+        /**
+         * {@code Logger} of the class. 
+         */
+        private final static Logger log = LogManager.getLogger(RelationTO.class.getName());
+
         /**
          * List the different relation types allowed in the Bgee database. 
          * Bgee makes no distinction between is_a and part_of relations, so they are merged 
@@ -329,6 +337,90 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             } else if (!targetId.equals(other.targetId))
                 return false;
             return true;
+        }
+        
+        /**
+         * Convert data source relation type into a {@code RelationType}.
+         * 
+         * @param databaseEnum  A {@code String} that is relation type from the data source.
+         * @return              An {@code RelationType} representing the given {@code String}. 
+         */
+        public static RelationType convertDatasourceEnumToRelationType(String databaseEnum) {
+            log.entry(databaseEnum);
+
+            RelationType relationType = null;
+            if (databaseEnum.equals("is_a part_of")) {
+                relationType = RelationType.ISA_PARTOF;
+            } else if (databaseEnum.equals("develops_from")) {
+                relationType = RelationType.DEVELOPSFROM;
+            } else if (databaseEnum.equals("transformation_of")) {
+                relationType = RelationType.TRANSFORMATIONOF;
+            }
+            
+            return log.exit(relationType);
+        }
+
+        /**
+         * Convert a {@code RelationType} into a data source relation type.
+         * 
+         * @param relationType  A {@code RelationType} that is the relation type to convert.
+         * @return              A {@code String} representing the given {@code RelationType}. 
+         */
+        public static String convertRelationTypeToDatasourceEnum(RelationType relationType) {
+            log.entry(relationType);
+            
+            String databaseEnum = null;
+            if (relationType == RelationType.ISA_PARTOF) {
+                databaseEnum = "is_a part_of";
+            } else if (relationType == RelationType.DEVELOPSFROM) {
+                databaseEnum = "develops_from";
+            } else if (relationType == RelationType.TRANSFORMATIONOF) {
+                databaseEnum = "transformation_of";
+            }
+            
+            return log.exit(databaseEnum);
+        }
+        
+        /**
+         * Convert data source relation status into a {@code RelationStatus}.
+         * 
+         * @param databaseEnum  A {@code String} that is relation status from the data source.
+         * @return              An {@code RelationStatus} representing the given {@code String}. 
+         */
+        public static RelationStatus convertDatasourceEnumToRelationStatus(String databaseEnum) {
+            log.entry(databaseEnum);
+
+            RelationStatus relationStatus = null;
+            if (databaseEnum.equals("direct")) {
+                relationStatus = RelationStatus.DIRECT;
+            } else if (databaseEnum.equals("indirect")) {
+                relationStatus = RelationStatus.INDIRECT;
+            } else if (databaseEnum.equals("reflexive")) {
+                relationStatus = RelationStatus.REFLEXIVE;
+            }
+
+            return log.exit(relationStatus);
+        }
+
+        /**
+         * Convert a {@code RelationStatus} into a data source relation status.
+         * 
+         * @param relationStatus  A {@code RelationStatus} that is the relation status to convert.
+         * @return                A {@code String} representing the given {@code RelationStatus}. 
+         */
+        public static String convertRelationStatusToDatasourceEnum(RelationStatus relationStatus) {
+            log.entry(relationStatus);
+            
+            String databaseEnum = null;
+            if (relationStatus == RelationStatus.DIRECT) {
+                databaseEnum = "direct";
+            } else if (relationStatus == RelationStatus.INDIRECT) {
+                databaseEnum = "indirect";
+            } else if (relationStatus == RelationStatus.REFLEXIVE) {
+                databaseEnum = "reflexive";
+            }
+            
+            return log.exit(databaseEnum);
         }
     }
 }

@@ -152,7 +152,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 }
             }
             if (countNbEntites != expectedRelations.size()) {
-                log.debug("Not all RelationTO found for {}, {} generated vs {} expected",
+                log.debug("Not all RelationTO found for {}, {} generated but {} expected",
                         expectedRelations.toString(), countNbEntites, expectedRelations.size());
                 throw log.throwing(new AssertionError("Incorrect number of generated TOs"));
             }

@@ -31,8 +31,7 @@ import org.junit.Test;
 
 public class MySQLGeneDAOIT extends MySQLITAncestor {
     
-    private final static Logger log = 
-            LogManager.getLogger(MySQLGeneDAOIT.class.getName());
+    private final static Logger log = LogManager.getLogger(MySQLGeneDAOIT.class.getName());
 
     public MySQLGeneDAOIT() {
         super();
@@ -81,7 +80,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             }
         }
         if (countGenes != expectedGenes.size()) {
-            log.debug("Not all GeneTO found for {}, {} generated vs {} expected",
+            log.debug("Not all GeneTO found for {}, {} generated but {} expected",
                     expectedGenes.toString(), countGenes, expectedGenes.size());
             throw log.throwing(new AssertionError("Incorrect number of generated TOs"));
         }
@@ -108,7 +107,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             }
         }
         if (countGenes != expectedGenes.size()) {
-            log.debug("Not all GeneTO found for {}, {} generated vs {} expected",
+            log.debug("Not all GeneTO found for {}, {} generated but {} expected",
                     expectedGenes.toString(), countGenes, expectedGenes.size());
             throw log.throwing(new AssertionError("Incorrect number of generated TOs"));
         }
@@ -139,7 +138,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             }
         }
         if (countGenes != expectedGenes.size()) {
-            log.debug("Not all GeneTO found for {}, {} generated vs {} expected",
+            log.debug("Not all GeneTO found for {}, {} generated but {} expected",
                     expectedGenes.toString(), countGenes, expectedGenes.size());
             throw log.throwing(new AssertionError("Incorrect number of generated TOs"));
         }
@@ -152,8 +151,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the select method {@link MySQLGeneDAO#updateGenes()}.
-     * @throws SQLException 
+     * Test the update method {@link MySQLGeneDAO#updateGenes()}.
      */
     @Test
     public void shouldUpdateGenes() throws SQLException {

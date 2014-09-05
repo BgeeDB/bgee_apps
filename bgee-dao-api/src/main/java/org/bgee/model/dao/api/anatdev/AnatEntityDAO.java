@@ -22,7 +22,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
     /**
      * {@code Enum} used to define the attributes to populate in the {@code AnatEntityTO}s 
      * obtained from this {@code AnatEntityDAO}.
-     * <ul>TODO
+     * <ul>
      * <li>{@code ID: corresponds to {@link AnatEntityTO#getId()}.
      * <li>{@code NAME: corresponds to {@link AnatEntityTO#getName()}.
      * <li>{@code DESCRIPTION: corresponds to {@link AnatEntityTO#getDescription()}.
@@ -39,14 +39,15 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
 
     /**
      * Retrieve all anatomical entities from data source according to a {@code Set} of 
-     * {@code String}s that are the IDs of species allowing to filter the relations to use.
+     * {@code String}s that are the IDs of species allowing to filter the entities to use.
      * <p>
-     * The relations are retrieved and returned as a {@code AnatEntityTOResultSet}. It is the 
-     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * The anatomical entities are retrieved and returned as a {@code AnatEntityTOResultSet}. It is 
+     * the responsibility of the caller to close this {@code DAOResultSet} once results are 
+     * retrieved.
      * 
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
-     *                      allowing to filter the calls to use
-     * @return              A {@code AnatEntityTOResultSet} containing all anatomical entities
+     *                      allowing to filter the anatomical entities to use
+     * @return              An {@code AnatEntityTOResultSet} containing all anatomical entities
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
@@ -61,7 +62,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * @return              An {@code int} that is the number of inserted anatomical entities.
      * @throws DAOException If a {@code SQLException} occurred while trying to insert anatomical 
      *                      entities. The {@code SQLException} will be wrapped into a 
-     *                      {@code DAOException} ({@code DAOs} do not expose these kind of 
+     *                      {@code DAOException} ({@code DAO}s do not expose these kind of 
      *                      implementation details).
      */
     public int insertAnatEntities(Collection<AnatEntityTO> anatEntityTOs) throws DAOException;
@@ -90,13 +91,14 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         private static final long serialVersionUID = -4321114125536711089L;
         
         /**
-         * A {@code String} that is the ID of the start stage of this anatomical entity.
-
+         * A {@code String} that is the ID of the start of developmental stage of this 
+         * anatomical entity.
          */
         private final String startStageId;
         
         /**
-         * A {@code String} that is the ID of the end stage of this anatomical entity.
+         * A {@code String} that is the ID of the end of developmental stage of this 
+         * anatomical entity.
          */
         private final String endStageId;
 
@@ -107,8 +109,10 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          * @param id            A {@code String} that is the ID of this anatomical entity. 
          * @param name          A {@code String} that is the name of this anatomical entity.
          * @param description   A {@code String} that is the description of this anatomical entity.
-         * @param startStageId  A {@code String} that is the start stage of this anatomical entity.
-         * @param endStageId    A {@code String} that is the end stage of this anatomical entity.
+         * @param startStageId  A {@code String} that is the start of developmental stage of 
+         *                      this anatomical entity.
+         * @param endStageId    A {@code String} that is the end of developmental stage of this 
+         *                      anatomical entity.
          */
         public AnatEntityTO(String id, String name, String description, 
                 String startStageId, String endStageId) {
@@ -118,15 +122,15 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         }
 
         /**
-         * @return  the {@code String} representing the ID of the start stage of this 
-         *          anatomical entity.
+         * @return  the {@code String} representing the ID of the start of developmental stage 
+         *          of this anatomical entity.
          */
         public String getStartStageId() {
             return this.startStageId;
         }
 
         /**
-         * @return  the {@code String} representing the ID of the end stage of this 
+         * @return  the {@code String} representing the ID of the end of developmental stage of this 
          *          anatomical entity.
          */
         public String getEndStageId() {

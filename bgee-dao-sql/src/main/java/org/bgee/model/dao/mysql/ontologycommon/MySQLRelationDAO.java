@@ -147,17 +147,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         return log.exit(relationInsertedCount);
     }
 
-    /**
-     * Inserts the provided relations between Gene Ontology terms into the Bgee database, 
-     * represented as a {@code Collection} of {@code RelationTO}s. 
-     * 
-     * @param relations         A {@code Collection} of {@code RelationTO}s to be inserted into the 
-     *                          database.
-     * @throws DAOException     If a {@code SQLException} occurred while trying 
-     *                          to insert {@code relations}. The {@code SQLException} 
-     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
-     *                          do not expose these kind of implementation details).
-     */
+    @Override
     public int insertGeneOntologyRelations(Collection<RelationTO> relations) throws DAOException {
         log.entry(relations);
         

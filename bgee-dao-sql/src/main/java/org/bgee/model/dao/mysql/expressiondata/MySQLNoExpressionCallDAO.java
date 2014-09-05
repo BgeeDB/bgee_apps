@@ -71,7 +71,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      *                                  allowing to filter the calls to use
      * @param isIncludeParentStructures A {@code boolean} defining whether parents of the 
      *                                  anatomical entity were considered.
-     * @return                          An {@code NoExpressionCallTOResultSet} containing all 
+     * @return                          A {@code NoExpressionCallTOResultSet} containing all 
      *                                  no-expression calls from data source.
      * @throws DAOException             If a {@code SQLException} occurred while trying to get 
      *                                  no-expression calls.   
@@ -131,9 +131,9 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     }
 
     /** 
-     * Returns a {@code String} that correspond to the given {@code NoExpressionCallDAO.Attribute}.
+     * Return a {@code String} that correspond to the given {@code NoExpressionCallDAO.Attribute}.
      * 
-     * @param attribute   An {code NoExpressionCallDAO.Attribute} that is the attribute to
+     * @param attribute   A {code NoExpressionCallDAO.Attribute} that is the attribute to
      *                    convert in a {@code String}.
      * @return            A {@code String} that correspond to the given 
      *                    {@code NoExpressionCallDAO.Attribute}

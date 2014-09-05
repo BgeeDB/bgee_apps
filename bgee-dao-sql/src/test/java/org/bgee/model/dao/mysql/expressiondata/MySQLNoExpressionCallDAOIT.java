@@ -184,7 +184,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 }
             }
             if (countMethNoExprCalls != expectedNoExprCalls.size()) {
-                log.debug("Not all NoExpressionCallTO found for {}, {} generated vs {} expected",
+                log.debug("Not all NoExpressionCallTOs found for {}, {} generated but {} expected",
                         expectedNoExprCalls.toString(), countMethNoExprCalls, 
                         expectedNoExprCalls.size());
                 throw log.throwing(new AssertionError("Incorrect number of generated TOs"));

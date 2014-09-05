@@ -17,15 +17,15 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 
 
 /**
- * A {@code AnatEntityDAO} for MySQL. 
+ * An {@code AnatEntityDAO} for MySQL. 
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
  * @see org.bgee.model.dao.api.gene.AnatEntityDAO.AnatEntityTO
  * @since Bgee 13
  */
-public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> 
-                                implements AnatEntityDAO {
+public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implements AnatEntityDAO {
+    
     /**
      * {@code Logger} of the class. 
      */
@@ -83,33 +83,31 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute>
     }
     
     /** 
-     * Returns a {@code String} that correspond to the given {@code AnatEntityDAO.Attribute}.
+     * Return a {@code String} that correspond to the given {@code AnatEntityDAO.Attribute}.
      * 
      * @param attribute   An {code AnatEntityDAO.Attribute} that is the attribute to
-     *                    convert in a {@code String}.
+     *                    convert into a {@code String}.
      * @return            A {@code String} that correspond to the given 
      *                    {@code AnatEntityDAO.Attribute}
      */
     private String attributeToString(AnatEntityDAO.Attribute attribute) {
         log.entry(attribute);
         
-        String label = null;
-        if (attribute.equals(AnatEntityDAO.Attribute.ID)) {
-                label = "anatEntityId";
-        } else if (attribute.equals(AnatEntityDAO.Attribute.NAME)) {
-            label = "anatEntityName";
-        } else if (attribute.equals(AnatEntityDAO.Attribute.DESCRIPTION)) {
-            label = "anatEntityDescription";
-        } else if (attribute.equals(AnatEntityDAO.Attribute.STARTSTAGEID)) {
-            label = "startStageId";
-        } else if (attribute.equals(AnatEntityDAO.Attribute.ENDSTAGEID)) {
-            label = "endStageId";
-        } else {
-            throw log.throwing(new IllegalStateException("The attribute provided (" +
-                    attribute.toString() + ") is unknown for " + AnatEntityDAO.class.getName()));
+        switch (attribute) {
+            case ID: 
+                return log.exit("anatEntityId");
+            case NAME: 
+                return log.exit("anatEntityId");
+            case DESCRIPTION: 
+                return log.exit("anatEntityId");
+            case STARTSTAGEID: 
+                return log.exit("anatEntityId");
+            case ENDSTAGEID: 
+                return log.exit("anatEntityId");
+            default: 
+                throw log.throwing(new AssertionError("The attribute provided (" + 
+                       attribute.toString() + ") is unknown for " + AnatEntityDAO.class.getName()));
         }
-        
-        return log.exit(label);
     }
 
     @Override
@@ -126,12 +124,12 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute>
         int entityInsertedCount = 0;
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
-            for (AnatEntityTO entity: anatEntities) {
-                stmt.setString(1, entity.getId());
-                stmt.setString(2, entity.getName());
-                stmt.setString(3, entity.getDescription());
-                stmt.setString(4, entity.getStartStageId());
-                stmt.setString(5, entity.getEndStageId());
+            for (AnatEntityTO anatEntity: anatEntities) {
+                stmt.setString(1, anatEntity.getId());
+                stmt.setString(2, anatEntity.getName());
+                stmt.setString(3, anatEntity.getDescription());
+                stmt.setString(4, anatEntity.getStartStageId());
+                stmt.setString(5, anatEntity.getEndStageId());
                 entityInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -143,7 +141,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute>
     }
 
     /**
-     * A {@code MySQLDAOResultSet} specific to {@code GlobalExpressionToExpressionTO}.
+     * A {@code MySQLDAOResultSet} specific to {@code AnatEntityTO}.
      * 
      * @author Valentine Rech de Laval
      * @version Bgee 13
@@ -164,6 +162,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute>
         @Override
         public AnatEntityTO getTO() throws DAOException {
             log.entry();
+            
             String anatEntityId = null, anatEntityName = null, anatEntityDescription = null, 
                     startStageId = null, endStageId = null;
 

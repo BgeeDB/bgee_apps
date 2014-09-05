@@ -54,6 +54,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         return log.exit(
                 getAllExpressionCalls(params.getSpeciesIds(), params.isIncludeSubstructures())); 
         
+//        TODO use the store procedure instead of BgeePreparedStatement.
 //        String sql = "{call getAllExpression(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 //
 //        //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -157,10 +158,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     }
     
     /** 
-     * Returns a {@code String} that correspond to the given {@code ExpressionCallDAO.Attribute}.
+     * Return a {@code String} that correspond to the given {@code ExpressionCallDAO.Attribute}.
      * 
-     * @param attribute   An {code ExpressionCallDAO.Attribute} that is the attribute to
-     *                    convert in a {@code String}.
+     * @param attribute   An {code ExpressionCallDAO.Attribute} that is the attribute to be
+     *                    converted into a {@code String}.
      * @return            A {@code String} that correspond to the given 
      *                    {@code ExpressionCallDAO.Attribute}
      */
@@ -200,8 +201,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                                                          "for the moment"));
         } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES) ||
                 attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTAGES)) {
-            throw log.throwing(new IllegalStateException(
-                    attribute.toString() + "is not a column of the expression table"));
+            throw log.throwing(new IllegalStateException(attribute.toString() + 
+                    "is not a column of the expression and globalExpression tables"));
         } else {
             throw log.throwing(new IllegalStateException("The attribute provided (" +
                     attribute.toString() + ") is unknown for " + ExpressionCallDAO.class.getName()));

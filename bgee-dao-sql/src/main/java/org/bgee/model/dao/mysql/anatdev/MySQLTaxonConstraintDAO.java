@@ -25,7 +25,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  * @since Bgee 13
  */
 public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribute> 
-        implements TaxonConstraintDAO {
+                                     implements TaxonConstraintDAO {
 
     /**
      * {@code Logger} of the class. 
@@ -44,7 +44,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     }
 
     @Override
-    public int insertAnatEntityRelationTaxonConstraint(Collection<TaxonConstraintTO> contraints)
+    public int insertAnatEntityRelationTaxonConstraints(Collection<TaxonConstraintTO> contraints)
                     throws DAOException {
         log.entry(contraints);
 
@@ -64,7 +64,6 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                 } else {
                     stmt.setInt(2, Integer.parseInt(contraint.getSpeciesId()));
                 }
-
                 contraintInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -76,7 +75,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     }
 
     @Override
-    public int insertAnatEntityTaxonConstraint(Collection<TaxonConstraintTO> contraints)
+    public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO> contraints)
             throws DAOException {
         log.entry(contraints);
 
@@ -96,7 +95,6 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                 } else {
                     stmt.setInt(2, Integer.parseInt(contraint.getSpeciesId()));
                 }
-                
                 contraintInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -108,7 +106,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     }
 
     @Override
-    public int insertStageTaxonConstraint(Collection<TaxonConstraintTO> contraints)
+    public int insertStageTaxonConstraints(Collection<TaxonConstraintTO> contraints)
             throws DAOException {
         log.entry(contraints);
 
@@ -161,6 +159,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
         @Override
         public TaxonConstraintTO getTO() throws DAOException {
             log.entry();
+            
             String entityId = null, speciesId = null;
 
             ResultSet currentResultSet = this.getCurrentResultSet();
@@ -182,5 +181,4 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             return log.exit(new TaxonConstraintTO(entityId, speciesId));
         }
     }
-
 }

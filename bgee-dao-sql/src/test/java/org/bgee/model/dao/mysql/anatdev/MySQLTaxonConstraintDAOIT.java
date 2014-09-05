@@ -40,7 +40,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
 
     /**
      * Test the insert method 
-     * {@link MySQLTaxonConstraintDAO#insertAnatEntityRelationTaxonConstraint()}.
+     * {@link MySQLTaxonConstraintDAO#insertAnatEntityRelationTaxonConstraints()}.
      */
     @Test
     public void shouldInsertAnatEntityRelationTaxonConstraint() throws SQLException {
@@ -57,7 +57,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
         try {
             MySQLTaxonConstraintDAO dao = new MySQLTaxonConstraintDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows inserted", 3, 
-                    dao.insertAnatEntityRelationTaxonConstraint(taxonConstraintTOs));
+                    dao.insertAnatEntityRelationTaxonConstraints(taxonConstraintTOs));
             
             //we manually verify the insertion, as we do not want to rely on other methods 
             //that are tested elsewhere.
@@ -92,7 +92,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
 
     /**
      * Test the insert method 
-     * {@link MySQLTaxonConstraintDAO#insertAnatEntityTaxonConstraint()}.
+     * {@link MySQLTaxonConstraintDAO#insertAnatEntityTaxonConstraints()}.
      */
     @Test
     public void shouldInsertAnatEntityTaxonConstraint() throws SQLException {
@@ -110,7 +110,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
             MySQLTaxonConstraintDAO dao = new MySQLTaxonConstraintDAO(this.getMySQLDAOManager());
             
             assertEquals("Incorrect number of rows inserted", 3, 
-                    dao.insertAnatEntityTaxonConstraint(taxonConstraintTOs));
+                    dao.insertAnatEntityTaxonConstraints(taxonConstraintTOs));
             
             //we manually verify the insertion, as we do not want to rely on other methods 
             //that are tested elsewhere.
@@ -144,7 +144,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
     }        
      /**
     * Test the insert method 
-    * {@link MySQLTaxonConstraintDAO#insertAnatEntityRelationTaxonConstraint()}.
+    * {@link MySQLTaxonConstraintDAO#insertAnatEntityRelationTaxonConstraints()}.
     */
    @Test
    public void shouldInsertStageTaxonConstraint() throws SQLException {
@@ -162,7 +162,7 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
            MySQLTaxonConstraintDAO dao = new MySQLTaxonConstraintDAO(this.getMySQLDAOManager());
            
            assertEquals("Incorrect number of rows inserted", 3, 
-                   dao.insertStageTaxonConstraint(taxonConstraintTOs));
+                   dao.insertStageTaxonConstraints(taxonConstraintTOs));
            
            //we manually verify the insertion, as we do not want to rely on other methods 
            //that are tested elsewhere.

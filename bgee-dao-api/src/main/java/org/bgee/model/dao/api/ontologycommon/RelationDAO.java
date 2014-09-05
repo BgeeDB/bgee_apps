@@ -70,7 +70,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
     public int insertAnatEntityRelations(Collection<RelationTO> relationTOs) throws DAOException;
 
     /**
-     * Inserts the provided relations between Gene Ontology terms into the Bgee database, 
+     * Insert the provided relations between Gene Ontology terms into the Bgee database, 
      * represented as a {@code Collection} of {@code RelationTO}s. 
      * 
      * @param relationTOs   A {@code Collection} of {@code RelationTO}s to be inserted 
@@ -201,6 +201,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * (see {@link #getsourceId()}). The type of the relation (see {@link 
          * #getRelationType()}) is unspecified, and the relation is assumed to be direct 
          * (see {@link #isDirectRelation()}).
+         * <p>
+         * The relation ID, the relation type and the relation status are set to {@code null}.
          * 
          * @param sourceId         A {@code String} that is the ID of the descent term.
          * @param targetId          A {@code String} that is the ID of the parent term.
@@ -343,7 +345,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * Convert data source relation type into a {@code RelationType}.
          * 
          * @param databaseEnum  A {@code String} that is relation type from the data source.
-         * @return              An {@code RelationType} representing the given {@code String}. 
+         * @return              A {@code RelationType} representing the given {@code String}. 
          */
         public static RelationType convertDatasourceEnumToRelationType(String databaseEnum) {
             log.entry(databaseEnum);
@@ -363,7 +365,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
         /**
          * Convert a {@code RelationType} into a data source relation type.
          * 
-         * @param relationType  A {@code RelationType} that is the relation type to convert.
+         * @param relationType  A {@code RelationType} that is the relation type to be converted.
          * @return              A {@code String} representing the given {@code RelationType}. 
          */
         public static String convertRelationTypeToDatasourceEnum(RelationType relationType) {
@@ -405,7 +407,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
         /**
          * Convert a {@code RelationStatus} into a data source relation status.
          * 
-         * @param relationStatus  A {@code RelationStatus} that is the relation status to convert.
+         * @param relationStatus  A {@code RelationStatus} that is the relation status to be 
+         *                        converted.
          * @return                A {@code String} representing the given {@code RelationStatus}. 
          */
         public static String convertRelationStatusToDatasourceEnum(RelationStatus relationStatus) {

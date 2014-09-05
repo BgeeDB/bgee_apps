@@ -22,7 +22,7 @@ import org.junit.Test;
 
 /**
  * Integration tests for {@link MySQLAnatEntityDAO}, performed on a real MySQL database. 
- * See the documentation of {@link org.bgee.model.dao.mysql.MySQLITAncestor} for 
+ * See the documentation of {@link org.bgee.model.dao.mysql.MySQLITAncestor MySQLITAncestor} for 
  * important information.
  * 
  * @author Valentine Rech de Laval
@@ -32,8 +32,7 @@ import org.junit.Test;
  */
 public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
     
-    private final static Logger log = 
-            LogManager.getLogger(MySQLAnatEntityDAOIT.class.getName());
+    private final static Logger log = LogManager.getLogger(MySQLAnatEntityDAOIT.class.getName());
 
     public MySQLAnatEntityDAOIT() {
         super();
@@ -67,7 +66,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id9","forebrain","forebrain desc","Stage_id8","Stage_id17"),
                 new AnatEntityTO("Anat_id10","hindbrain","hindbrain desc","Stage_id8","Stage_id17"),
                 new AnatEntityTO("Anat_id11","cerebellum","cerebellum desc","Stage_id9","Stage_id13"));
-        this.compareResultSetAndTOList(dao.getAllAnatEntities(null), expectedAnatEntities);
+        this.compareAnatEntityResultSetAndTOList(dao.getAllAnatEntities(null), expectedAnatEntities);
 
         // Test recovery of one attribute without filter on species IDs
         dao.setAttributes(Arrays.asList(AnatEntityDAO.Attribute.ID));
@@ -83,7 +82,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id9", null, null, null, null),
                 new AnatEntityTO("Anat_id10", null, null, null, null),
                 new AnatEntityTO("Anat_id11", null, null, null, null));
-        this.compareResultSetAndTOList(dao.getAllAnatEntities(null), expectedAnatEntities);
+        this.compareAnatEntityResultSetAndTOList(dao.getAllAnatEntities(null), expectedAnatEntities);
 
         // Test recovery of one attribute with filter on species IDs
         Set<String> speciesIds = new HashSet<String>();
@@ -94,10 +93,11 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id6", null, null, null, null),
                 new AnatEntityTO("Anat_id8", null, null, null, null),
                 new AnatEntityTO("Anat_id11", null, null, null, null));
-        this.compareResultSetAndTOList(dao.getAllAnatEntities(speciesIds), expectedAnatEntities);
+        this.compareAnatEntityResultSetAndTOList(
+                dao.getAllAnatEntities(speciesIds), expectedAnatEntities);
     }
 
-    private void compareResultSetAndTOList(AnatEntityTOResultSet resultSet,
+    private void compareAnatEntityResultSetAndTOList(AnatEntityTOResultSet resultSet,
             List<AnatEntityTO> expectedTOs) {
         log.entry(resultSet, expectedTOs);
         
@@ -105,17 +105,17 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
             int countNbEntites = 0;
             while (resultSet.next()) {
                 boolean found = false;
-                AnatEntityTO resultSetTO = resultSet.getTO();
+                AnatEntityTO resultTO = resultSet.getTO();
                 countNbEntites++;
                 for (AnatEntityTO expTO: expectedTOs) {
-                    log.trace("Comparing {} to {}", resultSetTO.getId(), expTO.getId());
-                    if (TOComparator.areAnatEntityTOsEqual(resultSetTO, expTO)) {
+                    log.trace("Comparing {} to {}", resultTO.getId(), expTO.getId());
+                    if (TOComparator.areAnatEntityTOsEqual(resultTO, expTO)) {
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    log.debug("No equivalent AnatEntityTO found for {}", resultSetTO.toString());
+                    log.debug("No equivalent AnatEntityTO found for {}", resultTO.toString());
                     throw log.throwing(new AssertionError("Incorrect generated TO"));
                 }
             }

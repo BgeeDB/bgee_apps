@@ -23,13 +23,13 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * {@code Enum} used to define the attributes to populate in the {@code NoExpressionCallTO}s 
      * obtained from this {@code NoExpressionCallDAO}.
      * <ul>
-     * <li>{@code ID: corresponds to {@link CallTO#getId()}.
-     * <li>{@code GENEID: corresponds to {@link CallTO#getGeneId()}.
-     * <li>{@code DEVSTAGEID: corresponds to {@link CallTO#getDevStageId()}.
-     * <li>{@code ANATENTITYID: corresponds to {@link CallTO#getAnatEntityId()}.
-     * <li>{@code AFFYMETRIXDATA: corresponds to {@link CallTO#getAffymetrixData()}.
-     * <li>{@code INSITUDATA: corresponds to {@link CallTO#getInSituData()}.
-     * <li>{@code RNASEQDATA;: corresponds to {@link CallTO#getRNASeqData()}.
+     * <li>{@code ID: corresponds to {@link NoExpressionCallTO#getId()}.
+     * <li>{@code GENEID: corresponds to {@link NoExpressionCallTO#getGeneId()}.
+     * <li>{@code DEVSTAGEID: corresponds to {@link NoExpressionCallTO#getDevStageId()}.
+     * <li>{@code ANATENTITYID: corresponds to {@link NoExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code AFFYMETRIXDATA: corresponds to {@link NoExpressionCallTO#getAffymetrixData()}.
+     * <li>{@code INSITUDATA: corresponds to {@link NoExpressionCallTO#getInSituData()}.
+     * <li>{@code RNASEQDATA;: corresponds to {@link NoExpressionCallTO#getRNASeqData()}.
      * <li>{@code INCLUDEPARENTSTRUCTURES}: corresponds to 
      * {@link NoExpressionCallTO#isIncludeParentStructures()}.
      * <li>{@code ORIGINOFLINE}: corresponds to {@link NoExpressionCallTO#getOriginOfLine()}.
@@ -50,9 +50,9 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param params  An {@code NoExpressionCallParams} that provide the parameters specific 
-     *                to no-expression calls
-     * @return        An {@code NoExpressionCallTOResultSet} containing all no-expression calls 
+     * @param params  An{@code NoExpressionCallParams} that provide the parameters specific 
+     *                to no-expression calls.
+     * @return        A {@code NoExpressionCallTOResultSet} containing all no-expression calls 
      *                from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
@@ -75,12 +75,12 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
             throws DAOException;
 
     /**
-     * Inserts the provided correspondence between global no-expression and no-expression IDs into 
+     * Inserts the provided correspondence between no-expression and global no-expression calls into 
      * the Bgee database, represented as a {@code Collection} of 
      * {@code GlobalNoExpressionToNoExpressionTO}s. 
      * 
      * @param globalNoExpressionToNoExpression  A {@code Collection} of 
-     *                                          {@code globalNoExpressionToNoExpressionTO}s to be 
+     *                                          {@code GlobalNoExpressionToNoExpressionTO}s to be 
      *                                          inserted into the database.
      * @return                                  An {@code int} that is the number of inserted 
      *                                          correspondences.
@@ -137,7 +137,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         private boolean includeParentStructures;
 
         /**
-         * An {@code Enum} used to define the origin of line.
+         * An {@code Enum} used to define the origin of the global expression call.
          * <ul>
          * <li>{@code SELF}: this no-expression call exists in itself.
          * <li>{@code PARENT}: this no-expression call exists in one of its parents.
@@ -150,8 +150,8 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         }
         
         /**
-         * An {@code OriginOfLineType} used to define the origin of line: either {@code SELF},
-         * {@code PARENT} or {@code BOTH}.
+         * An {@code OriginOfLineType} used to define the origin of the global expression call: 
+         * either {@code SELF}, {@code PARENT} or {@code BOTH}.
          * 
          * @see OriginOfLineType
          */
@@ -172,6 +172,8 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * this call, whether this no-expression call was generated using data from the anatomical 
          * entity with the ID alone, or by also considering all parents by is_a or part_of 
          * relations, even indirect.
+         * <p>
+         * The origin of line is set to the default value; i.e. set to {@code OriginOfLineType.SELF}.
          * 
          * @param geneId               A {@code String} that is the ID of the gene associated to 
          *                             this call.
@@ -224,7 +226,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          *                             was generated using data from the anatomical entity with the 
          *                             ID alone, or by also considering all parents by is_a or 
          *                             part_of relations, even indirect.
-         * @param originOfLine         A {@code OriginOfLineType} defining the origin of line.
+         * @param originOfLine         An {@code OriginOfLineType} defining the origin of line.
          */
         public NoExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId,
                 DataState affymetrixData, DataState inSituData, DataState rnaSeqData, 
@@ -266,14 +268,16 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         }
 
         /**
-         * @return  the {@code OriginOfLineType} representing the origin of the call.
+         * @return  the {@code OriginOfLineType} representing the origin of the 
+         *          global expression call.
          */
         public OriginOfLineType getOriginOfLine() {
             return originOfLine;
         }
         
         /**
-         * @param originOfLine  the {@code OriginOfLineType} representing the origin of the call.
+         * @param originOfLine  An {@code OriginOfLineType} representing the origin of the 
+         *                      global expression call.
          */
         void setOriginOfLine(OriginOfLineType originOfLine) {
             this.originOfLine = originOfLine;
@@ -288,9 +292,11 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         }
         
         /**
-         * Convert the origin of call from the data source into an {@code OriginOfLineType}.
+         * Convert the origin of global expression call from the data source into an 
+         * {@code OriginOfLineType}.
          * 
-         * @param databaseEnum  A {@code String} that is origin of call from the data source.
+         * @param databaseEnum  A {@code String} that is origin of global expression call
+         *                      from the data source.
          * @return              An {@code OriginOfLineType} representing the given {@code String}. 
          */
         public static OriginOfLineType convertDatasourceEnumToOriginOfLineType(String databaseEnum) {
@@ -309,9 +315,11 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         }
 
         /**
-         * Convert the origin of call from the data source into an {@code OriginOfLineType}.
+         * Convert the origin of global expression call from the data source into an 
+         * {@code OriginOfLineType}.
          * 
-         * @param databaseEnum  A {@code String} that is origin of call from the data source.
+         * @param databaseEnum  A {@code String} that is origin of global expression call 
+         *                      from the data source.
          * @return              An {@code OriginOfLineType} representing the given {@code String}. 
          */
         public static String convertOriginOfLineTypeToDatasourceEnum(OriginOfLineType dataType) {
@@ -342,7 +350,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
     }
 
     /**
-     * A {@code TransferObject} representing relation between no-expression table and 
+     * A {@code TransferObject} representing relation between no-expression and 
      * globalNoExpression table in the Bgee data source.
      * 
      * @author Valentine Rech de Laval

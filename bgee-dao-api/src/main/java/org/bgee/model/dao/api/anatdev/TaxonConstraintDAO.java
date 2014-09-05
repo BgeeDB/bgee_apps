@@ -34,18 +34,18 @@ public interface TaxonConstraintDAO {
     }
 
     /**
-     * Inserts the provided stage taxon constraints into the Bgee database, 
+     * Inserts the provided developmental stage taxon constraints into the Bgee database, 
      * represented as a {@code Collection} of {@code TaxonConstraintTO}s. 
      * 
      * @param taxonConstraintTOs  A {@code Collection} of {@code TaxonConstraintTO}s to be 
      *                            inserted into the database.
      * @return                    An {@code int} that is the number of inserted taxon constraints.
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert stage taxon 
-     *                      constraints. The {@code SQLException} will be wrapped into a 
-     *                      {@code DAOException} ({@code DAOs} do not expose these kind of 
+     * @throws DAOException If a {@code SQLException} occurred while trying to insert developmental 
+     *                      stage taxon constraints. The {@code SQLException} will be wrapped into a 
+     *                      {@code DAOException} ({@code DAO}s do not expose these kind of 
      *                      implementation details).
      */
-    public int insertStageTaxonConstraint(Collection<TaxonConstraintTO> taxonConstraintTOs) 
+    public int insertStageTaxonConstraints(Collection<TaxonConstraintTO> taxonConstraintTOs) 
             throws DAOException;
     
     /**
@@ -61,7 +61,7 @@ public interface TaxonConstraintDAO {
      *                      a {@code DAOException} ({@code DAOs} do not expose these kind of 
      *                      implementation details).
      */
-    public int insertAnatEntityTaxonConstraint(Collection<TaxonConstraintTO> taxonConstraintTOs) 
+    public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO> taxonConstraintTOs) 
             throws DAOException;
     
     /**
@@ -77,7 +77,7 @@ public interface TaxonConstraintDAO {
      *                      wrapped into a {@code DAOException} ({@code DAOs} do not expose these 
      *                      kind of implementation details).
      */
-    public int insertAnatEntityRelationTaxonConstraint(
+    public int insertAnatEntityRelationTaxonConstraints(
             Collection<TaxonConstraintTO> taxonConstraintTOs) throws DAOException;
     
     /**
@@ -140,6 +140,37 @@ public interface TaxonConstraintDAO {
          */
         public String getSpeciesId() {
             return this.speciesId;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((entityId == null) ? 0 : entityId.hashCode());
+            result = prime * result + ((speciesId == null) ? 0 : speciesId.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            TaxonConstraintTO other = (TaxonConstraintTO) obj;
+            if (entityId == null) {
+                if (other.entityId != null)
+                    return false;
+            } else if (!entityId.equals(other.entityId))
+                return false;
+            if (speciesId == null) {
+                if (other.speciesId != null)
+                    return false;
+            } else if (!speciesId.equals(other.speciesId))
+                return false;
+            return true;
         }
     }
 }

@@ -45,7 +45,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @return              A {@code GeneTOResultSet} containing all genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getAllGenes();
+    public GeneTOResultSet getAllGenes() throws DAOException;
     
     /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 
@@ -57,7 +57,8 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      *                              attributes to be updated into the data source.
      * @return                      An {@code int} representing the number of genes updated.
      */
-    public int updateGenes(Collection<GeneTO> genes, Collection<GeneDAO.Attribute> attributesToUpdate);
+    public int updateGenes(Collection<GeneTO> genes, 
+            Collection<GeneDAO.Attribute> attributesToUpdate) throws DAOException;
     
     /**
      * {@code DAOResultSet} specifics to {@code GeneTO}s

@@ -9,7 +9,6 @@ import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-import org.bgee.model.dao.api.EntityTO;
 
 /**
  * DAO defining queries using or retrieving {@link ExpressionCallTO}s. 
@@ -24,14 +23,13 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code ExpressionCallTO}s 
      * obtained from this {@code ExpressionCallDAO}.
      * <ul>
-     * <li>{@code ID: corresponds to {@link ExpressionCallTO#getId()}.
-     * <li>{@code GENEID: corresponds to {@link ExpressionCallTO#getGeneId()}.
-     * <li>{@code DEVSTAGEID: corresponds to {@link ExpressionCallTO#getDevStageId()}.
-     * <li>{@code ANATENTITYID: corresponds to {@link ExpressionCallTO#getAnatEntityId()}.
-     * <li>{@code AFFYMETRIXDATA: corresponds to {@link ExpressionCallTO#getAffymetrixData()}.
-     * <li>{@code ESTDATA: corresponds to {@link ExpressionCallTO#getESTData()}.
-     * <li>{@code INSITUDATA: corresponds to {@link ExpressionCallTO#getInSituData()}.
-     * <li>{@code RELAXEDINSITUDATA: corresponds to {@link ExpressionCallTO#getRelaxedInSituData()}.
+     * <li>{@code ID: corresponds to {@link CallTO#getId()}.
+     * <li>{@code GENEID: corresponds to {@link CallTO#getGeneId()}.
+     * <li>{@code STAGEID: corresponds to {@link CallTO#getStageId()}.
+     * <li>{@code ANATENTITYID: corresponds to {@link CallTO#getAnatEntityId()}.
+     * <li>{@code AFFYMETRIXDATA: corresponds to {@link CallTO#getAffymetrixData()}.
+     * <li>{@code ESTDATA: corresponds to {@link CallTO#getESTData()}.
+     * <li>{@code INSITUDATA: corresponds to {@link CallTO#getInSituData()}.
      * <li>{@code RNASEQDATA: corresponds to {@link ExpressionCallTO#getRNASeqData()}.
      * <li>{@code INCLUDESUBSTRUCTURES}: corresponds to 
      * {@link ExpressionCallTO#isIncludeSubstructures()}.
@@ -43,8 +41,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, GENEID, DEVSTAGEID, ANATENTITYID, 
-        AFFYMETRIXDATA, ESTDATA, INSITUDATA, RELAXEDINSITUDATA, RNASEQDATA,
+        ID, GENEID, STAGEID, ANATENTITYID, 
+        AFFYMETRIXDATA, ESTDATA, INSITUDATA, RNASEQDATA,
         INCLUDESUBSTRUCTURES, INCLUDESUBSTAGES, ORIGINOFLINE;
     }
     
@@ -71,10 +69,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @param expressionCalls   A {@code Collection} of {@code ExpressionCallTO}s 
      *                          to be inserted into the database.
      * @return                  An {@code int} that is the number of inserted expression calls.
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert expression 
-     *                      calls. The {@code SQLException} will be wrapped into a 
-     *                      {@code DAOException} ({@code DAOs} do not expose these kind of 
-     *                      implementation details).
+     * @throws DAOException If an error occurred while trying to insert expression 
+     *                      calls. 
      */
     public int insertExpressionCalls(Collection<ExpressionCallTO> expressionCalls) 
             throws DAOException;
@@ -87,10 +83,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      *                                      {@code GlobalExpressionToExpressionTO}s to be inserted 
      *                                      into the database.
      * @return                              An {@code int} that is the number of inserted 
-     *                                      correspondences.
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert row.
-     *                      The {@code SQLException} will be wrapped into a  {@code DAOException} 
-     *                      ({@code DAOs} do not expose these kind of implementation details).
+     *                                      TOs.
+     * @throws DAOException If an error occurred while trying to insert data.
      */
     public int insertGlobalExpressionToExpression(Collection<GlobalExpressionToExpressionTO> 
                                                   globalExpressionToExpression) throws DAOException;
@@ -129,137 +123,152 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         private final static Logger log = LogManager.getLogger(ExpressionCallTO.class.getName());
 
         /**
+         * An {@code Enum} used to define the origin of an expression call.
+         * <ul>
+         * <li>{@code SELF}: the expression call was generated from data coming from 
+         * its related anatomical entity itself.
+         * <li>{@code DESCENT}: the expression call was generated by data coming from 
+         * one of the descendants of its related anatomical entity, through  
+         * <em>is_a</em> or <em>part_of</em> relations, even indirect.
+         * <li>{@code BOTH}: the expression call was generated by data coming from both 
+         * its related anatomical entity, and from one of its descendants 
+         * by <em>is_a</em> or <em>part_of</em> relations, even indirect.
+         * </ul>
+         */
+        public enum OriginOfLine {
+            SELF("self"), DESCENT("descent"), BOTH("both");
+            
+            /**
+             * Convert the {@code String} representation of a data state (for instance, 
+             * retrieved from a database) into a {@code OriginOfLine}. This method 
+             * compares {@code representation} to the value returned by 
+             * {@link #getStringRepresentation()}, as well as to the value 
+             * returned by {@link Enum#name()}, for each {@code OriginOfLine}, 
+             * .
+             * 
+             * @param representation    A {@code String} representing a data state.
+             * @return  A {@code OriginOfLine} corresponding to {@code representation}.
+             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             *                                  to any {@code OriginOfLine}.
+             */
+            public static final OriginOfLine convertToOriginOfLine(String representation) {
+                log.entry(representation);
+                
+                for (OriginOfLine origin: OriginOfLine.values()) {
+                    if (origin.getStringRepresentation().equals(representation) || 
+                            origin.name().equals(representation)) {
+                        return log.exit(origin);
+                    }
+                }
+                throw log.throwing(new IllegalArgumentException("\"" + representation + 
+                        "\" does not correspond to any OriginOfLine"));
+            }
+            
+            /**
+             * See {@link #getStringRepresentation()}
+             */
+            private final String stringRepresentation;
+            
+            /**
+             * Constructor providing the {@code String} representation 
+             * of this {@code OriginOfLine}.
+             * 
+             * @param stringRepresentation  A {@code String} corresponding to 
+             *                              this {@code OriginOfLine}.
+             */
+            private OriginOfLine(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+            
+            /**
+             * @return  A {@code String} that is the representation 
+             *          for this {@code OriginOfLine}, for instance to be used in a database.
+             */
+            public String getStringRepresentation() {
+                return this.stringRepresentation;
+            }
+            
+            @Override
+            public String toString() {
+                return this.getStringRepresentation();
+            }
+        }
+
+        /**
          * A {@code boolean} defining whether this expression call was generated 
          * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
          * alone, or by also considering all its descendants by <em>is_a</em> or 
          * <em>part_of</em> relations, even indirect. If {@code true}, all its descendants 
-         * were considered. 
+         * were also considered. 
          */
         private boolean includeSubstructures;
         
         /**
          * A {@code boolean} defining whether this expression call was generated 
-         * using data from the developmental stage with the ID {@link CallTO#getDevStageId()} 
+         * using data from the developmental stage with the ID {@link CallTO#getStageId()} 
          * alone, or by also considering all its descendants. If {@code true}, all its descendants 
-         * were considered.
+         * were also considered.
          */
         private boolean includeSubStages;
         
         /**
-         * An {@code Enum} used to define the origin of the line (for a global expression).
-         * <ul>
-         * <li>{@code SELF}: this global expression call was generated by its own data.
-         * <li>{@code DESCENT}: this global expression call was generated by data from one of its 
-         * anatomical descendants by <em>is_a</em> or <em>part_of</em> relations, even indirect.
-         * </ul>
-         */
-        public enum OriginOfLineType {
-            SELF, DESCENT;
-        }
-        
-        /**
-         * An {@code OriginOfLineType} used to define the origin of line (for a global expression): 
-         * either {@code SELF} or {@code DESCENT}.
+         * An {@code OriginOfLine} used to define the origin of this call. This is different 
+         * from {@link #includeSubstructures}: if {@code includeSubstructures} is {@code true}, 
+         * it means that the expression call was retrieved by taking into account 
+         * an anatomical entity and all its descendants. By using {@code originOfLine}, 
+         * it is possible to know exactly how the call was produced.
          * 
-         * @see OriginOfLineType
+         * @see OriginOfLine
          */
-        private OriginOfLineType originOfLine; 
+        private OriginOfLine originOfLine; 
         
         /**
          * Default constructor.
          */
         ExpressionCallTO() {
-            super();
-            includeSubstructures = false;
-            includeSubStages = false;
-            originOfLine = OriginOfLineType.SELF;
+            this(null, null, null, null, DataState.NODATA, DataState.NODATA, 
+                    DataState.NODATA, DataState.NODATA, false, false, 
+                    OriginOfLine.SELF);
         }
 
         /**
-         * Constructor providing the gene ID, the anatomical entity ID, the developmental stage ID,  
-         * the contribution of Affymetrix, EST, <em>in situ</em>, "relaxed" <em>in situ</em> and, 
-         * RNA-Seq data to the generation of this call, whether this expression call was generated 
-         * using data from the developmental stage and/or anatomical entity with the ID alone, 
-         * or by also considering all descendants.
-         * <p>
-         * The origin of line is set to the default value; i.e. set to {@code OriginOfLineType.SELF}.
          * 
-         * @param geneId               A {@code String} that is the ID of the gene associated to 
-         *                             this call.
-         * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
-         *                             associated to this call. 
-         * @param devStageId           A {@code String} that is the ID of the developmental stage 
-         *                             associated to this call. 
-         * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
-         *                             data to the generation of this call.
-         * @param estData              A {@code DataSate} that is the contribution of EST data
-         *                             to the generation of this call.
-         * @param inSituData           A {@code DataSate} that is the contribution of 
-         *                             <em>in situ</em> data to the generation of this call.
-         * @param relaxedInSituData    A {@code DataSate} that is the contribution of "relaxed" 
-         *                             <em>in situ</em> data to the generation of this call.
-         * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
-         *                             to the generation of this call.
-         * @param includeSubstructures A {@code boolean} defining whether this expression call was 
-         *                             generated using data from the anatomical entity with the ID 
-         *                             alone, or by also considering all its descendants by 
-         *                             <em>is_a</em> or <em>part_of</em> relations, even indirect.
-         * @param includeSubStages     A {@code boolean} defining whether this expression call was 
-         *                             generated using data from the developmental stage with the ID
-         *                             alone, or by also considering all its descendants.
+         * @param id                    A {@code String} that is the ID of this call.
+         * @param geneId                A {@code String} that is the ID of the gene 
+         *                              associated to this call.
+         * @param anatEntityId          A {@code String} that is the ID of the anatomical entity
+         *                              associated to this call. 
+         * @param stageId               A {@code String} that is the ID of the developmental stage 
+         *                              associated to this call. 
+         * @param affymetrixData        A {@code DataSate} that is the contribution of Affymetrix  
+         *                              data to the generation of this call.
+         * @param estData               A {@code DataSate} that is the contribution of EST data
+         *                              to the generation of this call.
+         * @param inSituData            A {@code DataSate} that is the contribution of 
+         *                              <em>in situ</em> data to the generation of this call.
+         * @param rnaSeqData            A {@code DataSate} that is the contribution of RNA-Seq data
+         *                              to the generation of this call.
+         * @param includeSubstructures  A {@code boolean} defining whether this expression call was 
+         *                              generated using data from the anatomical entity with the ID 
+         *                              alone, or by also considering all its descendants by 
+         *                              <em>is_a</em> or <em>part_of</em> relations, even indirect.
+         * @param includeSubStages      A {@code boolean} defining whether this expression call was 
+         *                              generated using data from the developmental stage with the ID
+         *                              alone, or by also considering all its descendants.
+         * @param origin                An {@code OriginOfLine} defining how this call 
+         *                              was produced: from the related anatomical itself, 
+         *                              or from one of its descendants, or from both.
          */
-        public ExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId,
+        public ExpressionCallTO(String id, String geneId, String anatEntityId, String stageId,
                 DataState affymetrixData, DataState estData, DataState inSituData, 
-                DataState relaxedInSituData, DataState rnaSeqData,
-                boolean includeSubstructures, boolean includeSubStages) {
-            super(id, geneId, anatEntityId, devStageId, affymetrixData, estData, inSituData, 
-                    relaxedInSituData, rnaSeqData);
+                DataState rnaSeqData,
+                boolean includeSubstructures, boolean includeSubStages, 
+                OriginOfLine origin) {
+            super(id, geneId, anatEntityId, stageId, affymetrixData, estData, inSituData, 
+                    DataState.NODATA, rnaSeqData);
             this.includeSubstructures = includeSubstructures;
             this.includeSubStages = includeSubStages;
-            this.originOfLine = OriginOfLineType.SELF;
-        }
-        
-        /**
-         * Constructor providing the gene ID, the anatomical entity ID, the developmental stage ID,  
-         * the contribution of Affymetrix, EST, <em>in situ</em>, "relaxed" <em>in situ</em> and, 
-         * RNA-Seq data to the generation of this call, whether this expression call was generated 
-         * using data from the developmental stage and/or anatomical entity with the ID alone, 
-         * or by also considering all descendants, the origin of line.
-         * 
-         * @param geneId               A {@code String} that is the ID of the gene associated to 
-         *                             this call.
-         * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
-         *                             associated to this call. 
-         * @param devStageId           A {@code String} that is the ID of the developmental stage 
-         *                             associated to this call. 
-         * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
-         *                             data to the generation of this call.
-         * @param estData              A {@code DataSate} that is the contribution of EST data
-         *                             to the generation of this call.
-         * @param inSituData           A {@code DataSate} that is the contribution of 
-         *                             <em>in situ</em> data to the generation of this call.
-         * @param relaxedInSituData    A {@code DataSate} that is the contribution of "relaxed" 
-         *                             <em>in situ</em> data to the generation of this call.
-         * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
-         *                             to the generation of this call.
-         * @param includeSubstructures A {@code boolean} defining whether this expression call was 
-         *                             generated using data from the anatomical entity with the ID 
-         *                             alone, or by also considering all its descendants by 
-         *                             <em>is_a</em> or <em>part_of</em> relations, even indirect.
-         * @param includeSubStages     A {@code boolean} defining whether this expression call was 
-         *                             generated using data from the developmental stage with the ID
-         *                             alone, or by also considering all its descendants.
-         * @param originOfLine         A {@code OriginOfLineType} defining the origin of the global
-         *                             expression call.
-         */
-        public ExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId,
-                DataState affymetrixData, DataState estData, DataState inSituData, 
-                DataState relaxedInSituData, DataState rnaSeqData,
-                boolean includeSubstructures, boolean includeSubStages, 
-                OriginOfLineType originOfLine) {
-            this(id, geneId, anatEntityId, devStageId, affymetrixData, estData, inSituData, 
-                    relaxedInSituData, rnaSeqData, includeSubstructures, includeSubStages);
-            this.originOfLine = originOfLine;
+            this.originOfLine = origin;
         }
 
         /**
@@ -315,21 +324,25 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
         
         /**
-         * @return  the {@code OriginOfLineType} representing the origin of the global expression
+         * @return  the {@code OriginOfLine} representing the origin of the global expression
          *          call.
          */
-        public OriginOfLineType getOriginOfLine() {
+        public OriginOfLine getOriginOfLine() {
             return originOfLine;
         }
         
         /**
-         * @param originOfLine  the {@code OriginOfLineType} representing the origin of the global 
+         * @param originOfLine  the {@code OriginOfLine} representing the origin of the global 
          *                      expression call.
          */
-        void setOriginOfLine(OriginOfLineType originOfLine) {
+        void setOriginOfLine(OriginOfLine originOfLine) {
             this.originOfLine = originOfLine;
         }
 
+
+        //**************************************
+        // Object methods overridden
+        //**************************************
         @Override
         public String toString() {
             return super.toString() + " - Include SubStages: " + this.isIncludeSubStages() + 
@@ -337,44 +350,43 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
                     " - Origin Of Line: " + this.getOriginOfLine();
         }
 
-        /**
-         * Convert data source origin of the global expression call into an {@code OriginOfLineType}.
-         * 
-         * @param databaseEnum  A {@code String} that is origin of global expression call from the 
-         *                      data source.
-         * @return              An {@code OriginOfLineType} representing the given {@code String}. 
-         */
-        public static OriginOfLineType convertDatasourceEnumToOriginOfLineType(String databaseEnum) {
-            log.entry(databaseEnum);
-            
-            OriginOfLineType originType = null;
-            if (databaseEnum.equals("self")) {
-                originType = OriginOfLineType.SELF;
-            } else if (databaseEnum.equals("descent")) {
-                originType = OriginOfLineType.DESCENT;
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            if (this.useOtherAttributesForHashCodeEquals()) {
+                result = prime * result + (includeSubStages ? 1231 : 1237);
+                result = prime * result + (includeSubstructures ? 1231 : 1237);
+                result = prime * result
+                        + ((originOfLine == null) ? 0 : originOfLine.hashCode());
             }
-            
-            return log.exit(originType);
+            return result;
         }
 
-        /**
-         * Convert an {@code OriginOfLineType} into a data source origin of line.
-         * 
-         * @param dataType  An {@code OriginOfLineType} that is origin of global expression call
-         *                  to be converted.
-         * @return          A {@code String} representing the given {@code OriginOfLineType}. 
-         */
-        public static String convertOriginOfLineTypeToDatasourceEnum(OriginOfLineType dataType) {
-            log.entry(dataType);
-            
-            String databaseEnum = null;
-            if (dataType == OriginOfLineType.SELF) {
-                databaseEnum = "self";
-            } else if (dataType == OriginOfLineType.DESCENT) {
-                databaseEnum = "descent";
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
             }
-            
-            return log.exit(databaseEnum);
+            if (!(obj instanceof ExpressionCallTO)) {
+                return false;
+            }
+            if (!super.equals(obj)) {
+                return false;
+            }
+            if (this.useOtherAttributesForHashCodeEquals()) {
+                ExpressionCallTO other = (ExpressionCallTO) obj;
+                if (includeSubStages != other.includeSubStages) {
+                    return false;
+                }
+                if (includeSubstructures != other.includeSubstructures) {
+                    return false;
+                }
+                if (originOfLine != other.originOfLine) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
     
@@ -391,10 +403,10 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
 
     /**
      * A {@code TransferObject} representing relation between an expression call and a global
-     * expression call in the Bgee database.
+     * expression call in the data source.
      * <p>
      * This class defines a expression call ID (see {@link #getExpressionId()} 
-     * and a global expression call (see {@link #getGlobalExpressionId()}).
+     * and a global expression call ID (see {@link #getGlobalExpressionId()}).
      * <p>
      * Note that this class is one of the few {@code TransferObject}s that are not 
      * an {@link EntityTO}.
@@ -410,12 +422,12 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         /**
          * A {@code String} representing the ID of the expression call.
          */
-        private String expressionId;
+        private final String expressionId;
 
         /**
          * A {@code String} representing the ID of the global expression call.
          */
-        private String globalExpressionId;
+        private final String globalExpressionId;
 
         /**
          * Constructor providing the expression call ID (see {@link #getExpressionId()}) and 
@@ -426,8 +438,9 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          *                              call.
          **/
         public GlobalExpressionToExpressionTO(String expressionId, String globalExpressionId) {
-            this.setExpressionId(expressionId);
-            this.setGlobalExpressionId(globalExpressionId);
+            super();
+            this.expressionId = expressionId;
+            this.globalExpressionId = globalExpressionId;
         }
 
         /**
@@ -438,25 +451,16 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
 
         /**
-         * @param expressionId  the {@code String} representing the ID of the expression call.
-         */
-        void setExpressionId(String expressionId) {
-            this.expressionId = expressionId;
-        }
-
-        /**
          * @return  the {@code String} representing the ID of the global expression call.
          */
         public String getGlobalExpressionId() {
             return globalExpressionId;
         }
-
-        /**
-         * @param globalExpressionId    the {@code String} representing the 
-         *                              ID of the global expression call.
-         */
-        void setGlobalExpressionId(String globalExpressionId) {
-            this.globalExpressionId = globalExpressionId;
+        
+        @Override
+        public String toString() {
+            return "expressionId: " + expressionId + 
+                    "- globalExpressionId: " + globalExpressionId;
         }
 
         @Override

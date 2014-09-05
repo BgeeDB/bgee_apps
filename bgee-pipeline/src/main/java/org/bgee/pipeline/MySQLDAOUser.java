@@ -142,7 +142,7 @@ public abstract class MySQLDAOUser {
      * @return  A {@code MySQLRelationDAO}.
      */
     protected RelationDAO getRelationDAO() {
-        return (RelationDAO) this.manager.getRelationDAO();
+        return this.manager.getRelationDAO();
     }
 
     

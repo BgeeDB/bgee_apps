@@ -23,11 +23,11 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code RelationTO}s 
      * obtained from this {@code RelationDAO}.
      * <ul>
-     * <li>{@code RELATIONID: corresponds to {@link RelationDAO#getRelationId()()}.
-     * <li>{@code SOURCEID: corresponds to {@link RelationDAO#getSourceId()}.
-     * <li>{@code TARGETID: corresponds to {@link RelationDAO#getTargetId()()}.
-     * <li>{@code RELATIONTYPE: corresponds to {@link RelationDAO#getRelationType()}.
-     * <li>{@code RELATIONSTATUS: corresponds to {@link RelationDAO#getRelationSatus()}.
+     * <li>{@code RELATIONID: corresponds to {@link RelationTO#getRelationId()()}.
+     * <li>{@code SOURCEID: corresponds to {@link RelationTO#getSourceId()}.
+     * <li>{@code TARGETID: corresponds to {@link RelationTO#getTargetId()()}.
+     * <li>{@code RELATIONTYPE: corresponds to {@link RelationTO#getRelationType()}.
+     * <li>{@code RELATIONSTATUS: corresponds to {@link RelationTO#getRelationStatus()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -136,7 +136,63 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * @since Bgee 13
          */
         public enum RelationType {
-            ISA_PARTOF, DEVELOPSFROM, TRANSFORMATIONOF;
+            ISA_PARTOF("is_a part_of"), DEVELOPSFROM("develops_from"), 
+            TRANSFORMATIONOF("transformation_of");
+            
+            /**
+             * Convert the {@code String} representation of a data state (for instance, 
+             * retrieved from a database) into a {@code RelationType}. This method 
+             * compares {@code representation} to the value returned by 
+             * {@link #getStringRepresentation()}, as well as to the value 
+             * returned by {@link Enum#name()}, for each {@code RelationType}, 
+             * .
+             * 
+             * @param representation    A {@code String} representing a data state.
+             * @return  A {@code RelationType} corresponding to {@code representation}.
+             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             *                                  to any {@code RelationType}.
+             */
+            public static final RelationType convertToRelationType(String representation) {
+                log.entry(representation);
+                
+                for (RelationType type: RelationType.values()) {
+                    if (type.getStringRepresentation().equals(representation) || 
+                            type.name().equals(representation)) {
+                        return log.exit(type);
+                    }
+                }
+                throw log.throwing(new IllegalArgumentException("\"" + representation + 
+                        "\" does not correspond to any RelationType"));
+            }
+            
+            /**
+             * See {@link #getStringRepresentation()}
+             */
+            private final String stringRepresentation;
+            
+            /**
+             * Constructor providing the {@code String} representation 
+             * of this {@code RelationType}.
+             * 
+             * @param stringRepresentation  A {@code String} corresponding to 
+             *                              this {@code RelationType}.
+             */
+            private RelationType(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+            
+            /**
+             * @return  A {@code String} that is the representation 
+             *          for this {@code RelationType}, for instance to be used in a database.
+             */
+            public String getStringRepresentation() {
+                return this.stringRepresentation;
+            }
+            
+            @Override
+            public String toString() {
+                return this.getStringRepresentation();
+            }
         }
 
         /**
@@ -148,18 +204,74 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * </ul>
          * 
          * @author Valentine Rech de Laval
+         * @author Frederic Bastian
          * @version Bgee 13
          * @see RelationTO#getRelationStatus()
          * @since Bgee 13
          */
         public enum RelationStatus {
-            DIRECT, INDIRECT, REFLEXIVE;
+            DIRECT("direct"), INDIRECT("indirect"), REFLEXIVE("reflexive");
+            
+            /**
+             * Convert the {@code String} representation of a data state (for instance, 
+             * retrieved from a database) into a {@code RelationStatus}. This method 
+             * compares {@code representation} to the value returned by 
+             * {@link #getStringRepresentation()}, as well as to the value 
+             * returned by {@link Enum#name()}, for each {@code RelationStatus}, 
+             * .
+             * 
+             * @param representation    A {@code String} representing a data state.
+             * @return  A {@code RelationStatus} corresponding to {@code representation}.
+             * @throw IllegalArgumentException  If {@code representation} does not correspond 
+             *                                  to any {@code RelationStatus}.
+             */
+            public static final RelationStatus convertToRelationStatus(String representation) {
+                log.entry(representation);
+                
+                for (RelationStatus status: RelationStatus.values()) {
+                    if (status.getStringRepresentation().equals(representation) || 
+                            status.name().equals(representation)) {
+                        return log.exit(status);
+                    }
+                }
+                throw log.throwing(new IllegalArgumentException("\"" + representation + 
+                        "\" does not correspond to any RelationStatus"));
+            }
+            
+            /**
+             * See {@link #getStringRepresentation()}
+             */
+            private final String stringRepresentation;
+            
+            /**
+             * Constructor providing the {@code String} representation 
+             * of this {@code RelationStatus}.
+             * 
+             * @param stringRepresentation  A {@code String} corresponding to 
+             *                              this {@code RelationStatus}.
+             */
+            private RelationStatus(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+            
+            /**
+             * @return  A {@code String} that is the representation 
+             *          for this {@code RelationStatus}, for instance to be used in a database.
+             */
+            public String getStringRepresentation() {
+                return this.stringRepresentation;
+            }
+            
+            @Override
+            public String toString() {
+                return this.getStringRepresentation();
+            }
         }
 
         /**
          * @return the {@code String} representing the ID of this relation.
          */
-        private final String relationId;
+        private final String id;
         
         /**
          * A {@code String} that is the OBO-like ID of the parent term of this relation.
@@ -188,21 +300,21 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
         private final RelationType relationType;
         
         /**
-         * A {@code boolean} defining whether the relation between {@code targetId} 
+         * A {@code RelationStatus} defining whether the relation between {@code targetId} 
          * and {@code sourceId} is direct (for instance, A is_a B), or indirect 
          * (for instance, A is_a B is_a C, therefore there is an indirect composed 
-         * relation between A and C: A is_a C). Default is {@code true}.
+         * relation between A and C: A is_a C), or reflexive.
          */
         private final RelationStatus relationStatus;
 
         /**
          * Constructor providing the ID of the parent term in the relation (see 
-         * {@link #gettargetId()} for more details), and the ID of the descent term 
-         * (see {@link #getsourceId()}). The type of the relation (see {@link 
+         * {@link #getTargetId()} for more details), and the ID of the descent term 
+         * (see {@link #getSourceId()}). The type of the relation (see {@link 
          * #getRelationType()}) is unspecified, and the relation is assumed to be direct 
          * (see {@link #isDirectRelation()}).
          * <p>
-         * The relation ID, the relation type and the relation status are set to {@code null}.
+         * The relation ID and the relation type are set to {@code null}.
          * 
          * @param sourceId         A {@code String} that is the ID of the descent term.
          * @param targetId          A {@code String} that is the ID of the parent term.
@@ -215,19 +327,20 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * Constructor providing the ID of the parent term in the relation (see 
          * {@link #gettargetId()} for more details), the ID of the descent term 
          * (see {@link #getsourceId()}), the type of the relation (see {@link 
-         * #getRelationType()}), and defining whether this relation is direct or 
-         * indirect (see {@link #isDirectRelation()}).
+         * #getRelationType()}), and defining whether this relation is direct,  
+         * indirect, or reflexive (see {@link #getRelationStatus()}).
          * 
-         * @param sourceId         A {@code String} that is the ID of the descent term.
+         * @param relationId        A {@code String} that is the ID of this relation.
+         * @param sourceId          A {@code String} that is the ID of the descent term.
          * @param targetId          A {@code String} that is the ID of the parent term.
          * @param relType           A {@code RelationType} defining the type of the relation.
-         * @param directRelation    A {@code boolean} defining whether the relation is direct 
-         *                          or indirect.
+         * @param directRelation    A {@code RelationStatus} defining whether the relation
+         *                          is direct, indirect, or reflexive.
          * @see RelationTO#RelationTO(String, String)
          */
-        public RelationTO(String relationId, String sourceId, String targetId, RelationType relType, 
-                RelationStatus relationStatus) {
-            this.relationId = relationId;
+        public RelationTO(String relationId, String sourceId, String targetId, 
+                RelationType relType, RelationStatus relationStatus) {
+            this.id = relationId;
             this.sourceId = sourceId;
             this.targetId = targetId;
             this.relationType = relType;
@@ -235,10 +348,10 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
         }
 
         /**
-         * @return the {@code String} representing the ID of this call.
+         * @return the {@code String} representing the ID of this relation.
          */
-        public String getRelationId() {
-            return this.relationId;
+        public String getId() {
+            return this.id;
         }
         /**
          * @return  A {@code String} that is the OBO-like ID of the parent term of this relation.
@@ -261,16 +374,13 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             return this.sourceId;
         }
         /**
-         * @return  A {@link RelationType} that is the type of this relation in the Bgee database. 
+         * @return  A {@link RelationType} that is the type of this relation. 
          *          These types might not always correspond to the OBO standard relation name.
-         *          If this attribute is {@code null}, it means that the relation type 
-         *          is not specified.
          */
         public RelationType getRelationType() {
             return this.relationType;
         }
         /**
-         * @return 
          * @return  A {@code RelationStatus} defining whether the relation between {@code targetId} 
          *          and {@code sourceId} is direct (for instance, A is_a B), indirect 
          *          (for instance, A is_a B is_a C, therefore there is an indirect composed 
@@ -283,23 +393,41 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
 
         @Override
         public String toString() {
-            return "Relation ID: " + this.getRelationId() + " - Source ID: " + this.getSourceId() + 
+            return "Relation ID: " + this.getId() + " - Source ID: " + this.getSourceId() + 
                     " - Target ID: " + this.getTargetId() + 
                     " - Relation type: " + this.getRelationType() + 
                     " - Relation status: " + this.getRelationStatus();
         }
+        
+        /**
+         * Implementation of hashCode specific to {@code RelationTO}s: 
+         * <ul>
+         * <li>if {@link #getId()} returned a non-null value, the hashCode 
+         * will be based solely on it. 
+         * <li>Otherwise, hashCode will be based on all attributes of this class.
+         * </ul>
+         */
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((relationId == null) ? 0 : relationId.hashCode());
-            result = prime * result + ((relationStatus == null) ? 0 : relationStatus.hashCode());
-            result = prime * result + ((relationType == null) ? 0 : relationType.hashCode());
-            result = prime * result + ((sourceId == null) ? 0 : sourceId.hashCode());
-            result = prime * result + ((targetId == null) ? 0 : targetId.hashCode());
+            result = prime * result + ((id == null) ? 0 : id.hashCode());
+            if (id == null) {
+                result = prime * result + ((relationStatus == null) ? 0 : 
+                    relationStatus.hashCode());
+                result = prime * result + ((relationType == null) ? 0 : 
+                    relationType.hashCode());
+                result = prime * result + ((sourceId == null) ? 0 : sourceId.hashCode());
+                result = prime * result + ((targetId == null) ? 0 : targetId.hashCode());
+            }
             return result;
         }
         
+        /**
+         * Implementation of equals specific to {@code ResultTO}s and consistent with 
+         * the {@link #hashCode()} implementation. See {@link #hashCode()} for more details.
+         * @see #hashCode()
+         */
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -312,13 +440,15 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
                 return false;
             }
             RelationTO other = (RelationTO) obj;
-            if (relationId == null) {
-                if (other.relationId != null) {
+            if (id == null) {
+                if (other.id != null) {
                     return false;
                 }
-            } else if (!relationId.equals(other.relationId)) {
-                return false;
+            } else {
+                //if id is not null, we will base the equals solely on it
+                return id.equals(other.id);
             }
+            
             if (relationStatus != other.relationStatus) {
                 return false;
             }
@@ -336,94 +466,10 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
                 if (other.targetId != null) {
                     return false;
                 }
-            } else if (!targetId.equals(other.targetId))
+            } else if (!targetId.equals(other.targetId)) {
                 return false;
+            }
             return true;
-        }
-        
-        /**
-         * Convert data source relation type into a {@code RelationType}.
-         * 
-         * @param databaseEnum  A {@code String} that is relation type from the data source.
-         * @return              A {@code RelationType} representing the given {@code String}. 
-         */
-        public static RelationType convertDatasourceEnumToRelationType(String databaseEnum) {
-            log.entry(databaseEnum);
-
-            RelationType relationType = null;
-            if (databaseEnum.equals("is_a part_of")) {
-                relationType = RelationType.ISA_PARTOF;
-            } else if (databaseEnum.equals("develops_from")) {
-                relationType = RelationType.DEVELOPSFROM;
-            } else if (databaseEnum.equals("transformation_of")) {
-                relationType = RelationType.TRANSFORMATIONOF;
-            }
-            
-            return log.exit(relationType);
-        }
-
-        /**
-         * Convert a {@code RelationType} into a data source relation type.
-         * 
-         * @param relationType  A {@code RelationType} that is the relation type to be converted.
-         * @return              A {@code String} representing the given {@code RelationType}. 
-         */
-        public static String convertRelationTypeToDatasourceEnum(RelationType relationType) {
-            log.entry(relationType);
-            
-            String databaseEnum = null;
-            if (relationType == RelationType.ISA_PARTOF) {
-                databaseEnum = "is_a part_of";
-            } else if (relationType == RelationType.DEVELOPSFROM) {
-                databaseEnum = "develops_from";
-            } else if (relationType == RelationType.TRANSFORMATIONOF) {
-                databaseEnum = "transformation_of";
-            }
-            
-            return log.exit(databaseEnum);
-        }
-        
-        /**
-         * Convert data source relation status into a {@code RelationStatus}.
-         * 
-         * @param databaseEnum  A {@code String} that is relation status from the data source.
-         * @return              An {@code RelationStatus} representing the given {@code String}. 
-         */
-        public static RelationStatus convertDatasourceEnumToRelationStatus(String databaseEnum) {
-            log.entry(databaseEnum);
-
-            RelationStatus relationStatus = null;
-            if (databaseEnum.equals("direct")) {
-                relationStatus = RelationStatus.DIRECT;
-            } else if (databaseEnum.equals("indirect")) {
-                relationStatus = RelationStatus.INDIRECT;
-            } else if (databaseEnum.equals("reflexive")) {
-                relationStatus = RelationStatus.REFLEXIVE;
-            }
-
-            return log.exit(relationStatus);
-        }
-
-        /**
-         * Convert a {@code RelationStatus} into a data source relation status.
-         * 
-         * @param relationStatus  A {@code RelationStatus} that is the relation status to be 
-         *                        converted.
-         * @return                A {@code String} representing the given {@code RelationStatus}. 
-         */
-        public static String convertRelationStatusToDatasourceEnum(RelationStatus relationStatus) {
-            log.entry(relationStatus);
-            
-            String databaseEnum = null;
-            if (relationStatus == RelationStatus.DIRECT) {
-                databaseEnum = "direct";
-            } else if (relationStatus == RelationStatus.INDIRECT) {
-                databaseEnum = "indirect";
-            } else if (relationStatus == RelationStatus.REFLEXIVE) {
-                databaseEnum = "reflexive";
-            }
-            
-            return log.exit(databaseEnum);
         }
     }
 }

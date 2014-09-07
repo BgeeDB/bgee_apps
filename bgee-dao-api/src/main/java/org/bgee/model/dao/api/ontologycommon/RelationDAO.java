@@ -111,7 +111,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class RelationTO implements TransferObject {
+    public class RelationTO extends TransferObject {
 
         private static final long serialVersionUID = 6320202680108735124L;
 

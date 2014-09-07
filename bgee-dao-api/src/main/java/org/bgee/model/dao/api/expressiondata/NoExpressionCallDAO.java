@@ -148,15 +148,15 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * by <em>is_a</em> or <em>part_of</em> relations, even indirect.
          * </ul>
          */
-        public enum OriginOfLine {
+        public enum OriginOfLine implements EnumDAOField {
             SELF("self"), PARENT("parent"), BOTH("both");
             
             /**
              * Convert the {@code String} representation of a data state (for instance, 
-             * retrieved from a database) into a {@code OriginOfLine}. This method 
-             * compares {@code representation} to the value returned by 
-             * {@link #getStringRepresentation()}, as well as to the value 
-             * returned by {@link Enum#name()}, for each {@code OriginOfLine}, 
+             * retrieved from a database) into a {@code OriginOfLine}. Operation performed 
+             * by calling {@link TransferObject#convert(Class, String)} with {@code OriginOfLine} 
+             * as the {@code Class} argument, and {@code representation} 
+             * as the {@code String} argument. 
              * .
              * 
              * @param representation    A {@code String} representing a data state.
@@ -166,15 +166,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
              */
             public static final OriginOfLine convertToOriginOfLine(String representation) {
                 log.entry(representation);
-                
-                for (OriginOfLine origin: OriginOfLine.values()) {
-                    if (origin.getStringRepresentation().equals(representation) || 
-                            origin.name().equals(representation)) {
-                        return log.exit(origin);
-                    }
-                }
-                throw log.throwing(new IllegalArgumentException("\"" + representation + 
-                        "\" does not correspond to any OriginOfLine"));
+                return log.exit(TransferObject.convert(OriginOfLine.class, representation));
             }
             
             /**
@@ -192,15 +184,10 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
             private OriginOfLine(String stringRepresentation) {
                 this.stringRepresentation = stringRepresentation;
             }
-            
-            /**
-             * @return  A {@code String} that is the representation 
-             *          for this {@code OriginOfLine}, for instance to be used in a database.
-             */
+            @Override
             public String getStringRepresentation() {
                 return this.stringRepresentation;
             }
-            
             @Override
             public String toString() {
                 return this.getStringRepresentation();
@@ -376,7 +363,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @version Bgee 13
      * @since Bgee 13
      */
-    public final class GlobalNoExpressionToNoExpressionTO implements TransferObject {
+    public final class GlobalNoExpressionToNoExpressionTO extends TransferObject {
         // TODO modify the class to be immutable.
         private static final long serialVersionUID = -5283534395161770005L;
 

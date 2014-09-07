@@ -98,7 +98,7 @@ public interface TaxonConstraintDAO {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public class TaxonConstraintTO implements TransferObject {
+    public class TaxonConstraintTO extends TransferObject {
 
         private static final long serialVersionUID = -4793134010857365138L;
 

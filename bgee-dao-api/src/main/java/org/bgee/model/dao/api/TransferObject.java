@@ -2,8 +2,11 @@ package org.bgee.model.dao.api;
 
 import java.io.Serializable;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
- * An interface to mark {@code TransferObject}s used to communicate between the
+ * {@code TransferObject}s are used to communicate between the
  * DAO layer and the business/model layer. 
  * <p>
  * {@code TransferObject}s should be immutable. 
@@ -13,7 +16,60 @@ import java.io.Serializable;
  * @version Bgee 13
  * @since Bgee 01
  */
-public interface TransferObject extends Serializable {
+public abstract class TransferObject implements Serializable {
+    
+    private static final long serialVersionUID = 3679182128027053390L;
+
+    /**
+     * {@code Logger} of the class. 
+     */
+    private final static Logger log = LogManager.getLogger(TransferObject.class.getName());
 
     
+    /**
+     * An interface that must be implemented by {@code Enum}s representing 
+     * a field in the data source. To be used along with {@link #convert(Class, String)}
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public interface EnumDAOField {
+        /**
+         * @return  A {@code String} corresponding to this {@code EnumDAOField} element, 
+         *          to be used in the data source.
+         */
+        public String getStringRepresentation();
+    }
+    
+    /**
+     * Convert the {@code String} representation corresponding to an {@link EnumDAOField} 
+     * (for instance, retrieved from a data source) into the proper {@code Enum} element. 
+     * This method compares {@code representation} to the value returned by 
+     * {@link EnumDAOField#getStringRepresentation()}, as well as to the value 
+     * returned by {@link Enum#name()}, for each {@code Enum} element corresponing to 
+     * {@code enumField}. 
+     * .
+     * @param enumField         The {@code Class} that is the {@code Enum} class 
+     *                          implementing {@code EnumDAOField}, for which we want 
+     *                          to find an element corresponding to {@code representation}.
+     * @param representation    A {@code String} representing an element of {@code enumField}.
+     * @return  An element of the {@code Enum} class {@code enumField}, 
+     *          corresponding to {@code representation}.
+     * @throw IllegalArgumentException  If {@code representation} does not correspond 
+     *                                  to any element of {@code enumField}.
+     */
+    protected static final <T extends Enum<T> & EnumDAOField> T convert(Class<T> enumField, 
+            String representation) {
+        log.entry(enumField, representation);
+        
+        for (T element: enumField.getEnumConstants()) {
+            if (element.getStringRepresentation().equals(representation) || 
+                    element.name().equals(representation)) {
+                return log.exit(element);
+            }
+        }
+        throw log.throwing(new IllegalArgumentException("\"" + representation + 
+                "\" does not correspond to any element of " + enumField.getName()));
+    }
 }

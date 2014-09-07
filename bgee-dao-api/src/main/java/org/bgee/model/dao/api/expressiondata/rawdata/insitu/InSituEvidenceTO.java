@@ -1,7 +1,5 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
-import java.io.Serializable;
-
 import org.bgee.model.dao.api.TransferObject;
 
 /**
@@ -16,7 +14,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @see org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence
  * @since Bgee 11
  */
-public class InSituEvidenceTO implements TransferObject
+public class InSituEvidenceTO extends TransferObject
 {
 
 	/**

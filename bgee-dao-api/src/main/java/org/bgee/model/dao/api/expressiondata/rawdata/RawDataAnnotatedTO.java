@@ -15,7 +15,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @since Bgee 11
  */
 @Deprecated
-public class RawDataAnnotatedTO implements TransferObject
+public class RawDataAnnotatedTO extends TransferObject
 {
     public String organId;
     public String stageId;

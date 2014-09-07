@@ -1,7 +1,5 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
-import java.io.Serializable;
-
 import org.bgee.model.dao.api.TransferObject;
 
 /**
@@ -16,7 +14,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqExp
  * @since Bgee 12
  */
-public class RNASeqExpTO implements TransferObject
+public class RNASeqExpTO extends TransferObject
 {
 
 	/**

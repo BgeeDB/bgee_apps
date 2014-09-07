@@ -1,7 +1,5 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
-import java.io.Serializable;
-
 import org.bgee.model.dao.api.TransferObject;
 
 /**
@@ -16,7 +14,7 @@ import org.bgee.model.dao.api.TransferObject;
  * @see org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixExp
  * @since Bgee 11
  */
-public class AffymetrixExpTO implements TransferObject
+public class AffymetrixExpTO extends TransferObject
 {
 
 	/**

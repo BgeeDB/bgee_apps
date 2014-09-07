@@ -86,7 +86,7 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
 	 * @version Bgee 13
 	 * @since Bgee 11
 	 */
-	public final class SourceTO implements TransferObject
+	public final class SourceTO extends TransferObject
 	{
 		private static final long serialVersionUID = -4966619139786311073L;
 		

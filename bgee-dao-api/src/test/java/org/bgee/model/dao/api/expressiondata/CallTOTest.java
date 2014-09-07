@@ -42,20 +42,16 @@ public class CallTOTest extends TestAncestor {
      */
     @Test
     public void shouldConvertToDataState() {
-        assertEquals("Incorrect DataState returned", DataState.NODATA, 
-                DataState.convertToDataState(DataState.NODATA.getStringRepresentation()));
-        assertEquals("Incorrect DataState returned", DataState.NODATA, 
-                DataState.convertToDataState(DataState.NODATA.name()));
-
-        assertEquals("Incorrect DataState returned", DataState.LOWQUALITY, 
-                DataState.convertToDataState(DataState.LOWQUALITY.getStringRepresentation()));
-        assertEquals("Incorrect DataState returned", DataState.LOWQUALITY, 
-                DataState.convertToDataState(DataState.LOWQUALITY.name()));
-
-        assertEquals("Incorrect DataState returned", DataState.HIGHQUALITY, 
-                DataState.convertToDataState(DataState.HIGHQUALITY.getStringRepresentation()));
-        assertEquals("Incorrect DataState returned", DataState.HIGHQUALITY, 
-                DataState.convertToDataState(DataState.HIGHQUALITY.name()));
+        boolean hasElement = false;
+        for (DataState element: DataState.values()) {
+            hasElement = true;
+            log.trace("Testing: {}", element);
+            assertEquals("Incorrect DataState returned", element, 
+                    DataState.convertToDataState(element.getStringRepresentation()));
+            assertEquals("Incorrect DataState returned", element, 
+                    DataState.convertToDataState(element.name()));
+        }
+        assertTrue("No element for DataState", hasElement);
         
         //should throw an IllegalArgumentException when not matching any DataState
         try {
@@ -74,23 +70,16 @@ public class CallTOTest extends TestAncestor {
      */
     @Test
     public void shouldConvertToDiffCallType() {
-        assertEquals("Incorrect DiffCallType returned", DiffCallType.OVEREXPRESSED, 
-                DiffCallType.convertToDiffCallType(
-                        DiffCallType.OVEREXPRESSED.getStringRepresentation()));
-        assertEquals("Incorrect DiffCallType returned", DiffCallType.OVEREXPRESSED, 
-                DiffCallType.convertToDiffCallType(DiffCallType.OVEREXPRESSED.name()));
-
-        assertEquals("Incorrect DiffCallType returned", DiffCallType.UNDEREXPRESSED, 
-                DiffCallType.convertToDiffCallType(
-                        DiffCallType.UNDEREXPRESSED.getStringRepresentation()));
-        assertEquals("Incorrect DiffCallType returned", DiffCallType.UNDEREXPRESSED, 
-                DiffCallType.convertToDiffCallType(DiffCallType.UNDEREXPRESSED.name()));
-
-        assertEquals("Incorrect DiffCallType returned", DiffCallType.NOTDIFFEXPRESSED, 
-                DiffCallType.convertToDiffCallType(
-                        DiffCallType.NOTDIFFEXPRESSED.getStringRepresentation()));
-        assertEquals("Incorrect DiffCallType returned", DiffCallType.NOTDIFFEXPRESSED, 
-                DiffCallType.convertToDiffCallType(DiffCallType.NOTDIFFEXPRESSED.name()));
+        boolean hasElement = false;
+        for (DiffCallType element: DiffCallType.values()) {
+            hasElement = true;
+            log.trace("Testing: {}", element);
+            assertEquals("Incorrect DiffCallType returned", element, 
+                    DiffCallType.convertToDiffCallType(element.getStringRepresentation()));
+            assertEquals("Incorrect DiffCallType returned", element, 
+                    DiffCallType.convertToDiffCallType(element.name()));
+        }
+        assertTrue("No element for DiffCallType", hasElement);
         
         //should throw an IllegalArgumentException when not matching any DiffCallType
         try {
@@ -109,15 +98,16 @@ public class CallTOTest extends TestAncestor {
      */
     @Test
     public void shouldConvertToFactor() {
-        assertEquals("Incorrect Factor returned", Factor.ANATOMY, 
-                Factor.convertToFactor(Factor.ANATOMY.getStringRepresentation()));
-        assertEquals("Incorrect Factor returned", Factor.ANATOMY, 
-                Factor.convertToFactor(Factor.ANATOMY.name()));
-
-        assertEquals("Incorrect Factor returned", Factor.DEVELOPMENT, 
-                Factor.convertToFactor(Factor.DEVELOPMENT.getStringRepresentation()));
-        assertEquals("Incorrect Factor returned", Factor.DEVELOPMENT, 
-                Factor.convertToFactor(Factor.DEVELOPMENT.name()));
+        boolean hasElement = false;
+        for (Factor element: Factor.values()) {
+            hasElement = true;
+            log.trace("Testing: {}", element);
+            assertEquals("Incorrect Factor returned", element, 
+                    Factor.convertToFactor(element.getStringRepresentation()));
+            assertEquals("Incorrect Factor returned", element, 
+                    Factor.convertToFactor(element.name()));
+        }
+        assertTrue("No element for Factor", hasElement);
         
         //should throw an IllegalArgumentException when not matching any Factor
         try {
@@ -136,20 +126,16 @@ public class CallTOTest extends TestAncestor {
      */
     @Test
     public void shouldConvertToExpressionOriginOfLine() {
-        assertEquals("Incorrect OriginOfLine returned", OriginOfLine.SELF, 
-                OriginOfLine.convertToOriginOfLine(OriginOfLine.SELF.getStringRepresentation()));
-        assertEquals("Incorrect OriginOfLine returned", OriginOfLine.SELF, 
-                OriginOfLine.convertToOriginOfLine(OriginOfLine.SELF.name()));
-
-        assertEquals("Incorrect OriginOfLine returned", OriginOfLine.DESCENT, 
-                OriginOfLine.convertToOriginOfLine(OriginOfLine.DESCENT.getStringRepresentation()));
-        assertEquals("Incorrect OriginOfLine returned", OriginOfLine.DESCENT, 
-                OriginOfLine.convertToOriginOfLine(OriginOfLine.DESCENT.name()));
-
-        assertEquals("Incorrect OriginOfLine returned", OriginOfLine.BOTH, 
-                OriginOfLine.convertToOriginOfLine(OriginOfLine.BOTH.getStringRepresentation()));
-        assertEquals("Incorrect OriginOfLine returned", OriginOfLine.BOTH, 
-                OriginOfLine.convertToOriginOfLine(OriginOfLine.BOTH.name()));
+        boolean hasElement = false;
+        for (OriginOfLine element: OriginOfLine.values()) {
+            hasElement = true;
+            log.trace("Testing: {}", element);
+            assertEquals("Incorrect OriginOfLine returned", element, 
+                    OriginOfLine.convertToOriginOfLine(element.getStringRepresentation()));
+            assertEquals("Incorrect OriginOfLine returned", element, 
+                    OriginOfLine.convertToOriginOfLine(element.name()));
+        }
+        assertTrue("No element for OriginOfLine", hasElement);
         
         //should throw an IllegalArgumentException when not matching any OriginOfLine
         try {
@@ -168,26 +154,17 @@ public class CallTOTest extends TestAncestor {
      */
     @Test
     public void shouldConvertToNoExpressionOriginOfLine() {
-        assertEquals("Incorrect OriginOfLine returned", NoExpressionCallTO.OriginOfLine.SELF, 
-                NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(
-                        NoExpressionCallTO.OriginOfLine.SELF.getStringRepresentation()));
-        assertEquals("Incorrect OriginOfLine returned", NoExpressionCallTO.OriginOfLine.SELF, 
-                NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(
-                        NoExpressionCallTO.OriginOfLine.SELF.name()));
-
-        assertEquals("Incorrect OriginOfLine returned", NoExpressionCallTO.OriginOfLine.PARENT, 
-                NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(
-                        NoExpressionCallTO.OriginOfLine.PARENT.getStringRepresentation()));
-        assertEquals("Incorrect OriginOfLine returned", NoExpressionCallTO.OriginOfLine.PARENT, 
-                NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(
-                        NoExpressionCallTO.OriginOfLine.PARENT.name()));
-
-        assertEquals("Incorrect OriginOfLine returned", NoExpressionCallTO.OriginOfLine.BOTH, 
-                NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(
-                        NoExpressionCallTO.OriginOfLine.BOTH.getStringRepresentation()));
-        assertEquals("Incorrect OriginOfLine returned", NoExpressionCallTO.OriginOfLine.BOTH, 
-                NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(
-                        NoExpressionCallTO.OriginOfLine.BOTH.name()));
+        boolean hasElement = false;
+        for (NoExpressionCallTO.OriginOfLine element: NoExpressionCallTO.OriginOfLine.values()) {
+            hasElement = true;
+            log.trace("Testing: {}", element);
+            assertEquals("Incorrect OriginOfLine returned", element, 
+                    NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(
+                            element.getStringRepresentation()));
+            assertEquals("Incorrect OriginOfLine returned", element, 
+                    NoExpressionCallTO.OriginOfLine.convertToOriginOfLine(element.name()));
+        }
+        assertTrue("No element for OriginOfLine", hasElement);
         
         //should throw an IllegalArgumentException when not matching any OriginOfLine
         try {

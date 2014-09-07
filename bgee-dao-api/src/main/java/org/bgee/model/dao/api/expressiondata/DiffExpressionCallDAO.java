@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 
 /**
@@ -92,34 +93,27 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          * {@code UNDEREXPRESSED} calls). 
          * </ul>
          */
-        public enum DiffCallType {
+        public enum DiffCallType implements EnumDAOField {
             OVEREXPRESSED("over-expression"), UNDEREXPRESSED("under-expression"), 
             NOTDIFFEXPRESSED("no diff expression");
             
             /**
              * Convert the {@code String} representation of a data state (for instance, 
-             * retrieved from a database) into a {@code DiffCallType}. This method 
-             * compares {@code representation} to the value returned by 
-             * {@link #getStringRepresentation()}, as well as to the value 
-             * returned by {@link Enum#name()}, for each {@code DiffCallType}, 
+             * retrieved from a database) into a {@code DiffCallType}.  Operation performed 
+             * by calling {@link TransferObject#convert(Class, String)} with {@code DiffCallType} 
+             * as the {@code Class} argument, and {@code representation} 
+             * as the {@code String} argument.
              * .
              * 
              * @param representation    A {@code String} representing a data state.
              * @return  A {@code DiffCallType} corresponding to {@code representation}.
              * @throw IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code DiffCallType}.
+             * @see #convert(Class, String)
              */
             public static final DiffCallType convertToDiffCallType(String representation) {
                 log.entry(representation);
-                
-                for (DiffCallType type: DiffCallType.values()) {
-                    if (type.getStringRepresentation().equals(representation) || 
-                            type.name().equals(representation)) {
-                        return log.exit(type);
-                    }
-                }
-                throw log.throwing(new IllegalArgumentException("\"" + representation + 
-                        "\" does not correspond to any DiffCallType"));
+                return log.exit(TransferObject.convert(DiffCallType.class, representation));
             }
             
             /**
@@ -137,15 +131,10 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
             private DiffCallType(String stringRepresentation) {
                 this.stringRepresentation = stringRepresentation;
             }
-            
-            /**
-             * @return  A {@code String} that is the representation 
-             *          for this {@code DiffCallType}, for instance to be used in a database.
-             */
+            @Override
             public String getStringRepresentation() {
                 return this.stringRepresentation;
             }
-            
             @Override
             public String toString() {
                 return this.getStringRepresentation();
@@ -165,15 +154,15 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          * developmental stages genes are differentially expressed. 
          * </ul>
          */
-        public enum Factor {
+        public enum Factor implements EnumDAOField {
             ANATOMY("anatomy"), DEVELOPMENT("development");
             
             /**
              * Convert the {@code String} representation of a data state (for instance, 
-             * retrieved from a database) into a {@code Factor}. This method 
-             * compares {@code representation} to the value returned by 
-             * {@link #getStringRepresentation()}, as well as to the value 
-             * returned by {@link Enum#name()}, for each {@code Factor}, 
+             * retrieved from a database) into a {@code Factor}. Operation performed 
+             * by calling {@link TransferObject#convert(Class, String)} with {@code Factor} 
+             * as the {@code Class} argument, and {@code representation} 
+             * as the {@code String} argument.
              * .
              * 
              * @param representation    A {@code String} representing a data state.
@@ -183,15 +172,7 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
              */
             public static final Factor convertToFactor(String representation) {
                 log.entry(representation);
-                
-                for (Factor fac: Factor.values()) {
-                    if (fac.getStringRepresentation().equals(representation) || 
-                            fac.name().equals(representation)) {
-                        return log.exit(fac);
-                    }
-                }
-                throw log.throwing(new IllegalArgumentException("\"" + representation + 
-                        "\" does not correspond to any Factor"));
+                return log.exit(TransferObject.convert(Factor.class, representation));
             }
             
             /**
@@ -209,15 +190,10 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
             private Factor(String stringRepresentation) {
                 this.stringRepresentation = stringRepresentation;
             }
-            
-            /**
-             * @return  A {@code String} that is the representation 
-             *          for this {@code Factor}, for instance to be used in a database.
-             */
+            @Override
             public String getStringRepresentation() {
                 return this.stringRepresentation;
             }
-            
             @Override
             public String toString() {
                 return this.getStringRepresentation();

@@ -55,7 +55,7 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
      * @version Bgee 13
      * @since Bgee 13
      */
-    public abstract class CallTO implements TransferObject {
+    public abstract class CallTO extends TransferObject {
         // TODO modify the class to be immutable. Use a Builder pattern?
         private static final long serialVersionUID = 2157139618099008406L;
         
@@ -81,17 +81,17 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @version Bgee 13
          * @since Bgee 13
          */
-        public enum DataState {
+        public enum DataState implements EnumDAOField {
             NODATA("no data"), 
             LOWQUALITY("poor quality"), 
             HIGHQUALITY("high quality");
             
             /**
              * Convert the {@code String} representation of a data state (for instance, 
-             * retrieved from a database) into a {@code DataState}. This method 
-             * compares {@code representation} to the value returned by 
-             * {@link #getStringRepresentation()}, as well as to the value 
-             * returned by {@link Enum#name()}, for each {@code DataState}, 
+             * retrieved from a database) into a {@code DataState}. Operation performed 
+             * by calling {@link TransferObject#convert(Class, String)} with {@code DataState} 
+             * as the {@code Class} argument, and {@code representation} 
+             * as the {@code String} argument.
              * .
              * 
              * @param representation    A {@code String} representing a data state.
@@ -101,15 +101,7 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
              */
             public static final DataState convertToDataState(String representation) {
                 log.entry(representation);
-                
-                for (DataState dataState: DataState.values()) {
-                    if (dataState.getStringRepresentation().equals(representation) || 
-                            dataState.name().equals(representation)) {
-                        return log.exit(dataState);
-                    }
-                }
-                throw log.throwing(new IllegalArgumentException("\"" + representation + 
-                        "\" does not correspond to any DataState"));
+                return log.exit(TransferObject.convert(DataState.class, representation));
             }
             
             /**
@@ -127,15 +119,10 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
             private DataState(String stringRepresentation) {
                 this.stringRepresentation = stringRepresentation;
             }
-            
-            /**
-             * @return  A {@code String} that is the representation 
-             *          for this {@code DataState}, for instance to be used in a database.
-             */
+            @Override
             public String getStringRepresentation() {
                 return this.stringRepresentation;
             }
-            
             @Override
             public String toString() {
                 return this.getStringRepresentation();

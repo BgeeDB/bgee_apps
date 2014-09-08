@@ -31,18 +31,17 @@ public class GenerateDownladFile {
     /**
      * {@code Logger} of the class.
      */
-    private final static Logger log = 
-            LogManager.getLogger(GenerateDownladFile.class.getName());
+    private final static Logger log = LogManager.getLogger(GenerateDownladFile.class.getName());
     
     /**
      * An {@code int} that is the number of headers in the simple file.
      */
-    private final static int SIMPLE_HEADER_COUNT = 10;
+    private final static int SIMPLE_HEADER_COUNT = 7;
     
     /**
      * An {@code int} that is the number of headers in the complete file.
      */
-    private final static int COMPLETE_HEADER_COUNT = 10;
+    private final static int COMPLETE_HEADER_COUNT = 11;
     
     /**
      * A {@code String} that is the name of the column containing gene IDs, in the download file.
@@ -79,169 +78,273 @@ public class GenerateDownladFile {
     public final static String ANATENTITY_NAME_COLUMN_NAME = "Anatomical entity name";
 
     /**
-     * A {@code String} that is the name of the column containing the contribution of Affymetrix 
-     * data, in the download file.
+     * A {@code String} that is the name of the column containing expression/no-expression found 
+     * with Affymetrix experiment, in the download file.
      */
-    public final static String AFFYMETRIXDATA_NAME_COLUMN_NAME = "Contribution of Affymetrix data";
+    public final static String AFFYMETRIXDATA_NAME_COLUMN_NAME = "Affymetrix data";
 
     /**
-     * A {@code String} that is the name of the column containing the contribution of EST data, 
-     * in the download file.
+     * A {@code String} that is the name of the column containing expression/no-expression found 
+     * with EST experiment, in the download file.
      */
-    public final static String ESTDATA_NAME_COLUMN_NAME = "Contribution of EST data";
+    public final static String ESTDATA_NAME_COLUMN_NAME = "EST data";
 
     /**
-     * A {@code String} that is the name of the column containing the contribution of 
-     * <em>in situ</em> data, in the download file.
+     * A {@code String} that is the name of the column containing expression/no-expression found 
+     * with <em>in situ</em> experiment, in the download file.
      */
-    public final static String INSITUDATA_NAME_COLUMN_NAME = "Contribution of in situ data";
+    public final static String INSITUDATA_NAME_COLUMN_NAME = "In situ data";
 
     /**
-     * A {@code String} that is the name of the column containing the contribution of RNA-Seq data, 
-     * in the download file.
+     * A {@code String} that is the name of the column containing expression/no-expression found 
+     * with RNA-Seq experiment, in the download file.
      */
-    public final static String RNASEQDATA_NAME_COLUMN_NAME = "Contribution of RNA-Seq data";
+    public final static String RNASEQDATA_NAME_COLUMN_NAME = "RNA-Seq data";
 
     /**
-     * A {@code String} that is the name of the column containing the expression, 
-     * in the download file.
+     * A {@code String} that is the name of the column containing merged expression/no-expression 
+     * from different data types, in the download file.
      */
-    public final static String EXPRESSION_NAME_COLUMN_NAME = "Expression";
+    public final static String EXPRESSION_COLUMN_NAME = "Expression/No-expression";
 
     /**
-     * A {@code String} that is the no data value for data contributions, 
-     * in the download file.
+     * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...), the 
+     * expression/no-expression of the call.
+     * <ul>
+     * <li>{@code NODATA}:         no data from the associated data type allowed to produce the call.
+     * <li>{@code NOEXPRESSION}:   no-expression was detected from the associated data type.
+     * <li>{@code LOWEXPRESSION}:  low expression was detected from the associated data type.
+     * <li>{@code HIGHEXPRESSION}: high expression was detected from the associated data type.
+     * <li>{@code AMBIGUOUS}:      different data types are not coherent (for instance, Affymetrix 
+     *                             data reveals an low expression while <em>in situ</em> data 
+     *                             reveals a no-expression).
+     * </ul>
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
      */
-    public final static String NODATA_VALUE = "no data";
+    public enum ExpressionData {
+        NODATA("no data"), NOEXPRESSION("no-expression"), LOWEXPRESSION("low expression"), 
+        HIGHEXPRESSION("high expression"), AMBIGUOUS("ambiguous");
 
-    /**
-     * A {@code String} that is the no-expression value for data contributions, 
-     * in the download file.
-     */
-    public final static String NOEXPRESSION_VALUE = "no-expression";
+        private final String stringRepresentation;
 
-    /**
-     * A {@code String} that is the low expression value for data contributions, 
-     * in the download file.
-     */
-    public final static String LOWEXPRESSION_VALUE = "low expression";
+        /**
+         * Constructor providing the {@code String} representation 
+         * of this {@code DataState}.
+         * 
+         * @param stringRepresentation  A {@code String} corresponding to 
+         *                              this {@code DataState}.
+         */
+        private ExpressionData(String stringRepresentation) {
+            this.stringRepresentation = stringRepresentation;
+        }
 
-    /**
-     * A {@code String} that is the high expression value for data contributions, 
-     * in the download file.
-     */
-    public final static String HIGHEXPRESSION_VALUE = "high expression";
-    
-    /**
-     * A {@code String} that is the expression value when it is ambiguous between different 
-     * data types, in the download file.
-     */
-    public final static String AMBIGUOUS_VALUE = "ambiguous";
+        public String getStringRepresentation() {
+            return this.stringRepresentation;
+        }
+
+        public String toString() {
+            return this.getStringRepresentation();
+        }
+
+    }
 
     public static void main(String[] args) throws IOException {
         log.entry((Object[]) args);
 
+        // TODO Get data and set in a List<Map<String,String>>
         GenerateDownladFile generate = new GenerateDownladFile();
         List<Map<String,String>> list = null;
-        generate.writeDownloadFile(list, "OUTPUT_SIMPE_FILE", "OUTPUT_COMPLETE_FILE");
+        generate.writeDownloadFiles(list, "OUTPUT_SIMPE_FILE", "OUTPUT_COMPLETE_FILE");
 
         log.exit();
     }
 
-    private void writeDownloadFile(List<Map<String, String>> inputList, String outputSimpleFile,
+    /**
+     * Write the download TSV files (simple and complete files). The data are provided 
+     * by a {@code List} of {@code Map}s where keys are column names and values are data associated 
+     * to the column name. 
+     * <p>
+     * The generated TSV file will have one header line. Both files do not have the same headers:
+     * in the simple file, expression/no-expression from different data types are merged in a single
+     * column called Expression/No-expression.
+     * 
+     * @param inputList          A {@code List} of {@code Map}s where keys are column names and 
+     *                           values are data associated to the column name. 
+     * @param outputSimpleFile   A {@code String} that is the path to the simple output file
+     *                           were data will be written as TSV.
+     * @param outputCompleteFile A {@code String} that is the path to the complete output file
+     *                           were data will be written as TSV.
+     * @throws IOException       If an error occurred while trying to write to 
+     *                           {@code outputSimpleFile} or {@code outputCompleteFile}.
+     */
+    private void writeDownloadFiles(List<Map<String, String>> inputList, String outputSimpleFile,
             String outputCompleteFile) throws IOException {
         log.entry(inputList, outputSimpleFile, outputCompleteFile);
-        // TODO 
         
         CellProcessor[] processorSimpleFile = new CellProcessor[SIMPLE_HEADER_COUNT];
         CellProcessor[] processorCompleteFile = new CellProcessor[COMPLETE_HEADER_COUNT];
         String[] headerSimpleFile = new String[SIMPLE_HEADER_COUNT];
         String[] headerCompleteFile = new String[COMPLETE_HEADER_COUNT];
 
-        //BOTH FILES
+        // Generate cell processors and headers
+        int colNumber = 0; // to avoid to modify 
+        //IN BOTH FILES
         // The gene (must be unique)
-        processorSimpleFile[0] = processorCompleteFile[0] = new UniqueHashCode(new NotNull());
-        headerSimpleFile[0] = headerCompleteFile[0] = GENE_ID_COLUMN_NAME;
+        processorSimpleFile[colNumber] = processorCompleteFile[colNumber] = new UniqueHashCode(new NotNull());
+        headerSimpleFile[colNumber] = headerCompleteFile[colNumber] = GENE_ID_COLUMN_NAME;
+        colNumber++;
         
-        processorSimpleFile[1] = processorCompleteFile[1] = new NotNull();
-        headerSimpleFile[1] = headerCompleteFile[1] = GENE_ID_COLUMN_NAME;
+        processorSimpleFile[colNumber] = processorCompleteFile[colNumber] = new NotNull();
+        headerSimpleFile[colNumber] = headerCompleteFile[colNumber] = GENE_NAME_COLUMN_NAME;
+        colNumber++;
         
         // The developmental stage
-        processorSimpleFile[2] = processorCompleteFile[2] = new NotNull();
-        headerSimpleFile[2] = headerCompleteFile[2] = STAGE_ID_COLUMN_NAME;
+        processorSimpleFile[colNumber] = processorCompleteFile[colNumber] = new NotNull();
+        headerSimpleFile[colNumber] = headerCompleteFile[colNumber] = STAGE_ID_COLUMN_NAME;
+        colNumber++;
         
-        processorSimpleFile[3] = processorCompleteFile[3] = new NotNull();
-        headerSimpleFile[3] = headerCompleteFile[3] = STAGE_ID_COLUMN_NAME;
+        processorSimpleFile[colNumber] = processorCompleteFile[colNumber] = new NotNull();
+        headerSimpleFile[colNumber] = headerCompleteFile[colNumber] = STAGE_NAME_COLUMN_NAME;
+        colNumber++;
         
         // The anatomical entity
-        processorSimpleFile[4] = processorCompleteFile[4] = new NotNull();
-        headerSimpleFile[4] = headerCompleteFile[4] = ANATENTITY_ID_COLUMN_NAME;
+        processorSimpleFile[colNumber] = processorCompleteFile[colNumber] = new NotNull();
+        headerSimpleFile[colNumber] = headerCompleteFile[colNumber] = ANATENTITY_ID_COLUMN_NAME;
+        colNumber++;
         
-        processorSimpleFile[5] = processorCompleteFile[5] = new NotNull();
-        headerSimpleFile[5] = headerCompleteFile[5] = ANATENTITY_ID_COLUMN_NAME;
+        processorSimpleFile[colNumber] = processorCompleteFile[colNumber] = new NotNull();
+        headerSimpleFile[colNumber] = headerCompleteFile[colNumber] = ANATENTITY_NAME_COLUMN_NAME;
+        colNumber++;
         
-        // Different possible elements for data contributions
-        List<Object> list = Arrays.asList(new Object[] {
-                NOEXPRESSION_VALUE, LOWEXPRESSION_VALUE, HIGHEXPRESSION_VALUE, 
-                AMBIGUOUS_VALUE, NODATA_VALUE});
+        // Different possible elements for expression data
+        List<Object> list = Arrays.asList(new Object[] {ExpressionData.values()});
 
-        //SIMPLE FILE
-        // The expression column (combining all data types)
-        processorSimpleFile[6] = new IsElementOf(list);
-        headerSimpleFile[6] = ANATENTITY_ID_COLUMN_NAME;
+        //IN SIMPLE FILE ONLY
+        // The expression/no-expression column (merging data from all data types)
+        processorSimpleFile[colNumber] = new IsElementOf(list);
+        headerSimpleFile[colNumber] = EXPRESSION_COLUMN_NAME;
+        // Warning: no incrementing for colNumber because the next header is not in the same file
 
-        //COMPLETE FILE
-        // The contribution of Affimetrix data
-        processorCompleteFile[6] = new IsElementOf(list);
-        headerCompleteFile[6] = AFFYMETRIXDATA_NAME_COLUMN_NAME;
+        //IN COMPLETE FILE ONLY
+        // Affymetrix data
+        processorCompleteFile[colNumber] = new IsElementOf(list);
+        headerCompleteFile[colNumber] = AFFYMETRIXDATA_NAME_COLUMN_NAME;
+        colNumber++;
         
-        // The contribution of EST data
-        processorCompleteFile[7] = new IsElementOf(list);
-        headerCompleteFile[7] = ESTDATA_NAME_COLUMN_NAME;
+        // EST data
+        processorCompleteFile[colNumber] = new IsElementOf(list);
+        headerCompleteFile[colNumber] = ESTDATA_NAME_COLUMN_NAME;
+        colNumber++;
 
-        // The contribution of in Situ data
-        processorCompleteFile[8] = new IsElementOf(list);
-        headerCompleteFile[8] = INSITUDATA_NAME_COLUMN_NAME;
+        // In Situ data
+        processorCompleteFile[colNumber] = new IsElementOf(list);
+        headerCompleteFile[colNumber] = INSITUDATA_NAME_COLUMN_NAME;
+        colNumber++;
 
-        // The contribution of RNA-seq data
-        processorCompleteFile[8] = new IsElementOf(list);
-        headerCompleteFile[8] = RNASEQDATA_NAME_COLUMN_NAME;
+        // RNA-seq data
+        processorCompleteFile[colNumber] = new IsElementOf(list);
+        headerCompleteFile[colNumber] = RNASEQDATA_NAME_COLUMN_NAME;
+        colNumber++;
 
-        // Write complete download file
-        //TODO
-        try (ICsvMapWriter mapCompleteWriter = new CsvMapWriter(new FileWriter(outputCompleteFile),
+        // Write files
+        writeDownloadFile(inputList, outputCompleteFile, headerCompleteFile, processorCompleteFile, false);
+        writeDownloadFile(inputList, outputSimpleFile, headerSimpleFile, processorSimpleFile, true);
+
+        log.exit();
+    }
+
+    /**
+     * Write a download TSV file according to the data are provided by a {@code List} of 
+     * {@code Map}s where keys are column names and values are data associated to the column name, 
+     * the given output file path, headers, cell processors and {@code boolean} defining whether 
+     * it is a simple download file.
+     * <p>
+     * If the {@code isSimplifiedFile} is {code true}, expression data from different data types 
+     * are merged in a single column called Expression.
+     * 
+     * @param inputList          A {@code List} of {@code Map}s where keys are column names and 
+     *                           values are data associated to the column name. 
+     * @param outputFile         A {@code String} that is the path to the output file
+     *                           were data will be written as TSV.
+     * @param headers           An {@code Array} of {@code String}s containing headers of the file.
+     * @param processors        An {@code Array} of {@code CellProcessor}s containing cell 
+     *                          processors which automates the data type conversions, and enforce 
+     *                          column constraints.
+     * @param isSimplifiedFile  A {@code boolean} defining whether the output file is a simple file.
+     *                          If {code true}, expression data from different data types are merged
+     *                          in a single column called Expression/No-expression.
+     * @throws IOException      If an error occurred while trying to write to {@code outputFile}.
+     */
+    private void writeDownloadFile(List<Map<String, String>> inputList, String outputFile, 
+            String[] headers, CellProcessor[] processors, boolean isSimplifiedFile) 
+            throws IOException {
+        log.entry(inputList, outputFile, headers, processors);
+        
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
                 Utils.TSVCOMMENTED)) {
             
-            mapCompleteWriter.writeHeader(headerCompleteFile);
+            mapWriter.writeHeader(headers);
             
             for (Map<String, String> map: inputList) {
                 Map<String, Object> row = new HashMap<String, Object>();
-
-                row.put(headerCompleteFile[0], "");
-                
-                mapCompleteWriter.write(row, headerCompleteFile, processorCompleteFile);
+                if (isSimplifiedFile) {
+                    String mergedData = mergeExprData(
+                            map.get(AFFYMETRIXDATA_NAME_COLUMN_NAME), 
+                            map.get(ESTDATA_NAME_COLUMN_NAME), 
+                            map.get(INSITUDATA_NAME_COLUMN_NAME), 
+                            map.get(RNASEQDATA_NAME_COLUMN_NAME));
+                    row.put(EXPRESSION_COLUMN_NAME, mergedData);
+                }
+                for (String key : map.keySet()) {
+                    if (!isSimplifiedFile ||
+                            (!key.equals(AFFYMETRIXDATA_NAME_COLUMN_NAME) &&
+                            !key.equals(ESTDATA_NAME_COLUMN_NAME) &&
+                            !key.equals(INSITUDATA_NAME_COLUMN_NAME) && 
+                            !key.equals(RNASEQDATA_NAME_COLUMN_NAME))) {
+                        row.put(key, map.get(key));
+                    }
+                }
+                mapWriter.write(row, headers, processors);
             }
         }
-        
-        // Write simple download file.
-        //TODO
-        try (ICsvMapWriter mapSimpleWriter = new CsvMapWriter(new FileWriter(outputSimpleFile),
-                Utils.TSVCOMMENTED)) {
-            
-            mapSimpleWriter.writeHeader(headerSimpleFile);
-            
-            for (Map<String, String> map: inputList) {
-                Map<String, Object> row = new HashMap<String, Object>();
-
-                row.put(headerSimpleFile[0], "");
-                
-                mapSimpleWriter.write(row, headerSimpleFile, processorSimpleFile);
-            }
-        }
-        
-
         
         log.exit();
     }
 
+    /**
+     * Merge expression data from different data types.
+     * 
+     * @param affymetrixData    A {@code String} that is the expression/no-expression data from 
+     *                          Affymetrix experiment.
+     * @param estData           A {@code String} that is the expression/no-expression data from 
+     *                          EST experiment.
+     * @param inSituData        A {@code String} that is the expression/no-expression data from 
+     *                          <em> in situ</em> experiment.
+     * @param relaxedInSitu     A {@code String} that is the expression/no-expression data from
+     *                          relaxed <em> in situ</em> experiment.
+     * @param rnaSeqData        A {@code String} that is the expression/no-expression data from
+     *                          RNA-seq experiment.
+     * @return
+     */
+    private String mergeExprData(String affymetrixData, String estData, String inSituData,
+            String rnaSeqData) {
+        log.entry(affymetrixData, estData, inSituData, rnaSeqData);
+        
+        if (affymetrixData.equals(estData) && affymetrixData.equals(inSituData) && 
+                affymetrixData.equals(rnaSeqData)) {
+            // All values are equals
+            return log.exit(affymetrixData);
+        } else if (affymetrixData.equals(ExpressionData.NOEXPRESSION.getStringRepresentation()) ||
+                estData.equals(ExpressionData.NOEXPRESSION.getStringRepresentation()) ||
+                inSituData.equals(ExpressionData.NOEXPRESSION.getStringRepresentation()) ||
+                rnaSeqData.equals(ExpressionData.NOEXPRESSION.getStringRepresentation())) {
+            // At least on no-expression but not all
+            return log.exit(ExpressionData.AMBIGUOUS.getStringRepresentation());
+        }
+        // At least one high expression
+        return log.exit(ExpressionData.HIGHEXPRESSION.getStringRepresentation());
+    }
 }

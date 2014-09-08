@@ -14,7 +14,7 @@ import org.bgee.controller.RequestParameters;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class TestParentDisplay extends ConcreteDisplayParent implements DisplayParentInterface
+public class TestParentDisplay extends ConcreteDisplayParent
 {
 
 	public TestParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
@@ -22,21 +22,6 @@ public class TestParentDisplay extends ConcreteDisplayParent implements DisplayP
 	{
 		super(response,prop);
 	}
-
-    @Override
-    public void emptyDisplay() {
-        // Do nothing  
-    }
-
-    @Override
-    public void startDisplay(String page, String title) {
-        // Do nothing   
-    }
-
-    @Override
-    public void displayBgeeMenu() {
-        // Do nothing   
-    }
 
     @Override
     public void sendHeaders(boolean ajax) {

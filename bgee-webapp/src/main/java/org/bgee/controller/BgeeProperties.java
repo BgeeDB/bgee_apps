@@ -141,43 +141,43 @@ public class BgeeProperties
      * {@code String} that defines the directory where query strings holding storable parameters  
      * from previous large queries are stored. 
      */
-    private String requestParametersStorageDirectory;
+    private final String requestParametersStorageDirectory;
 
     /**
      * A {@code String} that defines the root of URLs to Bgee, 
      * for instance, "http://bgee.unil.ch/bgee/bgee".
      */
-    private String bgeeRootDirectory;
+    private final String bgeeRootDirectory;
 
     /**
      * A {@code String} that defines the root directory where are located files available for download, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to download files.
      */
-    private String downloadRootDirectory;
+    private final String downloadRootDirectory;
 
     /**
      * A {@code String} that defines the root directory where are located javascript files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain javascript files.
      */
-    private String javascriptFilesRootDirectory;
+    private final String javascriptFilesRootDirectory;
 
     /**
      * A {@code String} that defines the root directory where are located css files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain css files.
      */
-    private String cssFilesRootDirectory;
+    private final String cssFilesRootDirectory;
 
     /**
      * A {@code String} that defines the root directory where are located images, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain images.
      */
-    private String imagesRootDirectory;
+    private final String imagesRootDirectory;
 
     /**
      * A {@code String} that defines the directory where are stored TopOBO result files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain result files.
      */
-    private String topOBOResultsUrlRootDirectory;
+    private final String topOBOResultsUrlRootDirectory;
 
     /**
      * An {@code Integer} that definesmax length of URLs. Typically, if the URL exceeds the max length, 
@@ -191,7 +191,7 @@ public class BgeeProperties
      * <p>
      * Anyway, we use a much lower limitation, as we do not want too long URL.
      */
-    private Integer urlMaxLength;
+    private final Integer urlMaxLength;
 
     /**
      * A {@code boolean} that defines whether parameters should be url encoded 
@@ -203,7 +203,7 @@ public class BgeeProperties
      * <parameter>
      * Default value is {@code true}.
      */
-    private boolean encodeUrl;
+    private final boolean encodeUrl;
 
     /**
      * Private constructor, can be only called through the use of one of the

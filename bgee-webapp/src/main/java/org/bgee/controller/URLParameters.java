@@ -154,7 +154,8 @@ public class URLParameters {
     private static final Parameter<String> EMAIL = new Parameter<String>("email",
             DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, 
-            "[\\w\\._-]+@[\\w\\._-]+\\.[a-zA-Z][a-zA-Z][a-zA-Z]?$",String.class);
+            "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$",
+            String.class);
 
 
     /**
@@ -367,8 +368,7 @@ public class URLParameters {
          * @param isSecure		          A {@code boolean} defining whether the parameter 
          *                                is secure.
          * @param maxSize                 An {@code int} that represents the maximum number 
-         *                                of characters allowed if the type of this 
-         *                                {@code Parameter} is a {@code String}.
+         *                                of characters allowed for this {@code Parameter}.
          * @param format                  A {@code String} that contains the regular expression 
          *                                that this parameter has to fit to.
          * @param type                    A {@code Class<T>} that is the data type of the value 

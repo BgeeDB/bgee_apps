@@ -8,7 +8,7 @@ package org.bgee.view;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 1
  */
-public interface GeneralDisplay extends DisplayParentInterface
+public interface GeneralDisplay
 {
     public void displayAbout();
     /**

@@ -1,165 +1,152 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  
-  <parent>
-    <groupId>org.bgee</groupId>
-    <artifactId>bgee-applications</artifactId>
-    <version>13</version>
-  </parent>
-  
-  <artifactId>bgee-pipeline</artifactId>
-  <packaging>jar</packaging>
-  <name>bgee-pipeline</name>
-  
-  <dependencies>
-  
-    <!-- The API will be used to access he DAOManager and the TransferObjects, 
-        otherwise, the MySQL layer will be used directly. -->
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-dao-api</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-dao-api</artifactId>
-      <type>test-jar</type>
-    </dependency>
-    
-    <!-- The pipeline is allowed to access directly the MySQL layer. 
-         Notably, the insertion/update queries are not part of the API. -->
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bgee-dao-sql</artifactId>
-    </dependency>
-  
-    <dependency>
-      <groupId>org.bbop</groupId>
-      <artifactId>OWLTools-all</artifactId>
-    </dependency>
-  
-    <dependency>
-      <groupId>org.bbop</groupId>
-      <artifactId>OWLTools-ncbi</artifactId>
-    </dependency>
-      
-    <dependency>
-      <groupId>sbc</groupId>
-      <artifactId>orthoxml</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>net.sf.supercsv</groupId>
-      <artifactId>super-csv</artifactId>
-    </dependency>
-      
-  </dependencies>
-  
-  <build>
-      <finalName>bgee-pipeline-${project.version}</finalName>
-      
-      <plugins>
-      
-        <!-- The use of the maven-assembly-plugin has been replaced by the maven-shade-plugin, 
-             because it allows to manage files from the dependencies included. 
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <configuration>
-                <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
-                <archive>
-                    <manifest>
-                        <mainClass>org.bgee.pipeline.CommandRunner</mainClass>
-                    </manifest>
-                </archive>
-              </configuration>
-              
-              <executions>
-                  <execution>
-                      <id>make-assembly</id> 
-                      <phase>package</phase> 
-                      <goals>
-                          <goal>single</goal>
-                      </goals>
-                  </execution>
-              </executions>
-          </plugin>
-          -->
-          
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-shade-plugin</artifactId>
-              <executions>
-                  <execution>
-                      <phase>package</phase>
-                      <goals>
-                          <goal>shade</goal>
-                      </goals>
-                      <configuration>
-                          <shadedArtifactAttached>true</shadedArtifactAttached>
-                          <shadedClassifierName>with-dependencies</shadedClassifierName>
-                          <transformers>
-                              <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-                                  <file>${project.groupId}:bgee-dao-sql:with-dependencies</file>
-                              </transformer>
-                              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                  <manifestEntries>
-                                      <Main-Class>org.bgee.pipeline.CommandRunner</Main-Class>
-                                      <!-- in order to be able to modify logging levels 
-                                           from config files in same directors as the jar, 
-                                           without recompiling -->
-                                      <Class-Path>./</Class-Path>
-                                  </manifestEntries>
-                              </transformer>
-                              <!-- To be able to configure loggers from files external to the jar, 
-                                   and to make sure our conf. files are not overridden 
-                                   by a file with identical name in a dependency. 
-                                   If we didn't exclude these files from the jar, 
-                                   they would have preeminence over the external files. 
-                                   Our property files will be exported to the target directory, 
-                                   see end of this pom.xml. -->
-                              <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-                                  <resource>log4j2.xml</resource>
-                              </transformer>
-                              <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-                                  <resource>log4j.properties</resource>
-                              </transformer>
-                
-                              <!-- If we wanted to put these configuration files only in the jar, 
-                                   and to make sure they are not overridden by files 
-                                   with identical name in a dependency, we should do: -->
-                              <!-- <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-                                  <resource>log4j2.xml</resource>
-                              </transformer>
-                              <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-                                  <resource>log4j.properties</resource>
-                              </transformer> -->
-                              <!-- If we needed to merge them instead, 
-                                   see org.apache.maven.plugins.shade.resource.AppendingTransformer 
-                                   and org.apache.maven.plugins.shade.resource.XmlAppendingTransformer -->
-                                   
-                          </transformers>
-                      </configuration>
-                  </execution>
-              </executions>
-          </plugin>
-      </plugins>
-      
-      <!-- In order to export logger configuration files to the target directory, 
-           for easier external configuration. -->
-      <resources>
-        <resource>
-            <directory>src/main/resources</directory>
-            <targetPath>${project.build.directory}</targetPath>
-            <includes>
-                <include>log4j2.xml</include>
-                <include>log4j.properties</include>
-            </includes>
-        </resource>
-    </resources>
-  </build>
-  
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.bgee</groupId>
+        <artifactId>bgee-applications</artifactId>
+        <version>13</version>
+    </parent>
+
+    <artifactId>bgee-pipeline</artifactId>
+    <packaging>jar</packaging>
+    <name>bgee-pipeline</name>
+
+    <dependencies>
+
+        <!-- The API will be used to access he DAOManager and the TransferObjects, 
+            otherwise, the MySQL layer will be used directly. -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-api</artifactId>
+            <type>test-jar</type>
+        </dependency>
+
+        <!-- The pipeline is allowed to access directly the MySQL layer. 
+            Notably, the insertion/update queries are not part of the API. -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-dao-sql</artifactId>
+        </dependency>
+
+        <!-- The pipeline need to access to the webapp to generate javascript 
+            files -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bgee-webapp</artifactId>
+            <classifier>classes</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bbop</groupId>
+            <artifactId>OWLTools-all</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bbop</groupId>
+            <artifactId>OWLTools-ncbi</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>sbc</groupId>
+            <artifactId>orthoxml</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sf.supercsv</groupId>
+            <artifactId>super-csv</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>bgee-pipeline-${project.version}</finalName>
+
+        <plugins>
+
+            <!-- The use of the maven-assembly-plugin has been replaced by 
+                the maven-shade-plugin, because it allows to manage files from the dependencies 
+                included. <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-assembly-plugin</artifactId> 
+                <configuration> <descriptorRefs> <descriptorRef>jar-with-dependencies</descriptorRef> 
+                </descriptorRefs> <archive> <manifest> <mainClass>org.bgee.pipeline.CommandRunner</mainClass> 
+                </manifest> </archive> </configuration> <executions> <execution> <id>make-assembly</id> 
+                <phase>package</phase> <goals> <goal>single</goal> </goals> </execution> 
+                </executions> </plugin> -->
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>with-dependencies</shadedClassifierName>
+                            <transformers>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                                    <file>${project.groupId}:bgee-dao-sql:with-dependencies</file>
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>org.bgee.pipeline.CommandRunner</Main-Class>
+                                        <!-- in order to be able to modify 
+                                            logging levels from config files in same directors as the jar, without recompiling -->
+                                        <Class-Path>./</Class-Path>
+                                    </manifestEntries>
+                                </transformer>
+                                <!-- To be able to configure loggers from 
+                                    files external to the jar, and to make sure our conf. files are not overridden 
+                                    by a file with identical name in a dependency. If we didn't exclude these 
+                                    files from the jar, they would have preeminence over the external files. 
+                                    Our property files will be exported to the target directory, see end of this 
+                                    pom.xml. -->
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                    <resource>log4j2.xml</resource>
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                    <resource>log4j.properties</resource>
+                                </transformer>
+
+                                <!-- If we wanted to put these configuration 
+                                    files only in the jar, and to make sure they are not overridden by files 
+                                    with identical name in a dependency, we should do: -->
+                                <!-- <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer"> 
+                                    <resource>log4j2.xml</resource> </transformer> <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer"> 
+                                    <resource>log4j.properties</resource> </transformer> -->
+                                <!-- If we needed to merge them instead, 
+                                    see org.apache.maven.plugins.shade.resource.AppendingTransformer and org.apache.maven.plugins.shade.resource.XmlAppendingTransformer -->
+
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <!-- In order to export logger configuration files to the target 
+            directory, for easier external configuration. -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <targetPath>${project.build.directory}</targetPath>
+                <includes>
+                    <include>log4j2.xml</include>
+                    <include>log4j.properties</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
 </project>

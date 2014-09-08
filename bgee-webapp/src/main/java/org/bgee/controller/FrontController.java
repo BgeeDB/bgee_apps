@@ -151,7 +151,6 @@ public class FrontController extends HttpServlet {
                 this.urlParameters, this.prop);
         //need the default factory here in case an exception is thrown 
         // before we get the correct display type
-        ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
         GeneralDisplay generalDisplay = null;
 
         //then let's start the real job!
@@ -160,6 +159,7 @@ public class FrontController extends HttpServlet {
             //we do it in the try clause, because getting a view can throw an IOException.
             //so here we get the default view from the default factory before any exception 
             //can be thrown.
+            ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             generalDisplay = factory.getGeneralDisplay(prop);
             request.setCharacterEncoding("UTF-8");
             requestParameters = new RequestParameters(request, this.urlParameters, this.prop);

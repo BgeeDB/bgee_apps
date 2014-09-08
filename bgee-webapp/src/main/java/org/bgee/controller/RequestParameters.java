@@ -334,7 +334,10 @@ public class RequestParameters {
     }
 
     /**
-     * Load the parameters from the {@code HttpServletRequest} object 
+     * Load the parameters from the {@code HttpServletRequest} object
+     * 
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
      * 
      * @param request          the {@code HttpServletRequest} object representing 
      *                         the current request to the server.
@@ -651,6 +654,9 @@ public class RequestParameters {
      * Generate the query from the current state of the parameters and can 
      * include or not some elements depending on the given params.
      * 
+     * This method has a js counterpart in {@code requestparameters.js}, called getRequestURL(),
+     * that should be kept consistent as much as possible if the method evolves.
+     * 
      * @param parametersSeparator   A {@code String} that is used as parameters separator in the URL
      * 
      * @param includeStorable       A {@code boolean} to indicate whether to include
@@ -769,6 +775,9 @@ public class RequestParameters {
      * for session tracking. It just converts special chars to be used in URL.
      * The encoding can be desactivated by setting the {@code encodeUrl} attribute to
      * {@code false}.
+     *  
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
      * 
      * @param url   the {@code String} to be encoded.
      * @return  a {@code String} encoded, if needed (meaning, if including special chars), 
@@ -788,7 +797,7 @@ public class RequestParameters {
         try {
             // warning, you need to add an attribut to the connector in server.xml  
             // in order to get the utf-8 encoding working : URIEncoding="UTF-8"
-            encodeString = java.net.URLEncoder.encode(url, "ISO-8859-1");
+            encodeString = java.net.URLEncoder.encode(url, "UTF-8");
         } catch (Exception e) {
             log.error("Error while URLencoding", e);
         }
@@ -809,7 +818,7 @@ public class RequestParameters {
         String decodeString = url;
 
         try {
-            decodeString = java.net.URLDecoder.decode(url, "ISO-8859-1");
+            decodeString = java.net.URLDecoder.decode(url, "UTF-8");
         } catch (Exception e) {
             log.error("Error while URLdecoding", e);
         }
@@ -826,6 +835,9 @@ public class RequestParameters {
 
     /**
      * Return the URL corresponding to this {@code RequestParameters} instance
+     * 
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
      * 
      * @param parametersSeparator    A {@code String} that is used as parameters separator in the URL
      * 
@@ -847,6 +859,9 @@ public class RequestParameters {
      * Return all the values for the given {@code URLParameters.Parameter<T>} 
      * in a {@code List<T>} or null if it is empty.
      * 
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *  
      * @param parameter The {@code URLParameters.Parameter<T>} that corresponds 
      *                  to the values to be returned
      *                  
@@ -875,6 +890,9 @@ public class RequestParameters {
      * Return the first value of the given {@code URLParameters.Parameter<T>} 
      * or null if it is empty
      * 
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @param parameter the {@code URLParameters.Parameter<T>} 
      *                  that corresponds to the value to be returned
      *                  
@@ -895,6 +913,9 @@ public class RequestParameters {
 
     /**
      * Add a value to the given {@code URLParameters.Parameter<T>}
+     *
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
      *  
      * @param parameter The {@code URLParameters.Parameter<T>} to add the value to
      * 
@@ -947,6 +968,9 @@ public class RequestParameters {
 
     /**
      * Reset the value for the given {@code URLParameters.Parameter<T>}
+     *
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
      *  
      * @param parameter The {@code URLParameters.Parameter<T>} to reset
      */
@@ -1048,6 +1072,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the display is Xml or not
      */
     public boolean isXmlDisplayType() {
@@ -1060,6 +1087,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the display is Csv or not
      */
     public boolean isCsvDisplayType() {
@@ -1072,6 +1102,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the display is Tsv or not
      */
     public boolean isTsvDisplayType() {
@@ -1088,6 +1121,9 @@ public class RequestParameters {
      * It is currently simply based on the fact that, in Bgee, all AJAX actions 
      * starts by "ajax_". It should be kept that way ;)
      * 
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  {@code true} if this request was performed through AJAX
      */
     public boolean isAnAjaxRequest()
@@ -1102,6 +1138,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the page corresponds to the homepage
      */
     public boolean isTheHomePage(){
@@ -1114,6 +1153,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "about"
      */
@@ -1128,6 +1170,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "admin"
      */
@@ -1142,6 +1187,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "anatomy"
      */
@@ -1156,6 +1204,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "documentation"
      */
@@ -1170,6 +1221,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "download"
      */
@@ -1183,6 +1237,9 @@ public class RequestParameters {
     }    
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "expression"
      */
@@ -1197,6 +1254,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "gene"
      */
@@ -1211,6 +1271,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "gene_family"
      */
@@ -1225,6 +1288,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "log"
      */
@@ -1239,6 +1305,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "news"
      */
@@ -1253,6 +1322,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "registration"
      */
@@ -1267,6 +1339,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "search"
      */
@@ -1281,6 +1356,9 @@ public class RequestParameters {
     }
 
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "top_anat"
      */
@@ -1298,6 +1376,9 @@ public class RequestParameters {
      * Determine whether the requested page contains sensitive information, 
      * such as passwords.
      * Such pages should then not be cached, or the URL be stored in the database, etc.
+     * 
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
      * 
      * @return  {@code true} if the page contains sensitive information, {@code false} otherwise.
      */
@@ -1364,19 +1445,22 @@ public class RequestParameters {
      * Perform security controls and prepare the submitted {@code String} for use. It includes
      * a check of the {@code String} length and the format of the {@code String}.
      * 
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
      * @param stringToCheck    a {@code String} to be checked 
      * @param lengthToCheck    an {@code int} defining the max allowed length of 
      *                         {@code stringToCheck}. If {@code stringToCheck} is greater 
      *                         than 0, and if the length of {@code stringToCheck} is greater
-     *                         than {@code lengthToCheck}, this method returns an empty string. 
+     *                         than {@code lengthToCheck}, this method throw a 
+     *                         {@code WrongFormatException}. 
      *                         If {@code stringToCheck} is equal to 0, no control are performed 
      *                         on string length (but other modifications are still performed, 
      *                         such as triming the {@code String}). 
      * @param format           A {@code String} that contains the regular expression the 
      *                         {@code String} should match.
-     * @return a secured and prepared {@code String}. Return an empty String if security checks
-     *         have failed, or if the stringToCheck was null, or of its length was greater than 
-     *         {@code lengthToCheck}.
+     * @return a secured and prepared {@code String}. Return an empty String if the stringToCheck
+     *         was null.
      * @throws WrongFormatException The {@code String} to secure does not fit the requirement
      *
      *              
@@ -1406,8 +1490,8 @@ public class RequestParameters {
      * without checking length of {@code stringToCheck} ({@code MAXSTRINGLENGTH}).
      * 
      * @param stringToCheck
-     * @return  a secured and prepared {@code String}. Return an empty String if security checks
-     *          have failed, or if the stringToCheck was null.
+     * @return a secured and prepared {@code String}. Return an empty String if the stringToCheck
+     *         was null.
      * @throws WrongFormatException The {@code String} to secure does not fit the requirement
      * @see #secureString(String)
      */

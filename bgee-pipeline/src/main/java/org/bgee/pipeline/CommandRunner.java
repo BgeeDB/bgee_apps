@@ -14,6 +14,7 @@ import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
+import org.bgee.pipeline.js.JSConverter;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
@@ -45,14 +46,14 @@ public class CommandRunner {
      */
     private final static Logger log = 
             LogManager.getLogger(CommandRunner.class.getName());
-    
+
     /**
      * A {@code String} that is used to separate elements from a list when providing 
      * a response to a socket client (see {@link #socketUberonStagesBetween(Uberon, 
      * int)}).
      */
     public static final String SOCKET_RESPONSE_SEPARATOR = "\t";
-    
+
     /**
      * A {@code String} that is the separator between elements of a same list, 
      * when a list needs to be provided as a single argument for a command line usage. 
@@ -88,8 +89,8 @@ public class CommandRunner {
      * @see #parseListArgument(String)
      */
     public static final String EMPTY_LIST = "-";
-    
-    
+
+
     /**
      * Entry point method of the Bgee pipeline. The first element in {@code args} 
      * should be the name of the action to perform (most of the time, it is 
@@ -116,22 +117,22 @@ public class CommandRunner {
      */
     public static void main(String[] args) throws IllegalArgumentException, Exception {
         log.entry((Object[]) args);
-        
+
         if (args.length < 1) {
             throw log.throwing(new IllegalArgumentException("At least one argument " +
-            		"must be provided to determine the job requested to the pipeline."));
+                    "must be provided to determine the job requested to the pipeline."));
         }
-        
+
         //make a new String array from args with first element removed
         String[] newArgs = new String[args.length - 1];
         for (int i = 1; i < args.length; i++) {
             newArgs[i-1] = args[i];
         }
-        
-        
+
+
         //now choose the class to dispatch the work
         switch(args[0]) {
-        
+
         //---------- species and taxonomy -----------
         case "GenerateTaxonOntology": 
             GenerateTaxonOntology.main(newArgs);
@@ -179,15 +180,20 @@ public class CommandRunner {
         case "ParseOrthoXML":
             ParseOrthoXML.main(newArgs);
             break;
-            
+
+        //---------- Javascripts file generation -----------
+        case "JSConverter":
+            JSConverter.main(newArgs);
+            break;    
+
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
         }
-        
+
         log.exit();
     }
-    
+
     /**
      * Delegates to {@link #parseListArgument(String, Class)} with {@code Class} argument 
      * being {@code String.class}.
@@ -197,7 +203,7 @@ public class CommandRunner {
      */
     public static List<String> parseListArgument(String listArg) {
         log.entry(listArg);
-        
+
         return log.exit(CommandRunner.parseListArgument(listArg, String.class));
     }
     /**
@@ -209,7 +215,7 @@ public class CommandRunner {
      */
     public static List<Integer> parseListArgumentAsInt(String listArg) {
         log.entry(listArg);
-        
+
         return log.exit(CommandRunner.parseListArgument(listArg, Integer.class));
     }
     /**
@@ -226,7 +232,7 @@ public class CommandRunner {
      */
     private static <T> List<T> parseListArgument(String listArg, Class<T> type) {
         log.entry(listArg, type);
-        
+
         List<T> resultingList = new ArrayList<T>();
         listArg = listArg.trim();
         if (!listArg.equals(EMPTY_LIST)) {
@@ -243,10 +249,10 @@ public class CommandRunner {
                 }
             }
         }
-        
+
         return log.exit(resultingList);
     }
-    
+
     /**
      * Delegates to {@link #parseMapArgument(String, Class)} with {@code Class} argument 
      * being {@code String.class}.
@@ -269,7 +275,7 @@ public class CommandRunner {
         log.entry(mapArg);
         return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class));
     }
-    
+
     /**
      * Split {@code mapArg} representing a map in a command line argument, where 
      * key-value pairs are separated by {@link #LIST_SEPARATOR}, and keys  
@@ -288,7 +294,7 @@ public class CommandRunner {
      */
     private static <T> Map<String, Set<T>> parseMapArgument(String mapArg, Class<T> type) {
         log.entry(mapArg, type);
-        
+
         Map<String, Set<T>> resultingMap = new HashMap<String, Set<T>>();
         mapArg = mapArg.trim();
         if (!mapArg.equals(EMPTY_LIST)) {
@@ -296,14 +302,14 @@ public class CommandRunner {
                 log.trace("Map entry parsed: {}", arg);
                 if (StringUtils.isNotBlank(arg)) {
                     String[] keyValue = arg.split(KEY_VALUE_SEPARATOR);
-                    
+
                     if (keyValue.length != 2 || StringUtils.isBlank(keyValue[0]) || 
                             StringUtils.isBlank(keyValue[1])) {
                         throw log.throwing(new IllegalArgumentException("Incorrect format " +
                                 "for a key-value pair in a Map command line argument: " + 
                                 arg));
                     }
-                        
+
                     String key = keyValue[0].trim();
                     Set<T> existingValues = resultingMap.get(key);
                     if (existingValues == null) {
@@ -326,7 +332,7 @@ public class CommandRunner {
                 }
             }
         }
-        
+
         return log.exit(resultingMap);
     }
 }

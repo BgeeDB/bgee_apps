@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.ConcreteDisplayParent;
-import org.bgee.view.DisplayParentInterface;
 
 /**
  * Parent of all display for the {@code displayTypes} HTML
@@ -19,7 +18,7 @@ import org.bgee.view.DisplayParentInterface;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayParentInterface
+public class HtmlParentDisplay extends ConcreteDisplayParent
 {
 
     private final static Logger log = LogManager.getLogger(HtmlParentDisplay.class.getName());
@@ -60,7 +59,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
         return log.exit(idToReturn);
     }
 
-    @Override
     public void emptyDisplay()
     {
         log.entry();
@@ -68,7 +66,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
         this.writeln("");
         log.exit();
     }
-    @Override
+    
     public void startDisplay(String page, String title)
     {
         log.entry(page, title);
@@ -240,7 +238,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
         return log.exit(this.displayHelpLink(cat, "[?]"));
     }
 
-    @Override
     public void displayBgeeMenu() {
         log.entry();
         this.writeln("<header>");
@@ -279,7 +276,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent implements DisplayP
         this.includeJs("common.js");
         this.includeJs("requestparameters.js");
         this.includeJs("urlparameters.js");
-        this.includeJs("bgeeutils.js");
+        this.includeJs("bgeeproperties.js");
     }
     /**
      * Method that loads the provided javascript file.

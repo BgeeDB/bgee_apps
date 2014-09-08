@@ -7,7 +7,7 @@ package org.bgee.view;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public interface DownloadDisplay extends DisplayParentInterface
+public interface DownloadDisplay
 {
 	public void displayDownloadPage();
 }

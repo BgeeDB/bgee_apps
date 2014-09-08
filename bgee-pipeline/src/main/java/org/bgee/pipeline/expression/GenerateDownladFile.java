@@ -323,8 +323,6 @@ public class GenerateDownladFile {
      *                          EST experiment.
      * @param inSituData        A {@code String} that is the expression/no-expression data from 
      *                          <em> in situ</em> experiment.
-     * @param relaxedInSitu     A {@code String} that is the expression/no-expression data from
-     *                          relaxed <em> in situ</em> experiment.
      * @param rnaSeqData        A {@code String} that is the expression/no-expression data from
      *                          RNA-seq experiment.
      * @return
@@ -333,18 +331,20 @@ public class GenerateDownladFile {
             String rnaSeqData) {
         log.entry(affymetrixData, estData, inSituData, rnaSeqData);
         
-        if (affymetrixData.equals(estData) && affymetrixData.equals(inSituData) && 
-                affymetrixData.equals(rnaSeqData)) {
-            // All values are equals
-            return log.exit(affymetrixData);
-        } else if (affymetrixData.equals(ExpressionData.NOEXPRESSION.getStringRepresentation()) ||
-                estData.equals(ExpressionData.NOEXPRESSION.getStringRepresentation()) ||
-                inSituData.equals(ExpressionData.NOEXPRESSION.getStringRepresentation()) ||
-                rnaSeqData.equals(ExpressionData.NOEXPRESSION.getStringRepresentation())) {
-            // At least on no-expression but not all
+        List<String> allData = Arrays.asList(affymetrixData, estData, inSituData, rnaSeqData);
+        
+        if (allData.contains(ExpressionData.NOEXPRESSION.getStringRepresentation()) &&
+                (allData.contains(ExpressionData.LOWEXPRESSION.getStringRepresentation()) ||
+                        allData.contains(ExpressionData.HIGHEXPRESSION.getStringRepresentation()))) {
+            // No-expression and expression from different data types
             return log.exit(ExpressionData.AMBIGUOUS.getStringRepresentation());
+        } else if (allData.contains(ExpressionData.HIGHEXPRESSION.getStringRepresentation())) {
+            return log.exit(ExpressionData.HIGHEXPRESSION.getStringRepresentation());
+        } else if (allData.contains(ExpressionData.LOWEXPRESSION.getStringRepresentation())) {
+            return log.exit(ExpressionData.LOWEXPRESSION.getStringRepresentation());
+        } else if (allData.contains(ExpressionData.NOEXPRESSION.getStringRepresentation())) {
+            return log.exit(ExpressionData.NOEXPRESSION.getStringRepresentation());
         }
-        // At least one high expression
-        return log.exit(ExpressionData.HIGHEXPRESSION.getStringRepresentation());
+        return log.exit(ExpressionData.NODATA.getStringRepresentation());
     }
 }

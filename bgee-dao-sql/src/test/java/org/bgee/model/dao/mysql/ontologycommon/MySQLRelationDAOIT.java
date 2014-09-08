@@ -140,7 +140,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 RelationTO resultSetTO = resultSet.getTO();
                 countNbEntites++;
                 for (RelationTO expTO: expectedRelations) {
-                    log.trace("Comparing {} to {}", resultSetTO.getRelationId(), expTO.getRelationId());
+                    log.trace("Comparing {} to {}", resultSetTO.getId(), expTO.getId());
                     if (resultSetTO.equals(expTO)) {
                         found = true;
                         break;
@@ -191,24 +191,24 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 stmt.setInt(1, 1);
                 stmt.setString(2, "sourceId1");
                 stmt.setString(3, "targetId1");
-                stmt.setString(4, RelationTO.convertRelationTypeToDatasourceEnum(RelationType.ISA_PARTOF));
-                stmt.setString(5, RelationTO.convertRelationStatusToDatasourceEnum(RelationStatus.DIRECT));
+                stmt.setString(4, RelationType.ISA_PARTOF.getStringRepresentation());
+                stmt.setString(5, RelationStatus.DIRECT.getStringRepresentation());
                 assertTrue("RelationTO (AnatEntityRelation) incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
                 
                 stmt.setInt(1, 2);
                 stmt.setString(2, "sourceId2");
                 stmt.setString(3, "targetId2");
-                stmt.setString(4, RelationTO.convertRelationTypeToDatasourceEnum(RelationType.DEVELOPSFROM));
-                stmt.setString(5, RelationTO.convertRelationStatusToDatasourceEnum(RelationStatus.REFLEXIVE));
+                stmt.setString(4, RelationType.DEVELOPSFROM.getStringRepresentation());
+                stmt.setString(5, RelationStatus.REFLEXIVE.getStringRepresentation());
                 assertTrue("RelationTO (AnatEntityRelation) incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
 
                 stmt.setInt(1, 3);
                 stmt.setString(2, "sourceId3");
                 stmt.setString(3, "targetId3");
-                stmt.setString(4, RelationTO.convertRelationTypeToDatasourceEnum(RelationType.TRANSFORMATIONOF));
-                stmt.setString(5, RelationTO.convertRelationStatusToDatasourceEnum(RelationStatus.INDIRECT));
+                stmt.setString(4, RelationType.TRANSFORMATIONOF.getStringRepresentation());
+                stmt.setString(5, RelationStatus.INDIRECT.getStringRepresentation());
                 assertTrue("RelationTO (AnatEntityRelation) incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }

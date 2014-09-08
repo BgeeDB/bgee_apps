@@ -130,13 +130,11 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (RelationTO relation: relations) {
-                stmt.setInt(1, Integer.parseInt(relation.getRelationId()));
+                stmt.setInt(1, Integer.parseInt(relation.getId()));
                 stmt.setString(2, relation.getSourceId());
                 stmt.setString(3, relation.getTargetId());
-                stmt.setString(4, RelationTO.convertRelationTypeToDatasourceEnum(
-                        relation.getRelationType()));
-                stmt.setString(5, RelationTO.convertRelationStatusToDatasourceEnum(
-                        relation.getRelationStatus()));
+                stmt.setString(4, relation.getRelationType().getStringRepresentation());
+                stmt.setString(5, relation.getRelationStatus().getStringRepresentation());
                 relationInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -211,10 +209,10 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                     } else if (column.getValue().equals("anatEntityTargetId") || column.getValue().equals("goAllTargetId") ) {
                         targetId = currentResultSet.getString(column.getKey());
                     } else if (column.getValue().equals("relationStatus")) {
-                        relationStatus = RelationTO.convertDatasourceEnumToRelationStatus(
+                        relationStatus = RelationStatus.convertToRelationStatus(
                                 currentResultSet.getString(column.getKey()));
                     } else if (column.getValue().equals("relationType")) {
-                        relationType = RelationTO.convertDatasourceEnumToRelationType(
+                        relationType = RelationType.convertToRelationType(
                                 currentResultSet.getString(column.getKey()));
                     }
                 } catch (SQLException e) {

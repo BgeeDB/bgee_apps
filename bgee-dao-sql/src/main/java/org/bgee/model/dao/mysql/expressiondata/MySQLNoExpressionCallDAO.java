@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO.OriginOfLineType;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -214,10 +214,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setInt(1, Integer.parseInt(call.getId()));
                 stmt.setString(2, call.getGeneId());
                 stmt.setString(3, call.getAnatEntityId());
-                stmt.setString(4, call.getDevStageId());
-                stmt.setString(5, CallTO.convertDataStateToDataSourceQuality(call.getAffymetrixData()));
-                stmt.setString(6, CallTO.convertDataStateToDataSourceQuality(call.getInSituData()));
-                stmt.setString(7, CallTO.convertDataStateToDataSourceQuality(call.getRNASeqData()));
+                stmt.setString(4, call.getStageId());
+                stmt.setString(5, call.getAffymetrixData().getStringRepresentation());
+                stmt.setString(6, call.getInSituData().getStringRepresentation());
+                stmt.setString(7, call.getRNASeqData().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -235,12 +235,11 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setInt(1, Integer.parseInt(call.getId()));
                 stmt.setString(2, call.getGeneId());
                 stmt.setString(3, call.getAnatEntityId());
-                stmt.setString(4, call.getDevStageId());
-                stmt.setString(5, CallTO.convertDataStateToDataSourceQuality(call.getAffymetrixData()));
-                stmt.setString(6, CallTO.convertDataStateToDataSourceQuality(call.getInSituData()));
-                stmt.setString(7, CallTO.convertDataStateToDataSourceQuality(call.getRNASeqData()));
-                stmt.setString(8, NoExpressionCallTO.convertOriginOfLineTypeToDatasourceEnum(
-                                                                call.getOriginOfLine()));
+                stmt.setString(4, call.getStageId());
+                stmt.setString(5, call.getAffymetrixData().getStringRepresentation());
+                stmt.setString(6, call.getInSituData().getStringRepresentation());
+                stmt.setString(7, call.getRNASeqData().getStringRepresentation());
+                stmt.setString(8, call.getOriginOfLine().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -252,7 +251,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     }
     
     @Override
-    public int insertGlobalNoExpressionToNoExpression(
+    public int insertGlobalNoExprToNoExpr(
             Collection<GlobalNoExpressionToNoExpressionTO> globalNoExpressionToNoExpression) {
         log.entry(globalNoExpressionToNoExpression);
         
@@ -302,13 +301,11 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         public NoExpressionCallTO getTO() throws DAOException {
             log.entry();
 
-            String id = null, geneId = null, anatEntityId = null, 
-                    devStageId = null;
-            DataState noExpressionAffymetrixData = DataState.NODATA, 
-                    noExpressionInSituData = DataState.NODATA, 
-                    noExpressionRnaSeqData = DataState.NODATA;
+            String id = null, geneId = null, anatEntityId = null, devStageId = null;
+            DataState noExprAffymetrixData = DataState.NODATA, noExprInSituData = DataState.NODATA, 
+                    noExprRelaxedInSituData = DataState.NODATA, noExprRnaSeqData = DataState.NODATA;
             boolean includeParentStructures = false;
-            OriginOfLineType noExpressionOriginOfLine = OriginOfLineType.SELF;
+            OriginOfLine noExpressionOriginOfLine = OriginOfLine.SELF;
 
             boolean isGlobalExpression = false;
             ResultSet currentResultSet = this.getCurrentResultSet();
@@ -330,20 +327,23 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                         devStageId = currentResultSet.getString(column.getKey());
 
                     } else if (column.getValue().equals("noExpressionAffymetrixData")) {
-                        noExpressionAffymetrixData = CallTO.convertDataSourceQualityToDataState(
+                        noExprAffymetrixData = DataState.convertToDataState(
                                 currentResultSet.getString(column.getKey()));
 
                     } else if (column.getValue().equals("noExpressionInSituData")) {
-                        noExpressionInSituData = CallTO.convertDataSourceQualityToDataState(
+                        noExprInSituData = DataState.convertToDataState(
+                                currentResultSet.getString(column.getKey()));
+
+                    } else if (column.getValue().equals("noExpressionRelaxedInSituData")) {
+                        noExprRelaxedInSituData = DataState.convertToDataState(
                                 currentResultSet.getString(column.getKey()));
 
                     } else if (column.getValue().equals("noExpressionRnaSeqData")) {
-                        noExpressionRnaSeqData = CallTO.convertDataSourceQualityToDataState(
+                        noExprRnaSeqData = DataState.convertToDataState(
                                 currentResultSet.getString(column.getKey()));
 
                     } else if (column.getValue().equals("noExpressionOriginOfLine")) {
-                        noExpressionOriginOfLine = 
-                                NoExpressionCallTO.convertDatasourceEnumToOriginOfLineType(
+                        noExpressionOriginOfLine = OriginOfLine.convertToOriginOfLine(
                                         currentResultSet.getString(column.getKey()));
                         isGlobalExpression = true;
                     }
@@ -358,8 +358,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             }
 
             return log.exit(new NoExpressionCallTO(id, geneId, anatEntityId,
-                    devStageId, noExpressionAffymetrixData, noExpressionInSituData,
-                    noExpressionRnaSeqData, includeParentStructures, noExpressionOriginOfLine));
+                    devStageId, noExprAffymetrixData, noExprInSituData, noExprRelaxedInSituData,
+                    noExprRnaSeqData, includeParentStructures, noExpressionOriginOfLine));
         }
     }
 

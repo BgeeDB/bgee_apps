@@ -15,7 +15,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLineType;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
@@ -178,7 +178,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             }
         } else if (attribute.equals(ExpressionCallDAO.Attribute.GENEID)) {
             label = "geneId";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.DEVSTAGEID)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGEID)) {
             label = "stageId";
         } else if (attribute.equals(ExpressionCallDAO.Attribute.ANATENTITYID)) {
             label = "anatEntityId";
@@ -196,9 +196,6 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             } else {
                 throw log.throwing(new IllegalStateException("No originOfLine in expression table"));
             }
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.RELAXEDINSITUDATA)) {
-            throw log.throwing(new IllegalStateException("No relaxed in situ data in data source" +
-                                                         "for the moment"));
         } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES) ||
                 attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTAGES)) {
             throw log.throwing(new IllegalStateException(attribute.toString() + 
@@ -245,11 +242,11 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 stmt.setInt(1, Integer.parseInt(call.getId()));
                 stmt.setString(2, call.getGeneId());
                 stmt.setString(3, call.getAnatEntityId());
-                stmt.setString(4, call.getDevStageId());
-                stmt.setString(5, CallTO.convertDataStateToDataSourceQuality(call.getESTData()));
-                stmt.setString(6, CallTO.convertDataStateToDataSourceQuality(call.getAffymetrixData()));
-                stmt.setString(7, CallTO.convertDataStateToDataSourceQuality(call.getInSituData()));
-                stmt.setString(8, CallTO.convertDataStateToDataSourceQuality(call.getRNASeqData()));
+                stmt.setString(4, call.getStageId());
+                stmt.setString(5, call.getESTData().getStringRepresentation());
+                stmt.setString(6, call.getAffymetrixData().getStringRepresentation());
+                stmt.setString(7, call.getInSituData().getStringRepresentation());
+                stmt.setString(8, call.getRNASeqData().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -267,13 +264,12 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 stmt.setInt(1, Integer.parseInt(call.getId()));
                 stmt.setString(2, call.getGeneId());
                 stmt.setString(3, call.getAnatEntityId());
-                stmt.setString(4, call.getDevStageId());
-                stmt.setString(5, CallTO.convertDataStateToDataSourceQuality(call.getESTData()));
-                stmt.setString(6, CallTO.convertDataStateToDataSourceQuality(call.getAffymetrixData()));
-                stmt.setString(7, CallTO.convertDataStateToDataSourceQuality(call.getInSituData()));
-                stmt.setString(8, CallTO.convertDataStateToDataSourceQuality(call.getRNASeqData()));
-                stmt.setString(9, ExpressionCallTO.
-                        convertOriginOfLineTypeToDatasourceEnum(call.getOriginOfLine()));
+                stmt.setString(4, call.getStageId());
+                stmt.setString(5, call.getESTData().getStringRepresentation());
+                stmt.setString(6, call.getAffymetrixData().getStringRepresentation());
+                stmt.setString(7, call.getInSituData().getStringRepresentation());
+                stmt.setString(8, call.getRNASeqData().getStringRepresentation());
+                stmt.setString(9, call.getOriginOfLine().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -336,10 +332,9 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 
             String id = null, geneId = null, anatEntityId = null, devStageId = null;
             DataState affymetrixData = DataState.NODATA, estData = DataState.NODATA, 
-                    inSituData = DataState.NODATA, relaxedInSituData = DataState.NODATA, 
-                    rnaSeqData = DataState.NODATA;
+                    inSituData = DataState.NODATA, rnaSeqData = DataState.NODATA;
             boolean includeSubstructures = false, includeSubStages = false;
-            OriginOfLineType originOfLine = OriginOfLineType.SELF;
+            OriginOfLine originOfLine = OriginOfLine.SELF;
 
             boolean isGlobalExpression = false;
             ResultSet currentResultSet = this.getCurrentResultSet();
@@ -361,27 +356,23 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                         devStageId = currentResultSet.getString(column.getKey());
 
                     } else if (column.getValue().equals("affymetrixData")) {
-                        affymetrixData = CallTO.convertDataSourceQualityToDataState(
+                        affymetrixData = DataState.convertToDataState(
                                 currentResultSet.getString(column.getKey()));
 
                     } else if (column.getValue().equals("estData")) {
-                        estData = CallTO.convertDataSourceQualityToDataState(
+                        estData = DataState.convertToDataState(
                                 currentResultSet.getString(column.getKey()));
-
+                        
                     } else if (column.getValue().equals("inSituData")) {
-                        inSituData = CallTO.convertDataSourceQualityToDataState(
-                                currentResultSet.getString(column.getKey()));
-
-                    } else if (column.getValue().equals("relaxedInSituData")) {
-                        relaxedInSituData = CallTO.convertDataSourceQualityToDataState(
+                        inSituData = DataState.convertToDataState(
                                 currentResultSet.getString(column.getKey()));
 
                     } else if (column.getValue().equals("rnaSeqData")) {
-                        rnaSeqData = CallTO.convertDataSourceQualityToDataState(
+                        rnaSeqData = DataState.convertToDataState(
                                 currentResultSet.getString(column.getKey()));
                         
                     } else if (column.getValue().equals("originOfLine")) {
-                        originOfLine = ExpressionCallTO.convertDatasourceEnumToOriginOfLineType(
+                        originOfLine = OriginOfLine.convertToOriginOfLine(
                                 currentResultSet.getString(column.getKey()));
                         isGlobalExpression = true;
                     }
@@ -397,7 +388,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             
             //TODO manage includeSubStages when complete query will be write
             return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, devStageId,
-                    affymetrixData, estData, inSituData, relaxedInSituData, rnaSeqData,
+                    affymetrixData, estData, inSituData, rnaSeqData,
                     includeSubstructures, includeSubStages, originOfLine));
         }
     }

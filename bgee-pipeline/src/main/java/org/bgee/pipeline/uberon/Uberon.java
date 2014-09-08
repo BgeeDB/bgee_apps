@@ -218,15 +218,6 @@ public class Uberon extends UberonCommon {
      * {@code OWLGraphManipulator#removeRelsToSubsets(Collection, Collection)}.
      */
     private Collection<String> classIdsExcludedFromSubsetRemoval;
-    /**
-     * A {@code Map} to specify to remove relations between two {@code OWLClass}es. 
-     * Keys are {@code String}s that are the OBO-like IDs of the source of the relations 
-     * to remove, the associated value being a {@code Set} of {@code String}s 
-     * that are the OBO-like ID of the targets of the relations to remove.
-     * {@code OWLGraphManipulator#removeDirectEdgesBetween(String, String)} will be called 
-     * for each key with each entry in the associated {@code Set}.
-     */
-    private Map<String, Set<String>> relsBetweenToRemove;
     
     
     /**
@@ -826,28 +817,6 @@ public class Uberon extends UberonCommon {
     public void setClassIdsExcludedFromSubsetRemoval(
             Collection<String> classIdsExcludedFromSubsetRemoval) {
         this.classIdsExcludedFromSubsetRemoval = classIdsExcludedFromSubsetRemoval;
-    }
-
-    /**
-     * @return  A {@code Map} to specify to remove relations between two {@code OWLClass}es. 
-     *          Keys are {@code String}s that are the OBO-like IDs of the source of the relations 
-     *          to remove, the associated value being a {@code Set} of {@code String}s 
-     *          that are the OBO-like ID of the targets of the relations to remove.
-     *          {@code OWLGraphManipulator#removeDirectEdgesBetween(String, String)} will be called 
-     *          for each key with each entry in the associated {@code Set}.
-     * @see #setRelsBetweenToRemove(Map)
-     */
-    public Map<String, Set<String>> getRelsBetweenToRemove() {
-        return relsBetweenToRemove;
-    }
-    /**
-     * Sets the parameter returned by {@link #getRelsBetweenToRemove()}.
-     * 
-     * @param relsBetweenToRemove   See {@link #getRelsBetweenToRemove()}.
-     * @see #getRelsBetweenToRemove()
-     */
-    public void setRelsBetweenToRemove(Map<String, Set<String>> relsBetweenToRemove) {
-        this.relsBetweenToRemove = relsBetweenToRemove;
     }
     
     

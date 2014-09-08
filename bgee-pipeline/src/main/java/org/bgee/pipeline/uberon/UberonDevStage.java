@@ -91,6 +91,12 @@ public class UberonDevStage extends UberonCommon {
      *   and to propagate their incoming edges to their outgoing edges. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
      *   See {@link #setClassIdsToRemove(Collection)}.
+     *   <li>a map specifying specific relations to remove between pairs of {@code OWLClass}es. 
+     *   In a key-value pair, the key should be the OBO-like ID of the source of relations 
+     *   to remove, the value being the target of the relations to remove. Key-value pairs 
+     *   must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
+     *   separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}. 
+     *   A key can be associated to several values. See {@link #setRelsBetweenToRemove(Map)}.
      *   <li>A list of OBO-like IDs of {@code OWLClass}es for which we want to remove 
      *   all their children, reachable by any path in their graph closure. 
      *   The {@code OWLClass}es themselves will not be removed. 
@@ -105,9 +111,16 @@ public class UberonDevStage extends UberonCommon {
      *   {@code java -Xmx2g -jar myJar 
      *   UberonDevStage generateStageOntology ext.owl dev_stage_ont  
      *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000,BFO:0000003,MmusDv:0000041 
+     *   UBERON:0000070/UBERON:0000092 
      *   -
      *   BFO:0000050,BFO:0000062,RO:0002087
      *   UBERON:0000104,FBdv:00000000,NCBITaxon:1}
+     *   
+     *   (relation between UBERON:0000070 "pupal stage" and UBERON:0000092 "post-embryonic stage" 
+     *   is removed, because UBERON:0000070 "pupal stage" is also part of FBdv:00007001 "P-stage" 
+     *   in drosophila. So we will consider the relation to P-stage, and infer the relation 
+     *   to UBERON:0000092 "post-embryonic stage" for other species (as FBdv:00007001 
+     *   is part of UBERON:0000092))
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
@@ -120,18 +133,19 @@ public class UberonDevStage extends UberonCommon {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("generateStageOntology")) {
-            if (args.length != 7) {
+            if (args.length != 8) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "7 arguments, " + args.length + " provided."));
+                        "8 arguments, " + args.length + " provided."));
             }
             
             UberonDevStage ub = new UberonDevStage(args[1]);
             ub.setModifiedOntPath(args[2]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[3]));
-            ub.setChildrenOfToRemove(CommandRunner.parseListArgument(args[4]));
-            ub.setRelIds(CommandRunner.parseListArgument(args[5]));
-            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[6]));
+            ub.setRelsBetweenToRemove(CommandRunner.parseMapArgument(args[4]));
+            ub.setChildrenOfToRemove(CommandRunner.parseListArgument(args[5]));
+            ub.setRelIds(CommandRunner.parseListArgument(args[6]));
+            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[7]));
             
             
             ub.generateStageOntologyAndSaveToFile();
@@ -284,7 +298,8 @@ public class UberonDevStage extends UberonCommon {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
         log.entry(this.getPathToUberonOnt(), this.getModifiedOntPath(), 
-                this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
+                this.getClassIdsToRemove(), this.getRelsBetweenToRemove(), 
+                this.getChildrenOfToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
         this.generateStageOntology();
@@ -325,7 +340,8 @@ public class UberonDevStage extends UberonCommon {
     public void generateStageOntology() {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
-        log.entry(this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
+        log.entry(this.getClassIdsToRemove(), this.getRelsBetweenToRemove(), 
+                this.getChildrenOfToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
         //before using OWLGraphManipulator, we remove all EquivalentClass axioms. 
@@ -353,6 +369,18 @@ public class UberonDevStage extends UberonCommon {
                 manipulator.removeClassAndPropagateEdges(classIdToRemove);
             }
         }
+
+        //potential terms to call this code on:
+        //UBERON:0000070 "pupal stage" to UBERON:0000092 "post-embryonic stage" 
+        //(because pupal stage has another species-specific parent, that will allow 
+        //to infer belonging to UBERON:0000092)
+        if (this.getRelsBetweenToRemove() != null) {
+            for (Entry<String, Set<String>> relsToRemove: this.getRelsBetweenToRemove().entrySet()) {
+                for (String targetId: relsToRemove.getValue()) {
+                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+                }
+            }
+        }
         
         //remove all children of childrenOfToRemove
         //potential terms to call this code on: UBERON:0000069 "larval stage"
@@ -369,7 +397,7 @@ public class UberonDevStage extends UberonCommon {
                 }
                 
                 //remove children
-                for (OWLClass child: manipulator.getOwlGraphWrapper().getOWLClassDescendants(parent)) {
+                for (OWLClass child: manipulator.getOwlGraphWrapper().getOWLClassDescendantsWithGCI(parent)) {
                     if (!manipulator.removeClass(child)) {
                         throw log.throwing(new AssertionError("An OWLClass could not be removed: " + 
                                 child));
@@ -521,7 +549,7 @@ public class UberonDevStage extends UberonCommon {
             //multi-species children).
             //Use a TreeMap so that ordering between species is predictable
             Map<Integer, Set<OWLClass>> children = new TreeMap<Integer, Set<OWLClass>>();
-            for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(classWalked)) {
+            for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdgesWithGCI(classWalked)) {
                 if ((this.getOntologyUtils().isPartOfRelation(incomingEdge) || 
                         this.getOntologyUtils().isASubClassOfEdge(incomingEdge)) && 
                         incomingEdge.isSourceNamedObject()) {
@@ -751,7 +779,8 @@ public class UberonDevStage extends UberonCommon {
             //the most precise and independent selected stages
             Set<OWLObject> ancestors = new HashSet<OWLObject>();
             for (OWLClass selectedStage: selectedStages) {
-                ancestors.addAll(wrapper.getAncestors(selectedStage, this.overPartOf));
+                ancestors.addAll(wrapper.getNamedAncestorsWithGCI(selectedStage, 
+                        this.overPartOf));
             }
             selectedStages.removeAll(ancestors);
             
@@ -839,9 +868,9 @@ public class UberonDevStage extends UberonCommon {
                         precedingClass, directEdgesAlreadyTried);
                 Set<OWLGraphEdge> outgoingEdges;
                 if (!directEdgesAlreadyTried) {
-                    outgoingEdges = wrapper.getOutgoingEdges(precedingClass);
+                    outgoingEdges = wrapper.getOutgoingEdgesWithGCI(precedingClass);
                 } else {
-                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupProps(precedingClass);
+                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(precedingClass);
                 }
                 
                 //check first the immediately_preceded_by relations, there should be only one 
@@ -989,9 +1018,9 @@ public class UberonDevStage extends UberonCommon {
                         classToOrder, directEdgesAlreadyTried);
                 Set<OWLGraphEdge> outgoingEdges;
                 if (!directEdgesAlreadyTried) {
-                    outgoingEdges = wrapper.getOutgoingEdges(classToOrder);
+                    outgoingEdges = wrapper.getOutgoingEdgesWithGCI(classToOrder);
                 } else {
-                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupProps(classToOrder);
+                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(classToOrder);
                 }
                 for (OWLGraphEdge outgoingEdge: outgoingEdges) {
                     log.trace("Testing if edge is valid preceded_by relation: {}", 

@@ -84,10 +84,10 @@ public class RequestParametersTest {
      */
     @AfterClass
     public static void resetProperties(){
-        System.clearProperty(BgeeProperties.propertiesFileNameKey);
-        System.clearProperty(BgeeProperties.bgeeRootDirectoryKey);
-        System.clearProperty(BgeeProperties.urlMaxLengthKey);
-        System.clearProperty(BgeeProperties.encodeUrlKey);
+        System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
+        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
+        System.clearProperty(BgeeProperties.ENCODE_URL_KEY);
     }
 
     /**

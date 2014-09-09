@@ -47,15 +47,15 @@ public class BgeeProperties
      * of the file in the classpath that is read at the initialization 
      * of {@code BgeeProperties}
      */
-    public final static String propertiesFileNameKey = 
-            "bgee-webapp.properties.file";
+    public final static String PROPERTIES_FILE_NAME_KEY = 
+            "org.bgee.webapp.properties.file";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the request parameters storage directory
      * @see #getRequestParametersStorageDirectory()
      */
-    public final static String requestParametersStorageDirectoryKey = 
+    public final static String REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY = 
             "org.bgee.webapp.requestParametersStorageDirectory";
 
     /**
@@ -63,7 +63,7 @@ public class BgeeProperties
      * initialization of {@code BgeeProperties} to set the bgee root directory
      * @see #getBgeeRootDirectory()
      */
-    public final static String bgeeRootDirectoryKey = 
+    public final static String BGEE_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.bgeeRootDirectory";
 
     /**
@@ -71,7 +71,7 @@ public class BgeeProperties
      * initialization of {@code BgeeProperties} to set the download root directory
      * @see #getDownloadRootDirectory()
      */
-    public final static String downloadRootDirectoryKey = 
+    public final static String DOWNLOAD_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.downloadRootDirectory";
 
     /**
@@ -79,7 +79,7 @@ public class BgeeProperties
      * initialization of {@code BgeeProperties} to set the javascript file root directory
      * @see #getJavascriptFilesRootDirectory()
      */
-    public final static String javascriptFilesRootDirectoryKey = 
+    public final static String JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.javascriptFilesRootDirectory";
 
     /**
@@ -87,7 +87,7 @@ public class BgeeProperties
      * initialization of {@code BgeeProperties} to set the css file root directory
      * @see #getCssFilesRootDirectory()
      */
-    public final static String cssFilesRootDirectoryKey = 
+    public final static String CSS_FILES_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.cssFilesRootDirectory";
 
     /**
@@ -95,7 +95,7 @@ public class BgeeProperties
      * initialization of {@code BgeeProperties} to set the images root directory
      * @see #getImagesRootDirectory()
      */
-    public final static String imagesRootDirectoryKey = 
+    public final static String IMAGES_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.imagesRootDirectory";
 
     /**
@@ -103,7 +103,7 @@ public class BgeeProperties
      * initialization of {@code BgeeProperties} to set the top OBO results url root directory
      * @see #getTopOBOResultsUrlRootDirectory()
      */
-    public final static String topOBOResultsUrlRootDirectoryKey = 
+    public final static String TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.topOBOResultsUrlRootDirectory";
 
     /**
@@ -111,7 +111,7 @@ public class BgeeProperties
      * initialization of {@code BgeeProperties} to set the url max length.
      * @see #getUrlMaxLength()
      */
-    public final static String urlMaxLengthKey = 
+    public final static String URL_MAX_LENGTH_KEY = 
             "org.bgee.webapp.urlMaxLength";
 
     /**
@@ -119,7 +119,7 @@ public class BgeeProperties
      * initialization of {@code BgeeProperties} to set the encode url boolean
      * @see #isEncodeUrl()
      */
-    public final static String encodeUrlKey = 
+    public final static String ENCODE_URL_KEY = 
             "org.bgee.webapp.encodeUrl";
 
     /**
@@ -225,7 +225,7 @@ public class BgeeProperties
         //try to get the properties file.
         //default name is bgee.properties
         //check first if an alternative name has been provided in the System properties
-        String propertyFile = sysProps.getProperty("bgee-webapp.properties.file", 
+        String propertyFile = sysProps.getProperty(PROPERTIES_FILE_NAME_KEY, 
                 "/bgee-webapp.properties");
         log.debug("Trying to use properties file {}", propertyFile);
         Properties fileProps = null;
@@ -252,24 +252,24 @@ public class BgeeProperties
         // properties and then the file. The default value provided will be use if none of the
         // previous solutions contain the property
         requestParametersStorageDirectory  = getStringOption(prop, sysProps, fileProps, 
-                requestParametersStorageDirectoryKey,  
+                REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
                 System.getProperty("java.io.tmpdir"));
         bgeeRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                bgeeRootDirectoryKey, "/");
+                BGEE_ROOT_DIRECTORY_KEY, "/");
         downloadRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                requestParametersStorageDirectoryKey, "download/");
+                REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "download/");
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                downloadRootDirectoryKey, "js/");
+                DOWNLOAD_ROOT_DIRECTORY_KEY, "js/");
         cssFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                cssFilesRootDirectoryKey, "css/");
+                CSS_FILES_ROOT_DIRECTORY_KEY, "css/");
         imagesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                imagesRootDirectoryKey, "img/");
+                IMAGES_ROOT_DIRECTORY_KEY, "img/");
         topOBOResultsUrlRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                topOBOResultsUrlRootDirectoryKey, null);
+                TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, null);
         urlMaxLength = getIntegerOption(prop, sysProps, fileProps, 
-                urlMaxLengthKey, 120);
+                URL_MAX_LENGTH_KEY, 120);
         encodeUrl = getBooleanOption(prop, sysProps, fileProps, 
-                encodeUrlKey, true);
+                ENCODE_URL_KEY, true);
         log.info("Initialization done.");
         log.exit();
     }

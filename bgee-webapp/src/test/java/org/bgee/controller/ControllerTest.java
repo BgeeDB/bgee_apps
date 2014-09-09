@@ -104,7 +104,7 @@ public class ControllerTest {
         // 2) TestURLParameters : check that test_string parameter exists with "test_string"
         // 3) ViewFactoryProvider : only a TestFactoryProvider can lead to the correct output
         Properties prop = new Properties();
-        prop.put(BgeeProperties.urlMaxLengthKey, "9999");
+        prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "9999");
         new FrontController(BgeeProperties.getBgeeProperties(prop),new TestURLParameters(),
                 this.testFactoryProvider).doRequest(mockHttpServletRequest, 
                         mockHttpServletResponse, false);

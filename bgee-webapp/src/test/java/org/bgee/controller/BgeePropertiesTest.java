@@ -38,13 +38,13 @@ public class BgeePropertiesTest {
      */
     @Before
     public void initTests(){
-        System.setProperty(BgeeProperties.propertiesFileNameKey, 
+        System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, 
                 "/test.properties");
-        System.setProperty(BgeeProperties.bgeeRootDirectoryKey, 
+        System.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, 
                 "/system");
-        System.setProperty(BgeeProperties.urlMaxLengthKey, 
+        System.setProperty(BgeeProperties.URL_MAX_LENGTH_KEY, 
                 "30");
-        System.setProperty(BgeeProperties.encodeUrlKey, 
+        System.setProperty(BgeeProperties.ENCODE_URL_KEY, 
                 "false");
     }
     
@@ -53,10 +53,10 @@ public class BgeePropertiesTest {
      */
     @AfterClass
     public static void resetProperties(){
-        System.clearProperty(BgeeProperties.propertiesFileNameKey);
-        System.clearProperty(BgeeProperties.bgeeRootDirectoryKey);
-        System.clearProperty(BgeeProperties.urlMaxLengthKey);
-        System.clearProperty(BgeeProperties.encodeUrlKey);
+        System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
+        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
+        System.clearProperty(BgeeProperties.ENCODE_URL_KEY);
     }
     
     /**
@@ -66,9 +66,9 @@ public class BgeePropertiesTest {
     public void testInjectedProperties(){
         // set the properties to inject
         Properties prop = new Properties();
-        prop.put(BgeeProperties.bgeeRootDirectoryKey, "/injected");
-        prop.put(BgeeProperties.urlMaxLengthKey, "10");
-        prop.put(BgeeProperties.encodeUrlKey, "false");
+        prop.put(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/injected");
+        prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "10");
+        prop.put(BgeeProperties.ENCODE_URL_KEY, "false");
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
         assertEquals("Wrong property value retrieved","/injected",bgeeProp.getBgeeRootDirectory());
@@ -82,9 +82,9 @@ public class BgeePropertiesTest {
     @Test
     public void testLoadPropertiesFromFile(){
         // First clear the system properties that would be used if present
-        System.clearProperty(BgeeProperties.bgeeRootDirectoryKey);
-        System.clearProperty(BgeeProperties.urlMaxLengthKey);
-        System.clearProperty(BgeeProperties.encodeUrlKey);
+        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
+        System.clearProperty(BgeeProperties.ENCODE_URL_KEY);
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved","/file",bgeeProp.getBgeeRootDirectory());
@@ -111,10 +111,10 @@ public class BgeePropertiesTest {
     public void testLoadDefaultProperties(){
         // First clear the system properties that would be used if present
         // and also the name of the file on the classpath that would be used as well
-        System.clearProperty(BgeeProperties.bgeeRootDirectoryKey);
-        System.clearProperty(BgeeProperties.urlMaxLengthKey);
-        System.clearProperty(BgeeProperties.encodeUrlKey);
-        System.clearProperty(BgeeProperties.propertiesFileNameKey);
+        System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
+        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
+        System.clearProperty(BgeeProperties.ENCODE_URL_KEY);
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved","/",bgeeProp.getBgeeRootDirectory());

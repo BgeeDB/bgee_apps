@@ -115,6 +115,12 @@ public class InsertUberon extends MySQLDAOUser {
         //no nested set model provided, need to compute it, starting from the root 
         //of the ontology. 
         Set<OWLClass> roots = uberon.getOntologyUtils().getWrapper().getOntologyRoots();
+        if (uberon.getToIgnoreSubgraphRootIds() != null) {
+            for (String rootIdToIgnore: uberon.getToIgnoreSubgraphRootIds()) {
+                roots.remove(uberon.getOntologyUtils().getWrapper().getOWLClassByIdentifier(
+                        rootIdToIgnore));
+            }
+        }
         if (roots.size() != 1) {
             throw log.throwing(new IllegalStateException("Incorrect number of roots " +
                     "in the developmental stage ontology: " + roots.size() + " - " + roots));

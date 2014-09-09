@@ -33,6 +33,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -1646,14 +1647,66 @@ public class OntologyUtils {
     public void retainLeafClasses(Set<OWLClass> classes,  
             @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
         log.entry(classes, overProps);
+        this.retainRelativeClasses(classes, overProps, true);
+        log.exit();
+    }
+
+    /**
+     * Retain only parent {@code OWLClass}es over the specified properties 
+     * from the provided {@code Set} {@code classes}. This method will remove 
+     * from {@code classes} any {@code OWLClass} that is the child of one of 
+     * the other {@code OWLClass}es in the {@code Set}, over the properties {@code overProps}.
+     * 
+     * @param classes       A {@code Set} of {@code OWLClass}es to filter to remove 
+     *                      children of other {@code OWLClass}es in the {@code Set}.
+     * @param overProps     A {@code Set} of {@code OWLPropertyExpression}s allowing 
+     *                      to restrain the relations considered. Can be {@code null} 
+     *                      for no restrictions.
+     */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
+    public void retainParentClasses(Set<OWLClass> classes,  
+            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
+        log.entry(classes, overProps);
+        this.retainRelativeClasses(classes, overProps, false);
+        log.exit();
+    }
+
+    /**
+     * Modify {@code classes} to either retain leaf classes or parent classes over 
+     * the specified {@code Set} of {@code OWLPropertyExpression}, depending on 
+     * {@code retainLeaves}. {@code classes} will be modified as a result of this call 
+     * (optional operation).
+     * 
+     * @param classes       A {@code Set} of {@code OWLClass}es to be filtered.
+     * @param overProps     A {@code Set} of {@code OWLPropertyExpression}s allowing 
+     *                      to restrain the relations considered. Can be {@code null} 
+     *                      for no restrictions.
+     * @param retainLeaves  A {@code boolean} indicating, when {@code true}, that leaves 
+     *                      should be retained. Otherwise, parent classes should be retain 
+     *                      and child classes removed.
+     * @see #retainLeafClasses(Set, Set)
+     * @see #retainParentClasses(Set, Set)
+     */
+    //suppress warning because the getAncestors method of owltools uses unparameterized 
+    //generic OWLPropertyExpression, so we need to do the same. 
+    private void retainRelativeClasses(Set<OWLClass> classes,  
+            @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps, 
+            boolean retainLeaves) {
+        log.entry(classes, overProps, retainLeaves);
         
         Set<OWLObject> toRemove = new HashSet<OWLObject>();
         for (OWLClass cls: classes) {
-            Set<OWLObject> ancestors = this.getWrapper().getAncestors(cls, overProps);
+            Set<OWLNamedObject> ancestors = 
+                    this.getWrapper().getNamedAncestorsWithGCI(cls, overProps);
             //just to be sure, in case of cycles?
             ancestors.remove(cls);
-            log.trace("Ancestors retrieved for {}: {}", cls, ancestors);
-            toRemove.addAll(ancestors);
+            log.trace("Relatives retrieved for {}: {}", cls, ancestors);
+            if (retainLeaves) {
+                toRemove.addAll(ancestors);
+            } else if (!Collections.disjoint(classes, ancestors)) {
+                toRemove.add(cls);
+            }
         }
         classes.removeAll(toRemove);
         log.trace("Resulting Set after filtering: {}", classes);

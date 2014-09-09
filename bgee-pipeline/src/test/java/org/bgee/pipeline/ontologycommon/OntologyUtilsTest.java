@@ -759,6 +759,49 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
+     * Test the method {@link OntologyUtils#retainParentClasses(Set, Set)}
+     */
+    @Test
+    public void shouldRetainParentClasses() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/minDistance.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+        @SuppressWarnings("rawtypes")
+        Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
+                Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
+                        OntologyUtils.PART_OF_ID)));
+        
+
+        Set<OWLClass> setToModify = new HashSet<OWLClass>(Arrays.asList(cls1, cls2));
+        Set<OWLClass> expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls1));
+        utils.retainParentClasses(setToModify, null);
+        assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls1, cls2, cls4));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls1));
+        utils.retainParentClasses(setToModify, null);
+        assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls3, cls4, cls5));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls3, cls4));
+        utils.retainParentClasses(setToModify, null);
+        assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls3, cls4, cls5));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls3, cls4, cls5));
+        utils.retainParentClasses(setToModify, overProps);
+        assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
+    }
+    
+    /**
      * Test the method {@link OntologyUtils#mergeLists(List, List)}.
      * @throws IOException 
      * @throws OBOFormatParserException 

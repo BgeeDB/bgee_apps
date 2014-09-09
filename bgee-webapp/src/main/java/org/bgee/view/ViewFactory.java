@@ -21,7 +21,7 @@ import org.bgee.controller.RequestParameters;
  * @see org.bgee.view.html.HtmlFactory
  * @see org.bgee.view.xml.XmlFactory
  * @see org.bgee.view.dsv.DsvFactory
- * @see TestFactoryProvider
+ * @see ViewFactoryProvider
  * 
  */
 public abstract class ViewFactory

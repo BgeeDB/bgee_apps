@@ -797,6 +797,7 @@ public class RequestParameters {
         try {
             // warning, you need to add an attribut to the connector in server.xml  
             // in order to get the utf-8 encoding working : URIEncoding="UTF-8"
+            // See https://wiki.apache.org/tomcat/FAQ/CharacterEncoding#Q8
             encodeString = java.net.URLEncoder.encode(url, "UTF-8");
         } catch (Exception e) {
             log.error("Error while URLencoding", e);
@@ -833,6 +834,27 @@ public class RequestParameters {
         return log.exit(this.URLParametersInstance.getParamData());
     }
 
+    /**
+     * Return the URL corresponding to this {@code RequestParameters} instance using "&" as
+     * parameters separator.
+     * 
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     * 
+     * @return  A {@code String} that contains the URL corresponding to the current state of the request. 
+     *          It will change every time a parameter is modified
+     *                                              
+     * @throws RequestParametersNotStorableException    if an error occur while trying to use the
+     *                                                  key or to write the query string in a file
+     * 
+     */
+    public String getRequestURL() throws RequestParametersNotStorableException
+    {
+        log.entry();
+        this.generateParametersQuery("&");
+        return log.exit(this.parametersQuery);
+    }
+    
     /**
      * Return the URL corresponding to this {@code RequestParameters} instance
      * 

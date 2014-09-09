@@ -31,7 +31,7 @@ import org.junit.rules.Timeout;
  * @since Bgee 13
  */
 public class RequestParametersTest {
-    
+
     /**
      * A {@code Timeout} whose only purpose is to force JUnit to run independent thread
      * for each test, which is important because of the "per-thread singleton" behavior of
@@ -78,7 +78,7 @@ public class RequestParametersTest {
         testURLParameters = new TestURLParameters();	
 
     }
-    
+
     /**
      * Reset the properties to avoid to disturb other tests
      */
@@ -113,10 +113,18 @@ public class RequestParametersTest {
         .thenReturn(new String[]{"STRING1"}); // for testLoadWrongFormatValue
 
         when(mockHttpServletRequest.getParameterValues("test_boolean"))
-        .thenReturn(new String[]{"true","false"});
+        .thenReturn(new String[]{"true","false"})
+        .thenReturn(new String[]{"true","false"}) // for requestParametersWithNoKey
+        .thenReturn(new String[]{"false","true"}); // for requestParametersHavingAKey :
+                                                   // wrong values, should not be used if
+                                                   // the key is use as expected
 
         when(mockHttpServletRequest.getParameterValues("test_integer"))
-        .thenReturn(new String[]{"1234","2345"});
+        .thenReturn(new String[]{"1234","2345"})
+        .thenReturn(new String[]{"1234","2345"}) // for requestParametersWithNoKey
+        .thenReturn(new String[]{"9999","9999"}); // for requestParametersHavingAKey :
+                                                  // wrong values, should not be used if
+                                                  // the key is use as expected
 
         // the first time, do not return a key, the second time provide a key.
         when(mockHttpServletRequest.getParameter("data"))
@@ -125,9 +133,9 @@ public class RequestParametersTest {
         .thenReturn("cde384a208277a175428167464e49bf9ee3ee831");
         //for requestParametersHavingAKey
 
-        // To ensure that the key is generated and written on the disk, generate
-        // a request parameter with parameters corresponding to the
-        // key cde384a208277a175428167464e49bf9ee3ee831 and call getRequestURL
+        // To ensure that the key is generated and written on the disk before the tests start,
+        // generate a request parameter with parameters corresponding to the
+        // key cde384a208277a175428167464e49bf9ee3ee831 and call getRequestURL on it.
         // The separator used in the tests is not the default separator "&", but the key 
         // still corresponds to the hash of the value with "&" between parameters.
         // This checks that the key is always generated with "&", no matter which separator
@@ -157,13 +165,19 @@ public class RequestParametersTest {
     MultipleValuesNotAllowedException, RequestParametersNotFoundException, WrongFormatException{
 
         // Check that the query returned corresponds to the parameters declared in
-        // the mockHttpServletRequest.
+        // the mockHttpServletRequest. Do it with the default parameters separator and with
+        // a custom one
+
+        assertEquals("Incorrect query returned ","test_string=string1%26test_integer="
+                + "1234%26test_integer=2345%26test_boolean=true%26test_boolean="
+                + "false",this.requestParametersWithNoKey.getRequestURL());
+
         assertEquals("Incorrect query returned ","test_string=string1%2Btest_integer="
                 + "1234%2Btest_integer=2345%2Btest_boolean=true%2Btest_boolean="
                 + "false",this.requestParametersWithNoKey.getRequestURL("+"));
 
         // Add a parameter value to exceed the threshold over which a key is used
-        // (110 for tests),
+        // (120 for this test),
         // and check that indeed, a key is present after a new call of 
         // getRequestURL(), with still test_string written because
         // it is non storable
@@ -175,12 +189,13 @@ public class RequestParametersTest {
                         + "%2Bdata=cde384a208277a175428167464e49bf9ee3ee831", 
                         this.requestParametersWithNoKey.getRequestURL("+"));
 
-
         // Check that the storable parameters are loaded correctly from the 
         // provided key
-        // and that getRequestURL() returns it correctly with the 
+        // and that getRequestURL() returns the key correctly with the 
         // non storable parameters as well.
-
+        assertEquals("Parameters are not correctly loaded from the key ", 
+                "[1234, 2345, 987654321]",this.requestParametersHavingAKey.getValues(
+                        testURLParameters.getParamTestInteger()).toString());
         assertEquals("Incorrect query returned ", 
                 "test_string=string1"
                         + "%2Bdata=cde384a208277a175428167464e49bf9ee3ee831", 

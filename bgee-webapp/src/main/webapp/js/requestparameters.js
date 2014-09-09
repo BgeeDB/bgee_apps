@@ -105,6 +105,14 @@ function requestParameters(queryString){
         }
     };
     /**
+     * Generate the URL from the current state of the parameters using "&" as parameters separator
+     *                              
+     * @return  A {@code String} that is the generated query
+     */
+    this.getRequestURL = function(){
+        this.getRequestURL("&");
+    };
+    /**
      * Generate the URL from the current state of the parameters
      * 
      * @param parametersSeparator   A {@code String} that is used as parameters separator in the URL

@@ -34,7 +34,7 @@ public class TestFactory extends ViewFactory
     public DownloadDisplay getDownloadDisplay(BgeeProperties prop)  throws IOException
     {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
-                ((TestURLParameters)this.requestParameters.getURLParametersInstance())
+                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
             return new TestDownloadDisplay(this.response, this.requestParameters, prop);
         }

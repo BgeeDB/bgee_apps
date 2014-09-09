@@ -119,7 +119,7 @@ public class RequestParameters {
      * 
      * @see URLParameters
      */
-    private final URLParameters URLParametersInstance;
+    private final URLParameters urlParametersInstance;
 
     /**
      * Name of the HTTP method with which this request was made, for example, GET, POST, or PUT.
@@ -143,20 +143,20 @@ public class RequestParameters {
     /**
      * Default constructor. 
      * 
-     * @param URLParametersInstance     A instance of {@code URLParameters} that 
+     * @param urlParametersInstance     A instance of {@code URLParameters} that 
      *                                  is injected to provide the available parameters
      *                                  list. 
      *                                  
      * @param prop                      An instance of {@code BgeeProperties}  that is injected 
      *                                  to provide the all the properties values
      */
-    public RequestParameters(URLParameters URLParametersInstance, BgeeProperties prop)  {
-        log.entry(URLParametersInstance,prop);
+    public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop)  {
+        log.entry(urlParametersInstance,prop);
 
         // set the properties and then call the constructor method.
         this.prop = prop;
         this.encodeUrl = prop.isEncodeUrl();
-        this.URLParametersInstance = URLParametersInstance;
+        this.urlParametersInstance = urlParametersInstance;
         //to avoid duplicating methods, 
         //here we simulate a HttpServletRequest with an empty query string, 
         //so that all parameters will be initialized empty
@@ -184,7 +184,7 @@ public class RequestParameters {
      * @param request               The HttpServletRequest object corresponding to the current 
      *                              request to the server.
      * 
-     * @param URLParametersInstance An instance of {@code URLParameters} that 
+     * @param urlParametersInstance An instance of {@code URLParameters} that 
      *                              is injected to provide the available parameters
      *                              list. 
      *                              
@@ -212,16 +212,16 @@ public class RequestParameters {
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      */
-    public RequestParameters(HttpServletRequest request, URLParameters URLParametersInstance,
+    public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
             BgeeProperties prop)
                     throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
                     MultipleValuesNotAllowedException, WrongFormatException {
-        log.entry(request, URLParametersInstance, prop);
+        log.entry(request, urlParametersInstance, prop);
 
         // set the properties and then call the constructor method.
         this.prop = prop;
         this.encodeUrl = prop.isEncodeUrl();
-        this.URLParametersInstance = URLParametersInstance;
+        this.urlParametersInstance = urlParametersInstance;
         this.httpMethod = request.getMethod();
         this.constructor(request);
 
@@ -366,7 +366,7 @@ public class RequestParameters {
         log.entry(request, loadStorable);
 
         // Browse all available parameters
-        for (URLParameters.Parameter<?> parameter : this.URLParametersInstance.getList()){    
+        for (URLParameters.Parameter<?> parameter : this.urlParametersInstance.getList()){    
             // If it is a param that has the desired isStorable status, proceed...
             if (loadStorable || !parameter.isStorable()){
                 // Fetch the string values from the URL
@@ -675,7 +675,7 @@ public class RequestParameters {
         String urlFragment = "";
 
         // Browse all available parameters
-        for (URLParameters.Parameter<?> parameter : this.URLParametersInstance.getList()){
+        for (URLParameters.Parameter<?> parameter : this.urlParametersInstance.getList()){
 
             // If it is one of the param to include, proceed...
             if((includeStorable && parameter.isStorable()) || (includeNonStorable 
@@ -831,7 +831,7 @@ public class RequestParameters {
      */
     private Parameter<String> getKeyParam(){
         log.entry();
-        return log.exit(this.URLParametersInstance.getParamData());
+        return log.exit(this.urlParametersInstance.getParamData());
     }
 
     /**
@@ -854,7 +854,7 @@ public class RequestParameters {
         this.generateParametersQuery("&");
         return log.exit(this.parametersQuery);
     }
-    
+
     /**
      * Return the URL corresponding to this {@code RequestParameters} instance
      * 
@@ -1013,29 +1013,7 @@ public class RequestParameters {
      */
     public RequestParameters cloneWithAllParameters(){
         log.entry();
-
-        //to avoid duplicating methods, 
-        //we we simulate a HttpServletRequest with parameters corresponding by a query string we provide 
-        //holding storable parameters of this object
-
-        String queryString = this.generateParametersQuery(true, true, "&");
-        BgeeHttpServletRequest request = new BgeeHttpServletRequest(this.urlDecode(queryString));
-
-        RequestParameters clonedRequestParameters = null;
-        try {
-            clonedRequestParameters = new RequestParameters(request, 
-                    this.URLParametersInstance.getClass().newInstance(),this.prop);
-        } catch ( RequestParametersNotFoundException
-                | RequestParametersNotStorableException
-                | MultipleValuesNotAllowedException | WrongFormatException e) {
-            // In this particular case, should never be thrown.
-            assert false: "Unreachable code reached in cloneWithAllParameters";
-        } catch (InstantiationException | IllegalAccessException e) {
-            // Do nothing but log the event
-            log.throwing(e);
-        }
-
-        return log.exit(clonedRequestParameters);
+        return log.exit(this.cloneRequestParameter(true));
     }
 
     /**
@@ -1048,28 +1026,38 @@ public class RequestParameters {
      */
     public RequestParameters cloneWithStorableParameters(){
         log.entry();
+        return log.exit(this.cloneRequestParameter(false));
+    }
 
+    /**
+     * Method that actually proceed to the cloning and is called by 
+     * {@link #cloneWithAllParameters()} and {@link #cloneWithStorableParameters()}
+     * @param includeNonStorable    A boolean to tell whether to keep the non storable parameters
+     * @return     a new {@code RequestParameters} object, with or without the non storable 
+     *             parameters depending on {@code includeNonStorable}
+     */
+    private RequestParameters cloneRequestParameter(boolean includeNonStorable){
+        log.entry(includeNonStorable);
         //to avoid duplicating methods, 
-        //we we simulate a HttpServletRequest with parameters corresponding by 
-        // a query string we provide 
+        //we we simulate a HttpServletRequest with parameters corresponding by a query string we provide 
         //holding storable parameters of this object
-
-        String queryString = this.generateParametersQuery(true, false, "&");
+        String queryString = this.generateParametersQuery(true, includeNonStorable, "&");
         BgeeHttpServletRequest request = new BgeeHttpServletRequest(this.urlDecode(queryString));
-
         RequestParameters clonedRequestParameters = null;
         try {
             clonedRequestParameters = new RequestParameters(request, 
-                    this.URLParametersInstance.getClass().newInstance(),this.prop);
-            // Add the key which is not a storable parameters and was not included
-            clonedRequestParameters.addValue(this.getKeyParam(), 
-                    this.getFirstValue(this.getKeyParam()));
+                    this.urlParametersInstance.getClass().newInstance(),this.prop);
+            if(! includeNonStorable){
+                // Add the key which is not a storable parameters and was not included
+                clonedRequestParameters.addValue(this.getKeyParam(), 
+                        this.getFirstValue(this.getKeyParam()));
+            }
         } catch ( RequestParametersNotFoundException
                 | RequestParametersNotStorableException
-                | MultipleValuesNotAllowedException e) {
+                | MultipleValuesNotAllowedException | WrongFormatException e) {
             // In this particular case, should never be thrown.
-            assert false: "Unreachable code reached in cloneWithStorableParameters";
-        } catch (InstantiationException | IllegalAccessException | WrongFormatException e) {
+            assert false: "Unreachable code reached in cloneWithAllParameters";
+        } catch (InstantiationException | IllegalAccessException e) {
             // Do nothing but log the event
             log.throwing(e);
         }
@@ -1080,8 +1068,8 @@ public class RequestParameters {
      * @return  An instance of {@code URLParameters} that provides all the
      *          {@code URLParameters.Parameter} that can be present in the request
      */
-    public URLParameters getURLParametersInstance() {
-        return URLParametersInstance;
+    public URLParameters getUrlParametersInstance() {
+        return urlParametersInstance;
     }
 
     /**
@@ -1101,8 +1089,8 @@ public class RequestParameters {
      */
     public boolean isXmlDisplayType() {
         log.entry();
-        if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()) != null &&
-                this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("xml")){
+        if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals("xml")){
             return log.exit(true);
         }
         return log.exit(false);
@@ -1116,8 +1104,8 @@ public class RequestParameters {
      */
     public boolean isCsvDisplayType() {
         log.entry();
-        if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()) != null &&
-                this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("csv")){
+        if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals("csv")){
             return log.exit(true);
         }
         return log.exit(false);
@@ -1131,8 +1119,8 @@ public class RequestParameters {
      */
     public boolean isTsvDisplayType() {
         log.entry();
-        if(this.getFirstValue(this.URLParametersInstance.getParamDisplayType()) != null &&
-                this.getFirstValue(this.URLParametersInstance.getParamDisplayType()).equals("tsv")){
+        if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals("tsv")){
             return log.exit(true);
         }
         return log.exit(false);
@@ -1151,8 +1139,8 @@ public class RequestParameters {
     public boolean isAnAjaxRequest()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamAction()) != null &&
-                this.getFirstValue(this.URLParametersInstance.getParamAction()).toLowerCase()
+        if (this.getFirstValue(this.urlParametersInstance.getParamAction()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamAction()).toLowerCase()
                 .startsWith("ajax_")) {
             return log.exit(true);
         }
@@ -1167,8 +1155,8 @@ public class RequestParameters {
      */
     public boolean isTheHomePage(){
         log.entry();
-        if(this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("about")){
+        if(this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("about")){
             return log.exit(true);
         }
         return log.exit(false);
@@ -1184,8 +1172,8 @@ public class RequestParameters {
     public boolean isAnAboutPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("about")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("about")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1201,8 +1189,8 @@ public class RequestParameters {
     public boolean isAnAdminPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("admin")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("admin")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1218,8 +1206,8 @@ public class RequestParameters {
     public boolean isAnAnatomyPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("anatomy")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("anatomy")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1235,8 +1223,8 @@ public class RequestParameters {
     public boolean isADocumentationPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("documentation")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("documentation")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1251,8 +1239,8 @@ public class RequestParameters {
      */
     public boolean isADownloadPageCategory(){
         log.entry();
-        if(this.getFirstValue(this.URLParametersInstance.getParamPage()) != null &&
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("download")){
+        if(this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("download")){
             return log.exit(true);
         }
         return log.exit(false);
@@ -1268,8 +1256,8 @@ public class RequestParameters {
     public boolean isAnExpressionPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("expression")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("expression")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1285,8 +1273,8 @@ public class RequestParameters {
     public boolean isAGenePageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("gene")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1302,8 +1290,8 @@ public class RequestParameters {
     public boolean isAGeneFamilyPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("gene_family")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene_family")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1319,8 +1307,8 @@ public class RequestParameters {
     public boolean isALogPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) != null &&
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("log")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("log")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1336,8 +1324,8 @@ public class RequestParameters {
     public boolean isANewsPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("news")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("news")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1353,8 +1341,8 @@ public class RequestParameters {
     public boolean isARegistrationPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) != null &&
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("registration")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("registration")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1370,8 +1358,8 @@ public class RequestParameters {
     public boolean isASearchPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("search")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("search")) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1387,8 +1375,8 @@ public class RequestParameters {
     public boolean isATopOBOPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.URLParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.URLParametersInstance.getParamPage()).equals("top_anat")) {
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("top_anat")) {
             return log.exit(true);
         }
         return log.exit(false);

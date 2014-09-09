@@ -117,14 +117,14 @@ public class RequestParametersTest {
         .thenReturn(new String[]{"true","false"}) // for requestParametersWithNoKey
         .thenReturn(new String[]{"false","true"}); // for requestParametersHavingAKey :
                                                    // wrong values, should not be used if
-                                                   // the key is use as expected
+                                                   // the key is used as expected
 
         when(mockHttpServletRequest.getParameterValues("test_integer"))
         .thenReturn(new String[]{"1234","2345"})
         .thenReturn(new String[]{"1234","2345"}) // for requestParametersWithNoKey
         .thenReturn(new String[]{"9999","9999"}); // for requestParametersHavingAKey :
                                                   // wrong values, should not be used if
-                                                  // the key is use as expected
+                                                  // the key is used as expected
 
         // the first time, do not return a key, the second time provide a key.
         when(mockHttpServletRequest.getParameter("data"))

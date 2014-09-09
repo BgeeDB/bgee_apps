@@ -634,7 +634,7 @@ public class OntologyUtils {
         //we will iterate children of classInspected. 
         Set<OWLClass> children = new HashSet<OWLClass>();
         if (overProps != null && !overProps.isEmpty()) {
-            for (OWLGraphEdge incomingEdge: this.getWrapper().getIncomingEdges(classInspected)) {
+            for (OWLGraphEdge incomingEdge: this.getWrapper().getIncomingEdgesWithGCI(classInspected)) {
                 OWLQuantifiedProperty qp = incomingEdge.getSingleQuantifiedProperty();
                 if (incomingEdge.isSourceNamedObject() && 
                     (qp.isSomeValuesFrom() && overProps.contains(qp.getProperty()) || 
@@ -644,7 +644,7 @@ public class OntologyUtils {
                 }
             }
         } else {
-            children = this.getWrapper().getOWLClassDirectDescendants(classInspected);
+            children = this.getWrapper().getOWLClassDirectDescendantsWithGCI(classInspected);
         }
         //we discard children that are not in classOrder
         if (classOrder != null) {
@@ -1298,7 +1298,7 @@ public class OntologyUtils {
         log.entry(object);
         
         Set<OWLGraphEdge> isAPartOfEdges = new HashSet<OWLGraphEdge>();
-        for (OWLGraphEdge edge: wrapper.getOutgoingEdges(object)) {
+        for (OWLGraphEdge edge: wrapper.getOutgoingEdgesWithGCI(object)) {
             //consider only named target
             if (!edge.isTargetNamedObject()) {
                 continue;
@@ -1557,7 +1557,7 @@ public class OntologyUtils {
             OWLClass currentClass = currentStep.keySet().iterator().next();
             int nextDistance = currentStep.values().iterator().next() + 1;
             
-            for (OWLGraphEdge outgoingEdge: this.getWrapper().getOutgoingEdges(currentClass)) {
+            for (OWLGraphEdge outgoingEdge: this.getWrapper().getOutgoingEdgesWithGCI(currentClass)) {
                 if (outgoingEdge.getQuantifiedPropertyList().size() > 1) {
                     continue;
                 }
@@ -1577,7 +1577,7 @@ public class OntologyUtils {
                             //what was the shortest path
                             minDistance = Math.min(minDistance, nextDistance);
                         }
-                    } else if (this.getWrapper().getAncestors(potentialNextStep, overProps).
+                    } else if (this.getWrapper().getNamedAncestorsWithGCI(potentialNextStep, overProps).
                             contains(target)) {
                         //target on path, continue walk
                         walks.offerFirst(Collections.singletonMap(potentialNextStep, 
@@ -1614,8 +1614,8 @@ public class OntologyUtils {
         log.entry(cls1, cls2, overProps);
         
         Set<OWLClass> commonAncestors = new HashSet<OWLClass>();
-        Set<OWLObject> ancestorsStart = this.getWrapper().getAncestors(cls1, overProps);
-        Set<OWLObject> ancestorsEnd = this.getWrapper().getAncestors(cls2, overProps);
+        Set<OWLNamedObject> ancestorsStart = this.getWrapper().getNamedAncestorsWithGCI(cls1, overProps);
+        Set<OWLNamedObject> ancestorsEnd = this.getWrapper().getNamedAncestorsWithGCI(cls2, overProps);
         ancestorsStart.retainAll(ancestorsEnd);
         for (OWLObject ancestor: ancestorsStart) {
             if (ancestor instanceof OWLClass) {
@@ -1624,7 +1624,7 @@ public class OntologyUtils {
         }
         Set<OWLClass> lcas = new HashSet<OWLClass>(commonAncestors);
         for (OWLObject ancestor: commonAncestors) {
-            lcas.removeAll(this.getWrapper().getAncestors(ancestor, overProps));
+            lcas.removeAll(this.getWrapper().getNamedAncestorsWithGCI(ancestor, overProps));
         }
         
         return log.exit(lcas);

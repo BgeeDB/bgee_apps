@@ -430,7 +430,6 @@
                         can still skip unit tests by using skipTests. See the documentation of the 
                         property skip.surefire.tests in this file for more details. -->
                     <skipTests>${skip.surefire.tests}</skipTests>
-                    <argLine>-Xmx3g</argLine>
                 </configuration>
             </plugin>
 

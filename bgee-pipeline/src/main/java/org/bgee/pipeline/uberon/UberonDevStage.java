@@ -27,6 +27,7 @@ import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -369,7 +370,7 @@ public class UberonDevStage extends UberonCommon {
                 }
                 
                 //remove children
-                for (OWLClass child: manipulator.getOwlGraphWrapper().getOWLClassDescendants(parent)) {
+                for (OWLClass child: manipulator.getOwlGraphWrapper().getOWLClassDescendantsWithGCI(parent)) {
                     if (!manipulator.removeClass(child)) {
                         throw log.throwing(new AssertionError("An OWLClass could not be removed: " + 
                                 child));
@@ -493,8 +494,8 @@ public class UberonDevStage extends UberonCommon {
             return log.exit(nestedSetModel);
         }
         //then check if we have a nested set model in cache for one of its ancestor
-        Set<OWLObject> ancestors = 
-                this.getOntologyUtils().getWrapper().getAncestors(root, this.overPartOf);
+        Set<OWLNamedObject> ancestors = 
+                this.getOntologyUtils().getWrapper().getNamedAncestorsWithGCI(root, this.overPartOf);
         ancestors.retainAll(this.nestedSetModels.keySet());
         if (!ancestors.isEmpty()) {
             //select any ancestor with a nested set model in cache
@@ -521,7 +522,7 @@ public class UberonDevStage extends UberonCommon {
             //multi-species children).
             //Use a TreeMap so that ordering between species is predictable
             Map<Integer, Set<OWLClass>> children = new TreeMap<Integer, Set<OWLClass>>();
-            for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdges(classWalked)) {
+            for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdgesWithGCI(classWalked)) {
                 if ((this.getOntologyUtils().isPartOfRelation(incomingEdge) || 
                         this.getOntologyUtils().isASubClassOfEdge(incomingEdge)) && 
                         incomingEdge.isSourceNamedObject()) {
@@ -751,7 +752,7 @@ public class UberonDevStage extends UberonCommon {
             //the most precise and independent selected stages
             Set<OWLObject> ancestors = new HashSet<OWLObject>();
             for (OWLClass selectedStage: selectedStages) {
-                ancestors.addAll(wrapper.getAncestors(selectedStage, this.overPartOf));
+                ancestors.addAll(wrapper.getNamedAncestorsWithGCI(selectedStage, this.overPartOf));
             }
             selectedStages.removeAll(ancestors);
             
@@ -839,9 +840,10 @@ public class UberonDevStage extends UberonCommon {
                         precedingClass, directEdgesAlreadyTried);
                 Set<OWLGraphEdge> outgoingEdges;
                 if (!directEdgesAlreadyTried) {
-                    outgoingEdges = wrapper.getOutgoingEdges(precedingClass);
+                    outgoingEdges = wrapper.getOutgoingEdgesWithGCI(precedingClass);
                 } else {
-                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupProps(precedingClass);
+                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(
+                            precedingClass);
                 }
                 
                 //check first the immediately_preceded_by relations, there should be only one 
@@ -989,9 +991,10 @@ public class UberonDevStage extends UberonCommon {
                         classToOrder, directEdgesAlreadyTried);
                 Set<OWLGraphEdge> outgoingEdges;
                 if (!directEdgesAlreadyTried) {
-                    outgoingEdges = wrapper.getOutgoingEdges(classToOrder);
+                    outgoingEdges = wrapper.getOutgoingEdgesWithGCI(classToOrder);
                 } else {
-                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupProps(classToOrder);
+                    outgoingEdges = wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(
+                            classToOrder);
                 }
                 for (OWLGraphEdge outgoingEdge: outgoingEdges) {
                     log.trace("Testing if edge is valid preceded_by relation: {}", 
@@ -1052,7 +1055,8 @@ public class UberonDevStage extends UberonCommon {
             matches.add((OWLClass) cls);
         } else {
             //test if cls is a child of some of the OWLClasses in classes
-            Set<OWLObject> partOfAncestors = this.getOntologyUtils().getWrapper().getAncestors(cls, 
+            Set<OWLNamedObject> partOfAncestors = 
+                    this.getOntologyUtils().getWrapper().getNamedAncestorsWithGCI(cls, 
                     this.overPartOf);
             //partOfAncestors.retainAll(classes);
             for (OWLObject ancestor: partOfAncestors) {

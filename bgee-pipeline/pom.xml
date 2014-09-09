@@ -68,6 +68,7 @@
         <finalName>bgee-pipeline-${project.version}</finalName>
 
         <plugins>
+        
 
             <!-- The use of the maven-assembly-plugin has been replaced by 
                 the maven-shade-plugin, because it allows to manage files from the dependencies 

@@ -1,14 +1,12 @@
 package org.bgee.controller.servletutils;
 
 import java.io.IOException;
-import java.net.URL;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.constructs.blocking.LockTimeoutException;
 import net.sf.ehcache.constructs.web.AlreadyCommittedException;
@@ -44,8 +42,9 @@ import org.bgee.controller.exception.WrongFormatException;
  * kept. Thus a call to {@code RequestParameters#isACacheableRequest} is made before putting
  * any request in cache.
  * 
- * To use ehcache, the configuration xml file ehcache-production.xml has to be present in
- * the resources folder.
+ * To use ehcache, the ehcache configuration xml file has to be present in
+ * the resources folder
+ * 
  * 
  * @author Mathieu Seppey
  * @version Bgee 13, Aug 2014
@@ -55,6 +54,7 @@ import org.bgee.controller.exception.WrongFormatException;
  * @see org.bgee.controller.RequestParameters
  * @see org.bgee.controller.FrontController
  * @see #calculateKey(HttpServletRequest)
+ * @see BgeeProperties#getWebpagesCacheConfigFileName()
  * @since Bgee 13
  */
 public class BgeeWebCache extends CachingFilter
@@ -143,7 +143,8 @@ public class BgeeWebCache extends CachingFilter
                 // Not cachable, leave the caching process
                 chain.doFilter(request, response);
             }
-        } catch (RequestParametersNotFoundException | WrongFormatException | RequestParametersNotStorableException
+        } catch (RequestParametersNotFoundException | WrongFormatException
+                | RequestParametersNotStorableException
                 | MultipleValuesNotAllowedException | PageNotFoundException e) {
             // If an Exception is thrown by the RequestParameter, call the next element in chain
             // and leave the caching process. The corresponding error page will be displayed and
@@ -155,30 +156,16 @@ public class BgeeWebCache extends CachingFilter
 
     /**
      * Gets the {@code CacheManager} for this {@code CachingFilter}.
-     * It creates a cache based on the config xml file {@code ehcache-production.xml}
-     * that has to be in the resources folder. A second config file called
-     * ehcache-lowmemory.xml can be added as backup to avoid a crash if the server has not
-     * enough memory to load the production cache.
+     * It creates a cache based on the config xml file declared in 
+     * {@code BgeeProperties#getWebpagesCacheConfigFileName()}
+     * that has to be in the resources folder.
      */
     @Override
     protected CacheManager getCacheManager() {
         log.entry();
-        try{
-            return log.exit(CacheManager.create(BgeeWebCache.class
-                    .getClassLoader().getResource("/ehcache-production.xml")));
-        }
-        catch(CacheException e){
-            // In case the server has not enough memory to load the production cache,
-            // it loads a lowmemory config file instead. It is likely to happen in 
-            // developper's environment, but if it happen in prod, the cache will be useless
-            log.warn("Not enough memory to use the prod ehcache config file, try to load the lowmemory config file");
-            URL lowmemfile = BgeeWebCache.class.getClassLoader()
-                    .getResource("/ehcache-lowmemory.xml");
-            // If the low memory file is missing, let the initial exception be thrown
-            if(lowmemfile == null){
-                throw(e);
-            }
-            return log.exit(CacheManager.create(lowmemfile));       
-        }
+        return log.exit(CacheManager.create(BgeeWebCache.class
+                .getClassLoader().getResource(BgeeProperties.getBgeeProperties()
+                        .getWebpagesCacheConfigFileName())));
+
     }
 }

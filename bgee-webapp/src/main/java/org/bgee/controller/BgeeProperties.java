@@ -123,6 +123,13 @@ public class BgeeProperties
             "org.bgee.webapp.encodeUrl";
 
     /**
+     * A {@code String} that is the key to access to the System property that contains the name
+     * of the file in the classpath that is read to initialize the webapp web pages cache
+     */
+    public final static String WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY = 
+            "org.bgee.webapp.webpages-cache.file";
+
+    /**
      * A {@code ConcurrentMap} used to store {@code BgeeProperties}, 
      * associated to their ID as key (corresponding to the ID of the thread 
      * who requested the {@code BgeeProperties}). 
@@ -204,6 +211,13 @@ public class BgeeProperties
      * Default value is {@code true}.
      */
     private final boolean encodeUrl;
+    
+    /**
+     * {@code String} that contains the name of the web pages cache config file in the
+     * resources folder. To reach the file, the resources folder has to be added in front of
+     * this properties. The default value is ehcache-webpages.xml
+     */
+    private final String webpagesCacheConfigFileName;
 
     /**
      * Private constructor, can be only called through the use of one of the
@@ -270,6 +284,8 @@ public class BgeeProperties
                 URL_MAX_LENGTH_KEY, 120);
         encodeUrl = getBooleanOption(prop, sysProps, fileProps, 
                 ENCODE_URL_KEY, true);
+        webpagesCacheConfigFileName = getStringOption(prop, sysProps, fileProps, 
+                WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "/ehcache-webpages.xml");
         log.info("Initialization done.");
         log.exit();
     }
@@ -538,6 +554,15 @@ public class BgeeProperties
      */
     public boolean isEncodeUrl() {
         return encodeUrl;
+    }
+    
+    /**
+     * @return  A {@code String} that contains the name of the web pages cache config file in the
+     *          resources folder. To reach the file, the resources folder has to be added in front of
+     *          this properties. The default value is ehcache-webpages.xml
+     */
+    public String getWebpagesCacheConfigFileName() {
+        return webpagesCacheConfigFileName;
     }
 
 }

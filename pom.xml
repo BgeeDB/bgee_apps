@@ -298,6 +298,20 @@
                 <scope>compile</scope>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>2.0.2</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.7</version>
+                <scope>compile</scope>
+            </dependency>
+
             <!-- IMPORTANT : Keep this dependency with 'provided' scope even 
                 if it is not used, as ehcache-core is replaced by ehcache-ee to use bigmemory. 
                 The reason is that it is somehow automatically included with ehcache-web 
@@ -397,8 +411,9 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
-            
-            <!-- Install in our local maven repository libraries that are not on Maven -->
+
+            <!-- Install in our local maven repository libraries that are 
+                not on Maven -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

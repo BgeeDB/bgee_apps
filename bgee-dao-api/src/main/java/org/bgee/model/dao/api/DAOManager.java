@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
@@ -914,6 +915,19 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.exit(this.getNewRelationDAO());
     }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.ExpressionCallDAO ExpressionCallDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code ExpressionCallDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO ExpressionCallDAO
+     */
+    public final ExpressionCallDAO getExpressionCallDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewExpressionCallDAO());
+    }
     
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
@@ -1070,4 +1084,12 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code RelationDAO}
      */
     protected abstract RelationDAO getNewRelationDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.ExpressionCallDAO ExpressionCallDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code ExpressionCallDAO}
+     */
+    protected abstract ExpressionCallDAO getNewExpressionCallDAO();
 }

@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -901,5 +902,10 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLRelationDAO getNewRelationDAO() {
         log.entry();
         return log.exit(new MySQLRelationDAO(this));
+    }
+    @Override
+    protected MySQLExpressionCallDAO getNewExpressionCallDAO() {
+        log.entry();
+        return log.exit(new MySQLExpressionCallDAO(this));
     }
 }

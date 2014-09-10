@@ -9,6 +9,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -144,7 +145,12 @@ public abstract class MySQLDAOUser {
     protected RelationDAO getRelationDAO() {
         return this.manager.getRelationDAO();
     }
-
+    /**
+     * @return  A {@code MySQLExpressionCallDAO}.
+     */
+    protected MySQLExpressionCallDAO getExpressionCallDAO() {
+        return (MySQLExpressionCallDAO) this.manager.getExpressionCallDAO();
+    }
     
     /**
      * Start a transaction with the MySQL database. We wrap the potential 

@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
@@ -101,9 +102,12 @@ public class MockDAOManager extends DAOManager {
     protected StageDAO getNewStageDAO() {
         return this.instanceMockManager.getNewStageDAO();
     }
-
     @Override
     protected RelationDAO getNewRelationDAO() {
         return this.instanceMockManager.getNewRelationDAO();
+    }
+    @Override
+    protected ExpressionCallDAO getNewExpressionCallDAO() {
+        return this.instanceMockManager.getNewExpressionCallDAO();
     }
 }

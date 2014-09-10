@@ -57,7 +57,7 @@ public class CommandDownload extends CommandParent
     public void processRequest() throws IOException 
     {
         log.entry();
-        DownloadDisplay display = this.viewFactory.getDownloadDisplay(prop);
+        DownloadDisplay display = this.viewFactory.getDownloadDisplay();
         display.displayDownloadPage();
         log.exit();
     }

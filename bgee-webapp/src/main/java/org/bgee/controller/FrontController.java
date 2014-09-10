@@ -65,7 +65,8 @@ public class FrontController extends HttpServlet {
      * @see ViewFactory
      */
     public FrontController() {
-        this(BgeeProperties.getBgeeProperties(), new URLParameters(), new ViewFactoryProvider());
+        this(BgeeProperties.getBgeeProperties(), new URLParameters(), 
+                new ViewFactoryProvider(BgeeProperties.getBgeeProperties()));
     }
 
     /**
@@ -81,7 +82,8 @@ public class FrontController extends HttpServlet {
      * @see URLParameters
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), new URLParameters(), new ViewFactoryProvider());
+        this(BgeeProperties.getBgeeProperties(prop), new URLParameters(),
+                new ViewFactoryProvider(BgeeProperties.getBgeeProperties(prop)));
     }
 
     /**
@@ -124,7 +126,7 @@ public class FrontController extends HttpServlet {
         }
         if(viewFactoryProvider == null){
             // If the viewFactoryProvider object is null, just use a new instance
-            this.viewFactoryProvider = new ViewFactoryProvider();
+            this.viewFactoryProvider = new ViewFactoryProvider(this.prop);
         }
         else{
             this.viewFactoryProvider = viewFactoryProvider;
@@ -160,7 +162,7 @@ public class FrontController extends HttpServlet {
             //so here we get the default view from the default factory before any exception 
             //can be thrown.
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
-            generalDisplay = factory.getGeneralDisplay(prop);
+            generalDisplay = factory.getGeneralDisplay();
             request.setCharacterEncoding("UTF-8");
             requestParameters = new RequestParameters(request, this.urlParameters, this.prop);
             log.info("Analyzed URL: " + requestParameters.getRequestURL("&"));

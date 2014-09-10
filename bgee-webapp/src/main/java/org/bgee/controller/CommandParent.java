@@ -121,19 +121,4 @@ abstract class CommandParent {
      */
     public abstract void processRequest() throws Exception;
 
-    /**
-     * Method that is called in case of HTTP 404 error
-     */
-    protected void pageNotFound()
-    {
-
-    }
-
-    /**
-     * Method that is called in case of HTTP 500 error
-     */
-    protected void failedRequest()
-    {
-
-    }
 }

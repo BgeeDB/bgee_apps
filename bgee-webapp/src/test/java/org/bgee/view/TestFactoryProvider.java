@@ -1,15 +1,14 @@
 package org.bgee.view;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * This test class extends {@code ViewFactoryProvider} and returns a {@code TestFactory} only 
@@ -26,9 +25,9 @@ public class TestFactoryProvider extends ViewFactoryProvider
     /**
      * Constructor
      */
-    public TestFactoryProvider()
+    public TestFactoryProvider(BgeeProperties prop)
     {
-        super();
+        super(prop);
     }
 
     /**
@@ -50,11 +49,11 @@ public class TestFactoryProvider extends ViewFactoryProvider
     {
                        
         if (displayType == displayTypes.XML) {
-            return new TestFactory(response, requestParameters);
+            return new TestFactory(response, requestParameters, this.prop);
         }
         ViewFactory mockFactory = mock(ViewFactory.class);
         try {
-            when(mockFactory.getGeneralDisplay(any(BgeeProperties.class)))
+            when(mockFactory.getGeneralDisplay())
             .thenReturn(mock(GeneralDisplay.class));
         } catch (IOException e) {
             // Do nothing, should not occur with a mock

@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.dsv.DsvFactory;
 import org.bgee.view.html.HtmlFactory;
@@ -32,13 +33,22 @@ public class ViewFactoryProvider
      * The {@code displayTypes} used as default
      */
     public static final displayTypes DEFAULT = displayTypes.HTML;
+    
+    /**
+     * An instance of {@code BgeeProperties} to provide the all 
+     * the properties values
+     */
+    public final BgeeProperties prop;
    
     /**
      * Constructor
+     * 
+     * @param prop  An instance of {@code BgeeProperties} to provide the all 
+     *              the properties values
      */
-    public ViewFactoryProvider()
+    public ViewFactoryProvider(BgeeProperties prop)
     {
-
+        this.prop = prop;
     }
 
     /**
@@ -100,15 +110,15 @@ public class ViewFactoryProvider
     {
         log.entry(response, displayType, requestParameters);
         if (displayType == displayTypes.XML) {
-            return new XmlFactory(response, requestParameters);
+            return new XmlFactory(response, requestParameters, this.prop);
         }
         if (displayType == displayTypes.CSV) {
-            return new DsvFactory(response, ",", requestParameters);
+            return new DsvFactory(response, ",", requestParameters, this.prop);
         }
         if (displayType == displayTypes.TSV) {
-            return new DsvFactory(response, "\t", requestParameters);
+            return new DsvFactory(response, "\t", requestParameters, this.prop);
         }
-        return log.exit(new HtmlFactory(response, requestParameters));
+        return log.exit(new HtmlFactory(response, requestParameters, this.prop));
     }
 
 }

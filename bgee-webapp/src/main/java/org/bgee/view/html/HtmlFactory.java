@@ -31,23 +31,29 @@ public class HtmlFactory extends ViewFactory
      *                          
      * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
      *                          current request.
+     *                          
+     * @param prop              An instance of {@code BgeeProperties} to provide the all 
+     *                          the properties values
      */
-	public HtmlFactory(HttpServletResponse response, RequestParameters requestParameters)
+	public HtmlFactory(HttpServletResponse response, RequestParameters requestParameters,
+	        BgeeProperties prop)
     {
-    	super(response, requestParameters);
+    	super(response, requestParameters, prop);
     }
     
 	@Override
-	public DownloadDisplay getDownloadDisplay(BgeeProperties prop)  throws IOException
+	public DownloadDisplay getDownloadDisplay()  throws IOException
 	{
-	    log.entry(prop);
-		return log.exit(new HtmlDownloadDisplay(this.response, this.requestParameters, prop));
+	    log.entry();
+		return log.exit(new HtmlDownloadDisplay(this.response, this.requestParameters,
+		        this.prop));
 	}
 
 	@Override
-	public GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException {
-	    log.entry(prop);
-		return log.exit(new HtmlGeneralDisplay(this.response, this.requestParameters, prop));
+	public GeneralDisplay getGeneralDisplay() throws IOException {
+	    log.entry();
+		return log.exit(new HtmlGeneralDisplay(this.response, this.requestParameters,
+		        this.prop));
 	}
     
 }

@@ -54,7 +54,7 @@ public class CommandHome extends CommandParent
     public void processRequest() throws IOException, PageNotFoundException 
     {
         log.entry();
-        GeneralDisplay display = this.viewFactory.getGeneralDisplay(prop);
+        GeneralDisplay display = this.viewFactory.getGeneralDisplay();
 
         if (requestParameters.isTheHomePage()) {
             display.displayAbout();

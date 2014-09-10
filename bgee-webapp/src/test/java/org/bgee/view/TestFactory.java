@@ -19,9 +19,10 @@ import org.bgee.controller.TestURLParameters;
 public class TestFactory extends ViewFactory
 {
     
-    public TestFactory(HttpServletResponse response, RequestParameters requestParameters)
+    public TestFactory(HttpServletResponse response, RequestParameters requestParameters,
+            BgeeProperties prop)
     {
-        super(response, requestParameters);
+        super(response, requestParameters, prop);
     }
     
     @Override
@@ -31,7 +32,7 @@ public class TestFactory extends ViewFactory
      * @param prop  The injected {@code BgeeProperties}
      * @return  A new {@code TestURLParameters} if the parameters are correct, else {@code null}
      */
-    public DownloadDisplay getDownloadDisplay(BgeeProperties prop)  throws IOException
+    public DownloadDisplay getDownloadDisplay()  throws IOException
     {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
@@ -47,7 +48,7 @@ public class TestFactory extends ViewFactory
      * @param prop  A {@code BgeeProperties}
      * @return  {@code null}
      */
-    public GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException {
+    public GeneralDisplay getGeneralDisplay() throws IOException {
         return null;
     }
     

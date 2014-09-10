@@ -13,18 +13,18 @@ import org.bgee.view.ViewFactory;
 public class DsvFactory extends ViewFactory
 {	
 	public DsvFactory(HttpServletResponse response, String localDelimiter,
-	        RequestParameters requestParameters) 
+	        RequestParameters requestParameters, BgeeProperties prop) 
 	{
-		super(response, requestParameters);
+		super(response, requestParameters, prop);
 	}
 
 	@Override
-	public DownloadDisplay getDownloadDisplay(BgeeProperties prop) throws IOException {
+	public DownloadDisplay getDownloadDisplay() throws IOException {
 		return null;
 	}
 
 	@Override
-	public GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException {
+	public GeneralDisplay getGeneralDisplay() throws IOException {
 		return null;
 	}
 

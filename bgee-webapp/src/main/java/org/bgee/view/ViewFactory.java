@@ -26,19 +26,25 @@ import org.bgee.controller.RequestParameters;
  */
 public abstract class ViewFactory
 {
-    
+
     private final static Logger log = LogManager.getLogger(ViewFactory.class.getName());
-    
+
     /**
      * The {@code HttpServletResponse} used to return the result to the client
      */
     protected HttpServletResponse response;
-    
+
     /**
      * The {@code RequestParameters} handling the parameters of the current request, 
      * used for display purposes.
      */
     protected RequestParameters requestParameters;
+    
+    /**
+     * An instance of {@code BgeeProperties} to 
+     * provide the all the properties values
+     */
+    protected BgeeProperties prop;
 
     /**
      * Constructor with injected {@code RequestParameters}
@@ -48,35 +54,34 @@ public abstract class ViewFactory
      * @param requestParameters The {@code RequestParameters} handling the parameters of the 
      *                          current request, to determine the requested displayType, 
      *                          and for display purposes.
+     * @param prop              An instance of {@code BgeeProperties} to provide the all 
+     *                          the properties values
      */
-    public ViewFactory(HttpServletResponse response, RequestParameters requestParameters)
+    public ViewFactory(HttpServletResponse response, RequestParameters requestParameters,
+            BgeeProperties prop)
     {
-        log.entry(response, requestParameters);
+        log.entry(response, requestParameters, prop);
         this.response = response;
         this.requestParameters = requestParameters;
+        this.prop = prop;
         log.exit();
     }
 
-    /**
-     * @param prop                  An instance of {@code BgeeProperties}  that is injected to 
-     *                              provide the all the properties values
-     *                              
+    /**                             
      * @return A {@code GeneralDisplay} instance that is the view to be used
      * 
      * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
      *                      response output.
      */
-    public abstract GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException;
+    public abstract GeneralDisplay getGeneralDisplay() throws IOException;
 
     /**
-     * @param prop                  An instance of {@code BgeeProperties}  that is injected to 
-     *                              provide the all the properties values
      *                              
      * @return A {@code DownloadDisplay} instance that is the view to be used
      * 
      * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
      *                      response output.
      */
-    public abstract DownloadDisplay getDownloadDisplay(BgeeProperties prop) throws IOException;
+    public abstract DownloadDisplay getDownloadDisplay() throws IOException;
 
 }

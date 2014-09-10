@@ -17,23 +17,22 @@ public class XmlFactory extends ViewFactory
     
     private final static Logger log = LogManager.getLogger(XmlFactory.class.getName());
 
-	public XmlFactory(HttpServletResponse response, RequestParameters requestParameters)
+	public XmlFactory(HttpServletResponse response, RequestParameters requestParameters,
+	        BgeeProperties prop)
 	{
-		super(response, requestParameters);
+		super(response, requestParameters, prop);
 	}
 	
 	@Override
-	public DownloadDisplay getDownloadDisplay(BgeeProperties prop) 
+	public DownloadDisplay getDownloadDisplay() 
 	{
-	    log.entry(prop);
-		// TODO Auto-generated method stub
+	    log.entry();
 		return log.exit(null);
 	}
 
 	@Override
-	public GeneralDisplay getGeneralDisplay(BgeeProperties prop) throws IOException {
-	    log.entry(prop);
-		// TODO Auto-generated method stub
+	public GeneralDisplay getGeneralDisplay() throws IOException {
+	    log.entry();
 		return log.exit(null);
 	}
 }

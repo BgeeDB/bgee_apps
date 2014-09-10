@@ -61,6 +61,11 @@ public class ControllerTest {
      * the test, else it will return a mock {@code ViewFactory}
      */
     private ViewFactoryProvider testFactoryProvider;
+    
+    /**
+     * A {@code BgeeProperties} instance used for tests
+     */
+    private BgeeProperties testProperties;
 
     /**
      * Initialize all the mock and real objects involved in the {@code FrontController} 
@@ -74,7 +79,10 @@ public class ControllerTest {
         this.mockHttpServletRequest = mock(HttpServletRequest.class);
         this.mockHttpServletResponse = mock(HttpServletResponse.class);
         this.mockPrintWriter = mock(PrintWriter.class);
-        this.testFactoryProvider = new TestFactoryProvider();
+        Properties prop = new Properties();
+        prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "9999");
+        this.testProperties = BgeeProperties.getBgeeProperties(prop);
+        this.testFactoryProvider = new TestFactoryProvider(this.testProperties);
         // The mock HttpServletResponse provides a mock PrintWriter
         when(this.mockHttpServletResponse.getWriter()).thenReturn(this.mockPrintWriter);
         // The mock HttpServletRequest provides values for three URL parameters
@@ -103,9 +111,7 @@ public class ControllerTest {
         // 1) BgeeProperties : check that the url max length is 9999
         // 2) TestURLParameters : check that test_string parameter exists with "test_string"
         // 3) ViewFactoryProvider : only a TestFactoryProvider can lead to the correct output
-        Properties prop = new Properties();
-        prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "9999");
-        new FrontController(BgeeProperties.getBgeeProperties(prop),new TestURLParameters(),
+        new FrontController(this.testProperties,new TestURLParameters(),
                 this.testFactoryProvider).doRequest(mockHttpServletRequest, 
                         mockHttpServletResponse, false);
         verify(this.mockPrintWriter, times(1)).println(eq("Test page is good !"));

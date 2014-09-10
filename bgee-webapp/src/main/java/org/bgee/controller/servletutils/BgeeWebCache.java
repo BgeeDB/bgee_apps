@@ -11,6 +11,7 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.constructs.blocking.LockTimeoutException;
 import net.sf.ehcache.constructs.web.AlreadyCommittedException;
 import net.sf.ehcache.constructs.web.AlreadyGzippedException;
+import net.sf.ehcache.constructs.web.PageInfo;
 import net.sf.ehcache.constructs.web.filter.CachingFilter;
 import net.sf.ehcache.constructs.web.filter.FilterNonReentrantException;
 
@@ -97,46 +98,9 @@ public class BgeeWebCache extends CachingFilter
             LockTimeoutException, IOException, ServletException, Exception
     {
         log.entry(request, response, chain);
-        // Call the protected doFilter method that actually does the job, with an
-        // additional parameter : a RequestParameters for the current request
-        try{
-            doFilter(request, response, chain, 
-                    new RequestParameters(request,new URLParameters(),BgeeProperties.getBgeeProperties()));
-        }
-        catch (RequestParametersNotFoundException | WrongFormatException
-                | RequestParametersNotStorableException
-                | MultipleValuesNotAllowedException | PageNotFoundException e) {
-            // If an Exception is thrown by the RequestParameter, call the next element in chain
-            // and leave the caching process. The corresponding error page will be displayed and
-            // nothing will be kept in cache.
-            chain.doFilter(request, response);
-        }  
-        log.exit();
-    }
-
-    /**
-     * Perform the filtering for a request. This protected method allows the injection of a 
-     * {@code RequestParameters}. It should be called only internally by the overridden
-     * method {@link #doFilter(HttpServletRequest, HttpServletResponse, FilterChain)} or
-     * for unit test purpose.
-     * 
-     * @param request           the {@code HttpServletRequest} being currently processed
-     * @param response          the {@code HttpServletResponse} to send responses to the client 
-     *                          (would be wrapped if cached)
-     * @param chain             the {@code FilterChain} used to invoke the next entity in the servlet
-     *                          filter chain. if the page should not be cache
-     * @param requestParameter  A {@code RequestParamters} that is used to check whether the request
-     *                          is cacheable 
-     */
-    protected void doFilter(HttpServletRequest request, HttpServletResponse response, 
-            FilterChain chain, RequestParameters requestParameter) 
-                    throws AlreadyCommittedException, AlreadyGzippedException,
-                    FilterNonReentrantException,
-                    LockTimeoutException, IOException, ServletException, Exception
-    {
-        log.entry(request, response, chain, requestParameter);
         try {
-            if (requestParameter.isACacheableRequest()) {
+            if (new RequestParameters(request,
+                    new URLParameters(),BgeeProperties.getBgeeProperties()).isACacheableRequest()) {
                 // Cacheble, forward it to the super class
                 super.doFilter(request, response, chain);
             } else {
@@ -166,6 +130,31 @@ public class BgeeWebCache extends CachingFilter
         return log.exit(CacheManager.create(BgeeWebCache.class
                 .getClassLoader().getResource(BgeeProperties.getBgeeProperties()
                         .getWebpagesCacheConfigFileName())));
+    }
 
+    // Overridden because CachingFilter put a null body to the returned page when the
+    // response is not 200.. and get rid of our nice 404 custom page. 
+    // This method re throws the exception, so the normal chain produces the page again.
+    // TODO : it works better than nothing because the 404 error page is displayed correctly
+    // when the filter is on, but...
+    // - it is a super inefficient way to solve the problem, because ehcache still put our wrong page
+    // in cache with a null body and then the webapp is called again without cache to produce
+    // the correct 404 error page.
+    // However, it seems impossible to override CachingFilter#buildPageInfo to get rid of this
+    // behavior because of the internal class VisitLog that is private and important to manage
+    // the access to the cache.
+    // - shouldn't be better to let the ehcache behavior happen normally so the 404 are
+    // cached and in case of DOS on a non existing adresse it will help. And use redirection to
+    // display error pages, which seems to be what CachingFilter expects us to do.
+    @Override
+    protected PageInfo buildPageInfo(final HttpServletRequest request,
+            final HttpServletResponse response, final FilterChain chain)
+                    throws Exception {
+        log.entry(request, response, chain);
+        PageInfo returnedPageInfo  = super.buildPageInfo(request, response, chain);
+        if(! returnedPageInfo.isOk()){
+            throw new PageNotFoundException();
+        }
+        return log.exit(returnedPageInfo);
     }
 }

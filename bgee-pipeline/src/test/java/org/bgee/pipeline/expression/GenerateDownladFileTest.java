@@ -13,12 +13,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.expression.GenerateDownladFile.ExpressionData;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.supercsv.cellprocessor.constraint.IsElementOf;
-import org.supercsv.cellprocessor.constraint.NotNull;
-import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
@@ -56,100 +54,123 @@ public class GenerateDownladFileTest  extends TestAncestor {
         String outputCompleteFile = testFolder.newFile("completeFile.tsv").getPath();
 
         GenerateDownladFile generate = new GenerateDownladFile();
-
-        Map<String, String> data1 = new HashMap<String, String>();
-        data1.put(GenerateDownladFile.GENE_ID_COLUMN_NAME, "Gid1");
-        data1.put(GenerateDownladFile.GENE_NAME_COLUMN_NAME, "Gname1");
-        data1.put(GenerateDownladFile.STAGE_ID_COLUMN_NAME, "STid1");
-        data1.put(GenerateDownladFile.STAGE_NAME_COLUMN_NAME, "STname1");
-        data1.put(GenerateDownladFile.ANATENTITY_ID_COLUMN_NAME, "AEid1");
-        data1.put(GenerateDownladFile.ANATENTITY_NAME_COLUMN_NAME, "AEname1");
-        // no data - no expr - low expr - high expr 
-        data1.put(GenerateDownladFile.AFFYMETRIXDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation());
-        data1.put(GenerateDownladFile.ESTDATA_NAME_COLUMN_NAME,
-                GenerateDownladFile.ExpressionData.NOEXPRESSION.getStringRepresentation());
-        data1.put(GenerateDownladFile.INSITUDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation());
-        data1.put(GenerateDownladFile.RNASEQDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.HIGHEXPRESSION.getStringRepresentation());
-
-        Map<String, String> data2 = new HashMap<String, String>();
-        data2.put(GenerateDownladFile.GENE_ID_COLUMN_NAME, "Gid2");
-        data2.put(GenerateDownladFile.GENE_NAME_COLUMN_NAME, "Gname2");
-        data2.put(GenerateDownladFile.STAGE_ID_COLUMN_NAME, "STid2");
-        data2.put(GenerateDownladFile.STAGE_NAME_COLUMN_NAME, "STname2");
-        data2.put(GenerateDownladFile.ANATENTITY_ID_COLUMN_NAME, "AEid2");
-        data2.put(GenerateDownladFile.ANATENTITY_NAME_COLUMN_NAME, "AEname2");
-        // no data - low expr - high expr - high expr 
-        data2.put(GenerateDownladFile.AFFYMETRIXDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation());
-        data2.put(GenerateDownladFile.ESTDATA_NAME_COLUMN_NAME,
-                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation());
-        data2.put(GenerateDownladFile.INSITUDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.HIGHEXPRESSION.getStringRepresentation());
-        data2.put(GenerateDownladFile.RNASEQDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.HIGHEXPRESSION.getStringRepresentation());
-
-        Map<String, String> data3 = new HashMap<String, String>();
-        data3.put(GenerateDownladFile.GENE_ID_COLUMN_NAME, "Gid3");
-        data3.put(GenerateDownladFile.GENE_NAME_COLUMN_NAME, "Gname3");
-        data3.put(GenerateDownladFile.STAGE_ID_COLUMN_NAME, "STid3");
-        data3.put(GenerateDownladFile.STAGE_NAME_COLUMN_NAME, "STname3");
-        data3.put(GenerateDownladFile.ANATENTITY_ID_COLUMN_NAME, "AEid3");
-        data3.put(GenerateDownladFile.ANATENTITY_NAME_COLUMN_NAME, "AEname3");
-        // no data - low expr - low expr - no data 
-        data3.put(GenerateDownladFile.AFFYMETRIXDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation());
-        data3.put(GenerateDownladFile.ESTDATA_NAME_COLUMN_NAME,
-                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation());
-        data3.put(GenerateDownladFile.INSITUDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation());
-        data3.put(GenerateDownladFile.RNASEQDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation());
-
-        Map<String, String> data4 = new HashMap<String, String>();
-        data4.put(GenerateDownladFile.GENE_ID_COLUMN_NAME, "Gid4");
-        data4.put(GenerateDownladFile.GENE_NAME_COLUMN_NAME, "Gname4");
-        data4.put(GenerateDownladFile.STAGE_ID_COLUMN_NAME, "STid4");
-        data4.put(GenerateDownladFile.STAGE_NAME_COLUMN_NAME, "STname4");
-        data4.put(GenerateDownladFile.ANATENTITY_ID_COLUMN_NAME, "AEid4");
-        data4.put(GenerateDownladFile.ANATENTITY_NAME_COLUMN_NAME, "AEname4");
-        // no data - no data - no data - no data 
-        data4.put(GenerateDownladFile.AFFYMETRIXDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation());
-        data4.put(GenerateDownladFile.ESTDATA_NAME_COLUMN_NAME,
-                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation());
-        data4.put(GenerateDownladFile.INSITUDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation());
-        data4.put(GenerateDownladFile.RNASEQDATA_NAME_COLUMN_NAME, 
-                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation());
-
+        
+        // Generate input data
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-        list.add(data1);
-        list.add(data2);
-        list.add(data3);
-        list.add(data4);
+        //  1/ no data - no data - no data - no data >> no data
+        list.add(generateDataMap("Gid1", "Gname1", "STid1", "STname1", "AEid1", "AEname1",
+                GenerateDownladFile.ExpressionData.NODATA, 
+                GenerateDownladFile.ExpressionData.NODATA,
+                GenerateDownladFile.ExpressionData.NODATA,
+                GenerateDownladFile.ExpressionData.NODATA));
+        //  2/ no data - no expr - no data - no expr >> no expr
+        list.add(generateDataMap("Gid2", "Gname2", "STid2", "STname2", "AEid2", "AEname2",
+                GenerateDownladFile.ExpressionData.NODATA, 
+                GenerateDownladFile.ExpressionData.NOEXPRESSION,
+                GenerateDownladFile.ExpressionData.NODATA,
+                GenerateDownladFile.ExpressionData.NOEXPRESSION));
+        //  3/ no data - low - low - no data >> low
+        list.add(generateDataMap("Gid3", "Gname3", "STid3", "STname3", "AEid3", "AEname3",
+                GenerateDownladFile.ExpressionData.NODATA, 
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION,
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION,
+                GenerateDownladFile.ExpressionData.NODATA));
+        //  4/ high - high - no data - no data >> high
+        list.add(generateDataMap("Gid4", "Gname4", "STid4", "STname4", "AEid4", "AEname4",
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, 
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION,
+                GenerateDownladFile.ExpressionData.NODATA,
+                GenerateDownladFile.ExpressionData.NODATA));
+        //  5/ no data - no expr - low - no expr >> ambiguous
+        list.add(generateDataMap("Gid5", "Gname5", "STid", "STname", "AEid", "AEname",
+                GenerateDownladFile.ExpressionData.NODATA, 
+                GenerateDownladFile.ExpressionData.NOEXPRESSION,
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION,
+                GenerateDownladFile.ExpressionData.NOEXPRESSION));
+        //  6/ no data - no expr - high - high >> ambiguous
+        list.add(generateDataMap("Gid6", "Gname6", "STid", "STname", "AEid", "AEname",
+                GenerateDownladFile.ExpressionData.NODATA, 
+                GenerateDownladFile.ExpressionData.NOEXPRESSION,
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION,
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION));
+        //  7/ no data - no expr - low - high >> ambiguous
+        list.add(generateDataMap("Gid7", "Gname7", "STid", "STname", "AEid", "AEname",
+                GenerateDownladFile.ExpressionData.NODATA, 
+                GenerateDownladFile.ExpressionData.NOEXPRESSION,
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION,
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION));
+        //  8/ no data - low - high - low >> high
+        list.add(generateDataMap("Gid8", "Gname8", "STid", "STname", "AEid", "AEname",
+                GenerateDownladFile.ExpressionData.NODATA, 
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION,
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION,
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION));
+        //  9/ no expr - no expr - no expr - no expr >> no expr
+        list.add(generateDataMap("Gid9", "Gname9", "STid", "STname", "AEid", "AEname",
+                GenerateDownladFile.ExpressionData.NOEXPRESSION, 
+                GenerateDownladFile.ExpressionData.NOEXPRESSION,
+                GenerateDownladFile.ExpressionData.NOEXPRESSION,
+                GenerateDownladFile.ExpressionData.NOEXPRESSION));
+        // 10/ low - low - low - low >> low
+        list.add(generateDataMap("Gid10", "Gname10", "STid", "STname", "AEid", "AEname",
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION, 
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION,
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION,
+                GenerateDownladFile.ExpressionData.LOWEXPRESSION));
+        // 11/ high - high - high - high >> high
+        list.add(generateDataMap("Gid11", "Gname11", "STid", "STname", "AEid", "AEname",
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, 
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION,
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION,
+                GenerateDownladFile.ExpressionData.HIGHEXPRESSION));
+
+        // Generate TSV files
         generate.writeDownloadFiles(list, outputSimpleFile, outputCompleteFile);
 
-        //now read the TSV files
-
-        checkReadFile(outputSimpleFile, true);
-
-        checkReadFile(outputCompleteFile, false);
+        //now read the created TSV files
+        assertDownloadFile(outputSimpleFile, true);
+        assertDownloadFile(outputCompleteFile, false);
 
         log.exit();
     }
 
+    private Map<String, String> generateDataMap(String geneId, String geneName,
+            String stageId, String stageName, String anatEntityId, String anatEntityName,
+            ExpressionData affymetrixData, ExpressionData estData, ExpressionData inSituData,
+            ExpressionData rnaSeqData) {
+        log.entry(geneId, geneName, stageId, stageName, anatEntityId, anatEntityName,
+                affymetrixData, estData, inSituData, rnaSeqData);
+        
+        Map<String, String> data = new HashMap<String, String>();
+        data.put(GenerateDownladFile.GENE_ID_COLUMN_NAME, geneId);
+        data.put(GenerateDownladFile.GENE_NAME_COLUMN_NAME, geneName);
+        data.put(GenerateDownladFile.STAGE_ID_COLUMN_NAME, stageId);
+        data.put(GenerateDownladFile.STAGE_NAME_COLUMN_NAME, stageName);
+        data.put(GenerateDownladFile.ANATENTITY_ID_COLUMN_NAME, anatEntityId);
+        data.put(GenerateDownladFile.ANATENTITY_NAME_COLUMN_NAME, anatEntityName);
+        data.put(GenerateDownladFile.AFFYMETRIXDATA_NAME_COLUMN_NAME, 
+                                                        affymetrixData.getStringRepresentation());
+        data.put(GenerateDownladFile.ESTDATA_NAME_COLUMN_NAME, 
+                                                        estData.getStringRepresentation());
+        data.put(GenerateDownladFile.INSITUDATA_NAME_COLUMN_NAME, 
+                                                        inSituData.getStringRepresentation());
+        data.put(GenerateDownladFile.RNASEQDATA_NAME_COLUMN_NAME,
+                                                        rnaSeqData.getStringRepresentation());
+
+        return log.exit(data);
+    }
+
     /**
-     * Read given file and check whether the file contents corresponds to what is expected. 
+     * Asserts that the download file is good.
+     * <p>
+     * Read given download file and check whether the file contents corresponds to what is expected. 
      * 
      * @param file              A {@code String} that is the path to the file were data was written 
      *                          as TSV.
      * @param isSimplifiedFile  A {@code boolean} defining whether the file is a simple file.
      * @throws IOException      If the file could not be used.
      */
-    private void checkReadFile(String file, boolean isSiplifiedFile) throws IOException {
+    private void assertDownloadFile(String file, boolean isSiplifiedFile) throws IOException {
         log.entry(file, isSiplifiedFile);
 
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
@@ -157,26 +178,9 @@ public class GenerateDownladFileTest  extends TestAncestor {
             log.trace("Headers: {}", (Object[]) headers);
             CellProcessor[] processors;
             if (isSiplifiedFile) {
-                processors = new CellProcessor[] {
-                        new UniqueHashCode(new NotNull()),
-                        new NotNull(),
-                        new NotNull(),
-                        new NotNull(),
-                        new NotNull(),
-                        new NotNull(),
-                        new IsElementOf(GenerateDownladFile.EXPRESSIONDATA)};
+                processors = GenerateDownladFile.generateCellProcessor(true);
             } else {
-                processors = new CellProcessor[] {
-                        new UniqueHashCode(new NotNull()),
-                        new NotNull(),
-                        new NotNull(),
-                        new NotNull(),
-                        new NotNull(),
-                        new NotNull(),
-                        new IsElementOf(GenerateDownladFile.EXPRESSIONDATA),
-                        new IsElementOf(GenerateDownladFile.EXPRESSIONDATA),
-                        new IsElementOf(GenerateDownladFile.EXPRESSIONDATA),
-                        new IsElementOf(GenerateDownladFile.EXPRESSIONDATA)};
+                processors = GenerateDownladFile.generateCellProcessor(false);
             }
             Map<String, Object> rowMap;
             int i = 0;
@@ -200,119 +204,253 @@ public class GenerateDownladFileTest  extends TestAncestor {
                     rnaSeqData = (String) rowMap.get(headers[9]);
                 }
 
+                //  1/ no data - no data - no data - no data >> no data
                 if (geneId.equals("Gid1")) {
-                    assertEquals("Incorrect gene name for Gid1", "Gname1", geneName);
-                    assertEquals("Incorrect stage ID for Gid1", "STid1", stageId);
-                    assertEquals("Incorrect satge name for Gid1", "STname1", stageName);
-                    assertEquals("Incorrect anaEntity ID for Gid1", "AEid1", anatEntityId);
-                    assertEquals("Incorrect anaEntity name for Gid1", "AEname1", anatEntityName);
+                    assertCommonColumnRowEqual(geneId, "Gname1", geneName, "STid1", stageId, "STname1", 
+                                stageName, "AEid1", anatEntityId,  "AEname1", anatEntityName);
                     if (isSiplifiedFile) {
-                        // ambiguous
-                        assertEquals("Incorrect expression data for Gid1", 
-                                GenerateDownladFile.ExpressionData.AMBIGUOUS.getStringRepresentation(), 
-                                expressionData);
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NODATA, expressionData);
                     } else {
-                        // no data - no expr - low expr - high expr 
-                        assertEquals("Incorrect Affymetrix data for Gid1", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(),
-                                affymetrixData);
-                        assertEquals("Incorrect EST data for Gid1", 
-                                GenerateDownladFile.ExpressionData.NOEXPRESSION.getStringRepresentation(),
-                                estData);
-                        assertEquals("Incorrect in Situ Data for Gid1", 
-                                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation(),
-                                inSituData);
-                        assertEquals("Incorrect RNA-seq data for Gid1", 
-                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION.getStringRepresentation(),
-                                rnaSeqData);
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NODATA, affymetrixData,
+                                GenerateDownladFile.ExpressionData.NODATA, estData,
+                                GenerateDownladFile.ExpressionData.NODATA, inSituData,
+                                GenerateDownladFile.ExpressionData.NODATA, rnaSeqData);
                     }
                 }
 
                 if (geneId.equals("Gid2")) {
-                    assertEquals("Incorrect gene name for Gid2", "Gname2", geneName);
-                    assertEquals("Incorrect stage ID for Gid2", "STid2", stageId);
-                    assertEquals("Incorrect satge name for Gid2", "STname2", stageName);
-                    assertEquals("Incorrect anaEntity ID for Gid2", "AEid2", anatEntityId);
-                    assertEquals("Incorrect anaEntity name for Gid2", "AEname2", anatEntityName);
+                    //  2/ no data - no expr - no data - no expr >> no expr
+                    assertCommonColumnRowEqual(geneId, "Gname2", geneName, "STid2", stageId, "STname2", 
+                            stageName, "AEid2", anatEntityId,  "AEname2", anatEntityName);
                     if (isSiplifiedFile) {
-                        // high expr 
-                        assertEquals("Incorrect expression data for Gid2", 
-                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION.getStringRepresentation(), 
-                                expressionData);
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, expressionData);
                     } else {
-                        // no data - low expr - high expr - high expr 
-                        assertEquals("Incorrect Affymetrix data for Gid2", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(),
-                                affymetrixData);
-                        assertEquals("Incorrect EST data for Gid2", 
-                                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation(),
-                                estData);
-                        assertEquals("Incorrect in Situ Data for Gid2", 
-                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION.getStringRepresentation(), 
-                                inSituData);
-                        assertEquals("Incorrect RNA-seq data for Gid2", 
-                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION.getStringRepresentation(), 
-                                rnaSeqData);
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NODATA, affymetrixData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.NODATA, inSituData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, rnaSeqData);
                     }
                 }
 
                 if (geneId.equals("Gid3")) {
-                    assertEquals("Incorrect gene name for Gid3", "Gname3", geneName);
-                    assertEquals("Incorrect stage ID for Gid3", "STid3", stageId);
-                    assertEquals("Incorrect satge name for Gid3", "STname3", stageName);
-                    assertEquals("Incorrect anaEntity ID for Gid3", "AEid3", anatEntityId);
-                    assertEquals("Incorrect anaEntity name for Gid3", "AEname3", anatEntityName);
+                    //  3/ no data - low - low - no data >> low
+                    assertCommonColumnRowEqual(geneId, "Gname3", geneName, "STid3", stageId, "STname3", 
+                            stageName, "AEid3", anatEntityId,  "AEname3", anatEntityName);
                     if (isSiplifiedFile) {
-                        assertEquals("Incorrect expression data for Gid3", 
-                                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation(), 
-                                expressionData);
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, expressionData);
                     } else {
-                        // no data - low expr - low expr - no data 
-                        assertEquals("Incorrect Affymetrix data for Gid3", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(),
-                                affymetrixData);
-                        assertEquals("Incorrect EST data for Gid3", 
-                                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation(),
-                                estData);
-                        assertEquals("Incorrect in Situ Data for Gid3", 
-                                GenerateDownladFile.ExpressionData.LOWEXPRESSION.getStringRepresentation(),
-                                inSituData);
-                        assertEquals("Incorrect RNA-seq data for Gid3", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(),
-                                rnaSeqData);
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NODATA, affymetrixData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, inSituData,
+                                GenerateDownladFile.ExpressionData.NODATA, rnaSeqData);
                     }
                 }
 
                 if (geneId.equals("Gid4")) {
-                    assertEquals("Incorrect gene name for Gid4", "Gname4", geneName);
-                    assertEquals("Incorrect stage ID for Gid4", "STid4", stageId);
-                    assertEquals("Incorrect satge name for Gid4", "STname4", stageName);
-                    assertEquals("Incorrect anaEntity ID for Gid4", "AEid4", anatEntityId);
-                    assertEquals("Incorrect anaEntity name for Gid4", "AEname4", anatEntityName);
+                    //  4/ high - high - no data - no data >> high
+                    assertCommonColumnRowEqual(geneId, "Gname4", geneName, "STid4", stageId, "STname4", 
+                            stageName, "AEid4", anatEntityId,  "AEname4", anatEntityName);
                     if (isSiplifiedFile) {
-                        assertEquals("Incorrect expression data for Gid4", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(), 
-                                expressionData);
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, expressionData);
                     } else {
-                        // no data - no data - no data - no data
-                        assertEquals("Incorrect Affymetrix data for Gid4", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(),
-                                affymetrixData);
-                        assertEquals("Incorrect EST data for Gid4", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(),
-                                estData);
-                        assertEquals("Incorrect in Situ Data for Gid4", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(),
-                                inSituData);
-                        assertEquals("Incorrect RNA-seq data for Gid4", 
-                                GenerateDownladFile.ExpressionData.NODATA.getStringRepresentation(),
-                                rnaSeqData);
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, affymetrixData,
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.NODATA, inSituData,
+                                GenerateDownladFile.ExpressionData.NODATA, rnaSeqData);
+                    }
+                }
+                
+                if (geneId.equals("Gid5")) {
+                    //  5/ no data - no expr - low - no expr >> ambiguous
+                    assertCommonColumnRowEqual(geneId, "Gname5", geneName, "STid", stageId, "STname", 
+                            stageName, "AEid", anatEntityId,  "AEname", anatEntityName);
+                    if (isSiplifiedFile) {
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.AMBIGUOUS, expressionData);
+                    } else {
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NODATA, affymetrixData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, inSituData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, rnaSeqData);
+                    }
+                }
+
+                if (geneId.equals("Gid6")) {
+                    //  6/ no data - no expr - high - high >> ambiguous
+                    assertCommonColumnRowEqual(geneId, "Gname6", geneName, "STid", stageId, "STname", 
+                            stageName, "AEid", anatEntityId,  "AEname", anatEntityName);
+                    if (isSiplifiedFile) {
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.AMBIGUOUS, expressionData);
+                    } else {
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NODATA, affymetrixData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, inSituData,
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, rnaSeqData);
+                    }
+                }
+
+                if (geneId.equals("Gid7")) {
+                    //  7/ no data - no expr - low - high >> ambiguous
+                    assertCommonColumnRowEqual(geneId, "Gname7", geneName, "STid", stageId, "STname", 
+                            stageName, "AEid", anatEntityId,  "AEname", anatEntityName);
+                    if (isSiplifiedFile) {
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.AMBIGUOUS, expressionData);
+                    } else {
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NODATA, affymetrixData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, inSituData,
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, rnaSeqData);
+                    }
+                }
+
+                if (geneId.equals("Gid8")) {
+                    //  8/ no data - low - high - low >> high
+                    assertCommonColumnRowEqual(geneId, "Gname8", geneName, "STid", stageId, "STname", 
+                            stageName, "AEid", anatEntityId,  "AEname", anatEntityName);
+                    if (isSiplifiedFile) {
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, expressionData);
+                    } else {
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NODATA, affymetrixData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, inSituData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, rnaSeqData);
+                    }
+                }
+
+                if (geneId.equals("Gid9")) {
+                    //  9/ no expr - no expr - no expr - no expr >> no expr
+                    assertCommonColumnRowEqual(geneId, "Gname9", geneName, "STid", stageId, "STname", 
+                            stageName, "AEid", anatEntityId,  "AEname", anatEntityName);
+                    if (isSiplifiedFile) {
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, expressionData);
+                    } else {
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, affymetrixData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, inSituData,
+                                GenerateDownladFile.ExpressionData.NOEXPRESSION, rnaSeqData);
+                    }
+                }
+
+                if (geneId.equals("Gid19")) {
+                    // 10/ low - low - low - low >> low
+                    assertCommonColumnRowEqual(geneId, "Gname10", geneName, "STid", stageId, "STname", 
+                            stageName, "AEid", anatEntityId,  "AEname", anatEntityName);
+                    if (isSiplifiedFile) {
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, expressionData);
+                    } else {
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, affymetrixData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, inSituData,
+                                GenerateDownladFile.ExpressionData.LOWEXPRESSION, rnaSeqData);
+                    }
+                }
+
+                if (geneId.equals("Gid11")) {
+                    // 11/ high - high - high - high >> high
+                    assertCommonColumnRowEqual(geneId, "Gname11", geneName, "STid", stageId, "STname", 
+                            stageName, "AEid", anatEntityId,  "AEname", anatEntityName);
+                    if (isSiplifiedFile) {
+                        this.assertSimpleColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, expressionData);
+                    } else {
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, affymetrixData,
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, estData,
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, inSituData,
+                                GenerateDownladFile.ExpressionData.HIGHEXPRESSION, rnaSeqData);
                     }
                 }
             }
-            assertEquals("Incorrect number of lines in TSV output", 4, i);
+            assertEquals("Incorrect number of lines in TSV output", 11, i);
 
             log.exit();
         }
+    }
+
+    /**
+     * Assert that common columns row are equal. It checks gene name, stage ID, stage name, 
+     * anatomical entity ID, and anatomical entity name columns.
+     * 
+     * @param geneId            A {@code String} that is the gene ID of the row.
+     * @param expGeneName       A {@code String} that is the expected gene name.
+     * @param geneName          A {@code String} that is the actual gene name.
+     * @param expStageId        A {@code String} that is the expected stage ID.
+     * @param stageId           A {@code String} that is the actual stage ID.
+     * @param expStageName      A {@code String} that is the expected stage name.
+     * @param stageName         A {@code String} that is the actual stage name.
+     * @param expAnatEntityId   A {@code String} that is the expected anatomical entity ID.
+     * @param anatEntityId      A {@code String} that is the actual anatomical entity ID.
+     * @param expAnatEntityName A {@code String} that is the expected anatomical entity name.
+     * @param anatEntityName    A {@code String} that is the actual anatomical entity name.
+     */
+    private void assertCommonColumnRowEqual(String geneId, String expGeneName, String geneName, 
+            String expStageId, String stageId, String expStageName, String stageName, 
+            String expAnatEntityId, String anatEntityId, 
+            String expAnatEntityName, String anatEntityName) {
+        assertEquals("Incorrect gene name for " + geneId, expGeneName, geneName);
+        assertEquals("Incorrect stage ID for " + geneId, expStageId, stageId);
+        assertEquals("Incorrect stage name for " + geneId, expStageName, stageName);
+        assertEquals("Incorrect anaEntity ID for " + geneId, expAnatEntityId, anatEntityId);
+        assertEquals("Incorrect anaEntity name for " + geneId, expAnatEntityName, anatEntityName);
+    }
+
+    /**
+     * Assert that specific complete file columns row are equal. It checks affymetrix data, 
+     * EST data, <em>in Situ</em> data, and RNA-seq data columns. 
+     * 
+     * @param geneId            A {@code String} that is the gene ID of the row.
+     * @param expAffyData       An {@code ExpressionData} that is the expected affymetrix data. 
+     * @param affyData          A {@code String} that is the actual affymetrix data.
+     * @param expESTData        An {@code ExpressionData} that is the expected EST data.
+     * @param estData           A {@code String} that is the actual EST data.
+     * @param expInSituData     An {@code ExpressionData} that is the expected <em>in Situ</em> data.
+     * @param inSituData        A {@code String} that is the actual <em>in Situ</em> data.
+     * @param expRNAseqData     An {@code ExpressionData} that is the expected RNA-seq data.
+     * @param rnaSeqData        A {@code String} that is the actual RNA-seq data.
+     */
+    private void assertCompleteColumnRowEqual(String geneId, ExpressionData expAffyData, String affyData,
+            ExpressionData expESTData, String estData, 
+            ExpressionData expInSituData, String inSituData,
+            ExpressionData expRNAseqData, String rnaSeqData) {
+        assertEquals("Incorrect Affymetrix data for " + geneId, 
+                expAffyData.getStringRepresentation(), affyData);
+        assertEquals("Incorrect EST data for " + geneId, 
+                expESTData.getStringRepresentation(), estData);
+        assertEquals("Incorrect in situ data for " + geneId, 
+                expInSituData.getStringRepresentation(), inSituData);
+        assertEquals("Incorrect RNA-seq data for " + geneId, 
+                expRNAseqData.getStringRepresentation(), rnaSeqData);
+    }
+
+    /**
+     * Assert that specific simple file columns row are equal. It checks expression data columns. 
+     * 
+     * @param geneId            A {@code String} that is the gene ID of the row.
+     * @param expExprData       An {@code ExpressionData} that is the expected expression data. 
+     * @param exprData          A {@code String} that is the actual expression data.
+     */
+    private void assertSimpleColumnRowEqual(String geneId, 
+            ExpressionData expExprData, String exprData) {
+        assertEquals("Incorrect expression data for " + geneId, 
+                expExprData.getStringRepresentation(), exprData);
     }
 }

@@ -4,8 +4,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -192,7 +194,7 @@ public class GenerateDownladFile {
             String outputCompleteFile) throws IOException {
         log.entry(inputList, outputSimpleFile, outputCompleteFile);
         
-        CellProcessor[] processorCompleteFile = this.generateCellProcessor(false);;
+        CellProcessor[] processorCompleteFile = generateCellProcessor(false);;
         final String[] headerCompleteFile = new String[] {
                 GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
                 STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
@@ -202,7 +204,7 @@ public class GenerateDownladFile {
         writeDownloadFile(
                 inputList, outputCompleteFile, headerCompleteFile, processorCompleteFile, false);
         
-        CellProcessor[] processorSimpleFile = this.generateCellProcessor(true);
+        CellProcessor[] processorSimpleFile = generateCellProcessor(true);
         final String[] headerSimpleFile = new String[] { 
                 GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
                 STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
@@ -222,7 +224,7 @@ public class GenerateDownladFile {
      * @return                  A {@code CellProcessor} needed to write a simple or complete 
      *                          download file.
      */
-    private CellProcessor[] generateCellProcessor(boolean isSimplifiedFile) {
+    public static CellProcessor[] generateCellProcessor(boolean isSimplifiedFile) {
         log.entry(isSimplifiedFile);
         
         final CellProcessor[] processors;
@@ -327,7 +329,8 @@ public class GenerateDownladFile {
             String affymetrixData, String estData, String inSituData, String rnaSeqData) {
         log.entry(affymetrixData, estData, inSituData, rnaSeqData);
         
-        List<String> allData = Arrays.asList(affymetrixData, estData, inSituData, rnaSeqData);
+        Set<String> allData = new HashSet<String>(
+                Arrays.asList(affymetrixData, estData, inSituData, rnaSeqData));
         
         if (allData.contains(ExpressionData.NOEXPRESSION.getStringRepresentation()) &&
                 (allData.contains(ExpressionData.LOWEXPRESSION.getStringRepresentation()) ||

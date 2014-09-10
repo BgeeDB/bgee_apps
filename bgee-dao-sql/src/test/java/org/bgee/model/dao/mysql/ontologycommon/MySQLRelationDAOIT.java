@@ -80,7 +80,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("21", "Anat_id9", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
                 new RelationTO("22", "Anat_id10", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
                 new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
-        this.compareResultSetAndTOList(dao.getAllAnatEntityRelations(null), expectedRelations);
+        this.compareResultSetAndTOList(dao.getAllAnatEntityRelations(null, null), expectedRelations);
 
         // Test recovery of one attribute without filter on species IDs
         dao.setAttributes(Arrays.asList(RelationDAO.Attribute.RELATIONID));
@@ -108,9 +108,9 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("21", null, null, null, null),
                 new RelationTO("22", null, null, null, null),
                 new RelationTO("23", null, null, null, null));
-        this.compareResultSetAndTOList(dao.getAllAnatEntityRelations(null), expectedRelations);
+        this.compareResultSetAndTOList(dao.getAllAnatEntityRelations(null, null), expectedRelations);
 
-        // Test recovery of one attribute with filter on species IDs
+        // Test recovery of one attribute with filter on species IDs ONLY
         Set<String> speciesIds = new HashSet<String>();
         speciesIds.addAll(Arrays.asList("11","44"));
         expectedRelations = Arrays.asList(
@@ -126,7 +126,37 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("18", null, null, null, null),
                 new RelationTO("19", null, null, null, null),
                 new RelationTO("23", null, null, null, null));
-        this.compareResultSetAndTOList(dao.getAllAnatEntityRelations(speciesIds), expectedRelations);
+        this.compareResultSetAndTOList(dao.getAllAnatEntityRelations(speciesIds, null), 
+                                       expectedRelations);
+
+        // Test recovery of one attribute with filter on species IDs AND relation types
+        dao.clearAttributes();
+        Set<RelationType> relations = new HashSet<RelationType>();
+        relations.addAll(Arrays.asList(RelationType.ISA_PARTOF, RelationType.TRANSFORMATIONOF));
+        expectedRelations = Arrays.asList(
+                new RelationTO("1", "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("2", "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("4", "Anat_id4", "Anat_id4", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("5", "Anat_id5", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("8", "Anat_id8", "Anat_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("10", "Anat_id10", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
+                new RelationTO("12", "Anat_id2", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("14", "Anat_id4", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("23", "Anat_id11", "Anat_id10", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
+        this.compareResultSetAndTOList(dao.getAllAnatEntityRelations(speciesIds, relations),
+                expectedRelations);
+
+        // Test recovery of one attribute with filter on relation types ONLY
+        relations.clear();
+        relations.add(RelationType.DEVELOPSFROM);
+       expectedRelations = Arrays.asList(
+                new RelationTO("16", "Anat_id5", "Anat_id7", RelationType.DEVELOPSFROM, RelationStatus.INDIRECT),
+                new RelationTO("17", "Anat_id5", "Anat_id8", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
+                new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
+        this.compareResultSetAndTOList(dao.getAllAnatEntityRelations(null, relations),
+                expectedRelations);
     }
 
     private void compareResultSetAndTOList(RelationTOResultSet resultSet,

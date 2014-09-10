@@ -3,6 +3,7 @@ package org.bgee.model.dao.mysql.ontologycommon;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -44,8 +45,12 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public RelationTOResultSet getAllAnatEntityRelations(Set<String> speciesIds) {
-        log.entry(speciesIds);
+    public RelationTOResultSet getAllAnatEntityRelations(Set<String> speciesIds, 
+            Set<RelationType> relationTypes) {
+        log.entry(speciesIds, relationTypes);
+
+        boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
+        boolean isRelationTypeFilter = relationTypes != null && relationTypes.size() > 0;
         
         StringBuilder sql = new StringBuilder(); 
         Collection<RelationDAO.Attribute> attributes = this.getAttributes();
@@ -63,15 +68,35 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             }
         }
         sql.append(" FROM anatEntityRelation");
-         if (speciesIds != null && speciesIds.size() > 0) {
-             sql.append(" INNER JOIN anatEntityRelationTaxonConstraint ON (" +
-                                 "anatEntityRelationTaxonConstraint.anatEntityRelationId = "
-                                 + "anatEntityRelation.anatEntityRelationId)");
-             sql.append(" WHERE anatEntityRelationTaxonConstraint.speciesId IS NULL");
-             sql.append(" OR anatEntityRelationTaxonConstraint.speciesId IN (");
-             sql.append(createStringFromSet(speciesIds, ','));
-             sql.append(")");
-         }
+        
+        if (isSpeciesFilter) {
+            sql.append(" INNER JOIN anatEntityRelationTaxonConstraint ON (" +
+                    "anatEntityRelationTaxonConstraint.anatEntityRelationId = "
+                    + "anatEntityRelation.anatEntityRelationId)");
+        }
+        if (isSpeciesFilter || isRelationTypeFilter) {
+                sql.append(" WHERE ");
+        }
+        if (isSpeciesFilter) {
+            sql.append("(anatEntityRelationTaxonConstraint.speciesId IS NULL");
+            sql.append(" OR anatEntityRelationTaxonConstraint.speciesId IN (");
+            sql.append(createStringFromSet(speciesIds, ','));
+            sql.append("))");
+        }
+        
+        if (isSpeciesFilter && isRelationTypeFilter) {
+            sql.append(" AND ");
+        }
+        if (isRelationTypeFilter) {
+            Set<String> convertedRelations = new HashSet<String>();
+            for (RelationType relation: relationTypes) {
+                convertedRelations.add("'"+relation.getStringRepresentation()+"'");
+            }
+            sql.append(" relationType IN (");
+            sql.append(createStringFromSet(convertedRelations, ','));
+            sql.append(")");
+        }
+        
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.

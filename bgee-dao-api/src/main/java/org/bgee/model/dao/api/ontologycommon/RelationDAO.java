@@ -9,6 +9,7 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 
 /**
  * DAO defining queries using or retrieving {@link RelationTO}s. 
@@ -39,7 +40,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
 
     /**
      * Retrieve all anatomical entity relations from data source according to a {@code Set} of 
-     * {@code String}s that are the IDs of species allowing to filter the relations to use.
+     * {@code String}s that are the IDs of species, and a {@code Set} of {@code RelationType}s 
+     * that are the relation types, both allowing to filter the relations to use.
      * <p>
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
@@ -47,11 +49,14 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * 
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
      *                      allowing to filter the calls to use
+     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation types
+     *                      allowing to filter the calls to use
      * @return              A {@code RelationTOResultSet} containing all anatomical entity relations
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public RelationTOResultSet getAllAnatEntityRelations(Set<String> speciesIds) throws DAOException;
+    public RelationTOResultSet getAllAnatEntityRelations(Set<String> speciesIds,
+            Set<RelationType> relationTypes) throws DAOException;
 
 
     /**

@@ -1,5 +1,6 @@
 package org.bgee.pipeline.expression;
 
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -11,7 +12,10 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.pipeline.Utils;
+import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
@@ -155,6 +159,17 @@ public class GenerateDownladFile {
 
     }
 
+    /**
+     * Main method to trigger the generate TSV download files (simple and complete files) from Bgee 
+     * database. Parameters that must be provided in order in {@code args} are: 
+     * <ol>
+     * <li>path to the single download file to generate.
+     * <li>path to the complete download file to generate.
+     * </ol>
+     * 
+     * @param args          An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws IOException  If some files could not be used.
+     */
     public static void main(String[] args) throws IOException {
         log.entry((Object[]) args);
 

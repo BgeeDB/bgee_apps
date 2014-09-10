@@ -25,11 +25,11 @@ public class InsertGlobalExpressionTest extends TestAncestor {
     }
     
     /**
-     * Test {@link InsertGlobalExpression#insert(String)}, which is 
+     * Test {@link InsertGlobalExpression#insert()}, which is 
      * the central method of the class doing all the job.
      */
     @Test
-    public void shouldInsertGO() {
-        // TODO to be implemented
+    public void shouldInsertGlobalExpression() {
+        // TODO To be implemented
     }
 }

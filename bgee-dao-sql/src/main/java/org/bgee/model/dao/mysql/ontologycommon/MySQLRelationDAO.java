@@ -3,6 +3,7 @@ package org.bgee.model.dao.mysql.ontologycommon;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -46,7 +47,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
 
     @Override
     public RelationTOResultSet getAllAnatEntityRelations(Set<String> speciesIds, 
-            Set<RelationType> relationTypes) {
+            EnumSet<RelationType> relationTypes) {
         log.entry(speciesIds, relationTypes);
 
         boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;

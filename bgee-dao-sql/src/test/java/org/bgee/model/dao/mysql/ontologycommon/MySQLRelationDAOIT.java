@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -131,8 +132,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
 
         // Test recovery of one attribute with filter on species IDs AND relation types
         dao.clearAttributes();
-        Set<RelationType> relations = new HashSet<RelationType>();
-        relations.addAll(Arrays.asList(RelationType.ISA_PARTOF, RelationType.TRANSFORMATIONOF));
+        EnumSet<RelationType> relations = EnumSet.of(
+                RelationType.ISA_PARTOF, RelationType.TRANSFORMATIONOF);
         expectedRelations = Arrays.asList(
                 new RelationTO("1", "Anat_id1", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
                 new RelationTO("2", "Anat_id2", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE),
@@ -149,9 +150,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 expectedRelations);
 
         // Test recovery of one attribute with filter on relation types ONLY
-        relations.clear();
-        relations.add(RelationType.DEVELOPSFROM);
-       expectedRelations = Arrays.asList(
+        relations = EnumSet.of(RelationType.DEVELOPSFROM);
+        expectedRelations = Arrays.asList(
                 new RelationTO("16", "Anat_id5", "Anat_id7", RelationType.DEVELOPSFROM, RelationStatus.INDIRECT),
                 new RelationTO("17", "Anat_id5", "Anat_id8", RelationType.DEVELOPSFROM, RelationStatus.DIRECT),
                 new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));

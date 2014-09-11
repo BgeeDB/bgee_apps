@@ -78,7 +78,7 @@ public class UberonSocketTool {
                     new ServerSocket(Integer.parseInt(args[5])));
             tool.startListening();
         } else if (args[0].equalsIgnoreCase("idMapping")) {
-            UberonSocketTool tool = new UberonSocketTool(new OntologyUtils(args[1]), 
+            UberonSocketTool tool = new UberonSocketTool(new Uberon(args[1]), 
                     new ServerSocket(Integer.parseInt(args[2])));
             tool.startListening();
         } else {
@@ -95,17 +95,16 @@ public class UberonSocketTool {
      */
     private final UberonDevStage uberonDevStage;
     /**
+     * An {@code UberonCommon} used to answer queries relative to ID mappings.
+     * @see #socketIdMappings()
+     */
+    private final UberonCommon uberonCommon;
+    /**
      * An {@code int} that is the ID of the species which stage range queries are considering.
      * @see #uberonDevStage
      * @see #socketStagesBetween()
      */
     private final int devStageSpeciesId;
-
-    /**
-     * The {@code OntologyUtils} used to answer queries relative to ID mappings.
-     * @see #socketIdMappings()
-     */
-    private final OntologyUtils ontUtils;
     
     /**
      * The {@code ServerSocket} used to communicate: to acquire queries and to return results.
@@ -123,7 +122,7 @@ public class UberonSocketTool {
      */
     @SuppressWarnings("unused")
     private UberonSocketTool() {
-        this(null, 0, null, null, null);
+        this(null, 0, null, null);
     }
     
     /**
@@ -142,20 +141,20 @@ public class UberonSocketTool {
      * @param serverSocket  The {@code ServerSocket} to use to communicate.
      */
     public UberonSocketTool(UberonDevStage uberon, int speciesId, ServerSocket serverSocket) {
-        this(uberon, speciesId, null, serverSocket, SocketAction.STAGES_BETWEEN);
+        this(uberon, speciesId, serverSocket, SocketAction.STAGES_BETWEEN);
     }
     /**
      * Constructor to use a {@code ServerSocket} to perform ID mapping queries, as with 
-     * the method {@link OntologyUtils#getOWLClass(String)}. 
+     * the method {@link UberonCommon#getOWLClass(String)}. 
      * This method is written so that external applications can query for mappings, 
      * without needing to reload the ontology for each query. Using sockets, 
      * the ontology can be kept loaded, answering several queries. 
      * The method used to obtain mappings is {@link OntologyUtils#getOWLClass(String)}.
-     * @param ontUtils      The {@code OntologyUtils} used to perform ID mappings.
+     * @param UberonCommon  The {@code UberonCommon} used to perform ID mappings.
      * @param serverSocket  The {@code ServerSocket} to use to communicate.
      */
-    public UberonSocketTool(OntologyUtils ontUtils, ServerSocket serverSocket) {
-        this(null, 0, ontUtils, serverSocket, SocketAction.ID_MAPPINGS);
+    public UberonSocketTool(UberonCommon uberon, ServerSocket serverSocket) {
+        this(uberon, 0, serverSocket, SocketAction.ID_MAPPINGS);
     }
     
     /**
@@ -163,19 +162,22 @@ public class UberonSocketTool {
      * to be used together. This constructor also launches the {@code ServerSocket} 
      * and parameterize it depending on the requested {@code action}.
      * 
-     * @param uberon        An {@code UberonDevStage} used to perform stage range queries, 
-     *                      see {@link UberonDevStage#getStageIdsBetween(String, String, int)}.
+     * @param uberon        An {@code UberonCommon} used to perform stage range queries, 
+     *                      or ID mapping queries.
      * @param speciesId     An {@code int} that is the ID of the species to consider to retrieve 
      *                      stage ranges, see {@link UberonDevStage#getStageIdsBetween(String, String, int)}.
-     * @param ontUtils      An {@code OntologyUtils} used to perform ID mapping queries. 
      * @param serverSocket  The {@code ServerSocket} to use to communicate.
      * @param action        The {@code SocketAction} defining which query to perform.
      */
-    private UberonSocketTool(UberonDevStage uberon, int speciesId, 
-            OntologyUtils ontUtils, ServerSocket serverSocket, SocketAction action) {
-        this.uberonDevStage = uberon;
+    private UberonSocketTool(UberonCommon uberon, int speciesId, 
+            ServerSocket serverSocket, SocketAction action) {
+        this.uberonCommon = uberon;
+        if (uberon instanceof UberonDevStage) {
+            this.uberonDevStage = (UberonDevStage) uberon;
+        } else {
+            this.uberonDevStage = null;
+        }
         this.devStageSpeciesId = speciesId;
-        this.ontUtils = ontUtils;
         this.serverSocket = serverSocket;
         this.action = action;
     }
@@ -306,12 +308,13 @@ public class UberonSocketTool {
     private String idMappingQuery(String input) {
         log.entry(input);
         
-        Set<OWLClass> classes = this.ontUtils.getOWLClasses(input, false);
-        this.ontUtils.retainLeafClasses(classes, this.ontUtils.getGenericPartOfProps());
+        Set<OWLClass> classes = this.uberonCommon.getOWLClasses(input, false);
+        this.uberonCommon.getOntologyUtils().retainLeafClasses(
+                classes, this.uberonCommon.getOntologyUtils().getGenericPartOfProps());
         
         if (classes.size() == 1) {
-            return log.exit(
-                    this.ontUtils.getWrapper().getIdentifier(classes.iterator().next()));
+            return log.exit(this.uberonCommon.getOntologyUtils().getWrapper().getIdentifier(
+                    classes.iterator().next()));
         } 
         if (log.isWarnEnabled()) {
             if (classes.isEmpty()) {

@@ -140,15 +140,17 @@ public class UberonSocketToolTest extends TestAncestor {
         
         final int port = 15557;
         final String host = "127.0.0.1";
-        final OntologyUtils mockUtils = mock(OntologyUtils.class);
+        final UberonCommon uberon = mock(UberonCommon.class);
         OWLClass mockClass1 = mock(OWLClass.class);
         OWLClass mockClass2 = mock(OWLClass.class);
-        when(mockUtils.getOWLClasses(eq("ID:0"), eq(false))).thenReturn(
+        when(uberon.getOWLClasses(eq("ID:0"), eq(false))).thenReturn(
                 new HashSet<OWLClass>(Arrays.asList(mockClass1)));
-        when(mockUtils.getOWLClasses(eq("ID_BIS:0"), eq(false))).thenReturn(
+        when(uberon.getOWLClasses(eq("ID_BIS:0"), eq(false))).thenReturn(
                 new HashSet<OWLClass>(Arrays.asList(mockClass1, mockClass2)));
         
         OWLGraphWrapper mockWrapper = mock(OWLGraphWrapper.class);
+        OntologyUtils mockUtils = mock(OntologyUtils.class);
+        when(uberon.getOntologyUtils()).thenReturn(mockUtils);
         when(mockUtils.getWrapper()).thenReturn(mockWrapper);
         when(mockWrapper.getIdentifier(eq(mockClass1))).thenReturn("ID:1");
         
@@ -164,7 +166,7 @@ public class UberonSocketToolTest extends TestAncestor {
                 ServerSocket server = null;
                 try {
                     server = new ServerSocket(port);
-                    UberonSocketTool tool = new UberonSocketTool(mockUtils, server);
+                    UberonSocketTool tool = new UberonSocketTool(uberon, server);
                     this.socketTool = tool; //to be sure it is initialized before being set
                     this.socketTool.startListening();
                 } catch (IOException e) {

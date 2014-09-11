@@ -653,8 +653,8 @@ public class UberonDevStage extends UberonCommon {
         List<String> stageIdsBetween = new ArrayList<String>();
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
 
-        OWLClass startStage = this.getOntologyUtils().getOWLClass(startStageId);
-        OWLClass endStage = this.getOntologyUtils().getOWLClass(endStageId);
+        OWLClass startStage = this.getOWLClass(startStageId);
+        OWLClass endStage = this.getOWLClass(endStageId);
         if (startStage == null) {
             throw log.throwing(new IllegalArgumentException("Could not find any OWLClass " +
                     "corresponding to " + startStageId));

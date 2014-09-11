@@ -65,6 +65,18 @@
         <oboInOwl:inSubset rdf:resource="http://purl.obolibrary.org/obo/uberon/core#upper_level"/>
     </owl:Class>
     
+    <!-- http://purl.obolibrary.org/obo/UBERON_0000105 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000105">
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">UBERON:0000105</oboInOwl:id>
+    </owl:Class>
+    
+    <!-- http://purl.obolibrary.org/obo/UBERON_0000106 -->
+
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/UBERON_0000106">
+        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">UBERON:0000106</oboInOwl:id>
+    </owl:Class>
+    
     <!-- http://purl.obolibrary.org/obo/HsapDv_0000001 -->
 
     <owl:Class rdf:about="http://purl.obolibrary.org/obo/HsapDv_0000001">
@@ -74,6 +86,28 @@
                     <rdf:Description rdf:about="http://purl.obolibrary.org/obo/UBERON_0000104"/>
                     <owl:Restriction>
                         <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/BFO_0000050"/>
+                        <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_9606"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purl.obolibrary.org/obo/UBERON_0000105"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/BFO_0000050"/>
+                        <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_9605"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purl.obolibrary.org/obo/UBERON_0000106"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/RO_0002160"/>
                         <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_9606"/>
                     </owl:Restriction>
                 </owl:intersectionOf>

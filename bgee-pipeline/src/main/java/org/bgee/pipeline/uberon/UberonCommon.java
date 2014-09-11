@@ -10,9 +10,18 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
+import org.obolibrary.oboformat.parser.OBOFormatConstants.OboFormatTag;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+
+import owltools.graph.OWLGraphWrapper;
 
 /**
  * Class holding attributes and methods common to {@link Uberon} and {@link UberonDevStage}.
@@ -26,6 +35,11 @@ abstract class UberonCommon {
      * {@code Logger} of the class.
      */
     private final static Logger log = LogManager.getLogger(UberonCommon.class.getName());
+    
+    /**
+     * A {@code String} that is the OBO-like ID of the root of the NCBI taxonomy ontology.
+     */
+    public final static String TAXONOMY_ROOT_ID = "NCBITaxon:1";
     
     /**
      * A {@code String} that is the name of the column containing the anatomical entity IDs 
@@ -187,6 +201,269 @@ abstract class UberonCommon {
         this.setTaxonConstraints(null);
     }
 
+    
+    /**
+     * Delegates to {@link #getOWLClasses(String, boolean)} with the {@code boolean} 
+     * argument set to {@code true}, and returns either the {@code OWLClass} contained 
+     * in the returned {@code Set}, or {@code null} if it is empty. 
+     * 
+     * @param id    See same name argument in {@link #getOWLClasses(String, boolean)}
+     * @return      The {@code OWLClass} retrieved based on {@code id}, or {@code null} 
+     *              if none were retrieved.
+     * @see #getOWLClasses(String, boolean)
+     */
+    public OWLClass getOWLClass(String id) {
+        log.entry(id);
+        
+        Set<OWLClass> potentialClasses = this.getOWLClasses(id, true);
+        if (potentialClasses.size() == 1) {
+            return log.exit(potentialClasses.iterator().next());
+        } 
+        return log.exit(null);
+    }
+    
+    /**
+     * Obtains from the ontology wrapped in this object the {@code OWLClass}es corresponding to 
+     * {@code id}. The {@code OWLClass}es will be tried to be identified: first by assuming 
+     * {@code id} is an OBO-like ID (using 
+     * {@code OWLGraphWrapperExtended.getOWLClassByIdentifier(String)}); then, if not identified, 
+     * by assuming it is the {@code String} representation of an {@code IRI} (using 
+     * {@code OWLGraphWrapperExtended.getOWLClass(String)}); at this point, if a class 
+     * was retrieved, it will be checked whether it is a taxon equivalence to an Uberon class 
+     * (using ECAs between the retrieved class and 
+     * IntersectionOf(Uberon_class part_of some taxon_class)), in which case 
+     * the Uberon class will be returned; then, if the class was not identified, it will 
+     * be assumed that {@code id} is an xref (in that case, xref mappings are retrieved calling 
+     * {@link #getXRefMappings()}; then, if not identified, by checking whether {@code id} 
+     * maps to an obsolete {@code OWLClass}, in which case the "replaced_by" mappings 
+     * will be returned (replaced_by mappings are retrieved by calling 
+     * {@link #getReplacedByMappings()}). If {@code isStrict} is {@code true}, 
+     * then only an {@code OWLClass} uniquely corresponding to an Uberon term or an xref or 
+     * a replaced_by annotation will be considered, and if it maps to several 
+     * {@code OWLClass}es, they will be discarded. If {@code isStrict} 
+     * is {@code false}, then ambiguously mapped {@code OWLClass}es will all be returned. 
+     * <p>
+     * If an {@code OWLClass} is retrieved by its OBO-like ID or its IRI, then 
+     * the returned {@code Set} will contain only one {@code OWLClass}. If {@code isStrict} 
+     * is {@code true}, the returned {@code Set} will always contain 
+     * either 0 or 1 {@code OWLClass} (this is similar to calling 
+     * {@link #getOWLClass(String)}). If {@code isStrict} is {@code false}, 
+     * the returned {@code Set} can contain any number of elements. 
+     * 
+     * @param id    A {@code String} that can be either the OBO-like ID or the {@code IRI} 
+     *              of an {@code OWLClass}, or an XRef mapped to some {@code OWLClass}es, 
+     *              or the OBO-like ID or {@code IRI} of an obsolete {@code OWLClass}, 
+     *              for which to retrieve the {@code OWLClass}es to use as replacement.
+     * @param isStrict  A {@code boolean} defining whether only unambiguous xref 
+     *                  or replaced_by mappings should be considered. In that case, 
+     *                  the returned {@code Set} will contain at most 1 element.
+     * @return          A {@code Set} of {@code OWLClass}es that were retrieved 
+     *                  from {@code id}.
+     * @see #getOWLClass(String)
+     */
+    public Set<OWLClass> getOWLClasses(String id, boolean isStrict) {
+        return this.getOWLClasses(id, isStrict, null);
+    }
+    
+    /**
+     * Same as {@link #getOWLClasses(String, boolean)}, with an additional argument 
+     * {@code visitedIds}, to protect against infinite cycles when calling this method 
+     * recursively. 
+     * 
+     * @param id            See {@link #getOWLClasses(String, boolean)}
+     * @param isStrict      See {@link #getOWLClasses(String, boolean)}
+     * @param visitedIds    A {@code Set} of {@code String}s storing IDs already visited 
+     *                      when calling this method recursively.
+     * @return              See {@link #getOWLClasses(String, boolean)}
+     */
+    private Set<OWLClass> getOWLClasses(String id, boolean isStrict, Set<String> visitedIds) {
+        log.entry(id, isStrict, visitedIds);
+
+        Set<OWLClass> potentialClasses = new HashSet<OWLClass>();
+        
+        if (visitedIds == null) {
+            visitedIds = new HashSet<String>();
+        }
+        if (visitedIds.contains(id)) {
+            return potentialClasses;
+        }
+        visitedIds.add(id);
+        
+        OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
+        OWLClass cls = wrapper.getOWLClassByIdentifier(id);
+        //if id was not an OBO-like ID, but an IRI
+        if (cls == null) {
+            cls = wrapper.getOWLClass(id);
+        }
+        
+        
+        if (cls != null) {
+            //check that this class is not actually equivalent to the intersection 
+            //of an Uberon class in a given taxon, in which case we would return 
+            //the Uberon equivalent class
+            OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
+                    OntologyUtils.PART_OF_ID);
+            OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(TAXONOMY_ROOT_ID);
+            Set<OWLClass> classesMapped = 
+                    this.getOntologyUtils().getECAIntersectionOf(cls, partOf, taxonomyRoot);
+            if (classesMapped.size() == 1 || !isStrict) {
+                potentialClasses.addAll(classesMapped);
+            } 
+            //if no equivalent class, just consider cls
+            if (classesMapped.isEmpty()) {
+                potentialClasses.add(cls);
+            }
+        } else {
+            //in case the id provided was actually an xref
+            Set<String> classIdsMapped = this.getOntologyUtils().getXRefMappings().get(id);
+            if (classIdsMapped != null) {
+                Set<OWLClass> classesMapped = new HashSet<OWLClass>();
+                for (String idMapped: classIdsMapped) {
+                    //recursivity to get the class corresponding to the xref
+                    classesMapped.addAll(this.getOWLClasses(idMapped, isStrict, visitedIds));
+                }
+                if (classesMapped.size() == 1 || !isStrict) {
+                    potentialClasses.addAll(classesMapped);
+                }
+            }
+        }
+        
+        //iterate a copy of potentialClasses to be able to modify it.
+        //here, we check for obsolete classes replaced by another class
+        for (OWLClass potentialClass: new HashSet<OWLClass>(potentialClasses)) {
+            //if the class is obsolete, search for replaced_by annotations
+            if (wrapper.isObsolete(potentialClass) || 
+                    wrapper.getIsObsolete(potentialClass)) {
+                
+                potentialClasses.remove(potentialClass);
+
+                //otherwise, we need to use the replaced_by annotations
+                Set<String> replacedByIds = this.getOntologyUtils().getReplacedByMappings().get(
+                        wrapper.getIdentifier(potentialClass));
+                if (replacedByIds != null) {
+                    Set<OWLClass> classesMapped = new HashSet<OWLClass>();
+                    //we iterate all IDs even if isStrict is true: maybe several replaced_by 
+                    //annotations will end up pointing to the same OWLClass
+                    for (String idMapped: replacedByIds) {
+                        //use recursivity in case the replaced_by annotation is itself pointing 
+                        //to an obsolete class or an xref
+                        Set<OWLClass> tempClassesMapped = this.getOWLClasses(idMapped, isStrict, visitedIds);
+                        if (tempClassesMapped.isEmpty()) {
+                            log.warn("A replaced_by annotation from OWLClass {} did not allow to retrieve an OWLClass: {}", 
+                                    id, idMapped);
+                        }
+                        classesMapped.addAll(tempClassesMapped);
+                    }
+                    if (classesMapped.size() == 1 || !isStrict) {
+                        potentialClasses.addAll(classesMapped);
+                    }
+                }
+            }
+        } 
+        
+        return log.exit(potentialClasses);
+    }
+    
+    protected void convertTaxonECAsToXrefs() {
+        log.entry();
+        
+        OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
+        OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
+                OntologyUtils.PART_OF_ID);
+        OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(TAXONOMY_ROOT_ID);
+        
+        for (OWLOntology ont: this.getOntologyUtils().getWrapper().getAllOntologies()) {
+            OWLDataFactory fac = ont.getOWLOntologyManager().getOWLDataFactory();
+            for (OWLClass cls: ont.getClassesInSignature()) {
+                //retrieve taxonomy equivalent classes
+                CONTINUE HERE WITH getECAIntersectionOf
+                for (OWLClass equivalentCls: 
+                    this.getOntologyUtils().getECAIntersectionOf(cls, partOf, taxonomyRoot)) {
+                    //create the xref 
+                    OWLAnnotationAssertionAxiom ax = fac.getOWLAnnotationAssertionAxiom(
+                            wrapper.getAnnotationProperty(OboFormatTag.TAG_XREF.getTag()), 
+                            cls.getIRI(), equivalentCls.getIRI());
+                    if (!ont.containsAxiomIgnoreAnnotations(ax)) {
+                        ont.getOWLOntologyManager().addAxiom(ont, ax);
+                    }
+                }
+            }
+        }
+        
+        log.exit();
+    }
+
+
+    /**
+     * Determines whether {@code cls} belongs to the taxon with ID {@code taxonId}. 
+     * This can be determined only if taxon constraints have been provided (see 
+     * {@link #setTaxonConstraints(Map)}). If no taxon contraints have been provided, 
+     * or {@code taxonId} is equal to 0, this method will always return {@code true}. 
+     * If some taxon constraints have been provided, and if {@code taxonId} is different from 0, 
+     * then this method will return {@code true} if {@code cls} belongs to the taxon, 
+     * {@code false} otherwise (if the taxon does not belong to the set of taxon IDs 
+     * associated to the class). 
+     * 
+     * @param cls           An {@code OWLClass} for which we want to determine whether 
+     *                      it belongs to the taxon with ID {@code taxonId}.
+     * @param taxonId       An {@code int} that is the NCBI ID of the taxon for which 
+     *                      we want to know if {@code cls} belongs to.
+     * @return              {@code false} if it is shown that {@code cls} doesa not belong to 
+     *                      taxon with ID {@code taxonId}, {@code false} otherwise. 
+     * @see #existsInAtLeastOneSpecies(OWLClass, Collection)
+     */
+    public boolean existsInSpecies(OWLClass cls, int taxonId) {
+        log.entry(cls, taxonId);
+        if (this.getTaxonConstraints() == null || taxonId == 0) {
+            return log.exit(true);
+        }
+        Set<Integer> validSpecies = this.getTaxonConstraints().get(
+                this.getOntologyUtils().getWrapper().getIdentifier(cls));
+        if (validSpecies == null || !validSpecies.contains(taxonId)) {
+            return log.exit(false);
+        }
+        return log.exit(true);
+    }
+
+    /**
+     * Determines whether {@code cls} belongs to at least one taxon with ID in {@code taxonIds}. 
+     * This can be determined only if taxon constraints have been provided (see 
+     * {@link #setTaxonConstraints(Map)}). If no taxon contraints have been provided, 
+     * or if {@code taxonIds} contains 0, this method will always return {@code true}. 
+     * If some taxon constraints have been provided, and if {@code taxonIds} does not contain 0, 
+     * then this method will return {@code true} if {@code cls} belongs to one of the taxa, 
+     * {@code false} otherwise. 
+     * 
+     * @param cls           An {@code OWLClass} for which we want to determine whether 
+     *                      it belongs to one of the taxa with ID in {@code taxonIds}.
+     * @param taxonId       A {@code Collection} of {@code Integer}s that are the NCBI IDs 
+     *                      of the taxon for which we want to know if {@code cls} belongs to any.
+     * @return              {@code false} if it is shown that {@code cls} does not belong to 
+     *                      any taxon with ID in {@code taxonIds}, {@code false} otherwise. 
+     * @throw IllegalArgumentException  If {@code taxonIds} is empty, as this method would then 
+     *                                  only return {@code false}.
+     * @see #existsInSpecies(OWLClass, int)
+     */
+    public boolean existsInAtLeastOneSpecies(OWLClass cls, Collection<Integer> taxonIds) {
+        log.entry(cls, taxonIds);
+        if (this.getTaxonConstraints() == null || taxonIds.contains(0)) {
+            return log.exit(true);
+        }
+        if (taxonIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The provided Collection of taxon IDs " + 
+                               "is empty, this method will always return false"));
+        }
+        Set<Integer> copiedTaxonIds = new HashSet<Integer>(taxonIds);
+        Set<Integer> validSpecies = this.getTaxonConstraints().get(
+                this.getOntologyUtils().getWrapper().getIdentifier(cls));
+        if (validSpecies == null) {
+            return log.exit(false);
+        }
+        copiedTaxonIds.retainAll(validSpecies);
+        
+        //if there is an intersection => valid cls
+        return log.exit(!copiedTaxonIds.isEmpty());
+    }
 
     /**
      * @return  A {@code String} that is the path to the file storing the Uberon ontology 
@@ -372,77 +649,6 @@ abstract class UberonCommon {
         this.taxonConstraints = taxonConstraints;
     }
     
-    /**
-     * Determines whether {@code cls} belongs to the taxon with ID {@code taxonId}. 
-     * This can be determined only if taxon constraints have been provided (see 
-     * {@link #setTaxonConstraints(Map)}). If no taxon contraints have been provided, 
-     * or {@code taxonId} is equal to 0, this method will always return {@code true}. 
-     * If some taxon constraints have been provided, and if {@code taxonId} is different from 0, 
-     * then this method will return {@code true} if {@code cls} belongs to the taxon, 
-     * {@code false} otherwise (if the taxon does not belong to the set of taxon IDs 
-     * associated to the class). 
-     * 
-     * @param cls           An {@code OWLClass} for which we want to determine whether 
-     *                      it belongs to the taxon with ID {@code taxonId}.
-     * @param taxonId       An {@code int} that is the NCBI ID of the taxon for which 
-     *                      we want to know if {@code cls} belongs to.
-     * @return              {@code false} if it is shown that {@code cls} doesa not belong to 
-     *                      taxon with ID {@code taxonId}, {@code false} otherwise. 
-     * @see #existsInAtLeastOneSpecies(OWLClass, Collection)
-     */
-    public boolean existsInSpecies(OWLClass cls, int taxonId) {
-        log.entry(cls, taxonId);
-        if (this.getTaxonConstraints() == null || taxonId == 0) {
-            return log.exit(true);
-        }
-        Set<Integer> validSpecies = this.getTaxonConstraints().get(
-                this.getOntologyUtils().getWrapper().getIdentifier(cls));
-        if (validSpecies == null || !validSpecies.contains(taxonId)) {
-            return log.exit(false);
-        }
-        return log.exit(true);
-    }
-    
-    /**
-     * Determines whether {@code cls} belongs to at least one taxon with ID in {@code taxonIds}. 
-     * This can be determined only if taxon constraints have been provided (see 
-     * {@link #setTaxonConstraints(Map)}). If no taxon contraints have been provided, 
-     * or if {@code taxonIds} contains 0, this method will always return {@code true}. 
-     * If some taxon constraints have been provided, and if {@code taxonIds} does not contain 0, 
-     * then this method will return {@code true} if {@code cls} belongs to one of the taxa, 
-     * {@code false} otherwise. 
-     * 
-     * @param cls           An {@code OWLClass} for which we want to determine whether 
-     *                      it belongs to one of the taxa with ID in {@code taxonIds}.
-     * @param taxonId       A {@code Collection} of {@code Integer}s that are the NCBI IDs 
-     *                      of the taxon for which we want to know if {@code cls} belongs to any.
-     * @return              {@code false} if it is shown that {@code cls} does not belong to 
-     *                      any taxon with ID in {@code taxonIds}, {@code false} otherwise. 
-     * @throw IllegalArgumentException  If {@code taxonIds} is empty, as this method would then 
-     *                                  only return {@code false}.
-     * @see #existsInSpecies(OWLClass, int)
-     */
-    public boolean existsInAtLeastOneSpecies(OWLClass cls, Collection<Integer> taxonIds) {
-        log.entry(cls, taxonIds);
-        if (this.getTaxonConstraints() == null || taxonIds.contains(0)) {
-            return log.exit(true);
-        }
-        if (taxonIds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The provided Collection of taxon IDs " + 
-                               "is empty, this method will always return false"));
-        }
-        Set<Integer> copiedTaxonIds = new HashSet<Integer>(taxonIds);
-        Set<Integer> validSpecies = this.getTaxonConstraints().get(
-                this.getOntologyUtils().getWrapper().getIdentifier(cls));
-        if (validSpecies == null) {
-            return log.exit(false);
-        }
-        copiedTaxonIds.retainAll(validSpecies);
-        
-        //if there is an intersection => valid cls
-        return log.exit(!copiedTaxonIds.isEmpty());
-    }
-
     /**
      * @return  A {@code Map} where keys are {@code String}s that are the OBO-like IDs 
      *          of {@code OWLClass}es removed as a result of the simplification process, 

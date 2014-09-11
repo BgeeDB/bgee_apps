@@ -36,7 +36,6 @@ import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -67,11 +66,6 @@ public class OntologyUtils {
      */
     private final static Logger log = 
             LogManager.getLogger(OntologyUtils.class.getName());
-    
-    /**
-     * A {@code String} that is the OBO-like ID of the root of the NCBI taxonomy ontology.
-     */
-    public final static String TAXONOMY_ROOT_ID = "NCBITaxon:1";
     /**
      * An unmodifiable {@code Set} of {@code String}s that are the names 
      * of non-informative subsets in Uberon.
@@ -987,201 +981,172 @@ public class OntologyUtils {
     }
     
     /**
-     * Delegates to {@link #getOWLClasses(String, boolean)} with the {@code boolean} 
-     * argument set to {@code true}, and returns either the {@code OWLClass} contained 
-     * in the returned {@code Set}, or {@code null} if it is empty. 
+     * Retrieves {@code OWLClass}es corresponding to {@code cls}. 
+     * "Corresponding" {@code OWLClass}es are the targets retrieved by searching for 
+     * taxonomy Equivalent Classes Axioms, see {@link #getECAIntersectionOf(OWLClass, 
+     * OWLObjectPropertyExpression, OWLClass)} for details.
      * 
-     * @param id    See same name argument in {@link #getOWLClasses(String, boolean)}
-     * @return      The {@code OWLClass} retrieved based on {@code id}, or {@code null} 
-     *              if none were retrieved.
-     * @see #getOWLClasses(String, boolean)
+     * @param cls               See see {@link #getECAIntersectionOf(OWLClass, 
+     *                          OWLObjectPropertyExpression, OWLClass)}
+     * @param prop              See see {@link #getECAIntersectionOf(OWLClass, 
+     *                          OWLObjectPropertyExpression, OWLClass)}
+     * @param fillerParentClass See see {@link #getECAIntersectionOf(OWLClass, 
+     *                          OWLObjectPropertyExpression, OWLClass)}
+     * @return                  A {@code Set} of {@code OWLClass}es that are the class operands 
+     *                          in the {@code OWLObjectSomeValuesFrom}s of the 
+     *                          {@code OWLObjectIntersectionOf}s considered. 
      */
-    public OWLClass getOWLClass(String id) {
-        log.entry(id);
-        
-        Set<OWLClass> potentialClasses = this.getOWLClasses(id, true);
-        if (potentialClasses.size() == 1) {
-            return log.exit(potentialClasses.iterator().next());
-        } 
-        return log.exit(null);
+    public Set<OWLClass> getECAIntersectionOfTargets(OWLClass cls, 
+            OWLObjectPropertyExpression prop, OWLClass fillerParentClass) {
+        log.entry(cls, prop, fillerParentClass);
+        Set<OWLClass> targets = new HashSet<OWLClass>();
+        for (OWLEquivalentClassesAxiom eca: 
+            this.getECAIntersectionOf(cls, prop, fillerParentClass)) {
+            targets.add((OWLClass) this.convertECAIntersectionOfToEdge(eca).getTarget());
+        }
+        return log.exit(targets);
     }
     
     /**
-     * Obtains from the ontology wrapped in this object the {@code OWLClass}es corresponding to 
-     * {@code id}. The {@code OWLClass}es will be tried to be identified: first by assuming 
-     * {@code id} is an OBO-like ID (using 
-     * {@code OWLGraphWrapperExtended.getOWLClassByIdentifier(String)}); then, if not identified, 
-     * by assuming it is the {@code String} representation of an {@code IRI} (using 
-     * {@code OWLGraphWrapperExtended.getOWLClass(String)}); then, if not identified, 
-     * by assuming it is an xref (in that case, xref mappings are retrieved calling 
-     * {@link #getXRefMappings()}; then, if not identified, by checking whether {@code id} 
-     * maps to an obsolete {@code OWLClass}, in which case the "replaced_by" mappings 
-     * will be returned (replaced_by mappings are retrieved by calling 
-     * {@link #getReplacedByMappings()}). If {@code isStrict} is {@code true}, 
-     * then only the {@code OWLClass} uniquely mapped to an xref or by a replaced_by annotation  
-     * will be considered, and if the xref or replaced_by annotations map to several 
-     * {@code OWLClass}es, they will be discarded. If {@code isStrict} 
-     * is {@code false}, then ambiguously mapped {@code OWLClass}es will all be returned. 
+     * Retrieves {@code OWLEquivalentClassesAxiom}s with a specific structure: 
+     * Equivalent Classes Axioms where one of the class expressions is {@code cls}, 
+     * the other expression being an {@code OWLObjectIntersectionOf}; where
+     * one of its operands is an {@code OWLClass}, and the other operand is 
+     * an {@code OWLObjectSomeValuesFrom}; where the {@code OWLObjectSomeValuesFrom} 
+     * have {@code prop} as property, the filler being equal to, 
+     * or a subClassOf of {@code fillerParentClass} (through direct or indirect is_a relations). 
      * <p>
-     * If an {@code OWLClass} is retrieved by its OBO-like ID or its IRI, then 
-     * the returned {@code Set} will contain only one {@code OWLClass}. If {@code isStrict} 
-     * is {@code true}, the returned {@code Set} will always contain 
-     * either 0 or 1 {@code OWLClass} (this is similar to calling 
-     * {@link #getOWLClass(String)}). If {@code isStrict} is {@code false}, 
-     * the returned {@code Set} can contain any number of elements. 
+     * A typical use case is to retrieved taxonomy equivalence, where, for instance, 
+     * an EHDAA2 class is considered to be equivalent to an Uberon class in the human taxon 
+     * (for instance, {@code EHDAA2:xxx EquivalentTo(UBERON:xxx and part_of some NCBITaxon:9606)}; 
+     * here, {@code cls} would correspond to "EHDAA2:xxx", {@code prop} to "part_of", 
+     * {@code fillerParentClass} to "NCBITaxon:1"; the returned {@code Set} would contain 
+     * the class "UBERON:xxx").
+     * <p>
+     * If {@code prop} is {@code null}, then {@code OWLObjectSomeValuesFrom}s with 
+     * any property will be considered. If {@code fillerParentClass} is {@code null}, 
+     * then {@code OWLObjectSomeValuesFrom}s with any filler will be considered. 
      * 
-     * @param id    A {@code String} that can be either the OBO-like ID or the {@code IRI} 
-     *              of an {@code OWLClass}, or an XRef mapped to some {@code OWLClass}es, 
-     *              or the OBO-like ID or {@code IRI} of an obsolete {@code OWLClass}, 
-     *              for which to retrieve the {@code OWLClass}es to use as replacement.
-     * @param isStrict  A {@code boolean} defining whether only unambiguous xref 
-     *                  or replaced_by mappings should be considered. In that case, 
-     *                  the returned {@code Set} will contain at most 1 element.
-     * @return          A {@code Set} of {@code OWLClass}es that were retrieved 
-     *                  from {@code id}.
-     * @see #getOWLClass(String)
+     * @param cls               An {@code OWLClass} for which we want related 
+     *                          {@code OWLEquivalentClassesAxiom}s.
+     * @param prop              An {@code OWLObjectPropertyExpression} retraining the 
+     *                          {@code OWLObjectSomeValuesFrom}s considered.
+     * @param fillerParentClass An {@code OWLClass}  retraining the 
+     *                          {@code OWLObjectSomeValuesFrom}s considered.
+     * @return                  A {@code Set} of {@code OWLEquivalentClassesAxiom}es 
+     *                          matching the requested structure.
      */
-    public Set<OWLClass> getOWLClasses(String id, boolean isStrict) {
-        return this.getOWLClasses(id, isStrict, null);
+    public Set<OWLEquivalentClassesAxiom> getECAIntersectionOf(OWLClass cls, 
+            OWLObjectPropertyExpression prop, OWLClass fillerParentClass) {
+        log.entry(cls, prop, fillerParentClass);
+        
+        Set<OWLEquivalentClassesAxiom> ecas = new HashSet<OWLEquivalentClassesAxiom>();
+        for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
+            //we search for Equivalent Classes Axioms where one of the class expressions 
+            //is cls, the other expression being an OWLObjectIntersectionOf. 
+            //We expect one of its operands to be an OWLClass, and the other 
+            //operand to be an OWLObjectSomeValuesFrom. The OWLObjectSomeValuesFrom 
+            //should have prop as property, and the filler should be a subClassOf of 
+            //fillerParentClass (through direct or indirect is_a relations).
+            for (OWLEquivalentClassesAxiom eca: ont.getEquivalentClassesAxioms(cls)) {
+                log.trace("Examining ECA: {}", eca);
+                //we use convertECAIntersectionToEdge to check that the ECA is valid
+                try {
+                    OWLGraphEdge edge = this.convertECAIntersectionOfToEdge(eca);
+                    //If the ECA satisfies all requirements
+                    if (edge.getSource().equals(cls) && 
+                            (prop == null || prop.equals(edge.getGCIRelation())) && 
+                            (fillerParentClass == null || 
+                            fillerParentClass.equals(edge.getGCIFiller()) ||
+                             this.getAncestorsThroughIsA(edge.getGCIFiller()).contains(
+                                     fillerParentClass))) {
+                        log.trace("Satisfying ECA: {}", eca);
+                        ecas.add(eca);
+                    } else {
+                        log.trace("Discarded.");
+                    }
+                } catch (IllegalArgumentException e) {
+                    //do nothing, this is simply not a valid ECA
+                    log.trace("Discarded.");
+                }
+            }
+        }
+        return log.exit(ecas);
     }
     
     /**
-     * Same as {@link #getOWLClasses(String, boolean)}, with an additional argument 
-     * {@code visitedIds}, to protect against infinite cycles when calling this method 
-     * recursively. 
+     * Convert an EquivalentClasses axiom with IntersectionOf class expression into 
+     * an {@code OWLGraphEdge}. The axioms should be the same as the axioms retrieved by 
+     * {@link #getECAIntersectionOf(OWLClass, OWLObjectPropertyExpression, OWLClass)}, 
+     * otherwise, an {@code IllegalArgumentException} is thrown. 
+     * <p>
+     * The {@code OWLClass} expression in the eca will be returned by 
+     * {@code OWLGraphEdge#getSource()}, the {@code OWLClass} expression in the IntersectionOf 
+     * will be returned by {@code OWLGraphEdge#getTarget()}, the filler and property 
+     * in the {@code OWLObjectSomeValuesFrom} will be returned respectively by 
+     * {@code OWLGraphEdge#getGCIFiller()} and {@code OWLGraphEdge#getGCIRelation()}. 
+     * <p>
+     * {@code OWLGraphEdge#getOntology()}, {@code OWLGraphEdge#getAxioms()}, and 
+     * {@code OWLGraphEdge#getQuantifiedPropertyList()} will not returned any meaningful 
+     * information. The {@code OWLGraphEdge} is a "fake" edge used for convenience. 
      * 
-     * @param id            See {@link #getOWLClasses(String, boolean)}
-     * @param isStrict      See {@link #getOWLClasses(String, boolean)}
-     * @param visitedIds    A {@code Set} of {@code String}s storing IDs already visited 
-     *                      when calling this method recursively.
-     * @return              See {@link #getOWLClasses(String, boolean)}
+     * @param eca   An {@code OWLEquivalentClassesAxiom} with the same structure as 
+     *              the axioms returned by {@link #getECAIntersectionOf(OWLClass, 
+     *              OWLObjectPropertyExpression, OWLClass)}.
+     * @return      An {@code OWLGraphEdge} storing the information relative to {@code eca}.
+     * @throws IllegalArgumentException If {@code eca} does not have the expected structure 
+     *                                  (see {@link #getECAIntersectionOf(OWLClass, 
+     *                                  OWLObjectPropertyExpression, OWLClass)})
      */
-    private Set<OWLClass> getOWLClasses(String id, boolean isStrict, Set<String> visitedIds) {
-        log.entry(id, isStrict, visitedIds);
+    public OWLGraphEdge convertECAIntersectionOfToEdge(OWLEquivalentClassesAxiom eca) {
+        log.entry(eca);
+        
+        if (eca.getClassExpressions().size() != 2) {
+            throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
+            		"axiom provided, expecting 2 class expressions: " + eca));
+        }
+        OWLClass sourceCls = null;
+        OWLObjectIntersectionOf intersect = null;
+        for (OWLClassExpression clsExpr: eca.getClassExpressions()) {
+            if (clsExpr instanceof OWLClass) {
+                sourceCls = (OWLClass) clsExpr;
+            } else if (clsExpr instanceof OWLObjectIntersectionOf) {
+                intersect = (OWLObjectIntersectionOf) clsExpr;
+            }
+        }
+        if (sourceCls == null || intersect == null) {
+            throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
+                    "axiom provided, expecting one of the class expressions being OWLClass, " +
+                    "and other class expression being an OWLObjectIntersectionOf: " + eca));
+        }
+        if (intersect.getOperands().size() != 2) {
+            throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
+                    "axiom provided, expecting one of the class expressions being " +
+                    "an OWLObjectIntersectionOf with two operands: " + eca));
+        }
 
-        Set<OWLClass> potentialClasses = new HashSet<OWLClass>();
-        
-        if (visitedIds == null) {
-            visitedIds = new HashSet<String>();
-        }
-        if (visitedIds.contains(id)) {
-            return potentialClasses;
-        }
-        visitedIds.add(id);
-        
-        OWLClass cls = this.getWrapper().getOWLClassByIdentifier(id);
-        //if id was not an OBO-like ID, but an IRI
-        if (cls == null) {
-            cls = this.getWrapper().getOWLClass(id);
-        }
-        //check that this class is not actually equivalent to the intersection 
-        //of an Uberon class in a given taxon, in which case we would return 
-        //the Uberon equivalent class
-        if (cls != null) {
-            OWLObjectProperty partOf = 
-                    this.getWrapper().getOWLObjectPropertyByIdentifier(PART_OF_ID);
-            OWLClass taxonomyRoot = 
-                    this.getWrapper().getOWLClassByIdentifier(TAXONOMY_ROOT_ID);
-            ontology: for (OWLOntology ont: this.getWrapper().getAllOntologies()) {
-                //we search for Equivalent Classes Axioms where one of the class expressions 
-                //is cls, the other expression being an OWLObjectIntersectionOf. 
-                //We expect one of its operands to be an Uberon class, and the other 
-                //operand to be an OWLObjectSomeValuesFrom. The OWLObjectSomeValuesFrom 
-                //should have a taxon as filler, and a part_of as property.
-                for (OWLEquivalentClassesAxiom eca: ont.getEquivalentClassesAxioms(cls)) {
-                    if (eca.getClassExpressions().size() != 2) {
-                        continue;
-                    }
-                    OWLClassExpression otherClassExpression = 
-                            eca.getClassExpressionsMinus(cls).iterator().next();
-                    OWLClass clsOperand = null;
-                    OWLObjectPropertyExpression gciRel = null;
-                    OWLClass filler = null;
-                    if (otherClassExpression instanceof OWLObjectIntersectionOf) {
-                        if (((OWLObjectIntersectionOf) otherClassExpression).
-                                getOperands().size() != 2) {
-                            continue;
-                        }
-                        
-                        for (OWLClassExpression operand: 
-                            ((OWLObjectIntersectionOf) otherClassExpression).getOperands()) {
-                            if (operand instanceof OWLClass) {
-                                clsOperand = (OWLClass) operand;
-                            } else if (operand instanceof OWLObjectSomeValuesFrom &&
-                                    ((OWLObjectSomeValuesFrom)operand).getFiller()
-                                    instanceof OWLClass) {
-                                filler = (OWLClass) ((OWLObjectSomeValuesFrom)operand).getFiller();
-                                gciRel = ((OWLObjectSomeValuesFrom)operand).getProperty();
-                            }
-                        }
-                    }
-                    //If the ECA satisfies all requirements (notably, that the filler 
-                    //is indeed a taxon)
-                    if (clsOperand != null && filler != null && partOf.equals(gciRel) && 
-                            this.getAncestorsThroughIsA(filler).contains(taxonomyRoot)) {
-                        //in that case, we replace the requested class with 
-                        //the equivalent class
-                        log.trace("{} is equivalent to {} in taxon {}", 
-                                cls, clsOperand, filler);
-                        cls = clsOperand;
-                        break ontology;
-                    }
-                }
+        OWLClass clsOperand = null;
+        OWLObjectPropertyExpression gciRel = null;
+        OWLClass filler = null;
+        for (OWLClassExpression operand: intersect.getOperands()) {
+            if (operand instanceof OWLClass) {
+                clsOperand = (OWLClass) operand;
+            } else if (operand instanceof OWLObjectSomeValuesFrom &&
+                    ((OWLObjectSomeValuesFrom)operand).getFiller()
+                    instanceof OWLClass) {
+                filler = (OWLClass) ((OWLObjectSomeValuesFrom)operand).getFiller();
+                gciRel = ((OWLObjectSomeValuesFrom)operand).getProperty();
             }
         }
-        
-        
-        if (cls != null) {
-            potentialClasses.add(cls);
-        } else {
-            //in case the id provided was actually an xref
-            Set<String> classIdsMapped = this.getXRefMappings().get(id);
-            if (classIdsMapped != null) {
-                Set<OWLClass> classesMapped = new HashSet<OWLClass>();
-                for (String idMapped: classIdsMapped) {
-                    //recursivity to get the class corresponding to the xref
-                    classesMapped.addAll(this.getOWLClasses(idMapped, isStrict, visitedIds));
-                }
-                if (classesMapped.size() == 1 || !isStrict) {
-                    potentialClasses.addAll(classesMapped);
-                }
-            }
+        if (clsOperand == null || filler == null || gciRel == null) {
+            throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
+                    "axiom provided, expecting one of the class expressions being " +
+                    "an OWLObjectIntersectionOf, with one operand being an OWLClass, " +
+                    "the other operand being an OWLObjectSomeValuesFrom with " +
+                    "a filler and a property: " + eca));
         }
         
-        //iterate a copy of potentialClasses to be able to modify it.
-        //here, we check for obsolete classes replaced by another class
-        for (OWLClass potentialClass: new HashSet<OWLClass>(potentialClasses)) {
-            //if the class is obsolete, search for replaced_by annotations
-            if (this.getWrapper().isObsolete(potentialClass) || 
-                this.getWrapper().getIsObsolete(potentialClass)) {
-                
-                potentialClasses.remove(potentialClass);
-
-                //otherwise, we need to use the replaced_by annotations
-                Set<String> replacedByIds = this.getReplacedByMappings().get(
-                        this.getWrapper().getIdentifier(potentialClass));
-                if (replacedByIds != null) {
-                    Set<OWLClass> classesMapped = new HashSet<OWLClass>();
-                    //we iterate all IDs even if isStrict is true: maybe several replaced_by 
-                    //annotations will end up pointing to the same OWLClass
-                    for (String idMapped: replacedByIds) {
-                        //use recursivity in case the replaced_by annotation is itself pointing 
-                        //to an obsolete class or an xref
-                        Set<OWLClass> tempClassesMapped = this.getOWLClasses(idMapped, isStrict, visitedIds);
-                        if (tempClassesMapped.isEmpty()) {
-                            log.warn("A replaced_by annotation from OWLClass {} did not allow to retrieve an OWLClass: {}", 
-                                    id, idMapped);
-                        }
-                        classesMapped.addAll(tempClassesMapped);
-                    }
-                    if (classesMapped.size() == 1 || !isStrict) {
-                        potentialClasses.addAll(classesMapped);
-                    }
-                }
-            }
-        } 
-        
-        return log.exit(potentialClasses);
+        return log.exit(new OWLGraphEdge(sourceCls, clsOperand, null, null, filler, gciRel));
     }
     
     /**

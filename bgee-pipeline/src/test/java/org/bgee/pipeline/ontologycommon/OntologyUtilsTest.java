@@ -25,7 +25,9 @@ import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
@@ -549,92 +551,14 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link OntologyUtils#getOWLClass(String)}.
+     * Test the method {@link OntologyUtils#getECAIntersectionOfTargets(OWLClass, 
+     * OWLObjectPropertyExpression, OWLClass)} 
      * @throws IOException 
      * @throws OBOFormatParserException 
      * @throws OWLOntologyCreationException 
      */
     @Test
-    public void shouldGetOWLClass() throws OWLOntologyCreationException, 
-        OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
-                getResource("/ontologies/xRefMappings.obo").getFile());
-        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        OntologyUtils utils = new OntologyUtils(wrapper);
-        
-        OWLClass expectedClass = wrapper.getOWLClassByIdentifier("ID:1");
-        
-        //Test OBO-like ID
-        assertEquals(expectedClass, utils.getOWLClass("ID:1"));
-        //test IRI
-        assertEquals(expectedClass, utils.getOWLClass("http://purl.obolibrary.org/obo/ID_1"));
-        //test xrefs
-        assertEquals(expectedClass, utils.getOWLClass("ALT_ID:1"));
-        assertEquals(expectedClass, utils.getOWLClass("ALT_ALT_ID:1"));
-        //if mapping is ambiguous, return null
-        assertNull(utils.getOWLClass("ALT_ID:2"));
-        //test obsolete class replaced_by another
-        assertEquals(expectedClass, utils.getOWLClass("ID:5"));
-        //if mapping ambiguous over replaced_by, return null
-        assertNull(utils.getOWLClass("ID:4"));
-    }
-    
-    /**
-     * Test the method {@link OntologyUtils#getOWLClasses(String, boolean)} 
-     * with the {@code boolean} argument {@code false}.
-     * @throws IOException 
-     * @throws OBOFormatParserException 
-     * @throws OWLOntologyCreationException 
-     */
-    @Test
-    public void shouldGetOWLClasses() throws OWLOntologyCreationException, 
-        OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
-                getResource("/ontologies/xRefMappings.obo").getFile());
-        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        OntologyUtils utils = new OntologyUtils(wrapper);
-        
-        Set<OWLClass> expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID:1"), 
-                wrapper.getOWLClassByIdentifier("ID:2")));
-        assertEquals(expectedClasses, utils.getOWLClasses("ALT_ID:2", false));
-        
-        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID_REPLACED:4"), 
-                wrapper.getOWLClassByIdentifier("ID_REPLACED_BIS_XREF:4")));
-        assertEquals(expectedClasses, utils.getOWLClasses("ID:4", false));
-        
-        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID:1")));
-        assertEquals(expectedClasses, utils.getOWLClasses("ID_XREF_OBSOLETE:5", false));
-        
-        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID:1")));
-        assertEquals(expectedClasses, utils.getOWLClasses("ID_XREF_OBSOLETE:1", false));
-        
-        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("ID_REPLACED:4"), 
-                wrapper.getOWLClassByIdentifier("ID_REPLACED_BIS_XREF:4"),
-                wrapper.getOWLClassByIdentifier("ID:1")));
-        assertEquals(expectedClasses, utils.getOWLClasses("ID_XREF_OBSOLETE:6", false));
-        
-        expectedClasses = new HashSet<OWLClass>();
-        assertEquals(expectedClasses, utils.getOWLClasses("ID:7", false));
-        
-        expectedClasses = new HashSet<OWLClass>();
-        assertEquals(expectedClasses, utils.getOWLClasses("ID:6", false));
-    }
-    
-    /**
-     * Test the method {@link OntologyUtils#getOWLClasses(String, boolean)} 
-     * with the {@code boolean} argument {@code false}, to retrieve taxonomic equivalent 
-     * classes.
-     * @throws IOException 
-     * @throws OBOFormatParserException 
-     * @throws OWLOntologyCreationException 
-     */
-    @Test
-    public void shouldGetEquivalentOWLClasses() throws OWLOntologyCreationException, 
+    public void shouldGetECAIntersectionOfTargets() throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
                 getResource("/ontologies/gci_equivalent.owl").getFile());
@@ -642,10 +566,117 @@ public class OntologyUtilsTest extends TestAncestor {
         OntologyUtils utils = new OntologyUtils(wrapper);
         
         Set<OWLClass> expectedClasses = new HashSet<OWLClass>(Arrays.asList(
-                wrapper.getOWLClassByIdentifier("UBERON:0000104")));
-        assertEquals(expectedClasses, utils.getOWLClasses("HsapDv:0000001", false));
+                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000105")));
+        assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:1")));
         
-        assertEquals(expectedClasses, utils.getOWLClasses("UBERON:0000104", false));
+        assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9605")));
+        
+        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("UBERON:0000104")));
+        assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606")));
+        
+        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("UBERON:0000106")));
+        assertEquals(expectedClasses, utils.getECAIntersectionOfTargets(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0002160"), 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:1")));
+    }
+    
+    /**
+     * Test the method {@link OntologyUtils#getECAIntersectionOf(OWLClass, 
+     * OWLObjectPropertyExpression, OWLClass)} 
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldGetECAIntersectionOf() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/gci_equivalent.owl").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        OWLDataFactory fac = wrapper.getDataFactory();
+        
+        OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050");
+        
+        Set<OWLEquivalentClassesAxiom> expectedAxioms = new HashSet<OWLEquivalentClassesAxiom>();
+        expectedAxioms.add(fac.getOWLEquivalentClassesAxiom(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                fac.getOWLObjectIntersectionOf(
+                        wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                        fac.getOWLObjectSomeValuesFrom(
+                                partOf, wrapper.getOWLClassByIdentifier("NCBITaxon:9606")))));
+        expectedAxioms.add(fac.getOWLEquivalentClassesAxiom(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                fac.getOWLObjectIntersectionOf(
+                        wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                        fac.getOWLObjectSomeValuesFrom(
+                                partOf, wrapper.getOWLClassByIdentifier("NCBITaxon:9605")))));
+        
+        assertEquals(expectedAxioms, utils.getECAIntersectionOf(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:1")));
+        
+
+        expectedAxioms = new HashSet<OWLEquivalentClassesAxiom>();
+        expectedAxioms.add(fac.getOWLEquivalentClassesAxiom(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                fac.getOWLObjectIntersectionOf(
+                        wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
+                        fac.getOWLObjectSomeValuesFrom(
+                                wrapper.getOWLObjectPropertyByIdentifier("RO:0002160"), 
+                                wrapper.getOWLClassByIdentifier("NCBITaxon:9606")))));
+        assertEquals(expectedAxioms, utils.getECAIntersectionOf(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0002160"), 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606")));
+    }
+    
+    /**
+     * Test the method 
+     * {@link OntologyUtils#convertECAIntersectionToEdge(OWLEquivalentClassesAxiom)} 
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldConvertECAIntersectionToEdge() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/gci_equivalent.owl").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        OWLDataFactory fac = wrapper.getDataFactory();
+        
+        OWLEquivalentClassesAxiom eca = fac.getOWLEquivalentClassesAxiom(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                fac.getOWLObjectIntersectionOf(
+                        wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                        fac.getOWLObjectSomeValuesFrom(
+                                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"), 
+                                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"))));
+        OWLGraphEdge expectedEdge = new OWLGraphEdge(
+                wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                null, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), 
+                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"));
+        
+        assertEquals("Incorrect edge generated from ECA", expectedEdge, 
+                utils.convertECAIntersectionOfToEdge(eca));
     }
     
     /**

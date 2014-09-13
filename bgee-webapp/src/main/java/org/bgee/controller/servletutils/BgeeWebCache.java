@@ -98,9 +98,10 @@ public class BgeeWebCache extends CachingFilter
             LockTimeoutException, IOException, ServletException, Exception
     {
         log.entry(request, response, chain);
+        BgeeProperties prop = BgeeProperties.getBgeeProperties();
         try {
             if (new RequestParameters(request,
-                    new URLParameters(),BgeeProperties.getBgeeProperties(), true, "&")
+                    new URLParameters(),prop, true, "&")
             .isACacheableRequest()){
                 // Cacheble, forward it to the super class
                 super.doFilter(request, response, chain);
@@ -116,6 +117,10 @@ public class BgeeWebCache extends CachingFilter
             // nothing will be kept in cache.
             chain.doFilter(request, response);
         }  
+        finally{
+            // Remove the bgee properties instance from the pool
+            prop.removeFromBgeePropertiesPool();
+        }
         log.exit();
     }
 

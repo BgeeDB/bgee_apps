@@ -191,7 +191,7 @@ public class BgeeProperties
      * Anyway, we use a much lower limitation, as we do not want too long URL.
      */
     private final Integer urlMaxLength;
-    
+
     /**
      * {@code String} that contains the name of the web pages cache config file in the
      * resources folder. To reach the file, the resources folder has to be added in front of
@@ -315,6 +315,14 @@ public class BgeeProperties
     public static boolean hasBgeeProperties() {
         log.entry();
         return log.exit(bgeeProperties.containsKey(Thread.currentThread().getId()));
+    }
+
+    /**
+     * Remove the current instance of {@code BgeeProperties} from the {@code ConcurrentMap} 
+     * used to store {@code BgeeProperties}
+     */
+    public void removeFromBgeePropertiesPool(){
+        bgeeProperties.remove(Thread.currentThread().getId());
     }
 
     /**
@@ -473,7 +481,7 @@ public class BgeeProperties
     }
 
     /**
-     * @return  An {@code Integer} that definesmax length of URLs. Typically, if the URL 
+     * @return  An {@code Integer} that defines max length of URLs. Typically, if the URL 
      *          exceeds the max length, a key is generated to store and retrieve a query 
      *          string, holding the "storable" parameters. The "storable" parameters are
      *          removed from the URL, and replaced by the generated key.
@@ -481,7 +489,7 @@ public class BgeeProperties
     public Integer getUrlMaxLength() {
         return urlMaxLength;
     }
-    
+
     /**
      * @return  A {@code String} that contains the name of the web pages cache config file in the
      *          resources folder. To reach the file, the resources folder has to be added in front of

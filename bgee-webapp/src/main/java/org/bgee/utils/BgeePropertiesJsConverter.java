@@ -1,4 +1,4 @@
-package org.bgee.pipeline.js;
+package org.bgee.utils;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -112,13 +112,6 @@ public class BgeePropertiesJsConverter extends JSConverter {
         this.writeln("                   return '"+this.prop.getUrlMaxLength()+"';");
         this.writeln("                },");
         this.writeln("               ");
-        this.writeln("               /**");
-        this.writeln("                 * @return  A {@code boolean} that defines whether parameters should be url encoded ");
-        this.writeln("                 *          by the {@code encodeUrl} method.");
-        this.writeln("                 */");
-        this.writeln("                isEncodeUrl: function() {");
-        this.writeln("                    return '"+this.prop.isEncodeUrl()+"';");
-        this.writeln("               }");
         this.writeln("       };");
         log.exit();
     }

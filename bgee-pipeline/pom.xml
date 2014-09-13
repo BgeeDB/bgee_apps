@@ -34,14 +34,6 @@
             <artifactId>bgee-dao-sql</artifactId>
         </dependency>
 
-        <!-- The pipeline need to access to the webapp to generate javascript 
-            files -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>bgee-webapp</artifactId>
-            <classifier>classes</classifier>
-        </dependency>
-
         <dependency>
             <groupId>org.bbop</groupId>
             <artifactId>OWLTools-all</artifactId>

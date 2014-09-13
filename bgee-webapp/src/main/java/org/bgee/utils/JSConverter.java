@@ -1,4 +1,4 @@
-package org.bgee.pipeline.js;
+package org.bgee.utils;
 
 import java.io.File;
 import java.io.FileWriter;

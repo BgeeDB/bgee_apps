@@ -265,16 +265,6 @@
                 <scope>compile</scope>
             </dependency>
 
-            <!-- The pipeline need to access to the webapp to generate javascript 
-                files -->
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>bgee-webapp</artifactId>
-                <version>${project.version}</version>
-                <classifier>classes</classifier>
-                <scope>compile</scope>
-            </dependency>
-
             <!-- End for pipeline -->
 
             <!-- Needed for the webapp -->

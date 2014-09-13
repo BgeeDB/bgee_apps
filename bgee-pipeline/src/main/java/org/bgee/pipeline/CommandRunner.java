@@ -180,12 +180,7 @@ public class CommandRunner {
         case "ParseOrthoXML":
             ParseOrthoXML.main(newArgs);
             break;
-
-        //---------- Javascripts file generation -----------
-        case "JSConverter":
-            JSConverter.main(newArgs);
-            break;    
-
+ 
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));

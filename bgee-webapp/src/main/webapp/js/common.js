@@ -29,5 +29,5 @@ $( document ).ready(function() {
     // Init object urlParameters, which provides the list of all parameters allowed in an URL.
     urlParameters.init();
     // Create a requestParameters for the current URL
-    var currentRequest = new requestParameters();    
+    var currentRequest = new requestParameters(null,true, "&");
 });

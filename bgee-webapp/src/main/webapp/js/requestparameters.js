@@ -2,8 +2,15 @@
  * requestParameters handles the parameters that are received and sent through a request.
  * It checks the validity of the parameters (see urlparameters.js), adds/resets/returns
  * parameters and generates URLs.
- * Use new requestParameters(queryString) to create a new instance for every request you have
- * to manage. To create an empty requestParameters,  pass the value ""
+ * Use new requestParameters(queryString, encodeUrl, parametersSeparator) to create 
+ * a new instance for every request you have to manage.
+ * To create an empty requestParameters,  pass the value "" for queryString
+ * To create a requestParameters based on the current url, let the value null or pass the current
+ * url value.
+ * example :
+ * var currentRequest = new requestParameters("action=1",true, "&"); for manual query content
+ * var currentRequest = new requestParameters("",true, "&"); for blank url
+ * var currentRequest = new requestParameters(null,true, "&"); for current url
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
@@ -11,24 +18,34 @@
  * @since Bgee 13
  */
 
-function requestParameters(queryString){
+function requestParameters(queryString, encodeUrl, parametersSeparator){
 
     /**
      * Associative array that contains the values for all parameters present in the query
      */
     this.values = null ;
     /**
-     * Boolean to tell whether to encode the url or not
+     * A {@code boolean} to tell whether to encode the url or not
      */
     this.encodeUrl = null ;
     /**
-     * Initialization
+     * A {@code String} used as parameters separator
      */
-    this.init = function(queryString){
+    this.parametersSeparator = null ;
+    /**
+     * Initialization
+     * 
+     * @param queryString
+     * @param encodeUrl             A {@code boolean} to tell whether to encode the url or not
+     * @param parametersSeparator   A {@code String} used as parameters separator
+     */
+    this.init = function(queryString, encodeUrl, parametersSeparator){
 
         this.values = new Array();
 
-        this.encodeUrl = bgeeProperties.isEncodeUrl();
+        this.encodeUrl = encodeUrl;
+        
+        this.parametersSeparator = parametersSeparator;
 
         this.loadParametersFromRequest(queryString);
     };
@@ -105,22 +122,19 @@ function requestParameters(queryString){
         }
     };
     /**
-     * Generate the URL from the current state of the parameters using "&" as parameters separator
-     *                              
-     * @return  A {@code String} that is the generated query
-     */
-    this.getRequestURL = function(){
-        this.getRequestURL("&");
-    };
-    /**
      * Generate the URL from the current state of the parameters
      * 
-     * @param parametersSeparator   A {@code String} that is used as parameters separator in the URL
+     * @param parametersSeparator   A {@code String} that is used as custom parameters separator
+     *                              in the URL. If let empty, the parameter provided to the constructor
+     *                              or set afterwards with {@code setParametersSeparator} is used
      *                              
      * @return  A {@code String} that is the generated query
      */
     this.getRequestURL = function(parametersSeparator){
         urlFragment = "";
+        if(! parametersSeparator){
+            parametersSeparator = this.parametersSeparator;
+        }
         // Browse all available parameters
         for (i in urlParameters.getList()){           
             // Fetch the values of this param and generate a query with all
@@ -512,7 +526,26 @@ function requestParameters(queryString){
         return false;
     };
 
+    /**
+     * Change the {@code boolean} defining whether parameters should be url encoded 
+     * by the {@code encodeUrl} method.
+     * @param encodeUrl A {@code boolean} defining whether parameters should be url encoded 
+     *                  by the {@code encodeUrl} method.
+     */
+    this.setEncodeUrl = function(encodeUrl) {
+        this.encodeUrl = encodeUrl;
+    };
+    /**
+     * Change the {@code String} defining the character(s) that are used as parameters 
+     * separator in the URL   
+     * @param parametersSeparator   A {@code String} defining the character(s) that are used as 
+     *                              parameters separator in the URL   
+     */
+    this.setParametersSeparator = function(parametersSeparator) {
+        this.parametersSeparator = parametersSeparator;
+    };
+    
     //  Init the instance of this class ( kind of call to the constructor )
-    this.init(queryString);
+    this.init(queryString, encodeUrl, parametersSeparator);
 
 };

@@ -9,9 +9,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
 
 /**
  * This class tests {@code BgeeWebCache} methods. The class mostly uses methods
@@ -23,14 +21,6 @@ import org.junit.rules.Timeout;
  * @since Bgee 13
  */
 public class BgeeWebCacheTest {
-
-    /**
-     * A {@code Timeout} whose only purpose is to force JUnit to run independent thread
-     * for each test, which is important because of the "per-thread singleton" behavior of
-     * some important classes such as BgeeProperties
-     */
-    @Rule
-    public Timeout globalTimeout= new Timeout(99999);
 
     /**
      * Mock {@code HttpServletRequest}

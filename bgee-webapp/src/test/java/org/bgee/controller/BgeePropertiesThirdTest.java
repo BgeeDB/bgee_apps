@@ -1,0 +1,34 @@
+package org.bgee.controller;
+
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+
+/**
+ * Unit tests for {@link BgeeProperties}.
+ * It checks that the properties are loaded from the correct source
+ * These tests are split in several test classes to avoid conflicts between tests due to
+ * the per-thread singleton behavior.
+ * 
+ * @author Mathieu Seppey
+ * @version Bgee 13
+ * @since Bgee 13
+ * @see BgeePropertiesParentTest
+ * @see BgeePropertiesFirstTest
+ * @see BgeePropertiesSecondTest
+ * @see BgeePropertiesThirdTest
+ * @see BgeePropertiesFourthTest
+ */
+public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
+
+    /**
+     * Test that the {@code java.util.Properties} are read from the system properties
+     */
+    @Test
+    public void testLoadSystemProperties(){
+        // get the instance of bgeeproperties and check the values
+        this.bgeeProp = BgeeProperties.getBgeeProperties();
+        assertEquals("Wrong property value retrieved","/system",bgeeProp.getBgeeRootDirectory());
+        assertEquals("Wrong property value retrieved","30",bgeeProp.getUrlMaxLength().toString());
+    }
+}

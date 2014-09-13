@@ -25,14 +25,14 @@ public abstract class JSConverter {
             JSConverter.class.getName());
 
     /**
-     * A {@FileWriter} to produce the output file
+     * A {@code FileWriter} to produce the output file
      */
     private FileWriter writer;
 
     /**
      * Constructor that has to be invoked by the extending class
      * 
-     * @param writer    A {@FileWriter} to produce the output file
+     * @param writer    A {@code FileWriter} to produce the output file
      */
     public JSConverter(FileWriter writer){
         this.writer = writer;

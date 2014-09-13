@@ -33,7 +33,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
 
     /**
      * Constructor
-     * @param writer   A {@FileWriter} to produce the output file
+     * @param writer   A {@code FileWriter} to produce the output file
      * @param prop     The {@code} BgeeProperties instance to use as source 
      */
     public BgeePropertiesJsConverter(FileWriter writer, BgeeProperties prop){

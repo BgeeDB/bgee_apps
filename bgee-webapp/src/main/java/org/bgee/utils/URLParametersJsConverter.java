@@ -11,7 +11,7 @@ import org.bgee.controller.URLParameters.Parameter;
 
 /**
  * Class that generates a javascript equivalent of the provided {@link URLParameters} class.
- * The aim should be to use an instance similar to the one injected to the {@link FrontController}
+ * The aim should be to use an instance similar to the one injected to the {@code FrontController}
  * of bgee-webapp. It writes the result in the file provided to the constructor.
  *
  * @author Mathieu Seppey
@@ -31,7 +31,7 @@ public class URLParametersJsConverter extends JSConverter {
 
     /**
      * Constructor
-     * @param writer            A {@FileWriter} to produce the output file
+     * @param writer            A {@code FileWriter} to produce the output file
      * @param urlParameters     An instance of {@code URLParameters} that will be used as 
      *                          source to generate the parameters in the javascript file. 
      */

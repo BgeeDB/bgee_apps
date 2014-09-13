@@ -68,6 +68,8 @@ import org.bgee.controller.servletutils.BgeeHttpServletRequest;
  * The properties {@link URLParameters.Parameter#isStorable} tells whether 
  * the parameter is storable or not.
  * 
+ * This class has a js counterpart called {@code requestparameters.js} that should be kept 
+ * consistent as much as possible if the class evolves.
  * 
  * @author Mathieu Seppey
  * @author Frederic Bastian
@@ -99,12 +101,16 @@ public class RequestParameters {
      * (it does not necessarily mean they will. For index, if there are no 
      * special chars to encode in the submitted String).
      * <parameter>
-     * Default value is {@code true}.
-     * This parameter is loaded from {@link BgeeProperties}
      * 
      * @see #urlEncode(String)
      */
     private boolean encodeUrl ;
+
+    /**
+     * A {@code String} defining the character(s) that are used as parameters separator in the
+     * URL 
+     */
+    private String parametersSeparator;
 
     /**
      * A {@code String} that contains the URL corresponding to the current state
@@ -147,16 +153,25 @@ public class RequestParameters {
      *                                  is injected to provide the available parameters
      *                                  list. 
      *                                  
-     * @param prop                      An instance of {@code BgeeProperties}  that is injected 
+     * @param prop                      An instance of {@code BgeeProperties}  that is injected
      *                                  to provide the all the properties values
+     *                                  
+     * @param encodeUrl                 A {@code boolean} defining whether parameters should be
+     *                                  url encoded.
+     * 
+     * @param parametersSeparator       A {@code String} defining the character(s) that are
+     *                                  used as parameters separator in the URL 
+     *                                  
      */
-    public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop)  {
-        log.entry(urlParametersInstance,prop);
+    public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop,
+            boolean encodeUrl, String parametersSeparator)  {
+        log.entry(urlParametersInstance,prop,encodeUrl, parametersSeparator);
 
         // set the properties and then call the constructor method.
         this.prop = prop;
-        this.encodeUrl = prop.isEncodeUrl();
+        this.encodeUrl = encodeUrl;
         this.urlParametersInstance = urlParametersInstance;
+        this.parametersSeparator = parametersSeparator;
         //to avoid duplicating methods, 
         //here we simulate a HttpServletRequest with an empty query string, 
         //so that all parameters will be initialized empty
@@ -190,6 +205,12 @@ public class RequestParameters {
      *                              
      * @param prop                  An instance of {@code BgeeProperties}  that is injected to 
      *                              provide the all the properties values
+     *                                                          
+     * @param encodeUrl             A {@code boolean} defining whether parameters should be
+     *                              url encoded.
+     * 
+     * @param parametersSeparator   A {@code String} defining the character(s) that are
+     *                              used as parameters separator in the URL                              
      * 
      * @throws RequestParametersNotFoundException       if a key is set in the 
      *                                                  URL, meaning that a stored query string
@@ -213,15 +234,16 @@ public class RequestParameters {
      *                                                  {@link URLParameters.Parameter}
      */
     public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
-            BgeeProperties prop)
+            BgeeProperties prop,  boolean encodeUrl, String parametersSeparator)
                     throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
                     MultipleValuesNotAllowedException, WrongFormatException {
-        log.entry(request, urlParametersInstance, prop);
+        log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator);
 
         // set the properties and then call the constructor method.
         this.prop = prop;
-        this.encodeUrl = prop.isEncodeUrl();
+        this.encodeUrl = encodeUrl;
         this.urlParametersInstance = urlParametersInstance;
+        this.parametersSeparator = parametersSeparator;
         this.httpMethod = request.getMethod();
         this.constructor(request);
 
@@ -256,8 +278,8 @@ public class RequestParameters {
      *                                                  fit the format requirement for related
      *                                                  {@link URLParameters.Parameter}
      *                                                  
-     * @see #RequestParameters(URLParameters, BgeeProperties)
-     * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeProperties)
+     * @see #RequestParameters(URLParameters, BgeeProperties, boolean, String)
+     * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeProperties, boolean, String)
      */
     private void constructor(HttpServletRequest request) throws RequestParametersNotFoundException,
     RequestParametersNotStorableException, MultipleValuesNotAllowedException, WrongFormatException{
@@ -625,7 +647,7 @@ public class RequestParameters {
                 this.getKeyParam()))){
             // Regenerate the key in case a storable param has changed
             // Always use & as separator to generate the key, so the key is the same for 
-            // the same parameters, no matter the separator provided
+            // the same parameters, no matter the separator provided.
             this.generateKey(this.generateParametersQuery(true, false,"&"));
             // Regenerate the parameters query, with the non storable that include
             // the key parameter
@@ -835,8 +857,9 @@ public class RequestParameters {
     }
 
     /**
-     * Return the URL corresponding to this {@code RequestParameters} instance using "&" as
-     * parameters separator.
+     * Return the URL corresponding to this {@code RequestParameters} instance using 
+     * the parameters separator provided to the constructor or set afterwards using 
+     * {@link #setParametersSeparator}.
      * 
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
@@ -851,12 +874,15 @@ public class RequestParameters {
     public String getRequestURL() throws RequestParametersNotStorableException
     {
         log.entry();
-        this.generateParametersQuery("&");
+        this.generateParametersQuery(this.parametersSeparator);
         return log.exit(this.parametersQuery);
     }
 
     /**
-     * Return the URL corresponding to this {@code RequestParameters} instance
+     * Return the URL corresponding to this {@code RequestParameters} instance using 
+     * a custom parameters separator instead of the one provided to the constructor or set 
+     * afterwards using {@link #setParametersSeparator}.
+     * TODO : is this method still useful now if we can set the parameter separator ?
      * 
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
@@ -1046,7 +1072,8 @@ public class RequestParameters {
         RequestParameters clonedRequestParameters = null;
         try {
             clonedRequestParameters = new RequestParameters(request, 
-                    this.urlParametersInstance.getClass().newInstance(),this.prop);
+                    this.urlParametersInstance.getClass().newInstance(),this.prop,
+                    this.encodeUrl, this.parametersSeparator);
             if(! includeNonStorable){
                 // Add the key which is not a storable parameters and was not included
                 clonedRequestParameters.addValue(this.getKeyParam(), 
@@ -1553,6 +1580,26 @@ public class RequestParameters {
             }
         }
         return log.exit(castInt);
+    }
+
+    /**
+     * Change the {@code boolean} defining whether parameters should be url encoded 
+     * by the {@code encodeUrl} method.
+     * @param encodeUrl A {@code boolean} defining whether parameters should be url encoded 
+     *                  by the {@code encodeUrl} method.
+     */
+    public void setEncodeUrl(boolean encodeUrl) {
+        this.encodeUrl = encodeUrl;
+    }
+
+    /**
+     * Change the {@code String} defining the character(s) that are used as parameters 
+     * separator in the URL   
+     * @param parametersSeparator A {@code String} defining the character(s) that are used as 
+     * parameters separator in the URL   
+     */
+    public void setParametersSeparator(String parametersSeparator) {
+        this.parametersSeparator = parametersSeparator;
     }
 }
 

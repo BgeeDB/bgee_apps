@@ -100,7 +100,8 @@ public class BgeeWebCache extends CachingFilter
         log.entry(request, response, chain);
         try {
             if (new RequestParameters(request,
-                    new URLParameters(),BgeeProperties.getBgeeProperties()).isACacheableRequest()) {
+                    new URLParameters(),BgeeProperties.getBgeeProperties(), true, "&")
+            .isACacheableRequest()){
                 // Cacheble, forward it to the super class
                 super.doFilter(request, response, chain);
             } else {

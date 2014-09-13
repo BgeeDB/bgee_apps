@@ -150,7 +150,7 @@ public class FrontController extends HttpServlet {
         //in order to display error message in catch clauses
         //we get  "fake" RequestParameters so that no exception is thrown already.
         RequestParameters requestParameters = new RequestParameters(
-                this.urlParameters, this.prop);
+                this.urlParameters, this.prop, true, "&");
         //need the default factory here in case an exception is thrown 
         // before we get the correct display type
         GeneralDisplay generalDisplay = null;
@@ -164,7 +164,8 @@ public class FrontController extends HttpServlet {
             ViewFactory factory = this.viewFactoryProvider.getFactory(response, requestParameters);
             generalDisplay = factory.getGeneralDisplay();
             request.setCharacterEncoding("UTF-8");
-            requestParameters = new RequestParameters(request, this.urlParameters, this.prop);
+            requestParameters = new RequestParameters(request, this.urlParameters, this.prop,
+                    true, "&");
             log.info("Analyzed URL: " + requestParameters.getRequestURL("&"));
             //in order to display error message in catch clauses. 
             //we redo it here to get the correct display type and correct user, 

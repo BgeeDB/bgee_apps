@@ -44,8 +44,6 @@ public class BgeePropertiesTest {
                 "/system");
         System.setProperty(BgeeProperties.URL_MAX_LENGTH_KEY, 
                 "30");
-        System.setProperty(BgeeProperties.ENCODE_URL_KEY, 
-                "false");
     }
     
     /**
@@ -56,7 +54,6 @@ public class BgeePropertiesTest {
         System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
-        System.clearProperty(BgeeProperties.ENCODE_URL_KEY);
     }
     
     /**
@@ -68,12 +65,10 @@ public class BgeePropertiesTest {
         Properties prop = new Properties();
         prop.put(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/injected");
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "10");
-        prop.put(BgeeProperties.ENCODE_URL_KEY, "false");
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
         assertEquals("Wrong property value retrieved","/injected",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved","10",bgeeProp.getUrlMaxLength().toString());
-        assertFalse("Wrong property value retrieved",bgeeProp.isEncodeUrl());
     }
 
     /**
@@ -84,12 +79,10 @@ public class BgeePropertiesTest {
         // First clear the system properties that would be used if present
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
-        System.clearProperty(BgeeProperties.ENCODE_URL_KEY);
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved","/file",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved","20",bgeeProp.getUrlMaxLength().toString());
-        assertFalse("Wrong property value retrieved",bgeeProp.isEncodeUrl());
     }
 
     /**
@@ -101,7 +94,6 @@ public class BgeePropertiesTest {
         this.bgeeProp = BgeeProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved","/system",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved","30",bgeeProp.getUrlMaxLength().toString());
-        assertFalse("Wrong property value retrieved",bgeeProp.isEncodeUrl());
     }
     
     /**
@@ -114,12 +106,10 @@ public class BgeePropertiesTest {
         System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
-        System.clearProperty(BgeeProperties.ENCODE_URL_KEY);
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
         assertEquals("Wrong property value retrieved","/",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved","120",bgeeProp.getUrlMaxLength().toString());
-        assertTrue("Wrong property value retrieved",bgeeProp.isEncodeUrl());
     }
     
     /**

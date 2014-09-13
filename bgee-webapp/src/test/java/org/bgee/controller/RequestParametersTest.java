@@ -87,7 +87,6 @@ public class RequestParametersTest {
         System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
-        System.clearProperty(BgeeProperties.ENCODE_URL_KEY);
     }
 
     /**
@@ -141,16 +140,18 @@ public class RequestParametersTest {
         // This checks that the key is always generated with "&", no matter which separator
         // is provided
         RequestParameters rp = new RequestParameters(this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),true,"&");
         rp.addValue(testURLParameters.getParamTestInteger(),987654321);
         rp.getRequestURL("+"); 
         this.requestParametersWithNoKey = new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),
+                true,"&");
 
         this.requestParametersHavingAKey= new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),
+                true,"&");
     }
 
     /**
@@ -454,7 +455,7 @@ public class RequestParametersTest {
 
         new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),true,"&");
     }
 
     /**
@@ -476,7 +477,7 @@ public class RequestParametersTest {
         try{
             new RequestParameters(
                     this.mockHttpServletRequest,
-                    RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
+                    RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),true,"&");
         }
         catch(Exception e){
             // Do nothing
@@ -488,7 +489,8 @@ public class RequestParametersTest {
 
         new RequestParameters(
                 this.mockHttpServletRequest,
-                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties());
+                RequestParametersTest.testURLParameters,BgeeProperties.getBgeeProperties(),
+                true,"&");
 
     }
 

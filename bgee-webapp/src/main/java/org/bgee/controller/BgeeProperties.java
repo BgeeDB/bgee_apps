@@ -115,14 +115,6 @@ public class BgeeProperties
             "org.bgee.webapp.urlMaxLength";
 
     /**
-     * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the encode url boolean
-     * @see #isEncodeUrl()
-     */
-    public final static String ENCODE_URL_KEY = 
-            "org.bgee.webapp.encodeUrl";
-
-    /**
      * A {@code String} that is the key to access to the System property that contains the name
      * of the file in the classpath that is read to initialize the webapp web pages cache
      */
@@ -199,18 +191,6 @@ public class BgeeProperties
      * Anyway, we use a much lower limitation, as we do not want too long URL.
      */
     private final Integer urlMaxLength;
-
-    /**
-     * A {@code boolean} that defines whether parameters should be url encoded 
-     * by the {@code encodeUrl} method.
-     * If {@code false}, then the {@code encodeUrl} method returns 
-     * Strings with no modifications, otherwise, they are url encoded if needed 
-     * (it does not necessarily mean they will. For index, if there are no 
-     * special chars to encode in the submitted String).
-     * <parameter>
-     * Default value is {@code true}.
-     */
-    private final boolean encodeUrl;
     
     /**
      * {@code String} that contains the name of the web pages cache config file in the
@@ -282,8 +262,6 @@ public class BgeeProperties
                 TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, null);
         urlMaxLength = getIntegerOption(prop, sysProps, fileProps, 
                 URL_MAX_LENGTH_KEY, 120);
-        encodeUrl = getBooleanOption(prop, sysProps, fileProps, 
-                ENCODE_URL_KEY, true);
         webpagesCacheConfigFileName = getStringOption(prop, sysProps, fileProps, 
                 WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "/ehcache-webpages.xml");
         log.info("Initialization done.");
@@ -437,50 +415,6 @@ public class BgeeProperties
     }
 
     /**
-     * Try to retrieve the property corresponding to {@code key}, 
-     * (if the value of the property is set, and equal to "true", "yes", or "on", 
-     * the returned boolean will be {@code true}, {@code false} otherwise),
-     * first from the injected {@code Properties} ({@code prop}), then from the System properties 
-     * ({@code sysProps}), then, if undefined or empty, from properties retrieved from the 
-     * Bgee property file ({@code fileProps}). If the property is still undefined or empty 
-     * return {@code defaultValue}.
-     *
-     * @param prop          A {@code java.util.Properties} instance that contains the system 
-     *                      properties to look for {@code key} first
-     * @param sysProps      {@code java.util.Properties} retrieved from System properties, 
-     *                      where {@code key} is searched in second
-     * @param fileProps     {@code java.util.Properties} retrieved 
-     *                      from the Bgee properties file, 
-     *                      where {@code key} is searched in if {@code prop} and {@code sysProps}
-     *                      were undefined or empty for {@code key}. 
-     *                      Can be {@code null} if no properties file was found.
-     * @param defaultValue  default value that will be returned if the property 
-     *                      is undefined or empty in all {@code Properties}.
-     *
-     * @return             A {@code boolean} corresponding to the value
-     *                     for that property key (if the value of the property is set and equal 
-     *                     to "true", "yes", or "on", the returned boolean 
-     *                     will be {@code true}, {@code false} otherwise). 
-     *                     Or {@code defaultValue} if not defined or empty.
-     */
-    private boolean getBooleanOption(Properties prop, Properties sysProps, 
-            Properties fileProps, String key, 
-            boolean defaultValue)
-    {
-        log.entry(fileProps, sysProps, key, defaultValue);
-
-        String propValue = this.getStringOption(prop, sysProps, fileProps, key, null);
-        boolean val = defaultValue;
-        if (propValue != null) {
-            val= "true".equals(propValue) ||
-                    "yes".equals(propValue) || 
-                    "on".equals(propValue);
-        }
-
-        return log.exit(val);
-    }
-
-    /**
      * @return  A {@code String} that defines the directory where query strings holding storable 
      *          parameters from previous large queries are stored. 
      */
@@ -546,14 +480,6 @@ public class BgeeProperties
      */
     public Integer getUrlMaxLength() {
         return urlMaxLength;
-    }
-
-    /**
-     * @return  A {@code boolean} that defines whether parameters should be url encoded 
-     *          by the {@code encodeUrl} method.
-     */
-    public boolean isEncodeUrl() {
-        return encodeUrl;
     }
     
     /**

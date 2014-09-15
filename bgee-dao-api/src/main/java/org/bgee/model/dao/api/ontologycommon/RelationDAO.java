@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api.ontologycommon;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +9,7 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 
 /**
@@ -57,7 +57,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public RelationTOResultSet getAllAnatEntityRelations(Set<String> speciesIds,
-            EnumSet<RelationType> relationTypes) throws DAOException;
+            Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
 
 
     /**

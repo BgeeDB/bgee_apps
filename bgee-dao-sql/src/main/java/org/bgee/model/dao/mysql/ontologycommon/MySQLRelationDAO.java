@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.ontologycommon;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -24,7 +23,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.gene.RelationDAO.RelationTO
+ * @see org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO
  * @since Bgee 13
  */
 public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute> 
@@ -47,11 +46,13 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
 
     @Override
     public RelationTOResultSet getAllAnatEntityRelations(Set<String> speciesIds, 
-            EnumSet<RelationType> relationTypes) {
+            Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes);
 
+        
         boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
         boolean isRelationTypeFilter = relationTypes != null && relationTypes.size() > 0;
+        boolean isRelationStatusFilter = relationStatus != null && relationStatus.size() > 0;
         
         StringBuilder sql = new StringBuilder(); 
         Collection<RelationDAO.Attribute> attributes = this.getAttributes();
@@ -75,9 +76,11 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                     "anatEntityRelationTaxonConstraint.anatEntityRelationId = "
                     + "anatEntityRelation.anatEntityRelationId)");
         }
-        if (isSpeciesFilter || isRelationTypeFilter) {
+        
+        if (isSpeciesFilter || isRelationTypeFilter || isRelationStatusFilter) {
                 sql.append(" WHERE ");
         }
+        
         if (isSpeciesFilter) {
             sql.append("(anatEntityRelationTaxonConstraint.speciesId IS NULL");
             sql.append(" OR anatEntityRelationTaxonConstraint.speciesId IN (");
@@ -85,9 +88,10 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             sql.append("))");
         }
         
-        if (isSpeciesFilter && isRelationTypeFilter) {
+        if (isSpeciesFilter && (isRelationTypeFilter || isRelationStatusFilter)) {
             sql.append(" AND ");
         }
+        
         if (isRelationTypeFilter) {
             Set<String> convertedRelations = new HashSet<String>();
             for (RelationType relation: relationTypes) {
@@ -98,6 +102,19 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             sql.append(")");
         }
         
+        if (isRelationTypeFilter && isRelationStatusFilter) {
+            sql.append(" AND ");
+        }
+
+        if (isRelationStatusFilter) {
+            Set<String> convertedRelations = new HashSet<String>();
+            for (RelationStatus relation: relationStatus) {
+                convertedRelations.add("'"+relation.getStringRepresentation()+"'");
+            }
+            sql.append(" relationStatus IN (");
+            sql.append(createStringFromSet(convertedRelations, ','));
+            sql.append(")");
+        }
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
@@ -209,7 +226,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     public class MySQLRelationTOResultSet extends MySQLDAOResultSet<RelationTO> 
                                           implements RelationTOResultSet {
         /**
-         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.

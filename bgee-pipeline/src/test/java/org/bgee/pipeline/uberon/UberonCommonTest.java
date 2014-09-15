@@ -17,10 +17,13 @@ import org.bgee.pipeline.ontologycommon.OntologyUtilsTest;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 
 public class UberonCommonTest extends TestAncestor {
     /**
@@ -224,6 +227,127 @@ public class UberonCommonTest extends TestAncestor {
         expectedClasses = new HashSet<OWLClass>(Arrays.asList(
                 wrapper.getOWLClassByIdentifier("UBERON:0000104")));
         assertEquals(expectedClasses, uberon.getOWLClasses("UBERON:0000104", false));
+    }
+    
+    /**
+     * Test the the method {@link UberonCommon#convertTaxonECAs()}.
+     */
+    @Test
+    public void shouldConvertTaxonECAs() throws OWLOntologyCreationException, 
+    OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/gci_equivalent.owl").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
+        
+        uberon.convertTaxonECAs();
+        String classIdWithEquivalence = "HsapDv:0000001";
+        OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050");
+        OWLObjectProperty developsFrom = wrapper.getOWLObjectPropertyByIdentifier("RO:0002202");
+        OWLObjectProperty onlyInTaxon = wrapper.getOWLObjectPropertyByIdentifier("RO:0002160");
+        
+        //check that class with equivalence was removed
+        assertNull("Class with equivalence was not removed", 
+                wrapper.getOWLClassByIdentifier(classIdWithEquivalence));
+        //and that an xref was added to equivalent classes
+        assertTrue("Xref not added", wrapper.getXref(
+                wrapper.getOWLClassByIdentifier("UBERON:0000104")).contains(
+                        classIdWithEquivalence));
+        assertTrue("Xref not added", wrapper.getXref(
+                wrapper.getOWLClassByIdentifier("UBERON:0000105")).contains(
+                        classIdWithEquivalence));
+        
+        //check that relations were propagated
+        
+        //incoming edges to UBERON:0000104
+        Set<OWLGraphEdge> expectedEdges = new HashSet<OWLGraphEdge>();
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("HsapDv:0000003"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                developsFrom, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:1"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("HsapDv:0000003"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                developsFrom, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                developsFrom, Quantifier.SOME, ont, null, 
+                null, null));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                developsFrom, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+        assertEquals("Incorrect incoming edges to equivalent class", expectedEdges, 
+                wrapper.getIncomingEdgesWithGCI(
+                        wrapper.getOWLClassByIdentifier("UBERON:0000104")));
+        
+        //outgoing edges from UBERON:0000104
+        expectedEdges = new HashSet<OWLGraphEdge>();
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                partOf, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:1"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), 
+                onlyInTaxon, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
+                partOf, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                partOf, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+        assertEquals("Incorrect outgoing edges from equivalent class", expectedEdges, 
+                wrapper.getOutgoingEdgesWithGCI(
+                        wrapper.getOWLClassByIdentifier("UBERON:0000104")));
+        
+        //incoming edges to UBERON:0000105
+        expectedEdges = new HashSet<OWLGraphEdge>();
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("HsapDv:0000003"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                developsFrom, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9605"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("HsapDv:0000003"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                developsFrom, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:1"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                developsFrom, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9605"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                partOf, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                partOf, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:1"), partOf));
+        assertEquals("Incorrect incoming edges to equivalent class", expectedEdges, 
+                wrapper.getIncomingEdgesWithGCI(
+                        wrapper.getOWLClassByIdentifier("UBERON:0000105")));
+
+        //outgoing edges from UBERON:0000105
+        expectedEdges = new HashSet<OWLGraphEdge>();
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), 
+                onlyInTaxon, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9605"), partOf));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000106"), 
+                partOf, Quantifier.SOME, ont, null, 
+                null, null));
+        expectedEdges.add(new OWLGraphEdge(wrapper.getOWLClassByIdentifier("UBERON:0000105"), 
+                wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
+                developsFrom, Quantifier.SOME, ont, null, 
+                wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), partOf));
+        assertEquals("Incorrect outgoing edges from equivalent class", expectedEdges, 
+                wrapper.getOutgoingEdgesWithGCI(
+                        wrapper.getOWLClassByIdentifier("UBERON:0000105")));
+        
     }
 
 }

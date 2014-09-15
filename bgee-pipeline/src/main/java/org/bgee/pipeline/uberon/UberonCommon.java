@@ -17,6 +17,7 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -381,13 +382,14 @@ abstract class UberonCommon {
      * <p>
      * Operations performed are: i) a Xref pointing to the taxon-specific {@code OWLClass} 
      * is added to the generic {@code OWLClass}; ii) Edges incoming to and outgoing from 
-     * the taxon-specific {@code OWLClass} are transformed into incoming and outgoing 
-     * edges applied to the generic {@code OWLClass}, as GCI relations, to restrict 
-     * the relations to the specified taxon (except for edges that were already a GCI, 
-     * in which case the original taxon is conserved); iii) the taxon-specific class 
-     * is removed from the ontologies.
+     * the taxon-specific {@code OWLClass}, only by {@code OWLSubClassOfAxiom}s,
+     * are transformed into incoming and outgoing edges applied to the generic {@code OWLClass}, 
+     * as GCI relations, to restrict the relations to the specified taxon (except for edges 
+     * that were already a GCI, in which case the original taxon is conserved); 
+     * iii) the taxon-specific class is removed from the ontologies.
      */
-    void convertTaxonECAsToXrefs() {
+    //TODO: transform also axioms that are not OWLSubClassOd axioms
+    void convertTaxonECAs() {
         log.entry();
         log.debug("Converting taxonomy Equivalent Classes Axioms...");
         
@@ -431,46 +433,25 @@ abstract class UberonCommon {
                     //incoming edges are retrieved from all ontologies at once 
                     //but it does not really matter
                     for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdgesWithGCI(cls)) {
-                        OWLClass filler = incomingEdge.getGCIFiller();
-                        OWLObjectPropertyExpression prop = incomingEdge.getGCIRelation();
-                        //if the incoming edge is a GCI, we keep its GCI filler and prop.
-                        //otherwise, we transform the edge into a GCI based on the taxon 
-                        //in the ECA
-                        if (!incomingEdge.isGCI()) {
-                            filler = ecaEdge.getGCIFiller();
-                            prop = ecaEdge.getGCIRelation();
+                        OWLGraphEdge newEdge = this.transformEdgeForTaxonEquivalentClass(
+                                incomingEdge, incomingEdge.getSource(), ecaEdge.getTarget(), 
+                                ecaEdge.getGCIFiller(), ecaEdge.getGCIRelation());
+                        if (newEdge != null) {
+                            log.trace("Transforming incoming edge {} into new edge {}", 
+                                    incomingEdge, newEdge);
+                            newEdges.add(newEdge);
                         }
-                        //change the target
-                        OWLGraphEdge newEdge = new OWLGraphEdge(incomingEdge.getSource(), 
-                                ecaEdge.getTarget(), 
-                                incomingEdge.getQuantifiedPropertyList(), 
-                                incomingEdge.getOntology(), null, 
-                                filler, prop);
-                        log.trace("Transforming incoming edge {} into new edge {}", 
-                                incomingEdge, newEdge);
-                        newEdges.add(newEdge);
                     }
                     //same thing with outgoing edges, we switch the sources
-                    //TODO: refactor this
                     for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdgesWithGCI(cls)) {
-                        OWLClass filler = outgoingEdge.getGCIFiller();
-                        OWLObjectPropertyExpression prop = outgoingEdge.getGCIRelation();
-                        //if the incoming edge is a GCI, we keep its GCI filler and prop.
-                        //otherwise, we transform the edge into a GCI based on the taxon 
-                        //in the ECA
-                        if (!outgoingEdge.isGCI()) {
-                            filler = ecaEdge.getGCIFiller();
-                            prop = ecaEdge.getGCIRelation();
+                        OWLGraphEdge newEdge = this.transformEdgeForTaxonEquivalentClass(
+                                outgoingEdge, ecaEdge.getTarget(), outgoingEdge.getTarget(), 
+                                ecaEdge.getGCIFiller(), ecaEdge.getGCIRelation());
+                        if (newEdge != null) {
+                            log.trace("Transforming outgoing edge {} into new edge {}", 
+                                    outgoingEdge, newEdge);
+                            newEdges.add(newEdge);
                         }
-                        //change the source
-                        OWLGraphEdge newEdge = new OWLGraphEdge(ecaEdge.getTarget(), 
-                                outgoingEdge.getTarget(), 
-                                outgoingEdge.getQuantifiedPropertyList(), 
-                                outgoingEdge.getOntology(), null, 
-                                filler, prop);
-                        log.trace("Transforming outgoing edge {} into new edge {}", 
-                                outgoingEdge, newEdge);
-                        newEdges.add(newEdge);
                     }
                 }
                 //now add the new edges and remove the class 
@@ -485,7 +466,19 @@ abstract class UberonCommon {
                                     (OWLClassExpression) wrapper.edgeToTargetExpression(newEdge));
                         if (!axiomsAdded.contains(newAxiom)) {
                             axiomsAdded.add(newAxiom);
-                            if (!newEdge.getOntology().containsAxiomIgnoreAnnotations(newAxiom)) {
+                            //in order to check that the non-GCI equivalent of the edge 
+                            //does not already exists
+                            OWLGraphEdge nonGCIEdge = new OWLGraphEdge(newEdge.getSource(), 
+                                    newEdge.getTarget(), 
+                                    newEdge.getQuantifiedPropertyList(), 
+                                    newEdge.getOntology(), null, null, null);
+                            OWLSubClassOfAxiom nonGCIAxion = 
+                                    nonGCIEdge.getOntology().getOWLOntologyManager().
+                                    getOWLDataFactory().getOWLSubClassOfAxiom(
+                                        (OWLClassExpression) wrapper.edgeToSourceExpression(nonGCIEdge), 
+                                        (OWLClassExpression) wrapper.edgeToTargetExpression(nonGCIEdge));
+                            if (!newEdge.getOntology().containsAxiomIgnoreAnnotations(newAxiom) && 
+                                    !newEdge.getOntology().containsAxiomIgnoreAnnotations(nonGCIAxion)) {
                                 log.trace("Adding axiom: {}", newAxiom);
                                 newEdge.getOntology().getOWLOntologyManager().addAxiom(
                                         newEdge.getOntology(), newAxiom);
@@ -507,6 +500,53 @@ abstract class UberonCommon {
 
         log.debug("Done converting taxonomy Equivalent Classes Axioms.");
         log.exit();
+    }
+    
+    /**
+     * Transform {@code existingEdge} into a new {@code OWLGraphEdge}. Source and target 
+     * of the new edge will respectively be {@code newSource} and {@code newTarget}. 
+     * If the method {@code OWLGraphEdge#isGCI()} return {@code false} for {@code existingEdge}, 
+     * then {@code equivFiller} and {@code equivProp} will be used to create the new edge, 
+     * otherwise, the values returned by the methods {@code OWLGraphEdge#getGCIFiller()} 
+     * and {@code OWLGraphEdge#getGCIRelation()} called on {@code existingEdge} will be used. 
+     * 
+     * @param existingEdge  An {@code OWLGraphEdge} to be used to produce a new one.
+     * @param newSource     An {@code OWLObject} that is the source of the new edge.
+     * @param newTarget     An {@code OWLObject} that is the target of the new edge.
+     * @param equivFiller   An {@code OWLClass} that will be the GCI filler of the new edge 
+     *                      if {@code existingEdge} does not represent a GCI relation.
+     * @param equivProp     An {@code OWLClass} that will be the GCI property of the new edge 
+     *                      if {@code existingEdge} does not represent a GCI relation.
+     * @return              An {@code OWLGraphEdge} newly created from {@code existingEdge}.
+     */
+    private OWLGraphEdge transformEdgeForTaxonEquivalentClass(OWLGraphEdge existingEdge, 
+            OWLObject newSource, OWLObject newTarget, 
+            OWLClass equivFiller, OWLObjectPropertyExpression equivProp) {
+        log.entry(existingEdge, newSource, newTarget, equivFiller, equivProp);
+        
+        //treat only SubClassOfAxioms
+        if (existingEdge.getSubClassOfAxioms().isEmpty()) {
+            return log.exit(null);
+        }
+        //avoid creating a cycle
+        if (existingEdge.getTarget().equals(newSource) || 
+                existingEdge.getSource().equals(newTarget)) {
+            return log.exit(null);
+        }
+        OWLClass filler = existingEdge.getGCIFiller();
+        OWLObjectPropertyExpression prop = existingEdge.getGCIRelation();
+        //if the edge is a GCI, we keep its GCI filler and prop.
+        //otherwise, we transform the edge into a GCI based on the taxon 
+        //in the ECA
+        if (!existingEdge.isGCI()) {
+            filler = equivFiller;
+            prop = equivProp;
+        }
+        //change the source an target, filler and prop
+        return log.exit(new OWLGraphEdge(newSource, newTarget, 
+                existingEdge.getQuantifiedPropertyList(), 
+                existingEdge.getOntology(), null, 
+                filler, prop));
     }
 
 

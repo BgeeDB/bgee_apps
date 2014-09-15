@@ -1,6 +1,5 @@
 package org.bgee.pipeline.expression;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -15,6 +14,7 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOR
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -148,7 +148,8 @@ public class InsertGlobalExpression extends MySQLDAOUser {
         speciesFilter.add(species);
 
         RelationTOResultSet rsRelations = dao.getAllAnatEntityRelations(
-                speciesFilter, EnumSet.of(RelationType.ISA_PARTOF));
+                speciesFilter, EnumSet.of(RelationType.ISA_PARTOF), 
+                EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT));
         
         Set<RelationTO> relationTOs = new HashSet<RelationTO>();
         while (rsRelations.next()) {

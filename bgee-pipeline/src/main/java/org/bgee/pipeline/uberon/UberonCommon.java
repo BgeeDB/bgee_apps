@@ -12,15 +12,20 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatConstants.OboFormatTag;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.util.OWLEntityRemover;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
 
 /**
@@ -305,7 +310,7 @@ abstract class UberonCommon {
                     OntologyUtils.PART_OF_ID);
             OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(TAXONOMY_ROOT_ID);
             Set<OWLClass> classesMapped = 
-                    this.getOntologyUtils().getECAIntersectionOf(cls, partOf, taxonomyRoot);
+                    this.getOntologyUtils().getECAIntersectionOfTargets(cls, partOf, taxonomyRoot);
             if (classesMapped.size() == 1 || !isStrict) {
                 potentialClasses.addAll(classesMapped);
             } 
@@ -347,7 +352,8 @@ abstract class UberonCommon {
                     for (String idMapped: replacedByIds) {
                         //use recursivity in case the replaced_by annotation is itself pointing 
                         //to an obsolete class or an xref
-                        Set<OWLClass> tempClassesMapped = this.getOWLClasses(idMapped, isStrict, visitedIds);
+                        Set<OWLClass> tempClassesMapped = this.getOWLClasses(idMapped, isStrict, 
+                                visitedIds);
                         if (tempClassesMapped.isEmpty()) {
                             log.warn("A replaced_by annotation from OWLClass {} did not allow to retrieve an OWLClass: {}", 
                                     id, idMapped);
@@ -364,8 +370,26 @@ abstract class UberonCommon {
         return log.exit(potentialClasses);
     }
     
-    protected void convertTaxonECAsToXrefs() {
+    /**
+     * Convert taxonomy Equivalent Classes Axioms into Xrefs and remove the targeted classes. 
+     * Such axioms are {@code OWLEquivalentClassesAxiom}s that define an equivalence 
+     * between a taxon-specific {@code OWLClass}, and a generic {@code OWLClass} 
+     * in a specified taxon. The are of the form: 
+     * {@code EHDAA2:xxx EquivalentTo(UBERON:xxx and part_of some NCBITaxon:xxx)}, 
+     * where {@code EHDAA2:xxx} is a taxon-specific class, {@code UBERON:xxx} 
+     * is the generic class, and {@code NCBITaxon:xxx} is the specified taxon.
+     * <p>
+     * Operations performed are: i) a Xref pointing to the taxon-specific {@code OWLClass} 
+     * is added to the generic {@code OWLClass}; ii) Edges incoming to and outgoing from 
+     * the taxon-specific {@code OWLClass} are transformed into incoming and outgoing 
+     * edges applied to the generic {@code OWLClass}, as GCI relations, to restrict 
+     * the relations to the specified taxon (except for edges that were already a GCI, 
+     * in which case the original taxon is conserved); iii) the taxon-specific class 
+     * is removed from the ontologies.
+     */
+    void convertTaxonECAsToXrefs() {
         log.entry();
+        log.debug("Converting taxonomy Equivalent Classes Axioms...");
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
@@ -375,21 +399,113 @@ abstract class UberonCommon {
         for (OWLOntology ont: this.getOntologyUtils().getWrapper().getAllOntologies()) {
             OWLDataFactory fac = ont.getOWLOntologyManager().getOWLDataFactory();
             for (OWLClass cls: ont.getClassesInSignature()) {
-                //retrieve taxonomy equivalent classes
-                CONTINUE HERE WITH getECAIntersectionOf
-                for (OWLClass equivalentCls: 
+                log.trace("Examining class {} in ontology {}", cls, ont);
+                //if there are taxonomy ECA for this cls, it will be removed
+                boolean clsToRemove = false;
+                //in that case, we will propagate its incoming edges to the eq. class. 
+                //We store the new edges in this Set.
+                Set<OWLGraphEdge> newEdges = new HashSet<OWLGraphEdge>();
+                //now we retrieve the taxonomy ECAs
+                for (OWLEquivalentClassesAxiom eca: 
                     this.getOntologyUtils().getECAIntersectionOf(cls, partOf, taxonomyRoot)) {
+                    log.trace("Taxonomy ECA found: {}", eca);
+                    clsToRemove = true;
+                    //convert the eca into an edge, this is more convenient
+                    OWLGraphEdge ecaEdge = 
+                            this.getOntologyUtils().convertECAIntersectionOfToEdge(eca, ont);
+                    
                     //create the xref 
                     OWLAnnotationAssertionAxiom ax = fac.getOWLAnnotationAssertionAxiom(
                             wrapper.getAnnotationProperty(OboFormatTag.TAG_XREF.getTag()), 
-                            cls.getIRI(), equivalentCls.getIRI());
+                            ((OWLClass) ecaEdge.getTarget()).getIRI(),  
+                            fac.getOWLLiteral(wrapper.getIdentifier(cls)));
+                    log.trace("Trying to add Xref: {}", ax);
                     if (!ont.containsAxiomIgnoreAnnotations(ax)) {
                         ont.getOWLOntologyManager().addAxiom(ont, ax);
+                        log.trace("Xref added");
+                    } else {
+                        log.trace("Xref already exists and was not added");
                     }
+                    
+                    //propagate incoming edges of cls to the equivalent class. 
+                    //incoming edges are retrieved from all ontologies at once 
+                    //but it does not really matter
+                    for (OWLGraphEdge incomingEdge: wrapper.getIncomingEdgesWithGCI(cls)) {
+                        OWLClass filler = incomingEdge.getGCIFiller();
+                        OWLObjectPropertyExpression prop = incomingEdge.getGCIRelation();
+                        //if the incoming edge is a GCI, we keep its GCI filler and prop.
+                        //otherwise, we transform the edge into a GCI based on the taxon 
+                        //in the ECA
+                        if (!incomingEdge.isGCI()) {
+                            filler = ecaEdge.getGCIFiller();
+                            prop = ecaEdge.getGCIRelation();
+                        }
+                        //change the target
+                        OWLGraphEdge newEdge = new OWLGraphEdge(incomingEdge.getSource(), 
+                                ecaEdge.getTarget(), 
+                                incomingEdge.getQuantifiedPropertyList(), 
+                                incomingEdge.getOntology(), null, 
+                                filler, prop);
+                        log.trace("Transforming incoming edge {} into new edge {}", 
+                                incomingEdge, newEdge);
+                        newEdges.add(newEdge);
+                    }
+                    //same thing with outgoing edges, we switch the sources
+                    //TODO: refactor this
+                    for (OWLGraphEdge outgoingEdge: wrapper.getOutgoingEdgesWithGCI(cls)) {
+                        OWLClass filler = outgoingEdge.getGCIFiller();
+                        OWLObjectPropertyExpression prop = outgoingEdge.getGCIRelation();
+                        //if the incoming edge is a GCI, we keep its GCI filler and prop.
+                        //otherwise, we transform the edge into a GCI based on the taxon 
+                        //in the ECA
+                        if (!outgoingEdge.isGCI()) {
+                            filler = ecaEdge.getGCIFiller();
+                            prop = ecaEdge.getGCIRelation();
+                        }
+                        //change the source
+                        OWLGraphEdge newEdge = new OWLGraphEdge(ecaEdge.getTarget(), 
+                                outgoingEdge.getTarget(), 
+                                outgoingEdge.getQuantifiedPropertyList(), 
+                                outgoingEdge.getOntology(), null, 
+                                filler, prop);
+                        log.trace("Transforming outgoing edge {} into new edge {}", 
+                                outgoingEdge, newEdge);
+                        newEdges.add(newEdge);
+                    }
+                }
+                //now add the new edges and remove the class 
+                if (clsToRemove) {
+                    //in order not to try to add several times a similar axiom 
+                    Set<OWLSubClassOfAxiom> axiomsAdded = new HashSet<OWLSubClassOfAxiom>();
+                    for (OWLGraphEdge newEdge: newEdges) {
+                        OWLSubClassOfAxiom newAxiom = 
+                                newEdge.getOntology().getOWLOntologyManager().
+                                getOWLDataFactory().getOWLSubClassOfAxiom(
+                                    (OWLClassExpression) wrapper.edgeToSourceExpression(newEdge), 
+                                    (OWLClassExpression) wrapper.edgeToTargetExpression(newEdge));
+                        if (!axiomsAdded.contains(newAxiom)) {
+                            axiomsAdded.add(newAxiom);
+                            if (!newEdge.getOntology().containsAxiomIgnoreAnnotations(newAxiom)) {
+                                log.trace("Adding axiom: {}", newAxiom);
+                                newEdge.getOntology().getOWLOntologyManager().addAxiom(
+                                        newEdge.getOntology(), newAxiom);
+                            }
+                        }
+                    }
+                    //remove class
+                    OWLOntologyManager manager = ont.getOWLOntologyManager();
+                    OWLEntityRemover remover = new OWLEntityRemover(manager, 
+                            wrapper.getAllOntologies());
+                    cls.accept(remover);
+                    manager.applyChanges(remover.getChanges());
+                    log.trace("Class {} removed.", cls);
+                    
+                    wrapper.clearCachedEdges();
                 }
             }
         }
-        
+
+        log.debug("Done converting taxonomy Equivalent Classes Axioms.");
         log.exit();
     }
 

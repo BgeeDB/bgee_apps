@@ -49,6 +49,7 @@ import org.semanticweb.owlapi.model.UnloadableImportException;
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
 import owltools.graph.OWLQuantifiedProperty;
+import owltools.graph.OWLQuantifiedProperty.Quantifier;
 import owltools.io.ParserWrapper;
 
 /**
@@ -1002,7 +1003,7 @@ public class OntologyUtils {
         Set<OWLClass> targets = new HashSet<OWLClass>();
         for (OWLEquivalentClassesAxiom eca: 
             this.getECAIntersectionOf(cls, prop, fillerParentClass)) {
-            targets.add((OWLClass) this.convertECAIntersectionOfToEdge(eca).getTarget());
+            targets.add((OWLClass) this.convertECAIntersectionOfToEdge(eca, null).getTarget());
         }
         return log.exit(targets);
     }
@@ -1052,7 +1053,7 @@ public class OntologyUtils {
                 log.trace("Examining ECA: {}", eca);
                 //we use convertECAIntersectionToEdge to check that the ECA is valid
                 try {
-                    OWLGraphEdge edge = this.convertECAIntersectionOfToEdge(eca);
+                    OWLGraphEdge edge = this.convertECAIntersectionOfToEdge(eca, ont);
                     //If the ECA satisfies all requirements
                     if (edge.getSource().equals(cls) && 
                             (prop == null || prop.equals(edge.getGCIRelation())) && 
@@ -1085,10 +1086,12 @@ public class OntologyUtils {
      * will be returned by {@code OWLGraphEdge#getTarget()}, the filler and property 
      * in the {@code OWLObjectSomeValuesFrom} will be returned respectively by 
      * {@code OWLGraphEdge#getGCIFiller()} and {@code OWLGraphEdge#getGCIRelation()}. 
+     * {@code eca} will be returned by {@code OWLGraphEdge#getAxioms()}.
      * <p>
-     * {@code OWLGraphEdge#getOntology()}, {@code OWLGraphEdge#getAxioms()}, and 
-     * {@code OWLGraphEdge#getQuantifiedPropertyList()} will not returned any meaningful 
-     * information. The {@code OWLGraphEdge} is a "fake" edge used for convenience. 
+     * Note that this is not the proper meaning of {@code OWLGraphEdge#getGCIFiller()} 
+     * and {@code OWLGraphEdge#getGCIRelation()} (as the anonymous class expression 
+     * is not on the left side, as for a GCI, but on the right side), but we use them 
+     * for convenience.
      * 
      * @param eca   An {@code OWLEquivalentClassesAxiom} with the same structure as 
      *              the axioms returned by {@link #getECAIntersectionOf(OWLClass, 
@@ -1098,8 +1101,9 @@ public class OntologyUtils {
      *                                  (see {@link #getECAIntersectionOf(OWLClass, 
      *                                  OWLObjectPropertyExpression, OWLClass)})
      */
-    public OWLGraphEdge convertECAIntersectionOfToEdge(OWLEquivalentClassesAxiom eca) {
-        log.entry(eca);
+    public OWLGraphEdge convertECAIntersectionOfToEdge(OWLEquivalentClassesAxiom eca, 
+            OWLOntology ont) {
+        log.entry(eca, ont);
         
         if (eca.getClassExpressions().size() != 2) {
             throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
@@ -1146,7 +1150,8 @@ public class OntologyUtils {
                     "a filler and a property: " + eca));
         }
         
-        return log.exit(new OWLGraphEdge(sourceCls, clsOperand, null, null, filler, gciRel));
+        return log.exit(new OWLGraphEdge(sourceCls, clsOperand, null, Quantifier.IDENTITY, 
+                ont, eca, filler, gciRel));
     }
     
     /**

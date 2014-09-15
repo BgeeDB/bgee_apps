@@ -27,7 +27,6 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
@@ -671,12 +670,13 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphEdge expectedEdge = new OWLGraphEdge(
                 wrapper.getOWLClassByIdentifier("HsapDv:0000001"), 
                 wrapper.getOWLClassByIdentifier("UBERON:0000104"), 
-                null, null, 
+                null, Quantifier.IDENTITY, 
+                ont, eca, 
                 wrapper.getOWLClassByIdentifier("NCBITaxon:9606"), 
                 wrapper.getOWLObjectPropertyByIdentifier("BFO:0000050"));
         
         assertEquals("Incorrect edge generated from ECA", expectedEdge, 
-                utils.convertECAIntersectionOfToEdge(eca));
+                utils.convertECAIntersectionOfToEdge(eca, ont));
     }
     
     /**

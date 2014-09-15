@@ -25,7 +25,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.gene.ExpressionCallDAO.ExpressionCallTO
+ * @see org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO
  * @since Bgee 13
  */
 public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute> 
@@ -92,14 +92,14 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param speciesIds            A {@code Set} of {@code String}s that are the IDs of species 
-     *                              allowing to filter the calls to use
-     * @param includeSubstructures  A {@code boolean} defining whether descendants 
-     *                              of the anatomical entity were considered.
-     * @return                      An {@code ExpressionCallTOResultSet} containing all expression 
-     *                              calls from data source.
-     * @throws DAOException         If a {@code SQLException} occurred while trying to get 
-     *                              expression calls.   
+     * @param speciesIds             A {@code Set} of {@code String}s that are the IDs of species 
+     *                               allowing to filter the calls to use
+     * @param isIncludeSubstructures A {@code boolean} defining whether descendants 
+     *                               of the anatomical entity were considered.
+     * @return                       An {@code ExpressionCallTOResultSet} containing all expression 
+     *                               calls from data source.
+     * @throws DAOException          If a {@code SQLException} occurred while trying to get 
+     *                               expression calls.   
      */
     public ExpressionCallTOResultSet getAllExpressionCalls(Set<String> speciesIds, 
             boolean isIncludeSubstructures) throws DAOException {
@@ -317,7 +317,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                                                 implements ExpressionCallTOResultSet {
 
         /**
-         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
@@ -404,7 +404,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                                          extends MySQLDAOResultSet<GlobalExpressionToExpressionTO> 
                                          implements GlobalExpressionToExpressionTOResultSet {
         /**
-         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.

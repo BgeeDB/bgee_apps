@@ -185,9 +185,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
          *                      org.bgee.model.dao.mysql.connector.MySQLDAOResultSet
          *                      #MySQLDAOResultSet(BgeePreparedStatement) 
          *                      MySQLDAOResultSet(BgeePreparedStatement)}.
-         * @param speciesDAO    The {@code MySQLSpeciesDAO} that produced this 
-         *                      {@code MySQLSpeciesTOResultSet}. Needed to obtain labels 
-         *                      associated to {@code SpeciesDAO.Attributes}.
          */
         public MySQLSpeciesTOResultSet(BgeePreparedStatement statement) {
             super(statement);

@@ -19,7 +19,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  * 
  * @author Frederic Bastian
  * @version Bgee 13
- * @see org.bgee.model.dao.api.species.TaxonTO
+ * @see org.bgee.model.dao.api.species.TaxonDAO.TaxonTO
  * @since Bgee 13
  */
 public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> 
@@ -151,7 +151,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
             implements TaxonTOResultSet {
 
         /**
-         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.

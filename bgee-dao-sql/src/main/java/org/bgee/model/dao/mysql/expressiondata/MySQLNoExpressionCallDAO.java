@@ -25,7 +25,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.gene.NoExpressionCallDAO
+ * @see org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO
  * @since Bgee 13
  */
 public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attribute> 
@@ -288,7 +288,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     implements NoExpressionCallTOResultSet {
 
         /**
-         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
@@ -375,7 +375,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                                        extends MySQLDAOResultSet<GlobalNoExpressionToNoExpressionTO> 
                                        implements GlobalNoExpressionToNoExpressionTOResultSet {
         /**
-         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.

@@ -21,7 +21,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.gene.TaxonConstraintDAO.TaxonConstraintTO
+ * @see org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO
  * @since Bgee 13
  */
 public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribute> 
@@ -147,7 +147,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     public class MySQLTaxonConstraintTOResultSet extends MySQLDAOResultSet<TaxonConstraintTO> 
                                                  implements TaxonConstraintTOResultSet {
         /**
-         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.

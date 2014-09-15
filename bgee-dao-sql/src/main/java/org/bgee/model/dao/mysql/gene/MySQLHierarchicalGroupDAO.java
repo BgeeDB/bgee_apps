@@ -53,7 +53,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
      * Inserts the provided Hierarchical Groups into the Bgee database, represented as a
      * {@code Collection} of {@code HierarchicalGroupTO}s.
      * 
-     * @param terms         A {@code Collection} of {@code HierarchicalGroupTO}s to be
+     * @param groups        A {@code Collection} of {@code HierarchicalGroupTO}s to be
      *                      inserted into the database.
      * @throws DAOException If a {@code SQLException} occurred while trying to insert
      *                      {@code terms}. The {@code SQLException} will be wrapped into a

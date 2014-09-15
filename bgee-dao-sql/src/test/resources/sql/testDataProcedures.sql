@@ -64,18 +64,18 @@ BEGIN
                ('Stage_id17','stageN17','stage Desc 17',30,31,2),
                ('Stage_id18','stageN18','stage Desc 18',33,34,2);
                
-        INSERT INTO anatEntity(anatEntityId,anatEntityName,anatEntityDescription,startStageId,endStageId)
-        VALUES ('Anat_id1','anatStruct','anatStruct desc','Stage_id1','Stage_id2'),
-               ('Anat_id2','organ','organ desc','Stage_id10','Stage_id18'),
-               ('Anat_id3','heart','heart desc','Stage_id16','Stage_id18'),
-               ('Anat_id4','gill','gill desc','Stage_id12','Stage_id18'),
-               ('Anat_id5','brain','brain desc','Stage_id11','Stage_id17'),
-               ('Anat_id6','embryoStruct','embryoStruct desc','Stage_id2','Stage_id5'),
-               ('Anat_id7','ectoderm','ectoderm desc','Stage_id6','Stage_id13'),
-               ('Anat_id8','neuralTube','neuralTube desc','Stage_id8','Stage_id17'),
-               ('Anat_id9','forebrain','forebrain desc','Stage_id8','Stage_id17'),
-               ('Anat_id10','hindbrain','hindbrain desc','Stage_id8','Stage_id17'),
-               ('Anat_id11','cerebellum','cerebellum desc','Stage_id9','Stage_id13');
+        INSERT INTO anatEntity(anatEntityId,anatEntityName,anatEntityDescription,startStageId,endStageId,nonInformative)
+        VALUES ('Anat_id1','anatStruct','anatStruct desc','Stage_id1','Stage_id2',true),
+               ('Anat_id2','organ','organ desc','Stage_id10','Stage_id18',false),
+               ('Anat_id3','heart','heart desc','Stage_id16','Stage_id18',false),
+               ('Anat_id4','gill','gill desc','Stage_id12','Stage_id18',false),
+               ('Anat_id5','brain','brain desc','Stage_id11','Stage_id17',false),
+               ('Anat_id6','embryoStruct','embryoStruct desc','Stage_id2','Stage_id5',false),
+               ('Anat_id7','ectoderm','ectoderm desc','Stage_id6','Stage_id13',false),
+               ('Anat_id8','neuralTube','neuralTube desc','Stage_id8','Stage_id17',false),
+               ('Anat_id9','forebrain','forebrain desc','Stage_id8','Stage_id17',false),
+               ('Anat_id10','hindbrain','hindbrain desc','Stage_id8','Stage_id17',true),
+               ('Anat_id11','cerebellum','cerebellum desc','Stage_id9','Stage_id13',false);
 
         INSERT INTO anatEntityTaxonConstraint(anatEntityId,speciesId)
         VALUES ('Anat_id1',null),

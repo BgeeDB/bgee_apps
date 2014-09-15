@@ -28,13 +28,14 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * <li>{@code DESCRIPTION: corresponds to {@link AnatEntityTO#getDescription()}.
      * <li>{@code STARTSTAGEID: corresponds to {@link AnatEntityTO#getStartStageId()}.
      * <li>{@code ENDSTAGEID: corresponds to {@link AnatEntityTO#getEndStageId()}.
+     * <li>{@code NONINFORMATIVE: corresponds to {@link AnatEntityTO#isNonInformative()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, STARTSTAGEID, ENDSTAGEID;
+        ID, NAME, DESCRIPTION, STARTSTAGEID, ENDSTAGEID, NONINFORMATIVE;
     }
 
     /**
@@ -103,22 +104,33 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         private final String endStageId;
 
         /**
+         * A {@code boolean} defining whether this anatomical entity is part of a non-informative 
+         * subset in used the ontology. For instance, in Uberon, 'upper_level "abstract upper-level 
+         * terms not directly useful for analysis"'.
+         */
+        private final boolean nonInformative;
+
+        /**
          * Constructor providing the ID, the name, the description, the start stage, and the end 
          * stage of this anatomical entity.
          * 
-         * @param id            A {@code String} that is the ID of this anatomical entity. 
-         * @param name          A {@code String} that is the name of this anatomical entity.
-         * @param description   A {@code String} that is the description of this anatomical entity.
-         * @param startStageId  A {@code String} that is the start of developmental stage of 
-         *                      this anatomical entity.
-         * @param endStageId    A {@code String} that is the end of developmental stage of this 
-         *                      anatomical entity.
+         * @param id                A {@code String} that is the ID of this anatomical entity. 
+         * @param name              A {@code String} that is the name of this anatomical entity.
+         * @param description       A {@code String} that is the description of this anatomical 
+         *                          entity.
+         * @param startStageId      A {@code String} that is the start of developmental stage of 
+         *                          this anatomical entity.
+         * @param endStageId        A {@code String} that is the end of developmental stage of this 
+         *                          anatomical entity.
+         * @param isNonInformative  A {@code boolean} defining whether this anatomical entity is 
+         *                          part of a non-informative subset in the used ontology.
          */
         public AnatEntityTO(String id, String name, String description, 
-                String startStageId, String endStageId) {
+                String startStageId, String endStageId, boolean nonInformative) {
             super(id, name, description);
             this.startStageId = startStageId;
             this.endStageId = endStageId;
+            this.nonInformative = nonInformative;
         }
 
         /**
@@ -136,5 +148,13 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         public String getEndStageId() {
             return this.endStageId;
         }
-    }
+
+        /**
+         * @return  the {@code boolean} defining whether this anatomical entity is 
+         *          part of a non-informative subset in the used ontology.
+         */
+        public boolean isNonInformative() {
+            return this.nonInformative;
+        }
+}
 }

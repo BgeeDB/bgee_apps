@@ -21,7 +21,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
  * 
  * @author Valentine Rech de Laval
  * @version Bgee 13
- * @see org.bgee.model.dao.api.gene.AnatEntityDAO.AnatEntityTO
+ * @see org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO
  * @since Bgee 13
  */
 public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implements AnatEntityDAO {
@@ -97,13 +97,15 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             case ID: 
                 return log.exit("anatEntityId");
             case NAME: 
-                return log.exit("anatEntityId");
+                return log.exit("anatEntityName");
             case DESCRIPTION: 
-                return log.exit("anatEntityId");
+                return log.exit("anatEntityDescription");
             case STARTSTAGEID: 
-                return log.exit("anatEntityId");
+                return log.exit("startStageId");
             case ENDSTAGEID: 
-                return log.exit("anatEntityId");
+                return log.exit("endStageId");
+            case NONINFORMATIVE: 
+                return log.exit("nonInformative");
             default: 
                 throw log.throwing(new AssertionError("The attribute provided (" + 
                        attribute.toString() + ") is unknown for " + AnatEntityDAO.class.getName()));
@@ -116,8 +118,9 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
 
         // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO anatEntity " +
-                "(anatEntityId, anatEntityName, anatEntityDescription, startStageId, endStageId) " +
-                "VALUES (?, ?, ?, ?, ?)";
+                "(anatEntityId, anatEntityName, anatEntityDescription, " +
+                "startStageId, endStageId, nonInformative) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
         
         // To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         // and because of laziness, we insert expression calls one at a time
@@ -130,6 +133,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 stmt.setString(3, anatEntity.getDescription());
                 stmt.setString(4, anatEntity.getStartStageId());
                 stmt.setString(5, anatEntity.getEndStageId());
+                stmt.setBoolean(6, anatEntity.isNonInformative());
                 entityInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
@@ -150,7 +154,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     public class MySQLAnatEntityTOResultSet extends MySQLDAOResultSet<AnatEntityTO> 
                                             implements AnatEntityTOResultSet {
         /**
-         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
          * super constructor.
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
@@ -165,7 +169,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             
             String anatEntityId = null, anatEntityName = null, anatEntityDescription = null, 
                     startStageId = null, endStageId = null;
-
+            boolean nonInformative = false;
+            
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
@@ -179,13 +184,15 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                         startStageId = currentResultSet.getString(column.getKey());
                     } else if (column.getValue().equals("endStageId")) {
                         endStageId = currentResultSet.getString(column.getKey());
+                    } else if (column.getValue().equals("nonInformative")) {
+                        nonInformative = currentResultSet.getBoolean(column.getKey());
                     }                
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));
                 }
             }
             return log.exit(new AnatEntityTO(anatEntityId, anatEntityName, anatEntityDescription, 
-                    startStageId, endStageId));
+                    startStageId, endStageId, nonInformative));
         }
     }
 }

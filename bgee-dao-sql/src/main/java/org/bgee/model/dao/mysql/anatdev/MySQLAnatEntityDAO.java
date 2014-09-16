@@ -62,7 +62,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             }
         }
         sql.append(" FROM anatEntity");
-         if (speciesIds != null && speciesIds.size() > 0) {
+        if (speciesIds != null && speciesIds.size() > 0) {
              sql.append(" INNER JOIN anatEntityTaxonConstraint ON (" +
                                 "anatEntityTaxonConstraint.anatEntityId = anatEntity.anatEntityId)");
              sql.append(" WHERE anatEntityTaxonConstraint.speciesId IS NULL");
@@ -82,6 +82,56 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
          }
     }
     
+    @Override
+    public AnatEntityTOResultSet getAllNonInformativeAnatEntities(Set<String> speciesIds) 
+            throws DAOException {
+        log.entry(speciesIds);
+
+        boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
+
+        StringBuilder sql = new StringBuilder(); 
+        Collection<AnatEntityDAO.Attribute> attributes = this.getAttributes();
+        if (attributes == null || attributes.size() == 0) {
+            sql.append("SELECT anatEntity.*");
+        } else {
+            for (AnatEntityDAO.Attribute attribute: attributes) {
+                if (sql.length() == 0) {
+                    sql.append("SELECT ");
+                } else {
+                    sql.append(", ");
+                }
+                sql.append("anatEntity.");
+                sql.append(this.attributeToString(attribute));
+            }
+        }
+        sql.append(" FROM anatEntity");
+        sql.append(" LEFT OUTER JOIN expression ON (" +
+                "expression.anatEntityId = anatEntity.anatEntityId)");
+        if (isSpeciesFilter) {
+            sql.append(" INNER JOIN anatEntityTaxonConstraint ON (" +
+                    "anatEntityTaxonConstraint.anatEntityId = anatEntity.anatEntityId)");
+        }
+        sql.append(" WHERE nonInformative = true");
+        sql.append(" AND expression.anatEntityId IS NULL");
+        if (isSpeciesFilter) {
+            sql.append(" AND (anatEntityTaxonConstraint.speciesId IS NULL");
+            sql.append(" OR anatEntityTaxonConstraint.speciesId IN (");
+            sql.append(createStringFromSet(speciesIds, ','));
+            sql.append("))");
+        }
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            return log.exit(new MySQLAnatEntityTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+    }
+
     /** 
      * Return a {@code String} that correspond to the given {@code AnatEntityDAO.Attribute}.
      * 

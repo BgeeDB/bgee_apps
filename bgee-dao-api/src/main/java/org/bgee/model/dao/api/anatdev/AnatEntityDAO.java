@@ -55,6 +55,24 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
     public AnatEntityTOResultSet getAllAnatEntities(Set<String> speciesIds) throws DAOException;
     
     /**
+     * Retrieve all non-informative anatomical entities without expression call from data source 
+     * according to a {@code Set} of {@code String}s that are the IDs of species allowing to filter 
+     * the entities to use.
+     * <p>
+     * The non-informative anatomical entities are retrieved and returned as a 
+     * {@code AnatEntityTOResultSet}. It is the responsibility of the caller to close this 
+     * {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      allowing to filter the non-informative anatomical entities to use
+     * @return              An {@code AnatEntityTOResultSet} containing all non-informative 
+     *                      anatomical entities from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public AnatEntityTOResultSet getAllNonInformativeAnatEntities(Set<String> speciesIds) 
+            throws DAOException;
+    
+    /**
      * Inserts the provided anatomical entities into the Bgee database, 
      * represented as a {@code Collection} of {@code AnatEntityTO}s. 
      * 
@@ -156,5 +174,12 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         public boolean isNonInformative() {
             return this.nonInformative;
         }
-}
+
+        @Override
+        public String toString() {
+            return " ID: " + this.getId() + " - Name: " + this.getName() +
+            " - Description: " + this.getDescription() + "- Start stage Id: " +  startStageId + 
+            " - End stage Id:" + endStageId + " - Non-informative:" + nonInformative;
+        }
+    }
 }

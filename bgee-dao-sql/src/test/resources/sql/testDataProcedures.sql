@@ -75,7 +75,9 @@ BEGIN
                ('Anat_id8','neuralTube','neuralTube desc','Stage_id8','Stage_id17',false),
                ('Anat_id9','forebrain','forebrain desc','Stage_id8','Stage_id17',false),
                ('Anat_id10','hindbrain','hindbrain desc','Stage_id8','Stage_id17',true),
-               ('Anat_id11','cerebellum','cerebellum desc','Stage_id9','Stage_id13',false);
+               ('Anat_id11','cerebellum','cerebellum desc','Stage_id9','Stage_id13',false),
+               ('Anat_id12','anat12','unused anatE 12','Stage_id1','Stage_id13',false),
+               ('Anat_id13','anat13','unused anatE 13','Stage_id9','Stage_id10',true);
 
         INSERT INTO anatEntityTaxonConstraint(anatEntityId,speciesId)
         VALUES ('Anat_id1',null),
@@ -90,7 +92,9 @@ BEGIN
                ('Anat_id8',11),
                ('Anat_id9',21),
                ('Anat_id10',31),
-               ('Anat_id11',null);
+               ('Anat_id11',null),
+               ('Anat_id12',21),
+               ('Anat_id13',null);
                
         INSERT INTO anatEntityRelation(anatEntityRelationId,anatEntitySourceId,anatEntityTargetId,relationType,relationStatus)
         VALUES (1,'Anat_id1','Anat_id1','is_a part_of','reflexive'),
@@ -142,7 +146,7 @@ BEGIN
                (22,31),
                (23,null);
 
-               INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData)
+        INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData)
         VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality'),
                (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality'),
                (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality'),

@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
@@ -134,13 +135,16 @@ public class InsertUberon extends MySQLDAOUser {
         Map<OWLClass, Map<String, Integer>> nestedSetModel = 
                 uberon.generateStageNestedSetModel(roots.iterator().next());
         
-        //generate the StageTOs
+        //generate the StageTOs and taxonConstraintTOs
         Set<StageTO> stageTOs = new HashSet<StageTO>();
+        Set<TaxonConstraintTO> constraintTOs = new HashSet<TaxonConstraintTO>();
         OWLGraphWrapper wrapper = uberon.getOntologyUtils().getWrapper();
         for (Entry<OWLClass, Map<String, Integer>> stageEntry: nestedSetModel.entrySet()) {
             OWLClass OWLClassStage = stageEntry.getKey();
-            //keep the stage only if exists in one of the requested species
-            if (!uberon.existsInAtLeastOneSpecies(OWLClassStage, speciesIds)) {
+            //keep the stage only if exists in one of the requested species 
+            //and if not obsolete
+            if (!uberon.existsInAtLeastOneSpecies(OWLClassStage, speciesIds) || 
+                    uberon.getOntologyUtils().isObsolete(OWLClassStage)) {
                 continue;
             }
             
@@ -162,12 +166,23 @@ public class InsertUberon extends MySQLDAOUser {
                     stageEntry.getValue().get(OntologyUtils.LEVEL_KEY), 
                     wrapper.getSubsets(OWLClassStage).contains(UberonDevStage.TOO_GRANULAR_SUBSET), 
                     id.startsWith("UBERON:")));//currently, grouping stages are simply all Uberon stages
+            
+            //generate the TaxonConstraintTOs
+            if (uberon.existsInAllSpecies(OWLClassStage, speciesIds)) {
+                //a null speciesId means: exists in all species
+                constraintTOs.add(new TaxonConstraintTO(id, null));
+            } else {
+                for (int speciesId: uberon.existsInSpecies(OWLClassStage, speciesIds)) {
+                    constraintTOs.add(new TaxonConstraintTO(id, Integer.toString(speciesId)));
+                }
+            }
         }
         
-        //insert the stage TOs
+        //insert the stage TOs and TaxonConstraint TOs
         try {
             this.startTransaction();
             this.getStageDAO().insertStages(stageTOs);
+            this.getTaxonConstraintDAO().insertStageTaxonConstraints(constraintTOs);
             this.commit();
         } finally {
             this.closeDAO();

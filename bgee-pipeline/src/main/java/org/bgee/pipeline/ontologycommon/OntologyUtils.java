@@ -901,6 +901,17 @@ public class OntologyUtils {
     }
     
     /**
+     * Determines whether {@code obj} is obsolete.
+     * @param obj   An {@code OWLObject} to be checked for deprecation
+     * @return      {@code true} if {@code obj} is obsolete.
+     */
+    public boolean isObsolete(OWLObject obj) {
+        log.entry(obj);
+        return log.exit(this.getWrapper().isObsolete(obj) || 
+                this.getWrapper().getIsObsolete(obj));
+    }
+    
+    /**
      * Obtains a unmodifiable mapping from all XRef IDs, present in the {@code OWLOntology} 
      * wrapped by this object, to the OBO-like IDs of the {@code OWLClass}es they were 
      * associated to. Each XRef ID can be associated to several OBO-like IDs 
@@ -953,8 +964,7 @@ public class OntologyUtils {
                         if (cls == null) {
                             cls = this.getWrapper().getOWLClass(clsId);
                         }
-                        if (this.getWrapper().isObsolete(cls) || 
-                                this.getWrapper().getIsObsolete(cls)) {
+                        if (this.isObsolete(cls)) {
                             obsoleteClassIds.add(clsId);
                         } else {
                             nonObsoleteClassIds.add(clsId);
@@ -1588,7 +1598,7 @@ public class OntologyUtils {
         Set<OWLNamedObject> ancestorsEnd = this.getWrapper().getNamedAncestorsWithGCI(cls2, overProps);
         ancestorsStart.retainAll(ancestorsEnd);
         for (OWLObject ancestor: ancestorsStart) {
-            if (ancestor instanceof OWLClass) {
+            if (ancestor instanceof OWLClass && !this.isObsolete(ancestor)) {
                 commonAncestors.add((OWLClass) ancestor);
             }
         }

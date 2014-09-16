@@ -9,6 +9,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
+import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
@@ -115,6 +116,12 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLTaxonDAO getTaxonDAO() {
         return (MySQLTaxonDAO) this.manager.getTaxonDAO();
+    }
+    /**
+     * @return  A {@code MySQLTaxonConstraintDAO}.
+     */
+    protected MySQLTaxonConstraintDAO getTaxonConstraintDAO() {
+        return (MySQLTaxonConstraintDAO) this.manager.getTaxonConstraintDAO();
     }
     /**
      * @return  A {@code MySQLGeneOntologyDAO}.

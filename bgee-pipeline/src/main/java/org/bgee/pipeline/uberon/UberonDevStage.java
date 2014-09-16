@@ -25,7 +25,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
-import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLObject;
@@ -329,17 +328,12 @@ public class UberonDevStage extends UberonCommon {
         log.entry(this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
-        //before using OWLGraphManipulator, we remove all EquivalentClass axioms. 
+        //before using OWLGraphManipulator, we remove all taxon EquivalentClass axioms. 
         //This is because there is a bug 
         //where species-specific stages are dangling thanks to their EC axioms. 
         //they will be converted by the manipulator as is_a relations, while we want 
         //to merge these classes, so, to make them disappear.
-        log.debug("Removing all OWLEquivalentClassesAxioms...");
-        for (OWLOntology ont: this.getOntologyUtils().getWrapper().getAllOntologies()) {
-            ont.getOWLOntologyManager().removeAxioms(ont, 
-                    ont.getAxioms(AxiomType.EQUIVALENT_CLASSES));
-        }
-        log.debug("Done removing OWLEquivalentClassesAxioms.");
+        this.convertTaxonECAs();
         
         //now, we can safely use the manipulator
         OWLGraphManipulator manipulator = this.getOntologyUtils().getManipulator();
@@ -528,6 +522,9 @@ public class UberonDevStage extends UberonCommon {
                         incomingEdge.isSourceNamedObject()) {
                   
                     OWLClass child = (OWLClass) incomingEdge.getSource();
+                    if (this.getOntologyUtils().isObsolete(child)) {
+                        continue;
+                    }
                     if (this.getTaxonConstraints() != null) {
                         Set<Integer> speciesIds = this.getTaxonConstraints().get(
                             this.getOntologyUtils().getWrapper().getIdentifier(child));

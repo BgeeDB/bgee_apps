@@ -26,6 +26,7 @@ import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
@@ -33,6 +34,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphManipulator;
@@ -414,8 +416,6 @@ public class UberonDevStage extends UberonCommon {
     public void generatePrecededByFromComments(Set<OWLClass> classesToOrder) {
         log.entry(classesToOrder);
         
-        OWLGraphManipulator manipulator = this.getOntologyUtils().getManipulator();
-        
         //now, we transform temporal ordering in comments into preceded_by relations 
         //(it is the only way to correctly use FBdv)
         NavigableMap<Integer, OWLClass> commentOrdering = new TreeMap<Integer, OWLClass>();
@@ -437,19 +437,30 @@ public class UberonDevStage extends UberonCommon {
         //create the relations by iterating in reversed order. Wd don't use 
         //a descendingMap, because we will need to use a List anyway, to retrieve 
         //an OWLClass along with its predecessor.
+        OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         List<OWLClass> orderedClasses = new ArrayList<OWLClass>(commentOrdering.values());
-        OWLObjectPropertyExpression precededBy = 
-                manipulator.getOwlGraphWrapper().getOWLObjectPropertyByIdentifier(
+        OWLObjectPropertyExpression precededBy = wrapper.getOWLObjectPropertyByIdentifier(
                         OntologyUtils.PRECEDED_BY_ID);
         Set<OWLGraphEdge> edgesToAdd = new HashSet<OWLGraphEdge>();
         for (int i = orderedClasses.size() - 1; i > 0; i--) {
             edgesToAdd.add(new OWLGraphEdge(
                     orderedClasses.get(i), orderedClasses.get(i-1), 
-                    precededBy, Quantifier.SOME, 
-                    manipulator.getOwlGraphWrapper().getSourceOntology()));
+                    precededBy, Quantifier.SOME, wrapper.getSourceOntology()));
         }
         log.trace("{} edges to add: {}", edgesToAdd.size(), edgesToAdd);
-        manipulator.addEdges(edgesToAdd);
+        for (OWLGraphEdge edgeToAdd: edgesToAdd) {
+            OWLSubClassOfAxiom newAxiom = edgeToAdd.getOntology().getOWLOntologyManager().
+                    getOWLDataFactory().getOWLSubClassOfAxiom(
+                        (OWLClassExpression) wrapper.edgeToSourceExpression(edgeToAdd), 
+                        (OWLClassExpression) wrapper.edgeToTargetExpression(edgeToAdd));
+            if (!edgeToAdd.getOntology().containsAxiomIgnoreAnnotations(newAxiom)) {
+                edgeToAdd.getOntology().getOWLOntologyManager().addAxiom(
+                        edgeToAdd.getOntology(), newAxiom);
+                log.trace("Axiom added: {}", newAxiom);
+            } else {
+                log.trace("Axionm already present, not added: {}", newAxiom);
+            }
+        }
         
         log.exit();
     }
@@ -525,6 +536,15 @@ public class UberonDevStage extends UberonCommon {
                     if (this.getOntologyUtils().isObsolete(child)) {
                         continue;
                     }
+                    //we use the getOWLClass method to check if it is a taxon equivalent class, 
+                    //in which case we can skip it, the equivalent class will be walked.
+                    //if getOWLClass returns a null value, it means there is an uncertainty 
+                    //about mappings; if the returned value is not equal to child, 
+                    //then it is a taxon equivalent.
+                    if (!child.equals(this.getOWLClass(wrapper.getIdentifier(child)))) {
+                        continue;
+                    }
+                    
                     if (this.getTaxonConstraints() != null) {
                         Set<Integer> speciesIds = this.getTaxonConstraints().get(
                             this.getOntologyUtils().getWrapper().getIdentifier(child));

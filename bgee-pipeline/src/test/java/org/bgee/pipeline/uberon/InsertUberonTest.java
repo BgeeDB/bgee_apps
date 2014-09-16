@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
@@ -70,6 +71,8 @@ public class InsertUberonTest extends TestAncestor {
                 getResource("/ontologies/test_dev_stage_ont.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
+        System.out.println("YE: " + ont.getAxioms(wrapper.getOWLClassByIdentifier("ID:8")));
+        System.out.println("YE2: " + ont.getEquivalentClassesAxioms(wrapper.getOWLClassByIdentifier("ID:8")));
         
         //instantiate an UberonDevStage with custom taxon constraints and mock manager
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
@@ -79,10 +82,19 @@ public class InsertUberonTest extends TestAncestor {
         taxonConstraints.put("ID:4", new HashSet<Integer>(Arrays.asList(1, 3)));
         taxonConstraints.put("ID:5", new HashSet<Integer>(Arrays.asList(2, 3)));
         taxonConstraints.put("ID:6", new HashSet<Integer>(4, 5));
+        //Taxonomy is part of a subgraph to ignore, should not be considered
+        taxonConstraints.put("NCBITaxon:1", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+        taxonConstraints.put("NCBITaxon:9606", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+        //obsolete class, should not be considered
+        taxonConstraints.put("ID:7", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+        //ID:8 is a taxon equivalent to ID:4, should not be seen
+        taxonConstraints.put("ID:8", new HashSet<Integer>(Arrays.asList(1, 2, 3)));
+        
         UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);
+        uberon.setToIgnoreSubgraphRootIds(Arrays.asList("NCBITaxon:1"));
         
         InsertUberon insert = new InsertUberon(mockManager);
-        insert.insertStageOntologyIntoDataSource(uberon, Arrays.asList(1, 2));
+        insert.insertStageOntologyIntoDataSource(uberon, Arrays.asList(1, 2, 3));
         
         //generate the expected Sets of SpeciesTOs and taxonTOs to verify the calls 
         //made to the DAOs
@@ -104,6 +116,24 @@ public class InsertUberonTest extends TestAncestor {
             throw new AssertionError("Incorrect StageTOs generated to insert stages, " +
                     "expected " + expectedStageTOs.toString() + ", but was " + 
                     stageTOsArg.getValue());
+        }
+
+        Set<TaxonConstraintTO> expectedTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("UBERON:1", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("UBERON:2", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("UBERON:3", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:4", "1"));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:4", "3"));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:5", "2"));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:5", "3"));
+        ArgumentCaptor<Set> taxonConstraintTOsArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockTaxonConstraintDAO).insertStageTaxonConstraints(
+                taxonConstraintTOsArg.capture());
+        if (!TOComparator.areTOCollectionsEqual(
+                expectedTaxonConstraintTOs, taxonConstraintTOsArg.getValue())) {
+            throw new AssertionError("Incorrect TaxonConstraintTOs generated to insert stages, " +
+                    "expected " + expectedTaxonConstraintTOs.toString() + ", but was " + 
+                    taxonConstraintTOsArg.getValue());
         }
     }
 }

@@ -34,10 +34,10 @@ comment: left bound: 3 - right bound: 4 - level: 3
 id: ID:5
 name: stage 5
 def: "def stage 5"
-relationship: BFO:0000050 UBERON:2
+relationship: BFO:0000050 UBERON:2 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9606"}
 relationship: BFO:0000062 ID:4
 subset: granular_stage
-comment: left bound: 5 - right bound: 6 - level: 3
+comment: left bound: 5 - right bound: 6 - level: 3 - test with GCI relations
 
 [Term]
 id: ID:6
@@ -45,6 +45,22 @@ name: stage 6
 def: "def stage 6"
 comment: we will exclude this one through custom taxon contraints.
 relationship: BFO:0000050 UBERON:3
+
+[Term]
+id: NCBITaxon:1
+
+[Term]
+id: NCBITaxon:9606
+is_a: NCBITaxon:1
+
+[Term]
+id: ID:7
+is_obsolete: true
+
+[Term]
+id: ID:8
+intersection_of: ID:4
+intersection_of: BFO:0000050 NCBITaxon:9606
 
 [Typedef]
 id: BFO:0000062

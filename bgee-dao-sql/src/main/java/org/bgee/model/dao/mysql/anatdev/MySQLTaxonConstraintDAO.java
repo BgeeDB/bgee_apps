@@ -44,6 +44,12 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     }
 
     @Override
+    /*
+     * (non-javadoc)
+     * All the insert methods of that class are not factorize in a single method because of 
+     * table names, entity ID column names, and, most important of all, types of this column 
+     * (int or string) are different.
+     */
     public int insertAnatEntityRelationTaxonConstraints(Collection<TaxonConstraintTO> contraints)
                     throws DAOException {
         log.entry(contraints);
@@ -74,6 +80,12 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     }
 
     @Override
+    /*
+     * (non-javadoc)
+     * All the insert methods of that class are not factorize in a single method because of 
+     * table names, entity ID column names, and, most important of all, types of this column 
+     * (int or string) are different.
+     */
     public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO> contraints)
             throws DAOException {
         log.entry(contraints);
@@ -104,6 +116,12 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     }
 
     @Override
+    /*
+     * (non-javadoc)
+     * All the insert methods of that class are not factorize in a single method because of 
+     * table names, entity ID column names, and, most important of all, types of this column 
+     * (int or string) are different.
+     */
     public int insertStageTaxonConstraints(Collection<TaxonConstraintTO> contraints)
             throws DAOException {
         log.entry(contraints);
@@ -133,7 +151,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
 
         return log.exit(contraintInsertedCount);
     }
-
+    
     /**
      * A {@code MySQLDAOResultSet} specific to {@code MySQLTaxonConstraintTO}.
      * 

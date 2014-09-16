@@ -48,7 +48,6 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                     throws DAOException {
         log.entry(contraints);
 
-        // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO anatEntityRelationTaxonConstraint " +
                                             "(anatEntityRelationId, speciesId) VALUES (?, ?)";
         
@@ -79,7 +78,6 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             throws DAOException {
         log.entry(contraints);
 
-        // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO anatEntityTaxonConstraint (anatEntityId, speciesId) " +
                                "VALUES (?, ?)";
         
@@ -110,7 +108,6 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             throws DAOException {
         log.entry(contraints);
 
-        // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO stageTaxonConstraint (stageId, speciesId) " +
                                "VALUES (?, ?)";
         

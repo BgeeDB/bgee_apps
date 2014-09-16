@@ -3,6 +3,7 @@ package org.bgee.model.dao.api;
 import java.util.Properties;
 
 import org.bgee.model.dao.api.anatdev.StageDAO;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -85,6 +86,10 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected TaxonDAO getNewTaxonDAO() {
         return this.instanceMockManager.getNewTaxonDAO();
+    }
+    @Override
+    protected TaxonConstraintDAO getNewTaxonConstraintDAO() {
+        return this.instanceMockManager.getNewTaxonConstraintDAO();
     }
     @Override
     protected GeneOntologyDAO getNewGeneOntologyDAO() {

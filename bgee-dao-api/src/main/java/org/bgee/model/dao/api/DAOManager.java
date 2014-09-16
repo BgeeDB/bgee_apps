@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.StageDAO;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -851,6 +852,19 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewTaxonDAO());
     }
     /**
+     * Get a new {@link org.bgee.model.dao.api.species.TaxonConstraintDAO TaxonConstraintDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code TaxonConstraintDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.species.TaxonConstraintDAO TaxonConstraintDAO
+     */
+    public final TaxonConstraintDAO getTaxonConstraintDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewTaxonConstraintDAO());
+    }
+    /**
      * Get a new {@link org.bgee.model.dao.api.gene.GeneOntologyDAO GeneOntologyDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
@@ -1045,6 +1059,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code TaxonDAO}
      */
     protected abstract TaxonDAO getNewTaxonDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.species.TaxonConstraintDAO TaxonConstraintDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code TaxonConstraintDAO}
+     */
+    protected abstract TaxonConstraintDAO getNewTaxonConstraintDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.gene.GeneOntologyDAO GeneOntologyDAO} instance 

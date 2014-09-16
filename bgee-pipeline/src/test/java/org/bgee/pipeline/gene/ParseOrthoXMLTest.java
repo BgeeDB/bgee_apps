@@ -192,7 +192,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
         ArgumentCaptor<Set> hGroupsTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockHierarchicalGroupDAO).insertHierarchicalGroups(
                 hGroupsTOsArg.capture());
-        if (!TOComparator.areHGroupTOCollectionsEqual(expectedHGroupTOs, hGroupsTOsArg.getValue())) {
+        if (!TOComparator.areTOCollectionsEqual(expectedHGroupTOs, hGroupsTOsArg.getValue())) {
             throw new AssertionError("Incorrect HierarchicalGroupTOs generated to insert "
                     + "hierarchical groups, expected " + expectedHGroupTOs.toString() + 
                     ", but was " + hGroupsTOsArg.getValue());
@@ -218,7 +218,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 
                 eq(Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID)));
-        if (!TOComparator.areGeneTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue())) {
+        if (!TOComparator.areTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue())) {
             throw new AssertionError("Incorrect GeneTOs generated to update genes, "+
                     "expected " + expectedGeneTOs + ", but was " + geneTOsArg.getValue());
         }

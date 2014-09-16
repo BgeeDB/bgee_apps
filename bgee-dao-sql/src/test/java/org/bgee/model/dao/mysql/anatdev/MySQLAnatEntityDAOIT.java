@@ -146,7 +146,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 countNbEntites++;
                 for (AnatEntityTO expTO: expectedTOs) {
                     log.trace("Comparing {} to {}", resultTO.getId(), expTO.getId());
-                    if (TOComparator.areAnatEntityTOsEqual(resultTO, expTO)) {
+                    if (TOComparator.areTOsEqual(resultTO, expTO)) {
                         found = true;
                         break;
                     }

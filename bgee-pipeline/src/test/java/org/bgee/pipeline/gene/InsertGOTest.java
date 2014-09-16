@@ -92,7 +92,7 @@ public class InsertGOTest extends TestAncestor {
         
         ArgumentCaptor<Set> goTermTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneOntologyDAO).insertTerms(goTermTOsArg.capture());
-        if (!TOComparator.areGOTermTOCollectionsEqual(
+        if (!TOComparator.areTOCollectionsEqual(
                 expectedGOTermTOs, goTermTOsArg.getValue())) {
             throw new AssertionError("Incorrect GOTermTOs generated to insert GO terms, " +
                     "expected " + expectedGOTermTOs.toString() + ", but was " + 

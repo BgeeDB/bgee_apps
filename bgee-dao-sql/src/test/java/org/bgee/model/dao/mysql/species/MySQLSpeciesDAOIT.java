@@ -131,7 +131,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
             SpeciesTO methSpecies = methResults.getTO();
             for (SpeciesTO expSpecies: expectedSpecies) {
                 log.trace("Comparing {} to {}", methSpecies, expSpecies);
-                if (TOComparator.areSpeciesTOsEqual(methSpecies, expSpecies)) {
+                if (TOComparator.areTOsEqual(methSpecies, expSpecies)) {
                     found = true;
                     break;
                 }

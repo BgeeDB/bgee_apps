@@ -126,7 +126,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
             TaxonTO methTaxon = methResults.getTO();
             for (TaxonTO expTaxon: expectedTaxa) {
                 log.trace("Comparing {} to {}", methTaxon, expTaxon);
-                if (TOComparator.areTaxonTOsEqual(methTaxon, expTaxon)) {
+                if (TOComparator.areTOsEqual(methTaxon, expTaxon)) {
                     found = true;
                     break;
                 }
@@ -154,7 +154,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
             TaxonTO methTaxon = methResults.getTO();
             for (TaxonTO expTaxon: expectedTaxa) {
                 log.trace("Comparing {} to {}", methTaxon, expTaxon);
-                if (TOComparator.areTaxonTOsEqual(methTaxon, expTaxon)) {
+                if (TOComparator.areTOsEqual(methTaxon, expTaxon)) {
                     found = true;
                     break;
                 }

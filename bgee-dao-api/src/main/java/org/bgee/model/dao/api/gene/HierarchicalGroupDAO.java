@@ -2,7 +2,7 @@ package org.bgee.model.dao.api.gene;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.ontologycommon.NestedSetModelElementTO;
 
 /**
  * DAO defining queries using or retrieving {@link HierarchicalGroupTO}s.
@@ -110,7 +110,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * @see org.bgee.model.hierarchicalgroup.HierarchicalGroup
      * @since Bgee 13
      */
-    public class HierarchicalGroupTO extends EntityTO {
+    public class HierarchicalGroupTO extends NestedSetModelElementTO {
 
         private static final long serialVersionUID = 3491884200260547404L;
 
@@ -119,18 +119,6 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * genes.
          */
         private final String OMAGroupId;
-
-        /**
-         * An {@code int} representing the hierarchical left bound which is generated when
-         * each hierarchical group is stored as a nested set.
-         */
-        private final int leftBound;
-
-        /**
-         * An {@code int} representing the hierarchical right bound which is generated
-         * when each hierarchical group is stored as a nested set.
-         */
-        private final int rightBound;
 
         /**
          * An {@code int} representing the NCBI taxonomy ID of the hierarchical level
@@ -173,14 +161,9 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          */
         public HierarchicalGroupTO(int id, String OMAGroupId, int leftBound,
                 int rightBound, int taxonId) {
-            super(String.valueOf(id));
-            if (leftBound < 0 || rightBound < 0 || taxonId < 0) {
-                throw new IllegalArgumentException("Integer parameters must be positive.");
-            }
+            super(String.valueOf(id), null, null, leftBound, rightBound, 0);
             
             this.OMAGroupId = OMAGroupId;
-            this.leftBound = leftBound;
-            this.rightBound = rightBound;
             this.taxonId = taxonId;
         }
 
@@ -204,22 +187,6 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          */
         public String getOMAGroupId() {
             return this.OMAGroupId;
-        }
-
-        /**
-         * @return An {@code int} representing the hierarchical left bound which is
-         *         generated when each hierarchical group is stored as a nested set.
-         */
-        public int getLeftBound() {
-            return this.leftBound;
-        }
-
-        /**
-         * @return An {@code int} representing the hierarchical right bound which is
-         *         generated when each hierarchical group is stored as a nested set.
-         */
-        public int getRightBound() {
-            return this.rightBound;
         }
 
         /**

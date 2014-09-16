@@ -69,7 +69,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             countGenes ++;
             for (GeneTO expGene: expectedGenes) {
                 log.trace("Comparing {} to {}", methGene, expGene);
-                if (TOComparator.areGeneTOsEqual(methGene, expGene)) {
+                if (TOComparator.areTOsEqual(methGene, expGene)) {
                     found = true;
                     break;
                 }
@@ -96,7 +96,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             countGenes ++;
             for (GeneTO expGene: expectedGenes) {
                 log.trace("Comparing {} to {}", methGene, expGene);
-                if (TOComparator.areGeneTOsEqual(methGene, expGene)) {
+                if (TOComparator.areTOsEqual(methGene, expGene)) {
                     found = true;
                     break;
                 }
@@ -127,7 +127,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             countGenes ++;
             for (GeneTO expGene: expectedGenes) {
                 log.trace("Comparing {} to {}", methGene, expGene);
-                if (TOComparator.areGeneTOsEqual(methGene, expGene)) {
+                if (TOComparator.areTOsEqual(methGene, expGene)) {
                     found = true;
                     break;
                 }

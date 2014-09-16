@@ -7,6 +7,7 @@ import java.util.Properties;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
+import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
@@ -75,6 +76,8 @@ public abstract class TestAncestor
 	    public final MySQLSourceDAO mockSourceDAO = mock(MySQLSourceDAO.class);
         public final MySQLSpeciesDAO mockSpeciesDAO = mock(MySQLSpeciesDAO.class);
         public final MySQLTaxonDAO mockTaxonDAO = mock(MySQLTaxonDAO.class);
+        public final MySQLTaxonConstraintDAO mockTaxonConstraintDAO = 
+                mock(MySQLTaxonConstraintDAO.class);
         public final MySQLGeneOntologyDAO mockGeneOntologyDAO = mock(MySQLGeneOntologyDAO.class);
         public final MySQLGeneDAO mockGeneDAO = mock(MySQLGeneDAO.class);
         public final MySQLHierarchicalGroupDAO mockHierarchicalGroupDAO = 
@@ -120,6 +123,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLTaxonDAO getNewTaxonDAO() {
             return this.mockTaxonDAO;
+        }
+        @Override
+        protected MySQLTaxonConstraintDAO getNewTaxonConstraintDAO() {
+            return this.mockTaxonConstraintDAO;
         }
         @Override
         protected MySQLGeneOntologyDAO getNewGeneOntologyDAO() {

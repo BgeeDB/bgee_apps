@@ -26,6 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
@@ -914,4 +915,10 @@ public class MySQLDAOManager extends DAOManager {
         log.entry();
         return log.exit(new MySQLExpressionCallDAO(this));
     }
+    @Override
+    protected MySQLAnatEntityDAO getNewAnatEntityDAO() {
+        log.entry();
+        return log.exit(new MySQLAnatEntityDAO(this));
+    }
+
 }

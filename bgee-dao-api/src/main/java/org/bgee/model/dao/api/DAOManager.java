@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -942,6 +943,19 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.exit(this.getNewExpressionCallDAO());
     }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.anatdev.AnatEntityDAO AnatEntityDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code AnatEntityDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.anatdev.AnatEntityDAO AnatEntityDAO
+     */
+    public final AnatEntityDAO getAnatEntityDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewAnatEntityDAO());
+    }
     
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
@@ -1114,4 +1128,12 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code ExpressionCallDAO}
      */
     protected abstract ExpressionCallDAO getNewExpressionCallDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.anatdev.AnatEntityDAO AnatEntityDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code AnatEntityDAO}
+     */
+    protected abstract AnatEntityDAO getNewAnatEntityDAO();
 }

@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
+import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
@@ -151,7 +152,13 @@ public abstract class MySQLDAOUser {
     protected MySQLExpressionCallDAO getExpressionCallDAO() {
         return (MySQLExpressionCallDAO) this.manager.getExpressionCallDAO();
     }
-    
+    /**
+     * @return  A {@code MySQLAnatEntityDAO}.
+     */
+    protected MySQLAnatEntityDAO getAnatEntityDAO() {
+        return (MySQLAnatEntityDAO) this.manager.getAnatEntityDAO();
+    }
+
     /**
      * Start a transaction with the MySQL database. We wrap the potential 
      * {@code SQLException} into a {@code DAOException}, because we do not want 

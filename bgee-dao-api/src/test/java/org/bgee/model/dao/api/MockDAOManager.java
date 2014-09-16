@@ -2,6 +2,7 @@ package org.bgee.model.dao.api;
 
 import java.util.Properties;
 
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -114,5 +115,9 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected ExpressionCallDAO getNewExpressionCallDAO() {
         return this.instanceMockManager.getNewExpressionCallDAO();
+    }
+    @Override
+    protected AnatEntityDAO getNewAnatEntityDAO() {
+        return this.instanceMockManager.getNewAnatEntityDAO();
     }
 }

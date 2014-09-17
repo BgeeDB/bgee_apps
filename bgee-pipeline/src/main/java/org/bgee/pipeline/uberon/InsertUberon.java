@@ -10,8 +10,12 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
@@ -19,8 +23,11 @@ import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
+import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
 
 /**
@@ -189,5 +196,194 @@ public class InsertUberon extends MySQLDAOUser {
         }
         
         log.exit();
+    }
+    
+    public void insertAnatOntologyIntoDataSource(Uberon uberon, 
+            Collection<Integer> speciesIds) {
+        log.entry(uberon, speciesIds);
+        
+        //we modify the taxon constraints so that only terms belonging to at least one 
+        //of the requested species will be considered
+        for (Set<Integer> taxa: uberon.getTaxonConstraints().values()) {
+            taxa.retainAll(speciesIds);
+        }
+
+        OntologyUtils utils = uberon.getOntologyUtils();
+        OWLGraphWrapper wrapper = uberon.getOntologyUtils().getWrapper();
+        
+        //load the OWLClasses that are is_a descendants of root of subgraph to ignore
+        Set<OWLClass> classesToIgnore = new HashSet<OWLClass>();
+        if (uberon.getToIgnoreSubgraphRootIds() != null) {
+            for (String rootIdToIgnore: uberon.getToIgnoreSubgraphRootIds()) {
+                OWLClass cls = wrapper.getOWLClassByIdentifier(rootIdToIgnore);
+                if (cls != null) {
+                    classesToIgnore.add(cls);
+                    classesToIgnore.addAll(utils.getDescendantsThroughIsA(cls));
+                }
+            }
+        }
+
+        //generate the TOs for insertion
+        Set<AnatEntityTO> anatEntityTOs = new HashSet<AnatEntityTO>();
+        Set<TaxonConstraintTO> anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+        Set<RelationTO> relationTOs = new HashSet<RelationTO>();
+        Set<TaxonConstraintTO> relTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+        //in order to generate relationTO IDs
+        int relationId = 0;
+        //in order to check taxon GCIs
+        OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(UberonCommon.TAXONOMY_ROOT_ID);
+        OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
+                OntologyUtils.PART_OF_ID);
+        
+        for (OWLOntology ont: wrapper.getAllOntologies()) {
+            for (OWLClass cls: ont.getClassesInSignature()) {
+                log.trace("Iterating cls: {}", cls);
+                //keep the stage only if exists in one of the requested species, 
+                //and if not obsolete, and if not a class to ignore
+                if (classesToIgnore.contains(cls) || 
+                        !uberon.existsInAtLeastOneSpecies(cls, speciesIds) || 
+                        utils.isObsolete(cls)) {
+                    log.trace("Class discarded");
+                    continue;
+                }
+
+                //we use the getOWLClass method to check if it is a taxon equivalent class, 
+                //in which case we can skip it, the equivalent class will be walked.
+                //if getOWLClass returns a null value, it means there is an uncertainty 
+                //about mappings; if the returned value is not equal to cls, 
+                //then it is a taxon equivalent.
+                if (!cls.equals(uberon.getOWLClass(wrapper.getIdentifier(cls)))) {
+                    log.trace("Class discarded because it is a taxon equivalent class, or there is uncertainty about a mapping");
+                    continue;
+                }
+                
+                //check that we always have an ID and a name
+                String id = wrapper.getIdentifier(cls);
+                if (StringUtils.isBlank(id)) {
+                    throw log.throwing(new IllegalStateException("No OBO-like ID retrieved for " + 
+                            cls));
+                }
+                String name = wrapper.getLabel(cls);
+                if (StringUtils.isBlank(name)) {
+                    throw log.throwing(new IllegalStateException("No label retrieved for " + 
+                            cls));
+                }
+                
+                //TODO: for now we do not retrieve start and end stages, so the root 
+                //of developmental stages is here used hardcoded. It have to be changed 
+                //when start and end stages will be used.
+                anatEntityTOs.add(new AnatEntityTO(id, name, wrapper.getDef(cls), 
+                "UBERON:0000104", "UBERON:0000104", utils.isNonInformativeSubsetMember(cls)));
+                //for each anatomical entity we create an "identity" relation 
+                relationId++;
+                relationTOs.add(new RelationTO(Integer.toString(relationId), id, id, 
+                        RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
+                
+                //create TaxonConstraintTOs for iterated class 
+                //and relTaxonConstraintTOs for "identity" relation
+                if (uberon.existsInAllSpecies(cls, speciesIds)) {
+                    //a null speciesId means: exists in all species
+                    anatEntityTaxonConstraintTOs.add(new TaxonConstraintTO(id, null));
+                    relTaxonConstraintTOs.add(
+                            new TaxonConstraintTO(Integer.toString(relationId), null));
+                } else {
+                    for (int speciesId: uberon.existsInSpecies(cls, speciesIds)) {
+                        anatEntityTaxonConstraintTOs.add(
+                                new TaxonConstraintTO(id, Integer.toString(speciesId)));
+                        relTaxonConstraintTOs.add(new TaxonConstraintTO(
+                                Integer.toString(relationId), Integer.toString(speciesId)));
+                    }
+                }
+                
+                //now, we generate TOs relative to relations between terms. 
+                //here we retrieve all graph closure outgoing from cls
+                Set<OWLGraphEdge> outgoingEdges = 
+                        wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(cls);
+                //we also get direct outgoingEdges to be able to know if a relation 
+                //is direct or indirect
+                Set<OWLGraphEdge> directOutgoingEdges = wrapper.getOutgoingEdgesWithGCI(cls);
+                for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+                    log.trace("Iterating outgoing edge {}", outgoingEdge);
+                    //-------------Test validity of edge---------------
+                    if (outgoingEdge.getQuantifiedPropertyList().size() != 1) {
+                        log.trace("Edge discarded because multiple or no property.");
+                        continue;
+                    }
+                    if (!(outgoingEdge.getTarget() instanceof OWLClass)) {
+                        log.trace("Edge discarded because target is not an OWLClass");
+                        continue;
+                    }
+                    //if it is a GCI relation, with make sure it is actually 
+                    //a taxonomy GCI relation
+                    if (outgoingEdge.isGCI() && 
+                            (!utils.getAncestorsThroughIsA(outgoingEdge.getGCIFiller()).
+                            contains(taxonomyRoot) || 
+                            !partOf.equals(outgoingEdge.getGCIRelation()))) {
+                        log.trace("Edge discarded because it is a non-taxonomy GCI");
+                        continue;
+                    }
+                    //-------------Test validity of target---------------
+                    OWLClass target = (OWLClass) outgoingEdge.getTarget();
+                    if (classesToIgnore.contains(target) || 
+                            !uberon.existsInAtLeastOneSpecies(target, speciesIds) || 
+                            utils.isObsolete(target)) {
+                        log.trace("Target discarded");
+                        continue;
+                    }
+                    String targetId = wrapper.getIdentifier(target);
+                    if (StringUtils.isBlank(targetId)) {
+                        throw log.throwing(new IllegalStateException("No OBO-like ID retrieved for " + 
+                                target));
+                    }
+                    
+                    //OK, valid edge, generate TOs
+                    RelationType relType = null;
+                    if (utils.isASubClassOfEdge(outgoingEdge) || 
+                            utils.isPartOfRelation(outgoingEdge)) {
+                        relType = RelationType.ISA_PARTOF;
+                    }
+                    //make sure to call isTransformationOfRelation before 
+                    //isDevelopsFromRelation, because a transformation_of relation is also 
+                    //a develops_from relation.
+                    else if (utils.isTransformationOfRelation(outgoingEdge)) {
+                        relType = RelationType.TRANSFORMATIONOF;
+                    } else if (utils.isDevelopsFromRelation(outgoingEdge) && 
+                            //just to be sure, in case the order of the code changes
+                            !utils.isTransformationOfRelation(outgoingEdge)) {
+                        relType = RelationType.DEVELOPSFROM;
+                    } else {
+                        throw log.throwing(new IllegalArgumentException("The provided ontology " +
+                        		"contains a relation that is not recognized: " + outgoingEdge));
+                    }
+                    RelationStatus status = RelationStatus.INDIRECT;
+                    if (directOutgoingEdges.contains(outgoingEdge)) {
+                        status = RelationStatus.DIRECT;
+                    }
+                    relationId++;
+                    relationTOs.add(new RelationTO(Integer.toString(relationId), id, targetId, 
+                            relType, status));
+                    //generate the taxon constraints for this relation
+                    if (outgoingEdge.isGCI()) {
+                        //if it is a GCI, we retrieve the associated species
+                        Set<String> speciesClsIdsToConsider = new HashSet<String>();
+                        speciesClsIdsToConsider.add(
+                                wrapper.getIdentifier(outgoingEdge.getGCIFiller()));
+                        for (OWLClass taxonGCIDescendants: 
+                            utils.getDescendantsThroughIsA(outgoingEdge.getGCIFiller())) {
+                            speciesClsIdsToConsider.add(
+                                    wrapper.getIdentifier(taxonGCIDescendants));
+                        }
+                        Set<Integer> speciesIdsToConsider = 
+                                OntologyUtils.convertToNcbiIds(speciesClsIdsToConsider);
+                        speciesIdsToConsider.retainAll(speciesIds);
+                        continue here
+                        
+                    } else {
+                        //otherwise, we apply the maximal taxon constraints from source 
+                        //and target of the edge
+                    }
+                }
+            }
+        }
     }
 }

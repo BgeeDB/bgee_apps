@@ -392,12 +392,13 @@ abstract class UberonCommon {
     //TODO: transform also axioms that are not OWLSubClassOd axioms
     void convertTaxonECAs() {
         log.entry();
-        log.debug("Converting taxonomy Equivalent Classes Axioms...");
+        log.info("Converting taxonomy Equivalent Classes Axioms...");
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
                 OntologyUtils.PART_OF_ID);
         OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(TAXONOMY_ROOT_ID);
+        int ecaRemoved = 0;
         
         for (OWLOntology ont: this.getOntologyUtils().getWrapper().getAllOntologies()) {
             OWLDataFactory fac = ont.getOWLOntologyManager().getOWLDataFactory();
@@ -413,6 +414,7 @@ abstract class UberonCommon {
                     this.getOntologyUtils().getECAIntersectionOf(cls, partOf, taxonomyRoot)) {
                     log.trace("Taxonomy ECA found: {}", eca);
                     clsToRemove = true;
+                    ecaRemoved++;
                     //convert the eca into an edge, this is more convenient
                     OWLGraphEdge ecaEdge = 
                             this.getOntologyUtils().convertECAIntersectionOfToEdge(eca, ont);
@@ -499,7 +501,8 @@ abstract class UberonCommon {
             }
         }
 
-        log.debug("Done converting taxonomy Equivalent Classes Axioms.");
+        log.info("Done converting taxonomy Equivalent Classes Axioms, {} ECAs removed.", 
+                ecaRemoved);
         log.exit();
     }
     

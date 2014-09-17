@@ -96,6 +96,10 @@ public class OntologyUtils {
      */
     public final static String TRANSFORMATION_OF_ID = "RO:0002494";
     /**
+     * {@code IRI} of the {@code OWLObjectProperty} "immediate_transformation_of".
+     */
+    public final static String IMMEDIATE_TRANSFORMATION_OF_ID = "RO:0002495";
+    /**
      * {@code IRI} of the {@code OWLObjectProperty} "in_taxon".
      */
     public final static IRI IN_TAXON_IRI = 
@@ -431,12 +435,35 @@ public class OntologyUtils {
      * the sub-properties of the "preceded_by" property (for instance, "immediately_preceded_by"), 
      * and the "preceded_by" property itself (see {@link #PRECEDED_BY_ID}).
      * <p>
-     * This attribute is lazy loaded when {@link #isPrecededByRelation(OWLGraphEdge)} 
+     * This attribute is lazy loaded when {@link #getPrecededByProps()} 
      * is called. 
      * 
+     * @see #getPrecededByProps()
      * @see #isPrecededByRelation(OWLGraphEdge)
      */
     private Set<OWLObjectPropertyExpression> precededByRels;
+    /**
+     * A {@code Set} of {@code OWLObjectPropertyExpression}s containing 
+     * the sub-properties of the "transformation_of" property, 
+     * and the "transformation_of" property itself (see {@link #TRANSFORMATION_OF_ID}).
+     * <p>
+     * This attribute is lazy loaded when {@link #getTransformationOfProps()} is called. 
+     * 
+     * @see #getTransformationOfProps()
+     * @see #isTransformationOfRelation(OWLGraphEdge)
+     */
+    private Set<OWLObjectPropertyExpression> transformationOfRels;
+    /**
+     * A {@code Set} of {@code OWLObjectPropertyExpression}s containing 
+     * the sub-properties of the "develops_from" property, 
+     * and the "develops_from" property itself (see {@link #DEVELOPS_FROM_ID}).
+     * <p>
+     * This attribute is lazy loaded when {@link #getDevelopsFromProps()} is called. 
+     * 
+     * @see #getDevelopsFromProps()
+     * @see #isTransformationOfRelation(OWLGraphEdge)
+     */
+    private Set<OWLObjectPropertyExpression> developsFromRels;
     
     /**
      * Constructor providing the {@code OWLOntology} which operations 
@@ -450,6 +477,8 @@ public class OntologyUtils {
         this.xRefMappings = null;
         this.partOfRels = null;
         this.precededByRels = null;
+        this.transformationOfRels = null;
+        this.developsFromRels = null;
     }
     /**
      * Constructor providing the {@code OWLGraphWrapper} wrapping 
@@ -1116,8 +1145,10 @@ public class OntologyUtils {
         log.entry(eca, ont);
         
         if (eca.getClassExpressions().size() != 2) {
-            throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
-            		"axiom provided, expecting 2 class expressions: " + eca));
+            //we do not log the exception because it used to test for ECA validity 
+            //by other methods, so this would generate annoying logs.
+            throw new IllegalArgumentException("Incorrect EquivalentClasses " +
+            		"axiom provided, expecting 2 class expressions: " + eca);
         }
         OWLClass sourceCls = null;
         OWLObjectIntersectionOf intersect = null;
@@ -1129,14 +1160,18 @@ public class OntologyUtils {
             }
         }
         if (sourceCls == null || intersect == null) {
-            throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
+            //we do not log the exception because it used to test for ECA validity 
+            //by other methods, so this would generate annoying logs.
+            throw new IllegalArgumentException("Incorrect EquivalentClasses " +
                     "axiom provided, expecting one of the class expressions being OWLClass, " +
-                    "and other class expression being an OWLObjectIntersectionOf: " + eca));
+                    "and other class expression being an OWLObjectIntersectionOf: " + eca);
         }
         if (intersect.getOperands().size() != 2) {
-            throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
+            //we do not log the exception because it used to test for ECA validity 
+            //by other methods, so this would generate annoying logs.
+            throw new IllegalArgumentException("Incorrect EquivalentClasses " +
                     "axiom provided, expecting one of the class expressions being " +
-                    "an OWLObjectIntersectionOf with two operands: " + eca));
+                    "an OWLObjectIntersectionOf with two operands: " + eca);
         }
 
         OWLClass clsOperand = null;
@@ -1153,11 +1188,13 @@ public class OntologyUtils {
             }
         }
         if (clsOperand == null || filler == null || gciRel == null) {
-            throw log.throwing(new IllegalArgumentException("Incorrect EquivalentClasses " +
+            //we do not log the exception because it used to test for ECA validity 
+            //by other methods, so this would generate annoying logs.
+            throw new IllegalArgumentException("Incorrect EquivalentClasses " +
                     "axiom provided, expecting one of the class expressions being " +
                     "an OWLObjectIntersectionOf, with one operand being an OWLClass, " +
                     "the other operand being an OWLObjectSomeValuesFrom with " +
-                    "a filler and a property: " + eca));
+                    "a filler and a property: " + eca);
         }
         
         return log.exit(new OWLGraphEdge(sourceCls, clsOperand, null, Quantifier.IDENTITY, 
@@ -1296,32 +1333,51 @@ public class OntologyUtils {
     }
     
     /**
-     * Determines whether {@code edge} is a is_a relation (SubClassOf relation with no 
-     * {@code OWLObjectProperty}).
-     * 
-     * @param edge  The {@code OWLGraphEdge} to test for being a is_a relation.
-     * @return      {@code true} if {@code edge} is a is_a relation.
-     */
-    public boolean isASubClassOfEdge(OWLGraphEdge edge) {
-        log.entry(edge);
-        
-        return log.exit(edge.getSingleQuantifiedProperty().getProperty() == null && 
-                            edge.getSingleQuantifiedProperty().isSubClassOf());
-    }
-    
-    /**
-     * Retrieve {@code OWLClass} ancestors of {@code x} only using "is_a" ({@code SubClassOf) 
-     * relations.
+     * Retrieve {@code OWLClass} ancestors of {@code x} only using "is_a" relations 
+     * ({@code SubClassOf).
      * 
      * @param x An {@code OWLObject} for which we want to retrieve {@code OWLClass} ancestors 
      *          through "is_a" relations, even indirect.
      * @return  A {@code Set} of {@code OWLClass}es that are the ancestors of {@code x} 
      *          through "is_a" relations.
+     * @see #getDescendantsThroughIsA(OWLObject)
      */
     public Set<OWLClass> getAncestorsThroughIsA(OWLObject x) {
         log.entry(x);
+        return log.exit(this.getRelativesThroughIsA(x, true));
+    }
+    /**
+     * Retrieve {@code OWLClass} descendants of {@code x} only using "is_a" relations 
+     * ({@code SubClassOf).
+     * 
+     * @param x An {@code OWLObject} for which we want to retrieve {@code OWLClass} descendants 
+     *          through "is_a" relations, even indirect.
+     * @return  A {@code Set} of {@code OWLClass}es that are the descendants of {@code x} 
+     *          through "is_a" relations.
+     * @see #getAncestorsThroughIsA(OWLObject)
+     */
+    public Set<OWLClass> getDescendantsThroughIsA(OWLObject x) {
+        log.entry(x);
+        return log.exit(this.getRelativesThroughIsA(x, false));
+    }
+    /**
+     * Retrieve {@code OWLClass} ancestors or descendants of {@code x} only using "is_a" 
+     * relations ({@code SubClassOf). If {@code ancestors} is {@code true}, ancestors 
+     * will be retrieved, otherwise, decendants will be retrieved. 
+     * 
+     * @param x         An {@code OWLObject} for which we want to retrieve 
+     *                  {@code OWLClass} ancestors or descendants through "is_a" relations, 
+     *                  even indirect.
+     * @param ancestors A {@code boolean} defining whether ancestors or descendants 
+     *                  should be retrieved. If {@code true}, ancestors will be retrieved, 
+     *                  otherwise, descendants. 
+     * @return  A {@code Set} of {@code OWLClass}es that are the ancestors or descendants 
+     *          of {@code x} through "is_a" relations.
+     */
+    private Set<OWLClass> getRelativesThroughIsA(OWLObject x, boolean ancestors) {
+        log.entry(x, ancestors);
         
-        Set<OWLClass> ancestors = new HashSet<OWLClass>();
+        Set<OWLClass> relatives = new HashSet<OWLClass>();
         //protect against cycles
         Set<OWLObject> visited = new HashSet<OWLObject>();
         //avoid recursivity by using a Deque
@@ -1330,13 +1386,24 @@ public class OntologyUtils {
         walkAncestors.addFirst(x);
         OWLObject iteratedRelative;
         while ((iteratedRelative = walkAncestors.pollFirst()) != null) {
-            for (OWLGraphEdge edge: 
-                this.getWrapper().getOutgoingEdgesWithGCI(iteratedRelative)) {
+            Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
+            if (ancestors) {
+                edges = this.getWrapper().getOutgoingEdgesWithGCI(iteratedRelative);
+            } else {
+                edges = this.getWrapper().getIncomingEdgesWithGCI(iteratedRelative);
+            }
+            for (OWLGraphEdge edge: edges) {
                 
                 if (!this.isASubClassOfEdge(edge)) {
                     continue;
                 }
-                OWLObject relative = edge.getTarget();
+                OWLObject relative = null;
+                if (ancestors) {
+                    relative = edge.getTarget();
+                } else {
+                    relative = edge.getSource();
+                }
+                        
                 //protect against cycles
                 if (visited.contains(relative)) {
                     continue;
@@ -1344,13 +1411,13 @@ public class OntologyUtils {
                 visited.add(relative);
                 //we only want OWLClasses
                 if (relative instanceof OWLClass) {
-                    ancestors.add((OWLClass) relative);
+                    relatives.add((OWLClass) relative);
                 }
                 walkAncestors.addLast(relative);
             }
         }
         
-        return log.exit(ancestors);
+        return log.exit(relatives);
     }
     
     /**
@@ -1385,7 +1452,67 @@ public class OntologyUtils {
         }
         return log.exit(props);
     }
-    
+
+    /**
+     * Get "preceded_by" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
+     * when needed. See {@link #precededByRels}.
+     * 
+     * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "preceded_by" 
+     *          {@code OWLObjectPropertyExpression}, and all its children.
+     */
+    private Set<OWLObjectPropertyExpression> getPrecededByProps() {
+        log.entry();
+        if (this.precededByRels == null) {
+            this.precededByRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
+                    this.getWrapper().getOWLObjectPropertyByIdentifier(PRECEDED_BY_ID));
+        }
+        return log.exit(this.precededByRels);
+    }
+    /**
+     * Get "transformation_of" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
+     * when needed. See {@link #transformationOfRels}.
+     * 
+     * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "transformation_of" 
+     *          {@code OWLObjectPropertyExpression}, and all its children.
+     */
+    private Set<OWLObjectPropertyExpression> getTransformationOfProps() {
+        log.entry();
+        if (this.transformationOfRels == null) {
+            this.transformationOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
+                    this.getWrapper().getOWLObjectPropertyByIdentifier(TRANSFORMATION_OF_ID));
+        }
+        return log.exit(this.transformationOfRels);
+    }
+    /**
+     * Get "develops_from" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
+     * when needed. See {@link #developsFromRels}.
+     * 
+     * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "develops_from" 
+     *          {@code OWLObjectPropertyExpression}, and all its children.
+     */
+    private Set<OWLObjectPropertyExpression> getDevelopsFromProps() {
+        log.entry();
+        if (this.developsFromRels == null) {
+            this.developsFromRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
+                    this.getWrapper().getOWLObjectPropertyByIdentifier(DEVELOPS_FROM_ID));
+        }
+        return log.exit(this.developsFromRels);
+    }
+
+    /**
+     * Determines whether {@code edge} is a is_a relation (SubClassOf relation with no 
+     * {@code OWLObjectProperty}).
+     * 
+     * @param edge  The {@code OWLGraphEdge} to test for being a is_a relation.
+     * @return      {@code true} if {@code edge} is a is_a relation.
+     */
+    public boolean isASubClassOfEdge(OWLGraphEdge edge) {
+        log.entry(edge);
+        
+        return log.exit(edge.getSingleQuantifiedProperty().getProperty() == null && 
+                            edge.getSingleQuantifiedProperty().isSubClassOf());
+    }
+
     /**
      * Determines whether {@code edge} is a immediately_preceded_by relation (see 
      * {@link #IMMEDIATELY_PRECEDED_BY_ID}).
@@ -1397,7 +1524,8 @@ public class OntologyUtils {
         log.entry(edge);
         
         return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
-                
+
+                edge.getSingleQuantifiedProperty().getProperty() != null &&
                 this.getWrapper().getOWLObjectPropertyByIdentifier(
                 IMMEDIATELY_PRECEDED_BY_ID).equals(
                         edge.getSingleQuantifiedProperty().getProperty()) &&
@@ -1417,7 +1545,9 @@ public class OntologyUtils {
         log.entry(edge);
         
         if (edge.getQuantifiedPropertyList().size() == 1) {
-            return log.exit(this.getPrecededByProps().contains(
+            return log.exit(
+                    edge.getSingleQuantifiedProperty().getProperty() != null &&
+                    this.getPrecededByProps().contains(
                     edge.getSingleQuantifiedProperty().getProperty()) && 
                     edge.getSingleQuantifiedProperty().isSomeValuesFrom());
         } 
@@ -1461,27 +1591,52 @@ public class OntologyUtils {
         log.entry(edge);
         
         return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
-                
+
+                edge.getSingleQuantifiedProperty().getProperty() != null &&
                 this.getPartOfProps().contains(
                     edge.getSingleQuantifiedProperty().getProperty()) && 
                     
                     edge.getSingleQuantifiedProperty().isSomeValuesFrom());
     }
-    
+
     /**
-     * Get "preceded_by" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
-     * when needed. See {@link #precededByRels}.
+     * Determines whether {@code edge} is a transformation_of-related relation, meaning, 
+     * having a {@code OWLObjectProperty} corresponding to "transformation_of" (see 
+     * {@link #TRANSFORMATION_OF_ID}) or any of its {@code OWLObjectProperty} children.
      * 
-     * @return  A {@code Set} of {@code OWLObjectPropertyExpression}s containing the "preceded_by" 
-     *          {@code OWLObjectPropertyExpression}, and all its children.
+     * @param edge  The {@code OWLGraphEdge} to test for being a transformation_of-related relation.
+     * @return      {@code true} if {@code edge} is a transformation_of-related relation.
      */
-    private Set<OWLObjectPropertyExpression> getPrecededByProps() {
-        log.entry();
-        if (this.precededByRels == null) {
-            this.precededByRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
-                    this.getWrapper().getOWLObjectPropertyByIdentifier(PRECEDED_BY_ID));
-        }
-        return log.exit(this.precededByRels);
+    public boolean isTransformationOfRelation(OWLGraphEdge edge) {
+        log.entry(edge);
+        
+        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+                
+                edge.getSingleQuantifiedProperty().getProperty() != null &&
+                this.getTransformationOfProps().contains(
+                    edge.getSingleQuantifiedProperty().getProperty()) && 
+                    
+                    edge.getSingleQuantifiedProperty().isSomeValuesFrom());
+    }
+
+    /**
+     * Determines whether {@code edge} is a develops_from-related relation, meaning, 
+     * having a {@code OWLObjectProperty} corresponding to "develops_from" (see 
+     * {@link #DEVELOPS_FROM_ID}) or any of its {@code OWLObjectProperty} children.
+     * 
+     * @param edge  The {@code OWLGraphEdge} to test for being a develops_from-related relation.
+     * @return      {@code true} if {@code edge} is a develops_from-related relation.
+     */
+    public boolean isDevelopsFromRelation(OWLGraphEdge edge) {
+        log.entry(edge);
+        
+        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+                
+                edge.getSingleQuantifiedProperty().getProperty() != null &&
+                this.getDevelopsFromProps().contains(
+                    edge.getSingleQuantifiedProperty().getProperty()) && 
+                    
+                    edge.getSingleQuantifiedProperty().isSomeValuesFrom());
     }
     
     /**

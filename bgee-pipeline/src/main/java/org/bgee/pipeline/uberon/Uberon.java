@@ -328,6 +328,7 @@ public class Uberon extends UberonCommon {
      * <p>
      * Operations that are performed, in order:
      * <ul>
+     * <li>Convert taxonomy Equivalent Classes Axioms into Xrefs and remove the targeted classes.
      * <li>{@code OWLGraphManipulator#removeClassAndPropagateEdges(String)} on each of the 
      * {@code String} part of the {@code Collection} returned by {@link #getClassIdsToRemove()}.
      * <li>{@code OWLGraphManipulator#removeDirectEdgesBetween(String, String)}, called for 
@@ -362,6 +363,9 @@ public class Uberon extends UberonCommon {
                 this.getRelIds(), this.getToRemoveSubgraphRootIds(), 
                 this.getToFilterSubgraphRootIds(), this.getSubsetNames(), 
                 this.getClassIdsExcludedFromSubsetRemoval());
+        
+        //convert taxon ECAs
+        this.convertTaxonECAs();
         
         OWLGraphManipulator manipulator = this.getOntologyUtils().getManipulator();
 

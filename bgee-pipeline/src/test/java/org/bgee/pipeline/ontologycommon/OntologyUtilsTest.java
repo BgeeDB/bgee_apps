@@ -422,7 +422,7 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@code OntologyUtils#isPrecededByRelation()}.
+     * Test the method {@code OntologyUtils#isPrecededByRelation(OWLGraphEdge)}.
      */
     @Test
     public void testIsPrecededByRelation() throws OWLOntologyCreationException, 
@@ -476,7 +476,7 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@code OntologyUtils#isImmediatelyPrecededByRelation()}.
+     * Test the method {@code OntologyUtils#isImmediatelyPrecededByRelation(OWLGraphEdge)}.
      */
     @Test
     public void testIsImmediatelyPrecededByRelation() throws OWLOntologyCreationException, 
@@ -503,7 +503,7 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@code OntologyUtils#isPartOfRelation()}.
+     * Test the method {@code OntologyUtils#isPartOfRelation(OWLGraphEdge)}.
      */
     @Test
     public void testIsPartOfRelation() throws OWLOntologyCreationException, 
@@ -529,6 +529,70 @@ public class OntologyUtilsTest extends TestAncestor {
                 Quantifier.SOME, ont);
         assertFalse("preceded_by edge incorrectly seen as part_of edge", 
                 utils.isPartOfRelation(edge));
+        
+    }
+    
+    /**
+     * Test the method {@code OntologyUtils#isTransformationOfRelation(OWLGraphEdge)}.
+     */
+    @Test
+    public void testIsTransformationOfRelation() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/transformation_of.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass clsA = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass clsB = wrapper.getOWLClassByIdentifier("FOO:0002");
+        
+        OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.TRANSFORMATION_OF_ID), 
+                Quantifier.SOME, ont);
+        assertTrue("transformation_of edge not recognized", 
+                utils.isTransformationOfRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(
+                        OntologyUtils.IMMEDIATE_TRANSFORMATION_OF_ID), 
+                Quantifier.SOME, ont);
+        assertTrue("immediate_transformation_of edge not recognized", 
+                utils.isTransformationOfRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.PRECEDED_BY_ID), 
+                Quantifier.SOME, ont);
+        assertFalse("preceded_by edge incorrectly seen as transformation_of edge", 
+                utils.isTransformationOfRelation(edge));
+        
+    }
+    /**
+     * Test the method {@code OntologyUtils#isDevelopsFromRelation(OWLGraphEdge)}.
+     */
+    @Test
+    public void testIsDevelopsFromRelation() throws OWLOntologyCreationException, 
+        OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/transformation_of.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass clsA = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass clsB = wrapper.getOWLClassByIdentifier("FOO:0002");
+        
+        OWLGraphEdge edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.DEVELOPS_FROM_ID), 
+                Quantifier.SOME, ont);
+        assertTrue("develops_from edge not recognized", utils.isDevelopsFromRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier(
+                        OntologyUtils.IMMEDIATE_TRANSFORMATION_OF_ID), 
+                Quantifier.SOME, ont);
+        assertTrue("immediate_transformation_of edge not recognized", 
+                utils.isDevelopsFromRelation(edge));
+        edge = new OWLGraphEdge(clsB, clsA, 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0002254"), 
+                Quantifier.SOME, ont);
+        assertFalse("has_developmental_contribution_from edge incorrectly seen as develops_from edge", 
+                utils.isDevelopsFromRelation(edge));
         
     }
     
@@ -860,13 +924,14 @@ public class OntologyUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link OntologyUtils#getAncestorsThroughIsA(OWLObject)}
+     * Test the method {@link OntologyUtils#getAncestorsThroughIsA(OWLObject)} and 
+     * {@link OntologyUtils#getDescendantsThroughIsA(OWLObject)}
      * @throws IOException 
      * @throws OBOFormatParserException 
      * @throws OWLOntologyCreationException 
      */
     @Test
-    public void shouldGetIsAAncestors() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+    public void shouldGetIsARelatives() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
                 getResource("/ontologies/is_a_ancestors_test.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
@@ -885,5 +950,11 @@ public class OntologyUtilsTest extends TestAncestor {
         expectedAncestors = new HashSet<OWLClass>();
         assertEquals("Incorrect ancestors through is_a returned", expectedAncestors, 
                 utils.getAncestorsThroughIsA(cls4));
+        
+        Set<OWLClass> expectedDescendants = new HashSet<OWLClass>();
+        expectedDescendants.add(cls2);
+        expectedDescendants.add(cls3);
+        assertEquals("Incorrect desendants through is_a returned", expectedDescendants, 
+                utils.getDescendantsThroughIsA(cls1));
     }
 }

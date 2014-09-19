@@ -6,10 +6,12 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -84,6 +86,9 @@ public abstract class TestAncestor
         		mock(MySQLHierarchicalGroupDAO.class);
         public final MySQLStageDAO mockStageDAO = mock(MySQLStageDAO.class);
         public final MySQLRelationDAO mockRelationDAO = mock(MySQLRelationDAO.class);
+        public final MySQLExpressionCallDAO mockExpressionCallDAO = 
+                mock(MySQLExpressionCallDAO.class);
+        public final MySQLAnatEntityDAO mockAnatEntityDAO = mock(MySQLAnatEntityDAO.class);
         
         public MockDAOManager() {
             
@@ -147,6 +152,14 @@ public abstract class TestAncestor
         @Override
         protected MySQLRelationDAO getNewRelationDAO() {
             return this.mockRelationDAO;
+        }
+        @Override
+        protected MySQLExpressionCallDAO getNewExpressionCallDAO() {
+            return this.mockExpressionCallDAO;
+        }
+        @Override
+        protected MySQLAnatEntityDAO getNewAnatEntityDAO() {
+            return this.mockAnatEntityDAO;
         }
 	}
 }

@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
@@ -72,9 +74,11 @@ public class TOComparator {
             return log.exit(areTOsEqual((HierarchicalGroupTO) to1, (HierarchicalGroupTO) to2));
         } else if (to1 instanceof TaxonConstraintTO) {
             return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
+        } else if (to1 instanceof ExpressionCallTO) {
+            return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2));
         }
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
-        		"implemented for TransferObject " + to1.getClass() + ", you must implement one"));
+                "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
     }
     /**
      * Method to compare two {@code Collection}s of {@code T}s, to check 
@@ -94,7 +98,6 @@ public class TOComparator {
     public static <T extends TransferObject> boolean areTOCollectionsEqual(Collection<T> c1, 
             Collection<T> c2) {
         log.entry(c1, c2);
-        
         if (c1 == null && c2 == null) {
             return log.exit(true);
         }
@@ -119,6 +122,7 @@ public class TOComparator {
         }
         return log.exit(true);
     }
+    
     /**
      * Method to compare two {@code EntityTO}s, to check for complete equality of each attribute.
      * This is because the {@code equals} method of {@code EntityTO}s is solely based 
@@ -149,19 +153,19 @@ public class TOComparator {
      *                  attributes equal.
      */
     private static boolean areTOsEqual(SpeciesTO spTO1, SpeciesTO spTO2) {
-            log.entry(spTO1, spTO2);
-            if (TOComparator.areEntityTOsEqual(spTO1, spTO2) && 
-                    StringUtils.equals(spTO1.getGenus(), spTO2.getGenus()) &&
-                    StringUtils.equals(spTO1.getSpeciesName(), spTO2.getSpeciesName()) &&
-                    StringUtils.equals(spTO1.getParentTaxonId(), spTO2.getParentTaxonId()) &&
-                    StringUtils.equals(spTO1.getGenomeFilePath(), spTO2.getGenomeFilePath()) &&
-                    StringUtils.equals(spTO1.getGenomeSpeciesId(), spTO2.getGenomeSpeciesId()) &&
-                    StringUtils.equals(spTO1.getFakeGeneIdPrefix(), spTO2.getFakeGeneIdPrefix())) {
-                return log.exit(true);
-            }
-            return log.exit(false);
+        log.entry(spTO1, spTO2);
+        if (TOComparator.areEntityTOsEqual(spTO1, spTO2) && 
+                StringUtils.equals(spTO1.getGenus(), spTO2.getGenus()) &&
+                StringUtils.equals(spTO1.getSpeciesName(), spTO2.getSpeciesName()) &&
+                StringUtils.equals(spTO1.getParentTaxonId(), spTO2.getParentTaxonId()) &&
+                StringUtils.equals(spTO1.getGenomeFilePath(), spTO2.getGenomeFilePath()) &&
+                StringUtils.equals(spTO1.getGenomeSpeciesId(), spTO2.getGenomeSpeciesId()) &&
+                StringUtils.equals(spTO1.getFakeGeneIdPrefix(), spTO2.getFakeGeneIdPrefix())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
-    
+
     /**
      * Method to compare two {@code TaxonTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code TaxonTO}s is solely
@@ -184,7 +188,7 @@ public class TOComparator {
         }
         return log.exit(false);
     }
-    
+
     /**
      * Method to compare two {@code GOTermTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code GOTermTO}s is solely
@@ -206,7 +210,7 @@ public class TOComparator {
         }
         return log.exit(false);
     }
-    
+
     /**
      * Method to compare two {@code GeneTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code GeneTO}s is solely
@@ -228,7 +232,7 @@ public class TOComparator {
         }
         return log.exit(false);
     }
-    
+
     /**
      * Method to compare two {@code HierarchicalGroupTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of 
@@ -263,14 +267,12 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(AnatEntityTO anatEntity1, AnatEntityTO anatEntity2) {
         log.entry(anatEntity1, anatEntity2);
-        
         if (TOComparator.areEntityTOsEqual(anatEntity1, anatEntity2) && 
                 StringUtils.equals(anatEntity1.getStartStageId(), anatEntity2.getStartStageId()) &&
                 StringUtils.equals(anatEntity1.getEndStageId(), anatEntity2.getEndStageId()) && 
                 anatEntity1.isNonInformative() == anatEntity2.isNonInformative()) {
             return log.exit(true);
         }
-        
         return log.exit(false);
     }
 
@@ -286,13 +288,11 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(StageTO to1, StageTO to2) {
         log.entry(to1, to2);
-        
         if (TOComparator.areEntityTOsEqual(to1, to2) && 
                 to1.isGroupingStage() == to2.isGroupingStage() && 
                 to1.isTooGranular() == to2.isTooGranular()) {
             return log.exit(true);
         }
-        
         return log.exit(false);
     }
 
@@ -307,11 +307,55 @@ public class TOComparator {
      */
     private static boolean areTOsEqual(TaxonConstraintTO to1, TaxonConstraintTO to2) {
         log.entry(to1, to2);
-        
+
         //for now, the equals method of TaxonConstraintTO takes into account 
         //all attributes, so we can use it directly. We still keep the method 
         //areTOsEqual for abstraction purpose.
         return log.exit(to1.equals(to2));
     }
-    
+
+    /**
+     * Method to compare two {@code CallTO}s, to check for complete equality of each
+     * attribute. 
+     * 
+     * @param to1   An {@code CallTO} to be compared to {@code to2}.
+     * @param to2   An {@code CallTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    private static boolean areCallTOsEqual(CallTO to1, CallTO to2) {
+        log.entry(to1, to2);
+        if (StringUtils.equals(to1.getId(), to2.getId()) &&
+                StringUtils.equals(to1.getGeneId(), to2.getGeneId()) &&
+                StringUtils.equals(to1.getStageId(), to2.getStageId()) &&
+                StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
+                to1.getAffymetrixData() == to2.getAffymetrixData() &&
+                to1.getESTData() == to2.getESTData() &&
+                to1.getInSituData() == to2.getESTData() &&
+                to1.getRelaxedInSituData() == to2.getRelaxedInSituData() &&
+                to1.getRNASeqData() == to2.getRNASeqData()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code ExpressionCallTO}s, to check for complete equality of each
+     * attribute. 
+     * 
+     * @param to1   An {@code ExpressionCallTO} to be compared to {@code to2}.
+     * @param to2   An {@code ExpressionCallTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    private static boolean areTOsEqual(ExpressionCallTO to1, ExpressionCallTO to2) {
+        log.entry(to1, to2);
+        if (TOComparator.areCallTOsEqual(to1, to2) && 
+                to1.isIncludeSubstructures() == to2.isIncludeSubstructures() && 
+                to1.isIncludeSubStages() == to2.isIncludeSubStages() &&
+                to1.getOriginOfLine() == to2.getOriginOfLine()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
 }

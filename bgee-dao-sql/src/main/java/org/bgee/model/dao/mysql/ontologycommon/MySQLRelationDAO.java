@@ -57,7 +57,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         StringBuilder sql = new StringBuilder(); 
         Collection<RelationDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT *");
+            sql.append("SELECT anatEntityRelation.*");
         } else {
             for (RelationDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {

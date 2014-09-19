@@ -88,7 +88,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         //Construct sql query
         StringBuilder sql = new StringBuilder(); 
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT *");
+            sql.append("SELECT " + tableName + ".*");
         } else {
             for (NoExpressionCallDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
@@ -362,7 +362,6 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                     noExprRnaSeqData, includeParentStructures, noExpressionOriginOfLine));
         }
     }
-
 
     /**
      * A {@code MySQLDAOResultSet} specific to {@code GlobalNoExpressionToNoExpressionTO}.

@@ -49,7 +49,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         StringBuilder sql = new StringBuilder(); 
         Collection<AnatEntityDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT *");
+            sql.append("SELECT anatEntity.*");
         } else {
             for (AnatEntityDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {

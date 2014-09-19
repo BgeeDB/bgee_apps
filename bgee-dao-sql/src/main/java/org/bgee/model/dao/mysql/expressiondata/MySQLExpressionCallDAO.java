@@ -101,7 +101,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      * @throws DAOException          If a {@code SQLException} occurred while trying to get 
      *                               expression calls.   
      */
-    public ExpressionCallTOResultSet getAllExpressionCalls(Set<String> speciesIds, 
+    private ExpressionCallTOResultSet getAllExpressionCalls(Set<String> speciesIds, 
             boolean isIncludeSubstructures) throws DAOException {
         log.entry(speciesIds, isIncludeSubstructures);
 
@@ -114,7 +114,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         //Construct sql query
         StringBuilder sql = new StringBuilder(); 
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT *");
+            sql.append("SELECT " + tableName + ".*");
         } else {
             for (ExpressionCallDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {

@@ -331,7 +331,7 @@ public class TOComparator {
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
                 to1.getAffymetrixData() == to2.getAffymetrixData() &&
                 to1.getESTData() == to2.getESTData() &&
-                to1.getInSituData() == to2.getESTData() &&
+                to1.getInSituData() == to2.getInSituData() &&
                 to1.getRelaxedInSituData() == to2.getRelaxedInSituData() &&
                 to1.getRNASeqData() == to2.getRNASeqData()) {
             return log.exit(true);

@@ -10,6 +10,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
@@ -159,6 +162,27 @@ public class TOComparatorTest extends TestAncestor {
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
     
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code ExpressionCallTO}s.
+     */
+    @Test
+    public void testAreExpressionCallTOEqual() {
+        ExpressionCallTO to1 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, false, OriginOfLine.SELF);
+        ExpressionCallTO to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, false, OriginOfLine.SELF);
+        log.debug(to1 + "///" + to2);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, false, OriginOfLine.DESCENT);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+
     /**
      * Test the generic method {@link TOComparator#areTOCollectionsEqual(Collection, Collection)}.
      */

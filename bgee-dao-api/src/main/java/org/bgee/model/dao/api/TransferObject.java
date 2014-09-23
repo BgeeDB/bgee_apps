@@ -1,6 +1,8 @@
 package org.bgee.model.dao.api;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,5 +73,21 @@ public abstract class TransferObject implements Serializable {
         }
         throw log.throwing(new IllegalArgumentException("\"" + representation + 
                 "\" does not correspond to any element of " + enumField.getName()));
+    }
+    
+    /**
+     * Convert a {@code Set} of {@code EnumDAOField}s into a {@code Set} of {@code String}s, 
+     * using the method {@link EnumDAOField#getStringRepresentation()}.
+     * @param enums A {@code Set} of {@code EnumDAOField}s to be converted.
+     * @return      A {@code Set} of {@code String}s that are the representation of 
+     *              the {@code EnumDAOField}s contained in {@code enums}.
+     */
+    protected static final Set<String> convertEnumSetToStringSet(Set<EnumDAOField> enums) {
+        log.entry(enums);
+        Set<String> stringSet = new HashSet<String>();
+        for (EnumDAOField enumDAOField: enums) {
+            stringSet.add(enumDAOField.getStringRepresentation());
+        }
+        return log.exit(stringSet);
     }
 }

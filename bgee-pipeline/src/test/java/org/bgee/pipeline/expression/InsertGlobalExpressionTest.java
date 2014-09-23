@@ -198,7 +198,7 @@ public class InsertGlobalExpressionTest extends TestAncestor {
         
         ArgumentCaptor<Set> exprTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockExpressionCallDAO).insertExpressionCalls(exprTOsArg.capture());
-        Set<ExpressionCallTO> cleanSet = removeIds(exprTOsArg.getValue());
+        Set<ExpressionCallTO> cleanSet = removeExpressionIds(exprTOsArg.getValue());
         if (!TOComparator.areTOCollectionsEqual(expectedExprCallTOs, cleanSet)) {
             throw new AssertionError("Incorrect ExpressionCallTO generated to insert "
                     + "global expression calls, expected " + expectedExprCallTOs.toString() + 
@@ -209,15 +209,20 @@ public class InsertGlobalExpressionTest extends TestAncestor {
     }
     
     /**
-     * TODO
-     * @param argumentCaptorValue
-     * @return
+     * Remove IDs of {@code ExpressionCallTO}s contain in a {@code Set}.
+     * <p>
+     * {@code ExpressionCallTO}s should be immutable, so we need to create a new {@code Set} of 
+     * {@code ExpressionCallTO}s.
+     * 
+     * @param expressions   A {@code Set} of {@code ExpressionCallTO}s to be modified. 
+     * @return              A {@code Set} of {@code ExpressionCallTO}s with IDs
+     *                      equal to {@code null}.
      */
-    private Set<ExpressionCallTO> removeIds(Set<ExpressionCallTO> argumentCaptorValue) {
-        log.entry(argumentCaptorValue);
+    private Set<ExpressionCallTO> removeExpressionIds(Set<ExpressionCallTO> expressions) {
+        log.entry(expressions);
         
         Set<ExpressionCallTO> cleanSet = new HashSet<ExpressionCallTO>();
-        for (ExpressionCallTO expressionCallTO : argumentCaptorValue) {
+        for (ExpressionCallTO expressionCallTO : expressions) {
             cleanSet.add(new ExpressionCallTO(null, 
                     expressionCallTO.getGeneId(),
                     expressionCallTO.getAnatEntityId(),
@@ -236,8 +241,6 @@ public class InsertGlobalExpressionTest extends TestAncestor {
     
     /**
      * Custom matcher for verifying actual and expected {@code ExpressionParams}.
-     * 
-     *  @param expected  An {@code ExpressionCallParams}
      */
     private static class ExpressionCallParamsMatcher extends ArgumentMatcher<ExpressionCallParams> {
      
@@ -260,9 +263,11 @@ public class InsertGlobalExpressionTest extends TestAncestor {
     
     /**
      * Convenience factory method for using the custom {@code ExpressionParams} matcher.
+     * 
+     *  @param expected  An {@code ExpressionCallParams} that is the argument to be verified.
      */
-    private static ExpressionCallParams valueExpressionCallEq(ExpressionCallParams expected) {
-        return argThat(new ExpressionCallParamsMatcher(expected));
+    private static ExpressionCallParams valueExpressionCallEq(ExpressionCallParams params) {
+        return argThat(new ExpressionCallParamsMatcher(params));
     }
 
     /**
@@ -290,13 +295,13 @@ public class InsertGlobalExpressionTest extends TestAncestor {
     }
     
     /**
-     * Convenience factory method for using the custom {@code Set} of {@code E}s matcher.
-     * TODO Javadoc
-     * @param expected  A {@code Set} of {@code E}s
-     * @param <E>
+     * Convenience factory method for using the custom {@code Set} of {@code T}s matcher.
+     * 
+     * @param set   A {@code Set} of {@code T}s that is the argument to be verified.
+     * @param <T>   An {@code Object} type parameter.
      */
-    private static <E> Set<E> valueSetEq(Set<E> expected) {
-        return argThat(new SetMatcher<E>(expected));
+    private static <T> Set<T> valueSetEq(Set<T> set) {
+        return argThat(new SetMatcher<T>(set));
     }
 
 }

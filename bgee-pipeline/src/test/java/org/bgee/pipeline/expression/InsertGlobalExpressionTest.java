@@ -56,7 +56,7 @@ public class InsertGlobalExpressionTest extends TestAncestor {
      * the central method of the class doing all the job.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-//    @Test
+    @Test
     public void shouldInsertGlobalExpression() {
         log.entry();
         
@@ -199,13 +199,10 @@ public class InsertGlobalExpressionTest extends TestAncestor {
         ArgumentCaptor<Set> exprTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockExpressionCallDAO).insertExpressionCalls(exprTOsArg.capture());
         Set<ExpressionCallTO> cleanSet = removeIds(exprTOsArg.getValue());
-        log.debug("####Before areTOCollectionsEqual");
-        boolean b = TOComparator.areTOCollectionsEqual(expectedExprCallTOs, cleanSet);
-        log.debug("####Boolean: "+b);
-        if (!b) {
+        if (!TOComparator.areTOCollectionsEqual(expectedExprCallTOs, cleanSet)) {
             throw new AssertionError("Incorrect ExpressionCallTO generated to insert "
-                    + "global expression calls, expected " + expectedExprCallTOs + 
-                    ", but was ");
+                    + "global expression calls, expected " + expectedExprCallTOs.toString() + 
+                    ", but was " + cleanSet);
         }
         
         log.exit();
@@ -269,22 +266,23 @@ public class InsertGlobalExpressionTest extends TestAncestor {
     }
 
     /**
-     * Custom matcher for verifying actual and expected {@code Set} of {@code E}s.
+     * Custom matcher for verifying actual and expected {@code Set} of {@code T}s.
      */
-    private static class SetMatcher<E> extends ArgumentMatcher<Set<E>> {
+    private static class SetMatcher<T> extends ArgumentMatcher<Set<T>> {
      
-        private final Set<E> expected;
+        private final Set<T> expected;
      
-        public SetMatcher(Set<E> expected) {
+        public SetMatcher(Set<T> expected) {
             this.expected = expected;
         }
      
+        @SuppressWarnings("unchecked")
         @Override
         public boolean matches(Object actual) {
             log.entry(actual);
             log.debug("expected: "+expected);
             if (actual == null && expected == null || 
-                    actual != null && ((E) actual).equals(expected)) {
+                    actual != null && ((T) actual).equals(expected)) {
                 return log.exit(true);
             }
             return log.exit(false);

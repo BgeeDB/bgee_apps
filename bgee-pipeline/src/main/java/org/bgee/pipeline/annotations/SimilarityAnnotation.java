@@ -735,9 +735,9 @@ public class SimilarityAnnotation {
             for (String uberonId: uberonIds) {
                 //it is the responsibility of the checkAnnotation method to make sure 
                 //the Uberon IDs exist, so we accept null values, it's not our job here.
-                if (uberonOntWrapper.getOWLClassByIdentifier(uberonId) != null) {
+                if (uberonOntWrapper.getOWLClassByIdentifier(uberonId, true) != null) {
                     String name = uberonOntWrapper.getLabel(
-                            uberonOntWrapper.getOWLClassByIdentifier(uberonId));
+                            uberonOntWrapper.getOWLClassByIdentifier(uberonId, true));
                     if (name != null) {
                         uberonNames.add(name);
                     }
@@ -755,9 +755,9 @@ public class SimilarityAnnotation {
                 releaseAnnot.put(TAXON_COL_NAME, taxonId);
                 
                 String ontologyTaxId = OntologyUtils.getTaxOntologyId(taxonId);
-                if (taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId) != null) {
+                if (taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true) != null) {
                     releaseAnnot.put(TAXON_NAME_COL_NAME, taxOntWrapper.getLabel(
-                            taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId)));
+                            taxOntWrapper.getOWLClassByIdentifier(ontologyTaxId, true)));
                 }
             }
             
@@ -770,9 +770,9 @@ public class SimilarityAnnotation {
             if (rawAnnot.get(HOM_COL_NAME) != null) {
                 String homId = ((String) rawAnnot.get(HOM_COL_NAME)).trim();
                 releaseAnnot.put(HOM_COL_NAME, homId);
-                if (homOntWrapper.getOWLClassByIdentifier(homId) != null) {
+                if (homOntWrapper.getOWLClassByIdentifier(homId, true) != null) {
                     releaseAnnot.put(HOM_NAME_COL_NAME, homOntWrapper.getLabel(
-                            homOntWrapper.getOWLClassByIdentifier(homId)));
+                            homOntWrapper.getOWLClassByIdentifier(homId, true)));
                 }
             }
             
@@ -780,15 +780,15 @@ public class SimilarityAnnotation {
             if (rawAnnot.get(ECO_COL_NAME) != null) {
                 String ecoId = ((String) rawAnnot.get(ECO_COL_NAME)).trim();
                 releaseAnnot.put(ECO_COL_NAME, ecoId);
-                if (ecoOntWrapper.getOWLClassByIdentifier(ecoId) != null) {
+                if (ecoOntWrapper.getOWLClassByIdentifier(ecoId, true) != null) {
                     releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
-                            ecoOntWrapper.getOWLClassByIdentifier(ecoId)));
+                            ecoOntWrapper.getOWLClassByIdentifier(ecoId, true)));
                 }
             } else {
                 //otherwise it means that it is an unreviewed annotations
                 releaseAnnot.put(ECO_COL_NAME, AUTOMATIC_ECO);
                 releaseAnnot.put(ECO_NAME_COL_NAME, ecoOntWrapper.getLabel(
-                        ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO)));
+                        ecoOntWrapper.getOWLClassByIdentifier(AUTOMATIC_ECO, true)));
                 releaseAnnot.put(CURATOR_COL_NAME, AUTOMATIC_CURATOR);
             }
             
@@ -796,9 +796,9 @@ public class SimilarityAnnotation {
             if (rawAnnot.get(CONF_COL_NAME) != null) {
                 String confId = ((String) rawAnnot.get(CONF_COL_NAME)).trim();
                 releaseAnnot.put(CONF_COL_NAME, confId);
-                if (confOntWrapper.getOWLClassByIdentifier(confId) != null) {
+                if (confOntWrapper.getOWLClassByIdentifier(confId, true) != null) {
                     releaseAnnot.put(CONF_NAME_COL_NAME, confOntWrapper.getLabel(
-                            confOntWrapper.getOWLClassByIdentifier(confId)));
+                            confOntWrapper.getOWLClassByIdentifier(confId, true)));
                 }
             }
             
@@ -1004,9 +1004,9 @@ public class SimilarityAnnotation {
                     throws IllegalArgumentException {
         log.entry(annotations, ecoOntWrapper, confOntWrapper);
         
-        OWLClass highQual = confOntWrapper.getOWLClassByIdentifier(HIGH_CONF_ID);
-        OWLClass mediumQual = confOntWrapper.getOWLClassByIdentifier(MEDIUM_CONF_ID);
-        OWLClass lowQual = confOntWrapper.getOWLClassByIdentifier(LOW_CONF_ID);
+        OWLClass highQual = confOntWrapper.getOWLClassByIdentifier(HIGH_CONF_ID, true);
+        OWLClass mediumQual = confOntWrapper.getOWLClassByIdentifier(MEDIUM_CONF_ID, true);
+        OWLClass lowQual = confOntWrapper.getOWLClassByIdentifier(LOW_CONF_ID, true);
         
         //in order to identify related annotations, we will use a Map where keys 
         //are the concatenation of the entity column, the taxon column, the HOM column, and 
@@ -1048,9 +1048,9 @@ public class SimilarityAnnotation {
                 }
                 
                 OWLClass currentECO = ecoOntWrapper.getOWLClassByIdentifier(
-                        (String) annot.get(ECO_COL_NAME));
+                        (String) annot.get(ECO_COL_NAME), true);
                 OWLClass currentConf = confOntWrapper.getOWLClassByIdentifier(
-                        (String) annot.get(CONF_COL_NAME));
+                        (String) annot.get(CONF_COL_NAME), true);
                 boolean currentNegate = annot.get(QUALIFIER_COL_NAME) != null ? true:false;
 
                 //defines the best quality 
@@ -1108,7 +1108,7 @@ public class SimilarityAnnotation {
                     summaryConfId = "CONF:0000020";
                 }
             }
-            OWLClass summaryConf = confOntWrapper.getOWLClassByIdentifier(summaryConfId);
+            OWLClass summaryConf = confOntWrapper.getOWLClassByIdentifier(summaryConfId, true);
             if (summaryConf == null) {
                 throw log.throwing(new AssertionError("Could not find the appropriate " +
                 		"multiple evidences confidence code."));
@@ -1329,7 +1329,7 @@ public class SimilarityAnnotation {
         
         String ecoId = (String) annotation.get(ECO_COL_NAME);
         if (ecoId != null) {
-            OWLClass cls = ecoOntWrapper.getOWLClassByIdentifier(ecoId.trim());
+            OWLClass cls = ecoOntWrapper.getOWLClassByIdentifier(ecoId.trim(), true);
             if (cls == null || 
                     ecoOntWrapper.isObsolete(cls) || ecoOntWrapper.getIsObsolete(cls)) {
                 log.error("Missing ECO ID: {}", ecoId);
@@ -1340,7 +1340,7 @@ public class SimilarityAnnotation {
         
         String homId = (String) annotation.get(HOM_COL_NAME);
         if (homId != null) {
-            OWLClass cls = homOntWrapper.getOWLClassByIdentifier(homId.trim());
+            OWLClass cls = homOntWrapper.getOWLClassByIdentifier(homId.trim(), true);
             if (cls == null || 
                     homOntWrapper.isObsolete(cls) || homOntWrapper.getIsObsolete(cls)) {
                 log.trace("Missing HOM ID: {}", homId);
@@ -1351,7 +1351,7 @@ public class SimilarityAnnotation {
         
         String confId = (String) annotation.get(CONF_COL_NAME);
         if (confId != null) {
-            OWLClass cls = confOntWrapper.getOWLClassByIdentifier(confId.trim());
+            OWLClass cls = confOntWrapper.getOWLClassByIdentifier(confId.trim(), true);
             if (cls == null || 
                     confOntWrapper.isObsolete(cls) || confOntWrapper.getIsObsolete(cls)) {
                 log.trace("Missing CONF ID: {}", confId);
@@ -1569,7 +1569,7 @@ public class SimilarityAnnotation {
         //of the taxon with ID taxonId
         OWLOntology ont = OntologyUtils.loadOntology(taxOntFile);
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        OWLClass taxClass = wrapper.getOWLClassByIdentifier(OntologyUtils.getTaxOntologyId(taxonId));
+        OWLClass taxClass = wrapper.getOWLClassByIdentifier(OntologyUtils.getTaxOntologyId(taxonId), true);
         if (taxClass == null) {
             throw log.throwing(new IllegalArgumentException("The taxon with ID " + taxonId + 
                     " was not retrieved from the ontology file " + taxOntFile));
@@ -1695,7 +1695,7 @@ public class SimilarityAnnotation {
                 AnnotationCommon.extractAnatEntityIdsFromFile(annotFile, false);
         Set<OWLClass> withNoTransfOf = new HashSet<OWLClass>();
         anatEntities: for (String anatEntityId: anatEntityIds) {
-            OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(anatEntityId);
+            OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(anatEntityId, true);
             log.trace("Testing OWLClass for ID {}: {}", anatEntityId, anatEntity);
             if (anatEntity == null) {
                 log.trace("Entity {} not found in the ontology.", anatEntityId);

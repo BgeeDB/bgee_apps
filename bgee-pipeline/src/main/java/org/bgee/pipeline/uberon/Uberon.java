@@ -481,7 +481,7 @@ public class Uberon extends UberonCommon {
             mapWriter.writeHeader(header);
             
             for (String uberonId: orderedIds) {
-                OWLClass cls = wrapper.getOWLClassByIdentifier(uberonId);
+                OWLClass cls = wrapper.getOWLClassByIdentifier(uberonId, true);
                 if (cls != null) {
                     //check that the class is not obsolete
                     if (wrapper.isObsolete(cls) || wrapper.getIsObsolete(cls)) {

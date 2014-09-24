@@ -222,6 +222,8 @@ public class UberonCommonTest extends TestAncestor {
         
         //Test OBO-like ID
         assertEquals(expectedClass, uberon.getOWLClass("ID:1"));
+        //Test alt IDs
+        assertEquals(expectedClass, uberon.getOWLClass("ID:0001"));
         //test IRI
         assertEquals(expectedClass, uberon.getOWLClass("http://purl.obolibrary.org/obo/ID_1"));
         //test xrefs
@@ -274,6 +276,10 @@ public class UberonCommonTest extends TestAncestor {
                 wrapper.getOWLClassByIdentifier("ID_REPLACED_BIS_XREF:4"),
                 wrapper.getOWLClassByIdentifier("ID:1")));
         assertEquals(expectedClasses, uberon.getOWLClasses("ID_XREF_OBSOLETE:6", false));
+        
+        expectedClasses = new HashSet<OWLClass>(Arrays.asList(
+                wrapper.getOWLClassByIdentifier("ID:1")));
+        assertEquals(expectedClasses, uberon.getOWLClasses("ID:0001", false));
         
         expectedClasses = new HashSet<OWLClass>();
         assertEquals(expectedClasses, uberon.getOWLClasses("ID:7", false));

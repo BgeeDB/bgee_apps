@@ -8,6 +8,7 @@ xref: ALT_ID:1
 xref: ALT_ALT_ID:1
 xref: ALT_ID:2
 xref: ID_XREF_OBSOLETE:1
+alt_id: ID:0001
 
 [Term]
 id: ID:2

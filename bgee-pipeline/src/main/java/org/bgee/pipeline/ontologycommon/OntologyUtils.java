@@ -989,7 +989,7 @@ public class OntologyUtils {
                     Set<String> nonObsoleteClassIds = new HashSet<String>();
                     Set<String> obsoleteClassIds = new HashSet<String>();
                     for (String clsId: associatedClassIds) {
-                        OWLClass cls = this.getWrapper().getOWLClassByIdentifier(clsId);
+                        OWLClass cls = this.getWrapper().getOWLClassByIdentifier(clsId, true);
                         if (cls == null) {
                             cls = this.getWrapper().getOWLClass(clsId);
                         }

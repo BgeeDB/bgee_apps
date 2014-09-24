@@ -239,7 +239,7 @@ public class GenerateTaxonOntology {
         
         Set<OWLClass> owlClassesToKeep = new HashSet<OWLClass>();
         for (String taxonId: taxonIds) {
-            OWLClass taxClass = ontWrapper.getOWLClassByIdentifier(taxonId);
+            OWLClass taxClass = ontWrapper.getOWLClassByIdentifier(taxonId, true);
             if (taxClass == null) {
                 throw log.throwing(new IllegalArgumentException("Taxon " + taxonId + 
                         " was not found in the ontology"));

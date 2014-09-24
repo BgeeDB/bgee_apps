@@ -574,7 +574,7 @@ public class TaxonConstraints {
         
         //Get the OWLClass corresponding to the requested taxon
         String ontTaxonId = OntologyUtils.getTaxOntologyId(taxonId);
-        OWLClass taxClass = ontWrapper.getOWLClassByIdentifier(ontTaxonId);
+        OWLClass taxClass = ontWrapper.getOWLClassByIdentifier(ontTaxonId, true);
         if (taxClass == null || 
                 ontWrapper.isObsolete(taxClass) || ontWrapper.getIsObsolete(taxClass)) {
             throw log.throwing(new IllegalArgumentException("A taxon ID " +
@@ -687,7 +687,7 @@ public class TaxonConstraints {
             for (String uberonId: sortedClassIds) {
                 Map<String, Object> row = new HashMap<String, Object>();
                 row.put(header[0], uberonId);
-                OWLClass cls = this.uberonOntWrapper.getOWLClassByIdentifier(uberonId);
+                OWLClass cls = this.uberonOntWrapper.getOWLClassByIdentifier(uberonId, true);
                 String label = "-";
                 if (cls != null) {
                     label = this.uberonOntWrapper.getLabelOrDisplayId(cls);
@@ -761,7 +761,7 @@ public class TaxonConstraints {
         
         for (int taxonId: taxonIds) {
             if (taxOntWrapper.getOWLClassByIdentifier(
-                    OntologyUtils.getTaxOntologyId(taxonId)) == null) {
+                    OntologyUtils.getTaxOntologyId(taxonId), true) == null) {
                 throw log.throwing(new IllegalArgumentException("The requested taxon " + 
                     taxonId + " does not exist in the provided taxonomy ontology."));
             }

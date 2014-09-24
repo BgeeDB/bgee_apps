@@ -355,7 +355,7 @@ public class UberonDevStage extends UberonCommon {
         //potential terms to call this code on: UBERON:0000069 "larval stage"
         if (this.getChildrenOfToRemove() != null) {
             for (String parentId: this.getChildrenOfToRemove()) {
-                OWLClass parent = manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(parentId);
+                OWLClass parent = manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(parentId, true);
                 //in case it was an IRI and not an OBO-like ID
                 if (parent == null) {
                     parent = manipulator.getOwlGraphWrapper().getOWLClass(parentId);

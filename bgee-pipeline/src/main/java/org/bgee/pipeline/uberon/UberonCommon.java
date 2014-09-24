@@ -297,7 +297,7 @@ abstract class UberonCommon {
         visitedIds.add(id);
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
-        OWLClass cls = wrapper.getOWLClassByIdentifier(id);
+        OWLClass cls = wrapper.getOWLClassByIdentifier(id, true);
         //if id was not an OBO-like ID, but an IRI
         if (cls == null) {
             cls = wrapper.getOWLClass(id);
@@ -310,7 +310,7 @@ abstract class UberonCommon {
             //the Uberon equivalent class
             OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
                     OntologyUtils.PART_OF_ID);
-            OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(TAXONOMY_ROOT_ID);
+            OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(TAXONOMY_ROOT_ID, true);
             Set<OWLClass> classesMapped = 
                     this.getOntologyUtils().getECAIntersectionOfTargets(cls, partOf, taxonomyRoot);
             if (classesMapped.size() == 1 || !isStrict) {
@@ -397,7 +397,7 @@ abstract class UberonCommon {
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
                 OntologyUtils.PART_OF_ID);
-        OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(TAXONOMY_ROOT_ID);
+        OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(TAXONOMY_ROOT_ID, true);
         int ecaRemoved = 0;
         
         for (OWLOntology ont: this.getOntologyUtils().getWrapper().getAllOntologies()) {

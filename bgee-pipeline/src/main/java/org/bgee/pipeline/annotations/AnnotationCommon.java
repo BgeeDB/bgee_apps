@@ -390,7 +390,7 @@ public class AnnotationCommon {
                     Map<String, String> row;
                     rowLoop: while( (row = infoReader.read(header)) != null ) {
                         String entityId = row.get(entityColName);
-                        OWLClass cls = wrapper.getOWLClassByIdentifier(entityId);
+                        OWLClass cls = wrapper.getOWLClassByIdentifier(entityId, true);
                         if (cls == null) {
                             //maybe was not an OBO-like ID but an IRI
                             cls = wrapper.getOWLClass(entityId);

@@ -442,7 +442,7 @@ public class InsertTaxa extends MySQLDAOUser {
         for (Map<String, Object> species: allSpecies) {
             int speciesId = (Integer) species.get(SPECIES_ID_KEY);
             OWLClass speciesCls = this.taxOntWrapper.getOWLClassByIdentifier(
-                    OntologyUtils.getTaxOntologyId(speciesId));
+                    OntologyUtils.getTaxOntologyId(speciesId), true);
             if (speciesCls == null) {
                 throw log.throwing(new IllegalStateException(
                         "The provided species ID " + speciesId + 
@@ -526,10 +526,10 @@ public class InsertTaxa extends MySQLDAOUser {
         
         for (int speciesId1: speciesIds) {
             OWLClass species1 = this.taxOntWrapper.getOWLClassByIdentifier(
-                    OntologyUtils.getTaxOntologyId(speciesId1));
+                    OntologyUtils.getTaxOntologyId(speciesId1), true);
             for (int speciesId2: speciesIds) {
                 OWLClass species2 = this.taxOntWrapper.getOWLClassByIdentifier(
-                        OntologyUtils.getTaxOntologyId(speciesId2));
+                        OntologyUtils.getTaxOntologyId(speciesId2), true);
                 if (species1 == species2) {
                     continue;
                 }
@@ -641,7 +641,7 @@ public class InsertTaxa extends MySQLDAOUser {
         Set<OWLClass> owlClassesToKeep = new HashSet<OWLClass>();
         for (int taxonId: allTaxonIds) {
             OWLClass taxClass = this.taxOntWrapper.getOWLClassByIdentifier(
-                    OntologyUtils.getTaxOntologyId(taxonId));
+                    OntologyUtils.getTaxOntologyId(taxonId), true);
             if (taxClass == null) {
                 throw log.throwing(new IllegalStateException("Taxon " + taxonId + 
                         " was not found in the ontology"));

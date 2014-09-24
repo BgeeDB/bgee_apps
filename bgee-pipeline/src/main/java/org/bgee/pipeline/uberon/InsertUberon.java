@@ -126,7 +126,7 @@ public class InsertUberon extends MySQLDAOUser {
         if (uberon.getToIgnoreSubgraphRootIds() != null) {
             for (String rootIdToIgnore: uberon.getToIgnoreSubgraphRootIds()) {
                 roots.remove(uberon.getOntologyUtils().getWrapper().getOWLClassByIdentifier(
-                        rootIdToIgnore));
+                        rootIdToIgnore, true));
             }
         }
         if (roots.size() != 1) {
@@ -215,7 +215,7 @@ public class InsertUberon extends MySQLDAOUser {
         Set<OWLClass> classesToIgnore = new HashSet<OWLClass>();
         if (uberon.getToIgnoreSubgraphRootIds() != null) {
             for (String rootIdToIgnore: uberon.getToIgnoreSubgraphRootIds()) {
-                OWLClass cls = wrapper.getOWLClassByIdentifier(rootIdToIgnore);
+                OWLClass cls = wrapper.getOWLClassByIdentifier(rootIdToIgnore, true);
                 if (cls != null) {
                     classesToIgnore.add(cls);
                     classesToIgnore.addAll(utils.getDescendantsThroughIsA(cls));
@@ -231,7 +231,7 @@ public class InsertUberon extends MySQLDAOUser {
         //in order to generate relationTO IDs
         int relationId = 0;
         //in order to check taxon GCIs
-        OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(UberonCommon.TAXONOMY_ROOT_ID);
+        OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(UberonCommon.TAXONOMY_ROOT_ID, true);
         OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
                 OntologyUtils.PART_OF_ID);
         
@@ -376,7 +376,7 @@ public class InsertUberon extends MySQLDAOUser {
                         Set<Integer> speciesIdsToConsider = 
                                 OntologyUtils.convertToNcbiIds(speciesClsIdsToConsider);
                         speciesIdsToConsider.retainAll(speciesIds);
-                        continue here
+                        //continue here
                         
                     } else {
                         //otherwise, we apply the maximal taxon constraints from source 

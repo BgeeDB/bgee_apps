@@ -107,7 +107,8 @@ public class UberonDevStage extends UberonCommon {
      *   {@code java -Xmx2g -jar myJar 
      *   UberonDevStage generateStageOntology ext.owl dev_stage_ont  
      *   UBERON:0000067,UBERON:0000071,UBERON:0000105,UBERON:0000000,BFO:0000003,MmusDv:0000041 
-     *   -
+     *   - 
+     *   UBERON:0000481/NCBITaxon:6072 
      *   BFO:0000050,BFO:0000062,RO:0002087
      *   UBERON:0000104,FBdv:00000000,NCBITaxon:1}
      * </ul>
@@ -122,18 +123,19 @@ public class UberonDevStage extends UberonCommon {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("generateStageOntology")) {
-            if (args.length != 7) {
+            if (args.length != 8) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "7 arguments, " + args.length + " provided."));
+                        "8 arguments, " + args.length + " provided."));
             }
             
             UberonDevStage ub = new UberonDevStage(args[1]);
             ub.setModifiedOntPath(args[2]);
             ub.setClassIdsToRemove(CommandRunner.parseListArgument(args[3]));
             ub.setChildrenOfToRemove(CommandRunner.parseListArgument(args[4]));
-            ub.setRelIds(CommandRunner.parseListArgument(args[5]));
-            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[6]));
+            ub.setRelsBetweenToRemove(CommandRunner.parseMapArgument(args[5]));
+            ub.setRelIds(CommandRunner.parseListArgument(args[6]));
+            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[7]));
             
             
             ub.generateStageOntologyAndSaveToFile();
@@ -328,6 +330,7 @@ public class UberonDevStage extends UberonCommon {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
         log.entry(this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
+                this.getRelsBetweenToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
         //before using OWLGraphManipulator, we remove all taxon EquivalentClass axioms. 
@@ -373,6 +376,14 @@ public class UberonDevStage extends UberonCommon {
                     }
                     log.debug("Child of {} removed: {}", parent, child);
                 } 
+            }
+        }
+        
+        if (this.getRelsBetweenToRemove() != null) {
+            for (Entry<String, Set<String>> relsToRemove: this.getRelsBetweenToRemove().entrySet()) {
+                for (String targetId: relsToRemove.getValue()) {
+                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+                }
             }
         }
         

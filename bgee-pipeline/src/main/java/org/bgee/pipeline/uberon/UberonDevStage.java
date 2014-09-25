@@ -30,7 +30,6 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLNamedObject;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
@@ -93,6 +92,12 @@ public class UberonDevStage extends UberonCommon {
      *   and to propagate their incoming edges to their outgoing edges. These IDs must be 
      *   separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
      *   See {@link #setClassIdsToRemove(Collection)}.
+     *   <li>a map specifying specific relations to remove between pairs of {@code OWLClass}es. 
+     *   In a key-value pair, the key should be the OBO-like ID of the source of relations 
+     *   to remove, the value being the target of the relations to remove. Key-value pairs 
+     *   must be separated by {@link CommandRunner#LIST_SEPARATOR}, keys must be  
+     *   separated from their associated value by {@link CommandRunner#KEY_VALUE_SEPARATOR}. 
+     *   A key can be associated to several values. See {@link #setRelsBetweenToRemove(Map)}.
      *   <li>A list of OBO-like IDs of {@code OWLClass}es for which we want to remove 
      *   all their children, reachable by any path in their graph closure. 
      *   The {@code OWLClass}es themselves will not be removed. 
@@ -267,8 +272,8 @@ public class UberonDevStage extends UberonCommon {
      * {@code OWLOntology} provided, and using attributes set before calling this method. 
      * Attributes that are used can be set prior to calling this method through the methods: 
      * {@link #setClassIdsToRemove(Collection)}, {@link #setToRemoveSubgraphRootIds(Collection)}, 
-     * {@link #setToFilterSubgraphRootIds(Collection)}, and 
-     * {@link #setChildrenOfToRemove(Collection)}.
+     * {@link #setToFilterSubgraphRootIds(Collection)}, {@link #setRelsBetweenToRemove(Map)}, 
+     * and {@link #setChildrenOfToRemove(Collection)}.
      * <p>
      * The resulting {@code OWLOntology} is then saved, in OBO (with a ".obo" extension 
      * to the path provided through {@link #setModifiedOntPath(String)}), 
@@ -307,23 +312,28 @@ public class UberonDevStage extends UberonCommon {
      * {@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}). 
      * This method is very similar to {@link #simplifyUberon(OWLOntology)}, 
      * but the simplification process for the developmental stages is much simpler and faster. 
-     * Also, all {@code OWLEquivalentClassesAxiom}s are removed before modifying the ontology.
-     * This is because there is a bug /where species-specific stages are dangling 
-     * because of their EC axioms. By removing these axioms, these classes will be removed 
-     * during graph filtering.
      * <p>
      * Note that the {@code OWLOntology} passed as argument will be modified as a result 
      * of the call to this method.
      * <p>
      * Operations that are performed, in order:
      * <ul>
+     * <li>{@link #convertTaxonECAs()}
      * <li>{@code OWLGraphManipulator#removeClassAndPropagateEdges(String)} on each of the 
      * {@code String} part of the {@code Collection} returned by {@link #getClassIdsToRemove()}.
      * <li>remove all children, reachable by any path in their graph closure, 
      * of the {@code OWLClass}es with their OBO-like IDs returned by {@link #getChildrenOfToRemove()}. 
      * <li>{@code OWLGraphManipulator#filterSubgraphs(Collection)} with value returned by 
      * {@link #getToFilterSubgraphRootIds()}.
-     * <li>{@code OWLGraphManipulator#reducePartOfIsARelations()}
+     * <li>{@code OWLGraphManipulator#removeDirectEdgesBetween(String, String)} with value returned by 
+     * {@link #getRelsBetweenToRemove()}.
+     * <li>{@code OWLGraphManipulator#mapRelationsToParent(Collection)} and 
+     * {@code OWLGraphManipulator#filterRelations(Collection, boolean)} with value returned by 
+     * {@link #getRelIds()}.
+     * <li>{@code OWLGraphManipulator#filterSubgraphs(Collection)} with value returned by 
+     * {@link #getToFilterSubgraphRootIds()}.
+     * <li>{@code OWLGraphManipulator#reducePartOfIsARelations()} and 
+     * {@code OWLGraphManipulator#reduceRelations()}
      * <li>{@link org.bgee.pipeline.OntologyUtils#removeOBOProblematicAxioms()}
      */
     public void generateStageOntology() {

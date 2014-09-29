@@ -447,7 +447,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         @Override
         public String toString() {
             return "expressionId: " + expressionId + 
-                    "- globalExpressionId: " + globalExpressionId;
+                    " - globalExpressionId: " + globalExpressionId;
         }
 
         @Override

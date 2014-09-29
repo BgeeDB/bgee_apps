@@ -10,6 +10,7 @@ import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
@@ -76,6 +77,9 @@ public class TOComparator {
             return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
         } else if (to1 instanceof ExpressionCallTO) {
             return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2));
+        } else if (to1 instanceof GlobalExpressionToExpressionTO) {
+            return log.exit(areTOsEqual((
+                    GlobalExpressionToExpressionTO) to1, (GlobalExpressionToExpressionTO) to2));
         }
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
                 "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
@@ -354,6 +358,25 @@ public class TOComparator {
                 to1.isIncludeSubstructures() == to2.isIncludeSubstructures() && 
                 to1.isIncludeSubStages() == to2.isIncludeSubStages() &&
                 to1.getOriginOfLine() == to2.getOriginOfLine()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code GlobalExpressionToExpressionTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1   A {@code GlobalExpressionToExpressionTO} to be compared to {@code to2}.
+     * @param to2   A {@code GlobalExpressionToExpressionTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    private static boolean areTOsEqual(GlobalExpressionToExpressionTO to1, 
+            GlobalExpressionToExpressionTO to2) {
+        log.entry(to1, to2);
+        if (to1.getExpressionId() == to2.getExpressionId() && 
+                to1.getGlobalExpressionId() == to2.getGlobalExpressionId()) {
             return log.exit(true);
         }
         return log.exit(false);

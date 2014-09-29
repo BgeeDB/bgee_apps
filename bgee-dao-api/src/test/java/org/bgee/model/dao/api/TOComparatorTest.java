@@ -12,6 +12,7 @@ import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
@@ -174,7 +175,6 @@ public class TOComparatorTest extends TestAncestor {
         ExpressionCallTO to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
                 DataState.LOWQUALITY, false, false, OriginOfLine.SELF);
-        log.debug(to1 + "///" + to2);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         
         to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
@@ -184,10 +184,24 @@ public class TOComparatorTest extends TestAncestor {
     }
 
     /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code GlobalExpressionToExpressionTO}s.
+     */
+    @Test
+    public void testAreGlobalExpressionToExpressionTOEqual() {
+        GlobalExpressionToExpressionTO to1 = new GlobalExpressionToExpressionTO("1", "10");
+        GlobalExpressionToExpressionTO to2 = new GlobalExpressionToExpressionTO("1", "10");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new GlobalExpressionToExpressionTO("1", "20");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+
+    /**
      * Test the generic method {@link TOComparator#areTOCollectionsEqual(Collection, Collection)}.
      */
     @Test
-    public void testAreTOCollectionsEqualEqual() {
+    public void testAreTOCollectionsEqual() {
         Collection<TaxonConstraintTO> c1 = Arrays.asList(new TaxonConstraintTO("ID1", "ID2"), 
         new TaxonConstraintTO("ID3", "ID4"));
         Collection<TaxonConstraintTO> c2 = Arrays.asList(new TaxonConstraintTO("ID1", "ID2"), 

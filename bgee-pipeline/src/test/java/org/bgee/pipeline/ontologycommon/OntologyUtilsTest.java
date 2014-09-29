@@ -772,7 +772,7 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLClass target = wrapper.getOWLClassByIdentifier("FOO:0002");
         OWLClass source = wrapper.getOWLClassByIdentifier("FOO:0006");
         
-        assertEquals("Incorrect min distance asserted over any relation", 2, 
+        assertEquals("Incorrect min distance asserted over any relation", 3, 
                 utils.getMinDistance(source, target, null));
         
         assertEquals("Incorrect min distance asserted over specified properties", 3, 
@@ -792,7 +792,7 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0003");
         OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0006");
         @SuppressWarnings("rawtypes")
         Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
@@ -809,6 +809,18 @@ public class OntologyUtilsTest extends TestAncestor {
         assertEquals("Incorrect least common ancestor", 
                 expectedLcas, 
                 utils.getLeastCommonAncestors(cls1, cls2, overProps));
+        
+        assertEquals("Incorrect least common ancestor", 
+                new HashSet<OWLClass>(Arrays.asList(
+                        wrapper.getOWLClassByIdentifier("FOO:0002"))), 
+                utils.getLeastCommonAncestors(wrapper.getOWLClassByIdentifier("FOO:0002"), 
+                        wrapper.getOWLClassByIdentifier("FOO:0005"), overProps));
+        
+        assertEquals("Incorrect least common ancestor", 
+                new HashSet<OWLClass>(Arrays.asList(
+                        wrapper.getOWLClassByIdentifier("FOO:0004"))), 
+                utils.getLeastCommonAncestors(wrapper.getOWLClassByIdentifier("FOO:0004"), 
+                        wrapper.getOWLClassByIdentifier("FOO:0005"), overProps));
     }
     
     /**

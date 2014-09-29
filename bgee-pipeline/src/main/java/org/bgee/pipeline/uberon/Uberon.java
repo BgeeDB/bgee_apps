@@ -364,6 +364,11 @@ public class Uberon extends UberonCommon {
                 this.getToFilterSubgraphRootIds(), this.getSubsetNames(), 
                 this.getClassIdsExcludedFromSubsetRemoval());
         
+        //remove completely unrelated relations
+        if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
+            this.removeUnrelatedRelations(this.getRelIds());
+        }
+        
         //convert taxon ECAs
         this.convertTaxonECAs();
         

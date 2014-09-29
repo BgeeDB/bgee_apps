@@ -439,4 +439,54 @@ public class UberonCommonTest extends TestAncestor {
         
     }
 
+    /**
+     * Test {@link UberonCommon#removeUnrelatedRelations(Collection, boolean)}
+     * @throws IOException 
+     * @throws OBOFormatParserException 
+     * @throws OWLOntologyCreationException 
+     */
+    @Test
+    public void shouldRemoveUnrelatedRelations() throws 
+    OWLOntologyCreationException, OBOFormatParserException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/rmUnrelatedRels.owl").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        Uberon uberon = new Uberon(utils);
+        
+        uberon.removeUnrelatedRelations(new HashSet<String>(Arrays.asList("RO:0003002")));
+        
+        assertNotNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0003002"));
+        assertNotNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000051"));
+        assertNotNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0002507"));
+        assertNotNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0002202"));
+
+        assertNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0003001"));
+        
+        
+        ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/rmUnrelatedRels.owl").getFile());
+        wrapper = new OWLGraphWrapper(ont);
+        utils = new OntologyUtils(wrapper);
+        uberon = new Uberon(utils);
+        
+        uberon.removeUnrelatedRelations(new HashSet<String>(Arrays.asList("RO:0003001")));
+        
+        assertNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0003002"));
+        assertNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("BFO:0000051"));
+        assertNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0002202"));
+
+        assertNotNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0003001"));
+        assertNotNull("Incorrect relation removed", 
+                wrapper.getOWLObjectPropertyByIdentifier("RO:0002507"));
+    }
 }

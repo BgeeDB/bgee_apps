@@ -3,6 +3,7 @@ package org.bgee.pipeline.uberon;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,9 +15,11 @@ import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatConstants.OboFormatTag;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -551,6 +554,107 @@ abstract class UberonCommon {
                 existingEdge.getQuantifiedPropertyList(), 
                 existingEdge.getOntology(), null, 
                 filler, prop));
+    }
+    
+    /**
+     * Remove from all {@code OWLOntologies} wrapped by this object 
+     * the {@code OWLObjectProperty}s not related to the provided {@code allowedRels}. 
+     * For each {@code OWLObjectProperty}, this methods will check whether it has 
+     * an allowed relation in the signature of its referencing axioms, or in 
+     * the referencing axioms of one of its super or sub-properties, and if not, 
+     * will remove it. This method is useful to mirror the method 
+     * {@code OWLGraphManipulator#filterRelations(Collection, boolean)} using value 
+     * returned by {@link #getRelIds()}, to remove all completely unrelated relations 
+     * before actually filtering the relations. This is because we need related relations 
+     * for relation reduction, before applying the filtering (a composed relation 
+     * could for instance lead to an allowed relation, so we do not want to remove 
+     * the relations used for composition before relation reduction, even if not allowed). 
+     * <p>
+     * The {@code OWLOntologies} wrapped by this object wrapped by this object 
+     * will be modified as a result to the call to this method.
+     * 
+     * @param allowedRels       A {@code Collection} of {@code String}s 
+     *                          representing the OBO-style IDs of the relations 
+     *                          to keep in the ontology, e.g. "BFO:0000050". 
+     */
+    void removeUnrelatedRelations(Collection<String> allowedRels) {
+        log.entry(allowedRels);
+        log.info("Removing relations unrelated to allowed relations...");
+        if (allowedRels.isEmpty()) {
+            log.info("Nothing to be done, exiting method.");
+            log.exit(); return;
+        }
+        
+        Set<OWLObjectProperty> propsRemoved = new HashSet<OWLObjectProperty>();
+        
+        OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
+        
+        //Retrieve all the allowed OWLObjectProperties 
+        Set<OWLObjectPropertyExpression> propsToConsider = 
+                new HashSet<OWLObjectPropertyExpression>();
+        for (String propId: allowedRels) {
+            //get the OWLObjectProperty corresponding to the iterated ID
+            OWLObjectProperty prop = wrapper.getOWLObjectPropertyByIdentifier(propId);
+            //maybe the ID was not an OBO-like ID, but a String corresponding to an IRI
+            if (prop == null) {
+                prop = wrapper.getOWLObjectProperty(propId);
+            }
+            //could not find an property corresponding to the ID
+            if (prop == null) {
+                throw new IllegalArgumentException("The ID '" + propId + 
+                        "' does not correspond to any OWLObjectProperty");
+            }
+            
+            propsToConsider.add(prop);
+            propsToConsider.addAll(wrapper.getSubPropertyClosureOf(prop));
+        }
+        log.debug("Allowed OWLObjectProperties: {}" + propsToConsider);
+        
+        //now, for each OWLObjectProperty, we check whether it has one of the requested 
+        //properties in its signature, or in the signature of a super or sub-property
+        for (OWLOntology ont: wrapper.getAllOntologies()) {
+
+            OWLEntityRemover remover = new OWLEntityRemover(ont.getOWLOntologyManager(), 
+                    new HashSet<OWLOntology>(Arrays.asList(ont)));
+            
+            for (OWLObjectProperty prop: ont.getObjectPropertiesInSignature()) {
+                log.trace("Examining {}", prop);
+                boolean relatedToAllowedRel = false;
+                Set<OWLObjectPropertyExpression> relativePropExprs = 
+                        new HashSet<OWLObjectPropertyExpression>();
+                relativePropExprs.addAll(wrapper.getSubPropertyReflexiveClosureOf(prop));
+                relativePropExprs.addAll(wrapper.getSuperPropertyReflexiveClosureOf(prop));
+                relativeProp: for (OWLObjectPropertyExpression relativePropExpr: relativePropExprs) {
+                    if (relativePropExpr instanceof OWLEntity) {
+                        OWLEntity relativeProp = (OWLEntity) relativePropExpr;
+                        for (OWLAxiom ax: relativeProp.getReferencingAxioms(ont)) {
+                            //skip SubClassOf axioms
+                            if (ax instanceof OWLSubClassOfAxiom) {
+                                continue;
+                            }
+                            if (!Collections.disjoint(propsToConsider, 
+                                    ax.getObjectPropertiesInSignature())) {
+                                relatedToAllowedRel = true;
+                                log.trace("Prop {} will be kept", prop);
+                                break relativeProp;
+                            }
+                        }
+                    }
+                }
+                if (!relatedToAllowedRel) {
+                    log.trace("Prop {} will be removed", prop);
+                    propsRemoved.add(prop);
+                    prop.accept(remover);
+                }
+            }
+            
+            ont.getOWLOntologyManager().applyChanges(remover.getChanges());
+            wrapper.clearCachedEdges();
+        }
+        
+        log.info("Done removing relations unrelated to allowed relations, {} relations removed: {}", 
+                propsRemoved.size(), propsRemoved);
+        log.exit();
     }
 
 

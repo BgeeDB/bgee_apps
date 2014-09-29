@@ -31,7 +31,6 @@ is_a: FOO:0001 ! A
 id: FOO:0006
 name: F
 relationship: in_deep_part_of FOO:0005 ! E
-relationship: in_deep_part_of FOO:0003 ! C
 
 [Typedef]
 id: has_part

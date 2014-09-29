@@ -1748,6 +1748,16 @@ public class OntologyUtils {
             @SuppressWarnings("rawtypes") Set<OWLPropertyExpression> overProps) {
         log.entry(cls1, cls2, overProps);
         
+        //in case one of the class is the ancestor of the other
+        Set<OWLClass> providedClasses = new HashSet<OWLClass>();
+        providedClasses.add(cls1);
+        providedClasses.add(cls2);
+        this.retainParentClasses(providedClasses, overProps);
+        //if collection has changed as a result
+        if (providedClasses.size() == 1) {
+            return log.exit(providedClasses);
+        }
+        
         Set<OWLClass> commonAncestors = new HashSet<OWLClass>();
         Set<OWLNamedObject> ancestorsStart = this.getWrapper().getNamedAncestorsWithGCI(cls1, overProps);
         Set<OWLNamedObject> ancestorsEnd = this.getWrapper().getNamedAncestorsWithGCI(cls2, overProps);

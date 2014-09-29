@@ -1,8 +1,15 @@
 package org.bgee.controller;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Exchanger;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.Test;
 
@@ -22,7 +29,7 @@ import org.junit.Test;
  * @see BgeePropertiesFourthTest
  */
 public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
-       
+
     /**
      * Test that the injected {@code java.util.Properties} are used
      */
@@ -37,17 +44,63 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved","/injected",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved","10",bgeeProp.getUrlMaxLength().toString());
     }
-    
+
     /**
      * Test that the returned {@code BgeeProperties} instance is always the same within the
-     * same thread
+     * same thread but different between two threads
+     * @throws InterruptedException 
+     * @throws ExecutionException 
      */
     @Test
-    public void testOnePropertiesPerThread(){
+    public void testOnePropertiesPerThread() throws InterruptedException, ExecutionException{
+
+        /**
+         * An anonymous class to acquire {@code BgeeProperties}s 
+         * from a different thread than this one, 
+         * and to be run alternatively to the main thread.
+         */
+        class ThreadTest implements Callable<Boolean> {
+
+            public BgeeProperties bgeeProp3;
+            /**
+             * An {@code Exchanger} that will be used to run threads alternatively. 
+             */
+            public final Exchanger<Integer> exchanger = new Exchanger<Integer>();
+            @Override
+            public Boolean call() throws InterruptedException{
+                try{
+                    bgeeProp3 = BgeeProperties.getBgeeProperties();
+                    return true;
+                } finally {
+                    //whatever happens, make sure to re-launch the main thread, 
+                    //as we do not use an Executor that might catch the Exception 
+                    //and interrupt the other Thread. 
+                    this.exchanger.exchange(null);
+                }
+            }
+        };
+
+        // Get two BgeeProperties in the main thread and check that it is the same instance
         BgeeProperties bgeeProp1 = BgeeProperties.getBgeeProperties();
         BgeeProperties bgeeProp2 = BgeeProperties.getBgeeProperties();
         assertEquals("The two objects are not the same but they should be",
                 System.identityHashCode(bgeeProp1),System.identityHashCode((bgeeProp2)));
+
+        //launch a second thread also acquiring BgeeProperties
+        ThreadTest test = new ThreadTest();
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        Future<Boolean> future = executorService.submit(test);
+        //wait for this thread's turn
+        test.exchanger.exchange(null);
+        //check that no exception was thrown in the second thread.
+        //In that case, it would be completed and calling get would throw 
+        //the exception. 
+        if (future.isDone()) {
+            future.get();
+        }
+        assertNotEquals("The two objects are the same but they should not be",
+                System.identityHashCode(bgeeProp1),System.identityHashCode((test.bgeeProp3)));
+
     }
 
 }

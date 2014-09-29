@@ -150,11 +150,13 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
      * @param set       A {@code Set} of {@code String}s that must be put into a single 
      *                  {@code String}.
      * @param separator A {@code char} that is the separator to use.
+     * @param useCote   A {@code boolean} defining whether we use simple quote around each 
+     *                  {@code String} of the {@code Set}. 
      * @return          A {@code String} composed with all {@code String}s of a {@code Set} 
      *                  separated by the given separator. If {@code Set} is null or empty, 
      *                  returns an empty {@code String}.
      */
-    public String createStringFromSet(Set<String> set, char separator) {
+    public String createStringFromSet(Set<String> set, char separator, boolean useCote) {
         log.entry(set);
         if (set == null || set.size() ==0) {
             return log.exit("");
@@ -166,7 +168,13 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
             if (!isFirst && set.size() > 1) {
                 myString.append(separator);
             }
+            if (useCote) {
+                myString.append("'");
+            }
             myString.append(i.next());
+            if (useCote) {
+                myString.append("'");
+            }
             isFirst = false;
         }
         return log.exit(myString.toString());

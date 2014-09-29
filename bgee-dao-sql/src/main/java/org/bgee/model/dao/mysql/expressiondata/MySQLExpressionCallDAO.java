@@ -133,7 +133,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
              sql.append(" INNER JOIN gene ON (gene.geneId = ");
              sql.append(tableName + ".geneId)");
              sql.append(" WHERE gene.speciesId IN (");
-             sql.append(createStringFromSet(speciesIds, ','));
+             sql.append(createStringFromSet(speciesIds, ',', false));
              sql.append(")");
              sql.append(" ORDER BY gene.speciesId, ");
              sql.append(tableName + ".geneId, ");

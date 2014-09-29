@@ -67,7 +67,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                                 "anatEntityTaxonConstraint.anatEntityId = anatEntity.anatEntityId)");
              sql.append(" WHERE anatEntityTaxonConstraint.speciesId IS NULL");
              sql.append(" OR anatEntityTaxonConstraint.speciesId IN (");
-             sql.append(createStringFromSet(speciesIds, ','));
+             sql.append(createStringFromSet(speciesIds, ',', false));
              sql.append(")");
          }
 
@@ -116,7 +116,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         if (isSpeciesFilter) {
             sql.append(" AND (anatEntityTaxonConstraint.speciesId IS NULL");
             sql.append(" OR anatEntityTaxonConstraint.speciesId IN (");
-            sql.append(createStringFromSet(speciesIds, ','));
+            sql.append(createStringFromSet(speciesIds, ',', false));
             sql.append("))");
         }
 

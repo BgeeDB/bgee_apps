@@ -3,10 +3,10 @@ package org.bgee.model.dao.mysql.ontologycommon;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -49,78 +49,73 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes);
 
+        String tableName = "anatEntityRelation";
         
         boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
         boolean isRelationTypeFilter = relationTypes != null && relationTypes.size() > 0;
         boolean isRelationStatusFilter = relationStatus != null && relationStatus.size() > 0;
         
-        StringBuilder sql = new StringBuilder(); 
+        String sql = null;
         Collection<RelationDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT anatEntityRelation.*");
+            sql = "SELECT " + tableName + ".*";
         } else {
             for (RelationDAO.Attribute attribute: attributes) {
-                if (sql.length() == 0) {
-                    sql.append("SELECT ");
+                if (StringUtils.isEmpty(sql)) {
+                    sql = "SELECT ";
                 } else {
-                    sql.append(", ");
+                    sql += ", ";
                 }
-                sql.append("anatEntityRelation.");
-                sql.append(this.attributeAnatEntityRelationToString(attribute));
+                sql += tableName + "." + this.attributeAnatEntityRelationToString(attribute);
             }
         }
-        sql.append(" FROM anatEntityRelation");
+        sql += " FROM " + tableName;
         
         if (isSpeciesFilter) {
-            sql.append(" INNER JOIN anatEntityRelationTaxonConstraint ON (" +
+            sql += " INNER JOIN anatEntityRelationTaxonConstraint ON (" +
                     "anatEntityRelationTaxonConstraint.anatEntityRelationId = "
-                    + "anatEntityRelation.anatEntityRelationId)");
+                    + tableName + ".anatEntityRelationId)";
         }
         
         if (isSpeciesFilter || isRelationTypeFilter || isRelationStatusFilter) {
-                sql.append(" WHERE ");
+            sql += " WHERE ";
         }
         
         if (isSpeciesFilter) {
-            sql.append("(anatEntityRelationTaxonConstraint.speciesId IS NULL");
-            sql.append(" OR anatEntityRelationTaxonConstraint.speciesId IN (");
-            sql.append(createStringFromSet(speciesIds, ','));
-            sql.append("))");
+            sql += "(anatEntityRelationTaxonConstraint.speciesId IS NULL"
+                  + " OR anatEntityRelationTaxonConstraint.speciesId IN ("
+                  + createStringFromSet(speciesIds, ',', false) + "))";
         }
         
         if (isSpeciesFilter && (isRelationTypeFilter || isRelationStatusFilter)) {
-            sql.append(" AND ");
+            sql += " AND ";
         }
         
         if (isRelationTypeFilter) {
-            Set<String> convertedRelations = new HashSet<String>();
-            for (RelationType relation: relationTypes) {
-                convertedRelations.add("'"+relation.getStringRepresentation()+"'");
-            }
-            sql.append(" relationType IN (");
-            sql.append(createStringFromSet(convertedRelations, ','));
-            sql.append(")");
+            sql += " relationType IN (" + 
+                    createStringFromSet(RelationType.convertToStringSet(relationTypes), ',', true) + 
+                    ")";
         }
         
         if (isRelationTypeFilter && isRelationStatusFilter) {
-            sql.append(" AND ");
+            sql += " AND ";
         }
 
         if (isRelationStatusFilter) {
-            Set<String> convertedRelations = new HashSet<String>();
-            for (RelationStatus relation: relationStatus) {
-                convertedRelations.add("'"+relation.getStringRepresentation()+"'");
-            }
-            sql.append(" relationStatus IN (");
-            sql.append(createStringFromSet(convertedRelations, ','));
-            sql.append(")");
+            sql += " relationStatus IN (" + 
+                    createStringFromSet(RelationStatus.convertToStringSet(relationStatus), ',', true) + 
+                    ")";
         }
+        sql += " ORDER BY " + tableName + "." + 
+                this.attributeAnatEntityRelationToString(RelationDAO.Attribute.SOURCEID) + 
+                ", " + tableName + "." + 
+                this.attributeAnatEntityRelationToString(RelationDAO.Attribute.TARGETID);
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
          BgeePreparedStatement stmt = null;
          try {
-             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+             stmt = this.getManager().getConnection().prepareStatement(sql);
              return log.exit(new MySQLRelationTOResultSet(stmt));
          } catch (SQLException e) {
              throw log.throwing(new DAOException(e));

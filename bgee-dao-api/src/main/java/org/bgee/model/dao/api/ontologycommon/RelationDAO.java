@@ -44,9 +44,11 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * {@code String}s that are the IDs of species, and a {@code Set} of {@code RelationType}s 
      * that are the relation types, both allowing to filter the relations to use.
      * <p>
-     * The relations are retrieved and returned as a {@code RelationTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
-     * results are retrieved.
+     * The relations are ordered by source ID and target ID, the only common columns to 
+     * all relation tables. 
+     * <p>
+     * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
      *                      allowing to filter the calls to use
@@ -141,7 +143,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * @see RelationTO#getRelationType()
          * @since Bgee 13
          */
-        public enum RelationType {
+        public enum RelationType implements EnumDAOField {
             ISA_PARTOF("is_a part_of"), DEVELOPSFROM("develops_from"), 
             TRANSFORMATIONOF("transformation_of");
             
@@ -170,6 +172,21 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
                 throw log.throwing(new IllegalArgumentException("\"" + representation + 
                         "\" does not correspond to any RelationType"));
             }
+            
+            /**
+             * Convert a {@code Set} of {@code RelationType}s into a {@code Set} of 
+             * {@code String}s, using the method 
+             * {@link TransferObject#convertEnumSetToStringSet(Set)}.
+             * 
+             * @param enums A {@code Set} of {@code RelationType}s to be converted.
+             * @return      A {@code Set} of {@code String}s that are the representation of 
+             *              the {@code RelationType}s contained in {@code enums}.
+             */
+            public static final Set<String> convertToStringSet(Set<RelationType> relationType) {
+                log.entry(relationType);
+                return log.exit(TransferObject.convertEnumSetToStringSet(relationType));
+            }
+
             
             /**
              * See {@link #getStringRepresentation()}
@@ -215,7 +232,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * @see RelationTO#getRelationStatus()
          * @since Bgee 13
          */
-        public enum RelationStatus {
+        public enum RelationStatus implements EnumDAOField {
             DIRECT("direct"), INDIRECT("indirect"), REFLEXIVE("reflexive");
             
             /**
@@ -223,8 +240,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              * retrieved from a database) into a {@code RelationStatus}. This method 
              * compares {@code representation} to the value returned by 
              * {@link #getStringRepresentation()}, as well as to the value 
-             * returned by {@link Enum#name()}, for each {@code RelationStatus}, 
-             * .
+             * returned by {@link Enum#name()}, for each {@code RelationStatus}.
              * 
              * @param representation    A {@code String} representing a data state.
              * @return  A {@code RelationStatus} corresponding to {@code representation}.
@@ -244,6 +260,20 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
                         "\" does not correspond to any RelationStatus"));
             }
             
+            /**
+             * Convert a {@code Set} of {@code RelationStatus}s into a {@code Set} of 
+             * {@code String}s, using the method 
+             * {@link TransferObject#convertEnumSetToStringSet(Set)}.
+             * 
+             * @param enums A {@code Set} of {@code RelationStatus}s to be converted.
+             * @return      A {@code Set} of {@code String}s that are the representation of 
+             *              the {@code RelationStatus}s contained in {@code enums}.
+             */
+            public static final Set<String> convertToStringSet(Set<RelationStatus> relationStatus) {
+                log.entry(relationStatus);
+                return log.exit(TransferObject.convertEnumSetToStringSet(relationStatus));
+            }
+
             /**
              * See {@link #getStringRepresentation()}
              */

@@ -82,10 +82,11 @@ public abstract class TransferObject implements Serializable {
      * @return      A {@code Set} of {@code String}s that are the representation of 
      *              the {@code EnumDAOField}s contained in {@code enums}.
      */
-    protected static final Set<String> convertEnumSetToStringSet(Set<EnumDAOField> enums) {
+    protected static final <T extends Enum<T> & EnumDAOField> Set<String> 
+                                convertEnumSetToStringSet(Set<T> enums) {
         log.entry(enums);
         Set<String> stringSet = new HashSet<String>();
-        for (EnumDAOField enumDAOField: enums) {
+        for (T enumDAOField: enums) {
             stringSet.add(enumDAOField.getStringRepresentation());
         }
         return log.exit(stringSet);

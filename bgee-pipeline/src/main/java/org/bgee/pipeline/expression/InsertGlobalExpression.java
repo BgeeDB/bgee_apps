@@ -72,19 +72,24 @@ public class InsertGlobalExpression extends MySQLDAOUser {
      * Main method to insert global expression in Bgee database. No parameters must be provided.
      * 
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
+     *                       The only parameter that could be provided is a list of species IDs that 
+     *                       will be used to propagate expression, separated by the {@code String} 
+     *                       {@link CommandRunner#LIST_SEPARATOR}. If it's not provided, all species
+     *                       contained in database will be used.
      * @throws DAOException  If an error occurred while inserting the data into the Bgee database.
      */
     public static void main(String[] args) throws DAOException {
         log.entry((Object[]) args);
 
         int expectedArgLength = 1;
-        if (args.length != expectedArgLength) {
+        Set<String> speciesIds = null;
+        if (args.length == expectedArgLength) {
+            speciesIds = new HashSet<String>(CommandRunner.parseListArgument(args[0]));    
+        } else if (args.length > expectedArgLength) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
                     "provided, expected " + expectedArgLength + " arguments, " + args.length + 
                     " provided."));
         }
-        
-        Set<String> speciesIds = new HashSet<String>(CommandRunner.parseListArgument(args[0]));
         
         InsertGlobalExpression insert = new InsertGlobalExpression();
         insert.insert(speciesIds);
@@ -100,7 +105,7 @@ public class InsertGlobalExpression extends MySQLDAOUser {
     public void insert(Set<String> speciesIds) throws DAOException {
         log.entry();
 
-        if (speciesIds.size() == 0 ) {
+        if (speciesIds == null || speciesIds.size() == 0) {
             // Retrieve species IDs of the Bgee database to be able to one species by one.
             speciesIds = this.loadSpeciesIdsFromDb();
         }

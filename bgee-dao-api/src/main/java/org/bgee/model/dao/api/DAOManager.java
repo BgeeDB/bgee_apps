@@ -23,6 +23,7 @@ import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
@@ -944,6 +945,20 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewExpressionCallDAO());
     }
     /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO 
+     * NoExpressionCallDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code NoExpressionCallDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO NoExpressionCallDAO
+     */
+    public final NoExpressionCallDAO getNoExpressionCallDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewNoExpressionCallDAO());
+    }
+
+    /**
      * Get a new {@link org.bgee.model.dao.api.anatdev.AnatEntityDAO AnatEntityDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
@@ -1128,6 +1143,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code ExpressionCallDAO}
      */
     protected abstract ExpressionCallDAO getNewExpressionCallDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO NoExpressionCallDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code NoExpressionCallDAO}
+     */
+    protected abstract NoExpressionCallDAO getNewNoExpressionCallDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.anatdev.AnatEntityDAO AnatEntityDAO} instance 

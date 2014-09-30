@@ -12,6 +12,7 @@ import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -158,6 +159,12 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLExpressionCallDAO getExpressionCallDAO() {
         return (MySQLExpressionCallDAO) this.manager.getExpressionCallDAO();
+    }
+    /**
+     * @return  A {@code MySQLNoExpressionCallDAO}.
+     */
+    protected MySQLNoExpressionCallDAO getNoExpressionCallDAO() {
+        return (MySQLNoExpressionCallDAO) this.manager.getNoExpressionCallDAO();
     }
     /**
      * @return  A {@code MySQLAnatEntityDAO}.

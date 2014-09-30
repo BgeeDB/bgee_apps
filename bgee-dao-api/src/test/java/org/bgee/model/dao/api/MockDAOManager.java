@@ -7,6 +7,7 @@ import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
@@ -115,6 +116,10 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected ExpressionCallDAO getNewExpressionCallDAO() {
         return this.instanceMockManager.getNewExpressionCallDAO();
+    }
+    @Override
+    protected NoExpressionCallDAO getNewNoExpressionCallDAO() {
+        return this.instanceMockManager.getNewNoExpressionCallDAO();
     }
     @Override
     protected AnatEntityDAO getNewAnatEntityDAO() {

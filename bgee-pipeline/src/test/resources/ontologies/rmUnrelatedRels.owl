@@ -16,36 +16,72 @@
      xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
     <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/uberon/ext.owl"></owl:Ontology>
     
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003001">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003001</oboInOwl:hasDbXref>
+    </owl:ObjectProperty>
     
     <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/BFO_0000051">
         <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BFO:0000051</oboInOwl:hasDbXref>
-        <rdfs:subPropertyOf rdf:resource="http://purl.obolibrary.org/obo/RO_0003002"/>
+        <rdfs:subPropertyOf rdf:resource="http://purl.obolibrary.org/obo/RO_0003001"/>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003002">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003002</oboInOwl:hasDbXref>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003003">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003003</oboInOwl:hasDbXref>
+        <owl:propertyChainAxiom rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/RO_0003004"/>
+            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/RO_0002202"/>
+        </owl:propertyChainAxiom>
+        <rdfs:subPropertyOf rdf:resource="http://purl.obolibrary.org/obo/RO_0003001"/>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003004">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003004</oboInOwl:hasDbXref>
     </owl:ObjectProperty>
     
     <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0002202">
         <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0002202</oboInOwl:hasDbXref>
     </owl:ObjectProperty>
     
-    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003001">
-        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003001</oboInOwl:hasDbXref>
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003008">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003008</oboInOwl:hasDbXref>
+        <owl:equivalentProperty rdf:resource="http://purl.obolibrary.org/obo/BFO_0000051"/>
     </owl:ObjectProperty>
     
-    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003002">
-        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003002</oboInOwl:hasDbXref>
-    </owl:ObjectProperty>
-
-    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0002507">
-        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has material contribution from</rdfs:label>
-        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0002507</oboInOwl:hasDbXref>
-        <oboInOwl:id rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has_material_contribution_from</oboInOwl:id>
-        <oboInOwl:shorthand rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has_material_contribution_from</oboInOwl:shorthand>
-        <oboInOwl:hasOBONamespace rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uberon</oboInOwl:hasOBONamespace>
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003005">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003005</oboInOwl:hasDbXref>
         <owl:propertyChainAxiom rdf:parseType="Collection">
-            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/BFO_0000051"/>
-            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/RO_0002202"/>
+            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/RO_0003006"/>
+            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/RO_0003007"/>
         </owl:propertyChainAxiom>
-        <owl:inverseOf rdf:resource="http://purl.obolibrary.org/obo/RO_0003001"/>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003006">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003006</oboInOwl:hasDbXref>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003007">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003007</oboInOwl:hasDbXref>
+        <owl:propertyChainAxiom rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/RO_0003010"/>
+            <rdf:Description rdf:about="http://purl.obolibrary.org/obo/RO_0003011"/>
+        </owl:propertyChainAxiom>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003009">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003009</oboInOwl:hasDbXref>
+        <rdfs:subPropertyOf rdf:resource="http://purl.obolibrary.org/obo/RO_0003007"/>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003010">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003010</oboInOwl:hasDbXref>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="http://purl.obolibrary.org/obo/RO_0003011">
+        <oboInOwl:hasDbXref rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RO:0003011</oboInOwl:hasDbXref>
     </owl:ObjectProperty>
     
     
@@ -63,7 +99,7 @@
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clsA</rdfs:label>
         <rdfs:subClassOf>
             <owl:Restriction>
-                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/RO_0002507"/>
+                <owl:onProperty rdf:resource="http://purl.obolibrary.org/obo/RO_0003005"/>
                 <owl:someValuesFrom rdf:resource="http://purl.obolibrary.org/obo/UBERON_0000002"/>
             </owl:Restriction>
         </rdfs:subClassOf>

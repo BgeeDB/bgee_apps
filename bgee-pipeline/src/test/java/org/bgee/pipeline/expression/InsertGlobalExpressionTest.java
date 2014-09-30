@@ -15,6 +15,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
@@ -24,6 +25,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO.MySQLAnatEntityTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
@@ -132,15 +134,36 @@ public class InsertGlobalExpressionTest extends TestAncestor {
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 valueSetEq(EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT)))).
                 thenReturn(mockRelation11TORs);
-        // Determine the behavior of consecutive calls to getTO().
+        // Determine the behavior of consecutive calls to getAllTOs().
         when(mockManager.mockRelationDAO.getAllTOs(mockRelation11TORs)).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id3", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id2"),
                 new RelationTO("Anat_id5", "Anat_id4"),
                 new RelationTO("Anat_id5", "Anat_id1"),
-                new RelationTO("Anat_id5", "Anat_id2")));
+                new RelationTO("Anat_id5", "Anat_id2"),
+                new RelationTO("Anat_id3", "Anat_id11"),
+                new RelationTO("Anat_id11", "Anat_id1")));
         
+        // We need a mock MySQLAnatEntityTOResultSet to mock the return of 
+        // getAllNonInformativeAnatEntities().
+        MySQLAnatEntityTOResultSet mockAE11TORs = mock(MySQLAnatEntityTOResultSet.class);
+        when(mockManager.mockAnatEntityDAO.
+                getAllNonInformativeAnatEntities(valueSetEq(speciesFilter))).
+                thenReturn(mockAE11TORs);
+        // Determine the behavior of consecutive calls to getTO().
+        when(mockAE11TORs.getTO()).thenReturn(
+                new AnatEntityTO("Anat_id11", null, null, null, null, false));
+        // Determine the behavior of consecutive calls to next().
+        when(mockAE11TORs.next()).thenAnswer(new Answer<Boolean>() {
+            int counter = 0;
+            public Boolean answer(InvocationOnMock invocationOnMock) 
+                    throws Throwable {
+                // Return true while there is TaxonTO to return 
+                return counter++ < 1;
+            }
+        });
+
         // We need a mock MySQLRelationTOResultSet to mock the return of getAllAnatEntityRelations().
         MySQLRelationTOResultSet mockRelation21TORs = mock(MySQLRelationTOResultSet.class);
         speciesFilter = new HashSet<String>();
@@ -150,16 +173,36 @@ public class InsertGlobalExpressionTest extends TestAncestor {
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 valueSetEq(EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT)))).
                 thenReturn(mockRelation21TORs);
-        // Determine the behavior of consecutive calls to getTO().
+        // Determine the behavior of consecutive calls to getAllTOs().
         when(mockManager.mockRelationDAO.getAllTOs(mockRelation21TORs)).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id8", "Anat_id6"),
                 new RelationTO("Anat_id9", "Anat_id8"),
                 new RelationTO("Anat_id9", "Anat_id6"),
-                new RelationTO("Anat_id9", "Anat_id7")));
+                new RelationTO("Anat_id9", "Anat_id7"),
+                new RelationTO("Anat_id9", "Anat_id10"),
+                new RelationTO("Anat_id10", "Anat_id7")));
+
+        // We need a mock MySQLAnatEntityTOResultSet to mock the return of 
+        // getAllNonInformativeAnatEntities().
+        MySQLAnatEntityTOResultSet mockAE21TORs = mock(MySQLAnatEntityTOResultSet.class);
+        when(mockManager.mockAnatEntityDAO.
+                getAllNonInformativeAnatEntities(valueSetEq(speciesFilter))).
+                thenReturn(mockAE21TORs);
+        // Determine the behavior of consecutive calls to getTO().
+        when(mockAE21TORs.getTO()).thenReturn(
+                new AnatEntityTO("Anat_id10", null, null, null, null, false));
+        // Determine the behavior of consecutive calls to next().
+        when(mockAE21TORs.next()).thenAnswer(new Answer<Boolean>() {
+            int counter = 0;
+            public Boolean answer(InvocationOnMock invocationOnMock) 
+                    throws Throwable {
+                // Return true while there is TaxonTO to return 
+                return counter++ < 1;
+            }
+        });
 
         InsertGlobalExpression insert = new InsertGlobalExpression(mockManager);
-        insert.insert(new HashSet<String>());
-
+        insert.insert(new HashSet<String>(), false);
 
         ArgumentCaptor<Set> exprTOsArgGlobalExpr = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockExpressionCallDAO, times(2)).insertExpressionCalls(exprTOsArgGlobalExpr.capture());

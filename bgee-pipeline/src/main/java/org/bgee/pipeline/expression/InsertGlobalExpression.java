@@ -11,6 +11,8 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
@@ -19,6 +21,11 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
@@ -51,6 +58,11 @@ public class InsertGlobalExpression extends MySQLDAOUser {
     private int globalExprId;
 
     /**
+     * An {@code int} that is a unique ID for each global non-expression calls.
+     */
+    private int globalNoExprId;
+
+    /**
      * Default constructor. 
      */
     public InsertGlobalExpression() {
@@ -66,33 +78,47 @@ public class InsertGlobalExpression extends MySQLDAOUser {
     public InsertGlobalExpression(MySQLDAOManager manager) {
         super(manager);
         this.globalExprId = 1;
+        this.globalNoExprId = 1;
     }
 
     /**
-     * Main method to insert global expression in Bgee database. No parameters must be provided.
+     * Main method to insert global expression in Bgee database. Parameters that must be provided 
+     * in order in {@code args} are: 
+     * <ol>
+     * <li> boolean defining whether we propagate expression or non-expression. If {@code true}, the 
+     * propagation will be done for non-expression calls. 
+     * <li> a list of species IDs that will be used to propagate (non-)expression, separated by the 
+     * {@code String} {@link CommandRunner#LIST_SEPARATOR}. If it is not provided, all species 
+     * contained in database will be used.
+     * </ol>
      * 
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
-     *                       The only parameter that could be provided is a list of species IDs that 
-     *                       will be used to propagate expression, separated by the {@code String} 
-     *                       {@link CommandRunner#LIST_SEPARATOR}. If it's not provided, all species
-     *                       contained in database will be used.
      * @throws DAOException  If an error occurred while inserting the data into the Bgee database.
      */
     public static void main(String[] args) throws DAOException {
         log.entry((Object[]) args);
 
-        int expectedArgLength = 1;
-        Set<String> speciesIds = null;
-        if (args.length == expectedArgLength) {
-            speciesIds = new HashSet<String>(CommandRunner.parseListArgument(args[0]));    
-        } else if (args.length > expectedArgLength) {
+        
+        int expectedArgLengthWithoutSpecies = 1;
+        int expectedArgLengthWithSpecies = 2;
+
+        if (args.length != expectedArgLengthWithSpecies ||
+                args.length != expectedArgLengthWithoutSpecies) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
-                    "provided, expected " + expectedArgLength + " arguments, " + args.length + 
+                    "provided, expected " + expectedArgLengthWithoutSpecies + " or " + 
+                    expectedArgLengthWithSpecies + " arguments, " + args.length + 
                     " provided."));
         }
         
+        boolean isNoExpression = Boolean.valueOf(args[0]);
+        
+        Set<String> speciesIds = null;
+        if (args.length == expectedArgLengthWithSpecies) {
+            speciesIds = new HashSet<String>(CommandRunner.parseListArgument(args[1]));    
+        }
+        
         InsertGlobalExpression insert = new InsertGlobalExpression();
-        insert.insert(speciesIds);
+        insert.insert(speciesIds, isNoExpression);
         
         log.exit();
     }
@@ -100,87 +126,115 @@ public class InsertGlobalExpression extends MySQLDAOUser {
     /**
      * Inserts the global expression calls into the Bgee database.
      * 
-     * @throws DAOException   If an error occurred while inserting the data into the Bgee database.
+     * @param speciesIds        A {@code Set} of {@code String}s containing species IDs that will 
+     *                          be used to propagate (non-)expression.
+     * @param isNoExpression    A {@code boolean} defining whether we propagate expression or 
+     *                          non-expression. If {@code true}, the propagation will be done for 
+     *                          non-expression calls.
+     * @throws DAOException     If an error occurred while inserting the data into the Bgee database.
      */
-    public void insert(Set<String> speciesIds) throws DAOException {
+    public void insert(Set<String> speciesIds, boolean isNoExpression) throws DAOException {
         log.entry();
 
         if (speciesIds == null || speciesIds.size() == 0) {
             // Retrieve species IDs of the Bgee database to be able to one species by one.
             speciesIds = this.loadSpeciesIdsFromDb();
         }
-
+        
         try {
             for (String speciesId: speciesIds) {
-                // Retrieve all expression calls of the current species, with all fields.
-                List<ExpressionCallTO> expressionTOs = this.loadExpressionCallFromDb(speciesId);
-
+                
                 // Retrieve all relations (as RelationTOs) with relation type as "is_a part_of" 
                 // between anatomical structures of this species, source and target fields only.
                 List<RelationTO> relationTOs = this.loadAnatEntityRelationFromDb(speciesId);
 
-                // For each expression row, propagate to parents.
-                Map<ExpressionCallTO, Set<ExpressionCallTO>> globalExprMap = 
-                        this.generateGlobalExpressionTOs(expressionTOs, relationTOs);
+                
+                // Retrieve all all non-informative anatomical entity IDs.
+                Set<String> nonInformativeAEs = this.loadNonInformativeAnatEntitiesFromDb(speciesId);
 
-                // Generate IDs of global expression calls and the globalExprToExprTO
-                Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
-                        this.generateGlobalExprToExprTOs(globalExprMap);
+                if (isNoExpression) {
+                    // Retrieve all non-expression calls of the current species.
+                    List<NoExpressionCallTO> noExpressionTOs = this.loadNoExpressionCallFromDb(speciesId);
 
-                int nbInsertedExpressions = 0;
-                int nbInsertedGlobalExprToExpr = 0;
+                  Set<String> anatomicalEntityFilter = 
+                          this.loadGlobalExprAnatomicalEntitiesFromDb(speciesId);
 
-                this.startTransaction();
+                  // For each expression row, propagate to children.
+                  Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalNoExprMap =
+                          this.generateGlobalNoExpressionTOs(noExpressionTOs, relationTOs, 
+                                  nonInformativeAEs, anatomicalEntityFilter);
+                    
+                  // Generate the globalNoExprToNoExprTOs
+                  Set<GlobalNoExpressionToNoExpressionTO> globalNoExprToNoExprTOs = 
+                          this.generateGlobalNoExprToNoExprTOs(globalNoExprMap);
 
-                log.info("Start inserting of global expression calls for {}...", speciesId);
-                nbInsertedExpressions += this.getExpressionCallDAO().
-                        insertExpressionCalls(globalExprMap.keySet());
-                log.info("Done inserting of global expression calls for {}.", speciesId);
 
-                log.info("Start inserting of relation between an expression call " +
-                        "and a global expression call for {}...", speciesId);
-                nbInsertedGlobalExprToExpr += this.getExpressionCallDAO().
-                        insertGlobalExpressionToExpression(globalExprToExprTOs);
-                log.info("Done inserting of correspondances between an expression call " +
-                        "and a global expression call for {}.", speciesId);
+                  int nbInsertedNoExpressions = 0;
+                  int nbInsertedGlobalNoExprToNoExpr = 0;
 
-                this.commit();
+                  this.startTransaction();
 
-                log.info("Done inserting for {}: {} global expression calls inserted " +
-                        "and {} correspondances inserted", speciesId, 
-                        nbInsertedExpressions, nbInsertedGlobalExprToExpr);
+                  log.info("Start inserting of global non-expression calls for {}...", speciesId);
+                  nbInsertedNoExpressions += this.getNoExpressionCallDAO().
+                          insertNoExpressionCalls(globalNoExprMap.keySet());
+                  log.info("Done inserting of global non-expression calls for {}.", speciesId);
+
+                  log.info("Start inserting of relation between a non-expression call " +
+                          "and a global non-expression call for {}...", speciesId);
+                  nbInsertedGlobalNoExprToNoExpr += this.getNoExpressionCallDAO().
+                          insertGlobalNoExprToNoExpr(globalNoExprToNoExprTOs);
+                  log.info("Done inserting of correspondances between a non-expression call " +
+                          "and a global non-expression call for {}.", speciesId);
+
+                  this.commit();
+
+                  log.info("Done inserting for {}: {} global non-expression calls inserted " +
+                          "and {} correspondances inserted", speciesId, 
+                          nbInsertedNoExpressions, nbInsertedGlobalNoExprToNoExpr);
+
+
+                } else {
+                    // Retrieve all expression calls of the current species.
+                    List<ExpressionCallTO> expressionTOs = this.loadExpressionCallFromDb(speciesId);
+
+                    // For each expression row, propagate to parents.
+                    Map<ExpressionCallTO, Set<ExpressionCallTO>> globalExprMap =
+                            this.generateGlobalExpressionTOs(
+                                    expressionTOs, relationTOs, nonInformativeAEs);
+
+                    // Generate the globalExprToExprTOs
+                    Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
+                            this.generateGlobalExprToExprTOs(globalExprMap);
+
+                    int nbInsertedExpressions = 0;
+                    int nbInsertedGlobalExprToExpr = 0;
+
+                    this.startTransaction();
+
+                    log.info("Start inserting of global expression calls for {}...", speciesId);
+                    nbInsertedExpressions += this.getExpressionCallDAO().
+                            insertExpressionCalls(globalExprMap.keySet());
+                    log.info("Done inserting of global expression calls for {}.", speciesId);
+
+                    log.info("Start inserting of relation between an expression call " +
+                            "and a global expression call for {}...", speciesId);
+                    nbInsertedGlobalExprToExpr += this.getExpressionCallDAO().
+                            insertGlobalExpressionToExpression(globalExprToExprTOs);
+                    log.info("Done inserting of correspondances between an expression call " +
+                            "and a global expression call for {}.", speciesId);
+
+                    this.commit();
+
+                    log.info("Done inserting for {}: {} global expression calls inserted " +
+                            "and {} correspondances inserted", speciesId, 
+                            nbInsertedExpressions, nbInsertedGlobalExprToExpr);
+                }
             }
         } finally {
             this.closeDAO();
         }
 
         log.exit();
-    }
-
-    /**
-     * Generate the {code GlobalExpressionToExpressionTO}s from the given {@code Map} 
-     * associating generated global expression calls to expression calls used to generate it.
-     * 
-     * @param globalExprMap A {@code Map} associating generated global expression calls to
-     *                      expression calls as {@code ExpressionCallTO}s to be inserted into 
-     *                      globalExpressionToExpression table of the Bgee database.
-     * @return              A {@code Set} of {@code GlobalExpressionToExpressionTO} containing 
-     *                      {@code GlobalExpressionToExpressionTO}s to be inserted into the 
-     *                      Bgee database.
-     */
-    private Set<GlobalExpressionToExpressionTO> generateGlobalExprToExprTOs(
-            Map<ExpressionCallTO, Set<ExpressionCallTO>> globalExprMap) {
-        log.entry(globalExprMap);
-        
-        Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = new HashSet<GlobalExpressionToExpressionTO>();
-        for (Entry<ExpressionCallTO, Set<ExpressionCallTO>> entry: globalExprMap.entrySet()) {
-            for (ExpressionCallTO expression : entry.getValue()) {
-                globalExprToExprTOs.add(new GlobalExpressionToExpressionTO(
-                        expression.getId(), entry.getKey().getId()));
-            }
-        }
-        
-        return log.exit(globalExprToExprTOs);
     }
 
     /**
@@ -206,30 +260,36 @@ public class InsertGlobalExpression extends MySQLDAOUser {
     }
 
     /**
-     * Retrieves all expression calls of a given species, present into the Bgee database.
+     * Retrieve all non-informative anatomical entities from data source according to a 
+     * {@code String} that are the ID of the species allowing to filter the entities to get.
      * 
-     * @param speciesId     A {@code String} that is the ID of species allowing to filter 
-     *                      the calls to use.
-     * @return              A {@code List} of {@code ExpressionCallTO}s containing all expression 
-     *                      calls of the given species.
-     * @throws DAOException If an error occurred while getting the data from the Bgee database.
+     * @param speciesIds    A {@code String} that is the species ID allowing to filter the 
+     *                      anatomical entities to get.
+     * @return              A {@code Set} of {@code String}s containing non-informative anatomical 
+     *                      entity IDs of the Bgee database.
+     * @throws DAOException If an error occurred when accessing the data source. 
      */
-    private List<ExpressionCallTO> loadExpressionCallFromDb(String speciesId) throws DAOException {
+    private Set<String> loadNonInformativeAnatEntitiesFromDb(String speciesId) throws DAOException {
         log.entry(speciesId);
         
-        log.info("Start retrieving expression calls for the species ID {}...", speciesId);
+        log.info("Start retrieving non-informative anatomical entity IDs...");
+
+        AnatEntityDAO dao = this.getAnatEntityDAO();
+        dao.setAttributes(AnatEntityDAO.Attribute.ID);
         
-        ExpressionCallDAO dao = this.getExpressionCallDAO();
+        Set<String> speciesFilter = new HashSet<String>();
+        speciesFilter.add(speciesId);
+
+        AnatEntityTOResultSet rsAnatEntity = dao.getAllNonInformativeAnatEntities(speciesFilter);
+        Set<String> nonInformativeAnatEntities = new HashSet<String>();
+        while (rsAnatEntity.next()) {
+            nonInformativeAnatEntities.add(rsAnatEntity.getTO().getId());
+        }
         
-        ExpressionCallParams params = new ExpressionCallParams();
-        params.addAllSpeciesIds(Arrays.asList(speciesId));
-    
-        ExpressionCallTOResultSet rsExpressionCalls = dao.getAllExpressionCalls(params);
-        
-        List<ExpressionCallTO> exprTOs = dao.getAllTOs(rsExpressionCalls);
-        log.info("Done retrieving expression calls, {} expression calls found", exprTOs.size());
-    
-        return log.exit(exprTOs);        
+        log.info("Done retrieving non-informative anatomical entity IDs, {} entities found", 
+                nonInformativeAnatEntities.size());
+
+        return log.exit(nonInformativeAnatEntities);        
     }
 
     /**
@@ -264,6 +324,95 @@ public class InsertGlobalExpression extends MySQLDAOUser {
     }
 
     /**
+     * Retrieves all expression calls of a given species, present into the Bgee database.
+     * 
+     * @param speciesId         A {@code String} that is the ID of species allowing to filter 
+     *                          the calls to use.
+     * @return                  A {@code List} of {@code ExpressionCallTO}s containing all 
+     *                          expression calls of the given species.
+     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
+     */
+    private List<ExpressionCallTO> loadExpressionCallFromDb(String speciesId) throws DAOException {
+        log.entry(speciesId);
+
+        log.info("Start retrieving expression calls for the species ID {}...", speciesId);
+
+        ExpressionCallDAO dao = this.getExpressionCallDAO();
+
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList(speciesId));
+
+        ExpressionCallTOResultSet rsExpressionCalls = dao.getAllExpressionCalls(params);
+
+        List<ExpressionCallTO> exprTOs = dao.getAllTOs(rsExpressionCalls);
+        log.info("Done retrieving expression calls, {} expression calls found", exprTOs.size());
+
+        return log.exit(exprTOs);        
+    }
+
+    /**
+     * Retrieves all non-expression calls of a given species, present into the Bgee database.
+     * 
+     * @param speciesId         A {@code String} that is the ID of species allowing to filter 
+     *                          the calls to use.
+     * @return                  A {@code List} of {@code NoExpressionCallTO}s containing all 
+     *                          non-expression calls of the given species.
+     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
+     */
+    private List<NoExpressionCallTO> loadNoExpressionCallFromDb(String speciesId) throws DAOException {
+
+        log.info("Start retrieving non-expression calls for the species ID {}...", speciesId);
+
+        NoExpressionCallDAO dao = this.getNoExpressionCallDAO();
+
+        NoExpressionCallParams params = new NoExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList(speciesId));
+
+        NoExpressionCallTOResultSet rsNoExpressionCalls = dao.getAllNoExpressionCalls(params);
+
+        List<NoExpressionCallTO> noExprTOs = dao.getAllTOs(rsNoExpressionCalls);
+        log.info("Done retrieving non-expression calls, {} expression calls found", 
+                noExprTOs.size());
+
+        return log.exit(noExprTOs);        
+    }
+    
+    /**
+     * Retrieves all anatomical entity IDs having at least a global expression call,
+     * into the Bgee database.
+     * 
+     * @param speciesId     A {@code String} that is the ID of species allowing to filter 
+     *                      the calls to use.
+     * @return              A {@code Set} of {@code String}s containing anatomical entity IDs
+     *                      having at least a global expression call.
+     * @throws DAOException If an error occurred while getting the data from the Bgee database.
+     */
+    private Set<String> loadGlobalExprAnatomicalEntitiesFromDb(String speciesId) 
+            throws DAOException {
+        log.entry(speciesId);
+        
+        log.info("Start retrieving expression calls for the species ID {}...", speciesId);
+        
+        ExpressionCallDAO dao = this.getExpressionCallDAO();
+        dao.setAttributes(ExpressionCallDAO.Attribute.ANATENTITYID);
+        
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList(speciesId));
+    
+        ExpressionCallTOResultSet rsExpressionCalls = dao.getAllExpressionCalls(params);
+        
+        Set<String> anatEntIdsInBgee = new HashSet<String>();
+        while (rsExpressionCalls.next()) {
+            anatEntIdsInBgee.add(rsExpressionCalls.getTO().getAnatEntityId());
+        }
+
+        log.info("Done retrieving anatomical entity IDs having at least a global expression call, " +
+                "{} anatomical entity IDs found", anatEntIdsInBgee.size());
+    
+        return log.exit(anatEntIdsInBgee);        
+    }
+
+    /**
      * Generate the global expression calls from expression calls filling the {@code Map} 
      * associating generated global expression calls to expression calls used to generate it.
      * <p>
@@ -276,14 +425,15 @@ public class InsertGlobalExpression extends MySQLDAOUser {
      *                                      all expression calls to propagate.
      * @param relationTOs                   A {@code List} of {@code RelationTO}s containing source 
      *                                      and target IDs of all anatomical entity relations.
-     * @param nonInformativeAnatEntityTOs   A {@code List} of {@code String}s containing all non 
+     * @param nonInformativeAnatEntityTOs   A {@code Set} of {@code String}s containing all non 
      *                                      informative anatomical entity IDs.
      * @return  A {@code Map} associating generated global expression calls as 
      *          {@code ExpressionCallTO}s to expression calls as {@code ExpressionCallTO}s                                     
      */
     private Map<ExpressionCallTO, Set<ExpressionCallTO>> generateGlobalExpressionTOs(
-            List<ExpressionCallTO> expressionTOs, List<RelationTO> relationTOs) {
-        log.entry(expressionTOs, relationTOs);
+            List<ExpressionCallTO> expressionTOs, List<RelationTO> relationTOs, 
+            Set<String> nonInformativeAnatEntities) {
+        log.entry(expressionTOs, relationTOs, nonInformativeAnatEntities);
                 
         Map<ExpressionCallTO, Set<ExpressionCallTO>> mapGlobalExpr = 
                 new HashMap<ExpressionCallTO, Set<ExpressionCallTO>>();
@@ -314,7 +464,8 @@ public class InsertGlobalExpression extends MySQLDAOUser {
             curExprAsSet.add(curExpression);
             
             for (RelationTO curRelation : relationTOs) {
-                if (curExpression.getAnatEntityId().equals(curRelation.getSourceId())) {
+                if (curExpression.getAnatEntityId().equals(curRelation.getSourceId()) && 
+                        !nonInformativeAnatEntities.contains(curRelation.getTargetId())) {
                     // Add propagated expression call (same gene ID and stage ID 
                     // but with anatomical entity ID of the current relation target ID).
                     ExpressionCallTO propagatedExpression = new ExpressionCallTO(
@@ -335,7 +486,6 @@ public class InsertGlobalExpression extends MySQLDAOUser {
                        mapGlobalExpr.put(propagatedExpression, curExprAsSet);
                     }
                     curExprAsSet.add(curExpression);
-
                 }
             }
         }
@@ -343,6 +493,35 @@ public class InsertGlobalExpression extends MySQLDAOUser {
         this.updateGlobalExpressions(mapGlobalExpr);
         
         return log.exit(mapGlobalExpr);        
+    }
+
+    /**
+     *TODO Generate the global non-expression calls from non-expression calls filling the {@code Map} 
+     * associating generated global non-expression calls to non-expression calls used to generate it.
+     * <p>
+     * This method fills the map with generic global non-expression calls (which contains only 
+     * gene ID, anatomical entity ID, and stage ID) as key and with all corresponding non-expression 
+     * calls as values. Second, it merges non-expression calls and updates the global non-expression calls 
+     * calling {@link #updateGlobalExpressions()}.
+     * 
+     * @param expressionTOs                 A {@code Set} of {@code ExpressionCallTO}s containing 
+     *                                      all expression calls to propagate.
+     * @param relationTOs                   A {@code List} of {@code RelationTO}s containing source 
+     *                                      and target IDs of all anatomical entity relations.
+     * @param nonInformativeAnatEntities    A {@code Set} of {@code String}s containing all non 
+     *                                      informative anatomical entity IDs.
+     * @param expressedAnatEntities         A {@code Set} of {@code String}s containing anatomical 
+     *                                      entity IDs having at least a global expression call.
+     * @return  A {@code Map} associating generated global expression calls as 
+     *          {@code ExpressionCallTO}s to expression calls as {@code ExpressionCallTO}s                                     
+     */
+
+    private Map<NoExpressionCallTO, Set<NoExpressionCallTO>>
+            generateGlobalNoExpressionTOs(List<NoExpressionCallTO> noExpressionTOs,
+                    List<RelationTO> relationTOs, Set<String> nonInformativeAnatEntities,
+                    Set<String> expressedAnatEntities) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     /**
@@ -390,6 +569,7 @@ public class InsertGlobalExpression extends MySQLDAOUser {
             }
 
             // Add the updated global expression call
+            //TODO with instance of
             globalExprMap.put(
                     new ExpressionCallTO(String.valueOf(this.globalExprId++), 
                             globalExpression.getGeneId(), globalExpression.getAnatEntityId(), 
@@ -416,5 +596,59 @@ public class InsertGlobalExpression extends MySQLDAOUser {
             return log.exit(dataState2);
         }
         return log.exit(dataState1);
+    }
+
+    /**
+     * Generate the {code GlobalExpressionToExpressionTO}s from the given {@code Map} 
+     * associating generated global expression calls to expression calls used to generate it.
+     * 
+     * @param globalExprMap A {@code Map} associating generated global expression calls to
+     *                      expression calls as {@code ExpressionCallTO}s to be inserted into 
+     *                      globalExpressionToExpression table of the Bgee database.
+     * @return              A {@code Set} of {@code GlobalExpressionToExpressionTO} containing 
+     *                      {@code GlobalExpressionToExpressionTO}s to be inserted into the 
+     *                      Bgee database.
+     */
+    private Set<GlobalExpressionToExpressionTO> generateGlobalExprToExprTOs(
+            Map<ExpressionCallTO, Set<ExpressionCallTO>> globalExprMap) {
+        log.entry(globalExprMap);
+        
+        Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
+                new HashSet<GlobalExpressionToExpressionTO>();
+        for (Entry<ExpressionCallTO, Set<ExpressionCallTO>> entry: globalExprMap.entrySet()) {
+            for (ExpressionCallTO expression : entry.getValue()) {
+                globalExprToExprTOs.add(new GlobalExpressionToExpressionTO(
+                        expression.getId(), entry.getKey().getId()));
+            }
+        }
+        
+        return log.exit(globalExprToExprTOs);
+    }
+
+    /**
+     * Generate the {code GlobalNoExpressionToNoExpressionTO}s from the given {@code Map} 
+     * associating generated global non-expression calls to non-expression calls used to generate it.
+     * 
+     * @param globalNoExprMap   A {@code Map} associating generated global non-expression calls to
+     *                          non-expression calls as {@code NoExpressionCallTO}s to be inserted 
+     *                          into globalNoExpressionToNoExpression table of the Bgee database.
+     * @return                  A {@code Set} of {@code GlobalNoExpressionToNoExpressionTO} 
+     *                          containing {@code GlobalNoExpressionToNoExpressionTO}s to be 
+     *                          inserted into the Bgee database.
+     */
+    private Set<GlobalNoExpressionToNoExpressionTO> generateGlobalNoExprToNoExprTOs(
+            Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalNoExprMap) {
+        log.entry(globalNoExprMap);
+        
+        Set<GlobalNoExpressionToNoExpressionTO> globalNoExprToNoExprTOs = 
+                new HashSet<GlobalNoExpressionToNoExpressionTO>();
+        for (Entry<NoExpressionCallTO, Set<NoExpressionCallTO>> entry: globalNoExprMap.entrySet()) {
+            for (NoExpressionCallTO expression : entry.getValue()) {
+                globalNoExprToNoExprTOs.add(new GlobalNoExpressionToNoExpressionTO(
+                        expression.getId(), entry.getKey().getId()));
+            }
+        }
+        
+        return log.exit(globalNoExprToNoExprTOs);
     }
 }

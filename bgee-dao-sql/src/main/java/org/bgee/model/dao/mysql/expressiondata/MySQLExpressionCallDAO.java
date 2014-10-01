@@ -18,7 +18,6 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 
 /**
  * A {@code ExpressionCallDAO} for MySQL. 
@@ -118,7 +117,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         } else {
             for (ExpressionCallDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql.append("SELECT ");
+                    sql.append("SELECT DISTINCT ");
                 } else {
                     sql.append(", ");
                 }

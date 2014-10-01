@@ -53,7 +53,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         } else {
             for (SpeciesDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql.append("SELECT ");
+                    sql.append("SELECT DISTINCT ");
                 } else {
                     sql.append(", ");
                 }

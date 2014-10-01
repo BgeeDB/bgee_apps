@@ -125,16 +125,23 @@ public class CallPropagationTest extends TestAncestor {
         when(mockManager.mockRelationDAO.getAllAnatEntityRelations(
                 valueSetEq(speciesFilter), 
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
-                valueSetEq(EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT)))).
+                valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
         // Determine the behavior of consecutive calls to getAllTOs().
+        //TODO: you should mock successive values returned by the resultset, 
+        //not the result of getAllTOs, because this is way too much implementation dependent.
         when(mockManager.mockRelationDAO.getAllTOs(mockRelation11TORs)).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id3", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id2"),
                 new RelationTO("Anat_id5", "Anat_id4"),
                 new RelationTO("Anat_id5", "Anat_id1"),
-                new RelationTO("Anat_id5", "Anat_id2")));
+                new RelationTO("Anat_id5", "Anat_id2"),
+                new RelationTO("Anat_id1", "Anat_id1"),
+                new RelationTO("Anat_id2", "Anat_id2"),
+                new RelationTO("Anat_id3", "Anat_id3"),
+                new RelationTO("Anat_id4", "Anat_id4"),
+                new RelationTO("Anat_id5", "Anat_id5")));
 
         // We need a mock MySQLRelationTOResultSet to mock the return of getAllAnatEntityRelations().
         MySQLRelationTOResultSet mockRelation21TORs = mock(MySQLRelationTOResultSet.class);
@@ -143,14 +150,20 @@ public class CallPropagationTest extends TestAncestor {
         when(mockManager.mockRelationDAO.getAllAnatEntityRelations(
                 valueSetEq(speciesFilter), 
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
-                valueSetEq(EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT)))).
+                valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation21TORs);
         // Determine the behavior of consecutive calls to getAllTOs().
+        //TODO: you should mock successive values returned by the resultset, 
+        //not the result of getAllTOs, because this is way too much implementation dependent.
         when(mockManager.mockRelationDAO.getAllTOs(mockRelation21TORs)).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id8", "Anat_id6"),
                 new RelationTO("Anat_id9", "Anat_id8"),
                 new RelationTO("Anat_id9", "Anat_id6"),
-                new RelationTO("Anat_id9", "Anat_id7")));
+                new RelationTO("Anat_id9", "Anat_id7"),
+                new RelationTO("Anat_id6", "Anat_id6"),
+                new RelationTO("Anat_id7", "Anat_id7"),
+                new RelationTO("Anat_id8", "Anat_id8"),
+                new RelationTO("Anat_id9", "Anat_id9")));
 
         CallPropagation insert = new CallPropagation(mockManager);
         insert.insert(null, false);
@@ -308,9 +321,11 @@ public class CallPropagationTest extends TestAncestor {
         when(mockManager.mockRelationDAO.getAllAnatEntityRelations(
                 valueSetEq(new HashSet<String>(speciesId)), 
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
-                valueSetEq(EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT)))).
+                valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
         // Determine the behavior of consecutive calls to getAllTOs().
+        //TODO: you should mock successive values returned by the resultset, 
+        //not the result of getAllTOs, because this is way too much implementation dependent.
         when(mockManager.mockRelationDAO.getAllTOs(mockRelation11TORs)).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id3", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id1"),
@@ -319,7 +334,13 @@ public class CallPropagationTest extends TestAncestor {
                 new RelationTO("Anat_id5", "Anat_idX"),
                 new RelationTO("Anat_id5", "Anat_id4"),
                 new RelationTO("Anat_id5", "Anat_id1"),
-                new RelationTO("Anat_id5", "Anat_id2")));
+                new RelationTO("Anat_id5", "Anat_id2"),
+                new RelationTO("Anat_id1", "Anat_id1"),
+                new RelationTO("Anat_id2", "Anat_id2"),
+                new RelationTO("Anat_id3", "Anat_id3"),
+                new RelationTO("Anat_id4", "Anat_id4"),
+                new RelationTO("Anat_id5", "Anat_id5"),
+                new RelationTO("Anat_idX", "Anat_idX")));
         
         MySQLExpressionCallTOResultSet mockGlobalExprTORs =
                 mock(MySQLExpressionCallTOResultSet.class);
@@ -341,6 +362,25 @@ public class CallPropagationTest extends TestAncestor {
                     throws Throwable {
                 // Return true while there is speciesTO to return 
                 return counter++ < 5;
+            }
+        });
+        
+
+        //TODO: refactor
+        // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
+        MySQLSpeciesTOResultSet mockSpeciesTORs = mock(MySQLSpeciesTOResultSet.class);
+        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
+        // Determine the behavior of consecutive calls to getTO().
+        when(mockSpeciesTORs.getTO()).thenReturn(
+                new SpeciesTO("11", null, null, null, null, null, null, null),
+                new SpeciesTO("21", null, null, null, null, null, null, null));
+        // Determine the behavior of consecutive calls to next().
+        when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
+            int counter = 0;
+            public Boolean answer(InvocationOnMock invocationOnMock) 
+                    throws Throwable {
+                // Return true while there is speciesTO to return 
+                return counter++ < 2;
             }
         });
 
@@ -371,7 +411,7 @@ public class CallPropagationTest extends TestAncestor {
                 exprTOsArgGlobalNoExpr.getValue(), NoExpressionCallTO.class);
         if (!TOComparator.areTOCollectionsEqual(expectedNoExpr, cleanSet)) {
             throw new AssertionError("Incorrect NoExpressionCallTOs generated to insert "
-                    + "global no-expression calls, expected " + expectedNoExpr.toString() + 
+                    + "global no-expression calls, expected " + expectedNoExpr + 
                     ", but was " + cleanSet);
         }
 

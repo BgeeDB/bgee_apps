@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
@@ -92,7 +91,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         } else {
             for (NoExpressionCallDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql.append("SELECT ");
+                    sql.append("SELECT DISTINCT ");
                 } else {
                     sql.append(", ");
                 }

@@ -62,7 +62,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         } else {
             for (RelationDAO.Attribute attribute: attributes) {
                 if (StringUtils.isEmpty(sql)) {
-                    sql = "SELECT ";
+                    sql = "SELECT DISTINCT ";
                 } else {
                     sql += ", ";
                 }

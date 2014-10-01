@@ -574,7 +574,7 @@ abstract class UberonCommon {
      * of the call to this method.
      * 
      * @param allowedRels       A {@code Collection} of {@code String}s 
-     *                          representing the OBO-style IDs of the relations 
+     *                          representing the OBO-like IDs of the relations 
      *                          to keep in the ontology, e.g. "BFO:0000050". 
      */
     void removeUnrelatedRelations(Collection<String> allowedRels) {
@@ -653,8 +653,7 @@ abstract class UberonCommon {
         log.debug("Allowed OWLObjectProperties: {}" + propsToConsider);
         
         
-        //now, for each OWLObjectProperty, we check whether it has one of the requested 
-        //properties in its signature, or in the signature of a super or sub-property
+        //now, remove unrelated props
         Set<OWLObjectProperty> propsRemoved = new HashSet<OWLObjectProperty>();
         for (OWLOntology ont: wrapper.getAllOntologies()) {
 

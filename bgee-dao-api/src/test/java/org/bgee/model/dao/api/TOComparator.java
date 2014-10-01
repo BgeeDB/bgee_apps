@@ -11,6 +11,8 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
@@ -77,9 +79,14 @@ public class TOComparator {
             return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
         } else if (to1 instanceof ExpressionCallTO) {
             return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2));
+        } else if (to1 instanceof NoExpressionCallTO) {
+            return log.exit(areTOsEqual((NoExpressionCallTO) to1, (NoExpressionCallTO) to2));
         } else if (to1 instanceof GlobalExpressionToExpressionTO) {
             return log.exit(areTOsEqual((
                     GlobalExpressionToExpressionTO) to1, (GlobalExpressionToExpressionTO) to2));
+        } else if (to1 instanceof GlobalNoExpressionToNoExpressionTO) {
+            return log.exit(areTOsEqual((
+                    GlobalNoExpressionToNoExpressionTO) to1, (GlobalNoExpressionToNoExpressionTO) to2));
         }
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
                 "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
@@ -120,7 +127,7 @@ public class TOComparator {
                 }
             }
             if (!found) {
-                log.trace("No equivalent term found for {}", to1);
+                log.trace("No equivalent TransferObject {} found for {}", to1.getClass(), to1);
                 return log.exit(false);
             }      
         }
@@ -364,6 +371,25 @@ public class TOComparator {
     }
     
     /**
+     * Method to compare two {@code NoExpressionCallTO}s, to check for complete equality of each
+     * attribute. 
+     * 
+     * @param to1   An {@code NoExpressionCallTO} to be compared to {@code to2}.
+     * @param to2   An {@code NoExpressionCallTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    private static boolean areTOsEqual(NoExpressionCallTO to1, NoExpressionCallTO to2) {
+        log.entry(to1, to2);
+        if (TOComparator.areCallTOsEqual(to1, to2) && 
+                to1.isIncludeParentStructures() == to2.isIncludeParentStructures() && 
+                to1.getOriginOfLine() == to2.getOriginOfLine()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
      * Method to compare two {@code GlobalExpressionToExpressionTO}s, to check for complete 
      * equality of each attribute. 
      * 
@@ -377,6 +403,25 @@ public class TOComparator {
         log.entry(to1, to2);
         if (to1.getExpressionId() == to2.getExpressionId() && 
                 to1.getGlobalExpressionId() == to2.getGlobalExpressionId()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * Method to compare two {@code GlobalNoExpressionToNoExpressionTO}s, to check for complete 
+     * equality of each attribute. 
+     * 
+     * @param to1   A {@code GlobalNoExpressionToNoExpressionTO} to be compared to {@code to2}.
+     * @param to2   A {@code GlobalNoExpressionToNoExpressionTO} to be compared to {@code to1}.
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    private static boolean areTOsEqual(GlobalNoExpressionToNoExpressionTO to1, 
+            GlobalNoExpressionToNoExpressionTO to2) {
+        log.entry(to1, to2);
+        if (to1.getNoExpressionId() == to2.getNoExpressionId() && 
+                to1.getGlobalNoExpressionId() == to2.getGlobalNoExpressionId()) {
             return log.exit(true);
         }
         return log.exit(false);

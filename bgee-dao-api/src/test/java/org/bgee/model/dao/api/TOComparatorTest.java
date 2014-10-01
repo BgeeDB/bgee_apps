@@ -13,7 +13,8 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
@@ -171,15 +172,35 @@ public class TOComparatorTest extends TestAncestor {
     public void testAreExpressionCallTOEqual() {
         ExpressionCallTO to1 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, OriginOfLine.SELF);
+                DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF);
         ExpressionCallTO to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, OriginOfLine.SELF);
+                DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         
         to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, OriginOfLine.DESCENT);
+                DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.DESCENT);
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code NoExpressionCallTO}s.
+     */
+    @Test
+    public void testAreNoExpressionCallTOEqual() {
+        NoExpressionCallTO to1 = new NoExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
+        NoExpressionCallTO to2 = new NoExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF);
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new NoExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.PARENT);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 
@@ -194,6 +215,20 @@ public class TOComparatorTest extends TestAncestor {
         assertTrue(TOComparator.areTOsEqual(to1, to2));
         
         to2 = new GlobalExpressionToExpressionTO("1", "20");
+        assertFalse(TOComparator.areTOsEqual(to1, to2));
+    }
+    
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object)} 
+     * using {@code GlobalNoExpressionToNoExpressionTO}s.
+     */
+    @Test
+    public void testAreGlobalNoExpressionToNoExpressionTOEqual() {
+        GlobalNoExpressionToNoExpressionTO to1 = new GlobalNoExpressionToNoExpressionTO("1", "10");
+        GlobalNoExpressionToNoExpressionTO to2 = new GlobalNoExpressionToNoExpressionTO("1", "10");
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+        
+        to2 = new GlobalNoExpressionToNoExpressionTO("1", "20");
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
 

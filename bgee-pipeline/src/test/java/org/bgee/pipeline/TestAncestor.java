@@ -12,6 +12,7 @@ import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -88,6 +89,8 @@ public abstract class TestAncestor
         public final MySQLRelationDAO mockRelationDAO = mock(MySQLRelationDAO.class);
         public final MySQLExpressionCallDAO mockExpressionCallDAO = 
                 mock(MySQLExpressionCallDAO.class);
+        public final MySQLNoExpressionCallDAO mockNoExpressionCallDAO = 
+                mock(MySQLNoExpressionCallDAO.class);
         public final MySQLAnatEntityDAO mockAnatEntityDAO = mock(MySQLAnatEntityDAO.class);
         
         public MockDAOManager() {
@@ -156,6 +159,10 @@ public abstract class TestAncestor
         @Override
         protected MySQLExpressionCallDAO getNewExpressionCallDAO() {
             return this.mockExpressionCallDAO;
+        }
+        @Override
+        protected MySQLNoExpressionCallDAO getNewNoExpressionCallDAO() {
+            return this.mockNoExpressionCallDAO;
         }
         @Override
         protected MySQLAnatEntityDAO getNewAnatEntityDAO() {

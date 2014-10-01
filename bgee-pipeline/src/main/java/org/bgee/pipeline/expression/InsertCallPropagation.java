@@ -44,12 +44,12 @@ import org.bgee.pipeline.MySQLDAOUser;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class InsertGlobalExpression extends MySQLDAOUser {
+public class InsertCallPropagation extends MySQLDAOUser {
 
     /**
      * {@code Logger} of the class.
      */
-    private final static Logger log = LogManager.getLogger(InsertGlobalExpression.class.getName());
+    private final static Logger log = LogManager.getLogger(InsertCallPropagation.class.getName());
     
     /**
      * An {@code int} that is a unique ID for each global expression calls.
@@ -64,7 +64,7 @@ public class InsertGlobalExpression extends MySQLDAOUser {
     /**
      * Default constructor. 
      */
-    public InsertGlobalExpression() {
+    public InsertCallPropagation() {
         this(null);
     }
 
@@ -74,7 +74,7 @@ public class InsertGlobalExpression extends MySQLDAOUser {
      * 
      * @param manager   the {@code MySQLDAOManager} to use.
      */
-    public InsertGlobalExpression(MySQLDAOManager manager) {
+    public InsertCallPropagation(MySQLDAOManager manager) {
         super(manager);
         this.globalExprId = 1;
         this.globalNoExprId = 1;
@@ -115,7 +115,7 @@ public class InsertGlobalExpression extends MySQLDAOUser {
             speciesIds = CommandRunner.parseListArgument(args[1]);    
         }
         
-        InsertGlobalExpression insert = new InsertGlobalExpression();
+        InsertCallPropagation insert = new InsertCallPropagation();
         insert.insert(speciesIds, isNoExpression);
         
         log.exit();

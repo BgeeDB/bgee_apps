@@ -39,18 +39,18 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-public class InsertGlobalExpressionTest extends TestAncestor {
+public class InsertCallPropagationTest extends TestAncestor {
 
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(InsertGlobalExpressionTest.class.getName());
+            LogManager.getLogger(InsertCallPropagationTest.class.getName());
     
     /**
      * Default Constructor. 
      */
-    public InsertGlobalExpressionTest() {
+    public InsertCallPropagationTest() {
         super();
     }
     @Override
@@ -152,7 +152,7 @@ public class InsertGlobalExpressionTest extends TestAncestor {
                 new RelationTO("Anat_id9", "Anat_id6"),
                 new RelationTO("Anat_id9", "Anat_id7")));
 
-        InsertGlobalExpression insert = new InsertGlobalExpression(mockManager);
+        InsertCallPropagation insert = new InsertCallPropagation(mockManager);
         insert.insert(null, false);
 
         ArgumentCaptor<Set> exprTOsArgGlobalExpr = ArgumentCaptor.forClass(Set.class);
@@ -344,7 +344,7 @@ public class InsertGlobalExpressionTest extends TestAncestor {
             }
         });
 
-        InsertGlobalExpression insert = new InsertGlobalExpression(mockManager);
+        InsertCallPropagation insert = new InsertCallPropagation(mockManager);
         insert.insert(speciesId, true);
 
         ArgumentCaptor<Set> exprTOsArgGlobalNoExpr = ArgumentCaptor.forClass(Set.class);
@@ -502,7 +502,7 @@ public class InsertGlobalExpressionTest extends TestAncestor {
      * Custom matcher for verifying actual and expected {@code CallParams}.
      */
     private static class CallParamsMatcher extends ArgumentMatcher<CallParams> {
-     
+      
         private final CallParams expected;
      
         public CallParamsMatcher(CallParams expected) {

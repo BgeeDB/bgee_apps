@@ -39,18 +39,18 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-public class InsertCallPropagationTest extends TestAncestor {
+public class CallPropagationTest extends TestAncestor {
 
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(InsertCallPropagationTest.class.getName());
+            LogManager.getLogger(CallPropagationTest.class.getName());
     
     /**
      * Default Constructor. 
      */
-    public InsertCallPropagationTest() {
+    public CallPropagationTest() {
         super();
     }
     @Override
@@ -152,7 +152,7 @@ public class InsertCallPropagationTest extends TestAncestor {
                 new RelationTO("Anat_id9", "Anat_id6"),
                 new RelationTO("Anat_id9", "Anat_id7")));
 
-        InsertCallPropagation insert = new InsertCallPropagation(mockManager);
+        CallPropagation insert = new CallPropagation(mockManager);
         insert.insert(null, false);
 
         ArgumentCaptor<Set> exprTOsArgGlobalExpr = ArgumentCaptor.forClass(Set.class);
@@ -344,7 +344,7 @@ public class InsertCallPropagationTest extends TestAncestor {
             }
         });
 
-        InsertCallPropagation insert = new InsertCallPropagation(mockManager);
+        CallPropagation insert = new CallPropagation(mockManager);
         insert.insert(speciesId, true);
 
         ArgumentCaptor<Set> exprTOsArgGlobalNoExpr = ArgumentCaptor.forClass(Set.class);

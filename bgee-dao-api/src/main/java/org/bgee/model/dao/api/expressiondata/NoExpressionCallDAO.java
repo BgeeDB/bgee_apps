@@ -403,7 +403,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         @Override
         public String toString() {
             return "noExpressionId: " + noExpressionId + 
-                    "- globalNoExpressionId: " + globalNoExpressionId;
+                    " - globalNoExpressionId: " + globalNoExpressionId;
         }
 
         @Override

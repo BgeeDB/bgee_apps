@@ -27,7 +27,6 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -175,14 +174,6 @@ public class CallPropagation extends MySQLDAOUser {
                 
                 if (isNoExpression) {
                     // Retrieve all no-expression calls of the current species.
-                    
-                    //TODO: actually here, you should not load all TOs from the database 
-                    //in memory, as you will use only one of them at a time anyway; 
-                    //You should use the ResultSet to retrieve one TO at a time, 
-                    //to not overload the memory. 
-                    //When I said to put all TOs in memory, I meant the generated TOs 
-                    //with expression propagated, as this avoid multiple SELECT/UPDATE. 
-                    //Not the calls from the database.
                     List<NoExpressionCallTO> noExpressionTOs = 
                             this.loadNoExpressionCallFromDb(speciesFilter);
 
@@ -190,8 +181,6 @@ public class CallPropagation extends MySQLDAOUser {
                             this.loadGlobalExprAnatomicalEntitiesFromDb(speciesFilter);
                     
                     // For each expression row, propagate to children.
-                    //TODO: so here, rather than providing noExpressionTOs, 
-                    //you will provide the resultset.
                     Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalNoExprMap =
                             this.generateGlobalNoExpressionTOs(noExpressionTOs, relationTOs, 
                                     anatomicalEntityFilter);
@@ -223,14 +212,6 @@ public class CallPropagation extends MySQLDAOUser {
                             nbInsertedNoExpressions, nbInsertedGlobalNoExprToNoExpr);
                 } else {
                     // Retrieve all expression calls of the current species.
-                    
-                    //TODO: actually here, you should not load all TOs from the database 
-                    //in memory, as you will use only one of them at a time anyway; 
-                    //You should use the ResultSet to retrieve one TO at a time, 
-                    //to not overload the memory. 
-                    //When I said to put all TOs in memory, I meant the generated TOs 
-                    //with expression propagated, as this avoid multiple SELECT/UPDATE. 
-                    //Not the calls from the database.
                     List<ExpressionCallTO> expressionTOs = 
                             this.loadExpressionCallFromDb(speciesFilter);
 
@@ -239,8 +220,6 @@ public class CallPropagation extends MySQLDAOUser {
                             this.generateGlobalExpressionTOs(expressionTOs, relationTOs);
 
                     // Generate the globalExprToExprTOs.
-                    //TODO: so here, rather than providing noExpressionTOs, 
-                    //you will provide the resultset.
                     Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
                             this.generateGlobalCallToCallTOs(globalExprMap, 
                                     GlobalExpressionToExpressionTO.class);

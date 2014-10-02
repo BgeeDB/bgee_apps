@@ -1,10 +1,8 @@
 package org.bgee.pipeline.uberon;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -16,13 +14,10 @@ import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatConstants.OboFormatTag;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
@@ -30,7 +25,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 
 import owltools.graph.OWLGraphEdge;
@@ -557,126 +551,6 @@ abstract class UberonCommon {
                 existingEdge.getQuantifiedPropertyList(), 
                 existingEdge.getOntology(), null, 
                 filler, prop));
-    }
-    
-    /**
-     * Remove from all {@code OWLOntologies} wrapped by this object 
-     * the {@code OWLObjectProperty}s not related to the provided {@code allowedRels}. 
-     * This method is useful to mirror the method 
-     * {@code OWLGraphManipulator#filterRelations(Collection, boolean)} using value 
-     * returned by {@link #getRelIds()}, to remove all completely unrelated relations 
-     * before actually filtering the relations. This is because we need related relations 
-     * for relation reduction, before applying the filtering (a composed relation 
-     * could for instance lead to an allowed relation, so we do not want to remove 
-     * the relations used for composition before relation reduction, even if not allowed). 
-     * <p>
-     * The {@code OWLOntology}s wrapped by this object will be modified as a result 
-     * of the call to this method.
-     * 
-     * @param allowedRels       A {@code Collection} of {@code String}s 
-     *                          representing the OBO-like IDs of the relations 
-     *                          to keep in the ontology, e.g. "BFO:0000050". 
-     */
-    void removeUnrelatedRelations(Collection<String> allowedRels) {
-        log.entry(allowedRels);
-        log.info("Removing relations unrelated to allowed relations...");
-        if (allowedRels.isEmpty()) {
-            log.info("Nothing to be done, exiting method.");
-            log.exit(); return;
-        }
-        
-        OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
-        //we will avoid the use of recursivity thanks to a Deque.
-        Deque<OWLObjectPropertyExpression> walkProps = 
-                new ArrayDeque<OWLObjectPropertyExpression>();
-        
-        //first, we retrieve the allowed rels
-        for (String propId: allowedRels) {
-            //get the OWLObjectProperty corresponding to the iterated ID
-            OWLObjectProperty prop = wrapper.getOWLObjectPropertyByIdentifier(propId);
-            //maybe the ID was not an OBO-like ID, but a String corresponding to an IRI
-            if (prop == null) {
-                prop = wrapper.getOWLObjectProperty(propId);
-            }
-            //could not find an property corresponding to the ID
-            if (prop == null) {
-                throw new IllegalArgumentException("The ID '" + propId + 
-                        "' does not correspond to any OWLObjectProperty");
-            }
-            walkProps.addFirst(prop);
-        }
-        
-        //now, we retrieve all associated properties and sub-properties
-        Set<OWLObjectPropertyExpression> propsToConsider = 
-                new HashSet<OWLObjectPropertyExpression>();
-        OWLObjectPropertyExpression iteratedProp;
-        while ((iteratedProp = walkProps.pollFirst()) != null) {
-            //avoid cycle of props
-            if (propsToConsider.contains(iteratedProp)) {
-                continue;
-            }
-            log.trace("Examining property {}", iteratedProp);
-            
-            propsToConsider.add(iteratedProp);
-            //we will also check all its children
-            walkProps.addAll(wrapper.getSubPropertyClosureOf(iteratedProp));
-            
-            //now, also consider equivalent relations and relations whose chain can generate 
-            //an allowed rel.
-            Set<OWLAxiom> propAxioms = new HashSet<OWLAxiom>();
-            for (OWLOntology ont: wrapper.getAllOntologies()) {
-                propAxioms.addAll(ont.getAxioms(iteratedProp));
-                if (iteratedProp instanceof OWLEntity) {
-                    //need the referencing axioms for the OWLSubPropertyChainOfAxiom, 
-                    //weirdly it is not returned by ont.getAxioms
-                    propAxioms.addAll(((OWLEntity) iteratedProp).getReferencingAxioms(ont));
-                }
-            }
-            for (OWLAxiom ax: propAxioms) {
-                log.trace("Examining axiom {}", ax);
-                if (ax instanceof OWLSubPropertyChainOfAxiom) {
-                    OWLSubPropertyChainOfAxiom chainAx = (OWLSubPropertyChainOfAxiom) ax;
-                    if (chainAx.getSuperProperty().equals(iteratedProp)) {
-                        for (OWLObjectPropertyExpression propExpr: chainAx.getPropertyChain()) {
-                            walkProps.addLast(propExpr);
-                        }
-                    }
-                } else if (ax instanceof OWLEquivalentObjectPropertiesAxiom) {
-                    for (OWLObjectPropertyExpression propExpr: 
-                        ((OWLEquivalentObjectPropertiesAxiom) ax).getPropertiesMinus(iteratedProp)) {
-
-                        walkProps.addLast(propExpr);
-                    }
-                }
-            }
-        }
-        log.debug("Allowed OWLObjectProperties: {}" + propsToConsider);
-        
-        
-        //now, remove unrelated props
-        Set<OWLObjectProperty> propsRemoved = new HashSet<OWLObjectProperty>();
-        for (OWLOntology ont: wrapper.getAllOntologies()) {
-
-            OWLEntityRemover remover = new OWLEntityRemover(ont.getOWLOntologyManager(), 
-                    new HashSet<OWLOntology>(Arrays.asList(ont)));
-            
-            for (OWLObjectProperty prop: ont.getObjectPropertiesInSignature()) {
-                if (!propsToConsider.contains(prop)) {
-                    log.trace("Prop {} will be removed", prop);
-                    propsRemoved.add(prop);
-                    prop.accept(remover);
-                } else {
-                    log.trace("Prop {} will be kept", prop);
-                }
-            }
-            
-            ont.getOWLOntologyManager().applyChanges(remover.getChanges());
-            wrapper.clearCachedEdges();
-        }
-        
-        log.info("Done removing relations unrelated to allowed relations, {} relations removed: {}", 
-                propsRemoved.size(), propsRemoved);
-        log.exit();
     }
 
 

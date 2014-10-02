@@ -343,11 +343,6 @@ public class UberonDevStage extends UberonCommon {
                 this.getRelsBetweenToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
-        //remove completely unrelated relations
-        if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
-            this.removeUnrelatedRelations(this.getRelIds());
-        }
-        
         //before using OWLGraphManipulator, we remove all taxon EquivalentClass axioms. 
         //This is because there is a bug 
         //where species-specific stages are dangling thanks to their EC axioms. 
@@ -357,6 +352,11 @@ public class UberonDevStage extends UberonCommon {
         
         //now, we can safely use the manipulator
         OWLGraphManipulator manipulator = this.getOntologyUtils().getManipulator();
+        
+        //remove completely unrelated relations to simplify relation reuction
+        if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
+            manipulator.removeUnrelatedRelations(this.getRelIds());
+        }
 
         //potential terms to call this code on: 
         //UBERON:0000067 embryo stage part

@@ -364,15 +364,15 @@ public class Uberon extends UberonCommon {
                 this.getToFilterSubgraphRootIds(), this.getSubsetNames(), 
                 this.getClassIdsExcludedFromSubsetRemoval());
         
-        //remove completely unrelated relations
-        if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
-            this.removeUnrelatedRelations(this.getRelIds());
-        }
-        
         //convert taxon ECAs
         this.convertTaxonECAs();
         
         OWLGraphManipulator manipulator = this.getOntologyUtils().getManipulator();
+        
+        //remove completely unrelated relations to simplify relation reuction
+        if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
+            manipulator.removeUnrelatedRelations(this.getRelIds());
+        }
 
         if (this.getClassIdsToRemove() != null) {
             for (String classIdToRemove: this.getClassIdsToRemove()) {

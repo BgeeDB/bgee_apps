@@ -326,13 +326,16 @@ public class InsertUberon extends MySQLDAOUser {
     private void generateClassInformation(Uberon uberon, Set<OWLClass> classesToIgnore, 
             Collection<Integer> speciesIds) {
         log.entry(uberon, classesToIgnore, speciesIds);
+        log.info("Generating AnatomicalEntityTOs and related taxon constraints...");
         
         OntologyUtils utils = uberon.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
         
         for (OWLOntology ont: wrapper.getAllOntologies()) {
             for (OWLClass cls: ont.getClassesInSignature(true)) {
+                log.trace("Iterating OWLClass {}", cls);
                 if (!this.isValidClass(cls, uberon, classesToIgnore, speciesIds)) {
+                    log.trace("Class discarded because invalid");
                     continue;
                 }
                 //we use the getOWLClass method to check if it is a taxon equivalent class, 
@@ -365,17 +368,22 @@ public class InsertUberon extends MySQLDAOUser {
                 //and anatRelTaxonConstraintTOs for "identity" relation
                 if (uberon.existsInAllSpecies(cls, speciesIds)) {
                     //a null speciesId means: exists in all species
-                    this.anatEntityTaxonConstraintTOs.add(new TaxonConstraintTO(id, null));
+                    TaxonConstraintTO taxConstrTO = new TaxonConstraintTO(id, null);
+                    this.anatEntityTaxonConstraintTOs.add(taxConstrTO);
+                    log.trace("Generating taxon constraint: {}", taxConstrTO);
                 } else {
                     for (int speciesId: uberon.existsInSpecies(cls, speciesIds)) {
-                        this.anatEntityTaxonConstraintTOs.add(
-                                new TaxonConstraintTO(id, Integer.toString(speciesId)));
+                        TaxonConstraintTO taxConstrTO = 
+                                new TaxonConstraintTO(id, Integer.toString(speciesId));
+                        this.anatEntityTaxonConstraintTOs.add(taxConstrTO);
+                        log.trace("Generating taxon constraint: {}", taxConstrTO);
                     }
                 }
             }
         }
 
-        
+        log.info("Done generating AnatomicalEntityTOs and related taxon constraints., {} TOs generated", 
+                this.anatEntityTOs.size());
         log.exit();
     }
     
@@ -405,6 +413,7 @@ public class InsertUberon extends MySQLDAOUser {
     private void generateRelationInformation(Uberon uberon, Set<OWLClass> classesToIgnore, 
             Collection<Integer> speciesIds) {
         log.entry(uberon, classesToIgnore, speciesIds);
+        log.info("Generating RelationTOs and related taxon constraints...");
         
         OntologyUtils utils = uberon.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
@@ -606,7 +615,7 @@ public class InsertUberon extends MySQLDAOUser {
             log.trace("Generating proper RelationTO: {}", newRelTO);
             
             Set<Integer> inSpecies = relTOEntry.getValue();
-            if (inSpecies.isEmpty()) {
+            if (inSpecies.isEmpty() || inSpecies.containsAll(speciesIds)) {
                 //a null speciesId means: exists in all species
                 TaxonConstraintTO taxConstraintTO = 
                         new TaxonConstraintTO(Integer.toString(relationId), null);
@@ -622,7 +631,9 @@ public class InsertUberon extends MySQLDAOUser {
             }
         }
         log.debug("Done generating proper RelationTOs (second pass).");
-        
+
+        log.info("Done generating RelationTOs and related taxon constraints, {} relations generated", 
+                this.anatRelationTOs.size());
         log.exit();
     }
     

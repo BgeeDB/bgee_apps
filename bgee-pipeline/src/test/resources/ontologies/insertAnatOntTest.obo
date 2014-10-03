@@ -1,0 +1,312 @@
+format-version: 1.2
+data-version: uberon/releases/2014-07-15/composite-metazoan.owl
+subsetdef: anatomical_site_slim ""
+subsetdef: BrainName ""
+subsetdef: BrainName_Embargo ""
+subsetdef: cell_slim ""
+subsetdef: Cross-product_review ""
+subsetdef: Cross_product_review ""
+subsetdef: cumbo "CUMBO"
+subsetdef: cur ""
+subsetdef: cyclostome_subset "cyclostome structures"
+subsetdef: defined_by_ordinal_series "classes that are defined by relative position counting from first in a series of elements along an axis in an individual organism rather than by strict homology"
+subsetdef: deprecated ""
+subsetdef: developmental_classification "developmental_classification"
+subsetdef: disjointness_axiom_removed "A class which has a weakened disjointness axiom, to avoid inconsistency. These are kept separately in the uberon_disjoint_from_strict ontology."
+subsetdef: dubious_grouping "Indicates that subclasses in AOs may be inappropriately linked"
+subsetdef: early_development "A class that represents an early developmental structure, like a blastocyst. This part of the ontology is undergoing review to remove inappropriate grouping classes."
+subsetdef: efo_slim "EFO slim"
+subsetdef: emapa_ehdaa2 "derived from the union of EHDAA2 and EMAPA - still to be checked"
+subsetdef: EmbDevSlim ""
+subsetdef: FB_gloss ""
+subsetdef: FlyTed ""
+subsetdef: frequent_anatomy_items ""
+subsetdef: FT_new ""
+subsetdef: functional_classification "functional_classification"
+subsetdef: gocheck_do_not_annotate ""
+subsetdef: gocheck_do_not_manually_annotate ""
+subsetdef: goslim_aspergillus ""
+subsetdef: goslim_candida ""
+subsetdef: goslim_generic ""
+subsetdef: goslim_metagenomics ""
+subsetdef: goslim_pir ""
+subsetdef: goslim_plant ""
+subsetdef: goslim_pombe ""
+subsetdef: goslim_yeast ""
+subsetdef: gosubset_prok ""
+subsetdef: granular_stage "Subset consisting of classes describing highly granular developmental stages (for instance, '23-year-old'). Such stages might be useful for annotation purpose, but might be folded into less granular parents for display purpose."
+subsetdef: grouping_class "Subset consisting of classes creating for grouping purposes"
+subsetdef: hidden_assertion ""
+subsetdef: high_level_annotation_qc ""
+subsetdef: inconsistent_with_fma "classes that have some inconsistency with FMA"
+subsetdef: larval_OF ""
+subsetdef: loose_concept "loose concept"
+subsetdef: major_organ "somewhat fuzzy grouping for analysis purposes, currently composed of something like: liver, heart, skeletal, kidney, bladder, brain, skin, mouth, esophagus, stomach, small intestine, large intestines, trachea nose, lungs, brain, spinal cord,  peripheral nerves, kidneys, ureters, bladder, urethra, gonads"
+subsetdef: metazoa_core "core classes typically found across metazoa. one purpose is to create a rough set of terms that could be used to start a new metazoan AO. Note this subset is not yet fully fleshed out"
+subsetdef: mf_needs_review ""
+subsetdef: non_informative "abstract class brought in to group ontology classes but not informative"
+subsetdef: olfactory_system_draft ""
+subsetdef: organ_slim "organs, excluding individual muscles and skeletal elements"
+subsetdef: organism_views ""
+subsetdef: phenotype_rcn "A subset specifically created for the 2012 Phenotype RCN meeting. Includes some human-specific terms that may eventually be removed when they are adequately represented with part of relationships in FMA"
+subsetdef: RD ""
+subsetdef: sectional_anatomy_items ""
+subsetdef: termgenie_unvetted ""
+subsetdef: TL_lineage_clone ""
+subsetdef: uberon_slim "Uberon slim - somewhat arbitrary subset that excludes obscure terms and deep compositional terms"
+subsetdef: ubprop:upper_level "abstract upper-level terms not directly useful for analysis"
+subsetdef: unverified_taxonomic_grouping "Indicates that the class encompasses classes from other AOs that have not been verified"
+subsetdef: upper_level "abstract upper-level terms not directly useful for analysis"
+subsetdef: upper_ontology_conflict "Terms in this subset group together terms from different anatomy ontologies that have conflicting upper ontology/CARO assignments. For example, in FMA the naris is immaterial and in ZFA it is an organism subdivision."
+subsetdef: vertebrate_core "core classes typically found across vertebrates. one purpose is to create a rough set of terms that could be used to start a new vertebrate AO"
+subsetdef: vessel_or_tree "A term classified differently in FMA due to its treatment of branching structures - to be reviewed and revised by editors"
+subsetdef: virus_checked ""
+synonymtypedef: ABBREVIATION "abbreviation"
+synonymtypedef: BRAIN_NAME_ABV ""
+synonymtypedef: BRAND_NAME ""
+synonymtypedef: COMPARATIVE_PREFERRED "preferred term in the context of comparative anatomy"
+synonymtypedef: DEPRECATED "A historic synonym, no longer encouraged"
+synonymtypedef: DEVELOPMENTAL "developmental term"
+synonymtypedef: DUBIOUS "dubious or contested synonym"
+synonymtypedef: FORMULA ""
+synonymtypedef: HOMOLOGY "a synonym made on the basis of a possibly homologous structure in another species"
+synonymtypedef: HUMAN_PREFERRED "preferred term when talking about an instance of this class in Homo sapiens"
+synonymtypedef: InChI ""
+synonymtypedef: InChIKey ""
+synonymtypedef: INCONSISTENT "indicates that a synonym is used in an inconsistent or confusing way, typically between species"
+synonymtypedef: INN ""
+synonymtypedef: IUPAC_NAME ""
+synonymtypedef: LATIN "latin term"
+synonymtypedef: NON_AMNIOTE "synonym that is inappropriate for amniotes"
+synonymtypedef: NON_MAMMAL "synonym that is inappropriate for mammals"
+synonymtypedef: PENDING_REVIEW "expert consultation and attribution required"
+synonymtypedef: PLURAL ""
+synonymtypedef: PLURAL "PLURAL"
+synonymtypedef: PLURAL "plural term"
+synonymtypedef: SENSU "taxonomic disambiguation"
+synonymtypedef: SMILES ""
+synonymtypedef: systematic_synonym ""
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/acardv-bridge-to-uberon.owl>))) [Axioms: 9394 Logical Axioms: 2830]
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/uberon/composite-ehdaa2.owl>))) [Axioms: 252593 Logical Axioms: 62351]
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/uberon/composite-emapa.owl>))) [Axioms: 258047 Logical Axioms: 64365]
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/uberon/composite-fbbt.owl>))) [Axioms: 294723 Logical Axioms: 77813]
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/uberon/composite-ma.owl>))) [Axioms: 239438 Logical Axioms: 52199]
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/uberon/composite-wbbt.owl>))) [Axioms: 270952 Logical Axioms: 63469]
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/uberon/composite-wbls.owl>))) [Axioms: 235205 Logical Axioms: 51095]
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/uberon/composite-xao.owl>))) [Axioms: 242450 Logical Axioms: 55393]
+remark: Includes Ontology(OntologyID(OntologyIRI(<http://purl.obolibrary.org/obo/uberon/composite-zfa.owl>))) [Axioms: 245683 Logical Axioms: 58037]
+ontology: uberon/raw-composite-metazoan
+owl-axioms: Prefix(owl:=<http://www.w3.org/2002/07/owl#>)\nPrefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)\nPrefix(xml:=<http://www.w3.org/XML/1998/namespace>)\nPrefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)\nPrefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)\n\n\nOntology(\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/zfs#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/fbbt#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/zfa#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/ehdaa2#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/xao#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/aeo#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/wbls#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/emapa#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/hsapdv#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/fbdv#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/ma#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/wbbt#part_of\"^^xsd:string)\nAnnotationAssertion(<http://www.geneontology.org/formats/oboInOwl#id> <http://purl.obolibrary.org/obo/BFO_0000050> \"http://purl.obolibrary.org/obo/caro#part_of\"^^xsd:string)\n)
+
+[Term]
+id: ID:1
+name: name cls 1
+def: "Def. cls 1" [Bgee:curator]
+subset: upper_level
+
+[Term]
+id: ID:2
+name: name cls 2
+def: "Def. cls 2" [Bgee:curator]
+comment: this subgraph should be removed through taxon constraints
+relationship: part_of ID:1
+
+[Term]
+id: ID:3
+name: name cls 3
+def: "Def. cls 3" [Bgee:curator]
+comment: this subgraph should be removed through taxon constraints
+is_a: ID:2
+
+[Term]
+id: ID:4
+is_obsolete: true
+is_a: ID:1
+
+[Term]
+id: ID:5
+intersection_of: ID:1
+intersection_of: BFO:0000050 NCBITaxon:9606
+
+[Term]
+id: ID:6
+name: name cls 6
+def: "Def. cls 6" [Bgee:curator]
+relationship: part_of ID:1
+relationship: part_of ID:4 ! relation to obsolete class should not be seen
+relationship: part_of ID:3 ! relation to class to be discarded because of taxon constraints should not be seen
+
+[Term]
+id: ID:7
+name: name cls 7
+def: "Def. cls 7" [Bgee:curator]
+relationship: part_of ID:1
+relationship: part_of ID:6 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:7955"} ! this relation should not be inserted because we test to insert only human and mouse
+relationship: develops_from ID:6 {gci_relation="RO:0002202", gci_filler="NCBITaxon:9606"} ! this relation should not be inserted because it is not a taxon GCI
+
+[Term]
+id: ID:8
+name: name cls 8
+def: "Def. cls 8" [Bgee:curator]
+comment: taxon constraints to exist only in human
+relationship: part_of ID:7 ! this relation should have taxon constraints defined by the taxon constraint of its cls
+subset: non_informative
+
+[Term]
+id: ID:9
+name: name cls 9
+def: "Def. cls 9" [Bgee:curator]
+comment: taxon constraints to exist only in human and mouse
+relationship: develops_from ID:8 ! this relation should have taxon constraints defined by the taxon constraint of cls ID:8
+relationship: part_of ID:8 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9606"} ! this relation should have taxon constraints defined by the taxon constraint of cls ID:8
+relationship: part_of ID:8 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:10090"} ! this relation should have taxon constraints defined by the taxon constraint of cls ID:8
+
+[Term]
+id: ID:10
+name: name cls 10
+comment: test term with no def.
+is_a: ID:1
+subset: non_informative
+
+[Term]
+id: ID:11
+name: name cls 11
+def: "Def. cls 11" [Bgee:curator]
+comment: will test composition of indirect relations between ID:10 and ID:12
+relationship: develops_from ID:10
+
+[Term]
+id: ID:12
+name: name cls 12
+def: "Def. cls 12" [Bgee:curator]
+comment: will test composition of indirect relations between ID:10 and ID:12
+relationship: immediate_transformation_of ID:11
+
+[Term]
+id: ID:13
+name: name cls 13
+def: "Def. cls 13" [Bgee:curator]
+comment: will test composition of indirect relations with GCI between ID:10 and ID:14
+relationship: develops_from ID:10
+
+[Term]
+id: ID:14
+name: name cls 14
+def: "Def. cls 14" [Bgee:curator]
+comment: will test composition of indirect relations with GCI between ID:10 and ID:14
+relationship: immediate_transformation_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9606"}
+
+[Term]
+id: ID:15
+name: name cls 15
+def: "Def. cls 15" [Bgee:curator]
+relationship: part_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9606"} ! taxon constraints should be added and seen as existing in all requested species
+relationship: part_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:10090"} ! taxon constraints should be added and seen as existing in all requested species
+
+[Term]
+id: NCBITaxon:1
+name: taxonomy root
+
+[Term]
+id: NCBITaxon:33208
+name: Metazoa
+is_a: NCBITaxon:1
+
+[Term]
+id: NCBITaxon:7955
+name: Danio rerio
+is_a: NCBITaxon:33208
+
+[Term]
+id: NCBITaxon:9606
+name: Homo sapiens
+is_a: NCBITaxon:33208
+
+[Term]
+id: NCBITaxon:10090
+name: Mus musculus
+is_a: NCBITaxon:33208
+
+[Typedef]
+id: overlaps
+name: overlaps
+def: "A overlaps B if they share some part in common." []
+xref: RO:0002131
+transitive_over: part_of ! part of
+holds_over_chain: has_part overlaps ! overlaps
+holds_over_chain: has_part part_of ! part of
+expand_expression_to: "BFO_0000051 some (BFO_0000050 some ?Y)" []
+
+[Typedef]
+id: has_part
+name: has_part
+namespace: anatomical_entity_ontology
+is_transitive: true
+inverse_of: part_of  ! part of
+xref: BFO:0000051
+xref: OBO_REL:has_part
+is_a: overlaps  ! overlaps
+
+[Typedef]
+id: part_of
+name: part of
+is_transitive: true
+xref: BFO:0000050
+xref: OBO_REL:part_of
+is_a: overlaps ! overlaps
+
+[Typedef]
+id: has_developmental_contribution_from
+name: has developmental contribution from
+namespace: uberon
+def: "x has developmental contribution from y iff x has some part z such that z develops from y" []
+xref: RO:0002254
+is_transitive: true
+
+[Typedef]
+id: develops_from
+name: develops from
+namespace: uberon
+def: "x develops from y if and only if either (a) x directly develops from y or (b) there exists some z such that x directly develops from z and z develops from y" []
+xref: RO:0002202
+is_transitive: true
+is_a: has_developmental_contribution_from ! has developmental contribution from
+
+[Typedef]
+id: directly_develops_from
+name: directly_develops_from
+namespace: uberon
+def: "Candidate definition: x directly_develops from y if and only if there exists some developmental process (GO:0032502) p such that x and y both participates in p, and x is the output of p and y is the input of p, and a substantial portion of the matter of y comes from x, and the start of x is coincident with or after the end of y" []
+xref: RO:0002207
+is_a: develops_from ! develops from
+
+[Typedef]
+id: develops_from_part_of
+name: develops_from_part_of
+namespace: uberon
+def: "x develops from part of y if and only if there exists some z such that x develops from z and z is part of y" []
+xref: RO:0002225
+is_a: develops_from ! develops from
+
+[Typedef]
+id: immediate_transformation_of
+name: immediate transformation of
+namespace: uberon
+def: "x immediate transformation of y iff x immediately succeeds y temporally at a time boundary t, and all of the matter present in x at t is present in y at t, and all the matter in y at t is present in x at t" []
+synonym: "direct_transformation_of" EXACT [https://orcid.org/0000-0002-6601-2165]
+synonym: "immediately transforms from" EXACT [SIO:000658]
+xref: RO:0002495
+is_a: directly_develops_from ! directly_develops_from
+is_a: transformation_of ! transformation of
+property_value: seeAlso SIO:000658
+
+[Typedef]
+id: transformation_of
+name: transformation of
+namespace: uberon
+def: "x transformation of y if x is the immediate transformation of y, or is linked to y through a chain of transformation relationships" []
+synonym: "transforms from" EXACT [SIO:000657]
+xref: RO:0002494
+is_transitive: true
+is_a: develops_from ! develops from
+property_value: seeAlso SIO:000657

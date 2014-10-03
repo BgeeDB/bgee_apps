@@ -242,12 +242,27 @@ public class Uberon extends UberonCommon {
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
-     * wrapping the Uberon ontology that will be used. 
+     * wrapping the Uberon ontology that will be used, and the taxon constraints 
+     * that will be used to identify to which species classes belong.
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
      */
     public Uberon(OntologyUtils ontUtils) {
         super(ontUtils);
+    }
+    /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used. 
+     * 
+     * @param ontUtils  the {@code OntologyUtils} that will be used. 
+     * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 
+     *                          {@code OWLClass}es, and values are {@code Set}s 
+     *                          of {@code Integer}s containing the IDs of taxa 
+     *                          in which the {@code OWLClass} exists.
+     */
+    public Uberon(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) {
+        super(ontUtils);
+        this.setTaxonConstraints(taxonConstraints);
     }
     
     /**

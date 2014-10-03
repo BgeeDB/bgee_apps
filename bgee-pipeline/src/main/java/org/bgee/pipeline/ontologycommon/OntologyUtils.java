@@ -832,7 +832,7 @@ public class OntologyUtils {
      * @throws IllegalArgumentException
      */
     public void saveAsOBO(String outputFile) 
-            throws OWLOntologyCreationException, IOException, IllegalArgumentException {
+            throws IOException, IllegalArgumentException {
         log.entry(outputFile);
         this.saveAsOBO(outputFile, true);
         log.exit();
@@ -855,7 +855,7 @@ public class OntologyUtils {
      *                                      a correct name.
      */
     public void saveAsOBO(String outputFile, boolean checkStructure) 
-            throws OWLOntologyCreationException, IOException, IllegalArgumentException {
+            throws IOException, IllegalArgumentException {
         log.entry(outputFile);
 
         if (!outputFile.endsWith(".obo")) {

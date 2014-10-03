@@ -5,7 +5,6 @@ import static org.mockito.Mockito.verify;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class InsertUberonTest extends TestAncestor {
 
     
     /**
-     * Test {@link UberonDevStage#insertStageOntologyIntoDataSource(Collection)}.
+     * Test {@link InsertUberon#insertStageOntologyIntoDataSource(UberonDevStage, Collection)}.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
@@ -67,12 +66,10 @@ public class InsertUberonTest extends TestAncestor {
         //that the correct values were tried to be inserted into the database.
         MockDAOManager mockManager = new MockDAOManager();
 
-        OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
+        OWLOntology ont = OntologyUtils.loadOntology(InsertUberonTest.class.
                 getResource("/ontologies/test_dev_stage_ont.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
-        System.out.println("YE: " + ont.getAxioms(wrapper.getOWLClassByIdentifier("ID:8")));
-        System.out.println("YE2: " + ont.getEquivalentClassesAxioms(wrapper.getOWLClassByIdentifier("ID:8")));
         
         //instantiate an UberonDevStage with custom taxon constraints and mock manager
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
@@ -135,5 +132,45 @@ public class InsertUberonTest extends TestAncestor {
                     "expected " + expectedTaxonConstraintTOs.toString() + ", but was " + 
                     taxonConstraintTOsArg.getValue());
         }
+    }
+    
+    /**
+     * Test {@link InsertUberon#insertStageOntologyIntoDataSource(Uberon, Collection)}.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Test
+    public void insertAnatOntologyIntoDataSource() throws OBOFormatParserException, 
+    OWLOntologyCreationException, IOException {
+      //first, we need a mock MySQLDAOManager, for the class to acquire mock 
+        //DAOs. This will allow to verify 
+        //that the correct values were tried to be inserted into the database.
+        MockDAOManager mockManager = new MockDAOManager();
+
+        OWLOntology ont = OntologyUtils.loadOntology(InsertUberonTest.class.
+                getResource("/ontologies/test_dev_stage_ont.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+      //instantiate an UberonDevStage with custom taxon constraints and mock manager
+        Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
+        taxonConstraints.put("ID:1", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:2", new HashSet<Integer>(Arrays.asList(7955)));
+        taxonConstraints.put("ID:3", new HashSet<Integer>(Arrays.asList(7955)));
+        //obsolete class, should not be considered
+        taxonConstraints.put("ID:4", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        //ID:5 is a taxon equivalent to ID:1, should not be seen
+        taxonConstraints.put("ID:5", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        
+        taxonConstraints.put("ID:6", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:7", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+
+        taxonConstraints.put("ID:8", new HashSet<Integer>(Arrays.asList(9606)));
+        taxonConstraints.put("ID:9", new HashSet<Integer>(Arrays.asList(9606, 10090)));
+        
+        Uberon uberon = new Uberon(utils, taxonConstraints);
+        uberon.setToIgnoreSubgraphRootIds(Arrays.asList("NCBITaxon:1"));
+        
+        InsertUberon insert = new InsertUberon(mockManager);
+        insert.insertAnatOntologyIntoDataSource(uberon, Arrays.asList(9606, 10090));
     }
 }

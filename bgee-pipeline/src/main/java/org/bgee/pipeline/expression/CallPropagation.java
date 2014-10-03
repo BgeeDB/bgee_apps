@@ -177,10 +177,27 @@ public class CallPropagation extends MySQLDAOUser {
                     List<NoExpressionCallTO> noExpressionTOs = 
                             this.loadNoExpressionCallFromDb(speciesFilter);
 
-                    List<String> anatomicalEntityFilter = 
-                            this.loadGlobalExprAnatomicalEntitiesFromDb(speciesFilter);
+                    //we do not want to propagate to all terms, but only to terms 
+                    //with expression or no expression data
+                    //TODO: add test cases to check that no-expression anat entity IDs, 
+                    //and ancestors, are correctly taken into account
+                    Set<String> anatomicalEntityFilter = new HashSet<String>(
+                            this.loadExprAnatomicalEntitiesFromDb(speciesFilter));
+                    for (NoExpressionCallTO noExprCallTO: noExpressionTOs) {
+                        anatomicalEntityFilter.add(noExprCallTO.getAnatEntityId());
+                    }
+                    //we also want to allow their parents, to get a consistent graph propagation
+                    Set<String> ancestorIds = new HashSet<String>();
+                    for (String anatEntityId: anatomicalEntityFilter) {
+                        for (RelationTO relTO: relationTOs) {
+                            if (relTO.getSourceId().equals(anatEntityId)) {
+                                ancestorIds.add(relTO.getTargetId());
+                            }
+                        }
+                    }
+                    anatomicalEntityFilter.addAll(ancestorIds);
                     
-                    // For each expression row, propagate to children.
+                    // For each expression row, propagate to allowed children.
                     Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalNoExprMap =
                             this.generateGlobalNoExpressionTOs(noExpressionTOs, relationTOs, 
                                     anatomicalEntityFilter);
@@ -370,7 +387,7 @@ public class CallPropagation extends MySQLDAOUser {
     }
     
     /**
-     * Retrieves all anatomical entity IDs having at least one global expression call,
+     * Retrieves all anatomical entity IDs having at least one expression call,
      * into the Bgee database.
      * 
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
@@ -379,7 +396,7 @@ public class CallPropagation extends MySQLDAOUser {
      *                      having at least a global expression call.
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    private List<String> loadGlobalExprAnatomicalEntitiesFromDb(Set<String> speciesIds) 
+    private List<String> loadExprAnatomicalEntitiesFromDb(Set<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
         
@@ -391,7 +408,10 @@ public class CallPropagation extends MySQLDAOUser {
         
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
-        params.setIncludeSubstructures(true);
+        //we do not query global expression calls, because this way we can launch 
+        //the propagation of global expression and global no-expression calls independently. 
+        //We will propagate expression calls thanks to relations between anatomical terms.
+        //params.setIncludeSubstructures(true);
     
         ExpressionCallTOResultSet rsExpressionCalls = dao.getAllExpressionCalls(params);
         
@@ -486,7 +506,7 @@ public class CallPropagation extends MySQLDAOUser {
      *                                  all no-expression calls to be propagated.
      * @param relationTOs               A {@code List} of {@code RelationTO}s containing source 
      *                                  and target IDs of all anatomical entity relations.
-     * @param expressedAnatEntities     A {@code List} of {@code String}s containing anatomical 
+     * @param expressedAnatEntities     A {@code Set} of {@code String}s containing anatomical 
      *                                  entity IDs having at least a global expression call.
      * @return                          A {@code Map} associating generated global no-expression 
      *                                  calls ({@code NoExpressionCallTO}s) to no-expression calls.
@@ -494,8 +514,8 @@ public class CallPropagation extends MySQLDAOUser {
     //TODO: I don't understand second paragraph of javadoc :p
     private Map<NoExpressionCallTO, Set<NoExpressionCallTO>>
             generateGlobalNoExpressionTOs(List<NoExpressionCallTO> noExpressionTOs,
-                    List<RelationTO> relationTOs, List<String> expressedAnatEntities) {
-        log.entry(noExpressionTOs, relationTOs, expressedAnatEntities);
+                    List<RelationTO> relationTOs, Set<String> filteredAnatEntities) {
+        log.entry(noExpressionTOs, relationTOs, filteredAnatEntities);
 
         Map<NoExpressionCallTO, Set<NoExpressionCallTO>> mapGlobalNoExpr = 
                 new HashMap<NoExpressionCallTO, Set<NoExpressionCallTO>>();
@@ -512,7 +532,7 @@ public class CallPropagation extends MySQLDAOUser {
                 // only in anatomical entities having at least a global expression call.
                 if (curExpression.getAnatEntityId().equals(curRelation.getTargetId()) && 
                         (curRelation.getSourceId().equals(curRelation.getTargetId()) || //reflexive relation
-                                expressedAnatEntities.contains(curRelation.getSourceId()))) {
+                                filteredAnatEntities.contains(curRelation.getSourceId()))) {
                     // Set ID to null to be able to compare keys of the map on 
                     // gene ID, anatomical entity ID, and stage ID.
                     NoExpressionCallTO propagatedExpression = new NoExpressionCallTO(

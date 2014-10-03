@@ -204,6 +204,22 @@ relationship: part_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9
 relationship: part_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:10090"} ! taxon constraints should be added and seen as existing in all requested species
 
 [Term]
+id: ID:16
+name: name cls 16
+def: "Def. cls 16" [Bgee:curator]
+comment: will test removal of redundant direct relations between ID:10 and ID:17
+relationship: part_of ID:10
+
+[Term]
+id: ID:17
+name: name cls 17
+def: "Def. cls 17" [Bgee:curator]
+comment: will test removal of redundant direct relations between ID:10 and ID:17
+relationship: part_of ID:16
+relationship: part_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:10090"} ! the indirect relation is more inclusive, this direct relation should be removed
+relationship: part_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9606"} ! the indirect relation is more inclusive, this direct relation should be removed
+
+[Term]
 id: NCBITaxon:1
 name: taxonomy root
 

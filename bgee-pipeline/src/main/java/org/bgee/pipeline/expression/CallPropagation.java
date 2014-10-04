@@ -157,6 +157,15 @@ public class CallPropagation extends MySQLDAOUser {
             } else {
                 speciesIdsToUse = speciesIds;
             }
+            
+            //retrieve IDs of all anatomical entities allowed for no-expression call 
+            //propagation, see loadAllowedAnatEntities method for details. 
+            //This is done once for all species, as we want all no-expression calls 
+            //to be propagated in the same way for any species.
+            Set<String> anatEntityFilter = null;
+            if (isNoExpression) {
+                anatEntityFilter = this.loadAllowedAnatEntities();
+            }
 
             //we will propagate calls one species at a time to not overload the memory, 
             //but will insert data for all species in one single transaction: 
@@ -168,39 +177,19 @@ public class CallPropagation extends MySQLDAOUser {
                 Set<String> speciesFilter = new HashSet<String>();
                 speciesFilter.add(speciesId);
 
-                // Retrieve all relations (as RelationTOs) with relation type as "is_a part_of" 
+                // Retrieve all relations (as RelationTOs) with relation type "is_a part_of" 
                 // between anatomical structures of this species, source and target fields only.
-                List<RelationTO> relationTOs = this.loadAnatEntityRelationFromDb(speciesFilter);
+                List<RelationTO> relationTOs = this.loadIsAPartOfRelationsFromDb(speciesFilter);
                 
                 if (isNoExpression) {
                     // Retrieve all no-expression calls of the current species.
                     List<NoExpressionCallTO> noExpressionTOs = 
                             this.loadNoExpressionCallFromDb(speciesFilter);
-
-                    //we do not want to propagate to all terms, but only to terms 
-                    //with expression or no expression data
-                    //TODO: add test cases to check that no-expression anat entity IDs, 
-                    //and ancestors, are correctly taken into account
-                    Set<String> anatomicalEntityFilter = new HashSet<String>(
-                            this.loadExprAnatomicalEntitiesFromDb(speciesFilter));
-                    for (NoExpressionCallTO noExprCallTO: noExpressionTOs) {
-                        anatomicalEntityFilter.add(noExprCallTO.getAnatEntityId());
-                    }
-                    //we also want to allow their parents, to get a consistent graph propagation
-                    Set<String> ancestorIds = new HashSet<String>();
-                    for (String anatEntityId: anatomicalEntityFilter) {
-                        for (RelationTO relTO: relationTOs) {
-                            if (relTO.getSourceId().equals(anatEntityId)) {
-                                ancestorIds.add(relTO.getTargetId());
-                            }
-                        }
-                    }
-                    anatomicalEntityFilter.addAll(ancestorIds);
                     
                     // For each expression row, propagate to allowed children.
                     Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalNoExprMap =
                             this.generateGlobalNoExpressionTOs(noExpressionTOs, relationTOs, 
-                                    anatomicalEntityFilter);
+                                    anatEntityFilter);
                     
                     // Generate the globalNoExprToNoExprTOs.
                     Set<GlobalNoExpressionToNoExpressionTO> globalNoExprToNoExprTOs = 
@@ -290,6 +279,9 @@ public class CallPropagation extends MySQLDAOUser {
         while (rsSpecies.next()) {
             speciesIdsInBgee.add(rsSpecies.getTO().getId());
         }
+        //no need for a try with resource or a finally, the insert method will close everything 
+        //at the end in any case.
+        rsSpecies.close();
         
         log.info("Done retrieving species IDs, {} species found", speciesIdsInBgee.size());
     
@@ -297,16 +289,18 @@ public class CallPropagation extends MySQLDAOUser {
     }
 
     /**
-     * Retrieves all anatomical entity relations for given species, present into the Bgee database, 
-     * source and target fields only.
+     * Retrieves all is_a/part_of relations between anatomical entities for given species, 
+     * present into the Bgee data source, source and target fields only. If {@code speciesIds} 
+     * is {@code null} or empty, relations for all species will be retrieved.
      * 
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
-     *                      allowing to filter the anatomical entities to use.
+     *                      allowing to filter the anatomical entities to use. Can be 
+     *                      {@code null} or empty
      * @return              A {@code List} of {@code RelationTO}s containing source and target IDs 
      *                      of all anatomical entity relations of the given species.
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    private List<RelationTO> loadAnatEntityRelationFromDb(Set<String> speciesIds) 
+    private List<RelationTO> loadIsAPartOfRelationsFromDb(Set<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
         
@@ -319,8 +313,10 @@ public class CallPropagation extends MySQLDAOUser {
         //get direct, indirect, and reflexive relations for propagation
         RelationTOResultSet rsRelations = dao.getAllAnatEntityRelations(
                 speciesIds, EnumSet.of(RelationType.ISA_PARTOF), null);
-        
         List<RelationTO> relationTOs = dao.getAllTOs(rsRelations);
+        //no need for a try with resource or a finally, the insert method will close everything 
+        //at the end in any case.
+        rsRelations.close();
         
         log.info("Done retrieving anatomical entity relations, {} relations found",
                 relationTOs.size());
@@ -351,6 +347,9 @@ public class CallPropagation extends MySQLDAOUser {
         ExpressionCallTOResultSet rsExpressionCalls = dao.getAllExpressionCalls(params);
 
         List<ExpressionCallTO> exprTOs = dao.getAllTOs(rsExpressionCalls);
+        //no need for a try with resource or a finally, the insert method will close everything 
+        //at the end in any case.
+        rsExpressionCalls.close();
         log.info("Done retrieving expression calls, {} calls found", exprTOs.size());
 
         return log.exit(exprTOs);        
@@ -379,6 +378,9 @@ public class CallPropagation extends MySQLDAOUser {
         NoExpressionCallTOResultSet rsNoExpressionCalls = dao.getAllNoExpressionCalls(params);
 
         List<NoExpressionCallTO> noExprTOs = dao.getAllTOs(rsNoExpressionCalls);
+        //no need for a try with resource or a finally, the insert method will close everything 
+        //at the end in any case.
+        rsNoExpressionCalls.close();
         
         log.info("Done retrieving no-expression calls, {} calls found", 
                 noExprTOs.size());
@@ -387,43 +389,79 @@ public class CallPropagation extends MySQLDAOUser {
     }
     
     /**
-     * Retrieves all anatomical entity IDs having at least one expression call,
-     * into the Bgee database.
+     * Retrieves all anatomical entity IDs allowed for no-expression call propagation. 
+     * This method will retrieve the IDs of anatomical entities having at least 
+     * an expression call, or a no-expression call, as well as the IDs of all 
+     * anatomical entities with evolutionary relations to them (for instance, homology, 
+     * or analogy), and the IDs of all the parents by is_a/part_of relation of 
+     * all these anatomical entities.
+     * <p>
+     * These method is called by {@link #insert(List, boolean)} when the second argument 
+     * is {@code true} (no-expression call propagation). The reason is that no-expression 
+     * calls are propagated from parents to children, yet we do not want to propagate 
+     * to all possible terms, as this would generate too many global no-expression calls. 
+     * Instead, we restrain propagation to terms with data, or worthing a comparison 
+     * to terms with data, or leading to these terms (for a consistent graph propagation).
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
-     *                      allowing to filter the anatomical entities to use.
-     * @return              A {@code List} of {@code String}s containing anatomical entity IDs
-     *                      having at least a global expression call.
-     * @throws DAOException If an error occurred while getting the data from the Bgee database.
+     * @return              A {@code Set} of {@code String}s containing anatomical entity IDs
+     *                      allowed to be used for no-expression call propagation.
+     * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
-    private List<String> loadExprAnatomicalEntitiesFromDb(Set<String> speciesIds) 
-            throws DAOException {
-        log.entry(speciesIds);
+    private Set<String> loadAllowedAnatEntities() throws DAOException {
+        log.entry();
         
-        log.info("Start retrieving anat entities used in expression calls for the species IDs {}...", 
-                speciesIds);
+        log.info("Start retrieving anat entities all for no-expression call propagation...");
+        Set<String> allowedAnatEntities = new HashSet<String>();
         
-        ExpressionCallDAO dao = this.getExpressionCallDAO();
-        dao.setAttributes(ExpressionCallDAO.Attribute.ANATENTITYID);
-        
-        ExpressionCallParams params = new ExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
+        log.debug("Retrieving anat entities with expression calls...");
+        ExpressionCallDAO exprDao = this.getExpressionCallDAO();
+        exprDao.setAttributes(ExpressionCallDAO.Attribute.ANATENTITYID);
+        ExpressionCallParams exprParams = new ExpressionCallParams();
         //we do not query global expression calls, because this way we can launch 
         //the propagation of global expression and global no-expression calls independently. 
         //We will propagate expression calls thanks to relations between anatomical terms.
         //params.setIncludeSubstructures(true);
-    
-        ExpressionCallTOResultSet rsExpressionCalls = dao.getAllExpressionCalls(params);
-        
-        List<String> anatEntIdsInBgee = new ArrayList<String>();
+        ExpressionCallTOResultSet rsExpressionCalls = exprDao.getAllExpressionCalls(exprParams);
         while (rsExpressionCalls.next()) {
-            anatEntIdsInBgee.add(rsExpressionCalls.getTO().getAnatEntityId());
+            String anatEntityId = rsExpressionCalls.getTO().getAnatEntityId();
+            log.trace("Anat. entity with expression calls: {}", anatEntityId);
+            allowedAnatEntities.add(anatEntityId);
         }
+        //no need for a try with resource or a finally, the insert method will close everything 
+        //at the end in any case.
+        rsExpressionCalls.close();
+        
+        log.debug("Retrieving anat entities with no-expression calls...");
+        NoExpressionCallDAO noExprDao = this.getNoExpressionCallDAO();
+        noExprDao.setAttributes(NoExpressionCallDAO.Attribute.ANATENTITYID);
+        NoExpressionCallTOResultSet rsNoExpressionCalls = noExprDao.getAllNoExpressionCalls(
+                new NoExpressionCallParams());
+        while (rsNoExpressionCalls.next()) {
+            String anatEntityId = rsNoExpressionCalls.getTO().getAnatEntityId();
+            log.trace("Anat. entity with no-expression calls: {}", anatEntityId);
+            allowedAnatEntities.add(anatEntityId);
+        }
+        rsNoExpressionCalls.close();
+        
+        //TODO: retrieve anat. entities related by an evolutionary relation, 
+        //once this information will be inserted into Bgee
 
-        log.info("Done retrieving anatomical entity IDs having at least one global expression " +
-                "call, {} entities found", anatEntIdsInBgee.size());
+        log.debug("Retrieving parents of anat entities allowed so far...");
+        List<RelationTO> allRelationTOs = this.loadIsAPartOfRelationsFromDb(null);
+        Set<String> ancestorIds = new HashSet<String>();
+        for (String anatEntityId: allowedAnatEntities) {
+            for (RelationTO relTO: allRelationTOs) {
+                if (relTO.getSourceId().equals(anatEntityId)) {
+                    ancestorIds.add(relTO.getTargetId());
+                }
+            }
+        }
+        allowedAnatEntities.addAll(ancestorIds);
+
+        log.info("Done retrieving anat entities for no-expression call propagation, {} entities allowed: {}", 
+                allowedAnatEntities.size());
     
-        return log.exit(anatEntIdsInBgee);        
+        return log.exit(allowedAnatEntities);        
     }
 
     /**

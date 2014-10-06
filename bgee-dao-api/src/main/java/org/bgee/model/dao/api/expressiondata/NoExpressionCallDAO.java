@@ -59,7 +59,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public NoExpressionCallTOResultSet getAllNoExpressionCalls(NoExpressionCallParams params)
+    public NoExpressionCallTOResultSet getNoExpressionCalls(NoExpressionCallParams params)
             throws DAOException;
     
     /**

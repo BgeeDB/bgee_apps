@@ -311,7 +311,7 @@ public class CallPropagation extends MySQLDAOUser {
         dao.setAttributes(RelationDAO.Attribute.SOURCEID, RelationDAO.Attribute.TARGETID);
     
         //get direct, indirect, and reflexive relations for propagation
-        RelationTOResultSet rsRelations = dao.getAllAnatEntityRelations(
+        RelationTOResultSet rsRelations = dao.getAnatEntityRelations(
                 speciesIds, EnumSet.of(RelationType.ISA_PARTOF), null);
         List<RelationTO> relationTOs = dao.getAllTOs(rsRelations);
         //no need for a try with resource or a finally, the insert method will close everything 
@@ -344,7 +344,7 @@ public class CallPropagation extends MySQLDAOUser {
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
 
-        ExpressionCallTOResultSet rsExpressionCalls = dao.getAllExpressionCalls(params);
+        ExpressionCallTOResultSet rsExpressionCalls = dao.getExpressionCalls(params);
 
         List<ExpressionCallTO> exprTOs = dao.getAllTOs(rsExpressionCalls);
         //no need for a try with resource or a finally, the insert method will close everything 
@@ -375,7 +375,7 @@ public class CallPropagation extends MySQLDAOUser {
         NoExpressionCallParams params = new NoExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
 
-        NoExpressionCallTOResultSet rsNoExpressionCalls = dao.getAllNoExpressionCalls(params);
+        NoExpressionCallTOResultSet rsNoExpressionCalls = dao.getNoExpressionCalls(params);
 
         List<NoExpressionCallTO> noExprTOs = dao.getAllTOs(rsNoExpressionCalls);
         //no need for a try with resource or a finally, the insert method will close everything 
@@ -421,7 +421,7 @@ public class CallPropagation extends MySQLDAOUser {
         //the propagation of global expression and global no-expression calls independently. 
         //We will propagate expression calls thanks to relations between anatomical terms.
         //params.setIncludeSubstructures(true);
-        ExpressionCallTOResultSet rsExpressionCalls = exprDao.getAllExpressionCalls(exprParams);
+        ExpressionCallTOResultSet rsExpressionCalls = exprDao.getExpressionCalls(exprParams);
         while (rsExpressionCalls.next()) {
             String anatEntityId = rsExpressionCalls.getTO().getAnatEntityId();
             log.trace("Anat. entity with expression calls: {}", anatEntityId);
@@ -434,7 +434,7 @@ public class CallPropagation extends MySQLDAOUser {
         log.debug("Retrieving anat entities with no-expression calls...");
         NoExpressionCallDAO noExprDao = this.getNoExpressionCallDAO();
         noExprDao.setAttributes(NoExpressionCallDAO.Attribute.ANATENTITYID);
-        NoExpressionCallTOResultSet rsNoExpressionCalls = noExprDao.getAllNoExpressionCalls(
+        NoExpressionCallTOResultSet rsNoExpressionCalls = noExprDao.getNoExpressionCalls(
                 new NoExpressionCallParams());
         while (rsNoExpressionCalls.next()) {
             String anatEntityId = rsNoExpressionCalls.getTO().getAnatEntityId();

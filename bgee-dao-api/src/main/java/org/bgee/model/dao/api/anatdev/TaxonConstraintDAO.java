@@ -172,5 +172,9 @@ public interface TaxonConstraintDAO {
                 return false;
             return true;
         }
+        @Override
+        public String toString() {
+            return "Entity ID: " + this.getEntityId() + " - Species ID: " + this.getSpeciesId();
+        }
     }
 }

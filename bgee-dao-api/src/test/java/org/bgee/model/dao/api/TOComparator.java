@@ -1,6 +1,8 @@
 package org.bgee.model.dao.api;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -44,52 +46,93 @@ public class TOComparator {
     private final static Logger log = LogManager.getLogger(TOComparator.class.getName());
 
     /**
+     * Delegates to {@link #areTOsEqual(Object, Object, boolean)}, 
+     * with the {@code boolean} argument set to {@code true}.
+     * 
+     * @param to1   See {@link #areTOsEqual(Object, Object, boolean)}.
+     * @param to2   See {@link #areTOsEqual(Object, Object, boolean)}.
+     * @return      See {@link #areTOsEqual(Object, Object, boolean)}.
+     * @param <T>   A {@code TransferObject} type parameter.
+     */
+    public static <T extends TransferObject> boolean areTOsEqual(T to1, T to2) {
+        log.entry(to1, to2);
+        return log.exit(areTOsEqual(to1, to2, true));
+    }
+    /**
      * Method to compare two {@code TransferObject}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of some {@code TransferObject}s  
      * are based on some attributes only, while for test purpose we want to compare 
      * all of them, so we cannot use the {@code equals} method.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * of {@code T} will not be used for comparison (most of the time, they are 
+     * {@code EntityTO}s, but other types of {@code TransferObject}s also have a {@code getId} 
+     * method).
      * 
-     * @param to1   A {@code T} to be compared to {@code to2}.
-     * @param to2   A {@code T} to be compared to {@code to1}.
-     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     * @param to1       A {@code T} to be compared to {@code to2}.
+     * @param to2       A {@code T} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparison. 
+     * @return      {@code true} if {@code to1} and {@code to2} have all requested 
      *              attributes equal.
      * @param <T>   A {@code TransferObject} type parameter.
      */
-    public static <T extends TransferObject> boolean areTOsEqual(T to1, T to2) {
+    //TODO: when NamedEntityTO will be implemented, check for EntityTO instances 
+    //to properly be sure that there is a getId() method
+    public static <T extends TransferObject> boolean areTOsEqual(T to1, T to2, boolean compareId) {
         log.entry(to1, to2);
         //Warning: we should have used a visitor pattern here, but this would represent 
         //too much changes to the TransferObject classes, only for test purposes.
         //So we dispatch to the appropriate areTOsEqual method "manually", 
         //this is ugly but it will do the trick. 
         if (to1 instanceof SpeciesTO) {
-            return log.exit(areTOsEqual((SpeciesTO) to1, (SpeciesTO) to2));
+            return log.exit(areTOsEqual((SpeciesTO) to1, (SpeciesTO) to2, compareId));
         } else if (to1 instanceof TaxonTO) {
-            return log.exit(areTOsEqual((TaxonTO) to1, (TaxonTO) to2));
+            return log.exit(areTOsEqual((TaxonTO) to1, (TaxonTO) to2, compareId));
         } else if (to1 instanceof GOTermTO) {
-            return log.exit(areTOsEqual((GOTermTO) to1, (GOTermTO) to2));
+            return log.exit(areTOsEqual((GOTermTO) to1, (GOTermTO) to2, compareId));
         } else if (to1 instanceof GeneTO) {
-            return log.exit(areTOsEqual((GeneTO) to1, (GeneTO) to2));
+            return log.exit(areTOsEqual((GeneTO) to1, (GeneTO) to2, compareId));
         } else if (to1 instanceof AnatEntityTO) {
-            return log.exit(areTOsEqual((AnatEntityTO) to1, (AnatEntityTO) to2));
+            return log.exit(areTOsEqual((AnatEntityTO) to1, (AnatEntityTO) to2, compareId));
         } else if (to1 instanceof StageTO) {
-            return log.exit(areTOsEqual((StageTO) to1, (StageTO) to2));
+            return log.exit(areTOsEqual((StageTO) to1, (StageTO) to2, compareId));
         } else if (to1 instanceof HierarchicalGroupTO) {
-            return log.exit(areTOsEqual((HierarchicalGroupTO) to1, (HierarchicalGroupTO) to2));
+            return log.exit(areTOsEqual((HierarchicalGroupTO) to1, (HierarchicalGroupTO) to2, 
+                    compareId));
         } else if (to1 instanceof TaxonConstraintTO) {
-            return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
+            return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2, 
+                    compareId));
         } else if (to1 instanceof ExpressionCallTO) {
-            return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2));
+            return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2, 
+                    compareId));
         } else if (to1 instanceof NoExpressionCallTO) {
-            return log.exit(areTOsEqual((NoExpressionCallTO) to1, (NoExpressionCallTO) to2));
+            return log.exit(areTOsEqual((NoExpressionCallTO) to1, (NoExpressionCallTO) to2, 
+                    compareId));
         } else if (to1 instanceof GlobalExpressionToExpressionTO) {
             return log.exit(areTOsEqual((
                     GlobalExpressionToExpressionTO) to1, (GlobalExpressionToExpressionTO) to2));
         } else if (to1 instanceof GlobalNoExpressionToNoExpressionTO) {
             return log.exit(areTOsEqual((
-                    GlobalNoExpressionToNoExpressionTO) to1, (GlobalNoExpressionToNoExpressionTO) to2));
+                    GlobalNoExpressionToNoExpressionTO) to1, 
+                    (GlobalNoExpressionToNoExpressionTO) to2));
         }
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
                 "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
+    }
+    /**
+     * Delegates to {@link #areTOCollectionsEqual(Collection, Collection, boolean)}, 
+     * with the {@code boolean} argument set to {@code true}.
+     * 
+     * @param c1    See {@link #areTOCollectionsEqual(Collection, Collection, boolean)}.
+     * @param c2    See {@link #areTOCollectionsEqual(Collection, Collection, boolean)}.
+     * @return      See {@link #areTOCollectionsEqual(Collection, Collection, boolean)}.
+     * @param <T>   A {@code TransferObject} type parameter.
+     */
+    public static <T extends TransferObject> boolean areTOCollectionsEqual(Collection<T> c1, 
+            Collection<T> c2) {
+        log.entry(c1, c2);
+        return log.exit(areTOCollectionsEqual(c1, c2, true));
     }
     /**
      * Method to compare two {@code Collection}s of {@code T}s, to check 
@@ -97,17 +140,27 @@ public class TOComparator {
      * the {@code equals} method of some {@code TransferObject}s  
      * are based on some attributes only, while for test purpose we want to compare 
      * all of them, so we cannot use the {@code equals} method.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * of {@code T} will not be used for comparison.
+     * <p>
+     * Note that this method takes into account duplicate elements, but does not take 
+     * into account order of elements, in case the provided {@code Collection}s are {@code List}s.
      * 
-     * @param c1    A {@code Collection} of {@code T}s o be compared to {@code c2}.
-     * @param c2    A {@code Collection} of {@code T}s o be compared to {@code c1}.
+     * @param c1        A {@code Collection} of {@code T}s o be compared to {@code c2}.
+     * @param c2        A {@code Collection} of {@code T}s o be compared to {@code c1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return      {@code true} if {@code c1} and {@code c2} contain the same number 
      *              of {@code T}s, and each {@code T} of a {@code Collection} 
      *              has an equivalent {@code T} in the other {@code Collection}, 
      *              with all attributes equal.
      * @param <T>   A {@code TransferObject} type parameter.
      */
+    //TODO: when NamedEntityTO will be implemented, check for EntityTO instances 
+    //to properly be sure that there is a getId() method
     public static <T extends TransferObject> boolean areTOCollectionsEqual(Collection<T> c1, 
-            Collection<T> c2) {
+            Collection<T> c2, boolean compareId) {
         log.entry(c1, c2);
         if (c1 == null && c2 == null) {
             return log.exit(true);
@@ -118,12 +171,38 @@ public class TOComparator {
         if (c1.size() != c2.size()) {
             return log.exit(false);
         }
+        //to make sure we have the same number of each element. 
+        //for instance, we could have a list {Element1, Element1, Element2}, 
+        //and another list {Element1, Element2, Element2}, they would be seen as equal 
+        //without this check. 
+        //here we assume that the equals method returns true when areTOsEqual returns true
+        Map<T, Integer> countElementInFirstCollection = new HashMap<T, Integer>();
+        Map<T, Integer> countElementMatchInSecondCollection = new HashMap<T, Integer>();
         for (T to1: c1) {
+            for (T to1bis: c1) {
+                if (areTOsEqual(to1, to1bis, compareId)) {
+                    Integer count1 = countElementInFirstCollection.get(to1);
+                    if (count1 == null) {
+                        count1 = 0;
+                    }
+                    count1++;
+                    countElementInFirstCollection.put(to1, count1);
+                }
+            }
+            
             boolean found = false;
             for (T to2: c2) {
-                if (areTOsEqual(to1, to2)) {
+                if (areTOsEqual(to1, to2, compareId)) {
                     found = true;
-                    break;
+                    //here we store to1 as key, it's not an error, it's to be able 
+                    //to compare to countElementInFirstCollection
+                    //TODO: refactor
+                    Integer count2 = countElementMatchInSecondCollection.get(to1);
+                    if (count2 == null) {
+                        count2 = 0;
+                    }
+                    count2++;
+                    countElementMatchInSecondCollection.put(to1, count2);
                 }
             }
             if (!found) {
@@ -131,22 +210,31 @@ public class TOComparator {
                 return log.exit(false);
             }      
         }
-        return log.exit(true);
+        log.trace("Count elements in first collection: {}", countElementInFirstCollection);
+        log.trace("Count matching elements in second collection: {}", 
+                countElementMatchInSecondCollection);
+        return log.exit(countElementInFirstCollection.equals(countElementMatchInSecondCollection));
     }
     
     /**
      * Method to compare two {@code EntityTO}s, to check for complete equality of each attribute.
      * This is because the {@code equals} method of {@code EntityTO}s is solely based 
      * on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param entity1   An {@code EntityTO} to be compared to {@code entity2}.
      * @param entity2   An {@code EntityTO} to be compared to {@code entity1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return          {@code true} if {@code entity1} and {@code entity2} have 
      *                  all attributes equal.
      */
-    private static boolean areEntityTOsEqual(EntityTO entity1, EntityTO entity2) {
-        log.entry(entity1, entity2);
-        if (StringUtils.equals(entity1.getId(), entity2.getId()) &&
+    private static boolean areEntityTOsEqual(EntityTO entity1, EntityTO entity2, 
+            boolean compareId) {
+        log.entry(entity1, entity2, compareId);
+        if ((!compareId || StringUtils.equals(entity1.getId(), entity2.getId())) &&
                 StringUtils.equals(entity1.getName(), entity2.getName()) &&
                 StringUtils.equals(entity1.getDescription(), entity2.getDescription())) {
             return log.exit(true);
@@ -157,15 +245,21 @@ public class TOComparator {
      * Method to compare two {@code SpeciesTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code SpeciesTO}s is 
      * solely based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param spTO1     A {@code SpeciesTO} to be compared to {@code spTO2}.
      * @param spTO2     A {@code SpeciesTO} to be compared to {@code spTO1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return          {@code true} if {@code spTO1} and {@code spTO2} have all 
      *                  attributes equal.
      */
-    private static boolean areTOsEqual(SpeciesTO spTO1, SpeciesTO spTO2) {
-        log.entry(spTO1, spTO2);
-        if (TOComparator.areEntityTOsEqual(spTO1, spTO2) && 
+    private static boolean areTOsEqual(SpeciesTO spTO1, SpeciesTO spTO2, 
+            boolean compareId) {
+        log.entry(spTO1, spTO2, compareId);
+        if (TOComparator.areEntityTOsEqual(spTO1, spTO2, compareId) && 
                 StringUtils.equals(spTO1.getGenus(), spTO2.getGenus()) &&
                 StringUtils.equals(spTO1.getSpeciesName(), spTO2.getSpeciesName()) &&
                 StringUtils.equals(spTO1.getParentTaxonId(), spTO2.getParentTaxonId()) &&
@@ -181,15 +275,21 @@ public class TOComparator {
      * Method to compare two {@code TaxonTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code TaxonTO}s is solely
      * based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param taxonTO1 A {@code TaxonTO} to be compared to {@code taxonTO2}.
      * @param taxonTO2 A {@code TaxonTO} to be compared to {@code taxonTO1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return {@code true} if {@code taxonTO1} and {@code taxonTO2} have all attributes
      *         equal.
      */
-    private static boolean areTOsEqual(TaxonTO taxonTO1, TaxonTO taxonTO2) {
-        log.entry(taxonTO1, taxonTO2);
-        if (TOComparator.areEntityTOsEqual(taxonTO1, taxonTO2) && 
+    private static boolean areTOsEqual(TaxonTO taxonTO1, TaxonTO taxonTO2, 
+            boolean compareId) {
+        log.entry(taxonTO1, taxonTO2, compareId);
+        if (TOComparator.areEntityTOsEqual(taxonTO1, taxonTO2, compareId) && 
                 StringUtils.equals(taxonTO1.getScientificName(), taxonTO2.getScientificName()) &&
                 taxonTO1.getLeftBound() == taxonTO2.getLeftBound() && 
                 taxonTO1.getRightBound() == taxonTO2.getRightBound() && 
@@ -204,19 +304,25 @@ public class TOComparator {
      * Method to compare two {@code GOTermTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code GOTermTO}s is solely
      * based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param goTermTO1 A {@code GOTermTO} to be compared to {@code goTermTO2}.
      * @param goTermTO2 A {@code GOTermTO} to be compared to {@code goTermTO1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return {@code true} if {@code goTermTO1} and {@code goTermTO2} have all attributes
      *         equal.
      */
-    private static boolean areTOsEqual(GOTermTO goTermTO1, GOTermTO goTermTO2) {
-        log.entry(goTermTO1, goTermTO2);
-        if (TOComparator.areEntityTOsEqual(goTermTO1, goTermTO2) && 
+    private static boolean areTOsEqual(GOTermTO goTermTO1, GOTermTO goTermTO2, 
+            boolean compareId) {
+        log.entry(goTermTO1, goTermTO2, compareId);
+        if (TOComparator.areEntityTOsEqual(goTermTO1, goTermTO2, compareId) && 
                 (goTermTO1.getDomain() == null && goTermTO2.getDomain() == null || 
                 goTermTO1.getDomain() != null && goTermTO1.getDomain().equals(goTermTO2.getDomain())) && 
-                goTermTO1.getAltIds() == null && goTermTO2.getAltIds() == null || 
-                goTermTO1.getAltIds() != null && goTermTO1.getAltIds().equals(goTermTO2.getAltIds())) {
+                (goTermTO1.getAltIds() == null && goTermTO2.getAltIds() == null || 
+                goTermTO1.getAltIds() != null && goTermTO1.getAltIds().equals(goTermTO2.getAltIds()))) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -226,15 +332,21 @@ public class TOComparator {
      * Method to compare two {@code GeneTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code GeneTO}s is solely
      * based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param geneTO1 A {@code GeneTO} to be compared to {@code geneTO2}.
      * @param geneTO2 A {@code GeneTO} to be compared to {@code geneTO1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return {@code true} if {@code geneTO1} and {@code geneTO2} have all attributes
      *         equal.
      */
-    private static boolean areTOsEqual(GeneTO geneTO1, GeneTO geneTO2) {
-        log.entry(geneTO1, geneTO2);
-        if (TOComparator.areEntityTOsEqual(geneTO1, geneTO2) && 
+    private static boolean areTOsEqual(GeneTO geneTO1, GeneTO geneTO2, 
+            boolean compareId) {
+        log.entry(geneTO1, geneTO2, compareId);
+        if (TOComparator.areEntityTOsEqual(geneTO1, geneTO2, compareId) && 
                 geneTO1.getSpeciesId() == geneTO2.getSpeciesId() && 
                 geneTO1.getGeneBioTypeId() == geneTO2.getGeneBioTypeId() && 
                 geneTO1.getOMAParentNodeId() == geneTO2.getOMAParentNodeId() && 
@@ -248,15 +360,21 @@ public class TOComparator {
      * Method to compare two {@code HierarchicalGroupTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of 
      * {@code HierarchicalGroupTO}s is solely based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param to1 A {@code HierarchicalGroupTO} to be compared to {@code to2}.
      * @param to2 A {@code HierarchicalGroupTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return {@code true} if {@code to1} and {@code to2} have all attributes
      *         equal.
      */
-    private static boolean areTOsEqual(HierarchicalGroupTO to1, HierarchicalGroupTO to2) {
-        log.entry(to1, to2);
-        if (TOComparator.areEntityTOsEqual(to1, to2) && 
+    private static boolean areTOsEqual(HierarchicalGroupTO to1, HierarchicalGroupTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2, compareId);
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
                 StringUtils.equals(to1.getOMAGroupId(), to2.getOMAGroupId()) && 
                 to1.getLeftBound() == to2.getLeftBound() && 
                 to1.getRightBound() == to2.getRightBound() && 
@@ -270,15 +388,21 @@ public class TOComparator {
      * Method to compare two {@code AnatEntityTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code AnatEntityTO}s is solely
      * based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param anatEntity1   An {@code AnatEntityTO} to be compared to {@code entity2}.
      * @param anatEntity2   An {@code AnatEntityTO} to be compared to {@code entity1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return          {@code true} if {@code entity1} and {@code entity2} have all 
      *                  attributes equal.
      */
-    private static boolean areTOsEqual(AnatEntityTO anatEntity1, AnatEntityTO anatEntity2) {
-        log.entry(anatEntity1, anatEntity2);
-        if (TOComparator.areEntityTOsEqual(anatEntity1, anatEntity2) && 
+    private static boolean areTOsEqual(AnatEntityTO anatEntity1, AnatEntityTO anatEntity2, 
+            boolean compareId) {
+        log.entry(anatEntity1, anatEntity2, compareId);
+        if (TOComparator.areEntityTOsEqual(anatEntity1, anatEntity2, compareId) && 
                 StringUtils.equals(anatEntity1.getStartStageId(), anatEntity2.getStartStageId()) &&
                 StringUtils.equals(anatEntity1.getEndStageId(), anatEntity2.getEndStageId()) && 
                 anatEntity1.isNonInformative() == anatEntity2.isNonInformative()) {
@@ -291,15 +415,21 @@ public class TOComparator {
      * Method to compare two {@code StageTO}s, to check for complete equality of each
      * attribute. This is because the {@code equals} method of {@code StageTO}s is solely
      * based on their ID, not on other attributes.
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param to1   An {@code StageTO} to be compared to {@code to2}.
      * @param to2   An {@code StageTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areTOsEqual(StageTO to1, StageTO to2) {
-        log.entry(to1, to2);
-        if (TOComparator.areEntityTOsEqual(to1, to2) && 
+    private static boolean areTOsEqual(StageTO to1, StageTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2, compareId);
+        if (TOComparator.areEntityTOsEqual(to1, to2, compareId) && 
                 to1.isGroupingStage() == to2.isGroupingStage() && 
                 to1.isTooGranular() == to2.isTooGranular()) {
             return log.exit(true);
@@ -310,14 +440,20 @@ public class TOComparator {
     /**
      * Method to compare two {@code TaxonConstraintTO}s, to check for complete equality of each
      * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param to1   An {@code TaxonConstraintTO} to be compared to {@code to2}.
      * @param to2   An {@code TaxonConstraintTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areTOsEqual(TaxonConstraintTO to1, TaxonConstraintTO to2) {
-        log.entry(to1, to2);
+    private static boolean areTOsEqual(TaxonConstraintTO to1, TaxonConstraintTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2, compareId);
 
         //for now, the equals method of TaxonConstraintTO takes into account 
         //all attributes, so we can use it directly. We still keep the method 
@@ -328,15 +464,21 @@ public class TOComparator {
     /**
      * Method to compare two {@code CallTO}s, to check for complete equality of each
      * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param to1   An {@code CallTO} to be compared to {@code to2}.
      * @param to2   An {@code CallTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areCallTOsEqual(CallTO to1, CallTO to2) {
-        log.entry(to1, to2);
-        if (StringUtils.equals(to1.getId(), to2.getId()) &&
+    private static boolean areCallTOsEqual(CallTO to1, CallTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2, compareId);
+        if ((!compareId || StringUtils.equals(to1.getId(), to2.getId())) &&
                 StringUtils.equals(to1.getGeneId(), to2.getGeneId()) &&
                 StringUtils.equals(to1.getStageId(), to2.getStageId()) &&
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
@@ -353,15 +495,21 @@ public class TOComparator {
     /**
      * Method to compare two {@code ExpressionCallTO}s, to check for complete equality of each
      * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param to1   An {@code ExpressionCallTO} to be compared to {@code to2}.
      * @param to2   An {@code ExpressionCallTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areTOsEqual(ExpressionCallTO to1, ExpressionCallTO to2) {
-        log.entry(to1, to2);
-        if (TOComparator.areCallTOsEqual(to1, to2) && 
+    private static boolean areTOsEqual(ExpressionCallTO to1, ExpressionCallTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2, compareId);
+        if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
                 to1.isIncludeSubstructures() == to2.isIncludeSubstructures() && 
                 to1.isIncludeSubStages() == to2.isIncludeSubStages() &&
                 to1.getOriginOfLine() == to2.getOriginOfLine()) {
@@ -373,15 +521,21 @@ public class TOComparator {
     /**
      * Method to compare two {@code NoExpressionCallTO}s, to check for complete equality of each
      * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
      * 
      * @param to1   An {@code NoExpressionCallTO} to be compared to {@code to2}.
      * @param to2   An {@code NoExpressionCallTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areTOsEqual(NoExpressionCallTO to1, NoExpressionCallTO to2) {
+    private static boolean areTOsEqual(NoExpressionCallTO to1, NoExpressionCallTO to2, 
+            boolean compareId) {
         log.entry(to1, to2);
-        if (TOComparator.areCallTOsEqual(to1, to2) && 
+        if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
                 to1.isIncludeParentStructures() == to2.isIncludeParentStructures() && 
                 to1.getOriginOfLine() == to2.getOriginOfLine()) {
             return log.exit(true);

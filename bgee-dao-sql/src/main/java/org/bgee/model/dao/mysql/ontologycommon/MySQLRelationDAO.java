@@ -45,7 +45,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public RelationTOResultSet getAllAnatEntityRelations(Set<String> speciesIds, 
+    public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes);
 

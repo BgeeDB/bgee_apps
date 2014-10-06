@@ -51,21 +51,20 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         
         Collection<GeneDAO.Attribute> attributes = this.getAttributes();
         //Construct sql query
-        StringBuilder sql = new StringBuilder(); 
+        String sql = new String(); 
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT *");
+            sql += "SELECT *";
         } else {
             for (GeneDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql.append("SELECT ");
+                    sql += "SELECT DISTINCT ";
                 } else {
-                    sql.append(", ");
+                    sql += ", ";
                 }
-                sql.append(this.attributeToString(attribute));
+                sql += this.attributeToString(attribute);
             }
         }
-        sql.append(" FROM gene");
-
+        sql += " FROM gene";
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;

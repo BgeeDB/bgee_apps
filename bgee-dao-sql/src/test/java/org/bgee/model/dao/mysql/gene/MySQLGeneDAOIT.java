@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
@@ -54,99 +53,41 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         // Generate result with the method
         MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.values()));
-        GeneTOResultSet methResults = dao.getAllGenes();
+        List<GeneTO> methGenes = dao.getAllTOs(dao.getAllGenes());
 
         // Generate manually expected result
         List<GeneTO> expectedGenes = Arrays.asList(
                 new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 2, true), 
                 new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 0, true), 
                 new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false)); 
-
-        int countGenes = 0;
-        while (methResults.next()) {
-            boolean found = false;
-            GeneTO methGene = methResults.getTO();
-            countGenes ++;
-            for (GeneTO expGene: expectedGenes) {
-                log.trace("Comparing {} to {}", methGene, expGene);
-                if (TOComparator.areTOsEqual(methGene, expGene)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent gene found for {}", methGene);
-                throw log.throwing(new AssertionError("Incorrect generated TO"));
-            }
+        //Compare
+        if(!TOComparator.areTOCollectionsEqual(methGenes, expectedGenes)) {
+            throw new AssertionError("GeneTOs incorrectly retieved, expected " + 
+                    expectedGenes.toString() + ", but was " + methGenes.toString());
         }
-        if (countGenes != expectedGenes.size()) {
-            log.debug("Not all GeneTO found for {}, {} generated but {} expected",
-                    expectedGenes.toString(), countGenes, expectedGenes.size());
-            throw log.throwing(new AssertionError("Incorrect number of generated TOs"));
-        }
-        methResults.close();
 
         // without declared attribute should return same TOs that with all attributes 
         dao.clearAttributes();
-        methResults = dao.getAllGenes();
-        countGenes = 0;
-        while (methResults.next()) {
-            boolean found = false;
-            GeneTO methGene = methResults.getTO();
-            countGenes ++;
-            for (GeneTO expGene: expectedGenes) {
-                log.trace("Comparing {} to {}", methGene, expGene);
-                if (TOComparator.areTOsEqual(methGene, expGene)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent gene found for {}", methGene);
-                throw log.throwing(new AssertionError("Incorrect generated TO"));
-            }
+        methGenes = dao.getAllTOs(dao.getAllGenes());
+        //Compare
+        if(!TOComparator.areTOCollectionsEqual(methGenes, expectedGenes)) {
+            throw new AssertionError("GeneTOs incorrectly retieved, expected " + 
+                    expectedGenes.toString() + ", but was " + methGenes.toString());
         }
-        if (countGenes != expectedGenes.size()) {
-            log.debug("Not all GeneTO found for {}, {} generated but {} expected",
-                    expectedGenes.toString(), countGenes, expectedGenes.size());
-            throw log.throwing(new AssertionError("Incorrect number of generated TOs"));
-        }
-        methResults.close();
 
         // Generate manually expected result
+        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+        methGenes = dao.getAllTOs(dao.getAllGenes());
         expectedGenes = Arrays.asList(
                 new GeneTO("ID1", null, null, 0, 0, 0, false), 
                 new GeneTO("ID2", null, null, 0, 0, 0, false), 
                 new GeneTO("ID3", null, null, 0, 0, 0, false));
-        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-        methResults = dao.getAllGenes();
-        countGenes = 0;
-        while (methResults.next()) {
-            boolean found = false;
-            GeneTO methGene = methResults.getTO();
-            countGenes ++;
-            for (GeneTO expGene: expectedGenes) {
-                log.trace("Comparing {} to {}", methGene, expGene);
-                if (TOComparator.areTOsEqual(methGene, expGene)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent gene found for {}", methGene);
-                throw log.throwing(new AssertionError("Incorrect generated TO"));
-            }
+        //Compare
+        if(!TOComparator.areTOCollectionsEqual(methGenes, expectedGenes)) {
+            throw new AssertionError("GeneTOs incorrectly retieved, expected " + 
+                    expectedGenes.toString() + ", but was " + methGenes.toString());
         }
-        if (countGenes != expectedGenes.size()) {
-            log.debug("Not all GeneTO found for {}, {} generated but {} expected",
-                    expectedGenes.toString(), countGenes, expectedGenes.size());
-            throw log.throwing(new AssertionError("Incorrect number of generated TOs"));
-        }
-        methResults.close();
 
-        dao.clearAttributes();
-        methResults = dao.getAllGenes();
-        
         log.exit();
     }
 

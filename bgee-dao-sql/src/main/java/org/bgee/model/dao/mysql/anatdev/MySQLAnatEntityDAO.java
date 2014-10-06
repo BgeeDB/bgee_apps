@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
@@ -43,32 +44,34 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
 
     @Override
-    public AnatEntityTOResultSet getAllAnatEntities(Set<String> speciesIds) throws DAOException {
+    public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds) throws DAOException {
         log.entry(speciesIds);
 
-        StringBuilder sql = new StringBuilder(); 
+        String tableName = "anatEntity";
+
+        String sql = new String(); 
         Collection<AnatEntityDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT anatEntity.*");
+            sql += "SELECT " + tableName + ".*";
         } else {
             for (AnatEntityDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql.append("SELECT ");
+                    sql += "SELECT ";
                 } else {
-                    sql.append(", ");
+                    sql += ", ";
                 }
-                sql.append("anatEntity.");
-                sql.append(this.attributeToString(attribute));
+                sql += tableName + "." + this.attributeToString(attribute);
             }
         }
-        sql.append(" FROM anatEntity");
+        sql += " FROM " + tableName;
+        String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
         if (speciesIds != null && speciesIds.size() > 0) {
-             sql.append(" INNER JOIN anatEntityTaxonConstraint ON (" +
-                                "anatEntityTaxonConstraint.anatEntityId = anatEntity.anatEntityId)");
-             sql.append(" WHERE anatEntityTaxonConstraint.speciesId IS NULL");
-             sql.append(" OR anatEntityTaxonConstraint.speciesId IN (");
-             sql.append(createStringFromSet(speciesIds, ',', false));
-             sql.append(")");
+             sql += " INNER JOIN " + anatEntTaxConstTabName + " ON (" +
+                          anatEntTaxConstTabName + ".anatEntityId = " + 
+                          tableName + "."+this.attributeToString(AnatEntityDAO.Attribute.ID)+")" +
+                    " WHERE " + anatEntTaxConstTabName + ".speciesId IS NULL" +
+                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" +
+                          createStringFromSet(speciesIds, ',', false) + ")";
          }
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -83,48 +86,54 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
     
     @Override
-    public AnatEntityTOResultSet getAllNonInformativeAnatEntities(Set<String> speciesIds) 
+    public AnatEntityTOResultSet getNonInformativeAnatEntities(Set<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
 
         boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
-
-        StringBuilder sql = new StringBuilder(); 
+        String tableName = "anatEntity";
+        
+        String sql = new String(); 
         Collection<AnatEntityDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT anatEntity.*");
+            sql += "SELECT " + tableName + ".*";
         } else {
             for (AnatEntityDAO.Attribute attribute: attributes) {
-                if (sql.length() == 0) {
-                    sql.append("SELECT ");
+                if (StringUtils.isEmpty(sql)) {
+                    sql += "SELECT ";
                 } else {
-                    sql.append(", ");
+                    sql += ", ";
                 }
-                sql.append("anatEntity.");
-                sql.append(this.attributeToString(attribute));
+                sql += tableName + "." + this.attributeToString(attribute);
             }
         }
-        sql.append(" FROM anatEntity");
-        sql.append(" LEFT OUTER JOIN expression ON (" +
-                "expression.anatEntityId = anatEntity.anatEntityId)");
-        if (isSpeciesFilter) {
-            sql.append(" INNER JOIN anatEntityTaxonConstraint ON (" +
-                    "anatEntityTaxonConstraint.anatEntityId = anatEntity.anatEntityId)");
-        }
-        sql.append(" WHERE nonInformative = true");
-        sql.append(" AND expression.anatEntityId IS NULL");
-        if (isSpeciesFilter) {
-            sql.append(" AND (anatEntityTaxonConstraint.speciesId IS NULL");
-            sql.append(" OR anatEntityTaxonConstraint.speciesId IN (");
-            sql.append(createStringFromSet(speciesIds, ',', false));
-            sql.append("))");
-        }
+        
+        String expressionTabName = "expression";
 
+        sql += " FROM " + tableName +
+               " LEFT OUTER JOIN " + expressionTabName + " ON (" + 
+                        expressionTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+        
+        String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
+
+        if (isSpeciesFilter) {
+            sql += " INNER JOIN " + anatEntTaxConstTabName + " ON (" +
+                    anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+        }
+        sql += " WHERE " + tableName + ".nonInformative = true " +
+                "AND " + expressionTabName + ".anatEntityId IS NULL";
+        if (isSpeciesFilter) {
+            sql += " AND (" + anatEntTaxConstTabName + ".speciesId IS NULL" +
+                   " OR " + anatEntTaxConstTabName + ".speciesId IN (" +
+                    createStringFromSet(speciesIds, ',', false) + "))";
+        }
+        sql += " ORDER BY " + tableName + ".anatEntityId";
+        
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

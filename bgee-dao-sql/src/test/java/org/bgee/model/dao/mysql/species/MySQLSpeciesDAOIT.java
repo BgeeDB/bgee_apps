@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
-import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
@@ -116,8 +115,8 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         // Generate result with the method
         MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(SpeciesDAO.Attribute.values()));
-        SpeciesTOResultSet methResults = dao.getAllSpecies();
-
+        List<SpeciesTO> methSpecies = dao.getAllTOs(dao.getAllSpecies());
+        
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(
                 new SpeciesTO("11", "gen11", "sp11", "spCName11", "111", "path/genome11",
@@ -126,22 +125,12 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
                         "52", "FAKEPREFIX"), 
                 new SpeciesTO("31", "gen31", "sp31", "spCName31", "311", "path/genome31", 
                         "0", "")); 
-        while (methResults.next()) {
-            boolean found = false;
-            SpeciesTO methSpecies = methResults.getTO();
-            for (SpeciesTO expSpecies: expectedSpecies) {
-                log.trace("Comparing {} to {}", methSpecies, expSpecies);
-                if (TOComparator.areTOsEqual(methSpecies, expSpecies)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent Species found for {}", methSpecies);
-                throw log.throwing(new AssertionError("Incorrect generated TO"));
-            }
+        // Compare
+        if(!TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies)) {
+            throw new AssertionError("SpeciesTOs incorrectly retieved, expected " + 
+                    expectedSpecies.toString() + ", but was " + methSpecies.toString());
         }
-        methResults.close();
+        
         log.exit();
     }
 }

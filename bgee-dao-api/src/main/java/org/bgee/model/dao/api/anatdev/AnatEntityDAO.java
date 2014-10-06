@@ -39,7 +39,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
     }
 
     /**
-     * Retrieve all anatomical entities from data source according to a {@code Set} of 
+     * Retrieve anatomical entities from data source according to a {@code Set} of 
      * {@code String}s that are the IDs of species allowing to filter the entities to use.
      * <p>
      * The anatomical entities are retrieved and returned as a {@code AnatEntityTOResultSet}. It is 
@@ -52,10 +52,10 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getAllAnatEntities(Set<String> speciesIds) throws DAOException;
+    public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds) throws DAOException;
     
     /**
-     * Retrieve all non-informative anatomical entities without expression call from data source 
+     * Retrieve non-informative anatomical entities without expression call from data source 
      * according to a {@code Set} of {@code String}s that are the IDs of species allowing to filter 
      * the entities to use.
      * <p>
@@ -65,11 +65,11 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * 
      * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
      *                      allowing to filter the non-informative anatomical entities to use
-     * @return              An {@code AnatEntityTOResultSet} containing all non-informative 
+     * @return              An {@code AnatEntityTOResultSet} containing non-informative 
      *                      anatomical entities from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getAllNonInformativeAnatEntities(Set<String> speciesIds) 
+    public AnatEntityTOResultSet getNonInformativeAnatEntities(Set<String> speciesIds) 
             throws DAOException;
     
     /**

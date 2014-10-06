@@ -47,11 +47,11 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     }
 
     @Override
-    public ExpressionCallTOResultSet getAllExpressionCalls(ExpressionCallParams params) 
+    public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
             throws DAOException {
         log.entry(params);
         return log.exit(
-                getAllExpressionCalls(params.getSpeciesIds(), params.isIncludeSubstructures())); 
+                getExpressionCalls(params.getSpeciesIds(), params.isIncludeSubstructures())); 
         
 //        TODO use the store procedure instead of BgeePreparedStatement.
 //        String sql = "{call getAllExpression(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
@@ -81,7 +81,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     }
 
     /**
-     * Retrieve all expression calls from data source according to a {@code Set} of {@code String}s 
+     * Retrieve expression calls from data source according to a {@code Set} of {@code String}s 
      * that are the IDs of species allowing to filter the calls to use, and a {@code boolean} 
      * defining whether this expression call was generated using data from the anatomical entity 
      * with the ID {@link CallTO#getAnatEntityId()} alone, or by also considering all its 
@@ -100,56 +100,61 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      * @throws DAOException          If a {@code SQLException} occurred while trying to get 
      *                               expression calls.   
      */
-    private ExpressionCallTOResultSet getAllExpressionCalls(Set<String> speciesIds, 
+    private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
             boolean isIncludeSubstructures) throws DAOException {
         log.entry(speciesIds, isIncludeSubstructures);
 
         Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
         
         String tableName = "expression";
+        String geneTabName = "gene";
+
         if (isIncludeSubstructures) {
             tableName = "globalExpression";
         }
         //Construct sql query
-        StringBuilder sql = new StringBuilder(); 
+        String sql = new String(); 
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT " + tableName + ".*");
+            sql += "SELECT " + tableName + ".*";
         } else {
             for (ExpressionCallDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql.append("SELECT DISTINCT ");
+                    sql += "SELECT DISTINCT ";
                 } else {
-                    sql.append(", ");
+                    sql += ", ";
                 }
-                sql.append(tableName);
-                sql.append(".");
-                sql.append(this.attributeToString(attribute, isIncludeSubstructures));
+                sql +=  tableName + "." + this.attributeToString(attribute, isIncludeSubstructures);
             }
         }
-        sql.append(" FROM ");
-        sql.append(tableName);
-         if (speciesIds != null && speciesIds.size() > 0) {
-             sql.append(" INNER JOIN gene ON (gene.geneId = ");
-             sql.append(tableName + ".geneId)");
-             sql.append(" WHERE gene.speciesId IN (");
-             sql.append(createStringFromSet(speciesIds, ',', false));
-             sql.append(")");
-             sql.append(" ORDER BY gene.speciesId, ");
-             sql.append(tableName + ".geneId, ");
-             sql.append(tableName + ".anatEntityId, ");
-             sql.append(tableName + ".stageId");
+        sql += " FROM " + tableName;
+        if (speciesIds != null && speciesIds.size() > 0) {
+             sql += " INNER JOIN " + geneTabName + " ON (" + geneTabName + ".geneId = " + 
+                         tableName + "." + this.attributeToString(
+                             ExpressionCallDAO.Attribute.GENEID, isIncludeSubstructures)+")" +
+                    " WHERE " + geneTabName + ".speciesId IN (" + 
+                            createStringFromSet(speciesIds, ',', false) + ")" +
+                    " ORDER BY " + geneTabName + ".speciesId, " + 
+                            tableName + "." + this.attributeToString(
+                                  ExpressionCallDAO.Attribute.GENEID, isIncludeSubstructures) +  
+                            ", " + tableName + "." + this.attributeToString(
+                                  ExpressionCallDAO.Attribute.ANATENTITYID, isIncludeSubstructures) +
+                            ", " + tableName + "." + this.attributeToString(
+                                  ExpressionCallDAO.Attribute.STAGEID, isIncludeSubstructures);
          } else {
-             sql.append(" ORDER BY ");
-             sql.append(tableName + ".geneId, ");
-             sql.append(tableName + ".anatEntityId, ");
-             sql.append(tableName + ".stageId");
+             sql += " ORDER BY " +
+                             tableName + "." + this.attributeToString(
+                                 ExpressionCallDAO.Attribute.GENEID, isIncludeSubstructures) +  
+                             ", " + tableName + "." + this.attributeToString(
+                                 ExpressionCallDAO.Attribute.ANATENTITYID, isIncludeSubstructures) +
+                             ", " + tableName + "." + this.attributeToString(
+                                 ExpressionCallDAO.Attribute.STAGEID, isIncludeSubstructures);
          }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            stmt = this.getManager().getConnection().prepareStatement(sql);
             return log.exit(new MySQLExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

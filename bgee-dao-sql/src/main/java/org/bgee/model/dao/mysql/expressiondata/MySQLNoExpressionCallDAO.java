@@ -48,10 +48,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     }
 
     @Override
-    public NoExpressionCallTOResultSet getAllNoExpressionCalls(NoExpressionCallParams params) {
+    public NoExpressionCallTOResultSet getNoExpressionCalls(NoExpressionCallParams params) {
         log.entry(params);
         return log.exit(
-                getAllNoExpressionCalls(params.getSpeciesIds(), params.isIncludeParentStructures())); 
+                getNoExpressionCalls(params.getSpeciesIds(), params.isIncludeParentStructures())); 
     }
 
     /**
@@ -75,7 +75,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @throws DAOException             If a {@code SQLException} occurred while trying to get 
      *                                  no-expression calls.   
      */
-    public NoExpressionCallTOResultSet getAllNoExpressionCalls(Set<String> speciesIds,
+    public NoExpressionCallTOResultSet getNoExpressionCalls(Set<String> speciesIds,
             boolean isIncludeParentStructures) throws DAOException {
         log.entry(speciesIds, isIncludeParentStructures);
 
@@ -85,37 +85,42 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             tableName = "globalNoExpression";
         }
         //Construct sql query
-        StringBuilder sql = new StringBuilder(); 
+        String sql = new String(); 
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT " + tableName + ".*");
+            sql += "SELECT " + tableName + ".*";
         } else {
             for (NoExpressionCallDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql.append("SELECT DISTINCT ");
+                    sql += "SELECT DISTINCT ";
                 } else {
-                    sql.append(", ");
+                    sql += ", ";
                 }
-                sql.append(tableName);
-                sql.append(".");
-                sql.append(this.attributeToString(attribute, isIncludeParentStructures));
+                sql += tableName + "." + this.attributeToString(attribute, isIncludeParentStructures);
             }
         }
-        sql.append(" FROM " + tableName);
+        sql += " FROM " + tableName;
+        String geneTabName = "gene";
          if (speciesIds != null && speciesIds.size() > 0) {
-             sql.append(" INNER JOIN gene ON (gene.geneId = ");
-             sql.append(tableName + ".geneId)");
-             sql.append(" WHERE gene.speciesId IN (");
-             sql.append(createStringFromSet(speciesIds, ',', false));
-             sql.append(")");
-             sql.append(" ORDER BY gene.speciesId, ");
-             sql.append(tableName + ".geneId, ");
-             sql.append(tableName + ".anatEntityId, ");
-             sql.append(tableName + ".stageId");
+             sql += " INNER JOIN " + geneTabName + " ON (gene.geneId = " + 
+                             tableName + "." + this.attributeToString(
+                                     NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) +")" +
+                    " WHERE " + geneTabName + ".speciesId IN (" +
+                             createStringFromSet(speciesIds, ',', false) + ")" +
+                    " ORDER BY " + geneTabName + ".speciesId, " + 
+                        tableName + "." + this.attributeToString(
+                            NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) + ", " +
+                        tableName + "." + this.attributeToString(
+                            NoExpressionCallDAO.Attribute.ANATENTITYID, isIncludeParentStructures) + ", " +
+                        tableName + "." + this.attributeToString(
+                            NoExpressionCallDAO.Attribute.DEVSTAGEID, isIncludeParentStructures);
          } else {
-             sql.append(" ORDER BY ");
-             sql.append(tableName + ".geneId, ");
-             sql.append(tableName + ".anatEntityId, ");
-             sql.append(tableName + ".stageId");
+             sql += " ORDER BY " + 
+                         tableName + "." + this.attributeToString(
+                             NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) + ", " +
+                         tableName + "." + this.attributeToString(
+                             NoExpressionCallDAO.Attribute.ANATENTITYID, isIncludeParentStructures) + ", " +
+                         tableName + "." + this.attributeToString(
+                             NoExpressionCallDAO.Attribute.DEVSTAGEID, isIncludeParentStructures);
          }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -132,10 +137,12 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     /** 
      * Return a {@code String} that correspond to the given {@code NoExpressionCallDAO.Attribute}.
      * 
-     * @param attribute   A {code NoExpressionCallDAO.Attribute} that is the attribute to
-     *                    convert in a {@code String}.
-     * @return            A {@code String} that correspond to the given 
-     *                    {@code NoExpressionCallDAO.Attribute}
+     * @param attribute                 A {code NoExpressionCallDAO.Attribute} that is the attribute
+     *                                  to convert in a {@code String}.
+     * @param isIncludeParentStructures A {@code boolean} defining whether parents of the  
+     *                                  anatomical entity were considered.
+     * @return                          A {@code String} that correspond to the given 
+     *                                  {@code NoExpressionCallDAO.Attribute}
      */
     private String attributeToString(NoExpressionCallDAO.Attribute attribute,
             boolean isIncludeParentStructures) {

@@ -12,12 +12,12 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO.OriginOfLine;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -91,7 +91,11 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("7","ID3", "Anat_id5", "Stage_id6", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF),
                 new NoExpressionCallTO("8","ID3", "Anat_id5", "Stage_id14", DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF)); 
         // Compare
-        compareTOResultSetAndTOList(dao.getAllNoExpressionCalls(params), expectedNoExprCalls);
+        List<NoExpressionCallTO> noExpressions = dao.getAllTOs(dao.getNoExpressionCalls(params));
+        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
+            throw new AssertionError("NoExpressionCallTOs incorrectly retieved, expected " + 
+                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
+        }
 
         // With speciesIds but not include parent structures 
         params.addAllSpeciesIds(Arrays.asList("21", "41"));
@@ -100,8 +104,12 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF),
                 new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF)); 
         // Compare
-        compareTOResultSetAndTOList(dao.getAllNoExpressionCalls(params), expectedNoExprCalls);
-        
+        noExpressions = dao.getAllTOs(dao.getNoExpressionCalls(params));
+        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
+            throw new AssertionError("NoExpressionCallTOs incorrectly retieved, expected " + 
+                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
+        }
+
         // On global no-expression table
         dao.setAttributes(Arrays.asList(
                 NoExpressionCallDAO.Attribute.ID, 
@@ -124,8 +132,12 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("8", "ID2", "Anat_id10", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
                 new NoExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
         // Compare
-        compareTOResultSetAndTOList(dao.getAllNoExpressionCalls(params), expectedNoExprCalls);
-        
+        noExpressions = dao.getAllTOs(dao.getNoExpressionCalls(params));
+        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
+            throw new AssertionError("NoExpressionCallTOs incorrectly retieved, expected " + 
+                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
+        }
+
         // Without species filter but include substructures
         // Generate parameters
         params.clearSpeciesIds();
@@ -145,85 +157,15 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF),
                 new NoExpressionCallTO("13", "ID3", "Anat_id1", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
         // Compare
-        compareTOResultSetAndTOList(dao.getAllNoExpressionCalls(params), expectedNoExprCalls);
-        
+        noExpressions = dao.getAllTOs(dao.getNoExpressionCalls(params));
+        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
+            throw new AssertionError("NoExpressionCallTOs incorrectly retieved, expected " + 
+                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
+        }
+
         log.exit();
     }
     
-    /**
-     * Compare a {@code NoExpressionCallTOResultSet} with a {@code List} of 
-     * {@code NoExpressionCallTO}.
-     * 
-     * @param noExpressionResultSet A {@code NoExpressionCallTOResultSet} to be compared to 
-     *                              {@code expectedNoExprCalls}.
-     * @param listNoExpressionTO    A {@code List} of {@code NoExpressionCallTO} to be compared to 
-     *                              {@code noExpressionResultSet}.
-     * @return                      {@code true} if {@code noExpressionResultSet} and 
-     *                              {@code listNoExpressionTO} have same {@code NoExpressionCallTO}s.
-     */
-    private void compareTOResultSetAndTOList(NoExpressionCallTOResultSet methResults,
-            List<NoExpressionCallTO> expectedNoExprCalls) {
-        log.entry(methResults, expectedNoExprCalls);
-
-        try {
-            int countMethNoExprCalls = 0;
-            while (methResults.next()) {
-                boolean found = false;
-                NoExpressionCallTO methNoExprCall = methResults.getTO();
-                countMethNoExprCalls++;
-                for (NoExpressionCallTO expNoExprCall: expectedNoExprCalls) {
-                    if (this.areNoExpressionCallTOsEqual(methNoExprCall, expNoExprCall)) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    log.debug("No equivalent NoExpressionCallTO found for {}",
-                            methNoExprCall.toString());
-                    throw log.throwing(new AssertionError("Incorrect generated TO"));
-                }
-            }
-            if (countMethNoExprCalls != expectedNoExprCalls.size()) {
-                log.debug("Not all NoExpressionCallTOs found for {}, {} generated but {} expected",
-                        expectedNoExprCalls.toString(), countMethNoExprCalls, 
-                        expectedNoExprCalls.size());
-                throw log.throwing(new AssertionError("Incorrect number of generated TOs"));
-            }
-        } finally {
-            methResults.close();
-        }
-
-        log.exit();
-    }
-
-    /**
-     * Method to compare two {@code NoExpressionCallTO}s, to check for complete equality of each
-     * attribute. This is because the {@code equals} method of {@code NoExpressionCallTO}s is 
-     * solely based on their ID, gene ID, developmental stage ID, and anatomical entity ID, not on 
-     * other attributes.
-     * 
-     * @param exprCallTO1   A {@code NoExpressionCallTO} to be compared to {@code exprCallTO2}.
-     * @param exprCallTO2   A {@code NoExpressionCallTO} to be compared to {@code exprCallTO1}.
-     * @return              {@code true} if {@code exprCallTO1} and {@code exprCallTO2} have all 
-     *                      attributes equal.
-     */
-    private boolean areNoExpressionCallTOsEqual(
-            NoExpressionCallTO exprCallTO1, NoExpressionCallTO exprCallTO2) {
-        log.entry(exprCallTO1, exprCallTO2);
-        if (exprCallTO1.getGeneId().equals(exprCallTO1.getGeneId()) &&
-            exprCallTO1.getStageId().equals(exprCallTO1.getStageId()) &&
-            exprCallTO1.getAnatEntityId().equals(exprCallTO1.getAnatEntityId()) &&
-            exprCallTO1.getAffymetrixData() == exprCallTO2.getAffymetrixData() &&
-            exprCallTO1.getInSituData() == exprCallTO2.getInSituData() &&
-            exprCallTO1.getRNASeqData() == exprCallTO2.getRNASeqData() &&
-            exprCallTO1.getAffymetrixData() == exprCallTO2.getAffymetrixData() &&
-            exprCallTO1.isIncludeParentStructures() == exprCallTO2.isIncludeParentStructures()) {
-            return log.exit(true);
-        }
-        log.debug("No-expression calls {} and {} are not equivalent", exprCallTO1, exprCallTO2);
-        return log.exit(false);
-    }
-
     /**
      * Test the select method {@link MySQLNoExpressionCallDAO#insertNoExpressionCalls()}.
      * @throws SQLException 

@@ -47,7 +47,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
     }
     
     /**
-     * Retrieve all expression calls from data source according {@code ExpressionCallParams}.
+     * Retrieve expression calls from data source according {@code ExpressionCallParams}.
      * <p>
      * The expression calls are retrieved and returned as an {@code ExpressionCallTOResultSet}. 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
@@ -59,7 +59,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      *                from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public ExpressionCallTOResultSet getAllExpressionCalls(ExpressionCallParams params) 
+    public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
             throws DAOException;
     
     /**

@@ -14,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
-import org.bgee.model.dao.api.species.TaxonDAO.TaxonTOResultSet;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Test;
@@ -111,7 +110,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         // Generate result with the method
         MySQLTaxonDAO dao = new MySQLTaxonDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.values()));
-        TaxonTOResultSet methResults = dao.getAllTaxa();
+        List<TaxonTO> methResults = dao.getAllTOs(dao.getAllTaxa());
 
         // Generate manually expected result
         List<TaxonTO> expectedTaxa = Arrays.asList(
@@ -121,26 +120,15 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                 new TaxonTO("411", "taxCName411", "taxSName411", 5, 6, 1, true), 
                 new TaxonTO("511", "taxCName511", "taxSName511", 7, 8, 1, true)); 
 
-        while (methResults.next()) {
-            boolean found = false;
-            TaxonTO methTaxon = methResults.getTO();
-            for (TaxonTO expTaxon: expectedTaxa) {
-                log.trace("Comparing {} to {}", methTaxon, expTaxon);
-                if (TOComparator.areTOsEqual(methTaxon, expTaxon)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent taxon found for {}", methTaxon);
-                throw log.throwing(new AssertionError("Incorrect generated TO"));
-            }
+        // Compare
+        if(!TOComparator.areTOCollectionsEqual(methResults, expectedTaxa)) {
+            throw new AssertionError("TaxonTOs incorrectly retieved, expected " + 
+                    expectedTaxa.toString() + ", but was " + methResults.toString());
         }
-        methResults.close();
 
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.ID));
-        methResults = dao.getAllTaxa();
-
+        methResults = dao.getAllTOs(dao.getAllTaxa());
+        
         // Generate manually expected result
         expectedTaxa = Arrays.asList(
                 new TaxonTO("111", null, null, 0, 0, 0, false), 
@@ -149,22 +137,10 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                 new TaxonTO("411", null, null, 0, 0, 0, false), 
                 new TaxonTO("511", null, null, 0, 0, 0, false)); 
 
-        while (methResults.next()) {
-            boolean found = false;
-            TaxonTO methTaxon = methResults.getTO();
-            for (TaxonTO expTaxon: expectedTaxa) {
-                log.trace("Comparing {} to {}", methTaxon, expTaxon);
-                if (TOComparator.areTOsEqual(methTaxon, expTaxon)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                log.debug("No equivalent taxon found for {}", methTaxon);
-                throw log.throwing(new AssertionError("Incorrect generated TO"));
-            }
+        if(!TOComparator.areTOCollectionsEqual(methResults, expectedTaxa)) {
+            throw new AssertionError("TaxonTOs incorrectly retieved, expected " + 
+                    expectedTaxa.toString() + ", but was " + methResults.toString());
         }
-        methResults.close();
 
         log.exit();
     }

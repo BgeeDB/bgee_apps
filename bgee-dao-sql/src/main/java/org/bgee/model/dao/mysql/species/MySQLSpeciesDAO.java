@@ -47,20 +47,20 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         
         Collection<SpeciesDAO.Attribute> attributes = this.getAttributes();
         //Construct sql query
-        StringBuilder sql = new StringBuilder(); 
+        String sql = new String(); 
         if (attributes == null || attributes.size() == 0) {
-            sql.append("SELECT *");
+            sql += "SELECT *";
         } else {
             for (SpeciesDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql.append("SELECT DISTINCT ");
+                    sql += "SELECT DISTINCT ";
                 } else {
-                    sql.append(", ");
+                    sql += ", ";
                 }
-                sql.append(this.attributeToString(attribute));
+                sql += this.attributeToString(attribute);
             }
         }
-        sql.append(" FROM species");
+        sql += " FROM species";
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.

@@ -17,6 +17,7 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.junit.Test;
@@ -246,5 +247,8 @@ public class InsertUberonTest extends TestAncestor {
                     "expected " + expectedTaxonConstraintTOs.toString() + ", but was " + 
                     taxonConstraintTOsArg.getValue());
         }
+
+        Set<RelationTO> expectedRelTOs = new HashSet<RelationTO>();
+        //continue here
     }
 }

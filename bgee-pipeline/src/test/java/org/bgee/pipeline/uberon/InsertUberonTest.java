@@ -13,6 +13,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -147,11 +148,11 @@ public class InsertUberonTest extends TestAncestor {
         MockDAOManager mockManager = new MockDAOManager();
 
         OWLOntology ont = OntologyUtils.loadOntology(InsertUberonTest.class.
-                getResource("/ontologies/test_dev_stage_ont.obo").getFile());
+                getResource("/ontologies/insertAnatOntTest.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         
-      //instantiate an UberonDevStage with custom taxon constraints and mock manager
+        //instantiate an Uberon with custom taxon constraints and mock manager
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
         taxonConstraints.put("ID:1", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
         taxonConstraints.put("ID:2", new HashSet<Integer>(Arrays.asList(7955)));
@@ -166,11 +167,84 @@ public class InsertUberonTest extends TestAncestor {
 
         taxonConstraints.put("ID:8", new HashSet<Integer>(Arrays.asList(9606)));
         taxonConstraints.put("ID:9", new HashSet<Integer>(Arrays.asList(9606, 10090)));
+
+        taxonConstraints.put("ID:10", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:11", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:12", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:13", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:14", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:15", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:16", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:17", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
         
         Uberon uberon = new Uberon(utils, taxonConstraints);
         uberon.setToIgnoreSubgraphRootIds(Arrays.asList("NCBITaxon:1"));
         
         InsertUberon insert = new InsertUberon(mockManager);
         insert.insertAnatOntologyIntoDataSource(uberon, Arrays.asList(9606, 10090));
+        
+        //generate the expected Sets of AnatEntityTO, RelationTO, TaxonConstraintTO 
+        //to verify the calls made to the DAOs
+        Set<AnatEntityTO> expectedAnatEntityTOs = new HashSet<AnatEntityTO>();
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:1", "name cls 1", "Def. cls 1", 
+                "UBERON:0000104", "UBERON:0000104", true));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:6", "name cls 6", "Def. cls 6", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:7", "name cls 7", "Def. cls 7", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:8", "name cls 8", "Def. cls 8", 
+                "UBERON:0000104", "UBERON:0000104", true));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:9", "name cls 9", "Def. cls 9", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:10", "name cls 10", null, 
+                "UBERON:0000104", "UBERON:0000104", true));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:11", "name cls 11", "Def. cls 11", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:12", "name cls 12", "Def. cls 12", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:13", "name cls 13", "Def. cls 13", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:14", "name cls 14", "Def. cls 14", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:15", "name cls 15", "Def. cls 15", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:16", "name cls 16", "Def. cls 16", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:17", "name cls 17", "Def. cls 17", 
+                "UBERON:0000104", "UBERON:0000104", false));
+        ArgumentCaptor<Set> anatEntityTOsArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockAnatEntityDAO).insertAnatEntities(anatEntityTOsArg.capture());
+        if (!TOComparator.areTOCollectionsEqual(
+                expectedAnatEntityTOs, anatEntityTOsArg.getValue())) {
+            throw new AssertionError("Incorrect anatEntityTOs generated to insert anatomy, " +
+                    "expected " + expectedAnatEntityTOs.toString() + ", but was " + 
+                    anatEntityTOsArg.getValue());
+        }
+
+        Set<TaxonConstraintTO> expectedTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:1", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:6", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:7", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:9", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:10", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:11", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:12", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:13", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:14", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:15", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:16", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:17", null));
+
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:8", "9606"));
+        
+        ArgumentCaptor<Set> taxonConstraintTOsArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockTaxonConstraintDAO).insertAnatEntityTaxonConstraints(
+                taxonConstraintTOsArg.capture());
+        if (!TOComparator.areTOCollectionsEqual(
+                expectedTaxonConstraintTOs, taxonConstraintTOsArg.getValue())) {
+            throw new AssertionError("Incorrect TaxonConstraintTOs generated for anatomical entities, " +
+                    "expected " + expectedTaxonConstraintTOs.toString() + ", but was " + 
+                    taxonConstraintTOsArg.getValue());
+        }
     }
 }

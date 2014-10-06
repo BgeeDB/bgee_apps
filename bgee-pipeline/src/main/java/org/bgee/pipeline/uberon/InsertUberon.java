@@ -696,16 +696,19 @@ public class InsertUberon extends MySQLDAOUser {
             return log.exit(false);
         }
         
-        //check that we always have an ID and a name
-        String id = wrapper.getIdentifier(cls);
-        if (StringUtils.isBlank(id)) {
-            throw log.throwing(new IllegalArgumentException("No OBO-like ID retrieved for " + 
-                    cls));
-        }
-        String name = wrapper.getLabel(cls);
-        if (StringUtils.isBlank(name)) {
-            throw log.throwing(new IllegalArgumentException("No label retrieved for " + 
-                    cls));
+        //check that we always have an ID and a name, only for class that will not be 
+        //replaced by another one
+        if (cls.equals(uberon.getOWLClass(wrapper.getIdentifier(cls)))) {
+            String id = wrapper.getIdentifier(cls);
+            if (StringUtils.isBlank(id)) {
+                throw log.throwing(new IllegalArgumentException("No OBO-like ID retrieved for " + 
+                        cls));
+            }
+            String name = wrapper.getLabel(cls);
+            if (StringUtils.isBlank(name)) {
+                throw log.throwing(new IllegalArgumentException("No label retrieved for " + 
+                        cls));
+            }
         }
         
         return log.exit(true);

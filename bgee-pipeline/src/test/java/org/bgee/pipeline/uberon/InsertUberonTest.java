@@ -140,7 +140,7 @@ public class InsertUberonTest extends TestAncestor {
      * Test {@link InsertUberon#insertStageOntologyIntoDataSource(Uberon, Collection)}.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    @Test
+//    @Test
     public void insertAnatOntologyIntoDataSource() throws OBOFormatParserException, 
     OWLOntologyCreationException, IOException {
       //first, we need a mock MySQLDAOManager, for the class to acquire mock 

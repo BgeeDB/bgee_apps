@@ -43,12 +43,12 @@ import org.bgee.pipeline.MySQLDAOUser;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class CallPropagation extends MySQLDAOUser {
+public class InsertGlobalCalls extends MySQLDAOUser {
 
     /**
      * {@code Logger} of the class.
      */
-    private final static Logger log = LogManager.getLogger(CallPropagation.class.getName());
+    private final static Logger log = LogManager.getLogger(InsertGlobalCalls.class.getName());
     
     /**
      * An {@code int} that is a unique ID for each global expression calls.
@@ -63,7 +63,7 @@ public class CallPropagation extends MySQLDAOUser {
     /**
      * Default constructor. 
      */
-    public CallPropagation() {
+    public InsertGlobalCalls() {
         this(null);
     }
 
@@ -73,7 +73,7 @@ public class CallPropagation extends MySQLDAOUser {
      * 
      * @param manager   the {@code MySQLDAOManager} to use.
      */
-    public CallPropagation(MySQLDAOManager manager) {
+    public InsertGlobalCalls(MySQLDAOManager manager) {
         super(manager);
         this.globalExprId = 1;
         this.globalNoExprId = 1;
@@ -120,7 +120,7 @@ public class CallPropagation extends MySQLDAOUser {
             speciesIds = CommandRunner.parseListArgument(args[1]);    
         }
         
-        CallPropagation insert = new CallPropagation();
+        InsertGlobalCalls insert = new InsertGlobalCalls();
         insert.insert(speciesIds, isNoExpression);
         
         log.exit();
@@ -313,7 +313,7 @@ public class CallPropagation extends MySQLDAOUser {
         //get direct, indirect, and reflexive relations for propagation
         RelationTOResultSet rsRelations = dao.getAnatEntityRelations(
                 speciesIds, EnumSet.of(RelationType.ISA_PARTOF), null);
-        List<RelationTO> relationTOs = dao.getAllTOs(rsRelations);
+        List<RelationTO> relationTOs = rsRelations.getAllTOs();
         //no need for a try with resource or a finally, the insert method will close everything 
         //at the end in any case.
         rsRelations.close();
@@ -346,7 +346,7 @@ public class CallPropagation extends MySQLDAOUser {
 
         ExpressionCallTOResultSet rsExpressionCalls = dao.getExpressionCalls(params);
 
-        List<ExpressionCallTO> exprTOs = dao.getAllTOs(rsExpressionCalls);
+        List<ExpressionCallTO> exprTOs = rsExpressionCalls.getAllTOs();
         //no need for a try with resource or a finally, the insert method will close everything 
         //at the end in any case.
         rsExpressionCalls.close();
@@ -377,7 +377,7 @@ public class CallPropagation extends MySQLDAOUser {
 
         NoExpressionCallTOResultSet rsNoExpressionCalls = dao.getNoExpressionCalls(params);
 
-        List<NoExpressionCallTO> noExprTOs = dao.getAllTOs(rsNoExpressionCalls);
+        List<NoExpressionCallTO> noExprTOs = rsNoExpressionCalls.getAllTOs();
         //no need for a try with resource or a finally, the insert method will close everything 
         //at the end in any case.
         rsNoExpressionCalls.close();

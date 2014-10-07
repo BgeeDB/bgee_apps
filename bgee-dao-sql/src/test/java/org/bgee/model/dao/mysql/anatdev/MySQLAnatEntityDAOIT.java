@@ -67,7 +67,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id7","ectoderm","ectoderm desc","Stage_id6","Stage_id13", false),
                 new AnatEntityTO("Anat_id8","neuralTube","neuralTube desc","Stage_id8","Stage_id17", false),
                 new AnatEntityTO("Anat_id9","forebrain","forebrain desc","Stage_id8","Stage_id17", false));
-        List<AnatEntityTO> methAnatEntities = dao.getAllTOs(dao.getAnatEntities(null)); 
+        List<AnatEntityTO> methAnatEntities = dao.getAnatEntities(null).getAllTOs(); 
         if(!TOComparator.areTOCollectionsEqual(methAnatEntities, expectedAnatEntities)) {
             throw new AssertionError("AnatEntityTOs incorrectly retieved, expected " + 
                     expectedAnatEntities.toString() + ", but was " + methAnatEntities.toString());
@@ -89,7 +89,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id7", null, null, null, null, false),
                 new AnatEntityTO("Anat_id8", null, null, null, null, false),
                 new AnatEntityTO("Anat_id9", null, null, null, null, false));
-        methAnatEntities = dao.getAllTOs(dao.getAnatEntities(null)); 
+        methAnatEntities = dao.getAnatEntities(null).getAllTOs(); 
         if(!TOComparator.areTOCollectionsEqual(methAnatEntities, expectedAnatEntities)) {
             throw new AssertionError("AnatEntityTOs incorrectly retieved, expected " + 
                     expectedAnatEntities.toString() + ", but was " + methAnatEntities.toString());
@@ -109,7 +109,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id2", null, null, "Stage_id10", "Stage_id18", false),
                 new AnatEntityTO("Anat_id6", null, null, "Stage_id2", "Stage_id5", false),
                 new AnatEntityTO("Anat_id8", null, null, "Stage_id8", "Stage_id17", false));
-        methAnatEntities = dao.getAllTOs(dao.getAnatEntities(speciesIds)); 
+        methAnatEntities = dao.getAnatEntities(speciesIds).getAllTOs(); 
         if(!TOComparator.areTOCollectionsEqual(methAnatEntities, expectedAnatEntities)) {
             throw new AssertionError("AnatEntityTOs incorrectly retieved, expected " + 
                     expectedAnatEntities.toString() + ", but was " + methAnatEntities.toString());
@@ -132,7 +132,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         List<AnatEntityTO> expectedAnatEntities = Arrays.asList(
                 new AnatEntityTO("Anat_id10","hindbrain","hindbrain desc","Stage_id8","Stage_id17", true),
                 new AnatEntityTO("Anat_id13","anat13","unused anatE 13","Stage_id9","Stage_id10", true));
-        List<AnatEntityTO> methAnatEntities = dao.getAllTOs(dao.getNonInformativeAnatEntities(null)); 
+        List<AnatEntityTO> methAnatEntities = dao.getNonInformativeAnatEntities(null).getAllTOs(); 
         if(!TOComparator.areTOCollectionsEqual(methAnatEntities, expectedAnatEntities)) {
             throw new AssertionError("AnatEntityTOs incorrectly retieved, expected " + 
                     expectedAnatEntities.toString() + ", but was " + methAnatEntities.toString());
@@ -143,7 +143,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         speciesIds.addAll(Arrays.asList("11","44"));
         expectedAnatEntities = Arrays.asList(
                 new AnatEntityTO("Anat_id13","anat13","unused anatE 13","Stage_id9","Stage_id10", true));
-        methAnatEntities = dao.getAllTOs(dao.getNonInformativeAnatEntities(speciesIds)); 
+        methAnatEntities = dao.getNonInformativeAnatEntities(speciesIds).getAllTOs(); 
         if(!TOComparator.areTOCollectionsEqual(methAnatEntities, expectedAnatEntities)) {
             throw new AssertionError("AnatEntityTOs incorrectly retieved, expected " + 
                     expectedAnatEntities.toString() + ", but was " + methAnatEntities.toString());

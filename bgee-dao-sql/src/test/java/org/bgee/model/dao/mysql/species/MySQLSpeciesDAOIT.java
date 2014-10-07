@@ -115,7 +115,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         // Generate result with the method
         MySQLSpeciesDAO dao = new MySQLSpeciesDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(SpeciesDAO.Attribute.values()));
-        List<SpeciesTO> methSpecies = dao.getAllTOs(dao.getAllSpecies());
+        List<SpeciesTO> methSpecies = dao.getAllSpecies().getAllTOs();
         
         // Generate manually expected result
         List<SpeciesTO> expectedSpecies = Arrays.asList(

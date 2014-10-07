@@ -53,7 +53,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         // Generate result with the method
         MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.values()));
-        List<GeneTO> methGenes = dao.getAllTOs(dao.getAllGenes());
+        List<GeneTO> methGenes = dao.getAllGenes().getAllTOs();
 
         // Generate manually expected result
         List<GeneTO> expectedGenes = Arrays.asList(
@@ -68,7 +68,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // without declared attribute should return same TOs that with all attributes 
         dao.clearAttributes();
-        methGenes = dao.getAllTOs(dao.getAllGenes());
+        methGenes = dao.getAllGenes().getAllTOs();
         //Compare
         if(!TOComparator.areTOCollectionsEqual(methGenes, expectedGenes)) {
             throw new AssertionError("GeneTOs incorrectly retieved, expected " + 
@@ -77,7 +77,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-        methGenes = dao.getAllTOs(dao.getAllGenes());
+        methGenes = dao.getAllGenes().getAllTOs();
         expectedGenes = Arrays.asList(
                 new GeneTO("ID1", null, null, 0, 0, 0, false), 
                 new GeneTO("ID2", null, null, 0, 0, 0, false), 

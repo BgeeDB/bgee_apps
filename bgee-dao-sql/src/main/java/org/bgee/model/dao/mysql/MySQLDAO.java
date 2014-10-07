@@ -127,19 +127,7 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         Set<T> attributeCopy = new HashSet<T>(attributes) ;
         return log.exit(attributeCopy);
     }
-    
-    @Override
-    public <O extends TransferObject> List<O> getAllTOs(DAOResultSet<O> resultSet) 
-        throws DAOException {
-        log.entry(resultSet);
-        List<O> allTOs = new ArrayList<O>();
-        while (resultSet.next()) {
-            allTOs.add(resultSet.getTO());
-        }
-        resultSet.close();
-        return log.exit(allTOs);
-    }
-    
+        
     /**
      * Create a {@code String} composed with all {@code String}s of a {@code Set} separated 
      * by the given separator.

@@ -110,7 +110,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         // Generate result with the method
         MySQLTaxonDAO dao = new MySQLTaxonDAO(this.getMySQLDAOManager());
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.values()));
-        List<TaxonTO> methResults = dao.getAllTOs(dao.getAllTaxa());
+        List<TaxonTO> methResults = dao.getAllTaxa().getAllTOs();
 
         // Generate manually expected result
         List<TaxonTO> expectedTaxa = Arrays.asList(
@@ -127,7 +127,7 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         }
 
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.ID));
-        methResults = dao.getAllTOs(dao.getAllTaxa());
+        methResults = dao.getAllTaxa().getAllTOs();
         
         // Generate manually expected result
         expectedTaxa = Arrays.asList(

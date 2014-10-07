@@ -91,7 +91,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("7","ID3", "Anat_id5", "Stage_id6", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF),
                 new NoExpressionCallTO("8","ID3", "Anat_id5", "Stage_id14", DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF)); 
         // Compare
-        List<NoExpressionCallTO> noExpressions = dao.getAllTOs(dao.getNoExpressionCalls(params));
+        List<NoExpressionCallTO> noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
         if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
             throw new AssertionError("NoExpressionCallTOs incorrectly retieved, expected " + 
                     expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
@@ -104,7 +104,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF),
                 new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF)); 
         // Compare
-        noExpressions = dao.getAllTOs(dao.getNoExpressionCalls(params));
+        noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
         if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
             throw new AssertionError("NoExpressionCallTOs incorrectly retieved, expected " + 
                     expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
@@ -132,7 +132,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("8", "ID2", "Anat_id10", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
                 new NoExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
         // Compare
-        noExpressions = dao.getAllTOs(dao.getNoExpressionCalls(params));
+        noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
         if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
             throw new AssertionError("NoExpressionCallTOs incorrectly retieved, expected " + 
                     expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
@@ -157,7 +157,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF),
                 new NoExpressionCallTO("13", "ID3", "Anat_id1", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
         // Compare
-        noExpressions = dao.getAllTOs(dao.getNoExpressionCalls(params));
+        noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
         if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
             throw new AssertionError("NoExpressionCallTOs incorrectly retieved, expected " + 
                     expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());

@@ -158,6 +158,17 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             throw log.throwing(new DAOException(e));
         }
     }
+    
+    @Override
+    public List<T> getAllTOs() throws DAOException {
+        log.entry();
+        List<T> allTOs = new ArrayList<T>();
+        while (this.next()) {
+            allTOs.add(this.getTO());
+        }
+        this.close();
+        return log.exit(allTOs);
+    }
 
     /**
      * Returns the {@code ResultSet} corresponding to the current cursor position of this 

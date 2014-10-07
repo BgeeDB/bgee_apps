@@ -94,7 +94,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("8", "ID3", "Anat_id3", "Stage_id1", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, false, false, OriginOfLine.SELF),
                 new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, false, false, OriginOfLine.SELF));
         // Compare
-        List<ExpressionCallTO> expressions = dao.getAllTOs(dao.getExpressionCalls(params));
+        List<ExpressionCallTO> expressions = dao.getExpressionCalls(params).getAllTOs();
         if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
             throw new AssertionError("ExpressionCallTOs incorrectly retieved, expected " + 
                     expectedExprCalls.toString() + ", but was " + expressions.toString());
@@ -109,7 +109,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("3","ID1", "Anat_id6", "Stage_id7", DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, false, OriginOfLine.SELF),
                 new ExpressionCallTO("5","ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, false, false, OriginOfLine.SELF)); 
         // Compare
-        expressions = dao.getAllTOs(dao.getExpressionCalls(params));
+        expressions = dao.getExpressionCalls(params).getAllTOs();
         if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
             throw new AssertionError("ExpressionCallTOs incorrectly retieved, expected " + 
                     expectedExprCalls.toString() + ", but was " + expressions.toString());
@@ -134,7 +134,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, DataState.NODATA, DataState.NODATA,  DataState.LOWQUALITY, true, false, OriginOfLine.SELF),
                 new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, OriginOfLine.SELF));
         // Compare
-        expressions = dao.getAllTOs(dao.getExpressionCalls(params));
+        expressions = dao.getExpressionCalls(params).getAllTOs();
         if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
             throw new AssertionError("ExpressionCallTOs incorrectly retieved, expected " + 
                     expectedExprCalls.toString() + ", but was " + expressions.toString());
@@ -169,7 +169,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("22", "ID3", "Anat_id3", "Stage_id1", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, true, false, OriginOfLine.DESCENT),
                 new ExpressionCallTO("23", "ID2", "Anat_id1", "Stage_id1", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT));
         // Compare
-        expressions = dao.getAllTOs(dao.getExpressionCalls(params));
+        expressions = dao.getExpressionCalls(params).getAllTOs();
         if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
             throw new AssertionError("ExpressionCallTOs incorrectly retieved, expected " + 
                     expectedExprCalls.toString() + ", but was " + expressions.toString());

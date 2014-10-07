@@ -38,18 +38,18 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-public class CallPropagationTest extends TestAncestor {
+public class InsertGlobalCallsTest extends TestAncestor {
     
     /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = 
-            LogManager.getLogger(CallPropagationTest.class.getName());
+            LogManager.getLogger(InsertGlobalCallsTest.class.getName());
     
     /**
      * Default Constructor. 
      */
-    public CallPropagationTest() {
+    public InsertGlobalCallsTest() {
         super();
     }
     @Override
@@ -80,7 +80,7 @@ public class CallPropagationTest extends TestAncestor {
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExpr11TORs);
         // Determine the behavior of call to getAllTOs().
-        when(mockManager.mockExpressionCallDAO.getAllTOs(mockExpr11TORs)).thenReturn(Arrays.asList(
+        when(mockExpr11TORs.getAllTOs()).thenReturn(Arrays.asList(
                 new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
                 new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
                 new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
@@ -95,7 +95,7 @@ public class CallPropagationTest extends TestAncestor {
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExpr21TORs);
         // Determine the behavior of call to getAllTOs().
-        when(mockManager.mockExpressionCallDAO.getAllTOs(mockExpr21TORs)).thenReturn(Arrays.asList(
+        when(mockExpr21TORs.getAllTOs()).thenReturn(Arrays.asList(
                 new ExpressionCallTO("6", "ID4", "Anat_id6", "Stage_id12", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
                 new ExpressionCallTO("7", "ID4", "Anat_id9", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
                 new ExpressionCallTO("8", "ID5", "Anat_id8", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF)));
@@ -111,7 +111,7 @@ public class CallPropagationTest extends TestAncestor {
                 valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
         // Determine the behavior of call to getAllTOs().
-        when(mockManager.mockRelationDAO.getAllTOs(mockRelation11TORs)).thenReturn(Arrays.asList(
+        when(mockRelation11TORs.getAllTOs()).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id3", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id2"),
@@ -135,7 +135,7 @@ public class CallPropagationTest extends TestAncestor {
                 valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation21TORs);
         // Determine the behavior of call to getAllTOs().
-        when(mockManager.mockRelationDAO.getAllTOs(mockRelation21TORs)).thenReturn(Arrays.asList(
+        when(mockRelation21TORs.getAllTOs()).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id8", "Anat_id6"),
                 new RelationTO("Anat_id9", "Anat_id8"),
                 new RelationTO("Anat_id9", "Anat_id6"),
@@ -145,7 +145,7 @@ public class CallPropagationTest extends TestAncestor {
                 new RelationTO("Anat_id8", "Anat_id8"),
                 new RelationTO("Anat_id9", "Anat_id9")));
         
-        CallPropagation insert = new CallPropagation(mockManager);
+        InsertGlobalCalls insert = new InsertGlobalCalls(mockManager);
         insert.insert(null, false);
         
         // 
@@ -343,7 +343,7 @@ public class CallPropagationTest extends TestAncestor {
                 valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelationTORs);
         // Determine the behavior of call to getAllTOs().
-        when(mockManager.mockRelationDAO.getAllTOs(mockRelationTORs)).thenReturn(Arrays.asList(
+        when(mockRelationTORs.getAllTOs()).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id3", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id2"),
@@ -367,7 +367,7 @@ public class CallPropagationTest extends TestAncestor {
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
                 (NoExpressionCallParams) valueCallParamEq(noExprparams))).thenReturn(mockNoExprTORs);
         // Determine the behavior of call to getAllTOs().
-        when(mockManager.mockNoExpressionCallDAO.getAllTOs(mockNoExprTORs)).thenReturn(Arrays.asList(
+        when(mockNoExprTORs.getAllTOs()).thenReturn(Arrays.asList(
                 new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
                 new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
                 new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
@@ -383,7 +383,7 @@ public class CallPropagationTest extends TestAncestor {
                 valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
         // Determine the behavior of call to getAllTOs().
-        when(mockManager.mockRelationDAO.getAllTOs(mockRelation11TORs)).thenReturn(Arrays.asList(
+        when(mockRelation11TORs.getAllTOs()).thenReturn(Arrays.asList(
                 new RelationTO("Anat_id3", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id1"),
                 new RelationTO("Anat_id4", "Anat_id2"),
@@ -408,7 +408,7 @@ public class CallPropagationTest extends TestAncestor {
                 new RelationTO("Anat_idX", "Anat_idX")));
         
         //
-        CallPropagation insert = new CallPropagation(mockManager);
+        InsertGlobalCalls insert = new InsertGlobalCalls(mockManager);
         insert.insert(speciesId, true);
         
         //

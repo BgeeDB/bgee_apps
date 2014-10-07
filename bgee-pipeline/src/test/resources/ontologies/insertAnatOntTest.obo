@@ -194,7 +194,7 @@ id: ID:14
 name: name cls 14
 def: "Def. cls 14" [Bgee:curator]
 comment: will test composition of indirect relations with GCI between ID:10 and ID:14
-relationship: immediate_transformation_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9606"}
+relationship: immediate_transformation_of ID:13 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9606"}
 
 [Term]
 id: ID:15
@@ -286,6 +286,8 @@ namespace: uberon
 def: "x develops from y if and only if either (a) x directly develops from y or (b) there exists some z such that x directly develops from z and z develops from y" []
 xref: RO:0002202
 is_transitive: true
+transitive_over: part_of  ! part of
+holds_over_chain: part_of develops_from  ! develops from
 is_a: has_developmental_contribution_from ! has developmental contribution from
 
 [Typedef]

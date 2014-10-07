@@ -152,6 +152,22 @@ public class InsertUberonTest extends TestAncestor {
                 getResource("/ontologies/insertAnatOntTest.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
+
+        log.info("direct outgoing edges for ID:17: {}", 
+                wrapper.getOutgoingEdges(
+                        wrapper.getOWLClassByIdentifier("ID:17")));
+        log.info("direct outgoing edges with GCI for ID:17: {}", 
+                wrapper.getOutgoingEdgesWithGCI(
+                        wrapper.getOWLClassByIdentifier("ID:17")));
+        log.info("outgoing edge named closure with GCI for ID:17: {}", 
+                wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(
+                        wrapper.getOWLClassByIdentifier("ID:17")));
+        log.info("outgoing edge named closure for ID:17: {}", 
+                wrapper.getOutgoingEdgesNamedClosureOverSupProps(
+                        wrapper.getOWLClassByIdentifier("ID:17")));
+        log.info("outgoing edge closure with GCI for ID:17: {}", 
+                wrapper.getOutgoingEdgesClosureWithGCI(
+                        wrapper.getOWLClassByIdentifier("ID:17")));
         
         //instantiate an Uberon with custom taxon constraints and mock manager
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
@@ -163,10 +179,10 @@ public class InsertUberonTest extends TestAncestor {
         //ID:5 is a taxon equivalent to ID:1, should not be seen
         taxonConstraints.put("ID:5", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
         
-        taxonConstraints.put("ID:6", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
-        taxonConstraints.put("ID:7", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:6", new HashSet<Integer>(Arrays.asList(9606, 10090)));
+        taxonConstraints.put("ID:7", new HashSet<Integer>(Arrays.asList(9606, 10090)));
 
-        taxonConstraints.put("ID:8", new HashSet<Integer>(Arrays.asList(9606)));
+        taxonConstraints.put("ID:8", new HashSet<Integer>(Arrays.asList(7955, 9606)));
         taxonConstraints.put("ID:9", new HashSet<Integer>(Arrays.asList(9606, 10090)));
 
         taxonConstraints.put("ID:10", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
@@ -249,6 +265,115 @@ public class InsertUberonTest extends TestAncestor {
         }
 
         Set<RelationTO> expectedRelTOs = new HashSet<RelationTO>();
+        //we do not set relation IDs, as the iteration order is not predictable. 
+        //comparison to expected relations will be done without taking IDs into account.
+        
+        //first, all reflexive relations
+        expectedRelTOs.add(new RelationTO(null, "ID:1", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:6", "ID:6", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:7", "ID:7", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:8", "ID:8", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:9", "ID:9", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:10", "ID:10", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:11", "ID:11", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:12", "ID:12", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:13", "ID:13", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:14", "ID:14", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:15", "ID:15", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:16", "ID:16", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:17", "ID:17", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        //now, direct relations
+        expectedRelTOs.add(new RelationTO(null, "ID:6", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:7", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:8", "ID:7", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:9", "ID:8", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:9", "ID:8", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:10", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:11", "ID:10", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:12", "ID:11", 
+                RelationTO.RelationType.TRANSFORMATIONOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:13", "ID:10", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:14", "ID:13", 
+                RelationTO.RelationType.TRANSFORMATIONOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:15", "ID:10", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:16", "ID:10", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:17", "ID:16", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        //now, indirect relations
+        //ID:8 po ID:7 po ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:8", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+        //ID:9 po ID:8 po ID:7 po ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:9", "ID:7", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:9", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+        //ID:9 dvlt_from ID:8 po ID:7 po ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:9", "ID:7", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:9", "ID:1", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //ID:11 dvlt_from ID:10 is_a ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:11", "ID:1", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //ID:12 transf_of ID:11 dvlt_from ID:10 is_a ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:12", "ID:10", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:12", "ID:1", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //ID:13 dvlt_from ID:10 is_a ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:13", "ID:1", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //ID:14 transf_of ID:13 dvlt_from ID:10 is_a ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:14", "ID:10", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:14", "ID:1", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //ID:15 po ID:10 is_a ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:15", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+        //ID:16 po ID:10 is_a ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:16", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+        //ID:17 po ID:16 po ID:10 is_a ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:17", "ID:10", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:17", "ID:1", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+        
+        ArgumentCaptor<Set> relTOsArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockRelationDAO).insertAnatEntityRelations(relTOsArg.capture());
+        if (!TOComparator.areTOCollectionsEqual(
+                expectedRelTOs, relTOsArg.getValue(), false)) {
+            throw new AssertionError("Incorrect RelationTOs generated for relations " +
+            		"between anatomical entities, expected " + expectedRelTOs + ", but was " + 
+            		relTOsArg.getValue());
+        }
+        
+        Set<TaxonConstraintTO> expectedRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
         //continue here
     }
 }

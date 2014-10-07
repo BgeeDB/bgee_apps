@@ -19,6 +19,9 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO.Domain;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.junit.Test;
@@ -192,7 +195,7 @@ public class TOComparatorTest extends TestAncestor {
      * using {@code TaxonConstraintTO}s.
      */
     @Test
-    public void testAreTaxonConstraintTOEqual() {
+    public void testAreTaxonConstraintTOsEqual() {
         TaxonConstraintTO to1 = new TaxonConstraintTO("ID1", "ID2");
         TaxonConstraintTO to2 = new TaxonConstraintTO("ID1", "ID2");
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
@@ -200,6 +203,33 @@ public class TOComparatorTest extends TestAncestor {
         
         to2 = new TaxonConstraintTO("ID1", "ID3");
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+    }
+    
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code RelationTO}s.
+     */
+    @Test
+    public void testAreRelationTOsEqual() {
+        RelationTO to1 = new RelationTO("1", "ID1", "ID2", RelationType.ISA_PARTOF, 
+                RelationStatus.DIRECT);
+        RelationTO to2 = new RelationTO("1", "ID1", "ID2", RelationType.ISA_PARTOF, 
+                RelationStatus.DIRECT);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new RelationTO("1", "ID1", "ID2", RelationType.DEVELOPSFROM, 
+                RelationStatus.DIRECT);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new RelationTO("1", "ID1", "ID2", RelationType.ISA_PARTOF, 
+                RelationStatus.INDIRECT);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new RelationTO("2", "ID1", "ID2", RelationType.ISA_PARTOF, 
+                RelationStatus.DIRECT);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
     
     /**

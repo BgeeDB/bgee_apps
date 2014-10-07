@@ -18,6 +18,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO.GOTermTO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 
@@ -101,8 +102,9 @@ public class TOComparator {
             return log.exit(areTOsEqual((HierarchicalGroupTO) to1, (HierarchicalGroupTO) to2, 
                     compareId));
         } else if (to1 instanceof TaxonConstraintTO) {
-            return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2, 
-                    compareId));
+            return log.exit(areTOsEqual((TaxonConstraintTO) to1, (TaxonConstraintTO) to2));
+        } else if (to1 instanceof RelationTO) {
+            return log.exit(areTOsEqual((RelationTO) to1, (RelationTO) to2, compareId));
         } else if (to1 instanceof ExpressionCallTO) {
             return log.exit(areTOsEqual((ExpressionCallTO) to1, (ExpressionCallTO) to2, 
                     compareId));
@@ -169,6 +171,8 @@ public class TOComparator {
             return log.exit(false);
         }
         if (c1.size() != c2.size()) {
+            log.trace("Collections not equal, size first collection: {} - size second collection: {}", 
+                    c1.size(), c2.size());
             return log.exit(false);
         }
         //to make sure we have the same number of each element. 
@@ -440,25 +444,47 @@ public class TOComparator {
     /**
      * Method to compare two {@code TaxonConstraintTO}s, to check for complete equality of each
      * attribute. 
-     * <p>
-     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
-     * will not be used for comparison.
      * 
      * @param to1   An {@code TaxonConstraintTO} to be compared to {@code to2}.
      * @param to2   An {@code TaxonConstraintTO} to be compared to {@code to1}.
-     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
-     *                  used for comparisons. 
      * @return      {@code true} if {@code to1} and {@code to2} have all 
      *              attributes equal.
      */
-    private static boolean areTOsEqual(TaxonConstraintTO to1, TaxonConstraintTO to2, 
-            boolean compareId) {
-        log.entry(to1, to2, compareId);
+    private static boolean areTOsEqual(TaxonConstraintTO to1, TaxonConstraintTO to2) {
+        log.entry(to1, to2);
 
         //for now, the equals method of TaxonConstraintTO takes into account 
         //all attributes, so we can use it directly. We still keep the method 
         //areTOsEqual for abstraction purpose.
         return log.exit(to1.equals(to2));
+    }
+
+    /**
+     * Method to compare two {@code RelationTO}s, to check for complete equality of each
+     * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param to1   An {@code RelationTO} to be compared to {@code to2}.
+     * @param to2   An {@code RelationTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return      {@code true} if {@code to1} and {@code to2} have all 
+     *              attributes equal.
+     */
+    private static boolean areTOsEqual(RelationTO to1, RelationTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2, compareId);
+
+        if ((!compareId || StringUtils.equals(to1.getId(), to2.getId())) && 
+                StringUtils.equals(to1.getSourceId(), to2.getSourceId()) && 
+                StringUtils.equals(to1.getTargetId(), to2.getTargetId()) && 
+                to1.getRelationStatus() == to2.getRelationStatus() && 
+                to1.getRelationType() == to2.getRelationType()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
 
     /**

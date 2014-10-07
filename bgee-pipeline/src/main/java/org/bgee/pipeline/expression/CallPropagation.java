@@ -416,12 +416,12 @@ public class CallPropagation extends MySQLDAOUser {
         log.debug("Retrieving anat entities with expression calls...");
         ExpressionCallDAO exprDao = this.getExpressionCallDAO();
         exprDao.setAttributes(ExpressionCallDAO.Attribute.ANATENTITYID);
-        ExpressionCallParams exprParams = new ExpressionCallParams();
         //we do not query global expression calls, because this way we can launch 
         //the propagation of global expression and global no-expression calls independently. 
         //We will propagate expression calls thanks to relations between anatomical terms.
         //params.setIncludeSubstructures(true);
-        ExpressionCallTOResultSet rsExpressionCalls = exprDao.getExpressionCalls(exprParams);
+        ExpressionCallTOResultSet rsExpressionCalls = 
+                exprDao.getExpressionCalls(new ExpressionCallParams());
         while (rsExpressionCalls.next()) {
             String anatEntityId = rsExpressionCalls.getTO().getAnatEntityId();
             log.trace("Anat. entity with expression calls: {}", anatEntityId);
@@ -466,20 +466,20 @@ public class CallPropagation extends MySQLDAOUser {
 
     /**
      * Generate the global expression calls from given expression calls filling the return 
-     * {@code Map} associating each generated global expression call to expression calls used 
+     * {@code Map} associating each generated global expression calls to expression calls used 
      * to generate it.
      * <p>
-     * This method fills the map with generic global expression calls (which contain only 
-     * gene ID, anatomical entity ID, and stage ID) as key and with all corresponding expression 
-     * calls as values. Second, it merges expression calls and updates the global expression calls 
-     * calling {@link #updateGlobalExpressions()}.
+     * First, the method fills the map with generic global expression calls as key (only gene ID, 
+     * anatomical entity ID, and stage ID are defined) with all expression calls used to generate 
+     * the global expression call. Second, it updates the global expression calls calling
+     * {@link #updateGlobalExpressions()}.
      * 
      * @param expressionTOs A {@code List} of {@code ExpressionCallTO}s containing 
      *                      all expression calls to propagate.
      * @param relationTOs   A {@code List} of {@code RelationTO}s containing source 
      *                      and target IDs of all anatomical entity relations.
-     * @return              A {@code Map} associating generated global expression calls ( 
-     *                      {@code ExpressionCallTO}s) to expression calls.
+     * @return              A {@code Map} associating generated global expression calls to 
+     *                      expression calls used to generate it.
      */
     private Map<ExpressionCallTO, Set<ExpressionCallTO>> generateGlobalExpressionTOs(
             List<ExpressionCallTO> expressionTOs, List<RelationTO> relationTOs) {
@@ -523,7 +523,7 @@ public class CallPropagation extends MySQLDAOUser {
             }
         }
 
-        this.updateGlobalExpressions(mapGlobalExpr, ExpressionCallTO.class);
+        this.updateGlobalExpressions(mapGlobalExpr);
         
         return log.exit(mapGlobalExpr);        
     }
@@ -533,21 +533,19 @@ public class CallPropagation extends MySQLDAOUser {
      * {@code Map} associating each generated global no-expression calls to no-expression calls 
      * used to generate it.
      * <p>
-     * This method fills the map with generic global no-expression calls (which contains only 
-     * gene ID, anatomical entity ID, and stage ID) as key and with all corresponding no-expression 
-     * calls as values. Second, it merges no-expression calls and updates the global no-expression
-     * calls calling {@link #updateGlobalExpressions()}. The propagation is done only in anatomical 
-     * entities having at least one global expression call to avoid having too many
-     * propagated expression.
+     * First, the method fills the map associating generic global no-expression calls as key 
+     * (only gene ID, anatomical entity ID, and stage ID are defined) with all no-expression calls 
+     * used to generate the global no-expression call. Second, it updates the global no-expression
+     * calls calling {@link #updateGlobalNoExpressions()}.
      * 
      * @param noExpressionTOs           A {@code List} of {@code NoExpressionCallTO}s containing 
      *                                  all no-expression calls to be propagated.
      * @param relationTOs               A {@code List} of {@code RelationTO}s containing source 
      *                                  and target IDs of all anatomical entity relations.
-     * @param expressedAnatEntities     A {@code Set} of {@code String}s containing anatomical 
-     *                                  entity IDs having at least a global expression call.
+     * @param filteredAnatEntities      A {@code Set} of {@code String}s that are the IDs of 
+     *                                  anatomical entities allowing filter calls to propagate.
      * @return                          A {@code Map} associating generated global no-expression 
-     *                                  calls ({@code NoExpressionCallTO}s) to no-expression calls.
+     *                                  calls to no-expression calls used to generate it.
      */
     //TODO: I don't understand second paragraph of javadoc :p
     private Map<NoExpressionCallTO, Set<NoExpressionCallTO>>
@@ -596,112 +594,124 @@ public class CallPropagation extends MySQLDAOUser {
             }
         }
 
-        this.updateGlobalExpressions(mapGlobalNoExpr, NoExpressionCallTO.class);
+        this.updateGlobalNoExpressions(mapGlobalNoExpr);
 
         return log.exit(mapGlobalNoExpr);        
     }
 
     /**
-     * Update global {@code T} calls of the given {@code Map} taking account {@code DataType}s and 
+     * Update global expression calls of the given {@code Map} taking account {@code DataType}s and 
      * anatomical entity IDs of calls to generate {@code OrigineOfLine} of global calls. 
-     * Are currently supported: {@code ExpressionCallTO.class}, {@code NoExpressionCallTO.class}.
      * 
-     * @param globalMap         A {@code Map} associating generated global calls to calls
-     *                          to be updated.
-     * @param isNoExpression    A {@code boolean} defining whether it is propagation of expression 
-     *                          or no-expression. If {@code true}, the propagation will be done for 
-     *                          no-expression calls.
-     * @param type              The desired {@code CallTO} type.
-     * @param <T>               A {@code CallTO} type parameter, that should either be 
-     *                          an {@code ExpressionCallTO}, or a {@code NoExpressionCallTO}.
-     * @throws IllegalArgumentException If {@code T} is not an {@code ExpressionCallTO}, 
-     *                                  nor a {@code NoExpressionCallTO}
+     * @param globalMap     A {@code Map} associating generated global expression calls to 
+     *                      expression calls to be updated.
      */
-    private <T extends CallTO> void updateGlobalExpressions(Map<T, Set<T>> globalMap, Class<T> type) {
-        log.entry(globalMap, type);
-        
-        if (!ExpressionCallTO.class.isAssignableFrom(type) && 
-                !NoExpressionCallTO.class.isAssignableFrom(type)) {
-            throw log.throwing(new IllegalArgumentException("Incorrect Class type provided: " + 
-                type));
-        }
+    private void updateGlobalExpressions(Map<ExpressionCallTO, Set<ExpressionCallTO>> globalMap) {
+        log.entry(globalMap);
         
         // Create a Set from keySet to be able to modify globalMap.
-        Set<T> tmpGlobalCalls = new HashSet<T>(globalMap.keySet());
+        Set<ExpressionCallTO> tmpGlobalCalls = new HashSet<ExpressionCallTO>(globalMap.keySet());
 
-        for (T globalCall: tmpGlobalCalls) {
+        for (ExpressionCallTO globalCall: tmpGlobalCalls) {
             // Remove generic global call which contains only 
             // gene ID, anatomical entity ID, and stage ID
-            Set<T> calls = globalMap.remove(globalCall);
+            Set<ExpressionCallTO> calls = globalMap.remove(globalCall);
 
-            log.trace("Update global call ({}): {}; with: {}", type.getSimpleName(), globalCall, 
-                    calls);
+            log.trace("Update global expression calls: {}; with: {}", globalCall, calls);
             
             // Define the best DataType of the global call according to all calls
             // and get anatomical entity IDs to be able to define OriginOfLine later.
             DataState affymetrixData = DataState.NODATA, estData = DataState.NODATA, 
-                    relaxedinSituData = DataState.NODATA, inSituData = DataState.NODATA, 
-                    rnaSeqData = DataState.NODATA;
+                    inSituData = DataState.NODATA, rnaSeqData = DataState.NODATA;
             Set<String> anatEntityIDs = new HashSet<String>();
-            for (T call: calls) {
-                //TODO: here, this should be differentiated between expression and no expression, 
-                //because a NoExpressionCallTO should throw an OperationNotSupportedException 
-                //when calling getESTData, for instance.
-                //And, in that case, it seems you could dispatch to two different methods 
-                //and avoid the use of a generic method.
+            for (ExpressionCallTO call: calls) {
                 affymetrixData = getBestDataState(affymetrixData, call.getAffymetrixData());
                 estData = getBestDataState(estData, call.getESTData());
+                inSituData = getBestDataState(inSituData, call.getInSituData());
+                rnaSeqData = getBestDataState(rnaSeqData, call.getRNASeqData());
+                anatEntityIDs.add(call.getAnatEntityId());
+            }
+
+            // Define the OriginOfLine of the global expression call according to all calls
+            ExpressionCallTO.OriginOfLine origin = ExpressionCallTO.OriginOfLine.DESCENT;
+            if (anatEntityIDs.contains(globalCall.getAnatEntityId())) {
+                if (anatEntityIDs.size() == 1) {
+                    origin = ExpressionCallTO.OriginOfLine.SELF;
+                } else {
+                    origin = ExpressionCallTO.OriginOfLine.BOTH;
+                }
+            }
+            ExpressionCallTO updatedGlobalCall =
+                    new ExpressionCallTO(String.valueOf(this.globalExprId++), 
+                            globalCall.getGeneId(), globalCall.getAnatEntityId(), 
+                            globalCall.getStageId(), 
+                            affymetrixData, estData, inSituData, rnaSeqData, true,
+                            ((ExpressionCallTO) globalCall).isIncludeSubStages(), origin);
+
+            log.trace("Updated global expression call: " + updatedGlobalCall);
+
+            // Add the updated global expression call
+            globalMap.put(updatedGlobalCall, calls);
+        } 
+        
+        log.exit();
+    }
+
+    /**
+     * Update global no-expression calls of the given {@code Map} taking account {@code DataType}s 
+     * and anatomical entity IDs of calls to generate {@code OrigineOfLine} of global calls. 
+     * 
+     * @param globalMap     A {@code Map} associating generated global no-expression calls to 
+     *                      no-expression calls to be updated.
+     */
+    private void updateGlobalNoExpressions(
+            Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalMap) {
+        log.entry(globalMap);
+        
+        // Create a Set from keySet to be able to modify globalMap.
+        Set<NoExpressionCallTO> tmpGlobalCalls = new HashSet<NoExpressionCallTO>(globalMap.keySet());
+
+        for (NoExpressionCallTO globalCall: tmpGlobalCalls) {
+            // Remove generic global call which contains only 
+            // gene ID, anatomical entity ID, and stage ID
+            Set<NoExpressionCallTO> calls = globalMap.remove(globalCall);
+
+            log.trace("Update global no-expression calls: {}; with: {}", globalCall, calls);
+            
+            // Define the best DataType of the global call according to all calls
+            // and get anatomical entity IDs to be able to define OriginOfLine later.
+            DataState affymetrixData = DataState.NODATA, relaxedinSituData = DataState.NODATA,
+                    inSituData = DataState.NODATA, rnaSeqData = DataState.NODATA;
+            Set<String> anatEntityIDs = new HashSet<String>();
+            for (NoExpressionCallTO call: calls) {
+                affymetrixData = getBestDataState(affymetrixData, call.getAffymetrixData());
                 inSituData = getBestDataState(inSituData, call.getInSituData());
                 relaxedinSituData = getBestDataState(relaxedinSituData, call.getRelaxedInSituData());
                 rnaSeqData = getBestDataState(rnaSeqData, call.getRNASeqData());
                 anatEntityIDs.add(call.getAnatEntityId());
             }
 
-            if (type.equals(NoExpressionCallTO.class)) {
-                // Define the OriginOfLine of the global no-expression call according to all calls
-               NoExpressionCallTO.OriginOfLine origin = NoExpressionCallTO.OriginOfLine.PARENT;
-                if (anatEntityIDs.contains(globalCall.getAnatEntityId())) {
-                    if (anatEntityIDs.size() == 1) {
-                        origin = NoExpressionCallTO.OriginOfLine.SELF;
-                    } else {
-                        origin = NoExpressionCallTO.OriginOfLine.BOTH;
-                    }
+            // Define the OriginOfLine of the global no-expression call according to all calls
+            NoExpressionCallTO.OriginOfLine origin = NoExpressionCallTO.OriginOfLine.PARENT;
+            if (anatEntityIDs.contains(globalCall.getAnatEntityId())) {
+                if (anatEntityIDs.size() == 1) {
+                    origin = NoExpressionCallTO.OriginOfLine.SELF;
+                } else {
+                    origin = NoExpressionCallTO.OriginOfLine.BOTH;
                 }
-                
-                NoExpressionCallTO updatedGlobalCall =
-                        new NoExpressionCallTO(String.valueOf(this.globalNoExprId++), 
-                                globalCall.getGeneId(), globalCall.getAnatEntityId(), 
-                                globalCall.getStageId(), 
-                                affymetrixData, inSituData, relaxedinSituData, rnaSeqData,
-                                true, origin);
-                
-                log.trace("Updated global no-expression call: " + updatedGlobalCall);
-                
-                // Add the updated global no-expression call
-                globalMap.put(type.cast(updatedGlobalCall), calls);
-                
-            } else if (type.equals(ExpressionCallTO.class)) {
-                // Define the OriginOfLine of the global expression call according to all calls
-                ExpressionCallTO.OriginOfLine origin = ExpressionCallTO.OriginOfLine.DESCENT;
-                if (anatEntityIDs.contains(globalCall.getAnatEntityId())) {
-                    if (anatEntityIDs.size() == 1) {
-                        origin = ExpressionCallTO.OriginOfLine.SELF;
-                    } else {
-                        origin = ExpressionCallTO.OriginOfLine.BOTH;
-                    }
-                }
-                ExpressionCallTO updatedGlobalCall =
-                        new ExpressionCallTO(String.valueOf(this.globalExprId++), 
-                                globalCall.getGeneId(), globalCall.getAnatEntityId(), 
-                                globalCall.getStageId(), 
-                                affymetrixData, estData, inSituData, rnaSeqData, true,
-                                ((ExpressionCallTO) globalCall).isIncludeSubStages(), origin);
-                
-                log.trace("Updated global expression call: " + updatedGlobalCall);
-                
-                // Add the updated global expression call
-                globalMap.put(type.cast(updatedGlobalCall), calls);
-            } 
+            }
+
+            NoExpressionCallTO updatedGlobalCall =
+                    new NoExpressionCallTO(String.valueOf(this.globalNoExprId++), 
+                            globalCall.getGeneId(), globalCall.getAnatEntityId(), 
+                            globalCall.getStageId(), 
+                            affymetrixData, inSituData, relaxedinSituData, rnaSeqData,
+                            true, origin);
+
+            log.trace("Updated global no-expression call: " + updatedGlobalCall);
+
+            // Add the updated global no-expression call
+            globalMap.put(updatedGlobalCall, calls);
         }
         
         log.exit();

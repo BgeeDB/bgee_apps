@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -78,7 +79,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
 
         // And, we need to mock the return of getMaxNoExpressionCallID().
-       when(mockManager.mockExpressionCallDAO.getMaxExpressionCallID(true)).thenReturn(0);
+       when(mockManager.mockExpressionCallDAO.getMaxExpressionCallID(true)).thenReturn(4);
 
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
         MySQLExpressionCallTOResultSet mockExpr11TORs = createMockDAOResultSet( 
@@ -125,9 +126,9 @@ public class InsertGlobalCallsTest extends TestAncestor {
         speciesFilter.add("11");
         // Determine the behavior of call to getAnatEntityRelations().
         when(mockManager.mockRelationDAO.getAnatEntityRelations(
-                valueSetEq(speciesFilter), 
-                valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
-                valueSetEq((Set<RelationStatus>) null))).
+                eq(speciesFilter), 
+                eq(EnumSet.of(RelationType.ISA_PARTOF)), 
+                eq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
         
         // We need a mock MySQLRelationTOResultSet to mock the return of getAnatEntityRelations().
@@ -146,9 +147,9 @@ public class InsertGlobalCallsTest extends TestAncestor {
         speciesFilter.add("21");
         // Determine the behavior of call to getAnatEntityRelations().
         when(mockManager.mockRelationDAO.getAnatEntityRelations(
-                valueSetEq(speciesFilter), 
-                valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
-                valueSetEq((Set<RelationStatus>) null))).
+                eq(speciesFilter), 
+                eq(EnumSet.of(RelationType.ISA_PARTOF)), 
+                eq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation21TORs);
         
         InsertGlobalCalls insert = new InsertGlobalCalls(mockManager);
@@ -257,7 +258,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         }
         
         Set<String> expectedIds = new HashSet<String>(
-                Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
+                Arrays.asList("5", "6", "7", "8", "9", "10", "11", "12", "13", "14"));
         assertEquals("Incorrect GlobalNoExpressionTO IDs", expectedIds, ids);
 
         // Verify the calls made to the DAOs for speciesID = 21.
@@ -311,7 +312,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
             }
         }
         
-        expectedIds = new HashSet<String>(Arrays.asList("11", "12", "13", "14", "15", "16"));
+        expectedIds = new HashSet<String>(Arrays.asList("15", "16", "17", "18", "19", "20"));
         assertEquals("Incorrect GlobalNoExpressionTO IDs", expectedIds, ids);
 
         log.exit();
@@ -385,9 +386,9 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         new RelationTO("Anat_idX", "Anat_idX")),
                 MySQLRelationTOResultSet.class);
         when(mockManager.mockRelationDAO.getAnatEntityRelations(
-                valueSetEq(new HashSet<String>(speciesId)), 
-                valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
-                valueSetEq((Set<RelationStatus>) null))).
+                eq(new HashSet<String>(speciesId)), 
+                eq(EnumSet.of(RelationType.ISA_PARTOF)), 
+                eq((Set<RelationStatus>) null))).
                 thenReturn(mockRelationTORs);
         
         // Fourth, we need mock a mock MySQLNoExpressionCallTOResultSet to mock the return of 
@@ -433,9 +434,9 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         new RelationTO("Anat_idX", "Anat_idX")),        
                 MySQLRelationTOResultSet.class);
         when(mockManager.mockRelationDAO.getAnatEntityRelations(
-                valueSetEq((HashSet<String>) null), 
-                valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
-                valueSetEq((Set<RelationStatus>) null))).
+                eq((HashSet<String>) null), 
+                eq(EnumSet.of(RelationType.ISA_PARTOF)), 
+                eq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
 
         //
@@ -604,38 +605,5 @@ public class InsertGlobalCallsTest extends TestAncestor {
      */
     private static CallParams valueCallParamEq(CallParams params) {
         return argThat(new CallParamsMatcher(params));
-    }
-    
-    /**
-     * Custom matcher for verifying actual and expected {@code Set} of {@code T}s.
-     */
-    private static class SetMatcher<T> extends ArgumentMatcher<Set<T>> {
-        
-        private final Set<T> expected;
-        
-        public SetMatcher(Set<T> expected) {
-            this.expected = expected;
-        }
-        
-        @SuppressWarnings("unchecked")
-        @Override
-        public boolean matches(Object actual) {
-            log.entry(actual);
-            if (actual == null && expected == null || 
-                    actual != null && ((T) actual).equals(expected)) {
-                return log.exit(true);
-            }
-            return log.exit(false);
-        }
-    }
-    
-    /**
-     * Convenience factory method for using the custom {@code Set} of {@code T}s matcher.
-     * 
-     * @param set   A {@code Set} of {@code T}s that is the argument to be verified.
-     * @param <T>   An {@code Object} type parameter.
-     */
-    private static <T> Set<T> valueSetEq(Set<T> set) {
-        return argThat(new SetMatcher<T>(set));
     }
 }

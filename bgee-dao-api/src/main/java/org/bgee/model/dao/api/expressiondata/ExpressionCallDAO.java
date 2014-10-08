@@ -53,15 +53,28 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param params  An {@code ExpressionCallParams} that provide the parameters specific 
-     *                to expression calls
-     * @return        An {@code ExpressionCallTOResultSet} containing all expression calls 
-     *                from data source.
+     * @param params        An {@code ExpressionCallParams} that provide the parameters specific 
+     *                      to expression calls
+     * @return              An {@code ExpressionCallTOResultSet} containing all expression calls 
+     *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
             throws DAOException;
     
+    /**
+     * Retrieve the maximum of expression call IDs from data source according a {@code boolean} 
+     * defining whether whether descendants of the anatomical entity were considered.
+     * 
+     * @param isIncludeSubstructures    A {@code boolean} defining whether descendants 
+     *                                  of the anatomical entity were considered.
+     * @return                          An {@code int} that is maximum of expression call IDs
+     *                                  from data source. If there is no call, return 0.
+     * @throws DAOException             If an error occurred when accessing the data source. 
+     */
+    public int getMaxExpressionCallID(boolean isIncludeSubstructures) 
+            throws DAOException;
+
     /**
      * Inserts the provided expression calls into the Bgee database, 
      * represented as a {@code Collection} of {@code ExpressionCallTO}s. 
@@ -69,8 +82,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @param expressionCalls   A {@code Collection} of {@code ExpressionCallTO}s 
      *                          to be inserted into the database.
      * @return                  An {@code int} that is the number of inserted expression calls.
-     * @throws DAOException If an error occurred while trying to insert expression 
-     *                      calls. 
+     * @throws DAOException     If an error occurred while trying to insert expression calls. 
      */
     public int insertExpressionCalls(Collection<ExpressionCallTO> expressionCalls) 
             throws DAOException;
@@ -84,7 +96,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      *                                      into the database.
      * @return                              An {@code int} that is the number of inserted 
      *                                      TOs.
-     * @throws DAOException If an error occurred while trying to insert data.
+     * @throws DAOException                 If an error occurred while trying to insert data.
      */
     public int insertGlobalExpressionToExpression(Collection<GlobalExpressionToExpressionTO> 
                                                   globalExpressionToExpression) throws DAOException;

@@ -53,15 +53,28 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
      * results are retrieved.
      * 
-     * @param params  An{@code NoExpressionCallParams} that provide the parameters specific 
-     *                to no-expression calls.
-     * @return        A {@code NoExpressionCallTOResultSet} containing all no-expression calls 
-     *                from data source.
+     * @param params        A {@code NoExpressionCallParams} that provide the parameters specific 
+     *                      to no-expression calls.
+     * @return              A {@code NoExpressionCallTOResultSet} containing all no-expression calls 
+     *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public NoExpressionCallTOResultSet getNoExpressionCalls(NoExpressionCallParams params)
             throws DAOException;
     
+    /**
+     * Retrieve the maximum of no-expression call IDs from data source according a {@code boolean} 
+     * defining whether whether parents of the anatomical entity were considered.
+     * 
+     * @param isIncludeParentStructures A {@code boolean} defining whether parents of the 
+     *                                  anatomical entity were considered.
+     * @return                          An {@code int} that is maximum of no-expression calls IDs
+     *                                  from data source. If there is no call, return 0.
+     * @throws DAOException             If an error occurred when accessing the data source. 
+     */
+    public int getMaxNoExpressionCallID(Boolean isIncludeSubstructures) 
+            throws DAOException;
+
     /**
      * Inserts the provided no-expression calls into the Bgee database, 
      * represented as a {@code Collection} of {@code NoExpressionCallTO}s. 
@@ -69,8 +82,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @param noExpressionCalls A {@code Collection} of {@code NoExpressionCallTO}s 
      *                          to be inserted into the database.
      * @return                  An {@code int} that is the number of inserted no-expression calls.
-     * @throws DAOException If an error occurred while trying to insert no-expression 
-     *                      calls. .
+     * @throws DAOException     If an error occurred while trying to insert no-expression calls.
      */
     public int insertNoExpressionCalls(Collection<NoExpressionCallTO> noExpressionCalls)
             throws DAOException;
@@ -83,9 +95,8 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @param globalNoExprToNoExprTOs   A {@code Collection} of 
      *                                  {@code GlobalNoExpressionToNoExpressionTO}s to be 
      *                                  inserted into the database.
-     * @return                          An {@code int} that is the number of inserted 
-     *                                  TOs.
-     * @throws DAOException If an error occurred while trying to insert data. 
+     * @return                          An {@code int} that is the number of inserted TOs.
+     * @throws DAOException             If an error occurred while trying to insert data. 
      */
     public int insertGlobalNoExprToNoExpr(Collection<GlobalNoExpressionToNoExpressionTO> 
                                               globalNoExprToNoExprTOs) throws DAOException;

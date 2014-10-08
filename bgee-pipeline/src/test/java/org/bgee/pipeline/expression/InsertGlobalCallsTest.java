@@ -1,5 +1,7 @@
 package org.bgee.pipeline.expression;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.never;
@@ -74,7 +76,10 @@ public class InsertGlobalCallsTest extends TestAncestor {
         MockDAOManager mockManager = new MockDAOManager();
         
         MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
-        
+
+        // And, we need to mock the return of getMaxNoExpressionCallID().
+       when(mockManager.mockExpressionCallDAO.getMaxExpressionCallID(true)).thenReturn(0);
+
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
         MySQLExpressionCallTOResultSet mockExpr11TORs = createMockDAOResultSet( 
                 Arrays.asList(
@@ -196,46 +201,67 @@ public class InsertGlobalCallsTest extends TestAncestor {
             throw new AssertionError("Incorrect number of generated GlobalExpressionToExpressionTOs " +
                     ", expected 20 , but was " + allGlobalExprToExprTO.size());
         }
+        Set<String> ids = new HashSet<String>();
         for (ExpressionCallTO globalExpr: methExprSpecies11) {
             if (globalExpr.getGeneId().equals("ID1") && 
                 globalExpr.getAnatEntityId().equals("Anat_id5") && 
-                globalExpr.getStageId().equals("Stage_id6") &&
-                allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("2",globalExpr.getId()))) {
-                // find: 2 - globalExpr.getId()
+                globalExpr.getStageId().equals("Stage_id6")) {
+
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("2",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+
             } else if (globalExpr.getGeneId().equals("ID1") && 
                       (globalExpr.getAnatEntityId().equals("Anat_id4") || 
                             globalExpr.getAnatEntityId().equals("Anat_id1") || 
                             globalExpr.getAnatEntityId().equals("Anat_id2")) && 
-                       globalExpr.getStageId().equals("Stage_id6") &&
-                       allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("1",globalExpr.getId())) &&
-                       allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("2",globalExpr.getId()))) {
-                // find: 1 - globalExpr.getId() 
-                // find: 2 - globalExpr.getId() 
+                       globalExpr.getStageId().equals("Stage_id6")) {
+                
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("1",globalExpr.getId())));
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("2",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+                
             } else if (globalExpr.getGeneId().equals("ID1") && 
                       (globalExpr.getAnatEntityId().equals("Anat_id3") || 
                             globalExpr.getAnatEntityId().equals("Anat_id1")) && 
-                       globalExpr.getStageId().equals("Stage_id1") &&
-                       allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("3",globalExpr.getId()))) {
-                // find: 3 - globalExpr.getId() 
+                       globalExpr.getStageId().equals("Stage_id1")) {
+
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("3",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+
             } else if (globalExpr.getGeneId().equals("ID2") && 
                       (globalExpr.getAnatEntityId().equals("Anat_id4") || 
                             globalExpr.getAnatEntityId().equals("Anat_id1") || 
                             globalExpr.getAnatEntityId().equals("Anat_id2")) && 
-                       globalExpr.getStageId().equals("Stage_id7") &&
-                       allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("4",globalExpr.getId()))) {
-                // find: 4 - globalExpr.getId() 
+                       globalExpr.getStageId().equals("Stage_id7")) {
+
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("4",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+
             } else if (globalExpr.getGeneId().equals("ID3") && 
                        globalExpr.getAnatEntityId().equals("Anat_id1") && 
-                       globalExpr.getStageId().equals("Stage_id7") &&
-                       allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("5",globalExpr.getId()))) {
-                // find: 5 - globalExpr.getId() 
+                       globalExpr.getStageId().equals("Stage_id7")) {
+
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("5",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+                
             } else {
                 throw new AssertionError("Incorrect GlobalExpressionToExpressionTO generated for: " +
                         globalExpr);
             }
         }
         
+        Set<String> expectedIds = new HashSet<String>(
+                Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
+        assertEquals("Incorrect GlobalNoExpressionTO IDs", expectedIds, ids);
+
         // Verify the calls made to the DAOs for speciesID = 21.
+        ids.clear();
         List<ExpressionCallTO> expectedExprSpecies21 = Arrays.asList(
                 new ExpressionCallTO(null, "ID4", "Anat_id9", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.SELF),
                 new ExpressionCallTO(null, "ID4", "Anat_id8", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
@@ -254,28 +280,40 @@ public class InsertGlobalCallsTest extends TestAncestor {
                (globalExpr.getAnatEntityId().equals("Anat_id9") || 
                     globalExpr.getAnatEntityId().equals("Anat_id7") || 
                     globalExpr.getAnatEntityId().equals("Anat_id8")) && 
-                globalExpr.getStageId().equals("Stage_id12") &&
-                allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("7",globalExpr.getId()))) {
-                // find: 7 - globalExpr.getId()
+                globalExpr.getStageId().equals("Stage_id12")) {
+
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("7",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+
             } else if (globalExpr.getGeneId().equals("ID4") && 
                        globalExpr.getAnatEntityId().equals("Anat_id6") && 
-                       globalExpr.getStageId().equals("Stage_id12") &&
-                       allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("6",globalExpr.getId())) &&
-                       allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("7",globalExpr.getId()))) {
-                // find: 6 - globalExpr.getId()
-                // find: 7 - globalExpr.getId()
+                       globalExpr.getStageId().equals("Stage_id12")) {
+
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("6",globalExpr.getId())));
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("7",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+
             } else if (globalExpr.getGeneId().equals("ID5") && 
                       (globalExpr.getAnatEntityId().equals("Anat_id8") || 
                             globalExpr.getAnatEntityId().equals("Anat_id6")) && 
-                       globalExpr.getStageId().equals("Stage_id1") &&
-                       allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("8",globalExpr.getId()))) {
-                // find: 8 - globalExpr.getId()
+                       globalExpr.getStageId().equals("Stage_id1")) {
+
+                assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
+                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("8",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+
             } else {
                 throw new AssertionError("Incorrect GlobalExpressionToExpressionTO generated for: " +
                         globalExpr);
             }
         }
         
+        expectedIds = new HashSet<String>(Arrays.asList("11", "12", "13", "14", "15", "16"));
+        assertEquals("Incorrect GlobalNoExpressionTO IDs", expectedIds, ids);
+
         log.exit();
     }
     
@@ -297,6 +335,9 @@ public class InsertGlobalCallsTest extends TestAncestor {
         
         // Second, We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
         MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
+        
+        // And, we need to mock the return of getMaxNoExpressionCallID().
+        when(mockManager.mockNoExpressionCallDAO.getMaxNoExpressionCallID(true)).thenReturn(10);
         
         // Third, we need mock ResultSets to mock the return of get methods called in 
         // loadAllowedAnatEntities() 
@@ -453,42 +494,63 @@ public class InsertGlobalCallsTest extends TestAncestor {
                     ", but was " + exprTOsArgGlobalNoExprToNoExpr.getValue().size());
         }
         
+        Set<String> ids = new HashSet<String>();
         for (NoExpressionCallTO globalExpr: (Set<NoExpressionCallTO>) exprTOsArgGlobalNoExpr.getValue()) {
             if (globalExpr.getGeneId().equals("ID1") && 
                 globalExpr.getAnatEntityId().equals("Anat_id3") && 
-                globalExpr.getStageId().equals("Stage_id1") &&
-                values.contains(new GlobalNoExpressionToNoExpressionTO("2",globalExpr.getId()))) {
-                // find: 2 - globalExpr.getId()
+                globalExpr.getStageId().equals("Stage_id1")) {
+                
+                assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
+                        values.contains(new GlobalNoExpressionToNoExpressionTO("2",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+
             } else if (globalExpr.getGeneId().equals("ID1") && 
                        globalExpr.getAnatEntityId().equals("Anat_id4") && 
-                       globalExpr.getStageId().equals("Stage_id3") &&
-                       values.contains(new GlobalNoExpressionToNoExpressionTO("3",globalExpr.getId()))) {
-                // find: 3 - globalExpr.getId() 
+                       globalExpr.getStageId().equals("Stage_id3")) {
+
+                assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
+                        values.contains(new GlobalNoExpressionToNoExpressionTO("3",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+ 
             } else if (globalExpr.getGeneId().equals("ID1") && 
                        globalExpr.getAnatEntityId().equals("Anat_id5") && 
-                       globalExpr.getStageId().equals("Stage_id3") &&
-                       values.contains(new GlobalNoExpressionToNoExpressionTO("3",globalExpr.getId())) &&
-                       values.contains(new GlobalNoExpressionToNoExpressionTO("5",globalExpr.getId()))) {
-                // find: 3 and 5 - globalExpr.getId() 
+                       globalExpr.getStageId().equals("Stage_id3")) {
+                
+                assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
+                        values.contains(new GlobalNoExpressionToNoExpressionTO("3",globalExpr.getId())));
+                assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
+                        values.contains(new GlobalNoExpressionToNoExpressionTO("5",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+                
             } else if (globalExpr.getGeneId().equals("ID2") && 
                       (globalExpr.getAnatEntityId().equals("Anat_id4") || 
                             globalExpr.getAnatEntityId().equals("Anat_id5")) && 
-                       globalExpr.getStageId().equals("Stage_id3") &&
-                       values.contains(new GlobalNoExpressionToNoExpressionTO("4",globalExpr.getId()))) {
-                // find: 4 - globalExpr.getId() 
+                       globalExpr.getStageId().equals("Stage_id3")) {
+                
+                assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
+                        values.contains(new GlobalNoExpressionToNoExpressionTO("4",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+                 
             } else if (globalExpr.getGeneId().equals("ID3") && 
                       (globalExpr.getAnatEntityId().equals("Anat_id1") || 
                             globalExpr.getAnatEntityId().equals("Anat_id3") || 
                             globalExpr.getAnatEntityId().equals("Anat_id4") || 
                             globalExpr.getAnatEntityId().equals("Anat_id5")) && 
-                       globalExpr.getStageId().equals("Stage_id6") &&
-                       values.contains(new GlobalNoExpressionToNoExpressionTO("1",globalExpr.getId()))) {
-                // find: 1 - globalExpr.getId() 
+                       globalExpr.getStageId().equals("Stage_id6")) {
+
+                assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
+                        values.contains(new GlobalNoExpressionToNoExpressionTO("1",globalExpr.getId())));
+                ids.add(globalExpr.getId());
+
             } else {
                 throw new AssertionError("Incorrect GlobalNoExpressionToNoExpressionTO generated for: " +
                         globalExpr);
             }
         }
+        
+        Set<String> expectedIds = new HashSet<String>(
+                Arrays.asList("11", "12", "13", "14", "15", "16", "17", "18", "19"));
+        assertEquals("Incorrect GlobalNoExpressionTO IDs", expectedIds, ids);
         
         log.exit();
     }

@@ -72,7 +72,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      *                                  from data source. If there is no call, return 0.
      * @throws DAOException             If an error occurred when accessing the data source. 
      */
-    public int getMaxExpressionCallID(boolean isIncludeSubstructures) 
+    public int getMaxExpressionCallId(boolean isIncludeSubstructures) 
             throws DAOException;
 
     /**

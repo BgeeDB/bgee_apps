@@ -81,7 +81,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     }
 
     @Override
-    public int getMaxExpressionCallID(boolean isIncludeSubstructures)
+    public int getMaxExpressionCallId(boolean isIncludeSubstructures)
             throws DAOException {
         log.entry(isIncludeSubstructures);
         
@@ -94,19 +94,15 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 
         String sql = "SELECT MAX(" + id + ") AS " + id + " FROM " + tableName;
     
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
-        try {
-            stmt = this.getManager().getConnection().prepareStatement(sql);
-            
+        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
             MySQLExpressionCallTOResultSet resultSet = new MySQLExpressionCallTOResultSet(stmt);
-
-            if (resultSet.next() && resultSet.getTO().getId() != null) {
+            resultSet.next();
+            
+            if (resultSet.getTO().getId() != null) {
                 return log.exit(Integer.valueOf(resultSet.getTO().getId()));
             } else {
                 // There is no call in the table 
-                return log.exit(0);
+                return log.exit(0);                    
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

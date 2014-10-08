@@ -144,9 +144,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         try {
             // Get the maximum of global call IDs to get start index for new inserted global calls. 
             if (isNoExpression) {
-                globalNoExprId = this.getNoExpressionCallDAO().getMaxNoExpressionCallID(true) + 1;
+                globalNoExprId = this.getNoExpressionCallDAO().getMaxNoExpressionCallId(true) + 1;
             } else {
-                globalExprId = this.getExpressionCallDAO().getMaxExpressionCallID(true) + 1;
+                globalExprId = this.getExpressionCallDAO().getMaxExpressionCallId(true) + 1;
             }
 
             //get all species in Bgee even if some species IDs were provided, 
@@ -174,7 +174,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                 anatEntityFilter = this.loadAllowedAnatEntities();
             }
 
-            
             for (String speciesId: speciesIdsToUse) {
                 
                 Set<String> speciesFilter = new HashSet<String>();
@@ -202,7 +201,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     int nbInsertedNoExpressions = 0;
                     int nbInsertedGlobalNoExprToNoExpr = 0;
                     
-
                     this.startTransaction();
                     
                     log.info("Start inserting of global no-expression calls for {}...", speciesId);
@@ -218,7 +216,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             "and a global no-expression call for {}.", speciesId);
 
                     this.commit();
-                    
                     
                     log.info("Done inserting for {}: {} global no-expression calls inserted " +
                             "and {} correspondances inserted", speciesId, 

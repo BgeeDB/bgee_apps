@@ -72,8 +72,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                                  from data source. If there is no call, return 0.
      * @throws DAOException             If an error occurred when accessing the data source. 
      */
-    public int getMaxNoExpressionCallID(Boolean isIncludeSubstructures) 
-            throws DAOException;
+    public int getMaxNoExpressionCallId(Boolean isIncludeSubstructures) throws DAOException;
 
     /**
      * Inserts the provided no-expression calls into the Bgee database, 

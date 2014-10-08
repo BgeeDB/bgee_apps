@@ -135,7 +135,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     }
 
     @Override
-    public int getMaxNoExpressionCallID(Boolean isIncludeParentStructures)
+    public int getMaxNoExpressionCallId(Boolean isIncludeParentStructures)
             throws DAOException {
         log.entry(isIncludeParentStructures);
         
@@ -147,20 +147,16 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 this.attributeToString(NoExpressionCallDAO.Attribute.ID, isIncludeParentStructures);
         
         String sql = "SELECT MAX(" + id + ") AS " + id + " FROM " + tableName;
-
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
-        try {
-            stmt = this.getManager().getConnection().prepareStatement(sql);
-            
+        
+        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
             MySQLNoExpressionCallTOResultSet resultSet = new MySQLNoExpressionCallTOResultSet(stmt);
+            resultSet.next();
             
-            if (resultSet.next() && resultSet.getTO().getId() != null) {
+            if (resultSet.getTO().getId() != null) {
                 return log.exit(Integer.valueOf(resultSet.getTO().getId()));
             } else {
                 // There is no call in the table 
-                return log.exit(0);
+                return log.exit(0);                    
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

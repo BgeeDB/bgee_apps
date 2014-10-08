@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -40,7 +41,9 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoE
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.pipeline.TestAncestor;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 
@@ -63,23 +66,28 @@ public class InsertGlobalCallsTest extends TestAncestor {
         return log;
     }
     
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+    
     /**
      * Test {@link InsertGlobalExpression#insert()} for propagation of expression.
+     * @throws SQLException 
+     * @throws IllegalStateException 
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
-    public void shouldInsertGlobalExpression() {
+    public void shouldInsertGlobalExpression() throws IllegalStateException, SQLException {
         log.entry();
         
         // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
         // This will allow to verify that the correct values were tried to be inserted 
         // into the database.
         MockDAOManager mockManager = new MockDAOManager();
-        
+
         MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
 
         // And, we need to mock the return of getMaxNoExpressionCallID().
-       when(mockManager.mockExpressionCallDAO.getMaxExpressionCallID(true)).thenReturn(4);
+       when(mockManager.mockExpressionCallDAO.getMaxExpressionCallId(true)).thenReturn(4);
 
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
         MySQLExpressionCallTOResultSet mockExpr11TORs = createMockDAOResultSet( 
@@ -155,6 +163,9 @@ public class InsertGlobalCallsTest extends TestAncestor {
         InsertGlobalCalls insert = new InsertGlobalCalls(mockManager);
         insert.insert(null, false);
 
+        // Verify that startTransaction() and commit()
+        verify(mockManager.getConnection(), times(2)).commit();
+        verify(mockManager.getConnection(), times(2)).startTransaction();
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
         verify(mockExpr11TORs).close();
@@ -192,16 +203,13 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 new ExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
                 new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.SELF));
         Set<ExpressionCallTO> methExprSpecies11 = allGlobalExpr.get(0);
-        if (!TOComparator.areTOCollectionsEqual(expectedExprSpecies11, methExprSpecies11, false)) {
-            throw new AssertionError("Incorrect ExpressionCallTOs generated to insert "
-                    + "global expression calls, expected " + expectedExprSpecies11.toString() + 
-                    ", but was " + methExprSpecies11.toString());
-        }
+        assertTrue("Incorrect ExpressionCallTOs generated to insert global expression calls", 
+                TOComparator.areTOCollectionsEqual(expectedExprSpecies11, methExprSpecies11, false));
         
-        if (allGlobalExprToExprTO.size() != 20) {
-            throw new AssertionError("Incorrect number of generated GlobalExpressionToExpressionTOs " +
-                    ", expected 20 , but was " + allGlobalExprToExprTO.size());
-        }
+        int nbExpected = 20;
+        assertEquals("Incorrect number of generated GlobalExpressionToExpressionTOs", 
+                nbExpected, allGlobalExprToExprTO.size());
+
         Set<String> ids = new HashSet<String>();
         for (ExpressionCallTO globalExpr: methExprSpecies11) {
             if (globalExpr.getGeneId().equals("ID1") && 
@@ -271,11 +279,9 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 new ExpressionCallTO(null, "ID5", "Anat_id8", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.SELF),
                 new ExpressionCallTO(null, "ID5", "Anat_id6", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.DESCENT));
         Set<ExpressionCallTO> methExprSpecies21 = allGlobalExpr.get(1);
-        if (!TOComparator.areTOCollectionsEqual(expectedExprSpecies21, methExprSpecies21, false)) {
-            throw new AssertionError("Incorrect ExpressionCallTOs generated to insert "
-                    + "global expression calls, expected " + expectedExprSpecies21.toString() + 
-                    ", but was " + methExprSpecies21.toString());
-        }
+        assertTrue("Incorrect ExpressionCallTOs generated to insert global expression calls", 
+                TOComparator.areTOCollectionsEqual(expectedExprSpecies21, methExprSpecies21, false));
+
         for (ExpressionCallTO globalExpr: methExprSpecies21) {
             if (globalExpr.getGeneId().equals("ID4") && 
                (globalExpr.getAnatEntityId().equals("Anat_id9") || 
@@ -323,7 +329,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
-    public void shouldInsertGlobalNoExpression() {
+    public void shouldInsertGlobalNoExpression() throws IllegalStateException, SQLException {
         log.entry();
         
         // Species ID to use
@@ -338,7 +344,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
         
         // And, we need to mock the return of getMaxNoExpressionCallID().
-        when(mockManager.mockNoExpressionCallDAO.getMaxNoExpressionCallID(true)).thenReturn(10);
+        when(mockManager.mockNoExpressionCallDAO.getMaxNoExpressionCallId(true)).thenReturn(10);
         
         // Third, we need mock ResultSets to mock the return of get methods called in 
         // loadAllowedAnatEntities() 
@@ -443,13 +449,15 @@ public class InsertGlobalCallsTest extends TestAncestor {
         InsertGlobalCalls insert = new InsertGlobalCalls(mockManager);
         insert.insert(speciesId, true);
         
+        // Verify that startTransaction() and commit()
+        verify(mockManager.getConnection()).commit();
+        verify(mockManager.getConnection()).startTransaction();
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
         verify(mockRelationTORs).close();
         verify(mockExprAnatTORs).close();
         verify(mockNoExprAnatTORs).close();
         verify(mockNoExprTORs).close();
-        
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO).setAttributes(SpeciesDAO.Attribute.ID);
         verify(mockManager.mockExpressionCallDAO).
@@ -479,21 +487,14 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 new NoExpressionCallTO(null, "ID3", "Anat_id3", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
                 new NoExpressionCallTO(null, "ID3", "Anat_id4", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
                 new NoExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT));
-        
-        Set<NoExpressionCallTO> methNoExpr = exprTOsArgGlobalNoExpr.getValue();
-        if (!TOComparator.areTOCollectionsEqual(expectedNoExpr, methNoExpr, false)) {
-            throw new AssertionError("Incorrect NoExpressionCallTOs generated to insert "
-                    + "global no-expression calls, expected " + expectedNoExpr + 
-                    ", but was " + methNoExpr);
-        }
+        assertTrue("Incorrect NoExpressionCallTOs generated to insert global no-expression calls", 
+                TOComparator.areTOCollectionsEqual(
+                        expectedNoExpr, exprTOsArgGlobalNoExpr.getValue(), false));
         
         Set<GlobalNoExpressionToNoExpressionTO> values = exprTOsArgGlobalNoExprToNoExpr.getValue();
         int nbExpected = 10;
-        if (values.size() != nbExpected) {
-            throw new AssertionError("Incorrect number of generated " +
-                    "GlobalNoExpressionToNoExpressionTOs , expected " + nbExpected + 
-                    ", but was " + exprTOsArgGlobalNoExprToNoExpr.getValue().size());
-        }
+        assertEquals("Incorrect number of generated GlobalNoExpressionToNoExpressionTOs", 
+                nbExpected, values.size());
         
         Set<String> ids = new HashSet<String>();
         for (NoExpressionCallTO globalExpr: (Set<NoExpressionCallTO>) exprTOsArgGlobalNoExpr.getValue()) {
@@ -556,6 +557,62 @@ public class InsertGlobalCallsTest extends TestAncestor {
         log.exit();
     }
     
+    /**
+     * Test {@link InsertGlobalExpression#insert()} for propagation of non-expression but with
+     *  species IDs not found in Bgee.
+     */
+    @Test
+    public void shouldInsertGlobalNoExpressionWithUnknownSpecies()
+            throws IllegalStateException, SQLException {
+        log.entry();
+
+        MockDAOManager mockManager = new MockDAOManager();
+
+        MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Some species IDs could not be found in Bgee: [44]");
+
+        InsertGlobalCalls insertBadSpecies = new InsertGlobalCalls(mockManager);
+        insertBadSpecies.insert(Arrays.asList("44"), true);
+        
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockSpeciesDAO).setAttributes(SpeciesDAO.Attribute.ID);
+
+        log.exit();
+    }
+    
+    /**
+     * Test {@link InsertGlobalExpression#insert()} for propagation of expression but with
+     *  species IDs not found in Bgee.
+     */
+    @Test
+    public void shouldInsertGlobalExpressionWithUnknownSpecies()
+            throws IllegalStateException, SQLException {
+        log.entry();
+
+        MockDAOManager mockManager = new MockDAOManager();
+
+        MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Some species IDs could not be found in Bgee: [44]");
+        
+        InsertGlobalCalls insertBadSpecies = new InsertGlobalCalls(mockManager);
+        insertBadSpecies.insert(Arrays.asList("44"), false);
+        
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockSpeciesDAO).setAttributes(SpeciesDAO.Attribute.ID);
+
+        log.exit();
+    }
+
+    
+
     /**
      * Define a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies.
      * 

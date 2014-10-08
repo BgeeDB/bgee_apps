@@ -61,12 +61,15 @@ public class InsertUberon extends MySQLDAOUser {
      *   (recommended for developmental stages), see {@link 
      *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
      *   how to provided it. Can be empty.
+     *   <li>A list of OBO-like IDs of terms that are roots of subgraph to ignore, 
+     *   see {@link UberonCommon#getToIgnoreSubgraphRootIds()}. Can be empty.
      *   <li>Path to the file listing species used in Bgee. can be empty.
      *   </ol>
      *   Example of command line usage for this task: 
      *   {@code java -Xmx2g -jar myJar 
      *   InsertUberon insertStages dev_stage_ontology.owl taxonConstraints.tsv 
-     *   HsapDv:/9606,MmusDv:/10090  
+     *   HsapDv:/9606,MmusDv:/10090 
+     *   NCBITaxon:1 
      *   bgeeSpecies.tsv
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -79,7 +82,7 @@ public class InsertUberon extends MySQLDAOUser {
         log.entry((Object[]) args);
         
         if (args[0].equalsIgnoreCase("insertStages")) {
-            if (args.length < 4 || args.length > 5) {
+            if (args.length < 5 || args.length > 6) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
                         "4 or 5 arguments, " + args.length + " provided."));
@@ -87,12 +90,34 @@ public class InsertUberon extends MySQLDAOUser {
             
             UberonDevStage ub = new UberonDevStage(args[1], args[2], 
                     CommandRunner.parseMapArgumentAsInteger(args[3]));
+            ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[4]));
+            
             InsertUberon insert = new InsertUberon();
-            Collection<Integer> speciesIds = new HashSet<Integer>();
-            if (args.length > 4 && StringUtils.isNotBlank(args[4])) {
-                speciesIds = AnnotationCommon.getTaxonIds(args[4]);
+            
+            Collection<Integer> speciesIds = null;
+            if (args.length > 5 && StringUtils.isNotBlank(args[5])) {
+                speciesIds = AnnotationCommon.getTaxonIds(args[5]);
             }
             insert.insertStageOntologyIntoDataSource(ub, speciesIds);
+            
+        } else if (args[0].equalsIgnoreCase("insertAnatomy")) {
+            if (args.length < 5 || args.length > 6) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "4 or 5 arguments, " + args.length + " provided."));
+            }
+            
+            Uberon ub = new Uberon(args[1], args[2], 
+                    CommandRunner.parseMapArgumentAsInteger(args[3]));
+            ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[4]));
+            
+            InsertUberon insert = new InsertUberon();
+            
+            Collection<Integer> speciesIds = null;
+            if (args.length > 5 && StringUtils.isNotBlank(args[5])) {
+                speciesIds = AnnotationCommon.getTaxonIds(args[5]);
+            }
+            insert.insertAnatOntologyIntoDataSource(ub, speciesIds);
             
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +

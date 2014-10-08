@@ -251,6 +251,33 @@ public class Uberon extends UberonCommon {
         super(ontUtils);
     }
     /**
+     * Constructor providing the path to the Uberon ontology to used to perform operations, 
+     * the path the a file containing taxon constraints, as parsable by 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}, and 
+     * {@code idStartsToOverridenTaxonIds}, allowing to override constraints 
+     * retrieved from the file (see {@link TaxonConstraints#extractTaxonConstraints(String, Map)}). 
+     * This argument can be {@code null}, but as usage of the ontology 
+     * requires precise taxon constraints, this is unlikely. 
+     * 
+     * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
+     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
+     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
+     *                                      representing prefixes of uberon terms to match, 
+     *                                      the associated value being a {@code Set} 
+     *                                      of {@code Integer}s to replace taxon constraints 
+     *                                      of matching terms.
+     * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
+     * @throws OBOFormatParserException     If the ontology is malformed.
+     * @throws IOException                  If the file could not be read. 
+     */
+    public Uberon(String pathToUberon, String pathToTaxonConstraints, 
+            Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
+            throws OWLOntologyCreationException, OBOFormatParserException, IOException {
+        this(new OntologyUtils(pathToUberon), 
+                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints, 
+                        idStartsToOverridenTaxonIds));
+    }
+    /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
      * wrapping the Uberon ontology that will be used. 
      * 

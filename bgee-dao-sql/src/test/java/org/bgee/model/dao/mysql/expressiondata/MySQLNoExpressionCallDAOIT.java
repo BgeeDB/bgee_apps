@@ -91,11 +91,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("7","ID3", "Anat_id5", "Stage_id6", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF),
                 new NoExpressionCallTO("8","ID3", "Anat_id5", "Stage_id14", DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF)); 
         // Compare
-        List<NoExpressionCallTO> noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
-            throw new AssertionError("NoExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
-        }
+        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+                        dao.getNoExpressionCalls(params).getAllTOs()));
 
         // With speciesIds but not include parent structures 
         params.addAllSpeciesIds(Arrays.asList("21", "41"));
@@ -104,11 +102,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF),
                 new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, false, OriginOfLine.SELF)); 
         // Compare
-        noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
-            throw new AssertionError("NoExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
-        }
+        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+                        dao.getNoExpressionCalls(params).getAllTOs()));
 
         // On global no-expression table
         dao.setAttributes(Arrays.asList(
@@ -132,11 +128,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("8", "ID2", "Anat_id10", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
                 new NoExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id11", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
         // Compare
-        noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
-            throw new AssertionError("NoExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
-        }
+        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+                        dao.getNoExpressionCalls(params).getAllTOs()));
 
         // Without species filter but include substructures
         // Generate parameters
@@ -157,11 +151,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("12", "ID3", "Anat_id6", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF),
                 new NoExpressionCallTO("13", "ID3", "Anat_id1", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
         // Compare
-        noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
-            throw new AssertionError("NoExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
-        }
+        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+                        dao.getNoExpressionCalls(params).getAllTOs()));
         
         // Test get only ID without species filter and without including substructures
         dao.clearAttributes();
@@ -178,11 +170,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("7", null, null, null, DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
                 new NoExpressionCallTO("8", null, null, null, DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF));
         // Compare
-        noExpressions = dao.getNoExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedNoExprCalls, noExpressions)) {
-            throw new AssertionError("ExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedNoExprCalls.toString() + ", but was " + noExpressions.toString());
-        }
+        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+                        dao.getNoExpressionCalls(params).getAllTOs()));
 
         log.exit();
     }
@@ -201,38 +191,29 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result for expression table
         int expectedMaxNoExprId = 8;
-        int maxNoExprId = dao.getMaxNoExpressionCallID(false);
-        if (maxNoExprId != expectedMaxNoExprId) {
-            throw new AssertionError("Max no-expression ID incorrectly retrieved, expected " + 
-                    expectedMaxNoExprId + ", but was " + maxNoExprId);
-        }
+        int maxNoExprId = dao.getMaxNoExpressionCallId(false);
+        assertEquals("Max no-expression ID incorrectly retrieved", expectedMaxNoExprId, maxNoExprId);
 
         // Generate manually expected result for global expression table
         int expectedMaxGlobalNoExprId = 13;
-        int maxGlobalNoExprId = dao.getMaxNoExpressionCallID(true);
-        if (maxGlobalNoExprId != expectedMaxGlobalNoExprId) {
-            throw new AssertionError("Max global no-expression ID incorrectly retrieved, expected " + 
-                    expectedMaxGlobalNoExprId + ", but was " + maxGlobalNoExprId);
-        }
+        int maxGlobalNoExprId = dao.getMaxNoExpressionCallId(true);
+        assertEquals("Max global no-expression ID incorrectly retrieved", 
+                expectedMaxGlobalNoExprId, maxGlobalNoExprId);
         
         // Check on database without calls
         this.useEmptyDB();
         
         // Generate manually expected result for expression table
         expectedMaxNoExprId = 0;
-        maxNoExprId = dao.getMaxNoExpressionCallID(false);
-        if (maxNoExprId != expectedMaxNoExprId) {
-            throw new AssertionError("Max no-expression ID incorrectly retrieved, expected " + 
-                    expectedMaxNoExprId + ", but was " + maxNoExprId);
-        }
+        maxNoExprId = dao.getMaxNoExpressionCallId(false);
+        assertEquals("Max no-expression ID incorrectly retrieved", 
+                expectedMaxNoExprId, maxNoExprId);
         
         // Generate manually expected result for global expression table
         expectedMaxGlobalNoExprId = 0;
-        maxGlobalNoExprId = dao.getMaxNoExpressionCallID(true);
-        if (maxGlobalNoExprId != expectedMaxGlobalNoExprId) {
-            throw new AssertionError("Max global no-expression ID incorrectly retrieved, expected " + 
-                    expectedMaxGlobalNoExprId + ", but was " + maxGlobalNoExprId);
-        }
+        maxGlobalNoExprId = dao.getMaxNoExpressionCallId(true);
+        assertEquals("Max global no-expression ID incorrectly retrieved", 
+                expectedMaxGlobalNoExprId, maxGlobalNoExprId);
 
         log.exit();
     }

@@ -11,18 +11,23 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.mysql.TestAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.mysql.jdbc.ResultSetMetaData;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
 public class MySQLDAOResultSetTest extends TestAncestor
 {
@@ -270,6 +275,31 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement3).close();
     }
     
+    /**
+     * Test {@link MySQLDAOResultSet#getAllTOs()}.
+     */
+    @Test
+    public void testGetAllTOs() throws SQLException {
+        log.entry();
+        
+        MySQLRelationTOResultSet myRs = Mockito.mock(MySQLRelationTOResultSet.class);
+        
+        List<RelationTO> expectedTOs = 
+                Arrays.asList(new RelationTO("1","2"), new RelationTO("3","4"));
+        
+        when(myRs.getTO()).thenReturn(new RelationTO("1","2"), new RelationTO("3","4"));
+        when(myRs.next()).thenReturn(true, true, false);
+
+        when(myRs.getAllTOs()).thenCallRealMethod();
+
+        List<RelationTO> retrievedTOs = (List<RelationTO>) myRs.getAllTOs();
+        
+        assertTrue("", TOComparator.areTOCollectionsEqual(expectedTOs, retrievedTOs));
+        verify(myRs).close();
+        
+        log.exit();
+    }
+
     /**
      * Test the behavior of {@link MySQLDAOManager#next()} when the query 
      * is interrupted.

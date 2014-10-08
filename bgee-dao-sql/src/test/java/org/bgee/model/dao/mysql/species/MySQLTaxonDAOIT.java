@@ -119,12 +119,9 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                 new TaxonTO("311", "taxCName311", "taxSName311", 4, 9, 2, false), 
                 new TaxonTO("411", "taxCName411", "taxSName411", 5, 6, 1, true), 
                 new TaxonTO("511", "taxCName511", "taxSName511", 7, 8, 1, true)); 
-
         // Compare
-        if(!TOComparator.areTOCollectionsEqual(methResults, expectedTaxa)) {
-            throw new AssertionError("TaxonTOs incorrectly retieved, expected " + 
-                    expectedTaxa.toString() + ", but was " + methResults.toString());
-        }
+        assertTrue("TaxonTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methResults, expectedTaxa));
 
         dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.ID));
         methResults = dao.getAllTaxa().getAllTOs();
@@ -136,11 +133,8 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                 new TaxonTO("311", null, null, 0, 0, 0, false), 
                 new TaxonTO("411", null, null, 0, 0, 0, false), 
                 new TaxonTO("511", null, null, 0, 0, 0, false)); 
-
-        if(!TOComparator.areTOCollectionsEqual(methResults, expectedTaxa)) {
-            throw new AssertionError("TaxonTOs incorrectly retieved, expected " + 
-                    expectedTaxa.toString() + ", but was " + methResults.toString());
-        }
+        assertTrue("TaxonTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(methResults, expectedTaxa));
 
         log.exit();
     }

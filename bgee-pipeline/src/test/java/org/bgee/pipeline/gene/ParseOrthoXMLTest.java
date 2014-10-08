@@ -1,6 +1,7 @@
 package org.bgee.pipeline.gene;
 
 import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
 
 import java.io.FileNotFoundException;
 import java.util.Arrays;
@@ -192,11 +193,8 @@ public class ParseOrthoXMLTest extends TestAncestor {
         ArgumentCaptor<Set> hGroupsTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockHierarchicalGroupDAO).insertHierarchicalGroups(
                 hGroupsTOsArg.capture());
-        if (!TOComparator.areTOCollectionsEqual(expectedHGroupTOs, hGroupsTOsArg.getValue())) {
-            throw new AssertionError("Incorrect HierarchicalGroupTOs generated to insert "
-                    + "hierarchical groups, expected " + expectedHGroupTOs.toString() + 
-                    ", but was " + hGroupsTOsArg.getValue());
-        }
+        assertTrue("Incorrect HierarchicalGroupTOs generated to insert hierarchical groups",
+                TOComparator.areTOCollectionsEqual(expectedHGroupTOs, hGroupsTOsArg.getValue()));
         
         // Generate the expected List of GeneTOs to verify the calls made to the DAO.
         List<GeneTO> expectedGeneTOs = Arrays.asList(
@@ -218,9 +216,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 
                 eq(Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID)));
-        if (!TOComparator.areTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue())) {
-            throw new AssertionError("Incorrect GeneTOs generated to update genes, "+
-                    "expected " + expectedGeneTOs + ", but was " + geneTOsArg.getValue());
-        }
+        assertTrue("Incorrect GeneTOs generated to update genes",
+                TOComparator.areTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue()));
     }
 }

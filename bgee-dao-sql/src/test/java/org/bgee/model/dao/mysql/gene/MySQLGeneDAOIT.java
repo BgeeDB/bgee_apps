@@ -61,19 +61,15 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 new GeneTO("ID2", "genN2", "genDesc2", 21, 0, 0, true), 
                 new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false)); 
         //Compare
-        if(!TOComparator.areTOCollectionsEqual(methGenes, expectedGenes)) {
-            throw new AssertionError("GeneTOs incorrectly retieved, expected " + 
-                    expectedGenes.toString() + ", but was " + methGenes.toString());
-        }
+        assertTrue("GeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
 
         // without declared attribute should return same TOs that with all attributes 
         dao.clearAttributes();
         methGenes = dao.getAllGenes().getAllTOs();
         //Compare
-        if(!TOComparator.areTOCollectionsEqual(methGenes, expectedGenes)) {
-            throw new AssertionError("GeneTOs incorrectly retieved, expected " + 
-                    expectedGenes.toString() + ", but was " + methGenes.toString());
-        }
+        assertTrue("GeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
 
         // Generate manually expected result
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
@@ -83,10 +79,8 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 new GeneTO("ID2", null, null, 0, 0, 0, false), 
                 new GeneTO("ID3", null, null, 0, 0, 0, false));
         //Compare
-        if(!TOComparator.areTOCollectionsEqual(methGenes, expectedGenes)) {
-            throw new AssertionError("GeneTOs incorrectly retieved, expected " + 
-                    expectedGenes.toString() + ", but was " + methGenes.toString());
-        }
+        assertTrue("GeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
 
         log.exit();
     }

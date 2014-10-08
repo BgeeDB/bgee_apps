@@ -126,10 +126,8 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
                 new SpeciesTO("31", "gen31", "sp31", "spCName31", "311", "path/genome31", 
                         "0", "")); 
         // Compare
-        if(!TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies)) {
-            throw new AssertionError("SpeciesTOs incorrectly retieved, expected " + 
-                    expectedSpecies.toString() + ", but was " + methSpecies.toString());
-        }
+        assertTrue("SpeciesTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
         
         log.exit();
     }

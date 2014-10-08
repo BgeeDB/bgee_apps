@@ -95,10 +95,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, false, false, OriginOfLine.SELF));
         // Compare
         List<ExpressionCallTO> expressions = dao.getExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
-            throw new AssertionError("ExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedExprCalls.toString() + ", but was " + expressions.toString());
-        }
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
 
         // With speciesIds but not include substructures 
         // Generate parameters
@@ -110,11 +108,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("5","ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, false, false, OriginOfLine.SELF)); 
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
-            throw new AssertionError("ExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedExprCalls.toString() + ", but was " + expressions.toString());
-        }
-        
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+
         // On global expression table 
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.ID, 
                 ExpressionCallDAO.Attribute.GENEID, 
@@ -135,10 +131,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, OriginOfLine.SELF));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
-            throw new AssertionError("ExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedExprCalls.toString() + ", but was " + expressions.toString());
-        }
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
 
         // Without species filter but include substructures
         // Generate parameters
@@ -170,10 +164,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("23", "ID2", "Anat_id1", "Stage_id1", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
-            throw new AssertionError("ExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedExprCalls.toString() + ", but was " + expressions.toString());
-        }
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
         
         // Test get only ID without species filter and without including substructures
         dao.clearAttributes();
@@ -192,19 +184,17 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("9", null, null, null, DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA, false, false, OriginOfLine.SELF));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
-        if (!TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions)) {
-            throw new AssertionError("ExpressionCallTOs incorrectly retrieved, expected " + 
-                    expectedExprCalls.toString() + ", but was " + expressions.toString());
-        }
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
 
         log.exit();
     }
     
     /**
-     * Test the get max method {@link MySQLExpressionCallDAO#getMaxExpressionCallID()}.
+     * Test the get max method {@link MySQLExpressionCallDAO#getMaxExpressionCallId()}.
      */
     @Test
-    public void shouldGetMaxExpressionCallID() throws SQLException {
+    public void shouldGetMaxExpressionCallId() throws SQLException {
         log.entry();
 
         // Check on database with calls
@@ -214,37 +204,31 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
 
         // Generate manually expected result for expression table
         int expectedMaxExprId = 9;
-        int maxExprId = dao.getMaxExpressionCallID(false);
-        if (maxExprId != expectedMaxExprId) {
-            throw new AssertionError("Max expression ID incorrectly retrieved, expected " + 
-                    expectedMaxExprId + ", but was " + maxExprId);
-        }
+        int maxExprId = dao.getMaxExpressionCallId(false);
+        assertEquals("Max expression ID incorrectly retrieved", expectedMaxExprId, maxExprId);
 
         // Generate manually expected result for global expression table
         int expectedMaxGlobalExprId = 23;
-        int maxGlobalExprId = dao.getMaxExpressionCallID(true);
-        if (maxGlobalExprId != expectedMaxGlobalExprId) {
-            throw new AssertionError("Max global expression ID incorrectly retrieved, expected " + 
-                    expectedMaxGlobalExprId + ", but was " + maxGlobalExprId);
-        }
+        int maxGlobalExprId = dao.getMaxExpressionCallId(true);
+        assertEquals("Max expression ID incorrectly retrieved", 
+                expectedMaxGlobalExprId, maxGlobalExprId);
 
         // Check on database without calls
         this.useEmptyDB();
         
-        // Generate manually expected result for expression table
-        expectedMaxExprId = 0;
-        maxExprId = dao.getMaxExpressionCallID(false);
-        if (maxExprId != expectedMaxExprId) {
-            throw new AssertionError("Max expression ID incorrectly retrieved, expected " + 
-                    expectedMaxExprId + ", but was " + maxExprId);
-        }
+        try {
+            // Generate manually expected result for expression table
+            expectedMaxExprId = 0;
+            maxExprId = dao.getMaxExpressionCallId(false);
+            assertEquals("Max expression ID incorrectly retrieved", expectedMaxExprId, maxExprId);
 
-        // Generate manually expected result for global expression table
-        expectedMaxGlobalExprId = 0;
-        maxGlobalExprId = dao.getMaxExpressionCallID(true);
-        if (maxGlobalExprId != expectedMaxGlobalExprId) {
-            throw new AssertionError("Max global expression ID incorrectly retrieved, expected " + 
-                    expectedMaxGlobalExprId + ", but was " + maxGlobalExprId);
+            // Generate manually expected result for global expression table
+            expectedMaxGlobalExprId = 0;
+            maxGlobalExprId = dao.getMaxExpressionCallId(true);
+            assertEquals("Max expression ID incorrectly retrieved", 
+                    expectedMaxGlobalExprId, maxGlobalExprId);
+        } finally {
+            this.emptyAndUseDefaultDB();
         }
 
         log.exit();

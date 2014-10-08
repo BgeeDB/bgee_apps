@@ -174,10 +174,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                 anatEntityFilter = this.loadAllowedAnatEntities();
             }
 
-            //we will propagate calls one species at a time to not overload the memory, 
-            //but will insert data for all species in one single transaction: 
-            //if something goes wrong for any species, I guess we want no data inserted at all.
-            this.startTransaction();
             
             for (String speciesId: speciesIdsToUse) {
                 
@@ -206,6 +202,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     int nbInsertedNoExpressions = 0;
                     int nbInsertedGlobalNoExprToNoExpr = 0;
                     
+
+                    this.startTransaction();
                     
                     log.info("Start inserting of global no-expression calls for {}...", speciesId);
                     nbInsertedNoExpressions += this.getNoExpressionCallDAO().
@@ -218,6 +216,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             insertGlobalNoExprToNoExpr(globalNoExprToNoExprTOs);
                     log.info("Done inserting of correspondances between a no-expression call " +
                             "and a global no-expression call for {}.", speciesId);
+
+                    this.commit();
                     
                     
                     log.info("Done inserting for {}: {} global no-expression calls inserted " +
@@ -240,6 +240,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     int nbInsertedExpressions = 0;
                     int nbInsertedGlobalExprToExpr = 0;
 
+                    this.startTransaction();
+                    
                     log.info("Start inserting of global expression calls for {}...", speciesId);
                     nbInsertedExpressions += this.getExpressionCallDAO().
                             insertExpressionCalls(globalExprMap.keySet());
@@ -252,13 +254,14 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     log.info("Done inserting of correspondances between an expression call " +
                             "and a global expression call for {}.", speciesId);
 
+                    this.commit();
+
                     log.info("Done inserting for {}: {} global expression calls inserted " +
                             "and {} correspondances inserted.", speciesId, 
                             nbInsertedExpressions, nbInsertedGlobalExprToExpr);
                 }
             }
 
-            this.commit();
             
         } finally {
             this.closeDAO();

@@ -163,11 +163,14 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     public List<T> getAllTOs() throws DAOException {
         log.entry();
         List<T> allTOs = new ArrayList<T>();
-        while (this.next()) {
-            allTOs.add(this.getTO());
+        try {
+            while (this.next()) {
+                allTOs.add(this.getTO());
+            }
+            return log.exit(allTOs);
+        } finally {
+            this.close();
         }
-        this.close();
-        return log.exit(allTOs);
     }
 
     /**

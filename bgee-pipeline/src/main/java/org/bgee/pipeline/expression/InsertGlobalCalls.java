@@ -316,7 +316,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         List<RelationTO> relationTOs = rsRelations.getAllTOs();
         //no need for a try with resource or a finally, the insert method will close everything 
         //at the end in any case.
-        rsRelations.close();
+        // No need to close the ResultSet, it's done by getAllTOs().
         
         log.info("Done retrieving anatomical entity relations, {} relations found",
                 relationTOs.size());
@@ -349,7 +349,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         List<ExpressionCallTO> exprTOs = rsExpressionCalls.getAllTOs();
         //no need for a try with resource or a finally, the insert method will close everything 
         //at the end in any case.
-        rsExpressionCalls.close();
+        // No need to close the ResultSet, it's done by getAllTOs().
         log.info("Done retrieving expression calls, {} calls found", exprTOs.size());
 
         return log.exit(exprTOs);        
@@ -380,7 +380,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         List<NoExpressionCallTO> noExprTOs = rsNoExpressionCalls.getAllTOs();
         //no need for a try with resource or a finally, the insert method will close everything 
         //at the end in any case.
-        rsNoExpressionCalls.close();
+        // No need to close the ResultSet, it's done by getAllTOs().
         
         log.info("Done retrieving no-expression calls, {} calls found", 
                 noExprTOs.size());

@@ -1,7 +1,8 @@
 package org.bgee.pipeline.expression;
 
+import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,15 +18,19 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.CallParams;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
+import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
@@ -35,8 +40,6 @@ import org.bgee.pipeline.TestAncestor;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 public class InsertGlobalCallsTest extends TestAncestor {
     
@@ -70,38 +73,49 @@ public class InsertGlobalCallsTest extends TestAncestor {
         // into the database.
         MockDAOManager mockManager = new MockDAOManager();
         
-        this.mockGetAllSpecies(mockManager);
+        MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
         
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
-        MySQLExpressionCallTOResultSet mockExpr11TORs = mock(MySQLExpressionCallTOResultSet.class);
+        MySQLExpressionCallTOResultSet mockExpr11TORs = createMockDAOResultSet( 
+                Arrays.asList(
+                        new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("5", "ID3", "Anat_id1", "Stage_id7", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF)),
+                MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("11"));
-        // Determine the behavior of call to getExpressionCalls().
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExpr11TORs);
-        // Determine the behavior of call to getAllTOs().
-        when(mockExpr11TORs.getAllTOs()).thenReturn(Arrays.asList(
-                new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("5", "ID3", "Anat_id1", "Stage_id7", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF)));
         
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
-        MySQLExpressionCallTOResultSet mockExpr21TORs = mock(MySQLExpressionCallTOResultSet.class);
+        MySQLExpressionCallTOResultSet mockExpr21TORs = createMockDAOResultSet(
+                Arrays.asList(
+                        new ExpressionCallTO("6", "ID4", "Anat_id6", "Stage_id12", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("7", "ID4", "Anat_id9", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("8", "ID5", "Anat_id8", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF)),
+                MySQLExpressionCallTOResultSet.class);
         params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("21"));
-        // Determine the behavior of call to getExpressionCalls().
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExpr21TORs);
-        // Determine the behavior of call to getAllTOs().
-        when(mockExpr21TORs.getAllTOs()).thenReturn(Arrays.asList(
-                new ExpressionCallTO("6", "ID4", "Anat_id6", "Stage_id12", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("7", "ID4", "Anat_id9", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("8", "ID5", "Anat_id8", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF)));
         
         // We need a mock MySQLRelationTOResultSet to mock the return of getAnatEntityRelations().
-        MySQLRelationTOResultSet mockRelation11TORs = mock(MySQLRelationTOResultSet.class);
+        MySQLRelationTOResultSet mockRelation11TORs = createMockDAOResultSet(
+                Arrays.asList(
+                        new RelationTO("Anat_id3", "Anat_id1"),
+                        new RelationTO("Anat_id4", "Anat_id1"),
+                        new RelationTO("Anat_id4", "Anat_id2"),
+                        new RelationTO("Anat_id5", "Anat_id4"),
+                        new RelationTO("Anat_id5", "Anat_id1"),
+                        new RelationTO("Anat_id5", "Anat_id2"),
+                        new RelationTO("Anat_id1", "Anat_id1"),
+                        new RelationTO("Anat_id2", "Anat_id2"),
+                        new RelationTO("Anat_id3", "Anat_id3"),
+                        new RelationTO("Anat_id4", "Anat_id4"),
+                        new RelationTO("Anat_id5", "Anat_id5")),
+                MySQLRelationTOResultSet.class);
         Set<String> speciesFilter = new HashSet<String>(); 
         speciesFilter.add("11");
         // Determine the behavior of call to getAnatEntityRelations().
@@ -110,22 +124,19 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
-        // Determine the behavior of call to getAllTOs().
-        when(mockRelation11TORs.getAllTOs()).thenReturn(Arrays.asList(
-                new RelationTO("Anat_id3", "Anat_id1"),
-                new RelationTO("Anat_id4", "Anat_id1"),
-                new RelationTO("Anat_id4", "Anat_id2"),
-                new RelationTO("Anat_id5", "Anat_id4"),
-                new RelationTO("Anat_id5", "Anat_id1"),
-                new RelationTO("Anat_id5", "Anat_id2"),
-                new RelationTO("Anat_id1", "Anat_id1"),
-                new RelationTO("Anat_id2", "Anat_id2"),
-                new RelationTO("Anat_id3", "Anat_id3"),
-                new RelationTO("Anat_id4", "Anat_id4"),
-                new RelationTO("Anat_id5", "Anat_id5")));
         
         // We need a mock MySQLRelationTOResultSet to mock the return of getAnatEntityRelations().
-        MySQLRelationTOResultSet mockRelation21TORs = mock(MySQLRelationTOResultSet.class);
+        MySQLRelationTOResultSet mockRelation21TORs = createMockDAOResultSet(
+                Arrays.asList(
+                        new RelationTO("Anat_id8", "Anat_id6"),
+                        new RelationTO("Anat_id9", "Anat_id8"),
+                        new RelationTO("Anat_id9", "Anat_id6"),
+                        new RelationTO("Anat_id9", "Anat_id7"),
+                        new RelationTO("Anat_id6", "Anat_id6"),
+                        new RelationTO("Anat_id7", "Anat_id7"),
+                        new RelationTO("Anat_id8", "Anat_id8"),
+                        new RelationTO("Anat_id9", "Anat_id9")),
+                        MySQLRelationTOResultSet.class);
         speciesFilter = new HashSet<String>();
         speciesFilter.add("21");
         // Determine the behavior of call to getAnatEntityRelations().
@@ -134,20 +145,21 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation21TORs);
-        // Determine the behavior of call to getAllTOs().
-        when(mockRelation21TORs.getAllTOs()).thenReturn(Arrays.asList(
-                new RelationTO("Anat_id8", "Anat_id6"),
-                new RelationTO("Anat_id9", "Anat_id8"),
-                new RelationTO("Anat_id9", "Anat_id6"),
-                new RelationTO("Anat_id9", "Anat_id7"),
-                new RelationTO("Anat_id6", "Anat_id6"),
-                new RelationTO("Anat_id7", "Anat_id7"),
-                new RelationTO("Anat_id8", "Anat_id8"),
-                new RelationTO("Anat_id9", "Anat_id9")));
         
         InsertGlobalCalls insert = new InsertGlobalCalls(mockManager);
         insert.insert(null, false);
-        
+
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockExpr11TORs).close();
+        verify(mockExpr21TORs).close();
+        verify(mockRelation11TORs).close();
+        verify(mockRelation21TORs).close();
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockExpressionCallDAO, never()).setAttributes(anyCollection());
+        verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(SpeciesDAO.Attribute.ID);
+        verify(mockManager.mockRelationDAO, times(2)).setAttributes(
+                RelationDAO.Attribute.SOURCEID, RelationDAO.Attribute.TARGETID);
         // 
         ArgumentCaptor<Set> exprTOsArgGlobalExpr = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockExpressionCallDAO, times(2)).
@@ -284,133 +296,127 @@ public class InsertGlobalCallsTest extends TestAncestor {
         MockDAOManager mockManager = new MockDAOManager();
         
         // Second, We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
-        this.mockGetAllSpecies(mockManager);
+        MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
         
         // Third, we need mock ResultSets to mock the return of get methods called in 
         // loadAllowedAnatEntities() 
         
         // Mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
-        MySQLExpressionCallTOResultSet mockExprTORs = mock(MySQLExpressionCallTOResultSet.class);
+        MySQLExpressionCallTOResultSet mockExprAnatTORs = createMockDAOResultSet(
+                Arrays.asList(new ExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, false, false, null),
+                        new ExpressionCallTO(null, null, "Anat_id3", null, null, null, null, null, false, false, null),
+                        new ExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, false, false, null),
+                        new ExpressionCallTO(null, null, "Anat_id10", null, null, null, null, null, false, false, null)),
+                MySQLExpressionCallTOResultSet.class);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) valueCallParamEq(new ExpressionCallParams()))).
-                thenReturn(mockExprTORs);
-        // Determine the behavior of consecutive calls to next().
-        when(mockExprTORs.next()).thenAnswer(new Answer<Boolean>() {
-            int counter = 0;
-            public Boolean answer(InvocationOnMock invocationOnMock) 
-                    throws Throwable {
-                // Return true while there is speciesTO to return 
-                return counter++ < 4;
-            }
-        });
-        // Determine the behavior of consecutive calls to getTO().
-        when(mockExprTORs.getTO()).thenReturn(
-                new ExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, false, false, null),
-                new ExpressionCallTO(null, null, "Anat_id3", null, null, null, null, null, false, false, null),
-                new ExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, false, false, null),
-                new ExpressionCallTO(null, null, "Anat_id10", null, null, null, null, null, false, false, null));
+                thenReturn(mockExprAnatTORs);
         
         // Mock MySQLNoExpressionCallTOResultSet to mock the return of getNoExpressionCalls().
-        MySQLNoExpressionCallTOResultSet mockNoExprAnatTORs = 
-                mock(MySQLNoExpressionCallTOResultSet.class);
+        MySQLNoExpressionCallTOResultSet mockNoExprAnatTORs = createMockDAOResultSet(
+                Arrays.asList(new NoExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id3", null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id4", null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id4", null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id5", null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id6", null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, false, null)),
+                MySQLNoExpressionCallTOResultSet.class);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
                 (NoExpressionCallParams) valueCallParamEq(new NoExpressionCallParams()))).
                 thenReturn(mockNoExprAnatTORs);
-        // Determine the behavior of consecutive calls to next().
-        when(mockNoExprAnatTORs.next()).thenAnswer(new Answer<Boolean>() {
-            int counter = 0;
-            public Boolean answer(InvocationOnMock invocationOnMock) 
-                    throws Throwable {
-                // Return true while there is speciesTO to return 
-                return counter++ < 7;
-            }
-        });
-        // Determine the behavior of consecutive calls to getTO().
-        when(mockNoExprAnatTORs.getTO()).thenReturn(
-                new NoExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, false, null),
-                new NoExpressionCallTO(null, null, "Anat_id3", null, null, null, null, null, false, null),
-                new NoExpressionCallTO(null, null, "Anat_id4", null, null, null, null, null, false, null),
-                new NoExpressionCallTO(null, null, "Anat_id4", null, null, null, null, null, false, null),
-                new NoExpressionCallTO(null, null, "Anat_id5", null, null, null, null, null, false, null),
-                new NoExpressionCallTO(null, null, "Anat_id6", null, null, null, null, null, false, null),
-                new NoExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, false, null));
         
         // Mock MySQLRelationTOResultSet to mock the return of getAnatEntityRelations().
-        MySQLRelationTOResultSet mockRelationTORs = mock(MySQLRelationTOResultSet.class);
+        MySQLRelationTOResultSet mockRelationTORs = createMockDAOResultSet(
+                Arrays.asList(
+                        new RelationTO("Anat_id3", "Anat_id1"),
+                        new RelationTO("Anat_id4", "Anat_id1"),
+                        new RelationTO("Anat_id4", "Anat_id2"),
+                        new RelationTO("Anat_idX", "Anat_id4"),
+                        new RelationTO("Anat_id5", "Anat_id4"),
+                        new RelationTO("Anat_id5", "Anat_id1"),
+                        new RelationTO("Anat_id5", "Anat_id2"),
+                        new RelationTO("Anat_id1", "Anat_id1"),
+                        new RelationTO("Anat_id2", "Anat_id2"),
+                        new RelationTO("Anat_id3", "Anat_id3"),
+                        new RelationTO("Anat_id4", "Anat_id4"),
+                        new RelationTO("Anat_id5", "Anat_id5"),
+                        new RelationTO("Anat_idX", "Anat_idX")),
+                MySQLRelationTOResultSet.class);
         when(mockManager.mockRelationDAO.getAnatEntityRelations(
                 valueSetEq(new HashSet<String>(speciesId)), 
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelationTORs);
-        // Determine the behavior of call to getAllTOs().
-        when(mockRelationTORs.getAllTOs()).thenReturn(Arrays.asList(
-                new RelationTO("Anat_id3", "Anat_id1"),
-                new RelationTO("Anat_id4", "Anat_id1"),
-                new RelationTO("Anat_id4", "Anat_id2"),
-                new RelationTO("Anat_idX", "Anat_id4"),
-                new RelationTO("Anat_id5", "Anat_id4"),
-                new RelationTO("Anat_id5", "Anat_id1"),
-                new RelationTO("Anat_id5", "Anat_id2"),
-                new RelationTO("Anat_id1", "Anat_id1"),
-                new RelationTO("Anat_id2", "Anat_id2"),
-                new RelationTO("Anat_id3", "Anat_id3"),
-                new RelationTO("Anat_id4", "Anat_id4"),
-                new RelationTO("Anat_id5", "Anat_id5"),
-                new RelationTO("Anat_idX", "Anat_idX")));
         
         // Fourth, we need mock a mock MySQLNoExpressionCallTOResultSet to mock the return of 
         // getNoExpressionCalls().
-        MySQLNoExpressionCallTOResultSet mockNoExprTORs = 
-                mock(MySQLNoExpressionCallTOResultSet.class);
+        MySQLNoExpressionCallTOResultSet mockNoExprTORs = createMockDAOResultSet(
+                Arrays.asList(
+                        new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)),
+                MySQLNoExpressionCallTOResultSet.class);
         NoExpressionCallParams noExprparams = new NoExpressionCallParams();
         noExprparams.addAllSpeciesIds(Arrays.asList("11"));
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
                 (NoExpressionCallParams) valueCallParamEq(noExprparams))).thenReturn(mockNoExprTORs);
-        // Determine the behavior of call to getAllTOs().
-        when(mockNoExprTORs.getAllTOs()).thenReturn(Arrays.asList(
-                new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)));
         
         // Fifth, we need a mock MySQLRelationTOResultSet to mock the return of 
         // getAnatEntityRelations().
-        MySQLRelationTOResultSet mockRelation11TORs = mock(MySQLRelationTOResultSet.class);
+        MySQLRelationTOResultSet mockRelation11TORs = createMockDAOResultSet(
+                Arrays.asList(
+                        new RelationTO("Anat_id3", "Anat_id1"),
+                        new RelationTO("Anat_id4", "Anat_id1"),
+                        new RelationTO("Anat_id4", "Anat_id2"),
+                        new RelationTO("Anat_idX", "Anat_id4"),
+                        new RelationTO("Anat_id5", "Anat_id4"),
+                        new RelationTO("Anat_id5", "Anat_id1"),
+                        new RelationTO("Anat_id5", "Anat_id2"),
+                        new RelationTO("Anat_id1", "Anat_id1"),
+                        new RelationTO("Anat_id2", "Anat_id2"),
+                        new RelationTO("Anat_id3", "Anat_id3"),
+                        new RelationTO("Anat_id4", "Anat_id4"),
+                        new RelationTO("Anat_id5", "Anat_id5"),
+                        new RelationTO("Anat_idX", "Anat_idX"),
+                        new RelationTO("Anat_id8", "Anat_id6"),
+                        new RelationTO("Anat_id9", "Anat_id8"),
+                        new RelationTO("Anat_id9", "Anat_id6"),
+                        new RelationTO("Anat_id9", "Anat_id7"),
+                        new RelationTO("Anat_id6", "Anat_id6"),
+                        new RelationTO("Anat_id7", "Anat_id7"),
+                        new RelationTO("Anat_id8", "Anat_id8"),
+                        new RelationTO("Anat_id9", "Anat_id9"),
+                        new RelationTO("Anat_idX", "Anat_idX")),        
+                MySQLRelationTOResultSet.class);
         when(mockManager.mockRelationDAO.getAnatEntityRelations(
                 valueSetEq((HashSet<String>) null), 
                 valueSetEq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 valueSetEq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
-        // Determine the behavior of call to getAllTOs().
-        when(mockRelation11TORs.getAllTOs()).thenReturn(Arrays.asList(
-                new RelationTO("Anat_id3", "Anat_id1"),
-                new RelationTO("Anat_id4", "Anat_id1"),
-                new RelationTO("Anat_id4", "Anat_id2"),
-                new RelationTO("Anat_idX", "Anat_id4"),
-                new RelationTO("Anat_id5", "Anat_id4"),
-                new RelationTO("Anat_id5", "Anat_id1"),
-                new RelationTO("Anat_id5", "Anat_id2"),
-                new RelationTO("Anat_id1", "Anat_id1"),
-                new RelationTO("Anat_id2", "Anat_id2"),
-                new RelationTO("Anat_id3", "Anat_id3"),
-                new RelationTO("Anat_id4", "Anat_id4"),
-                new RelationTO("Anat_id5", "Anat_id5"),
-                new RelationTO("Anat_idX", "Anat_idX"),
-                new RelationTO("Anat_id8", "Anat_id6"),
-                new RelationTO("Anat_id9", "Anat_id8"),
-                new RelationTO("Anat_id9", "Anat_id6"),
-                new RelationTO("Anat_id9", "Anat_id7"),
-                new RelationTO("Anat_id6", "Anat_id6"),
-                new RelationTO("Anat_id7", "Anat_id7"),
-                new RelationTO("Anat_id8", "Anat_id8"),
-                new RelationTO("Anat_id9", "Anat_id9"),
-                new RelationTO("Anat_idX", "Anat_idX")));
-        
+
         //
         InsertGlobalCalls insert = new InsertGlobalCalls(mockManager);
         insert.insert(speciesId, true);
         
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockRelationTORs).close();
+        verify(mockExprAnatTORs).close();
+        verify(mockNoExprAnatTORs).close();
+        verify(mockNoExprTORs).close();
+        
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockSpeciesDAO).setAttributes(SpeciesDAO.Attribute.ID);
+        verify(mockManager.mockExpressionCallDAO).
+                                        setAttributes(ExpressionCallDAO.Attribute.ANATENTITYID);
+        verify(mockManager.mockNoExpressionCallDAO).
+                                        setAttributes(NoExpressionCallDAO.Attribute.ANATENTITYID);
+        verify(mockManager.mockRelationDAO, times(2)).setAttributes(
+                RelationDAO.Attribute.SOURCEID, RelationDAO.Attribute.TARGETID);
+
         //
         ArgumentCaptor<Set> exprTOsArgGlobalNoExpr = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockNoExpressionCallDAO).insertNoExpressionCalls(
@@ -492,27 +498,18 @@ public class InsertGlobalCallsTest extends TestAncestor {
      * 
      * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
      */
-    private void mockGetAllSpecies(MockDAOManager mockManager) {
+    private MySQLSpeciesTOResultSet mockGetAllSpecies(MockDAOManager mockManager) {
         log.entry(mockManager);
         
         // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
-        MySQLSpeciesTOResultSet mockSpeciesTORs = mock(MySQLSpeciesTOResultSet.class);
+        MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
+                Arrays.asList(
+                        new SpeciesTO("11", null, null, null, null, null, null, null),
+                        new SpeciesTO("21", null, null, null, null, null, null, null)),
+                MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
-        // Determine the behavior of consecutive calls to next().
-        when(mockSpeciesTORs.next()).thenAnswer(new Answer<Boolean>() {
-            int counter = 0;
-            public Boolean answer(InvocationOnMock invocationOnMock) 
-                    throws Throwable {
-                // Return true while there is speciesTO to return 
-                return counter++ < 2;
-            }
-        });
-        // Determine the behavior of consecutive calls to getTO().
-        when(mockSpeciesTORs.getTO()).thenReturn(
-                new SpeciesTO("11", null, null, null, null, null, null, null),
-                new SpeciesTO("21", null, null, null, null, null, null, null));
         
-        log.exit();
+        return log.exit(mockSpeciesTORs);
     }
 
     /**

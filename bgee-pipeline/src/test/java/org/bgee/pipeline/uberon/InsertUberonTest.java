@@ -1,5 +1,6 @@
 package org.bgee.pipeline.uberon;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
 
 import java.io.FileNotFoundException;
@@ -366,14 +367,113 @@ public class InsertUberonTest extends TestAncestor {
         
         ArgumentCaptor<Set> relTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockRelationDAO).insertAnatEntityRelations(relTOsArg.capture());
+        
         if (!TOComparator.areTOCollectionsEqual(
                 expectedRelTOs, relTOsArg.getValue(), false)) {
+            Set<RelationTO> diffRelTos = new HashSet<RelationTO>();
+            for (RelationTO relTO: (Set<RelationTO>) relTOsArg.getValue()) {
+                diffRelTos.add(new RelationTO(null, relTO.getSourceId(), relTO.getTargetId(), 
+                        relTO.getRelationType(), relTO.getRelationStatus()));
+            }
+            Set<RelationTO> unexpectedRelTOs = new HashSet<RelationTO>(diffRelTos);
+            unexpectedRelTOs.removeAll(expectedRelTOs);
+            expectedRelTOs.removeAll(diffRelTos);
             throw new AssertionError("Incorrect RelationTOs generated for relations " +
-            		"between anatomical entities, expected " + expectedRelTOs + ", but was " + 
-            		relTOsArg.getValue());
+            		"between anatomical entities, unexpected RelationTOs: " + unexpectedRelTOs + 
+            		" - missing RelationTOs: " + expectedRelTOs + " - All generated " +
+            		"RelationTOs: " + relTOsArg.getValue());
         }
-        
-        Set<TaxonConstraintTO> expectedRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
-        //continue here
+
+        ArgumentCaptor<Set> relTaxonConstraintTOsArg = ArgumentCaptor.forClass(Set.class);
+        verify(mockManager.mockTaxonConstraintDAO).insertAnatEntityRelationTaxonConstraints(
+                relTaxonConstraintTOsArg.capture());
+        int allSpeciesReflexiveTaxonConstraints = 0;
+        int restrainedReflexiveTaxonConstraints = 0;
+        int allSpeciesOtherTaxonConstraints = 0;
+        int restrainedOtherTaxonConstraints = 0;
+        for (RelationTO insertedRelTO: (Set<RelationTO>) relTOsArg.getValue()) {
+            //several taxon constraints can be generated for a same relation, 
+            //this is why we use a Set here
+            Set<TaxonConstraintTO> expectedRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
+            
+            if (insertedRelTO.getRelationStatus() == RelationTO.RelationStatus.REFLEXIVE) {
+                if (insertedRelTO.getSourceId().equals("ID:8")) {
+                    expectedRelTaxonConstraintTOs.add(
+                            new TaxonConstraintTO(insertedRelTO.getId(), "9606"));
+                    restrainedReflexiveTaxonConstraints++;
+                } else {
+                    allSpeciesReflexiveTaxonConstraints++;
+                    expectedRelTaxonConstraintTOs.add(
+                            new TaxonConstraintTO(insertedRelTO.getId(), null));
+                }
+            } else if (TOComparator.areTOsEqual(insertedRelTO, new RelationTO(null, "ID:8", "ID:7", 
+                        RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT), false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:9", "ID:8", 
+                        RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.DIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:9", "ID:8", 
+                        RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:8", "ID:1", 
+                        RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:9", "ID:7", 
+                        RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:9", "ID:1", 
+                        RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:9", "ID:7", 
+                        RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:9", "ID:1", 
+                        RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:14", "ID:13", 
+                        RelationTO.RelationType.TRANSFORMATIONOF, RelationTO.RelationStatus.DIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:14", "ID:10", 
+                        RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT), 
+                        false) || 
+                    TOComparator.areTOsEqual(insertedRelTO, 
+                        new RelationTO(null, "ID:14", "ID:1", 
+                        RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT), 
+                        false)) {
+
+                restrainedOtherTaxonConstraints++;
+                expectedRelTaxonConstraintTOs.add(
+                        new TaxonConstraintTO(insertedRelTO.getId(), "9606"));
+            } else {
+                allSpeciesOtherTaxonConstraints++;
+                expectedRelTaxonConstraintTOs.add(
+                        new TaxonConstraintTO(insertedRelTO.getId(), null));
+            }
+            
+            assertTrue("Missing relation taxon constraints: " + expectedRelTaxonConstraintTOs + 
+                    " for RelationTO: " + insertedRelTO + " - all taxon constraints: " + 
+                    relTaxonConstraintTOsArg.getValue(), 
+                    relTaxonConstraintTOsArg.getValue().containsAll(
+                            expectedRelTaxonConstraintTOs));
+            
+        }
+        assertEquals("Incorrect relation taxon constraints generated: " + 
+                relTaxonConstraintTOsArg, 41, relTaxonConstraintTOsArg.getValue().size());
+        assertEquals("Incorrect relation taxon constraints generated: " + 
+                relTaxonConstraintTOsArg, 12, allSpeciesReflexiveTaxonConstraints);
+        assertEquals("Incorrect relation taxon constraints generated: " + 
+                relTaxonConstraintTOsArg, 1, restrainedReflexiveTaxonConstraints);
+        assertEquals("Incorrect relation taxon constraints generated: " + 
+                relTaxonConstraintTOsArg, 17, allSpeciesOtherTaxonConstraints);
+        assertEquals("Incorrect relation taxon constraints generated: " + 
+                relTaxonConstraintTOsArg, 11, restrainedOtherTaxonConstraints);
     }
 }

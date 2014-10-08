@@ -24,6 +24,7 @@ import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -613,10 +614,31 @@ public class InsertUberon extends MySQLDAOUser {
                         speciesIdsToConsider.retainAll(speciesIds);
                         
                     } 
-                    //in any case, we apply the maximal taxon constraints from source 
-                    //and target of the edge
+                    //in any case, we apply the maximal taxon constraints from all OWLClasses 
+                    //that were walked on the path
+                    Set<OWLClass> classesWalked = new HashSet<OWLClass>();
+                    for (OWLAxiom ax: outgoingEdge.getAxioms()) {
+                        classesWalked.addAll(ax.getClassesInSignature());
+                    }
+                    for (OWLClass clsWalked: classesWalked) {
+                        OWLClass mappedClsWalked = 
+                                uberon.getOWLClass(wrapper.getIdentifier(clsWalked));
+                        if (mappedClsWalked == null || 
+                                !this.isValidClass(mappedClsWalked, uberon, 
+                                        classesToIgnore, speciesIds)) {
+                            continue;
+                        }
+                        Set<Integer> inSpecies = uberon.existsInSpecies(mappedClsWalked, 
+                                speciesIds);
+                        log.trace("OWLClass walked to produce the edge: {} - Mapped to OWLClass: {} - Exists in species: {}", 
+                                clsWalked, mappedClsWalked, inSpecies);
+                        speciesIdsToConsider.retainAll(inSpecies);
+                    }
+                    //and now, in case it was a fake relation with no axioms, e.g., 
+                    //reflexive edge
                     speciesIdsToConsider.retainAll(uberon.existsInSpecies(mappedCls, speciesIds));
                     speciesIdsToConsider.retainAll(uberon.existsInSpecies(target, speciesIds));
+                    
                     if (speciesIdsToConsider.isEmpty()) {
                         //exists in no species, discard
                         log.trace("Discarding edge because exists in no species: {}", 

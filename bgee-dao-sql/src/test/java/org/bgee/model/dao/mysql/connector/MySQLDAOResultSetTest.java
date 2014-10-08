@@ -294,7 +294,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
 
         List<RelationTO> retrievedTOs = (List<RelationTO>) myRs.getAllTOs();
         
-        assertTrue("", TOComparator.areTOCollectionsEqual(expectedTOs, retrievedTOs));
+        assertTrue("Incorrect retried TOs by getAllTOs",
+                TOComparator.areTOCollectionsEqual(expectedTOs, retrievedTOs));
         verify(myRs).close();
         
         log.exit();

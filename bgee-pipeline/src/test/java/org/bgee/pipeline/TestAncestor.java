@@ -77,10 +77,20 @@ public abstract class TestAncestor
 	 */
 	protected abstract Logger getLogger();
 	
-	
-	
-	protected <T extends TransferObject, V extends DAOResultSet<T>> V createMockDAOResultSet(
-	        List<T> resultSetContent, Class<V> type) {
+	/**
+	 * Create a mock {@code DAOResultSet} {@code code V} containing the provided {@code List} of 
+	 * {@code T} as results, used for unit testing.
+	 * 
+	 * @param resultSetContent A {@code List} of {@code T}s that is result of the 
+	 *                         {@code DAOResultSet} {@code code V}. 
+     * @param type             The desired returned type of values.
+	 * @return                 A mock {@code DAOResultSet} {@code code V} containing containing 
+	 *                         the provided {@code List} of {@code T} as results.
+     * @param <T>              A {@code TransferObject} type parameter.
+     * @param <V>              A {@code DAOResultSet} of {@code T}s type parameter.
+	 */
+	protected <T extends TransferObject, V extends DAOResultSet<T>> 
+	                V createMockDAOResultSet(List<T> resultSetContent, Class<V> type) {
 	    this.getLogger().entry(resultSetContent, type);
 	    
         V mockResultSet = Mockito.mock(type);
@@ -90,7 +100,7 @@ public abstract class TestAncestor
         when(mockResultSet.next()).thenAnswer(new Answer<Boolean>() {
             int counter = 0;
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
-                // Return true while there is speciesTO to return 
+                // Return true while there is a result to return 
                 return counter++ < resultSetSize;
             }
         });
@@ -100,7 +110,7 @@ public abstract class TestAncestor
         when(mockResultSet.getTO()).thenAnswer(new Answer<T>() {
             int counter = 0;
             public T answer(InvocationOnMock invocationOnMock) throws Throwable {
-                // Return true while there is speciesTO to return 
+                // Return true while there is a listTO to return 
                 return listTO.get(counter++);
             }
         });

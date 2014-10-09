@@ -555,9 +555,15 @@ public class InsertUberon extends MySQLDAOUser {
         OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
                 OntologyUtils.PART_OF_ID);
         
-        log.debug("Generating RelationTOs (first pass)...");
+        log.info("Generating RelationTOs (first pass)...");
         for (OWLOntology ont: wrapper.getAllOntologies()) {
-            for (OWLClass iteratedCls: ont.getClassesInSignature(true)) {
+            Set<OWLClass> allClasses = ont.getClassesInSignature(true);
+            //for logging purpose
+            int allClassesSize = allClasses.size();
+            int i = 0;
+            for (OWLClass iteratedCls: allClasses) {
+                i++;
+                log.info("Iterating class {}/{}: {}", i, allClassesSize, iteratedCls);
                 if (!this.isValidClass(iteratedCls, uberon, classesToIgnore, speciesIds)) {
                     continue;
                 }
@@ -724,7 +730,7 @@ public class InsertUberon extends MySQLDAOUser {
                 }
             }
         }
-        log.debug("Done generating RelationTOs (first pass).");
+        log.info("Done generating RelationTOs (first pass).");
         
         log.exit();
     }
@@ -822,10 +828,11 @@ public class InsertUberon extends MySQLDAOUser {
             Map<RelationTO, Set<Integer>> indirectRelationTOs, Collection<Integer> speciesIds) {
         log.entry(directRelationTOs, indirectRelationTOs, speciesIds);
         
-        log.debug("Generating proper RelationTOs (second pass)...");
         int relationId = 0;
         Set<RelationTO> allRelationTOs = new HashSet<RelationTO>(directRelationTOs.keySet());
         allRelationTOs.addAll(indirectRelationTOs.keySet());
+        log.info("Generating proper RelationTOs (second pass), number of relations: {}...", 
+                allRelationTOs.size());
         
         for (RelationTO relTO: allRelationTOs) {
             log.trace("Iterating relation: {}", relTO);
@@ -893,7 +900,7 @@ public class InsertUberon extends MySQLDAOUser {
             
             this.storeRelationTaxonConstraints(relationId, inSpecies, speciesIds);
         }
-        log.debug("Done generating proper RelationTOs (second pass).");
+        log.info("Done generating proper RelationTOs (second pass).");
         log.exit();
     }
     

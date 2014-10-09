@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
@@ -279,26 +278,19 @@ public class MySQLDAOResultSetTest extends TestAncestor
      * Test {@link MySQLDAOResultSet#getAllTOs()}.
      */
     @Test
-    public void testGetAllTOs() throws SQLException {
-        log.entry();
-        
+    public void testGetAllTOs() {
         MySQLRelationTOResultSet myRs = Mockito.mock(MySQLRelationTOResultSet.class);
         
         List<RelationTO> expectedTOs = 
                 Arrays.asList(new RelationTO("1","2"), new RelationTO("3","4"));
         
-        when(myRs.getTO()).thenReturn(new RelationTO("1","2"), new RelationTO("3","4"));
+        when(myRs.getTO()).thenReturn(expectedTOs.get(0), expectedTOs.get(1));
         when(myRs.next()).thenReturn(true, true, false);
 
         when(myRs.getAllTOs()).thenCallRealMethod();
-
-        List<RelationTO> retrievedTOs = (List<RelationTO>) myRs.getAllTOs();
         
-        assertTrue("Incorrect retried TOs by getAllTOs",
-                TOComparator.areTOCollectionsEqual(expectedTOs, retrievedTOs));
+        assertEquals("Incorrect retried TOs by getAllTOs", expectedTOs, myRs.getAllTOs());
         verify(myRs).close();
-        
-        log.exit();
     }
 
     /**

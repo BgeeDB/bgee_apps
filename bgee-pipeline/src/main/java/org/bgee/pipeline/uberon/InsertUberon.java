@@ -71,6 +71,21 @@ public class InsertUberon extends MySQLDAOUser {
      *   HsapDv:/9606,MmusDv:/10090 
      *   NCBITaxon:1 
      *   bgeeSpecies.tsv
+     * <li>If the first element in {@code args} is "insertAnatomy", the action 
+     * will be to insert the anatomical ontology into the database, 
+     * see {@link #insertAnatOntologyIntoDataSource(Uberon, Collection)}.
+     * Following elements in {@code args} must then be:
+     *   <ol>
+     *   <li>path to the file storing the Uberon ontology, see {@link #setPathToUberonOnt(String)}.
+     *   <li>path to a file storing the Uberon taxon constraints
+     *   <li>A Map<String, Set<Integer>> to potentially override taxon constraints 
+     *   (recommended for developmental stages), see {@link 
+     *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
+     *   how to provided it. Can be empty.
+     *   <li>A list of OBO-like IDs of terms that are roots of subgraph to ignore, 
+     *   see {@link UberonCommon#getToIgnoreSubgraphRootIds()}. Can be empty.
+     *   <li>Path to the file listing species used in Bgee. can be empty.
+     *   </ol>
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
@@ -85,7 +100,7 @@ public class InsertUberon extends MySQLDAOUser {
             if (args.length < 5 || args.length > 6) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "4 or 5 arguments, " + args.length + " provided."));
+                        "5 or 6 arguments, " + args.length + " provided."));
             }
             
             UberonDevStage ub = new UberonDevStage(args[1], args[2], 
@@ -104,7 +119,7 @@ public class InsertUberon extends MySQLDAOUser {
             if (args.length < 5 || args.length > 6) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "4 or 5 arguments, " + args.length + " provided."));
+                        "5 or 6 arguments, " + args.length + " provided."));
             }
             
             Uberon ub = new Uberon(args[1], args[2], 
@@ -284,10 +299,14 @@ public class InsertUberon extends MySQLDAOUser {
             Collection<Integer> speciesIds) throws DAOException {
         log.entry(uberon, speciesIds);
         
+        log.info("Start inserting anatomy for species: {}...", speciesIds);
+        
         //we modify the taxon constraints so that only terms belonging to at least one 
         //of the requested species will be considered
         for (Set<Integer> taxa: uberon.getTaxonConstraints().values()) {
-            taxa.retainAll(speciesIds);
+            if (taxa != null) {
+                taxa.retainAll(speciesIds);
+            }
         }
 
         OntologyUtils utils = uberon.getOntologyUtils();
@@ -309,6 +328,7 @@ public class InsertUberon extends MySQLDAOUser {
         this.generateRelationInformation(uberon, classesToIgnore, speciesIds);
         
         try {
+            log.info("Start inserting info into data source...");
             this.startTransaction();
             
             //insert anat entities and their taxon constraints
@@ -321,9 +341,12 @@ public class InsertUberon extends MySQLDAOUser {
                     this.anatRelTaxonConstraintTOs);
             
             this.commit();
+            log.info("Done inserting info into data source.");
         } finally {
             this.closeDAO();
         }
+
+        log.info("Done inserting anatomy.", speciesIds);
     }
     
     /**

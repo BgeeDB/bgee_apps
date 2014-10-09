@@ -238,14 +238,19 @@ public class GenerateTaxonOntology {
         log.info("Start filtering ontology for taxa {}...", taxonIds);
         
         Set<OWLClass> owlClassesToKeep = new HashSet<OWLClass>();
+        Set<String> missingTaxonIds = new HashSet<String>();
         for (String taxonId: taxonIds) {
             OWLClass taxClass = ontWrapper.getOWLClassByIdentifier(taxonId, true);
             if (taxClass == null) {
-                throw log.throwing(new IllegalArgumentException("Taxon " + taxonId + 
-                        " was not found in the ontology"));
+                missingTaxonIds.add(taxonId);
+            } else {
+                owlClassesToKeep.add(taxClass);
+                owlClassesToKeep.addAll(ontWrapper.getOWLClassAncestors(taxClass));
             }
-            owlClassesToKeep.add(taxClass);
-            owlClassesToKeep.addAll(ontWrapper.getOWLClassAncestors(taxClass));
+        }
+        if (!missingTaxonIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The following taxa " + 
+                    " were not found in the ontology: " + missingTaxonIds));
         }
         OWLGraphManipulator manipulator = new OWLGraphManipulator(ontWrapper);
         manipulator.filterClasses(owlClassesToKeep);

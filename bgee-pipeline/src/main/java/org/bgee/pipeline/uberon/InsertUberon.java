@@ -565,7 +565,10 @@ public class InsertUberon extends MySQLDAOUser {
                 i++;
                 boolean isValid = 
                         this.isValidClass(iteratedCls, uberon, classesToIgnore, speciesIds);
-                log.info("Iterating class {}/{}: {} - is valid: {}", i, allClassesSize, 
+                if (log.isInfoEnabled() && (i % 500) == 0) {
+                    log.info("Classes examined: {}/{}", i, allClassesSize);
+                }
+                log.debug("Iterating class {}/{}: {} - is valid: {}", i, allClassesSize, 
                         iteratedCls, isValid);
                 if (!isValid) {
                     continue;

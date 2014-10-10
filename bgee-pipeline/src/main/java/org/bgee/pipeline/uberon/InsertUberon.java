@@ -333,12 +333,17 @@ public class InsertUberon extends MySQLDAOUser {
             
             //insert anat entities and their taxon constraints
             this.getAnatEntityDAO().insertAnatEntities(this.anatEntityTOs);
+            //save memory
+            this.anatEntityTOs.clear();
             this.getTaxonConstraintDAO().insertAnatEntityTaxonConstraints(
                     this.anatEntityTaxonConstraintTOs);
+            this.anatEntityTaxonConstraintTOs.clear();
             //insert relations between anat entities and their taxon constraints
             this.getRelationDAO().insertAnatEntityRelations(this.anatRelationTOs);
+            this.anatRelationTOs.clear();
             this.getTaxonConstraintDAO().insertAnatEntityRelationTaxonConstraints(
                     this.anatRelTaxonConstraintTOs);
+            this.anatRelTaxonConstraintTOs.clear();
             
             this.commit();
             log.info("Done inserting info into data source.");

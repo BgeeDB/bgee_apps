@@ -149,26 +149,26 @@ public class InsertUberon extends MySQLDAOUser {
      * entities to be inserted. Related taxon constraints to be inserted 
      * for each of them is stored in {@link #anatEntityTaxonConstraintTOs}.
      */
-    private final Set<AnatEntityTO> anatEntityTOs;
+    private Set<AnatEntityTO> anatEntityTOs;
     /**
      * A {@code Set} of {@code TaxonConstraintTO}s generated as part of the insertion 
      * of the Uberon anatomy into the data source. They represent the taxon constraints 
      * for each anatomical entity stored in {@link #anatEntityTOs}.
      */
-    private final Set<TaxonConstraintTO> anatEntityTaxonConstraintTOs;
+    private Set<TaxonConstraintTO> anatEntityTaxonConstraintTOs;
     /**
      * A {@code Set} of {@code RelationTO}s generated as part of the insertion 
      * of the Uberon anatomy into the data source. They represent the relations between 
      * anatomical entities to be inserted. Related taxon constraints to be inserted 
      * for each of them is stored in {@link #anatRelTaxonConstraintTOs}.
      */
-    private final Set<RelationTO> anatRelationTOs;
+    private Set<RelationTO> anatRelationTOs;
     /**
      * A {@code Set} of {@code TaxonConstraintTO}s generated as part of the insertion 
      * of the Uberon anatomy into the data source. They represent the taxon constraints 
      * for each relation stored in {@link #anatRelationTOs}.
      */
-    private final Set<TaxonConstraintTO> anatRelTaxonConstraintTOs;
+    private Set<TaxonConstraintTO> anatRelTaxonConstraintTOs;
 
     /**
      * Default constructor using default {@code MySQLDAOManager}.
@@ -334,16 +334,16 @@ public class InsertUberon extends MySQLDAOUser {
             //insert anat entities and their taxon constraints
             this.getAnatEntityDAO().insertAnatEntities(this.anatEntityTOs);
             //save memory
-            this.anatEntityTOs.clear();
+            this.anatEntityTOs = new HashSet<AnatEntityTO>();
             this.getTaxonConstraintDAO().insertAnatEntityTaxonConstraints(
                     this.anatEntityTaxonConstraintTOs);
-            this.anatEntityTaxonConstraintTOs.clear();
+            this.anatEntityTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
             //insert relations between anat entities and their taxon constraints
             this.getRelationDAO().insertAnatEntityRelations(this.anatRelationTOs);
-            this.anatRelationTOs.clear();
+            this.anatRelationTOs = new HashSet<RelationTO>();
             this.getTaxonConstraintDAO().insertAnatEntityRelationTaxonConstraints(
                     this.anatRelTaxonConstraintTOs);
-            this.anatRelTaxonConstraintTOs.clear();
+            this.anatRelTaxonConstraintTOs = new HashSet<TaxonConstraintTO>();
             
             this.commit();
             log.info("Done inserting info into data source.");

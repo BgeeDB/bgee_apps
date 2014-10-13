@@ -122,7 +122,7 @@ public class Uberon extends UberonCommon {
      *   Uberon simplifyUberon composite-metazoan.owl custom_composite simplification_composite.tsv 
      *   UBERON:0001062,UBERON:0000465,UBERON:0000061,UBERON:0010000,UBERON:0008979 
      *   BFO:0000050,RO:0002202,RO:0002494 
-     *   UBERON:0000922/UBERON:0002050,UBERON:0000467/UBERON:0000468,UBERON:0000475/UBERON:0000468,UBERON:0000479/UBERON:0000468,UBERON:0000480/UBERON:0000468,UBERON:0007688/UBERON:0000468,UBERON:0010707/UBERON:0000468,UBERON:0012641/UBERON:0000468,UBERON:0002199/UBERON:0000468,UBERON:0002416/UBERON:0000468,UBERON:0007376/UBERON:0000468,UBERON:0000463/UBERON:0000468,UBERON:0001048/UBERON:0000468,UBERON:0007567/UBERON:0000468,UBERON:0015119/UBERON:0000468 
+     *   UBERON:0000922/UBERON:0002050,UBERON:0004716/UBERON:0000922,UBERON:0000467/UBERON:0000468,UBERON:0000475/UBERON:0000468,UBERON:0000479/UBERON:0000468,UBERON:0000480/UBERON:0000468,UBERON:0007688/UBERON:0000468,UBERON:0010707/UBERON:0000468,UBERON:0012641/UBERON:0000468,UBERON:0002199/UBERON:0000468,UBERON:0002416/UBERON:0000468,UBERON:0007376/UBERON:0000468,UBERON:0000463/UBERON:0000468,UBERON:0001048/UBERON:0000468,UBERON:0007567/UBERON:0000468,UBERON:0015119/UBERON:0000468 
      *   NBO:0000313,GO:0008150,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,CHEBI:24431,UBERON:0004458,UBERON:0000466,SO:0000704 
      *   UBERON:0013701,UBERON:0000026,UBERON:0000480,UBERON:0000479,UBERON:0000468,GO:0005575 
      *   grouping_class,non_informative,ubprop:upper_level,upper_level 
@@ -397,6 +397,8 @@ public class Uberon extends UberonCommon {
      * @throws UnknownOWLOntologyException      If an error occurred while wrapping 
      *                                          the {@code uberonOnt} into an 
      *                                          {@code OWLGraphManipulator}.
+     * @throws IllegalStateException            If the modifications are incorrect, 
+     *                                          because of the original state of the ontology.
      */
     public void simplifyUberon() throws UnknownOWLOntologyException {
         //we provide to the entry methods all class attributes that will be used 
@@ -430,12 +432,33 @@ public class Uberon extends UberonCommon {
             }
         }
         
+        //in order to identify problems related to cycles: after relation reduction, 
+        //terms in cycles can be seen as having no parents, thus being removed 
+        //when filtering graph. We will spot them by identifying "newly" appearing roots. 
+        //This needs to be done after the previous custom modifications, as they could 
+        //result in new roots willingly added.
+        Set<OWLClass> originalRoots = manipulator.getOwlGraphWrapper().getOntologyRoots();
+        
         manipulator.reduceRelations();
         manipulator.reducePartOfIsARelations();
         
         if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
             manipulator.mapRelationsToParent(this.getRelIds());
             manipulator.filterRelations(this.getRelIds(), true);
+        }
+        
+        //in order to identify problems related to cycles: after relation reduction, 
+        //terms in cycles can be seen as having no parents, thus being removed 
+        //when filtering graph. We will spot them by identifying "newly" appearing roots
+        Set<OWLClass> afterModifRoots = manipulator.getOwlGraphWrapper().getOntologyRoots();
+        afterModifRoots.removeAll(originalRoots);
+        if (!afterModifRoots.isEmpty()) {
+            throw new IllegalStateException(
+                    "Modifications of the ontology resulted in terms losing all their " +
+            		"outgoing relations, thus being seen as root of the ontology. " +
+            		"Such subgraphs will be erroneously removed by subgraph filtering. " +
+            		"This is often due to cycles in the ontology. Newly appearing roots: " +  
+            		afterModifRoots);
         }
         
         if (this.getToRemoveSubgraphRootIds() != null) {

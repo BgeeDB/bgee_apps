@@ -438,27 +438,27 @@ public class Uberon extends UberonCommon {
         //This needs to be done after the previous custom modifications, as they could 
         //result in new roots willingly added.
         Set<OWLClass> originalRoots = manipulator.getOwlGraphWrapper().getOntologyRoots();
+        log.trace("Original roots: {}", originalRoots);
         
         manipulator.reduceRelations();
         manipulator.reducePartOfIsARelations();
         
+        //We find "newly" appearing roots
+        Set<OWLClass> afterReductionRoots = manipulator.getOwlGraphWrapper().getOntologyRoots();
+        log.trace("Roots after relation reduction: {}", afterReductionRoots);
+        afterReductionRoots.removeAll(originalRoots);
+        if (!afterReductionRoots.isEmpty()) {
+            throw new IllegalStateException(
+                    "Modifications of the ontology resulted in terms losing all their " +
+                    "outgoing relations, thus being seen as root of the ontology. " +
+                    "Such subgraphs will be erroneously removed by subgraph filtering. " +
+                    "This is often due to cycles in the ontology. Newly appearing roots: " +  
+                    afterReductionRoots);
+        }
+        
         if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {
             manipulator.mapRelationsToParent(this.getRelIds());
             manipulator.filterRelations(this.getRelIds(), true);
-        }
-        
-        //in order to identify problems related to cycles: after relation reduction, 
-        //terms in cycles can be seen as having no parents, thus being removed 
-        //when filtering graph. We will spot them by identifying "newly" appearing roots
-        Set<OWLClass> afterModifRoots = manipulator.getOwlGraphWrapper().getOntologyRoots();
-        afterModifRoots.removeAll(originalRoots);
-        if (!afterModifRoots.isEmpty()) {
-            throw new IllegalStateException(
-                    "Modifications of the ontology resulted in terms losing all their " +
-            		"outgoing relations, thus being seen as root of the ontology. " +
-            		"Such subgraphs will be erroneously removed by subgraph filtering. " +
-            		"This is often due to cycles in the ontology. Newly appearing roots: " +  
-            		afterModifRoots);
         }
         
         if (this.getToRemoveSubgraphRootIds() != null) {

@@ -29,6 +29,7 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -570,7 +571,7 @@ public class InsertUberon extends MySQLDAOUser {
                 i++;
                 boolean isValid = 
                         this.isValidClass(iteratedCls, uberon, classesToIgnore, speciesIds);
-                if (log.isInfoEnabled() && (i % 500) == 0) {
+                if (log.isInfoEnabled() && (i % 1000) == 0) {
                     log.info("Classes examined: {}/{}", i, allClassesSize);
                 }
                 log.debug("Iterating class {}/{}: {} - is valid: {}", i, allClassesSize, 
@@ -605,13 +606,13 @@ public class InsertUberon extends MySQLDAOUser {
                 allOutgoingEdges.add(fakeEdge);
                 directOutgoingEdges.add(fakeEdge);
                 
-                for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
+                edge: for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
                     log.trace("Iterating outgoing edge {}", outgoingEdge);
                     
                     //-------------Test validity of edge---------------
                     if (outgoingEdge.getQuantifiedPropertyList().size() != 1) {
                         log.trace("Edge discarded because multiple or no property.");
-                        continue;
+                        continue edge;
                     }
                     //if it is a GCI relation, with make sure it is actually 
                     //a taxonomy GCI relation
@@ -620,25 +621,39 @@ public class InsertUberon extends MySQLDAOUser {
                                     contains(taxonomyRoot) || 
                                     !partOf.equals(outgoingEdge.getGCIRelation()))) {
                         log.trace("Edge discarded because it is a non-taxonomy GCI");
-                        continue;
+                        continue edge;
+                    }
+                    //we do not want to include develops_from or transformation_of relations 
+                    //propagated through is_a relations
+                    if (utils.isTransformationOfRelation(outgoingEdge) || 
+                            utils.isDevelopsFromRelation(outgoingEdge)) {
+                        for (OWLSubClassOfAxiom ax: outgoingEdge.getSubClassOfAxioms()) {
+                            //if there is an is_a relation in the chain of axioms 
+                            //that generated this edge, discard
+                            if (!ax.getSubClass().isAnonymous() && 
+                                    !ax.getSuperClass().isAnonymous()) {
+                                log.trace("Edge discarded because is a develops_from/transformation_of relation propagated through is_a");
+                                continue edge;
+                            }
+                        }
                     }
                     
                     //-------------Test validity of target---------------
                     if (!(outgoingEdge.getTarget() instanceof OWLClass)) {
                         log.trace("Edge discarded because target is not an OWLClass");
-                        continue;
+                        continue edge;
                     }
                     OWLClass target = (OWLClass) outgoingEdge.getTarget();
                     if (!this.isValidClass(target, uberon, classesToIgnore, speciesIds)) {
                         log.trace("Edge discarded because target is invalid");
-                        continue;
+                        continue edge;
                     }
                     //get equivalent class
                     target = uberon.getOWLClass(wrapper.getIdentifier(target));
                     if (target == null || 
                             !this.isValidClass(target, uberon, classesToIgnore, speciesIds)) {
                         log.trace("Edge discarded because target is invalid");
-                        continue;
+                        continue edge;
                     }
                     String targetId = wrapper.getIdentifier(target);
                     
@@ -708,7 +723,7 @@ public class InsertUberon extends MySQLDAOUser {
                         //exists in no species, discard
                         log.trace("Discarding edge because exists in no species: {}", 
                                 outgoingEdge);
-                        continue;
+                        continue edge;
                     }
                     
                     //create RelationTO.

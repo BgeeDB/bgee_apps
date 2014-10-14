@@ -337,22 +337,28 @@ public class InsertUberonTest extends TestAncestor {
                 RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
         expectedRelTOs.add(new RelationTO(null, "ID:9", "ID:1", 
                 RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
-        //ID:11 dvlt_from ID:10 is_a ID:1
-        expectedRelTOs.add(new RelationTO(null, "ID:11", "ID:1", 
-                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //ID:11 dvlt_from ID:10 is_a ID:1, should be discarded 
+        //(no propagation of develops_from/transformation_of through is_a)
+//        expectedRelTOs.add(new RelationTO(null, "ID:11", "ID:1", 
+//                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
         //ID:12 transf_of ID:11 dvlt_from ID:10 is_a ID:1
         expectedRelTOs.add(new RelationTO(null, "ID:12", "ID:10", 
                 RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
-        expectedRelTOs.add(new RelationTO(null, "ID:12", "ID:1", 
-                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
-        //ID:13 dvlt_from ID:10 is_a ID:1
-        expectedRelTOs.add(new RelationTO(null, "ID:13", "ID:1", 
-                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //should be discarded 
+        //(no propagation of develops_from/transformation_of through is_a)
+//        expectedRelTOs.add(new RelationTO(null, "ID:12", "ID:1", 
+//                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //ID:13 dvlt_from ID:10 is_a ID:1, should be discarded 
+        //(no propagation of develops_from/transformation_of through is_a)
+//        expectedRelTOs.add(new RelationTO(null, "ID:13", "ID:1", 
+//                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
         //ID:14 transf_of ID:13 dvlt_from ID:10 is_a ID:1
         expectedRelTOs.add(new RelationTO(null, "ID:14", "ID:10", 
                 RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
-        expectedRelTOs.add(new RelationTO(null, "ID:14", "ID:1", 
-                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        //should be discarded 
+        //(no propagation of develops_from/transformation_of through is_a)
+//        expectedRelTOs.add(new RelationTO(null, "ID:14", "ID:1", 
+//                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
         //ID:15 po ID:10 is_a ID:1
         expectedRelTOs.add(new RelationTO(null, "ID:15", "ID:1", 
                 RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
@@ -443,10 +449,6 @@ public class InsertUberonTest extends TestAncestor {
                     TOComparator.areTOsEqual(insertedRelTO, 
                         new RelationTO(null, "ID:14", "ID:10", 
                         RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT), 
-                        false) || 
-                    TOComparator.areTOsEqual(insertedRelTO, 
-                        new RelationTO(null, "ID:14", "ID:1", 
-                        RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT), 
                         false)) {
 
                 restrainedOtherTaxonConstraints++;
@@ -466,14 +468,14 @@ public class InsertUberonTest extends TestAncestor {
             
         }
         assertEquals("Incorrect relation taxon constraints generated: " + 
-                relTaxonConstraintTOsArg, 41, relTaxonConstraintTOsArg.getValue().size());
+                relTaxonConstraintTOsArg, 37, relTaxonConstraintTOsArg.getValue().size());
         assertEquals("Incorrect relation taxon constraints generated: " + 
                 relTaxonConstraintTOsArg, 12, allSpeciesReflexiveTaxonConstraints);
         assertEquals("Incorrect relation taxon constraints generated: " + 
                 relTaxonConstraintTOsArg, 1, restrainedReflexiveTaxonConstraints);
         assertEquals("Incorrect relation taxon constraints generated: " + 
-                relTaxonConstraintTOsArg, 17, allSpeciesOtherTaxonConstraints);
+                relTaxonConstraintTOsArg, 14, allSpeciesOtherTaxonConstraints);
         assertEquals("Incorrect relation taxon constraints generated: " + 
-                relTaxonConstraintTOsArg, 11, restrainedOtherTaxonConstraints);
+                relTaxonConstraintTOsArg, 10, restrainedOtherTaxonConstraints);
     }
 }

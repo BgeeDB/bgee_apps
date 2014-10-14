@@ -258,7 +258,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         log.entry(expressionCalls);
         
         int callInsertedCount = 0;
-
+        
         // According to isIncludeSubstructures(), the ExpressionCallTO is inserted in 
         // expression or globalExpression table. As prepared statement is for the 
         // column values not for table name, we need to separate ExpressionCallTOs into
@@ -294,6 +294,9 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 stmt.setString(8, call.getRNASeqData().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
+                if (callInsertedCount % MySQLDAO.INSERTED_ROWS_MODULO_DIVISOR == 0) {
+                    log.info("{} expression calls inserted", callInsertedCount);
+                }
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -317,6 +320,9 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 stmt.setString(9, call.getOriginOfLine().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
+                if (callInsertedCount % MySQLDAO.INSERTED_ROWS_MODULO_DIVISOR == 0) {
+                    log.info("{} global expression calls inserted", callInsertedCount);
+                }
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -344,6 +350,9 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 stmt.setString(2, call.getExpressionId());
                 rowInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
+                if (rowInsertedCount % MySQLDAO.INSERTED_ROWS_MODULO_DIVISOR == 0) {
+                    log.info("{} global expression to expression inserted", rowInsertedCount);
+                }
             }
             return log.exit(rowInsertedCount);
         } catch (SQLException e) {

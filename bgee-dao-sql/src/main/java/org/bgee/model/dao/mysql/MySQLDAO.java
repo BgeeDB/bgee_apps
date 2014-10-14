@@ -37,6 +37,11 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
     protected final static int MAX_UPDATE_COUNT = 10000;
     
     /**
+     * An {@code int} that is the modulo divisor that can be used to follow number of inserted rows.
+     */
+    protected final static int INSERTED_ROWS_MODULO_DIVISOR = 100000;
+
+    /**
      * A {@code Set} of {@code DAO.Attribute}s specifying the attributes to retrieve 
      * from the data source in order to build {@code TransferObject}s associated to 
      * this {@code DAO}.

@@ -206,6 +206,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     log.info("Start inserting of global no-expression calls for {}...", speciesId);
                     nbInsertedNoExpressions += this.getNoExpressionCallDAO().
                             insertNoExpressionCalls(globalNoExprMap.keySet());
+                    // Empty memory to free up some memory. We don't use clear() 
+                    // because it empty ArgumentCaptor values in test in same time.
+                    globalNoExprMap = new HashMap<NoExpressionCallTO, Set<NoExpressionCallTO>>();
                     log.info("Done inserting of global no-expression calls for {}.", speciesId);
                     
                     log.info("Start inserting of relation between a no-expression call " +
@@ -228,7 +231,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     // For each expression row, propagate to parents.
                     Map<ExpressionCallTO, Set<ExpressionCallTO>> globalExprMap =
                             this.generateGlobalExpressionTOs(expressionTOs, relationTOs);
-
+                    
                     // Generate the globalExprToExprTOs.
                     Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
                             this.generateGlobalCallToCallTOs(globalExprMap, 
@@ -242,6 +245,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     log.info("Start inserting of global expression calls for {}...", speciesId);
                     nbInsertedExpressions += this.getExpressionCallDAO().
                             insertExpressionCalls(globalExprMap.keySet());
+                    // Empty memory to free up some memory. We don't use clear() 
+                    // because it empty ArgumentCaptor values in test in same time.
+                    globalExprMap = new HashMap<ExpressionCallTO, Set<ExpressionCallTO>>();
                     log.info("Done inserting of global expression calls for {}.", speciesId);
 
                     log.info("Start inserting of relation between an expression call " +
@@ -257,9 +263,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             "and {} correspondances inserted.", speciesId, 
                             nbInsertedExpressions, nbInsertedGlobalExprToExpr);
                 }
-            }
-
-            
+            }            
         } finally {
             this.closeDAO();
         }

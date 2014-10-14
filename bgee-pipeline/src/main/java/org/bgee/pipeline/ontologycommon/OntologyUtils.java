@@ -1876,18 +1876,43 @@ public class OntologyUtils {
         log.entry(classes, overProps, retainLeaves);
         
         Set<OWLObject> toRemove = new HashSet<OWLObject>();
+        //we need to take cycles into account, otherwise we could exclude all classes. 
+        //to do that we will associate each class to its ancestors, and filter afterwards
+        Map<OWLNamedObject, Set<OWLNamedObject>> clsToAncestors = 
+                new HashMap<OWLNamedObject, Set<OWLNamedObject>>();
+        
         for (OWLClass cls: classes) {
             Set<OWLNamedObject> ancestors = 
                     this.getWrapper().getNamedAncestorsWithGCI(cls, overProps);
             //just to be sure, in case of cycles?
             ancestors.remove(cls);
+            clsToAncestors.put(cls, ancestors);
             log.trace("Relatives retrieved for {}: {}", cls, ancestors);
-            if (retainLeaves) {
-                toRemove.addAll(ancestors);
-            } else if (!Collections.disjoint(classes, ancestors)) {
-                toRemove.add(cls);
+        }
+        for (Entry<OWLNamedObject, Set<OWLNamedObject>> clsToAncestor: clsToAncestors.entrySet()) {
+            OWLNamedObject iteratedObj = clsToAncestor.getKey();
+            //if an ancestor of iteratedObj has also iteratedObj as an ancestor, 
+            //discard the ancestor. This is needed only in case retainLeaves is false.
+            if (!retainLeaves) {
+                Set<OWLNamedObject> ancestorsCopy = 
+                        new HashSet<OWLNamedObject>(clsToAncestor.getValue());
+                for (OWLNamedObject ancestor: clsToAncestor.getValue()) {
+                    Set<OWLNamedObject> ancestorsAncestor = clsToAncestors.get(ancestor);
+                    if (ancestorsAncestor != null && 
+                            ancestorsAncestor.contains(iteratedObj)) {
+                        ancestorsCopy.remove(ancestor);
+                        log.trace("Discaring {}, ancestor of {}, because of cycles.", ancestor, 
+                                iteratedObj);
+                    }
+                } 
+                if (!Collections.disjoint(classes, ancestorsCopy)) {
+                    toRemove.add(iteratedObj);
+                }
+            } else {
+                toRemove.addAll(clsToAncestor.getValue());
             }
         }
+          
         classes.removeAll(toRemove);
         log.trace("Resulting Set after filtering: {}", classes);
         

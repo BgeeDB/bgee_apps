@@ -838,6 +838,10 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
         OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
         OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
+
+        OWLClass cls7 = wrapper.getOWLClassByIdentifier("FOO:0007");
+        OWLClass cls8 = wrapper.getOWLClassByIdentifier("FOO:0008");
+        OWLClass cls9 = wrapper.getOWLClassByIdentifier("FOO:0009");
         @SuppressWarnings("rawtypes")
         Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
                 Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
@@ -863,6 +867,16 @@ public class OntologyUtilsTest extends TestAncestor {
         expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls2, cls4));
         utils.retainLeafClasses(setToModify, overProps);
         assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls7, cls8, cls9));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls9));
+        utils.retainLeafClasses(setToModify, overProps);
+        assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls8, cls9));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls9));
+        utils.retainLeafClasses(setToModify, overProps);
+        assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
     }
     
     /**
@@ -881,6 +895,10 @@ public class OntologyUtilsTest extends TestAncestor {
         OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
         OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
         OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+
+        OWLClass cls7 = wrapper.getOWLClassByIdentifier("FOO:0007");
+        OWLClass cls8 = wrapper.getOWLClassByIdentifier("FOO:0008");
+        OWLClass cls9 = wrapper.getOWLClassByIdentifier("FOO:0009");
         @SuppressWarnings("rawtypes")
         Set<OWLPropertyExpression> overProps = new HashSet<OWLPropertyExpression>(
                 Arrays.asList(wrapper.getOWLObjectPropertyByIdentifier(
@@ -904,6 +922,16 @@ public class OntologyUtilsTest extends TestAncestor {
         
         setToModify = new HashSet<OWLClass>(Arrays.asList(cls3, cls4, cls5));
         expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls3, cls4, cls5));
+        utils.retainParentClasses(setToModify, overProps);
+        assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls7, cls8, cls9));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls7, cls8));
+        utils.retainParentClasses(setToModify, overProps);
+        assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
+        
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls7, cls9));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls7));
         utils.retainParentClasses(setToModify, overProps);
         assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
     }

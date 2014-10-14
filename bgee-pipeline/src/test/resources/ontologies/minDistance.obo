@@ -32,6 +32,21 @@ id: FOO:0006
 name: F
 relationship: in_deep_part_of FOO:0005 ! E
 
+[Term]
+id: FOO:0007
+name: G
+relationship: part_of FOO:0008 ! H
+
+[Term]
+id: FOO:0008
+name: H
+relationship: part_of FOO:0007 ! G
+
+[Term]
+id: FOO:0009
+name: I
+relationship: part_of FOO:0007 ! G
+
 [Typedef]
 id: has_part
 name: has_part

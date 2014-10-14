@@ -24,14 +24,14 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * {@code Enum} used to define the attributes to populate in the {@code NoExpressionCallTO}s 
      * obtained from this {@code NoExpressionCallDAO}.
      * <ul>
-     * <li>{@code ID: corresponds to {@link CallTO#getId()}.
-     * <li>{@code GENEID: corresponds to {@link CallTO#getGeneId()}.
-     * <li>{@code STAGEID: corresponds to {@link CallTO#getStageId()}.
-     * <li>{@code ANATENTITYID: corresponds to {@link CallTO#getAnatEntityId()}.
-     * <li>{@code AFFYMETRIXDATA: corresponds to {@link CallTO#getAffymetrixData()}.
-     * <li>{@code RELAXEDINSITUDATA: corresponds to {@link CallTO#getRelaxedInSituData()}.
-     * <li>{@code INSITUDATA: corresponds to {@link CallTO#getInSituData()}.
-     * <li>{@code RNASEQDATA;: corresponds to {@link CallTO#getRNASeqData()}.
+     * <li>{@code ID}: corresponds to {@link NoExpressionCallTO#getId()}.
+     * <li>{@code GENEID}: corresponds to {@link NoExpressionCallTO#getGeneId()}.
+     * <li>{@code STAGEID}: corresponds to {@link NoExpressionCallTO#getStageId()}.
+     * <li>{@code ANATENTITYID}: corresponds to {@link NoExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code AFFYMETRIXDATA}: corresponds to {@link NoExpressionCallTO#getAffymetrixData()}.
+     * <li>{@code RELAXEDINSITUDATA}: corresponds to {@link NoExpressionCallTO#getRelaxedInSituData()}.
+     * <li>{@code INSITUDATA}: corresponds to {@link NoExpressionCallTO#getInSituData()}.
+     * <li>{@code RNASEQDATA}: corresponds to {@link NoExpressionCallTO#getRNASeqData()}.
      * <li>{@code INCLUDEPARENTSTRUCTURES}: corresponds to 
      * {@link NoExpressionCallTO#isIncludeParentStructures()}.
      * <li>{@code ORIGINOFLINE}: corresponds to {@link NoExpressionCallTO#getOriginOfLine()}.
@@ -72,7 +72,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                                  from data source. If there is no call, return 0.
      * @throws DAOException             If an error occurred when accessing the data source. 
      */
-    public int getMaxNoExpressionCallId(Boolean isIncludeSubstructures) throws DAOException;
+    public int getMaxNoExpressionCallId(Boolean isIncludeParentStructures) throws DAOException;
 
     /**
      * Inserts the provided no-expression calls into the Bgee database, 

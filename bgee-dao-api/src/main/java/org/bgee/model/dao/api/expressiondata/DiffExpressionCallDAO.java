@@ -20,15 +20,14 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
      * {@code Enum} used to define the attributes to populate in the 
      * {@code DiffExpressionCallTO}s obtained from this {@code DiffExpressionCallDAO}.
      * <ul>
-     * <li>{@code ID: corresponds to {@link CallTO#getId()}.
-     * <li>{@code GENEID: corresponds to {@link CallTO#getGeneId()}.
-     * <li>{@code STAGEID: corresponds to {@link CallTO#getStageId()}.
-     * <li>{@code ANATENTITYID: corresponds to {@link CallTO#getAnatEntityId()}.
-     * <li>{@code AFFYMETRIXDATA: corresponds to {@link CallTO#getAffymetrixData()}.
-     * <li>{@code ESTDATA: corresponds to {@link CallTO#getESTData()}.
-     * <li>{@code INSITUDATA: corresponds to {@link CallTO#getInSituData()}.
-     * <li>{@code RNASEQDATA;: corresponds to {@link CallTO#getRNASeqData()}.
-
+     * <li>{@code ID}: corresponds to {@link DiffExpressionCallTO#getId()}.
+     * <li>{@code GENEID}: corresponds to {@link DiffExpressionCallTO#getGeneId()}.
+     * <li>{@code STAGEID}: corresponds to {@link DiffExpressionCallTO#getStageId()}.
+     * <li>{@code ANATENTITYID}: corresponds to {@link DiffExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code AFFYMETRIXDATA}: corresponds to {@link DiffExpressionCallTO#getAffymetrixData()}.
+     * <li>{@code ESTDATA}: corresponds to {@link DiffExpressionCallTO#getESTData()}.
+     * <li>{@code INSITUDATA}: corresponds to {@link DiffExpressionCallTO#getInSituData()}.
+     * <li>{@code RNASEQDATA}: corresponds to {@link DiffExpressionCallTO#getRNASeqData()}.
      * <li>{@code DIFFCALLTYPE}: corresponds to {@link DiffExpressionCallTO#getDiffCallType()}.
      * <li>{@code MINCONDITIONCOUNT}: corresponds to 
      *                                {@link DiffExpressionCallTO#getMinConditionCount()}.
@@ -144,11 +143,11 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          * Define the different types of differential expression analyses, 
          * based on the experimental factor studied: 
          * <ul>
-         * <li>ANATOMY: analyzes comparing different anatomical structures at a same 
+         * <li>{@code ANATOMY}: analyzes comparing different anatomical structures at a same 
          * (broad) developmental stage. The experimental factor is the anatomy, 
          * these analyzes try to identify in which anatomical structures genes are 
          * differentially expressed. 
-         * <li>DEVELOPMENT: analyzes comparing for a same anatomical structure 
+         * <li>{@code DEVELOPMENT}: analyzes comparing for a same anatomical structure 
          * different developmental stages. The experimental factor is the developmental time, 
          * these analyzes try to identify for a given anatomical structures at which 
          * developmental stages genes are differentially expressed. 

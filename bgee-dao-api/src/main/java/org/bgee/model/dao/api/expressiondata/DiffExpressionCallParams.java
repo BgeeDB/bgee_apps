@@ -21,8 +21,8 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
  * for differential expression calls, so no associated parameters.
  * <p>
  * In general, a {@code DiffCallType} and a {@code Factor} should be provided (see 
- * {@link #setDiffCallType(DiffExpressionCallTO.DiffCallType)} and 
- * {@link #setFactor(DiffExpressionCallTO.Factor)}).
+ * {@link #setDiffCallType(DiffCallType)} and 
+ * {@link #setFactor(Factor)}).
  * Otherwise, It means that different types of call would be used (for instance, 
  * {@code OVEREXPRESSED} and {@code UNDEREXPRESSED}), or comparing different things 
  * (for instance, comparing expression in an organ at different stage, or comparing 

@@ -652,7 +652,7 @@ public abstract class CallParams {
      *                      the {@code DataState}s with those of this {@code CallParams}.
      * @return  {@code true} if this {@code CallParams} and {@code otherParams} 
      *          have the same {@code DataState}s.
-     * @see #equivalent(CallTO.DataState, CallTO.DataState)
+     * @see #equivalent(DataState, DataState)
      */
     private boolean hasSameDataStates(CallParams otherParams) {
         log.entry(otherParams);
@@ -701,7 +701,7 @@ public abstract class CallParams {
      *                      the {@code DataState}s with those of this {@code CallParams}.
      * @return  {@code true} if this {@code CallParams} and {@code otherParams} 
      *          have equivalent or consecutive {@code DataState}s for each data type.
-     * @see #coherent(CallTO.DataState, CallTO.DataState)
+     * @see #coherent(DataState, DataState)
      */
     private boolean hasCoherentDataStates(CallParams otherParams) {
         log.entry(otherParams);
@@ -783,7 +783,7 @@ public abstract class CallParams {
      * @param state2    The second {@code DataState} to be compared
      * @return  {@code true} if {@code state1} and {@code state2} are equivalent 
      *          or consecutive.
-     * @see #equivalen(CallTO.DataState, CallTO.DataState)
+     * @see #equivalent(DataState, DataState)
      */
     private static boolean coherent(DataState state1, DataState state2) {
         log.entry(state1, state2);

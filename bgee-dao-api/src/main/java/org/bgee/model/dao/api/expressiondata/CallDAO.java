@@ -19,15 +19,15 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code CallTO}s 
      * obtained from this {@code CallDAO}.
      * <ul>
-     * <li>{@code ID: corresponds to {@link CallTO#getId()}.
-     * <li>{@code GENEID: corresponds to {@link CallTO#getGeneId()}.
-     * <li>{@code STAGEID: corresponds to {@link CallTO#getDevStageId()}.
-     * <li>{@code ANATENTITYID: corresponds to {@link CallTO#getAnatEntityId()}.
-     * <li>{@code AFFYMETRIXDATA: corresponds to {@link CallTO#getAffymetrixData()}.
-     * <li>{@code ESTDATA: corresponds to {@link CallTO#getESTData()}.
-     * <li>{@code INSITUDATA: corresponds to {@link CallTO#getInSituData()}.
-     * <li>{@code RELAXEDINSITUDATA: corresponds to {@link CallTO#getRelaxedInSituData()}.
-     * <li>{@code RNASEQDATA;: corresponds to {@link CallTO#getRNASeqData()}.
+     * <li>{@code ID}: corresponds to {@link CallTO#getId()}.
+     * <li>{@code GENEID}: corresponds to {@link CallTO#getGeneId()}.
+     * <li>{@code STAGEID}: corresponds to {@link CallTO#getStageId()}.
+     * <li>{@code ANATENTITYID}: corresponds to {@link CallTO#getAnatEntityId()}.
+     * <li>{@code AFFYMETRIXDATA}: corresponds to {@link CallTO#getAffymetrixData()}.
+     * <li>{@code ESTDATA}: corresponds to {@link CallTO#getESTData()}.
+     * <li>{@code INSITUDATA}: corresponds to {@link CallTO#getInSituData()}.
+     * <li>{@code RELAXEDINSITUDATA}: corresponds to {@link CallTO#getRelaxedInSituData()}.
+     * <li>{@code RNASEQDATA}: corresponds to {@link CallTO#getRNASeqData()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -201,7 +201,7 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          *                             this call.
          * @param anatEntityId         A {@code String} that is the ID of the anatomical entity
          *                             associated to this call. 
-         * @param stageId           A {@code String} that is the ID of the developmental stage 
+         * @param stageId              A {@code String} that is the ID of the developmental stage 
          *                             associated to this call. 
          * @param affymetrixData       A {@code DataSate} that is the contribution of Affymetrix  
          *                             data to the generation of this call.
@@ -214,14 +214,14 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
          *                             to the generation of this call.
          */
-        protected CallTO(String id, String geneId, String anatEntityId, String devStageId, 
+        protected CallTO(String id, String geneId, String anatEntityId, String stageId, 
                 DataState affymetrixData, DataState estData, DataState inSituData, 
                 DataState relaxedInSituData, DataState rnaSeqData) {
             super();
             this.id = id;
             this.geneId = geneId;
             this.anatEntityId = anatEntityId;
-            this.stageId = devStageId;
+            this.stageId = stageId;
             this.affymetrixData = affymetrixData;
             this.estData = estData;
             this.inSituData = inSituData;

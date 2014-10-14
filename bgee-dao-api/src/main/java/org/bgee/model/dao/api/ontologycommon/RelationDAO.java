@@ -25,11 +25,11 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code RelationTO}s 
      * obtained from this {@code RelationDAO}.
      * <ul>
-     * <li>{@code RELATIONID: corresponds to {@link RelationTO#getRelationId()()}.
-     * <li>{@code SOURCEID: corresponds to {@link RelationTO#getSourceId()}.
-     * <li>{@code TARGETID: corresponds to {@link RelationTO#getTargetId()()}.
-     * <li>{@code RELATIONTYPE: corresponds to {@link RelationTO#getRelationType()}.
-     * <li>{@code RELATIONSTATUS: corresponds to {@link RelationTO#getRelationStatus()}.
+     * <li>{@code RELATIONID}: corresponds to {@link RelationTO#getRelationId()}.
+     * <li>{@code SOURCEID}: corresponds to {@link RelationTO#getSourceId()}.
+     * <li>{@code TARGETID}: corresponds to {@link RelationTO#getTargetId()}.
+     * <li>{@code RELATIONTYPE}: corresponds to {@link RelationTO#getRelationType()}.
+     * <li>{@code RELATIONSTATUS}: corresponds to {@link RelationTO#getRelationStatus()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -106,13 +106,13 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * A {@code TransferObject} representing a relation between two members of an ontology, 
      * as stored in the Bgee database. 
      * <p>
-     * As relations are oriented, this class defines a parent term (see {@link #gettargetId()} 
-     * and a descent term (see {@link #getsourceId()}). The type of the relation 
+     * As relations are oriented, this class defines a parent term (see {@link #getTargetId()} 
+     * and a descent term (see {@link #getSourceId()}). The type of the relation 
      * can be specified (see {@link #getRelationType()}). The relation can be direct, 
-     * or indirect (see {@link #isDirectRelation()}).
+     * or indirect (see {@link #getRelationStatus()}).
      * <p>
      * Note that this class is one of the few {@code TransferObject}s that are not 
-     * an {@link EntityTO}.
+     * an {@link org.bgee.model.dao.api.EntityTO}.
      * 
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
@@ -178,9 +178,9 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              * {@code String}s, using the method 
              * {@link TransferObject#convertEnumSetToStringSet(Set)}.
              * 
-             * @param enums A {@code Set} of {@code RelationType}s to be converted.
-             * @return      A {@code Set} of {@code String}s that are the representation of 
-             *              the {@code RelationType}s contained in {@code enums}.
+             * @param relationType  A {@code Set} of {@code RelationType}s to be converted.
+             * @return              A {@code Set} of {@code String}s that are the representation 
+             *                      of the {@code RelationType}s contained in {@code enums}.
              */
             public static final Set<String> convertToStringSet(Set<RelationType> relationType) {
                 log.entry(relationType);
@@ -265,9 +265,9 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              * {@code String}s, using the method 
              * {@link TransferObject#convertEnumSetToStringSet(Set)}.
              * 
-             * @param enums A {@code Set} of {@code RelationStatus}s to be converted.
-             * @return      A {@code Set} of {@code String}s that are the representation of 
-             *              the {@code RelationStatus}s contained in {@code enums}.
+             * @param relationStatus A {@code Set} of {@code RelationStatus}s to be converted.
+             * @return               A {@code Set} of {@code String}s that are the representation 
+             *                       of the {@code RelationStatus}s contained in {@code enums}.
              */
             public static final Set<String> convertToStringSet(Set<RelationStatus> relationStatus) {
                 log.entry(relationStatus);
@@ -305,7 +305,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
         }
 
         /**
-         * @return the {@code String} representing the ID of this relation.
+         * A {@code String} representing the ID of this relation.
          */
         private final String id;
         
@@ -348,7 +348,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * {@link #getTargetId()} for more details), and the ID of the descent term 
          * (see {@link #getSourceId()}). The type of the relation (see {@link 
          * #getRelationType()}) is unspecified, and the relation is assumed to be direct 
-         * (see {@link #isDirectRelation()}).
+         * (see {@link #getRelationStatus()}).
          * <p>
          * The relation ID and the relation type are set to {@code null}.
          * 
@@ -361,8 +361,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
         }
         /**
          * Constructor providing the ID of the parent term in the relation (see 
-         * {@link #gettargetId()} for more details), the ID of the descent term 
-         * (see {@link #getsourceId()}), the type of the relation (see {@link 
+         * {@link #getTargetId()} for more details), the ID of the descent term 
+         * (see {@link #getSourceId()}), the type of the relation (see {@link 
          * #getRelationType()}), and defining whether this relation is direct,  
          * indirect, or reflexive (see {@link #getRelationStatus()}).
          * 
@@ -370,7 +370,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * @param sourceId          A {@code String} that is the ID of the descent term.
          * @param targetId          A {@code String} that is the ID of the parent term.
          * @param relType           A {@code RelationType} defining the type of the relation.
-         * @param directRelation    A {@code RelationStatus} defining whether the relation
+         * @param relationStatus    A {@code RelationStatus} defining whether the relation
          *                          is direct, indirect, or reflexive.
          * @see RelationTO#RelationTO(String, String)
          */

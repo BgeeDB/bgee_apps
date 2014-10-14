@@ -22,10 +22,10 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * <ul>
      * <li>{@code ID}: corresponds to {@link GeneTO#getId()}.
      * <li>{@code NAME}: corresponds to {@link GeneTO#getName()}.
-     * <li>{@code DOMAIN}: corresponds to {@link GeneTO#getDomain()}.
+     * <li>{@code DESCRIPTION}: corresponds to {@link GeneTO#getDescription()}.
      * <li>{@code SPECIESID}: corresponds to {@link GeneTO#getSpeciesId()}.
      * <li>{@code GENEBIOTYPEID}: corresponds to {@link GeneTO#getGeneBioTypeId()}.
-     * <li>{@code OMAPARENTNODEID}: corresponds to {@link GeneTO#getOMANodeId()}.
+     * <li>{@code OMAPARENTNODEID}: corresponds to {@link GeneTO#getOMAParentNodeId()}.
      * <li>{@code ENSEMBLGENE}: corresponds to {@link GeneTO#isEnsemblGene()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)

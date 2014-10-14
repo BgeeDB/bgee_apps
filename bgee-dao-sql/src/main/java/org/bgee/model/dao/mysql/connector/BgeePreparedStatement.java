@@ -111,7 +111,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         this.getRealPreparedStatement().setString(parameterIndex, x);
     }
     /**
-     * Delegated to {@link java.sql.PreparedStatement#setString(int, int)}.
+     * Delegated to {@link java.sql.PreparedStatement#setString(int, String)}.
      * 
      * @param parameterIndex    {@code int} that is the index of the parameter to set.
      * @param x                 {@code int} that is the value of the parameter 
@@ -127,8 +127,8 @@ public class BgeePreparedStatement implements AutoCloseable {
      * Delegated to {@link java.sql.PreparedStatement#setNull(int, int)}.
      * 
      * @param parameterIndex    {@code int} that is the index of the parameter to set.
-     * @param sqlType           {@code int} that is the value of the parameter 
-     *                          to set.
+     * @param sqlType           {@code int} that is the SQL type code defined in 
+     *                          {@code java.sql.Types}.
      * @throws SQLException     if parameterIndex does not correspond to a parameter 
      *                          marker in the SQL statement; if a database access error 
      *                          occurs or this method is called on a closed PreparedStatement.
@@ -333,7 +333,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         return executed;
     }
     /**
-     * @param executed  set {@link #execute}.
+     * @param executed  set {@link #executed}.
      */
     protected void setExecuted(boolean executed) {
         this.executed = executed;

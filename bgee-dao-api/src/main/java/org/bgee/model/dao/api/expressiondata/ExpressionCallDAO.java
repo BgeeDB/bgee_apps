@@ -23,14 +23,14 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code ExpressionCallTO}s 
      * obtained from this {@code ExpressionCallDAO}.
      * <ul>
-     * <li>{@code ID: corresponds to {@link CallTO#getId()}.
-     * <li>{@code GENEID: corresponds to {@link CallTO#getGeneId()}.
-     * <li>{@code STAGEID: corresponds to {@link CallTO#getStageId()}.
-     * <li>{@code ANATENTITYID: corresponds to {@link CallTO#getAnatEntityId()}.
-     * <li>{@code AFFYMETRIXDATA: corresponds to {@link CallTO#getAffymetrixData()}.
-     * <li>{@code ESTDATA: corresponds to {@link CallTO#getESTData()}.
-     * <li>{@code INSITUDATA: corresponds to {@link CallTO#getInSituData()}.
-     * <li>{@code RNASEQDATA: corresponds to {@link ExpressionCallTO#getRNASeqData()}.
+     * <li>{@code ID}: corresponds to {@link ExpressionCallTO#getId()}.
+     * <li>{@code GENEID}: corresponds to {@link ExpressionCallTO#getGeneId()}.
+     * <li>{@code STAGEID}: corresponds to {@link ExpressionCallTO#getStageId()}.
+     * <li>{@code ANATENTITYID}: corresponds to {@link ExpressionCallTO#getAnatEntityId()}.
+     * <li>{@code AFFYMETRIXDATA}: corresponds to {@link ExpressionCallTO#getAffymetrixData()}.
+     * <li>{@code ESTDATA}: corresponds to {@link ExpressionCallTO#getESTData()}.
+     * <li>{@code INSITUDATA}: corresponds to {@link ExpressionCallTO#getInSituData()}.
+     * <li>{@code RNASEQDATA}: corresponds to {@link ExpressionCallTO#getRNASeqData()}.
      * <li>{@code INCLUDESUBSTRUCTURES}: corresponds to 
      * {@link ExpressionCallTO#isIncludeSubstructures()}.
      * <li>{@code INCLUDESUBSTAGES}: corresponds to {@link ExpressionCallTO#isIncludeSubStages()}.
@@ -299,9 +299,9 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
 
         /**
          * Returns the {@code boolean} defining whether this expression call was generated 
-         * using data from the developmental stage with the ID {@link CallTO#getDevStageId()} 
-         * alone, or by also considering all its descendants. If {@code true}, all its descendants 
-         * were considered.
+         * using data from the developmental stage with the ID 
+         * {@link ExpressionCallTO#getStageId()} alone, or by also considering all its
+         * descendants. If {@code true}, all its descendants were considered.
          * 
          * @return  If {@code true}, all descendants of the developmental stage 
          *          were considered. 
@@ -408,7 +408,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * and a global expression call ID (see {@link #getGlobalExpressionId()}).
      * <p>
      * Note that this class is one of the few {@code TransferObject}s that are not 
-     * an {@link EntityTO}.
+     * an {@link org.bgee.model.dao.api.EntityTO}.
      * 
      * @author Valentine Rech de Laval
      * @version Bgee 13

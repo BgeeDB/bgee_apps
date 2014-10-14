@@ -22,8 +22,8 @@ public interface TaxonConstraintDAO {
      * {@code Enum} used to define the attributes to populate in the {@code TaxonConstraintTO}s 
      * obtained from this {@code TaxonConstraintDAO}.
      * <ul>
-     * <li>{@code ENTITYID: corresponds to {@link TaxonConstraintTO#getEntityId()}.
-     * <li>{@code SPECIESID: corresponds to {@link TaxonConstraintTO#getSpeciesId()}.
+     * <li>{@code ENTITYID}: corresponds to {@link TaxonConstraintTO#getEntityId()}.
+     * <li>{@code SPECIESID}: corresponds to {@link TaxonConstraintTO#getSpeciesId()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])

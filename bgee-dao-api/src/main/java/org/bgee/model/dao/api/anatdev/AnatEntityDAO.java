@@ -23,12 +23,12 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code AnatEntityTO}s 
      * obtained from this {@code AnatEntityDAO}.
      * <ul>
-     * <li>{@code ID: corresponds to {@link AnatEntityTO#getId()}.
-     * <li>{@code NAME: corresponds to {@link AnatEntityTO#getName()}.
-     * <li>{@code DESCRIPTION: corresponds to {@link AnatEntityTO#getDescription()}.
-     * <li>{@code STARTSTAGEID: corresponds to {@link AnatEntityTO#getStartStageId()}.
-     * <li>{@code ENDSTAGEID: corresponds to {@link AnatEntityTO#getEndStageId()}.
-     * <li>{@code NONINFORMATIVE: corresponds to {@link AnatEntityTO#isNonInformative()}.
+     * <li>{@code ID}: corresponds to {@link AnatEntityTO#getId()}.
+     * <li>{@code NAME}: corresponds to {@link AnatEntityTO#getName()}.
+     * <li>{@code DESCRIPTION}: corresponds to {@link AnatEntityTO#getDescription()}.
+     * <li>{@code STARTSTAGEID}: corresponds to {@link AnatEntityTO#getStartStageId()}.
+     * <li>{@code ENDSTAGEID}: corresponds to {@link AnatEntityTO#getEndStageId()}.
+     * <li>{@code NONINFORMATIVE}: corresponds to {@link AnatEntityTO#isNonInformative()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -39,7 +39,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
     }
 
     /**
-     * Retrieve anatomical entities from data source according to a {@code Set} of 
+     * Retrieves anatomical entities from data source according to a {@code Set} of 
      * {@code String}s that are the IDs of species allowing to filter the entities to use.
      * <p>
      * The anatomical entities are retrieved and returned as a {@code AnatEntityTOResultSet}. It is 
@@ -55,7 +55,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
     public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds) throws DAOException;
     
     /**
-     * Retrieve non-informative anatomical entities without expression call from data source 
+     * Retrieves non-informative anatomical entities without expression call from data source 
      * according to a {@code Set} of {@code String}s that are the IDs of species allowing to filter 
      * the entities to use.
      * <p>
@@ -73,11 +73,11 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
             throws DAOException;
     
     /**
-     * Inserts the provided anatomical entities into the Bgee database, 
+     * Inserts the provided anatomical entities into the data source, 
      * represented as a {@code Collection} of {@code AnatEntityTO}s. 
      * 
      * @param anatEntityTOs A {@code Collection} of {@code AnatEntityTO}s to be inserted into the 
-     *                      database.
+     *                      data source.
      * @return              An {@code int} that is the number of inserted anatomical entities.
      * @throws DAOException If a {@code SQLException} occurred while trying to insert anatomical 
      *                      entities. The {@code SQLException} will be wrapped into a 
@@ -140,7 +140,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          *                          this anatomical entity.
          * @param endStageId        A {@code String} that is the end of developmental stage of this 
          *                          anatomical entity.
-         * @param isNonInformative  A {@code boolean} defining whether this anatomical entity is 
+         * @param nonInformative    A {@code boolean} defining whether this anatomical entity is 
          *                          part of a non-informative subset in the used ontology.
          */
         public AnatEntityTO(String id, String name, String description, 

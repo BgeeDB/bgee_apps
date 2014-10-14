@@ -854,12 +854,12 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewTaxonDAO());
     }
     /**
-     * Get a new {@link org.bgee.model.dao.api.species.TaxonConstraintDAO TaxonConstraintDAO}, 
+     * Get a new {@link org.bgee.model.dao.api.anatdev.TaxonConstraintDAO TaxonConstraintDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code TaxonConstraintDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.species.TaxonConstraintDAO TaxonConstraintDAO
+     * @see org.bgee.model.dao.api.anatdev.TaxonConstraintDAO TaxonConstraintDAO
      */
     public final TaxonConstraintDAO getTaxonConstraintDAO() {
         log.entry();
@@ -893,12 +893,12 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewGeneDAO());
     }
     /**
-     * Get a new {@link org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO 
+     * Get a new {@link org.bgee.model.dao.api.gene.HierarchicalGroupDAO 
      * HierarchicalGroupDAO}, unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code HierarchicalGroupDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO HierarchicalGroupDAO
+     * @see org.bgee.model.dao.api.gene.HierarchicalGroupDAO HierarchicalGroupDAO
      */
     public final HierarchicalGroupDAO getHierarchicalGroupDAO() {
         log.entry();
@@ -1090,7 +1090,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract TaxonDAO getNewTaxonDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.species.TaxonConstraintDAO TaxonConstraintDAO} instance 
+     * {@link org.bgee.model.dao.api.anatdev.TaxonConstraintDAO TaxonConstraintDAO} instance 
      * when this method is called. 
      * 
      * @return  A new {@code TaxonConstraintDAO}
@@ -1114,7 +1114,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract GeneDAO getNewGeneDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.hierarchicalgroup.HierarchicalGroupDAO 
+     * {@link org.bgee.model.dao.api.gene.HierarchicalGroupDAO 
      * HierarchicalGroupDAO} instance when this method is called. 
      * 
      * @return  A new {@code HierarchicalGroupDAO}

@@ -22,11 +22,9 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
      * <ul>
      * <li>{@code ID}: corresponds to {@link HierarchicalGroupTO#getId()}.
      * <li>{@code OMA_GROUP_ID}: corresponds to {@link HierarchicalGroupTO#getOMAGroupId()}.
-     * <li>{@code LEFT_BOUND}:  corresponds to
-     *                             {@link HierarchicalGroupTO#getLeftBound()}.
-     * <li>{@code RIGHT_BOUND}: corresponds to
-     *                             {@link HierarchicalGroupTO#getRightBound()}.
-     * <li>{@code TAXON_ID}: corresponds to {@link HierarchicalGroupTO#gettaxonId()}.
+     * <li>{@code LEFT_BOUND}:  corresponds to {@link HierarchicalGroupTO#getLeftBound()}.
+     * <li>{@code RIGHT_BOUND}: corresponds to {@link HierarchicalGroupTO#getRightBound()}.
+     * <li>{@code TAXON_ID}: corresponds to {@link HierarchicalGroupTO#getTaxonId()}.
      * </ul>
      * 
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
@@ -97,17 +95,15 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
     }
 
     /**
-     * {@code TransferObject} for the class
-     * {@link org.bgee.model.hierarchicalgroup.HierarchicalGroup}.
+     * {@code TransferObject} for the class {@link org.bgee.model.dao.api.gene.HierarchicalGroupDAO}.
      * <p>
-     * For information on this {@code TransferObject} and its fields, see the
-     * corresponding class.
+     * For information on this {@code TransferObject} and its fields, see the corresponding class.
      * 
      * @author Komal Sanjeev
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
      * @version Bgee 13
-     * @see org.bgee.model.hierarchicalgroup.HierarchicalGroup
+     * @see org.bgee.model.dao.api.gene.HierarchicalGroupDAO
      * @since Bgee 13
      */
     public class HierarchicalGroupTO extends NestedSetModelElementTO {

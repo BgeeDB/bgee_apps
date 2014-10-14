@@ -93,7 +93,7 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
          */
         private final Domain domain;
         /**
-         * A {@code Set} of {@String}s that are the alternative IDs of this GO term. 
+         * A {@code Set} of {@code String}s that are the alternative IDs of this GO term. 
          * For instance, {@code GO:0035083} is an alternative ID to {@code GO:0035082}.
          * Note that this {@code Set} is made unmodifiable at instantiation, after having been 
          * populated. 

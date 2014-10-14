@@ -2,7 +2,10 @@ package org.bgee.model.dao.mysql.anatdev;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -47,6 +50,13 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds) throws DAOException {
         log.entry(speciesIds);
 
+        // Ordered species IDs to avoid to execute the same query twice. 
+        List<String> orderedSpeciesIds = null;
+        if (speciesIds != null && speciesIds.size() > 0) {
+            orderedSpeciesIds = new ArrayList<String>(speciesIds);
+            Collections.sort(orderedSpeciesIds);
+        }        
+        
         String tableName = "anatEntity";
 
         String sql = new String(); 
@@ -65,13 +75,13 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         }
         sql += " FROM " + tableName;
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
-        if (speciesIds != null && speciesIds.size() > 0) {
+        if (orderedSpeciesIds != null) {
              sql += " INNER JOIN " + anatEntTaxConstTabName + " ON (" +
                           anatEntTaxConstTabName + ".anatEntityId = " + 
                           tableName + "."+this.attributeToString(AnatEntityDAO.Attribute.ID)+")" +
                     " WHERE " + anatEntTaxConstTabName + ".speciesId IS NULL" +
-                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" +
-                          createStringFromSet(speciesIds, ',', false) + ")";
+                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" + 
+                        generateParameterizedQueryString(orderedSpeciesIds.size()) + ")";
          }
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -79,6 +89,9 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
          BgeePreparedStatement stmt = null;
          try {
              stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+             if (orderedSpeciesIds != null) {
+                 MySQLDAO.parameterizeStatement(stmt, 1, orderedSpeciesIds, Integer.class);
+             }             
              return log.exit(new MySQLAnatEntityTOResultSet(stmt));
          } catch (SQLException e) {
              throw log.throwing(new DAOException(e));
@@ -89,6 +102,13 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     public AnatEntityTOResultSet getNonInformativeAnatEntities(Set<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
+
+        // Ordered species IDs to avoid to execute the same query twice. 
+        List<String> orderedSpeciesIds = null;
+        if (speciesIds != null && speciesIds.size() > 0) {
+            orderedSpeciesIds = new ArrayList<String>(speciesIds);
+            Collections.sort(orderedSpeciesIds);
+        }        
 
         boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
         String tableName = "anatEntity";
@@ -125,7 +145,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         if (isSpeciesFilter) {
             sql += " AND (" + anatEntTaxConstTabName + ".speciesId IS NULL" +
                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" +
-                    createStringFromSet(speciesIds, ',', false) + "))";
+                   generateParameterizedQueryString(orderedSpeciesIds.size()) + "))";
         }
         sql += " ORDER BY " + tableName + ".anatEntityId";
         
@@ -134,6 +154,9 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (orderedSpeciesIds != null) {
+                MySQLDAO.parameterizeStatement(stmt, 1, orderedSpeciesIds, Integer.class);
+            }             
             return log.exit(new MySQLAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -142,11 +165,11 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
 
     /** 
-     * Return a {@code String} that correspond to the given {@code AnatEntityDAO.Attribute}.
+     * Returns a {@code String} that correspond to the given {@code AnatEntityDAO.Attribute}.
      * 
      * @param attribute   An {code AnatEntityDAO.Attribute} that is the attribute to
      *                    convert into a {@code String}.
-     * @return            A {@code String} that correspond to the given 
+     * @return            A {@code String} that corresponds to the given 
      *                    {@code AnatEntityDAO.Attribute}
      */
     private String attributeToString(AnatEntityDAO.Attribute attribute) {

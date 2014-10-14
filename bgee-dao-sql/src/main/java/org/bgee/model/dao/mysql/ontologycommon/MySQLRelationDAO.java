@@ -2,7 +2,10 @@ package org.bgee.model.dao.mysql.ontologycommon;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -47,7 +50,14 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     @Override
     public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
-        log.entry(speciesIds, relationTypes);
+        log.entry(speciesIds, relationTypes, relationStatus);
+
+        // Ordered species IDs to avoid to execute the same query twice. 
+        List<String> orderedSpeciesIds = null;
+        if (speciesIds != null && speciesIds.size() > 0) {
+            orderedSpeciesIds = new ArrayList<String>(speciesIds);
+            Collections.sort(orderedSpeciesIds);
+        }        
 
         String tableName = "anatEntityRelation";
         
@@ -82,9 +92,9 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         }
         
         if (isSpeciesFilter) {
-            sql += "(anatEntityRelationTaxonConstraint.speciesId IS NULL"
-                  + " OR anatEntityRelationTaxonConstraint.speciesId IN ("
-                  + createStringFromSet(speciesIds, ',', false) + "))";
+            sql += "(anatEntityRelationTaxonConstraint.speciesId IS NULL" +
+                   " OR anatEntityRelationTaxonConstraint.speciesId IN (" +
+                   MySQLDAO.generateParameterizedQueryString(orderedSpeciesIds.size()) + "))";
         }
         
         if (isSpeciesFilter && (isRelationTypeFilter || isRelationStatusFilter)) {
@@ -93,8 +103,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         
         if (isRelationTypeFilter) {
             sql += " relationType IN (" + 
-                    createStringFromSet(RelationType.convertToStringSet(relationTypes), ',', true) + 
-                    ")";
+                    MySQLDAO.generateParameterizedQueryString(relationTypes.size()) + ")";
         }
         
         if (isRelationTypeFilter && isRelationStatusFilter) {
@@ -103,8 +112,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
 
         if (isRelationStatusFilter) {
             sql += " relationStatus IN (" + 
-                    createStringFromSet(RelationStatus.convertToStringSet(relationStatus), ',', true) + 
-                    ")";
+                    MySQLDAO.generateParameterizedQueryString(relationStatus.size()) + ")";
         }
         sql += " ORDER BY " + tableName + "." + 
                 this.attributeAnatEntityRelationToString(RelationDAO.Attribute.SOURCEID) + 
@@ -116,6 +124,25 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
          BgeePreparedStatement stmt = null;
          try {
              stmt = this.getManager().getConnection().prepareStatement(sql);
+             int startIndex = 1;
+             if (isSpeciesFilter) {
+                 MySQLDAO.parameterizeStatement(stmt, startIndex, orderedSpeciesIds, Integer.class);
+                 startIndex += orderedSpeciesIds.size();
+             }
+             if (isRelationTypeFilter) {
+                 List<String> orderedTypes = 
+                         new ArrayList<String>(RelationType.convertToStringSet(relationTypes));
+                 Collections.sort(orderedTypes);
+                 MySQLDAO.parameterizeStatement(stmt, startIndex, orderedTypes, String.class);
+                 startIndex += orderedTypes.size();
+             }
+             if (isRelationStatusFilter) {
+                 List<String> orderedStatus = 
+                         new ArrayList<String>(RelationStatus.convertToStringSet(relationStatus));
+                 Collections.sort(orderedStatus);
+                 MySQLDAO.parameterizeStatement(stmt, startIndex, orderedStatus, String.class);
+                 startIndex += orderedStatus.size();
+             }
              return log.exit(new MySQLRelationTOResultSet(stmt));
          } catch (SQLException e) {
              throw log.throwing(new DAOException(e));

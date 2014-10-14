@@ -4,6 +4,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -75,9 +77,16 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @throws DAOException             If a {@code SQLException} occurred while trying to get 
      *                                  no-expression calls.   
      */
-    public NoExpressionCallTOResultSet getNoExpressionCalls(Set<String> speciesIds,
+    private NoExpressionCallTOResultSet getNoExpressionCalls(Set<String> speciesIds,
             boolean isIncludeParentStructures) throws DAOException {
         log.entry(speciesIds, isIncludeParentStructures);
+        
+        // Ordered species IDs to avoid to execute the same query twice. 
+        List<String> orderedSpeciesIds = null;
+        if (speciesIds != null && speciesIds.size() > 0) {
+            orderedSpeciesIds = new ArrayList<String>(speciesIds);
+            Collections.sort(orderedSpeciesIds);
+        }        
 
         Collection<NoExpressionCallDAO.Attribute> attributes = this.getAttributes();        
         String tableName = "noExpression";
@@ -100,12 +109,12 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
         sql += " FROM " + tableName;
         String geneTabName = "gene";
-         if (speciesIds != null && speciesIds.size() > 0) {
+         if (orderedSpeciesIds != null) {
              sql += " INNER JOIN " + geneTabName + " ON (gene.geneId = " + 
                              tableName + "." + this.attributeToString(
                                      NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) +")" +
                     " WHERE " + geneTabName + ".speciesId IN (" +
-                             createStringFromSet(speciesIds, ',', false) + ")" +
+                            MySQLDAO.generateParameterizedQueryString(orderedSpeciesIds.size()) + ")" +
                     " ORDER BY " + geneTabName + ".speciesId, " + 
                         tableName + "." + this.attributeToString(
                             NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) + ", " +
@@ -128,6 +137,9 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            if (orderedSpeciesIds != null) {
+                MySQLDAO.parameterizeStatement(stmt, 1, orderedSpeciesIds, Integer.class);
+            }             
             return log.exit(new MySQLNoExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

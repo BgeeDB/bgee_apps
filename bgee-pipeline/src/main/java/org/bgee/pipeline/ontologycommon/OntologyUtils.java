@@ -1421,6 +1421,41 @@ public class OntologyUtils {
     }
     
     /**
+     * Retrieve all {@code OWLClass} members of the subgraph from roots with their ID 
+     * in {@code subgraphRootIds}. This method will retrieve the {@code OWLClass}es 
+     * with their OBO-like ID in {@code subgraphRootIds}, as well as 
+     * all their {@code OWLClass} descendants and ancestors.
+     * 
+     * @param subgraphRootIds   A {@code Collection} of {@code String}s that are the OBO-like IDs 
+     *                          of {@code OWLClass}es for which we want to retrieve members 
+     *                          of their subgraph.
+     * @return      A {@code Set} of {@code OWLClass}es that have their OBO-like ID 
+     *              in {@code subgraphRootIds}, or that are their ancestors or descendants.
+     *              
+     */
+    public Set<OWLClass> getSubgraphMembers(Collection<String> subgraphRootIds) {
+        log.entry(subgraphRootIds);
+        
+        Set<OWLClass> subgraphMembers = new HashSet<OWLClass>();
+        if (subgraphRootIds != null) {
+            for (String subgraphRootId: new HashSet<String>(subgraphRootIds)) {
+                OWLClass subgraphRoot = this.getWrapper().getOWLClassByIdentifier(
+                        subgraphRootId);
+                
+                if (subgraphRoot != null) {
+                    subgraphMembers.add(subgraphRoot);
+                    subgraphMembers.addAll(this.getWrapper().getOWLClassDescendantsWithGCI(
+                                    subgraphRoot));
+                    subgraphMembers.addAll(this.getWrapper().getOWLClassAncestorsWithGCI(
+                                    subgraphRoot));
+                }
+            }
+        }
+        
+        return log.exit(subgraphMembers);
+    }
+    
+    /**
      * Get "part_of" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
      * when needed. See {@link #partOfRels}.
      * 

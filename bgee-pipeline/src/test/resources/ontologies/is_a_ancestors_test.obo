@@ -16,6 +16,17 @@ is_a: FOO:0002
 id: FOO:0004
 relationship: part_of FOO:0002
 
+[Term]
+id: FOO:0005
+relationship: overlaps FOO:0003
+
+[Term]
+id: FOO:0006
+
+[Term]
+id: FOO:0007
+is_a: FOO:0006
+
 [Typedef]
 id: overlaps
 name: overlaps

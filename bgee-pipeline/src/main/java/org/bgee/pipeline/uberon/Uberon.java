@@ -433,27 +433,26 @@ public class Uberon extends UberonCommon {
         }
         
         //in order to identify problems related to cycles: after relation reduction, 
-        //terms in cycles can be seen as having no parents, thus being removed 
-        //when filtering graph. We will spot them by identifying "newly" appearing roots. 
-        //This needs to be done after the previous custom modifications, as they could 
-        //result in new roots willingly added.
-        Set<OWLClass> originalRoots = manipulator.getOwlGraphWrapper().getOntologyRoots();
-        log.trace("Original roots: {}", originalRoots);
+        //terms in cycles can be "disconnected" from subgraphs to keep, without being seen 
+        //as root of the ontology, because of the cycle, thus being removed 
+        //when filtering graph. We try to detect such terms
+        Set<OWLClass> originalClassesToKeep = this.getOntologyUtils().getSubgraphMembers(
+                this.getToFilterSubgraphRootIds());
         
         manipulator.reduceRelations();
         manipulator.reducePartOfIsARelations();
         
-        //We find "newly" appearing roots
-        Set<OWLClass> afterReductionRoots = manipulator.getOwlGraphWrapper().getOntologyRoots();
-        log.trace("Roots after relation reduction: {}", afterReductionRoots);
-        afterReductionRoots.removeAll(originalRoots);
-        if (!afterReductionRoots.isEmpty()) {
+        //Search for "disconnected" terms.
+        Set<OWLClass> afterReductionClassesToKeep = this.getOntologyUtils().getSubgraphMembers(
+                this.getToFilterSubgraphRootIds());
+        originalClassesToKeep.removeAll(afterReductionClassesToKeep);
+        if (!originalClassesToKeep.isEmpty()) {
+            this.getOntologyUtils().retainParentClasses(originalClassesToKeep, null);
             throw new IllegalStateException(
-                    "Modifications of the ontology resulted in terms losing all their " +
-                    "outgoing relations, thus being seen as root of the ontology. " +
-                    "Such subgraphs will be erroneously removed by subgraph filtering. " +
-                    "This is often due to cycles in the ontology. Newly appearing roots: " +  
-                    afterReductionRoots);
+                    "Modifications of the ontology resulted in terms being disconnected " +
+                    "from subgraphs to be kept. Such terms will be erroneously removed " +
+                    "by subgraph filtering. This is often due to cycles between them. " +
+                    "Erroneously disconnected terms: " + originalClassesToKeep);
         }
         
         if (this.getRelIds() != null && !this.getRelIds().isEmpty()) {

@@ -969,4 +969,38 @@ public class OntologyUtilsTest extends TestAncestor {
         assertEquals("Incorrect desendants through is_a returned", expectedDescendants, 
                 utils.getDescendantsThroughIsA(cls1));
     }
+    
+    /**
+     * Test the method {@link OntologyUtils#getSubgraphMembers(Set)}.
+     */
+    @Test
+    public void shouldGetSubgraphMembers() throws OBOFormatParserException, 
+    OWLOntologyCreationException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/is_a_ancestors_test.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+        
+        Set<OWLClass> expectedMembers = new HashSet<OWLClass>(
+                Arrays.asList(cls1, cls2, cls3, cls4, cls5));
+        assertEquals("Incorrect subgraph members retrieved", expectedMembers, 
+                utils.getSubgraphMembers(new HashSet<String>(Arrays.asList("FOO:0002"))));
+
+        expectedMembers = new HashSet<OWLClass>(
+                Arrays.asList(cls1, cls2, cls3, cls5));
+        assertEquals("Incorrect subgraph members retrieved", expectedMembers, 
+                utils.getSubgraphMembers(new HashSet<String>(Arrays.asList("FOO:0003"))));
+        
+        expectedMembers = new HashSet<OWLClass>(
+                Arrays.asList(cls1, cls2, cls3, cls4, cls5));
+        assertEquals("Incorrect subgraph members retrieved", expectedMembers, 
+                utils.getSubgraphMembers(new HashSet<String>(
+                        Arrays.asList("FOO:0003", "FOO:0004"))));
+    }
 }

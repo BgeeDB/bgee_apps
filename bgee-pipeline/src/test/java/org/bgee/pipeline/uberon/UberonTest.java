@@ -233,6 +233,8 @@ public class UberonTest extends TestAncestor {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.owl");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         
+        //need to understand where the indirect transformation_of relation between 
+        //UBERON:0000010 and UBERON:0016880 comes from
         for (OWLGraphEdge edge: wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(
                 wrapper.getOWLClassByIdentifier("UBERON:0000010"))) {
             if (edge.getTarget().equals(wrapper.getOWLClassByIdentifier("UBERON:0016880"))) {

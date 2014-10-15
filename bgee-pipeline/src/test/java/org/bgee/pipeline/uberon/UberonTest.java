@@ -28,6 +28,9 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
+import owltools.graph.OWLGraphEdge;
+import owltools.graph.OWLGraphWrapper;
+
 /**
  * Unit tests for {@link Uberon}.
  * 
@@ -222,5 +225,19 @@ public class UberonTest extends TestAncestor {
             }
         }
         assertEquals("Incorrect number of lines in TSV output", 12, i);
+    }
+
+    
+    //@Test
+    public void test() throws OBOFormatParserException, OWLOntologyCreationException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.owl");
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        
+        for (OWLGraphEdge edge: wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(
+                wrapper.getOWLClassByIdentifier("UBERON:0000010"))) {
+            if (edge.getTarget().equals(wrapper.getOWLClassByIdentifier("UBERON:0016880"))) {
+                log.info(edge);
+            }
+        }
     }
 }

@@ -36,6 +36,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.constraint.NotNull;
@@ -486,6 +487,20 @@ public class Uberon extends UberonCommon {
         }
 
         this.getOntologyUtils().removeOBOProblematicAxioms();
+        
+        if (log.isWarnEnabled()) {
+            String msg = "";
+            for (OWLClass root: manipulator.getOwlGraphWrapper().getOntologyRoots(
+                    this.getOntologyUtils().getGenericPartOfProps())) {
+                msg += System.lineSeparator() + 
+                        manipulator.getOwlGraphWrapper().getIdentifier(root) + 
+                        " \"" + manipulator.getOwlGraphWrapper().getLabel(root) + "\"";
+            }
+            log.warn("For yor information, roots of the generated ontology " +
+            		"by is_a and part_of relations: {} {}", msg, 
+            		System.lineSeparator() + "(Logged with a WARN level because this information " +
+            				"needs to be examined)");
+        }
         
         log.exit();
     }

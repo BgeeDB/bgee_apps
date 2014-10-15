@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.anatdev;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -45,6 +46,20 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
     }
 
     /**
+     * Retrieves stages from data source according to a {@code Set} of {@code String}s
+     * that are the IDs of species allowing to filter the entities to use.
+     * <p>
+     * The stages are retrieved and returned as a {@code StageTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      allowing to filter the stages to use.
+     * @return              An {@code StageTOResultSet} containing all stages from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public StageTOResultSet getStages(Set<String> speciesIds) throws DAOException;
+    
+    /**
      * Inserts the provided stages into the Bgee database, represented as 
      * a {@code Collection} of {@code StageTO}s.
      * 
@@ -56,7 +71,6 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      *                          do not expose these kind of implementation details).
      */
     public int insertStages(Collection<StageTO> stages) throws DAOException;
-    
 
     /**
      * {@code DAOResultSet} specifics to {@code StageTO}s

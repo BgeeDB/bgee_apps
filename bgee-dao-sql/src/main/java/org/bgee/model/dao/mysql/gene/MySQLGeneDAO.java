@@ -2,8 +2,12 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,6 +80,53 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
     }
     
+    @Override
+    public GeneTOResultSet getGenes(Set<String> speciesIds) throws DAOException {
+        log.entry();
+        
+        // Ordered species IDs to avoid to execute the same query twice. 
+        List<String> orderedSpeciesIds = null;
+        if (speciesIds != null && speciesIds.size() > 0) {
+            orderedSpeciesIds = new ArrayList<String>(speciesIds);
+            Collections.sort(orderedSpeciesIds);
+        }        
+
+        Collection<GeneDAO.Attribute> attributes = this.getAttributes();
+        //Construct sql query
+        String sql = new String(); 
+        if (attributes == null || attributes.size() == 0) {
+            sql += "SELECT *";
+        } else {
+            for (GeneDAO.Attribute attribute: attributes) {
+                if (sql.length() == 0) {
+                    sql += "SELECT DISTINCT ";
+                } else {
+                    sql += ", ";
+                }
+                sql += this.attributeToString(attribute);
+            }
+        }
+        sql += " FROM gene";
+        
+        if (orderedSpeciesIds != null) {
+            sql += " WHERE gene.speciesId IN (" + 
+                       generateParameterizedQueryString(orderedSpeciesIds.size()) + ")";
+        }
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            if (orderedSpeciesIds != null) {
+                MySQLDAO.parameterizeStatement(stmt, 1, orderedSpeciesIds, Integer.class);
+            }             
+            return log.exit(new MySQLGeneTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
     @Override
     public int updateGenes(Collection<GeneTO> genes, 
             Collection<GeneDAO.Attribute> attributesToUpdate) throws DAOException {

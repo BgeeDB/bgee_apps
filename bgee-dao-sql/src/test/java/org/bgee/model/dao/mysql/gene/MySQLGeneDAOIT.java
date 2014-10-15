@@ -6,7 +6,9 @@ import static org.junit.Assert.assertTrue;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,6 +80,45 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 new GeneTO("ID1", null, null, 0, 0, 0, false), 
                 new GeneTO("ID2", null, null, 0, 0, 0, false), 
                 new GeneTO("ID3", null, null, 0, 0, 0, false));
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+
+        log.exit();
+    }
+
+    /**
+     * Test the select method {@link MySQLGeneDAO#getGenes()}.
+     */
+    @Test
+    public void shouldGetGenes() throws SQLException {
+        log.entry();
+        
+        this.useSelectDB();
+
+        MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
+
+        // Without specified species IDs
+        dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
+        List<GeneTO> methGenes = dao.getGenes(null).getAllTOs();
+        List<GeneTO> expectedGenes = Arrays.asList(
+                new GeneTO("ID1", null, null, 0, 0, 0, false), 
+                new GeneTO("ID2", null, null, 0, 0, 0, false), 
+                new GeneTO("ID3", null, null, 0, 0, 0, false));
+        //Compare
+        assertTrue("GeneTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
+
+        // With specified species IDs
+        Set<String> speciesIds = new HashSet<String>();
+        speciesIds.addAll(Arrays.asList("11", "31", "44"));
+        dao.clearAttributes();
+        methGenes = dao.getGenes(speciesIds).getAllTOs();
+
+        // Generate manually expected result
+        expectedGenes = Arrays.asList(
+                new GeneTO("ID1", "genN1", "genDesc1", 11, 12, 2, true), 
+                new GeneTO("ID3", "genN3", "genDesc3", 31, 0, 3, false)); 
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));

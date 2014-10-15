@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.gene;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -47,6 +48,20 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      */
     public GeneTOResultSet getAllGenes() throws DAOException;
     
+    /**
+     * Retrieves genes from data source according to a {@code Set} of {@code String}s
+     * that are the IDs of species allowing to filter the genes to use.
+     * <p>
+     * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      allowing to filter the genes to use.
+     * @return              An {@code GeneTOResultSet} containing all genes from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public GeneTOResultSet getGenes(Set<String> speciesIds) throws DAOException;
+
     /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 
      * {@code Collection} of {@code GeneTO}s

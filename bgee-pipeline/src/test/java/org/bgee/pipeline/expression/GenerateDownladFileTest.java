@@ -48,13 +48,17 @@ public class GenerateDownladFileTest  extends TestAncestor {
      */
     @Test
     public void shouldWriteDownloadFiles() throws IOException {
-        log.entry();
 
+        // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
+        // This will allow to verify that the correct values were tried to be inserted 
+        // into the database.
+        MockDAOManager mockManager = new MockDAOManager();
+
+        GenerateDownladFile generate = new GenerateDownladFile(mockManager);
+        
         String outputSimpleFile = testFolder.newFile("simpleFile.tsv").getPath();
         String outputCompleteFile = testFolder.newFile("completeFile.tsv").getPath();
 
-        GenerateDownladFile generate = new GenerateDownladFile();
-        
         // Generate input data
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
         //  1/ no data - no data - no data - no data >> no data
@@ -125,11 +129,12 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 GenerateDownladFile.ExpressionData.HIGHEXPRESSION));
 
         // Generate TSV files
-        generate.writeDownloadFiles(list, outputSimpleFile, outputCompleteFile);
+        generate.createDownloadFiles(list, outputSimpleFile, true, false);
+        generate.createDownloadFiles(list, outputCompleteFile, false, false);
 
         //now read the created TSV files
-        assertDownloadFile(outputSimpleFile, true);
-        assertDownloadFile(outputCompleteFile, false);
+        assertDownloadExprFile(outputSimpleFile, true);
+        assertDownloadExprFile(outputCompleteFile, false);
 
         log.exit();
     }
@@ -148,13 +153,13 @@ public class GenerateDownladFileTest  extends TestAncestor {
         data.put(GenerateDownladFile.STAGE_NAME_COLUMN_NAME, stageName);
         data.put(GenerateDownladFile.ANATENTITY_ID_COLUMN_NAME, anatEntityId);
         data.put(GenerateDownladFile.ANATENTITY_NAME_COLUMN_NAME, anatEntityName);
-        data.put(GenerateDownladFile.AFFYMETRIXDATA_NAME_COLUMN_NAME, 
+        data.put(GenerateDownladFile.AFFYMETRIXDATA_COLUMN_NAME, 
                                                         affymetrixData.getStringRepresentation());
-        data.put(GenerateDownladFile.ESTDATA_NAME_COLUMN_NAME, 
+        data.put(GenerateDownladFile.ESTDATA_COLUMN_NAME, 
                                                         estData.getStringRepresentation());
-        data.put(GenerateDownladFile.INSITUDATA_NAME_COLUMN_NAME, 
+        data.put(GenerateDownladFile.INSITUDATA_COLUMN_NAME, 
                                                         inSituData.getStringRepresentation());
-        data.put(GenerateDownladFile.RNASEQDATA_NAME_COLUMN_NAME,
+        data.put(GenerateDownladFile.RNASEQDATA_COLUMN_NAME,
                                                         rnaSeqData.getStringRepresentation());
 
         return log.exit(data);
@@ -170,7 +175,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
      * @param isSimplifiedFile  A {@code boolean} defining whether the file is a simple file.
      * @throws IOException      If the file could not be used.
      */
-    private void assertDownloadFile(String file, boolean isSiplifiedFile) throws IOException {
+    private void assertDownloadExprFile(String file, boolean isSiplifiedFile) throws IOException {
         log.entry(file, isSiplifiedFile);
 
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
@@ -178,9 +183,9 @@ public class GenerateDownladFileTest  extends TestAncestor {
             log.trace("Headers: {}", (Object[]) headers);
             CellProcessor[] processors;
             if (isSiplifiedFile) {
-                processors = GenerateDownladFile.generateCellProcessor(true);
+                processors = GenerateDownladFile.generateCellProcessor(true, false);
             } else {
-                processors = GenerateDownladFile.generateCellProcessor(false);
+                processors = GenerateDownladFile.generateCellProcessor(false, false);
             }
             Map<String, Object> rowMap;
             int i = 0;
@@ -381,8 +386,6 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 }
             }
             assertEquals("Incorrect number of lines in TSV output", 11, i);
-
-            log.exit();
         }
     }
 
@@ -427,10 +430,10 @@ public class GenerateDownladFileTest  extends TestAncestor {
      * @param expRNAseqData     An {@code ExpressionData} that is the expected RNA-seq data.
      * @param rnaSeqData        A {@code String} that is the actual RNA-seq data.
      */
-    private void assertCompleteColumnRowEqual(String geneId, ExpressionData expAffyData, String affyData,
-            ExpressionData expESTData, String estData, 
-            ExpressionData expInSituData, String inSituData,
-            ExpressionData expRNAseqData, String rnaSeqData) {
+    private void assertCompleteColumnRowEqual(String geneId, ExpressionData expAffyData, 
+            String affyData, ExpressionData expESTData, String estData, ExpressionData expInSituData,
+            String inSituData, ExpressionData expRNAseqData, String rnaSeqData) {
+        
         assertEquals("Incorrect Affymetrix data for " + geneId, 
                 expAffyData.getStringRepresentation(), affyData);
         assertEquals("Incorrect EST data for " + geneId, 

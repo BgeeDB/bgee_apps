@@ -291,10 +291,11 @@ public class OntologyUtils {
      */
     public static OWLOntology loadOntology(String ontFile) throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
+        log.entry(ontFile);
         ParserWrapper parserWrapper = new ParserWrapper();
         parserWrapper.setCheckOboDoc(false);
         try {
-            return parserWrapper.parse(ontFile);
+            return log.exit(parserWrapper.parse(ontFile));
         } catch(UnloadableImportException e) {
             //we sometimes have the problem that an import ontology cannot be accessed 
             //because of network errors. In that case, we retry 3 times before throwing 
@@ -330,7 +331,8 @@ public class OntologyUtils {
      *                  the taxonomy ontology.
      */
     public static String getTaxOntologyId(int ncbiId) {
-        return TAX_ONTOLOGY_ID_PREFIX + ncbiId;
+        log.entry(ncbiId);
+        return log.exit(TAX_ONTOLOGY_ID_PREFIX + ncbiId);
     }
     /**
      * Transform the ID of a taxonomy term in the generated ontology (which are strings 
@@ -343,7 +345,9 @@ public class OntologyUtils {
      *                          on the NCBI website. 
      */
     public static int getTaxNcbiId(String ontologyTermId) {
-        return Integer.parseInt(ontologyTermId.substring(TAX_ONTOLOGY_ID_PREFIX.length()));
+        log.entry(ontologyTermId);
+        return log.exit(Integer.parseInt(
+                ontologyTermId.substring(TAX_ONTOLOGY_ID_PREFIX.length())));
     }
     /**
      * Convert {@code taxNcbiIds} containing NCBI IDs (which are integers, 
@@ -399,6 +403,11 @@ public class OntologyUtils {
      * The {@code OWLOntology} which operations should be performed on.
      */
     private OWLOntology ontology;
+    /**
+     * A {@code String} that is the path to the ontology wrapped by this object, 
+     * if loaded from a file.
+     */
+    private String pathToOntology;
     /**
      * A {@code Map} storing the XRef mappings lazy loaded by the method 
      * {@link #getXRefMappings()}. See this method for details.
@@ -474,6 +483,7 @@ public class OntologyUtils {
     public OntologyUtils(OWLOntology ontology) { 
         this.ontology = ontology;
         this.wrapper = null;
+        this.pathToOntology = null;
         this.xRefMappings = null;
         this.partOfRels = null;
         this.precededByRels = null;
@@ -505,6 +515,7 @@ public class OntologyUtils {
     public OntologyUtils(String pathToOntology) throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException {
         this(OntologyUtils.loadOntology(pathToOntology));
+        this.pathToOntology = pathToOntology;
     }
     
     /**
@@ -1953,6 +1964,14 @@ public class OntologyUtils {
             this.manipulator = new OWLGraphManipulator(this.getWrapper());
         }
         return this.manipulator;
+    }
+    
+    /**
+     * @return  A {@code String} that is the path to the ontology wrapped by this object, 
+     *          if loaded from a file.
+     */
+    public String getPathToOntology() {
+        return this.pathToOntology;
     }
     
     @Override

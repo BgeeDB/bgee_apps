@@ -204,6 +204,7 @@ abstract class UberonCommon {
      */
     public UberonCommon(OntologyUtils ontUtils) {
         this.ontUtils = ontUtils;
+        this.setPathToUberonOnt(ontUtils.getPathToOntology());
         this.classesRemoved = new HashMap<String, String>();
         this.setTaxonConstraints(null);
     }

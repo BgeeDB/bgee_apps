@@ -77,11 +77,11 @@ public class InsertGlobalCallsTest extends TestAncestor {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void shouldInsertGlobalExpression() throws IllegalStateException, SQLException {
-        log.entry();
         
         // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
         // This will allow to verify that the correct values were tried to be inserted 
         // into the database.
+       
         MockDAOManager mockManager = new MockDAOManager();
 
         MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
@@ -320,8 +320,6 @@ public class InsertGlobalCallsTest extends TestAncestor {
         
         expectedIds = new HashSet<String>(Arrays.asList("15", "16", "17", "18", "19", "20"));
         assertEquals("Incorrect GlobalNoExpressionTO IDs", expectedIds, ids);
-
-        log.exit();
     }
     
     /**
@@ -330,7 +328,6 @@ public class InsertGlobalCallsTest extends TestAncestor {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void shouldInsertGlobalNoExpression() throws IllegalStateException, SQLException {
-        log.entry();
         
         // Species ID to use
         List<String> speciesId = Arrays.asList("11");
@@ -553,8 +550,6 @@ public class InsertGlobalCallsTest extends TestAncestor {
         Set<String> expectedIds = new HashSet<String>(
                 Arrays.asList("11", "12", "13", "14", "15", "16", "17", "18", "19"));
         assertEquals("Incorrect GlobalNoExpressionTO IDs", expectedIds, ids);
-        
-        log.exit();
     }
     
     /**
@@ -564,8 +559,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
     @Test
     public void shouldInsertGlobalNoExpressionWithUnknownSpecies()
             throws IllegalStateException, SQLException {
-        log.entry();
-
+        
         MockDAOManager mockManager = new MockDAOManager();
 
         MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
@@ -580,8 +574,6 @@ public class InsertGlobalCallsTest extends TestAncestor {
         verify(mockSpeciesTORs).close();
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO).setAttributes(SpeciesDAO.Attribute.ID);
-
-        log.exit();
     }
     
     /**
@@ -591,8 +583,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
     @Test
     public void shouldInsertGlobalExpressionWithUnknownSpecies()
             throws IllegalStateException, SQLException {
-        log.entry();
-
+        
         MockDAOManager mockManager = new MockDAOManager();
 
         MySQLSpeciesTOResultSet mockSpeciesTORs = this.mockGetAllSpecies(mockManager);
@@ -607,11 +598,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         verify(mockSpeciesTORs).close();
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockSpeciesDAO).setAttributes(SpeciesDAO.Attribute.ID);
-
-        log.exit();
     }
-
-    
 
     /**
      * Define a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies.
@@ -619,7 +606,6 @@ public class InsertGlobalCallsTest extends TestAncestor {
      * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
      */
     private MySQLSpeciesTOResultSet mockGetAllSpecies(MockDAOManager mockManager) {
-        log.entry(mockManager);
         
         // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
@@ -629,7 +615,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
         
-        return log.exit(mockSpeciesTORs);
+        return mockSpeciesTORs;
     }
 
     /**
@@ -646,12 +632,11 @@ public class InsertGlobalCallsTest extends TestAncestor {
         
         @Override
         public boolean matches(Object actual) {
-            log.entry(actual);
             if (actual == null && expected == null || 
                     actual != null && ((CallParams) actual).getSpeciesIds().equals(expected.getSpeciesIds())) {
-                return log.exit(true);
+                return true;
             }
-            return log.exit(false);
+            return false;
         }
     }
     

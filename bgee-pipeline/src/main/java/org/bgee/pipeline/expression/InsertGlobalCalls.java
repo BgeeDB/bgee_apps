@@ -29,9 +29,8 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
-import org.bgee.model.dao.api.species.SpeciesDAO;
-import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.MySQLDAOUser;
 
@@ -60,6 +59,16 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      */
     private int globalNoExprId;
     
+    /**
+     * A {@code String} that is the argument class for expression propagation.
+     */
+    public final static String EXPRESSION_ARG = "expression";
+
+    /**
+     * A {@code String} that is the argument class for no-expression propagation.
+     */
+    public final static String NOEXPRESSION_ARG = "no-expression";
+
     /**
      * Default constructor. 
      */
@@ -109,8 +118,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     " provided."));
         }
         
-        boolean isNoExpression = args[0].equalsIgnoreCase("no-expression");
-        if (!isNoExpression && !args[0].equalsIgnoreCase("expression")) {
+        boolean isNoExpression = args[0].equalsIgnoreCase(NOEXPRESSION_ARG);
+        if (!isNoExpression && !args[0].equalsIgnoreCase(EXPRESSION_ARG)) {
             throw log.throwing(new IllegalArgumentException("Unrecognized argument: " + 
                     args[0]));
         }
@@ -151,7 +160,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
             //get all species in Bgee even if some species IDs were provided, 
             //to check user input.
-            List<String> speciesIdsFromDb = this.loadSpeciesIdsFromDb();
+            List<String> speciesIdsFromDb = BgeeDBUtils.loadSpeciesIdsFromDb(this); 
             //Create a new List to avoid modifying user input
             List<String> speciesIdsToUse = null;
             if (speciesIds == null || speciesIds.size() == 0) {
@@ -272,34 +281,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     }
 
     /**
-     * Retrieves all species IDs present into the Bgee database.
-     * 
-     * @return A {@code Set} of {@code String}s containing species IDs of the Bgee database.
-     * @throws DAOException If an error occurred while getting the data from the Bgee database.
-     */
-    private List<String> loadSpeciesIdsFromDb() throws DAOException {
-        log.entry();
-        
-        log.info("Start retrieving species IDs...");
-
-        SpeciesDAO dao = this.getSpeciesDAO();
-        dao.setAttributes(SpeciesDAO.Attribute.ID);
-        
-        SpeciesTOResultSet rsSpecies = dao.getAllSpecies();
-        List<String> speciesIdsInBgee = new ArrayList<String>();
-        while (rsSpecies.next()) {
-            speciesIdsInBgee.add(rsSpecies.getTO().getId());
-        }
-        //no need for a try with resource or a finally, the insert method will close everything 
-        //at the end in any case.
-        rsSpecies.close();
-        
-        log.info("Done retrieving species IDs, {} species found", speciesIdsInBgee.size());
-    
-        return log.exit(speciesIdsInBgee);        
-    }
-
-    /**
      * Retrieves all is_a/part_of relations between anatomical entities for given species, 
      * present into the Bgee data source, source and target fields only. If {@code speciesIds} 
      * is {@code null} or empty, relations for all species will be retrieved.
@@ -339,12 +320,12 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * Retrieves all expression calls for given species, present into the Bgee database.
      * 
      * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
-     *                          allowing to filter the anatomical entities to use.
+     *                          allowing to filter the expression calls to use.
      * @return                  A {@code List} of {@code ExpressionCallTO}s containing all 
      *                          expression calls of the given species.
      * @throws DAOException     If an error occurred while getting the data from the Bgee database.
      */
-    private List<ExpressionCallTO> loadExpressionCallFromDb(Set<String> speciesIds) 
+    public List<ExpressionCallTO> loadExpressionCallFromDb(Set<String> speciesIds)
             throws DAOException {
         log.entry(speciesIds);
 
@@ -375,7 +356,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      *                      no-expression calls for the provided species.
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    private List<NoExpressionCallTO> loadNoExpressionCallFromDb(Set<String> speciesIds) 
+    public List<NoExpressionCallTO> loadNoExpressionCallFromDb(Set<String> speciesIds)
             throws DAOException {
         log.entry(speciesIds);
         
@@ -393,8 +374,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         //at the end in any case.
         // No need to close the ResultSet, it's done by getAllTOs().
         
-        log.info("Done retrieving no-expression calls, {} calls found", 
-                noExprTOs.size());
+        log.info("Done retrieving no-expression calls, {} calls found", noExprTOs.size());
 
         return log.exit(noExprTOs);        
     }

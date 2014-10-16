@@ -29,6 +29,7 @@ import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
 import owltools.graph.OWLGraphEdge;
+import owltools.graph.OWLGraphManipulator;
 import owltools.graph.OWLGraphWrapper;
 
 /**
@@ -232,6 +233,9 @@ public class UberonTest extends TestAncestor {
     public void test() throws OBOFormatParserException, OWLOntologyCreationException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology("/Users/admin/Desktop/composite-metazoan.owl");
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OWLGraphManipulator manip = new OWLGraphManipulator(wrapper);
+        
+        manip.removeUnrelatedRelations(Arrays.asList("BFO:0000050", "RO:0002202", "RO:0002494"));
         
         //need to understand where the indirect transformation_of relation between 
         //UBERON:0000010 and UBERON:0016880 comes from

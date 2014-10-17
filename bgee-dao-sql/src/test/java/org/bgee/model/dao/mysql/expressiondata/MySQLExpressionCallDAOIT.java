@@ -160,7 +160,6 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("19", "ID2", "Anat_id9", "Stage_id18", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT),
                 new ExpressionCallTO("20", "ID2", "Anat_id10", "Stage_id18", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT),
                 new ExpressionCallTO("21", "ID2", "Anat_id11", "Stage_id18", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT),
-                new ExpressionCallTO("22", "ID3", "Anat_id3", "Stage_id1", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, true, false, OriginOfLine.DESCENT),
                 new ExpressionCallTO("23", "ID2", "Anat_id1", "Stage_id1", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
@@ -244,6 +243,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         this.useEmptyDB();
         
         //create a Collection of ExpressionCallTO to be inserted
+        //TODO: where are the tests for OriginOfLine.BOTH??
         Collection<ExpressionCallTO> exprCallTOs = Arrays.asList(
                 new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY, false, false, OriginOfLine.SELF),
                 new ExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, false, false, OriginOfLine.SELF),

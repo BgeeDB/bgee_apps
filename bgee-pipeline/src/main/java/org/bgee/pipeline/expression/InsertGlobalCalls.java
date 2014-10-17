@@ -147,6 +147,11 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * @throws IllegalArgumentException If a species ID does not correspond to any species 
      *                                  in the Bgee data source.
      */
+    //TODO: the previous version of Bgee didn't have any "BOTH" origin of line, 
+    //the unique key was (geneId, anatEntityId, stageId, originOfLine), so that there was 
+    //always a SELF origin of line for each entry. Not sure to remember why it was needed. 
+    //Either it is needed and we should do the same, or we actually don't need 
+    //the origin of line information...
     public void insert(List<String> speciesIds, boolean isNoExpression) throws DAOException {
         log.entry(speciesIds, isNoExpression);
 
@@ -638,7 +643,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             globalCall.getGeneId(), globalCall.getAnatEntityId(), 
                             globalCall.getStageId(), 
                             affymetrixData, estData, inSituData, rnaSeqData, true,
-                            ((ExpressionCallTO) globalCall).isIncludeSubStages(), origin);
+                            globalCall.isIncludeSubStages(), origin);
 
             log.trace("Updated global expression call: " + updatedGlobalCall);
 

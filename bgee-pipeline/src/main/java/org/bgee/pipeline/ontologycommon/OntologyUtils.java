@@ -1109,8 +1109,8 @@ public class OntologyUtils {
                             (prop == null || prop.equals(edge.getGCIRelation())) && 
                             (fillerParentClass == null || 
                             fillerParentClass.equals(edge.getGCIFiller()) ||
-                             this.getAncestorsThroughIsA(edge.getGCIFiller()).contains(
-                                     fillerParentClass))) {
+                             this.getWrapper().getAncestorsThroughIsA(
+                                     edge.getGCIFiller()).contains(fillerParentClass))) {
                         log.trace("Satisfying ECA: {}", eca);
                         ecas.add(eca);
                     } else {
@@ -1341,94 +1341,6 @@ public class OntologyUtils {
         }
         
         return log.exit(isAPartOfEdges);
-    }
-    
-    /**
-     * Retrieve {@code OWLClass} ancestors of {@code x} only using "is_a" relations 
-     * ({@code SubClassOf).
-     * 
-     * @param x An {@code OWLObject} for which we want to retrieve {@code OWLClass} ancestors 
-     *          through "is_a" relations, even indirect.
-     * @return  A {@code Set} of {@code OWLClass}es that are the ancestors of {@code x} 
-     *          through "is_a" relations.
-     * @see #getDescendantsThroughIsA(OWLObject)
-     */
-    public Set<OWLClass> getAncestorsThroughIsA(OWLObject x) {
-        log.entry(x);
-        return log.exit(this.getRelativesThroughIsA(x, true));
-    }
-    /**
-     * Retrieve {@code OWLClass} descendants of {@code x} only using "is_a" relations 
-     * ({@code SubClassOf).
-     * 
-     * @param x An {@code OWLObject} for which we want to retrieve {@code OWLClass} descendants 
-     *          through "is_a" relations, even indirect.
-     * @return  A {@code Set} of {@code OWLClass}es that are the descendants of {@code x} 
-     *          through "is_a" relations.
-     * @see #getAncestorsThroughIsA(OWLObject)
-     */
-    public Set<OWLClass> getDescendantsThroughIsA(OWLObject x) {
-        log.entry(x);
-        return log.exit(this.getRelativesThroughIsA(x, false));
-    }
-    /**
-     * Retrieve {@code OWLClass} ancestors or descendants of {@code x} only using "is_a" 
-     * relations ({@code SubClassOf). If {@code ancestors} is {@code true}, ancestors 
-     * will be retrieved, otherwise, decendants will be retrieved. 
-     * 
-     * @param x         An {@code OWLObject} for which we want to retrieve 
-     *                  {@code OWLClass} ancestors or descendants through "is_a" relations, 
-     *                  even indirect.
-     * @param ancestors A {@code boolean} defining whether ancestors or descendants 
-     *                  should be retrieved. If {@code true}, ancestors will be retrieved, 
-     *                  otherwise, descendants. 
-     * @return  A {@code Set} of {@code OWLClass}es that are the ancestors or descendants 
-     *          of {@code x} through "is_a" relations.
-     */
-    private Set<OWLClass> getRelativesThroughIsA(OWLObject x, boolean ancestors) {
-        log.entry(x, ancestors);
-        
-        Set<OWLClass> relatives = new HashSet<OWLClass>();
-        //protect against cycles
-        Set<OWLObject> visited = new HashSet<OWLObject>();
-        //avoid recursivity by using a Deque
-        Deque<OWLObject> walkAncestors = new ArrayDeque<OWLObject>();
-        //seed the Deque with the starting OWLObject
-        walkAncestors.addFirst(x);
-        OWLObject iteratedRelative;
-        while ((iteratedRelative = walkAncestors.pollFirst()) != null) {
-            Set<OWLGraphEdge> edges = new HashSet<OWLGraphEdge>();
-            if (ancestors) {
-                edges = this.getWrapper().getOutgoingEdgesWithGCI(iteratedRelative);
-            } else {
-                edges = this.getWrapper().getIncomingEdgesWithGCI(iteratedRelative);
-            }
-            for (OWLGraphEdge edge: edges) {
-                
-                if (!this.isASubClassOfEdge(edge)) {
-                    continue;
-                }
-                OWLObject relative = null;
-                if (ancestors) {
-                    relative = edge.getTarget();
-                } else {
-                    relative = edge.getSource();
-                }
-                        
-                //protect against cycles
-                if (visited.contains(relative)) {
-                    continue;
-                }
-                visited.add(relative);
-                //we only want OWLClasses
-                if (relative instanceof OWLClass) {
-                    relatives.add((OWLClass) relative);
-                }
-                walkAncestors.addLast(relative);
-            }
-        }
-        
-        return log.exit(relatives);
     }
     
     /**
@@ -1897,6 +1809,14 @@ public class OntologyUtils {
                     this.getWrapper().getNamedAncestorsWithGCI(cls, overProps);
             //just to be sure, in case of cycles?
             ancestors.remove(cls);
+            //discard obsolete classes
+            Set<OWLNamedObject> obsoletes = new HashSet<OWLNamedObject>();
+            for (OWLNamedObject obj: ancestors) {
+                if (this.isObsolete(obj)) {
+                    obsoletes.add(obj);
+                }
+            }
+            ancestors.removeAll(obsoletes);
             clsToAncestors.put(cls, ancestors);
             log.trace("Relatives retrieved for {}: {}", cls, ancestors);
         }

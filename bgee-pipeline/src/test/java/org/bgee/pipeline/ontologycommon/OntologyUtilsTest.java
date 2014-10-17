@@ -877,6 +877,15 @@ public class OntologyUtilsTest extends TestAncestor {
         expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls9));
         utils.retainLeafClasses(setToModify, overProps);
         assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
+        
+        //here we try something borderline: filter using a fake ObjectProperty, 
+        //to retain leaves only through is_a relations only.
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls1, cls2, cls3, cls4));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls2, cls3, cls4));
+        utils.retainLeafClasses(setToModify, new HashSet<OWLPropertyExpression>(
+                Arrays.asList(wrapper.getManager().getOWLDataFactory().getOWLObjectProperty(
+                        IRI.create("")))));
+        assertEquals("Incorrect filtering of leaf classes", expectedModifiedSet, setToModify);
     }
     
     /**
@@ -934,6 +943,15 @@ public class OntologyUtilsTest extends TestAncestor {
         expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls7));
         utils.retainParentClasses(setToModify, overProps);
         assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
+        
+        //here we try something borderline: filter using a fake ObjectProperty, 
+        //to retain parents only through is_a relations only.
+        setToModify = new HashSet<OWLClass>(Arrays.asList(cls1, cls2, cls4));
+        expectedModifiedSet = new HashSet<OWLClass>(Arrays.asList(cls1, cls4));
+        utils.retainParentClasses(setToModify, new HashSet<OWLPropertyExpression>(
+                Arrays.asList(wrapper.getManager().getOWLDataFactory().getOWLObjectProperty(
+                        IRI.create("")))));
+        assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
     }
     
     /**
@@ -961,41 +979,6 @@ public class OntologyUtilsTest extends TestAncestor {
                 Arrays.asList(cls1, cls5, cls2, cls4, cls3, cls6, cls7), 
                 OntologyUtils.mergeLists(Arrays.asList(cls1, cls2, cls3, cls6), 
                         Arrays.asList(cls5, cls2, cls4, cls3, cls6, cls7)));
-    }
-    
-    /**
-     * Test the method {@link OntologyUtils#getAncestorsThroughIsA(OWLObject)} and 
-     * {@link OntologyUtils#getDescendantsThroughIsA(OWLObject)}
-     * @throws IOException 
-     * @throws OBOFormatParserException 
-     * @throws OWLOntologyCreationException 
-     */
-    @Test
-    public void shouldGetIsARelatives() throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
-                getResource("/ontologies/is_a_ancestors_test.obo").getFile());
-        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
-        OntologyUtils utils = new OntologyUtils(wrapper);
-        
-        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
-        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
-        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
-        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
-        
-        Set<OWLClass> expectedAncestors = new HashSet<OWLClass>();
-        expectedAncestors.add(cls2);
-        expectedAncestors.add(cls1);
-        assertEquals("Incorrect ancestors through is_a returned", expectedAncestors, 
-                utils.getAncestorsThroughIsA(cls3));
-        expectedAncestors = new HashSet<OWLClass>();
-        assertEquals("Incorrect ancestors through is_a returned", expectedAncestors, 
-                utils.getAncestorsThroughIsA(cls4));
-        
-        Set<OWLClass> expectedDescendants = new HashSet<OWLClass>();
-        expectedDescendants.add(cls2);
-        expectedDescendants.add(cls3);
-        assertEquals("Incorrect desendants through is_a returned", expectedDescendants, 
-                utils.getDescendantsThroughIsA(cls1));
     }
     
     /**

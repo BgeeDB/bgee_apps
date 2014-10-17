@@ -220,6 +220,12 @@ relationship: part_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:1
 relationship: part_of ID:10 {gci_relation="BFO:0000050", gci_filler="NCBITaxon:9606"} ! the indirect relation is more inclusive, this direct relation should be removed
 
 [Term]
+id: ID:18
+name: name cls 18
+def: "Def. cls 18" [Bgee:curator]
+is_a: ID:12 ! will test propagation of transformation_of or develops_from relation
+
+[Term]
 id: NCBITaxon:1
 name: taxonomy root
 

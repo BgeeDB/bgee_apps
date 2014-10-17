@@ -245,5 +245,11 @@ public class UberonTest extends TestAncestor {
                 log.info(edge);
             }
         }
+        for (OWLGraphEdge edge: wrapper.getOutgoingEdgesWithGCI(
+                wrapper.getOWLClassByIdentifier("UBERON:0000010"))) {
+            if (edge.getTarget().equals(wrapper.getOWLClassByIdentifier("UBERON:0016880"))) {
+                log.info(edge);
+            }
+        }
     }
 }

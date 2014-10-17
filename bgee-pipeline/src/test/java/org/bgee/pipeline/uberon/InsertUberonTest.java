@@ -153,22 +153,6 @@ public class InsertUberonTest extends TestAncestor {
                 getResource("/ontologies/insertAnatOntTest.obo").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
-
-        log.info("direct outgoing edges for ID:17: {}", 
-                wrapper.getOutgoingEdges(
-                        wrapper.getOWLClassByIdentifier("ID:17")));
-        log.info("direct outgoing edges with GCI for ID:17: {}", 
-                wrapper.getOutgoingEdgesWithGCI(
-                        wrapper.getOWLClassByIdentifier("ID:17")));
-        log.info("outgoing edge named closure with GCI for ID:17: {}", 
-                wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(
-                        wrapper.getOWLClassByIdentifier("ID:17")));
-        log.info("outgoing edge named closure for ID:17: {}", 
-                wrapper.getOutgoingEdgesNamedClosureOverSupProps(
-                        wrapper.getOWLClassByIdentifier("ID:17")));
-        log.info("outgoing edge closure with GCI for ID:17: {}", 
-                wrapper.getOutgoingEdgesClosureWithGCI(
-                        wrapper.getOWLClassByIdentifier("ID:17")));
         
         //instantiate an Uberon with custom taxon constraints and mock manager
         Map<String, Set<Integer>> taxonConstraints = new HashMap<String, Set<Integer>>();
@@ -194,6 +178,7 @@ public class InsertUberonTest extends TestAncestor {
         taxonConstraints.put("ID:15", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
         taxonConstraints.put("ID:16", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
         taxonConstraints.put("ID:17", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
+        taxonConstraints.put("ID:18", new HashSet<Integer>(Arrays.asList(7955, 9606, 10090)));
         
         Uberon uberon = new Uberon(utils, taxonConstraints);
         uberon.setToIgnoreSubgraphRootIds(Arrays.asList("NCBITaxon:1"));
@@ -230,6 +215,8 @@ public class InsertUberonTest extends TestAncestor {
                 "UBERON:0000104", "UBERON:0000104", false));
         expectedAnatEntityTOs.add(new AnatEntityTO("ID:17", "name cls 17", "Def. cls 17", 
                 "UBERON:0000104", "UBERON:0000104", false));
+        expectedAnatEntityTOs.add(new AnatEntityTO("ID:18", "name cls 18", "Def. cls 18", 
+                "UBERON:0000104", "UBERON:0000104", false));
         ArgumentCaptor<Set> anatEntityTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockAnatEntityDAO).insertAnatEntities(anatEntityTOsArg.capture());
         if (!TOComparator.areTOCollectionsEqual(
@@ -252,6 +239,7 @@ public class InsertUberonTest extends TestAncestor {
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:15", null));
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:16", null));
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:17", null));
+        expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:18", null));
 
         expectedTaxonConstraintTOs.add(new TaxonConstraintTO("ID:8", "9606"));
         
@@ -296,6 +284,8 @@ public class InsertUberonTest extends TestAncestor {
                 RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
         expectedRelTOs.add(new RelationTO(null, "ID:17", "ID:17", 
                 RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
+        expectedRelTOs.add(new RelationTO(null, "ID:18", "ID:18", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.REFLEXIVE));
         //now, direct relations
         expectedRelTOs.add(new RelationTO(null, "ID:6", "ID:1", 
                 RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
@@ -322,6 +312,8 @@ public class InsertUberonTest extends TestAncestor {
         expectedRelTOs.add(new RelationTO(null, "ID:16", "ID:10", 
                 RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
         expectedRelTOs.add(new RelationTO(null, "ID:17", "ID:16", 
+                RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:18", "ID:12", 
                 RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.DIRECT));
         //now, indirect relations
         //ID:8 po ID:7 po ID:1
@@ -370,6 +362,12 @@ public class InsertUberonTest extends TestAncestor {
                 RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
         expectedRelTOs.add(new RelationTO(null, "ID:17", "ID:1", 
                 RelationTO.RelationType.ISA_PARTOF, RelationTO.RelationStatus.INDIRECT));
+        //ID:18 is_a ID:12 immediate_transformation_of ID:11 develops_from ID:10 is_a ID:1
+        expectedRelTOs.add(new RelationTO(null, "ID:18", "ID:11", 
+                RelationTO.RelationType.TRANSFORMATIONOF, RelationTO.RelationStatus.INDIRECT));
+        expectedRelTOs.add(new RelationTO(null, "ID:18", "ID:10", 
+                RelationTO.RelationType.DEVELOPSFROM, RelationTO.RelationStatus.INDIRECT));
+        
         
         ArgumentCaptor<Set> relTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockRelationDAO).insertAnatEntityRelations(relTOsArg.capture());
@@ -468,13 +466,13 @@ public class InsertUberonTest extends TestAncestor {
             
         }
         assertEquals("Incorrect relation taxon constraints generated: " + 
-                relTaxonConstraintTOsArg, 37, relTaxonConstraintTOsArg.getValue().size());
+                relTaxonConstraintTOsArg, 41, relTaxonConstraintTOsArg.getValue().size());
         assertEquals("Incorrect relation taxon constraints generated: " + 
-                relTaxonConstraintTOsArg, 12, allSpeciesReflexiveTaxonConstraints);
+                relTaxonConstraintTOsArg, 13, allSpeciesReflexiveTaxonConstraints);
         assertEquals("Incorrect relation taxon constraints generated: " + 
                 relTaxonConstraintTOsArg, 1, restrainedReflexiveTaxonConstraints);
         assertEquals("Incorrect relation taxon constraints generated: " + 
-                relTaxonConstraintTOsArg, 14, allSpeciesOtherTaxonConstraints);
+                relTaxonConstraintTOsArg, 17, allSpeciesOtherTaxonConstraints);
         assertEquals("Incorrect relation taxon constraints generated: " + 
                 relTaxonConstraintTOsArg, 10, restrainedOtherTaxonConstraints);
     }

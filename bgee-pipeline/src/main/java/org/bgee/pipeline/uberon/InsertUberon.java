@@ -1,6 +1,7 @@
 package org.bgee.pipeline.uberon;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,12 +25,13 @@ import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.OWLPropertyExpression;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
@@ -310,7 +312,6 @@ public class InsertUberon extends MySQLDAOUser {
             }
         }
 
-        OntologyUtils utils = uberon.getOntologyUtils();
         OWLGraphWrapper wrapper = uberon.getOntologyUtils().getWrapper();
         
         //load the OWLClasses that are is_a descendants of root of subgraph to ignore
@@ -320,7 +321,7 @@ public class InsertUberon extends MySQLDAOUser {
                 OWLClass cls = wrapper.getOWLClassByIdentifier(rootIdToIgnore, true);
                 if (cls != null) {
                     classesToIgnore.add(cls);
-                    classesToIgnore.addAll(utils.getDescendantsThroughIsA(cls));
+                    classesToIgnore.addAll(wrapper.getDescendantsThroughIsA(cls));
                 }
             }
         }
@@ -596,6 +597,50 @@ public class InsertUberon extends MySQLDAOUser {
                 //here we retrieve the graph closure outgoing from iteratedCls
                 Set<OWLGraphEdge> allOutgoingEdges = 
                         wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(iteratedCls);
+                
+                
+                //we do not want to include develops_from or transformation_of relations 
+                //propagated through is_a relations AFTER we reached the first 
+                //developmental precursor. So, if A is_a B develops_from C is_a D, 
+                //we will accept the edge A develops_from C, but not A develops_from D.
+                //To filter such edges, we retrieve all targets of a transformation_of 
+                //or develops_from relation, and remove among them the ancestors by is_a 
+                //(we retain only the "leaves" by is_a). This is not bullet-proof 
+                //(for instance, we surely would like to propagate to equivalent classes, 
+                //that are seen as linked by an is_a relation), but this avoid to walk 
+                //each edge, as the method getOutgoingEdgesNamedClosureOverSupPropsWithGCI does.
+                //So, we first retrieve all targets of such relations: 
+                Set<OWLClass> transfOfTargets = new HashSet<OWLClass>();
+                Set<OWLClass> devFromTargets = new HashSet<OWLClass>();
+                for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
+                    if (!(outgoingEdge.getTarget() instanceof OWLClass) || 
+                            !wrapper.isRealClass(outgoingEdge.getTarget())) {
+                        continue;
+                    }
+                    //make sure to call isTransformationOfRelation before 
+                    //isDevelopsFromRelation, because a transformation_of relation is also 
+                    //a develops_from relation.
+                    if (utils.isTransformationOfRelation(outgoingEdge)) {
+                        transfOfTargets.add((OWLClass) outgoingEdge.getTarget());
+                    } else if (utils.isDevelopsFromRelation(outgoingEdge) && 
+                            //just to be sure, in case the order of the code changes
+                            !utils.isTransformationOfRelation(outgoingEdge)) {
+                        devFromTargets.add((OWLClass) outgoingEdge.getTarget());
+                    }
+                }
+                //here we do something borderline: filter using a fake ObjectProperty, 
+                //to retain leaves only through is_a relations.
+                Set<OWLPropertyExpression> fakeProps = new HashSet<OWLPropertyExpression>(
+                        Arrays.asList(wrapper.getManager().getOWLDataFactory().
+                                getOWLObjectProperty(IRI.create(""))));
+                utils.retainLeafClasses(transfOfTargets, fakeProps);
+                utils.retainLeafClasses(devFromTargets, fakeProps);
+                log.trace("Valid transformation_of targets of edges outgoing from {}: {}", 
+                        iteratedCls, transfOfTargets);
+                log.trace("Valid develops_from targets of edges outgoing from {}: {}", 
+                        iteratedCls, devFromTargets);
+                
+                
                 //we also get direct outgoingEdges to be able to know if a relation 
                 //is direct or indirect
                 Set<OWLGraphEdge> directOutgoingEdges = 
@@ -608,6 +653,9 @@ public class InsertUberon extends MySQLDAOUser {
                 
                 edge: for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
                     log.trace("Iterating outgoing edge {}", outgoingEdge);
+
+                    //to distinguish direct and indirect relations
+                    boolean isDirect = directOutgoingEdges.contains(outgoingEdge);
                     
                     //-------------Test validity of edge---------------
                     if (outgoingEdge.getQuantifiedPropertyList().size() != 1) {
@@ -617,25 +665,11 @@ public class InsertUberon extends MySQLDAOUser {
                     //if it is a GCI relation, with make sure it is actually 
                     //a taxonomy GCI relation
                     if (outgoingEdge.isGCI() && 
-                            (!utils.getAncestorsThroughIsA(outgoingEdge.getGCIFiller()).
+                            (!wrapper.getAncestorsThroughIsA(outgoingEdge.getGCIFiller()).
                                     contains(taxonomyRoot) || 
                                     !partOf.equals(outgoingEdge.getGCIRelation()))) {
                         log.trace("Edge discarded because it is a non-taxonomy GCI");
                         continue edge;
-                    }
-                    //we do not want to include develops_from or transformation_of relations 
-                    //propagated through is_a relations
-                    if (utils.isTransformationOfRelation(outgoingEdge) || 
-                            utils.isDevelopsFromRelation(outgoingEdge)) {
-                        for (OWLSubClassOfAxiom ax: outgoingEdge.getSubClassOfAxioms()) {
-                            //if there is an is_a relation in the chain of axioms 
-                            //that generated this edge, discard
-                            if (!ax.getSubClass().isAnonymous() && 
-                                    !ax.getSuperClass().isAnonymous()) {
-                                log.trace("Edge discarded because is a develops_from/transformation_of relation propagated through is_a");
-                                continue edge;
-                            }
-                        }
                     }
                     
                     //-------------Test validity of target---------------
@@ -643,6 +677,24 @@ public class InsertUberon extends MySQLDAOUser {
                         log.trace("Edge discarded because target is not an OWLClass");
                         continue edge;
                     }
+                    
+                    //if this is a transformation_of or develops_from edge, 
+                    //and this is not a direct edge, 
+                    //we check whether the target is allowed for propagation.
+                    //make sure to call isTransformationOfRelation before 
+                    //isDevelopsFromRelation, because a transformation_of relation is also 
+                    //a develops_from relation.
+                    if (!isDirect && 
+                            ((utils.isTransformationOfRelation(outgoingEdge) && 
+                                !transfOfTargets.contains(outgoingEdge.getTarget())) || 
+                            (utils.isDevelopsFromRelation(outgoingEdge) && 
+                                !utils.isTransformationOfRelation(outgoingEdge) && 
+                                !devFromTargets.contains(outgoingEdge.getTarget()))) ) {
+                            
+                        log.trace("Edge discarded because target is invalid for develops_from or transformation_of relation");
+                        continue edge;
+                    }
+                    
                     OWLClass target = (OWLClass) outgoingEdge.getTarget();
                     if (!this.isValidClass(target, uberon, classesToIgnore, speciesIds)) {
                         log.trace("Edge discarded because target is invalid");
@@ -685,7 +737,7 @@ public class InsertUberon extends MySQLDAOUser {
                         speciesClsIdsToConsider.add(
                                 wrapper.getIdentifier(outgoingEdge.getGCIFiller()));
                         for (OWLClass taxonGCIDescendants: 
-                            utils.getDescendantsThroughIsA(outgoingEdge.getGCIFiller())) {
+                            wrapper.getDescendantsThroughIsA(outgoingEdge.getGCIFiller())) {
                             speciesClsIdsToConsider.add(
                                     wrapper.getIdentifier(taxonGCIDescendants));
                         }
@@ -731,8 +783,6 @@ public class InsertUberon extends MySQLDAOUser {
                     //to be able to compare relations. Correct RelationStatus and relation ID 
                     //will be assigned during the second pass.
                     RelationTO relTO = new RelationTO(null, id, targetId, relType, null);
-                    //to distinguish direct and indirect relations
-                    boolean isDirect = directOutgoingEdges.contains(outgoingEdge);
                     log.trace("RelationTO generated: {} - is direct relation: {}", 
                             relTO, isDirect);
                     //generate taxon constraints
@@ -793,7 +843,7 @@ public class InsertUberon extends MySQLDAOUser {
         //and if not obsolete, and if not a class to ignore
         if (classesToIgnore.contains(cls) || 
                 !uberon.existsInAtLeastOneSpecies(cls, speciesIds) || 
-                utils.isObsolete(cls)) {
+                !wrapper.isRealClass(cls)) {
             log.trace("Class discarded");
             return log.exit(false);
         }

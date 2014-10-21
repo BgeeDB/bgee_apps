@@ -3,9 +3,11 @@ package org.bgee.model.dao.mysql.connector;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TransferObject.EnumDAOField;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
 
 /**
@@ -44,6 +46,29 @@ public class BgeePreparedStatement implements AutoCloseable {
      */
     private final static Logger log = 
             LogManager.getLogger(BgeePreparedStatement.class.getName());
+
+    /**
+     * Returns a {@code String} to be used in a parameterized query with the number of parameters 
+     * equals to the given {@code size}. For instance, if {@code size} is equal to {@code 3}, 
+     * the returned {@code String} is: {@code ?, ?, ?}.
+     * 
+     * @param size  An {@code int} that is the number of parameters in the returned {@code String}.
+     * @return      A {@code String} to be used in a parameterized query with the number of 
+     *              parameters equals to the given {@code size}. 
+     */
+    public static String generateParameterizedQueryString(int size) {
+        log.entry(size);
+        
+        StringBuilder sb = new StringBuilder((size * 2) - 1);
+        for (int i = 0; i < size; i++) {
+            if (i > 0) { 
+                sb.append(", ");
+            }
+            sb.append("?");
+         }
+
+        return log.exit(sb.toString());
+    }
     
     /**
      * The {@code BgeeConnection} that was used 
@@ -101,6 +126,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      * Delegated to {@link java.sql.PreparedStatement#setString(int, String)}.
      * 
      * @param parameterIndex    {@code int} that is the index of the parameter to set.
+     *                          the first parameter is 1, the second is 2, ...
      * @param x                 {@code String} that is the value of the parameter 
      *                          to set.
      * @throws SQLException     if parameterIndex does not correspond to a parameter 
@@ -109,6 +135,26 @@ public class BgeePreparedStatement implements AutoCloseable {
      */
     public void setString(int parameterIndex, String x) throws SQLException {
         this.getRealPreparedStatement().setString(parameterIndex, x);
+    }
+    /**
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
+     * given in {@code values}. 
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code List} of {@code String}s that are values to be used 
+     *                          to set the parameters.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
+     */
+    public void setStrings(int startIndex, List<String> values) throws SQLException {
+        log.entry(startIndex, values);
+        for (String value: values) {
+            this.setString(startIndex, value);
+            startIndex++;
+        }
     }
     /**
      * Delegated to {@link java.sql.PreparedStatement#setString(int, String)}.
@@ -124,17 +170,24 @@ public class BgeePreparedStatement implements AutoCloseable {
         this.getRealPreparedStatement().setInt(parameterIndex, x);
     }
     /**
-     * Delegated to {@link java.sql.PreparedStatement#setNull(int, int)}.
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
+     * given in {@code values}. 
      * 
-     * @param parameterIndex    {@code int} that is the index of the parameter to set.
-     * @param sqlType           {@code int} that is the SQL type code defined in 
-     *                          {@code java.sql.Types}.
-     * @throws SQLException     if parameterIndex does not correspond to a parameter 
-     *                          marker in the SQL statement; if a database access error 
-     *                          occurs or this method is called on a closed PreparedStatement.
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code List} of {@code Integer}s that are values to be used 
+     *                          to set the parameters.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
      */
-    public void setNull(int parameterIndex, int sqlType) throws SQLException {
-        this.getRealPreparedStatement().setNull(parameterIndex, sqlType);
+    public void setIntegers(int startIndex, List<Integer> values) throws SQLException {
+        log.entry(startIndex, values);
+        for (int value: values) {
+            this.setInt(startIndex, value);
+            startIndex++;
+        }
     }
     /**
      * Delegated to {@link java.sql.PreparedStatement#setBoolean(int, boolean)}.
@@ -149,6 +202,80 @@ public class BgeePreparedStatement implements AutoCloseable {
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
         this.getRealPreparedStatement().setBoolean(parameterIndex, x);
     }
+    /**
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
+     * given in {@code values}. 
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code List} of {@code Boolean}s that are values to be used 
+     *                          to set the parameters.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
+     */
+    public void setBooleans(int startIndex, List<Boolean> values) throws SQLException {
+        log.entry(startIndex, values);
+        for (boolean value: values) {
+            this.setBoolean(startIndex, value);
+            startIndex++;
+        }
+    }
+    /**
+     * Converts {@code x} into a {@code String} using the method {@code getStringRepresentation} 
+     * and delegates to {@link #setString(int, String)}.
+     * 
+     * @param parameterIndex    An {@code int} that is the index of the parameter to set.
+     * @param x                 An {@code EnumDAOField} that is the value of the parameter 
+     *                          to set.
+     * @throws SQLException     if parameterIndex does not correspond to a parameter 
+     *                          marker in the SQL statement; if a database access error 
+     *                          occurs or this method is called on a closed PreparedStatement.
+     */
+    public void setEnumDAOField(int parameterIndex, EnumDAOField x) throws SQLException {
+        this.setString(parameterIndex, x.getStringRepresentation());
+    }
+    /**
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
+     * given in {@code values}. 
+     * Generic method to avoid cast compilation errors (for instance, {@code cannot 
+     * convert from List<RelationType> to List<EnumDAOField>}).
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code List} of {@code Boolean}s that are values to be used 
+     *                          to set the parameters.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
+     * @param T                 The type of {@code EnumDAOField}
+     */
+    public <T extends Enum<T> & EnumDAOField> void setEnumDAOFields(int startIndex, 
+            List<T> values) 
+            throws SQLException {
+        log.entry(startIndex, values);
+        for (EnumDAOField value: values) {
+            this.setEnumDAOField(startIndex, value);
+            startIndex++;
+        }
+    }
+    
+    /**
+     * Delegated to {@link java.sql.PreparedStatement#setNull(int, int)}.
+     * 
+     * @param parameterIndex    {@code int} that is the index of the parameter to set.
+     * @param sqlType           {@code int} that is the SQL type code defined in 
+     *                          {@code java.sql.Types}.
+     * @throws SQLException     if parameterIndex does not correspond to a parameter 
+     *                          marker in the SQL statement; if a database access error 
+     *                          occurs or this method is called on a closed PreparedStatement.
+     */
+    public void setNull(int parameterIndex, int sqlType) throws SQLException {
+        this.getRealPreparedStatement().setNull(parameterIndex, sqlType);
+    }
+    
     
     /**
      * Executes the SQL query in this {@code BgeePreparedStatement} object, and 

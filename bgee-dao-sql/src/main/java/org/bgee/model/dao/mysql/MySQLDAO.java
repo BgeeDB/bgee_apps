@@ -1,6 +1,6 @@
 package org.bgee.model.dao.mysql;
 
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -9,7 +9,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
 /**
@@ -129,68 +128,31 @@ public abstract class MySQLDAO<T extends Enum<?> & DAO.Attribute> implements DAO
         Set<T> attributeCopy = new HashSet<T>(attributes) ;
         return log.exit(attributeCopy);
     }
-            
+    
     /**
-     * Sets the designated parameters of the given {@code BgeePreparedStatement} to the values 
-     * given in {@code List} of {@code T}s.
-     * <p>
-     * Are currently supported: {@code String.class}, {@code Integer.class}, {@code Boolean.class}. 
+     * Convert a {@code Collection} of {@code String}s into a {@code List} of {@code Integer}s. 
+     * Order in the returned {@code List} is the same as the iteration order of {@code strings}. 
+     * Each element will be converted into an {@code int}, and a {@code NumberFormatException} 
+     * is thrown if an element does not contain a parsable integer.
      * 
-     * @param stmt              A {@code BgeePreparedStatement} that is the statement 
-     *                          to parameterize.
-     * @param startIndex        An {@code int} that is the first index of the parameter to set.
-     * @param dataList          A {@code List} of {@code T}s that is values to be used to set the 
-     *                          parameters.
-     * @param type              The desired type of values.
-     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
-     *                          SQL statement; if a database access error occurs or this method is 
-     *                          called on a closed {@code PreparedStatement}.
-     * @param <T>               A type parameter.
+     * @param strings   A {@code Collection} of {@code String}s to be converted 
+     *                  into a {@code List} of {@code Integer}s.
+     * @return          A {@code List} of {@code Integer}s corresponding to {@code strings}, 
+     *                  with order provided by the iteration order of the iterator 
+     *                  of {@code strings}.
+     * @throws NumberFormatException    if an element of {@code strings} is not parsable 
+     *                                  into an {@code int}.
      */
-    public static <T> void parameterizeStatement(BgeePreparedStatement stmt, int startIndex, 
-            List<String> dataList, Class<T> type) throws SQLException {
-        log.entry(stmt, startIndex, dataList, type);
-        
-        try {
-            for (String data: dataList) {
-                if (type.equals(String.class)) {
-                    stmt.setString(startIndex, data);
-                } else if (type.equals(Integer.class)) {
-                    stmt.setInt(startIndex, Integer.valueOf(data));
-                } else if (type.equals(Boolean.class)) {
-                    stmt.setBoolean(startIndex, Boolean.valueOf(data));
-                } else {
-                    throw log.throwing(new IllegalArgumentException(type.getClass() +
-                            " is not currently supported."));
-                }
-                startIndex++;
-            }
-        } catch (SQLException e) {
-            throw log.throwing(e);
+    protected static List<Integer> convertToIntList(Collection<String> strings) 
+            throws NumberFormatException {
+        log.entry(strings);
+        if (strings == null) {
+            return log.exit(null);
         }
-        
-        log.exit();
-    }
-
-    /**
-     * Returns a {@code String} to be used in a parameterized query with the number of parameters 
-     * equals to the given {@code size}. 
-     * 
-     * @param size  An {@code int} that is the number of parameters in the returned {@code String}.
-     * @return      A {@code String} to be used in a parameterized query with the number of 
-     *              parameters equals to the given {@code size}. 
-     */
-    public static String generateParameterizedQueryString(int size) {
-        log.entry(size);
-        
-        String sql = new String();
-        for (int i = 0; i < size; i++) {
-            if (i > 0) { 
-                sql += ", ";
-            }
-            sql += "?";
-         }
-
-        return log.exit(sql);
+        List<Integer> intList = new ArrayList<Integer>(strings.size());
+        for (String val: strings) {
+            intList.add(Integer.parseInt(val));
+        }
+        return log.exit(intList);
     }
 }

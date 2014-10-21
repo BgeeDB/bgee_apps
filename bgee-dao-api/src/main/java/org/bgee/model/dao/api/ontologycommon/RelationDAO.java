@@ -162,32 +162,9 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              */
             public static final RelationType convertToRelationType(String representation) {
                 log.entry(representation);
-                
-                for (RelationType type: RelationType.values()) {
-                    if (type.getStringRepresentation().equals(representation) || 
-                            type.name().equals(representation)) {
-                        return log.exit(type);
-                    }
-                }
-                throw log.throwing(new IllegalArgumentException("\"" + representation + 
-                        "\" does not correspond to any RelationType"));
-            }
-            
-            /**
-             * Convert a {@code Set} of {@code RelationType}s into a {@code Set} of 
-             * {@code String}s, using the method 
-             * {@link TransferObject#convertEnumSetToStringSet(Set)}.
-             * 
-             * @param relationType  A {@code Set} of {@code RelationType}s to be converted.
-             * @return              A {@code Set} of {@code String}s that are the representation 
-             *                      of the {@code RelationType}s contained in {@code enums}.
-             */
-            public static final Set<String> convertToStringSet(Set<RelationType> relationType) {
-                log.entry(relationType);
-                return log.exit(TransferObject.convertEnumSetToStringSet(relationType));
+                return log.exit(TransferObject.convert(RelationType.class, representation));
             }
 
-            
             /**
              * See {@link #getStringRepresentation()}
              */
@@ -249,29 +226,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
              */
             public static final RelationStatus convertToRelationStatus(String representation) {
                 log.entry(representation);
-                
-                for (RelationStatus status: RelationStatus.values()) {
-                    if (status.getStringRepresentation().equals(representation) || 
-                            status.name().equals(representation)) {
-                        return log.exit(status);
-                    }
-                }
-                throw log.throwing(new IllegalArgumentException("\"" + representation + 
-                        "\" does not correspond to any RelationStatus"));
-            }
-            
-            /**
-             * Convert a {@code Set} of {@code RelationStatus}s into a {@code Set} of 
-             * {@code String}s, using the method 
-             * {@link TransferObject#convertEnumSetToStringSet(Set)}.
-             * 
-             * @param relationStatus A {@code Set} of {@code RelationStatus}s to be converted.
-             * @return               A {@code Set} of {@code String}s that are the representation 
-             *                       of the {@code RelationStatus}s contained in {@code enums}.
-             */
-            public static final Set<String> convertToStringSet(Set<RelationStatus> relationStatus) {
-                log.entry(relationStatus);
-                return log.exit(TransferObject.convertEnumSetToStringSet(relationStatus));
+                return log.exit(TransferObject.convert(RelationStatus.class, representation));
             }
 
             /**

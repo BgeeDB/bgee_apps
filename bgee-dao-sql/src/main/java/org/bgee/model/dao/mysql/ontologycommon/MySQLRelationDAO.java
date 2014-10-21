@@ -50,14 +50,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     @Override
     public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
-        log.entry(speciesIds, relationTypes, relationStatus);
-
-        // Ordered species IDs to avoid to execute the same query twice. 
-        List<String> orderedSpeciesIds = null;
-        if (speciesIds != null && speciesIds.size() > 0) {
-            orderedSpeciesIds = new ArrayList<String>(speciesIds);
-            Collections.sort(orderedSpeciesIds);
-        }        
+        log.entry(speciesIds, relationTypes, relationStatus);    
 
         String tableName = "anatEntityRelation";
         
@@ -90,30 +83,27 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         if (isSpeciesFilter || isRelationTypeFilter || isRelationStatusFilter) {
             sql += " WHERE ";
         }
-        
         if (isSpeciesFilter) {
             sql += "(anatEntityRelationTaxonConstraint.speciesId IS NULL" +
                    " OR anatEntityRelationTaxonConstraint.speciesId IN (" +
-                   MySQLDAO.generateParameterizedQueryString(orderedSpeciesIds.size()) + "))";
+                   BgeePreparedStatement.generateParameterizedQueryString(
+                           speciesIds.size()) + "))";
         }
-        
-        if (isSpeciesFilter && (isRelationTypeFilter || isRelationStatusFilter)) {
-            sql += " AND ";
-        }
-        
         if (isRelationTypeFilter) {
+            if (isSpeciesFilter) {
+                sql += " AND ";
+            }
             sql += " relationType IN (" + 
-                    MySQLDAO.generateParameterizedQueryString(relationTypes.size()) + ")";
+            BgeePreparedStatement.generateParameterizedQueryString(relationTypes.size()) + ")";
+        }
+        if (isRelationStatusFilter) {
+            if (isSpeciesFilter || isRelationTypeFilter) {
+                sql += " AND ";
+            }
+            sql += " relationStatus IN (" + 
+            BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
         }
         
-        if (isRelationTypeFilter && isRelationStatusFilter) {
-            sql += " AND ";
-        }
-
-        if (isRelationStatusFilter) {
-            sql += " relationStatus IN (" + 
-                    MySQLDAO.generateParameterizedQueryString(relationStatus.size()) + ")";
-        }
         sql += " ORDER BY " + tableName + "." + 
                 this.attributeAnatEntityRelationToString(RelationDAO.Attribute.SOURCEID) + 
                 ", " + tableName + "." + 
@@ -126,21 +116,22 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              stmt = this.getManager().getConnection().prepareStatement(sql);
              int startIndex = 1;
              if (isSpeciesFilter) {
-                 MySQLDAO.parameterizeStatement(stmt, startIndex, orderedSpeciesIds, Integer.class);
+                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
+                 Collections.sort(orderedSpeciesIds);
+                 stmt.setIntegers(startIndex, orderedSpeciesIds);
                  startIndex += orderedSpeciesIds.size();
              }
              if (isRelationTypeFilter) {
-                 List<String> orderedTypes = 
-                         new ArrayList<String>(RelationType.convertToStringSet(relationTypes));
+                 List<RelationType> orderedTypes = new ArrayList<RelationType>(relationTypes);
                  Collections.sort(orderedTypes);
-                 MySQLDAO.parameterizeStatement(stmt, startIndex, orderedTypes, String.class);
+                 stmt.setEnumDAOFields(startIndex, orderedTypes);
                  startIndex += orderedTypes.size();
              }
              if (isRelationStatusFilter) {
-                 List<String> orderedStatus = 
-                         new ArrayList<String>(RelationStatus.convertToStringSet(relationStatus));
+                 List<RelationStatus> orderedStatus = 
+                         new ArrayList<RelationStatus>(relationStatus);
                  Collections.sort(orderedStatus);
-                 MySQLDAO.parameterizeStatement(stmt, startIndex, orderedStatus, String.class);
+                 stmt.setEnumDAOFields(startIndex, orderedStatus);
                  startIndex += orderedStatus.size();
              }
              return log.exit(new MySQLRelationTOResultSet(stmt));

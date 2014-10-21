@@ -202,30 +202,24 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         MySQLExpressionCallDAO dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager());
 
         // Generate manually expected result for expression table
-        int expectedMaxExprId = 9;
-        int maxExprId = dao.getMaxExpressionCallId(false);
-        assertEquals("Max expression ID incorrectly retrieved", expectedMaxExprId, maxExprId);
+        assertEquals("Max expression ID incorrectly retrieved", 9, 
+                dao.getMaxExpressionCallId(false));
 
         // Generate manually expected result for global expression table
-        int expectedMaxGlobalExprId = 23;
-        int maxGlobalExprId = dao.getMaxExpressionCallId(true);
         assertEquals("Max expression ID incorrectly retrieved", 
-                expectedMaxGlobalExprId, maxGlobalExprId);
+                23, dao.getMaxExpressionCallId(true));
 
         // Check on database without calls
         this.useEmptyDB();
         
         try {
             // Generate manually expected result for expression table
-            expectedMaxExprId = 0;
-            maxExprId = dao.getMaxExpressionCallId(false);
-            assertEquals("Max expression ID incorrectly retrieved", expectedMaxExprId, maxExprId);
+            assertEquals("Max expression ID incorrectly retrieved", 0, 
+                    dao.getMaxExpressionCallId(false));
 
             // Generate manually expected result for global expression table
-            expectedMaxGlobalExprId = 0;
-            maxGlobalExprId = dao.getMaxExpressionCallId(true);
             assertEquals("Max expression ID incorrectly retrieved", 
-                    expectedMaxGlobalExprId, maxGlobalExprId);
+                    0, dao.getMaxExpressionCallId(true));
         } finally {
             this.emptyAndUseDefaultDB();
         }

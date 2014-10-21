@@ -78,12 +78,16 @@ public abstract class TransferObject implements Serializable {
     /**
      * Convert a {@code Set} of {@code EnumDAOField}s into a {@code Set} of {@code String}s, 
      * using the method {@link EnumDAOField#getStringRepresentation()}.
+     * Generic method to avoid cast compilation errors (for instance, {@code cannot 
+     * convert from List<RelationType> to List<EnumDAOField>}).
      * @param enums A {@code Set} of {@code EnumDAOField}s to be converted.
      * @return      A {@code Set} of {@code String}s that are the representation of 
      *              the {@code EnumDAOField}s contained in {@code enums}.
+     * @param T     The type of {@code EnumDAOField}
+     * 
      */
     protected static final <T extends Enum<T> & EnumDAOField> Set<String> 
-                                convertEnumSetToStringSet(Set<T> enums) {
+        convertEnumSetToStringSet(Set<T> enums) {
         log.entry(enums);
         Set<String> stringSet = new HashSet<String>();
         for (T enumDAOField: enums) {

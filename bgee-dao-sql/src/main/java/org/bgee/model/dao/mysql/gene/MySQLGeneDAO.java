@@ -2,7 +2,6 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -82,14 +81,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     
     @Override
     public GeneTOResultSet getGenes(Set<String> speciesIds) throws DAOException {
-        log.entry();
-        
-        // Ordered species IDs to avoid to execute the same query twice. 
-        List<String> orderedSpeciesIds = null;
-        if (speciesIds != null && speciesIds.size() > 0) {
-            orderedSpeciesIds = new ArrayList<String>(speciesIds);
-            Collections.sort(orderedSpeciesIds);
-        }        
+        log.entry();      
 
         Collection<GeneDAO.Attribute> attributes = this.getAttributes();
         //Construct sql query
@@ -108,9 +100,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
         sql += " FROM gene";
         
-        if (orderedSpeciesIds != null) {
+        if (speciesIds != null && speciesIds.size() > 0) {
             sql += " WHERE gene.speciesId IN (" + 
-                       generateParameterizedQueryString(orderedSpeciesIds.size()) + ")";
+                       BgeePreparedStatement.generateParameterizedQueryString(
+                               speciesIds.size()) + ")";
         }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -118,8 +111,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
-            if (orderedSpeciesIds != null) {
-                MySQLDAO.parameterizeStatement(stmt, 1, orderedSpeciesIds, Integer.class);
+            if (speciesIds != null && speciesIds.size() > 0) {
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
+                Collections.sort(orderedSpeciesIds);
+                stmt.setIntegers(1, orderedSpeciesIds);
             }             
             return log.exit(new MySQLGeneTOResultSet(stmt));
         } catch (SQLException e) {

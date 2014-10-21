@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -98,14 +99,11 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
             MySQLExpressionCallTOResultSet resultSet = new MySQLExpressionCallTOResultSet(stmt);
-            resultSet.next();
             
-            if (resultSet.getTO().getId() != null) {
+            if (resultSet.next() && StringUtils.isNotBlank(resultSet.getTO().getId())) {
                 return log.exit(Integer.valueOf(resultSet.getTO().getId()));
-            } else {
-                // There is no call in the table 
-                return log.exit(0);                    
-            }
+            } 
+            return log.exit(0);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -135,13 +133,6 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             boolean isIncludeSubstructures) throws DAOException {
         log.entry(speciesIds, isIncludeSubstructures);
 
-        // Ordered species IDs to avoid to execute the same query twice. 
-        List<String> orderedSpeciesIds = null;
-        if (speciesIds != null && speciesIds.size() > 0) {
-            orderedSpeciesIds = new ArrayList<String>(speciesIds);
-            Collections.sort(orderedSpeciesIds);
-        }        
-
         Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
         
         String tableName = "expression";
@@ -165,12 +156,13 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             }
         }
         sql += " FROM " + tableName;
-        if (orderedSpeciesIds != null) {
+        if (speciesIds != null && speciesIds.size() > 0) {
              sql += " INNER JOIN " + geneTabName + " ON (" + geneTabName + ".geneId = " + 
                          tableName + "." + this.attributeToString(
                              ExpressionCallDAO.Attribute.GENEID, isIncludeSubstructures)+")" +
                     " WHERE " + geneTabName + ".speciesId IN (" + 
-                            MySQLDAO.generateParameterizedQueryString(orderedSpeciesIds.size()) + ")" +
+                            BgeePreparedStatement.generateParameterizedQueryString(
+                                    speciesIds.size()) + ")" +
                     " ORDER BY " + geneTabName + ".speciesId, " + 
                             tableName + "." + this.attributeToString(
                                   ExpressionCallDAO.Attribute.GENEID, isIncludeSubstructures) +  
@@ -193,8 +185,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (orderedSpeciesIds != null) {
-                MySQLDAO.parameterizeStatement(stmt, 1, orderedSpeciesIds, Integer.class);
+            if (speciesIds != null && speciesIds.size() > 0) {
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
+                Collections.sort(orderedSpeciesIds);
+                stmt.setIntegers(1, orderedSpeciesIds);
             }             
             return log.exit(new MySQLExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {

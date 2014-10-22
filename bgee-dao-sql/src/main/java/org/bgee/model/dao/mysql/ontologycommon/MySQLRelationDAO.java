@@ -60,8 +60,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         
         String sql = null;
         Collection<RelationDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
-            sql = "SELECT " + tableName + ".*";
+        if (attributes == null || attributes.isEmpty()) {
+            sql = "SELECT DISTINCT " + tableName + ".*";
         } else {
             for (RelationDAO.Attribute attribute: attributes) {
                 if (StringUtils.isEmpty(sql)) {
@@ -139,9 +139,109 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              throw log.throwing(new DAOException(e));
          }
     }
+     
+    @Override
+    public RelationTOResultSet getStageRelations(Set<String> speciesIds, 
+            Set<RelationStatus> relationStatus) {
+        //NOTE: there is no relation table for stages, as they are represented 
+        //as a nested set model. So, this method will emulate the existence of such a table, 
+        //so that retrieval of relations between stages will be consistent with retrieval 
+        //of relations between anatomical entities.
+        
+        log.entry(speciesIds, relationStatus); 
+        
+        boolean isSpeciesFilter = speciesIds != null && speciesIds.size() > 0;
+        boolean isRelationStatusFilter = relationStatus != null && relationStatus.size() > 0;
+        
+        String sql = null;
+        Collection<RelationDAO.Attribute> attributes = this.getAttributes();
+        if (attributes == null || attributes.isEmpty()) {
+            sql = "SELECT *";
+        } else {
+            for (RelationDAO.Attribute attribute: attributes) {
+                if (sql == null) {
+                    sql = "SELECT DISTINCT ";
+                } else {
+                    sql += ", ";
+                }
+                sql += this.attributeStageRelationToString(attribute);
+            }
+        }
+        sql += " FROM ";
+        
+        //OK, we create a query that will emulate a temporary table similar to
+        //the retrieval of relations between anatomical entities.
+               
+        sql += 
+            // no relationId, provide 0 for all
+            "(SELECT DISTINCT 0 AS " + 
+            this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONID) + ", " +
+        	"t1.stageId AS " + 
+            this.attributeStageRelationToString(RelationDAO.Attribute.SOURCEID) + ", " +
+            "t3.stageId AS " + 
+            this.attributeStageRelationToString(RelationDAO.Attribute.TARGETID) + ", " +
+            //no other parenthood relations between stages other than is_a
+            RelationType.ISA_PARTOF.getStringRepresentation() + " AS " + 
+            this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONTYPE) + ", " +
+            //emulate RelationStatus
+            "IF (t1.stageId = t3.stageId, " + 
+                RelationStatus.REFLEXIVE.getStringRepresentation() + ", " +
+                "IF (t3.level = t1.level + 1, " + 
+                RelationStatus.DIRECT.getStringRepresentation() + ", " +
+                RelationStatus.INDIRECT.getStringRepresentation() + ")) AS " +
+            this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONSTATUS) + " " +
+            		
+            "FROM stage AS t1 " +
+            "INNER JOIN stageTaxonConstraint AS t2 " +
+                "ON t1.stageId = t2.stageId " +
+            "INNER JOIN stage AS t3 " +
+                "ON t3.stageLeftBound >= t1.stageLeftBound " +
+                "AND t3.stageRightBound <= t1.stageRightBound " +
+            "INNER JOIN stageTaxonConstraint AS t4 " +
+                "ON t3.stageId = t4.stageId AND " +
+                "(t4.speciesId IS NULL OR t4.speciesId = t2.speciesId) ";
+        if (isSpeciesFilter) {
+            sql += "WHERE t2.speciesId IS NULL OR t2.speciesId IN (" +
+                   BgeePreparedStatement.generateParameterizedQueryString(
+                           speciesIds.size()) + "))";
+        }
+        sql += ") AS tempTable ";
+        
+        if (isRelationStatusFilter) {
+            sql += " WHERE " + 
+            this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONSTATUS) + 
+            " IN (" + 
+            BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
+        }
+
+         //we don't use a try-with-resource, because we return a pointer to the results, 
+         //not the actual results, so we should not close this BgeePreparedStatement.
+         BgeePreparedStatement stmt = null;
+         try {
+             stmt = this.getManager().getConnection().prepareStatement(sql);
+             int startIndex = 1;
+             if (isSpeciesFilter) {
+                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
+                 Collections.sort(orderedSpeciesIds);
+                 stmt.setIntegers(startIndex, orderedSpeciesIds);
+                 startIndex += orderedSpeciesIds.size();
+             }
+             if (isRelationStatusFilter) {
+                 List<RelationStatus> orderedStatus = 
+                         new ArrayList<RelationStatus>(relationStatus);
+                 Collections.sort(orderedStatus);
+                 stmt.setEnumDAOFields(startIndex, orderedStatus);
+                 startIndex += orderedStatus.size();
+             }
+             return log.exit(new MySQLRelationTOResultSet(stmt));
+         } catch (SQLException e) {
+             throw log.throwing(new DAOException(e));
+         }
+    }
 
     /** 
-     * Returns a {@code String} that correspond to the given {@code RelationDAO.Attribute}.
+     * Returns a {@code String} that correspond to the given {@code RelationDAO.Attribute}, 
+     * for retrieval of relations between anatomical entities.
      * 
      * @param attribute   A {code RelationDAO.Attribute} that is the attribute to
      *                    convert in a {@code String}.
@@ -158,6 +258,38 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             label = "anatEntitySourceId";
         } else if (attribute.equals(RelationDAO.Attribute.TARGETID)) {
             label = "anatEntityTargetId";
+        } else if (attribute.equals(RelationDAO.Attribute.RELATIONTYPE)) {
+            label = "relationType";
+        } else if (attribute.equals(RelationDAO.Attribute.RELATIONSTATUS)) {
+            label = "relationStatus";
+        } else {
+            throw log.throwing(new IllegalStateException("The attribute provided (" +
+                    attribute.toString() + ") is unknown for " + RelationDAO.class.getName()));
+        }
+        
+        return log.exit(label);
+    }
+    /** 
+     * Returns a {@code String} that correspond to the given {@code RelationDAO.Attribute}, 
+     * for retrieval of relations between stages. Note that this does not correspond 
+     * to attributes of an actual table, but an emulated temporary table to use 
+     * queries consistent with retrieval of relations between anatomical entities. 
+     * 
+     * @param attribute   A {code RelationDAO.Attribute} that is the attribute to
+     *                    convert in a {@code String}.
+     * @return            A {@code String} that correspond to the given 
+     *                    {@code RelationDAO.Attribute}
+     */
+    private String attributeStageRelationToString(RelationDAO.Attribute attribute) {
+        log.entry(attribute);
+        
+        String label = null;
+        if (attribute.equals(RelationDAO.Attribute.RELATIONID)) {
+                label = "stageRelationId";
+        } else if (attribute.equals(RelationDAO.Attribute.SOURCEID)) {
+            label = "stageSourceId";
+        } else if (attribute.equals(RelationDAO.Attribute.TARGETID)) {
+            label = "stageTargetId";
         } else if (attribute.equals(RelationDAO.Attribute.RELATIONTYPE)) {
             label = "relationType";
         } else if (attribute.equals(RelationDAO.Attribute.RELATIONSTATUS)) {

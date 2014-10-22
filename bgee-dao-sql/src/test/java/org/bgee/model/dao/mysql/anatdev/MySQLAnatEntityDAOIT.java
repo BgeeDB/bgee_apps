@@ -52,21 +52,23 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         this.useSelectDB();
 
         MySQLAnatEntityDAO dao = new MySQLAnatEntityDAO(this.getMySQLDAOManager());
+        List<AnatEntityTO> allAnatEntityTOs = Arrays.asList(
+        new AnatEntityTO("Anat_id1",  "anatStruct",  "anatStruct desc",  "Stage_id1",  "Stage_id2", true), 
+        new AnatEntityTO("Anat_id10", "hindbrain", "hindbrain desc", "Stage_id8", "Stage_id17", true), 
+        new AnatEntityTO("Anat_id11", "cerebellum", "cerebellum desc", "Stage_id9", "Stage_id13", false), 
+        new AnatEntityTO("Anat_id12", "anat12", "unused anatE 12", "Stage_id1", "Stage_id13", false), 
+        new AnatEntityTO("Anat_id13", "anat13", "unused anatE 13", "Stage_id9", "Stage_id10", true), 
+        new AnatEntityTO("Anat_id2", "organ", "organ desc", "Stage_id10", "Stage_id18", false), 
+        new AnatEntityTO("Anat_id3", "heart", "heart desc", "Stage_id16", "Stage_id18", false), 
+        new AnatEntityTO("Anat_id4", "gill", "gill desc", "Stage_id12", "Stage_id18", false), 
+        new AnatEntityTO("Anat_id5", "brain", "brain desc", "Stage_id11", "Stage_id17", false), 
+        new AnatEntityTO("Anat_id6", "embryoStruct", "embryoStruct desc", "Stage_id2", "Stage_id5", false), 
+        new AnatEntityTO("Anat_id7", "ectoderm", "ectoderm desc", "Stage_id6", "Stage_id13", false), 
+        new AnatEntityTO("Anat_id8", "neuralTube", "neuralTube desc", "Stage_id8", "Stage_id17", false), 
+        new AnatEntityTO("Anat_id9", "forebrain", "forebrain desc", "Stage_id8", "Stage_id17", false));
+        
         // Test recovery of all attributes without filter on species IDs
-        List<AnatEntityTO> expectedAnatEntities = Arrays.asList(
-                new AnatEntityTO("Anat_id1", "anatStruct", "anatStruct desc", "Stage_id1", "Stage_id2", true),
-                new AnatEntityTO("Anat_id10","hindbrain","hindbrain desc","Stage_id8","Stage_id17", true),
-                new AnatEntityTO("Anat_id11","cerebellum","cerebellum desc","Stage_id9","Stage_id13", false),
-                new AnatEntityTO("Anat_id12","anat12","unused anatE 12","Stage_id1","Stage_id13",false),
-                new AnatEntityTO("Anat_id13","anat13","unused anatE 13","Stage_id9","Stage_id10",true),
-                new AnatEntityTO("Anat_id2","organ","organ desc","Stage_id10","Stage_id18", false),
-                new AnatEntityTO("Anat_id3","heart","heart desc","Stage_id16","Stage_id18", false),
-                new AnatEntityTO("Anat_id4","gill","gill desc","Stage_id12","Stage_id18", false),
-                new AnatEntityTO("Anat_id5","brain","brain desc","Stage_id11","Stage_id17", false),
-                new AnatEntityTO("Anat_id6","embryoStruct","embryoStruct desc","Stage_id2","Stage_id5", false),
-                new AnatEntityTO("Anat_id7","ectoderm","ectoderm desc","Stage_id6","Stage_id13", false),
-                new AnatEntityTO("Anat_id8","neuralTube","neuralTube desc","Stage_id8","Stage_id17", false),
-                new AnatEntityTO("Anat_id9","forebrain","forebrain desc","Stage_id8","Stage_id17", false));
+        List<AnatEntityTO> expectedAnatEntities = allAnatEntityTOs;
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntities(null).getAllTOs(), expectedAnatEntities));
@@ -105,6 +107,14 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id2", null, null, "Stage_id10", "Stage_id18", false),
                 new AnatEntityTO("Anat_id6", null, null, "Stage_id2", "Stage_id5", false),
                 new AnatEntityTO("Anat_id8", null, null, "Stage_id8", "Stage_id17", false));
+        assertTrue("AnatEntityTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
+
+        dao.clearAttributes();
+        speciesIds = new HashSet<String>();
+        speciesIds.addAll(Arrays.asList("11", "21", "31", "44"));
+        expectedAnatEntities = allAnatEntityTOs;
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));

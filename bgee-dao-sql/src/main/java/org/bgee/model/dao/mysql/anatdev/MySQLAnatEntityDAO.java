@@ -54,11 +54,11 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         String sql = new String(); 
         Collection<AnatEntityDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT " + tableName + ".*";
+            sql += "SELECT DISTINCT " + tableName + ".*";
         } else {
             for (AnatEntityDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql += "SELECT ";
+                    sql += "SELECT DISTINCT ";
                 } else {
                     sql += ", ";
                 }
@@ -104,11 +104,11 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         String sql = new String(); 
         Collection<AnatEntityDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT " + tableName + ".*";
+            sql += "SELECT DISTINCT " + tableName + ".*";
         } else {
             for (AnatEntityDAO.Attribute attribute: attributes) {
                 if (StringUtils.isEmpty(sql)) {
-                    sql += "SELECT ";
+                    sql += "SELECT DISTINCT ";
                 } else {
                     sql += ", ";
                 }

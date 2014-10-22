@@ -43,11 +43,11 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
         String sql = new String(); 
         Collection<StageDAO.Attribute> attributes = this.getAttributes();
         if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT " + tableName + ".*";
+            sql += "SELECT DISTINCT " + tableName + ".*";
         } else {
             for (StageDAO.Attribute attribute: attributes) {
                 if (sql.length() == 0) {
-                    sql += "SELECT ";
+                    sql += "SELECT DISTINCT ";
                 } else {
                     sql += ", ";
                 }

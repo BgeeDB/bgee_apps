@@ -52,48 +52,48 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
         MySQLStageDAO dao = new MySQLStageDAO(this.getMySQLDAOManager());
         // Test recovery of all attributes without filter on species IDs
         List<StageTO> expectedStages = Arrays.asList(
-                new StageTO("Stage_id1","stageN1","stage Desc 1",1,36,1,false,true),
-                new StageTO("Stage_id2","stageN2","stage Desc 2",2,7,2,false,false),
-                new StageTO("Stage_id3","stageN3","stage Desc 3",3,4,2,true,false),
-                new StageTO("Stage_id4","stageN4","stage Desc 4",5,6,1,false,false),
-                new StageTO("Stage_id5","stageN5","stage Desc 5",8,17,2,false,false),
-                new StageTO("Stage_id6","stageN6","stage Desc 6",9,10,2,false,false),
-                new StageTO("Stage_id7","stageN7","stage Desc 7",11,16,3,false,false),
-                new StageTO("Stage_id8","stageN8","stage Desc 8",12,13,3,false,true),
-                new StageTO("Stage_id9","stageN9","stage Desc 9",14,15,1,false,false),
-                new StageTO("Stage_id10","stageN10","stage Desc 10",18,25,2,false,true),
-                new StageTO("Stage_id11","stageN11","stage Desc 11",19,20,2,false,true),
-                new StageTO("Stage_id12","stageN12","stage Desc 12",21,22,2,false,true),
-                new StageTO("Stage_id13","stageN13","stage Desc 13",23,24,1,false,true),
-                new StageTO("Stage_id14","stageN14","stage Desc 14",26,35,2,false,false),
-                new StageTO("Stage_id15","stageN15","stage Desc 15",27,32,3,false,true),
-                new StageTO("Stage_id16","stageN16","stage Desc 16",28,29,3,false,false),
-                new StageTO("Stage_id17","stageN17","stage Desc 17",30,31,2,false,false),
-                new StageTO("Stage_id18","stageN18","stage Desc 18",33,34,2,false,false));
+                new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
+                new StageTO("Stage_id2", "stageN2", "stage Desc 2", 2, 7, 2, false, false), 
+                new StageTO("Stage_id3", "stageN3", "stage Desc 3", 3, 4, 3, true, false), 
+                new StageTO("Stage_id4", "stageN4", "stage Desc 4", 5, 6, 3, false, false), 
+                new StageTO("Stage_id5", "stageN5", "stage Desc 5", 8, 17, 2, false, false), 
+                new StageTO("Stage_id6", "stageN6", "stage Desc 6", 9, 10, 3, false, false), 
+                new StageTO("Stage_id7", "stageN7", "stage Desc 7", 11, 16, 3, false, false), 
+                new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
+                new StageTO("Stage_id9", "stageN9", "stage Desc 9", 14, 15, 4, false, false), 
+                new StageTO("Stage_id10", "stageN10", "stage Desc 10", 18, 25, 2, false, true), 
+                new StageTO("Stage_id11", "stageN11", "stage Desc 11", 19, 20, 3, false, true), 
+                new StageTO("Stage_id12", "stageN12", "stage Desc 12", 21, 22, 3, false, true), 
+                new StageTO("Stage_id13", "stageN13", "stage Desc 13", 23, 24, 3, false, true), 
+                new StageTO("Stage_id14", "stageN14", "stage Desc 14", 26, 35, 2, false, false), 
+                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true), 
+                new StageTO("Stage_id16", "stageN16", "stage Desc 16", 28, 29, 4, false, false), 
+                new StageTO("Stage_id17", "stageN17", "stage Desc 17", 30, 31, 4, false, false), 
+                new StageTO("Stage_id18", "stageN18", "stage Desc 18", 33, 34, 3, false, false));
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(dao.getStages(null).getAllTOs(), expectedStages));
         
         // Test recovery of one attribute without filter on species IDs
         dao.setAttributes(Arrays.asList(StageDAO.Attribute.ID, StageDAO.Attribute.NAME));
         expectedStages = Arrays.asList(
-                new StageTO("Stage_id1","stageN1",null,0,0,0,false,false),
-                new StageTO("Stage_id2","stageN2",null,0,0,0,false,false),
-                new StageTO("Stage_id3","stageN3",null,0,0,0,false,false),
-                new StageTO("Stage_id4","stageN4",null,0,0,0,false,false),
-                new StageTO("Stage_id5","stageN5",null,0,0,0,false,false),
-                new StageTO("Stage_id6","stageN6",null,0,0,0,false,false),
-                new StageTO("Stage_id7","stageN7",null,0,0,0,false,false),
-                new StageTO("Stage_id8","stageN8",null,0,0,0,false,false),
-                new StageTO("Stage_id9","stageN9",null,0,0,0,false,false),
-                new StageTO("Stage_id10","stageN10",null,0,0,0,false,false),
-                new StageTO("Stage_id11","stageN11",null,0,0,0,false,false),
-                new StageTO("Stage_id12","stageN12",null,0,0,0,false,false),
-                new StageTO("Stage_id13","stageN13",null,0,0,0,false,false),
-                new StageTO("Stage_id14","stageN14",null,0,0,0,false,false),
-                new StageTO("Stage_id15","stageN15",null,0,0,0,false,false),
-                new StageTO("Stage_id16","stageN16",null,0,0,0,false,false),
-                new StageTO("Stage_id17","stageN17",null,0,0,0,false,false),
-                new StageTO("Stage_id18","stageN18",null,0,0,0,false,false));
+                new StageTO("Stage_id1", "stageN1", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id2", "stageN2", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id3", "stageN3", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id4", "stageN4", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id5", "stageN5", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id6", "stageN6", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id7", "stageN7", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id8", "stageN8", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id9", "stageN9", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id10", "stageN10", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id11", "stageN11", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id12", "stageN12", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id13", "stageN13", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id14", "stageN14", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id15", "stageN15", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id16", "stageN16", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id17", "stageN17", null, 0, 0, 0, false, false), 
+                new StageTO("Stage_id18", "stageN18", null, 0, 0, 0, false, false));
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(dao.getStages(null).getAllTOs(), expectedStages));
 
@@ -102,14 +102,16 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
         Set<String> speciesIds = new HashSet<String>();
         speciesIds.addAll(Arrays.asList("11","44"));
         expectedStages = Arrays.asList(
-                new StageTO("Stage_id1","stageN1","stage Desc 1",1,36,1,false,true),
-                new StageTO("Stage_id4","stageN4","stage Desc 4",5,6,1,false,false),
-                new StageTO("Stage_id5","stageN5","stage Desc 5",8,17,2,false,false),
-                new StageTO("Stage_id8","stageN8","stage Desc 8",12,13,3,false,true),
-                new StageTO("Stage_id12","stageN12","stage Desc 12",21,22,2,false,true),
-                new StageTO("Stage_id13","stageN13","stage Desc 13",23,24,1,false,true),
-                new StageTO("Stage_id16","stageN16","stage Desc 16",28,29,3,false,false),
-                new StageTO("Stage_id18","stageN18","stage Desc 18",33,34,2,false,false));
+                new StageTO("Stage_id1", "stageN1", "stage Desc 1", 1, 36, 1, false, true), 
+                new StageTO("Stage_id2", "stageN2", "stage Desc 2", 2, 7, 2, false, false), 
+                new StageTO("Stage_id5", "stageN5", "stage Desc 5", 8, 17, 2, false, false), 
+                new StageTO("Stage_id6", "stageN6", "stage Desc 6", 9, 10, 3, false, false), 
+                new StageTO("Stage_id7", "stageN7", "stage Desc 7", 11, 16, 3, false, false), 
+                new StageTO("Stage_id8", "stageN8", "stage Desc 8", 12, 13, 4, false, true), 
+                new StageTO("Stage_id14", "stageN14", "stage Desc 14", 26, 35, 2, false, false), 
+                new StageTO("Stage_id15", "stageN15", "stage Desc 15", 27, 32, 3, false, true), 
+                new StageTO("Stage_id16", "stageN16", "stage Desc 16", 28, 29, 4, false, false), 
+                new StageTO("Stage_id18", "stageN18", "stage Desc 18", 33, 34, 3, false, false));
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getStages(speciesIds).getAllTOs(), expectedStages));
@@ -121,7 +123,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
      * Test the insertion method {@link MySQLStageDAO#insertStages(Collection)}.
      */
     @Test
-    public void shouldInsertTaxa() throws SQLException {
+    public void shouldInsertStages() throws SQLException {
         this.useEmptyDB();
         //create a Collection of TaxonTOs to be inserted
         Collection<StageTO> stageTOs = new ArrayList<StageTO>();

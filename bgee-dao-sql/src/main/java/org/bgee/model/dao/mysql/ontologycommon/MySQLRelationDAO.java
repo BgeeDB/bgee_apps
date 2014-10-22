@@ -181,14 +181,14 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             "t3.stageId AS " + 
             this.attributeStageRelationToString(RelationDAO.Attribute.TARGETID) + ", " +
             //no other parenthood relations between stages other than is_a
-            RelationType.ISA_PARTOF.getStringRepresentation() + " AS " + 
+            "'" + RelationType.ISA_PARTOF.getStringRepresentation() + "' AS " + 
             this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONTYPE) + ", " +
             //emulate RelationStatus
             "IF (t1.stageId = t3.stageId, " + 
-                RelationStatus.REFLEXIVE.getStringRepresentation() + ", " +
-                "IF (t3.level = t1.level + 1, " + 
-                RelationStatus.DIRECT.getStringRepresentation() + ", " +
-                RelationStatus.INDIRECT.getStringRepresentation() + ")) AS " +
+                "'" + RelationStatus.REFLEXIVE.getStringRepresentation() + "', " +
+                "IF (t3.stageLevel = t1.stageLevel + 1, " + 
+                "'" + RelationStatus.DIRECT.getStringRepresentation() + "', " +
+                "'" + RelationStatus.INDIRECT.getStringRepresentation() + "')) AS " +
             this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONSTATUS) + " " +
             		
             "FROM stage AS t1 " +
@@ -199,11 +199,19 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 "AND t3.stageRightBound <= t1.stageRightBound " +
             "INNER JOIN stageTaxonConstraint AS t4 " +
                 "ON t3.stageId = t4.stageId AND " +
-                "(t4.speciesId IS NULL OR t4.speciesId = t2.speciesId) ";
+                "(t2.speciesId IS NULL OR t4.speciesId IS NULL OR t4.speciesId = t2.speciesId) ";
         if (isSpeciesFilter) {
-            sql += "WHERE t2.speciesId IS NULL OR t2.speciesId IN (" +
+            //a case is not covered in this where clause: for instance, if we query relations 
+            //for species 1 or species 2, while stage 1 exists in species 1, and stqge2 
+            //in species 2. With only this where clause, we could retrieve 
+            //an incorrect relation between stage 1 an stage 2. But this is not possible 
+            //thanks to the join clause above between t4 and t2. 
+            sql += "WHERE (t2.speciesId IS NULL OR t2.speciesId IN (" +
                    BgeePreparedStatement.generateParameterizedQueryString(
-                           speciesIds.size()) + "))";
+                           speciesIds.size()) + ")) " +
+                   "AND (t4.speciesId IS NULL OR t4.speciesId IN (" +
+                   BgeePreparedStatement.generateParameterizedQueryString(
+                           speciesIds.size()) + ")) ";
         }
         sql += ") AS tempTable ";
         
@@ -223,6 +231,10 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              if (isSpeciesFilter) {
                  List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                  Collections.sort(orderedSpeciesIds);
+                 stmt.setIntegers(startIndex, orderedSpeciesIds);
+                 startIndex += orderedSpeciesIds.size();
+                 //we set the species IDs twice, once for the parent stages, 
+                 //once for the child stages
                  stmt.setIntegers(startIndex, orderedSpeciesIds);
                  startIndex += orderedSpeciesIds.size();
              }
@@ -390,11 +402,16 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
-                    if (column.getValue().equals("anatEntityRelationId")) {
+                    if (column.getValue().equals("anatEntityRelationId") || 
+                            column.getValue().equals("stageRelationId")) {
                         relationId = currentResultSet.getString(column.getKey());
-                    } else if (column.getValue().equals("anatEntitySourceId") || column.getValue().equals("goAllSourceId") ) {
+                    } else if (column.getValue().equals("anatEntitySourceId") || 
+                            column.getValue().equals("goAllSourceId") || 
+                            column.getValue().equals("stageSourceId")) {
                         sourceId = currentResultSet.getString(column.getKey());
-                    } else if (column.getValue().equals("anatEntityTargetId") || column.getValue().equals("goAllTargetId") ) {
+                    } else if (column.getValue().equals("anatEntityTargetId") || 
+                            column.getValue().equals("goAllTargetId") || 
+                            column.getValue().equals("stageTargetId") ) {
                         targetId = currentResultSet.getString(column.getKey());
                     } else if (column.getValue().equals("relationStatus")) {
                         relationStatus = RelationStatus.convertToRelationStatus(

@@ -40,9 +40,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
     }
 
     /**
-     * Retrieve all anatomical entity relations from data source according to a {@code Set} of 
-     * {@code String}s that are the IDs of species, and a {@code Set} of {@code RelationType}s 
-     * that are the relation types, both allowing to filter the relations to use.
+     * Retrieve all anatomical entity relations from data source. The relations 
+     * can be filtered by species IDs, by {@code RelationType}s, and {@code RelationStatus}.
      * <p>
      * The relations are ordered by source ID and target ID, the only common columns to 
      * all relation tables. 
@@ -50,17 +49,37 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
-     *                      allowing to filter the calls to use
-     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation types
-     *                      allowing to filter the calls to use
-     * @return              A {@code RelationTOResultSet} containing all anatomical entity relations
-     *                      from data source.
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     *                          to retrieve relations for.
+     * @param relationTypes     A {@code Set} of {@code RelationType}s that are the relation 
+     *                          types allowing to filter the relations to retrieve.
+     * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
+     *                          allowing to filter the relations to retrieve.
+     * @return              A {@code RelationTOResultSet} allowing to retrieve anatomical 
+     *                      entity relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds,
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
 
+    /**
+     * Retrieve all relations between stages from data source. The relations 
+     * can be filtered by species IDs or {@code RelationStatus} (the only parenthood 
+     * relations between stages are "is_a" relations).
+     * <p>
+     * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     * 
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     *                          to retrieve relations for.
+     * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
+     *                          allowing to filter the relations to retrieve.
+     * @return              A {@code RelationTOResultSet} allowing to retrieve stage relations 
+     *                      from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public RelationTOResultSet getStageRelations(Set<String> speciesIds, 
+            Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
      * Inserts the provided anatomical entity relations into the Bgee database, represented as a 

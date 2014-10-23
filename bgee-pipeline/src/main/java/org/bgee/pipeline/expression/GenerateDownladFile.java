@@ -309,21 +309,10 @@ public class GenerateDownladFile extends MySQLDAOUser {
         
         //get all species in Bgee even if some species IDs were provided, 
         //to check user input.
-        List<String> speciesIdsFromDb = BgeeDBUtils.loadSpeciesIdsFromDb(this); 
-        //Create a new List to avoid modifying user input
-        List<String> speciesIdsToUse = null;
-        if (speciesIds == null || speciesIds.size() == 0) {
-            speciesIdsToUse = speciesIdsFromDb;
-        } else if (!speciesIdsFromDb.containsAll(speciesIds)) {
-            speciesIdsToUse = new ArrayList<String>(speciesIds);
-            speciesIdsToUse.removeAll(speciesIdsFromDb);
-            throw log.throwing(new IllegalArgumentException("Some species IDs " +
-                    "could not be found in Bgee: " + speciesIdsToUse));
-        } else {
-            speciesIdsToUse = speciesIds;
-        }
+        List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(speciesIds, 
+                this.getSpeciesDAO()); 
 
-        if (fileTypes.size() == 0) {
+        if (fileTypes.isEmpty()) {
             // If no file types are given by user, we set all file types
             fileTypes = Arrays.asList(EXPR_SIMPLE, EXPR_COMPLETE, DIFFEXPR_SIMPLE, DIFFEXPR_COMPLETE);
         }

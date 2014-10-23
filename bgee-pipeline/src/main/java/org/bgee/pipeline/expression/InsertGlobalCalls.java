@@ -1,6 +1,5 @@
 package org.bgee.pipeline.expression;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,11 +49,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     private final static Logger log = LogManager.getLogger(InsertGlobalCalls.class.getName());
     
     /**
-     * An {@code int} used to generate IDs of global expression or no-expression calls.
-     */        
-    private int globalId;
-    
-    /**
      * A {@code String} that is the argument class for expression propagation.
      */
     public final static String EXPRESSION_ARG = "expression";
@@ -63,24 +57,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * A {@code String} that is the argument class for no-expression propagation.
      */
     public final static String NOEXPRESSION_ARG = "no-expression";
-
-    /**
-     * Default constructor. 
-     */
-    public InsertGlobalCalls() {
-        this(null);
-    }
-
-    /**
-     * Constructor providing the {@code MySQLDAOManager} that will be used by 
-     * this object to perform queries to the database. This is useful for unit testing.
-     * 
-     * @param manager   the {@code MySQLDAOManager} to use.
-     */
-    public InsertGlobalCalls(MySQLDAOManager manager) {
-        super(manager);
-        this.globalId = 0;
-    }
 
     /**
      * Main method to insert global expression or no-expression in Bgee database. 
@@ -103,7 +79,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         
         int expectedArgLengthWithoutSpecies = 1;
         int expectedArgLengthWithSpecies = 2;
-
+    
         if (args.length != expectedArgLengthWithSpecies &&
                 args.length != expectedArgLengthWithoutSpecies) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
@@ -130,6 +106,29 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     }
 
     /**
+     * An {@code int} used to generate IDs of global expression or no-expression calls.
+     */        
+    private int globalId;
+
+    /**
+     * Default constructor. 
+     */
+    public InsertGlobalCalls() {
+        this(null);
+    }
+
+    /**
+     * Constructor providing the {@code MySQLDAOManager} that will be used by 
+     * this object to perform queries to the database. This is useful for unit testing.
+     * 
+     * @param manager   the {@code MySQLDAOManager} to use.
+     */
+    public InsertGlobalCalls(MySQLDAOManager manager) {
+        super(manager);
+        this.globalId = 0;
+    }
+
+    /**
      * Inserts the global expression or no-expression calls into the Bgee database.
      * 
      * @param speciesIds       A {@code Set} of {@code String}s containing species IDs that will 
@@ -144,8 +143,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     //TODO: the previous version of Bgee didn't have any "BOTH" origin of line, 
     //the unique key was (geneId, anatEntityId, stageId, originOfLine), so that there was 
     //always a SELF origin of line for each entry. Not sure to remember why it was needed. 
-    //Either it is needed and we should do the same, or we actually don't need 
-    //the origin of line information...
+    //Maybe it is needed and we should do the same? Or the "BOTH" solves the problem?
     public void insert(List<String> speciesIds, boolean isNoExpression) throws DAOException {
         log.entry(speciesIds, isNoExpression);
 
@@ -159,19 +157,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
             //get all species in Bgee even if some species IDs were provided, 
             //to check user input.
-            List<String> speciesIdsFromDb = BgeeDBUtils.loadSpeciesIdsFromDb(this); 
-            //Create a new List to avoid modifying user input
-            List<String> speciesIdsToUse = null;
-            if (speciesIds == null || speciesIds.size() == 0) {
-                speciesIdsToUse = speciesIdsFromDb;
-            } else if (!speciesIdsFromDb.containsAll(speciesIds)) {
-                speciesIdsToUse = new ArrayList<String>(speciesIds);
-                speciesIdsToUse.removeAll(speciesIdsFromDb);
-                throw log.throwing(new IllegalArgumentException("Some species IDs " +
-                        "could not be found in Bgee: " + speciesIdsToUse));
-            } else {
-                speciesIdsToUse = speciesIds;
-            }
+            List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(speciesIds, 
+                    this.getSpeciesDAO());
             
             //retrieve IDs of all anatomical entities allowed for no-expression call 
             //propagation, see loadAllowedAnatEntities method for details. 

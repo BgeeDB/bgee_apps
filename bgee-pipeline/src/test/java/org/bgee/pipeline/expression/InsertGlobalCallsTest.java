@@ -558,7 +558,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
      */
     @Test
     public void shouldInsertGlobalNoExpressionWithUnknownSpecies()
-            throws IllegalStateException, SQLException {
+            throws IllegalStateException {
         
         MockDAOManager mockManager = new MockDAOManager();
 
@@ -582,7 +582,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
      */
     @Test
     public void shouldInsertGlobalExpressionWithUnknownSpecies()
-            throws IllegalStateException, SQLException {
+            throws IllegalStateException {
         
         MockDAOManager mockManager = new MockDAOManager();
 

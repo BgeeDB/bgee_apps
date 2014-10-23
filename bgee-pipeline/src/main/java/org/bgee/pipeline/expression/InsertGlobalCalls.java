@@ -27,7 +27,6 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
@@ -116,7 +115,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     public InsertGlobalCalls() {
         this(null);
     }
-
     /**
      * Constructor providing the {@code MySQLDAOManager} that will be used by 
      * this object to perform queries to the database. This is useful for unit testing.
@@ -176,7 +174,10 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
                 // Retrieve all relations (as RelationTOs) with relation type "is_a part_of" 
                 // between anatomical structures of this species, source and target fields only.
-                List<RelationTO> relationTOs = this.loadIsAPartOfRelationsFromDb(speciesFilter);
+                this.getRelationDAO().setAttributes(RelationDAO.Attribute.SOURCEID, 
+                RelationDAO.Attribute.TARGETID);
+                List<RelationTO> relationTOs = this.getRelationDAO().getAnatEntityRelations(
+                        speciesFilter, EnumSet.of(RelationType.ISA_PARTOF), null).getAllTOs();
                 
                 if (isNoExpression) {
                     // Retrieve all no-expression calls of the current species.
@@ -264,42 +265,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         }
 
         log.exit();
-    }
-
-    /**
-     * Retrieves all is_a/part_of relations between anatomical entities for given species, 
-     * present into the Bgee data source, source and target fields only. If {@code speciesIds} 
-     * is {@code null} or empty, relations for all species will be retrieved.
-     * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
-     *                      allowing to filter the anatomical entities to use. Can be 
-     *                      {@code null} or empty
-     * @return              A {@code List} of {@code RelationTO}s containing source and target IDs 
-     *                      of all anatomical entity relations of the given species.
-     * @throws DAOException If an error occurred while getting the data from the Bgee database.
-     */
-    private List<RelationTO> loadIsAPartOfRelationsFromDb(Set<String> speciesIds) 
-            throws DAOException {
-        log.entry(speciesIds);
-        
-        log.info("Start retrieving anatomical entity relations for the species IDs {}...", 
-                speciesIds);
-        
-        RelationDAO dao = this.getRelationDAO();
-        dao.setAttributes(RelationDAO.Attribute.SOURCEID, RelationDAO.Attribute.TARGETID);
-    
-        //get direct, indirect, and reflexive relations for propagation
-        RelationTOResultSet rsRelations = dao.getAnatEntityRelations(
-                speciesIds, EnumSet.of(RelationType.ISA_PARTOF), null);
-        List<RelationTO> relationTOs = rsRelations.getAllTOs();
-        //no need for a try with resource or a finally, the insert method will close everything 
-        //at the end in any case.
-        // No need to close the ResultSet, it's done by getAllTOs().
-        
-        log.info("Done retrieving anatomical entity relations, {} relations found",
-                relationTOs.size());
-    
-        return log.exit(relationTOs);        
     }
 
     /**
@@ -424,7 +389,10 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         //once this information will be inserted into Bgee
 
         log.debug("Retrieving parents of anat entities allowed so far...");
-        List<RelationTO> allRelationTOs = this.loadIsAPartOfRelationsFromDb(null);
+        this.getRelationDAO().setAttributes(RelationDAO.Attribute.SOURCEID, 
+                RelationDAO.Attribute.TARGETID);
+        List<RelationTO> allRelationTOs = this.getRelationDAO().getAnatEntityRelations(
+                null, EnumSet.of(RelationType.ISA_PARTOF), null).getAllTOs();
         Set<String> ancestorIds = new HashSet<String>();
         for (String anatEntityId: allowedAnatEntities) {
             for (RelationTO relTO: allRelationTOs) {

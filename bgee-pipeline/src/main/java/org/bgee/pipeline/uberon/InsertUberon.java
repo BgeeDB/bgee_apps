@@ -179,7 +179,6 @@ public class InsertUberon extends MySQLDAOUser {
     public InsertUberon() {
         this(null);
     }
-
     /**
      * Constructor providing the {@code MySQLDAOManager} that will be used by 
      * this object to perform queries to the database.

@@ -182,7 +182,7 @@ public class CommandRunner {
             break;
 
         //---------- Call propagation -----------
-        case "CallPropagation":
+        case "InsertGlobalCalls":
             InsertGlobalCalls.main(newArgs);
             break;
  

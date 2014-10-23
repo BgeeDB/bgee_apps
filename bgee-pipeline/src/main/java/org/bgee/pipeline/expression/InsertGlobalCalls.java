@@ -50,14 +50,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     private final static Logger log = LogManager.getLogger(InsertGlobalCalls.class.getName());
     
     /**
-     * An {@code int} that is a unique ID for each global expression calls.
+     * An {@code int} used to generate IDs of global expression or no-expression calls.
      */        
-    private int globalExprId;
-
-    /**
-     * An {@code int} that is a unique ID for each global no-expression calls.
-     */
-    private int globalNoExprId;
+    private int globalId;
     
     /**
      * A {@code String} that is the argument class for expression propagation.
@@ -84,8 +79,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      */
     public InsertGlobalCalls(MySQLDAOManager manager) {
         super(manager);
-        this.globalExprId = 0;
-        this.globalNoExprId = 0;
+        this.globalId = 0;
     }
 
     /**
@@ -110,7 +104,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         int expectedArgLengthWithoutSpecies = 1;
         int expectedArgLengthWithSpecies = 2;
 
-        if (args.length != expectedArgLengthWithSpecies ||
+        if (args.length != expectedArgLengthWithSpecies &&
                 args.length != expectedArgLengthWithoutSpecies) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
                     "provided, expected " + expectedArgLengthWithoutSpecies + " or " + 
@@ -158,9 +152,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         try {
             // Get the maximum of global call IDs to get start index for new inserted global calls. 
             if (isNoExpression) {
-                globalNoExprId = this.getNoExpressionCallDAO().getMaxNoExpressionCallId(true) + 1;
+                this.globalId = this.getNoExpressionCallDAO().getMaxNoExpressionCallId(true) + 1;
             } else {
-                globalExprId = this.getExpressionCallDAO().getMaxExpressionCallId(true) + 1;
+                this.globalId = this.getExpressionCallDAO().getMaxExpressionCallId(true) + 1;
             }
 
             //get all species in Bgee even if some species IDs were provided, 
@@ -639,7 +633,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                 }
             }
             ExpressionCallTO updatedGlobalCall =
-                    new ExpressionCallTO(String.valueOf(this.globalExprId++), 
+                    new ExpressionCallTO(String.valueOf(this.globalId++), 
                             globalCall.getGeneId(), globalCall.getAnatEntityId(), 
                             globalCall.getStageId(), 
                             affymetrixData, estData, inSituData, rnaSeqData, true,
@@ -701,7 +695,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             }
 
             NoExpressionCallTO updatedGlobalCall =
-                    new NoExpressionCallTO(String.valueOf(this.globalNoExprId++), 
+                    new NoExpressionCallTO(String.valueOf(this.globalId++), 
                             globalCall.getGeneId(), globalCall.getAnatEntityId(), 
                             globalCall.getStageId(), 
                             affymetrixData, inSituData, relaxedinSituData, rnaSeqData,

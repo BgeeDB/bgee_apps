@@ -396,6 +396,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         
         // Fourth, we need mock a mock MySQLNoExpressionCallTOResultSet to mock the return of 
         // getNoExpressionCalls().
+        //TODO: why is this the second time that we set the NoExpressionCallTO to return?
         MySQLNoExpressionCallTOResultSet mockNoExprTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
@@ -434,6 +435,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         new RelationTO("Anat_id7", "Anat_id7"),
                         new RelationTO("Anat_id8", "Anat_id8"),
                         new RelationTO("Anat_id9", "Anat_id9"),
+                        new RelationTO("Anat_id10", "Anat_id10"),
                         new RelationTO("Anat_idX", "Anat_idX")),        
                 MySQLRelationTOResultSet.class);
         when(mockManager.mockRelationDAO.getAnatEntityRelations(

@@ -152,6 +152,9 @@
         <repository>
             <id>terracotta-repository</id>
             <url>http://www.terracotta.org/download/reflector/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
 

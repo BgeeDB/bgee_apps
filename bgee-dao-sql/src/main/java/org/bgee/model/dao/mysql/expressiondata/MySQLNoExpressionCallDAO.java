@@ -262,8 +262,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setString(7, call.getRNASeqData().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
-                if (callInsertedCount % MySQLDAO.INSERTED_ROWS_MODULO_DIVISOR == 0) {
-                    log.info("{} no-expression calls inserted", callInsertedCount);
+                if (log.isDebugEnabled() && callInsertedCount % 100000 == 0) {
+                    log.debug("{} no-expression calls inserted", callInsertedCount);
                 }
             }
         } catch (SQLException e) {
@@ -287,8 +287,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setString(8, call.getOriginOfLine().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
-                if (callInsertedCount % MySQLDAO.INSERTED_ROWS_MODULO_DIVISOR == 0) {
-                    log.info("{} global no-expression calls inserted", callInsertedCount);
+                if (log.isDebugEnabled() && callInsertedCount % 100000 == 0) {
+                    log.debug("{} global no-expression calls inserted", callInsertedCount);
                 }
             }
         } catch (SQLException e) {
@@ -318,8 +318,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setString(2, call.getNoExpressionId());
                 rowInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
-                if (rowInsertedCount % MySQLDAO.INSERTED_ROWS_MODULO_DIVISOR == 0) {
-                    log.info("{} global no-expression to no-expression inserted", rowInsertedCount);
+                if (log.isDebugEnabled() && rowInsertedCount % 100000 == 0) {
+                    log.debug("{} global no-expression to no-expression inserted", rowInsertedCount);
                 }
             }
             return log.exit(rowInsertedCount);

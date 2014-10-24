@@ -6,11 +6,23 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.junit.Test;
 
@@ -46,7 +58,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
     public void shouldGetSpeciesIdsFromDb() {
         
         MockDAOManager mockManager = new MockDAOManager();
-        MySQLSpeciesTOResultSet mockSpeciesResultSet = this.mockGetAllSpecies(mockManager);
+        SpeciesTOResultSet mockSpeciesResultSet = this.mockGetAllSpecies(mockManager);
         
         assertEquals("Incorrect speciesIDs retrieved", Arrays.asList("21", "11", "30"), 
                 BgeeDBUtils.getSpeciesIdsFromDb(mockManager.getSpeciesDAO()));
@@ -98,10 +110,10 @@ public class BgeeDBUtilsTest extends TestAncestor {
      * 
      * @param mockManager A {@code MySQLDAOManager} to for the class to acquire mock DAOs.
      */
-    private MySQLSpeciesTOResultSet mockGetAllSpecies(MockDAOManager mockManager) {
+    private SpeciesTOResultSet mockGetAllSpecies(MockDAOManager mockManager) {
         
         // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
-        MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
+        SpeciesTOResultSet mockSpeciesTORs = this.createMockDAOResultSet(
                 Arrays.asList(
                         new SpeciesTO("21", null, null, null, null, null, null, null),
                         new SpeciesTO("11", null, null, null, null, null, null, null),
@@ -110,5 +122,107 @@ public class BgeeDBUtilsTest extends TestAncestor {
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
         
         return mockSpeciesTORs;
+    }
+    
+    /**
+     * Test {@link BgeeDBUtils#getAnatEntityChilrenFromParents(Set, RelationDAO)} and 
+     * {@link BgeeDBUtils#getAnatEntityParentsFromChilren(Set, RelationDAO)}
+     */
+    @Test
+    public void shouldGetAnatEntityTargetsOrSources() {
+        MockDAOManager mockManager = new MockDAOManager();
+        List<RelationTO> returnedRelTOs = Arrays.asList(
+                new RelationTO("1", "1"), 
+                new RelationTO("2", "2"), 
+                new RelationTO("3", "3"), 
+                new RelationTO("4", "4"), 
+                new RelationTO("5", "5"), 
+                new RelationTO("2", "1"), 
+                new RelationTO("3", "1"), 
+                new RelationTO("4", "3"), 
+                new RelationTO("4", "1"), 
+                new RelationTO("3", "5"));
+        
+        RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+                returnedRelTOs, MySQLRelationTOResultSet.class);
+        when(mockManager.getRelationDAO().getAnatEntityRelations(
+                new HashSet<String>(Arrays.asList("1", "2")), 
+                EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
+        
+        Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
+        expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1", "2", "3", "4")));
+        expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2")));
+        expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "4")));
+        expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4")));
+        expectedReturnedVal.put("5", new HashSet<String>(Arrays.asList("5", "3")));
+        
+        assertEquals("Incorrect anat entity relatives by source", expectedReturnedVal, 
+                BgeeDBUtils.getAnatEntityChilrenFromParents(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getRelationDAO()));
+        verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
+                RelationDAO.Attribute.TARGETID);
+        verify(mockRelationTOResultSet).close();
+        
+        
+        mockManager = new MockDAOManager();
+        mockRelationTOResultSet = this.createMockDAOResultSet(
+                returnedRelTOs, MySQLRelationTOResultSet.class);
+        when(mockManager.getRelationDAO().getAnatEntityRelations(
+                new HashSet<String>(Arrays.asList("1", "2")), 
+                EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
+        
+        expectedReturnedVal = new HashMap<String, Set<String>>();
+        expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1")));
+        expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2", "1")));
+        expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "1", "5")));
+        expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4", "3", "1")));
+        expectedReturnedVal.put("5", new HashSet<String>(Arrays.asList("5")));
+        
+        assertEquals("Incorrect anat entity relatives by target", expectedReturnedVal, 
+                BgeeDBUtils.getAnatEntityParentsFromChilren(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getRelationDAO()));
+        verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
+                RelationDAO.Attribute.TARGETID);
+        verify(mockRelationTOResultSet).close();
+    }
+    
+    /**
+     * Test {@link BgeeDBUtils#getStageChilrenFromParents(Set, RelationDAO)}.
+     */
+    @Test
+    public void shouldGetStageTargetsBySources() {
+        MockDAOManager mockManager = new MockDAOManager();
+        //stages can have only one direct parent
+        List<RelationTO> returnedRelTOs = Arrays.asList(
+                new RelationTO("1", "1"), 
+                new RelationTO("2", "2"), 
+                new RelationTO("3", "3"), 
+                new RelationTO("4", "4"), 
+                new RelationTO("2", "1"), 
+                new RelationTO("3", "1"), 
+                new RelationTO("4", "3"), 
+                new RelationTO("4", "1"));
+        
+        RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+                returnedRelTOs, MySQLRelationTOResultSet.class);
+        when(mockManager.getRelationDAO().getStageRelations(
+                new HashSet<String>(Arrays.asList("1", "2")), null)).thenReturn(
+                        mockRelationTOResultSet);
+        
+        Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
+        expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1", "2", "3", "4")));
+        expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2")));
+        expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "4")));
+        expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4")));
+        
+        assertEquals("Incorrect stage relatives by source", expectedReturnedVal, 
+                BgeeDBUtils.getStageChilrenFromParents(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getRelationDAO()));
+        verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
+                RelationDAO.Attribute.TARGETID);
+        verify(mockRelationTOResultSet).close();
     }
 }

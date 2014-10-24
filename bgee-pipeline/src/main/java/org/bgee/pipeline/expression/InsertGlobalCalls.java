@@ -1,6 +1,5 @@
 package org.bgee.pipeline.expression;
 
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,9 +23,6 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpress
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
@@ -171,22 +167,14 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                 
                 Set<String> speciesFilter = new HashSet<String>();
                 speciesFilter.add(speciesId);
-
-                // Retrieve all relations (as RelationTOs) with relation type "is_a part_of" 
-                // between anatomical structures of this species, source and target fields only.
-                this.getRelationDAO().setAttributes(RelationDAO.Attribute.SOURCEID, 
-                RelationDAO.Attribute.TARGETID);
-                List<RelationTO> relationTOs = this.getRelationDAO().getAnatEntityRelations(
-                        speciesFilter, EnumSet.of(RelationType.ISA_PARTOF), null).getAllTOs();
                 
                 if (isNoExpression) {
-                    // Retrieve all no-expression calls of the current species.
-                    List<NoExpressionCallTO> noExpressionTOs = 
-                            this.loadNoExpressionCallFromDb(speciesFilter);
-                    
-                    // For each expression row, propagate to allowed children.
+                    // For each no-expression row, propagate to allowed children.
                     Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalNoExprMap =
-                            this.generateGlobalNoExpressionTOs(noExpressionTOs, relationTOs, 
+                            this.generateGlobalNoExpressionTOs(
+                                    this.loadNoExpressionCallFromDb(speciesFilter), 
+                                    BgeeDBUtils.getAnatEntityChilrenFromParents(speciesFilter, 
+                                            this.getRelationDAO()), 
                                     anatEntityFilter);
                     
                     // Generate the globalNoExprToNoExprTOs.
@@ -220,13 +208,12 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             "and {} correspondances inserted", speciesId, 
                             nbInsertedNoExpressions, nbInsertedGlobalNoExprToNoExpr);
                 } else {
-                    // Retrieve all expression calls of the current species.
-                    List<ExpressionCallTO> expressionTOs = 
-                            this.loadExpressionCallFromDb(speciesFilter);
-
                     // For each expression row, propagate to parents.
                     Map<ExpressionCallTO, Set<ExpressionCallTO>> globalExprMap =
-                            this.generateGlobalExpressionTOs(expressionTOs, relationTOs);
+                            this.generateGlobalExpressionTOs(
+                                    this.loadExpressionCallFromDb(speciesFilter), 
+                                    BgeeDBUtils.getAnatEntityParentsFromChilren(speciesFilter, 
+                                            this.getRelationDAO()));
                     
                     // Generate the globalExprToExprTOs.
                     Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
@@ -389,17 +376,11 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         //once this information will be inserted into Bgee
 
         log.debug("Retrieving parents of anat entities allowed so far...");
-        this.getRelationDAO().setAttributes(RelationDAO.Attribute.SOURCEID, 
-                RelationDAO.Attribute.TARGETID);
-        List<RelationTO> allRelationTOs = this.getRelationDAO().getAnatEntityRelations(
-                null, EnumSet.of(RelationType.ISA_PARTOF), null).getAllTOs();
+        Map<String, Set<String>> parentsFromChildren = 
+                BgeeDBUtils.getAnatEntityParentsFromChilren(null, this.getRelationDAO());
         Set<String> ancestorIds = new HashSet<String>();
         for (String anatEntityId: allowedAnatEntities) {
-            for (RelationTO relTO: allRelationTOs) {
-                if (relTO.getSourceId().equals(anatEntityId)) {
-                    ancestorIds.add(relTO.getTargetId());
-                }
-            }
+            ancestorIds.addAll(parentsFromChildren.get(anatEntityId));
         }
         allowedAnatEntities.addAll(ancestorIds);
 
@@ -419,52 +400,53 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * the global expression call. Second, it updates the global expression calls calling
      * {@link #updateGlobalExpressions()}.
      * 
-     * @param expressionTOs A {@code List} of {@code ExpressionCallTO}s containing 
-     *                      all expression calls to propagate.
-     * @param relationTOs   A {@code List} of {@code RelationTO}s containing source 
-     *                      and target IDs of all anatomical entity relations.
+     * @param expressionTOs         A {@code List} of {@code ExpressionCallTO}s containing 
+     *                              all expression calls to propagate.
+     * @param parentsFromChildren   A {@code Map} where keys are IDs of anatomical entities 
+     *                              that are sources of a relation, the associated value 
+     *                              being a {@code Set} of {@code String}s that are 
+     *                              the IDs of their associated targets. 
      * @return              A {@code Map} associating generated global expression calls to 
      *                      expression calls used to generate it.
      */
     private Map<ExpressionCallTO, Set<ExpressionCallTO>> generateGlobalExpressionTOs(
-            List<ExpressionCallTO> expressionTOs, List<RelationTO> relationTOs) {
-        log.entry(expressionTOs, relationTOs);
+            List<ExpressionCallTO> expressionTOs, 
+            Map<String, Set<String>> parentsFromChildren) {
+        log.entry(expressionTOs, parentsFromChildren);
                 
         Map<ExpressionCallTO, Set<ExpressionCallTO>> mapGlobalExpr = 
                 new HashMap<ExpressionCallTO, Set<ExpressionCallTO>>();
 
-        for (ExpressionCallTO curExpression : expressionTOs) {
-
+        for (ExpressionCallTO exprCallTO : expressionTOs) {
+            log.trace("Propagation for expression call: {}", exprCallTO);
             //the relations include a reflexive relation, where sourceId == targetId, 
             //this will allow to also include the actual not-propagated calls
-            for (RelationTO curRelation : relationTOs) {
-                log.trace("Propagation of the current expression for the relation: " + curRelation);
-                if (curExpression.getAnatEntityId().equals(curRelation.getSourceId())) {
-                    // Set ID to null to be able to compare keys of the map on 
-                    // gene ID, anatomical entity ID, and stage ID.
-                    // Add propagated expression call (same gene ID and stage ID 
-                    // but with anatomical entity ID of the current relation target ID).
-                    ExpressionCallTO propagatedExpression = new ExpressionCallTO(
-                            null, 
-                            curExpression.getGeneId(),
-                            curRelation.getTargetId(),
-                            curExpression.getStageId(),
-                            DataState.NODATA,      
-                            DataState.NODATA,
-                            DataState.NODATA,
-                            DataState.NODATA,
-                            false,
-                            false,
-                            ExpressionCallTO.OriginOfLine.SELF);
-                    
-                    log.trace("Add the propagated expression: " + propagatedExpression);
-                    Set<ExpressionCallTO> curExprAsSet = mapGlobalExpr.get(propagatedExpression);
-                    if (curExprAsSet == null) {
-                       curExprAsSet = new HashSet<ExpressionCallTO>();
-                       mapGlobalExpr.put(propagatedExpression, curExprAsSet);
-                    }
-                    curExprAsSet.add(curExpression);
+            for (String parentId : parentsFromChildren.get(exprCallTO.getAnatEntityId())) {
+                log.trace("Propagation of the current expression to parent: {}" + parentId);
+                // Set ID to null to be able to compare keys of the map on 
+                // gene ID, anatomical entity ID, and stage ID.
+                // Add propagated expression call (same gene ID and stage ID 
+                // but with anatomical entity ID of the current relation target ID).
+                ExpressionCallTO propagatedExpression = new ExpressionCallTO(
+                        null, 
+                        exprCallTO.getGeneId(),
+                        parentId,
+                        exprCallTO.getStageId(),
+                        DataState.NODATA,      
+                        DataState.NODATA,
+                        DataState.NODATA,
+                        DataState.NODATA,
+                        false,
+                        false,
+                        ExpressionCallTO.OriginOfLine.SELF);
+                
+                log.trace("Add the propagated expression: " + propagatedExpression);
+                Set<ExpressionCallTO> curExprAsSet = mapGlobalExpr.get(propagatedExpression);
+                if (curExprAsSet == null) {
+                    curExprAsSet = new HashSet<ExpressionCallTO>();
+                    mapGlobalExpr.put(propagatedExpression, curExprAsSet);
                 }
+                curExprAsSet.add(exprCallTO);
             }
         }
 
@@ -485,41 +467,43 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * 
      * @param noExpressionTOs           A {@code List} of {@code NoExpressionCallTO}s containing 
      *                                  all no-expression calls to be propagated.
-     * @param relationTOs               A {@code List} of {@code RelationTO}s containing source 
-     *                                  and target IDs of all anatomical entity relations.
+     * @param childrenFromParents        A {@code Map} where keys are IDs of anatomical entities 
+     *                                  that are targets of a relation, the associated value 
+     *                                  being a {@code Set} of {@code String}s that are 
+     *                                  the IDs of their associated sources. 
      * @param filteredAnatEntities      A {@code Set} of {@code String}s that are the IDs of 
      *                                  anatomical entities allowing filter calls to propagate.
      * @return                          A {@code Map} associating generated global no-expression 
      *                                  calls to no-expression calls used to generate it.
      */
     private Map<NoExpressionCallTO, Set<NoExpressionCallTO>>
-            generateGlobalNoExpressionTOs(List<NoExpressionCallTO> noExpressionTOs,
-                    List<RelationTO> relationTOs, Set<String> filteredAnatEntities) {
-        log.entry(noExpressionTOs, relationTOs, filteredAnatEntities);
+            generateGlobalNoExpressionTOs(List<NoExpressionCallTO> noExpressionTOs, 
+                    Map<String, Set<String>> childrenFromParents, 
+                    Set<String> filteredAnatEntities) {
+        log.entry(noExpressionTOs, childrenFromParents, filteredAnatEntities);
 
         Map<NoExpressionCallTO, Set<NoExpressionCallTO>> mapGlobalNoExpr = 
                 new HashMap<NoExpressionCallTO, Set<NoExpressionCallTO>>();
 
-        for (NoExpressionCallTO curExpression : noExpressionTOs) {
+        for (NoExpressionCallTO noExprCallTO : noExpressionTOs) {
+            log.trace("Propagation for no-expression call: {}", noExprCallTO);
             //the relations include a reflexive relation, where sourceId == targetId, 
             //this will allow to also include the actual not-propagated calls
-            for (RelationTO curRelation : relationTOs) {
-                log.trace("Propagation of the current no-expression for the relation: " + 
-                        curRelation);
+            for (String childId : childrenFromParents.get(noExprCallTO.getAnatEntityId())) {
+                log.trace("Propagation of the current no-expression to child: {}", childId);
 
                 // Add propagated no-expression call (same gene ID and stage ID 
                 // but with anatomical entity ID of the current relation source ID) 
                 // only in anatomical entities having at least a global expression call.
-                if (curExpression.getAnatEntityId().equals(curRelation.getTargetId()) && 
-                        (curRelation.getSourceId().equals(curRelation.getTargetId()) || //reflexive relation
-                                filteredAnatEntities.contains(curRelation.getSourceId()))) {
+                if (childId.equals(noExprCallTO.getAnatEntityId()) || //reflexive relation
+                            filteredAnatEntities.contains(childId)) {
                     // Set ID to null to be able to compare keys of the map on 
                     // gene ID, anatomical entity ID, and stage ID.
                     NoExpressionCallTO propagatedExpression = new NoExpressionCallTO(
                             null, 
-                            curExpression.getGeneId(),
-                            curRelation.getSourceId(),
-                            curExpression.getStageId(),
+                            noExprCallTO.getGeneId(),
+                            childId,
+                            noExprCallTO.getStageId(),
                             DataState.NODATA,      
                             DataState.NODATA,
                             DataState.NODATA,
@@ -533,7 +517,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                        curExprAsSet = new HashSet<NoExpressionCallTO>();
                        mapGlobalNoExpr.put(propagatedExpression, curExprAsSet);
                     }
-                    curExprAsSet.add(curExpression);
+                    curExprAsSet.add(noExprCallTO);
                 }
             }
         }

@@ -226,6 +226,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         log.entry(noExpressionCalls);
         
         int callInsertedCount = 0;
+        int totalCallNumber = noExpressionCalls.size();
 
         // According to isIncludeParentStructures(), the NoExpressionCallTO is inserted in 
         // noExpression or globalNoExpression table. As prepared statement is for the 
@@ -263,7 +264,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && callInsertedCount % 100000 == 0) {
-                    log.debug("{} no-expression calls inserted", callInsertedCount);
+                    log.debug("{}/{} no-expression calls inserted", callInsertedCount, 
+                            totalCallNumber);
                 }
             }
         } catch (SQLException e) {
@@ -288,7 +290,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && callInsertedCount % 100000 == 0) {
-                    log.debug("{} global no-expression calls inserted", callInsertedCount);
+                    log.debug("{}/{} global no-expression calls inserted", callInsertedCount, 
+                            totalCallNumber);
                 }
             }
         } catch (SQLException e) {
@@ -304,6 +307,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         log.entry(globalNoExpressionToNoExpression);
         
         int rowInsertedCount = 0;
+        int totalTONumber = globalNoExpressionToNoExpression.size();
 
         // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO globalNoExpressionToNoExpression " +
@@ -319,7 +323,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 rowInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && rowInsertedCount % 100000 == 0) {
-                    log.debug("{} global no-expression to no-expression inserted", rowInsertedCount);
+                    log.debug("{}/{} global no-expression to no-expression inserted", 
+                            rowInsertedCount, totalTONumber);
                 }
             }
             return log.exit(rowInsertedCount);

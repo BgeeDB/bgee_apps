@@ -252,6 +252,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         log.entry(expressionCalls);
         
         int callInsertedCount = 0;
+        int totalCallNumber = expressionCalls.size();
         
         // According to isIncludeSubstructures(), the ExpressionCallTO is inserted in 
         // expression or globalExpression table. As prepared statement is for the 
@@ -289,7 +290,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && callInsertedCount % 100000 == 0) {
-                    log.debug("{} expression calls inserted", callInsertedCount);
+                    log.debug("{}/{} expression calls inserted", callInsertedCount, 
+                            totalCallNumber);
                 }
             }
         } catch (SQLException e) {
@@ -315,7 +317,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && callInsertedCount % 100000 == 0) {
-                    log.debug("{} global expression calls inserted", callInsertedCount);
+                    log.debug("{}/{} global expression calls inserted", callInsertedCount, 
+                            totalCallNumber);
                 }
             }
         } catch (SQLException e) {
@@ -330,6 +333,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         log.entry(globalExpressionToExpression);
         
         int rowInsertedCount = 0;
+        int totalTONumber = globalExpressionToExpression.size();
 
         // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO globalExpressionToExpression " +
@@ -345,7 +349,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 rowInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && rowInsertedCount % 100000 == 0) {
-                    log.debug("{} global expression to expression inserted", rowInsertedCount);
+                    log.debug("{}/{} global expression to expression inserted", 
+                            rowInsertedCount, totalTONumber);
                 }
             }
             return log.exit(rowInsertedCount);

@@ -228,9 +228,13 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     log.info("Start inserting of global expression calls for {}...", speciesId);
                     nbInsertedExpressions += this.getExpressionCallDAO().
                             insertExpressionCalls(globalExprMap.keySet());
+                    if (nbInsertedExpressions != globalExprMap.keySet().size()) {
+                        throw log.throwing(new AssertionError("Global expression calls " +
+                        		"incorrectly inserted."));
+                    }
                     // Empty memory to free up some memory. We don't use clear() 
                     // because it empty ArgumentCaptor values in test in same time.
-                    globalExprMap = new HashMap<ExpressionCallTO, Set<ExpressionCallTO>>();
+                    globalExprMap = null;
                     log.info("Done inserting of global expression calls for {}.", speciesId);
 
                     log.info("Start inserting of relation between an expression call " +

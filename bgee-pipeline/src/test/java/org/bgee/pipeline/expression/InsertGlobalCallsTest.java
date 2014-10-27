@@ -114,6 +114,11 @@ public class InsertGlobalCallsTest extends TestAncestor {
         params.addAllSpeciesIds(Arrays.asList("21"));
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExpr21TORs);
+
+        // We need to mock the return of insertExpressionCalls() for species 11 and 21.
+        // TODO try to not use anyCollection()
+        when(mockManager.mockExpressionCallDAO.insertExpressionCalls(
+                anyCollection())).thenReturn(10).thenReturn(6);
         
         // We need a mock MySQLRelationTOResultSet to mock the return of getAnatEntityRelations().
         MySQLRelationTOResultSet mockRelation11TORs = createMockDAOResultSet(
@@ -357,7 +362,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 (ExpressionCallParams) valueCallParamEq(new ExpressionCallParams()))).
                 thenReturn(mockExprAnatTORs);
         
-        // Mock MySQLNoExpressionCallTOResultSet to mock the return of getNoExpressionCalls().
+        // Mock MySQLNoExpressionCallTOResultSet to mock the return of getNoExpressionCalls(),
+        // called by the method loadAllowedAnatEntities() 
         MySQLNoExpressionCallTOResultSet mockNoExprAnatTORs = createMockDAOResultSet(
                 Arrays.asList(new NoExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, false, null),
                               new NoExpressionCallTO(null, null, "Anat_id3", null, null, null, null, null, false, null),
@@ -395,8 +401,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 thenReturn(mockRelationTORs);
         
         // Fourth, we need mock a mock MySQLNoExpressionCallTOResultSet to mock the return of 
-        // getNoExpressionCalls().
-        //TODO: why is this the second time that we set the NoExpressionCallTO to return?
+        // getNoExpressionCalls(), called by the method loadNoExpressionCallFromDb()
         MySQLNoExpressionCallTOResultSet mockNoExprTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),

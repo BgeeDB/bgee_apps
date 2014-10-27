@@ -114,7 +114,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated sources. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getAnatEntityChilrenFromParents(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getAnatEntityChildrenFromParents(Set<String> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -143,7 +143,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated targets. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getAnatEntityParentsFromChilren(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getAnatEntityParentsFromChildren(Set<String> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
@@ -172,7 +172,7 @@ public class BgeeDBUtils {
      *                      that are the IDs of their associated sources. 
      * @throws DAOException If an error occurred while getting the data from the Bgee database.
      */
-    public static Map<String, Set<String>> getStageChilrenFromParents(Set<String> speciesIds, 
+    public static Map<String, Set<String>> getStageChildrenFromParents(Set<String> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(

@@ -173,7 +173,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalNoExprMap =
                             this.generateGlobalNoExpressionTOs(
                                     this.loadNoExpressionCallFromDb(speciesFilter), 
-                                    BgeeDBUtils.getAnatEntityChilrenFromParents(speciesFilter, 
+                                    BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
                                             this.getRelationDAO()), 
                                     anatEntityFilter);
                     
@@ -212,7 +212,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     Map<ExpressionCallTO, Set<ExpressionCallTO>> globalExprMap =
                             this.generateGlobalExpressionTOs(
                                     this.loadExpressionCallFromDb(speciesFilter), 
-                                    BgeeDBUtils.getAnatEntityParentsFromChilren(speciesFilter, 
+                                    BgeeDBUtils.getAnatEntityParentsFromChildren(speciesFilter, 
                                             this.getRelationDAO()));
                     
                     // Generate the globalExprToExprTOs.
@@ -377,7 +377,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
         log.debug("Retrieving parents of anat entities allowed so far...");
         Map<String, Set<String>> parentsFromChildren = 
-                BgeeDBUtils.getAnatEntityParentsFromChilren(null, this.getRelationDAO());
+                BgeeDBUtils.getAnatEntityParentsFromChildren(null, this.getRelationDAO());
         Set<String> ancestorIds = new HashSet<String>();
         for (String anatEntityId: allowedAnatEntities) {
             ancestorIds.addAll(parentsFromChildren.get(anatEntityId));

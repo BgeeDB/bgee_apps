@@ -125,8 +125,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test {@link BgeeDBUtils#getAnatEntityChilrenFromParents(Set, RelationDAO)} and 
-     * {@link BgeeDBUtils#getAnatEntityParentsFromChilren(Set, RelationDAO)}
+     * Test {@link BgeeDBUtils#getAnatEntityChildrenFromParents(Set, RelationDAO)} and 
+     * {@link BgeeDBUtils#getAnatEntityParentsFromChildren(Set, RelationDAO)}
      */
     @Test
     public void shouldGetAnatEntityTargetsOrSources() {
@@ -157,7 +157,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
         expectedReturnedVal.put("5", new HashSet<String>(Arrays.asList("5", "3")));
         
         assertEquals("Incorrect anat entity relatives by source", expectedReturnedVal, 
-                BgeeDBUtils.getAnatEntityChilrenFromParents(
+                BgeeDBUtils.getAnatEntityChildrenFromParents(
                         new HashSet<String>(Arrays.asList("1", "2")), 
                         mockManager.getRelationDAO()));
         verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
@@ -180,7 +180,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
         expectedReturnedVal.put("5", new HashSet<String>(Arrays.asList("5")));
         
         assertEquals("Incorrect anat entity relatives by target", expectedReturnedVal, 
-                BgeeDBUtils.getAnatEntityParentsFromChilren(
+                BgeeDBUtils.getAnatEntityParentsFromChildren(
                         new HashSet<String>(Arrays.asList("1", "2")), 
                         mockManager.getRelationDAO()));
         verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
@@ -189,7 +189,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test {@link BgeeDBUtils#getStageChilrenFromParents(Set, RelationDAO)}.
+     * Test {@link BgeeDBUtils#getStageChildrenFromParents(Set, RelationDAO)}.
      */
     @Test
     public void shouldGetStageTargetsBySources() {
@@ -218,7 +218,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
         expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4")));
         
         assertEquals("Incorrect stage relatives by source", expectedReturnedVal, 
-                BgeeDBUtils.getStageChilrenFromParents(
+                BgeeDBUtils.getStageChildrenFromParents(
                         new HashSet<String>(Arrays.asList("1", "2")), 
                         mockManager.getRelationDAO()));
         verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 

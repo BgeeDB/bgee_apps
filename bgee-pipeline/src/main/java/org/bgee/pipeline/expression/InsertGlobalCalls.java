@@ -134,10 +134,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * @throws IllegalArgumentException If a species ID does not correspond to any species 
      *                                  in the Bgee data source.
      */
-    //TODO: the previous version of Bgee didn't have any "BOTH" origin of line, 
-    //the unique key was (geneId, anatEntityId, stageId, originOfLine), so that there was 
-    //always a SELF origin of line for each entry. Not sure to remember why it was needed. 
-    //Maybe it is needed and we should do the same? Or the "BOTH" solves the problem?
     public void insert(List<String> speciesIds, boolean isNoExpression) throws DAOException {
         log.entry(speciesIds, isNoExpression);
 
@@ -170,7 +166,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                 
                 if (isNoExpression) {
                     // For each no-expression row, propagate to allowed children.
-                    Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalNoExprMap =
+                    Map<NoExpressionCallTO, Set<String>> globalNoExprMap =
                             this.generateGlobalNoExpressionTOs(
                                     this.loadNoExpressionCallFromDb(speciesFilter), 
                                     BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
@@ -192,13 +188,16 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             insertNoExpressionCalls(globalNoExprMap.keySet());
                     // Empty memory to free up some memory. We don't use clear() 
                     // because it empty ArgumentCaptor values in test in same time.
-                    globalNoExprMap = new HashMap<NoExpressionCallTO, Set<NoExpressionCallTO>>();
+                    globalNoExprMap = null;
                     log.info("Done inserting of global no-expression calls for {}.", speciesId);
                     
                     log.info("Start inserting of relation between a no-expression call " +
                             "and a global no-expression call for {}...", speciesId);
                     nbInsertedGlobalNoExprToNoExpr += this.getNoExpressionCallDAO().
                             insertGlobalNoExprToNoExpr(globalNoExprToNoExprTOs);
+                    // Empty memory to free up some memory. We don't use clear() 
+                    // because it empty ArgumentCaptor values in test in same time.
+                    globalNoExprToNoExprTOs = null; 
                     log.info("Done inserting of correspondances between a no-expression call " +
                             "and a global no-expression call for {}.", speciesId);
 
@@ -209,7 +208,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             nbInsertedNoExpressions, nbInsertedGlobalNoExprToNoExpr);
                 } else {
                     // For each expression row, propagate to parents.
-                    Map<ExpressionCallTO, Set<ExpressionCallTO>> globalExprMap =
+                    Map<ExpressionCallTO, Set<String>> globalExprMap =
                             this.generateGlobalExpressionTOs(
                                     this.loadExpressionCallFromDb(speciesFilter), 
                                     BgeeDBUtils.getAnatEntityParentsFromChildren(speciesFilter, 
@@ -230,7 +229,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             insertExpressionCalls(globalExprMap.keySet());
                     if (nbInsertedExpressions != globalExprMap.keySet().size()) {
                         throw log.throwing(new AssertionError("Global expression calls " +
-                        		"incorrectly inserted."));
+                        		"incorrectly inserted." + nbInsertedExpressions +" vs "+ globalExprMap.keySet().size()));
                     }
                     // Empty memory to free up some memory. We don't use clear() 
                     // because it empty ArgumentCaptor values in test in same time.
@@ -241,6 +240,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             "and a global expression call for {}...", speciesId);
                     nbInsertedGlobalExprToExpr += this.getExpressionCallDAO().
                             insertGlobalExpressionToExpression(globalExprToExprTOs);
+                    // Empty memory to free up some memory. We don't use clear() 
+                    // because it empty ArgumentCaptor values in test in same time.
+                    globalExprToExprTOs = null; 
                     log.info("Done inserting of correspondances between an expression call " +
                             "and a global expression call for {}.", speciesId);
 
@@ -271,16 +273,11 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             throws DAOException {
         log.entry(speciesIds);
 
-        log.info("Start retrieving expression calls for the species IDs {}...", speciesIds);
-
-        ExpressionCallDAO dao = this.getExpressionCallDAO();
-
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
 
-        ExpressionCallTOResultSet rsExpressionCalls = dao.getExpressionCalls(params);
-
-        List<ExpressionCallTO> exprTOs = rsExpressionCalls.getAllTOs();
+        List<ExpressionCallTO> exprTOs = 
+                this.getExpressionCallDAO().getExpressionCalls(params).getAllTOs();
         //no need for a try with resource or a finally, the insert method will close everything 
         //at the end in any case.
         // No need to close the ResultSet, it's done by getAllTOs().
@@ -301,17 +298,12 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     public List<NoExpressionCallTO> loadNoExpressionCallFromDb(Set<String> speciesIds)
             throws DAOException {
         log.entry(speciesIds);
-        
-        log.info("Start retrieving no-expression calls for the species IDs {}...", speciesIds);
-
-        NoExpressionCallDAO dao = this.getNoExpressionCallDAO();
 
         NoExpressionCallParams params = new NoExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
 
-        NoExpressionCallTOResultSet rsNoExpressionCalls = dao.getNoExpressionCalls(params);
-
-        List<NoExpressionCallTO> noExprTOs = rsNoExpressionCalls.getAllTOs();
+        List<NoExpressionCallTO> noExprTOs = 
+                this.getNoExpressionCallDAO().getNoExpressionCalls(params).getAllTOs();
         //no need for a try with resource or a finally, the insert method will close everything 
         //at the end in any case.
         // No need to close the ResultSet, it's done by getAllTOs().
@@ -396,7 +388,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
     /**
      * Generate the global expression calls from given expression calls filling the return 
-     * {@code Map} associating each generated global expression calls to expression calls used 
+     * {@code Map} associating each generated global expression calls to expression call IDs used 
      * to generate it.
      * <p>
      * First, the method fills the map with generic global expression calls as key (only gene ID, 
@@ -410,10 +402,10 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      *                              that are sources of a relation, the associated value 
      *                              being a {@code Set} of {@code String}s that are 
      *                              the IDs of their associated targets. 
-     * @return              A {@code Map} associating generated global expression calls to 
-     *                      expression calls used to generate it.
+     * @return                      A {@code Map} associating generated global expression calls to 
+     *                              expression call IDs used to generate it.
      */
-    private Map<ExpressionCallTO, Set<ExpressionCallTO>> generateGlobalExpressionTOs(
+    private Map<ExpressionCallTO, Set<String>> generateGlobalExpressionTOs(
             List<ExpressionCallTO> expressionTOs, 
             Map<String, Set<String>> parentsFromChildren) {
         log.entry(expressionTOs, parentsFromChildren);
@@ -426,7 +418,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             //the relations include a reflexive relation, where sourceId == targetId, 
             //this will allow to also include the actual not-propagated calls
             for (String parentId : parentsFromChildren.get(exprCallTO.getAnatEntityId())) {
-                log.trace("Propagation of the current expression to parent: {}" + parentId);
+                log.trace("Propagation of the current expression to parent: {}", parentId);
                 // Set ID to null to be able to compare keys of the map on 
                 // gene ID, anatomical entity ID, and stage ID.
                 // Add propagated expression call (same gene ID and stage ID 
@@ -444,7 +436,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                         false,
                         ExpressionCallTO.OriginOfLine.SELF);
                 
-                log.trace("Add the propagated expression: " + propagatedExpression);
+                log.trace("Add the propagated expression: {}", propagatedExpression);
                 Set<ExpressionCallTO> curExprAsSet = mapGlobalExpr.get(propagatedExpression);
                 if (curExprAsSet == null) {
                     curExprAsSet = new HashSet<ExpressionCallTO>();
@@ -454,14 +446,12 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             }
         }
 
-        this.updateGlobalExpressions(mapGlobalExpr);
-        
-        return log.exit(mapGlobalExpr);        
+        return log.exit(this.updateGlobalExpressions(mapGlobalExpr));        
     }
 
     /**
      * Generate the global no-expression calls from given no-expression calls filling the return
-     * {@code Map} associating each generated global no-expression calls to no-expression calls 
+     * {@code Map} associating each generated global no-expression calls to no-expression call IDs 
      * used to generate it.
      * <p>
      * First, the method fills the map associating generic global no-expression calls as key 
@@ -478,9 +468,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * @param filteredAnatEntities      A {@code Set} of {@code String}s that are the IDs of 
      *                                  anatomical entities allowing filter calls to propagate.
      * @return                          A {@code Map} associating generated global no-expression 
-     *                                  calls to no-expression calls used to generate it.
+     *                                  calls to no-expression call IDs used to generate it.
      */
-    private Map<NoExpressionCallTO, Set<NoExpressionCallTO>>
+    private Map<NoExpressionCallTO, Set<String>>
             generateGlobalNoExpressionTOs(List<NoExpressionCallTO> noExpressionTOs, 
                     Map<String, Set<String>> childrenFromParents, 
                     Set<String> filteredAnatEntities) {
@@ -515,7 +505,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             false, 
                             NoExpressionCallTO.OriginOfLine.SELF);
 
-                    log.trace("Add the propagated no-expression: " + propagatedExpression);
+                    log.trace("Add the propagated no-expression: {}", propagatedExpression);
                     Set<NoExpressionCallTO> curExprAsSet = mapGlobalNoExpr.get(propagatedExpression);
                     if (curExprAsSet == null) {
                        curExprAsSet = new HashSet<NoExpressionCallTO>();
@@ -526,23 +516,30 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             }
         }
 
-        this.updateGlobalNoExpressions(mapGlobalNoExpr);
-
-        return log.exit(mapGlobalNoExpr);        
+        return log.exit(this.updateGlobalNoExpressions(mapGlobalNoExpr));        
     }
 
     /**
-     * Update global expression calls of the given {@code Map} taking account {@code DataType}s and 
-     * anatomical entity IDs of calls to generate {@code OrigineOfLine} of global calls.
+     * Updates global expression calls of the given {@code Map} taking account {@code DataType}s and 
+     * anatomical entity IDs of calls to generate {@code OrigineOfLine} of global calls, 
+     * and returns them in a new {@code Map} associating generated global expression calls to 
+     * expression call IDs.
      * <p>
-     * The provided {@code Map} will be modified.
+     * The provided {@code Map} will be empty to free up some memory.
      * 
      * @param globalMap     A {@code Map} associating generated global expression calls to 
      *                      expression calls to be updated.
+     * @return              A {@code Map} associating generated global expression calls to 
+     *                      expression call IDs.
      */
-    private void updateGlobalExpressions(Map<ExpressionCallTO, Set<ExpressionCallTO>> globalMap) {
+    private Map<ExpressionCallTO, Set<String>> updateGlobalExpressions(
+            Map<ExpressionCallTO, Set<ExpressionCallTO>> globalMap) {
         log.entry(globalMap);
         
+        // Create a Map associating generated global expression calls to expression call IDs.
+        Map<ExpressionCallTO, Set<String>> globalExprWithExprIds =
+                    new HashMap<ExpressionCallTO, Set<String>>();
+
         // Create a Set from keySet to be able to modify globalMap.
         Set<ExpressionCallTO> tmpGlobalCalls = new HashSet<ExpressionCallTO>(globalMap.keySet());
 
@@ -553,23 +550,26 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
             log.trace("Update global expression calls: {}; with: {}", globalCall, calls);
             
-            // Define the best DataType of the global call according to all calls
-            // and get anatomical entity IDs to be able to define OriginOfLine later.
+            // Define the best DataType of the global call according to all calls,
+            // get anatomical entity IDs to be able to define OriginOfLine later, 
+            // and get expression IDs to build the new  
             DataState affymetrixData = DataState.NODATA, estData = DataState.NODATA, 
                     inSituData = DataState.NODATA, rnaSeqData = DataState.NODATA;
-            Set<String> anatEntityIDs = new HashSet<String>();
+            Set<String> anatEntityIds = new HashSet<String>();
+            Set<String> exprIds = new HashSet<String>();
             for (ExpressionCallTO call: calls) {
                 affymetrixData = getBestDataState(affymetrixData, call.getAffymetrixData());
                 estData = getBestDataState(estData, call.getESTData());
                 inSituData = getBestDataState(inSituData, call.getInSituData());
                 rnaSeqData = getBestDataState(rnaSeqData, call.getRNASeqData());
-                anatEntityIDs.add(call.getAnatEntityId());
+                anatEntityIds.add(call.getAnatEntityId());
+                exprIds.add(call.getId());
             }
 
             // Define the OriginOfLine of the global expression call according to all calls
             ExpressionCallTO.OriginOfLine origin = ExpressionCallTO.OriginOfLine.DESCENT;
-            if (anatEntityIDs.contains(globalCall.getAnatEntityId())) {
-                if (anatEntityIDs.size() == 1) {
+            if (anatEntityIds.contains(globalCall.getAnatEntityId())) {
+                if (anatEntityIds.size() == 1) {
                     origin = ExpressionCallTO.OriginOfLine.SELF;
                 } else {
                     origin = ExpressionCallTO.OriginOfLine.BOTH;
@@ -582,28 +582,36 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             affymetrixData, estData, inSituData, rnaSeqData, true,
                             globalCall.isIncludeSubStages(), origin);
 
-            log.trace("Updated global expression call: " + updatedGlobalCall);
+            log.trace("Updated global expression call: {}", updatedGlobalCall);
 
             // Add the updated global expression call
-            globalMap.put(updatedGlobalCall, calls);
+            globalExprWithExprIds.put(updatedGlobalCall, exprIds);
         } 
         
-        log.exit();
+        return log.exit(globalExprWithExprIds);
     }
 
     /**
-     * Update global no-expression calls of the given {@code Map} taking account {@code DataType}s 
-     * and anatomical entity IDs of calls to generate {@code OrigineOfLine} of global calls. 
+     * Updates global no-expression calls of the given {@code Map} taking account {@code DataType}s 
+     * and anatomical entity IDs of calls to generate {@code OrigineOfLine} of global calls, 
+     * and returns them in a new {@code Map} associating generated global no-expression calls to 
+     * no-expression call IDs.
      * <p>
-     * The provided {@code Map} will be modified.
+     * The provided {@code Map} will be empty to free up some memory.
      * 
      * @param globalMap     A {@code Map} associating generated global no-expression calls to 
      *                      no-expression calls to be updated.
+     * @return              A {@code Map} associating generated global no-expression calls to 
+     *                      no-expression call IDs.
      */
-    private void updateGlobalNoExpressions(
+    private Map<NoExpressionCallTO, Set<String>> updateGlobalNoExpressions(
             Map<NoExpressionCallTO, Set<NoExpressionCallTO>> globalMap) {
         log.entry(globalMap);
         
+        // Create a Map associating generated global no-expression calls to no-expression call IDs.
+        Map<NoExpressionCallTO, Set<String>> globalNoExprWithNoExprIds =
+                new HashMap<NoExpressionCallTO, Set<String>>();
+
         // Create a Set from keySet to be able to modify globalMap.
         Set<NoExpressionCallTO> tmpGlobalCalls = new HashSet<NoExpressionCallTO>(globalMap.keySet());
 
@@ -619,12 +627,14 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             DataState affymetrixData = DataState.NODATA, relaxedinSituData = DataState.NODATA,
                     inSituData = DataState.NODATA, rnaSeqData = DataState.NODATA;
             Set<String> anatEntityIDs = new HashSet<String>();
+            Set<String> noExprIDs = new HashSet<String>();
             for (NoExpressionCallTO call: calls) {
                 affymetrixData = getBestDataState(affymetrixData, call.getAffymetrixData());
                 inSituData = getBestDataState(inSituData, call.getInSituData());
                 relaxedinSituData = getBestDataState(relaxedinSituData, call.getRelaxedInSituData());
                 rnaSeqData = getBestDataState(rnaSeqData, call.getRNASeqData());
                 anatEntityIDs.add(call.getAnatEntityId());
+                noExprIDs.add(call.getId());
             }
 
             // Define the OriginOfLine of the global no-expression call according to all calls
@@ -644,13 +654,13 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                             affymetrixData, inSituData, relaxedinSituData, rnaSeqData,
                             true, origin);
 
-            log.trace("Updated global no-expression call: " + updatedGlobalCall);
+            log.trace("Updated global no-expression call: {}", updatedGlobalCall);
 
             // Add the updated global no-expression call
-            globalMap.put(updatedGlobalCall, calls);
+            globalNoExprWithNoExprIds.put(updatedGlobalCall, noExprIDs);
         }
         
-        log.exit();
+        return log.exit(globalNoExprWithNoExprIds);
     }
 
     /**
@@ -686,21 +696,21 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * @param <V>           A {@code TransferObject} type parameter.
      */
     private <T extends CallTO, V extends TransferObject> Set<V> generateGlobalCallToCallTOs(
-            Map<T, Set<T>> globalExprMap, Class<V> type) {
+            Map<T, Set<String>> globalExprMap, Class<V> type) {
         log.entry(globalExprMap, type);
         
         Set<V> globalExprToExprTOs = new HashSet<V>();
-        for (Entry<T, Set<T>> entry: globalExprMap.entrySet()) {
-            for (T expression : entry.getValue()) {
+        for (Entry<T, Set<String>> entry: globalExprMap.entrySet()) {
+            for (String expressionId : entry.getValue()) {
                 if (type.equals(GlobalExpressionToExpressionTO.class)) {
                     globalExprToExprTOs.add(type.cast(new GlobalExpressionToExpressionTO(
-                            expression.getId(), entry.getKey().getId())));
+                            expressionId, entry.getKey().getId())));
                 } else if (type.equals(GlobalNoExpressionToNoExpressionTO.class)) {
                     globalExprToExprTOs.add(type.cast(new GlobalNoExpressionToNoExpressionTO(
-                            expression.getId(), entry.getKey().getId())));
+                            expressionId, entry.getKey().getId())));
                 } else {
                     throw log.throwing(new IllegalArgumentException("There is no propagation " +
-                        "implemented for TransferObject " + expression.getClass() + "."));
+                        "implemented for TransferObject " + entry.getKey().getClass() + "."));
                 }
             }
         }

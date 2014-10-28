@@ -271,7 +271,8 @@ public class UberonSocketTool {
         String output = "";
         List<String> params = CommandRunner.parseListArgument(input);
         if (params.size() != 2) {
-            output = "Incorrect number of stage IDs provided, try again.";
+            throw log.throwing(new IllegalArgumentException("Incorrect number " +
+            		"of stage IDs provided."));
         } else {
             log.debug("Start stage retrieved: {} - End stage retrieved: {}", 
                     params.get(0), params.get(1));
@@ -286,8 +287,8 @@ public class UberonSocketTool {
             }
 
             if (StringUtils.isBlank(output)) {
-                output = "No results for provided start and end stages (" + 
-                        params.get(0) + " - " + params.get(1) + ")";
+                throw log.throwing(new IllegalArgumentException("No results for provided " +
+                		"start and end stages (" + params.get(0) + " - " + params.get(1) + ")"));
             }
         }
         

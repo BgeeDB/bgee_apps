@@ -2,6 +2,7 @@ package org.bgee.pipeline.expression;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -161,97 +162,134 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
             for (String speciesId: speciesIdsToUse) {
                 
+
                 Set<String> speciesFilter = new HashSet<String>();
                 speciesFilter.add(speciesId);
                 
+                this.startTransaction();
+
                 if (isNoExpression) {
-                    // For each no-expression row, propagate to allowed children.
-                    Map<NoExpressionCallTO, Set<String>> globalNoExprMap =
-                            this.generateGlobalNoExpressionTOs(
-                                    this.loadNoExpressionCallFromDb(speciesFilter), 
-                                    BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
-                                            this.getRelationDAO()), 
-                                    anatEntityFilter);
                     
-                    // Generate the globalNoExprToNoExprTOs.
-                    Set<GlobalNoExpressionToNoExpressionTO> globalNoExprToNoExprTOs = 
-                            this.generateGlobalCallToCallTOs(globalNoExprMap, 
-                                    GlobalNoExpressionToNoExpressionTO.class);
+                    LinkedHashMap<String, List<NoExpressionCallTO>> noExprTOs = 
+                            BgeeDBUtils.getNoExpressionCallsByGeneId(
+                                    speciesFilter, this.getNoExpressionCallDAO());
                     
+                    Map<String, Set<String>> anatEntityChildrenFromParents = 
+                            BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
+                                    this.getRelationDAO());
+
                     int nbInsertedNoExpressions = 0;
                     int nbInsertedGlobalNoExprToNoExpr = 0;
-                    
-                    this.startTransaction();
-                    
-                    log.info("Start inserting of global no-expression calls for {}...", speciesId);
-                    nbInsertedNoExpressions += this.getNoExpressionCallDAO().
-                            insertNoExpressionCalls(globalNoExprMap.keySet());
-                    // Empty memory to free up some memory. We don't use clear() 
-                    // because it empty ArgumentCaptor values in test in same time.
-                    globalNoExprMap = null;
-                    log.info("Done inserting of global no-expression calls for {}.", speciesId);
-                    
-                    log.info("Start inserting of relation between a no-expression call " +
-                            "and a global no-expression call for {}...", speciesId);
-                    nbInsertedGlobalNoExprToNoExpr += this.getNoExpressionCallDAO().
-                            insertGlobalNoExprToNoExpr(globalNoExprToNoExprTOs);
-                    // Empty memory to free up some memory. We don't use clear() 
-                    // because it empty ArgumentCaptor values in test in same time.
-                    globalNoExprToNoExprTOs = null; 
-                    log.info("Done inserting of correspondances between a no-expression call " +
-                            "and a global no-expression call for {}.", speciesId);
 
-                    this.commit();
+                    for (Entry<String, List<NoExpressionCallTO>> entry : noExprTOs.entrySet()) {
+                        // For each no-expression row, propagate to allowed children.
+                        Map<NoExpressionCallTO, Set<String>> globalNoExprMap =
+                                this.generateGlobalNoExpressionTOs(
+                                        entry.getValue(), 
+                                        anatEntityChildrenFromParents, 
+                                        anatEntityFilter);
+
+                        // Generate the globalNoExprToNoExprTOs.
+                        Set<GlobalNoExpressionToNoExpressionTO> globalNoExprToNoExprTOs = 
+                                this.generateGlobalCallToCallTOs(globalNoExprMap, 
+                                        GlobalNoExpressionToNoExpressionTO.class);
+                        
+                        log.info("Start inserting of global no-expression calls for species {} and gene ID {}", 
+                                speciesId, entry.getKey());
+                        int nbCurInsertedNoExpressions = this.getNoExpressionCallDAO().
+                                insertNoExpressionCalls(globalNoExprMap.keySet());
+                        if (nbCurInsertedNoExpressions != globalNoExprMap.keySet().size()) {
+                            throw log.throwing(new AssertionError(
+                                    "Global no-expression calls incorrectly inserted: " + 
+                                     nbCurInsertedNoExpressions +" vs "+ 
+                                     globalNoExprMap.keySet().size()));
+                        }
+
+                        log.info("Done inserting of global no-expression calls for species {} and gene ID {}.",
+                                speciesId, entry.getKey());
+
+                        // Empty memory to free up some memory. We don't use clear() 
+                        // because it empty ArgumentCaptor values in test in same time.
+                        globalNoExprMap = null;
+                        nbInsertedNoExpressions += nbCurInsertedNoExpressions;
+                        
+                        log.info("Start inserting of relation between a no-expression call " +
+                                "and a global no-expression call for species {} and gene ID {}...", 
+                                speciesId, entry.getKey());
+                        int nbCurInsertedGlobalNoExprToNoExpr = this.getNoExpressionCallDAO().
+                                insertGlobalNoExprToNoExpr(globalNoExprToNoExprTOs);
+                        log.info("Done inserting of correspondances between a no-expression call " +
+                                "and a global no-expression call for species {} and gene ID {}.", 
+                                speciesId, entry.getKey());
+
+                        // Empty memory to free up some memory. We don't use clear() 
+                        // because it empty ArgumentCaptor values in test in same time.
+                        globalNoExprToNoExprTOs = null; 
+                        nbInsertedGlobalNoExprToNoExpr += nbCurInsertedGlobalNoExprToNoExpr;
+                    }
                     
-                    log.info("Done inserting for {}: {} global no-expression calls inserted " +
+                    log.info("Done inserting for species {}: {} global no-expression calls inserted " +
                             "and {} correspondances inserted", speciesId, 
                             nbInsertedNoExpressions, nbInsertedGlobalNoExprToNoExpr);
                 } else {
-                    // For each expression row, propagate to parents.
-                    Map<ExpressionCallTO, Set<String>> globalExprMap =
-                            this.generateGlobalExpressionTOs(
-                                    this.loadExpressionCallFromDb(speciesFilter), 
-                                    BgeeDBUtils.getAnatEntityParentsFromChildren(speciesFilter, 
-                                            this.getRelationDAO()));
+                    LinkedHashMap<String, List<ExpressionCallTO>> exprTOs = 
+                            BgeeDBUtils.getExpressionCallsByGeneId(
+                                    speciesFilter, this.getExpressionCallDAO());
                     
-                    // Generate the globalExprToExprTOs.
-                    Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
-                            this.generateGlobalCallToCallTOs(globalExprMap, 
-                                    GlobalExpressionToExpressionTO.class);
+                    Map<String, Set<String>> anatEntityParentsFromChildren = 
+                            BgeeDBUtils.getAnatEntityParentsFromChildren(speciesFilter, 
+                            this.getRelationDAO());
 
                     int nbInsertedExpressions = 0;
                     int nbInsertedGlobalExprToExpr = 0;
-
-                    this.startTransaction();
                     
-                    log.info("Start inserting of global expression calls for {}...", speciesId);
-                    nbInsertedExpressions += this.getExpressionCallDAO().
-                            insertExpressionCalls(globalExprMap.keySet());
-                    if (nbInsertedExpressions != globalExprMap.keySet().size()) {
-                        throw log.throwing(new AssertionError("Global expression calls " +
-                        		"incorrectly inserted." + nbInsertedExpressions +" vs "+ globalExprMap.keySet().size()));
+                    for (Entry<String, List<ExpressionCallTO>> entry : exprTOs.entrySet()) {
+                        // For each expression row, propagate to parents.
+                        Map<ExpressionCallTO, Set<String>> globalExprMap =
+                                this.generateGlobalExpressionTOs(
+                                        entry.getValue(), anatEntityParentsFromChildren);
+
+                        // Generate the globalExprToExprTOs.
+                        Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
+                                this.generateGlobalCallToCallTOs(globalExprMap, 
+                                        GlobalExpressionToExpressionTO.class);
+                        
+                        log.info("Start inserting of global expression calls for species {} and gene ID {}...", 
+                                speciesId, entry.getKey());
+                        int nbCurInsertedExpr = this.getExpressionCallDAO().
+                                insertExpressionCalls(globalExprMap.keySet());
+                        if (nbCurInsertedExpr != globalExprMap.keySet().size()) {
+                            throw log.throwing(new AssertionError(
+                                    "Global expression calls incorrectly inserted: " + 
+                                    nbCurInsertedExpr +" vs "+ globalExprMap.keySet().size()));
+                        }
+                        log.info("Done inserting of {} global expression calls for species {} and gene ID {}.", 
+                                nbCurInsertedExpr, speciesId, entry.getKey());
+                        // Empty memory to free up some memory. We don't use clear() 
+                        // because it empty ArgumentCaptor values in test in same time.
+                        globalExprMap = null;
+                        nbInsertedExpressions += nbCurInsertedExpr;
+                        
+                        log.info("Start inserting of relation between an expression call " +
+                                "and a global expression call for species {} and gene ID {}...", 
+                                speciesId, entry.getKey());
+                        int nbCurInsertedGlobalExprToExpr = this.getExpressionCallDAO().
+                                insertGlobalExpressionToExpression(globalExprToExprTOs);
+                        log.info("Done inserting of {} correspondances between an expression call " +
+                                "and a global expression call for species {} and gene ID {}.", 
+                                nbCurInsertedGlobalExprToExpr, speciesId, entry.getKey());
+                        // Empty memory to free up some memory. We don't use clear() 
+                        // because it empty ArgumentCaptor values in test in same time.
+                        globalExprToExprTOs = null; 
+                        nbInsertedGlobalExprToExpr += nbCurInsertedGlobalExprToExpr;
                     }
-                    // Empty memory to free up some memory. We don't use clear() 
-                    // because it empty ArgumentCaptor values in test in same time.
-                    globalExprMap = null;
-                    log.info("Done inserting of global expression calls for {}.", speciesId);
-
-                    log.info("Start inserting of relation between an expression call " +
-                            "and a global expression call for {}...", speciesId);
-                    nbInsertedGlobalExprToExpr += this.getExpressionCallDAO().
-                            insertGlobalExpressionToExpression(globalExprToExprTOs);
-                    // Empty memory to free up some memory. We don't use clear() 
-                    // because it empty ArgumentCaptor values in test in same time.
-                    globalExprToExprTOs = null; 
-                    log.info("Done inserting of correspondances between an expression call " +
-                            "and a global expression call for {}.", speciesId);
-
-                    this.commit();
-
+                    
                     log.info("Done inserting for {}: {} global expression calls inserted " +
-                            "and {} correspondances inserted.", speciesId, 
+                            "and {} correspondances inserted", speciesId, 
                             nbInsertedExpressions, nbInsertedGlobalExprToExpr);
+
                 }
+                this.commit();
             }            
         } finally {
             this.closeDAO();
@@ -260,59 +298,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         log.exit();
     }
 
-    /**
-     * Retrieves all expression calls for given species, present into the Bgee database.
-     * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
-     *                          allowing to filter the expression calls to use.
-     * @return                  A {@code List} of {@code ExpressionCallTO}s containing all 
-     *                          expression calls of the given species.
-     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
-     */
-    public List<ExpressionCallTO> loadExpressionCallFromDb(Set<String> speciesIds)
-            throws DAOException {
-        log.entry(speciesIds);
-
-        ExpressionCallParams params = new ExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
-
-        List<ExpressionCallTO> exprTOs = 
-                this.getExpressionCallDAO().getExpressionCalls(params).getAllTOs();
-        //no need for a try with resource or a finally, the insert method will close everything 
-        //at the end in any case.
-        // No need to close the ResultSet, it's done by getAllTOs().
-        log.info("Done retrieving expression calls, {} calls found", exprTOs.size());
-
-        return log.exit(exprTOs);        
-    }
-
-    /**
-     * Retrieves all no-expression calls of provided species, present into the Bgee database.
-     * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
-     *                      allowing to filter the genes to consider.
-     * @return              A {@code List} of {@code NoExpressionCallTO}s containing all 
-     *                      no-expression calls for the provided species.
-     * @throws DAOException If an error occurred while getting the data from the Bgee database.
-     */
-    public List<NoExpressionCallTO> loadNoExpressionCallFromDb(Set<String> speciesIds)
-            throws DAOException {
-        log.entry(speciesIds);
-
-        NoExpressionCallParams params = new NoExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
-
-        List<NoExpressionCallTO> noExprTOs = 
-                this.getNoExpressionCallDAO().getNoExpressionCalls(params).getAllTOs();
-        //no need for a try with resource or a finally, the insert method will close everything 
-        //at the end in any case.
-        // No need to close the ResultSet, it's done by getAllTOs().
-        
-        log.info("Done retrieving no-expression calls, {} calls found", noExprTOs.size());
-
-        return log.exit(noExprTOs);        
-    }
-    
     /**
      * Retrieves all anatomical entity IDs allowed for no-expression call propagation. 
      * This method will retrieve the IDs of anatomical entities having at least 

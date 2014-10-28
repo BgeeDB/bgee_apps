@@ -3,7 +3,6 @@ package org.bgee.pipeline.expression;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
@@ -21,7 +20,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.CallParams;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
@@ -40,12 +38,12 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpre
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
+import org.bgee.pipeline.BgeeDBUtilsTest;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 
 public class InsertGlobalCallsTest extends TestAncestor {
     
@@ -92,33 +90,65 @@ public class InsertGlobalCallsTest extends TestAncestor {
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
         MySQLExpressionCallTOResultSet mockExpr11TORs = createMockDAOResultSet( 
                 Arrays.asList(
-                        new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("5", "ID3", "Anat_id1", "Stage_id7", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF)),
+                        new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
+                                DataState.HIGHQUALITY, DataState.NODATA, 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", 
+                                DataState.LOWQUALITY, DataState.NODATA, 
+                                DataState.HIGHQUALITY, DataState.NODATA, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("5", "ID3", "Anat_id1", "Stage_id7", 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF)),
                 MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("11"));
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExpr11TORs);
+                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                thenReturn(mockExpr11TORs);
         
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
         MySQLExpressionCallTOResultSet mockExpr21TORs = createMockDAOResultSet(
                 Arrays.asList(
-                        new ExpressionCallTO("6", "ID4", "Anat_id6", "Stage_id12", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("7", "ID4", "Anat_id9", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("8", "ID5", "Anat_id8", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF)),
+                        new ExpressionCallTO("6", "ID4", "Anat_id6", "Stage_id12", 
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("7", "ID4", "Anat_id9", "Stage_id12", 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("8", "ID5", "Anat_id8", "Stage_id1", 
+                                DataState.HIGHQUALITY, DataState.NODATA, 
+                                DataState.LOWQUALITY, DataState.NODATA, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF)),
                 MySQLExpressionCallTOResultSet.class);
         params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("21"));
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExpr21TORs);
+                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                thenReturn(mockExpr21TORs);
 
-        // We need to mock the return of insertExpressionCalls() for species 11 and 21.
-        // TODO try to not use anyCollection()
+        // We need to mock the return of insertExpressionCalls() for species 11 (ID1, ID2 then ID3)
+        // then species 21 (ID4 then ID5).
         when(mockManager.mockExpressionCallDAO.insertExpressionCalls(
-                anyCollection())).thenReturn(10).thenReturn(6);
+                anyCollection())).thenReturn(6).thenReturn(3).thenReturn(1).
+                                  thenReturn(4).thenReturn(2);
+        // We need to mock the return of insertGlobalExpressionToExpression() 
+        // for species 11 (ID1, ID2 then ID3) then species 21 (ID4 then ID5).
+        when(mockManager.mockExpressionCallDAO.insertGlobalExpressionToExpression(
+                anyCollection())).thenReturn(9).thenReturn(3).thenReturn(1).
+                                  thenReturn(5).thenReturn(2);
         
         // We need a mock MySQLRelationTOResultSet to mock the return of getAnatEntityRelations().
         MySQLRelationTOResultSet mockRelation11TORs = createMockDAOResultSet(
@@ -184,45 +214,131 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 RelationDAO.Attribute.SOURCEID, RelationDAO.Attribute.TARGETID);
         // 
         ArgumentCaptor<Set> exprTOsArgGlobalExpr = ArgumentCaptor.forClass(Set.class);
-        verify(mockManager.mockExpressionCallDAO, times(2)).
+        verify(mockManager.mockExpressionCallDAO, times(5)).
             insertExpressionCalls(exprTOsArgGlobalExpr.capture());
         List<Set> allGlobalExpr = exprTOsArgGlobalExpr.getAllValues();
         
         ArgumentCaptor<Set> exprTOsArgGlobalExprToExpr = ArgumentCaptor.forClass(Set.class);
-        verify(mockManager.mockExpressionCallDAO, times(2)).
+        verify(mockManager.mockExpressionCallDAO, times(5)).
             insertGlobalExpressionToExpression(exprTOsArgGlobalExprToExpr.capture());
         List<Set> globalExprToExprValues = exprTOsArgGlobalExprToExpr.getAllValues();
-        Set<GlobalExpressionToExpressionTO> allGlobalExprToExprTO = globalExprToExprValues.get(1);
-        allGlobalExprToExprTO.addAll(globalExprToExprValues.get(0));
+        Set<GlobalExpressionToExpressionTO> allGlobalExprToExprTO = globalExprToExprValues.get(0);
+        allGlobalExprToExprTO.addAll(globalExprToExprValues.get(1));
+        allGlobalExprToExprTO.addAll(globalExprToExprValues.get(2));
+        allGlobalExprToExprTO.addAll(globalExprToExprValues.get(3));
+        allGlobalExprToExprTO.addAll(globalExprToExprValues.get(4));
         
-        // Verify the calls made to the DAOs for speciesID = 11.
-        List<ExpressionCallTO> expectedExprSpecies11 = Arrays.asList(
-                new ExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id6", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.BOTH),
-                new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id6", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
-                new ExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id6", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
-                new ExpressionCallTO(null, "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
-                new ExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
-                new ExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id7", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
-                new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.SELF));
-        Set<ExpressionCallTO> methExprSpecies11 = allGlobalExpr.get(0);
-        assertTrue("Incorrect ExpressionCallTOs generated to insert global expression calls", 
-                TOComparator.areTOCollectionsEqual(expectedExprSpecies11, methExprSpecies11, false));
+        // Expected global calls for speciesID = 11.
+        List<ExpressionCallTO> expectedExprSpecies11id1 = Arrays.asList(
+                new ExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id6", 
+                        DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, DataState.LOWQUALITY,
+                        true, false, ExpressionCallTO.OriginOfLine.SELF),
+                new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                        true, false, ExpressionCallTO.OriginOfLine.BOTH),
+                new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id6", 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        true, false, ExpressionCallTO.OriginOfLine.DESCENT),
+                new ExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id6", 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        true, false, ExpressionCallTO.OriginOfLine.DESCENT),
+                new ExpressionCallTO(null, "ID1", "Anat_id3", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        true, false, ExpressionCallTO.OriginOfLine.SELF),
+                new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.NODATA, DataState.LOWQUALITY,
+                        true, false, ExpressionCallTO.OriginOfLine.DESCENT));
+        
+        List<ExpressionCallTO> expectedExprSpecies11id2 = Arrays.asList(
+                new ExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id7",
+                        DataState.LOWQUALITY, DataState.NODATA,
+                        DataState.HIGHQUALITY, DataState.NODATA,
+                        true, false, ExpressionCallTO.OriginOfLine.SELF),
+                new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id7", 
+                        DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, DataState.NODATA,
+                        true, false, ExpressionCallTO.OriginOfLine.DESCENT),
+                new ExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id7", 
+                        DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, DataState.NODATA, 
+                        true, false, ExpressionCallTO.OriginOfLine.DESCENT));
+        
+        List<ExpressionCallTO> expectedExprSpecies11id3 = Arrays.asList(
+                new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", 
+                        DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY,
+                        true, false, ExpressionCallTO.OriginOfLine.SELF));
+
+        // Expected global calls for speciesID = 21.
+        List<ExpressionCallTO> expectedExprSpecies21id4 = Arrays.asList(
+                new ExpressionCallTO(null, "ID4", "Anat_id9", "Stage_id12", 
+                        DataState.NODATA, DataState.HIGHQUALITY,
+                        DataState.NODATA, DataState.LOWQUALITY,
+                        true, false, ExpressionCallTO.OriginOfLine.SELF),
+                new ExpressionCallTO(null, "ID4", "Anat_id8", "Stage_id12", 
+                        DataState.NODATA, DataState.HIGHQUALITY,
+                        DataState.NODATA, DataState.LOWQUALITY,
+                        true, false, ExpressionCallTO.OriginOfLine.DESCENT),
+                new ExpressionCallTO(null, "ID4", "Anat_id6", "Stage_id12", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY,
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                        true, false, ExpressionCallTO.OriginOfLine.BOTH),
+                new ExpressionCallTO(null, "ID4", "Anat_id7", "Stage_id12", 
+                        DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.NODATA, DataState.LOWQUALITY,
+                        true, false, ExpressionCallTO.OriginOfLine.DESCENT));
+
+        List<ExpressionCallTO> expectedExprSpecies21id5 = Arrays.asList(
+                new ExpressionCallTO(null, "ID5", "Anat_id8", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.LOWQUALITY, DataState.NODATA,
+                        true, false, ExpressionCallTO.OriginOfLine.SELF),
+                new ExpressionCallTO(null, "ID5", "Anat_id6", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.LOWQUALITY, DataState.NODATA, 
+                        true, false, ExpressionCallTO.OriginOfLine.DESCENT));
+
+        assertTrue("Incorrect global expression calls generated for ID1",
+                TOComparator.areTOCollectionsEqual(
+                        expectedExprSpecies11id1, allGlobalExpr.get(0), false));
+        assertTrue("Incorrect global expression calls generated for ID2",
+                TOComparator.areTOCollectionsEqual(
+                        expectedExprSpecies11id2, allGlobalExpr.get(1), false));
+        assertTrue("Incorrect global expression calls generated for ID3",
+                TOComparator.areTOCollectionsEqual(
+                        expectedExprSpecies11id3, allGlobalExpr.get(2), false));
+        assertTrue("Incorrect global expression calls generated for ID4",
+                TOComparator.areTOCollectionsEqual(
+                        expectedExprSpecies21id4, allGlobalExpr.get(3), false));
+        assertTrue("Incorrect global expression calls generated for ID5",
+                TOComparator.areTOCollectionsEqual(
+                        expectedExprSpecies21id5, allGlobalExpr.get(4), false));
+//TODO
         
         int nbExpected = 20;
         assertEquals("Incorrect number of generated GlobalExpressionToExpressionTOs", 
                 nbExpected, allGlobalExprToExprTO.size());
 
+        Set<ExpressionCallTO> methAllExprSpecies11= new HashSet<ExpressionCallTO>();
+        methAllExprSpecies11.addAll(allGlobalExpr.get(0));
+        methAllExprSpecies11.addAll(allGlobalExpr.get(1));
+        methAllExprSpecies11.addAll(allGlobalExpr.get(2));
+        
         Set<String> ids = new HashSet<String>();
-        for (ExpressionCallTO globalExpr: methExprSpecies11) {
+        for (ExpressionCallTO globalExpr: methAllExprSpecies11) {
             if (globalExpr.getGeneId().equals("ID1") && 
                 globalExpr.getAnatEntityId().equals("Anat_id5") && 
                 globalExpr.getStageId().equals("Stage_id6")) {
 
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("2",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("2",globalExpr.getId())));
                 ids.add(globalExpr.getId());
 
             } else if (globalExpr.getGeneId().equals("ID1") && 
@@ -232,9 +348,11 @@ public class InsertGlobalCallsTest extends TestAncestor {
                        globalExpr.getStageId().equals("Stage_id6")) {
                 
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("1",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("1",globalExpr.getId())));
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("2",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("2",globalExpr.getId())));
                 ids.add(globalExpr.getId());
                 
             } else if (globalExpr.getGeneId().equals("ID1") && 
@@ -243,7 +361,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
                        globalExpr.getStageId().equals("Stage_id1")) {
 
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("3",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("3",globalExpr.getId())));
                 ids.add(globalExpr.getId());
 
             } else if (globalExpr.getGeneId().equals("ID2") && 
@@ -253,7 +372,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
                        globalExpr.getStageId().equals("Stage_id7")) {
 
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("4",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("4",globalExpr.getId())));
                 ids.add(globalExpr.getId());
 
             } else if (globalExpr.getGeneId().equals("ID3") && 
@@ -261,7 +381,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
                        globalExpr.getStageId().equals("Stage_id7")) {
 
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("5",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("5",globalExpr.getId())));
                 ids.add(globalExpr.getId());
                 
             } else {
@@ -274,20 +395,13 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 Arrays.asList("5", "6", "7", "8", "9", "10", "11", "12", "13", "14"));
         assertEquals("Incorrect GlobalNoExpressionTO IDs", expectedIds, ids);
 
-        // Verify the calls made to the DAOs for speciesID = 21.
         ids.clear();
-        List<ExpressionCallTO> expectedExprSpecies21 = Arrays.asList(
-                new ExpressionCallTO(null, "ID4", "Anat_id9", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO(null, "ID4", "Anat_id8", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
-                new ExpressionCallTO(null, "ID4", "Anat_id6", "Stage_id12", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.BOTH),
-                new ExpressionCallTO(null, "ID4", "Anat_id7", "Stage_id12", DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, false, ExpressionCallTO.OriginOfLine.DESCENT),
-                new ExpressionCallTO(null, "ID5", "Anat_id8", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO(null, "ID5", "Anat_id6", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.DESCENT));
-        Set<ExpressionCallTO> methExprSpecies21 = allGlobalExpr.get(1);
-        assertTrue("Incorrect ExpressionCallTOs generated to insert global expression calls", 
-                TOComparator.areTOCollectionsEqual(expectedExprSpecies21, methExprSpecies21, false));
 
-        for (ExpressionCallTO globalExpr: methExprSpecies21) {
+        Set<ExpressionCallTO> methAllExprSpecies21= new HashSet<ExpressionCallTO>();
+        methAllExprSpecies21.addAll(allGlobalExpr.get(3));
+        methAllExprSpecies21.addAll(allGlobalExpr.get(4));
+        
+        for (ExpressionCallTO globalExpr: methAllExprSpecies21) {
             if (globalExpr.getGeneId().equals("ID4") && 
                (globalExpr.getAnatEntityId().equals("Anat_id9") || 
                     globalExpr.getAnatEntityId().equals("Anat_id7") || 
@@ -295,7 +409,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 globalExpr.getStageId().equals("Stage_id12")) {
 
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("7",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("7",globalExpr.getId())));
                 ids.add(globalExpr.getId());
 
             } else if (globalExpr.getGeneId().equals("ID4") && 
@@ -303,9 +418,11 @@ public class InsertGlobalCallsTest extends TestAncestor {
                        globalExpr.getStageId().equals("Stage_id12")) {
 
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("6",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("6",globalExpr.getId())));
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("7",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("7",globalExpr.getId())));
                 ids.add(globalExpr.getId());
 
             } else if (globalExpr.getGeneId().equals("ID5") && 
@@ -314,7 +431,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
                        globalExpr.getStageId().equals("Stage_id1")) {
 
                 assertTrue("Incorrect GlobalExpressionToExpressionTO generated",
-                        allGlobalExprToExprTO.contains(new GlobalExpressionToExpressionTO("8",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalExpressionToExpressionTO("8",globalExpr.getId())));
                 ids.add(globalExpr.getId());
 
             } else {
@@ -353,28 +471,41 @@ public class InsertGlobalCallsTest extends TestAncestor {
         
         // Mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
         MySQLExpressionCallTOResultSet mockExprAnatTORs = createMockDAOResultSet(
-                Arrays.asList(new ExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, false, false, null),
-                        new ExpressionCallTO(null, null, "Anat_id3", null, null, null, null, null, false, false, null),
-                        new ExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, false, false, null),
-                        new ExpressionCallTO(null, null, "Anat_id10", null, null, null, null, null, false, false, null)),
+                Arrays.asList(
+                        new ExpressionCallTO(null, null, "Anat_id1", 
+                            null, null, null, null, null, false, false, null),
+                        new ExpressionCallTO(null, null, "Anat_id3", 
+                                null, null, null, null, null, false, false, null),
+                        new ExpressionCallTO(null, null, "Anat_id8", 
+                                null, null, null, null, null, false, false, null),
+                        new ExpressionCallTO(null, null, "Anat_id10", 
+                                null, null, null, null, null, false, false, null)),
                 MySQLExpressionCallTOResultSet.class);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) valueCallParamEq(new ExpressionCallParams()))).
+                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(new ExpressionCallParams()))).
                 thenReturn(mockExprAnatTORs);
         
         // Mock MySQLNoExpressionCallTOResultSet to mock the return of getNoExpressionCalls(),
         // called by the method loadAllowedAnatEntities() 
         MySQLNoExpressionCallTOResultSet mockNoExprAnatTORs = createMockDAOResultSet(
-                Arrays.asList(new NoExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, false, null),
-                              new NoExpressionCallTO(null, null, "Anat_id3", null, null, null, null, null, false, null),
-                              new NoExpressionCallTO(null, null, "Anat_id4", null, null, null, null, null, false, null),
-                              new NoExpressionCallTO(null, null, "Anat_id4", null, null, null, null, null, false, null),
-                              new NoExpressionCallTO(null, null, "Anat_id5", null, null, null, null, null, false, null),
-                              new NoExpressionCallTO(null, null, "Anat_id6", null, null, null, null, null, false, null),
-                              new NoExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, false, null)),
+                Arrays.asList(new NoExpressionCallTO(null, null, "Anat_id1",
+                        null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id3",
+                                      null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id4",
+                                      null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id4",
+                                      null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id5", 
+                                      null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id6",
+                                      null, null, null, null, null, false, null),
+                              new NoExpressionCallTO(null, null, "Anat_id8", 
+                                      null, null, null, null, null, false, null)),
                 MySQLNoExpressionCallTOResultSet.class);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) valueCallParamEq(new NoExpressionCallParams()))).
+                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(
+                        new NoExpressionCallParams()))).
                 thenReturn(mockNoExprAnatTORs);
         
         // Mock MySQLRelationTOResultSet to mock the return of getAnatEntityRelations().
@@ -404,17 +535,42 @@ public class InsertGlobalCallsTest extends TestAncestor {
         // getNoExpressionCalls(), called by the method loadNoExpressionCallFromDb()
         MySQLNoExpressionCallTOResultSet mockNoExprTORs = createMockDAOResultSet(
                 Arrays.asList(
-                        new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
-                        new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)),
+                        new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1",
+                                DataState.HIGHQUALITY, DataState.NODATA, 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3",
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3",
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF),        
+                        new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3",
+                                DataState.LOWQUALITY, DataState.NODATA, 
+                                DataState.HIGHQUALITY, DataState.NODATA, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6",
+                                DataState.NODATA, DataState.LOWQUALITY,
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                                false, NoExpressionCallTO.OriginOfLine.SELF)),
                 MySQLNoExpressionCallTOResultSet.class);
         NoExpressionCallParams noExprparams = new NoExpressionCallParams();
         noExprparams.addAllSpeciesIds(Arrays.asList("11"));
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) valueCallParamEq(noExprparams))).thenReturn(mockNoExprTORs);
+                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(noExprparams))).
+                thenReturn(mockNoExprTORs);
         
+        // We need to mock the return of insertNoExpressionCalls() for species 11 (ID1, ID2 then ID3)
+        when(mockManager.mockNoExpressionCallDAO.insertNoExpressionCalls(
+                anyCollection())).thenReturn(3).thenReturn(2).thenReturn(4);
+        // We need to mock the return of insertGlobalNoExprToNoExpr() 
+        // for species 11 (ID1, ID2 then ID3).
+        when(mockManager.mockNoExpressionCallDAO.insertGlobalNoExprToNoExpr(
+                anyCollection())).thenReturn(4).thenReturn(2).thenReturn(4);
+        
+
         // Fifth, we need a mock MySQLRelationTOResultSet to mock the return of 
         // getAnatEntityRelations().
         MySQLRelationTOResultSet mockRelation11TORs = createMockDAOResultSet(
@@ -473,84 +629,138 @@ public class InsertGlobalCallsTest extends TestAncestor {
 
         //
         ArgumentCaptor<Set> exprTOsArgGlobalNoExpr = ArgumentCaptor.forClass(Set.class);
-        verify(mockManager.mockNoExpressionCallDAO).insertNoExpressionCalls(
+        verify(mockManager.mockNoExpressionCallDAO, times(3)).insertNoExpressionCalls(
                 exprTOsArgGlobalNoExpr.capture());
-        
+        List<Set> allGlobalNoExpr = exprTOsArgGlobalNoExpr.getAllValues();
+
         ArgumentCaptor<Set> exprTOsArgGlobalNoExprToNoExpr = ArgumentCaptor.forClass(Set.class);
-        verify(mockManager.mockNoExpressionCallDAO).
-        insertGlobalNoExprToNoExpr(exprTOsArgGlobalNoExprToNoExpr.capture());
+        verify(mockManager.mockNoExpressionCallDAO, times(3)).
+                insertGlobalNoExprToNoExpr(exprTOsArgGlobalNoExprToNoExpr.capture());
+        List<Set> globalNoExprToNoExprValues = exprTOsArgGlobalNoExprToNoExpr.getAllValues();
         
+        Set<GlobalExpressionToExpressionTO> allGlobalExprToExprTO = globalNoExprToNoExprValues.get(0);
+        allGlobalExprToExprTO.addAll(globalNoExprToNoExprValues.get(1));
+        allGlobalExprToExprTO.addAll(globalNoExprToNoExprValues.get(2));
+
         // Verify the calls made to the DAOs for speciesID = 11.
-        List<NoExpressionCallTO> expectedNoExpr = Arrays.asList(   
-                new NoExpressionCallTO(null, "ID1", "Anat_id3", "Stage_id1", DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id3", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id3", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.BOTH),
-                new NoExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id3", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO(null, "ID2", "Anat_id5", "Stage_id3", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.PARENT),
-                new NoExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO(null, "ID3", "Anat_id3", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
-                new NoExpressionCallTO(null, "ID3", "Anat_id4", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
-                new NoExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id6", DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT));
-        assertTrue("Incorrect NoExpressionCallTOs generated to insert global no-expression calls", 
-                TOComparator.areTOCollectionsEqual(
-                        expectedNoExpr, exprTOsArgGlobalNoExpr.getValue(), false));
+        List<NoExpressionCallTO> expectedNoExprId1 = Arrays.asList(   
+                new NoExpressionCallTO(null, "ID1", "Anat_id3", "Stage_id1",
+                        DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        true, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id3", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY,
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        true, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id3", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        true, NoExpressionCallTO.OriginOfLine.BOTH));
         
-        Set<GlobalNoExpressionToNoExpressionTO> values = exprTOsArgGlobalNoExprToNoExpr.getValue();
+        List<NoExpressionCallTO> expectedNoExprId2 = Arrays.asList(   
+                new NoExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id3", 
+                        DataState.LOWQUALITY, DataState.NODATA,
+                        DataState.HIGHQUALITY, DataState.NODATA,
+                        true, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO(null, "ID2", "Anat_id5", "Stage_id3", 
+                        DataState.LOWQUALITY, DataState.NODATA,
+                        DataState.HIGHQUALITY, DataState.NODATA,
+                        true, NoExpressionCallTO.OriginOfLine.PARENT));
+
+        List<NoExpressionCallTO> expectedNoExprId3 = Arrays.asList(   
+                new NoExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id6", 
+                        DataState.NODATA, DataState.LOWQUALITY,
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        true, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO(null, "ID3", "Anat_id3", "Stage_id6",
+                        DataState.NODATA, DataState.LOWQUALITY,
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                        true, NoExpressionCallTO.OriginOfLine.PARENT),
+                new NoExpressionCallTO(null, "ID3", "Anat_id4", "Stage_id6",
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        true, NoExpressionCallTO.OriginOfLine.PARENT),
+                new NoExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id6", 
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY,
+                        true, NoExpressionCallTO.OriginOfLine.PARENT));
+
+        assertTrue("Incorrect global no-expression calls generated for ID1", 
+                TOComparator.areTOCollectionsEqual(
+                        expectedNoExprId1, allGlobalNoExpr.get(0), false));
+        assertTrue("Incorrect global no-expression calls generated for ID2", 
+                TOComparator.areTOCollectionsEqual(
+                        expectedNoExprId2, allGlobalNoExpr.get(1), false));
+        assertTrue("Incorrect global no-expression calls generated for ID3", 
+                TOComparator.areTOCollectionsEqual(
+                        expectedNoExprId3, allGlobalNoExpr.get(2), false));
+        //TODO
+        Set<NoExpressionCallTO> methAllNoExpr = new HashSet<NoExpressionCallTO>();
+        methAllNoExpr.addAll(allGlobalNoExpr.get(0));
+        methAllNoExpr.addAll(allGlobalNoExpr.get(1));
+        methAllNoExpr.addAll(allGlobalNoExpr.get(2));
+
         int nbExpected = 10;
         assertEquals("Incorrect number of generated GlobalNoExpressionToNoExpressionTOs", 
-                nbExpected, values.size());
+                nbExpected, allGlobalExprToExprTO.size());
         
         Set<String> ids = new HashSet<String>();
-        for (NoExpressionCallTO globalExpr: (Set<NoExpressionCallTO>) exprTOsArgGlobalNoExpr.getValue()) {
-            if (globalExpr.getGeneId().equals("ID1") && 
-                globalExpr.getAnatEntityId().equals("Anat_id3") && 
-                globalExpr.getStageId().equals("Stage_id1")) {
+        for (NoExpressionCallTO globalNoExpr: methAllNoExpr) {
+            if (globalNoExpr.getGeneId().equals("ID1") && 
+                globalNoExpr.getAnatEntityId().equals("Anat_id3") && 
+                globalNoExpr.getStageId().equals("Stage_id1")) {
                 
                 assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
-                        values.contains(new GlobalNoExpressionToNoExpressionTO("2",globalExpr.getId())));
-                ids.add(globalExpr.getId());
+                        allGlobalExprToExprTO.contains(
+                                new GlobalNoExpressionToNoExpressionTO("2",globalNoExpr.getId())));
+                ids.add(globalNoExpr.getId());
 
-            } else if (globalExpr.getGeneId().equals("ID1") && 
-                       globalExpr.getAnatEntityId().equals("Anat_id4") && 
-                       globalExpr.getStageId().equals("Stage_id3")) {
+            } else if (globalNoExpr.getGeneId().equals("ID1") && 
+                       globalNoExpr.getAnatEntityId().equals("Anat_id4") && 
+                       globalNoExpr.getStageId().equals("Stage_id3")) {
 
                 assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
-                        values.contains(new GlobalNoExpressionToNoExpressionTO("3",globalExpr.getId())));
-                ids.add(globalExpr.getId());
+                        allGlobalExprToExprTO.contains(
+                                new GlobalNoExpressionToNoExpressionTO("3",globalNoExpr.getId())));
+                ids.add(globalNoExpr.getId());
  
-            } else if (globalExpr.getGeneId().equals("ID1") && 
-                       globalExpr.getAnatEntityId().equals("Anat_id5") && 
-                       globalExpr.getStageId().equals("Stage_id3")) {
+            } else if (globalNoExpr.getGeneId().equals("ID1") && 
+                       globalNoExpr.getAnatEntityId().equals("Anat_id5") && 
+                       globalNoExpr.getStageId().equals("Stage_id3")) {
                 
                 assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
-                        values.contains(new GlobalNoExpressionToNoExpressionTO("3",globalExpr.getId())));
+                        allGlobalExprToExprTO.contains(
+                                new GlobalNoExpressionToNoExpressionTO("3",globalNoExpr.getId())));
                 assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
-                        values.contains(new GlobalNoExpressionToNoExpressionTO("5",globalExpr.getId())));
-                ids.add(globalExpr.getId());
+                        allGlobalExprToExprTO.contains(
+                                new GlobalNoExpressionToNoExpressionTO("5",globalNoExpr.getId())));
+                ids.add(globalNoExpr.getId());
                 
-            } else if (globalExpr.getGeneId().equals("ID2") && 
-                      (globalExpr.getAnatEntityId().equals("Anat_id4") || 
-                            globalExpr.getAnatEntityId().equals("Anat_id5")) && 
-                       globalExpr.getStageId().equals("Stage_id3")) {
+            } else if (globalNoExpr.getGeneId().equals("ID2") && 
+                      (globalNoExpr.getAnatEntityId().equals("Anat_id4") || 
+                            globalNoExpr.getAnatEntityId().equals("Anat_id5")) && 
+                       globalNoExpr.getStageId().equals("Stage_id3")) {
                 
                 assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
-                        values.contains(new GlobalNoExpressionToNoExpressionTO("4",globalExpr.getId())));
-                ids.add(globalExpr.getId());
+                        allGlobalExprToExprTO.contains(
+                                new GlobalNoExpressionToNoExpressionTO("4",globalNoExpr.getId())));
+                ids.add(globalNoExpr.getId());
                  
-            } else if (globalExpr.getGeneId().equals("ID3") && 
-                      (globalExpr.getAnatEntityId().equals("Anat_id1") || 
-                            globalExpr.getAnatEntityId().equals("Anat_id3") || 
-                            globalExpr.getAnatEntityId().equals("Anat_id4") || 
-                            globalExpr.getAnatEntityId().equals("Anat_id5")) && 
-                       globalExpr.getStageId().equals("Stage_id6")) {
+            } else if (globalNoExpr.getGeneId().equals("ID3") && 
+                      (globalNoExpr.getAnatEntityId().equals("Anat_id1") || 
+                            globalNoExpr.getAnatEntityId().equals("Anat_id3") || 
+                            globalNoExpr.getAnatEntityId().equals("Anat_id4") || 
+                            globalNoExpr.getAnatEntityId().equals("Anat_id5")) && 
+                       globalNoExpr.getStageId().equals("Stage_id6")) {
 
                 assertTrue("Incorrect GlobalNoExpressionToNoExpressionTO generated",
-                        values.contains(new GlobalNoExpressionToNoExpressionTO("1",globalExpr.getId())));
-                ids.add(globalExpr.getId());
+                        allGlobalExprToExprTO.contains(
+                                new GlobalNoExpressionToNoExpressionTO("1",globalNoExpr.getId())));
+                ids.add(globalNoExpr.getId());
 
             } else {
                 throw new AssertionError("Incorrect GlobalNoExpressionToNoExpressionTO generated for: " +
-                        globalExpr);
+                        globalNoExpr);
             }
         }
         
@@ -625,34 +835,4 @@ public class InsertGlobalCallsTest extends TestAncestor {
         return mockSpeciesTORs;
     }
 
-    /**
-     * Custom matcher for verifying IDs of species allowing to filter 
-     * the calls to use of actual and expected {@code CallParams}.
-     */
-    private static class CallParamsMatcher extends ArgumentMatcher<CallParams> {
-        
-        private final CallParams expected;
-        
-        public CallParamsMatcher(CallParams expected) {
-            this.expected = expected;
-        }
-        
-        @Override
-        public boolean matches(Object actual) {
-            if (actual == null && expected == null || 
-                    actual != null && ((CallParams) actual).getSpeciesIds().equals(expected.getSpeciesIds())) {
-                return true;
-            }
-            return false;
-        }
-    }
-    
-    /**
-     * Convenience factory method for using the custom {@code CallParams} matcher.
-     * 
-     *  @param expected  A {@code CallParams} that is the argument to be verified.
-     */
-    private static CallParams valueCallParamEq(CallParams params) {
-        return argThat(new CallParamsMatcher(params));
-    }
 }

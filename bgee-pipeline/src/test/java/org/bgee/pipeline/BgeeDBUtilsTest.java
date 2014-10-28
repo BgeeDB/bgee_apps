@@ -1,6 +1,7 @@
 package org.bgee.pipeline;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +16,16 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.TOComparator;
+import org.bgee.model.dao.api.expressiondata.CallParams;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
@@ -22,9 +33,12 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
+import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 
 /**
  * Tests for {@link BgeeDBUtils}.
@@ -224,5 +238,249 @@ public class BgeeDBUtilsTest extends TestAncestor {
         verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
                 RelationDAO.Attribute.TARGETID);
         verify(mockRelationTOResultSet).close();
+    }
+
+    /**
+     * Test {@link BgeeDBUtils#getExpressionCallsByGeneId(Set, ExpressionCallDAO)}.
+     */
+    @Test
+    public void shouldGetExpressionCallsByGeneId() {
+        MockDAOManager mockManager = new MockDAOManager();
+        
+        Map<String, Set<ExpressionCallTO>> expectedMap = 
+                new HashMap<String, Set<ExpressionCallTO>>();
+        Set<ExpressionCallTO> Id1ExprSet = new HashSet<ExpressionCallTO>();
+        Id1ExprSet.addAll(Arrays.asList(
+                new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", 
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        false, false, ExpressionCallTO.OriginOfLine.SELF),
+                new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
+                        DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        false, false, ExpressionCallTO.OriginOfLine.SELF),
+                new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        false, false, ExpressionCallTO.OriginOfLine.SELF)));
+        expectedMap.put("ID1", Id1ExprSet);
+        
+        Set<ExpressionCallTO> Id2ExprSet = new HashSet<ExpressionCallTO>();
+        Id2ExprSet.addAll(Arrays.asList(
+                new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", 
+                        DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, DataState.NODATA, 
+                        false, false, ExpressionCallTO.OriginOfLine.SELF),
+                new ExpressionCallTO("5", "ID2", "Anat_id1", "Stage_id7", 
+                        DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        false, false, ExpressionCallTO.OriginOfLine.SELF)));
+        expectedMap.put("ID2", Id2ExprSet);
+
+        List<ExpressionCallTO> allTOs = new ArrayList<ExpressionCallTO>(Id1ExprSet);
+        allTOs.addAll(Id2ExprSet);
+        
+        ExpressionCallTOResultSet mockExprResultSet = this.createMockDAOResultSet(
+                allTOs, MySQLExpressionCallTOResultSet.class);
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList("11", "21"));
+        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).thenReturn(mockExprResultSet);
+
+        Map<String, List<ExpressionCallTO>> returnedMap = BgeeDBUtils.getExpressionCallsByGeneId(
+                new HashSet<String>(Arrays.asList("11", "21")),
+                mockManager.getExpressionCallDAO());
+
+        assertEquals("Maps not equal, different sizes", expectedMap.size() , returnedMap.size());
+        
+        for(String id : expectedMap.keySet()) {
+            if(returnedMap.containsKey(id)) {
+                assertTrue("Incorrect map generated: different values for " + id, 
+                        TOComparator.areTOCollectionsEqual(expectedMap.get(id), returnedMap.get(id)));
+            } else {
+                throw new AssertionError("Incorrect map generated: missing expected id " + id);
+            }
+        }
+    }
+    
+    /**
+     * Test {@link BgeeDBUtils#getExpressionCallsFromDb(Set, ExpressionCallDAO)}.
+     */
+    @Test
+    public void shouldGetExpressionCallFromDb() {
+        MockDAOManager mockManager = new MockDAOManager();
+
+        List<ExpressionCallTO> expectedExprs = 
+                Arrays.asList(
+                        new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
+                                DataState.HIGHQUALITY, DataState.NODATA, 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", 
+                                DataState.LOWQUALITY, DataState.NODATA, 
+                                DataState.HIGHQUALITY, DataState.NODATA, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO("5", "ID3", "Anat_id1", "Stage_id7", 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF));
+        // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
+        ExpressionCallTOResultSet mockExprResultSet = this.createMockDAOResultSet(
+                expectedExprs,
+                MySQLExpressionCallTOResultSet.class);
+        
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList("11", "21"));
+        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExprResultSet);
+                
+        assertTrue("Incorrect expression calls retrieved", TOComparator.areTOCollectionsEqual(
+                expectedExprs, 
+                BgeeDBUtils.getExpressionCallsFromDb(new HashSet<String>(Arrays.asList("11", "21")),
+                        mockManager.getExpressionCallDAO())));
+        verify(mockExprResultSet).close();
+    }
+    
+    /**
+     * Test {@link BgeeDBUtils#getNoExpressionCallsByGeneId(Set, NoExpressionCallDAO)}.
+     */
+    @Test
+    public void shouldGetNoExpressionCallsByGeneId() {
+        MockDAOManager mockManager = new MockDAOManager();
+        
+        Map<String, Set<NoExpressionCallTO>> expectedMap = 
+                new HashMap<String, Set<NoExpressionCallTO>>();
+        Set<NoExpressionCallTO> Id1NoExprSet = new HashSet<NoExpressionCallTO>();
+        Id1NoExprSet.addAll(Arrays.asList(
+                new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", 
+                        DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)));
+        expectedMap.put("ID1", Id1NoExprSet);
+
+        Set<NoExpressionCallTO> Id2NoExprSet = new HashSet<NoExpressionCallTO>();
+        Id2NoExprSet.add(new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", 
+                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF));
+        expectedMap.put("ID2", Id2NoExprSet);
+
+        Set<NoExpressionCallTO> Id3NoExprSet = new HashSet<NoExpressionCallTO>();
+        Id3NoExprSet.add(new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", 
+                DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF));
+        expectedMap.put("ID3", Id3NoExprSet);
+
+        List<NoExpressionCallTO> allTOs = new ArrayList<NoExpressionCallTO>(Id1NoExprSet);
+        allTOs.addAll(Id2NoExprSet);
+        allTOs.addAll(Id3NoExprSet);
+        
+        NoExpressionCallTOResultSet mockNoExprResultSet = this.createMockDAOResultSet(
+                allTOs, MySQLNoExpressionCallTOResultSet.class);
+        NoExpressionCallParams params = new NoExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList("11", "21"));
+        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                thenReturn(mockNoExprResultSet);
+
+        Map<String, List<NoExpressionCallTO>> returnedMap = BgeeDBUtils.getNoExpressionCallsByGeneId(
+                new HashSet<String>(Arrays.asList("11", "21")),
+                mockManager.getNoExpressionCallDAO());
+
+        assertEquals("Maps not equal, different sizes", expectedMap.size() , returnedMap.size());
+        
+        for(String id : expectedMap.keySet()) {
+            if(returnedMap.containsKey(id)) {
+                assertTrue("Incorrect map generated: different values for " + id, 
+                        TOComparator.areTOCollectionsEqual(expectedMap.get(id), returnedMap.get(id)));
+            } else {
+                throw new AssertionError("Incorrect map generated: missing expected id " + id);
+            }
+        }
+    }
+    
+    /**
+     * Test {@link BgeeDBUtils#getNoExpressionCallsFromDb(Set, NoExpressionCallDAO)}.
+     */
+    @Test
+    public void shouldGetNoExpressionCallFromDb() {
+        MockDAOManager mockManager = new MockDAOManager();
+
+        List<NoExpressionCallTO> expectedNoExprs = Arrays.asList(
+                new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", 
+                        DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", 
+                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
+                new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", 
+                        DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF));
+        // We need a mock MySQLNoExpressionCallTOResultSet to mock 
+        // the return of getNoExpressionCalls().
+        NoExpressionCallTOResultSet mockNoExprResultSet = this.createMockDAOResultSet(
+                expectedNoExprs,
+                MySQLNoExpressionCallTOResultSet.class);
+        
+        NoExpressionCallParams params = new NoExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList("11", "21"));
+        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                (NoExpressionCallParams) valueCallParamEq(params))).thenReturn(mockNoExprResultSet);
+
+        assertTrue("Incorrect no-expression calls retrieved", TOComparator.areTOCollectionsEqual(
+                expectedNoExprs, 
+                BgeeDBUtils.getNoExpressionCallsFromDb(
+                        new HashSet<String>(Arrays.asList("11", "21")),
+                        mockManager.getNoExpressionCallDAO())));
+        verify(mockNoExprResultSet).close();
+    }
+
+    /**
+     * Custom matcher for verifying IDs of species allowing to filter 
+     * the calls to use of actual and expected {@code CallParams}.
+     */
+    private static class CallParamsMatcher extends ArgumentMatcher<CallParams> {
+        
+        private final CallParams expected;
+        
+        public CallParamsMatcher(CallParams expected) {
+            this.expected = expected;
+        }
+        
+        @Override
+        public boolean matches(Object actual) {
+            if (actual == null && expected == null || 
+                    actual != null && ((CallParams) actual).getSpeciesIds().equals(expected.getSpeciesIds())) {
+                return true;
+            }
+            return false;
+        }
+    }
+    
+    /**
+     * Convenience factory method for using the custom {@code CallParams} matcher.
+     * 
+     *  @param expected  A {@code CallParams} that is the argument to be verified.
+     */
+    public static CallParams valueCallParamEq(CallParams params) {
+        return argThat(new CallParamsMatcher(params));
     }
 }

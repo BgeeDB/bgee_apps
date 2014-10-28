@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,6 +100,41 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      */
     public int insertGlobalNoExprToNoExpr(Collection<GlobalNoExpressionToNoExpressionTO> 
                                               globalNoExprToNoExprTOs) throws DAOException;
+    
+    /**
+     * Delete from the data source the no-expression calls with the provided IDs. This method 
+     * removes either global no-expression calls, or basic no-expression calls, 
+     * depending on the value of {@code globalCalls}. This method cannot remove 
+     * both basic calls and global calls at the same time.
+     * 
+     * @param noExprIds     A {@code Set} of {@code String}s that are the IDs of 
+     *                      the no-expression calls to delete.
+     * @param globalCalls   A {@code boolean} defining whether to remove global calls 
+     *                      or basic calls. If {@code true}, global calls are removed.
+     * @return          An {@code int} that is the number of no-expression calls removed 
+     *                  as a result.
+     * @throws IllegalArgumentException If an ID could not be found in the data source.
+     * @throws DAOException             If an error occurred while deleting data. 
+     */
+    //TODO: should also remove data from globalNoExpressionToNoExpression
+    public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) throws DAOException;
+    
+    /**
+     * Update no-expression calls in the data source using {@code noExprCallTOs}. 
+     * This method can accept both global calls or basic calls at the same time, 
+     * they will be distinguished thanks to 
+     * {@link NoExpressionCallTO#isIncludeParentStructures()}.
+     * 
+     * @param noExprCallTOs     A {@code Collection} of {@code NoExpressionCallTO}s used 
+     *                          to update corresponding calls with same IDs in the data source.
+     * @return                  An {@code int} that is the number of no-expression calls 
+     *                          that were actually updated (not just number of matching calls).
+     * @throws IllegalArgumentException If a {@code NoExpressionCallTO} could not be found 
+     *                                  in the data source.
+     * @throws DAOException             If an error occurred while updating data. 
+     */
+    public int upadteNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs) 
+            throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code NoExpressionCallTO}s

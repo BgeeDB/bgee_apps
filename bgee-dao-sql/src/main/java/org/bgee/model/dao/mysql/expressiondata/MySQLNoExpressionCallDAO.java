@@ -333,6 +333,20 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
     }
     
+    @Override
+    public int deleteNoExprCalls(Set<String> arg0, boolean arg1)
+            throws DAOException, IllegalArgumentException {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int upadteNoExprCalls(Collection<NoExpressionCallTO> arg0)
+            throws DAOException, IllegalArgumentException {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
     /**
      * A {@code MySQLDAOResultSet} specific to {@code NoExpressionCallTO}.
      * 

@@ -1,14 +1,17 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
 
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixProbesetTO}s. 
  * 
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @see AffymetrixProbesetTO
  * @since Bgee 01
@@ -50,4 +53,37 @@ public interface AffymetrixProbesetDAO {
 	 */
 	public int updateNoExpressionConflicts(Set<String> noExprIds) 
 	        throws DAOException, IllegalArgumentException;
+	
+	/**
+	 * {@code TransferObject} for the class 
+	 * {@link org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixProbeset}.
+	 * <p>
+	 * For information on this {@code TransferObject} and its fields, 
+	 * see the corresponding class.
+	 * 
+	 * @author Frederic Bastian
+	 * @author Valentine Rech de Laval
+	 * @version Bgee 13
+	 * @see org.bgee.model.expressiondata.rawdata.affymetrix.AffymetrixProbeset
+	 * @since Bgee 11
+	 */
+	public final class AffymetrixProbesetTO extends CallSourceRawDataTO implements Serializable {
+
+	    /**
+	     * 
+	     */
+	    private static final long serialVersionUID = 112434L;
+
+	    public String bgeeAffymetrixChipId;
+	    public float normalizedSignalIntensity;
+
+	    public String detectionFlag;
+	    
+	    public AffymetrixProbesetTO() {
+	        super();
+	        this.bgeeAffymetrixChipId = null;
+	        this.normalizedSignalIntensity = 0;
+	        this.detectionFlag = "undefined";
+	    }
+	}
 }

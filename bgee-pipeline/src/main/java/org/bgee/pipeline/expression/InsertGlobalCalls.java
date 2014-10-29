@@ -2,6 +2,7 @@ package org.bgee.pipeline.expression;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -185,7 +186,10 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     int nbInsertedGlobalNoExprToNoExpr = 0;
                     int geneCount = noExprTOs.size();
                     int geneIterated = 0;
-                    for (Entry<String, List<NoExpressionCallTO>> entry : noExprTOs.entrySet()) {
+                    Iterator<Entry<String, List<NoExpressionCallTO>>> noExprTOIterator = 
+                            noExprTOs.entrySet().iterator();
+                    while (noExprTOIterator.hasNext()) {
+                        Entry<String, List<NoExpressionCallTO>> entry = noExprTOIterator.next();
                         geneIterated++;
                         if (log.isDebugEnabled() && geneIterated % 1000 == 0) {
                             log.debug("{}/{} genes examined.", geneIterated, geneCount);
@@ -234,6 +238,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                         // because it empty ArgumentCaptor values in test in same time.
                         globalNoExprToNoExprTOs = null; 
                         nbInsertedGlobalNoExprToNoExpr += nbCurInsertedGlobalNoExprToNoExpr;
+                        //free even more memory
+                        noExprTOIterator.remove();
                     }
                     
                     log.info("Done propagating no-expression calls for species {}: {} global no-expression calls inserted " +
@@ -256,7 +262,10 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                     int nbInsertedGlobalExprToExpr = 0;
                     int geneIterated = 0;
                     int geneCount = exprTOs.size();
-                    for (Entry<String, List<ExpressionCallTO>> entry : exprTOs.entrySet()) {
+                    Iterator<Entry<String, List<ExpressionCallTO>>> exprTOIterator = 
+                            exprTOs.entrySet().iterator();
+                    while (exprTOIterator.hasNext()) {
+                        Entry<String, List<ExpressionCallTO>> entry = exprTOIterator.next();
                         geneIterated++;
                         if (log.isDebugEnabled() && geneIterated % 1000 == 0) {
                             log.debug("{}/{} genes examined.", geneIterated, geneCount);
@@ -299,6 +308,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                         // because it empty ArgumentCaptor values in test in same time.
                         globalExprToExprTOs = null; 
                         nbInsertedGlobalExprToExpr += nbCurInsertedGlobalExprToExpr;
+                        //free even more memory
+                        exprTOIterator.remove();
                     }
                     
                     log.info("Done propagating expression calls for species {}: {} global expression calls inserted " +

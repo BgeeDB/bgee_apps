@@ -233,12 +233,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                         log.debug("Done inserting relations between no-expression calls " +
                                 "and global no-expression calls for species {} and gene ID {}.", 
                                 speciesId, entry.getKey());
-
-                        // Empty memory to free up some memory. We don't use clear() 
-                        // because it empty ArgumentCaptor values in test in same time.
-                        globalNoExprToNoExprTOs = null; 
+                        
                         nbInsertedGlobalNoExprToNoExpr += nbCurInsertedGlobalNoExprToNoExpr;
-                        //free even more memory
+                        //free memory
                         noExprTOIterator.remove();
                     }
                     
@@ -304,11 +301,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                         log.debug("Done inserting {} relations between expression calls " +
                                 "and global expression calls for species {} and gene ID {}.", 
                                 nbCurInsertedGlobalExprToExpr, speciesId, entry.getKey());
-                        // Empty memory to free up some memory. We don't use clear() 
-                        // because it empty ArgumentCaptor values in test in same time.
-                        globalExprToExprTOs = null; 
                         nbInsertedGlobalExprToExpr += nbCurInsertedGlobalExprToExpr;
-                        //free even more memory
+                        //free memory
                         exprTOIterator.remove();
                     }
                     

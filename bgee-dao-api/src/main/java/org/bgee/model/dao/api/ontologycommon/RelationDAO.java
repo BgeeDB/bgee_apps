@@ -25,7 +25,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code RelationTO}s 
      * obtained from this {@code RelationDAO}.
      * <ul>
-     * <li>{@code RELATIONID}: corresponds to {@link RelationTO#getRelationId()}.
+     * <li>{@code RELATIONID}: corresponds to {@link RelationTO#getId()}.
      * <li>{@code SOURCEID}: corresponds to {@link RelationTO#getSourceId()}.
      * <li>{@code TARGETID}: corresponds to {@link RelationTO#getTargetId()}.
      * <li>{@code RELATIONTYPE}: corresponds to {@link RelationTO#getRelationType()}.
@@ -328,7 +328,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * 
          * @param sourceId         A {@code String} that is the ID of the descent term.
          * @param targetId          A {@code String} that is the ID of the parent term.
-         * @see RelationTO#RelationTO(String, String, RelationType, boolean)
+         * @see RelationTO#RelationTO(String, String, String, RelationType, RelationStatus)
          */
         public RelationTO(String sourceId, String targetId) {
             this(null, sourceId, targetId, null, null);

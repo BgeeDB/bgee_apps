@@ -319,7 +319,6 @@ public class InsertGlobalCallsTest extends TestAncestor {
         assertTrue("Incorrect global expression calls generated for ID5",
                 TOComparator.areTOCollectionsEqual(
                         expectedExprSpecies21id5, allGlobalExpr.get(4), false));
-//TODO
         
         int nbExpected = 20;
         assertEquals("Incorrect number of generated GlobalExpressionToExpressionTOs", 
@@ -694,7 +693,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         assertTrue("Incorrect global no-expression calls generated for ID3", 
                 TOComparator.areTOCollectionsEqual(
                         expectedNoExprId3, allGlobalNoExpr.get(2), false));
-        //TODO
+
         Set<NoExpressionCallTO> methAllNoExpr = new HashSet<NoExpressionCallTO>();
         methAllNoExpr.addAll(allGlobalNoExpr.get(0));
         methAllNoExpr.addAll(allGlobalNoExpr.get(1));

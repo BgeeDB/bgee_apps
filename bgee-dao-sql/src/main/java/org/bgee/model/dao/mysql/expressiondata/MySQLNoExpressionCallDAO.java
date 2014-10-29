@@ -106,7 +106,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
          if (speciesIds != null && speciesIds.size() > 0) {
              sql += " INNER JOIN " + geneTabName + " ON (gene.geneId = " + 
                              tableName + "." + this.attributeToString(
-                                     NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) +")" +
+                              NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) +")" +
                     " WHERE " + geneTabName + ".speciesId IN (" +
                             BgeePreparedStatement.generateParameterizedQueryString(
                                     speciesIds.size()) + ")" +
@@ -201,6 +201,8 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             label = "noExpressionAffymetrixData";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.INSITUDATA)) {
             label = "noExpressionInSituData";
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.RELAXEDINSITUDATA)) {
+            label = "noExpressionRelaxedInSituData";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.RNASEQDATA)) {
             label = "noExpressionRnaSeqData";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGINOFLINE)) {
@@ -334,17 +336,114 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     }
     
     @Override
-    public int deleteNoExprCalls(Set<String> arg0, boolean arg1)
+    public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) 
             throws DAOException, IllegalArgumentException {
         // TODO Auto-generated method stub
+        //TODO: should also remove data from globalNoExpressionToNoExpression
         return 0;
     }
 
     @Override
-    public int upadteNoExprCalls(Collection<NoExpressionCallTO> arg0)
+    public int updateNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs)
             throws DAOException, IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return 0;
+        log.entry(noExprCallTOs);
+        
+        // According to isIncludeParentStructures(), the NoExpressionCallTO is updated in 
+        // noExpression or globalNoExpression table. As prepared statement is for the 
+        // column values not for table name, we need to separate NoExpressionCallTOs into
+        // two separated collections. 
+        Collection<NoExpressionCallTO> noExpressionToUpdate = new ArrayList<NoExpressionCallTO>();
+        Collection<NoExpressionCallTO> globalnoExpressionToUpdate = 
+                new ArrayList<NoExpressionCallTO>();
+        for (NoExpressionCallTO call: noExprCallTOs) {
+            if (call.isIncludeParentStructures()) {
+                globalnoExpressionToUpdate.add(call);
+            } else {
+                noExpressionToUpdate.add(call);
+            }
+        }
+
+        log.debug("{} basic no-expression calls and {} global no-expression calls will be updated", 
+                noExpressionToUpdate.size(), globalnoExpressionToUpdate.size());
+
+        // Construct sql query for basic no-expression calls
+        String sqlNoExpr = "UPDATE noExpression SET " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.GENEID, false) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.ANATENTITYID, false) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.DEVSTAGEID, false) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, false) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.INSITUDATA, false) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.RELAXEDINSITUDATA, false) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.RNASEQDATA, false) + " = ? " +
+                "WHERE noExpressionId = ?";
+
+        // Update basic no-expression calls
+        int noExprUpdatedCount = 0;
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlNoExpr)) {
+            for (NoExpressionCallTO noExpr: noExpressionToUpdate) {
+                stmt.setString(1, noExpr.getGeneId());
+                stmt.setString(2, noExpr.getAnatEntityId());
+                stmt.setString(3, noExpr.getStageId());
+                stmt.setString(4, noExpr.getAffymetrixData().getStringRepresentation());
+                stmt.setString(5, noExpr.getInSituData().getStringRepresentation());
+                stmt.setString(6, noExpr.getRelaxedInSituData().getStringRepresentation());
+                stmt.setString(7, noExpr.getRNASeqData().getStringRepresentation());
+                stmt.setInt(8, Integer.parseInt(noExpr.getId()));
+                int isInserted = stmt.executeUpdate();
+                if (isInserted == 0) {
+                    throw log.throwing(new IllegalArgumentException("The provided basic call " +
+                            noExpr.getId() + " was not found in the data source"));
+                }
+                noExprUpdatedCount += isInserted;
+                stmt.clearParameters();
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        // Construct sql query for global no-expression calls
+        String sqlGlobalNoExpr = "UPDATE globalNoExpression SET " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.GENEID, true) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.ANATENTITYID, true) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.DEVSTAGEID, true) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, true) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.INSITUDATA, true) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.RELAXEDINSITUDATA, true) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.RNASEQDATA, true) + " = ?, " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.ORIGINOFLINE, true) + " = ? " +
+                " WHERE globalNoExpressionId = ?";
+        
+        // Update global no-expression calls
+        int globalNoExprUpdatedCount = 0;
+        try (BgeePreparedStatement stmt = 
+                this.getManager().getConnection().prepareStatement(sqlGlobalNoExpr)) {
+            for (NoExpressionCallTO globalNoExpr: globalnoExpressionToUpdate) {
+                stmt.setString(1, globalNoExpr.getGeneId());
+                stmt.setString(2, globalNoExpr.getAnatEntityId());
+                stmt.setString(3, globalNoExpr.getStageId());
+                stmt.setString(4, globalNoExpr.getAffymetrixData().getStringRepresentation());
+                stmt.setString(5, globalNoExpr.getInSituData().getStringRepresentation());
+                stmt.setString(6, globalNoExpr.getRelaxedInSituData().getStringRepresentation());
+                stmt.setString(7, globalNoExpr.getRNASeqData().getStringRepresentation());
+                stmt.setString(8, globalNoExpr.getOriginOfLine().getStringRepresentation());
+                stmt.setString(9, globalNoExpr.getId());
+                int isInserted = stmt.executeUpdate();
+                if (isInserted == 0) {
+                    throw log.throwing(new IllegalArgumentException("The provided global call " +
+                            globalNoExpr.getId() + " was not found in the data source"));
+                }
+                globalNoExprUpdatedCount += isInserted;
+                stmt.clearParameters();
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        log.debug("{} basic no-expression calls and {} global no-expression calls updated", 
+                    noExprUpdatedCount, globalNoExprUpdatedCount);
+
+        return log.exit(noExprUpdatedCount + globalNoExprUpdatedCount);
     }
 
     /**

@@ -116,7 +116,6 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @throws IllegalArgumentException If an ID could not be found in the data source.
      * @throws DAOException             If an error occurred while deleting data. 
      */
-    //TODO: should also remove data from globalNoExpressionToNoExpression
     public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) 
             throws DAOException, IllegalArgumentException;
     
@@ -134,7 +133,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                                  in the data source.
      * @throws DAOException             If an error occurred while updating data. 
      */
-    public int upadteNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs) 
+    public int updateNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs) 
             throws DAOException, IllegalArgumentException;
 
     /**

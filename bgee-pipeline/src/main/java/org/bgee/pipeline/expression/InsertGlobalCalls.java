@@ -292,7 +292,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                                 speciesId, entry.getKey());
                         int nbCurInsertedGlobalExprToExpr = this.getExpressionCallDAO().
                                 insertGlobalExpressionToExpression(globalExprToExprTOs);
-                        log.info("Done inserting {} relations between expression calls " +
+                        log.debug("Done inserting {} relations between expression calls " +
                                 "and global expression calls for species {} and gene ID {}.", 
                                 nbCurInsertedGlobalExprToExpr, speciesId, entry.getKey());
                         // Empty memory to free up some memory. We don't use clear() 

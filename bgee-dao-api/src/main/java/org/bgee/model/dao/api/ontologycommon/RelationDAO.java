@@ -167,14 +167,13 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             TRANSFORMATIONOF("transformation_of");
             
             /**
-             * Convert the {@code String} representation of a data state (for instance, 
+             * Convert the {@code String} representation of a relation type (for instance, 
              * retrieved from a database) into a {@code RelationType}. This method 
              * compares {@code representation} to the value returned by 
              * {@link #getStringRepresentation()}, as well as to the value 
-             * returned by {@link Enum#name()}, for each {@code RelationType}, 
-             * .
+             * returned by {@link Enum#name()}, for each {@code RelationType}.
              * 
-             * @param representation    A {@code String} representing a data state.
+             * @param representation    A {@code String} representing a relation type.
              * @return  A {@code RelationType} corresponding to {@code representation}.
              * @throw IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code RelationType}.
@@ -232,13 +231,13 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
             DIRECT("direct"), INDIRECT("indirect"), REFLEXIVE("reflexive");
             
             /**
-             * Convert the {@code String} representation of a data state (for instance, 
+             * Convert the {@code String} representation of a relation status (for instance, 
              * retrieved from a database) into a {@code RelationStatus}. This method 
              * compares {@code representation} to the value returned by 
              * {@link #getStringRepresentation()}, as well as to the value 
              * returned by {@link Enum#name()}, for each {@code RelationStatus}.
              * 
-             * @param representation    A {@code String} representing a data state.
+             * @param representation    A {@code String} representing a relation status.
              * @return  A {@code RelationStatus} corresponding to {@code representation}.
              * @throw IllegalArgumentException  If {@code representation} does not correspond 
              *                                  to any {@code RelationStatus}.

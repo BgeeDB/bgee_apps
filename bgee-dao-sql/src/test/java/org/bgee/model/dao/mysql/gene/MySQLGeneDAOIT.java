@@ -149,7 +149,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         try {
             //Test with only one Attribute
             MySQLGeneDAO dao = new MySQLGeneDAO(this.getMySQLDAOManager());
-            assertEquals("Incorrect number of rows inserted", 2, 
+            assertEquals("Incorrect number of rows updated", 2, 
                     dao.updateGenes(geneTOs, attributesToUpdate1));
 
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
@@ -167,7 +167,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
             }
             
             //Test with all Attributes
-            assertEquals("Incorrect number of rows inserted", 2, 
+            assertEquals("Incorrect number of rows updated", 2, 
                     dao.updateGenes(geneTOs, attributesToUpdate2));
 
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().

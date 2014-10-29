@@ -2,6 +2,7 @@ package org.bgee.model.dao.mysql.expressiondata;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -59,8 +60,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetNoExpressionCalls() throws SQLException {
-        log.entry();
-        
         this.useSelectDB();
         
         // On noExpression table 
@@ -244,8 +243,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         assertTrue("NoExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
                         dao.getNoExpressionCalls(params).getAllTOs()));
-
-        log.exit();
     }
     
     /**
@@ -253,7 +250,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetMaxNoExpressionCallID() throws SQLException {
-        log.entry();
 
         // Check on database with calls
         this.useSelectDB();
@@ -295,7 +291,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertNoExpressionCalls() throws SQLException {
-        log.entry();
         
         this.useEmptyDB();
         
@@ -393,7 +388,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         } finally {
             this.emptyAndUseDefaultDB();
         }
-        log.exit();
     }
     
     /**
@@ -403,7 +397,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertGlobalNoExpressionToNoExpression() throws SQLException {
-        log.entry();
         
         this.useEmptyDB();
 
@@ -442,8 +435,91 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         } finally {
             this.emptyAndUseDefaultDB();
         }
+    }
+    
+    /**
+     * Test the delete methods {@link MySQLNoExpressionCallDAO#deleteNoExprCalls()}.
+     * @throws SQLException
+     */
+    @Test
+    public void shouldDeleteNoExprCalls() throws SQLException {
+        
+        this.useEmptyDB();
+        this.populateAndUseDatabase();
+        
+        Set<String> noExprIds = new HashSet<>(Arrays.asList("1", "5"));
+        Set<String> globalNoExprIds = new HashSet<>(Arrays.asList("2", "7", "13"));
+        Set<String> globalNoExprBadIds = new HashSet<>(Arrays.asList("3", "99"));
+        
+        try {
+            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
+            assertEquals("Incorrect nummber of rows deleted", 
+                    2, dao.deleteNoExprCalls(noExprIds, false));
 
-        log.exit();
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from noExpression where noExpressionId = ?")) {
+                stmt.setInt(1, 1);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+
+                stmt.setInt(1, 5);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+            }
+        
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
+                            "noExpressionId = ?")) {
+                stmt.setInt(1, 1);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setInt(1, 5);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+            }
+
+            assertEquals("Incorrect nummber of rows deleted", 
+                    3, dao.deleteNoExprCalls(globalNoExprIds, true));
+            
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from globalNoExpression where globalNoExpressionId = ?")) {
+                stmt.setInt(1, 2);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setInt(1, 7);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+
+                stmt.setInt(1, 13);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+            }
+            
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
+                            "globalNoExpressionId = ?")) {
+                stmt.setInt(1, 2);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setInt(1, 7);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setInt(1, 13);
+                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+            }
+
+            thrown.expect(IllegalArgumentException.class);
+            thrown.expectMessage("The provided call 99 was not found in the data source");
+            dao.deleteNoExprCalls(globalNoExprBadIds, true);
+
+        } finally {
+            this.emptyAndUseDefaultDB();
+        }
     }
     
     /**
@@ -452,7 +528,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldUpdateNoExprCalls() throws SQLException {
-        log.entry();
         
         this.useEmptyDB();
         this.populateAndUseDatabase();
@@ -568,6 +643,5 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         } finally {
             this.emptyAndUseDefaultDB();
         }
-        log.exit();
     }
 }

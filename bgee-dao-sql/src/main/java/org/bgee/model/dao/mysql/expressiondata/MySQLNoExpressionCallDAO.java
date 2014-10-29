@@ -338,10 +338,50 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     @Override
     public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) 
             throws DAOException, IllegalArgumentException {
-        // TODO Auto-generated method stub
-        //TODO: should also remove data from globalNoExpressionToNoExpression
-        return 0;
-    }
+        log.entry(noExprIds, globalCalls);
+
+        String sql = "DELETE FROM noExpression WHERE  " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.ID, false) + " = ?";
+        if (globalCalls) {
+            sql = "DELETE FROM globalNoExpression WHERE  " +
+                    this.attributeToString(NoExpressionCallDAO.Attribute.ID, true) + " = ?";
+        }
+        
+        String sqlRelation = "DELETE FROM globalNoExpressionToNoExpression WHERE  ";
+        if (globalCalls) {
+            sqlRelation += this.attributeToString(NoExpressionCallDAO.Attribute.ID, true) + " = ?";
+        } else {
+            sqlRelation += this.attributeToString(NoExpressionCallDAO.Attribute.ID, false) + " = ?";
+        }
+
+        int deletionCount = 0;
+        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
+            for (String id: noExprIds) {
+                stmt.setString(1, id);
+                int isDeleted = stmt.executeUpdate();
+                if (isDeleted == 0) {
+                    throw log.throwing(new IllegalArgumentException("The provided call " +
+                            id + " was not found in the data source"));
+                }
+                deletionCount += isDeleted;
+                stmt.clearParameters();
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sqlRelation)) {
+            for (String id: noExprIds) {
+                stmt.setString(1, id);
+                stmt.executeUpdate();
+                stmt.clearParameters();
+            }
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+
+        return log.exit(deletionCount);
+}
 
     @Override
     public int updateNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs)

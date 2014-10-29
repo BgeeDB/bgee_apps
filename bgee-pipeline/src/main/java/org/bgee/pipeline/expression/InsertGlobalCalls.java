@@ -183,8 +183,13 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
                     int nbInsertedNoExpressions = 0;
                     int nbInsertedGlobalNoExprToNoExpr = 0;
-
+                    int geneCount = noExprTOs.size();
+                    int geneIterated = 0;
                     for (Entry<String, List<NoExpressionCallTO>> entry : noExprTOs.entrySet()) {
+                        geneIterated++;
+                        if (log.isDebugEnabled() && geneIterated % 1000 == 0) {
+                            log.debug("{}/{} genes examined.", geneIterated, geneCount);
+                        }
                         // For each no-expression row, propagate to allowed children.
                         Map<NoExpressionCallTO, Set<String>> globalNoExprMap =
                                 this.generateGlobalNoExpressionTOs(
@@ -249,8 +254,13 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
                     int nbInsertedExpressions = 0;
                     int nbInsertedGlobalExprToExpr = 0;
-                    
+                    int geneIterated = 0;
+                    int geneCount = exprTOs.size();
                     for (Entry<String, List<ExpressionCallTO>> entry : exprTOs.entrySet()) {
+                        geneIterated++;
+                        if (log.isDebugEnabled() && geneIterated % 1000 == 0) {
+                            log.debug("{}/{} genes examined.", geneIterated, geneCount);
+                        }
                         // For each expression row, propagate to parents.
                         Map<ExpressionCallTO, Set<String>> globalExprMap =
                                 this.generateGlobalExpressionTOs(

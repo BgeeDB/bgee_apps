@@ -18,7 +18,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.expressiondata.CallParams;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
@@ -71,13 +70,14 @@ public class BgeeDBUtilsTest extends TestAncestor {
     @Test
     public void shouldGetSpeciesIdsFromDb() {
         
-        MockDAOManager mockManager = new MockDAOManager();
-        SpeciesTOResultSet mockSpeciesResultSet = this.mockGetAllSpecies(mockManager);
-        
-        assertEquals("Incorrect speciesIDs retrieved", Arrays.asList("21", "11", "30"), 
-                BgeeDBUtils.getSpeciesIdsFromDb(mockManager.getSpeciesDAO()));
-        verify(mockManager.getSpeciesDAO()).setAttributes(SpeciesDAO.Attribute.ID);
-        verify(mockSpeciesResultSet).close();
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            SpeciesTOResultSet mockSpeciesResultSet = this.mockGetAllSpecies(mockManager);
+            
+            assertEquals("Incorrect speciesIDs retrieved", Arrays.asList("21", "11", "30"), 
+                    BgeeDBUtils.getSpeciesIdsFromDb(mockManager.getSpeciesDAO()));
+            verify(mockManager.getSpeciesDAO()).setAttributes(SpeciesDAO.Attribute.ID);
+            verify(mockSpeciesResultSet).close();
+        }
     }
     
     /**
@@ -86,36 +86,37 @@ public class BgeeDBUtilsTest extends TestAncestor {
     @Test
     public void shouldCheckAndGetSpeciesIds() {
         
-        MockDAOManager mockManager = new MockDAOManager();
+        try (MockDAOManager mockManager = new MockDAOManager()) {
 
-        this.mockGetAllSpecies(mockManager);
-        assertEquals("Incorrect speciesIDs checked and retrieved", 
-                Arrays.asList("21", "11", "30"), BgeeDBUtils.checkAndGetSpeciesIds(
-                        null, mockManager.getSpeciesDAO()));
-        
-        this.mockGetAllSpecies(mockManager);
-        assertEquals("Incorrect speciesIDs checked and retrieved", 
-                Arrays.asList("21", "11", "30"), BgeeDBUtils.checkAndGetSpeciesIds(
-                        new ArrayList<String>(), mockManager.getSpeciesDAO()));
-
-        this.mockGetAllSpecies(mockManager);
-        assertEquals("Incorrect speciesIDs checked and retrieved", 
-                Arrays.asList("30", "21", "11"), BgeeDBUtils.checkAndGetSpeciesIds(
-                        Arrays.asList("30", "21", "11"), mockManager.getSpeciesDAO()));
-
-        this.mockGetAllSpecies(mockManager);
-        assertEquals("Incorrect speciesIDs checked and retrieved", 
-                Arrays.asList("30", "11"), BgeeDBUtils.checkAndGetSpeciesIds(
-                        Arrays.asList("30", "11"), mockManager.getSpeciesDAO()));
-        try {
             this.mockGetAllSpecies(mockManager);
-            BgeeDBUtils.checkAndGetSpeciesIds(Arrays.asList("11", "30", "100"), 
-                    mockManager.getSpeciesDAO());
-            //test failed, the method should have thrown an exception
-            throw new AssertionError("checkAndGetSpeciesIds did not throw " +
-            		"an IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            //test passed
+            assertEquals("Incorrect speciesIDs checked and retrieved", 
+                    Arrays.asList("21", "11", "30"), BgeeDBUtils.checkAndGetSpeciesIds(
+                            null, mockManager.getSpeciesDAO()));
+            
+            this.mockGetAllSpecies(mockManager);
+            assertEquals("Incorrect speciesIDs checked and retrieved", 
+                    Arrays.asList("21", "11", "30"), BgeeDBUtils.checkAndGetSpeciesIds(
+                            new ArrayList<String>(), mockManager.getSpeciesDAO()));
+            
+            this.mockGetAllSpecies(mockManager);
+            assertEquals("Incorrect speciesIDs checked and retrieved", 
+                    Arrays.asList("30", "21", "11"), BgeeDBUtils.checkAndGetSpeciesIds(
+                            Arrays.asList("30", "21", "11"), mockManager.getSpeciesDAO()));
+            
+            this.mockGetAllSpecies(mockManager);
+            assertEquals("Incorrect speciesIDs checked and retrieved", 
+                    Arrays.asList("30", "11"), BgeeDBUtils.checkAndGetSpeciesIds(
+                            Arrays.asList("30", "11"), mockManager.getSpeciesDAO()));
+            try {
+                this.mockGetAllSpecies(mockManager);
+                BgeeDBUtils.checkAndGetSpeciesIds(Arrays.asList("11", "30", "100"), 
+                        mockManager.getSpeciesDAO());
+                //test failed, the method should have thrown an exception
+                throw new AssertionError("checkAndGetSpeciesIds did not throw " +
+                        "an IllegalArgumentException");
+            } catch (IllegalArgumentException e) {
+                //test passed
+            }
         }
     }
 
@@ -144,7 +145,6 @@ public class BgeeDBUtilsTest extends TestAncestor {
      */
     @Test
     public void shouldGetAnatEntityTargetsOrSources() {
-        MockDAOManager mockManager = new MockDAOManager();
         List<RelationTO> returnedRelTOs = Arrays.asList(
                 new RelationTO("1", "1"), 
                 new RelationTO("2", "2"), 
@@ -157,49 +157,52 @@ public class BgeeDBUtilsTest extends TestAncestor {
                 new RelationTO("4", "1"), 
                 new RelationTO("3", "5"));
         
-        RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
-                returnedRelTOs, MySQLRelationTOResultSet.class);
-        when(mockManager.getRelationDAO().getAnatEntityRelations(
-                new HashSet<String>(Arrays.asList("1", "2")), 
-                EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            
+            RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+                    returnedRelTOs, MySQLRelationTOResultSet.class);
+            when(mockManager.getRelationDAO().getAnatEntityRelations(
+                    new HashSet<String>(Arrays.asList("1", "2")), 
+                    EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
+            
+            Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
+            expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1", "2", "3", "4")));
+            expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2")));
+            expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "4")));
+            expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4")));
+            expectedReturnedVal.put("5", new HashSet<String>(Arrays.asList("5", "3")));
+            
+            assertEquals("Incorrect anat entity relatives by source", expectedReturnedVal, 
+                    BgeeDBUtils.getAnatEntityChildrenFromParents(
+                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            mockManager.getRelationDAO()));
+            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
+                    RelationDAO.Attribute.TARGETID);
+            verify(mockRelationTOResultSet).close();
+        }
         
-        Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
-        expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1", "2", "3", "4")));
-        expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2")));
-        expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "4")));
-        expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4")));
-        expectedReturnedVal.put("5", new HashSet<String>(Arrays.asList("5", "3")));
-        
-        assertEquals("Incorrect anat entity relatives by source", expectedReturnedVal, 
-                BgeeDBUtils.getAnatEntityChildrenFromParents(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
-                        mockManager.getRelationDAO()));
-        verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
-                RelationDAO.Attribute.TARGETID);
-        verify(mockRelationTOResultSet).close();
-        
-        
-        mockManager = new MockDAOManager();
-        mockRelationTOResultSet = this.createMockDAOResultSet(
-                returnedRelTOs, MySQLRelationTOResultSet.class);
-        when(mockManager.getRelationDAO().getAnatEntityRelations(
-                new HashSet<String>(Arrays.asList("1", "2")), 
-                EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
-        
-        expectedReturnedVal = new HashMap<String, Set<String>>();
-        expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1")));
-        expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2", "1")));
-        expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "1", "5")));
-        expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4", "3", "1")));
-        expectedReturnedVal.put("5", new HashSet<String>(Arrays.asList("5")));
-        
-        assertEquals("Incorrect anat entity relatives by target", expectedReturnedVal, 
-                BgeeDBUtils.getAnatEntityParentsFromChildren(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
-                        mockManager.getRelationDAO()));
-        verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
-                RelationDAO.Attribute.TARGETID);
-        verify(mockRelationTOResultSet).close();
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+                    returnedRelTOs, MySQLRelationTOResultSet.class);
+            when(mockManager.getRelationDAO().getAnatEntityRelations(
+                    new HashSet<String>(Arrays.asList("1", "2")), 
+                    EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
+            
+            Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
+            expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1")));
+            expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2", "1")));
+            expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "1", "5")));
+            expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4", "3", "1")));
+            expectedReturnedVal.put("5", new HashSet<String>(Arrays.asList("5")));
+            
+            assertEquals("Incorrect anat entity relatives by target", expectedReturnedVal, 
+                    BgeeDBUtils.getAnatEntityParentsFromChildren(
+                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            mockManager.getRelationDAO()));
+            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
+                    RelationDAO.Attribute.TARGETID);
+            verify(mockRelationTOResultSet).close();
+        }
     }
     
     /**
@@ -207,37 +210,38 @@ public class BgeeDBUtilsTest extends TestAncestor {
      */
     @Test
     public void shouldGetStageTargetsBySources() {
-        MockDAOManager mockManager = new MockDAOManager();
-        //stages can have only one direct parent
-        List<RelationTO> returnedRelTOs = Arrays.asList(
-                new RelationTO("1", "1"), 
-                new RelationTO("2", "2"), 
-                new RelationTO("3", "3"), 
-                new RelationTO("4", "4"), 
-                new RelationTO("2", "1"), 
-                new RelationTO("3", "1"), 
-                new RelationTO("4", "3"), 
-                new RelationTO("4", "1"));
-        
-        RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
-                returnedRelTOs, MySQLRelationTOResultSet.class);
-        when(mockManager.getRelationDAO().getStageRelations(
-                new HashSet<String>(Arrays.asList("1", "2")), null)).thenReturn(
-                        mockRelationTOResultSet);
-        
-        Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
-        expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1", "2", "3", "4")));
-        expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2")));
-        expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "4")));
-        expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4")));
-        
-        assertEquals("Incorrect stage relatives by source", expectedReturnedVal, 
-                BgeeDBUtils.getStageChildrenFromParents(
-                        new HashSet<String>(Arrays.asList("1", "2")), 
-                        mockManager.getRelationDAO()));
-        verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
-                RelationDAO.Attribute.TARGETID);
-        verify(mockRelationTOResultSet).close();
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            //stages can have only one direct parent
+            List<RelationTO> returnedRelTOs = Arrays.asList(
+                    new RelationTO("1", "1"), 
+                    new RelationTO("2", "2"), 
+                    new RelationTO("3", "3"), 
+                    new RelationTO("4", "4"), 
+                    new RelationTO("2", "1"), 
+                    new RelationTO("3", "1"), 
+                    new RelationTO("4", "3"), 
+                    new RelationTO("4", "1"));
+            
+            RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+                    returnedRelTOs, MySQLRelationTOResultSet.class);
+            when(mockManager.getRelationDAO().getStageRelations(
+                    new HashSet<String>(Arrays.asList("1", "2")), null)).thenReturn(
+                            mockRelationTOResultSet);
+            
+            Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
+            expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1", "2", "3", "4")));
+            expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("2")));
+            expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("3", "4")));
+            expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("4")));
+            
+            assertEquals("Incorrect stage relatives by source", expectedReturnedVal, 
+                    BgeeDBUtils.getStageChildrenFromParents(
+                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            mockManager.getRelationDAO()));
+            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
+                    RelationDAO.Attribute.TARGETID);
+            verify(mockRelationTOResultSet).close();
+        }
     }
 
     /**
@@ -245,108 +249,63 @@ public class BgeeDBUtilsTest extends TestAncestor {
      */
     @Test
     public void shouldGetExpressionCallsByGeneId() {
-        MockDAOManager mockManager = new MockDAOManager();
+        try (MockDAOManager mockManager = new MockDAOManager()) {
         
-        Map<String, Set<ExpressionCallTO>> expectedMap = 
-                new HashMap<String, Set<ExpressionCallTO>>();
-        Set<ExpressionCallTO> Id1ExprSet = new HashSet<ExpressionCallTO>();
-        Id1ExprSet.addAll(Arrays.asList(
-                new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", 
-                        DataState.NODATA, DataState.LOWQUALITY, 
-                        DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                        false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
-                        DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.NODATA, DataState.LOWQUALITY, 
-                        false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        DataState.NODATA, DataState.LOWQUALITY, 
-                        false, false, ExpressionCallTO.OriginOfLine.SELF)));
-        expectedMap.put("ID1", Id1ExprSet);
-        
-        Set<ExpressionCallTO> Id2ExprSet = new HashSet<ExpressionCallTO>();
-        Id2ExprSet.addAll(Arrays.asList(
-                new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", 
-                        DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, DataState.NODATA, 
-                        false, false, ExpressionCallTO.OriginOfLine.SELF),
-                new ExpressionCallTO("5", "ID2", "Anat_id1", "Stage_id7", 
-                        DataState.NODATA, DataState.HIGHQUALITY, 
-                        DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                        false, false, ExpressionCallTO.OriginOfLine.SELF)));
-        expectedMap.put("ID2", Id2ExprSet);
-
-        List<ExpressionCallTO> allTOs = new ArrayList<ExpressionCallTO>(Id1ExprSet);
-        allTOs.addAll(Id2ExprSet);
-        
-        ExpressionCallTOResultSet mockExprResultSet = this.createMockDAOResultSet(
-                allTOs, MySQLExpressionCallTOResultSet.class);
-        ExpressionCallParams params = new ExpressionCallParams();
-        params.addAllSpeciesIds(Arrays.asList("11", "21"));
-        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).thenReturn(mockExprResultSet);
-
-        Map<String, List<ExpressionCallTO>> returnedMap = BgeeDBUtils.getExpressionCallsByGeneId(
-                new HashSet<String>(Arrays.asList("11", "21")),
-                mockManager.getExpressionCallDAO());
-
-        assertEquals("Maps not equal, different sizes", expectedMap.size() , returnedMap.size());
-        
-        for(String id : expectedMap.keySet()) {
-            if(returnedMap.containsKey(id)) {
-                assertTrue("Incorrect map generated: different values for " + id, 
-                        TOComparator.areTOCollectionsEqual(expectedMap.get(id), returnedMap.get(id)));
-            } else {
-                throw new AssertionError("Incorrect map generated: missing expected id " + id);
+            Map<String, Set<ExpressionCallTO>> expectedMap = 
+                    new HashMap<String, Set<ExpressionCallTO>>();
+            Set<ExpressionCallTO> Id1ExprSet = new HashSet<ExpressionCallTO>();
+            Id1ExprSet.addAll(Arrays.asList(
+                    new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", 
+                            DataState.NODATA, DataState.LOWQUALITY, 
+                            DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                            false, false, ExpressionCallTO.OriginOfLine.SELF),
+                            new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
+                                    DataState.HIGHQUALITY, DataState.NODATA, 
+                                    DataState.NODATA, DataState.LOWQUALITY, 
+                                    false, false, ExpressionCallTO.OriginOfLine.SELF),
+                                    new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
+                                            DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                            DataState.NODATA, DataState.LOWQUALITY, 
+                                            false, false, ExpressionCallTO.OriginOfLine.SELF)));
+            expectedMap.put("ID1", Id1ExprSet);
+            
+            Set<ExpressionCallTO> Id2ExprSet = new HashSet<ExpressionCallTO>();
+            Id2ExprSet.addAll(Arrays.asList(
+                    new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", 
+                            DataState.LOWQUALITY, DataState.NODATA, 
+                            DataState.HIGHQUALITY, DataState.NODATA, 
+                            false, false, ExpressionCallTO.OriginOfLine.SELF),
+                            new ExpressionCallTO("5", "ID2", "Anat_id1", "Stage_id7", 
+                                    DataState.NODATA, DataState.HIGHQUALITY, 
+                                    DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                                    false, false, ExpressionCallTO.OriginOfLine.SELF)));
+            expectedMap.put("ID2", Id2ExprSet);
+            
+            List<ExpressionCallTO> allTOs = new ArrayList<ExpressionCallTO>(Id1ExprSet);
+            allTOs.addAll(Id2ExprSet);
+            
+            ExpressionCallTOResultSet mockExprResultSet = this.createMockDAOResultSet(
+                    allTOs, MySQLExpressionCallTOResultSet.class);
+            ExpressionCallParams params = new ExpressionCallParams();
+            params.addAllSpeciesIds(Arrays.asList("11", "21"));
+            when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                    (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).thenReturn(mockExprResultSet);
+            
+            Map<String, List<ExpressionCallTO>> returnedMap = BgeeDBUtils.getExpressionCallsByGeneId(
+                    new HashSet<String>(Arrays.asList("11", "21")),
+                    mockManager.getExpressionCallDAO());
+            
+            assertEquals("Maps not equal, different sizes", expectedMap.size() , returnedMap.size());
+            
+            for(String id : expectedMap.keySet()) {
+                if(returnedMap.containsKey(id)) {
+                    assertTrue("Incorrect map generated: different values for " + id, 
+                            TOComparator.areTOCollectionsEqual(expectedMap.get(id), returnedMap.get(id)));
+                } else {
+                    throw new AssertionError("Incorrect map generated: missing expected id " + id);
+                }
             }
         }
-    }
-    
-    /**
-     * Test {@link BgeeDBUtils#getExpressionCallsFromDb(Set, ExpressionCallDAO)}.
-     */
-    @Test
-    public void shouldGetExpressionCallFromDb() {
-        MockDAOManager mockManager = new MockDAOManager();
-
-        List<ExpressionCallTO> expectedExprs = 
-                Arrays.asList(
-                        new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", 
-                                DataState.NODATA, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
-                                DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.NODATA, DataState.LOWQUALITY, 
-                                false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
-                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                                DataState.NODATA, DataState.LOWQUALITY, 
-                                false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", 
-                                DataState.LOWQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, 
-                                false, false, ExpressionCallTO.OriginOfLine.SELF),
-                        new ExpressionCallTO("5", "ID3", "Anat_id1", "Stage_id7", 
-                                DataState.NODATA, DataState.HIGHQUALITY, 
-                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                false, false, ExpressionCallTO.OriginOfLine.SELF));
-        // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
-        ExpressionCallTOResultSet mockExprResultSet = this.createMockDAOResultSet(
-                expectedExprs,
-                MySQLExpressionCallTOResultSet.class);
-        
-        ExpressionCallParams params = new ExpressionCallParams();
-        params.addAllSpeciesIds(Arrays.asList("11", "21"));
-        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) valueCallParamEq(params))).thenReturn(mockExprResultSet);
-                
-        assertTrue("Incorrect expression calls retrieved", TOComparator.areTOCollectionsEqual(
-                expectedExprs, 
-                BgeeDBUtils.getExpressionCallsFromDb(new HashSet<String>(Arrays.asList("11", "21")),
-                        mockManager.getExpressionCallDAO())));
-        verify(mockExprResultSet).close();
     }
     
     /**
@@ -354,103 +313,62 @@ public class BgeeDBUtilsTest extends TestAncestor {
      */
     @Test
     public void shouldGetNoExpressionCallsByGeneId() {
-        MockDAOManager mockManager = new MockDAOManager();
+        try (MockDAOManager mockManager = new MockDAOManager()) {
         
-        Map<String, Set<NoExpressionCallTO>> expectedMap = 
-                new HashMap<String, Set<NoExpressionCallTO>>();
-        Set<NoExpressionCallTO> Id1NoExprSet = new HashSet<NoExpressionCallTO>();
-        Id1NoExprSet.addAll(Arrays.asList(
-                new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", 
-                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
-                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", 
-                        DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)));
-        expectedMap.put("ID1", Id1NoExprSet);
-
-        Set<NoExpressionCallTO> Id2NoExprSet = new HashSet<NoExpressionCallTO>();
-        Id2NoExprSet.add(new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", 
-                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
-                        DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF));
-        expectedMap.put("ID2", Id2NoExprSet);
-
-        Set<NoExpressionCallTO> Id3NoExprSet = new HashSet<NoExpressionCallTO>();
-        Id3NoExprSet.add(new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", 
-                DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF));
-        expectedMap.put("ID3", Id3NoExprSet);
-
-        List<NoExpressionCallTO> allTOs = new ArrayList<NoExpressionCallTO>(Id1NoExprSet);
-        allTOs.addAll(Id2NoExprSet);
-        allTOs.addAll(Id3NoExprSet);
-        
-        NoExpressionCallTOResultSet mockNoExprResultSet = this.createMockDAOResultSet(
-                allTOs, MySQLNoExpressionCallTOResultSet.class);
-        NoExpressionCallParams params = new NoExpressionCallParams();
-        params.addAllSpeciesIds(Arrays.asList("11", "21"));
-        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
-                thenReturn(mockNoExprResultSet);
-
-        Map<String, List<NoExpressionCallTO>> returnedMap = BgeeDBUtils.getNoExpressionCallsByGeneId(
-                new HashSet<String>(Arrays.asList("11", "21")),
-                mockManager.getNoExpressionCallDAO());
-
-        assertEquals("Maps not equal, different sizes", expectedMap.size() , returnedMap.size());
-        
-        for(String id : expectedMap.keySet()) {
-            if(returnedMap.containsKey(id)) {
-                assertTrue("Incorrect map generated: different values for " + id, 
-                        TOComparator.areTOCollectionsEqual(expectedMap.get(id), returnedMap.get(id)));
-            } else {
-                throw new AssertionError("Incorrect map generated: missing expected id " + id);
+            Map<String, Set<NoExpressionCallTO>> expectedMap = 
+                    new HashMap<String, Set<NoExpressionCallTO>>();
+            Set<NoExpressionCallTO> Id1NoExprSet = new HashSet<NoExpressionCallTO>();
+            Id1NoExprSet.addAll(Arrays.asList(
+                    new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", 
+                            DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                            DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                            new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", 
+                                    DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                                    DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
+                                    new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", 
+                                            DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                            DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)));
+            expectedMap.put("ID1", Id1NoExprSet);
+            
+            Set<NoExpressionCallTO> Id2NoExprSet = new HashSet<NoExpressionCallTO>();
+            Id2NoExprSet.add(new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", 
+                    DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                    DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF));
+            expectedMap.put("ID2", Id2NoExprSet);
+            
+            Set<NoExpressionCallTO> Id3NoExprSet = new HashSet<NoExpressionCallTO>();
+            Id3NoExprSet.add(new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", 
+                    DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                    DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF));
+            expectedMap.put("ID3", Id3NoExprSet);
+            
+            List<NoExpressionCallTO> allTOs = new ArrayList<NoExpressionCallTO>(Id1NoExprSet);
+            allTOs.addAll(Id2NoExprSet);
+            allTOs.addAll(Id3NoExprSet);
+            
+            NoExpressionCallTOResultSet mockNoExprResultSet = this.createMockDAOResultSet(
+                    allTOs, MySQLNoExpressionCallTOResultSet.class);
+            NoExpressionCallParams params = new NoExpressionCallParams();
+            params.addAllSpeciesIds(Arrays.asList("11", "21"));
+            when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                    (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                    thenReturn(mockNoExprResultSet);
+            
+            Map<String, List<NoExpressionCallTO>> returnedMap = BgeeDBUtils.getNoExpressionCallsByGeneId(
+                    new HashSet<String>(Arrays.asList("11", "21")),
+                    mockManager.getNoExpressionCallDAO());
+            
+            assertEquals("Maps not equal, different sizes", expectedMap.size() , returnedMap.size());
+            
+            for(String id : expectedMap.keySet()) {
+                if(returnedMap.containsKey(id)) {
+                    assertTrue("Incorrect map generated: different values for " + id, 
+                            TOComparator.areTOCollectionsEqual(expectedMap.get(id), returnedMap.get(id)));
+                } else {
+                    throw new AssertionError("Incorrect map generated: missing expected id " + id);
+                }
             }
         }
-    }
-    
-    /**
-     * Test {@link BgeeDBUtils#getNoExpressionCallsFromDb(Set, NoExpressionCallDAO)}.
-     */
-    @Test
-    public void shouldGetNoExpressionCallFromDb() {
-        MockDAOManager mockManager = new MockDAOManager();
-
-        List<NoExpressionCallTO> expectedNoExprs = Arrays.asList(
-                new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", 
-                        DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", 
-                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
-                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", 
-                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", 
-                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
-                        DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF),
-                new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", 
-                        DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                        DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF));
-        // We need a mock MySQLNoExpressionCallTOResultSet to mock 
-        // the return of getNoExpressionCalls().
-        NoExpressionCallTOResultSet mockNoExprResultSet = this.createMockDAOResultSet(
-                expectedNoExprs,
-                MySQLNoExpressionCallTOResultSet.class);
-        
-        NoExpressionCallParams params = new NoExpressionCallParams();
-        params.addAllSpeciesIds(Arrays.asList("11", "21"));
-        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) valueCallParamEq(params))).thenReturn(mockNoExprResultSet);
-
-        assertTrue("Incorrect no-expression calls retrieved", TOComparator.areTOCollectionsEqual(
-                expectedNoExprs, 
-                BgeeDBUtils.getNoExpressionCallsFromDb(
-                        new HashSet<String>(Arrays.asList("11", "21")),
-                        mockManager.getNoExpressionCallDAO())));
-        verify(mockNoExprResultSet).close();
     }
 
     /**

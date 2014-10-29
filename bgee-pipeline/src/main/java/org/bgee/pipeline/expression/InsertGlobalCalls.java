@@ -170,6 +170,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
                 if (isNoExpression) {
                     
+                    log.info("Start propagating no-expression calls for species {}", 
+                            speciesId);
+                    
                     LinkedHashMap<String, List<NoExpressionCallTO>> noExprTOs = 
                             BgeeDBUtils.getNoExpressionCallsByGeneId(
                                     speciesFilter, this.getNoExpressionCallDAO());
@@ -194,7 +197,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                                 this.generateGlobalCallToCallTOs(globalNoExprMap, 
                                         GlobalNoExpressionToNoExpressionTO.class);
                         
-                        log.info("Start inserting of global no-expression calls for species {} and gene ID {}", 
+                        log.debug("Start inserting global no-expression calls for species {} and gene ID {}...", 
                                 speciesId, entry.getKey());
                         int nbCurInsertedNoExpressions = this.getNoExpressionCallDAO().
                                 insertNoExpressionCalls(globalNoExprMap.keySet());
@@ -205,7 +208,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                                      globalNoExprMap.keySet().size()));
                         }
 
-                        log.info("Done inserting of global no-expression calls for species {} and gene ID {}.",
+                        log.debug("Done inserting of global no-expression calls for species {} and gene ID {}.",
                                 speciesId, entry.getKey());
 
                         // Empty memory to free up some memory. We don't use clear() 
@@ -213,13 +216,13 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                         globalNoExprMap = null;
                         nbInsertedNoExpressions += nbCurInsertedNoExpressions;
                         
-                        log.info("Start inserting of relation between a no-expression call " +
-                                "and a global no-expression call for species {} and gene ID {}...", 
+                        log.debug("Start inserting relations between no-expression calls " +
+                                "and global no-expression calls for species {} and gene ID {}...", 
                                 speciesId, entry.getKey());
                         int nbCurInsertedGlobalNoExprToNoExpr = this.getNoExpressionCallDAO().
                                 insertGlobalNoExprToNoExpr(globalNoExprToNoExprTOs);
-                        log.info("Done inserting of correspondances between a no-expression call " +
-                                "and a global no-expression call for species {} and gene ID {}.", 
+                        log.debug("Done inserting relations between no-expression calls " +
+                                "and global no-expression calls for species {} and gene ID {}.", 
                                 speciesId, entry.getKey());
 
                         // Empty memory to free up some memory. We don't use clear() 
@@ -228,10 +231,14 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                         nbInsertedGlobalNoExprToNoExpr += nbCurInsertedGlobalNoExprToNoExpr;
                     }
                     
-                    log.info("Done inserting for species {}: {} global no-expression calls inserted " +
+                    log.info("Done propagating no-expression calls for species {}: {} global no-expression calls inserted " +
                             "and {} correspondances inserted", speciesId, 
                             nbInsertedNoExpressions, nbInsertedGlobalNoExprToNoExpr);
                 } else {
+
+                    log.info("Start propagating expression calls for species {}", 
+                            speciesId);
+                    
                     LinkedHashMap<String, List<ExpressionCallTO>> exprTOs = 
                             BgeeDBUtils.getExpressionCallsByGeneId(
                                     speciesFilter, this.getExpressionCallDAO());
@@ -254,7 +261,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                                 this.generateGlobalCallToCallTOs(globalExprMap, 
                                         GlobalExpressionToExpressionTO.class);
                         
-                        log.info("Start inserting of global expression calls for species {} and gene ID {}...", 
+                        log.debug("Start inserting global expression calls for species {} and gene ID {}", 
                                 speciesId, entry.getKey());
                         int nbCurInsertedExpr = this.getExpressionCallDAO().
                                 insertExpressionCalls(globalExprMap.keySet());
@@ -263,20 +270,20 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                                     "Global expression calls incorrectly inserted: " + 
                                     nbCurInsertedExpr +" vs "+ globalExprMap.keySet().size()));
                         }
-                        log.info("Done inserting of {} global expression calls for species {} and gene ID {}.", 
+                        log.debug("Done inserting of {} global expression calls for species {} and gene ID {}.", 
                                 nbCurInsertedExpr, speciesId, entry.getKey());
                         // Empty memory to free up some memory. We don't use clear() 
                         // because it empty ArgumentCaptor values in test in same time.
                         globalExprMap = null;
                         nbInsertedExpressions += nbCurInsertedExpr;
                         
-                        log.info("Start inserting of relation between an expression call " +
-                                "and a global expression call for species {} and gene ID {}...", 
+                        log.debug("Start inserting relations between expression calls " +
+                                "and global expression calls for species {} and gene ID {}...", 
                                 speciesId, entry.getKey());
                         int nbCurInsertedGlobalExprToExpr = this.getExpressionCallDAO().
                                 insertGlobalExpressionToExpression(globalExprToExprTOs);
-                        log.info("Done inserting of {} correspondances between an expression call " +
-                                "and a global expression call for species {} and gene ID {}.", 
+                        log.info("Done inserting {} relations between expression calls " +
+                                "and global expression calls for species {} and gene ID {}.", 
                                 nbCurInsertedGlobalExprToExpr, speciesId, entry.getKey());
                         // Empty memory to free up some memory. We don't use clear() 
                         // because it empty ArgumentCaptor values in test in same time.
@@ -284,7 +291,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                         nbInsertedGlobalExprToExpr += nbCurInsertedGlobalExprToExpr;
                     }
                     
-                    log.info("Done inserting for {}: {} global expression calls inserted " +
+                    log.info("Done propagating expression calls for species {}: {} global expression calls inserted " +
                             "and {} correspondances inserted", speciesId, 
                             nbInsertedExpressions, nbInsertedGlobalExprToExpr);
 

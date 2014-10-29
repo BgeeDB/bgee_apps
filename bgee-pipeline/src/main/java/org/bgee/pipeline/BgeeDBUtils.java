@@ -286,11 +286,17 @@ public class BgeeDBUtils {
             Set<String> speciesIds, ExpressionCallDAO exprCallDAO) throws DAOException {
         log.entry(speciesIds, exprCallDAO);
         
-        List<ExpressionCallTO> exprTOs = getExpressionCallsFromDb(speciesIds, exprCallDAO);
+        log.debug("Start retrieving expression calls for species: {}", speciesIds);
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(speciesIds);
+        List<ExpressionCallTO> exprTOs = exprCallDAO.getExpressionCalls(params).getAllTOs();
+        log.debug("Done retrieving expression calls for species {}, {} retrieved.", 
+                speciesIds, exprTOs.size());
         
         LinkedHashMap<String, List<ExpressionCallTO>> map = 
                 new LinkedHashMap<String, List<ExpressionCallTO>>();
-        
+        log.debug("Generating Map from genes to expression calls for species {}...", 
+                speciesIds);
         for (ExpressionCallTO exprTO : exprTOs) {
             log.trace("Expression call: {}", exprTO);
             List<ExpressionCallTO> curExprAsSet = map.get(exprTO.getGeneId());
@@ -301,6 +307,8 @@ public class BgeeDBUtils {
             }
             curExprAsSet.add(exprTO);
         }
+        log.debug("Done generating Map from genes to expression calls for species {}, {} entries.", 
+                speciesIds, map.size());
         
         return log.exit(map);        
     }
@@ -322,12 +330,18 @@ public class BgeeDBUtils {
     public static LinkedHashMap<String, List<NoExpressionCallTO>> getNoExpressionCallsByGeneId(
             Set<String> speciesIds, NoExpressionCallDAO noExprCallDAO) throws DAOException {
         log.entry(speciesIds, noExprCallDAO);
-        
-        List<NoExpressionCallTO> noExprTOs = getNoExpressionCallsFromDb(speciesIds, noExprCallDAO);
+
+        log.debug("Start retrieving no-expression calls for species: {}", speciesIds);
+        NoExpressionCallParams params = new NoExpressionCallParams();
+        params.addAllSpeciesIds(speciesIds);
+        List<NoExpressionCallTO> noExprTOs = noExprCallDAO.getNoExpressionCalls(params).getAllTOs();
+        log.debug("Done retrieving no-expression calls for species {}, {} retrieved.", 
+                speciesIds, noExprTOs.size());
         
         LinkedHashMap<String, List<NoExpressionCallTO>> map = 
                 new LinkedHashMap<String, List<NoExpressionCallTO>>();
-        
+        log.debug("Generating Map from genes to no-expression calls for species {}...", 
+                speciesIds);
         for (NoExpressionCallTO noExprTO : noExprTOs) {
             log.trace("No-expression call: {}", noExprTO);
             List<NoExpressionCallTO> curNoExprAsSet = map.get(noExprTO.getGeneId());
@@ -338,62 +352,9 @@ public class BgeeDBUtils {
             }
             curNoExprAsSet.add(noExprTO);
         }
+        log.debug("Done generating Map from genes to no-expression calls for species {}, {} entries.", 
+                speciesIds, map.size());
         
         return log.exit(map);        
-    }
-
-    /**
-     * Retrieves all expression calls for given species, present into the Bgee database.
-     * 
-     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
-     *                          allowing to filter the expression calls to use.
-     * @param exprCallDAO       A {@code ExpressionCallDAO} to use to retrieve information about 
-     *                          expression calls from the Bgee data source.
-     * @return                  A {@code List} of {@code ExpressionCallTO}s containing all 
-     *                          expression calls of the given species.
-     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
-     */
-    public static List<ExpressionCallTO> getExpressionCallsFromDb(
-            Set<String> speciesIds, ExpressionCallDAO exprCallDAO) throws DAOException {
-        log.entry(speciesIds, exprCallDAO);
-
-        ExpressionCallParams params = new ExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
-
-        List<ExpressionCallTO> exprTOs = exprCallDAO.getExpressionCalls(params).getAllTOs();
-        //no need for a try with resource or a finally, the insert method will close everything 
-        //at the end in any case.
-        // No need to close the ResultSet, it's done by getAllTOs().
-        log.info("Done retrieving expression calls, {} calls found", exprTOs.size());
-
-        return log.exit(exprTOs);        
-    }
-
-    /**
-     * Retrieves all no-expression calls of provided species, present into the Bgee database.
-     * 
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
-     *                      allowing to filter the genes to consider.
-     * @param noExprCallDAO A {@code NoExpressionCallDAO} to use to retrieve information about 
-     *                      no-expression calls from the Bgee data source.
-     * @return              A {@code List} of {@code NoExpressionCallTO}s containing all 
-     *                      no-expression calls for the provided species.
-     * @throws DAOException If an error occurred while getting the data from the Bgee database.
-     */
-    public static List<NoExpressionCallTO> getNoExpressionCallsFromDb(
-            Set<String> speciesIds, NoExpressionCallDAO noExprCallDAO) throws DAOException {
-        log.entry(speciesIds);
-
-        NoExpressionCallParams params = new NoExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
-
-        List<NoExpressionCallTO> noExprTOs = noExprCallDAO.getNoExpressionCalls(params).getAllTOs();
-        //no need for a try with resource or a finally, the insert method will close everything 
-        //at the end in any case.
-        // No need to close the ResultSet, it's done by getAllTOs().
-        
-        log.info("Done retrieving no-expression calls, {} calls found", noExprTOs.size());
-
-        return log.exit(noExprTOs);        
     }
 }

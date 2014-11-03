@@ -430,12 +430,12 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setString(6, noExpr.getRelaxedInSituData().getStringRepresentation());
                 stmt.setString(7, noExpr.getRNASeqData().getStringRepresentation());
                 stmt.setInt(8, Integer.parseInt(noExpr.getId()));
-                int isInserted = stmt.executeUpdate();
-                if (isInserted == 0) {
+                int isUpdated = stmt.executeUpdate();
+                if (isUpdated == 0) {
                     throw log.throwing(new IllegalArgumentException("The provided basic call " +
                             noExpr.getId() + " was not found in the data source"));
                 }
-                noExprUpdatedCount += isInserted;
+                noExprUpdatedCount += isUpdated;
                 stmt.clearParameters();
             }
         } catch (SQLException e) {
@@ -468,12 +468,12 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setString(7, globalNoExpr.getRNASeqData().getStringRepresentation());
                 stmt.setString(8, globalNoExpr.getOriginOfLine().getStringRepresentation());
                 stmt.setString(9, globalNoExpr.getId());
-                int isInserted = stmt.executeUpdate();
-                if (isInserted == 0) {
+                int isUpdated = stmt.executeUpdate();
+                if (isUpdated == 0) {
                     throw log.throwing(new IllegalArgumentException("The provided global call " +
                             globalNoExpr.getId() + " was not found in the data source"));
                 }
-                globalNoExprUpdatedCount += isInserted;
+                globalNoExprUpdatedCount += isUpdated;
                 stmt.clearParameters();
             }
         } catch (SQLException e) {

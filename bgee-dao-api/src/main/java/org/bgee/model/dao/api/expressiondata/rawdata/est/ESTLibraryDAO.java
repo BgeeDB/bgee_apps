@@ -2,7 +2,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.est;
 
 import java.io.Serializable;
 
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedDAO.RawDataAnnotatedTO;
 
 /**
  * DAO defining queries using or retrieving {@link ESTLibraryTO}s. 

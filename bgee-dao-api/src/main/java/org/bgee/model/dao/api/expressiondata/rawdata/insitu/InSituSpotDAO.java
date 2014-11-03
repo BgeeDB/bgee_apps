@@ -3,8 +3,12 @@ package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 import java.io.Serializable;
 import java.util.Set;
 
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.ExclusionReason;
 
 /**
  * DAO defining queries using or retrieving {@link InSituSpotTO}s. 
@@ -15,8 +19,12 @@ import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
  * @see InSituSpotTO
  * @since Bgee 01
  */
-//TODO: extends DAO<InSituSpotDAO.Attribute> 
-public interface InSituSpotDAO {
+public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
+    
+    public enum Attribute implements DAO.Attribute {
+        ID, INSITUEVIDENCEID, INSITUEXPRESSIONPATTERNID, ANATENTITYID, STAGEID, GENEID, 
+        DETECTIONFLAG, EXPRESSIONID, NOEXPRESSIONID, INSITUDATA, REASONFOREXCLUSION;
+    }
     
     /**
      * Remove link between some <em>in situ</em> spots and their associated no-expression 
@@ -49,22 +57,30 @@ public interface InSituSpotDAO {
      * @see org.bgee.model.expressiondata.rawdata.insitu.InSituSpot
      * @since Bgee 11
      */
+    /*
+     * (non-javadoc)
+     * This TO is not in it's final version. We need to known if CallSourceRawDataTO is necessary 
+     * and consistent. Need to be thinking.
+     */
     public class InSituSpotTO extends CallSourceRawDataTO implements Serializable {
 
-        /**
-         * 
-         */
         private static final long serialVersionUID = 12433455L;
 
-        public String inSituEvidenceId;
-        public String organId;
-        public String stageId;
+        public final String inSituEvidenceId;
+        public final String inSituExpressionPatternId;        
+        public final String anatEntityId;
+        public final String stageId;
 
-        public String detectionFlag;
-
-        public InSituSpotTO() {
-            super();
-            this.detectionFlag = "undefined";
+        public InSituSpotTO(String inSituSpotId, String inSituEvidenceId, 
+                String inSituExpressionPatternId, String anatEntityId, String stageId, 
+                String geneId, DetectionFlag detectionFlag, String expressionId, 
+                String noExpressionId, DataState inSituData, ExclusionReason reasonForExclusion) {
+            super(inSituSpotId, geneId, detectionFlag, expressionId, noExpressionId, 
+                    inSituData, reasonForExclusion);
+            this.inSituEvidenceId = inSituEvidenceId;
+            this.inSituExpressionPatternId = inSituExpressionPatternId;
+            this.anatEntityId = anatEntityId;
+            this.stageId = stageId;
         }
     }
 }

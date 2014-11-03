@@ -4,12 +4,10 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
-import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixProbesetTO}s. 
@@ -47,24 +45,7 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
         ID, BGEEAFFYMETRIXCHIPID, GENEID, NORMALIZEDSIGNALINTENSITY, DETECTIONFLAG, 
         EXPRESSIONID, NOEXPRESSIONID, AFFYMETRIXDATA, REASONFOREXCLUSION;
     }
-
-	/**
-	 * Return a {@code Collection} of {@code String}s  
-	 * corresponding to Affymetrix probeset Ids, 
-	 * subset of those passed as a parameter ({@code probesetIds}), 
-	 * that were not found in the data source.
-	 * @param probesetIds	a {@code Collection} of {@code String}s 
-	 * 						to be checked for presence in the data source.
-	 * @return 				a {@code Collection} of {@code String}s that 
-	 * 						could not be found in the list of probeset IDs 
-	 * 						in the data source. An empty {@code Collection} 
-	 * 						if all IDs were found in the database, 
-	 * 						or if {@code probesetIds} was empty.
-     * @throws DAOException 	If an error occurred when accessing the data source.
-	 */
-	public Collection<String> getNonMatchingProbesetIds(Collection<String> probesetIds) 
-	    throws DAOException;
-	
+    
 	/**
 	 * Remove link between some Affymetrix probesets and their associated no-expression 
 	 * call because of no-expression conflicts. The probesets will not be deleted, 
@@ -94,172 +75,59 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
 	 * @see org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO
 	 * @since Bgee 11
 	 */
+	/*
+	 * (non-javadoc)
+	 * This TO is not in it's final version. We need to known if CallSourceRawDataTO is necessary 
+	 * and consistent. Need to be thinking.
+	 */
 	public final class AffymetrixProbesetTO extends CallSourceRawDataTO implements Serializable {
-
+	    
 	    private static final long serialVersionUID = 112434L;
 
-	    /**
-         * {@code Logger} of the class. 
-         */
-        private final static Logger log = LogManager.getLogger(AffymetrixProbesetTO.class.getName());
-
         /**
-         * List the different exclusion reasons allowed in the Bgee database. Enum types available: 
-         * <ul>
-         * <li>{@code NOTEXCLUDED}
-         * <li>{@code PREFILTERING}
-         * <li>{@code BRONZEQUALITY}
-         * <li>{@code ABSENTLOWQUALITY}
-         * <li>{@code NOEXPRESSIONCONFLICT}
-         * <li>{@code UNDEFINED}
-         * </ul>
-         * 
-         * @author Valentine Rech de Laval
-         * @version Bgee 13
-         * @see AffymetrixProbesetTO#getExclusionReason()
-         * @since Bgee 13
+         * A {@code String} representing the bgee Affymetrix chip ID associated to this probeset.
          */
-        public enum ExclusionReason implements EnumDAOField {
-            NOTEXCLUDED("not excluded"), PREFILTERING("pre-filtering"), 
-            BRONZEQUALITY("bronze quality"), ABSENTLOWQUALITY("bronze quality"), 
-            NOEXPRESSIONCONFLICT("noExpression conflict"), UNDEFINED("undefined");
-            
-            /**
-             * Convert the {@code String} representation of a exclusion reason (for instance, 
-             * retrieved from a database) into a {@code ExclusionReason}. This method compares 
-             * {@code representation} to the value returned by {@link #getStringRepresentation()}, 
-             * as well as to the value returned by {@link Enum#name()}, for each 
-             * {@code ExclusionType}.
-             * 
-             * @param representation    A {@code String} representing an exclusion reason.
-             * @return                  A {@code ExclusionReason} corresponding to 
-             *                          {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
-             *                                  to any {@code ExclusionReason}.
-             */
-            public static final ExclusionReason convertToRelationType(String representation) {
-                log.entry(representation);
-                return log.exit(TransferObject.convert(ExclusionReason.class, representation));
-            }
-
-            /**
-             * See {@link #getStringRepresentation()}
-             */
-            private final String stringRepresentation;
-            
-            /**
-             * Constructor providing the {@code String} representation 
-             * of this {@code ExclusionReason}.
-             * 
-             * @param stringRepresentation  A {@code String} corresponding to 
-             *                              this {@code ExclusionReason}.
-             */
-            private ExclusionReason(String stringRepresentation) {
-                this.stringRepresentation = stringRepresentation;
-            }
-            
-            /**
-             * @return  A {@code String} that is the representation for this {@code ExclusionReason}, 
-             *          for instance to be used in a database.
-             */
-            public String getStringRepresentation() {
-                return this.stringRepresentation;
-            }
-            
-            @Override
-            public String toString() {
-                return this.getStringRepresentation();
-            }
-        }
-        
-        /**
-         * List the different detection flags allowed in the Bgee database. Enum types available: 
-         * <ul> 
-         * <li>{@code UNDEFINED}
-         * <li>{@code ABSENT}
-         * <li>{@code MARGINAL}
-         * <li>{@code PRESENT}
-         * </ul>
-         * 
-         * @author Valentine Rech de Laval
-         * @version Bgee 13
-         * @see AffymetrixProbesetTO#getExclusionReason()
-         * @since Bgee 13
-         */
-        public enum DetectionFlag implements EnumDAOField {
-            UNDEFINED("undefined"), ABSENT("absent"), MARGINAL("absent"), PRESENT("present");
-            
-            /**
-             * Convert the {@code String} representation of a detection flag (for instance,
-             * retrieved from a database) into a {@code DetectionFlag}. This method compares 
-             * {@code representation} to the value returned by {@link #getStringRepresentation()}, 
-             * as well as to the value returned by {@link Enum#name()}, for each 
-             * {@code DetectionFlag}.
-             * 
-             * @param representation    A {@code String} representing a detection flag.
-             * @return                  A {@code DetectionFlag} corresponding to 
-             *                          {@code representation}.
-             * @throw IllegalArgumentException  If {@code representation} does not correspond 
-             *                                  to any {@code DetectionFlag}.
-             */
-            public static final DetectionFlag convertToRelationType(String representation) {
-                log.entry(representation);
-                return log.exit(TransferObject.convert(DetectionFlag.class, representation));
-            }
-
-            /**
-             * See {@link #getStringRepresentation()}
-             */
-            private final String stringRepresentation;
-            
-            /**
-             * Constructor providing the {@code String} representation of this {@code DetectionFlag}.
-             * 
-             * @param stringRepresentation  A {@code String} corresponding to
-             *                              this {@code DetectionFlag}.
-             */
-            private DetectionFlag(String stringRepresentation) {
-                this.stringRepresentation = stringRepresentation;
-            }
-            
-            /**
-             * @return  A {@code String} that is the representation for this {@code DetectionFlag}, 
-             *          for instance to be used in a database.
-             */
-            public String getStringRepresentation() {
-                return this.stringRepresentation;
-            }
-            
-            @Override
-            public String toString() {
-                return this.getStringRepresentation();
-            }
-        }
-
-        private final String id;
-	    private final String bgeeAffymetrixChipId;
-	    private final float normalizedSignalIntensity;
-	    private final DetectionFlag detectionFlag;
-        private final String noExpressionId;
-        private final ExclusionReason reasonForExclusion;
+        private final String bgeeAffymetrixChipId;
 	    
-	    public AffymetrixProbesetTO() {
-	        super();
-	        this.id = null;
-	        this.bgeeAffymetrixChipId = null;
-	        this.normalizedSignalIntensity = 0;
-	        this.detectionFlag = DetectionFlag.UNDEFINED;
-	        this.noExpressionId = null;
-            this.reasonForExclusion = ExclusionReason.UNDEFINED;
+        /**
+         * A {@code float} defining the normalized signal intensity of this probeset.
+         */
+        private final float normalizedSignalIntensity;
+	    
+        /**
+         * Constructor providing the affymetrix probeset ID, the Bgee Affymetrix chip ID, 
+         * the gene ID, the normalized signal intensity, the detection flag, the ID of the 
+         * expression, the ID of the no-expression, the expression confidence, and the reason of 
+         * exclusion of this probeset.
+         * 
+         * @param affymetrixProbesetId      A {@code String} that is the ID of this probeset.
+         * @param bgeeAffymetrixChipId      A {@code String} that is the Bgee Affymetrix chip ID 
+         *                                  associated to this probeset.
+         * @param geneId                    A {@code String} that is the ID of the gene associated 
+         *                                  to this probeset.
+         * @param normalizedSignalIntensity A {@code float} defining the normalized signal intensity
+         *                                  of this probeset.
+         * @param detectionFlag             A {@code DetectionFlag} that is the detection flag of 
+         *                                  this probeset.
+         * @param expressionId              A {@code String} that is the ID of the expression 
+         *                                  associated to this probeset.
+         * @param noExpressionId            A {@code String} that is the ID of the no-expression 
+         *                                  associated to this probeset.
+         * @param expressionConfidence      A {@code DataState} that is the expression confidence 
+         *                                  of this probeset.
+         * @param reasonForExclusion        An {@code ExclusionReason} that is the reason of 
+         *                                  exclusion of this probeset.
+         */
+	    public AffymetrixProbesetTO(String affymetrixProbesetId, String bgeeAffymetrixChipId, 
+	            String geneId, float normalizedSignalIntensity, DetectionFlag detectionFlag, 
+	            String expressionId, String noExpressionId, DataState expressionConfidence, 
+	            ExclusionReason reasonForExclusion) {
+            super(affymetrixProbesetId, geneId, detectionFlag, expressionId, noExpressionId, 
+                    expressionConfidence, reasonForExclusion);
+	        this.bgeeAffymetrixChipId = bgeeAffymetrixChipId;
+	        this.normalizedSignalIntensity = normalizedSignalIntensity;
 	    }
 	    
-        /**
-         * @return the {@code String} representing the ID of this probeset.
-         */
-        public String getId() {
-            return this.id;
-        }
-        
         /**
          * @return  the {@code String} representing the Bgee Affymetrix chip ID associated
          *          this probeset.
@@ -269,32 +137,10 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
         }
 
         /**
-         * @return  the {@code float} representing the normalized signal intensity associated
-         *          this probeset.
+         * @return  the {@code float} defining the normalized signal intensity of this probeset.
          */
         public float getNormalizedSignalIntensity() {
             return this.normalizedSignalIntensity;
-        }
-        
-        /**
-         * @return  the {@code DetectionFlag} defining XXX .
-         */
-        public DetectionFlag getDetectionFlag() {
-            return this.detectionFlag;
-        }
-
-        /**
-         * @return  the {@code String} representing the no-expression ID associated this probeset.
-         */
-        public String getNoExpressionId() {
-            return this.noExpressionId;
-        }
-        
-        /**
-         * @return  the {@code ExclusionReason} defining XXX .
-         */
-        public ExclusionReason getReasonForExclusion() {
-            return this.reasonForExclusion;
         }
 	}
 }

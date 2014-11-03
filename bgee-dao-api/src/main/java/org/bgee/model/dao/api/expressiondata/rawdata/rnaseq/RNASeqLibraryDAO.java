@@ -3,7 +3,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 import java.io.Serializable;
 
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedDAO.RawDataAnnotatedTO;
 
 /**
  * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqLibraryTO}s 

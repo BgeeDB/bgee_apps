@@ -3,8 +3,9 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 import java.io.Serializable;
 import java.util.Set;
 
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO;
 
 /**
  * {@code DAO} related to RNA-Seq experiments, using {@link RNASeqResultTO}s 
@@ -16,8 +17,13 @@ import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataTO;
  * @see RNASeqResultTO
  * @since Bgee 12
  */
-//TODO: extends DAO<RNASeqResultDAO.Attribute> 
-public interface RNASeqResultDAO {
+public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
+    
+    public enum Attribute implements DAO.Attribute {
+        ID, GENEID, LOG2RPK, READSCOUNT, EXPRESSIONID, NOEXPRESSIONID, DETECTIONFLAG, 
+        RNASEQDATA, REASONFOREXCLUSION
+    }
+
     /**
      * Remove link between some RNA_Seq results and their associated no-expression 
      * call because of no-expression conflicts. The RNA_Seq results will not be deleted, 
@@ -49,6 +55,11 @@ public interface RNASeqResultDAO {
      * @version Bgee 13
      * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResult
      * @since Bgee 12
+     */
+    /*
+     * (non-javadoc)
+     * This TO is not in it's final version. We need to known if CallSourceRawDataTO is necessary 
+     * and consistent.
      */
     public final class RNASeqResultTO extends CallSourceRawDataTO implements Serializable {
         private static final long serialVersionUID = 9192921864601490175L;

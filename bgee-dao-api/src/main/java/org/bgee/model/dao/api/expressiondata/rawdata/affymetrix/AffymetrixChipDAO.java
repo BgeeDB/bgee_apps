@@ -3,7 +3,7 @@ package org.bgee.model.dao.api.expressiondata.rawdata.affymetrix;
 import java.io.Serializable;
 
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedDAO.RawDataAnnotatedTO;
 
 /**
  * DAO defining queries using or retrieving {@link AffymetrixChipTO}s. 

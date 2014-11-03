@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.connector;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -262,6 +263,75 @@ public class BgeePreparedStatement implements AutoCloseable {
         }
     }
     
+    /**
+     * Delegated to {@link java.sql.PreparedStatement#setFloat(int, float)}.
+     * 
+     * @param parameterIndex    {@code int} that is the index of the parameter to set.
+     *                          the first parameter is 1, the second is 2, ...
+     * @param x                 {@code float} that is the value of the parameter 
+     *                          to set.
+     * @throws SQLException     if parameterIndex does not correspond to a parameter 
+     *                          marker in the SQL statement; if a database access error 
+     *                          occurs or this method is called on a closed PreparedStatement.
+     */
+    public void setFloat(int parameterIndex, float x) throws SQLException {
+        this.getRealPreparedStatement().setFloat(parameterIndex, x);
+    }
+    /**
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
+     * given in {@code values}. 
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code List} of {@code float}s that are values to be used 
+     *                          to set the parameters.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
+     */
+    public void setFloats(int startIndex, List<Float> values) throws SQLException {
+        log.entry(startIndex, values);
+        for (float value: values) {
+            this.setFloat(startIndex, value);
+            startIndex++;
+        }
+    }
+    /**
+     * Delegated to {@link java.sql.PreparedStatement#setBigDecimal(int, setBigDecimal)}.
+     * 
+     * @param parameterIndex    {@code int} that is the index of the parameter to set.
+     *                          the first parameter is 1, the second is 2, ...
+     * @param x                 {@code BigDecimal} that is the value of the parameter 
+     *                          to set.
+     * @throws SQLException     if parameterIndex does not correspond to a parameter 
+     *                          marker in the SQL statement; if a database access error 
+     *                          occurs or this method is called on a closed PreparedStatement.
+     */
+    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+        this.getRealPreparedStatement().setBigDecimal(parameterIndex, x);
+    }
+    /**
+     * Sets the designated parameters of this {@code BgeePreparedStatement} to the values 
+     * given in {@code values}. 
+     * 
+     * @param startIndex        An {@code int} that is the first index of the parameter to set.
+     *                          If these are the first parameters set for this 
+     *                          {@code BgeePreparedStatement}, the first parameter is 1.
+     * @param values            A {@code List} of {@code BigDecimal}s that are values to be used 
+     *                          to set the parameters.
+     * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
+     *                          SQL statement; if a database access error occurs or this method is 
+     *                          called on a closed {@code PreparedStatement}.
+     */
+    public void setBigDecimals(int startIndex, List<BigDecimal> values) throws SQLException {
+        log.entry(startIndex, values);
+        for (BigDecimal value: values) {
+            this.setBigDecimal(startIndex, value);
+            startIndex++;
+        }
+    }
+
     /**
      * Delegated to {@link java.sql.PreparedStatement#setNull(int, int)}.
      * 

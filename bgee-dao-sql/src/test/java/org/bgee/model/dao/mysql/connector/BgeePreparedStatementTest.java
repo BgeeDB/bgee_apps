@@ -2,6 +2,7 @@ package org.bgee.model.dao.mysql.connector;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -270,4 +271,50 @@ public class BgeePreparedStatementTest extends TestAncestor
                 RelationType.DEVELOPSFROM.getStringRepresentation());
     }
     
+    /**
+     * Test {@link BgeePreparedStatement#setFloats(int, List)}.
+     */
+    @Test
+    public void shouldSetFloats() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, 
+                MockDriver.getMockStatement());
+        stmt.setFloats(2, Arrays.asList(1.08f));
+        
+        verify(MockDriver.getMockStatement()).setFloat(2, 1.08f);
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setFloats(2, Arrays.asList(3.6f, 18.01f, 3.14f));
+
+        verify(MockDriver.getMockStatement()).setFloat(2, 3.6f);
+        verify(MockDriver.getMockStatement()).setFloat(3, 18.01f);
+        verify(MockDriver.getMockStatement()).setFloat(4, 3.14f);
+    }
+    
+    /**
+     * Test {@link BgeePreparedStatement#setBigDecimals(int, List)}.
+     */
+    @Test
+    public void shouldSetBigDecimals() throws SQLException {
+        MockDriver.initialize();
+        BgeeConnection con = mock(BgeeConnection.class);
+        BgeePreparedStatement stmt = new BgeePreparedStatement(con, 
+                MockDriver.getMockStatement());
+        stmt.setBigDecimals(2, Arrays.asList(new BigDecimal("77.001")));
+        
+        verify(MockDriver.getMockStatement()).setBigDecimal(2, new BigDecimal("77.001"));
+        
+        MockDriver.initialize();
+        con = mock(BgeeConnection.class);
+        stmt = new BgeePreparedStatement(con, MockDriver.getMockStatement());
+        stmt.setBigDecimals(2, Arrays.asList(new BigDecimal("0.98989"), new BigDecimal("10"), 
+                new BigDecimal("77.001")));
+
+        verify(MockDriver.getMockStatement()).setBigDecimal(2, new BigDecimal("0.98989"));
+        verify(MockDriver.getMockStatement()).setBigDecimal(3, new BigDecimal("10"));
+        verify(MockDriver.getMockStatement()).setBigDecimal(4, new BigDecimal("77.001"));
+    }
 }

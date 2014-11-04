@@ -14,7 +14,8 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 
 
-public class MySQLAffymetrixProbesetDAO extends MySQLDAO<AffymetrixProbesetDAO.Attribute> implements AffymetrixProbesetDAO {
+public class MySQLAffymetrixProbesetDAO extends MySQLDAO<AffymetrixProbesetDAO.Attribute> 
+                                        implements AffymetrixProbesetDAO {
 
     /**
      * {@code Logger} of the class. 

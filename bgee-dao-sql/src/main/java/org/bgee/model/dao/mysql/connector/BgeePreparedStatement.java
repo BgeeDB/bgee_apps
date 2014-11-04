@@ -298,7 +298,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         }
     }
     /**
-     * Delegated to {@link java.sql.PreparedStatement#setBigDecimal(int, setBigDecimal)}.
+     * Delegated to {@link java.sql.PreparedStatement#setBigDecimal(int, BigDecimal)}.
      * 
      * @param parameterIndex    {@code int} that is the index of the parameter to set.
      *                          the first parameter is 1, the second is 2, ...

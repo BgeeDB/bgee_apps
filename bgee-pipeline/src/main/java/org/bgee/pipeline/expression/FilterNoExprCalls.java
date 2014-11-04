@@ -1,19 +1,23 @@
 package org.bgee.pipeline.expression;
 
-import java.util.EnumSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.MySQLDAOUser;
@@ -37,6 +41,14 @@ import org.bgee.pipeline.MySQLDAOUser;
  * <p>
  * Corresponding raw data are also updated to set to null their no-expression ID 
  * and to set their reason for exclusion to 'no-expression conflict'.
+ * <p>
+ * There is no implementation to filter propagated global no-expression calls, because 
+ * with the existing code, filtering would be incomplete: for instance, 
+ * if a no-expression call in organ A, was propagated to child organs B and C, and 
+ * there is expression of the same gene in organ B: the no-expression calls in A and B 
+ * would be removed, but not in C, thus this is inconsistent. So, basically, 
+ * basic no-expression calls should be filtered before propagating them, and they should not 
+ * be filtered on the basis of the global calls.  
  * 
  * @author Frederic Bastian
  * @version Bgee 13
@@ -47,6 +59,34 @@ public class FilterNoExprCalls extends MySQLDAOUser {
      * {@code Logger} of the class.
      */
     private final static Logger log = LogManager.getLogger(FilterNoExprCalls.class.getName());
+    
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of basic no-expression calls 
+     * that were invalidated and that were based, amongst others, on Affymetrix data. 
+     */
+    private Set<String> affyNoExprIds;
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of basic no-expression calls 
+     * that were invalidated and that were based, amongst others, on <em>in situ</em> data. 
+     */
+    private Set<String> inSituNoExprIds;
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of basic no-expression calls 
+     * that were invalidated and that were based, amongst others, on RNA-Seq data. 
+     */
+    private Set<String> rnaSeqNoExprIds;
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of no-expression calls 
+     * that were completely invalidated and that should be deleted from the data source. 
+     */
+    private Set<String> toDeleteNoExprIds;
+    /**
+     * A {@code Set} of {@code NoExpressionCallTO}s representing no-expression calls 
+     * that must be updated, because at least one of the data type they were based on 
+     * showed a conflict expression/no-expression, but not all of them (otherwise, 
+     * their ID would be stored in {@link #toDeleteNoExprIds}).
+     */
+    private Set<NoExpressionCallTO> noExprCallsToUpdate;
     
     /**
      * Default constructor using default {@code MySQLDAOManager}.
@@ -62,43 +102,358 @@ public class FilterNoExprCalls extends MySQLDAOUser {
      */
     public FilterNoExprCalls(MySQLDAOManager manager) {
         super(manager);
+        this.initAttributes();
     }
     
-    public void filterNoExpressionCalls(List<String> speciesIds, boolean globalNoExpression) 
+    /**
+     * Initialize attributes of this class, that need to be reinitialized when iterating 
+     * several species, for cleaning no-expression calls one species at a time.  
+     */
+    private void initAttributes() {
+        this.affyNoExprIds = new HashSet<String>();
+        this.inSituNoExprIds = new HashSet<String>();
+        this.rnaSeqNoExprIds = new HashSet<String>();
+        this.toDeleteNoExprIds = new HashSet<String>();
+        this.noExprCallsToUpdate = new HashSet<NoExpressionCallTO>();
+    }
+    
+    public void filterNoExpressionCalls(List<String> speciesIds) 
         throws IllegalArgumentException{
-        log.entry(speciesIds, globalNoExpression);
+        log.entry(speciesIds);
         
-        List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(speciesIds, 
-                this.getSpeciesDAO());
-        
-        for (String speciesId: speciesIdsToUse) {
-            Set<String> speciesFilter = new HashSet<String>();
-            speciesFilter.add(speciesId);
-            
-            //get the reflexive/direct/indirect is_a/part_of relations between stages 
-            //and between anat entities for this species
-            this.getRelationDAO().setAttributes(RelationDAO.Attribute.SOURCEID, 
-                    RelationDAO.Attribute.TARGETID);
-            List<RelationTO> anatEntityRelTOs = this.getRelationDAO().getAnatEntityRelations(
-                    speciesFilter, EnumSet.of(RelationType.ISA_PARTOF), null).getAllTOs();
-            List<RelationTO> stageRelTOs = this.getRelationDAO().getStageRelations(
-                    speciesFilter, null).getAllTOs();
-            
-            //get the global expression calls for this species
-            ExpressionCallParams params = new ExpressionCallParams();
-            params.addAllSpeciesIds(speciesIds);
-            params.setIncludeSubstructures(true);
-            List<ExpressionCallTO> exprTOs = 
-                    this.getExpressionCallDAO().getExpressionCalls(params).getAllTOs();
-            
-            //now, the no-expression calls, global or not depending on argument
-            NoExpressionCallParams noExprParams = new NoExpressionCallParams();
-            noExprParams.addAllSpeciesIds(speciesIds);
-            noExprParams.setIncludeParentStructures(globalNoExpression);
-            List<NoExpressionCallTO> noExprTOs = 
-                    this.getNoExpressionCallDAO().getNoExpressionCalls(noExprParams).getAllTOs();
+        try {
+            List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(speciesIds, 
+                    this.getSpeciesDAO());
+
+            for (String speciesId: speciesIdsToUse) {
+                this.initAttributes();
+                Set<String> speciesFilter = new HashSet<String>();
+                speciesFilter.add(speciesId);
+                
+                this.startTransaction();
+
+                //------------------ Relations ---------------------
+                //get the reflexive/direct/indirect is_a/part_of relations between stages 
+                //and between anat entities for this species
+                Map<String, Set<String>> anatEntityRels = 
+                        BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
+                                this.getRelationDAO());
+                Map<String, Set<String>> stageRels = 
+                        BgeeDBUtils.getStageChildrenFromParents(speciesFilter, 
+                                this.getRelationDAO());
+
+                
+                //------------------ Retrieve expression calls ---------------------
+                //get the global expression calls for this species (it should work the same 
+                //with basic expression calls, but we're never too careful!)
+                ExpressionCallParams params = new ExpressionCallParams();
+                params.addAllSpeciesIds(speciesIds);
+                params.setIncludeSubstructures(true);
+                //we do not want the IDs of the expression calls, otherwise the equals methods 
+                //will be based on these IDs, while we want the comparisons to be based on 
+                //the anatEntityId, stageId and geneId. 
+                Collection<ExpressionCallDAO.Attribute> attributes = 
+                        Arrays.asList(ExpressionCallDAO.Attribute.values());
+                attributes.remove(ExpressionCallDAO.Attribute.ID);
+                ExpressionCallDAO dao = this.getExpressionCallDAO();
+                dao.setAttributes(attributes);
+                //we want to be able to retrieve an expression call using a 'get' method 
+                //based on hashCode, not to iterate all expression calls each time 
+                //we need to retrieve a specific one. We use a Map to do that, 
+                //see http://stackoverflow.com/a/18380755/1768736
+                log.debug("Retrieving expression calls for species {}...", speciesId);
+                Map<ExpressionCallTO, ExpressionCallTO> exprCallTOs = 
+                        new HashMap<ExpressionCallTO, ExpressionCallTO>();
+                ExpressionCallTOResultSet exprRs = dao.getExpressionCalls(params);
+                while (exprRs.next()) {
+                    ExpressionCallTO exprCallTO = exprRs.getTO();
+                    if (exprCallTO.getId() != null || 
+                            exprCallTO.getGeneId() == null || 
+                            exprCallTO.getAnatEntityId() == null || 
+                            exprCallTO.getStageId() == null) {
+                        throw log.throwing(new AssertionError("The IDs fo the expression calls " +
+                        		"should not be retrieved, their associated gene ID, " +
+                        		"anat entity ID, and stage ID, should be retrieved. " +
+                        		"Offending expression call TO: " + exprCallTO));
+                    }
+                    if (exprCallTO.getAffymetrixData() == null || 
+                            exprCallTO.getESTData() == null || 
+                            exprCallTO.getInSituData() == null || 
+                            exprCallTO.getRNASeqData() == null) {
+                        throw log.throwing(new AssertionError("All data types should be retrieved. " +
+                                "Offending expression call TO: " + exprCallTO));
+                    }
+                    exprCallTOs.put(exprCallTO, exprCallTO);
+                }
+                //no need for a finally close, this part of the code is already 
+                //in a try-finally block.
+                exprRs.close();
+                log.debug("Done retrieving expression calls for species {}, {} calls retrieved.", 
+                        speciesId, exprCallTOs.size());
+
+
+                //------------------ Analyze no-expression calls ---------------------
+                //now, iterate the no-expression calls, global or not depending on argument, 
+                //and identify conflicts
+                NoExpressionCallParams noExprParams = new NoExpressionCallParams();
+                noExprParams.addAllSpeciesIds(speciesIds);
+                noExprParams.setIncludeParentStructures(false);
+                log.debug("Analyzing no-expression calls...");
+                NoExpressionCallTOResultSet noExprRs = 
+                        this.getNoExpressionCallDAO().getNoExpressionCalls(noExprParams);
+                int i = 0;
+                while (noExprRs.next()) {
+                    i++;
+                    if (log.isDebugEnabled() && i % 100000 == 0) {
+                        log.debug("{} no-expression calls examined.", i);
+                    }
+                    NoExpressionCallTO noExprCallTO = noExprRs.getTO();
+                    if (noExprCallTO.getId() == null || 
+                            noExprCallTO.getGeneId() == null || 
+                            noExprCallTO.getAnatEntityId() == null || 
+                            noExprCallTO.getStageId() == null || 
+                            noExprCallTO.getAffymetrixData() == null || 
+                            noExprCallTO.getInSituData() == null || 
+                            noExprCallTO.getRelaxedInSituData() == null || 
+                            noExprCallTO.getRNASeqData() == null) {
+                        throw log.throwing(new AssertionError("All data of no-expression calls " +
+                                "must be retrieved. Offending no-expression call TO: " + 
+                                noExprCallTO));
+                    }
+                    if (noExprCallTO.isIncludeParentStructures() || 
+                        noExprCallTO.getOriginOfLine() != NoExpressionCallTO.OriginOfLine.SELF) {
+                        throw log.throwing(new AssertionError("No-expression cleaning " +
+                                "can be performed only on basic no-expression calls. " +
+                                "Offending no-expression call: " + noExprCallTO));
+                    }
+                    this.analyzeNoExprCallTO(noExprCallTO, exprCallTOs, 
+                            anatEntityRels, stageRels);
+                }
+                //no need for a finally close, this part of the code is already 
+                //in a try-finally block. 
+                noExprRs.close();
+                log.debug("Done analyzing no-expression calls.");
+
+
+                //------------------ Update no-expression calls ---------------------
+                this.updateDataSource();
+                
+                this.commit();
+            }
+        } finally {
+            this.closeDAO();
         }
         
+        log.exit();
+    }
+    
+    /**
+     * Analyze a no-expression call to determine if there exist some conflicting expression data. 
+     * Expression data are conflicting if there exist some expression call 
+     * in the same anatomical entity and developmental stage as the no-expression call 
+     * {@code noExprCallTO}, or in any of the child anatomical entities and/or child stages. 
+     * This method will fill the attributes {@link #affyNoExprIds}, {@link #inSituNoExprIds}, 
+     * {@link #rnaSeqNoExprIds}, {@link toDeleteNoExprIds} and {@link #noExprCallsToUpdate}.
+     * 
+     * @param noExprCallTO      The {@code NoExpressionCallTO} to be checked for conflicting 
+     *                          expression data.
+     * @param exprCallTOs       A {@code Map} of {@code ExpressionCallTO}s that could lead
+     *                          to a conflict with {@code noExprCallTO}. In this {@code Map}, 
+     *                          keys and values are equal; a {@code Map} is used solely 
+     *                          to efficiently retrieve {@code ExpressionCallTO}s based on 
+     *                          their hashCode. 
+     * @param anatEntityRels    A {@code Map} where keys are IDs of anatomical entities 
+     *                          that are targets of a relation, the associated value 
+     *                          being a {@code Set} of {@code String}s that are 
+     *                          the IDs of their associated sources. This {@code Map} allows 
+     *                          to efficiently retrieve all children of an anatomical entity 
+     *                          by any is_a/part_of relation, even indirect or reflexive. 
+     * @param stageRels         A {@code Map} where keys are IDs of developmental stages  
+     *                          that are targets of a relation, the associated value 
+     *                          being a {@code Set} of {@code String}s that are 
+     *                          the IDs of their associated sources. This {@code Map} allows 
+     *                          to efficiently retrieve all children of a stage 
+     *                          by any is_a/part_of relation, even indirect or reflexive. 
+     */
+    private void analyzeNoExprCallTO(NoExpressionCallTO noExprCallTO, 
+            Map<ExpressionCallTO, ExpressionCallTO> exprCallTOs, 
+            Map<String, Set<String>> anatEntityRels, Map<String, Set<String>> stageRels) {
+        log.entry(noExprCallTO, exprCallTOs, anatEntityRels, stageRels);
+        log.trace("no-expresion call examined: {}", noExprCallTO);
+        
+        //------------------ sanity checks --------------------------
+        //check validity of the no-expression calls
+        if (noExprCallTO.isIncludeParentStructures() || 
+                noExprCallTO.getOriginOfLine() != NoExpressionCallTO.OriginOfLine.SELF) {
+            throw log.throwing(new IllegalArgumentException("No-expression cleaning " +
+            		"can be performed only on basic no-expression calls. " +
+            		"Offending no-expression call: " + noExprCallTO));
+        }
+        
+        //try to find expression calls in the same organ/stage as the no-expression call, 
+        //or in a child organ and/or in a child stage.
+        Set<String> childAnatEntityIds = anatEntityRels.get(noExprCallTO.getAnatEntityId());
+        if (childAnatEntityIds == null) {
+            throw log.throwing(new IllegalStateException("The anatomical entity " +
+                    noExprCallTO.getAnatEntityId() + " is not defined as existing " +
+                            "in the species of gene " + noExprCallTO.getGeneId() + 
+                            ", while it has no-expression data in it."));
+        }
+        Set<String> childStageIds = stageRels.get(noExprCallTO.getStageId());
+        if (childStageIds == null) {
+            throw log.throwing(new IllegalStateException("The stage " +
+                    noExprCallTO.getStageId() + " is not defined as existing " +
+                            "in the species of gene " + noExprCallTO.getGeneId() + 
+                            ", while it has no-expression data in it."));
+        }
+        
+
+        //------------------ Find conflicts --------------------------
+        boolean affyDataConflict          = false;
+        boolean inSituDataConflict        = false;
+        boolean relaxedInSituDataConflict = false;
+        boolean rnaSeqDataConflict        = false;
+
+        //anatEntityRels and stageRels contain reflexive relations, so same organ/stage 
+        //will be also tested when iterating the relations
+        checkConflict: for (String childAnatEntityId: childAnatEntityIds) {
+            for (String childStageId: childStageIds) {
+                log.trace("Trying to retrieve expression calls in anat entity {} and stage {}", 
+                        childAnatEntityId, childStageId);
+                //creating a fake expression call, to retrieve the real call 
+                //(quicker than iterating the whole list of ExpressionCallTO, 
+                //because based on hashCode)
+                ExpressionCallTO fakeExprCallTO = new ExpressionCallTO(null, 
+                        noExprCallTO.getGeneId(), childAnatEntityId, childStageId, 
+                        null, null, null, null, false, false, null);
+                //hashCode and equals methods are based on the geneId-anatEntityId-stageId, 
+                //because we requested the expression call TOs to not contain their ID.
+                ExpressionCallTO realExprCallTO = exprCallTOs.get(fakeExprCallTO);
+                //conflict found
+                if (realExprCallTO != null) {
+                    log.trace("Conflicting expression call retrieved: {}", realExprCallTO);
+                    //check for each data type whether there is a conflict
+                    if (noExprCallTO.getAffymetrixData() != DataState.NODATA && 
+                            realExprCallTO.getAffymetrixData() != DataState.NODATA) {
+                        affyDataConflict = true;
+                        log.trace("Affymetrix data conflicting.");
+                    }
+                    if (noExprCallTO.getInSituData() != DataState.NODATA && 
+                            realExprCallTO.getInSituData() != DataState.NODATA) {
+                        inSituDataConflict = true;
+                        log.trace("In-situ data conflicting.");
+                    }
+                    if (noExprCallTO.getRelaxedInSituData() != DataState.NODATA && 
+                            realExprCallTO.getInSituData() != DataState.NODATA) {
+                        relaxedInSituDataConflict = true;
+                        log.trace("Relaxed in-situ data conflicting.");
+                    }
+                    if (noExprCallTO.getRNASeqData() != DataState.NODATA && 
+                            realExprCallTO.getRNASeqData() != DataState.NODATA) {
+                        rnaSeqDataConflict = true;
+                        log.trace("RNA-Seq data conflicting.");
+                    }
+                }
+                log.trace("Overall conflicts: affymetrix {} - in situ {} - relaxed in situ {} - RNA-Seq {}", 
+                        affyDataConflict, inSituDataConflict, relaxedInSituDataConflict, 
+                        rnaSeqDataConflict);
+                
+                //if there is no remaining accepted data for the no-expression call, 
+                //no need to continue the iterations
+                if ((noExprCallTO.getAffymetrixData() == DataState.NODATA || affyDataConflict) && 
+                        (noExprCallTO.getInSituData() == DataState.NODATA || inSituDataConflict) && 
+                        (noExprCallTO.getRelaxedInSituData() == DataState.NODATA || 
+                            relaxedInSituDataConflict) && 
+                        (noExprCallTO.getRNASeqData() == DataState.NODATA || rnaSeqDataConflict)) {
+                    log.trace("No remaining accepted data, stop iterations");
+                    break checkConflict;
+                }
+            }
+        }
+        
+
+        //------------------ store information to update/delete --------------------------
+        //store information necessary for updating the data source
+        String noExprId = noExprCallTO.getId();
+        NoExpressionCallTO noExprCallTOForUpdate = new NoExpressionCallTO(noExprId, 
+                noExprCallTO.getGeneId(), noExprCallTO.getAnatEntityId(), noExprCallTO.getStageId(), 
+                (affyDataConflict? DataState.NODATA: noExprCallTO.getAffymetrixData()), 
+                (inSituDataConflict? DataState.NODATA: noExprCallTO.getInSituData()), 
+                (relaxedInSituDataConflict? DataState.NODATA: noExprCallTO.getRelaxedInSituData()), 
+                (rnaSeqDataConflict? DataState.NODATA: noExprCallTO.getRNASeqData()), 
+                //here, isIncludeParentStructures should always be false, and 
+                //originOfLine always equals to SELF
+                noExprCallTO.isIncludeParentStructures(), noExprCallTO.getOriginOfLine());
+        
+        //if there is no remaining data at all for the no-expression call, delete it
+        if (noExprCallTOForUpdate.getAffymetrixData() == DataState.NODATA && 
+                noExprCallTOForUpdate.getInSituData() == DataState.NODATA && 
+                noExprCallTOForUpdate.getRelaxedInSituData() == DataState.NODATA && 
+                noExprCallTOForUpdate.getRNASeqData() == DataState.NODATA) {
+            this.toDeleteNoExprIds.add(noExprId);
+            log.trace("No-expression call will be deleted.");
+        } else if (affyDataConflict || inSituDataConflict || 
+                relaxedInSituDataConflict || rnaSeqDataConflict) {
+            //update the call only if there was at least one conflict
+            this.noExprCallsToUpdate.add(noExprCallTOForUpdate);
+            log.trace("No-expression call will be updated: {}", noExprCallTOForUpdate);
+        } else {
+            log.trace("No conflicts, thus no modifications needed for this call.");
+        }
+        
+        //update raw data
+        if (affyDataConflict) {
+            this.affyNoExprIds.add(noExprId);
+            log.trace("Associated raw Affymetrix data will be removed.");
+        }
+        //for relaxedInSituData, there is no raw data associated
+        if (inSituDataConflict) {
+            this.inSituNoExprIds.add(noExprId);
+            log.trace("Associated raw in situ data will be removed.");
+        }
+        if (rnaSeqDataConflict) {
+            this.rnaSeqNoExprIds.add(noExprId);
+            log.trace("Associated raw RNA-Seq data will be removed.");
+        }
+        
+        log.exit();
+    }
+    
+    /**
+     * Update the data source. 
+     * <ul>
+     * <li>Raw data with conflicting no-expression data are updated. 
+     * This includes: Affymetrix probesets associated to a no-expression ID stored in 
+     * {@link #affyNoExprIds}; <em>in-situ</em> spots associated to a no-expression ID 
+     * stored in {@link #inSituNoExprIds}; RNA-Seq results associated to a no-expression ID 
+     * stored in {@link #rnaSeqNoExprIds}. 
+     * <li>No-expression calls with no more data after removal of conflicts are deleted 
+     * from the data source. Their IDs are stored in {@link toDeleteNoExprIds}.
+     * <li>No-expression calls with some conflicting data, but with some remaining valid data, 
+     * are updated. They are stored in {@link #noExprCallsToUpdate}.
+     * </ul>
+     */
+    private void updateDataSource() {
+        log.entry();
+        log.debug("Updating data source...");
+        
+        if (!this.affyNoExprIds.isEmpty()) {
+            this.getAffymetrixProbesetDAO().updateNoExpressionConflicts(this.affyNoExprIds);
+        }
+        if (!this.inSituNoExprIds.isEmpty()) {
+            this.getInSituSpotDAO().updateNoExpressionConflicts(this.inSituNoExprIds);
+        }
+        if (!this.rnaSeqNoExprIds.isEmpty()) {
+            this.getRNASeqResultDAO().updateNoExpressionConflicts(this.rnaSeqNoExprIds);
+        }
+        if (!this.toDeleteNoExprIds.isEmpty()) {
+            this.getNoExpressionCallDAO().deleteNoExprCalls(this.toDeleteNoExprIds, false);
+        }
+        if (!this.noExprCallsToUpdate.isEmpty()) {
+            this.getNoExpressionCallDAO().updateNoExprCalls(this.noExprCallsToUpdate);
+        }
+        
+        log.debug("Done updating data source.");
         log.exit();
     }
 }

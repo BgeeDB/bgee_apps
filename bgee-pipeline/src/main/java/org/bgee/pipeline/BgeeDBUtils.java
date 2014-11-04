@@ -1,6 +1,7 @@
 package org.bgee.pipeline;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -231,6 +232,9 @@ public class BgeeDBUtils {
                     throws DAOException {
         log.entry(speciesIds, anatEntityRelatives, childrenFromParents, relationDAO);
         
+        //store original attributes to restore relationDAO in proper state afterwards.
+        Collection<RelationDAO.Attribute> attributes = relationDAO.getAttributes();
+        
         relationDAO.setAttributes(RelationDAO.Attribute.SOURCEID, 
                 RelationDAO.Attribute.TARGETID);
     
@@ -264,6 +268,9 @@ public class BgeeDBUtils {
             }
             relatives.add(value);
         }
+        
+        //restore relationDAO in proper state
+        relationDAO.setAttributes(attributes);
         
         return log.exit(relativesMap);
     }

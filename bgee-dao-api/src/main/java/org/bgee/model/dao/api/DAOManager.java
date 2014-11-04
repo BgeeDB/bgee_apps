@@ -24,6 +24,9 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
@@ -972,6 +975,50 @@ public abstract class DAOManager implements AutoCloseable
         return log.exit(this.getNewAnatEntityDAO());
     }
     
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO
+     * AffymetrixProbesetDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code AffymetrixProbesetDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO 
+     * AffymetrixProbesetDAO
+     */
+    public final AffymetrixProbesetDAO getAffymetrixProbesetDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewAffymetrixProbesetDAO());
+    }
+
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO 
+     * InSituSpotDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code InSituSpotDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO
+     */
+    public final InSituSpotDAO getInSituSpotDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewInSituSpotDAO());
+    }
+
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO
+     * RNASeqResultDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code RNASeqResultDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO 
+     * RNASeqResultDAO
+     */
+    public final RNASeqResultDAO getRNASeqResultDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewRNASeqResultDAO());
+    }
+
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
     //*****************************************	
@@ -1159,4 +1206,28 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code AnatEntityDAO}
      */
     protected abstract AnatEntityDAO getNewAnatEntityDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO 
+     * AffymetrixProbesetDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code AffymetrixProbesetDAO}
+     */
+    protected abstract AffymetrixProbesetDAO getNewAffymetrixProbesetDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code InSituSpotDAO}
+     */
+    protected abstract InSituSpotDAO getNewInSituSpotDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO RNASeqResultDAO}
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code RNASeqResultDAO}
+     */
+    protected abstract RNASeqResultDAO getNewRNASeqResultDAO();
 }

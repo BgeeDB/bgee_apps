@@ -13,6 +13,9 @@ import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -172,7 +175,25 @@ public abstract class MySQLDAOUser {
     protected MySQLAnatEntityDAO getAnatEntityDAO() {
         return (MySQLAnatEntityDAO) this.manager.getAnatEntityDAO();
     }
-
+    /**
+     * @return  A {@code MySQLAffymetrixProbesetDAO}.
+     */
+    protected MySQLAffymetrixProbesetDAO getAffymetrixProbesetDAO() {
+        return (MySQLAffymetrixProbesetDAO) this.manager.getAffymetrixProbesetDAO();
+    }
+    /**
+     * @return  A {@code MySQLInSituSpotDAO}.
+     */
+    protected MySQLInSituSpotDAO getInSituSpotDAO() {
+        return (MySQLInSituSpotDAO) this.manager.getInSituSpotDAO();
+    }
+    /**
+     * @return  A {@code MySQLRNASeqResultDAO}.
+     */
+    protected MySQLRNASeqResultDAO getRNASeqResultDAO() {
+        return (MySQLRNASeqResultDAO) this.manager.getRNASeqResultDAO();
+    }
+    
     /**
      * Start a transaction with the MySQL database. We wrap the potential 
      * {@code SQLException} into a {@code DAOException}, because we do not want 

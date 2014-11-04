@@ -8,6 +8,9 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
@@ -124,5 +127,17 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected AnatEntityDAO getNewAnatEntityDAO() {
         return this.instanceMockManager.getNewAnatEntityDAO();
+    }
+    @Override
+    protected AffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {
+        return this.instanceMockManager.getNewAffymetrixProbesetDAO();
+    }
+    @Override
+    protected InSituSpotDAO getNewInSituSpotDAO() {
+        return this.instanceMockManager.getInSituSpotDAO();
+    }
+    @Override
+    protected RNASeqResultDAO getNewRNASeqResultDAO() {
+        return this.instanceMockManager.getNewRNASeqResultDAO();
     }
 }

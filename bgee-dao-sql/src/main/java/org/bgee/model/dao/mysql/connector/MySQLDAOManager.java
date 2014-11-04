@@ -31,6 +31,9 @@ import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
@@ -926,5 +929,19 @@ public class MySQLDAOManager extends DAOManager {
         log.entry();
         return log.exit(new MySQLAnatEntityDAO(this));
     }
-
+    @Override
+    protected MySQLAffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {
+        log.entry();
+        return log.exit(new MySQLAffymetrixProbesetDAO(this));
+    }
+    @Override
+    protected MySQLInSituSpotDAO getNewInSituSpotDAO() {
+        log.entry();
+        return log.exit(new MySQLInSituSpotDAO(this));
+    }
+    @Override
+    protected MySQLRNASeqResultDAO getNewRNASeqResultDAO() {
+        log.entry();
+        return log.exit(new MySQLRNASeqResultDAO(this));
+    }
 }

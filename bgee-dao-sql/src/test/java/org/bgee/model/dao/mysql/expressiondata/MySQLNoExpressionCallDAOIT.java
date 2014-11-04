@@ -548,6 +548,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("10", "ID3", "Anat_id8", "Stage_id7", 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, true, OriginOfLine.SELF));
+        
+               //TODO: add a NoExpressionCallTO as in the database, that will have a match, 
+               //but will thus not be actually updated
 
         try {
             MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());

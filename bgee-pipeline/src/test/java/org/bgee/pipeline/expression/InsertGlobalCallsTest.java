@@ -45,6 +45,13 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 
+/**
+ * Tests for {@link InsertGlobalCalls}.
+ * 
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @since Bgee 13
+ */
 public class InsertGlobalCallsTest extends TestAncestor {
     
     /**

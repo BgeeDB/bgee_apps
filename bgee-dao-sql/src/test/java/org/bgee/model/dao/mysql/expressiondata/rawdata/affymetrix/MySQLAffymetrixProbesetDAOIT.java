@@ -43,7 +43,7 @@ public class MySQLAffymetrixProbesetDAOIT extends MySQLITAncestor {
     }
 
     /**
-     * Test the select method {@link MySQLAffymetrixProbesetDAOIT#updateNoExpressionConflicts()}.
+     * Test {@link MySQLAffymetrixProbesetDAOIT#updateNoExpressionConflicts()}.
      */
     @Test
     public void shouldUpdateNoExpressionConflicts() throws SQLException {

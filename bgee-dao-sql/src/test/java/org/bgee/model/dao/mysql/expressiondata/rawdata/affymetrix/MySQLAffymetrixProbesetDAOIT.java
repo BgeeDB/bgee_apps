@@ -10,6 +10,9 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.ExclusionReason;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Rule;
@@ -47,13 +50,13 @@ public class MySQLAffymetrixProbesetDAOIT extends MySQLITAncestor {
     /**
      * Test the select method {@link MySQLAffymetrixProbesetDAOIT#updateNoExpressionConflicts()}.
      */
-//TODO remove comment    @Test
+    @Test
     public void shouldUpdateNoExpressionConflicts() throws SQLException {
 
         this.useEmptyDB();
         this.populateAndUseDatabase();
 
-        Set<String> noExprIds = new HashSet<String>(Arrays.asList("2", "10"));
+        Set<String> noExprIds = new HashSet<String>(Arrays.asList("4", "1"));
         try {
             MySQLAffymetrixProbesetDAO dao = new MySQLAffymetrixProbesetDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows updated", 2, 
@@ -63,29 +66,27 @@ public class MySQLAffymetrixProbesetDAOIT extends MySQLITAncestor {
                     prepareStatement("SELECT 1 FROM affymetrixProbeset WHERE " + 
                             "affymetrixProbesetId = ? AND bgeeAffymetrixChipId = ? AND " + 
                             "geneId = ? AND  normalizedSignalIntensity = ? AND " + 
-                            "detectionFlag = ? AND expressionId = ? AND noExpressionId = ? AND " + 
-                            "affymetrixData = ? AND reasonForExclusion = ?")) {
-                stmt.setString(1, "affymetrixProbesetId");
-                stmt.setString(2, "bgeeAffymetrixChipId");
-                stmt.setString(3, "geneId");
-                stmt.setFloat(4, 999);
-                stmt.setString(5, "detectionFlag");
-                stmt.setInt(6, Integer.parseInt("expressionId"));
-                stmt.setInt(7, Integer.parseInt("noExpressionId"));
-                stmt.setString(8, "affymetrixData");
-                stmt.setString(9, "reasonForExclusion");
+                            "detectionFlag = ? AND expressionId is null AND " +
+                            "noExpressionId is null AND affymetrixData = ? AND " +
+                            "reasonForExclusion = ?")) {
+
+                stmt.setString(1, "1006_at");
+                stmt.setInt(2, 12359);
+                stmt.setString(3, "ID2");
+                stmt.setFloat(4, 2.21f);
+                stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
+                stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("AffymetrixProbesetTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
 
-                stmt.setString(1, "affymetrixProbesetId");
-                stmt.setString(2, "bgeeAffymetrixChipId");
-                stmt.setString(3, "geneId");
-                stmt.setFloat(4, 999);
-                stmt.setString(5, "detectionFlag");
-                stmt.setInt(6, Integer.parseInt("expressionId"));
-                stmt.setInt(7, Integer.parseInt("noExpressionId"));
-                stmt.setString(8, "affymetrixData");
-                stmt.setString(9, "reasonForExclusion");
+                stmt.setString(1, "1041_xx");
+                stmt.setInt(2, 12361);
+                stmt.setString(3, "ID2");
+                stmt.setFloat(4, 2.24f);
+                stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
+                stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("AffymetrixProbesetTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }

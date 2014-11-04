@@ -10,9 +10,13 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.ExclusionReason;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 
@@ -46,13 +50,13 @@ public class MySQLInSituSpotDAOIT extends MySQLITAncestor {
     /**
      * Test the select method {@link MySQLInSituSpotDAOIT#updateNoExpressionConflicts()}.
      */
-//TODO remove comment    @Test
+    @Test
     public void shouldUpdateNoExpressionConflicts() throws SQLException {
      
         this.useEmptyDB();
         this.populateAndUseDatabase();
 
-        Set<String> noExprIds = new HashSet<String>(Arrays.asList("2", "10"));
+        Set<String> noExprIds = new HashSet<String>(Arrays.asList("2"));
         try {
             MySQLInSituSpotDAO dao = new MySQLInSituSpotDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows updated", 2, 
@@ -62,33 +66,29 @@ public class MySQLInSituSpotDAOIT extends MySQLITAncestor {
                     prepareStatement("SELECT 1 FROM inSituSpot WHERE inSituSpotId = ? AND " + 
                             "inSituEvidenceId = ? AND inSituExpressionPatternId = ? AND " + 
                             "anatEntityId  = ? AND stageId = ? AND geneId = ? AND " + 
-                            "detectionFlag = ? AND expressionId = ? AND noExpressionId = ? AND " + 
-                            "inSituData = ? AND reasonForExclusion = ?")) {
-                stmt.setString(1, "inSituSpotId");
-                stmt.setString(2, "inSituEvidenceId");
-                stmt.setString(3, "inSituExpressionPatternId");
-                stmt.setString(4, "anatEntityId");
-                stmt.setString(5, "stageId");
-                stmt.setString(6, "geneId");
-                stmt.setString(7, "detectionFlag");
-                stmt.setInt(8, Integer.parseInt("expressionId"));
-                stmt.setInt(9, Integer.parseInt("noExpressionId"));
-                stmt.setString(10, "inSituData");
-                stmt.setString(11, "reasonForExclusion");
+                            "detectionFlag = ? AND expressionId is null AND " +
+                            "noExpressionId is null AND inSituData = ? AND reasonForExclusion = ?")) {
+                stmt.setString(1, "BDGP-10000");
+                stmt.setString(2, "BDGP_140958");
+                stmt.setString(3, "");
+                stmt.setString(4, "Anat_id11");
+                stmt.setString(5, "Stage_id8");
+                stmt.setString(6, "ID1");
+                stmt.setString(7, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(8, DataState.LOWQUALITY.getStringRepresentation());
+                stmt.setString(9, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("InSituSpotTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
 
-                stmt.setString(1, "inSituSpotId");
-                stmt.setString(2, "inSituEvidenceId");
-                stmt.setString(3, "inSituExpressionPatternId");
-                stmt.setString(4, "anatEntityId");
-                stmt.setString(5, "stageId");
-                stmt.setString(6, "geneId");
-                stmt.setString(7, "detectionFlag");
-                stmt.setInt(8, Integer.parseInt("expressionId"));
-                stmt.setInt(9, Integer.parseInt("noExpressionId"));
-                stmt.setString(10, "inSituData");
-                stmt.setString(11, "reasonForExclusion");
+                stmt.setString(1, "mgi-1061");
+                stmt.setString(2, "MGI:2677299.7");
+                stmt.setString(3, "");
+                stmt.setString(4, "Anat_id10");
+                stmt.setString(5, "Stage_id2");
+                stmt.setString(6, "ID3");
+                stmt.setString(7, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(8, DataState.LOWQUALITY.getStringRepresentation());
+                stmt.setString(9, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("InSituSpotTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }

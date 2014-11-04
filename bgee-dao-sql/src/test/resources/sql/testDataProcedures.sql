@@ -272,6 +272,66 @@ BEGIN
                (6,12),
                (6,13);
 
+        INSERT INTO estLibrary (estLibraryId,estLibraryName,estLibraryDescription,anatEntityId,stageId,dataSourceId)
+        VALUES ('424', 'DKFZphamy1', 'DescDKFZ', 'Anat_id4', 'Stage_id4', 1), 
+               ('437', 'NCI_CGAP_Ov6', 'DescNCI', 'Anat_id13', 'Stage_id5', 1);
+
+        INSERT INTO expressedSequenceTag (estId, estId2, estLibraryId, geneId, UniGeneClusterId, expressionId, estData)
+        VALUES ('AA000001.1', 'g1392161', '424', 'ID3', 'Hs.528780', 8, 'high quality'),
+               ('AA000012.1', 'g1435877', '437', 'ID1', 'Mm.276405', 3, 'poor quality');
+
+        INSERT INTO microarrayExperiment (microarrayExperimentId, microarrayExperimentName, microarrayExperimentDescription, dataSourceId)
+        VALUES ('E-AFMX-1', 'microName1', 'microarrayDesc1', 1);
+
+        INSERT INTO chipType (chipTypeId, chipTypeName, cdfName, isCompatible, qualityScoreThreshold, percentPresentThreshold)
+        VALUES ('A-AFFY-1', 'U95Av2', 'HG_U95Av2', true, 45759.68, 22.76);
+
+        INSERT INTO affymetrixChip (bgeeAffymetrixChipId, affymetrixChipId, microarrayExperimentId, chipTypeId, scanDate, normalizationType, detectionType, anatEntityId, stageId, qualityScore, percentPresent)
+        VALUES (12359, 'h4a', 'E-AFMX-1', 'A-AFFY-1', '03/18/03 15:00:03', 'gcRMA', 'Schuster', 'Anat_id7', 'Stage_id2', 52229.94, 45.00),
+               (12361, 'h6a', 'E-AFMX-1', 'A-AFFY-1', '03/18/03 17:03:23', 'gcRMA', 'Schuster', 'Anat_id11', 'Stage_id15', 51850.62, 48.92);
+
+        INSERT INTO affymetrixProbeset (affymetrixProbesetId, bgeeAffymetrixChipId, geneId, normalizedSignalIntensity, detectionFlag, expressionId, noExpressionId, affymetrixData, reasonForExclusion)
+        VALUES ('1006_at', 12359, 'ID2', 2.21, 'absent', NULL, 1, 'high quality', 'not excluded'),
+               ('1007_s_at', 12359, 'ID3', 9.08, 'present', 1, NULL, 'high quality', 'not excluded'),
+               ('1041_at', 12361, 'ID1', 2.21, 'absent', NULL, NULL, 'high quality', 'pre-filtering'),
+               ('1041_xx', 12361, 'ID2', 2.24, 'absent', NULL, 4, 'high quality', 'not excluded'),
+               ('32233_at', 12361, 'ID2', 2.66, 'marginal', NULL, NULL, 'poor quality', 'undefined');
+
+        INSERT INTO inSituExperiment (inSituExperimentId, inSituExperimentName, inSituExperimentDescription, dataSourceId)
+        VALUES ('MGI:3041492', 'name1', '', 1),
+               ('MGI:2677299', 'name2', 'desc2', 1),
+               ('BDGP_IP07646', '', '', 1),
+               ('FBrf0219073', '', 'desc4', 1);
+
+        INSERT INTO inSituEvidence (inSituEvidenceId, inSituExperimentId, evidenceDistinguishable, inSituEvidenceUrlPart)
+        VALUES ('MGI:3041492.9', 'MGI:3041492', true, ''),
+               ('MGI:2677299.7', 'MGI:2677299', true, '5V_id'),
+               ('BDGP_140958', 'BDGP_IP07646', true, ''),
+               ('FBrf0219073.2', 'FBrf0219073', false, 'url2');
+               
+
+        INSERT INTO inSituSpot (inSituSpotId, inSituEvidenceId, inSituExpressionPatternId, anatEntityId, stageId, geneId, detectionFlag, expressionId, noExpressionId, inSituData, reasonForExclusion)
+        VALUES ('mgi-1118', 'MGI:3041492.9', '', 'Anat_id1', 'Stage_id1', 'ID3', 'present', 8, NULL, 'high quality', 'not excluded'),
+               ('mgi-1061', 'MGI:2677299.7', '', 'Anat_id10', 'Stage_id2', 'ID3', 'absent', NULL, 2, 'poor quality', 'not excluded'),
+               ('BDGP-10000', 'BDGP_140958', '', 'Anat_id11', 'Stage_id8', 'ID1', 'absent', NULL, 2, 'poor quality', 'not excluded'),
+               ('flybase-10', 'FBrf0219073.2', '', 'Anat_id13', 'Stage_id5', 'ID2', 'undefined', NULL, NULL, 'high quality', 'undefined');
+
+        INSERT INTO rnaSeqExperiment (rnaSeqExperimentId, rnaSeqExperimentName, rnaSeqExperimentDescription, dataSourceId)
+        VALUES ('GSE41338', 'ExpName1', 'ExpDesc1', 1);
+
+        INSERT INTO rnaSeqPlatform (rnaSeqPlatformId, rnaSeqPlatformDescription)
+        VALUES ('Illumina HiSeq 2000', '');
+
+        INSERT INTO rnaSeqLibrary(rnaSeqLibraryId, rnaSeqSecondaryLibraryId, rnaSeqExperimentId, rnaSeqPlatformId, anatEntityId, stageId, log2RPKThreshold, allGenesPercentPresent, proteinCodingGenesPercentPresent, intergenicRegionsPercentPresent, allReadsCount, leftMappedReadsCount, rightMappedReadsCount, minReadLength, maxReadLength, libraryType, libraryOrientation)
+        VALUES ('GSM1015161', 'SRX191160', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id11', 'Stage_id1', 1.000000, 68.27, 58.96, 15.85, 91641467, 33352222, 32332998, 75, 75, 'paired', 'unstranded'),
+               ('GSM1015164', 'SRX191163', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id13', 'Stage_id18', 1.000000, 43.85, 37.72, 6.23, 81401754, 28408829, 28299304, 75, 75, 'paired', 'unstranded'),
+               ('GSM1015162', 'SRX191161', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id10', 'Stage_id4', 1.000000, 60.13, 51.96, 12.61, 81401754, 43858614, 10260750, 75, 75, 'paired', 'unstranded');
+
+       INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, log2RPK, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
+        VALUES ('GSM1015164', 'ID1', 0.780113, 117, 2, NULL, 'present', 'high quality', 'not excluded'),
+               ('GSM1015161', 'ID1', -26.575425, 0, NULL, NULL, 'absent', 'high quality', 'pre-filtering'),
+               ('GSM1015161', 'ID2', -1.687530, 31, NULL, 4, 'absent', 'high quality', 'not excluded'),
+               ('GSM1015162', 'ID3', -2.462678, 31, NULL, 8, 'absent', 'poor quality', 'not excluded');
     END IF; 
 END
 ;

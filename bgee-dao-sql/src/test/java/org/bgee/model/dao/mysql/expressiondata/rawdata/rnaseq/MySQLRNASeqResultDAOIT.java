@@ -3,7 +3,6 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -11,9 +10,13 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.DetectionFlag;
+import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.ExclusionReason;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 
@@ -37,13 +40,13 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
     /**
      * Test the select method {@link MySQLRNASeqResultDAOIT#updateNoExpressionConflicts()}.
      */
-//TODO remove comment    @Test
+    @Test
     public void shouldUpdateNoExpressionConflicts() throws SQLException {
      
         this.useEmptyDB();
         this.populateAndUseDatabase();
 
-        Set<String> noExprIds = new HashSet<String>(Arrays.asList("2", "10"));
+        Set<String> noExprIds = new HashSet<String>(Arrays.asList("4", "8"));
         try {
             MySQLRNASeqResultDAO dao = new MySQLRNASeqResultDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows updated", 2, 
@@ -52,29 +55,25 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("SELECT 1 FROM rnaSeqResult WHERE rnaSeqLibraryId = ? AND " +
                             "geneId = ? AND log2RPK = ? AND readsCount = ? AND " +
-                            "expressionId = ? AND noExpressionId = ? AND detectionFlag = ? AND " +
-                            "rnaSeqData = ? AND reasonForExclusion = ?")) {
-                stmt.setString(1, "rnaSeqLibraryId");
-                stmt.setString(2, "geneId");
-                stmt.setBigDecimal(3, new BigDecimal("log2RPK"));
-                stmt.setInt(4, Integer.parseInt("readsCount"));
-                stmt.setInt(5, Integer.parseInt("expressionId"));
-                stmt.setInt(6, Integer.parseInt("noExpressionId"));
-                stmt.setString(7, "detectionFlag");
-                stmt.setString(8, "rnaSeqData");
-                stmt.setString(9, "reasonForExclusion");
+                            "expressionId is null AND noExpressionId is null " +
+                            "AND detectionFlag = ? AND rnaSeqData = ? AND reasonForExclusion = ?")) {
+                stmt.setString(1, "GSM1015161");
+                stmt.setString(2, "ID2");
+                stmt.setFloat(3, -1.687530f);
+                stmt.setInt(4, 31);
+                stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(6, DataState.HIGHQUALITY.getStringRepresentation());
+                stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("RNASeqResultTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
 
-                stmt.setString(1, "rnaSeqLibraryId");
-                stmt.setString(2, "geneId");
-                stmt.setBigDecimal(3, new BigDecimal("log2RPK"));
-                stmt.setInt(4, Integer.parseInt("readsCount"));
-                stmt.setInt(5, Integer.parseInt("expressionId"));
-                stmt.setInt(6, Integer.parseInt("noExpressionId"));
-                stmt.setString(7, "detectionFlag");
-                stmt.setString(8, "rnaSeqData");
-                stmt.setString(9, "reasonForExclusion");
+                stmt.setString(1, "GSM1015162");
+                stmt.setString(2, "ID3");
+                stmt.setFloat(3, -2.462678f);
+                stmt.setInt(4, 31);
+                stmt.setString(5, DetectionFlag.ABSENT.getStringRepresentation());
+                stmt.setString(6, DataState.LOWQUALITY.getStringRepresentation());
+                stmt.setString(7, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("RNASeqResultTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }

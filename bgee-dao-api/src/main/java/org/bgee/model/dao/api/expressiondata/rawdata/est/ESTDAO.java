@@ -22,8 +22,8 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
      * this {@code ESTDAO}.
      * <ul>
      * <li>{@code ESTID}: corresponds to {@link ESTTO#getId()}.
-     * <li>{@code ESTID2}: corresponds to {@link ESTTO#getESTId2()}.
-     * <li>{@code ESTLIBRARYID}: corresponds to {@link ESTTO#getESTLibraryId()}.
+     * <li>{@code ESTID2}: corresponds to {@link ESTTO#getEstId2()}.
+     * <li>{@code ESTLIBRARYID}: corresponds to {@link ESTTO#getEstLibraryId()}.
      * <li>{@code GENEID}: corresponds to {@link ESTTO#getGeneId()}.
      * <li>{@code UNIGENECLUSTERID}: corresponds to {@link ESTTO#getUniGeneClusterId()}.
      * <li>{@code EXPRESSIONID}: corresponds to {@link ESTTO#getExpressionId()}.

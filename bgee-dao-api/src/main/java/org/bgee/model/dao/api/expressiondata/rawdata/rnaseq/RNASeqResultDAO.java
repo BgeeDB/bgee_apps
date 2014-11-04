@@ -35,17 +35,13 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
      *                     RNA_Seq results should be removed. 
      * @return             An {@code int} that is the number of results that were actually 
      *                     updated as a result of the call to this method. 
-     * @throws IllegalArgumentException    If a no-expression call ID was not associated 
-     *                                     to any RNA_Seq result. 
-     * @throws DAOException                If an error occurred while updating the data. 
+     * @throws DAOException     If an error occurred while updating the data. 
      */
-    public int updateNoExpressionConflicts(Set<String> noExprIds) 
-            throws DAOException, IllegalArgumentException;
-
+    public int updateNoExpressionConflicts(Set<String> noExprIds) throws DAOException;
 
     /**
      * {@code TransferObject} for the class 
-     * {@link org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResult}.
+     * {@link org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResultDAO}.
      * <p>
      * For information on this {@code TransferObject} and its fields, 
      * see the corresponding class.
@@ -53,7 +49,7 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
      * @version Bgee 13
-     * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResult
+     * @see org.bgee.model.expressiondata.rawdata.rnaseq.RNASeqResultDAO
      * @since Bgee 12
      */
     /*

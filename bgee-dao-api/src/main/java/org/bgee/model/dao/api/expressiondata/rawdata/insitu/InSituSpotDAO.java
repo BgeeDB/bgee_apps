@@ -37,16 +37,13 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
      *                     <em>in situ</em> spots should be removed. 
      * @return             An {@code int} that is the number of spots that were actually 
      *                     updated as a result of the call to this method. 
-     * @throws IllegalArgumentException    If a no-expression call ID was not associated 
-     *                                     to any spot. 
-     * @throws DAOException                If an error occurred while updating the data. 
+     * @throws DAOException     If an error occurred while updating the data. 
      */
-    public int updateNoExpressionConflicts(Set<String> noExprIds) 
-            throws DAOException, IllegalArgumentException;
+    public int updateNoExpressionConflicts(Set<String> noExprIds) throws DAOException;
 
     /**
      * {@code TransferObject} for the class 
-     * {@link org.bgee.model.expressiondata.rawdata.insitu.InSituSpot}.
+     * {@link org.bgee.model.expressiondata.rawdata.insitu.InSituSpotDAO}.
      * <p>
      * For information on this {@code TransferObject} and its fields, 
      * see the corresponding class.
@@ -54,7 +51,7 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
      * @author Frederic Bastian
      * @author Valentine Rech de Laval
      * @version Bgee 13
-     * @see org.bgee.model.expressiondata.rawdata.insitu.InSituSpot
+     * @see org.bgee.model.expressiondata.rawdata.insitu.InSituSpotDAO
      * @since Bgee 11
      */
     /*

@@ -29,13 +29,14 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
      *                 corresponds to {@link AffymetrixProbesetTO#getBgeeAffymetrixChipId()}.
      * <li>{@code GENEID}: corresponds to {@link AffymetrixProbesetTO#getGeneId()}.
      * <li>{@code NORMALIZEDSIGNALINTENSITY}: 
-     *                 corresponds to {@link AffymetrixProbesetTO#getNormalizedSignalIntensity()}.
+     *                  corresponds to {@link AffymetrixProbesetTO#getNormalizedSignalIntensity()}.
      * <li>{@code DETECTIONFLAG}: corresponds to {@link AffymetrixProbesetTO#getDetectionFlag()}.
      * <li>{@code EXPRESSIONID}: corresponds to {@link AffymetrixProbesetTO#getExpressionId()}.
      * <li>{@code NOEXPRESSIONID}: corresponds to {@link AffymetrixProbesetTO#getNoExpressionId()}.
-     * <li>{@code AFFYMETRIXDATA}: corresponds to {@link AffymetrixProbesetTO#getAffymetrixData()}.
+     * <li>{@code AFFYMETRIXDATA}: 
+     *                  corresponds to {@link AffymetrixProbesetTO#getExpressionConfidence()}.
      * <li>{@code REASONFOREXCLUSION}: 
-     *                 corresponds to {@link AffymetrixProbesetTO#getReasonForExclusion()}.
+     *                  corresponds to {@link AffymetrixProbesetTO#getExclusionReason()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
      * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
@@ -57,12 +58,9 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
 	 *                     probesets should be removed. 
 	 * @return             An {@code int} that is the number of probesets that were actually 
 	 *                     updated as a result of the call to this method. 
-	 * @throws IllegalArgumentException    If a no-expression call ID was not associated 
-	 *                                     to any probeset. 
-	 * @throws DAOException                If an error occurred while updating the data. 
+	 * @throws DAOException        If an error occurred while updating the data. 
 	 */
-	public int updateNoExpressionConflicts(Set<String> noExprIds) 
-	        throws DAOException, IllegalArgumentException;
+	public int updateNoExpressionConflicts(Set<String> noExprIds) throws DAOException;
 	
 	/**
 	 * A {@code TransferObject} representing an Affymetrix probeset, as stored in the Bgee database.

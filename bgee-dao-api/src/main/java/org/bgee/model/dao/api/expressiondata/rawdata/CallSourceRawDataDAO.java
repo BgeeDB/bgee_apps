@@ -77,7 +77,7 @@ public interface CallSourceRawDataDAO extends DAO<CallSourceRawDataDAO.Attribute
          * 
          * @author Valentine Rech de Laval
          * @version Bgee 13
-         * @see AffymetrixProbesetTO#getExclusionReason()
+         * @see CallSourceRawDataTO#getExclusionReason()
          * @since Bgee 13
          */
         public enum DetectionFlag implements EnumDAOField {

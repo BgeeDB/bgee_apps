@@ -2,12 +2,15 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq;
 
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -38,28 +41,21 @@ implements RNASeqResultDAO {
             throws DAOException, IllegalArgumentException {
         log.entry(noExprIds);       
 
-        int noExprUpdatedCount = 0;
-
         String sql = "UPDATE rnaSeqResult SET " + 
                 this.attributeToString(RNASeqResultDAO.Attribute.NOEXPRESSIONID) + " = ?, " +
                 this.attributeToString(RNASeqResultDAO.Attribute.REASONFOREXCLUSION) + " = ? " +
-                "WHERE " + this.attributeToString(RNASeqResultDAO.Attribute.NOEXPRESSIONID) + " = ?";
-        
+                "WHERE " + this.attributeToString(RNASeqResultDAO.Attribute.NOEXPRESSIONID) + " IN (" + 
+                BgeePreparedStatement.generateParameterizedQueryString(noExprIds.size()) + ")";
+
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
-            for (String noExprId: noExprIds) {
-                stmt.setNull(1, Types.INTEGER);
-                stmt.setString(2, CallSourceRawDataTO.ExclusionReason.NOEXPRESSIONCONFLICT.
-                        getStringRepresentation());
-                stmt.setInt(3, Integer.parseInt(noExprId));
-                int isUpdated = stmt.executeUpdate();
-                if (isUpdated == 0) {
-                    throw log.throwing(new IllegalArgumentException("The provided no-expression ID " +
-                            noExprId + " was not found in the data source"));
-                }
-                noExprUpdatedCount += isUpdated;
-                stmt.clearParameters();
-            }
-            return log.exit(noExprUpdatedCount);
+            stmt.setNull(1, Types.INTEGER);
+            stmt.setString(2, CallSourceRawDataTO.ExclusionReason.NOEXPRESSIONCONFLICT.
+                    getStringRepresentation());
+            List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
+            Collections.sort(orderedNoExprIds);
+            stmt.setIntegers(3, orderedNoExprIds);
+            
+            return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

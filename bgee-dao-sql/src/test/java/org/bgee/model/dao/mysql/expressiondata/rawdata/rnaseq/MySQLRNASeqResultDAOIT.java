@@ -15,9 +15,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSo
 import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.ExclusionReason;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 
 public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
@@ -34,9 +32,6 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
         return log;
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     /**
      * Test the select method {@link MySQLRNASeqResultDAOIT#updateNoExpressionConflicts()}.
      */
@@ -46,7 +41,7 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
         this.useEmptyDB();
         this.populateAndUseDatabase();
 
-        Set<String> noExprIds = new HashSet<String>(Arrays.asList("4", "8"));
+        Set<String> noExprIds = new HashSet<String>(Arrays.asList("4", "8", "98"));
         try {
             MySQLRNASeqResultDAO dao = new MySQLRNASeqResultDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect number of rows updated", 2, 
@@ -77,12 +72,6 @@ public class MySQLRNASeqResultDAOIT  extends MySQLITAncestor {
                 assertTrue("RNASeqResultTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
-            
-            thrown.expect(IllegalArgumentException.class);
-            thrown.expectMessage("The provided no-expression ID 98 was not found in the data source");
-            noExprIds = new HashSet<String>(Arrays.asList("98", "2"));
-            dao.updateNoExpressionConflicts(noExprIds);
-
         } finally {
             this.emptyAndUseDefaultDB();
         }

@@ -447,9 +447,8 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         this.useEmptyDB();
         this.populateAndUseDatabase();
         
-        Set<String> noExprIds = new HashSet<>(Arrays.asList("1", "5"));
-        Set<String> globalNoExprIds = new HashSet<>(Arrays.asList("2", "7", "13"));
-        Set<String> globalNoExprBadIds = new HashSet<>(Arrays.asList("3", "99"));
+        Set<String> noExprIds = new HashSet<>(Arrays.asList("1", "5", "1111"));
+        Set<String> globalNoExprIds = new HashSet<>(Arrays.asList("2", "7", "13", "99"));
         
         try {
             MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
@@ -512,11 +511,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 assertFalse("NoExpressionCallTO incorrectly deleted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
-
-            thrown.expect(IllegalArgumentException.class);
-            thrown.expectMessage("The provided call 99 was not found in the data source");
-            dao.deleteNoExprCalls(globalNoExprBadIds, true);
-
         } finally {
             this.emptyAndUseDefaultDB();
         }

@@ -128,13 +128,12 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @param noExprCallTOs     A {@code Collection} of {@code NoExpressionCallTO}s used 
      *                          to update corresponding calls with same IDs in the data source.
      * @return                  An {@code int} that is the number of no-expression calls 
-     *                          that were actually updated (not just number of matching calls).
+     *                          that were actually updated.
      * @throws IllegalArgumentException If a {@code NoExpressionCallTO} could not be found 
      *                                  in the data source.
      * @throws DAOException             If an error occurred while updating data. 
      */
-    public int updateNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs) 
-            throws DAOException, IllegalArgumentException;
+    public int updateNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code NoExpressionCallTO}s

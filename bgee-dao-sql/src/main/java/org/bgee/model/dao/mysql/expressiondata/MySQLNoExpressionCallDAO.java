@@ -336,52 +336,48 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     }
     
     @Override
-    public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) 
-            throws DAOException, IllegalArgumentException {
+    public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) throws DAOException {
         log.entry(noExprIds, globalCalls);
 
-        String sql = "DELETE FROM noExpression WHERE  " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.ID, false) + " = ?";
-        if (globalCalls) {
-            sql = "DELETE FROM globalNoExpression WHERE  " +
-                    this.attributeToString(NoExpressionCallDAO.Attribute.ID, true) + " = ?";
-        }
-        
+        String parameterizedQuery = 
+                BgeePreparedStatement.generateParameterizedQueryString(noExprIds.size());
+        // First, we delete rows in globalNoExpressionToNoExpression
         String sqlRelation = "DELETE FROM globalNoExpressionToNoExpression WHERE  ";
         if (globalCalls) {
-            sqlRelation += this.attributeToString(NoExpressionCallDAO.Attribute.ID, true) + " = ?";
+            sqlRelation += this.attributeToString(NoExpressionCallDAO.Attribute.ID, true) + 
+                    " IN (" + parameterizedQuery + ")";
         } else {
-            sqlRelation += this.attributeToString(NoExpressionCallDAO.Attribute.ID, false) + " = ?";
+            sqlRelation += this.attributeToString(NoExpressionCallDAO.Attribute.ID, false) + 
+                    " IN (" + parameterizedQuery + ")";
         }
-
-        int deletionCount = 0;
-        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
-            for (String id: noExprIds) {
-                stmt.setString(1, id);
-                int isDeleted = stmt.executeUpdate();
-                if (isDeleted == 0) {
-                    throw log.throwing(new IllegalArgumentException("The provided call " +
-                            id + " was not found in the data source"));
-                }
-                deletionCount += isDeleted;
-                stmt.clearParameters();
-            }
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sqlRelation)) {
-            for (String id: noExprIds) {
-                stmt.setString(1, id);
-                stmt.executeUpdate();
-                stmt.clearParameters();
-            }
+            List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
+            Collections.sort(orderedNoExprIds);
+            stmt.setIntegers(1, orderedNoExprIds);
+            stmt.executeUpdate();
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(deletionCount);
-}
+        // Then, we delete rows in noExpression or globalNoExpression
+        String sql = "DELETE FROM noExpression WHERE  " +
+                this.attributeToString(NoExpressionCallDAO.Attribute.ID, false) + 
+                " IN (" + parameterizedQuery + ")";
+        if (globalCalls) {
+            sql = "DELETE FROM globalNoExpression WHERE  " +
+                    this.attributeToString(NoExpressionCallDAO.Attribute.ID, true) + 
+                    " IN (" + parameterizedQuery + ")";
+
+        }
+        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
+                List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
+                Collections.sort(orderedNoExprIds);
+                stmt.setIntegers(1, orderedNoExprIds);
+                return log.exit(stmt.executeUpdate());
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
 
     @Override
     public int updateNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs)

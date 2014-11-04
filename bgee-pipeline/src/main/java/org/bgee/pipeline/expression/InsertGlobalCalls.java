@@ -428,8 +428,18 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             }
             log.trace("Propagation for expression call: {}", exprCallTO);
             //the relations include a reflexive relation, where sourceId == targetId, 
-            //this will allow to also include the actual not-propagated calls
-            for (String parentId : parentsFromChildren.get(exprCallTO.getAnatEntityId())) {
+            //this will allow to also include the actual not-propagated calls. 
+            //we should always have at least a reflexive relation, so, if there is 
+            //no "parents" for the anatomical entity, something is wrong 
+            //in the database. 
+            Set<String> parents = parentsFromChildren.get(exprCallTO.getAnatEntityId());
+            if (parents == null) {
+                throw log.throwing(new IllegalStateException("The anatomical entity " +
+                        exprCallTO.getAnatEntityId() + " is not defined as existing " +
+                        		"in the species of gene " + exprCallTO.getGeneId() + 
+                        		", while it has expression data in it."));
+            }
+            for (String parentId : parents) {
                 log.trace("Propagation of the current expression to parent: {}", parentId);
                 // Set ID to null to be able to compare keys of the map on 
                 // gene ID, anatomical entity ID, and stage ID.
@@ -502,7 +512,17 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             log.trace("Propagation for no-expression call: {}", noExprCallTO);
             //the relations include a reflexive relation, where sourceId == targetId, 
             //this will allow to also include the actual not-propagated calls
-            for (String childId : childrenFromParents.get(noExprCallTO.getAnatEntityId())) {
+            //we should always have at least a reflexive relation, so, if there is 
+            //no "children" for the anatomical entity, something is wrong 
+            //in the database. 
+            Set<String> children = childrenFromParents.get(noExprCallTO.getAnatEntityId());
+            if (children == null) {
+                throw log.throwing(new IllegalStateException("The anatomical entity " +
+                        noExprCallTO.getAnatEntityId() + " is not defined as existing " +
+                                "in the species of gene " + noExprCallTO.getGeneId() + 
+                                ", while it has expression data in it."));
+            }
+            for (String childId : children) {
                 log.trace("Propagation of the current no-expression to child: {}", childId);
 
                 // Add propagated no-expression call (same gene ID and stage ID 

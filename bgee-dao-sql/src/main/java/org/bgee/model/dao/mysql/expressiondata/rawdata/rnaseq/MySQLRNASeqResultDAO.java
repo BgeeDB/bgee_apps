@@ -41,50 +41,24 @@ implements RNASeqResultDAO {
             throws DAOException, IllegalArgumentException {
         log.entry(noExprIds);       
 
-        String sql = "UPDATE rnaSeqResult SET " + 
-                this.attributeToString(RNASeqResultDAO.Attribute.NOEXPRESSIONID) + " = ?, " +
-                this.attributeToString(RNASeqResultDAO.Attribute.REASONFOREXCLUSION) + " = ? " +
-                "WHERE " + this.attributeToString(RNASeqResultDAO.Attribute.NOEXPRESSIONID) + " IN (" + 
+        if (noExprIds == null || noExprIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No no-expression IDs given, so no RNA-Seq result updated"));
+        }
+        
+        String sql = "UPDATE rnaSeqResult SET noExpressionId = ?, reasonForExclusion = ? " +
+                "WHERE noExpressionId IN (" + 
                 BgeePreparedStatement.generateParameterizedQueryString(noExprIds.size()) + ")";
 
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
             stmt.setNull(1, Types.INTEGER);
             stmt.setString(2, CallSourceRawDataTO.ExclusionReason.NOEXPRESSIONCONFLICT.
                     getStringRepresentation());
-            List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
-            Collections.sort(orderedNoExprIds);
-            stmt.setIntegers(3, orderedNoExprIds);
+            stmt.setIntegers(3, MySQLDAO.convertToIntList(noExprIds));
             
             return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-    }
-
-    private String attributeToString(RNASeqResultDAO.Attribute attribute) {
-        log.entry(attribute);
-        
-        String label = null;
-        if (attribute.equals(RNASeqResultDAO.Attribute.ID)) {
-            label = "rnaSeqLibraryId";
-        } else if (attribute.equals(RNASeqResultDAO.Attribute.GENEID)) {
-            label = "geneId";
-        } else if (attribute.equals(RNASeqResultDAO.Attribute.LOG2RPK)) {
-            label = "log2RPK";
-        } else if (attribute.equals(RNASeqResultDAO.Attribute.READSCOUNT)) {
-            label = "readsCount";
-        } else if (attribute.equals(RNASeqResultDAO.Attribute.EXPRESSIONID)) {
-            label = "expressionId";
-        } else if (attribute.equals(RNASeqResultDAO.Attribute.NOEXPRESSIONID)) {
-            label = "noExpressionId";
-        } else if (attribute.equals(RNASeqResultDAO.Attribute.DETECTIONFLAG)) {
-            label = "detectionFlag";
-        } else if (attribute.equals(RNASeqResultDAO.Attribute.RNASEQDATA)) {
-            label = "rnaSeqData";
-        } else if (attribute.equals(RNASeqResultDAO.Attribute.REASONFOREXCLUSION)) {
-            label = "reasonForExclusion";
-        } 
-        
-        return log.exit(label);
     }
 }

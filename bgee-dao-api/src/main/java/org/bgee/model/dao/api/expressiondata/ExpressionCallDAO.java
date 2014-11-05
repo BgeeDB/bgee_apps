@@ -82,10 +82,11 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @param expressionCalls   A {@code Collection} of {@code ExpressionCallTO}s 
      *                          to be inserted into the database.
      * @return                  An {@code int} that is the number of inserted expression calls.
+     * @throws IllegalArgumentException If {@code expressionCalls} is empty or null. 
      * @throws DAOException     If an error occurred while trying to insert expression calls. 
      */
     public int insertExpressionCalls(Collection<ExpressionCallTO> expressionCalls) 
-            throws DAOException;
+            throws DAOException, IllegalArgumentException;
 
     /**
      * Inserts the provided correspondence between expression and global expression calls into the 
@@ -96,10 +97,11 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      *                                      into the database.
      * @return                              An {@code int} that is the number of inserted 
      *                                      TOs.
+     * @throws IllegalArgumentException If {@code globalExpressionToExpression} is empty or null. 
      * @throws DAOException                 If an error occurred while trying to insert data.
      */
     public int insertGlobalExpressionToExpression(Collection<GlobalExpressionToExpressionTO> 
-                                                  globalExpressionToExpression) throws DAOException;
+            globalExpressionToExpression) throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ExpressionCallTO}s

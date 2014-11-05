@@ -43,12 +43,13 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
      * 
      * @param terms     a {@code Collection} of {@code GOTermTO}s to be inserted 
      *                  into the database.
+     * @throws IllegalArgumentException If {@code terms} is empty or null. 
      * @throws DAOException     If a {@code SQLException} occurred while trying 
      *                          to insert {@code terms}. The {@code SQLException} 
      *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
      *                          do not expose these kind of implementation details).
      */
-    public int insertTerms(Collection<GOTermTO> terms) throws DAOException;
+    public int insertTerms(Collection<GOTermTO> terms) throws DAOException, IllegalArgumentException;
     
     /**
      * {@code DAOResultSet} specifics to {@code GOTermTO}s

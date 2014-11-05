@@ -104,27 +104,15 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         sql += " FROM " + tableName;
         String geneTabName = "gene";
          if (speciesIds != null && speciesIds.size() > 0) {
-             sql += " INNER JOIN " + geneTabName + " ON (gene.geneId = " + 
-                             tableName + "." + this.attributeToString(
-                              NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) +")" +
+             sql += " INNER JOIN " + geneTabName + " ON (gene.geneId = " + tableName + ".geneId)" +
                     " WHERE " + geneTabName + ".speciesId IN (" +
                             BgeePreparedStatement.generateParameterizedQueryString(
                                     speciesIds.size()) + ")" +
-                    " ORDER BY " + geneTabName + ".speciesId, " + 
-                        tableName + "." + this.attributeToString(
-                            NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) + ", " +
-                        tableName + "." + this.attributeToString(
-                            NoExpressionCallDAO.Attribute.ANATENTITYID, isIncludeParentStructures) + ", " +
-                        tableName + "." + this.attributeToString(
-                            NoExpressionCallDAO.Attribute.DEVSTAGEID, isIncludeParentStructures);
+                    " ORDER BY " + geneTabName + ".speciesId, " + tableName + ".geneId, " +  
+                        tableName + ".anatEntityId, " + tableName + ".stageId";
          } else {
-             sql += " ORDER BY " + 
-                         tableName + "." + this.attributeToString(
-                             NoExpressionCallDAO.Attribute.GENEID, isIncludeParentStructures) + ", " +
-                         tableName + "." + this.attributeToString(
-                             NoExpressionCallDAO.Attribute.ANATENTITYID, isIncludeParentStructures) + ", " +
-                         tableName + "." + this.attributeToString(
-                             NoExpressionCallDAO.Attribute.DEVSTAGEID, isIncludeParentStructures);
+             sql +=  " ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, " +
+                     tableName + ".stageId";
          }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -152,8 +140,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         if (isIncludeParentStructures) {
             tableName = "globalNoExpression";
         }
-        String id = 
-                this.attributeToString(NoExpressionCallDAO.Attribute.ID, isIncludeParentStructures);
+        String id = "noExpressionId";
+        if (isIncludeParentStructures) {
+            id = "globalNoExpressionId";
+        }
         
         String sql = "SELECT MAX(" + id + ") AS " + id + " FROM " + tableName;
         
@@ -224,9 +214,15 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     }
 
     @Override
-    public int insertNoExpressionCalls(Collection<NoExpressionCallTO> noExpressionCalls) {
+    public int insertNoExpressionCalls(Collection<NoExpressionCallTO> noExpressionCalls) 
+            throws DAOException, IllegalArgumentException {
         log.entry(noExpressionCalls);
         
+        if (noExpressionCalls == null || noExpressionCalls.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No no-expression call given, so no call inserted"));
+        }
+
         int callInsertedCount = 0;
         int totalCallNumber = noExpressionCalls.size();
 
@@ -305,9 +301,15 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     
     @Override
     public int insertGlobalNoExprToNoExpr(
-            Collection<GlobalNoExpressionToNoExpressionTO> globalNoExpressionToNoExpression) {
+            Collection<GlobalNoExpressionToNoExpressionTO> globalNoExpressionToNoExpression) 
+                    throws DAOException, IllegalArgumentException {
         log.entry(globalNoExpressionToNoExpression);
         
+        if (globalNoExpressionToNoExpression == null || globalNoExpressionToNoExpression.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No global no-expression to no-expression given, so no row deleted"));
+        }
+
         int rowInsertedCount = 0;
         int totalTONumber = globalNoExpressionToNoExpression.size();
 
@@ -336,19 +338,24 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
     }
     
     @Override
-    public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) throws DAOException {
+    public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) 
+            throws DAOException, IllegalArgumentException {
         log.entry(noExprIds, globalCalls);
+
+        if (noExprIds == null || noExprIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No no-expression IDs given, so no no-expression call deleted"));
+        }
 
         String parameterizedQuery = 
                 BgeePreparedStatement.generateParameterizedQueryString(noExprIds.size());
+        
         // First, we delete rows in globalNoExpressionToNoExpression
         String sqlRelation = "DELETE FROM globalNoExpressionToNoExpression WHERE  ";
         if (globalCalls) {
-            sqlRelation += this.attributeToString(NoExpressionCallDAO.Attribute.ID, true) + 
-                    " IN (" + parameterizedQuery + ")";
+            sqlRelation += "globalNoExpressionId IN (" + parameterizedQuery + ")";
         } else {
-            sqlRelation += this.attributeToString(NoExpressionCallDAO.Attribute.ID, false) + 
-                    " IN (" + parameterizedQuery + ")";
+            sqlRelation += "noExpressionId IN (" + parameterizedQuery + ")";
         }
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sqlRelation)) {
             List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
@@ -360,13 +367,11 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
 
         // Then, we delete rows in noExpression or globalNoExpression
-        String sql = "DELETE FROM noExpression WHERE  " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.ID, false) + 
-                " IN (" + parameterizedQuery + ")";
+        String sql = "DELETE FROM noExpression WHERE noExpressionId IN (" + 
+                    parameterizedQuery + ")";
         if (globalCalls) {
-            sql = "DELETE FROM globalNoExpression WHERE  " +
-                    this.attributeToString(NoExpressionCallDAO.Attribute.ID, true) + 
-                    " IN (" + parameterizedQuery + ")";
+            sql = "DELETE FROM globalNoExpression WHERE globalNoExpressionId IN (" + 
+                    parameterizedQuery + ")";
 
         }
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
@@ -384,6 +389,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             throws DAOException, IllegalArgumentException {
         log.entry(noExprCallTOs);
         
+        if (noExprCallTOs == null || noExprCallTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No no-expression call given, so no no-expression call updated"));
+        }
         // According to isIncludeParentStructures(), the NoExpressionCallTO is updated in 
         // noExpression or globalNoExpression table. As prepared statement is for the 
         // column values not for table name, we need to separate NoExpressionCallTOs into
@@ -403,14 +412,9 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 noExpressionToUpdate.size(), globalnoExpressionToUpdate.size());
 
         // Construct sql query for basic no-expression calls
-        String sqlNoExpr = "UPDATE noExpression SET " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.GENEID, false) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.ANATENTITYID, false) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.DEVSTAGEID, false) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, false) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.INSITUDATA, false) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.RELAXEDINSITUDATA, false) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.RNASEQDATA, false) + " = ? " +
+        String sqlNoExpr = "UPDATE noExpression SET geneId = ?, anatEntityId = ?, stageId = ?, " +
+                "noExpressionAffymetrixData = ?, noExpressionInSituData = ?, " +
+                "noExpressionRelaxedInSituData = ?, noExpressionRnaSeqData = ? " +
                 "WHERE noExpressionId = ?";
 
         // Update basic no-expression calls
@@ -426,12 +430,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setString(6, noExpr.getRelaxedInSituData().getStringRepresentation());
                 stmt.setString(7, noExpr.getRNASeqData().getStringRepresentation());
                 stmt.setInt(8, Integer.parseInt(noExpr.getId()));
-                int isUpdated = stmt.executeUpdate();
-                if (isUpdated == 0) {
-                    throw log.throwing(new IllegalArgumentException("The provided basic call " +
-                            noExpr.getId() + " was not found in the data source"));
-                }
-                noExprUpdatedCount += isUpdated;
+                noExprUpdatedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
         } catch (SQLException e) {
@@ -439,16 +438,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
 
         // Construct sql query for global no-expression calls
-        String sqlGlobalNoExpr = "UPDATE globalNoExpression SET " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.GENEID, true) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.ANATENTITYID, true) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.DEVSTAGEID, true) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, true) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.INSITUDATA, true) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.RELAXEDINSITUDATA, true) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.RNASEQDATA, true) + " = ?, " +
-                this.attributeToString(NoExpressionCallDAO.Attribute.ORIGINOFLINE, true) + " = ? " +
-                " WHERE globalNoExpressionId = ?";
+        String sqlGlobalNoExpr = "UPDATE globalNoExpression SET geneId = ?, anatEntityId = ?, " +
+                "stageId = ?, noExpressionAffymetrixData = ?, noExpressionInSituData = ?, " +
+                "noExpressionRelaxedInSituData = ?, noExpressionRnaSeqData = ?, " +
+                "noExpressionOriginOfLine = ? WHERE globalNoExpressionId = ?";
         
         // Update global no-expression calls
         int globalNoExprUpdatedCount = 0;
@@ -464,12 +457,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 stmt.setString(7, globalNoExpr.getRNASeqData().getStringRepresentation());
                 stmt.setString(8, globalNoExpr.getOriginOfLine().getStringRepresentation());
                 stmt.setString(9, globalNoExpr.getId());
-                int isUpdated = stmt.executeUpdate();
-                if (isUpdated == 0) {
-                    throw log.throwing(new IllegalArgumentException("The provided global call " +
-                            globalNoExpr.getId() + " was not found in the data source"));
-                }
-                globalNoExprUpdatedCount += isUpdated;
+                globalNoExprUpdatedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
         } catch (SQLException e) {

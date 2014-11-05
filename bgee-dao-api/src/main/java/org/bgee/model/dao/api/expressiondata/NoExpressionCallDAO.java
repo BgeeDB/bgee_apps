@@ -82,10 +82,11 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @param noExpressionCalls A {@code Collection} of {@code NoExpressionCallTO}s 
      *                          to be inserted into the database.
      * @return                  An {@code int} that is the number of inserted no-expression calls.
+     * @throws IllegalArgumentException If {@code noExpressionCalls} is empty or null. 
      * @throws DAOException     If an error occurred while trying to insert no-expression calls.
      */
     public int insertNoExpressionCalls(Collection<NoExpressionCallTO> noExpressionCalls)
-            throws DAOException;
+            throws DAOException, IllegalArgumentException;
 
     /**
      * Inserts the provided correspondence between no-expression and global no-expression calls into 
@@ -96,10 +97,11 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                                  {@code GlobalNoExpressionToNoExpressionTO}s to be 
      *                                  inserted into the database.
      * @return                          An {@code int} that is the number of inserted TOs.
+     * @throws IllegalArgumentException If {@code globalNoExprToNoExprTOs} is empty or {@code null}.
      * @throws DAOException             If an error occurred while trying to insert data. 
      */
     public int insertGlobalNoExprToNoExpr(Collection<GlobalNoExpressionToNoExpressionTO> 
-                                              globalNoExprToNoExprTOs) throws DAOException;
+             globalNoExprToNoExprTOs) throws DAOException, IllegalArgumentException;
     
     /**
      * Delete from the data source the no-expression calls with the provided IDs. This method 
@@ -113,7 +115,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                      or basic calls. If {@code true}, global calls are removed.
      * @return          An {@code int} that is the number of no-expression calls removed 
      *                  as a result.
-     * @throws IllegalArgumentException If an ID could not be found in the data source.
+     * @throws IllegalArgumentException If {@code noExprIds} is empty or {@code null}.
      * @throws DAOException             If an error occurred while deleting data. 
      */
     public int deleteNoExprCalls(Set<String> noExprIds, boolean globalCalls) 
@@ -129,11 +131,11 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      *                          to update corresponding calls with same IDs in the data source.
      * @return                  An {@code int} that is the number of no-expression calls 
      *                          that were actually updated.
-     * @throws IllegalArgumentException If a {@code NoExpressionCallTO} could not be found 
-     *                                  in the data source.
+     * @throws IllegalArgumentException If {@code noExprCallTOs} is empty or {@code null}.
      * @throws DAOException             If an error occurred while updating data. 
      */
-    public int updateNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs) throws DAOException;
+    public int updateNoExprCalls(Collection<NoExpressionCallTO> noExprCallTOs) 
+            throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code NoExpressionCallTO}s

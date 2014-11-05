@@ -3,6 +3,7 @@ package org.bgee.model.dao.mysql.gene;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,7 +11,9 @@ import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalGroupTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.gene.MySQLHierarchicalGroupDAO;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.*;
 
@@ -38,6 +41,9 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
         return log;
     }
         
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     /**
      * Test the select method {@link MySQLHierarchicalGroupDAO#insertHierarchicalGroups()}.
      */
@@ -92,6 +98,9 @@ public class MySQLHierarchicalGroupDAOIT extends MySQLITAncestor {
                 assertTrue("HierarchicalGroupTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertHierarchicalGroups(new HashSet<HierarchicalGroupTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }

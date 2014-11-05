@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +17,9 @@ import org.bgee.model.dao.api.species.TaxonDAO;
 import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * Integration tests for {@link MySQLTaxonDAO}, performed on a real MySQL database. 
@@ -38,6 +41,9 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         return log;
     }
     
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     /**
      * Test the insertion method {@link MySQLTaxonDAO#insertTaxa(Collection)}.
      */
@@ -93,6 +99,9 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
                 assertTrue("TaxonTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertTaxa(new HashSet<TaxonTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }

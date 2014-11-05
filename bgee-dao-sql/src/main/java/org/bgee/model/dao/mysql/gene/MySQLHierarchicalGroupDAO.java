@@ -49,20 +49,16 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
     //TO BE EXPOSED TO THE PUBLIC API.
     //***************************************************************************
-    /**
-     * Inserts the provided Hierarchical Groups into the Bgee database, represented as a
-     * {@code Collection} of {@code HierarchicalGroupTO}s.
-     * 
-     * @param groups        A {@code Collection} of {@code HierarchicalGroupTO}s to be
-     *                      inserted into the database.
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert
-     *                      {@code terms}. The {@code SQLException} will be wrapped into a
-     *                      {@code DAOException} ({@code DAOs} do not expose these kind of
-     *                      implementation details).
-     */
+    @Override
     public int insertHierarchicalGroups(Collection<HierarchicalGroupTO> groups)
-            throws DAOException {
+            throws DAOException, IllegalArgumentException {
     	log.entry(groups);
+
+        if (groups == null || groups.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No hierarchical group is given, then no hierarchical group is inserted"));
+        }
+
     	int groupInsertedCount = 0;
 
     	// To not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 

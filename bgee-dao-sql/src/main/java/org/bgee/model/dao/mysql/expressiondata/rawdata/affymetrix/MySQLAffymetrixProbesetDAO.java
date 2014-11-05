@@ -35,53 +35,28 @@ public class MySQLAffymetrixProbesetDAO extends MySQLDAO<AffymetrixProbesetDAO.A
     }
 
     @Override
-    public int updateNoExpressionConflicts(Set<String> noExprIds) throws DAOException {
+    public int updateNoExpressionConflicts(Set<String> noExprIds) 
+            throws DAOException, IllegalArgumentException {
         log.entry(noExprIds);       
 
-        String sql = "UPDATE affymetrixProbeset SET " + 
-                this.attributeToString(AffymetrixProbesetDAO.Attribute.NOEXPRESSIONID) + " = ?, " +
-                this.attributeToString(AffymetrixProbesetDAO.Attribute.REASONFOREXCLUSION) + " = ? " +
-                "WHERE " + this.attributeToString(AffymetrixProbesetDAO.Attribute.NOEXPRESSIONID) +
-                " IN (" + BgeePreparedStatement.generateParameterizedQueryString(noExprIds.size()) + ")";
+        if (noExprIds == null || noExprIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No no-expression IDs given, so no affymetrix probeset updated"));
+        }
+        
+        String sql = "UPDATE affymetrixProbeset SET noExpressionId = ?, reasonForExclusion = ? " +
+                "WHERE noExpressionId IN (" + 
+                BgeePreparedStatement.generateParameterizedQueryString(noExprIds.size()) + ")";
         
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
             stmt.setNull(1, Types.INTEGER);
             stmt.setString(2, CallSourceRawDataTO.ExclusionReason.NOEXPRESSIONCONFLICT.
                     getStringRepresentation());
-            List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
-            Collections.sort(orderedNoExprIds);
-            stmt.setIntegers(3, orderedNoExprIds);
+            stmt.setIntegers(3, MySQLDAO.convertToIntList(noExprIds));
 
             return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-    }
-
-    private String attributeToString(AffymetrixProbesetDAO.Attribute attribute) {
-        log.entry(attribute);
-        
-        String label = null;
-        if (attribute.equals(AffymetrixProbesetDAO.Attribute.ID)) {
-            label = "affymetrixProbesetId";
-        } else if (attribute.equals(AffymetrixProbesetDAO.Attribute.BGEEAFFYMETRIXCHIPID)) {
-            label = "bgeeAffymetrixChipId";
-        } else if (attribute.equals(AffymetrixProbesetDAO.Attribute.GENEID)) {
-            label = "geneId";
-        } else if (attribute.equals(AffymetrixProbesetDAO.Attribute.NORMALIZEDSIGNALINTENSITY)) {
-            label = "normalizedSignalIntensity";
-        } else if (attribute.equals(AffymetrixProbesetDAO.Attribute.DETECTIONFLAG)) {
-            label = "detectionFlag";
-        } else if (attribute.equals(AffymetrixProbesetDAO.Attribute.EXPRESSIONID)) {
-            label = "expressionId";
-        } else if (attribute.equals(AffymetrixProbesetDAO.Attribute.NOEXPRESSIONID)) {
-            label = "noExpressionId";
-        } else if (attribute.equals(AffymetrixProbesetDAO.Attribute.AFFYMETRIXDATA)) {
-            label = "affymetrixData";
-        } else if (attribute.equals(AffymetrixProbesetDAO.Attribute.REASONFOREXCLUSION)) {
-            label = "reasonForExclusion";
-        } 
-        
-        return log.exit(label);
     }
 }

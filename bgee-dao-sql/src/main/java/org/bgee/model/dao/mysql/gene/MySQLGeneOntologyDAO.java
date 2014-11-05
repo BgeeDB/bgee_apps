@@ -45,8 +45,13 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
     //TO BE EXPOSED TO THE PUBLIC API.
     //***************************************************************************
     @Override
-    public int insertTerms(Collection<GOTermTO> terms) throws DAOException {
+    public int insertTerms(Collection<GOTermTO> terms) throws DAOException, IllegalArgumentException {
         log.entry(terms);
+
+        if (terms == null || terms.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No term is given, then no term is inserted"));
+        }
         
         //to not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         //and because of laziness, we insert terms one at a time

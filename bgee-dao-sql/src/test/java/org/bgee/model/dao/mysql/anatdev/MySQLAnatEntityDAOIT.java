@@ -17,7 +17,9 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * Integration tests for {@link MySQLAnatEntityDAO}, performed on a real MySQL database. 
@@ -41,6 +43,9 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
     protected Logger getLogger() {
         return log;
     }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     /**
      * Test the select method {@link MySQLAnatEntityDAO#getAnatEntities()}.
@@ -210,6 +215,9 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 assertTrue("AnatEntityTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertAnatEntities(new HashSet<AnatEntityTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }

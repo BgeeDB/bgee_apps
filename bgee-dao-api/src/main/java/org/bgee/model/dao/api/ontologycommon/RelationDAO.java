@@ -89,12 +89,14 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      *                      entity relations into the database.
      * @return              An {@code int} that is the number of inserted anatomical entity 
      *                      relations.
+     * @throws IllegalArgumentException If {@code relationTOs} is empty or null. 
      * @throws DAOException If a {@code SQLException} occurred while trying to insert anatomical 
      *                      entity relations. The {@code SQLException} will be wrapped into a 
      *                      {@code DAOException} ({@code DAOs} do not expose these kind of 
      *                      implementation details).
      */
-    public int insertAnatEntityRelations(Collection<RelationTO> relationTOs) throws DAOException;
+    public int insertAnatEntityRelations(Collection<RelationTO> relationTOs) 
+            throws DAOException, IllegalArgumentException;
 
     /**
      * Insert the provided relations between Gene Ontology terms into the Bgee database, 
@@ -103,12 +105,14 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @param relationTOs   A {@code Collection} of {@code RelationTO}s to be inserted 
      *                      into the database.
      * @return              An {@code int} that is the number of inserted relations.
+     * @throws IllegalArgumentException If {@code relationTOs} is empty or null. 
      * @throws DAOException If a {@code SQLException} occurred while trying to insert relations 
      *                      between Gene Ontology terms. The {@code SQLException} will be wrapped 
      *                      into a {@code DAOException} ({@code DAOs} do not expose these kind of 
      *                      implementation details).
      */
-    public int insertGeneOntologyRelations(Collection<RelationTO> relationTOs) throws DAOException;
+    public int insertGeneOntologyRelations(Collection<RelationTO> relationTOs) 
+            throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code RelationTO}s

@@ -58,8 +58,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
         String stageTaxConstTabName = "stageTaxonConstraint";
         if (speciesIds != null && speciesIds.size() > 0) {
              sql += " INNER JOIN " + stageTaxConstTabName + " ON (" +
-                          stageTaxConstTabName + ".stageId = " + 
-                          tableName + "." + this.attributeToString(StageDAO.Attribute.ID)+")" +
+                          stageTaxConstTabName + ".stageId = " + tableName + ".stageId)" +
                     " WHERE " + stageTaxConstTabName + ".speciesId IS NULL" +
                     " OR " + stageTaxConstTabName + ".speciesId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + 
@@ -117,8 +116,14 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     }
 
     @Override
-    public int insertStages(Collection<StageTO> stageTOs) throws DAOException {
+    public int insertStages(Collection<StageTO> stageTOs) 
+            throws DAOException, IllegalArgumentException {
         log.entry(stageTOs);
+        
+        if (stageTOs == null || stageTOs.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No stage is given, then no stage is inserted"));
+        }
         
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO stage" +  

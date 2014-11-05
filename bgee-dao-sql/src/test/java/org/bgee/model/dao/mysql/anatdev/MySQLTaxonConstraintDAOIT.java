@@ -6,13 +6,16 @@ import static org.junit.Assert.assertTrue;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * Integration tests for {@link MySQLTaxonConstraintDAO}, performed on a real MySQL database. 
@@ -37,6 +40,9 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
     protected Logger getLogger() {
         return log;
     }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     /**
      * Test the insert method 
@@ -83,6 +89,9 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
               assertTrue("TaxonConstraintTO (AnatEntityRelation) incorrectly inserted", 
                       stmt.getRealPreparedStatement().executeQuery().next());
             }
+
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertAnatEntityRelationTaxonConstraints(new HashSet<TaxonConstraintTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }
@@ -136,6 +145,9 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
               assertTrue("TaxonConstraintTO (AnatEntity) incorrectly inserted", 
                       stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertAnatEntityTaxonConstraints(new HashSet<TaxonConstraintTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }
@@ -188,6 +200,9 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
              assertTrue("TaxonConstraintTO (Stage) incorrectly inserted", 
                      stmt.getRealPreparedStatement().executeQuery().next());
            }
+           
+           this.thrown.expect(IllegalArgumentException.class);
+           dao.insertStageTaxonConstraints(new HashSet<TaxonConstraintTO>());
        } finally {
            this.emptyAndUseDefaultDB();
        }

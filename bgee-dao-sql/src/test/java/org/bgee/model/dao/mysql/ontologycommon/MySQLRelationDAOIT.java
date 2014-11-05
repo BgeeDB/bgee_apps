@@ -22,7 +22,9 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 
 /**
@@ -47,6 +49,9 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
     protected Logger getLogger() {
         return log;
     }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     /**
      * Test the select method {@link MySQLRelationDAO#getAnatEntityRelations()}.
@@ -416,6 +421,9 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 assertTrue("RelationTO (AnatEntityRelation) incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertAnatEntityRelations(new HashSet<RelationTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }

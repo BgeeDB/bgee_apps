@@ -47,8 +47,13 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
     //***************************************************************************
 
     @Override
-    public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException {
+    public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException, IllegalArgumentException {
         log.entry(taxa);
+        
+        if (taxa == null || taxa.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No taxon is given, then no taxon is inserted"));
+        }
         
         String sql = "Insert into taxon (taxonId, taxonScientificName, " +
                 "taxonCommonName, taxonLeftBound, taxonRightBound, taxonLevel, " +

@@ -385,6 +385,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 assertTrue("NoExpressionCallTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertNoExpressionCalls(new HashSet<NoExpressionCallTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }
@@ -432,6 +435,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 assertTrue("GlobalNoExpressionToNoExpressionTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertGlobalNoExprToNoExpr(new HashSet<GlobalNoExpressionToNoExpressionTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }
@@ -511,6 +517,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 assertFalse("NoExpressionCallTO incorrectly deleted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            thrown.expect(IllegalArgumentException.class);
+            dao.deleteNoExprCalls(new HashSet<String>(), false);
         } finally {
             this.emptyAndUseDefaultDB();
         }
@@ -527,6 +536,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         this.populateAndUseDatabase();
 
         Collection<NoExpressionCallTO> noExprCallTOs = Arrays.asList(
+                // Basic no-expression
                 // modify stageId, noExpressionInSituData, noExpressionRelaxedInSituData, noExpressionRnaSeqData
                 new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id1", 
                         DataState.LOWQUALITY, DataState.NODATA, 
@@ -535,7 +545,14 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("8", "ID1", "Anat_id2", "Stage_id11", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
+               //TODO: add a NoExpressionCallTO as in the database, that will have a match, 
+               //but will thus not be actually updated
+                // no modification
+//                new NoExpressionCallTO("5", "ID3", "Anat_id8", "Stage_id10", 
+//                        DataState.LOWQUALITY, DataState.LOWQUALITY, 
+//                        DataState.NODATA, DataState.LOWQUALITY, false, OriginOfLine.SELF),
                         
+                // Global no-expression
                 // modify geneId, noExpressionAffymetrixData  
                 new NoExpressionCallTO("2", "ID1", "Anat_id2", "Stage_id13", 
                         DataState.NODATA, DataState.HIGHQUALITY, 
@@ -548,12 +565,12 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("10", "ID3", "Anat_id8", "Stage_id7", 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.NODATA, true, OriginOfLine.SELF));
-        
-               //TODO: add a NoExpressionCallTO as in the database, that will have a match, 
-               //but will thus not be actually updated
-
+                // no modification
+//                new NoExpressionCallTO("1", "ID2", "Anat_id5", "Stage_id13", 
+//                        DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+//                        DataState.NODATA, DataState.HIGHQUALITY, true, OriginOfLine.SELF));
         try {
-            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
+            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());            
             assertEquals("Incorrect nummber of rows updated", 
                     5, dao.updateNoExprCalls(noExprCallTOs));
 
@@ -628,15 +645,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
             
+            // No no-expression ID given
             thrown.expect(IllegalArgumentException.class);
-            thrown.expectMessage("The provided basic call 10 was not found in the data source");
-            
-            noExprCallTOs = Arrays.asList(
-                    new NoExpressionCallTO("10", "ID2", "Anat_id5", "Stage_id1", 
-                            DataState.LOWQUALITY, DataState.NODATA, 
-                            DataState.HIGHQUALITY, DataState.LOWQUALITY, false, OriginOfLine.SELF));
-            
-            dao.updateNoExprCalls(noExprCallTOs);
+            dao.updateNoExprCalls(new HashSet<NoExpressionCallTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }

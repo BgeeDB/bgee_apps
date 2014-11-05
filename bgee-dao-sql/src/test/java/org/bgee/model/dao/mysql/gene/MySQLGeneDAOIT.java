@@ -17,7 +17,9 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * Integration tests for {@link MySQLGeneDAO}, performed on a real MySQL database. 
@@ -42,6 +44,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
     protected Logger getLogger() {
         return log;
     }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     /**
      * Test the select method {@link MySQLGeneDAO#getAllGenes()}.
@@ -195,6 +200,10 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 assertTrue("GeneTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            this.thrown.expectMessage("No gene is given, then no gene is updated");
+            dao.updateGenes(new HashSet<GeneTO>(), attributesToUpdate2);
         } finally {
             this.emptyAndUseDefaultDB();
         }

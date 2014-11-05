@@ -40,13 +40,15 @@ public interface TaxonConstraintDAO {
      * @param taxonConstraintTOs  A {@code Collection} of {@code TaxonConstraintTO}s to be 
      *                            inserted into the database.
      * @return                    An {@code int} that is the number of inserted taxon constraints.
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert developmental 
-     *                      stage taxon constraints. The {@code SQLException} will be wrapped into a 
-     *                      {@code DAOException} ({@code DAO}s do not expose these kind of 
-     *                      implementation details).
+     * @throws IllegalArgumentException If {@code taxonConstraintTOs} is empty or null. 
+     * @throws DAOException             If a {@code SQLException} occurred while trying to insert 
+     *                                  developmental stage taxon constraints. The 
+     *                                  {@code SQLException} will be wrapped into a 
+     *                                  {@code DAOException} ({@code DAO}s do not expose these kind 
+     *                                  of implementation details).
      */
     public int insertStageTaxonConstraints(Collection<TaxonConstraintTO> taxonConstraintTOs) 
-            throws DAOException;
+            throws DAOException, IllegalArgumentException;
     
     /**
      * Inserts the provided anatomical entity taxon constraints into the Bgee database, 
@@ -56,13 +58,14 @@ public interface TaxonConstraintDAO {
      *                            inserted into the database.
      * @return                    An {@code int} that is the number of inserted anatomical entity 
      *                            taxon constraints.
+     * @throws IllegalArgumentException If {@code taxonConstraintTOs} is empty or null. 
      * @throws DAOException If a {@code SQLException} occurred while trying to insert anatomical 
      *                      entity taxon constraints. The {@code SQLException} will be wrapped into 
      *                      a {@code DAOException} ({@code DAOs} do not expose these kind of 
      *                      implementation details).
      */
     public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO> taxonConstraintTOs) 
-            throws DAOException;
+            throws DAOException, IllegalArgumentException;
     
     /**
      * Inserts the provided anatomical entity relation taxon constraints into the Bgee database, 
@@ -72,13 +75,15 @@ public interface TaxonConstraintDAO {
      *                            inserted into the database.
      * @return                    An {@code int} that is the number of inserted anatomical entity 
      *                            relation taxon constraints.
+     * @throws IllegalArgumentException If {@code taxonConstraintTOs} is empty or null. 
      * @throws DAOException If a {@code SQLException} occurred while trying to insert anatomical 
      *                      entity relation taxon constraints. The {@code SQLException} will be 
      *                      wrapped into a {@code DAOException} ({@code DAOs} do not expose these 
      *                      kind of implementation details).
      */
     public int insertAnatEntityRelationTaxonConstraints(
-            Collection<TaxonConstraintTO> taxonConstraintTOs) throws DAOException;
+            Collection<TaxonConstraintTO> taxonConstraintTOs)
+                    throws DAOException, IllegalArgumentException;
     
     /**
      * {@code DAOResultSet} specifics to {@code TaxonConstraintTO}s

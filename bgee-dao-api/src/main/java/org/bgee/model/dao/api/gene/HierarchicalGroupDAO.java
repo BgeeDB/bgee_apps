@@ -1,7 +1,10 @@
 package org.bgee.model.dao.api.gene;
 
+import java.util.Collection;
+
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.NestedSetModelElementTO;
 
 /**
@@ -34,6 +37,21 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
     public enum Attribute implements DAO.Attribute {
         ID, OMA_GROUP_ID, LEFT_BOUND, RIGHT_BOUND, TAXON_ID;
     }
+
+    /**
+     * Inserts the provided Hierarchical Groups into the Bgee database, represented as a
+     * {@code Collection} of {@code HierarchicalGroupTO}s.
+     * 
+     * @param groups        A {@code Collection} of {@code HierarchicalGroupTO}s to be
+     *                      inserted into the database.
+     * @throws IllegalArgumentException If {@code groups} is empty or null. 
+     * @throws DAOException If a {@code SQLException} occurred while trying to insert
+     *                      {@code terms}. The {@code SQLException} will be wrapped into a
+     *                      {@code DAOException} ({@code DAOs} do not expose these kind of
+     *                      implementation details).
+     */
+    public int insertHierarchicalGroups(Collection<HierarchicalGroupTO> groups)
+            throws DAOException, IllegalArgumentException;
 
 //    /**
 //     * Retrieves all the orthologous genes corresponding to the queried gene at the

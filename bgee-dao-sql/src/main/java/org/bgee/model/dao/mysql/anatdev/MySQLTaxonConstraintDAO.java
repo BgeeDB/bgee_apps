@@ -51,8 +51,14 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * (int or string) are different.
      */
     public int insertAnatEntityRelationTaxonConstraints(Collection<TaxonConstraintTO> contraints)
-                    throws DAOException {
+                    throws DAOException, IllegalArgumentException {
         log.entry(contraints);
+
+        if (contraints == null || contraints.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No anatomical entity relation taxon constraint is given, " +
+                    "then no constraint is inserted"));
+        }
 
         String sqlExpression = "INSERT INTO anatEntityRelationTaxonConstraint " +
                                             "(anatEntityRelationId, speciesId) VALUES (?, ?)";
@@ -87,8 +93,14 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * (int or string) are different.
      */
     public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO> contraints)
-            throws DAOException {
+            throws DAOException, IllegalArgumentException {
         log.entry(contraints);
+
+        if (contraints == null || contraints.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No anatomical entity taxon constraint is given, " +
+                    "then no constraint is inserted"));
+        }
 
         String sqlExpression = "INSERT INTO anatEntityTaxonConstraint (anatEntityId, speciesId) " +
                                "VALUES (?, ?)";
@@ -123,8 +135,13 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * (int or string) are different.
      */
     public int insertStageTaxonConstraints(Collection<TaxonConstraintTO> contraints)
-            throws DAOException {
+            throws DAOException, IllegalArgumentException {
         log.entry(contraints);
+
+        if (contraints == null || contraints.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No stage taxon constraint is given, then no constraint is inserted"));
+        }
 
         String sqlExpression = "INSERT INTO stageTaxonConstraint (stageId, speciesId) " +
                                "VALUES (?, ?)";

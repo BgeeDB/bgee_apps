@@ -71,9 +71,12 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @param attributesToUpdate    A {@code Collection} of {@code Attribute}s that are 
      *                              attributes to be updated into the data source.
      * @return                      An {@code int} representing the number of genes updated.
+     * @throws DAOException             If an error occurred while updating the data.
+     * @throws IllegalArgumentException If {@code genes} is empty or null. 
      */
     public int updateGenes(Collection<GeneTO> genes, 
-            Collection<GeneDAO.Attribute> attributesToUpdate) throws DAOException;
+            Collection<GeneDAO.Attribute> attributesToUpdate) 
+                    throws DAOException, IllegalArgumentException;
     
     /**
      * {@code DAOResultSet} specifics to {@code GeneTO}s

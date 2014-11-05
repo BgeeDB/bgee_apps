@@ -124,8 +124,16 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
     @Override
     public int updateGenes(Collection<GeneTO> genes, 
-            Collection<GeneDAO.Attribute> attributesToUpdate) throws DAOException {
+            Collection<GeneDAO.Attribute> attributesToUpdate) 
+            throws DAOException, IllegalArgumentException {
         log.entry(genes, attributesToUpdate);
+        
+        if (genes == null || genes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No gene is given, then no gene is updated"));
+        }
+        // TODO add check on attributesToUpdate
+        
         int geneUpdatedCount = 0;
         //Construct sql query according to currents attributes
         StringBuilder sql = new StringBuilder(); 

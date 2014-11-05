@@ -104,10 +104,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
         }
         
-        sql += " ORDER BY " + tableName + "." + 
-                this.attributeAnatEntityRelationToString(RelationDAO.Attribute.SOURCEID) + 
-                ", " + tableName + "." + 
-                this.attributeAnatEntityRelationToString(RelationDAO.Attribute.TARGETID);
+        sql += " ORDER BY " + tableName + ".anatEntitySourceId, " + 
+                              tableName + ".anatEntityTargetId";
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.
@@ -171,26 +169,19 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         
         //OK, we create a query that will emulate a temporary table similar to
         //the retrieval of relations between anatomical entities.
-               
         sql += 
             // no relationId, provide 0 for all
-            "(SELECT DISTINCT 0 AS " + 
-            this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONID) + ", " +
-        	"t1.stageId AS " + 
-            this.attributeStageRelationToString(RelationDAO.Attribute.SOURCEID) + ", " +
-            "t3.stageId AS " + 
-            this.attributeStageRelationToString(RelationDAO.Attribute.TARGETID) + ", " +
+            "(SELECT DISTINCT 0 AS stageRelationId, " +
+        	"t1.stageId AS stageSourceId, " +
+            "t3.stageId AS stageTargetId, " +
             //no other parenthood relations between stages other than is_a
-            "'" + RelationType.ISA_PARTOF.getStringRepresentation() + "' AS " + 
-            this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONTYPE) + ", " +
+            "'" + RelationType.ISA_PARTOF.getStringRepresentation() + "' AS relationType, " +
             //emulate RelationStatus
             "IF (t1.stageId = t3.stageId, " + 
                 "'" + RelationStatus.REFLEXIVE.getStringRepresentation() + "', " +
                 "IF (t3.stageLevel = t1.stageLevel + 1, " + 
                 "'" + RelationStatus.DIRECT.getStringRepresentation() + "', " +
-                "'" + RelationStatus.INDIRECT.getStringRepresentation() + "')) AS " +
-            this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONSTATUS) + " " +
-            		
+                "'" + RelationStatus.INDIRECT.getStringRepresentation() + "')) AS relationStatus " +
             "FROM stage AS t1 " +
             "INNER JOIN stageTaxonConstraint AS t2 " +
                 "ON t1.stageId = t2.stageId " +
@@ -216,9 +207,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         sql += ") AS tempTable ";
         
         if (isRelationStatusFilter) {
-            sql += " WHERE " + 
-            this.attributeStageRelationToString(RelationDAO.Attribute.RELATIONSTATUS) + 
-            " IN (" + 
+            sql += " WHERE relationStatus IN (" + 
             BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
         }
 
@@ -315,9 +304,16 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public int insertAnatEntityRelations(Collection<RelationTO> relations) {
+    public int insertAnatEntityRelations(Collection<RelationTO> relations) 
+            throws DAOException, IllegalArgumentException {
+
         log.entry(relations);
 
+        if (relations == null || relations.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No anatomical entity relation is given, then no relation is inserted"));
+        }
+        
         // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO anatEntityRelation " +
                 "(anatEntityRelationId, anatEntitySourceId, anatEntityTargetId, " +
@@ -346,9 +342,15 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public int insertGeneOntologyRelations(Collection<RelationTO> relations) throws DAOException {
+    public int insertGeneOntologyRelations(Collection<RelationTO> relations) 
+            throws DAOException, IllegalArgumentException {
         log.entry(relations);
         
+        if (relations == null || relations.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No Gene Ontology relation is given, then no relation is inserted"));
+        }
+
         //to not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         //and because of laziness, we insert terms one at a time
         int relInsertedCount = 0;

@@ -18,7 +18,9 @@ import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * Integration tests for {@link MySQLStageDAO}, performed on a real MySQL database. 
@@ -40,6 +42,9 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
         return log;
     }
     
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     /**
      * Test the select method {@link MySQLStageDAO#getStages()}.
      */
@@ -186,6 +191,9 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                 assertTrue("StageTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertStages(new HashSet<StageTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }

@@ -15,7 +15,9 @@ import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSo
 import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSourceRawDataTO.ExclusionReason;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 
 /**
@@ -40,6 +42,9 @@ public class MySQLInSituSpotDAOIT extends MySQLITAncestor {
     protected Logger getLogger() {
         return log;
     }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     /**
      * Test the select method {@link MySQLInSituSpotDAOIT#updateNoExpressionConflicts()}.
@@ -85,6 +90,10 @@ public class MySQLInSituSpotDAOIT extends MySQLITAncestor {
                 stmt.setString(9, ExclusionReason.NOEXPRESSIONCONFLICT.getStringRepresentation());
                 assertTrue("InSituSpotTO incorrectly updated", 
                         stmt.getRealPreparedStatement().executeQuery().next());
+                
+                thrown.expect(IllegalArgumentException.class);
+                noExprIds.clear();
+                dao.updateNoExpressionConflicts(noExprIds);
             }
         } finally {
             this.emptyAndUseDefaultDB();

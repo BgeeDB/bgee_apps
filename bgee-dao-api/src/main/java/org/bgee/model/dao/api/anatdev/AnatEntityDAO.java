@@ -79,12 +79,14 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * @param anatEntityTOs A {@code Collection} of {@code AnatEntityTO}s to be inserted into the 
      *                      data source.
      * @return              An {@code int} that is the number of inserted anatomical entities.
-     * @throws DAOException If a {@code SQLException} occurred while trying to insert anatomical 
-     *                      entities. The {@code SQLException} will be wrapped into a 
-     *                      {@code DAOException} ({@code DAO}s do not expose these kind of 
-     *                      implementation details).
+     * @throws IllegalArgumentException If {@code anatEntityTOs} is empty or null. 
+     * @throws DAOException             If a {@code SQLException} occurred while trying to insert 
+     *                                  anatomical entities. The {@code SQLException} will be 
+     *                                  wrapped into a {@code DAOException} ({@code DAO}s do not 
+     *                                  expose these kind of implementation details).
      */
-    public int insertAnatEntities(Collection<AnatEntityTO> anatEntityTOs) throws DAOException;
+    public int insertAnatEntities(Collection<AnatEntityTO> anatEntityTOs) 
+            throws DAOException, IllegalArgumentException;
 
 
     /**

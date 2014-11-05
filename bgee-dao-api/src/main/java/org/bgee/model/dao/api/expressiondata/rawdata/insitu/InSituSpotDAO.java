@@ -37,9 +37,11 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
      *                     <em>in situ</em> spots should be removed. 
      * @return             An {@code int} that is the number of spots that were actually 
      *                     updated as a result of the call to this method. 
-     * @throws DAOException     If an error occurred while updating the data. 
+     * @throws IllegalArgumentException If {@code noExprIds} is empty or null. 
+     * @throws DAOException             If an error occurred while updating the data.
      */
-    public int updateNoExpressionConflicts(Set<String> noExprIds) throws DAOException;
+    public int updateNoExpressionConflicts(Set<String> noExprIds) 
+            throws DAOException, IllegalArgumentException;
 
     /**
      * {@code TransferObject} for the class 

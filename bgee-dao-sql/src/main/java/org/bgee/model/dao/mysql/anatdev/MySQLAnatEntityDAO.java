@@ -69,8 +69,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
         if (speciesIds != null && speciesIds.size() != 0) {
              sql += " INNER JOIN " + anatEntTaxConstTabName + " ON (" +
-                          anatEntTaxConstTabName + ".anatEntityId = " + 
-                          tableName + "."+this.attributeToString(AnatEntityDAO.Attribute.ID)+")" +
+                          anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId)" +
                     " WHERE " + anatEntTaxConstTabName + ".speciesId IS NULL" +
                     " OR " + anatEntTaxConstTabName + ".speciesId IN (" + 
                         BgeePreparedStatement.generateParameterizedQueryString(
@@ -186,8 +185,14 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
 
     @Override
-    public int insertAnatEntities(Collection<AnatEntityTO> anatEntities) throws DAOException {
+    public int insertAnatEntities(Collection<AnatEntityTO> anatEntities) 
+            throws DAOException, IllegalArgumentException{
         log.entry(anatEntities);
+
+        if (anatEntities == null || anatEntities.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No anatomical entity is given, then no anatomical entity is inserted"));
+        }
 
         // And we need to build two different queries. 
         String sqlExpression = "INSERT INTO anatEntity " +

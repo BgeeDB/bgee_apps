@@ -21,7 +21,9 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionT
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 
 /**
@@ -47,6 +49,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
     protected Logger getLogger() {
         return log;
     }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     /**
      * Test the select method {@link MySQLExpressionCallDAO#getExpressionCalls()}.
@@ -320,6 +325,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 assertTrue("ExpressionCallTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertExpressionCalls(new HashSet<ExpressionCallTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }
@@ -368,6 +376,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 assertTrue("GlobalExpressionToExpressionTO incorrectly inserted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertGlobalExpressionToExpression(new HashSet<GlobalExpressionToExpressionTO>());
         } finally {
             this.emptyAndUseDefaultDB();
         }

@@ -93,7 +93,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             tableName = "globalExpression";
         }        
         
-        String id = this.attributeToString(ExpressionCallDAO.Attribute.ID, isIncludeSubstructures);
+        String id = "expressionId";
+        if (isIncludeSubstructures) {
+            id = "globalExpressionId";
+        } 
 
         String sql = "SELECT MAX(" + id + ") AS " + id + " FROM " + tableName;
     
@@ -158,26 +161,15 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         sql += " FROM " + tableName;
         if (speciesIds != null && speciesIds.size() > 0) {
              sql += " INNER JOIN " + geneTabName + " ON (" + geneTabName + ".geneId = " + 
-                         tableName + "." + this.attributeToString(
-                             ExpressionCallDAO.Attribute.GENEID, isIncludeSubstructures)+")" +
+                         tableName + ".geneId)" +
                     " WHERE " + geneTabName + ".speciesId IN (" + 
                             BgeePreparedStatement.generateParameterizedQueryString(
                                     speciesIds.size()) + ")" +
-                    " ORDER BY " + geneTabName + ".speciesId, " + 
-                            tableName + "." + this.attributeToString(
-                                  ExpressionCallDAO.Attribute.GENEID, isIncludeSubstructures) +  
-                            ", " + tableName + "." + this.attributeToString(
-                                  ExpressionCallDAO.Attribute.ANATENTITYID, isIncludeSubstructures) +
-                            ", " + tableName + "." + this.attributeToString(
-                                  ExpressionCallDAO.Attribute.STAGEID, isIncludeSubstructures);
+                    " ORDER BY " + geneTabName + ".speciesId, " + tableName + ".geneId, " +  
+                            tableName + ".anatEntityId, " + tableName + ".stageId";
          } else {
-             sql += " ORDER BY " +
-                             tableName + "." + this.attributeToString(
-                                 ExpressionCallDAO.Attribute.GENEID, isIncludeSubstructures) +  
-                             ", " + tableName + "." + this.attributeToString(
-                                 ExpressionCallDAO.Attribute.ANATENTITYID, isIncludeSubstructures) +
-                             ", " + tableName + "." + this.attributeToString(
-                                 ExpressionCallDAO.Attribute.STAGEID, isIncludeSubstructures);
+             sql += " ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, " + 
+                             tableName + ".stageId";
          }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -248,9 +240,15 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     }
 
     @Override
-    public int insertExpressionCalls(Collection<ExpressionCallTO> expressionCalls) {
+    public int insertExpressionCalls(Collection<ExpressionCallTO> expressionCalls) 
+            throws DAOException, IllegalArgumentException {
         log.entry(expressionCalls);
         
+        if (expressionCalls == null || expressionCalls.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No expression call is given, then no expression call is updated"));
+        }
+
         int callInsertedCount = 0;
         int totalCallNumber = expressionCalls.size();
         
@@ -329,9 +327,15 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 
     @Override
     public int insertGlobalExpressionToExpression(
-            Collection<GlobalExpressionToExpressionTO> globalExpressionToExpression) {
+            Collection<GlobalExpressionToExpressionTO> globalExpressionToExpression) 
+                    throws DAOException, IllegalArgumentException {
         log.entry(globalExpressionToExpression);
         
+        if (globalExpressionToExpression == null || globalExpressionToExpression.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No global expression to expression is given, then nothing is updated"));
+        }
+
         int rowInsertedCount = 0;
         int totalTONumber = globalExpressionToExpression.size();
 

@@ -65,12 +65,14 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * 
      * @param stages    a {@code Collection} of {@code StageTO}s to be inserted 
      *                  into the database.
-     * @throws DAOException     If a {@code SQLException} occurred while trying 
-     *                          to insert {@code stages}. The {@code SQLException} 
-     *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
-     *                          do not expose these kind of implementation details).
+     * @throws IllegalArgumentException If {@code stages} is empty or null. 
+     * @throws DAOException             If a {@code SQLException} occurred while trying 
+     *                                  to insert {@code stages}. The {@code SQLException} 
+     *                                  will be wrapped into a {@code DAOException} ({@code DAOs} 
+     *                                  do not expose these kind of implementation details).
      */
-    public int insertStages(Collection<StageTO> stages) throws DAOException;
+    public int insertStages(Collection<StageTO> stages) 
+            throws DAOException, IllegalArgumentException;
 
     /**
      * {@code DAOResultSet} specifics to {@code StageTO}s

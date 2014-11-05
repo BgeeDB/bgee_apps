@@ -48,12 +48,13 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      * 
      * @param taxa      a {@code Collection} of {@code TaxonTO}s to be inserted 
      *                  into the database.
+     * @throws IllegalArgumentException If {@code taxa} is empty or null. 
      * @throws DAOException     If a {@code SQLException} occurred while trying 
      *                          to insert {@code taxa}. The {@code SQLException} 
      *                          will be wrapped into a {@code DAOException} ({@code DAOs} 
      *                          do not expose these kind of implementation details).
      */
-    public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException ;
+    public int insertTaxa(Collection<TaxonTO> taxa) throws DAOException, IllegalArgumentException ;
 
     /**
      * Retrieve all taxa from data source.

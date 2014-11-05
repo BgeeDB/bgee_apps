@@ -36,57 +36,28 @@ public class MySQLInSituSpotDAO extends MySQLDAO<InSituSpotDAO.Attribute> implem
     }
 
     @Override
-    public int updateNoExpressionConflicts(Set<String> noExprIds) throws DAOException {
+    public int updateNoExpressionConflicts(Set<String> noExprIds) 
+            throws DAOException, IllegalArgumentException {
         log.entry(noExprIds);       
 
-        String sql = "UPDATE inSituSpot SET " + 
-                this.attributeToString(InSituSpotDAO.Attribute.NOEXPRESSIONID) + " = ?, " +
-                this.attributeToString(InSituSpotDAO.Attribute.REASONFOREXCLUSION) + " = ? " +
-                "WHERE " + this.attributeToString(InSituSpotDAO.Attribute.NOEXPRESSIONID) +" IN (" + 
+        if (noExprIds == null || noExprIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No no-expression IDs given, so no InSitu spot updated"));
+        }
+        
+        String sql = "UPDATE inSituSpot SET noExpressionId = ?, reasonForExclusion = ? " +
+                "WHERE noExpressionId IN (" + 
                  BgeePreparedStatement.generateParameterizedQueryString(noExprIds.size()) + ")";
         
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
             stmt.setNull(1, Types.INTEGER);
             stmt.setString(2, CallSourceRawDataTO.ExclusionReason.NOEXPRESSIONCONFLICT.
                     getStringRepresentation());
-            List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
-            Collections.sort(orderedNoExprIds);
-            stmt.setIntegers(3, orderedNoExprIds);
+            stmt.setIntegers(3, MySQLDAO.convertToIntList(noExprIds));
 
             return log.exit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-    }
-
-    private String attributeToString(InSituSpotDAO.Attribute attribute) {
-        log.entry(attribute);
-        
-        String label = null;
-        if (attribute.equals(InSituSpotDAO.Attribute.ID)) {
-            label = "inSituSpotId";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.INSITUEVIDENCEID)) {
-            label = "inSituEvidenceId";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.INSITUEXPRESSIONPATTERNID)) {
-            label = "inSituExpressionPatternId";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.ANATENTITYID)) {
-            label = "anatEntityId";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.STAGEID)) {
-            label = "stageId";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.GENEID)) {
-            label = "geneId";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.DETECTIONFLAG)) {
-            label = "detectionFlag";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.EXPRESSIONID)) {
-            label = "expressionId";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.NOEXPRESSIONID)) {
-            label = "noExpressionId";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.INSITUDATA)) {
-            label = "inSituData";
-        } else if (attribute.equals(InSituSpotDAO.Attribute.REASONFOREXCLUSION)) {
-            label = "reasonForExclusion";
-        } 
-        
-        return log.exit(label);
     }
 }

@@ -303,6 +303,17 @@ public class GenerateDownladFile extends MySQLDAOUser {
         log.exit();
     }
     
+    /**
+     * Generate single species files according the given {@code List} of species IDs 
+     * in the given directory. 
+     * 
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species for which
+     *                      files are generated.
+     * @param fileTypes     A {@code List} of {@code String}s containing file types to be generated.
+     * @param directory     A {@code String} that is the directory path directory to store the 
+     *                      generated files. 
+     * @throws IOException  If an error occurred while trying to write generated files.
+     */
     public void generateSingleSpeciesFiles(
             List<String> speciesIds, List<String> fileTypes, String directory) throws IOException { 
         log.entry(speciesIds, fileTypes, directory);
@@ -312,14 +323,20 @@ public class GenerateDownladFile extends MySQLDAOUser {
         List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(speciesIds, 
                 this.getSpeciesDAO()); 
 
+        List<String> allFileTypes = 
+                Arrays.asList(EXPR_SIMPLE, EXPR_COMPLETE, DIFFEXPR_SIMPLE, DIFFEXPR_COMPLETE);
         if (fileTypes.isEmpty()) {
             // If no file types are given by user, we set all file types
-            fileTypes = Arrays.asList(EXPR_SIMPLE, EXPR_COMPLETE, DIFFEXPR_SIMPLE, DIFFEXPR_COMPLETE);
+            fileTypes = allFileTypes;
+        } else if (!allFileTypes.containsAll(fileTypes)) {
+            List<String> debugFileTypes = new ArrayList<String>(fileTypes);
+            debugFileTypes.removeAll(allFileTypes);
+            throw log.throwing(new IllegalArgumentException(
+                    "Some file types could not be generated: " + debugFileTypes));
         }
         
         for (String fileType: fileTypes) {
             for (String speciesId: speciesIdsToUse) {
-                
                 List<Map<String, String>> dataExpression = null;
                 if (fileTypes.contains(EXPR_SIMPLE) || fileTypes.contains(EXPR_COMPLETE)) {
                     dataExpression = this.loadExprDataFromDB(speciesId);
@@ -437,7 +454,7 @@ public class GenerateDownladFile extends MySQLDAOUser {
 
         ExpressionCallDAO dao = this.getExpressionCallDAO();
         // We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs.
-        // We don't need other attributes. 
+        // We don't need INCLUDESUBSTAGES and INCLUDESUBSTRUCTURES. 
         dao.setAttributes(ExpressionCallDAO.Attribute.GENEID, 
                 ExpressionCallDAO.Attribute.STAGEID, ExpressionCallDAO.Attribute.ANATENTITYID, 
                 ExpressionCallDAO.Attribute.AFFYMETRIXDATA, ExpressionCallDAO.Attribute.ESTDATA,
@@ -475,7 +492,7 @@ public class GenerateDownladFile extends MySQLDAOUser {
 
         NoExpressionCallDAO dao = this.getNoExpressionCallDAO();
         // We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs.
-        // We don't need other attributes. 
+        // We don't need INCLUDEPARENTSTRUCTURES and ORIGINOFLINE. 
         dao.setAttributes(NoExpressionCallDAO.Attribute.GENEID, 
                 NoExpressionCallDAO.Attribute.DEVSTAGEID, NoExpressionCallDAO.Attribute.ANATENTITYID, 
                 NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, 
@@ -534,7 +551,7 @@ public class GenerateDownladFile extends MySQLDAOUser {
     /**
      * Creates a {@code Map} associating file column names with data associated to the column name
      * merging an {@code ExpressionCallTO} with a {@code NoExpressionCallTO}.
-
+     * 
      * @param expressionCallTO      An {@code ExpressionCallTO} that is an expression call.
      * @param noExpressionCallTO    A {@code NoExpressionCallTO}
      * @return
@@ -951,6 +968,14 @@ public class GenerateDownladFile extends MySQLDAOUser {
         }
     }
 
+    /**
+     * Generate the {@code List} of {@code Map}s containing data to be written in download file
+     * for differential expression.
+     * 
+     * @param speciesId     A {@code String} that is the ID of species for which data are retrieved.
+     * @return              A {@code List} of {@code Map}s where keys are column names and 
+     *                      values are data associated to the column name.
+     */
     private List<Map<String, String>> loadDiffExprDataFromDB(String speciesId) {
         log.entry(speciesId);
         

@@ -157,13 +157,14 @@ public class InsertGlobalCalls extends MySQLDAOUser {
 
     /**
      * Inserts the global expression or no-expression calls into the Bgee database. 
+     * <p>
      * Note that if {@code isNoExpression} is {@code true}, conflicting no-expression calls 
      * will be first filtered, to ensure a consistent propagation, 
      * using {@link FilterNoExprCalls#filterNoExpressionCalls(List)}}. This slows down 
      * the propagation a lot, and should be even slower if you have already filtered 
      * conflicting no-expression calls. But this is necessary, that's it. You can provide 
      * a custom implementation of {@code FilterNoExprCalls} at instantiation, or rely on 
-     * the default one. 
+     * the default one (recommended). 
      * 
      * @param speciesIds       A {@code Set} of {@code String}s containing species IDs that will 
      *                         be used to propagate (non-)expression.

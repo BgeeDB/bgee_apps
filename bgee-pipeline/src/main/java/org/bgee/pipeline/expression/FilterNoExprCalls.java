@@ -161,7 +161,7 @@ public class FilterNoExprCalls extends MySQLDAOUser {
                 //the memory usage, but not the process time, as retrieval of conflicting 
                 //expression calls are hashCode-based). 
                 ExpressionCallParams params = new ExpressionCallParams();
-                params.addAllSpeciesIds(speciesIds);
+                params.addAllSpeciesIds(speciesFilter);
                 params.setIncludeSubstructures(true);
                 //we do not want the IDs of the expression calls, otherwise the equals/hashCode methods 
                 //will be based on these IDs, while we want the comparisons to be based on 
@@ -211,7 +211,7 @@ public class FilterNoExprCalls extends MySQLDAOUser {
                 //------------------ Analyze no-expression calls ---------------------
                 //now, iterate the no-expression calls, and identify conflicts
                 NoExpressionCallParams noExprParams = new NoExpressionCallParams();
-                noExprParams.addAllSpeciesIds(speciesIds);
+                noExprParams.addAllSpeciesIds(speciesFilter);
                 noExprParams.setIncludeParentStructures(false);
                 log.debug("Analyzing no-expression calls...");
                 NoExpressionCallTOResultSet noExprRs = 
@@ -312,6 +312,7 @@ public class FilterNoExprCalls extends MySQLDAOUser {
         //or in a child organ and/or in a child stage.
         Set<String> childAnatEntityIds = anatEntityRels.get(noExprCallTO.getAnatEntityId());
         if (childAnatEntityIds == null) {
+            log.trace(anatEntityRels);
             throw log.throwing(new IllegalStateException("The anatomical entity " +
                     noExprCallTO.getAnatEntityId() + " is not defined as existing " +
                             "in the species of gene " + noExprCallTO.getGeneId() + 

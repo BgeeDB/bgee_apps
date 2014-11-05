@@ -1,9 +1,9 @@
 package org.bgee.pipeline.expression;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,7 +65,7 @@ public class FilterNoExprCallsTest extends TestAncestor {
     /**
      * Test {@link FilterNoExprCalls#filterNoExpressionCalls(List)}.
      */
-    //@Test
+    @Test
     public void shouldFilterNoExpressionCalls() throws IllegalStateException, SQLException {
         MockDAOManager mockManager = new MockDAOManager();
 
@@ -241,43 +241,64 @@ public class FilterNoExprCallsTest extends TestAncestor {
         
         
        // We need a mock MySQLRelationTOResultSet to mock the return of getAnatEntityRelations().
-        MySQLRelationTOResultSet mockRelationTORS = createMockDAOResultSet(
-                Arrays.asList(
-                        new RelationTO("Anat_id1", "Anat_id1"),
-                        new RelationTO("Anat_id2", "Anat_id1"),
-                        new RelationTO("Anat_id3", "Anat_id1"),
-                        new RelationTO("Anat_id4", "Anat_id1"),
-                        new RelationTO("Anat_id5", "Anat_id1"),
-                        new RelationTO("Anat_id2", "Anat_id2"),
-                        new RelationTO("Anat_id4", "Anat_id2"),
-                        new RelationTO("Anat_id5", "Anat_id2"),
-                        new RelationTO("Anat_id3", "Anat_id3")),
+        List<RelationTO> anatEntityRelTOs = Arrays.asList(
+                new RelationTO("Anat_id1", "Anat_id1"),
+                new RelationTO("Anat_id2", "Anat_id1"),
+                new RelationTO("Anat_id3", "Anat_id1"),
+                new RelationTO("Anat_id4", "Anat_id1"),
+                new RelationTO("Anat_id5", "Anat_id1"),
+                new RelationTO("Anat_id2", "Anat_id2"),
+                new RelationTO("Anat_id4", "Anat_id2"),
+                new RelationTO("Anat_id5", "Anat_id2"),
+                new RelationTO("Anat_id3", "Anat_id3"),
+                new RelationTO("Anat_id4", "Anat_id4"),
+                new RelationTO("Anat_id5", "Anat_id5"));
+        MySQLRelationTOResultSet mockRelationTORS11 = createMockDAOResultSet(
+                anatEntityRelTOs,
+                MySQLRelationTOResultSet.class);
+        MySQLRelationTOResultSet mockRelationTORS21 = createMockDAOResultSet(
+                anatEntityRelTOs,
                 MySQLRelationTOResultSet.class);
         // Determine the behavior of call to getAnatEntityRelations().
         when(mockManager.mockRelationDAO.getAnatEntityRelations(
-                anySet(), 
+                eq(new HashSet<String>(Arrays.asList("11"))), 
                 eq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 eq((Set<RelationStatus>) null))).
-                thenReturn(mockRelationTORS);
+                thenReturn(mockRelationTORS11);
+        when(mockManager.mockRelationDAO.getAnatEntityRelations(
+                eq(new HashSet<String>(Arrays.asList("21"))), 
+                eq(EnumSet.of(RelationType.ISA_PARTOF)), 
+                eq((Set<RelationStatus>) null))).
+                thenReturn(mockRelationTORS21);
 
         // We need a mock MySQLRelationTOResultSet to mock the return of getStageRelations().
-         MySQLRelationTOResultSet mockStageRelationTORS = createMockDAOResultSet(
-                 Arrays.asList(
-                         new RelationTO("stage_id1", "stage_id1"),
-                         new RelationTO("stage_id2", "stage_id1"),
-                         new RelationTO("stage_id3", "stage_id1"),
-                         new RelationTO("stage_id4", "stage_id1"),
-                         new RelationTO("stage_id5", "stage_id1"),
-                         new RelationTO("stage_id2", "stage_id2"),
-                         new RelationTO("stage_id4", "stage_id2"),
-                         new RelationTO("stage_id5", "stage_id2"),
-                         new RelationTO("stage_id3", "stage_id3")),
+        List<RelationTO> stageRelTOs = Arrays.asList(
+                new RelationTO("stage_id1", "stage_id1"),
+                new RelationTO("stage_id2", "stage_id1"),
+                new RelationTO("stage_id3", "stage_id1"),
+                new RelationTO("stage_id4", "stage_id1"),
+                new RelationTO("stage_id5", "stage_id1"),
+                new RelationTO("stage_id2", "stage_id2"),
+                new RelationTO("stage_id4", "stage_id2"),
+                new RelationTO("stage_id5", "stage_id2"),
+                new RelationTO("stage_id3", "stage_id3"),
+                new RelationTO("stage_id4", "stage_id4"),
+                new RelationTO("stage_id5", "stage_id5"));
+         MySQLRelationTOResultSet mockStageRelationTORS11 = createMockDAOResultSet(
+                 stageRelTOs,
                  MySQLRelationTOResultSet.class);
-         // Determine the behavior of call to getAnatEntityRelations().
+         MySQLRelationTOResultSet mockStageRelationTORS21 = createMockDAOResultSet(
+                 stageRelTOs,
+                 MySQLRelationTOResultSet.class);
+         // Determine the behavior of call to getStageRelations().
          when(mockManager.mockRelationDAO.getStageRelations(
-                 anySet(), 
+                 eq(new HashSet<String>(Arrays.asList("11"))), 
                  eq((Set<RelationStatus>) null))).
-                 thenReturn(mockStageRelationTORS);
+                 thenReturn(mockStageRelationTORS11);
+         when(mockManager.mockRelationDAO.getStageRelations(
+                 eq(new HashSet<String>(Arrays.asList("21"))), 
+                 eq((Set<RelationStatus>) null))).
+                 thenReturn(mockStageRelationTORS21);
          
          // Define expected results passed to the DAOs
          Set<String> expectedAffyNoExprIds11 = new HashSet<String>(Arrays.asList("1", "2", "4"));
@@ -343,8 +364,10 @@ public class FilterNoExprCallsTest extends TestAncestor {
          verify(mockExpr21TORS).close();
          verify(mockNoExpr11TORS).close();
          verify(mockNoExpr21TORS).close();
-         verify(mockRelationTORS).close();
-         verify(mockStageRelationTORS).close();
+         verify(mockRelationTORS11).close();
+         verify(mockRelationTORS21).close();
+         verify(mockStageRelationTORS11).close();
+         verify(mockStageRelationTORS21).close();
 
          //now, verify all calls to update/delete methods
          ArgumentCaptor<Set> noExprTOsArg = ArgumentCaptor.forClass(Set.class);
@@ -366,30 +389,27 @@ public class FilterNoExprCallsTest extends TestAncestor {
 
          ArgumentCaptor<Set> noExprDeletedIdsArg = ArgumentCaptor.forClass(Set.class);
          verify(mockManager.mockNoExpressionCallDAO, times(2)).deleteNoExprCalls(
-                 noExprDeletedIdsArg.capture(), false);
+                 noExprDeletedIdsArg.capture(), eq(false));
          List<Set> allNoExprDeletedIdsSets = noExprDeletedIdsArg.getAllValues();
          assertEquals("Incorrect no-expression calls deleted for species 11", 
                  expectedNoExprIdsDeleted11, allNoExprDeletedIdsSets.get(0));
          assertEquals("Incorrect no-expression calls deleted for species 21", 
-                 expectedNoExprIdsDeleted11, allNoExprDeletedIdsSets.get(1));
+                 expectedNoExprIdsDeleted21, allNoExprDeletedIdsSets.get(1));
 
          ArgumentCaptor<Set> probesetIdsUpdatedArg = ArgumentCaptor.forClass(Set.class);
          verify(mockManager.mockAffymetrixProbesetDAO, times(2)).updateNoExpressionConflicts(
                  probesetIdsUpdatedArg.capture());
          List<Set> allProbesetIdsUpdatedSets = probesetIdsUpdatedArg.getAllValues();
          assertEquals("Incorrect no-expression update for Affymetrix for species 11", 
-                 expectedAffyNoExprIds11, allNoExprDeletedIdsSets.get(0));
+                 expectedAffyNoExprIds11, allProbesetIdsUpdatedSets.get(0));
          assertEquals("Incorrect no-expression update for Affymetrix for species 21", 
-                 expectedAffyNoExprIds21, allNoExprDeletedIdsSets.get(1));
+                 expectedAffyNoExprIds21, allProbesetIdsUpdatedSets.get(1));
 
          ArgumentCaptor<Set> inSituIdsUpdatedArg = ArgumentCaptor.forClass(Set.class);
-         verify(mockManager.mockInSituSpotDAO, times(2)).updateNoExpressionConflicts(
+         verify(mockManager.mockInSituSpotDAO, times(1)).updateNoExpressionConflicts(
                  inSituIdsUpdatedArg.capture());
-         List<Set> allInSituIdsUpdatedSets = inSituIdsUpdatedArg.getAllValues();
          assertEquals("Incorrect no-expression update for in situ for species 11", 
-                 expectedInSituNoExprIds11, allInSituIdsUpdatedSets.get(0));
-         assertEquals("Incorrect no-expression update for in situ for species 21", 
-                 expectedInSituNoExprIds21, allInSituIdsUpdatedSets.get(1));
+                 expectedInSituNoExprIds11, inSituIdsUpdatedArg.getValue());
 
          ArgumentCaptor<Set> rnaSeqIdsUpdatedArg = ArgumentCaptor.forClass(Set.class);
          verify(mockManager.mockRNASeqResultDAO, times(2)).updateNoExpressionConflicts(

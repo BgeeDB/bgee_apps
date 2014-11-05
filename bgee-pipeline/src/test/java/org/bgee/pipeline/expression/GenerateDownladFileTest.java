@@ -1,16 +1,33 @@
 package org.bgee.pipeline.expression;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO.MySQLAnatEntityTOResultSet;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
+import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
+import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
+import org.bgee.pipeline.BgeeDBUtilsTest;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.expression.GenerateDownladFile.ExpressionData;
@@ -42,8 +59,147 @@ public class GenerateDownladFileTest  extends TestAncestor {
     }
 
     /**
-     * Test {@link GenerateDownladFile#writeDownloadFiles(List<Map<String, String>>, String, String)},
+     * Test {@link GenerateDownladFile#generateSingleSpeciesFiles(List, List, String)},
      * which is the central method of the class doing all the job.
+     * @throws IOException 
+     */
+//    @Test
+    public void shouldGenerateSingleSpeciesFiles() throws IOException {
+
+        // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
+        // This will allow to verify that the correct values were tried to be inserted 
+        // into the database.
+        MockDAOManager mockManager = new MockDAOManager();
+
+        MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
+                Arrays.asList(
+                        new SpeciesTO("11", null, null, null, null, null, null, null),
+                        new SpeciesTO("21", null, null, null, null, null, null, null)),
+                        MySQLSpeciesTOResultSet.class);
+        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
+
+        // For each species, we need to mock getNonInformativeAnatEntities(), getExpressionCalls() 
+        // and getNoExpressionCalls()
+        
+        // Species 11
+        Set<String> setSpeciesIds = new HashSet<String>(); 
+        setSpeciesIds.add("11");
+        List<String> listSpeciesIds = Arrays.asList("11"); 
+
+        MySQLAnatEntityTOResultSet mockAnatEntityRsSp11 = createMockDAOResultSet(
+                Arrays.asList(
+                        //TODO add test data. Attributes to fill: ID
+                        new AnatEntityTO("", null, null, null, null, false),
+                        new AnatEntityTO("", null, null, null, null, false)),
+                        MySQLAnatEntityTOResultSet.class);
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(eq(setSpeciesIds))).
+                thenReturn(mockAnatEntityRsSp11);
+
+        MySQLExpressionCallTOResultSet mockExprRsSp11 = createMockDAOResultSet(
+                //TODO correct test data. Attributes to fill: GENEID, STAGEID, ANATENTITYID, AFFYMETRIXDATA, 
+                // ESTDATA, INSITUDATA, RNASEQDATA);
+                Arrays.asList(
+                        new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF)),
+                        MySQLExpressionCallTOResultSet.class);
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(listSpeciesIds);
+        params.setUseAnatDescendants(true);
+        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                thenReturn(mockExprRsSp11);
+
+        MySQLNoExpressionCallTOResultSet mockNoExprRsSp11 = createMockDAOResultSet(
+                //TODO correct test data. Attributes to fill: GENEID, DEVSTAGEID, ANATENTITYID, 
+                //              AFFYMETRIXDATA, INSITUDATA, RNASEQDATA.
+                Arrays.asList(
+                        new NoExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF)),
+                        MySQLNoExpressionCallTOResultSet.class);
+        NoExpressionCallParams noExprParams = new NoExpressionCallParams();
+        params.addAllSpeciesIds(listSpeciesIds);
+        params.setUseAnatDescendants(true);
+        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(noExprParams))).
+                thenReturn(mockNoExprRsSp11);
+
+        // Species 22
+        setSpeciesIds.clear(); 
+        setSpeciesIds.add("22");
+        listSpeciesIds = Arrays.asList("22"); 
+
+        MySQLAnatEntityTOResultSet mockAnatEntityRsSp22 = createMockDAOResultSet(
+                Arrays.asList(
+                        //TODO add test data. Attributes to fill: ID
+                        new AnatEntityTO("", null, null, null, null, false),
+                        new AnatEntityTO("", null, null, null, null, false)),
+                        MySQLAnatEntityTOResultSet.class);
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(eq(setSpeciesIds))).
+                thenReturn(mockAnatEntityRsSp22);
+
+        MySQLExpressionCallTOResultSet mockExprRsSp22 = createMockDAOResultSet(
+                //TODO correct test data. Attributes to fill: GENEID, STAGEID, ANATENTITYID, AFFYMETRIXDATA, 
+                // ESTDATA, INSITUDATA, RNASEQDATA.
+                Arrays.asList(
+                        new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF),
+                        new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF)),
+                        MySQLExpressionCallTOResultSet.class);
+        params = new ExpressionCallParams();
+        params.addAllSpeciesIds(listSpeciesIds);
+        params.setUseAnatDescendants(true);
+        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                thenReturn(mockExprRsSp22);
+
+        MySQLNoExpressionCallTOResultSet mockNoExprRsSp22 = createMockDAOResultSet(
+                //TODO correct test data. Attributes to fill: GENEID, DEVSTAGEID, ANATENTITYID, 
+                //              AFFYMETRIXDATA, INSITUDATA, RNASEQDATA.
+                Arrays.asList(
+                        new NoExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
+                                DataState.NODATA, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF),
+                        new NoExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", 
+                                DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF)),
+                        MySQLNoExpressionCallTOResultSet.class);
+        noExprParams = new NoExpressionCallParams();
+        params.addAllSpeciesIds(listSpeciesIds);
+        params.setUseAnatDescendants(true);
+        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(noExprParams))).
+                thenReturn(mockNoExprRsSp22);
+
+        GenerateDownladFile generate = new GenerateDownladFile(mockManager);
+        List<String> fileTypes = 
+                Arrays.asList(GenerateDownladFile.EXPR_SIMPLE, GenerateDownladFile.EXPR_COMPLETE);
+        generate.generateSingleSpeciesFiles(
+                Arrays.asList("11", "22"), fileTypes, testFolder.newFolder("tmpFolder").getPath());
+
+        // TODO test differential expression
+    }
+
+    /**
+     * Test {@link GenerateDownladFile#writeDownloadFiles(List<Map<String, String>>, String, String)}.
      * @throws IOException 
      */
     @Test
@@ -55,7 +211,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
         MockDAOManager mockManager = new MockDAOManager();
 
         GenerateDownladFile generate = new GenerateDownladFile(mockManager);
-        
+
         String outputSimpleFile = testFolder.newFile("simpleFile.tsv").getPath();
         String outputCompleteFile = testFolder.newFile("completeFile.tsv").getPath();
 
@@ -135,17 +291,13 @@ public class GenerateDownladFileTest  extends TestAncestor {
         //now read the created TSV files
         assertDownloadExprFile(outputSimpleFile, true);
         assertDownloadExprFile(outputCompleteFile, false);
-
-        log.exit();
     }
 
     private Map<String, String> generateDataMap(String geneId, String geneName,
             String stageId, String stageName, String anatEntityId, String anatEntityName,
             ExpressionData affymetrixData, ExpressionData estData, ExpressionData inSituData,
             ExpressionData rnaSeqData) {
-        log.entry(geneId, geneName, stageId, stageName, anatEntityId, anatEntityName,
-                affymetrixData, estData, inSituData, rnaSeqData);
-        
+
         Map<String, String> data = new HashMap<String, String>();
         data.put(GenerateDownladFile.GENE_ID_COLUMN_NAME, geneId);
         data.put(GenerateDownladFile.GENE_NAME_COLUMN_NAME, geneName);
@@ -154,15 +306,15 @@ public class GenerateDownladFileTest  extends TestAncestor {
         data.put(GenerateDownladFile.ANATENTITY_ID_COLUMN_NAME, anatEntityId);
         data.put(GenerateDownladFile.ANATENTITY_NAME_COLUMN_NAME, anatEntityName);
         data.put(GenerateDownladFile.AFFYMETRIXDATA_COLUMN_NAME, 
-                                                        affymetrixData.getStringRepresentation());
+                affymetrixData.getStringRepresentation());
         data.put(GenerateDownladFile.ESTDATA_COLUMN_NAME, 
-                                                        estData.getStringRepresentation());
+                estData.getStringRepresentation());
         data.put(GenerateDownladFile.INSITUDATA_COLUMN_NAME, 
-                                                        inSituData.getStringRepresentation());
+                inSituData.getStringRepresentation());
         data.put(GenerateDownladFile.RNASEQDATA_COLUMN_NAME,
-                                                        rnaSeqData.getStringRepresentation());
+                rnaSeqData.getStringRepresentation());
 
-        return log.exit(data);
+        return data;
     }
 
     /**
@@ -176,7 +328,6 @@ public class GenerateDownladFileTest  extends TestAncestor {
      * @throws IOException      If the file could not be used.
      */
     private void assertDownloadExprFile(String file, boolean isSiplifiedFile) throws IOException {
-        log.entry(file, isSiplifiedFile);
 
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
             String[] headers = mapReader.getHeader(true);
@@ -212,7 +363,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 //  1/ no data - no data - no data - no data >> no data
                 if (geneId.equals("Gid1")) {
                     assertCommonColumnRowEqual(geneId, "Gname1", geneName, "STid1", stageId, "STname1", 
-                                stageName, "AEid1", anatEntityId,  "AEname1", anatEntityName);
+                            stageName, "AEid1", anatEntityId,  "AEname1", anatEntityName);
                     if (isSiplifiedFile) {
                         this.assertSimpleColumnRowEqual(geneId, 
                                 GenerateDownladFile.ExpressionData.NODATA, expressionData);
@@ -272,7 +423,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 GenerateDownladFile.ExpressionData.NODATA, rnaSeqData);
                     }
                 }
-                
+
                 if (geneId.equals("Gid5")) {
                     //  5/ no data - no expr - low - no expr >> ambiguous
                     assertCommonColumnRowEqual(geneId, "Gname5", geneName, "STid", stageId, "STname", 
@@ -433,7 +584,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
     private void assertCompleteColumnRowEqual(String geneId, ExpressionData expAffyData, 
             String affyData, ExpressionData expESTData, String estData, ExpressionData expInSituData,
             String inSituData, ExpressionData expRNAseqData, String rnaSeqData) {
-        
+
         assertEquals("Incorrect Affymetrix data for " + geneId, 
                 expAffyData.getStringRepresentation(), affyData);
         assertEquals("Incorrect EST data for " + geneId, 

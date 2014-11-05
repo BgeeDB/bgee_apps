@@ -3,6 +3,7 @@ package org.bgee.pipeline.expression;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyCollection;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
@@ -611,9 +612,11 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 eq((Set<RelationStatus>) null))).
                 thenReturn(mockRelation11TORs);
 
-        //
-        InsertGlobalCalls insert = new InsertGlobalCalls(mockManager);
+        FilterNoExprCalls filter = mock(FilterNoExprCalls.class); 
+        InsertGlobalCalls insert = new InsertGlobalCalls(mockManager, filter);
         insert.insert(speciesId, true);
+        
+        verify(filter).filterNoExpressionCalls(speciesId.get(0));
         
         // Verify that startTransaction() and commit()
         verify(mockManager.getConnection()).commit();

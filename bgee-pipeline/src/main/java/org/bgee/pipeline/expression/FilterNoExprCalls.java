@@ -138,127 +138,151 @@ public class FilterNoExprCalls extends MySQLDAOUser {
                     this.getSpeciesDAO());
 
             for (String speciesId: speciesIdsToUse) {
-                this.initAttributes();
-                Set<String> speciesFilter = new HashSet<String>();
-                speciesFilter.add(speciesId);
-                
                 this.startTransaction();
-
-                //------------------ Relations ---------------------
-                //get the reflexive/direct/indirect is_a/part_of relations between stages 
-                //and between anat entities for this species
-                Map<String, Set<String>> anatEntityRels = 
-                        BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
-                                this.getRelationDAO());
-                Map<String, Set<String>> stageRels = 
-                        BgeeDBUtils.getStageChildrenFromParents(speciesFilter, 
-                                this.getRelationDAO());
-
                 
-                //------------------ Retrieve expression calls ---------------------
-                //get the global expression calls for this species (it should work the same 
-                //with basic expression calls, but we're never too careful! This will increase 
-                //the memory usage, but not the process time, as retrieval of conflicting 
-                //expression calls are hashCode-based). 
-                ExpressionCallParams params = new ExpressionCallParams();
-                params.addAllSpeciesIds(speciesFilter);
-                params.setIncludeSubstructures(true);
-                //we do not want the IDs of the expression calls, otherwise the equals/hashCode methods 
-                //will be based on these IDs, while we want the comparisons to be based on 
-                //the anatEntityId, stageId and geneId. 
-                Collection<ExpressionCallDAO.Attribute> attributes = 
-                        new HashSet<ExpressionCallDAO.Attribute>(
-                                Arrays.asList(ExpressionCallDAO.Attribute.values()));
-                attributes.remove(ExpressionCallDAO.Attribute.ID);
-                ExpressionCallDAO dao = this.getExpressionCallDAO();
-                dao.setAttributes(attributes);
-                //we want to be able to retrieve an expression call using a 'get' method 
-                //based on hashCode, not to iterate all expression calls each time 
-                //we need to retrieve a specific one. We use a Map to do that, 
-                //see http://stackoverflow.com/a/18380755/1768736
-                Map<ExpressionCallTO, ExpressionCallTO> exprCallTOs = 
-                        new HashMap<ExpressionCallTO, ExpressionCallTO>();
-                log.debug("Retrieving expression calls for species {}...", speciesId);
-                ExpressionCallTOResultSet exprRs = dao.getExpressionCalls(params);
-                while (exprRs.next()) {
-                    ExpressionCallTO exprCallTO = exprRs.getTO();
-                    //sanity checks
-                    if (exprCallTO.getId() != null || 
-                            exprCallTO.getGeneId() == null || 
-                            exprCallTO.getAnatEntityId() == null || 
-                            exprCallTO.getStageId() == null) {
-                        throw log.throwing(new AssertionError("The IDs fo the expression calls " +
-                        		"should not be retrieved, their associated gene ID, " +
-                        		"anat entity ID, and stage ID, should be retrieved. " +
-                        		"Offending expressionCallTO: " + exprCallTO));
-                    }
-                    if (exprCallTO.getAffymetrixData() == null || 
-                            exprCallTO.getESTData() == null || 
-                            exprCallTO.getInSituData() == null || 
-                            exprCallTO.getRNASeqData() == null) {
-                        throw log.throwing(new AssertionError("All data types should be retrieved. " +
-                                "Offending expressionCallTO: " + exprCallTO));
-                    }
-                    exprCallTOs.put(exprCallTO, exprCallTO);
-                }
-                //no need for a finally close, this part of the code is already 
-                //in a try-finally block that will close everything in all cases.
-                exprRs.close();
-                log.debug("Done retrieving expression calls for species {}, {} calls retrieved.", 
-                        speciesId, exprCallTOs.size());
-
-
-                //------------------ Analyze no-expression calls ---------------------
-                //now, iterate the no-expression calls, and identify conflicts
-                NoExpressionCallParams noExprParams = new NoExpressionCallParams();
-                noExprParams.addAllSpeciesIds(speciesFilter);
-                noExprParams.setIncludeParentStructures(false);
-                log.debug("Analyzing no-expression calls...");
-                NoExpressionCallTOResultSet noExprRs = 
-                        this.getNoExpressionCallDAO().getNoExpressionCalls(noExprParams);
-                int i = 0;
-                while (noExprRs.next()) {
-                    i++;
-                    if (log.isDebugEnabled() && i % 100000 == 0) {
-                        log.debug("{} no-expression calls examined.", i);
-                    }
-                    NoExpressionCallTO noExprCallTO = noExprRs.getTO();
-                    //sanity check
-                    if (noExprCallTO.getId() == null || 
-                            noExprCallTO.getGeneId() == null || 
-                            noExprCallTO.getAnatEntityId() == null || 
-                            noExprCallTO.getStageId() == null || 
-                            noExprCallTO.getAffymetrixData() == null || 
-                            noExprCallTO.getInSituData() == null || 
-                            noExprCallTO.getRelaxedInSituData() == null || 
-                            noExprCallTO.getRNASeqData() == null) {
-                        throw log.throwing(new AssertionError("All data of no-expression calls " +
-                                "must be retrieved. Offending noExpressionCallTO: " + 
-                                noExprCallTO));
-                    }
-                    if (noExprCallTO.isIncludeParentStructures() || 
-                        noExprCallTO.getOriginOfLine() != NoExpressionCallTO.OriginOfLine.SELF) {
-                        throw log.throwing(new AssertionError("No-expression cleaning " +
-                                "can be performed only on basic no-expression calls. " +
-                                "Offending noExpressionCallTO: " + noExprCallTO));
-                    }
-                    this.analyzeNoExprCallTO(noExprCallTO, exprCallTOs, 
-                            anatEntityRels, stageRels);
-                }
-                //no need for a finally close, this part of the code is already 
-                //in a try-finally block that will close everything in all cases. 
-                noExprRs.close();
-                log.debug("Done analyzing no-expression calls.");
-
-
-                //------------------ Update no-expression calls ---------------------
-                this.updateDataSource();
+                this.filterNoExpressionCalls(speciesId);
                 
                 this.commit();
             }
         } finally {
             this.closeDAO();
         }
+        
+        log.exit();
+    }
+    
+    /**
+     * Perform same operations as {@link #filterNoExpressionCalls(List)} but 
+     * for a single species and without dealing with operations related to connection 
+     * to the data source. Notably, this method is not responsible for starting 
+     * nor committing a transaction, nor to close the {@code DAOManager} afterwards. 
+     * These are the responsibilities of the caller. This is useful when another class, 
+     * already engaged in a transaction, requires a no-expression filtering for a species. 
+     * 
+     * @param speciesId A {@code String} that is the ID of a species for which 
+     *                  the filtering is requested. 
+     * @throws IllegalArgumentException If {@code speciesId} is not found in the database.
+     */
+    public void filterNoExpressionCalls(String speciesId) throws IllegalArgumentException {
+        log.entry(speciesId);
+        
+        //check validity of speciesId
+        BgeeDBUtils.checkAndGetSpeciesIds(Arrays.asList(speciesId), this.getSpeciesDAO());
+        
+        this.initAttributes();
+        Set<String> speciesFilter = new HashSet<String>();
+        speciesFilter.add(speciesId);
+        
+
+        //------------------ Relations ---------------------
+        //get the reflexive/direct/indirect is_a/part_of relations between stages 
+        //and between anat entities for this species
+        Map<String, Set<String>> anatEntityRels = 
+                BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
+                        this.getRelationDAO());
+        Map<String, Set<String>> stageRels = 
+                BgeeDBUtils.getStageChildrenFromParents(speciesFilter, 
+                        this.getRelationDAO());
+
+        
+        //------------------ Retrieve expression calls ---------------------
+        //get the global expression calls for this species (it should work the same 
+        //with basic expression calls, but we're never too careful! This will increase 
+        //the memory usage, but not the process time, as retrieval of conflicting 
+        //expression calls are hashCode-based). 
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(speciesFilter);
+        params.setIncludeSubstructures(true);
+        //we do not want the IDs of the expression calls, otherwise the equals/hashCode methods 
+        //will be based on these IDs, while we want the comparisons to be based on 
+        //the anatEntityId, stageId and geneId. 
+        Collection<ExpressionCallDAO.Attribute> attributes = 
+                new HashSet<ExpressionCallDAO.Attribute>(
+                        Arrays.asList(ExpressionCallDAO.Attribute.values()));
+        attributes.remove(ExpressionCallDAO.Attribute.ID);
+        ExpressionCallDAO dao = this.getExpressionCallDAO();
+        dao.setAttributes(attributes);
+        //we want to be able to retrieve an expression call using a 'get' method 
+        //based on hashCode, not to iterate all expression calls each time 
+        //we need to retrieve a specific one. We use a Map to do that, 
+        //see http://stackoverflow.com/a/18380755/1768736
+        Map<ExpressionCallTO, ExpressionCallTO> exprCallTOs = 
+                new HashMap<ExpressionCallTO, ExpressionCallTO>();
+        log.debug("Retrieving expression calls for species {}...", speciesId);
+        ExpressionCallTOResultSet exprRs = dao.getExpressionCalls(params);
+        while (exprRs.next()) {
+            ExpressionCallTO exprCallTO = exprRs.getTO();
+            //sanity checks
+            if (exprCallTO.getId() != null || 
+                    exprCallTO.getGeneId() == null || 
+                    exprCallTO.getAnatEntityId() == null || 
+                    exprCallTO.getStageId() == null) {
+                throw log.throwing(new AssertionError("The IDs fo the expression calls " +
+                        "should not be retrieved, their associated gene ID, " +
+                        "anat entity ID, and stage ID, should be retrieved. " +
+                        "Offending expressionCallTO: " + exprCallTO));
+            }
+            if (exprCallTO.getAffymetrixData() == null || 
+                    exprCallTO.getESTData() == null || 
+                    exprCallTO.getInSituData() == null || 
+                    exprCallTO.getRNASeqData() == null) {
+                throw log.throwing(new AssertionError("All data types should be retrieved. " +
+                        "Offending expressionCallTO: " + exprCallTO));
+            }
+            exprCallTOs.put(exprCallTO, exprCallTO);
+        }
+        //no need for a finally close, this part of the code is already 
+        //in a try-finally block that will close everything in all cases.
+        exprRs.close();
+        log.debug("Done retrieving expression calls for species {}, {} calls retrieved.", 
+                speciesId, exprCallTOs.size());
+
+
+        //------------------ Analyze no-expression calls ---------------------
+        //now, iterate the no-expression calls, and identify conflicts
+        NoExpressionCallParams noExprParams = new NoExpressionCallParams();
+        noExprParams.addAllSpeciesIds(speciesFilter);
+        noExprParams.setIncludeParentStructures(false);
+        log.debug("Analyzing no-expression calls...");
+        NoExpressionCallTOResultSet noExprRs = 
+                this.getNoExpressionCallDAO().getNoExpressionCalls(noExprParams);
+        int i = 0;
+        while (noExprRs.next()) {
+            i++;
+            if (log.isDebugEnabled() && i % 100000 == 0) {
+                log.debug("{} no-expression calls examined.", i);
+            }
+            NoExpressionCallTO noExprCallTO = noExprRs.getTO();
+            //sanity check
+            if (noExprCallTO.getId() == null || 
+                    noExprCallTO.getGeneId() == null || 
+                    noExprCallTO.getAnatEntityId() == null || 
+                    noExprCallTO.getStageId() == null || 
+                    noExprCallTO.getAffymetrixData() == null || 
+                    noExprCallTO.getInSituData() == null || 
+                    noExprCallTO.getRelaxedInSituData() == null || 
+                    noExprCallTO.getRNASeqData() == null) {
+                throw log.throwing(new AssertionError("All data of no-expression calls " +
+                        "must be retrieved. Offending noExpressionCallTO: " + 
+                        noExprCallTO));
+            }
+            if (noExprCallTO.isIncludeParentStructures() || 
+                noExprCallTO.getOriginOfLine() != NoExpressionCallTO.OriginOfLine.SELF) {
+                throw log.throwing(new AssertionError("No-expression cleaning " +
+                        "can be performed only on basic no-expression calls. " +
+                        "Offending noExpressionCallTO: " + noExprCallTO));
+            }
+            this.analyzeNoExprCallTO(noExprCallTO, exprCallTOs, 
+                    anatEntityRels, stageRels);
+        }
+        //no need for a finally close, this part of the code is already 
+        //in a try-finally block that will close everything in all cases. 
+        noExprRs.close();
+        log.debug("Done analyzing no-expression calls.");
+
+
+        //------------------ Update no-expression calls ---------------------
+        this.updateDataSource();
         
         log.exit();
     }

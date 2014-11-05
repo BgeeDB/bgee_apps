@@ -72,12 +72,19 @@ public class FilterNoExprCallsTest extends TestAncestor {
         //*********************************************
         //     MOCK DATA
         //*********************************************
-        MySQLSpeciesTOResultSet mockSpeciesTORS = createMockDAOResultSet(
-                Arrays.asList(
-                        new SpeciesTO("11", null, null, null, null, null, null, null),
-                        new SpeciesTO("21", null, null, null, null, null, null, null)),
+        List<SpeciesTO> speciesTOs = Arrays.asList(
+                new SpeciesTO("11", null, null, null, null, null, null, null),
+                new SpeciesTO("21", null, null, null, null, null, null, null));
+        //getAllSpecies will be called three times, once at the beginning, 
+        //then once for each species
+        MySQLSpeciesTOResultSet mockSpeciesTORS1 = createMockDAOResultSet(speciesTOs,
                 MySQLSpeciesTOResultSet.class);
-        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORS);
+        MySQLSpeciesTOResultSet mockSpeciesTORS2 = createMockDAOResultSet(speciesTOs,
+                MySQLSpeciesTOResultSet.class);
+        MySQLSpeciesTOResultSet mockSpeciesTORS3 = createMockDAOResultSet(speciesTOs,
+                MySQLSpeciesTOResultSet.class);
+        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORS1)
+            .thenReturn(mockSpeciesTORS2).thenReturn(mockSpeciesTORS3);
         
         //we use the following design for the test: 
         //             Anat_id1                       stage_id1
@@ -359,7 +366,9 @@ public class FilterNoExprCallsTest extends TestAncestor {
          verify(mockManager.getConnection(), times(2)).startTransaction();
          verify(mockManager.getConnection(), times(2)).commit();
          // Verify that all ResultSet are closed.
-         verify(mockSpeciesTORS).close();
+         verify(mockSpeciesTORS1).close();
+         verify(mockSpeciesTORS2).close();
+         verify(mockSpeciesTORS3).close();
          verify(mockExpr11TORS).close();
          verify(mockExpr21TORS).close();
          verify(mockNoExpr11TORS).close();

@@ -106,12 +106,18 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * An {@code int} used to generate IDs of global expression or no-expression calls.
      */        
     private int globalId;
+    /**
+     * A {@code FilterNoExprCalls} used to make sure no-expression calls were filtered 
+     * before propagating them. See {@link FilterNoExprCalls#filterNoExpressionCalls(List)} 
+     * for more details.
+     */
+    private final FilterNoExprCalls filterNoExprCalls;
 
     /**
      * Default constructor. 
      */
     public InsertGlobalCalls() {
-        this(null);
+        this(null, null);
     }
     /**
      * Constructor providing the {@code MySQLDAOManager} that will be used by 
@@ -120,12 +126,44 @@ public class InsertGlobalCalls extends MySQLDAOUser {
      * @param manager   the {@code MySQLDAOManager} to use.
      */
     public InsertGlobalCalls(MySQLDAOManager manager) {
-        super(manager);
-        this.globalId = 0;
+        this(manager, null);
     }
 
     /**
-     * Inserts the global expression or no-expression calls into the Bgee database.
+     * Constructor providing the {@code MySQLDAOManager} and the {@code FilterNoExprCalls}. 
+     * The {@code MySQLDAOManager} will be used by this object to perform queries 
+     * to the database. The {@code FilterNoExprCalls} will be used to make sure 
+     * no-expression calls were filtered before propagating them. If one of these arguments 
+     * is {@code null}, a new instance of these classes will be retrieved to be used 
+     * by this class. 
+     * 
+     * @param manager           the {@code MySQLDAOManager} to use. If {@code null}, 
+     *                          an instance will be retrieved by the constructor.
+     * @param filterNoExprCalls The {@code FilterNoExprCalls} used to make sure 
+     *                          no-expression calls are filtered before propagating them.
+     *                          It is not needed when propagating expression data. 
+     *                          If {@code null}, an instance will be retrieved 
+     *                          by this constructor.
+     */
+    public InsertGlobalCalls(MySQLDAOManager manager, FilterNoExprCalls filterNoExprCalls) {
+        super(manager);
+        this.globalId = 0;
+        if (filterNoExprCalls != null) {
+            this.filterNoExprCalls = filterNoExprCalls;
+        } else {
+            this.filterNoExprCalls = new FilterNoExprCalls(this.getManager());
+        }
+    }
+
+    /**
+     * Inserts the global expression or no-expression calls into the Bgee database. 
+     * Note that if {@code isNoExpression} is {@code true}, conflicting no-expression calls 
+     * will be first filtered, to ensure a consistent propagation, 
+     * using {@link FilterNoExprCalls#filterNoExpressionCalls(List)}}. This slows down 
+     * the propagation a lot, and should be even slower if you have already filtered 
+     * conflicting no-expression calls. But this is necessary, that's it. You can provide 
+     * a custom implementation of {@code FilterNoExprCalls} at instantiation, or rely on 
+     * the default one. 
      * 
      * @param speciesIds       A {@code Set} of {@code String}s containing species IDs that will 
      *                         be used to propagate (non-)expression.
@@ -162,7 +200,6 @@ public class InsertGlobalCalls extends MySQLDAOUser {
             }
 
             for (String speciesId: speciesIdsToUse) {
-                
 
                 Set<String> speciesFilter = new HashSet<String>();
                 speciesFilter.add(speciesId);
@@ -170,6 +207,9 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                 this.startTransaction();
 
                 if (isNoExpression) {
+                    
+                    log.info("Launch cleaning of no-expression calls before propagation");
+                    this.filterNoExprCalls.filterNoExpressionCalls(speciesId);
                     
                     log.info("Start propagating no-expression calls for species {}", 
                             speciesId);

@@ -1,7 +1,6 @@
 package org.bgee.pipeline;
 
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,7 +16,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
-import org.bgee.model.dao.api.expressiondata.CallParams;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
@@ -37,7 +35,6 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoE
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 
 /**
  * Tests for {@link BgeeDBUtils}.
@@ -369,36 +366,5 @@ public class BgeeDBUtilsTest extends TestAncestor {
                 }
             }
         }
-    }
-
-    /**
-     * Custom matcher for verifying IDs of species allowing to filter 
-     * the calls to use of actual and expected {@code CallParams}.
-     */
-    private static class CallParamsMatcher extends ArgumentMatcher<CallParams> {
-        
-        private final CallParams expected;
-        
-        public CallParamsMatcher(CallParams expected) {
-            this.expected = expected;
-        }
-        
-        @Override
-        public boolean matches(Object actual) {
-            if (actual == null && expected == null || 
-                    actual != null && ((CallParams) actual).getSpeciesIds().equals(expected.getSpeciesIds())) {
-                return true;
-            }
-            return false;
-        }
-    }
-    
-    /**
-     * Convenience factory method for using the custom {@code CallParams} matcher.
-     * 
-     *  @param expected  A {@code CallParams} that is the argument to be verified.
-     */
-    public static CallParams valueCallParamEq(CallParams params) {
-        return argThat(new CallParamsMatcher(params));
     }
 }

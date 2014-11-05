@@ -1,5 +1,6 @@
 package org.bgee.pipeline;
 
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -12,6 +13,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.CallParams;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
@@ -32,6 +36,7 @@ import org.bgee.model.dao.mysql.species.MySQLTaxonDAO;
 import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -103,8 +108,9 @@ public abstract class TestAncestor
         when(mockResultSet.next()).thenAnswer(new Answer<Boolean>() {
             int counter = 0;
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+                getLogger().entry(invocationOnMock);
                 // Return true while there is a result to return 
-                return counter++ < resultSetSize;
+                return getLogger().exit(counter++ < resultSetSize);
             }
         });
   
@@ -113,8 +119,9 @@ public abstract class TestAncestor
         when(mockResultSet.getTO()).thenAnswer(new Answer<T>() {
             int counter = 0;
             public T answer(InvocationOnMock invocationOnMock) throws Throwable {
+                getLogger().entry(invocationOnMock);
                 // Return true while there is a listTO to return 
-                return listTO.get(counter++);
+                return getLogger().exit(listTO.get(counter++));
             }
         });
   
@@ -244,4 +251,55 @@ public abstract class TestAncestor
             return this.mockRNASeqResultDAO;
         }
 	}
+
+
+    /**
+     * Custom matcher for verifying IDs of species allowing to filter 
+     * the calls to use of actual and expected {@code CallParams}.
+     */
+	//TODO: we use this design because CallParams is not yet stabilized, and we need 
+	//to think about the implementation of its equals/hashCode methods.
+	//To remove when it will be implemented. 
+    private static class CallParamsMatcher extends ArgumentMatcher<CallParams> {
+        
+        private final CallParams expected;
+        
+        public CallParamsMatcher(CallParams expected) {
+            this.expected = expected;
+        }
+        
+        @Override
+        public boolean matches(Object actual) {
+            if (actual == null && expected == null)
+                return true;
+            if (actual == null && expected != null)
+                return false;
+            if (!actual.getClass().equals(expected.getClass()))
+                return false;
+            
+            if (!((CallParams) actual).getSpeciesIds().equals(expected.getSpeciesIds())) {
+                return false;
+            }
+            if (actual instanceof ExpressionCallParams && 
+                    ((ExpressionCallParams) actual).isIncludeSubstructures() != 
+                    ((ExpressionCallParams) expected).isIncludeSubstructures()) {
+                return false;
+            }
+            if (actual instanceof NoExpressionCallParams && 
+                    ((NoExpressionCallParams) actual).isIncludeParentStructures() != 
+                    ((NoExpressionCallParams) expected).isIncludeParentStructures()) {
+                return false;
+            }
+            return true;
+        }
+    }
+    
+    /**
+     * Convenience factory method for using the custom {@code CallParams} matcher.
+     * 
+     *  @param expected  A {@code CallParams} that is the argument to be verified.
+     */
+    public static CallParams valueCallParamEq(CallParams params) {
+        return argThat(new CallParamsMatcher(params));
+    }
 }

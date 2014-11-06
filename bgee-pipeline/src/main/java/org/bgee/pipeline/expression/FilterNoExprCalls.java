@@ -206,8 +206,11 @@ public class FilterNoExprCalls extends MySQLDAOUser {
         //based on hashCode, not to iterate all expression calls each time 
         //we need to retrieve a specific one. We use a Map to do that, 
         //see http://stackoverflow.com/a/18380755/1768736
-        Map<ExpressionCallTO, ExpressionCallTO> exprCallTOs = 
-                new HashMap<ExpressionCallTO, ExpressionCallTO>();
+        //Also, we store the calls associated to their geneId, this will make analyzes 
+        //of a no-expression call faster. So we use a Map where keys are gene IDs, 
+        //and value is a Map where keys and values are the same associated expression calls. 
+        Map<String, Map<ExpressionCallTO, ExpressionCallTO>> exprCallTOsByGene = 
+                new HashMap<String, Map<ExpressionCallTO, ExpressionCallTO>>();
         log.debug("Retrieving expression calls for species {}...", speciesId);
         ExpressionCallTOResultSet exprRs = dao.getExpressionCalls(params);
         while (exprRs.next()) {
@@ -229,13 +232,19 @@ public class FilterNoExprCalls extends MySQLDAOUser {
                 throw log.throwing(new AssertionError("All data types should be retrieved. " +
                         "Offending expressionCallTO: " + exprCallTO));
             }
-            exprCallTOs.put(exprCallTO, exprCallTO);
+            Map<ExpressionCallTO, ExpressionCallTO> geneExprCallTOs = 
+                    exprCallTOsByGene.get(exprCallTO.getGeneId());
+            if (geneExprCallTOs == null) {
+                geneExprCallTOs = new HashMap<ExpressionCallTO, ExpressionCallTO>();
+                exprCallTOsByGene.put(exprCallTO.getGeneId(), geneExprCallTOs);
+            }
+            geneExprCallTOs.put(exprCallTO, exprCallTO);
         }
         //no need for a finally close, this part of the code is already 
         //in a try-finally block that will close everything in all cases.
         exprRs.close();
-        log.debug("Done retrieving expression calls for species {}, {} calls retrieved.", 
-                speciesId, exprCallTOs.size());
+        log.debug("Done retrieving expression calls for species {}, calls retrieved for {} genes.", 
+                speciesId, exprCallTOsByGene.size());
 
 
         //------------------ Analyze no-expression calls ---------------------
@@ -272,7 +281,8 @@ public class FilterNoExprCalls extends MySQLDAOUser {
                         "can be performed only on basic no-expression calls. " +
                         "Offending noExpressionCallTO: " + noExprCallTO));
             }
-            this.analyzeNoExprCallTO(noExprCallTO, exprCallTOs, 
+            this.analyzeNoExprCallTO(noExprCallTO, 
+                    exprCallTOsByGene.get(noExprCallTO.getGeneId()), 
                     anatEntityRels, stageRels);
         }
         //no need for a finally close, this part of the code is already 

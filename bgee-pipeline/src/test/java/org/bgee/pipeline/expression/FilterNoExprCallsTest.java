@@ -96,16 +96,19 @@ public class FilterNoExprCallsTest extends TestAncestor {
         // no-expression calls: ID1 gene_id1    Anat_id1    stage_id1   Affy    in situ relaxed in situ RNA-Seq
         //                      ID2 gene_id1    Anat_id2    stage_id2   Affy    in situ 
         //                      ID3 gene_id4    Anat_id3    stage_id3   Affy  
-        //                      => these 3 calls should be deleted
+        //                      ID10 gene_id1    Anat_id5    stage_id5   RNA-Seq  
+        //                      => these 4 calls should be deleted
         //                      ID4 gene_id2    Anat_id1    stage_id1   Affy    in situ relaxed in situ RNA-Seq 
         //=> kept: in situ    relaxed in situ 
         //                      ID5 gene_id2    Anat_id2    stage_id2   relaxed in situ RNA-Seq => kept: relaxed in situ
         //                      ID6 gene_id5    Anat_id3    stage_id3   in situ RNA-Seq => kept: in situ
-        //                      => these 3 calls should be updated
+        //                      ID11 gene_id2    Anat_id5    stage_id5   Affy RNA-Seq => kept: RNA-Seq
+        //                      => these 4 calls should be updated
         //                      ID7 gene_id3    Anat_id1    stage_id1   RNA-Seq
         //                      ID8 gene_id3    Anat_id2    stage_id2   relaxed in situ RNA-Seq
         //                      ID9 gene_id6    Anat_id3    stage_id3   RNA-Seq  
-        //                      => these 3 calls should be untouched
+        //                      ID12 gene_id3    Anat_id5    stage_id5   in situ    RNA-Seq  
+        //                      => these 4 calls should be untouched
         // expression calls:    gene_id1    Anat_id4    stage_id4   in situ   
         //                      gene_id1    Anat_id5    stage_id5   RNA-Seq
         //                      gene_id1    Anat_id2    stage_id2   Affy    in situ 
@@ -194,6 +197,10 @@ public class FilterNoExprCallsTest extends TestAncestor {
                                 new NoExpressionCallTO("2", "gene_id1", "Anat_id2", "stage_id2", 
                                 DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                                 DataState.NODATA, DataState.NODATA, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF), 
+                                new NoExpressionCallTO("10", "gene_id1", "Anat_id5", "stage_id5", 
+                                DataState.NODATA, DataState.NODATA, 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
                                 false, NoExpressionCallTO.OriginOfLine.SELF),  
 
                                 new NoExpressionCallTO("4", "gene_id2", "Anat_id1", "stage_id1", 
@@ -204,6 +211,10 @@ public class FilterNoExprCallsTest extends TestAncestor {
                                 DataState.NODATA, DataState.NODATA, 
                                 DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                                 false, NoExpressionCallTO.OriginOfLine.SELF),  
+                                new NoExpressionCallTO("11", "gene_id2", "Anat_id5", "stage_id5", 
+                                DataState.HIGHQUALITY, DataState.NODATA, 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF), 
 
                                 new NoExpressionCallTO("7", "gene_id3", "Anat_id1", "stage_id1", 
                                 DataState.NODATA, DataState.NODATA, 
@@ -212,6 +223,10 @@ public class FilterNoExprCallsTest extends TestAncestor {
                                 new NoExpressionCallTO("8", "gene_id3", "Anat_id2", "stage_id2", 
                                 DataState.NODATA, DataState.NODATA, 
                                 DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF), 
+                                new NoExpressionCallTO("12", "gene_id3", "Anat_id5", "stage_id5", 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
+                                DataState.NODATA, DataState.HIGHQUALITY, 
                                 false, NoExpressionCallTO.OriginOfLine.SELF)),
                                 
                                 MySQLNoExpressionCallTOResultSet.class);
@@ -308,13 +323,13 @@ public class FilterNoExprCallsTest extends TestAncestor {
                  thenReturn(mockStageRelationTORS21);
          
          // Define expected results passed to the DAOs
-         Set<String> expectedAffyNoExprIds11 = new HashSet<String>(Arrays.asList("1", "2", "4"));
+         Set<String> expectedAffyNoExprIds11 = new HashSet<String>(Arrays.asList("1", "2", "4", "11"));
          Set<String> expectedAffyNoExprIds21 = new HashSet<String>(Arrays.asList("3"));
          Set<String> expectedInSituNoExprIds11 = new HashSet<String>(Arrays.asList("1", "2"));
          Set<String> expectedInSituNoExprIds21 = new HashSet<String>();
-         Set<String> expectedRNASeqNoExprIds11 = new HashSet<String>(Arrays.asList("1", "4", "5"));
+         Set<String> expectedRNASeqNoExprIds11 = new HashSet<String>(Arrays.asList("1", "4", "5", "10"));
          Set<String> expectedRNASeqNoExprIds21 = new HashSet<String>(Arrays.asList("6"));
-         Set<String> expectedNoExprIdsDeleted11 = new HashSet<String>(Arrays.asList("1", "2"));
+         Set<String> expectedNoExprIdsDeleted11 = new HashSet<String>(Arrays.asList("1", "2", "10"));
          Set<String> expectedNoExprIdsDeleted21 = new HashSet<String>(Arrays.asList("3"));
          Set<NoExpressionCallTO> expectedNoExprCallTOsToUpdate11 = new HashSet<NoExpressionCallTO>(
                  Arrays.asList(new NoExpressionCallTO("4", "gene_id2", "Anat_id1", "stage_id1", 
@@ -324,6 +339,10 @@ public class FilterNoExprCallsTest extends TestAncestor {
                          new NoExpressionCallTO("5", "gene_id2", "Anat_id2", "stage_id2", 
                                  DataState.NODATA, DataState.NODATA, 
                                  DataState.HIGHQUALITY, DataState.NODATA, 
+                                 false, NoExpressionCallTO.OriginOfLine.SELF), 
+                         new NoExpressionCallTO("11", "gene_id2", "Anat_id5", "stage_id5", 
+                                 DataState.NODATA, DataState.NODATA, 
+                                 DataState.NODATA, DataState.HIGHQUALITY, 
                                  false, NoExpressionCallTO.OriginOfLine.SELF)));
          Set<NoExpressionCallTO> expectedNoExprCallTOsToUpdate21 = new HashSet<NoExpressionCallTO>(
                  Arrays.asList(new NoExpressionCallTO("6", "gene_id5", "Anat_id3", "stage_id3", 
@@ -333,17 +352,17 @@ public class FilterNoExprCallsTest extends TestAncestor {
          
          // mock the returned value of the update/delete call to DAOs
          when(mockManager.mockNoExpressionCallDAO.deleteNoExprCalls(
-                 expectedNoExprIdsDeleted11, false)).thenReturn(2);
+                 expectedNoExprIdsDeleted11, false)).thenReturn(3);
          when(mockManager.mockNoExpressionCallDAO.deleteNoExprCalls(
                  expectedNoExprIdsDeleted21, false)).thenReturn(1);
          
          when(mockManager.mockNoExpressionCallDAO.updateNoExprCalls(
-                 expectedNoExprCallTOsToUpdate11)).thenReturn(2);
+                 expectedNoExprCallTOsToUpdate11)).thenReturn(3);
          when(mockManager.mockNoExpressionCallDAO.updateNoExprCalls(
                  expectedNoExprCallTOsToUpdate21)).thenReturn(1);
          
          when(mockManager.mockAffymetrixProbesetDAO.updateNoExpressionConflicts(
-                 expectedAffyNoExprIds11)).thenReturn(3);
+                 expectedAffyNoExprIds11)).thenReturn(4);
          when(mockManager.mockAffymetrixProbesetDAO.updateNoExpressionConflicts(
                  expectedAffyNoExprIds21)).thenReturn(1);
          
@@ -351,7 +370,7 @@ public class FilterNoExprCallsTest extends TestAncestor {
                  expectedInSituNoExprIds11)).thenReturn(2);
          
          when(mockManager.mockRNASeqResultDAO.updateNoExpressionConflicts(
-                 expectedRNASeqNoExprIds11)).thenReturn(3);
+                 expectedRNASeqNoExprIds11)).thenReturn(4);
          when(mockManager.mockRNASeqResultDAO.updateNoExpressionConflicts(
                  expectedRNASeqNoExprIds21)).thenReturn(1);
          

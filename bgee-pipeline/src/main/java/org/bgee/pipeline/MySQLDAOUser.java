@@ -253,7 +253,7 @@ public abstract class MySQLDAOUser {
         log.exit();
     }
     
-    protected MySQLDAOManager getManager() {
+    public MySQLDAOManager getManager() {
         return this.manager;
     }
 }

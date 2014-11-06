@@ -56,7 +56,8 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     public final static String NOEXPRESSION_ARG = "no-expression";
 
     /**
-     * Main method to insert global expression or no-expression in Bgee database. 
+     * Main method to insert global expression or no-expression in Bgee database, see 
+     * {@link #insert(List, boolean)}
      * Parameters that must be provided in order in {@code args} are: 
      * <ol>
      * <li>A {@code String} defining whether the propagation is for expression or no-expression. 
@@ -114,45 +115,67 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     private final FilterNoExprCalls filterNoExprCalls;
 
     /**
-     * Default constructor. 
+     * Default constructor, using a default {@code MySQLDAOManager} to perform queries 
+     * on the data source, and a default {@code FilterNoExprCalls} for cleaning 
+     * conflicting no-expression calls before propagation (see 
+     * {@link #InsertGlobalCalls(MySQLDAOManager)} and #InsertGlobalCalls(FilterNoExprCalls)}).
      */
     public InsertGlobalCalls() {
-        this(null, null);
+        this((MySQLDAOManager) null);
     }
     /**
      * Constructor providing the {@code MySQLDAOManager} that will be used by 
-     * this object to perform queries to the database. This is useful for unit testing.
+     * this object to perform queries to the database. The default {@link FilterNoExprCalls} 
+     * will be used for cleaning conflicting no-expression calls before propagation 
+     * (see {@link #InsertGlobalCalls(FilterNoExprCalls)}).
      * 
      * @param manager   the {@code MySQLDAOManager} to use.
      */
     public InsertGlobalCalls(MySQLDAOManager manager) {
-        this(manager, null);
+        this(new FilterNoExprCalls(manager));
     }
 
     /**
-     * Constructor providing the {@code MySQLDAOManager} and the {@code FilterNoExprCalls}. 
-     * The {@code MySQLDAOManager} will be used by this object to perform queries 
-     * to the database. The {@code FilterNoExprCalls} will be used to make sure 
-     * no-expression calls were filtered before propagating them. If one of these arguments 
-     * is {@code null}, a new instance of these classes will be retrieved to be used 
-     * by this class. 
+     * Constructor providing the {@code FilterNoExprCalls} used for cleaning 
+     * conflicting no-expression calls before propagation. The {@code MySQLDAOManager} 
+     * used to perform queries to the data source will also be retrieved 
+     * from it (to make sure {@code filterNoExprCalls} and this object use the same). 
+     * If {@code filterNoExprCalls} is {@code null}, or if it does not allow 
+     * to retrieve a {@code MySQLDAOManager}, an {@code IllegalArgumentException} is thrown. 
+     * If you need to use the default implementation of {@code FilterNoExprCalls}, 
+     * use {@link #InsertGlobalCalls()} or {@link #InsertGlobalCalls(MySQLDAOManager)}.
      * 
-     * @param manager           the {@code MySQLDAOManager} to use. If {@code null}, 
-     *                          an instance will be retrieved by the constructor.
      * @param filterNoExprCalls The {@code FilterNoExprCalls} used to make sure 
-     *                          no-expression calls are filtered before propagating them.
-     *                          It is not needed when propagating expression data. 
-     *                          If {@code null}, an instance will be retrieved 
-     *                          by this constructor.
+     *                          no-expression calls are filtered before propagating them, 
+     *                          and that will also provide the {@code MySQLDAOManager} 
+     *                          to be used by this object.
+     * @throws IllegalArgumentException If {@code filterNoExprCalls} is {@code null} or 
+     *                                  does not allow to retrieve a valid {@code MySQLDAOManager}.
      */
-    public InsertGlobalCalls(MySQLDAOManager manager, FilterNoExprCalls filterNoExprCalls) {
-        super(manager);
-        this.globalId = 0;
-        if (filterNoExprCalls != null) {
-            this.filterNoExprCalls = filterNoExprCalls;
-        } else {
-            this.filterNoExprCalls = new FilterNoExprCalls(this.getManager());
+    public InsertGlobalCalls(FilterNoExprCalls filterNoExprCalls) {
+        //we make this statement to not throw an NullPointerException here 
+        //if filterNoExprCalls is null, but we will throw an IllegalArgumentException 
+        //afterwards. 
+        super((filterNoExprCalls != null) ? filterNoExprCalls.getManager(): null);
+        if (filterNoExprCalls == null) {
+            throw log.throwing(new IllegalArgumentException("Provided FilterNoExprCalls " +
+            		"cannot be null."));
         }
+        //also, filterNoExprCalls should already have a MySQLDAOManager instantiated, 
+        //otherwise we cannot guarantee that filterNoExprCalls and this object will use 
+        //the same. 
+        if (filterNoExprCalls.getManager() == null) {
+            throw log.throwing(new IllegalArgumentException("Provided FilterNoExprCalls " +
+                    "should allow to retrieve a valid DAOManager."));
+        }
+        //so at this point, DAOManager of filterNoExprCalls and of this object should be 
+        //the same...
+        if (this.getManager() != filterNoExprCalls.getManager()) {
+            throw log.throwing(new AssertionError("Provided FilterNoExprCalls " +
+                    "and this object use a different DAOManager."));
+        }
+        this.filterNoExprCalls = filterNoExprCalls;
+        this.globalId = 0;
     }
 
     /**

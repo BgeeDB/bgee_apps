@@ -613,7 +613,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
                 thenReturn(mockRelation11TORs);
 
         FilterNoExprCalls filter = mock(FilterNoExprCalls.class); 
-        InsertGlobalCalls insert = new InsertGlobalCalls(mockManager, filter);
+        when(filter.getManager()).thenReturn(mockManager);
+        InsertGlobalCalls insert = new InsertGlobalCalls(filter);
         insert.insert(speciesId, true);
         
         verify(filter).filterNoExpressionCalls(speciesId.get(0));

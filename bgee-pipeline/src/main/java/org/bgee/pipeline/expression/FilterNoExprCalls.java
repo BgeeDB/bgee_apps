@@ -86,11 +86,13 @@ public class FilterNoExprCalls extends MySQLDAOUser {
      * several species, for cleaning no-expression calls one species at a time.  
      */
     private void initAttributes() {
+        log.entry();
         this.affyNoExprIds = new HashSet<String>();
         this.inSituNoExprIds = new HashSet<String>();
         this.rnaSeqNoExprIds = new HashSet<String>();
         this.toDeleteNoExprIds = new HashSet<String>();
         this.noExprCallsToUpdate = new HashSet<NoExpressionCallTO>();
+        log.exit();
     }
     
     /**
@@ -293,7 +295,9 @@ public class FilterNoExprCalls extends MySQLDAOUser {
 
         //------------------ Update no-expression calls ---------------------
         this.updateDataSource();
-        
+
+        //free memory
+        this.initAttributes();
         log.exit();
     }
     

@@ -1,9 +1,7 @@
 package org.bgee.pipeline.expression;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -361,18 +359,20 @@ public class FilterNoExprCallsTest extends TestAncestor {
          when(mockManager.mockNoExpressionCallDAO.updateNoExprCalls(
                  expectedNoExprCallTOsToUpdate21)).thenReturn(1);
          
+         //return arbitrary numbers of raw data updated, as several raw data can be mapped 
+         //to a same noExpressionId
          when(mockManager.mockAffymetrixProbesetDAO.updateNoExpressionConflicts(
-                 expectedAffyNoExprIds11)).thenReturn(4);
+                 expectedAffyNoExprIds11)).thenReturn(10);
          when(mockManager.mockAffymetrixProbesetDAO.updateNoExpressionConflicts(
-                 expectedAffyNoExprIds21)).thenReturn(1);
+                 expectedAffyNoExprIds21)).thenReturn(3);
          
          when(mockManager.mockInSituSpotDAO.updateNoExpressionConflicts(
-                 expectedInSituNoExprIds11)).thenReturn(2);
+                 expectedInSituNoExprIds11)).thenReturn(20);
          
          when(mockManager.mockRNASeqResultDAO.updateNoExpressionConflicts(
-                 expectedRNASeqNoExprIds11)).thenReturn(4);
+                 expectedRNASeqNoExprIds11)).thenReturn(5);
          when(mockManager.mockRNASeqResultDAO.updateNoExpressionConflicts(
-                 expectedRNASeqNoExprIds21)).thenReturn(1);
+                 expectedRNASeqNoExprIds21)).thenReturn(9);
          
 
          //*********************************************

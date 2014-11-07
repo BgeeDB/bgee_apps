@@ -495,28 +495,34 @@ public class FilterNoExprCalls extends MySQLDAOUser {
         log.debug("Updating data source...");
         
         if (!this.affyNoExprIds.isEmpty()) {
-            int updateCount = this.getAffymetrixProbesetDAO().updateNoExpressionConflicts(
-                    this.affyNoExprIds);
-            if (updateCount != this.affyNoExprIds.size()) {
-                throw log.throwing(new AssertionError("Incorrect number of probesets updated, " +
-                		"expected: " + this.affyNoExprIds.size() + " but was: " + updateCount));
-            }
+            //actually, as several probesets can be mapped to a same noExpressionId, 
+            //we cannot know how many probesets will be updated. 
+//            int updateCount = 
+            this.getAffymetrixProbesetDAO().updateNoExpressionConflicts(this.affyNoExprIds);
+//            if (updateCount != this.affyNoExprIds.size()) {
+//                throw log.throwing(new AssertionError("Incorrect number of probesets updated, " +
+//                		"expected: " + this.affyNoExprIds.size() + " but was: " + updateCount));
+//            }
         }
         if (!this.inSituNoExprIds.isEmpty()) {
-            int updateCount = this.getInSituSpotDAO().updateNoExpressionConflicts(
-                    this.inSituNoExprIds);
-            if (updateCount != this.inSituNoExprIds.size()) {
-                throw log.throwing(new AssertionError("Incorrect number of in-situ spots updated, " +
-                        "expected: " + this.inSituNoExprIds.size() + " but was: " + updateCount));
-            }
+            //actually, as several in-situ spots can be mapped to a same noExpressionId, 
+            //we cannot know how many spots will be updated. 
+//            int updateCount = 
+            this.getInSituSpotDAO().updateNoExpressionConflicts(this.inSituNoExprIds);
+//            if (updateCount != this.inSituNoExprIds.size()) {
+//                throw log.throwing(new AssertionError("Incorrect number of in-situ spots updated, " +
+//                        "expected: " + this.inSituNoExprIds.size() + " but was: " + updateCount));
+//            }
         }
         if (!this.rnaSeqNoExprIds.isEmpty()) {
-            int updateCount = this.getRNASeqResultDAO().updateNoExpressionConflicts(
-                    this.rnaSeqNoExprIds);
-            if (updateCount != this.rnaSeqNoExprIds.size()) {
-                throw log.throwing(new AssertionError("Incorrect number of RNA-Seq results updated, " +
-                        "expected: " + this.rnaSeqNoExprIds.size() + " but was: " + updateCount));
-            }
+            //actually, as several RNA-Seq results can be mapped to a same noExpressionId, 
+            //we cannot know how many results will be updated. 
+//            int updateCount = 
+            this.getRNASeqResultDAO().updateNoExpressionConflicts(this.rnaSeqNoExprIds);
+//            if (updateCount != this.rnaSeqNoExprIds.size()) {
+//                throw log.throwing(new AssertionError("Incorrect number of RNA-Seq results updated, " +
+//                        "expected: " + this.rnaSeqNoExprIds.size() + " but was: " + updateCount));
+//            }
         }
         if (!this.toDeleteNoExprIds.isEmpty()) {
             int deleteCount = this.getNoExpressionCallDAO().deleteNoExprCalls(

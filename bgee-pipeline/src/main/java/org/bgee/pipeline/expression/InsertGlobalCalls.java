@@ -406,7 +406,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
     private Set<String> loadAllowedAnatEntities() throws DAOException {
         log.entry();
         
-        log.info("Start retrieving anat entities all for no-expression call propagation...");
+        log.info("Start retrieving allowed anat entities for no-expression call propagation...");
         Set<String> allowedAnatEntities = new HashSet<String>();
         
         log.debug("Retrieving anat entities with expression calls...");
@@ -451,7 +451,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         }
         allowedAnatEntities.addAll(ancestorIds);
 
-        log.info("Done retrieving anat entities for no-expression call propagation, {} entities allowed: {}", 
+        log.info("Done retrieving allowed anat entities for no-expression call propagation, {} entities allowed: {}", 
                 allowedAnatEntities.size());
     
         return log.exit(allowedAnatEntities);        

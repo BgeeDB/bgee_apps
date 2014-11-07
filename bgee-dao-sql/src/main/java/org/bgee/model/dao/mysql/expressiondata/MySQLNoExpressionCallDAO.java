@@ -89,16 +89,55 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
         //Construct sql query
         String sql = new String(); 
-        if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT " + tableName + ".*";
-        } else {
+        //the Attribute INCLUDEPARENTSTRUCTURES does not correspond 
+        //to any columns in a table, but it allows to determine how the TOs returned 
+        //were generated. 
+        //The TOs returned by the ResultSet will have this value set to false 
+        //by default. So, only if isIncludeParentStructures is true, we add a fake column 
+        //to the query to provide the information to the ResultSet, otherwise it is not needed. 
+        String sqlIncludeParentStructures = " 1 AS " + this.attributeToString(
+            NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, isIncludeParentStructures);
+        if (attributes != null) {
             for (NoExpressionCallDAO.Attribute attribute: attributes) {
-                if (sql.length() == 0) {
+                //INCLUDEPARENTSTRUCTURES corresponds to a fake column, to inform about 
+                //how the TO was generated. As the default value is false, we need to add 
+                //the fake column only if isIncludeParentStructures is true, otherwise, 
+                //we can skip this attribute. 
+                if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES) && 
+                        !isIncludeParentStructures) {
+                    continue;
+                }
+                //ORIGINOFLINE corresponds to a column only in the globalNoExpression table, 
+                //but we can still provide the information SELF for basic calls. As it is 
+                //the default value in the TOs returned, we just need to skip this attribute 
+                //if basic calls were requested. 
+                if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGINOFLINE) && 
+                        !isIncludeParentStructures) {
+                    continue;
+                }
+                if (sql.isEmpty()) {
                     sql += "SELECT DISTINCT ";
                 } else {
                     sql += ", ";
                 }
-                sql += tableName + "." + this.attributeToString(attribute, isIncludeParentStructures);
+                if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES)) {
+                    //add fake column
+                    sql += sqlIncludeParentStructures;
+                } else {
+                    //otherwise, real column requested
+                    sql +=  tableName + "." + 
+                            this.attributeToString(attribute, isIncludeParentStructures);
+                }
+            }
+        }
+        if (sql.isEmpty()) {
+            //at this point, either there was no attribute requested, or only unnecessary 
+            //fake columns were requested. As the latter case is really a weird use case, 
+            //we don't bother and retrieve all columns anyway.
+            sql += "SELECT " + tableName + ".*";
+            //add fake column if needed. 
+            if (isIncludeParentStructures) {
+                sql += ", " + sqlIncludeParentStructures;
             }
         }
         sql += " FROM " + tableName;
@@ -170,6 +209,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @return                          A {@code String} that correspond to the given 
      *                                  {@code NoExpressionCallDAO.Attribute}
      */
+    //TODO: see note about MySQLExpressionCallDAO#attributeToString(Attribute, boolean)
     private String attributeToString(NoExpressionCallDAO.Attribute attribute,
             boolean isIncludeParentStructures) {
         log.entry(attribute, isIncludeParentStructures);
@@ -196,15 +236,9 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.RNASEQDATA)) {
             label = "noExpressionRnaSeqData";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGINOFLINE)) {
-            if (isIncludeParentStructures) {
-                label = "noExpressionOriginOfLine";
-            } else {
-                throw log.throwing(new IllegalStateException("No noExpressionOriginOfLine in "+
-                                                             "expression table"));
-            }
+            label = "noExpressionOriginOfLine";
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES)) {
-            throw log.throwing(new IllegalStateException(
-                    attribute.toString() + "is not a column of the noExpression table"));
+            label = "includeParentStructures";
         } else {
             throw log.throwing(new IllegalStateException("The attribute provided (" +
                     attribute.toString() + ") is unknown for " + NoExpressionCallDAO.class.getName()));
@@ -500,7 +534,6 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             boolean includeParentStructures = false;
             OriginOfLine noExpressionOriginOfLine = OriginOfLine.SELF;
 
-            boolean isGlobalExpression = false;
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
@@ -538,16 +571,16 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                     } else if (column.getValue().equals("noExpressionOriginOfLine")) {
                         noExpressionOriginOfLine = OriginOfLine.convertToOriginOfLine(
                                         currentResultSet.getString(column.getKey()));
-                        isGlobalExpression = true;
-                    }
+                        //NOTE: and what if originOfLine was not requested? we will not see 
+                        //that it is a global call...
+                        //isGlobalExpression = true;
+                    } else if (column.getValue().equals("includeParentStructures")) {
+                        includeParentStructures = currentResultSet.getBoolean(column.getKey());
+                    } 
 
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));
                 }
-            }
-            
-            if (isGlobalExpression) {
-                includeParentStructures = true;
             }
 
             return log.exit(new NoExpressionCallTO(id, geneId, anatEntityId,

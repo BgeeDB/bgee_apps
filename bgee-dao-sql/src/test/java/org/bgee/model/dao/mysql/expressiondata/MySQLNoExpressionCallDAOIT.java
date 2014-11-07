@@ -59,6 +59,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
      * @throws SQLException 
      */
     @Test
+    //TODO: are there tests with no Attributes provided?
     public void shouldGetNoExpressionCalls() throws SQLException {
         this.useSelectDB();
         
@@ -71,11 +72,13 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 NoExpressionCallDAO.Attribute.ANATENTITYID, 
                 NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, 
                 NoExpressionCallDAO.Attribute.INSITUDATA,
-                NoExpressionCallDAO.Attribute.RNASEQDATA
+                NoExpressionCallDAO.Attribute.RNASEQDATA, 
                 // Remove INCLUDEPARENTSTRUCTURES because not data from DB
-                //NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, 
+                //NOTE: and it didn't disturb you to have useless Attributes?
+                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, 
                 // Remove ORIGINOFLINE because we test get no-expression calls on no-expression table
-                //NoExpressionCallDAO.Attribute.ORIGINOFLINE
+                //NOTE: how is an user supposed to guess?
+                NoExpressionCallDAO.Attribute.ORIGINOFLINE
                 ));
         
         // Without speciesIds and not include parent structures
@@ -139,6 +142,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, 
                 NoExpressionCallDAO.Attribute.INSITUDATA,
                 NoExpressionCallDAO.Attribute.RNASEQDATA,
+                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, 
                 NoExpressionCallDAO.Attribute.ORIGINOFLINE));
         params.setIncludeParentStructures(true);
         
@@ -150,7 +154,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, true, OriginOfLine.SELF),
                 new NoExpressionCallTO("2", "ID2", "Anat_id2", "Stage_id13", 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+                        DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
                 new NoExpressionCallTO("3", "ID2", "Anat_id1", "Stage_id13", 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
@@ -178,7 +182,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, true, OriginOfLine.SELF),
                 new NoExpressionCallTO("2", "ID2", "Anat_id2", "Stage_id13",
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+                        DataState.HIGHQUALITY, true, OriginOfLine.BOTH),
                 new NoExpressionCallTO("3", "ID2", "Anat_id1", "Stage_id13",
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
                         DataState.HIGHQUALITY, true, OriginOfLine.PARENT),

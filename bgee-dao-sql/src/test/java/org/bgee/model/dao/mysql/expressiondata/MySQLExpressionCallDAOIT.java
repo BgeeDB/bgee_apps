@@ -57,6 +57,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
      * Test the select method {@link MySQLExpressionCallDAO#getExpressionCalls()}.
      */
     @Test
+    //TODO: are there tests with no Attributes provided?
     public void shouldGetExpressionCalls() throws SQLException {
         log.entry();
         
@@ -73,12 +74,14 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 ExpressionCallDAO.Attribute.INSITUDATA,
                 // Remove RELAXEDINSITUDATA because not already in database
                 //ExpressionCallDAO.Attribute.RELAXEDINSITUDATA, 
-                ExpressionCallDAO.Attribute.RNASEQDATA
+                ExpressionCallDAO.Attribute.RNASEQDATA, 
                 // Remove INCLUDESUBSTRUCTURES and INCLUDESUBSTAGES because not data from DB
-                //ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES, 
-                //ExpressionCallDAO.Attribute.INCLUDESUBSTAGES,
+                //NOTE: and it didn't disturb you to have useless Attributes?
+                ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES, 
+                ExpressionCallDAO.Attribute.INCLUDESUBSTAGES,
                 // Remove ORIGINOFLINE because we test get expression calls on expression table
-                //ExpressionCallDAO.Attribute.ORIGINOFLINE
+                //NOTE: how is an user supposed to guess?
+                ExpressionCallDAO.Attribute.ORIGINOFLINE
                 ));
 
         // Without speciesIds and not include substructures
@@ -125,6 +128,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 ExpressionCallDAO.Attribute.ESTDATA, 
                 ExpressionCallDAO.Attribute.INSITUDATA,
                 ExpressionCallDAO.Attribute.RNASEQDATA,
+                ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES, 
+                ExpressionCallDAO.Attribute.INCLUDESUBSTAGES,
                 ExpressionCallDAO.Attribute.ORIGINOFLINE));
         // With speciesIds and include substructures 
         // Generate parameters
@@ -133,7 +138,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         expectedExprCalls = Arrays.asList(
                 new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY,  DataState.LOWQUALITY, true, false, OriginOfLine.SELF),
                 new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, DataState.NODATA, DataState.NODATA,  DataState.LOWQUALITY, true, false, OriginOfLine.SELF),
-                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, OriginOfLine.SELF));
+                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, OriginOfLine.BOTH));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
@@ -148,7 +153,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, true, false, OriginOfLine.SELF),
                 new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, true, false, OriginOfLine.SELF),
                 new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, false, OriginOfLine.SELF),
-                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, OriginOfLine.SELF),
+                new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, true, false, OriginOfLine.BOTH),
                 new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, true, false, OriginOfLine.SELF),
                 new ExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13", DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, true, false, OriginOfLine.SELF),
                 new ExpressionCallTO("8", "ID3", "Anat_id2", "Stage_id1", DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT),

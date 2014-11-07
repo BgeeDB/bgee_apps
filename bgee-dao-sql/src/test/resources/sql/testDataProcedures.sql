@@ -194,7 +194,7 @@ BEGIN
                (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality','self'),
                (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality','self'),
                (4,'ID2','Anat_id2','Stage_id18','high quality','high quality','high quality','high quality','self'),
-               (5,'ID1','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','poor quality','self'),
+               (5,'ID1','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','poor quality','both'),
                (6,'ID2','Anat_id11','Stage_id12','poor quality','high quality','no data','high quality','self'),
                (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data','self'),
                (8,'ID3','Anat_id2','Stage_id1','no data','poor quality','high quality','high quality','descent'),
@@ -244,7 +244,7 @@ BEGIN
 
         INSERT INTO globalNoExpression(globalNoExpressionId,geneId,anatEntityId,stageId,noExpressionAffymetrixData,noExpressionInSituData,noExpressionRnaSeqData,noExpressionOriginOfLine)
         VALUES (1,'ID2','Anat_id5','Stage_id13','poor quality','high quality','high quality','self'),
-               (2,'ID2','Anat_id2','Stage_id13','poor quality','high quality','high quality','parent'),
+               (2,'ID2','Anat_id2','Stage_id13','poor quality','high quality','high quality','both'),
                (3,'ID2','Anat_id1','Stage_id13','poor quality','high quality','high quality','parent'),
                (4,'ID3','Anat_id6','Stage_id6','no data','no data','poor quality','self'),
                (5,'ID3','Anat_id5','Stage_id6','high quality','no data','high quality','both'),

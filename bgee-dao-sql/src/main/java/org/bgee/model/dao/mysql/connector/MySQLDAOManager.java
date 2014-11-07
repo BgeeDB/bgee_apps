@@ -234,7 +234,7 @@ public class MySQLDAOManager extends DAOManager {
      */
     public BgeeConnection getConnection() throws SQLException {
         log.entry();
-        log.debug("Trying to obtain a BgeeConnection");
+        log.trace("Trying to obtain a BgeeConnection");
 
         if (this.isClosed()) {
             throw new SQLException("This DAOManager is already closed.");
@@ -251,7 +251,7 @@ public class MySQLDAOManager extends DAOManager {
             BgeeConnection connection = this.connections.get(connectionId);
             //if the connection already exists, return it
             if (connection != null) {
-                log.debug("Return an already opened Connection with ID {}", connection.getId());
+                log.trace("Return an already opened Connection with ID {}", connection.getId());
                 return log.exit(connection);
             }
             //otherwise, create a new connection

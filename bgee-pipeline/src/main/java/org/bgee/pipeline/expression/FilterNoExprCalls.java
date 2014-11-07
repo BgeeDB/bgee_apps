@@ -290,7 +290,11 @@ public class FilterNoExprCalls extends MySQLDAOUser {
         //no need for a finally close, this part of the code is already 
         //in a try-finally block that will close everything in all cases. 
         noExprRs.close();
-        log.debug("Done analyzing no-expression calls.");
+        log.debug("Done analyzing no-expression calls, {} no-expression calls to delete, " +
+        		"{} no-expression calls to update, {} no-expression calls with affymetrix data, {} with in-situ, {} with RNA-Seq.", 
+        		this.toDeleteNoExprIds.size(), this.noExprCallsToUpdate.size(), 
+        		this.affyNoExprIds.size(), this.inSituNoExprIds.size(), 
+        		this.rnaSeqNoExprIds.size());
 
 
         //------------------ Update no-expression calls ---------------------

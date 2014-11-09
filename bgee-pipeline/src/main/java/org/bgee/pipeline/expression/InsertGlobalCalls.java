@@ -231,12 +231,12 @@ public class InsertGlobalCalls extends MySQLDAOUser {
                 this.startTransaction();
 
                 if (isNoExpression) {
-                    
-                    log.info("Launch cleaning of no-expression calls before propagation");
-                    this.filterNoExprCalls.filterNoExpressionCalls(speciesId);
-                    
                     log.info("Start propagating no-expression calls for species {}", 
                             speciesId);
+                    
+                    log.info("Cleaning conflicting no-expression calls before propagation...");
+                    this.filterNoExprCalls.filterNoExpressionCalls(speciesId);
+                    log.info("Done cleaning conflicting no-expression calls before propagation.");
                     
                     LinkedHashMap<String, List<NoExpressionCallTO>> noExprTOs = 
                             BgeeDBUtils.getNoExpressionCallsByGeneId(
@@ -451,7 +451,7 @@ public class InsertGlobalCalls extends MySQLDAOUser {
         }
         allowedAnatEntities.addAll(ancestorIds);
 
-        log.info("Done retrieving allowed anat entities for no-expression call propagation, {} entities allowed: {}", 
+        log.info("Done retrieving allowed anat entities for no-expression call propagation, {} entities allowed.", 
                 allowedAnatEntities.size());
     
         return log.exit(allowedAnatEntities);        

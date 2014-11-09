@@ -19,10 +19,9 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
  * It implements the {@code AutoCloseable} interface so that it can be used in a 
  * {@code try-with-resources} statement.
  * <p>
- * Note that the {@code executeQuery} method should not be used directly by {@code DAO}s, 
- * but only by {@link MySQLDAOResultSet}s, this is why it is not public. See documentation 
- * of {@link MySQLDAOResultSet} for more details. {@code DAO}s should only create 
- * the SQL statement, and set the parameters.
+ * Note that the {@code executeQuery} method should not be used directly by {@code DAO} methods 
+ * returning {@code TransferObject}s, but only by {@link MySQLDAOResultSet}s, this is why 
+ * it is not public. See documentation of {@link MySQLDAOResultSet} for more details. 
  * <p>
  * Note that you should not use a {@code try-with-resource} statement with this class, 
  * for methods returning a pointer to the results, and not the actual results. Indeed, 
@@ -501,5 +500,8 @@ public class BgeePreparedStatement implements AutoCloseable {
         this.executed = executed;
     }   
 
-    
+    @Override
+    public String toString() {
+        return "BgeePreparedStatement: " + this.getRealPreparedStatement().toString();
+    }
 }

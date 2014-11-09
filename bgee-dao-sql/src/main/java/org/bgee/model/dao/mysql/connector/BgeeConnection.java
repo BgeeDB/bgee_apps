@@ -243,7 +243,6 @@ public class BgeeConnection implements AutoCloseable {
     void statementClosed(BgeePreparedStatement stmt)
     {
         log.entry(stmt);
-        log.debug("Releasing BgeePreparedStatement {}", stmt);
         this.preparedStatements.remove(stmt);
         log.exit();
     }

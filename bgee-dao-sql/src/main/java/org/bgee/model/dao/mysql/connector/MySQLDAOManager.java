@@ -234,7 +234,6 @@ public class MySQLDAOManager extends DAOManager {
      */
     public BgeeConnection getConnection() throws SQLException {
         log.entry();
-        log.trace("Trying to obtain a BgeeConnection");
 
         if (this.isClosed()) {
             throw new SQLException("This DAOManager is already closed.");

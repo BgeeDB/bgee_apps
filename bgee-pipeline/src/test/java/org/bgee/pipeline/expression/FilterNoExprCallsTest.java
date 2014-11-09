@@ -127,39 +127,39 @@ public class FilterNoExprCallsTest extends TestAncestor {
                                 new ExpressionCallTO(null, "gene_id1", "Anat_id4", "stage_id4", 
                                 DataState.NODATA, DataState.NODATA, 
                                 DataState.LOWQUALITY, DataState.NODATA, 
-                                true, true, ExpressionCallTO.OriginOfLine.BOTH), 
+                                false, false, ExpressionCallTO.OriginOfLine.BOTH), 
                                 new ExpressionCallTO(null, "gene_id1", "Anat_id5", "stage_id5", 
                                 DataState.NODATA, DataState.NODATA, 
                                 DataState.NODATA, DataState.HIGHQUALITY, 
-                                true, true, ExpressionCallTO.OriginOfLine.SELF), 
+                                false, false, ExpressionCallTO.OriginOfLine.SELF), 
                                 new ExpressionCallTO(null, "gene_id1", "Anat_id2", "stage_id2", 
                                 DataState.LOWQUALITY, DataState.NODATA, 
                                 DataState.HIGHQUALITY, DataState.NODATA, 
-                                true, true, ExpressionCallTO.OriginOfLine.DESCENT), 
+                                false, false, ExpressionCallTO.OriginOfLine.DESCENT), 
                                 
                                 new ExpressionCallTO(null, "gene_id2", "Anat_id5", "stage_id5", 
                                 DataState.LOWQUALITY, DataState.NODATA, 
                                 DataState.NODATA, DataState.NODATA, 
-                                true, true, ExpressionCallTO.OriginOfLine.BOTH), 
+                                false, false, ExpressionCallTO.OriginOfLine.BOTH), 
                                 new ExpressionCallTO(null, "gene_id2", "Anat_id2", "stage_id2", 
                                 DataState.LOWQUALITY, DataState.NODATA, 
                                 DataState.NODATA, DataState.HIGHQUALITY, 
-                                true, true, ExpressionCallTO.OriginOfLine.BOTH), 
+                                false, false, ExpressionCallTO.OriginOfLine.BOTH), 
                                 
                                 new ExpressionCallTO(null, "gene_id3", "Anat_id5", "stage_id5", 
                                 DataState.LOWQUALITY, DataState.NODATA, 
                                 DataState.NODATA, DataState.NODATA, 
-                                true, true, ExpressionCallTO.OriginOfLine.BOTH), 
+                                false, false, ExpressionCallTO.OriginOfLine.BOTH), 
                                 new ExpressionCallTO(null, "gene_id3", "Anat_id2", "stage_id2", 
                                 DataState.LOWQUALITY, DataState.NODATA, 
                                 DataState.NODATA, DataState.NODATA, 
-                                true, true, ExpressionCallTO.OriginOfLine.SELF)),
+                                false, false, ExpressionCallTO.OriginOfLine.SELF)),
                 MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("11"));
-        params.setIncludeSubstructures(true);
+        params.setIncludeSubstructures(false);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                (ExpressionCallParams) valueCallParamEq(params))).
                 thenReturn(mockExpr11TORS);
         
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
@@ -168,23 +168,23 @@ public class FilterNoExprCallsTest extends TestAncestor {
                         new ExpressionCallTO(null, "gene_id4", "Anat_id3", "stage_id3", 
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, 
-                        true, true, ExpressionCallTO.OriginOfLine.BOTH), 
+                        false, false, ExpressionCallTO.OriginOfLine.BOTH), 
                         
                         new ExpressionCallTO(null, "gene_id5", "Anat_id3", "stage_id3", 
                         DataState.NODATA, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY, 
-                        true, true, ExpressionCallTO.OriginOfLine.BOTH), 
+                        false, false, ExpressionCallTO.OriginOfLine.BOTH), 
                         
                         new ExpressionCallTO(null, "gene_id6", "Anat_id3", "stage_id3", 
                         DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.NODATA, 
-                        true, true, ExpressionCallTO.OriginOfLine.BOTH)),
+                        false, false, ExpressionCallTO.OriginOfLine.BOTH)),
                 MySQLExpressionCallTOResultSet.class);
         params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("21"));
-        params.setIncludeSubstructures(true);
+        params.setIncludeSubstructures(false);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                (ExpressionCallParams) valueCallParamEq(params))).
                 thenReturn(mockExpr21TORS);
         
         //mock the returned of getNoExpressionCalls
@@ -233,7 +233,7 @@ public class FilterNoExprCallsTest extends TestAncestor {
         NoExpressionCallParams noExprParams = new NoExpressionCallParams();
         noExprParams.addAllSpeciesIds(Arrays.asList("11"));
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(noExprParams))).
+                (NoExpressionCallParams) valueCallParamEq(noExprParams))).
                 thenReturn(mockNoExpr11TORS);
 
         //mock the returned of getNoExpressionCalls
@@ -263,7 +263,7 @@ public class FilterNoExprCallsTest extends TestAncestor {
         noExprParams = new NoExpressionCallParams();
         noExprParams.addAllSpeciesIds(Arrays.asList("21"));
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(noExprParams))).
+                (NoExpressionCallParams) valueCallParamEq(noExprParams))).
                 thenReturn(mockNoExpr21TORS);
         
         

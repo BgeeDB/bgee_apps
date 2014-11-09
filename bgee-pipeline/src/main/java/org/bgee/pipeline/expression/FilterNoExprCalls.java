@@ -188,13 +188,11 @@ public class FilterNoExprCalls extends MySQLDAOUser {
 
         
         //------------------ Retrieve expression calls ---------------------
-        //get the global expression calls for this species (it should work the same 
-        //with basic expression calls, but we're never too careful! This will increase 
-        //the memory usage, but not the process time, as retrieval of conflicting 
-        //expression calls are hashCode-based). 
+        //get the expression calls for this species
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesFilter);
-        params.setIncludeSubstructures(true);
+        //make sure we do not depend on previous insertions in globalExpression table.
+        params.setIncludeSubstructures(false);
         //we do not want the IDs of the expression calls, otherwise the equals/hashCode methods 
         //will be based on these IDs, while we want the comparisons to be based on 
         //the anatEntityId, stageId and geneId. 

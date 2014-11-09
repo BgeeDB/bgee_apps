@@ -107,6 +107,8 @@ public class FilterNoExprCallsTest extends TestAncestor {
         //                      ID9 gene_id6    Anat_id3    stage_id3   RNA-Seq  
         //                      ID12 gene_id3    Anat_id5    stage_id5   in situ    RNA-Seq  
         //                      => these 4 calls should be untouched
+        //                      ID13 gene_id7    Anat_id5    stage_id5   Affy   in situ    relaxed in situ  RNA-Seq  
+        //                      => No expression calls at all for this gene, for regression test
         // expression calls:    gene_id1    Anat_id4    stage_id4   in situ   
         //                      gene_id1    Anat_id5    stage_id5   RNA-Seq
         //                      gene_id1    Anat_id2    stage_id2   Affy    in situ 
@@ -250,6 +252,11 @@ public class FilterNoExprCallsTest extends TestAncestor {
                                 new NoExpressionCallTO("9", "gene_id6", "Anat_id3", "stage_id3", 
                                 DataState.NODATA, DataState.NODATA, 
                                 DataState.NODATA, DataState.HIGHQUALITY, 
+                                false, NoExpressionCallTO.OriginOfLine.SELF), 
+
+                                new NoExpressionCallTO("13", "gene_id7", "Anat_id5", "stage_id5", 
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                                 false, NoExpressionCallTO.OriginOfLine.SELF)),
                                 
                                 MySQLNoExpressionCallTOResultSet.class);

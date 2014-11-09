@@ -370,6 +370,10 @@ public class FilterNoExprCalls extends MySQLDAOUser {
         
 
         //------------------ Find conflicts --------------------------
+        if (exprCallTOs == null) {
+            log.trace("No expression data for this gene, nothing to do.");
+            log.exit(); return;
+        }
         boolean affyDataConflict          = false;
         boolean inSituDataConflict        = false;
         boolean relaxedInSituDataConflict = false;
@@ -390,30 +394,32 @@ public class FilterNoExprCalls extends MySQLDAOUser {
                 //hashCode and equals methods are based on the geneId-anatEntityId-stageId, 
                 //because we requested the expression call TOs to not contain their ID.
                 ExpressionCallTO realExprCallTO = exprCallTOs.get(fakeExprCallTO);
+                if (realExprCallTO == null) {
+                    log.trace("No conflict found.");
+                    continue;
+                }
                 //conflict found
-                if (realExprCallTO != null) {
-                    log.trace("Conflicting expression call retrieved: {}", realExprCallTO);
-                    //check for each data type whether there is a conflict
-                    if (noExprCallTO.getAffymetrixData() != DataState.NODATA && 
-                            realExprCallTO.getAffymetrixData() != DataState.NODATA) {
-                        affyDataConflict = true;
-                        log.trace("Affymetrix data conflicting.");
-                    }
-                    if (noExprCallTO.getInSituData() != DataState.NODATA && 
-                            realExprCallTO.getInSituData() != DataState.NODATA) {
-                        inSituDataConflict = true;
-                        log.trace("In-situ data conflicting.");
-                    }
-                    if (noExprCallTO.getRelaxedInSituData() != DataState.NODATA && 
-                            realExprCallTO.getInSituData() != DataState.NODATA) {
-                        relaxedInSituDataConflict = true;
-                        log.trace("Relaxed in-situ data conflicting.");
-                    }
-                    if (noExprCallTO.getRNASeqData() != DataState.NODATA && 
-                            realExprCallTO.getRNASeqData() != DataState.NODATA) {
-                        rnaSeqDataConflict = true;
-                        log.trace("RNA-Seq data conflicting.");
-                    }
+                log.trace("Conflicting expression call retrieved: {}", realExprCallTO);
+                //check for each data type whether there is a conflict
+                if (noExprCallTO.getAffymetrixData() != DataState.NODATA && 
+                        realExprCallTO.getAffymetrixData() != DataState.NODATA) {
+                    affyDataConflict = true;
+                    log.trace("Affymetrix data conflicting.");
+                }
+                if (noExprCallTO.getInSituData() != DataState.NODATA && 
+                        realExprCallTO.getInSituData() != DataState.NODATA) {
+                    inSituDataConflict = true;
+                    log.trace("In-situ data conflicting.");
+                }
+                if (noExprCallTO.getRelaxedInSituData() != DataState.NODATA && 
+                        realExprCallTO.getInSituData() != DataState.NODATA) {
+                    relaxedInSituDataConflict = true;
+                    log.trace("Relaxed in-situ data conflicting.");
+                }
+                if (noExprCallTO.getRNASeqData() != DataState.NODATA && 
+                        realExprCallTO.getRNASeqData() != DataState.NODATA) {
+                    rnaSeqDataConflict = true;
+                    log.trace("RNA-Seq data conflicting.");
                 }
                 log.trace("Overall conflicts: affymetrix {} - in situ {} - relaxed in situ {} - RNA-Seq {}", 
                         affyDataConflict, inSituDataConflict, relaxedInSituDataConflict, 

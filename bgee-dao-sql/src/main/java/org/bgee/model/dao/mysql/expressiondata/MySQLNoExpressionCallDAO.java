@@ -442,7 +442,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             }
         }
 
-        log.debug("{} basic no-expression calls and {} global no-expression calls will be updated", 
+        log.trace("{} basic no-expression calls and {} global no-expression calls will be updated", 
                 noExpressionToUpdate.size(), globalnoExpressionToUpdate.size());
 
         // Construct sql query for basic no-expression calls
@@ -498,7 +498,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             throw log.throwing(new DAOException(e));
         }
 
-        log.debug("{} basic no-expression calls and {} global no-expression calls updated", 
+        log.trace("{} basic no-expression calls and {} global no-expression calls updated", 
                     noExprUpdatedCount, globalNoExprUpdatedCount);
 
         return log.exit(noExprUpdatedCount + globalNoExprUpdatedCount);

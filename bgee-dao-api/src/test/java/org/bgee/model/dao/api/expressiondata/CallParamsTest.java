@@ -223,9 +223,9 @@ public class CallParamsTest extends TestAncestor {
         params.merge(paramsToCompare, mergedParams);
         assertFalse("Incorrect resulting merged CallParameters", 
                 mergedParams.isAllDataTypes());
-        assertEquals("Incorrect resulting merged CallParameters", null, 
+        assertEquals("Incorrect resulting merged CallParameters", DataState.NODATA, 
                 mergedParams.getAffymetrixData());
-        assertEquals("Incorrect resulting merged CallParameters", null, 
+        assertEquals("Incorrect resulting merged CallParameters", DataState.NODATA, 
                 mergedParams.getESTData());
         
         

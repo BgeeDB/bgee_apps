@@ -1219,6 +1219,9 @@ public abstract class CallParams {
      *          to be used.
      */
     protected DataState getAffymetrixData() {
+        if (this.getReferenceCallTO().getAffymetrixData() == null) {
+            return DataState.NODATA;
+        }
         return this.getReferenceCallTO().getAffymetrixData();
     }
     /**
@@ -1236,6 +1239,9 @@ public abstract class CallParams {
      *          to be used.
      */
     protected DataState getESTData() {
+        if (this.getReferenceCallTO().getESTData() == null) {
+            return DataState.NODATA;
+        }
         return this.getReferenceCallTO().getESTData();
     }
     /**
@@ -1253,6 +1259,9 @@ public abstract class CallParams {
      *          to be used.
      */
     protected DataState getInSituData() {
+        if (this.getReferenceCallTO().getInSituData() == null) {
+            return DataState.NODATA;
+        }
         return this.getReferenceCallTO().getInSituData();
     }
     /**
@@ -1270,6 +1279,9 @@ public abstract class CallParams {
      *          to be used.
      */
     protected DataState getRelaxedInSituData() {
+        if (this.getReferenceCallTO().getRelaxedInSituData() == null) {
+            return DataState.NODATA;
+        }
         return this.getReferenceCallTO().getRelaxedInSituData();
     }
     /**
@@ -1287,6 +1299,9 @@ public abstract class CallParams {
      *          to be used.
      */
     protected DataState getRNASeqData() {
+        if (this.getReferenceCallTO().getRNASeqData() == null) {
+            return DataState.NODATA;
+        }
         return this.getReferenceCallTO().getRNASeqData();
     }
     /**

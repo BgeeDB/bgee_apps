@@ -121,8 +121,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * Constructor providing the ID, the common name, the genus, the species, and the ID 
          * of the parent taxon.
          * <p>
-         * All of these parameters are optional except {@code id}, so they can be 
-         * {@code null} when not used.
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * We do not use a {@code builder pattern}, because {@code TransferObject}s 
          * are not meant to be instantiated by clients, but only by the application, 
          * so we do not really care about having non-friendly constructors.
@@ -136,7 +135,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
          * @param parentTaxonId A {@code String} that is the NCBI ID of the parent taxon 
          *                      of this species (for instance, {@code 9605} for <i>homo</i>, 
          *                      the parent taxon of human).
-         * @throws IllegalArgumentException If {@code id} is {@code null} or empty.
+         * @throws IllegalArgumentException If {@code id} is empty.
          */
         public SpeciesTO(String id, String commonName, String genus, String speciesName, 
                 String parentTaxonId, String genomeFilePath, String genomeSpeciesId, 

@@ -224,9 +224,9 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         public GeneTO getTO() {
             log.entry();
             ResultSet currentResultSet = this.getCurrentResultSet();
-            String geneId=null, geneName=null, geneDescription=null;
-            int speciesId=0, geneBioTypeId=0, OMAParentNodeId=0;
-            boolean ensemblGene=false;
+            String geneId = null, geneName = null, geneDescription = null;
+            Integer speciesId = null, geneBioTypeId = null, OMAParentNodeId = null;
+            Boolean ensemblGene = null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {

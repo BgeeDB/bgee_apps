@@ -169,9 +169,9 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         public TaxonTO getTO() {
             log.entry();
             ResultSet currentResultSet = this.getCurrentResultSet();
-            String taxonId=null, taxonName=null, taxonScientificName=null;
-            int taxonLeftBound=0, taxonRightBound=0, taxonLevel=0;
-            boolean bgeeSpeciesLCA=false;
+            String taxonId = null, taxonName = null, taxonScientificName = null;
+            Integer taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
+            Boolean bgeeSpeciesLCA = null;
             // Get results
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {

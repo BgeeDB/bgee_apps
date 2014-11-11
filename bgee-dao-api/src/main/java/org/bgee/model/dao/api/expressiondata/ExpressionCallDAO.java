@@ -196,21 +196,21 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
 
         /**
-         * A {@code boolean} defining whether this expression call was generated 
+         * A {@code Boolean} defining whether this expression call was generated 
          * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
          * alone, or by also considering all its descendants by <em>is_a</em> or 
          * <em>part_of</em> relations, even indirect. If {@code true}, all its descendants 
          * were also considered. 
          */
-        private boolean includeSubstructures;
+        private Boolean includeSubstructures;
         
         /**
-         * A {@code boolean} defining whether this expression call was generated 
+         * A {@code Boolean} defining whether this expression call was generated 
          * using data from the developmental stage with the ID {@link CallTO#getStageId()} 
          * alone, or by also considering all its descendants. If {@code true}, all its descendants 
          * were also considered.
          */
-        private boolean includeSubStages;
+        private Boolean includeSubStages;
         
         /**
          * An {@code OriginOfLine} used to define the origin of this call. This is different 
@@ -227,12 +227,18 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * Default constructor.
          */
         ExpressionCallTO() {
-            this(null, null, null, null, DataState.NODATA, DataState.NODATA, 
-                    DataState.NODATA, DataState.NODATA, false, false, 
-                    OriginOfLine.SELF);
+            this(null, null, null, null, null, null, null, null, null, null, null);
         }
 
         /**
+         * Constructor providing the ID, the gene ID, the anatomical entity ID, the developmental 
+         * stage ID, the contribution of Affymetrix, EST, <em>in situ</em>, "relaxed" 
+         * <em>in situ</em> and, RNA-Seq data to the generation of this call, whether this 
+         * expression call was generated using data from the developmental stage and/or anatomical 
+         * entity with the ID alone, or by also considering all descendants by is_a or part_of 
+         * relations, even indirect, the origin of line.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id                    A {@code String} that is the ID of this call.
          * @param geneId                A {@code String} that is the ID of the gene 
@@ -249,11 +255,11 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          *                              <em>in situ</em> data to the generation of this call.
          * @param rnaSeqData            A {@code DataSate} that is the contribution of RNA-Seq data
          *                              to the generation of this call.
-         * @param includeSubstructures  A {@code boolean} defining whether this expression call was 
+         * @param includeSubstructures  A {@code Boolean} defining whether this expression call was 
          *                              generated using data from the anatomical entity with the ID 
          *                              alone, or by also considering all its descendants by 
          *                              <em>is_a</em> or <em>part_of</em> relations, even indirect.
-         * @param includeSubStages      A {@code boolean} defining whether this expression call was 
+         * @param includeSubStages      A {@code Boolean} defining whether this expression call was 
          *                              generated using data from the developmental stage with the ID
          *                              alone, or by also considering all its descendants.
          * @param origin                An {@code OriginOfLine} defining how this call 
@@ -263,17 +269,17 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         public ExpressionCallTO(String id, String geneId, String anatEntityId, String stageId,
                 DataState affymetrixData, DataState estData, DataState inSituData, 
                 DataState rnaSeqData,
-                boolean includeSubstructures, boolean includeSubStages, 
+                Boolean includeSubstructures, Boolean includeSubStages, 
                 OriginOfLine origin) {
             super(id, geneId, anatEntityId, stageId, affymetrixData, estData, inSituData, 
-                    DataState.NODATA, rnaSeqData);
+                    null, rnaSeqData);
             this.includeSubstructures = includeSubstructures;
             this.includeSubStages = includeSubStages;
             this.originOfLine = origin;
         }
 
         /**
-         * Returns the {@code boolean} defining whether this expression call was generated 
+         * Returns the {@code Boolean} defining whether this expression call was generated 
          * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
          * alone, or by also considering all its descendants by <em>is_a</em> or 
          * <em>part_of</em> relations, even indirect. If {@code true}, all its descendants 
@@ -281,7 +287,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * 
          * @return  If {@code true}, all descendants of the anatomical entity were considered. 
          */
-        public boolean isIncludeSubstructures() {
+        public Boolean isIncludeSubstructures() {
             return includeSubstructures;
         }
         
@@ -300,7 +306,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
 
         /**
-         * Returns the {@code boolean} defining whether this expression call was generated 
+         * Returns the {@code Boolean} defining whether this expression call was generated 
          * using data from the developmental stage with the ID 
          * {@link ExpressionCallTO#getStageId()} alone, or by also considering all its
          * descendants. If {@code true}, all its descendants were considered.
@@ -308,7 +314,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * @return  If {@code true}, all descendants of the developmental stage 
          *          were considered. 
          */
-        public boolean isIncludeSubStages() {
+        public Boolean isIncludeSubStages() {
             return includeSubStages;
         }
         /**
@@ -356,10 +362,12 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
             final int prime = 31;
             int result = super.hashCode();
             if (this.useOtherAttributesForHashCodeEquals()) {
-                result = prime * result + (includeSubStages ? 1231 : 1237);
-                result = prime * result + (includeSubstructures ? 1231 : 1237);
-                result = prime * result
-                        + ((originOfLine == null) ? 0 : originOfLine.hashCode());
+                result = prime * result + 
+                        ((includeSubStages == null) ? 0 : includeSubStages.hashCode());
+                result = prime * result + 
+                        ((includeSubstructures == null) ? 0 : includeSubstructures.hashCode());
+                result = prime * result +
+                        ((originOfLine == null) ? 0 : originOfLine.hashCode());
             }
             return result;
         }

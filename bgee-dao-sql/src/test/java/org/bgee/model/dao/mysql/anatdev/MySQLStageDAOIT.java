@@ -50,7 +50,6 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetStages() throws SQLException {
-        log.entry();
 
         this.useSelectDB();
 
@@ -83,24 +82,24 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
         // Test recovery of one attribute without filter on species IDs
         dao.setAttributes(Arrays.asList(StageDAO.Attribute.ID, StageDAO.Attribute.NAME));
         expectedStages = Arrays.asList(
-                new StageTO("Stage_id1", "stageN1", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id2", "stageN2", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id3", "stageN3", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id4", "stageN4", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id5", "stageN5", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id6", "stageN6", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id7", "stageN7", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id8", "stageN8", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id9", "stageN9", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id10", "stageN10", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id11", "stageN11", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id12", "stageN12", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id13", "stageN13", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id14", "stageN14", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id15", "stageN15", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id16", "stageN16", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id17", "stageN17", null, 0, 0, 0, false, false), 
-                new StageTO("Stage_id18", "stageN18", null, 0, 0, 0, false, false));
+                new StageTO("Stage_id1", "stageN1", null, null, null, null, null, null), 
+                new StageTO("Stage_id2", "stageN2", null, null, null, null, null, null), 
+                new StageTO("Stage_id3", "stageN3", null, null, null, null, null, null), 
+                new StageTO("Stage_id4", "stageN4", null, null, null, null, null, null), 
+                new StageTO("Stage_id5", "stageN5", null, null, null, null, null, null), 
+                new StageTO("Stage_id6", "stageN6", null, null, null, null, null, null), 
+                new StageTO("Stage_id7", "stageN7", null, null, null, null, null, null), 
+                new StageTO("Stage_id8", "stageN8", null, null, null, null, null, null), 
+                new StageTO("Stage_id9", "stageN9", null, null, null, null, null, null), 
+                new StageTO("Stage_id10", "stageN10", null, null, null, null, null, null), 
+                new StageTO("Stage_id11", "stageN11", null, null, null, null, null, null), 
+                new StageTO("Stage_id12", "stageN12", null, null, null, null, null, null), 
+                new StageTO("Stage_id13", "stageN13", null, null, null, null, null, null), 
+                new StageTO("Stage_id14", "stageN14", null, null, null, null, null, null), 
+                new StageTO("Stage_id15", "stageN15", null, null, null, null, null, null), 
+                new StageTO("Stage_id16", "stageN16", null, null, null, null, null, null), 
+                new StageTO("Stage_id17", "stageN17", null, null, null, null, null, null), 
+                new StageTO("Stage_id18", "stageN18", null, null, null, null, null, null));
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(dao.getStages(null).getAllTOs(), expectedStages));
 
@@ -129,8 +128,6 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
         assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
                 " - but was: " + retrievedStageTOs,
                 TOComparator.areTOCollectionsEqual(retrievedStageTOs, expectedStages));
-
-        log.exit();
     }
     
     /**
@@ -138,7 +135,9 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertStages() throws SQLException {
+        
         this.useEmptyDB();
+        
         //create a Collection of TaxonTOs to be inserted
         Collection<StageTO> stageTOs = new ArrayList<StageTO>();
         stageTOs.add(new StageTO("stId1", "name 1", "desc 1", 1, 6, 1, false, true));

@@ -68,15 +68,15 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
          */
         public String rnaSeqLibraryId;
         /**
-         * A {@code float} representing the log2 RPK 
+         * A {@code Float} representing the log2 RPK 
          * (Reads Per Kilobase) for this gene in this library.
          */
-        public float log2RPK;
+        public Float log2RPK;
         /**
-         * An int representing the number of reads aligned to this gene 
+         * An Integer representing the number of reads aligned to this gene 
          * in this library. 
          */
-        public int readsCount;
+        public Integer readsCount;
         /**
          * A {@code String} representing the expression call for this gene 
          * in this library ('undefined', 'present', 'absent').
@@ -90,7 +90,7 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
         public RNASeqResultTO() {
             super();
             this.rnaSeqLibraryId = null;
-            this.log2RPK = -999999;
+            this.log2RPK = -999999f;
             this.readsCount = 0;
             this.detectionFlag = "undefined";
         }

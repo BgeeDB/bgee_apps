@@ -327,7 +327,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * #getRelationType()}) is unspecified, and the relation is assumed to be direct 
          * (see {@link #getRelationStatus()}).
          * <p>
-         * The relation ID and the relation type are set to {@code null}.
+         * The relation ID, the relation type, and the relation status are set to {@code null}.
          * 
          * @param sourceId         A {@code String} that is the ID of the descent term.
          * @param targetId          A {@code String} that is the ID of the parent term.
@@ -342,6 +342,8 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
          * (see {@link #getSourceId()}), the type of the relation (see {@link 
          * #getRelationType()}), and defining whether this relation is direct,  
          * indirect, or reflexive (see {@link #getRelationStatus()}).
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param relationId        A {@code String} that is the ID of this relation.
          * @param sourceId          A {@code String} that is the ID of the descent term.

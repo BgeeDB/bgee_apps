@@ -438,6 +438,7 @@ public class CallTOTest extends TestAncestor {
         
         int count = 10;
         callTO.setMinConditionCount(count);
-        assertEquals("Incorrect minConditionCount set/get", count, callTO.getMinConditionCount());
+        assertEquals("Incorrect minConditionCount set/get", 
+                count, (int) callTO.getMinConditionCount());
     }
 }

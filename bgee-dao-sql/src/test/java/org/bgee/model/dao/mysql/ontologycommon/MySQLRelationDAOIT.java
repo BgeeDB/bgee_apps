@@ -58,7 +58,6 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetAnatEntityRelations() throws SQLException {
-        log.entry();
 
         this.useSelectDB();
 
@@ -92,7 +91,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         // Warning, List is ordered by sourceId, targetId as Strings
         List<RelationTO> expectedRelations = allRelTOs;
         RelationTOResultSet resultSet = dao.getAnatEntityRelations(null, null, null);
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, resultSet.getAllTOs());
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
         // Test recovery of one attribute with filter on species IDs ONLY
         dao.setAttributes(Arrays.asList(RelationDAO.Attribute.RELATIONID));
@@ -111,7 +111,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("19", null, null, null, null),
                 new RelationTO("8", null, null, null, null));
         resultSet = dao.getAnatEntityRelations(speciesIds, null, null);
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, resultSet.getAllTOs());
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
         // Test recovery of one attribute with filter on species IDs AND relation types
         dao.clearAttributes();
@@ -129,7 +130,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
                 new RelationTO("8", "Anat_id8", "Anat_id8", RelationType.ISA_PARTOF, RelationStatus.REFLEXIVE));
         resultSet = dao.getAnatEntityRelations(speciesIds, relationTypes, null);
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, resultSet.getAllTOs());
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
         // Test recovery of one attribute with filter on species IDs AND relation status
         EnumSet<RelationStatus> relationStatus = EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT);
@@ -141,7 +143,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
                 new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, RelationStatus.DIRECT));
         resultSet = dao.getAnatEntityRelations(speciesIds, null, relationStatus);
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, resultSet.getAllTOs());
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
         // Test recovery of one attribute with filter on species IDs, relation types, 
         // and relations status,
@@ -152,7 +155,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("15", "Anat_id5", "Anat_id2", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
                 new RelationTO("18", "Anat_id6", "Anat_id1", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
         resultSet = dao.getAnatEntityRelations(speciesIds, relationTypes, relationStatus);
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, resultSet.getAllTOs());
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
         // Test recovery of one attribute with filter on species IDs AND relation status
         relationStatus = EnumSet.of(RelationStatus.DIRECT, RelationStatus.INDIRECT);
@@ -167,7 +171,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("20", "Anat_id8", "Anat_id7", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
                 new RelationTO("21", "Anat_id9", "Anat_id5", RelationType.ISA_PARTOF, RelationStatus.DIRECT));
         resultSet = dao.getAnatEntityRelations(null, relationTypes, relationStatus);
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, resultSet.getAllTOs());
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
         // Test recovery of one attribute with filter on relation types ONLY
         relationTypes = EnumSet.of(RelationType.DEVELOPSFROM);
@@ -179,7 +184,8 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("19", "Anat_id7", "Anat_id6", RelationType.DEVELOPSFROM, 
                         RelationStatus.DIRECT));
         resultSet = dao.getAnatEntityRelations(null, relationTypes, null);
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, resultSet.getAllTOs());
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
         
         // Test recovery of one attribute with filter on relation status ONLY
         relationStatus = EnumSet.of(RelationStatus.INDIRECT);
@@ -187,20 +193,22 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 new RelationTO("16", "Anat_id5", "Anat_id7", RelationType.DEVELOPSFROM, 
                         RelationStatus.INDIRECT));
         resultSet = dao.getAnatEntityRelations(null, null, relationStatus);
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, resultSet.getAllTOs());
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
         
         speciesIds = new HashSet<String>(Arrays.asList("11","21", "31", "44"));
         dao.clearAttributes();
         expectedRelations = allRelTOs;
-        assertEquals("RelationTOs incorrectly retrieved", expectedRelations, 
-                dao.getAnatEntityRelations(speciesIds, null, null).getAllTOs());
+        resultSet = dao.getAnatEntityRelations(speciesIds, null, null);
+        assertTrue("RelationTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
     }
+
     /**
      * Test the select method {@link MySQLRelationDAO#getStageRelations()}.
      */
     @Test
     public void shouldGetStageRelations() throws SQLException {
-        log.entry();
 
         this.useSelectDB();
 
@@ -375,7 +383,6 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertAnatEntityRelations() throws SQLException {
-        log.entry();
         
         this.useEmptyDB();
 
@@ -427,8 +434,5 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
         } finally {
             this.emptyAndUseDefaultDB();
         }
-
-        log.exit();
     }
-
 }

@@ -97,11 +97,11 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
         /**
          * See {@link #isTooGranular()}.
          */
-        private final boolean tooGranular;
+        private final Boolean tooGranular;
         /**
          * See {@link #isGroupingStage()}.
          */
-        private final boolean groupingStage;
+        private final Boolean groupingStage;
 
         /**
          * Constructor providing the ID, the name, the description, 
@@ -109,54 +109,51 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
          * (see {@link #isTooGranular()}), and whether it is a  grouping stage 
          * (see {@link #isGroupingStage()}).
          * <p>
-         * All of these parameters are optional except {@code id}, so they can be 
-         * {@code null} when not used.
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id                A {@code String} that is the ID.
          * @param name              A {@code String} that is the name of this stage.
          * @param description       A {@code String} that is the description of this stage.
-         * @param leftBound         An {@code int} that is the left bound of this stage 
+         * @param leftBound         An {@code Integer} that is the left bound of this stage 
          *                          in the nested set model representing the developmental 
          *                          stage ontology.
-         * @param rightBound        An {@code int} that is the right bound of this stage 
+         * @param rightBound        An {@code Integer} that is the right bound of this stage 
          *                          in the nested set model representing the developmental 
          *                          stage ontology.
-         * @param level             An {@code int} that is the level of this stage 
+         * @param level             An {@code Integer} that is the level of this stage 
          *                          in the nested set model representing the developmental 
          *                          stage ontology.
-         * @param tooGranular       A {@code boolean} defining whether this stage 
+         * @param tooGranular       A {@code Boolean} defining whether this stage 
          *                          is too granular (see {@link #isTooGranular()}).
-         * @param groupingStage     A {@code boolean} defining whether this stage 
+         * @param groupingStage     A {@code Boolean} defining whether this stage 
          *                          is a grouping stage (see {@link #isGroupingStage()}).
-         * @throws IllegalArgumentException If {@code id} is {@code null} or empty, or if any of 
+         * @throws IllegalArgumentException If {@code id} is empty, or if any of 
          *                                  {code leftBound} or {code rightBound} or {code level} 
-         *                                  is less than 0.
+         *                                  is not {@code null} and less than 0.
          */
-        public StageTO(String id, String name, String description,
-                int leftBound, int rightBound, int level, boolean tooGranular, 
-                boolean groupingStage) throws IllegalArgumentException {
-            
+        public StageTO(String id, String name, String description, Integer leftBound, 
+                Integer rightBound, Integer level, Boolean tooGranular, Boolean groupingStage) 
+                        throws IllegalArgumentException {
             super(id, name, description, leftBound, rightBound, level);
             this.tooGranular = tooGranular;
             this.groupingStage = groupingStage;
         }
 
-
         /**
-         * @return  the {@code boolean} defining whether this stage is a very granular 
+         * @return  the {@code Boolean} defining whether this stage is a very granular 
          *          developmental stage. Such stages are usually not used in expression 
          *          summaries, and are replaced by their closest parent not too granular.
          */
-        public boolean isTooGranular() {
+        public Boolean isTooGranular() {
             return tooGranular;
         }
         /**
-         * @return  the {@code boolean} defining whether this stage is a grouping stage, 
+         * @return  the {@code Boolean} defining whether this stage is a grouping stage, 
          *          broad enough to allow comparisons of anatomical features. For instance, 
          *          to compare expression in brain at stages such as "child", "early adulthood", 
          *          "late adulthood", rather than at stages such as "23 yo", "24yo", "25yo", ...
          */
-        public boolean isGroupingStage() {
+        public Boolean isGroupingStage() {
             return groupingStage;
         }
         

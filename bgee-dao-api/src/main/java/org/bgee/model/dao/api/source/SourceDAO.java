@@ -98,7 +98,7 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
 		public Date releaseDate;  
 		public String releaseVersion;
 	    
-		public boolean toDisplay;
+		public Boolean toDisplay;
 		public String category;
 
 		public String dataSourceDescription;

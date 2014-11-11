@@ -53,8 +53,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
             throws DAOException {
         log.entry(params);
-        return log.exit(
-                getExpressionCalls(params.getSpeciesIds(), params.isIncludeSubstructures())); 
+        return log.exit(getExpressionCalls(
+                params.getSpeciesIds(), params.isIncludeSubstructures(), params.isIncludeSubStages())); 
         
 //        TODO use the store procedure instead of BgeePreparedStatement.
 //        String sql = "{call getAllExpression(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
@@ -133,8 +133,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      *                               expression calls.   
      */
     private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
-            boolean isIncludeSubstructures) throws DAOException {
-        log.entry(speciesIds, isIncludeSubstructures);
+            boolean isIncludeSubstructures, boolean isIncludeSubStages) throws DAOException {
+        log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages);
 
         Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
         
@@ -153,21 +153,23 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         //by default. So, only if isIncludeSubstructures or isIncludeSubStages 
         //are true, we add a fake column to the query to provide the information to the ResultSet, 
         //otherwise it is not needed. 
-        String sqlIncludeSubstructures = " 1 AS " + this.attributeToString(
+        String sqlIncludeSubstructures = " 0";
+        if (isIncludeSubstructures) {
+            sqlIncludeSubstructures = " 1";
+        }
+        sqlIncludeSubstructures += " AS " + this.attributeToString(
                 ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES, isIncludeSubstructures);
+        
         //TODO: add the mechanism for includeSubStages when implemented.
-        String sqlIncludeSubStages = " 1 AS " + this.attributeToString(
+        String sqlIncludeSubStages = " 0 ";
+        if (isIncludeSubStages) {
+            sqlIncludeSubStages = " 1";
+        }
+        sqlIncludeSubStages += " AS " + this.attributeToString(
                 ExpressionCallDAO.Attribute.INCLUDESUBSTAGES, isIncludeSubstructures);
+        
         if (attributes != null) {
             for (ExpressionCallDAO.Attribute attribute: attributes) {
-                //INCLUDESUBSTRUCTURES corresponds to a fake column, to inform about 
-                //how the TO was generated. As the default value is false, we need to add 
-                //the fake column only if isIncludeSubstructures is true, otherwise, 
-                //we can skip this attribute. 
-                if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES) && 
-                        !isIncludeSubstructures) {
-                    continue;
-                }
                 //TODO: add the mechanism for includeSubStages when implemented.
                 //for now, we skip this attribute
                 if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTAGES)) {
@@ -200,11 +202,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             //at this point, either there was no attribute requested, or only unnecessary 
             //fake columns were requested. As the latter case is really a weird use case, 
             //we don't bother and retrieve all columns anyway.
-            sql += "SELECT " + tableName + ".*";
-            //add fake column if needed. 
-            if (isIncludeSubstructures) {
-                sql += ", " + sqlIncludeSubstructures;
-            }
+            sql += "SELECT " + tableName + ".*, " + sqlIncludeSubstructures;
         }
         sql += " FROM " + tableName;
         if (speciesIds != null && speciesIds.size() > 0) {
@@ -212,12 +210,12 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                          tableName + ".geneId)" +
                     " WHERE " + geneTabName + ".speciesId IN (" + 
                             BgeePreparedStatement.generateParameterizedQueryString(
-                                    speciesIds.size()) + ")" +
-                    " ORDER BY " + geneTabName + ".speciesId, " + tableName + ".geneId, " +  
-                            tableName + ".anatEntityId, " + tableName + ".stageId";
-         } else {
-             sql += " ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, " + 
-                             tableName + ".stageId";
+                                    speciesIds.size()) + ")";
+//                    " ORDER BY " + geneTabName + ".speciesId, " + tableName + ".geneId, " +  
+//                            tableName + ".anatEntityId, " + tableName + ".stageId";
+//         } else {
+//             sql += " ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, " + 
+//                             tableName + ".stageId";
          }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -243,9 +241,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      *                    converted into a {@code String}.
      * @return            A {@code String} that correspond to the given 
      *                    {@code ExpressionCallDAO.Attribute}
+     * @throws IllegalArgumentException if the {@code attribute} is unknown.
      */
-    //TODO: some unit tests might need to be updated following the acceptance of 
-    //ORIGINOFLINE, INCLUDESUBSTRUCTURES and INCLUDESUBSTAGES
     //NOTE: this method is not responsible for checking for column validity, only to map 
     //an Attribute to a String, as its javadoc states... Especially considering that 
     //it is a private method, so WE are responsible for what we provide to it. 
@@ -253,10 +250,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
     //if we add new Attributes. 
     //TODO: actually, we don't need a method converting Attributes to Strings, we just need 
     //a method generating all the SELECT clause. 
-    //converting attributes to strings?
-    //TODO: document exception thrown.
     private String attributeToString(ExpressionCallDAO.Attribute attribute, 
-            boolean isIncludeSubstructures) {
+            boolean isIncludeSubstructures) throws IllegalArgumentException {
         log.entry(attribute, isIncludeSubstructures);
 
         String label = null;
@@ -443,10 +438,9 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             log.entry();
 
             String id = null, geneId = null, anatEntityId = null, devStageId = null;
-            DataState affymetrixData = DataState.NODATA, estData = DataState.NODATA, 
-                    inSituData = DataState.NODATA, rnaSeqData = DataState.NODATA;
-            boolean includeSubstructures = false, includeSubStages = false;
-            OriginOfLine originOfLine = OriginOfLine.SELF;
+            DataState affymetrixData = null, estData = null, inSituData = null, rnaSeqData = null;
+            Boolean includeSubstructures = null, includeSubStages = null;
+            OriginOfLine originOfLine = null;
 
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {

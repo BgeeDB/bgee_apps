@@ -82,9 +82,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
         methGenes = dao.getAllGenes().getAllTOs();
         expectedGenes = Arrays.asList(
-                new GeneTO("ID1", null, null, 0, 0, 0, false), 
-                new GeneTO("ID2", null, null, 0, 0, 0, false), 
-                new GeneTO("ID3", null, null, 0, 0, 0, false));
+                new GeneTO("ID1", null, null, null, null, null, null), 
+                new GeneTO("ID2", null, null, null, null, null, null), 
+                new GeneTO("ID3", null, null, null, null, null, null));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -97,7 +97,6 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetGenes() throws SQLException {
-        log.entry();
         
         this.useSelectDB();
 
@@ -107,9 +106,9 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
         List<GeneTO> methGenes = dao.getGenes(null).getAllTOs();
         List<GeneTO> expectedGenes = Arrays.asList(
-                new GeneTO("ID1", null, null, 0, 0, 0, false), 
-                new GeneTO("ID2", null, null, 0, 0, 0, false), 
-                new GeneTO("ID3", null, null, 0, 0, 0, false));
+                new GeneTO("ID1", null, null, null, null, null, null), 
+                new GeneTO("ID2", null, null, null, null, null, null), 
+                new GeneTO("ID3", null, null, null, null, null, null));
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
@@ -127,8 +126,6 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
-
-        log.exit();
     }
 
     /**
@@ -136,7 +133,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldUpdateGenes() throws SQLException {
-        log.entry();
+
         this.useEmptyDB();
         this.populateAndUseDatabase();
 
@@ -207,6 +204,5 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         } finally {
             this.emptyAndUseDefaultDB();
         }
-        log.exit();
     }
 }

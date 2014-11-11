@@ -65,21 +65,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         
         // On noExpression table 
         MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
-        dao.setAttributes(Arrays.asList(
-                NoExpressionCallDAO.Attribute.ID, 
-                NoExpressionCallDAO.Attribute.GENEID, 
-                NoExpressionCallDAO.Attribute.DEVSTAGEID, 
-                NoExpressionCallDAO.Attribute.ANATENTITYID, 
-                NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, 
-                NoExpressionCallDAO.Attribute.INSITUDATA,
-                NoExpressionCallDAO.Attribute.RNASEQDATA, 
-                // Remove INCLUDEPARENTSTRUCTURES because not data from DB
-                //NOTE: and it didn't disturb you to have useless Attributes?
-                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, 
-                // Remove ORIGINOFLINE because we test get no-expression calls on no-expression table
-                //NOTE: how is an user supposed to guess?
-                NoExpressionCallDAO.Attribute.ORIGINOFLINE
-                ));
         
         // Without speciesIds and not include parent structures
         // Generate parameters
@@ -91,28 +76,28 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         List<NoExpressionCallTO> expectedNoExprCalls = Arrays.asList(
                 new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+                        DataState.HIGHQUALITY, false, null),
                 new NoExpressionCallTO("2","ID1", "Anat_id1", "Stage_id1",
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
+                        DataState.LOWQUALITY, false, null),
                 new NoExpressionCallTO("3","ID3", "Anat_id6", "Stage_id6",
                         DataState.NODATA, DataState.NODATA, DataState.NODATA, 
-                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
+                        DataState.LOWQUALITY, false, null),
                 new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+                        DataState.HIGHQUALITY, false, null),
                 new NoExpressionCallTO("5","ID3", "Anat_id8", "Stage_id10",
-                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.LOWQUALITY, false, OriginOfLine.SELF),
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.NODATA,
+                        DataState.LOWQUALITY, false, null),
                 new NoExpressionCallTO("6","ID3", "Anat_id6", "Stage_id7", 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+                        DataState.HIGHQUALITY, false, null),
                 new NoExpressionCallTO("7","ID3", "Anat_id5", "Stage_id6", 
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+                        DataState.HIGHQUALITY, false, null),
                 new NoExpressionCallTO("8","ID3", "Anat_id5", "Stage_id14", 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                        DataState.NODATA, false, OriginOfLine.SELF)); 
+                        DataState.NODATA, false, null)); 
         // Compare
         assertTrue("NoExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
@@ -124,26 +109,16 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         expectedNoExprCalls = Arrays.asList(
                 new NoExpressionCallTO("1","ID2", "Anat_id5", "Stage_id13", 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF),
+                        DataState.HIGHQUALITY, false, null),
                 new NoExpressionCallTO("4","ID2", "Anat_id11", "Stage_id11",
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                        DataState.HIGHQUALITY, false, OriginOfLine.SELF)); 
+                        DataState.HIGHQUALITY, false, null)); 
         // Compare
         assertTrue("NoExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
                         dao.getNoExpressionCalls(params).getAllTOs()));
 
         // On global no-expression table
-        dao.setAttributes(Arrays.asList(
-                NoExpressionCallDAO.Attribute.ID, 
-                NoExpressionCallDAO.Attribute.GENEID, 
-                NoExpressionCallDAO.Attribute.DEVSTAGEID, 
-                NoExpressionCallDAO.Attribute.ANATENTITYID, 
-                NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, 
-                NoExpressionCallDAO.Attribute.INSITUDATA,
-                NoExpressionCallDAO.Attribute.RNASEQDATA,
-                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, 
-                NoExpressionCallDAO.Attribute.ORIGINOFLINE));
         params.setIncludeParentStructures(true);
         
         // With speciesIds and include parent structures 
@@ -227,22 +202,30 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         params.clearSpeciesIds();
         params.setIncludeParentStructures(false);
         expectedNoExprCalls = Arrays.asList(
-                new NoExpressionCallTO("1", null, null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("2", null, null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("3", null, null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("4", null, null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("5", null, null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("6", null, null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("7", null, null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF),
-                new NoExpressionCallTO("8", null, null, null, DataState.NODATA, DataState.NODATA, 
-                        DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF));
+                new NoExpressionCallTO("1", null, null, null, null, null, null, null, null, null),
+                new NoExpressionCallTO("2", null, null, null, null, null, null, null, null, null),
+                new NoExpressionCallTO("3", null, null, null, null, null, null, null, null, null),
+                new NoExpressionCallTO("4", null, null, null, null, null, null, null, null, null),
+                new NoExpressionCallTO("5", null, null, null, null, null, null, null, null, null),
+                new NoExpressionCallTO("6", null, null, null, null, null, null, null, null, null),
+                new NoExpressionCallTO("7", null, null, null, null, null, null, null, null, null),
+                new NoExpressionCallTO("8", null, null, null, null, null, null, null, null, null));
+        // Compare
+        assertTrue("NoExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
+                        dao.getNoExpressionCalls(params).getAllTOs()));
+
+        // Test get only AFFYMETRIXDATA without species filter and including substructures
+        dao.clearAttributes();
+        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.AFFYMETRIXDATA));
+        params.setIncludeParentStructures(true);
+        expectedNoExprCalls = Arrays.asList(
+                new NoExpressionCallTO(null, null, null, null, DataState.NODATA, 
+                        null, null, null, null, null),
+                new NoExpressionCallTO(null, null, null, null, DataState.LOWQUALITY, 
+                        null, null, null, null, null),
+                new NoExpressionCallTO(null, null, null, null, DataState.HIGHQUALITY,
+                        null, null, null, null, null));
         // Compare
         assertTrue("NoExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
@@ -285,8 +268,6 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         maxGlobalNoExprId = dao.getMaxNoExpressionCallId(true);
         assertEquals("Max global no-expression ID incorrectly retrieved", 
                 expectedMaxGlobalNoExprId, maxGlobalNoExprId);
-
-        log.exit();
     }
 
     /**

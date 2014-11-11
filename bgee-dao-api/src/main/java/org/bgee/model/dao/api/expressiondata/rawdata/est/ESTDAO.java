@@ -76,6 +76,8 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
          * Constructor providing the IDs (ESTs have two IDs in Unigene), the ID of the EST Library,
          * the gene ID, the ID of UniGene Cluster, the ID of the expression, and the expression 
          * confidence of this EST.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param estId             A {@code String} that is the ID of this EST.
          * @param estId2            A {@code String} that is the second ID of this EST.

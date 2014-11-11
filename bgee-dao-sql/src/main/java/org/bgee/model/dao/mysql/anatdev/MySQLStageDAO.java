@@ -187,8 +187,8 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
             log.entry();
             
             String stageId = null, stageName = null, stageDescription = null;
-            int leftBound = 0, rightBound = 0, level = 0;
-            boolean tooGranular = false, groupingStage = false;
+            Integer leftBound = null, rightBound = null, level = null;
+            Boolean tooGranular = null, groupingStage = null;
             
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {

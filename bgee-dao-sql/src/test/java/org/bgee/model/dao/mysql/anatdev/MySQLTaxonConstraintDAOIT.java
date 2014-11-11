@@ -50,7 +50,6 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertAnatEntityRelationTaxonConstraint() throws SQLException {
-        log.entry();
         
         this.useEmptyDB();
 
@@ -95,8 +94,6 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
         } finally {
             this.emptyAndUseDefaultDB();
         }
-
-        log.exit();
     }
 
     /**
@@ -105,7 +102,6 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertAnatEntityTaxonConstraint() throws SQLException {
-        log.entry();
 
         this.useEmptyDB();
 
@@ -151,8 +147,6 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
         } finally {
             this.emptyAndUseDefaultDB();
         }
-
-        log.exit();
     }        
      /**
     * Test the insert method 
@@ -160,7 +154,6 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
     */
    @Test
    public void shouldInsertStageTaxonConstraint() throws SQLException {
-       log.entry();
 
        this.useEmptyDB();
 
@@ -206,7 +199,5 @@ public class MySQLTaxonConstraintDAOIT extends MySQLITAncestor {
        } finally {
            this.emptyAndUseDefaultDB();
        }
-
-       log.exit();
    }       
 }

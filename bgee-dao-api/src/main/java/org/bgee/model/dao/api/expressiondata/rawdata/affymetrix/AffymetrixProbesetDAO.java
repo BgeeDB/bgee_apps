@@ -90,15 +90,17 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
         private final String bgeeAffymetrixChipId;
 	    
         /**
-         * A {@code float} defining the normalized signal intensity of this probeset.
+         * A {@code Float} defining the normalized signal intensity of this probeset.
          */
-        private final float normalizedSignalIntensity;
+        private final Float normalizedSignalIntensity;
 	    
         /**
          * Constructor providing the affymetrix probeset ID, the Bgee Affymetrix chip ID, 
          * the gene ID, the normalized signal intensity, the detection flag, the ID of the 
          * expression, the ID of the no-expression, the expression confidence, and the reason of 
          * exclusion of this probeset.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param affymetrixProbesetId      A {@code String} that is the ID of this probeset.
          * @param bgeeAffymetrixChipId      A {@code String} that is the Bgee Affymetrix chip ID 
@@ -119,7 +121,7 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
          *                                  exclusion of this probeset.
          */
 	    public AffymetrixProbesetTO(String affymetrixProbesetId, String bgeeAffymetrixChipId, 
-	            String geneId, float normalizedSignalIntensity, DetectionFlag detectionFlag, 
+	            String geneId, Float normalizedSignalIntensity, DetectionFlag detectionFlag, 
 	            String expressionId, String noExpressionId, DataState expressionConfidence, 
 	            ExclusionReason reasonForExclusion) {
             super(affymetrixProbesetId, geneId, detectionFlag, expressionId, noExpressionId, 
@@ -137,9 +139,9 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
         }
 
         /**
-         * @return  the {@code float} defining the normalized signal intensity of this probeset.
+         * @return  the {@code Float} defining the normalized signal intensity of this probeset.
          */
-        public float getNormalizedSignalIntensity() {
+        public Float getNormalizedSignalIntensity() {
             return this.normalizedSignalIntensity;
         }
 	}

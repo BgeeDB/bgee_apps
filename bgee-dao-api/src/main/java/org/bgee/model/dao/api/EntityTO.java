@@ -55,8 +55,8 @@ public abstract class EntityTO extends TransferObject {
      */
     protected EntityTO(String id, String name, String description) 
             throws IllegalArgumentException {
-        if (StringUtils.isBlank(id)) {
-            throw new IllegalArgumentException("ID cannot be null nor empty.");
+        if (StringUtils.isWhitespace(id)) {
+            throw new IllegalArgumentException("ID cannot be empty.");
         }
         this.id          = id;
         this.name        = name;

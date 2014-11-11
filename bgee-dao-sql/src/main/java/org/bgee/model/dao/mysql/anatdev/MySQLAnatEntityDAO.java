@@ -135,7 +135,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                    BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + 
                    "))";
         }
-        sql += " ORDER BY " + tableName + ".anatEntityId";
+//        sql += " ORDER BY " + tableName + ".anatEntityId";
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
@@ -247,7 +247,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             
             String anatEntityId = null, anatEntityName = null, anatEntityDescription = null, 
                     startStageId = null, endStageId = null;
-            boolean nonInformative = false;
+            Boolean nonInformative = null;
             
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {

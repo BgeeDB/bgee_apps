@@ -256,6 +256,8 @@ public interface CallSourceRawDataDAO extends DAO<CallSourceRawDataDAO.Attribute
          * Constructor providing the ID, the gene ID, the detection flag, the ID of the expression,
          * the ID of the no-expression, the expression confidence, and the reason of exclusion of 
          * this call source raw data.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id                    A {@code String} that is the ID of this call source raw data.
          * @param geneId                A {@code String} that is the ID of the gene associated to 

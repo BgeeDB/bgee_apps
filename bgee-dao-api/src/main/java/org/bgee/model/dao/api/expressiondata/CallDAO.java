@@ -195,6 +195,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * Constructor providing the gene ID, the anatomical entity ID, the developmental stage ID,  
          * the contribution of Affymetrix, EST, <em>in situ</em>, "relaxed" <em>in situ</em> and, 
          * RNA-Seq data to the generation of this call.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id                   A {@code String} that is the ID of this call.
          * @param geneId               A {@code String} that is the ID of the gene associated to 

@@ -49,7 +49,9 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertTaxa() throws SQLException {
+        
         this.useEmptyDB();
+        
         //create a Collection of TaxonTOs to be inserted
         Collection<TaxonTO> taxonTOs = new ArrayList<TaxonTO>();
         taxonTOs.add(new TaxonTO("10", "commonName1", "sciName1", 1, 10, 1, true));
@@ -112,7 +114,6 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetAllTaxa() throws SQLException {
-        log.entry();
 
         this.useSelectDB();
 
@@ -132,19 +133,17 @@ public class MySQLTaxonDAOIT extends MySQLITAncestor {
         assertTrue("TaxonTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methResults, expectedTaxa));
 
-        dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.ID));
+        dao.setAttributes(Arrays.asList(TaxonDAO.Attribute.LCA));
         methResults = dao.getAllTaxa().getAllTOs();
         
         // Generate manually expected result
         expectedTaxa = Arrays.asList(
-                new TaxonTO("111", null, null, 0, 0, 0, false), 
-                new TaxonTO("211", null, null, 0, 0, 0, false), 
-                new TaxonTO("311", null, null, 0, 0, 0, false), 
-                new TaxonTO("411", null, null, 0, 0, 0, false), 
-                new TaxonTO("511", null, null, 0, 0, 0, false)); 
+                new TaxonTO(null, null, null, null, null, null, true), 
+                new TaxonTO(null, null, null, null, null, null, false), 
+                new TaxonTO(null, null, null, null, null, null, false), 
+                new TaxonTO(null, null, null, null, null, null, true), 
+                new TaxonTO(null, null, null, null, null, null, true)); 
         assertTrue("TaxonTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(methResults, expectedTaxa));
-
-        log.exit();
     }
 }

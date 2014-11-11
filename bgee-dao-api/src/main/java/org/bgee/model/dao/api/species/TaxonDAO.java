@@ -99,33 +99,33 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
          * of two species used in Bgee. This allows to easily identify important branchings.
          * Corresponds to the DAO {@code Attribute} {@link TaxonDAO.Attribute LCA}.
          */
-        private final boolean lca;
+        private final Boolean lca;
         
         /**
          * Constructor providing the ID, the common name, the scientific name, 
          * the left bound, the right bound, the level, and whether it is a least 
          * common ancestor of two species used in Bgee. 
          * <p>
-         * All of these parameters are optional except {@code id}, so they can be 
-         * {@code null} when not used.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id                A {@code String} that is the ID.
          * @param commonName        A {@code String} that is the common name of this taxon.
          * @param scientificName    A {@code String} that is the scientific name of this taxon.
-         * @param leftBound         An {@code int} that is the left bound of this taxon 
+         * @param leftBound         An {@code Integer} that is the left bound of this taxon 
          *                          in the nested set model representing the taxonomy.
-         * @param rightBound        An {@code int} that is the right bound of this taxon 
+         * @param rightBound        An {@code Integer} that is the right bound of this taxon 
          *                          in the nested set model representing the taxonomy.
-         * @param level             An {@code int} that is the level of this taxon 
+         * @param level             An {@code Integer} that is the level of this taxon 
          *                          in the nested set model representing the taxonomy.
-         * @param lca               A {@code boolean} defining whether this taxon is the 
+         * @param lca               A {@code Boolean} defining whether this taxon is the 
          *                          least common ancestor of two species used in Bgee. 
-         * @throws IllegalArgumentException If {@code id} is {@code null} or empty, or if any of 
-     *                                      {code leftBound} or {code rightBound} or {code level} 
-     *                                      is less than 0.
+         * @throws IllegalArgumentException If {@code id} is empty, or if any of 
+         *                                  {code leftBound} or {code rightBound} or {code level} 
+         *                                  is not {@code null} and less than 0.
          */
         public TaxonTO(String id, String commonName, String scientificName, 
-                int leftBound, int rightBound, int level, Boolean lca) 
+                Integer leftBound, Integer rightBound, Integer level, Boolean lca) 
             throws IllegalArgumentException {
             super(id, commonName, null, leftBound, rightBound, level);
             this.scientificName = scientificName;
@@ -153,7 +153,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
             return scientificName;
         }
         /**
-         * @return  the {@code boolean} defining whether this taxon is the least 
+         * @return  the {@code Boolean} defining whether this taxon is the least 
          *          common ancestor of two species used in Bgee. This allows to easily 
          *          identify important branchings.
          *          Corresponds to the DAO {@code Attribute} {@link TaxonDAO.Attribute 

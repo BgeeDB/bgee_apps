@@ -172,7 +172,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         private final static Logger log = LogManager.getLogger(NoExpressionCallTO.class.getName());
 
         /**
-         * A {@code boolean} defining whether this no-expression call was generated 
+         * A {@code Boolean} defining whether this no-expression call was generated 
          * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
          * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
@@ -180,7 +180,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * then B could benefit from this information. In other words, when a gene 
          * is not expressed in a structure, it is expressed nowhere in that structure.
          */
-        private boolean includeParentStructures;
+        private Boolean includeParentStructures;
 
         /**
          * An {@code Enum} used to define the origin of a no-expression call.
@@ -253,8 +253,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * Default constructor.
          */
         NoExpressionCallTO() {
-            this(null, null, null, null, DataState.NODATA, DataState.NODATA, 
-                    DataState.NODATA, DataState.NODATA, false, OriginOfLine.SELF);
+            this(null, null, null, null, null, null, null, null, null, null);
         }
 
         /**
@@ -263,6 +262,8 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * this call, whether this no-expression call was generated using data from the anatomical 
          * entity with the ID alone, or by also considering all parents by is_a or part_of 
          * relations, even indirect, and, the origin of line
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id                   A {@code String} that is the ID of this call.
          * @param geneId               A {@code String} that is the ID of the gene associated to 
@@ -280,7 +281,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * @param rnaSeqData           A {@code DataSate} that is the contribution of RNA-Seq data
          *                             to the generation of this call.
          * @param includeParentStructures
-         *                             A {@code boolean} defining whether this no-expression call 
+         *                             A {@code Boolean} defining whether this no-expression call 
          *                             was generated using data from the anatomical entity with the 
          *                             ID alone, or by also considering all parents by is_a or 
          *                             part_of relations, even indirect.
@@ -289,15 +290,15 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         public NoExpressionCallTO(String id, String geneId, String anatEntityId, String stageId,
                 DataState affymetrixData, DataState inSituData,  
                 DataState relaxedInSituData, DataState rnaSeqData, 
-                boolean includeParentStructures, OriginOfLine originOfLine) {
-            super(id, geneId, anatEntityId, stageId, affymetrixData, DataState.NODATA, 
+                Boolean includeParentStructures, OriginOfLine originOfLine) {
+            super(id, geneId, anatEntityId, stageId, affymetrixData, null, 
                     inSituData, relaxedInSituData, rnaSeqData);
             this.includeParentStructures = includeParentStructures;
             this.originOfLine = originOfLine;
         }
 
         /**
-         * Returns the {@code boolean} defining whether this no-expression call was generated 
+         * Returns the {@code Boolean} defining whether this no-expression call was generated 
          * using the data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
          * alone, or by also considering all its parents by <em>is_a</em> or <em>part_of</em> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
@@ -307,7 +308,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * 
          * @return  If {@code true}, all parents of the anatomical entity were considered.
          */
-        public boolean isIncludeParentStructures() {
+        public Boolean isIncludeParentStructures() {
             return includeParentStructures;
         }
 
@@ -360,9 +361,10 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
             final int prime = 31;
             int result = super.hashCode();
             if (this.useOtherAttributesForHashCodeEquals()) {
-                result = prime * result + (includeParentStructures ? 1231 : 1237);
-                result = prime * result
-                        + ((originOfLine == null) ? 0 : originOfLine.hashCode());
+                result = prime * result + 
+                        ((includeParentStructures == null) ? 0 : includeParentStructures.hashCode());
+                result = prime * result +
+                        ((originOfLine == null) ? 0 : originOfLine.hashCode());
             }
             return result;
         }

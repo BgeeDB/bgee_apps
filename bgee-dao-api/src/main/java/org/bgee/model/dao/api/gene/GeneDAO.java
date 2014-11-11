@@ -101,44 +101,44 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         private static final long serialVersionUID = -9011956802137411474L;
 
         /**
-         * An {@code int} that is the species ID of the gene.
+         * An {@code Integer} that is the species ID of the gene.
          */
-        private final int speciesId;
+        private final Integer speciesId;
         
         
         /**
-         * An {@code int} that is the gene type ID (for instance, the ID for protein_coding).
+         * An {@code Integer} that is the gene type ID (for instance, the ID for protein_coding).
          */
-        private final int geneBioTypeId;
+        private final Integer geneBioTypeId;
        
         /**
-         * An {@code int} that is unique ID for each node inside an OMA Hierarchical Orthologous 
+         * An {@code Integer} that is unique ID for each node inside an OMA Hierarchical Orthologous 
          * Group. It can be {@code null} if the gene does not belong to a hierarchical group. A gene 
          * can belong to one and only one group.
          */
-        private final int OMAParentNodeId;
+        private final Integer OMAParentNodeId;
         
         /**
-         * A {@code boolean} defining whether this gene is present in Ensembl. For some species, 
+         * A {@code Boolean} defining whether this gene is present in Ensembl. For some species, 
          * they are not (for instance, we generate our own custom IDs for some species)
          */
-        private final boolean ensemblGene;
+        private final Boolean ensemblGene;
 
         /**
          * Constructor providing the ID (for instance, {@code Ensembl:ENSMUSG00000038253}), 
          * the name (for instance, {@code Hoxa5}), the description and the species ID of this gene.
          * <p>
-         * Other attributes are set to default value: the gene description is set to {@code null}, 
-         * the BioType and the ID of the OMA Hierarchical Orthologous Group of this gene are set 
-         * to 0, and the {code boolean} defining whether this gene is present in Ensembl is set 
-         * to {@code true}
+         * All of these parameters are optional, so they can be {@code null} when not used.
+         * Other attributes are set to {@code null}.
          * 
          * @param geneId    A {@code String} that is the ID of this gene.
          * @param geneName  A {@code String} that is the name of this gene.
-         * @param speciesId An {@code int} of the species which this gene belongs to.
+         * @param speciesId An {@code Integer} of the species which this gene belongs to.
+         * @throws IllegalArgumentException If {@code id} is empty, .
          */
-        public GeneTO(String geneId, String geneName, Integer speciesId) {
-            this(geneId, geneName, null, speciesId, 0, 0, true);
+        public GeneTO(String geneId, String geneName, Integer speciesId) 
+                throws IllegalArgumentException {
+            this(geneId, geneName, null, speciesId, null, null, null);
         }
 
         /**
@@ -146,25 +146,25 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
          * the name (for instance, {@code Hoxa5}), the description, the species ID, the BioType, 
          * the ID of the OMA Hierarchical Orthologous Group, whether this gene is present in 
          * Ensembl (see {@link #isEnsemblGene()}).  
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param geneId            A {@code String} that is the ID of this gene.
          * @param geneName          A {@code String} that is the name of this gene.
          * @param geneDescription   A {@code String} that is the description of this gene.
-         * @param speciesId         An {@code int} that is the species ID which this 
+         * @param speciesId         An {@code Integer} that is the species ID which this 
          *                          gene belongs to.
-         * @param geneBioTypeId     An {@code int} that is the BioType of this gene.
-         * @param OMAParentNodeId   An {@code int} that is the ID of the OMA Hierarchical 
+         * @param geneBioTypeId     An {@code Integer} that is the BioType of this gene.
+         * @param OMAParentNodeId   An {@code Integer} that is the ID of the OMA Hierarchical 
          *                          Orthologous Group.
-         * @param ensemblGene       A {code boolean} defining whether this gene is present 
-         *                          in Ensembl. 
+         * @param ensemblGene       A {code Boolean} defining whether this gene is present 
+         *                          in Ensembl.
+         * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public GeneTO(String geneId, String geneName, String geneDescription, int speciesId,
-                int geneBioTypeId, int OMAParentNodeId, boolean ensemblGene) {
+        public GeneTO(String geneId, String geneName, String geneDescription, Integer speciesId,
+                Integer geneBioTypeId, Integer OMAParentNodeId, Boolean ensemblGene) 
+                        throws IllegalArgumentException {
             super(geneId, geneName, geneDescription);
-            if (speciesId < 0 || geneBioTypeId < 0 || OMAParentNodeId < 0) {
-                throw new IllegalArgumentException("Integer parameters must be positive.");
-            }
-
             this.speciesId = speciesId;
             this.geneBioTypeId = geneBioTypeId;
             this.OMAParentNodeId = OMAParentNodeId;
@@ -186,28 +186,28 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
         /**
          * @return  The species ID.
          */
-        public int getSpeciesId() {
+        public Integer getSpeciesId() {
             return this.speciesId;
         }
 
         /**
          * @return The gene bio type ID (for instance, the ID for protein_coding).
          */
-        public int getGeneBioTypeId() {
+        public Integer getGeneBioTypeId() {
             return this.geneBioTypeId;
         }
         
         /**
          * @return  The OMA Hierarchical Orthologous Group ID that this gene belongs to.
          */
-        public int getOMAParentNodeId() {
+        public Integer getOMAParentNodeId() {
             return this.OMAParentNodeId;
         }
         
         /**
-         * @return  The {@code boolean} defining whether this gene is present in Ensembl.
+         * @return  The {@code Boolean} defining whether this gene is present in Ensembl.
          */
-        public boolean isEnsemblGene() {
+        public Boolean isEnsemblGene() {
             return this.ensemblGene;
         }
 

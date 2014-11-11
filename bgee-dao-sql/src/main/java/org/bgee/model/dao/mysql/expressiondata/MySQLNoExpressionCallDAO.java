@@ -89,24 +89,18 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
         //Construct sql query
         String sql = new String(); 
-        //the Attribute INCLUDEPARENTSTRUCTURES does not correspond 
-        //to any columns in a table, but it allows to determine how the TOs returned 
-        //were generated. 
-        //The TOs returned by the ResultSet will have this value set to false 
-        //by default. So, only if isIncludeParentStructures is true, we add a fake column 
-        //to the query to provide the information to the ResultSet, otherwise it is not needed. 
-        String sqlIncludeParentStructures = " 1 AS " + this.attributeToString(
-            NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, isIncludeParentStructures);
+        //the Attribute INCLUDEPARENTSTRUCTURES does not correspond to any columns in a table, 
+        //but it allows to determine how the TOs returned were generated. 
+        //The TOs returned by the ResultSet will have this value set to null by default. 
+        //So, we add a fake column to the query to provide the information to the ResultSet. 
+        String sqlIncludeParentStructures = " 0";
+        if (isIncludeParentStructures) {
+            sqlIncludeParentStructures = " 1";
+        }
+        sqlIncludeParentStructures +=  " AS " + this.attributeToString(
+                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, isIncludeParentStructures);
         if (attributes != null) {
             for (NoExpressionCallDAO.Attribute attribute: attributes) {
-                //INCLUDEPARENTSTRUCTURES corresponds to a fake column, to inform about 
-                //how the TO was generated. As the default value is false, we need to add 
-                //the fake column only if isIncludeParentStructures is true, otherwise, 
-                //we can skip this attribute. 
-                if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES) && 
-                        !isIncludeParentStructures) {
-                    continue;
-                }
                 //ORIGINOFLINE corresponds to a column only in the globalNoExpression table, 
                 //but we can still provide the information SELF for basic calls. As it is 
                 //the default value in the TOs returned, we just need to skip this attribute 
@@ -134,11 +128,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             //at this point, either there was no attribute requested, or only unnecessary 
             //fake columns were requested. As the latter case is really a weird use case, 
             //we don't bother and retrieve all columns anyway.
-            sql += "SELECT " + tableName + ".*";
-            //add fake column if needed. 
-            if (isIncludeParentStructures) {
-                sql += ", " + sqlIncludeParentStructures;
-            }
+            sql += "SELECT " + tableName + ".*, " + sqlIncludeParentStructures;
         }
         sql += " FROM " + tableName;
         String geneTabName = "gene";
@@ -146,12 +136,12 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
              sql += " INNER JOIN " + geneTabName + " ON (gene.geneId = " + tableName + ".geneId)" +
                     " WHERE " + geneTabName + ".speciesId IN (" +
                             BgeePreparedStatement.generateParameterizedQueryString(
-                                    speciesIds.size()) + ")" +
-                    " ORDER BY " + geneTabName + ".speciesId, " + tableName + ".geneId, " +  
-                        tableName + ".anatEntityId, " + tableName + ".stageId";
-         } else {
-             sql +=  " ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, " +
-                     tableName + ".stageId";
+                                    speciesIds.size()) + ")";
+//                    " ORDER BY " + geneTabName + ".speciesId, " + tableName + ".geneId, " +  
+//                        tableName + ".anatEntityId, " + tableName + ".stageId";
+//         } else {
+//             sql +=  " ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, " +
+//                     tableName + ".stageId";
          }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
@@ -208,10 +198,11 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      *                                  anatomical entity were considered.
      * @return                          A {@code String} that correspond to the given 
      *                                  {@code NoExpressionCallDAO.Attribute}
+     * @throws IllegalArgumentException if the {@code attribute} is unknown.
      */
     //TODO: see note about MySQLExpressionCallDAO#attributeToString(Attribute, boolean)
     private String attributeToString(NoExpressionCallDAO.Attribute attribute,
-            boolean isIncludeParentStructures) {
+            boolean isIncludeParentStructures) throws IllegalArgumentException {
         log.entry(attribute, isIncludeParentStructures);
 
         String label = null;
@@ -529,10 +520,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             log.entry();
 
             String id = null, geneId = null, anatEntityId = null, devStageId = null;
-            DataState noExprAffymetrixData = DataState.NODATA, noExprInSituData = DataState.NODATA, 
-                    noExprRelaxedInSituData = DataState.NODATA, noExprRnaSeqData = DataState.NODATA;
-            boolean includeParentStructures = false;
-            OriginOfLine noExpressionOriginOfLine = OriginOfLine.SELF;
+            DataState noExprAffymetrixData = null, noExprInSituData = null, 
+                    noExprRelaxedInSituData = null, noExprRnaSeqData = null;
+            Boolean includeParentStructures = null;
+            OriginOfLine noExpressionOriginOfLine = null;
 
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {

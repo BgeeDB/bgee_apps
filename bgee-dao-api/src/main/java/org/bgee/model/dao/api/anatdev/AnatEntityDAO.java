@@ -124,15 +124,17 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         private final String endStageId;
 
         /**
-         * A {@code boolean} defining whether this anatomical entity is part of a non-informative 
+         * A {@code Boolean} defining whether this anatomical entity is part of a non-informative 
          * subset in used the ontology. For instance, in Uberon, 'upper_level "abstract upper-level 
          * terms not directly useful for analysis"'.
          */
-        private final boolean nonInformative;
+        private final Boolean nonInformative;
 
         /**
          * Constructor providing the ID, the name, the description, the start stage, and the end 
          * stage of this anatomical entity.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id                A {@code String} that is the ID of this anatomical entity. 
          * @param name              A {@code String} that is the name of this anatomical entity.
@@ -142,11 +144,12 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
          *                          this anatomical entity.
          * @param endStageId        A {@code String} that is the end of developmental stage of this 
          *                          anatomical entity.
-         * @param nonInformative    A {@code boolean} defining whether this anatomical entity is 
+         * @param nonInformative    A {@code Boolean} defining whether this anatomical entity is 
          *                          part of a non-informative subset in the used ontology.
+         * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public AnatEntityTO(String id, String name, String description, 
-                String startStageId, String endStageId, boolean nonInformative) {
+        public AnatEntityTO(String id, String name, String description, String startStageId,
+                String endStageId, Boolean nonInformative) throws IllegalArgumentException {
             super(id, name, description);
             this.startStageId = startStageId;
             this.endStageId = endStageId;
@@ -170,18 +173,18 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
         }
 
         /**
-         * @return  the {@code boolean} defining whether this anatomical entity is 
+         * @return  the {@code Boolean} defining whether this anatomical entity is 
          *          part of a non-informative subset in the used ontology.
          */
-        public boolean isNonInformative() {
+        public Boolean isNonInformative() {
             return this.nonInformative;
         }
 
         @Override
         public String toString() {
             return " ID: " + this.getId() + " - Name: " + this.getName() +
-            " - Description: " + this.getDescription() + "- Start stage Id: " +  startStageId + 
-            " - End stage Id:" + endStageId + " - Non-informative:" + nonInformative;
+            " - Description: " + this.getDescription() + " - Start stage Id: " +  startStageId + 
+            " - End stage Id: " + endStageId + " - Non-informative: " + nonInformative;
         }
     }
 }

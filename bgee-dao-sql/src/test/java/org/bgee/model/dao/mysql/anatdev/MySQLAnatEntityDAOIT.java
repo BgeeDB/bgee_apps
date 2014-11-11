@@ -52,7 +52,6 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetAnatEntities() throws SQLException {
-        log.entry();
 
         this.useSelectDB();
 
@@ -81,19 +80,19 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         // Test recovery of one attribute without filter on species IDs
         dao.setAttributes(Arrays.asList(AnatEntityDAO.Attribute.ID));
         expectedAnatEntities = Arrays.asList(
-                new AnatEntityTO("Anat_id1", null, null, null, null, false),
-                new AnatEntityTO("Anat_id10", null, null, null, null, false),
-                new AnatEntityTO("Anat_id11", null, null, null, null, false),
-                new AnatEntityTO("Anat_id12", null, null, null, null, false),
-                new AnatEntityTO("Anat_id13", null, null, null, null, false),
-                new AnatEntityTO("Anat_id2", null, null, null, null, false),
-                new AnatEntityTO("Anat_id3", null, null, null, null, false),
-                new AnatEntityTO("Anat_id4", null, null, null, null, false),
-                new AnatEntityTO("Anat_id5", null, null, null, null, false),
-                new AnatEntityTO("Anat_id6", null, null, null, null, false),
-                new AnatEntityTO("Anat_id7", null, null, null, null, false),
-                new AnatEntityTO("Anat_id8", null, null, null, null, false),
-                new AnatEntityTO("Anat_id9", null, null, null, null, false));
+                new AnatEntityTO("Anat_id1", null, null, null, null, null),
+                new AnatEntityTO("Anat_id10", null, null, null, null, null),
+                new AnatEntityTO("Anat_id11", null, null, null, null, null),
+                new AnatEntityTO("Anat_id12", null, null, null, null, null),
+                new AnatEntityTO("Anat_id13", null, null, null, null, null),
+                new AnatEntityTO("Anat_id2", null, null, null, null, null),
+                new AnatEntityTO("Anat_id3", null, null, null, null, null),
+                new AnatEntityTO("Anat_id4", null, null, null, null, null),
+                new AnatEntityTO("Anat_id5", null, null, null, null, null),
+                new AnatEntityTO("Anat_id6", null, null, null, null, null),
+                new AnatEntityTO("Anat_id7", null, null, null, null, null),
+                new AnatEntityTO("Anat_id8", null, null, null, null, null),
+                new AnatEntityTO("Anat_id9", null, null, null, null, null));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntities(null).getAllTOs(), expectedAnatEntities));
@@ -123,8 +122,6 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
-
-        log.exit();
     }
 
     /**
@@ -132,7 +129,6 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetNonInformativeAnatEntities() throws SQLException {
-        log.entry();
 
         this.useSelectDB();
 
@@ -153,8 +149,6 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getNonInformativeAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
-
-        log.exit();
     }
 
     /**
@@ -162,7 +156,6 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertAnatEntities() throws SQLException {
-        log.entry();
         
         this.useEmptyDB();
         
@@ -221,7 +214,5 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         } finally {
             this.emptyAndUseDefaultDB();
         }
-
-        log.exit();
     }   
 }

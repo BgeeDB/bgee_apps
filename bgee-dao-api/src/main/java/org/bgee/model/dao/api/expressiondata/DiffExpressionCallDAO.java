@@ -204,10 +204,10 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          */
         private DiffCallType diffCallType;
         /**
-         * An {@code int} defining the minimum number of conditions that were compared, 
+         * An {@code Integer} defining the minimum number of conditions that were compared, 
          * among all the differential expression analyzes that allowed to produce this call.
          */
-        private int minConditionCount;
+        private Integer minConditionCount;
         /**
          * A {@code Factor} defining what was the comparison factor used during 
          * the differential expression analyzes generating this call. 
@@ -224,6 +224,8 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
         /**
          * Constructor providing the type of differential expression of this call, 
          * the comparison factor used, and the minimum number of conditions compared.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id                A {@code String} that is the ID of this call.
          * @param geneId            A {@code String} that is the ID of the gene associated to 
@@ -241,13 +243,13 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          * @param factor            The {@code Factor} defining what was the comparison 
          *                          factor used during the differential expression analyzes 
          *                          generating this call.
-         * @param minConditionCount The {@code int} defining the minimum number of 
+         * @param minConditionCount The {@code Integer} defining the minimum number of 
          *                          conditions that were compared, among all the differential 
          *                          expression analyzes that allowed to produce this call.
          */
         DiffExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId, 
                 DataState affymetrixData, DataState rnaSeqData, 
-                DiffCallType diffCallType, Factor factor, int minConditionCount) {
+                DiffCallType diffCallType, Factor factor, Integer minConditionCount) {
             super(id, geneId, anatEntityId, devStageId, affymetrixData, null, null, 
                     null, rnaSeqData);
             this.diffCallType = diffCallType;
@@ -291,7 +293,7 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          *          were compared, among all the differential expression analyzes 
          *          that allowed to produce this call.
          */
-        public int getMinConditionCount() {
+        public Integer getMinConditionCount() {
             return minConditionCount;
         }
         /**

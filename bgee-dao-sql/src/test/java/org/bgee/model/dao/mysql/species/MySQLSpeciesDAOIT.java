@@ -43,7 +43,9 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldInsertSpecies() throws SQLException {
+        
         this.useEmptyDB();
+        
         //create a Collection of SpeciesTOs to be inserted
         Collection<SpeciesTO> speciesTOs = new ArrayList<SpeciesTO>();
         speciesTOs.add(new SpeciesTO("10", "commonName1", "genus1", "speciesName1", 
@@ -109,7 +111,7 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetAllSpecies() throws SQLException {
-        log.entry();
+
         this.useSelectDB();
 
         // Generate result with the method
@@ -129,6 +131,17 @@ public class MySQLSpeciesDAOIT extends MySQLITAncestor {
         assertTrue("SpeciesTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
         
-        log.exit();
+        dao.clearAttributes();
+        dao.setAttributes(Arrays.asList(SpeciesDAO.Attribute.COMMON_NAME));
+        methSpecies = dao.getAllSpecies().getAllTOs();
+        
+        // Generate manually expected result
+        expectedSpecies = Arrays.asList(
+                new SpeciesTO(null, null, null, "spCName11", null, null, null, null), 
+                new SpeciesTO(null, null, null, "spCName21", null, null, null, null), 
+                new SpeciesTO(null, null, null, "spCName31", null, null, null, null)); 
+        // Compare
+        assertTrue("SpeciesTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(methSpecies, expectedSpecies));
     }
 }

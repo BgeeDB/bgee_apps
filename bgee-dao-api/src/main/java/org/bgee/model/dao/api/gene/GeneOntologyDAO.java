@@ -105,12 +105,15 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
          * Constructor providing the ID (for instance, {@code GO:2001316}), the name 
          * (also known as label, for instance, {@code secretory granule lumen}), and 
          * the {@link Domain} of this Gene Ontology term.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id        a {@code String} that is the ID of this GO term.
          * @param name      a {@code String} that is the name (or label) of this GO term.
          * @param domain    a {@code Domain} which this GO term belongs to.
+         * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public GOTermTO(String id, String name, Domain domain) {
+        public GOTermTO(String id, String name, Domain domain) throws IllegalArgumentException {
             this(id, name, domain, null);
         }
         /**
@@ -119,14 +122,18 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
          * the {@link Domain} of this Gene Ontology term, and some alternative IDs 
          * for this GO term (for instance, {@code GO:0035083} is an alternative ID 
          * to {@code GO:0035082}).
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param id        a {@code String} that is the ID of this GO term.
          * @param name      a {@code String} that is the name (or label) of this GO term.
          * @param domain    a {@code Domain} which this GO term belongs to.
          * @param altIds    a {@code Collection} of {@code String}s that are the alternative IDs 
          *                  of this GO term.
+         * @throws IllegalArgumentException If {@code id} is empty.
          */
-        public GOTermTO(String id, String name, Domain domain, Collection<String> altIds) {
+        public GOTermTO(String id, String name, Domain domain, Collection<String> altIds) 
+                throws IllegalArgumentException{
             super(id, name);
             this.domain = domain;
             Set<String> tempAltIds;

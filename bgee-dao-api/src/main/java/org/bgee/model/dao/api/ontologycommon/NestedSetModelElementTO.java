@@ -12,38 +12,38 @@ import org.bgee.model.dao.api.EntityTO;
 public class NestedSetModelElementTO extends EntityTO {
     private static final long serialVersionUID = 3717417541660503259L;
     /**
-     * An {@code int} that is the left bound of this element in its nested set model.
+     * An {@code Integer} that is the left bound of this element in its nested set model.
      */
-    private final int leftBound;
+    private final Integer leftBound;
     /**
-     * An {@code int} that is the right bound of this element in its nested set model.
+     * An {@code Integer} that is the right bound of this element in its nested set model.
      */
-    private final int rightBound;
+    private final Integer rightBound;
     /**
-     * An {@code int} that is the level of this element in its nested set model.
+     * An {@code Integer} that is the level of this element in its nested set model.
      */
-    private final int level;
+    private final Integer level;
 
     /**
-     * Constructor providing the ID
-     * and its left bound, right bound, and level in its nested set model. 
+     * Constructor providing the ID and its left bound, right bound, 
+     * and level in its nested set model. 
      * <p>
-     * All of these parameters are optional except {@code id}, so they can be 
-     * {@code null} when not used (or equal to 0 for {@code int} arguments).
+     * All of these parameters are optional except {@code id}, so they can be {@code null} 
+     * when not used. If an {@code Integer} is not {@code null} it should be positive.
      * 
      * @param id                A {@code String} that is the ID.
-     * @param leftBound         An {@code int} that is the left bound of this element 
+     * @param leftBound         An {@code Integer} that is the left bound of this element 
      *                          in its nested set model.
-     * @param rightBound        An {@code int} that is the right bound of this element 
+     * @param rightBound        An {@code Integer} that is the right bound of this element 
      *                          in its nested set model.
-     * @param level             An {@code int} that is the level of this element 
+     * @param level             An {@code Integer} that is the level of this element 
      *                          in its nested set model.
      * @throws IllegalArgumentException If {@code id} is {@code null} or empty, or if any of 
      *                                  {code leftBound} or {code rightBound} or {code level} 
      *                                  is less than 0.
      */
     public NestedSetModelElementTO(String id, 
-            int leftBound, int rightBound, int level) throws IllegalArgumentException {
+            Integer leftBound, Integer rightBound, Integer level) throws IllegalArgumentException {
         this(id, null, null, leftBound, rightBound, level);
     }
 
@@ -51,26 +51,29 @@ public class NestedSetModelElementTO extends EntityTO {
      * Constructor providing the ID, the common name, and the description of the element, 
      * and its left bound, right bound, and level in its nested set model. 
      * <p>
-     * All of these parameters are optional except {@code id}, so they can be 
-     * {@code null} when not used (or equal to 0 for {@code int} arguments).
+     * All of these parameters are optional, so they can be {@code null} when not used.
+     * If {code leftBound} or {code rightBound} or {code level} is not {@code null},
+     * it should be positive.
      * 
      * @param id                A {@code String} that is the ID.
-     * @param name        A {@code String} that is the common name of this element.
+     * @param name              A {@code String} that is the common name of this element.
      * @param description       A {@code String} that is the description for this element.
-     * @param leftBound         An {@code int} that is the left bound of this element 
+     * @param leftBound         An {@code Integer} that is the left bound of this element 
      *                          in its nested set model.
-     * @param rightBound        An {@code int} that is the right bound of this element 
+     * @param rightBound        An {@code Integer} that is the right bound of this element 
      *                          in its nested set model.
-     * @param level             An {@code int} that is the level of this element 
+     * @param level             An {@code Integer} that is the level of this element 
      *                          in its nested set model.
-     * @throws IllegalArgumentException If {@code id} is {@code null} or empty, or if any of 
-     *                                  {code leftBound} or {code rightBound} or {code level} 
-     *                                  is less than 0.
+     * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or 
+     *                                  {code rightBound} or {code level} is not {@code null}
+     *                                  and less than 0.
      */
     public NestedSetModelElementTO(String id, String name, String description, 
-            int leftBound, int rightBound, int level) throws IllegalArgumentException {
+            Integer leftBound, Integer rightBound, Integer level) throws IllegalArgumentException {
         super(id, name, description);
-        if (leftBound < 0 || rightBound < 0 || level < 0) {
+        if ((leftBound !=null && leftBound < 0) || 
+            (rightBound  != null && rightBound < 0) ||
+            (level != null && level < 0)) {
             throw new IllegalArgumentException("Integer parameters must be positive.");
         }
         this.leftBound = leftBound;
@@ -79,21 +82,21 @@ public class NestedSetModelElementTO extends EntityTO {
     }
 
     /**
-     * @return  An {@code int} that is the left bound of this element in its nested set model.
+     * @return  An {@code Integer} that is the left bound of this element in its nested set model.
      */
-    public int getLeftBound() {
+    public Integer getLeftBound() {
         return leftBound;
     }
     /**
-     * @return  An {@code int} that is the right bound of this element in its nested set model.
+     * @return  An {@code Integer} that is the right bound of this element in its nested set model.
      */
-    public int getRightBound() {
+    public Integer getRightBound() {
         return rightBound;
     }
     /**
-     * @return  An {@code int} that is the level of this element in its nested set model.
+     * @return  An {@code Integer} that is the level of this element in its nested set model.
      */
-    public int getLevel() {
+    public Integer getLevel() {
         return level;
     }
 }

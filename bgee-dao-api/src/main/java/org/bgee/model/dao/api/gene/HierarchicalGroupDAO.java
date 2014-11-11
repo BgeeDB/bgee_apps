@@ -135,48 +135,57 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         private final String OMAGroupId;
 
         /**
-         * An {@code int} representing the NCBI taxonomy ID of the hierarchical level
+         * An {@code Integer} representing the NCBI taxonomy ID of the hierarchical level
          * queried.
          */
-        private final int taxonId;
+        private final Integer taxonId;
 
         /**
          * Constructor providing the node ID, the OMA Group ID, and the hierarchical left
          * and right bounds.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
+         * If a bound is not {@code null}, it should be positive.
          * 
-         * @param id         An {@code int} that is the ID of a node in the tree of
-         *                       hierarchical groups
-         * @param OMAGroupId     A {@code String} that is the ID for a particular OMA
-         *                       group of orthologous genes
-         * @param leftBound  An {@code int} that is the hierarchical left bound of the
-         *                       nested set.
-         * @param rightBound An {@code int} that is the hierarchical right bound of
-         *                       the nested set.
+         * @param id            An {@code Integer} that is the ID of a node in the tree of
+         *                      hierarchical groups
+         * @param OMAGroupId    A {@code String} that is the ID for a particular OMA
+         *                      group of orthologous genes
+         * @param leftBound     An {@code Integer} that is the hierarchical left bound of the
+         *                      nested set.
+         * @param rightBound    An {@code Integer} that is the hierarchical right bound of
+         *                      the nested set.
+         * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or
+         *                                  {code rightBound} is not {@code null} and less than 0.
          */
-        public HierarchicalGroupTO(int id, String OMAGroupId, int leftBound,
-                int rightBound) {
-            this(id, OMAGroupId, leftBound, rightBound, 0);
+        public HierarchicalGroupTO(Integer id, String OMAGroupId, Integer leftBound,
+                Integer rightBound) throws IllegalArgumentException {
+            this(id, OMAGroupId, leftBound, rightBound, null);
         }
 
         /**
          * Constructor providing the node ID, the OMA Group ID, the hierarchical left and
          * right bounds, and the NCBI taxonomy ID.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
+         * If a bound is not {@code null}, it should be positive.
          * 
-         * @param id         An {@code int} that is the ID of a node in the tree of
-         *                       hierarchical groups
-         * @param OMAGroupId     A {@code String} that is the ID for a particular OMA
-         *                       group of orthologous genes
-         * @param leftBound  An {@code int} that is the hierarchical left bound of the
-         *                       nested set.
-         * @param rightBound An {@code int} that is the hierarchical right bound of
-         *                       the nested set.
-         * @param taxonId An {@code int} that is the NCBI taxonomy ID of the
-         *                       hierarchical level queried.
+         * @param id            An {@code Integer} that is the ID of a node in the tree of
+         *                      hierarchical groups
+         * @param OMAGroupId    A {@code String} that is the ID for a particular OMA
+         *                      group of orthologous genes
+         * @param leftBound     An {@code Integer} that is the hierarchical left bound of the
+         *                      nested set.
+         * @param rightBound    An {@code Integer} that is the hierarchical right bound of
+         *                      the nested set.
+         * @param taxonId       An {@code Integer} that is the NCBI taxonomy ID of the
+         *                      hierarchical level queried.
+         * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or
+         *                                  {code rightBound} is not {@code null} and less than 0.
          */
-        public HierarchicalGroupTO(int id, String OMAGroupId, int leftBound,
-                int rightBound, int taxonId) {
-            super(String.valueOf(id), null, null, leftBound, rightBound, 0);
-            
+        public HierarchicalGroupTO(Integer id, String OMAGroupId, Integer leftBound,
+                Integer rightBound, Integer taxonId) throws IllegalArgumentException {
+            super(String.valueOf(id), null, null, leftBound, rightBound, null);
             this.OMAGroupId = OMAGroupId;
             this.taxonId = taxonId;
         }
@@ -204,7 +213,7 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         }
 
         /**
-         * @return An {@code int} representing the NCBI taxonomy ID of the hierarchical
+         * @return An {@code Integer} representing the NCBI taxonomy ID of the hierarchical
          *         level queried.
          */
         //TODO: more explanatory javadoc

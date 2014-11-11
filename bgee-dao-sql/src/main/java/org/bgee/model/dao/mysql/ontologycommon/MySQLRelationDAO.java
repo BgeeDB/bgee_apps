@@ -104,8 +104,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             BgeePreparedStatement.generateParameterizedQueryString(relationStatus.size()) + ")";
         }
         
-        sql += " ORDER BY " + tableName + ".anatEntitySourceId, " + 
-                              tableName + ".anatEntityTargetId";
+//        sql += " ORDER BY " + tableName + ".anatEntitySourceId, " + 
+//                              tableName + ".anatEntityTargetId";
 
          //we don't use a try-with-resource, because we return a pointer to the results, 
          //not the actual results, so we should not close this BgeePreparedStatement.

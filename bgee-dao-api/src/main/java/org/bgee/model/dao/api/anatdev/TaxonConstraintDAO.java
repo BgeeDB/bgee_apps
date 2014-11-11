@@ -120,6 +120,8 @@ public interface TaxonConstraintDAO {
 
         /**
          * Constructor providing the entity ID and the species ID defining this taxon constraint.
+         * <p>
+         * All of these parameters are optional, so they can be {@code null} when not used.
          * 
          * @param entityId      A {@code String} that is the ID of the entity that has a taxon 
          *                      constraint. 

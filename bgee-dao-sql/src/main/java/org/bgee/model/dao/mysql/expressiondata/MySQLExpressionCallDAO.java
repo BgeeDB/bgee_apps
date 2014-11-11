@@ -130,13 +130,19 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      * @return                       An {@code ExpressionCallTOResultSet} containing all expression 
      *                               calls from data source.
      * @throws DAOException          If a {@code SQLException} occurred while trying to get 
-     *                               expression calls.   
+     *                               expression calls.
+     * @throws IllegalArgumentException If {@code isIncludeSubStages} is {@code true}.                      
      */
     private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
-            boolean isIncludeSubstructures, boolean isIncludeSubStages) throws DAOException {
+            boolean isIncludeSubstructures, boolean isIncludeSubStages) 
+                    throws DAOException, IllegalArgumentException {
         log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages);
-
-        Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
+        
+        //TODO add the mechanism for includeSubStages
+        if (isIncludeSubStages) {
+            throw log.throwing(new IllegalArgumentException("The actual query can't include " +
+                    "substages, it's need to be implemented"));
+        }
         
         String tableName = "expression";
         String geneTabName = "gene";
@@ -146,13 +152,11 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         }
         // Construct sql query
         String sql = new String(); 
-        //the Attributes INCLUDESUBSTAGES and INCLUDESUBSTRUCTURES does not correspond 
-        //to any columns in a table, but they allow to determine how the TOs returned 
-        //were generated. 
-        //The TOs returned by the ResultSet will have these values set to false 
-        //by default. So, only if isIncludeSubstructures or isIncludeSubStages 
-        //are true, we add a fake column to the query to provide the information to the ResultSet, 
-        //otherwise it is not needed. 
+        //the Attribute INCLUDESUBSTRUCTURES does not correspond to any columns in a table, 
+        //but they allow to determine how the TOs returned were generated. 
+        //The TOs returned by the ResultSet will have these values set to null by default. 
+        //So, we add a fake column to the query to provide the information to the 
+        //ResultSet, otherwise it is not needed. 
         String sqlIncludeSubstructures = " 0";
         if (isIncludeSubstructures) {
             sqlIncludeSubstructures = " 1";
@@ -160,14 +164,15 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         sqlIncludeSubstructures += " AS " + this.attributeToString(
                 ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES, isIncludeSubstructures);
         
-        //TODO: add the mechanism for includeSubStages when implemented.
-        String sqlIncludeSubStages = " 0 ";
-        if (isIncludeSubStages) {
-            sqlIncludeSubStages = " 1";
-        }
-        sqlIncludeSubStages += " AS " + this.attributeToString(
-                ExpressionCallDAO.Attribute.INCLUDESUBSTAGES, isIncludeSubstructures);
-        
+        //the attribute ORIGINOFLINE does not correspond to any columns in basic expression call 
+        //table.  
+        //The TOs returned by the ResultSet will have these values set to null by default.
+        //So, we add a fake column to the query to provide the information to the 
+        //ResultSet, otherwise it is not needed. 
+        String sqlOriginOfLine = "'" + OriginOfLine.SELF.getStringRepresentation() + "' AS " + 
+                this.attributeToString(ExpressionCallDAO.Attribute.ORIGINOFLINE, isIncludeSubstructures);
+
+        Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
         if (attributes != null) {
             for (ExpressionCallDAO.Attribute attribute: attributes) {
                 //TODO: add the mechanism for includeSubStages when implemented.
@@ -175,14 +180,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTAGES)) {
                     continue;
                 }
-                //ORIGINOFLINE corresponds to a column only in the globalExpression table, 
-                //but we can still provide the information SELF for basic calls. As it is 
-                //the default value in the TOs returned, we just need to skip this attribute 
-                //if basic calls were requested. 
-                if (attribute.equals(ExpressionCallDAO.Attribute.ORIGINOFLINE) && 
-                        !isIncludeSubstructures) {
-                    continue;
-                }
+
                 if (sql.isEmpty()) {
                     sql += "SELECT DISTINCT ";
                 } else {
@@ -191,6 +189,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES)) {
                     //add fake column
                     sql += sqlIncludeSubstructures;
+                } else if (attribute.equals(ExpressionCallDAO.Attribute.ORIGINOFLINE) 
+                        && !isIncludeSubstructures) {
+                    //add fake column
+                    sql += sqlOriginOfLine;
                 } else {
                     //otherwise, real column requested
                     sql +=  tableName + "." + 
@@ -202,7 +204,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             //at this point, either there was no attribute requested, or only unnecessary 
             //fake columns were requested. As the latter case is really a weird use case, 
             //we don't bother and retrieve all columns anyway.
-            sql += "SELECT " + tableName + ".*, " + sqlIncludeSubstructures;
+            sql += "SELECT " + tableName + ".*, " + sqlIncludeSubstructures; 
+            if (!isIncludeSubstructures) {
+                sql += ", " + sqlOriginOfLine;
+            }
         }
         sql += " FROM " + tableName;
         if (speciesIds != null && speciesIds.size() > 0) {

@@ -99,6 +99,16 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
         sqlIncludeParentStructures +=  " AS " + this.attributeToString(
                 NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, isIncludeParentStructures);
+        
+        //the attribute ORIGINOFLINE does not correspond to any columns in basic no-expression call 
+        //table.  
+        //The TOs returned by the ResultSet will have these values set to null by default.
+        //So, we add a fake column to the query to provide the information to the 
+        //ResultSet, otherwise it is not needed. 
+        String sqlOriginOfLine = "'" + OriginOfLine.SELF.getStringRepresentation() + "' AS " + 
+                this.attributeToString(NoExpressionCallDAO.Attribute.ORIGINOFLINE, 
+                        isIncludeParentStructures);
+
         if (attributes != null) {
             for (NoExpressionCallDAO.Attribute attribute: attributes) {
                 //ORIGINOFLINE corresponds to a column only in the globalNoExpression table, 
@@ -117,6 +127,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES)) {
                     //add fake column
                     sql += sqlIncludeParentStructures;
+                } else if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGINOFLINE) 
+                        && !isIncludeParentStructures) {
+                    //add fake column
+                    sql += sqlOriginOfLine;
                 } else {
                     //otherwise, real column requested
                     sql +=  tableName + "." + 
@@ -128,7 +142,10 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             //at this point, either there was no attribute requested, or only unnecessary 
             //fake columns were requested. As the latter case is really a weird use case, 
             //we don't bother and retrieve all columns anyway.
-            sql += "SELECT " + tableName + ".*, " + sqlIncludeParentStructures;
+            sql += "SELECT " + tableName + ".*, " + sqlIncludeParentStructures; 
+            if (!isIncludeParentStructures) {
+                sql += ", " + sqlOriginOfLine;
+            }
         }
         sql += " FROM " + tableName;
         String geneTabName = "gene";

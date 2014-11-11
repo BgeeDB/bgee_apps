@@ -57,7 +57,6 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
      * Test the select method {@link MySQLExpressionCallDAO#getExpressionCalls()}.
      */
     @Test
-    //TODO: are there tests with no Attributes provided?
     public void shouldGetExpressionCalls() throws SQLException {
         
         this.useSelectDB();
@@ -75,31 +74,31 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         List<ExpressionCallTO> expectedExprCalls = Arrays.asList(
                 new ExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id1", DataState.LOWQUALITY, 
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY,
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("2", "ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY,
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY,
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("3", "ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY,
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("4", "ID2", "Anat_id2", "Stage_id18", DataState.HIGHQUALITY, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("6", "ID2", "Anat_id11", "Stage_id12", DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("7", "ID2", "Anat_id11", "Stage_id13", DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("8", "ID3", "Anat_id3", "Stage_id1", DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA,
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
-                        false, null, null));
+                        false, null, OriginOfLine.SELF));
         // Compare
         List<ExpressionCallTO> expressions = dao.getExpressionCalls(params).getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
@@ -112,13 +111,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         expectedExprCalls = Arrays.asList(
                 new ExpressionCallTO("2","ID1", "Anat_id6", "Stage_id6", DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("3","ID1", "Anat_id6", "Stage_id7", DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
-                        false, null, null),
+                        false, null, OriginOfLine.SELF),
                 new ExpressionCallTO("5","ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                        false, null, null)); 
+                        false, null, OriginOfLine.SELF)); 
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
@@ -271,6 +270,30 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("20", null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO("21", null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO("23", null, null, null, null, null, null, null, null, null, null));
+        // Compare
+        expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        
+        // Test get INCLUDESUBSTRUCTURES (and STAGEID) without OriginOfLine including substructures
+        dao.clearAttributes();
+        dao.setAttributes(
+                ExpressionCallDAO.Attribute.STAGEID, ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES);
+        expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO(null, null, null, "Stage_id1", 
+                        null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id6", 
+                        null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id7", 
+                        null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id18",
+                        null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id10", 
+                        null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id12",
+                        null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id13",
+                        null, null, null, null, true, null, null));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 

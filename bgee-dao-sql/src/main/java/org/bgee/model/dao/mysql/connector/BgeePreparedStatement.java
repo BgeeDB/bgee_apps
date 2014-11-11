@@ -249,7 +249,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      * @throws SQLException     If parameterIndex does not correspond to a parameter marker in the 
      *                          SQL statement; if a database access error occurs or this method is 
      *                          called on a closed {@code PreparedStatement}.
-     * @param T                 The type of {@code EnumDAOField}
+     * @param <T>               The type of {@code EnumDAOField}
      */
     public <T extends Enum<T> & EnumDAOField> void setEnumDAOFields(int startIndex, 
             List<T> values) 

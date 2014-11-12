@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TransferObject;
@@ -70,8 +72,11 @@ public class InsertGlobalCalls extends CallUser {
      * 
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
      * @throws DAOException  If an error occurred while inserting the data into the Bgee database.
+     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     *                                        {@code isIncludeSubStages} is set to {@code true},
+     *                                        because it is not implemented yet.
      */
-    public static void main(String[] args) throws DAOException {
+    public static void main(String[] args) throws DAOException, OperationNotSupportedException {
         log.entry((Object[]) args);
         
         int expectedArgLengthWithoutSpecies = 1;
@@ -196,8 +201,12 @@ public class InsertGlobalCalls extends CallUser {
      * @throws DAOException    If an error occurred while inserting the data into the Bgee database.
      * @throws IllegalArgumentException If a species ID does not correspond to any species 
      *                                  in the Bgee data source.
+     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     *                                        {@code isIncludeSubStages} is set to {@code true},
+     *                                        because it is not implemented yet.
      */
-    public void insert(List<String> speciesIds, boolean isNoExpression) throws DAOException {
+    public void insert(List<String> speciesIds, boolean isNoExpression) 
+            throws DAOException, OperationNotSupportedException {
         log.entry(speciesIds, isNoExpression);
 
         try {
@@ -401,8 +410,11 @@ public class InsertGlobalCalls extends CallUser {
      * @return              A {@code Set} of {@code String}s containing anatomical entity IDs
      *                      allowed to be used for no-expression call propagation.
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
+     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     *                                        {@code isIncludeSubStages} is set to {@code true},
+     *                                        because it is not implemented yet.
      */
-    private Set<String> loadAllowedAnatEntities() throws DAOException {
+    private Set<String> loadAllowedAnatEntities() throws DAOException, OperationNotSupportedException {
         log.entry();
         
         log.info("Start retrieving allowed anat entities for no-expression call propagation...");

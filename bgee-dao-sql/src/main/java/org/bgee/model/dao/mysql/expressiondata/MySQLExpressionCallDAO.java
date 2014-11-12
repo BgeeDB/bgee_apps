@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,7 +53,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 
     @Override
     public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
-            throws DAOException {
+            throws DAOException, OperationNotSupportedException {
         log.entry(params);
         return log.exit(getExpressionCalls(
                 params.getSpeciesIds(), params.isIncludeSubstructures(), params.isIncludeSubStages())); 
@@ -131,16 +133,16 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      *                               calls from data source.
      * @throws DAOException          If a {@code SQLException} occurred while trying to get 
      *                               expression calls.
-     * @throws IllegalArgumentException If {@code isIncludeSubStages} is {@code true}.                      
+     * @throws OperationNotSupportedException If {@code isIncludeSubStages} is {@code true}.                      
      */
     private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
             boolean isIncludeSubstructures, boolean isIncludeSubStages) 
-                    throws DAOException, IllegalArgumentException {
+                    throws DAOException, OperationNotSupportedException {
         log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages);
         
         //TODO add the mechanism for includeSubStages
         if (isIncludeSubStages) {
-            throw log.throwing(new IllegalArgumentException("The actual query can't include " +
+            throw log.throwing(new OperationNotSupportedException("The actual query can't include " +
                     "substages, it's need to be implemented"));
         }
         

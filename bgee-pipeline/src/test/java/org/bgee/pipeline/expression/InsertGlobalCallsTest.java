@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
@@ -82,7 +84,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
-    public void shouldInsertGlobalExpression() throws IllegalStateException, SQLException {
+    public void shouldInsertGlobalExpression() 
+            throws IllegalStateException, SQLException, OperationNotSupportedException {
         
         // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
         // This will allow to verify that the correct values were tried to be inserted 
@@ -457,7 +460,8 @@ public class InsertGlobalCallsTest extends TestAncestor {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
-    public void shouldInsertGlobalNoExpression() throws IllegalStateException, SQLException {
+    public void shouldInsertGlobalNoExpression() 
+            throws IllegalStateException, SQLException, OperationNotSupportedException {
         
         // Species ID to use
         List<String> speciesId = Arrays.asList("11");
@@ -785,7 +789,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
      */
     @Test
     public void shouldInsertGlobalNoExpressionWithUnknownSpecies()
-            throws IllegalStateException {
+            throws IllegalStateException, OperationNotSupportedException {
         
         MockDAOManager mockManager = new MockDAOManager();
 
@@ -809,7 +813,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
      */
     @Test
     public void shouldInsertGlobalExpressionWithUnknownSpecies()
-            throws IllegalStateException {
+            throws IllegalStateException, OperationNotSupportedException {
         
         MockDAOManager mockManager = new MockDAOManager();
 

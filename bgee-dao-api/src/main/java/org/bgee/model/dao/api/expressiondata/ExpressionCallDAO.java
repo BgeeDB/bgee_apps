@@ -2,6 +2,8 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
 
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
@@ -58,9 +60,12 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
      * @return              An {@code ExpressionCallTOResultSet} containing all expression calls 
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
+     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     *                                        {@code isIncludeSubStages} is set to {@code true},
+     *                                        because not yet implemented.
      */
     public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
-            throws DAOException;
+            throws DAOException, OperationNotSupportedException;
     
     /**
      * Retrieve the maximum of expression call IDs from data source according a {@code boolean} 

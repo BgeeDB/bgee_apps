@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -12,6 +13,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.naming.OperationNotSupportedException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -245,7 +248,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
      * Test {@link BgeeDBUtils#getExpressionCallsByGeneId(Set, ExpressionCallDAO)}.
      */
     @Test
-    public void shouldGetExpressionCallsByGeneId() {
+    public void shouldGetExpressionCallsByGeneId() throws OperationNotSupportedException {
         try (MockDAOManager mockManager = new MockDAOManager()) {
         
             Map<String, Set<ExpressionCallTO>> expectedMap = 

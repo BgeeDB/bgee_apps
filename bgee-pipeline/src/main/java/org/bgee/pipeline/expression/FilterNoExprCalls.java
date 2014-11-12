@@ -20,7 +20,6 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
-import org.bgee.pipeline.MySQLDAOUser;
 
 /**
  * Class used to delete or update conflicting no-expression calls in Bgee and associated 
@@ -30,7 +29,7 @@ import org.bgee.pipeline.MySQLDAOUser;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class FilterNoExprCalls extends MySQLDAOUser {
+public class FilterNoExprCalls extends CallUser {
     /**
      * {@code Logger} of the class.
      */

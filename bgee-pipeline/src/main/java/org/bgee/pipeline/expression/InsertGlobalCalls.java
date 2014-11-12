@@ -28,7 +28,6 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
-import org.bgee.pipeline.MySQLDAOUser;
 
 
 /**
@@ -38,7 +37,7 @@ import org.bgee.pipeline.MySQLDAOUser;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class InsertGlobalCalls extends MySQLDAOUser {
+public class InsertGlobalCalls extends CallUser {
 
     /**
      * {@code Logger} of the class.

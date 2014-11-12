@@ -116,10 +116,13 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         }
         
         String expressionTabName = "expression";
+        String noExpressionTabName = "noExpression";
 
         sql += " FROM " + tableName +
                " LEFT OUTER JOIN " + expressionTabName + " ON (" + 
-                        expressionTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+                        expressionTabName + ".anatEntityId = " + tableName + ".anatEntityId)" +
+               " LEFT OUTER JOIN " + noExpressionTabName + " ON (" + 
+                       noExpressionTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
         
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
 
@@ -128,7 +131,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                     anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
         }
         sql += " WHERE " + tableName + ".nonInformative = true " +
-                "AND " + expressionTabName + ".anatEntityId IS NULL";
+               "AND " + expressionTabName + ".anatEntityId IS NULL " +
+               "AND " + noExpressionTabName + ".anatEntityId IS NULL";
         if (isSpeciesFilter) {
             sql += " AND (" + anatEntTaxConstTabName + ".speciesId IS NULL" +
                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" +

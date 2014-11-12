@@ -127,9 +127,10 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
     /**
      * Test the select method {@link MySQLAnatEntityDAO#getNonInformativeAnatEntities()}.
      */
+    //TODO Add tests to take account the addition of the LEFT OUTER JOIN on the noExpression table
     @Test
     public void shouldGetNonInformativeAnatEntities() throws SQLException {
-
+        
         this.useSelectDB();
 
         MySQLAnatEntityDAO dao = new MySQLAnatEntityDAO(this.getMySQLDAOManager());

@@ -86,6 +86,9 @@ public class TOComparator {
         //too much changes to the TransferObject classes, only for test purposes.
         //So we dispatch to the appropriate areTOsEqual method "manually", 
         //this is ugly but it will do the trick. 
+        if (!to1.getClass().equals(to2.getClass())) {
+            return log.exit(false);
+        }
         if (to1 instanceof SpeciesTO) {
             return log.exit(areTOsEqual((SpeciesTO) to1, (SpeciesTO) to2, compareId));
         } else if (to1 instanceof TaxonTO) {

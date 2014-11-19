@@ -13,8 +13,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
@@ -354,11 +352,11 @@ public class GenerateDownladFile extends CallUser {
      * 
      * @param args          An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IOException  If some files could not be used.
-     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
-    public static void main(String[] args) throws IOException, OperationNotSupportedException {
+    public static void main(String[] args) throws IOException, UnsupportedOperationException {
         log.entry((Object[]) args);
 
         // TODO Manage with multi-species!
@@ -392,12 +390,12 @@ public class GenerateDownladFile extends CallUser {
      * @param directory     A {@code String} that is the directory path directory to store the 
      *                      generated files. 
      * @throws IOException  If an error occurred while trying to write generated files.
-     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
     public void generateSingleSpeciesFiles(List<String> speciesIds, List<String> fileTypes, 
-            String directory) throws IOException, OperationNotSupportedException { 
+            String directory) throws IOException, UnsupportedOperationException { 
         log.entry(speciesIds, fileTypes, directory);
         
         // Get all species in Bgee even if some species IDs were provided, to check user input.
@@ -460,7 +458,7 @@ public class GenerateDownladFile extends CallUser {
                     allCallTOs.addAll(exprTOs);
                     allCallTOs.addAll(noExprTOs);
                     allCallTOs.addAll(globalNoExprTOs);
-                    exprSimpleFile = this.mergeAllCalls(
+                    exprSimpleFile = this.mergeCallsFromSortedMap(
                             this.groupAndOrderByGeneAnatEntityStage(allCallTOs));
                     log.trace("Done generation of data for simple file for the species {}",
                             speciesId);
@@ -477,7 +475,8 @@ public class GenerateDownladFile extends CallUser {
                     allCallTOs.addAll(globalExprTOs);
                     allCallTOs.addAll(noExprTOs);
                     allCallTOs.addAll(globalNoExprTOs);
-                    exprAdvancedFile = this.mergeAllCalls(
+
+                    exprAdvancedFile = this.mergeCallsFromSortedMap(
                             this.groupAndOrderByGeneAnatEntityStage(allCallTOs));
                     log.trace("Done generation of data for advanced file for the species {}", 
                             speciesId);
@@ -547,12 +546,12 @@ public class GenerateDownladFile extends CallUser {
      * @return                              A {@code List} of {@code ExpressionCallTO}s containing 
      *                                      all basic expression calls of the given species.
      * @throws DAOException     If an error occurred while getting the data from the Bgee database.
-     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
     private List<ExpressionCallTO> loadBasicExprCallsFromDb(Set<String> speciesIds)
-                    throws DAOException, OperationNotSupportedException {
+                    throws DAOException, UnsupportedOperationException {
         log.entry(speciesIds);
     
         log.info("Start retrieving basic expression calls for the species IDs {}...", speciesIds);
@@ -636,12 +635,12 @@ public class GenerateDownladFile extends CallUser {
      * @return                              A {@code List} of {@code ExpressionCallTO}s containing 
      *                                      all global expression calls of the given species.
      * @throws DAOException     If an error occurred while getting the data from the Bgee database.
-     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
     private List<ExpressionCallTO> loadGlobalExprCallsFromDb(Set<String> speciesIds) 
-                    throws DAOException, OperationNotSupportedException {
+                    throws DAOException, UnsupportedOperationException {
         log.entry(speciesIds);
     
         log.info("Start retrieving global expression calls for the species IDs {}...", speciesIds);
@@ -729,14 +728,13 @@ public class GenerateDownladFile extends CallUser {
      * @return          A {@code List} of {@code Map}s where keys are file column names and 
      *                  values are data associated to the column name.
      */
-    private List<Map<String, String>> mergeAllCalls(SortedMap<CallTO, Collection<CallTO>> allCalls) {
+    private List<Map<String, String>> mergeCallsFromSortedMap(SortedMap<CallTO, Collection<CallTO>> allCalls) {
         log.entry(allCalls);
         
         List<Map<String, String>> allRows = new ArrayList<Map<String, String>>();
 
         for (Entry<CallTO, Collection<CallTO>> callGroup : allCalls.entrySet()) {
-            log.trace("Start merging the group of calls: key: {}; value: {}", 
-                    callGroup.getKey(), callGroup.getValue());
+            log.trace("Start merging the group of calls: {}", callGroup);
             Map<String, String> row = new HashMap<String, String>();
             
             ExpressionCallTO basicExprTO = null, globalExprTO = null;
@@ -756,13 +754,9 @@ public class GenerateDownladFile extends CallUser {
                     }
                 } else {
                     throw log.throwing(new IllegalArgumentException("The CallTO provided (" +
-                            call.toString()+ ") is not manage for expression/no-expression data"));
+                            call.getClass() + ") is not manage for expression/no-expression data"));
                 }
             }
-            
-            log.debug("Basic expression call: {}; Basic no-expression call: {};"
-                    + " Global expression call: {}; Global no-expression call: {}",
-                    basicExprTO, basicNoExprTO, globalExprTO, globalNoExprTO);
             
             // Default values
             ExpressionData affyData = ExpressionData.NODATA, estData = ExpressionData.NODATA, 
@@ -773,10 +767,182 @@ public class GenerateDownladFile extends CallUser {
                     inSituOrigin = Origin.NODATA, relaxedInSituOrigin = Origin.NODATA,
                     rnaSeqOrigin = Origin.NODATA; 
             
-            if (globalExprTO != null && globalNoExprTO != null) {
-                log.trace("Global expression call and global no-expression call are not null");
-                // We have an expression call AND a no-expression call for the same 
-                // triplet gene-organ-stage
+            if (basicExprTO != null && basicNoExprTO == null && globalExprTO == null && globalNoExprTO == null) {
+                resume = this.resumeExpresionCallDataStates(basicExprTO);
+
+                affyData = this.convertDateStateToExpressionData(basicExprTO.getAffymetrixData(), false);
+                estData = this.convertDateStateToExpressionData(basicExprTO.getESTData(), false);
+                inSituData = this.convertDateStateToExpressionData(basicExprTO.getInSituData(), false);
+                rnaSeqData = this.convertDateStateToExpressionData(basicExprTO.getRNASeqData(), false);
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getAffymetrixData(), null,null, null);
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getESTData(), null,null, null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getInSituData(), null,null, null);
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getRNASeqData(), null, null, null);
+
+            } else if (basicExprTO == null && basicNoExprTO != null && globalExprTO == null && globalNoExprTO == null) {
+                resume = ExpressionData.NOEXPRESSION;
+
+                affyData = this.convertDateStateToExpressionData(basicNoExprTO.getAffymetrixData(), true);
+                inSituData = this.convertDateStateToExpressionData(basicNoExprTO.getInSituData(), true);
+                relaxedInSituData = this.convertDateStateToExpressionData(basicNoExprTO.getRelaxedInSituData(), true);
+                rnaSeqData = this.convertDateStateToExpressionData(basicNoExprTO.getRNASeqData(), true);
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getAffymetrixData(), null, null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getInSituData(), null, null);
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRelaxedInSituData(), null, null);
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRNASeqData(), null, null);
+                
+            } else if (basicExprTO == null && basicNoExprTO == null && globalExprTO != null && globalNoExprTO == null) {
+                resume = this.resumeExpresionCallDataStates(globalExprTO);
+                
+                affyData = this.convertDateStateToExpressionData(globalExprTO.getAffymetrixData(), false);
+                estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
+                inSituData = this.convertDateStateToExpressionData(globalExprTO.getInSituData(), false);
+                rnaSeqData = this.convertDateStateToExpressionData(globalExprTO.getRNASeqData(), false);
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null, globalExprTO.getAffymetrixData(), null);
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null, globalExprTO.getESTData(), null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null, globalExprTO.getInSituData(), null);
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null, globalExprTO.getRNASeqData(), null);
+
+            } else if (basicExprTO == null && basicNoExprTO == null && globalExprTO == null && globalNoExprTO != null) {
+                resume = ExpressionData.NOEXPRESSION;
+
+                affyData = this.convertDateStateToExpressionData(globalNoExprTO.getAffymetrixData(), true);
+                inSituData = this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
+                relaxedInSituData = this.convertDateStateToExpressionData(globalNoExprTO.getRelaxedInSituData(), true);
+                rnaSeqData = this.convertDateStateToExpressionData(globalNoExprTO.getRNASeqData(), true);
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null, null, globalNoExprTO.getAffymetrixData());
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null, null, globalNoExprTO.getInSituData());
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null, null, globalNoExprTO.getRelaxedInSituData());
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null, null, globalNoExprTO.getRNASeqData());
+
+            } else if (basicExprTO != null && basicNoExprTO != null && globalExprTO == null && globalNoExprTO == null) {
+                resume = ExpressionData.HIGHAMBIGUITY;
+                
+                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getAffymetrixData(), basicNoExprTO.getAffymetrixData());
+                estData = this.convertDateStateToExpressionData(basicExprTO.getESTData(), false);
+                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getInSituData(), basicNoExprTO.getInSituData());
+                relaxedInSituData = 
+                        this.convertDateStateToExpressionData(basicNoExprTO.getInSituData(), true);
+                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getRNASeqData(), basicNoExprTO.getRNASeqData());
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getAffymetrixData(), basicNoExprTO.getAffymetrixData(),
+                        null, null);
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getESTData(), null,
+                        null, null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getInSituData(), basicNoExprTO.getInSituData(),
+                        null, null);
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRelaxedInSituData(),
+                        null, null);
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getRNASeqData(), basicNoExprTO.getRNASeqData(),
+                        null, null);
+
+            } else if (basicExprTO != null && basicNoExprTO == null && globalExprTO != null && globalNoExprTO == null) {
+                resume = this.resumeExpresionCallDataStates(globalExprTO);
+
+                affyData = this.convertDateStateToExpressionData(globalExprTO.getAffymetrixData(), false);
+                estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
+                inSituData = this.convertDateStateToExpressionData(globalExprTO.getInSituData(), false);
+                rnaSeqData = this.convertDateStateToExpressionData(globalExprTO.getRNASeqData(), false);
+                
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getAffymetrixData(), null,
+                        globalExprTO.getAffymetrixData(), null);
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getESTData(), null,
+                        globalExprTO.getESTData(), null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getInSituData(), null,
+                        globalExprTO.getInSituData(), null);
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getRNASeqData(), null,
+                        globalExprTO.getRNASeqData(), null);
+
+            } else if (basicExprTO != null && basicNoExprTO == null && globalExprTO == null && globalNoExprTO != null) {
+                resume = ExpressionData.LOWAMBIGUITY;
+
+                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estData = this.convertDateStateToExpressionData(basicExprTO.getESTData(), false);
+                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getInSituData(), globalNoExprTO.getInSituData());
+                relaxedInSituData = 
+                        this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
+                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getAffymetrixData(), null,
+                        null, globalNoExprTO.getAffymetrixData());
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getESTData(), null,
+                        null, null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getInSituData(), null,
+                        null, globalNoExprTO.getInSituData());
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null,
+                        null, globalNoExprTO.getRelaxedInSituData());
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getRNASeqData(), null,
+                        null, globalNoExprTO.getRNASeqData());
+
+            } else if (basicExprTO == null && basicNoExprTO != null && globalExprTO != null && globalNoExprTO == null) {
+                throw new IllegalStateException("There is a no-expression call while there is no "
+                        + "globla no-expression call.");
+                
+            } else if (basicExprTO == null && basicNoExprTO != null && globalExprTO == null && globalNoExprTO != null) {
+                resume = ExpressionData.NOEXPRESSION;
+                
+                affyData = this.convertDateStateToExpressionData(globalNoExprTO.getAffymetrixData(), true);
+                inSituData = this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
+                relaxedInSituData = 
+                        this.convertDateStateToExpressionData(globalNoExprTO.getRelaxedInSituData(), true);
+                rnaSeqData = this.convertDateStateToExpressionData(globalNoExprTO.getRNASeqData(), true);
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getAffymetrixData(),
+                        null, globalNoExprTO.getAffymetrixData());
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getInSituData(),
+                        null, globalNoExprTO.getInSituData());
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRelaxedInSituData(),
+                        null, globalNoExprTO.getRelaxedInSituData());
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRNASeqData(),
+                        null, globalNoExprTO.getRNASeqData());
+
+            } else if (basicExprTO == null && basicNoExprTO == null && globalExprTO != null && globalNoExprTO != null) {
+                resume = ExpressionData.LOWAMBIGUITY;
+                
                 affyData = this.mergeExprAndNoExprDataStatesInExprData(
                         globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
                 estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
@@ -787,213 +953,147 @@ public class GenerateDownladFile extends CallUser {
                 rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
                         globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
                 
-                if (basicNoExprTO != null && basicExprTO != null) {
-                    // Expression and no-expression calls are not inferred
-                    resume = ExpressionData.HIGHAMBIGUITY;
-                    
-                    affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            basicExprTO.getAffymetrixData(), basicNoExprTO.getAffymetrixData(),
-                            globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
-                    estOrigin = 
-                            this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            basicExprTO.getESTData(), null,
-                            globalExprTO.getESTData(), null);
-                    inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            basicExprTO.getInSituData(), basicNoExprTO.getInSituData(),
-                            globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
-                    relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            null, basicNoExprTO.getRelaxedInSituData(),
-                            null, globalNoExprTO.getRelaxedInSituData());
-                    rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            basicExprTO.getRNASeqData(), basicNoExprTO.getRNASeqData(),
-                            globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
-                } else if (basicNoExprTO != null) {
-                    // Only the no-expression is not inferred
-                    resume = ExpressionData.HIGHAMBIGUITY;
-                    
-                    affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, basicNoExprTO.getAffymetrixData(),
-                            globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
-                    estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, null,
-                            globalExprTO.getESTData(), null);
-                    inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, basicNoExprTO.getInSituData(),
-                            globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
-                    relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            null, basicNoExprTO.getRelaxedInSituData(),
-                            null, globalNoExprTO.getRelaxedInSituData());
-                    rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, basicNoExprTO.getRNASeqData(),
-                            globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null,
+                        globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null,
+                        globalExprTO.getESTData(), null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null,
+                        globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null,
+                        null, globalNoExprTO.getRelaxedInSituData());
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null,
+                        globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
 
-                } else if (basicExprTO != null) {
-                    // Only the expression is not inferred
-                    resume = ExpressionData.LOWAMBIGUITY;
-                    
-                    affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getAffymetrixData(), null,
-                            globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
-                    estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getESTData(), null,
-                            globalExprTO.getAffymetrixData(), null);
-                    inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getInSituData(), null,
-                            globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
-                    relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, null,
-                            null, globalNoExprTO.getInSituData());
-                    rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getRNASeqData(), null,
-                            globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
-                } else {
-                    // Expression and no-expression are inferred
-                    resume = ExpressionData.LOWAMBIGUITY;
-                    affyOrigin = Origin.INFERRED;
-                    estOrigin = Origin.INFERRED;
-                    inSituOrigin = Origin.INFERRED;
-                    relaxedInSituOrigin = Origin.INFERRED;
-                    rnaSeqOrigin = Origin.INFERRED; 
-                }
-            } else if (globalExprTO != null) {
-                // We have only expression call.
-                log.trace("Global expression call is not null but global no-expression call is null");                
+            } else if (basicExprTO != null && basicNoExprTO != null && globalExprTO != null && globalNoExprTO == null) {
+                throw new IllegalStateException("There is a no-expression call while there is no "
+                        + "globla no-expression call.");
 
-                Set<DataState> allData = new HashSet<DataState>(
-                        Arrays.asList(globalExprTO.getAffymetrixData(), globalExprTO.getESTData(),
-                                globalExprTO.getInSituData(), globalExprTO.getRNASeqData()));
-                if (allData.contains(DataState.HIGHQUALITY)) {
-                    resume = ExpressionData.HIGHQUALITY;
-                } else if (allData.contains(DataState.LOWQUALITY)) {
-                    resume = ExpressionData.LOWQUALITY;
-                } else {
-                    throw log.throwing(new IllegalStateException("All data types, " +
-                            "for one triplet gene-organ-stage, are without data"));
-                }
+            } else if (basicExprTO != null && basicNoExprTO != null && globalExprTO == null && globalNoExprTO != null) {
+                resume = ExpressionData.HIGHAMBIGUITY;
                 
-                affyData = this.convertDateStateToExpressionData(globalExprTO.getAffymetrixData(), false);
-                estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
-                inSituData = this.convertDateStateToExpressionData(globalExprTO.getInSituData(), false);
-                rnaSeqData = this.convertDateStateToExpressionData(globalExprTO.getRNASeqData(), false);
-
-                if (basicExprTO != null) {
-                    // There is an basic expression call, so the expression is not (only) inferred
-                    affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getAffymetrixData(), null,
-                            globalExprTO.getAffymetrixData(), null);
-                    estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getESTData(), null,
-                            globalExprTO.getESTData(), null);
-                    inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getInSituData(), null,
-                            globalExprTO.getInSituData(), null);
-                    rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getRNASeqData(), null,
-                            globalExprTO.getRNASeqData(), null);
-                } else {
-                    affyOrigin = Origin.INFERRED;
-                    estOrigin = Origin.INFERRED;
-                    inSituOrigin = Origin.INFERRED;
-                    rnaSeqOrigin = Origin.INFERRED; 
-                }                
-            } else if (globalNoExprTO != null) {
-                // No-expression only
-                log.trace("Global expression call is null but global no-expression call is not null");                
-
-                resume = ExpressionData.NOEXPRESSION;
-
-                affyData = 
-                        this.convertDateStateToExpressionData(globalNoExprTO.getAffymetrixData(), true);
-                inSituData = 
+                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estData = this.convertDateStateToExpressionData(basicExprTO.getESTData(), false);
+                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getInSituData(), globalNoExprTO.getInSituData());
+                relaxedInSituData = 
                         this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
+                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                        basicExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
+                
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getAffymetrixData(), basicNoExprTO.getAffymetrixData(),
+                        null, globalNoExprTO.getAffymetrixData());
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getESTData(), null,
+                        null, null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getInSituData(), basicNoExprTO.getInSituData(),
+                        null, globalNoExprTO.getInSituData());
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRelaxedInSituData(),
+                        null, globalNoExprTO.getRelaxedInSituData());
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getRNASeqData(), basicNoExprTO.getRNASeqData(),
+                        null, globalNoExprTO.getRNASeqData());
+
+            } else if (basicExprTO != null && basicNoExprTO == null && globalExprTO != null && globalNoExprTO != null) {
+                resume = ExpressionData.HIGHAMBIGUITY;
+                
+                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
+                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
+                relaxedInSituData = 
+                        this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
+                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getAffymetrixData(), null,
+                        globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getESTData(), null,
+                        globalExprTO.getESTData(), null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getInSituData(), null,
+                        globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null,
+                        null, globalNoExprTO.getRelaxedInSituData());
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getRNASeqData(), null,
+                        globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
+
+            } else if (basicExprTO == null && basicNoExprTO != null && globalExprTO != null && globalNoExprTO != null) {
+                resume = ExpressionData.HIGHAMBIGUITY;
+
+                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
+                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
+                relaxedInSituData = 
+                        this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
+                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getAffymetrixData(),
+                        globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, null,
+                        globalExprTO.getESTData(), null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getInSituData(),
+                        globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRelaxedInSituData(),
+                        null, globalNoExprTO.getRelaxedInSituData());
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRNASeqData(),
+                        globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
+
+            } else if (basicExprTO != null && basicNoExprTO != null && globalExprTO != null && globalNoExprTO != null) {
+                resume = ExpressionData.HIGHAMBIGUITY;
+                
+                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
+                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
                 relaxedInSituData = 
                         this.convertDateStateToExpressionData(globalNoExprTO.getRelaxedInSituData(), true);
-                rnaSeqData = 
-                        this.convertDateStateToExpressionData(globalNoExprTO.getRNASeqData(), true);
-                
-                if (basicNoExprTO != null) {
-                    // No-expression not (only) inferred
-                    affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, basicNoExprTO.getAffymetrixData(),
-                            null, globalNoExprTO.getAffymetrixData());
-                    inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, basicNoExprTO.getInSituData(),
-                            null, globalNoExprTO.getInSituData());
-                    relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, basicNoExprTO.getRelaxedInSituData(),
-                            null, globalNoExprTO.getRelaxedInSituData());
-                    rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            null, basicNoExprTO.getRNASeqData(),
-                            null, globalNoExprTO.getRNASeqData());
-                } else {
-                    affyOrigin = Origin.INFERRED;
-                    inSituOrigin = Origin.INFERRED;
-                    relaxedInSituOrigin = Origin.INFERRED;
-                    rnaSeqOrigin = Origin.INFERRED; 
-                }                
+                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                        globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
+
+                affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getAffymetrixData(), basicNoExprTO.getAffymetrixData(),
+                        globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
+                estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getESTData(), null,
+                        globalExprTO.getESTData(), null);
+                inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getInSituData(), basicNoExprTO.getInSituData(),
+                        globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
+                relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        null, basicNoExprTO.getRelaxedInSituData(),
+                        null, globalNoExprTO.getRelaxedInSituData());
+                rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
+                        basicExprTO.getRNASeqData(), basicNoExprTO.getRNASeqData(),
+                        globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
             } else {
-                // No global calls
-                log.trace("No global calls, it is a simple absence/presence file.");                
-
-                if (basicExprTO != null && basicNoExprTO != null) {
-                    log.trace("There is expression and no-expression.");                
-                    // 
-                    resume = ExpressionData.HIGHAMBIGUITY;
-
-                    affyData = this.mergeExprAndNoExprDataStatesInExprData(
-                            basicExprTO.getAffymetrixData(), basicNoExprTO.getAffymetrixData());
-                    estData = this.convertDateStateToExpressionData(basicExprTO.getESTData(), false);
-                    inSituData = this.mergeExprAndNoExprDataStatesInExprData(
-                            basicExprTO.getInSituData(), basicNoExprTO.getInSituData());
-                    relaxedInSituData = 
-                            this.convertDateStateToExpressionData(basicNoExprTO.getRelaxedInSituData(), true);
-                    rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
-                            basicExprTO.getRNASeqData(), basicNoExprTO.getRNASeqData());
-                    
-                    
-                    affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            basicExprTO.getAffymetrixData(), basicNoExprTO.getAffymetrixData(), 
-                            null, null);
-                    estOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin(
-                            basicExprTO.getESTData(), null, null, null);
-                    inSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            basicExprTO.getInSituData(), basicNoExprTO.getInSituData(), null, null);
-                    relaxedInSituOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            null, basicNoExprTO.getRelaxedInSituData(), null, null);
-                    rnaSeqOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
-                            basicExprTO.getRNASeqData(), basicNoExprTO.getRNASeqData(), null, null);
-                } else if (basicExprTO != null) {
-                    log.trace("There is only expression.");                
-                    Set<DataState> allData = new HashSet<DataState>(
-                            Arrays.asList(basicExprTO.getAffymetrixData(), basicExprTO.getESTData(),
-                                    basicExprTO.getInSituData(), basicExprTO.getRNASeqData()));
-                    if (allData.contains(DataState.HIGHQUALITY)) {
-                        resume = ExpressionData.HIGHQUALITY;
-                    } else if (allData.contains(DataState.LOWQUALITY)) {
-                        resume = ExpressionData.LOWQUALITY;
-                    } else {
-                        throw log.throwing(new IllegalStateException("All data types, " +
-                                "for one triplet gene-organ-stage, are without data"));
-                    }
-                    
-                    affyOrigin = Origin.NOTINFERRED;
-                    estOrigin = Origin.NOTINFERRED;
-                    inSituOrigin = Origin.NOTINFERRED;
-                    rnaSeqOrigin = Origin.NOTINFERRED;
-                } else if (basicNoExprTO != null) {
-                    log.trace("There is only no-expression.");                
-                    resume = ExpressionData.NOEXPRESSION;
-
-                    affyOrigin = Origin.NOTINFERRED;
-                    estOrigin = Origin.NOTINFERRED;
-                    inSituOrigin = Origin.NOTINFERRED;
-                    rnaSeqOrigin = Origin.NOTINFERRED;
-                } else {
-                    throw log.throwing(new IllegalStateException("No basic and global calls for the triplet gene(" + 
-                            callGroup.getKey().getGeneId() + ") - organ (" + callGroup.getKey().getAnatEntityId() + 
-                            ") - stage (" + callGroup.getKey().getStageId() + ")"));
-                }
-            }
+                throw log.throwing(new IllegalStateException("No basic and global calls for the "
+                        + "triplet gene(" + callGroup.getKey().getGeneId() + ") - organ (" + 
+                        callGroup.getKey().getAnatEntityId() + ") - stage (" + 
+                        callGroup.getKey().getStageId() + ")"));
+            }                
 
             row.put(GENE_ID_COLUMN_NAME, callGroup.getKey().getGeneId());
             row.put(ANATENTITY_ID_COLUMN_NAME, callGroup.getKey().getAnatEntityId());
@@ -1020,10 +1120,28 @@ public class GenerateDownladFile extends CallUser {
         return log.exit(allRows);
     }
 
+    private ExpressionData resumeExpresionCallDataStates(ExpressionCallTO call) {
+        log.entry(call);
+        
+        Set<DataState> allData = new HashSet<DataState>(
+                Arrays.asList(call.getAffymetrixData(), call.getESTData(), call.getInSituData(), 
+                        call.getRelaxedInSituData(), call.getRNASeqData()));
+        if (allData.contains(DataState.HIGHQUALITY)) {
+            return log.exit(ExpressionData.HIGHQUALITY);
+        }
+        if (allData.contains(DataState.LOWQUALITY)) {
+            return log.exit(ExpressionData.LOWQUALITY);
+        }
+        return log.exit(ExpressionData.NODATA);
+    }
+
     /**
-     * Generate the {@code Origin} of a data type from basic and global calls data states of a
+     * Generate the {@code Origin} of a data type from basic and global call data states of a
      * triplet gene-anat.entity-stage of interest.
-     * TODO explain difference between "null" and "no data"
+     * <p>
+     * If a {@code DataState} is {@code null}, it means that the corresponding {@code CallTO} is 
+     * also {@code null}. If the corresponding {@code CallTO} is not {@code null}, the 
+     * {@code DataState} is set to {@code NODATA}.
      * 
      * @param basicExprCallDataState    A {@code DataState} that is the basic expression call 
      *                                  {@code DataState} for the triplet of interest.
@@ -1172,12 +1290,14 @@ public class GenerateDownladFile extends CallUser {
     }
 
     /**
-     * Adds gene names in given {@code List} of {@code Map}s where keys are column names and 
+     * Adds gene names in given {@code List}s of {@code Map}s where keys are column names and 
      * values are data associated to the column name.
      * <p>
-     * The provided {@code List} will be modified.
+     * The provided {@code List}s will be modified.
      * 
-     * @param inputList     A {@code List} of {@code Map}s where keys are column names and 
+     * @param list1         A {@code List} of {@code Map}s where keys are column names and 
+     *                      values are data associated to the column name.
+     * @param list2         A {@code List} of {@code Map}s where keys are column names and 
      *                      values are data associated to the column name.
      * @param speciesId     A {@code String} that is the ID of species allowing to filter 
      *                      the genes to use.
@@ -1222,12 +1342,14 @@ public class GenerateDownladFile extends CallUser {
     }
 
     /**
-     * Adds stage names in given {@code List} of {@code Map}s where keys are column names and 
+     * Adds stage names in given {@code List}s of {@code Map}s where keys are column names and 
      * values are data associated to the column name.
      * <p>
-     * The provided {@code List} will be modified.
+     * The provided {@code List}s will be modified.
      * 
-     * @param inputList     A {@code List} of {@code Map}s where keys are column names and 
+     * @param list1         A {@code List} of {@code Map}s where keys are column names and 
+     *                      values are data associated to the column name.
+     * @param list2         A {@code List} of {@code Map}s where keys are column names and 
      *                      values are data associated to the column name.
      * @param speciesId     A {@code String} that is the ID of species allowing to filter 
      *                      the stages to use.
@@ -1275,9 +1397,11 @@ public class GenerateDownladFile extends CallUser {
      * Adds anatomical entity names in given {@code List} of {@code Map}s where keys are column 
      * names and values are data associated to the column name.
      * <p>
-     * The provided {@code List} will be modified.
+     * The provided {@code List}s will be modified.
      * 
-     * @param inputList     A {@code List} of {@code Map}s where keys are column names and 
+     * @param list1         A {@code List} of {@code Map}s where keys are column names and 
+     *                      values are data associated to the column name.
+     * @param list2         A {@code List} of {@code Map}s where keys are column names and 
      *                      values are data associated to the column name.
      * @param speciesId     A {@code String} that is the ID of species allowing to filter 
      *                      the anatomical entities to use.
@@ -1518,12 +1642,13 @@ public class GenerateDownladFile extends CallUser {
      * @param speciesId     A {@code String} that is the ID of species for which data are retrieved.
      * @return              A {@code List} of {@code Map}s where keys are column names and 
      *                      values are data associated to the column name.
-     * @throws OperationNotSupportedException Not yet implemented
+     * @throws UnsupportedOperationException Not yet implemented
      */
-    private List<Map<String, String>> generateDiffExprRows(String speciesId) throws OperationNotSupportedException {
+    private List<Map<String, String>> generateDiffExprRows(String speciesId) 
+            throws UnsupportedOperationException {
         log.entry(speciesId);
         // TODO Auto-generated method stub
-        throw log.throwing(new OperationNotSupportedException("Differential expression is not yet "
+        throw log.throwing(new UnsupportedOperationException("Differential expression is not yet "
                 + "supported, it's need to be implemented"));
     }
 }

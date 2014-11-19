@@ -2,6 +2,8 @@ package org.bgee.pipeline.expression;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.FileReader;
@@ -13,13 +15,18 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
+import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO.MySQLAnatEntityTOResultSet;
@@ -391,6 +398,46 @@ public class GenerateDownladFileTest  extends TestAncestor {
         assertExpressionFile(outputSimpleFile22, "22", true);
         assertExpressionFile(outputAdvancedFile11, "11", false);
         assertExpressionFile(outputAdvancedFile22, "22", false);
+
+        // Verify that all ResultSet are closed.
+        verify(mockAnatEntityTORs22).close();
+        verify(mockStageTORs22).close();
+        verify(mockGeneTORs22).close();
+        verify(mockGlobalNoExprRsSp22).close();
+        verify(mockBasicNoExprRsSp22).close();
+        verify(mockGlobalExprRsSp22).close();
+        verify(mockBasicExprRsSp22).close();
+        verify(mockAnatEntityRsSp22).close();
+        verify(mockAnatEntityTORs11).close();
+        verify(mockStageTORs11).close();
+        verify(mockGeneTORs11).close();
+        verify(mockGlobalNoExprRsSp11).close();
+        verify(mockBasicNoExprRsSp11).close();
+        verify(mockGlobalExprRsSp11).close();
+        verify(mockBasicExprRsSp11).close();
+        verify(mockAnatEntityRsSp11).close();
+        verify(mockSpeciesTORs).close();
+
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);
+        verify(mockManager.mockExpressionCallDAO, times(4)).setAttributes(
+                ExpressionCallDAO.Attribute.GENEID, 
+                ExpressionCallDAO.Attribute.STAGEID, ExpressionCallDAO.Attribute.ANATENTITYID, 
+                ExpressionCallDAO.Attribute.AFFYMETRIXDATA, ExpressionCallDAO.Attribute.ESTDATA,
+                ExpressionCallDAO.Attribute.INSITUDATA, ExpressionCallDAO.Attribute.RNASEQDATA,
+                ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES);
+        verify(mockManager.mockNoExpressionCallDAO, times(4)).setAttributes(
+                NoExpressionCallDAO.Attribute.GENEID, 
+                NoExpressionCallDAO.Attribute.DEVSTAGEID, NoExpressionCallDAO.Attribute.ANATENTITYID, 
+                NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, NoExpressionCallDAO.Attribute.INSITUDATA, 
+                NoExpressionCallDAO.Attribute.RNASEQDATA, 
+                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES);
+        verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(
+                AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
+        verify(mockManager.mockGeneDAO, times(2)).setAttributes(
+                GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
+        verify(mockManager.mockStageDAO, times(2)).setAttributes(
+                StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
     }
 
     /**

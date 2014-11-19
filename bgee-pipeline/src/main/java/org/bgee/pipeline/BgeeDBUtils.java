@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -290,13 +288,13 @@ public class BgeeDBUtils {
      *                          {@code LinkedHashMap} to keep the order in which 
      *                          {@code ExpressionCallTO}s are retrieved.
      * @throws DAOException     If an error occurred while getting the data from the Bgee database.
-     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
     public static LinkedHashMap<String, List<ExpressionCallTO>> getExpressionCallsByGeneId(
             Set<String> speciesIds, ExpressionCallDAO exprCallDAO) 
-                    throws DAOException, OperationNotSupportedException {
+                    throws DAOException, UnsupportedOperationException {
         log.entry(speciesIds, exprCallDAO);
         
         log.debug("Start retrieving expression calls for species: {}", speciesIds);

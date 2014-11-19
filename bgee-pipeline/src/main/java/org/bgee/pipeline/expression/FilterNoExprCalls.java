@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
@@ -131,12 +129,12 @@ public class FilterNoExprCalls extends CallUser {
      *                                  performed for all species in the database.
      * @throws IllegalArgumentException If an ID provided through {@code SpeciesId}s is not 
      *                                  found in the database.
-     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     * @throws UnsupportedOperationException  If in the given {@code ExpressionCallParams},
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
     public void filterNoExpressionCalls(List<String> speciesIds) 
-            throws IllegalArgumentException, OperationNotSupportedException {
+            throws IllegalArgumentException, UnsupportedOperationException {
         log.entry(speciesIds);
         
         try {
@@ -168,12 +166,12 @@ public class FilterNoExprCalls extends CallUser {
      * @param speciesId A {@code String} that is the ID of a species for which 
      *                  the filtering is requested. 
      * @throws IllegalArgumentException If {@code speciesId} is not found in the database.
-     * @throws OperationNotSupportedException If in the given {@code ExpressionCallParams},
+     * @throws UnsupportedOperationException  If in the given {@code ExpressionCallParams},
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
     public void filterNoExpressionCalls(String speciesId) 
-            throws IllegalArgumentException, OperationNotSupportedException {
+            throws IllegalArgumentException, UnsupportedOperationException {
         log.entry(speciesId);
         
         //check validity of speciesId

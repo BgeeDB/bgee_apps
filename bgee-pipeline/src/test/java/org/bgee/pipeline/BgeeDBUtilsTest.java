@@ -16,6 +16,12 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
+import org.bgee.model.dao.api.anatdev.StageDAO;
+import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
+import org.bgee.model.dao.api.anatdev.StageDAO.StageTOResultSet;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
@@ -23,6 +29,9 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOR
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
@@ -30,8 +39,11 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
+import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO.MySQLAnatEntityTOResultSet;
+import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO.MySQLStageTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.junit.Test;
@@ -365,6 +377,183 @@ public class BgeeDBUtilsTest extends TestAncestor {
                     throw new AssertionError("Incorrect map generated: missing expected id " + id);
                 }
             }
+        }
+    }
+    
+    /**
+     * Test {@link BgeeDBUtils#getGeneNamesByIds(Set, GeneDAO)}.
+     */
+    @Test
+    public void shouldGetGeneNamesByIds() {
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<GeneTO> returnedGeneTOs = Arrays.asList(
+                    new GeneTO("1", "gene A", null), 
+                    new GeneTO("2", "gene B", null), 
+                    new GeneTO("3", "gene C", null), 
+                    new GeneTO("3", "gene C", null));
+            
+            GeneTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedGeneTOs, MySQLGeneTOResultSet.class);
+            when(mockManager.getGeneDAO().getGenes(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            Map<String, String> expectedReturnedVal = new HashMap<String, String>();
+            expectedReturnedVal.put("1", "gene A");
+            expectedReturnedVal.put("2", "gene B");
+            expectedReturnedVal.put("3", "gene C");
+            
+            assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
+                    BgeeDBUtils.getGeneNamesByIds(
+                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            mockManager.getGeneDAO()));
+            verify(mockManager.getGeneDAO()).setAttributes(GeneDAO.Attribute.ID, 
+                    GeneDAO.Attribute.NAME);
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<GeneTO> returnedGeneTOs = Arrays.asList(
+                    new GeneTO("1", "gene A", null), 
+                    new GeneTO("1", "gene B", null));
+            
+            GeneTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedGeneTOs, MySQLGeneTOResultSet.class);
+            when(mockManager.getGeneDAO().getGenes(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            try {
+                //an IllegalStateException should be thrown, because several names are mapped 
+                //to a same ID
+                BgeeDBUtils.getGeneNamesByIds(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getGeneDAO());
+                //test failed
+                throw log.throwing(new AssertionError("No IllegalStateException was thrown " +
+                		"with several names mapped to a same ID"));
+            } catch (IllegalStateException e) {
+                //test passed
+            }
+            verify(mockRS).close();
+        }
+    }
+    
+    /**
+     * Test {@link BgeeDBUtils#getStageNamesByIds(Set, StageDAO)}.
+     */
+    @Test
+    public void shouldGetStageNamesByIds() {
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<StageTO> returnedStageTOs = Arrays.asList(
+                    new StageTO("1", "stage A", null, null, null, null, null, null), 
+                    new StageTO("2", "stage B", null, null, null, null, null, null), 
+                    new StageTO("3", "stage C", null, null, null, null, null, null), 
+                    new StageTO("3", "stage C", null, null, null, null, null, null));
+            
+            StageTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedStageTOs, MySQLStageTOResultSet.class);
+            when(mockManager.getStageDAO().getStages(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            Map<String, String> expectedReturnedVal = new HashMap<String, String>();
+            expectedReturnedVal.put("1", "stage A");
+            expectedReturnedVal.put("2", "stage B");
+            expectedReturnedVal.put("3", "stage C");
+            
+            assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
+                    BgeeDBUtils.getStageNamesByIds(
+                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            mockManager.getStageDAO()));
+            verify(mockManager.getStageDAO()).setAttributes(StageDAO.Attribute.ID, 
+                    StageDAO.Attribute.NAME);
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<StageTO> returnedStageTOs = Arrays.asList(
+                    new StageTO("1", "stage A", null, null, null, null, null, null), 
+                    new StageTO("1", "stage B", null, null, null, null, null, null));
+            
+            StageTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedStageTOs, MySQLStageTOResultSet.class);
+            when(mockManager.getStageDAO().getStages(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            try {
+                //an IllegalStateException should be thrown, because several names are mapped 
+                //to a same ID
+                BgeeDBUtils.getStageNamesByIds(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getStageDAO());
+                //test failed
+                throw log.throwing(new AssertionError("No IllegalStateException was thrown " +
+                        "with several names mapped to a same ID"));
+            } catch (IllegalStateException e) {
+                //test passed
+            }
+            verify(mockRS).close();
+        }
+    }
+    
+    /**
+     * Test {@link BgeeDBUtils#getAnatEntityNamesByIds(Set, AnatEntityDAO)}.
+     */
+    @Test
+    public void shouldGetAnatEntityNamesByIds() {
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<AnatEntityTO> returnedAnatEntityTOs = Arrays.asList(
+                    new AnatEntityTO("1", "anatEntity A", null, null, null, null), 
+                    new AnatEntityTO("2", "anatEntity B", null, null, null, null), 
+                    new AnatEntityTO("3", "anatEntity C", null, null, null, null), 
+                    new AnatEntityTO("3", "anatEntity C", null, null, null, null));
+            
+            AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
+            when(mockManager.getAnatEntityDAO().getAnatEntities(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            Map<String, String> expectedReturnedVal = new HashMap<String, String>();
+            expectedReturnedVal.put("1", "anatEntity A");
+            expectedReturnedVal.put("2", "anatEntity B");
+            expectedReturnedVal.put("3", "anatEntity C");
+            
+            assertEquals("Incorrect ID-name mapping", expectedReturnedVal, 
+                    BgeeDBUtils.getAnatEntityNamesByIds(
+                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            mockManager.getAnatEntityDAO()));
+            verify(mockManager.getAnatEntityDAO()).setAttributes(AnatEntityDAO.Attribute.ID, 
+                    AnatEntityDAO.Attribute.NAME);
+            verify(mockRS).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            List<AnatEntityTO> returnedAnatEntityTOs = Arrays.asList(
+                    new AnatEntityTO("1", "anatEntity A", null, null, null, null), 
+                    new AnatEntityTO("1", "anatEntity B", null, null, null, null));
+            
+            AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
+                    returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
+            when(mockManager.getAnatEntityDAO().getAnatEntities(
+                    new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
+                            mockRS);
+            
+            try {
+                //an IllegalStateException should be thrown, because several names are mapped 
+                //to a same ID
+                BgeeDBUtils.getAnatEntityNamesByIds(
+                        new HashSet<String>(Arrays.asList("1", "2")), 
+                        mockManager.getAnatEntityDAO());
+                //test failed
+                throw log.throwing(new AssertionError("No IllegalStateException was thrown " +
+                        "with several names mapped to a same ID"));
+            } catch (IllegalStateException e) {
+                //test passed
+            }
+            verify(mockRS).close();
         }
     }
 }

@@ -12,16 +12,24 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 
@@ -237,36 +245,41 @@ public class BgeeDBUtils {
         
         relationDAO.setAttributes(RelationDAO.Attribute.SOURCEID, 
                 RelationDAO.Attribute.TARGETID);
-    
         // get direct, indirect, and reflexive is_a/part_of relations 
-        // No need to close the ResultSet, it's done by getAllTOs().
-        List<RelationTO> relTOs = null;
-        if (anatEntityRelatives) {
-            relTOs = relationDAO.getAnatEntityRelations(
-                    speciesIds, EnumSet.of(RelationType.ISA_PARTOF), null).getAllTOs();
-        } else {
-            relTOs = relationDAO.getStageRelations(speciesIds, null).getAllTOs();
-        }
-        
-        //now, populate Map where keys are sourceId and values the associated targetIds, 
-        //or the opposite, depending on descendantsByParent
+        RelationTOResultSet relTORs = null;
         Map<String, Set<String>> relativesMap = new HashMap<String, Set<String>>();
-        for (RelationTO relTO: relTOs) {
-            String key = null;
-            String value = null;
-            if (childrenFromParents) {
-                key = relTO.getTargetId();
-                value = relTO.getSourceId();
+        try {
+            if (anatEntityRelatives) {
+                relTORs = relationDAO.getAnatEntityRelations(
+                        speciesIds, EnumSet.of(RelationType.ISA_PARTOF), null);
             } else {
-                key = relTO.getSourceId();
-                value = relTO.getTargetId();
+                relTORs = relationDAO.getStageRelations(speciesIds, null);
             }
-            Set<String> relatives = relativesMap.get(key);
-            if (relatives == null) {
-                relatives = new HashSet<String>();
-                relativesMap.put(key, relatives);
+            
+            //now, populate Map where keys are sourceId and values the associated targetIds, 
+            //or the opposite, depending on descendantsByParent
+            while (relTORs.next()) {
+                RelationTO relTO = relTORs.getTO();
+                String key = null;
+                String value = null;
+                if (childrenFromParents) {
+                    key = relTO.getTargetId();
+                    value = relTO.getSourceId();
+                } else {
+                    key = relTO.getSourceId();
+                    value = relTO.getTargetId();
+                }
+                Set<String> relatives = relativesMap.get(key);
+                if (relatives == null) {
+                    relatives = new HashSet<String>();
+                    relativesMap.put(key, relatives);
+                }
+                relatives.add(value);
             }
-            relatives.add(value);
+        } finally {
+            if (relTORs != null) {
+                relTORs.close();
+            }
         }
         
         //restore relationDAO in proper state
@@ -297,26 +310,25 @@ public class BgeeDBUtils {
                     throws DAOException, UnsupportedOperationException {
         log.entry(speciesIds, exprCallDAO);
         
-        log.debug("Start retrieving expression calls for species: {}", speciesIds);
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
-        List<ExpressionCallTO> exprTOs = exprCallDAO.getExpressionCalls(params).getAllTOs();
-        log.debug("Done retrieving expression calls for species {}, {} retrieved.", 
-                speciesIds, exprTOs.size());
-        
-        LinkedHashMap<String, List<ExpressionCallTO>> map = 
-                new LinkedHashMap<String, List<ExpressionCallTO>>();
+
         log.debug("Generating Map from genes to expression calls for species {}...", 
                 speciesIds);
-        for (ExpressionCallTO exprTO : exprTOs) {
-            log.trace("Expression call: {}", exprTO);
-            List<ExpressionCallTO> curExprAsSet = map.get(exprTO.getGeneId());
-            if (curExprAsSet == null) {
-                log.trace("Create new map key: {}", exprTO.getGeneId());
-                curExprAsSet = new ArrayList<ExpressionCallTO>();
-                map.put(exprTO.getGeneId(), curExprAsSet);
+        LinkedHashMap<String, List<ExpressionCallTO>> map = 
+                new LinkedHashMap<String, List<ExpressionCallTO>>();
+        try (ExpressionCallTOResultSet exprTORs = exprCallDAO.getExpressionCalls(params)) {
+            while (exprTORs.next()) {
+                ExpressionCallTO exprTO = exprTORs.getTO();
+                log.trace("Expression call: {}", exprTO);
+                List<ExpressionCallTO> curExprAsSet = map.get(exprTO.getGeneId());
+                if (curExprAsSet == null) {
+                    log.trace("Create new map key: {}", exprTO.getGeneId());
+                    curExprAsSet = new ArrayList<ExpressionCallTO>();
+                    map.put(exprTO.getGeneId(), curExprAsSet);
+                }
+                curExprAsSet.add(exprTO);
             }
-            curExprAsSet.add(exprTO);
         }
         log.debug("Done generating Map from genes to expression calls for species {}, {} entries.", 
                 speciesIds, map.size());
@@ -342,30 +354,159 @@ public class BgeeDBUtils {
             Set<String> speciesIds, NoExpressionCallDAO noExprCallDAO) throws DAOException {
         log.entry(speciesIds, noExprCallDAO);
 
-        log.debug("Start retrieving no-expression calls for species: {}", speciesIds);
         NoExpressionCallParams params = new NoExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
-        List<NoExpressionCallTO> noExprTOs = noExprCallDAO.getNoExpressionCalls(params).getAllTOs();
-        log.debug("Done retrieving no-expression calls for species {}, {} retrieved.", 
-                speciesIds, noExprTOs.size());
         
-        LinkedHashMap<String, List<NoExpressionCallTO>> map = 
-                new LinkedHashMap<String, List<NoExpressionCallTO>>();
         log.debug("Generating Map from genes to no-expression calls for species {}...", 
                 speciesIds);
-        for (NoExpressionCallTO noExprTO : noExprTOs) {
-            log.trace("No-expression call: {}", noExprTO);
-            List<NoExpressionCallTO> curNoExprAsSet = map.get(noExprTO.getGeneId());
-            if (curNoExprAsSet == null) {
-                log.trace("Create new map key: {}", noExprTO.getGeneId());
-                curNoExprAsSet = new ArrayList<NoExpressionCallTO>();
-                map.put(noExprTO.getGeneId(), curNoExprAsSet);
+        LinkedHashMap<String, List<NoExpressionCallTO>> map = 
+                new LinkedHashMap<String, List<NoExpressionCallTO>>();
+        try (NoExpressionCallTOResultSet noExprTORs = noExprCallDAO.getNoExpressionCalls(params)) {
+            while (noExprTORs.next()) {
+                NoExpressionCallTO noExprTO = noExprTORs.getTO();
+                log.trace("No-expression call: {}", noExprTO);
+                List<NoExpressionCallTO> curNoExprAsSet = map.get(noExprTO.getGeneId());
+                if (curNoExprAsSet == null) {
+                    log.trace("Create new map key: {}", noExprTO.getGeneId());
+                    curNoExprAsSet = new ArrayList<NoExpressionCallTO>();
+                    map.put(noExprTO.getGeneId(), curNoExprAsSet);
+                }
+                curNoExprAsSet.add(noExprTO);
             }
-            curNoExprAsSet.add(noExprTO);
         }
         log.debug("Done generating Map from genes to no-expression calls for species {}, {} entries.", 
                 speciesIds, map.size());
         
         return log.exit(map);        
+    }
+    
+    /**
+     * Retrieve from the data source a mapping from gene IDs to gene names for genes 
+     * belonging to the requested species. 
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      for which we want to retrieve gene IDs-names mapping.
+     * @param geneDAO       A {@code GeneDAO} to use to retrieve information about genes 
+     *                      from the data source.
+     * @return              A {@code Map} where keys are {@code String}s corresponding to 
+     *                      gene IDs, the associated values being {@code String}s 
+     *                      corresponding to gene names. 
+     */
+    public static Map<String, String> getGeneNamesByIds(Set<String> speciesIds, GeneDAO geneDAO) {
+        log.entry(speciesIds, geneDAO);
+        log.debug("Start retrieving gene names for species: {}", speciesIds);
+        //store original attributes to restore geneDAO in proper state afterwards.
+        Collection<GeneDAO.Attribute> attributes = geneDAO.getAttributes();
+        geneDAO.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
+        
+        Map<String, String> geneNamesByIds = generateNamesByIdsMap(geneDAO.getGenes(speciesIds));
+        
+        //restore geneDAO in proper state
+        geneDAO.setAttributes(attributes);
+        
+        log.debug("Done retrieving gene names for species: {}, {} names retrieved", 
+                speciesIds, geneNamesByIds.size());
+        return log.exit(geneNamesByIds);
+    }
+    
+    /**
+     * Retrieve from the data source a mapping from stage IDs to stage names for stages 
+     * belonging to the requested species. 
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      for which we want to retrieve stage IDs-names mapping.
+     * @param stageDAO      A {@code StageDAO} to use to retrieve information about stages 
+     *                      from the data source.
+     * @return              A {@code Map} where keys are {@code String}s corresponding to 
+     *                      stage IDs, the associated values being {@code String}s 
+     *                      corresponding to stage names. 
+     */
+    public static Map<String, String> getStageNamesByIds(Set<String> speciesIds, 
+            StageDAO stageDAO) {
+        log.entry(speciesIds, stageDAO);
+        log.debug("Start retrieving stage names for species: {}", speciesIds);
+        //store original attributes to restore stageDAO in proper state afterwards.
+        Collection<StageDAO.Attribute> attributes = stageDAO.getAttributes();
+        stageDAO.setAttributes(StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
+        
+        Map<String, String> stageNamesByIds = generateNamesByIdsMap(stageDAO.getStages(speciesIds));
+        
+        //restore geneDAO in proper state
+        stageDAO.setAttributes(attributes);
+        
+        log.debug("Done retrieving stage names for species: {}, {} names retrieved", 
+                speciesIds, stageNamesByIds.size());
+        return log.exit(stageNamesByIds);
+    }
+    
+    /**
+     * Retrieve from the data source a mapping from anatomical entity IDs to names 
+     * for anatomical entities belonging to the requested species. 
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      for which we want to retrieve anatomical entities' 
+     *                      IDs-names mapping.
+     * @param anatEntityDAO An {@code AnatEntityDAO} to use to retrieve information about 
+     *                      anatomical entities from the data source.
+     * @return              A {@code Map} where keys are {@code String}s corresponding to 
+     *                      anatomical entity IDs, the associated values being {@code String}s 
+     *                      corresponding to anatomical entity names. 
+     */
+    public static Map<String, String> getAnatEntityNamesByIds(Set<String> speciesIds, 
+            AnatEntityDAO anatEntityDAO) {
+        log.entry(speciesIds, anatEntityDAO);
+        log.debug("Start retrieving stage names for species: {}", speciesIds);
+        //store original attributes to restore stageDAO in proper state afterwards.
+        Collection<AnatEntityDAO.Attribute> attributes = anatEntityDAO.getAttributes();
+        anatEntityDAO.setAttributes(AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
+        
+        Map<String, String> anatEntityNamesByIds = 
+                generateNamesByIdsMap(anatEntityDAO.getAnatEntities(speciesIds));
+        
+        //restore geneDAO in proper state
+        anatEntityDAO.setAttributes(attributes);
+        
+        log.debug("Done retrieving anatomical entity names for species: {}, {} names retrieved", 
+                speciesIds, anatEntityNamesByIds.size());
+        return log.exit(anatEntityNamesByIds);
+    }
+    
+    /**
+     * Retrieve a mapping from IDs to names using the {@code DAOResultSet} {@code rs}, 
+     * supposed to return an {@code EntityTO} when calling the method 
+     * {@code DAOResultSet#getTO()}.
+     * <p>
+     * {@code rs} is closed by this method before exiting.
+     * 
+     * @param rs    A {@code DAOResultSet} returning an {@code EntityTO} when calling 
+     *              the method {@code DAOResultSet#getTO()}. It should not have been closed, 
+     *              and the method {@code next} should not have been already called.
+     * @return      A {@code Map} where keys are {@code String}s corresponding to 
+     *              entity IDs, the associated values being {@code String}s 
+     *              corresponding to entity names. 
+     */
+    private static Map<String, String> generateNamesByIdsMap(DAOResultSet rs) {
+        log.entry(rs);
+        Map<String, String> namesByIds = new HashMap<String, String>();
+        try {
+            while (rs.next()) {
+                EntityTO entityTO = null;
+                try {
+                    entityTO = (EntityTO) rs.getTO();
+                } catch (ClassCastException e) {
+                    throw log.throwing(new IllegalArgumentException("The provided DAOResultSet " +
+                            "does not allow to retrieve EntityTOs"));
+                }
+                String previousValue = namesByIds.put(entityTO.getId(), entityTO.getName());
+                if (previousValue != null && !previousValue.equals(entityTO.getName())) {
+                    throw log.throwing(new IllegalStateException("Several names associated to " +
+                            "a same ID: " + entityTO.getId() + " - " + previousValue + 
+                            " - " + entityTO.getName()));
+                }
+            }
+        } finally {
+            rs.close();
+        }
+        return log.exit(namesByIds);
     }
 }

@@ -52,6 +52,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
+    //TODO: rename into getAnatEntitiesBySpeciesIds
     public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds) throws DAOException;
     
     /**

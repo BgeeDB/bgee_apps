@@ -26,6 +26,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
@@ -128,7 +129,7 @@ public class GenerateDownladFile extends CallUser {
      * A {@code String} that is the name of the column containing whether the <em>in situ</em> data 
      * is inferred or not.
      */
-    public final static String INSITU_ORIGIN_COLUMN_NAME = "In situ inferred";
+    public final static String INSITU_ORIGIN_COLUMN_NAME = "In situ data inferred";
 
     /**
      * A {@code String} that is the name of the column containing expression/no-expression found 
@@ -140,7 +141,7 @@ public class GenerateDownladFile extends CallUser {
      * A {@code String} that is the name of the column containing whether the relaxed 
      * <em>in situ</em> data is inferred or not.
      */
-    public final static String RELAXEDINSITU_ORIGIN_COLUMN_NAME = "Relaxed in situ inferred";
+    public final static String RELAXEDINSITU_ORIGIN_COLUMN_NAME = "Relaxed in situ data inferred";
     
     /**
      * A {@code String} that is the name of the column containing expression/no-expression found 
@@ -190,6 +191,8 @@ public class GenerateDownladFile extends CallUser {
      */
    public final static String DIFFEXPR_COMPLETE = "diffexpr-complete";
 
+   //TODO: javadoc?
+   //TODO: these file types should be an Enum, not a List of Strings.
    public final static List<String> ALL_FILE_TYPES = 
            Arrays.asList(EXPR_SIMPLE, EXPR_COMPLETE, DIFFEXPR_SIMPLE, DIFFEXPR_COMPLETE);
    
@@ -204,13 +207,13 @@ public class GenerateDownladFile extends CallUser {
     * <ul>
     * <li>{@code NODATA}:         no data from the associated data type allowed to produce the call.
     * <li>{@code NOEXPRESSION}:   no-expression was detected from the associated data type.
-    * <li>{@code LOWEXPRESSION}:  low expression was detected from the associated data type.
-    * <li>{@code HIGHEXPRESSION}: high expression was detected from the associated data type.
+    * <li>{@code LOWEXPRESSION}:  low-quality expression was detected from the associated data type.
+    * <li>{@code HIGHEXPRESSION}: high-quality expression was detected from the associated data type.
     * <li>{@code LOWAMBIGUITY}:   different data types are not coherent with a no-expression call 
-    *                             inferred (for instance, Affymetrix data reveals an low expression 
+    *                             inferred (for instance, Affymetrix data reveals an expression 
     *                             while <em>in situ</em> data reveals an inferred no-expression).
     * <li>{@code HIGHAMBIGUITY}:  different data types are not coherent without at least an inferred
-    *                             no-expression call (for instance, Affymetrix data reveals a low 
+    *                             no-expression call (for instance, Affymetrix data reveals  
     *                             expression while <em>in situ</em> data reveals a no-expression 
     *                             without been inferred).
     * </ul>
@@ -259,6 +262,7 @@ public class GenerateDownladFile extends CallUser {
     * @version Bgee 13
     * @since Bgee 13
     */
+   //TODO: needs to take into account quality levels, as for expression calls
    public enum DiffExpressionData {
        NODATA("no data"), OVEREXPRESSED("over-expression"), UNDEREXPRESSED("under-expression"), 
        NOTDIFFEXPRESSED("no diff expression");
@@ -346,8 +350,7 @@ public class GenerateDownladFile extends CallUser {
      * <li> a list of files types that will be generated ({@code EXPR_SIMPLE}, {@code EXPR_COMPLETE}, 
      * {@code DIFFEXPR_SIMPLE}, and {@code DIFFEXPR_SIMPLE}), separated by the 
      * {@code String} {@link CommandRunner#LIST_SEPARATOR}.
-     * <li>the directory path that will be used to generate download files. So 
-     * it must finish with {@code /}
+     * <li>the directory path that will be used to generate download files. 
      * </ol>
      * 
      * @param args          An {@code Array} of {@code String}s containing the requested parameters.
@@ -369,10 +372,8 @@ public class GenerateDownladFile extends CallUser {
         }
 
         List<String> speciesIds = CommandRunner.parseListArgument(args[0]);
-        
-        List<String> fileTypes = CommandRunner.parseListArgument(args[1]);    
-        
-        String directory = args[2];
+        List<String> fileTypes  = CommandRunner.parseListArgument(args[1]); 
+        String directory        = args[2];
         
         GenerateDownladFile generate = new GenerateDownladFile();
         generate.generateSingleSpeciesFiles(speciesIds, fileTypes, directory);
@@ -381,8 +382,8 @@ public class GenerateDownladFile extends CallUser {
     }
     
     /**
-     * Generate single species files according the given {@code List} of species IDs 
-     * in the given directory. 
+     * Generate single species files, for the types defined by {@code fileTypes}, 
+     * for the species defined by {@code speciesIds}, in the directory {@code directory}. 
      * 
      * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species for which
      *                      files are generated.
@@ -394,65 +395,89 @@ public class GenerateDownladFile extends CallUser {
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
+    //TODO: fileTypes should be an EnumSet (see TODO for ALL_FILE_TYPES; also, 
+    //we don't care about the order here (why a List?))
     public void generateSingleSpeciesFiles(List<String> speciesIds, List<String> fileTypes, 
             String directory) throws IOException, UnsupportedOperationException { 
         log.entry(speciesIds, fileTypes, directory);
         
-        // Get all species in Bgee even if some species IDs were provided, to check user input.
+        // Check user input, or retrieve all species IDs
         List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(
                 speciesIds, this.getSpeciesDAO()); 
 
-        if (fileTypes.isEmpty()) {
+        if (fileTypes == null || fileTypes.isEmpty()) {
             // If no file types are given by user, we set all file types
             fileTypes = ALL_FILE_TYPES;
         } else if (!ALL_FILE_TYPES.containsAll(fileTypes)) {
+            //TODO: this part will become useless once it will be an Enum
             List<String> debugFileTypes = new ArrayList<String>(fileTypes);
             debugFileTypes.removeAll(ALL_FILE_TYPES);
             throw log.throwing(new IllegalArgumentException(
-                    "Some file types could not be generated: " + debugFileTypes));
+                    "Some file types do not exist: " + debugFileTypes));
         }
+        
+        //retrieve gene names, stage names, anat. entity names
+        
 
         for (String speciesId: speciesIdsToUse) {
-            log.trace("Start generation of download files for the species {}", speciesId);
+            log.debug("Start generation of download files for the species {}", speciesId);
             
             if (fileTypes.contains(DIFFEXPR_SIMPLE) || fileTypes.contains(DIFFEXPR_COMPLETE)) {
                 this.generateDiffExprRows(speciesId);
             }
 
             if (fileTypes.contains(EXPR_SIMPLE) || fileTypes.contains(EXPR_COMPLETE)) {
-                log.trace("Retrieve data from data source for absence/presence of expression filesfor the species {}",
-                        speciesId);
+                //TODO: I think that all the code in this IF statement could be dispatched 
+                //to another method, like for generateDiffExprRows (except the method name sucks :p)
+                log.trace("Retrieve data for expression files for the species {}", speciesId);
+                
                 Set<String> speciesFilter = new HashSet<String>();
                 speciesFilter.add(speciesId);
 
-                // Load non-informative anatomical entities
-                List<String> nonInformativesAnatEntities = this.loadNonInformativeAnatEntities(speciesFilter);
-
-                // Load basic expression calls
-                List<ExpressionCallTO> exprTOs = 
-                        this.loadBasicExprCallsFromDb(speciesFilter);
-
-                // Load basic no-expression calls
-                List<NoExpressionCallTO> noExprTOs = 
-                        this.loadBasicNoExprCallsFromDb(speciesFilter, nonInformativesAnatEntities);
-
-                List<ExpressionCallTO> globalExprTOs = new ArrayList<ExpressionCallTO>(); 
+                // Load non-informative anatomical entities only for the complete file: 
+                // calls occurring in these anatomical entities, and generated from 
+                // data propagation only (no observed data in them), will be discarded. 
+                // For the simple file, we will use only anat. entities with observed data, 
+                // so it's not necessary. 
+                Set<String> nonInformativesAnatEntities = new HashSet<String>();
                 if (fileTypes.contains(EXPR_COMPLETE)) {
-                    // Load global expression calls
-                    globalExprTOs = this.loadGlobalExprCallsFromDb(speciesFilter);
-                    log.debug("globalExprTOs size {}", globalExprTOs.size());
+                    nonInformativesAnatEntities = 
+                            this.loadNonInformativeAnatEntities(speciesFilter);
                 }
                 
-                // Load global no-expression
-                List<NoExpressionCallTO> globalNoExprTOs = new ArrayList<NoExpressionCallTO>(); 
-                globalNoExprTOs = 
-                        this.loadGlobalNoExprCallsFromDb(speciesFilter, nonInformativesAnatEntities);
+                //only for the complete file we propagate expression calls
+                List<ExpressionCallTO> globalExprTOs = new ArrayList<ExpressionCallTO>(); 
+                if (fileTypes.contains(EXPR_COMPLETE)) {
+                    globalExprTOs = this.loadExprCallsFromDb(speciesFilter, true, 
+                            nonInformativesAnatEntities);
+                    log.trace("globalExprTOs size {}", globalExprTOs.size());
+                }
 
-                List<Map<String, String>> exprSimpleFile = null;
+                // we always need the basic expression calls not propagated: either because 
+                // we generate a simple file and we don't propagate expression, or because 
+                // we generate the complete file, and need to be able for each data type 
+                // to know whether there exist some non-propagated data.
+                List<ExpressionCallTO> exprTOs = this.loadExprCallsFromDb(speciesFilter, 
+                        false, nonInformativesAnatEntities);
+
+                // we always load propagated global no-expression calls, because we always try 
+                // to match no-expression calls with potentially conflicting expression calls 
+                // (generated by different data types, as there can be no conflict for a given 
+                // data type).
+                List<NoExpressionCallTO> globalNoExprTOs = this.loadNoExprCallsFromDb(
+                        speciesFilter, true, nonInformativesAnatEntities);
+                
+                // and we need the basic no-expression calls, to be able for each data type 
+                // to know whether there exist some non-propagated data.
+                List<NoExpressionCallTO> noExprTOs = this.loadNoExprCallsFromDb(speciesFilter, 
+                        false, nonInformativesAnatEntities);
+
+                
                 if (fileTypes.contains(EXPR_SIMPLE)) {
                     log.trace("Start generation of data for simple file for the species {}",
                             speciesId);
-                    // Note that this Collection is a List, otherwise a global expression call 
+                    List<Map<String, String>> exprSimpleFile = null;
+                    // Note that this Collection is a List, if it was a Set a global expression call 
                     // could be seen as equal to a basic expression call. 
                     List<CallTO> allCallTOs = new ArrayList<CallTO>();
                     allCallTOs.addAll(exprTOs);
@@ -468,7 +493,7 @@ public class GenerateDownladFile extends CallUser {
                 if (fileTypes.contains(EXPR_COMPLETE)) {
                     log.trace("Start generation of data for advanced file for the species {}",
                             speciesId);
-                    // Note that this Collection is a List, otherwise a global expression call 
+                    // Note that this Collection is a List, if it was a Set a global expression call 
                     // could be seen as equal to a basic expression call. 
                     List<CallTO> allCallTOs = new ArrayList<CallTO>();
                     allCallTOs.addAll(exprTOs);
@@ -501,194 +526,139 @@ public class GenerateDownladFile extends CallUser {
     }
 
     /**
-     * Retrieves non-informative anatomical entities for given species, 
-     * present into the Bgee database.
+     * Retrieves non-informative anatomical entities for the requested species. They correspond 
+     * to anatomical entities belonging to non-informative subsets in Uberon, and with 
+     * no observed data from Bgee (no basic calls of any type in them).
      * 
      * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
      *                          allowing to filter the non-informative anatomical entities to use.
-     * @return                  A {@code List} of {@code String}s containing all 
-     *                          non-informative anatomical entities of the given species.
-     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
+     * @return                  A {@code Set} of {@code String}s containing all 
+     *                          non-informative anatomical entitiy IDs of the given species.
+     * @throws DAOException     If an error occurred while getting the data from the Bgee data source.
      */
-    private List<String> loadNonInformativeAnatEntities(Set<String> speciesIds) 
+    private Set<String> loadNonInformativeAnatEntities(Set<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
-    
-        log.info("Start retrieving non-informative anatomical entities for the species IDs {}...",
+        log.debug("Start retrieving non-informative anatomical entities for the species IDs {}...",
                 speciesIds);
     
         AnatEntityDAO dao = this.getAnatEntityDAO();
         dao.setAttributes(AnatEntityDAO.Attribute.ID);
-        
-        log.debug("DAOMOCK: " + dao);
-        List<String> anatEntities = new ArrayList<String>();
+        Set<String> anatEntities = new HashSet<String>();
         try (AnatEntityTOResultSet rs = dao.getNonInformativeAnatEntities(speciesIds)) {
             while (rs.next()) {
                 anatEntities.add(rs.getTO().getId());
             }
         }
         
-        log.info("Done retrieving non-informative anatomical entities, {} entities found",
+        log.debug("Done retrieving non-informative anatomical entities, {} entities found",
                 anatEntities.size());
-    
         return log.exit(anatEntities);        
     }
 
     /**
-     * Retrieves all basic expression calls for given species, present into the Bgee database.
+     * Retrieves all expression calls for the requested species from the Bgee data source, 
+     * including data propagated from anatomical substructures or not, 
+     * depending on {@code includeSubstructures}. When data propagation is requested, 
+     * calls generated by data propagation only, and occurring in anatomical entities 
+     * with ID present in {@code nonInformativesAnatEntityIds}, are discarded.
      * <p>
-     * We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs, neither
-     * INCLUDESUBSTAGES.
+     * The returned {@code ExpressionCallTO}s have no ID set, to be able 
+     * to compare calls based on gene, stage and anatomical entity IDs.
      * 
      * @param speciesIds                    A {@code Set} of {@code String}s that are the IDs of 
-     *                                      species allowing to filter the basic expression calls 
-     *                                      to use.
-     * @return                              A {@code List} of {@code ExpressionCallTO}s containing 
-     *                                      all basic expression calls of the given species.
-     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
-     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
+     *                                      species allowing to filter the expression calls 
+     *                                      to retrieve.
+     * @param includeSubstructures          A {@code boolean} defining whether the 
+     *                                      {@code ExpressionCallTO}s returned should be 
+     *                                      global expression calls with data propagated 
+     *                                      from substructures, or basic calls with no propagation. 
+     *                                      If {@code true}, data are propagated. 
+     * @param nonInformativesAnatEntityIds  A {@code Set} of {@code String}s that are the IDs of 
+     *                                      non-informative anatomical entities. Calls in these 
+     *                                      anatomical entities, generated by data propagation 
+     *                                      only, will be discarded.
+     * @return                      A {@code List} of {@code ExpressionCallTO}s containing 
+     *                              all expression calls for the requested species.
+     * @throws DAOException     If an error occurred while getting the data from the Bgee data source.
      */
-    private List<ExpressionCallTO> loadBasicExprCallsFromDb(Set<String> speciesIds)
-                    throws DAOException, UnsupportedOperationException {
-        log.entry(speciesIds);
-    
-        log.info("Start retrieving basic expression calls for the species IDs {}...", speciesIds);
+    private List<ExpressionCallTO> loadExprCallsFromDb(Set<String> speciesIds, 
+            boolean includeSubstrutures, Set<String> nonInformativesAnatEntityIds) 
+                    throws DAOException {
+        log.entry(speciesIds, includeSubstrutures);
+        log.debug("Start retrieving expression calls (include substructures: {}) for the species IDs {}...", 
+                includeSubstrutures, speciesIds);
     
         ExpressionCallDAO dao = this.getExpressionCallDAO();
-        // We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs.
-        // We don't need INCLUDESUBSTAGES. 
+        // We don't retrieve expression call ID to be able to compare calls on gene, 
+        // stage and anatomical IDs.
+        // We don't need INCLUDESUBSTAGES. TODO: actually maybe we need
         dao.setAttributes(ExpressionCallDAO.Attribute.GENEID, 
                 ExpressionCallDAO.Attribute.STAGEID, ExpressionCallDAO.Attribute.ANATENTITYID, 
                 ExpressionCallDAO.Attribute.AFFYMETRIXDATA, ExpressionCallDAO.Attribute.ESTDATA,
                 ExpressionCallDAO.Attribute.INSITUDATA, ExpressionCallDAO.Attribute.RNASEQDATA,
                 ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES);
-         
+        
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
-        params.setUseAnatDescendants(false);
+        params.setIncludeSubstructures(includeSubstrutures);
     
-        List<ExpressionCallTO> exprTOs = dao.getExpressionCalls(params).getAllTOs();
+        List<ExpressionCallTO> exprTOs = new ArrayList<ExpressionCallTO>();
+        try (ExpressionCallTOResultSet rsExpr = dao.getExpressionCalls(params)) {
+            while (rsExpr.next()) {
+                ExpressionCallTO to = rsExpr.getTO();
+                log.trace("Iterating ExpressionCallTO: {}", to);
+                //if the call was generated from propagated data only, we discard it 
+                //if present in a non-informative anatomical entity.
+                if (to.getOriginOfLine().equals(ExpressionCallTO.OriginOfLine.DESCENT) && 
+                        nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
+                    log.trace("Discarding propagated calls because in non-informative anatomical entity.");
+                    continue;
+                }
+                exprTOs.add(to);
+            }
+        }
 
-        log.info("Done retrieving basic expression calls, {} calls found", exprTOs.size());
-        
+        log.info("Done retrieving global expression calls, {} calls found", exprTOs.size());
         return log.exit(exprTOs); 
     }
 
     /**
-     * Retrieves all basic no-expression calls for given species not in a non-informative anatomical 
-     * entity, present into the Bgee database.
+     * Retrieves all no-expression calls for the requested species from the Bgee data source, 
+     * including data propagated from parent anatomical structures or not, 
+     * depending on {@code includeParentStructures}. When data propagation is requested, 
+     * calls generated by data propagation only, and occurring in anatomical entities 
+     * with ID present in {@code nonInformativesAnatEntityIds}, are discarded.
      * <p>
-     * We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs.
+     * The returned {@code NoExpressionCallTO}s have no ID set, to be able 
+     * to compare calls based on gene, stage and anatomical entity IDs.
      * 
      * @param speciesIds                    A {@code Set} of {@code String}s that are the IDs of 
-     *                                      species allowing to filter the basic no-expression 
+     *                                      species allowing to filter the no-expression 
      *                                      calls to use.
-     * @param nonInformativesAnatEntities   A {@code List} of {@code String}s that are the 
-     *                                      non-informative anatomical entities.
-     * @return                              A {@code List} of {@code NoExpressionCallTO}s containing 
-     *                                      all basic expression calls of the given species.
-     * @throws DAOException If an error occurred while getting the data from the Bgee database.
-     */
-    private List<NoExpressionCallTO> loadBasicNoExprCallsFromDb(
-            Set<String> speciesIds, List<String> nonInformativesAnatEntities) throws DAOException {
-        log.entry(speciesIds, nonInformativesAnatEntities);
-    
-        log.info("Start retrieving basic no-expression calls for the species IDs {}...", speciesIds);
-    
-        NoExpressionCallDAO dao = this.getNoExpressionCallDAO();
-        // We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs.
-        // We don't need ORIGINOFLINE. 
-        dao.setAttributes(NoExpressionCallDAO.Attribute.GENEID, 
-                NoExpressionCallDAO.Attribute.DEVSTAGEID, NoExpressionCallDAO.Attribute.ANATENTITYID, 
-                NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, NoExpressionCallDAO.Attribute.INSITUDATA, 
-                NoExpressionCallDAO.Attribute.RNASEQDATA, 
-                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES);
-    
-        NoExpressionCallParams params = new NoExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
-        params.setIncludeParentStructures(false);
-    
-        try (NoExpressionCallTOResultSet rsNoExpr = dao.getNoExpressionCalls(params)) {
-            List<NoExpressionCallTO> noExprTOs = new ArrayList<NoExpressionCallTO>();
-            while (rsNoExpr.next()) {
-                NoExpressionCallTO to = rsNoExpr.getTO();
-                if (!nonInformativesAnatEntities.contains(to.getAnatEntityId())) {
-                    noExprTOs.add(to);
-                }
-            }
-            log.info("Done retrieving basic no-expression calls, {} calls found", noExprTOs.size());
-            return log.exit(noExprTOs); 
-        } 
-    }
-
-    /**
-     * Retrieves all global expression calls for given species, present into the Bgee database.
-     * <p>
-     * We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs, neither
-     * INCLUDESUBSTAGES.
-     * 
-     * @param speciesIds                    A {@code Set} of {@code String}s that are the IDs of 
-     *                                      species allowing to filter the global expression calls 
-     *                                      to use.
-     * @return                              A {@code List} of {@code ExpressionCallTO}s containing 
-     *                                      all global expression calls of the given species.
-     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
-     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
-     */
-    private List<ExpressionCallTO> loadGlobalExprCallsFromDb(Set<String> speciesIds) 
-                    throws DAOException, UnsupportedOperationException {
-        log.entry(speciesIds);
-    
-        log.info("Start retrieving global expression calls for the species IDs {}...", speciesIds);
-    
-        ExpressionCallDAO dao = this.getExpressionCallDAO();
-        // We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs.
-        // We don't need INCLUDESUBSTAGES. 
-        dao.setAttributes(ExpressionCallDAO.Attribute.GENEID, 
-                ExpressionCallDAO.Attribute.STAGEID, ExpressionCallDAO.Attribute.ANATENTITYID, 
-                ExpressionCallDAO.Attribute.AFFYMETRIXDATA, ExpressionCallDAO.Attribute.ESTDATA,
-                ExpressionCallDAO.Attribute.INSITUDATA, ExpressionCallDAO.Attribute.RNASEQDATA,
-                ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES);
-        
-        ExpressionCallParams params = new ExpressionCallParams();
-        params.addAllSpeciesIds(speciesIds);
-        params.setIncludeSubstructures(true);
-    
-        List<ExpressionCallTO> globalExprTOs = dao.getExpressionCalls(params).getAllTOs();
-
-        log.info("Done retrieving global expression calls, {} calls found", globalExprTOs.size());
-        
-        return log.exit(globalExprTOs); 
-    }
-
-    /**
-     * Retrieves all global no-expression calls for given species in a non-informative anatomical 
-     * entity, present into the Bgee database.
-     * <p>
-     * We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs.
-     * 
-     * @param speciesIds                    A {@code Set} of {@code String}s that are the IDs of 
-     *                                      species allowing to filter the global no-expression 
-     *                                      calls to use.
-     * @param nonInformativesAnatEntities   A {@code List} of {@code String}s that are the 
-     *                                      non-informative anatomical entities.
+     * @param includeParentStructures        A {@code boolean} defining whether the 
+     *                                      {@code NoExpressionCallTO}s returned should be 
+     *                                      global no-expression calls with data propagated 
+     *                                      from parent anatomical structures, or basic calls 
+     *                                      with no propagation. If {@code true}, data are propagated. 
+     * @param nonInformativesAnatEntityIds  A {@code Set} of {@code String}s that are the IDs of 
+     *                                      non-informative anatomical entities. Calls in these 
+     *                                      anatomical entities, generated by data propagation 
+     *                                      only, will be discarded.
      * @return                              A {@code List} of {@code NoExpressionCallTO}s containing 
      *                                      all global no-expression calls of the given species.
      * @throws DAOException     If an error occurred while getting the data from the Bgee database.
      */
-    private List<NoExpressionCallTO> loadGlobalNoExprCallsFromDb(
-            Set<String> speciesIds, List<String> nonInformativesAnatEntities) throws DAOException {
-        log.entry(speciesIds, nonInformativesAnatEntities);
-    
-        log.info("Start retrieving global no-expression calls for the species IDs {}...", speciesIds);
+    private List<NoExpressionCallTO> loadNoExprCallsFromDb(Set<String> speciesIds, 
+            boolean includeParentStructures, Set<String> nonInformativesAnatEntityIds) 
+                    throws DAOException {
+        log.entry(speciesIds, includeParentStructures, nonInformativesAnatEntityIds);
+        log.info("Start retrieving no-expression calls (include parent structures: {}) for the species IDs {}...", 
+                includeParentStructures, speciesIds);
     
         NoExpressionCallDAO dao = this.getNoExpressionCallDAO();
-        // We don't retrieve ID to be able to compare calls on gene, stage and anatomical IDs.
-        // We don't need INCLUDEPARENTSTRUCTURES. 
+        // We don't retrieve no-expressionc call IDs to be able to compare calls on gene, 
+        //stage and anatomical IDs.
         dao.setAttributes(NoExpressionCallDAO.Attribute.GENEID, 
                 NoExpressionCallDAO.Attribute.DEVSTAGEID, NoExpressionCallDAO.Attribute.ANATENTITYID, 
                 NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, NoExpressionCallDAO.Attribute.INSITUDATA, 
@@ -697,19 +667,53 @@ public class GenerateDownladFile extends CallUser {
     
         NoExpressionCallParams params = new NoExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
-        params.setIncludeParentStructures(true);
-        
-        try (NoExpressionCallTOResultSet rsGlobalNoExpr = dao.getNoExpressionCalls(params)) {
-            List<NoExpressionCallTO> globalNoExprTOs = new ArrayList<NoExpressionCallTO>();
-            while (rsGlobalNoExpr.next()) {
-                NoExpressionCallTO to = rsGlobalNoExpr.getTO();
-                if (!nonInformativesAnatEntities.contains(to.getAnatEntityId())) {
-                    globalNoExprTOs.add(to);
+        params.setIncludeParentStructures(includeParentStructures);
+
+        List<NoExpressionCallTO> noExprTOs = new ArrayList<NoExpressionCallTO>();
+        try (NoExpressionCallTOResultSet rsNoExpr = dao.getNoExpressionCalls(params)) {
+            while (rsNoExpr.next()) {
+                NoExpressionCallTO to = rsNoExpr.getTO();
+                log.trace("Iterating NoExpressionCallTO: {}", to);
+                //if the call was generated from propagated data only, we discard it 
+                //if present in a non-informative anatomical entity.
+                if (to.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT) && 
+                        nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
+                    log.trace("Discarding propagated calls because in non-informative anatomical entity.");
+                    continue;
                 }
+                noExprTOs.add(to);
             }
-            log.info("Done retrieving basic no-expression calls, {} calls found", globalNoExprTOs.size());
-            return log.exit(globalNoExprTOs); 
-        } 
+        }
+        
+        log.info("Done retrieving basic no-expression calls, {} calls found", noExprTOs.size());
+        return log.exit(noExprTOs);  
+    }
+    
+    //TODO: javadoc
+    //TODO: change argument to an Enum
+    private List<Map<String, String>> generateExprRows(String fileType, 
+            Collection<ExpressionCallTO> basicExprTOs, 
+            Collection<ExpressionCallTO> globalExprTOs, 
+            Collection<NoExpressionCallTO> basicNoExprTOs, 
+            Collection<NoExpressionCallTO> globalNoExprTOs) {
+        log.entry(fileType, basicExprTOs, globalExprTOs, basicNoExprTOs, globalNoExprTOs);
+        
+        List<CallTO> allCallTOs = new ArrayList<CallTO>();
+        allCallTOs.addAll(basicExprTOs);
+        allCallTOs.addAll(basicNoExprTOs);
+        allCallTOs.addAll(globalNoExprTOs);
+        //only for complete file we use the propagated expression calls
+        if (fileType.equals(EXPR_COMPLETE)) {
+            allCallTOs.addAll(globalExprTOs);
+        }
+        
+        List<Map<String, String>> rows = this.mergeCallsFromSortedMap(
+                this.groupAndOrderByGeneAnatEntityStage(allCallTOs));
+        
+        // Add gene, stage and anatomical entity names
+        this.addGeneNames(exprSimpleFile, exprAdvancedFile, speciesId);
+        this.addStageNames(exprSimpleFile, exprAdvancedFile, speciesId);
+        this.addAnatEntityNames(exprSimpleFile, exprAdvancedFile, speciesId);
     }
 
     /**
@@ -1521,7 +1525,7 @@ public class GenerateDownladFile extends CallUser {
      * @return                  A {@code CellProcessor} needed to write a simple or complete 
      *                          download file.
      */
-    public static CellProcessor[] generateCellProcessor(boolean isSimplifiedFile, boolean isDiffExpr) {
+    private static CellProcessor[] generateCellProcessor(boolean isSimplifiedFile, boolean isDiffExpr) {
         log.entry(isSimplifiedFile, isDiffExpr);
         
         List<Object> dataElements = new ArrayList<Object>();

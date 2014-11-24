@@ -240,21 +240,31 @@ public class TOComparatorTest extends TestAncestor {
     public void testAreExpressionCallTOEqual() {
         ExpressionCallTO to1 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF);
+                DataState.LOWQUALITY, false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF);
         ExpressionCallTO to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF);
+                DataState.LOWQUALITY, false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.DESCENT);
+                DataState.LOWQUALITY, false, false, 
+                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.SELF);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.BOTH);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new ExpressionCallTO("2", "ID1", "Anat_id1", "Stage_id6", 
                 DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF);
+                DataState.LOWQUALITY, false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }

@@ -152,47 +152,65 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         }
         // Construct sql query
         String sql = new String(); 
-        //the Attribute INCLUDESUBSTRUCTURES does not correspond to any columns in a table, 
-        //but they allow to determine how the TOs returned were generated. 
+        //the Attributes INCLUDE_SUBSTRUCTURES and INCLUDE_SUBSTAGES do not correspond 
+        //to any columns in a table, but they allow to determine how the TOs returned were generated. 
         //The TOs returned by the ResultSet will have these values set to null by default. 
-        //So, we add a fake column to the query to provide the information to the 
-        //ResultSet, otherwise it is not needed. 
+        //So, we add fake columns to the query to provide the information to the ResultSet. 
         String sqlIncludeSubstructures = " 0";
         if (isIncludeSubstructures) {
             sqlIncludeSubstructures = " 1";
         }
         sqlIncludeSubstructures += " AS " + this.attributeToString(
-                ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES, isIncludeSubstructures);
+                ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES, isIncludeSubstructures);
         
-        //the attribute ORIGINOFLINE does not correspond to any columns in basic expression call 
-        //table.  
-        //The TOs returned by the ResultSet will have these values set to null by default.
-        //So, we add a fake column to the query to provide the information to the 
-        //ResultSet, otherwise it is not needed. 
-        String sqlOriginOfLine = "'" + OriginOfLine.SELF.getStringRepresentation() + "' AS " + 
-                this.attributeToString(ExpressionCallDAO.Attribute.ORIGINOFLINE, isIncludeSubstructures);
+        String sqlIncludeSubStages = " 0";
+        if (isIncludeSubStages) {
+            sqlIncludeSubStages = " 1";
+        }
+        sqlIncludeSubStages += " AS " + this.attributeToString(
+                ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES, isIncludeSubstructures);
+        
+        //the attribute ANAT_ORIGIN_OF_LINE does not correspond to any columns in basic expression call 
+        //table, we add a fake column to the query to provide the information to the ResultSet. 
+        String sqlAnatOriginOfLine = "'" + OriginOfLine.SELF.getStringRepresentation() + "' AS " + 
+                this.attributeToString(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE, 
+                        isIncludeSubstructures);
+        //The attribute STAGE_ORIGIN_OF_LINE does not correspond to any column 
+        //in any table. We add a fake column to the query to provide the information 
+        //to the ResultSet. 
+        String sqlDefaultStageOriginOfLine = "'" + OriginOfLine.SELF.getStringRepresentation() + "' AS " + 
+                this.attributeToString(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE, 
+                        isIncludeSubstructures);
+        String sqlIncludeSubStagesOriginOfLine = todo;
 
         Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
         if (attributes != null) {
             for (ExpressionCallDAO.Attribute attribute: attributes) {
-                //TODO: add the mechanism for includeSubStages when implemented.
-                //for now, we skip this attribute
-                if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTAGES)) {
-                    continue;
-                }
 
                 if (sql.isEmpty()) {
                     sql += "SELECT DISTINCT ";
                 } else {
                     sql += ", ";
                 }
-                if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES)) {
+                if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES)) {
                     //add fake column
                     sql += sqlIncludeSubstructures;
-                } else if (attribute.equals(ExpressionCallDAO.Attribute.ORIGINOFLINE) 
+                } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES)) {
+                    //add fake column
+                    sql += sqlIncludeSubStages;
+                } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)) {
+                    //The attribute STAGE_ORIGIN_OF_LINE does not correspond to any column 
+                    //in any table. We add a fake column to the query to provide the information 
+                    //to the ResultSet. 
+                    if (!isIncludeSubStages) {
+                        sql += sqlDefaultStageOriginOfLine;
+                    } else {
+                        todo
+                    }
+                } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE) 
                         && !isIncludeSubstructures) {
                     //add fake column
-                    sql += sqlOriginOfLine;
+                    sql += sqlAnatOriginOfLine;
                 } else {
                     //otherwise, real column requested
                     sql +=  tableName + "." + 
@@ -206,22 +224,32 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             //we don't bother and retrieve all columns anyway.
             sql += "SELECT " + tableName + ".*, " + sqlIncludeSubstructures; 
             if (!isIncludeSubstructures) {
-                sql += ", " + sqlOriginOfLine;
+                sql += ", " + sqlAnatOriginOfLine;
             }
         }
         sql += " FROM " + tableName;
-        if (speciesIds != null && speciesIds.size() > 0) {
+        //in case expression in sub stages was requested, we need to know each gene species 
+        //to propagate correctly, only to stages belonging to the proper species
+        if ((speciesIds != null && speciesIds.size() > 0) || isIncludeSubStages) {
              sql += " INNER JOIN " + geneTabName + " ON (" + geneTabName + ".geneId = " + 
-                         tableName + ".geneId)" +
-                    " WHERE " + geneTabName + ".speciesId IN (" + 
-                            BgeePreparedStatement.generateParameterizedQueryString(
-                                    speciesIds.size()) + ")";
-//                    " ORDER BY " + geneTabName + ".speciesId, " + tableName + ".geneId, " +  
-//                            tableName + ".anatEntityId, " + tableName + ".stageId";
-//         } else {
-//             sql += " ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, " + 
-//                             tableName + ".stageId";
-         }
+                         tableName + ".geneId)";
+        }
+        if (isIncludeSubStages) {
+            sql += " INNER JOIN stage ON " + tableName + ".stageId = stage.stageId " +
+            		"INNER JOIN stage AS propagatedStage ON " +
+            		    "propagatedStage.leftBoud <= stage.leftBound AND " +
+            		    "propagatedStage.rightBoud >= stage.rightBound " +
+            		"INNER JOIN stageTaxonConstraint ON " +
+            		    "propagatedStage.stageId = stageTaxonConstraint.stageId AND " +
+            		    "(stageTaxonConstraint.speciesId IS NULL OR stageTaxonConstraint.speciesId = " +
+            		    geneTabName + ".speciesId) ";
+        }
+        
+        if (speciesIds != null && speciesIds.size() > 0) {
+            sql += " WHERE " + geneTabName + ".speciesId IN (" + 
+                           BgeePreparedStatement.generateParameterizedQueryString(
+                                   speciesIds.size()) + ")";
+        }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
@@ -266,25 +294,27 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             } else {
                 label = "expressionId";
             }
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.GENEID)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.GENE_ID)) {
             label = "geneId";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGEID)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGE_ID)) {
             label = "stageId";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.ANATENTITYID)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID)) {
             label = "anatEntityId";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIXDATA)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
             label = "affymetrixData";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.ESTDATA)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_DATA)) {
             label = "estData";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.INSITUDATA)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
             label = "inSituData";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.RNASEQDATA)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
             label = "rnaSeqData";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.ORIGINOFLINE)) {
-            label = "originOfLine";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE)) {
+            label = "anatOriginOfLine";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)) {
+            label = "stageOriginOfLine";
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES)) {
             label = "includeSubstructures";
-        } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDESUBSTAGES)) {
+        } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES)) {
             label = "includeSubStages";
         } else {
             throw log.throwing(new IllegalArgumentException("The attribute provided (" +
@@ -366,7 +396,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 stmt.setString(6, call.getAffymetrixData().getStringRepresentation());
                 stmt.setString(7, call.getInSituData().getStringRepresentation());
                 stmt.setString(8, call.getRNASeqData().getStringRepresentation());
-                stmt.setString(9, call.getOriginOfLine().getStringRepresentation());
+                stmt.setString(9, call.getAnatOriginOfLine().getStringRepresentation());
                 callInsertedCount += stmt.executeUpdate();
                 stmt.clearParameters();
                 if (log.isDebugEnabled() && callInsertedCount % 100000 == 0) {
@@ -445,7 +475,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             String id = null, geneId = null, anatEntityId = null, devStageId = null;
             DataState affymetrixData = null, estData = null, inSituData = null, rnaSeqData = null;
             Boolean includeSubstructures = null, includeSubStages = null;
-            OriginOfLine originOfLine = null;
+            OriginOfLine anatOriginOfLine = null, stageOriginOfLine = null;
 
             ResultSet currentResultSet = this.getCurrentResultSet();
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -481,12 +511,13 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                         rnaSeqData = DataState.convertToDataState(
                                 currentResultSet.getString(column.getKey()));
                         
-                    } else if (column.getValue().equals("originOfLine")) {
-                        originOfLine = OriginOfLine.convertToOriginOfLine(
+                    } else if (column.getValue().equals("originOfLine") || 
+                            column.getValue().equals("anatOriginOfLine")) {
+                        anatOriginOfLine = OriginOfLine.convertToOriginOfLine(
                                 currentResultSet.getString(column.getKey()));
-                        //NOTE: and what if originOfLine was not requested? we will not see 
-                        //that it is a global call...
-                        //isGlobalExpression = true;
+                    } else if (column.getValue().equals("stageOriginOfLine")) {
+                        stageOriginOfLine = OriginOfLine.convertToOriginOfLine(
+                                currentResultSet.getString(column.getKey()));
                     } else if (column.getValue().equals("includeSubstructures")) {
                         includeSubstructures = currentResultSet.getBoolean(column.getKey());
                     } else if (column.getValue().equals("includeSubStages")) {
@@ -498,10 +529,10 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 }
             }
             
-            //TODO manage includeSubStages when complete query will be write
             return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, devStageId,
                     affymetrixData, estData, inSituData, rnaSeqData,
-                    includeSubstructures, includeSubStages, originOfLine));
+                    includeSubstructures, includeSubStages, 
+                    anatOriginOfLine, stageOriginOfLine));
         }
     }
     

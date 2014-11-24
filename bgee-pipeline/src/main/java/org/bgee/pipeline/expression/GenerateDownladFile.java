@@ -472,17 +472,18 @@ public class GenerateDownladFile extends CallUser {
                 List<NoExpressionCallTO> noExprTOs = this.loadNoExprCallsFromDb(speciesFilter, 
                         false, nonInformativesAnatEntities);
 
+
+                // Note that this Collection is a List, if it was a Set a global expression call 
+                // could be seen as equal to a basic expression call. 
+                List<CallTO> allCallTOs = new ArrayList<CallTO>();
+                allCallTOs.addAll(exprTOs);
+                allCallTOs.addAll(noExprTOs);
+                allCallTOs.addAll(globalNoExprTOs);
                 
                 if (fileTypes.contains(EXPR_SIMPLE)) {
                     log.trace("Start generation of data for simple file for the species {}",
                             speciesId);
                     List<Map<String, String>> exprSimpleFile = null;
-                    // Note that this Collection is a List, if it was a Set a global expression call 
-                    // could be seen as equal to a basic expression call. 
-                    List<CallTO> allCallTOs = new ArrayList<CallTO>();
-                    allCallTOs.addAll(exprTOs);
-                    allCallTOs.addAll(noExprTOs);
-                    allCallTOs.addAll(globalNoExprTOs);
                     exprSimpleFile = this.mergeCallsFromSortedMap(
                             this.groupAndOrderByGeneAnatEntityStage(allCallTOs));
                     log.trace("Done generation of data for simple file for the species {}",
@@ -493,13 +494,8 @@ public class GenerateDownladFile extends CallUser {
                 if (fileTypes.contains(EXPR_COMPLETE)) {
                     log.trace("Start generation of data for advanced file for the species {}",
                             speciesId);
-                    // Note that this Collection is a List, if it was a Set a global expression call 
-                    // could be seen as equal to a basic expression call. 
-                    List<CallTO> allCallTOs = new ArrayList<CallTO>();
-                    allCallTOs.addAll(exprTOs);
+                    // only for the complete file we need the propagated expression calls
                     allCallTOs.addAll(globalExprTOs);
-                    allCallTOs.addAll(noExprTOs);
-                    allCallTOs.addAll(globalNoExprTOs);
 
                     exprAdvancedFile = this.mergeCallsFromSortedMap(
                             this.groupAndOrderByGeneAnatEntityStage(allCallTOs));
@@ -717,11 +713,17 @@ public class GenerateDownladFile extends CallUser {
     }
 
     /**
-     * Merges basic and global calls provided in a {@code SortedMap} where keys are {@code CallTO}s 
+     * Generate the content of an expression download file from {@code allCalls}. 
+     * {@code allCalls} is a {@code Map} where keys are {@code CallTO}s 
      * providing the information of gene-anat.entity-stage, the associated values being 
-     * {@code Collection} of {@code CallTO}s with the corresponding gene-anat.entity-stage, and
-     * fill a {@code List} of {@code Map}s where keys are file column names and values are data 
-     * associated to the column name.
+     * {@code Collection}s of {@code CallTO}s occurring in the corresponding 
+     * gene-anat.entity-stage; these {@code Collection}s are not {@code Set}s, otherwise 
+     * a basic call could be seen as equal to a global propagated call; 
+     * {@code allCalls} is a {@code SortedMap} sorted by gene ID-anat. entity ID- stage ID. 
+     * <p>
+     * The returned value is a {@code List} of {@code Map}s, 
+     * with each {@code Map} corresponding to a row to be written in an expression download file, 
+     * and each {@code Entry} in a {@code Map} corresponding to a column.
      *  
      * @param allCalls  A {@code SortedMap} where keys are {@code CallTO}s providing 
      *                  the information of gene-anat.entity-stage, the associated values 
@@ -729,12 +731,14 @@ public class GenerateDownladFile extends CallUser {
      *                  gene-anat.entity-stage. {@code Entry}s are ordered according to 
      *                  the natural ordering of the IDs of the gene, anat. entity, and stage, 
      *                  in that order.
-     * @return          A {@code List} of {@code Map}s where keys are file column names and 
-     *                  values are data associated to the column name.
+     * @return          A {@code List} of {@code Map}s, where each {@code Map} 
+     *                  corresponds to a row, and each {@code Entry} in a {@code Map} have 
+     *                  keys corresponding to file column names and values are data 
+     *                  associated to the column name.
      */
-    private List<Map<String, String>> mergeCallsFromSortedMap(SortedMap<CallTO, Collection<CallTO>> allCalls) {
+    private List<Map<String, String>> generateFileContent(SortedMap<CallTO, Collection<CallTO>> allCalls) {
         log.entry(allCalls);
-        
+        log.debug("Start generating file content by merging calls...");
         List<Map<String, String>> allRows = new ArrayList<Map<String, String>>();
 
         for (Entry<CallTO, Collection<CallTO>> callGroup : allCalls.entrySet()) {
@@ -758,7 +762,8 @@ public class GenerateDownladFile extends CallUser {
                     }
                 } else {
                     throw log.throwing(new IllegalArgumentException("The CallTO provided (" +
-                            call.getClass() + ") is not manage for expression/no-expression data"));
+                            call.getClass() + ") is not managed for expression/no-expression data: " + 
+                            call));
                 }
             }
             
@@ -842,14 +847,14 @@ public class GenerateDownladFile extends CallUser {
             } else if (basicExprTO != null && basicNoExprTO != null && globalExprTO == null && globalNoExprTO == null) {
                 resume = ExpressionData.HIGHAMBIGUITY;
                 
-                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                affyData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getAffymetrixData(), basicNoExprTO.getAffymetrixData());
                 estData = this.convertDateStateToExpressionData(basicExprTO.getESTData(), false);
-                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                inSituData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getInSituData(), basicNoExprTO.getInSituData());
                 relaxedInSituData = 
                         this.convertDateStateToExpressionData(basicNoExprTO.getInSituData(), true);
-                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                rnaSeqData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getRNASeqData(), basicNoExprTO.getRNASeqData());
 
                 affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
@@ -892,14 +897,14 @@ public class GenerateDownladFile extends CallUser {
             } else if (basicExprTO != null && basicNoExprTO == null && globalExprTO == null && globalNoExprTO != null) {
                 resume = ExpressionData.LOWAMBIGUITY;
 
-                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                affyData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
                 estData = this.convertDateStateToExpressionData(basicExprTO.getESTData(), false);
-                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                inSituData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getInSituData(), globalNoExprTO.getInSituData());
                 relaxedInSituData = 
                         this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
-                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                rnaSeqData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
 
                 affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
@@ -947,14 +952,14 @@ public class GenerateDownladFile extends CallUser {
             } else if (basicExprTO == null && basicNoExprTO == null && globalExprTO != null && globalNoExprTO != null) {
                 resume = ExpressionData.LOWAMBIGUITY;
                 
-                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                affyData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
                 estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
-                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                inSituData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
                 relaxedInSituData = 
                         this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
-                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                rnaSeqData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
                 
                 affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
@@ -980,14 +985,14 @@ public class GenerateDownladFile extends CallUser {
             } else if (basicExprTO != null && basicNoExprTO != null && globalExprTO == null && globalNoExprTO != null) {
                 resume = ExpressionData.HIGHAMBIGUITY;
                 
-                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                affyData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
                 estData = this.convertDateStateToExpressionData(basicExprTO.getESTData(), false);
-                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                inSituData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getInSituData(), globalNoExprTO.getInSituData());
                 relaxedInSituData = 
                         this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
-                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                rnaSeqData = this.mergeExprAndNoExprDataStates(
                         basicExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
                 
                 affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
@@ -1009,14 +1014,14 @@ public class GenerateDownladFile extends CallUser {
             } else if (basicExprTO != null && basicNoExprTO == null && globalExprTO != null && globalNoExprTO != null) {
                 resume = ExpressionData.HIGHAMBIGUITY;
                 
-                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                affyData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
                 estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
-                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                inSituData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
                 relaxedInSituData = 
                         this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
-                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                rnaSeqData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
 
                 affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
@@ -1038,14 +1043,14 @@ public class GenerateDownladFile extends CallUser {
             } else if (basicExprTO == null && basicNoExprTO != null && globalExprTO != null && globalNoExprTO != null) {
                 resume = ExpressionData.HIGHAMBIGUITY;
 
-                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                affyData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
                 estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
-                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                inSituData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
                 relaxedInSituData = 
                         this.convertDateStateToExpressionData(globalNoExprTO.getInSituData(), true);
-                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                rnaSeqData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
 
                 affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
@@ -1067,14 +1072,14 @@ public class GenerateDownladFile extends CallUser {
             } else if (basicExprTO != null && basicNoExprTO != null && globalExprTO != null && globalNoExprTO != null) {
                 resume = ExpressionData.HIGHAMBIGUITY;
                 
-                affyData = this.mergeExprAndNoExprDataStatesInExprData(
+                affyData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getAffymetrixData(), globalNoExprTO.getAffymetrixData());
                 estData = this.convertDateStateToExpressionData(globalExprTO.getESTData(), false);
-                inSituData = this.mergeExprAndNoExprDataStatesInExprData(
+                inSituData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getInSituData(), globalNoExprTO.getInSituData());
                 relaxedInSituData = 
                         this.convertDateStateToExpressionData(globalNoExprTO.getRelaxedInSituData(), true);
-                rnaSeqData = this.mergeExprAndNoExprDataStatesInExprData(
+                rnaSeqData = this.mergeExprAndNoExprDataStates(
                         globalExprTO.getRNASeqData(), globalNoExprTO.getRNASeqData());
 
                 affyOrigin = this.checkBasicAndGlobalDataStatesAndGenerateOrigin( 
@@ -1120,10 +1125,12 @@ public class GenerateDownladFile extends CallUser {
             allRows.add(row);
             log.debug("Added row: {}", row);
         }
-        
+
+        log.debug("Done generating file content by merging calls.");
         return log.exit(allRows);
     }
 
+    //TODO: javadoc
     private ExpressionData resumeExpresionCallDataStates(ExpressionCallTO call) {
         log.entry(call);
         
@@ -1164,7 +1171,6 @@ public class GenerateDownladFile extends CallUser {
             DataState basicExprCallDataState, DataState basicNoExprCallDataState, 
             DataState globalExprCallDataState, DataState globalNoExprCallDataState) 
                     throws IllegalStateException { 
-        // TODO : state or argument: argument for the function and state for the class
         log.entry(basicExprCallDataState, basicNoExprCallDataState, 
                 globalExprCallDataState, globalNoExprCallDataState);
         
@@ -1182,17 +1188,16 @@ public class GenerateDownladFile extends CallUser {
         }
 
         if (hasExpression && hasNoExpression) {
-            // Expression and no-expression
-            throw log.throwing(new IllegalStateException("A basic expression call and " +
-                    "a basic no-expression call have data for the same data type: " +
-                    basicExprCallDataState.getStringRepresentation() + " for the expression call and " + 
-                    basicNoExprCallDataState.getStringRepresentation() + " for the no-expression call."));
+            // Expression and no-expression conflict for a same data type, not possible
+            throw log.throwing(new IllegalStateException("expression/no-expression conflict " +
+            		"for same data type ."));
         }
 
         if (!hasExpression && !hasNoExpression) {
             return log.exit(Origin.NODATA);
         }
 
+        //TODO: DRY, same code in the if/else blocks. 
         if (hasExpression) {
             if (basicExprCallDataState == null || basicExprCallDataState.equals(DataState.NODATA)) {
                 return log.exit(Origin.INFERRED);
@@ -1204,6 +1209,7 @@ public class GenerateDownladFile extends CallUser {
                 throw log.throwing(new IllegalStateException("No data in the global expression call " +
                         "while basic expression call has expression"));
             }
+            //TODO: not sure about this
             if (basicExprCallDataState.ordinal() < globalExprCallDataState.ordinal()) {
                 return log.exit(Origin.BOTH);
             } else if (basicExprCallDataState.ordinal() == globalExprCallDataState.ordinal()) {
@@ -1244,25 +1250,26 @@ public class GenerateDownladFile extends CallUser {
      * @param dateState A {@code DataState} to be converted.
      * @return          The {@code ExpressionData} corresponding to the given {@code DataState}. 
      */
-    private ExpressionData convertDateStateToExpressionData(DataState dateState, boolean isNoExpression) {
+    //TODO: useless method, use only mergeExprAndNoExprDataStates
+    private ExpressionData convertDateStateToExpressionData(DataState dateState, 
+            boolean isNoExpression) {
         log.entry(dateState, isNoExpression);
-        
-        ExpressionData exprData = null;
     
         if (dateState.equals(DataState.NODATA)) {
-            exprData = ExpressionData.NODATA;            
-        } else if (isNoExpression) {
-            exprData = ExpressionData.NOEXPRESSION;
-        } else if (dateState.equals(DataState.HIGHQUALITY)) {
-                exprData = ExpressionData.HIGHQUALITY;                            
-        } else if (dateState.equals(DataState.LOWQUALITY)) {
-                exprData = ExpressionData.LOWQUALITY;                            
-        } else {
-            throw log.throwing(new IllegalArgumentException(
-                    "The DataState provided (" + dateState.getStringRepresentation() + 
-                    ") is unknown for " + DataState.class.getName()));            
-        }
-        return log.exit(exprData);
+            return log.exit(ExpressionData.NODATA);            
+        } 
+        if (isNoExpression) {
+            return log.exit(ExpressionData.NOEXPRESSION);
+        } 
+        if (dateState.equals(DataState.HIGHQUALITY)) {
+            return log.exit(ExpressionData.HIGHQUALITY);                            
+        } 
+        if (dateState.equals(DataState.LOWQUALITY)) {
+            return log.exit(ExpressionData.LOWQUALITY);                            
+        } 
+        throw log.throwing(new IllegalArgumentException(
+                "The DataState provided (" + dateState.getStringRepresentation() + 
+                ") is not supported"));  
     }
 
     /**
@@ -1276,7 +1283,7 @@ public class GenerateDownladFile extends CallUser {
      * @throws IllegalStateException    If an expression call and a no-expression call are found 
      *                                  for the same data type.
      */
-    private ExpressionData mergeExprAndNoExprDataStatesInExprData(DataState dataStateExpr, 
+    private ExpressionData mergeExprAndNoExprDataStates(DataState dataStateExpr, 
             DataState dataStateNoExpr) throws IllegalStateException {
         log.entry(dataStateExpr, dataStateNoExpr);
     

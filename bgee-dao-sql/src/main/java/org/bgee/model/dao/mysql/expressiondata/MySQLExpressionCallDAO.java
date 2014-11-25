@@ -158,10 +158,19 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             }
             
             if (attribute.equals(ExpressionCallDAO.Attribute.ID)) {
+                String colName = "expressionId ";
                 if (isIncludeSubstructures) {
-                    sql += "globalExpressionId ";
+                    colName = "globalExpressionId ";
+                }
+                //in case we include sub-stages, we need to generate fake IDs, 
+                //because equality of ExpressionCallTO can be based on ID, and here 
+                //a same basic call with a given ID can be associated to different propagated calls.
+                if (isIncludeSubStages) {
+                    sql += "CONCAT(" + exprTableName + ".geneId, '__', " + 
+                            exprTableName + ".anatEntityId, '__', " + 
+                            propagatedStageTableName + ".stageId) AS " + colName;
                 } else {
-                    sql += "expressionId ";
+                    sql += colName;
                 }
             } else if (attribute.equals(ExpressionCallDAO.Attribute.GENE_ID)) {
                 sql += exprTableName + ".geneId ";
@@ -283,20 +292,14 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         }
         
         sql += " FROM " + exprTableName;
-        //in case expression in sub stages was requested, we need to know each gene species 
-        //to propagate correctly, only to stages belonging to the proper species
-        if ((speciesIds != null && speciesIds.size() > 0) || isIncludeSubStages) {
+        if (speciesIds != null && speciesIds.size() > 0) {
              sql += " INNER JOIN gene ON (gene.geneId = " + exprTableName + ".geneId)";
         }
         if (isIncludeSubStages) {
             sql += " INNER JOIN stage ON " + exprTableName + ".stageId = stage.stageId " +
             	   " INNER JOIN stage AS " + propagatedStageTableName + " ON " +
-            		    propagatedStageTableName + ".leftBoud <= stage.leftBound AND " +
-            		    propagatedStageTableName + ".rightBoud >= stage.rightBound " +
-            		" INNER JOIN stageTaxonConstraint ON " +
-            		    propagatedStageTableName + ".stageId = stageTaxonConstraint.stageId AND " +
-            		    "(stageTaxonConstraint.speciesId IS NULL OR stageTaxonConstraint.speciesId = " +
-            		    "gene.speciesId) ";
+            		    propagatedStageTableName + ".stageLeftBound <= stage.stageLeftBound AND " +
+            		    propagatedStageTableName + ".stageRightBound >= stage.stageRightBound ";
         }
         
         if (speciesIds != null && speciesIds.size() > 0) {
@@ -306,7 +309,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         }
         if (isIncludeSubStages) {
             sql += " GROUP BY " + exprTableName + ".geneId, " + 
-                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ". stageId";
+                   exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId";
             
                    
         }

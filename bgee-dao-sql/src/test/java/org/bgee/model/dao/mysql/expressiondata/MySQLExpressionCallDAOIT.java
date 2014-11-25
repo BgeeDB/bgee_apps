@@ -98,6 +98,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF),
                 new ExpressionCallTO("9", "ID2", "Anat_id1", "Stage_id9", DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF));
         // Compare
         List<ExpressionCallTO> expressions = dao.getExpressionCalls(params).getAllTOs();
@@ -117,6 +120,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF),
                 new ExpressionCallTO("5","ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        false, false, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("10", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF)); 
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
@@ -137,10 +143,17 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         true, false, OriginOfLine.SELF, OriginOfLine.SELF),
                 new ExpressionCallTO("5", "ID1", "Anat_id7", "Stage_id10", DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                        true, false, OriginOfLine.BOTH, OriginOfLine.SELF));
+                        true, false, OriginOfLine.BOTH, OriginOfLine.SELF),
+                new ExpressionCallTO("22", "ID1", "Anat_id6", "Stage_id8", DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                        true, false, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("24", "ID1", "Anat_id1", "Stage_id8", DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                        true, false, OriginOfLine.DESCENT, OriginOfLine.SELF));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
-        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+        assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls + 
+                ", but was: " + expressions, 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
 
         // Without species filter but include substructures
@@ -213,7 +226,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF),
                 new ExpressionCallTO("23", "ID2", "Anat_id1", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF));
+                        DataState.HIGHQUALITY, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF),
+                new ExpressionCallTO("22", "ID1", "Anat_id6", "Stage_id8", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, true, false, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("24", "ID1", "Anat_id1", "Stage_id8", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
@@ -269,7 +288,9 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("19", null, null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO("20", null, null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO("21", null, null, null, null, null, null, null, null, null, null, null),
-                new ExpressionCallTO("23", null, null, null, null, null, null, null, null, null, null, null));
+                new ExpressionCallTO("22", null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO("23", null, null, null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO("24", null, null, null, null, null, null, null, null, null, null, null));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
@@ -286,6 +307,8 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, true, null, null, null),
                 new ExpressionCallTO(null, null, null, "Stage_id7", 
                         null, null, null, null, true, null, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id8", 
+                        null, null, null, null, true, null, null, null),
                 new ExpressionCallTO(null, null, null, "Stage_id18",
                         null, null, null, null, true, null, null, null),
                 new ExpressionCallTO(null, null, null, "Stage_id10", 
@@ -294,6 +317,267 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, true, null, null, null),
                 new ExpressionCallTO(null, null, null, "Stage_id13",
                         null, null, null, null, true, null, null, null));
+        // Compare
+        expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+    }
+
+    /**
+     * Test the select method {@link MySQLExpressionCallDAO#getExpressionCalls()} 
+     * when including data from sub-stages.
+     */
+    @Test
+    public void shouldGetExpressionCallsIncludeSubStages() throws SQLException, UnsupportedOperationException {
+        
+        this.useSelectDB();
+
+        // On expression table 
+        MySQLExpressionCallDAO dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager());
+
+        // Without speciesIds and not include organ substructures
+        // Generate parameters
+        Set<String> speciesIds = new HashSet<String>();
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(speciesIds);
+        params.setIncludeSubstructures(false);
+        params.setIncludeSubStages(true);
+        // Generate manually expected result
+        List<ExpressionCallTO> expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1",
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.BOTH),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID2__Anat_id1__Stage_id1", "ID2", "Anat_id1", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT), 
+                new ExpressionCallTO("ID2__Anat_id1__Stage_id5", "ID2", "Anat_id1", "Stage_id5", 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT), 
+                new ExpressionCallTO("ID2__Anat_id1__Stage_id7", "ID2", "Anat_id1", "Stage_id7", 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT), 
+                new ExpressionCallTO("ID2__Anat_id1__Stage_id9", "ID2", "Anat_id1", "Stage_id9", 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF), 
+                new ExpressionCallTO("ID2__Anat_id2__Stage_id1", "ID2", "Anat_id2", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID2__Anat_id2__Stage_id14", "ID2", "Anat_id2", "Stage_id14", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID2__Anat_id2__Stage_id18", "ID2", "Anat_id2", "Stage_id18", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID2__Anat_id11__Stage_id1", "ID2", "Anat_id11", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID2__Anat_id11__Stage_id10", "ID2", "Anat_id11", "Stage_id10", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID2__Anat_id11__Stage_id12", "ID2", "Anat_id11", "Stage_id12", 
+                        DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.NODATA, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID2__Anat_id11__Stage_id13", "ID2", "Anat_id11", "Stage_id13", 
+                        DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID3__Anat_id1__Stage_id1", "ID3", "Anat_id1", "Stage_id1", 
+                        DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
+                        DataState.HIGHQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID3__Anat_id3__Stage_id1", "ID3", "Anat_id3", "Stage_id1", 
+                        DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                        DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF));
+        // Compare
+        List<ExpressionCallTO> expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved, expected " + expectedExprCalls + 
+                ", but was: " + expressions, 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+
+        // With speciesIds but not include substructures 
+        // Generate parameters
+        params.addAllSpeciesIds(Arrays.asList("11", "41")); // 41 = species Id that does not exist
+        // Generate manually expected result
+        expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id6","ID1", "Anat_id6", "Stage_id6", 
+                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id5","ID1", "Anat_id6", "Stage_id5", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id1","ID1", "Anat_id6", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id7","ID1", "Anat_id6", "Stage_id7", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY, 
+                        false, true, OriginOfLine.SELF, OriginOfLine.BOTH),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id8","ID1", "Anat_id6", "Stage_id8", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
+                        false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id7__Stage_id10","ID1", "Anat_id7", "Stage_id10", 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id7__Stage_id1","ID1", "Anat_id7", "Stage_id1", 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT)); 
+        // Compare
+        expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls + 
+                ", but was: " + expressions, 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+
+        // On global expression table 
+        // With speciesIds and include substructures 
+        // Generate parameters
+        params.setIncludeSubstructures(true);
+        // Generate manually expected result
+        expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", "ID1", "Anat_id6", "Stage_id6", 
+                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", "ID1", "Anat_id6", "Stage_id5", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", "ID1", "Anat_id6", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.LOWQUALITY, true, true, OriginOfLine.SELF, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", "ID1", "Anat_id6", "Stage_id7", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,  DataState.LOWQUALITY, 
+                        true, true, OriginOfLine.SELF, OriginOfLine.BOTH),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", "ID1", "Anat_id6", "Stage_id8", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,  DataState.NODATA, 
+                        true, true, OriginOfLine.SELF, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", "ID1", "Anat_id1", "Stage_id8", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,  DataState.NODATA, 
+                        true, true, OriginOfLine.DESCENT, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", "ID1", "Anat_id1", "Stage_id7", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,  DataState.NODATA, 
+                        true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", "ID1", "Anat_id1", "Stage_id5", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,  DataState.NODATA, 
+                        true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", "ID1", "Anat_id1", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,  DataState.NODATA, 
+                        true, true, OriginOfLine.DESCENT, OriginOfLine.DESCENT),
+                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", "ID1", "Anat_id7", "Stage_id10", 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.SELF),
+                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", "ID1", "Anat_id7", "Stage_id1", 
+                        DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
+                        DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.DESCENT));
+        // Compare
+        expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls + 
+                ", but was: " + expressions, 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        
+        // Test get only GENEID without species filter and without including substructures, 
+        // but with including sub-stages
+        dao.clearAttributes();
+        dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID));
+        params.clearSpeciesIds();
+        params.setIncludeSubstructures(false);
+        params.setIncludeSubStages(true);
+        expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO(null, "ID1", null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null));
+        // Compare
+        expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+
+        // Test get only INCLUDE_SUBSTRUCTURES without species filter and without including substructures, 
+        // but with including sub-stages
+        dao.clearAttributes();
+        dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES));
+        expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, null, null));
+        // Compare
+        expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        
+       // Test get only INCLUDE_SUBSTAGES without species filter and without including substructures, 
+        // but with including sub-stages
+        dao.clearAttributes();
+        dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES));
+        expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO(null, null, null, null, null, null, null, null, null, true, null, null));
+        // Compare
+        expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+
+        // Test get only ID with species filter and including substructures and sub-stages
+        dao.clearAttributes();
+        dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.ID));
+        params = new ExpressionCallParams();
+        params.addAllSpeciesIds(Arrays.asList("11", "41")); // 41 = species Id that does not exist
+        params.setIncludeSubstructures(true);
+        params.setIncludeSubStages(true);
+        expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id1", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id5", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id6", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id7", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id6__Stage_id8", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id1__Stage_id1", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id1__Stage_id5", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id1__Stage_id7", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id1__Stage_id8", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id7__Stage_id1", null, null, null, null, null, 
+                        null, null, null, null, null, null),
+                new ExpressionCallTO("ID1__Anat_id7__Stage_id10", null, null, null, null, null, 
+                        null, null, null, null, null, null));
+        // Compare
+        expressions = dao.getExpressionCalls(params).getAllTOs();
+        assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls + 
+                ", but was: " + expressions, 
+                TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        
+        // Test get INCLUDE_SUBSTAGES (and STAGEID) without OriginOfLine including sub-stages
+        dao.clearAttributes();
+        dao.setAttributes(
+                ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES);
+        expectedExprCalls = Arrays.asList(
+                new ExpressionCallTO(null, null, null, "Stage_id1", 
+                null, null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id5", 
+                        null, null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id6", 
+                        null, null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id7", 
+                        null, null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id8",
+                        null, null, null, null, null, true, null, null),
+                new ExpressionCallTO(null, null, null, "Stage_id10", 
+                        null, null, null, null, null, true, null, null));
         // Compare
         expressions = dao.getExpressionCalls(params).getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
@@ -312,12 +596,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         MySQLExpressionCallDAO dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager());
 
         // Generate manually expected result for expression table
-        assertEquals("Max expression ID incorrectly retrieved", 9, 
+        assertEquals("Max expression ID incorrectly retrieved", 10, 
                 dao.getMaxExpressionCallId(false));
 
         // Generate manually expected result for global expression table
         assertEquals("Max expression ID incorrectly retrieved", 
-                23, dao.getMaxExpressionCallId(true));
+                24, dao.getMaxExpressionCallId(true));
 
         // Check on database without calls
         this.useEmptyDB();

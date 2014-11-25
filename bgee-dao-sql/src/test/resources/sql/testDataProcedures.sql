@@ -179,7 +179,8 @@ BEGIN
                (23,null);
 
         INSERT INTO expression(expressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData)
-        VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality'),
+        VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality'), 
+               (10,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data'),
                (2,'ID1','Anat_id6','Stage_id6','high quality','poor quality','high quality','poor quality'),
                (3,'ID1','Anat_id6','Stage_id7','no data','no data','no data','poor quality'),
                (4,'ID2','Anat_id2','Stage_id18','high quality','high quality','high quality','high quality'),
@@ -211,26 +212,29 @@ BEGIN
                (18,'ID2','Anat_id5','Stage_id18','high quality','high quality','high quality','high quality','descent'),
                (19,'ID2','Anat_id9','Stage_id18','high quality','high quality','high quality','high quality','descent'),
                (20,'ID2','Anat_id10','Stage_id18','high quality','high quality','high quality','high quality','descent'),
-               (21,'ID2','Anat_id11','Stage_id18','high quality','high quality','high quality','high quality','descent');
+               (21,'ID2','Anat_id11','Stage_id18','high quality','high quality','high quality','high quality','descent'), 
+               (22,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data', 'self'), 
+               (24,'ID1','Anat_id1','Stage_id8','high quality','high quality','no data','no data', 'descent');
 
         INSERT INTO globalExpressionToExpression (expressionId,globalExpressionId) 
-        VALUES (1,1),
-               (1,8),
-               (1,9),
-               (1,10),
-               (1,11),
-               (1,12),
-               (1,13),
-               (1,14),
-               (1,15),
-               (1,23),
-               (4,4),
-               (4,16),
-               (4,17),
-               (4,18),
-               (4,19),
-               (4,20),
-               (4,21);
+        VALUES (1, 1),
+               (1, 8),
+               (1, 9),
+               (1, 10),
+               (1, 11),
+               (1, 12),
+               (1, 13),
+               (1, 14),
+               (1, 15),
+               (1, 23),
+               (4, 4),
+               (4, 16),
+               (4, 17),
+               (4, 18),
+               (4, 19),
+               (4, 20),
+               (4, 21),
+               (10, 22);
 
         INSERT INTO noExpression(noExpressionId,geneId,anatEntityId,stageId,noExpressionAffymetrixData,noExpressionInSituData,noExpressionRnaSeqData)
         VALUES (1,'ID2','Anat_id5','Stage_id13','poor quality','high quality','high quality'),

@@ -420,7 +420,7 @@ public class InsertGlobalCalls extends CallUser {
         
         log.debug("Retrieving anat entities with expression calls...");
         ExpressionCallDAO exprDao = this.getExpressionCallDAO();
-        exprDao.setAttributes(ExpressionCallDAO.Attribute.ANATENTITYID);
+        exprDao.setAttributes(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID);
         //we do not query global expression calls, because this way we can launch 
         //the propagation of global expression and global no-expression calls independently. 
         //We will propagate expression calls thanks to relations between anatomical terms.
@@ -529,6 +529,7 @@ public class InsertGlobalCalls extends CallUser {
                         DataState.NODATA,
                         false,
                         false,
+                        ExpressionCallTO.OriginOfLine.SELF, 
                         ExpressionCallTO.OriginOfLine.SELF);
                 
                 log.trace("Add the propagated expression: {}", propagatedExpression);
@@ -698,7 +699,8 @@ public class InsertGlobalCalls extends CallUser {
                             globalCall.getGeneId(), globalCall.getAnatEntityId(), 
                             globalCall.getStageId(), 
                             affymetrixData, estData, inSituData, rnaSeqData, true,
-                            globalCall.isIncludeSubStages(), origin);
+                            globalCall.isIncludeSubStages(), origin, 
+                            globalCall.getStageOriginOfLine());
 
             log.trace("Updated global expression call: {}", updatedGlobalCall);
 

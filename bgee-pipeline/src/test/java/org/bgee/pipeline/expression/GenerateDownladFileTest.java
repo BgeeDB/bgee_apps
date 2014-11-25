@@ -113,10 +113,11 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 Arrays.asList(
                         new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
                                 DataState.NODATA, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, false, null, null),
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, false, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID2", "Anat_id3", "Stage_id2", 
                                 DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, false, null, null)),
+                                DataState.HIGHQUALITY, DataState.NODATA, false, null, null, null)),
                         MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams basicExprParams11 = new ExpressionCallParams();
         basicExprParams11.addAllSpeciesIds(listSpeciesIds);
@@ -132,16 +133,20 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 Arrays.asList(
                         new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
                                 DataState.NODATA, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, null, null),
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id2", 
                                 DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, true, null, null),
+                                DataState.HIGHQUALITY, DataState.NODATA, true, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id2", 
                                 DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, true, null, null),
+                                DataState.HIGHQUALITY, DataState.NODATA, true, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID2", "Anat_id3", "Stage_id2", 
                                 DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.HIGHQUALITY, DataState.NODATA, true, null, null)),
+                                DataState.HIGHQUALITY, DataState.NODATA, true, null, null, 
+                                null)),
                         MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams globalExprParams11 = new ExpressionCallParams();
         globalExprParams11.addAllSpeciesIds(listSpeciesIds);
@@ -248,13 +253,15 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 Arrays.asList(
                         new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id2", 
                                 DataState.NODATA, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.HIGHQUALITY, false, null, null),
+                                DataState.LOWQUALITY, DataState.HIGHQUALITY, false, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id2", 
                                 DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, false, null, null),
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, false, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
                                 DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.NODATA, false, null, null)),
+                                DataState.LOWQUALITY, DataState.NODATA, false, null, null, null)),
                         MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams basicExprParams22 = new ExpressionCallParams();
         basicExprParams22.addAllSpeciesIds(listSpeciesIds);
@@ -270,19 +277,24 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 Arrays.asList(
                         new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id2", 
                                 DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, null, null),
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, true, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID3", "Anat_id4", "Stage_id2", 
                                 DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, true, null, null),
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, true, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID3", "Anat_id5", "Stage_id2", 
                                 DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                                DataState.HIGHQUALITY, DataState.LOWQUALITY, true, null, null),
+                                DataState.HIGHQUALITY, DataState.LOWQUALITY, true, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID5", "Anat_id1", "Stage_id5", 
                                 DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.NODATA, true, null, null),
+                                DataState.LOWQUALITY, DataState.NODATA, true, null, null, 
+                                null),
                         new ExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
                                 DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                DataState.LOWQUALITY, DataState.NODATA, true, null, null)),
+                                DataState.LOWQUALITY, DataState.NODATA, true, null, null, 
+                                null)),
                         MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams globalExprParams22 = new ExpressionCallParams();
         globalExprParams22.addAllSpeciesIds(listSpeciesIds);
@@ -421,11 +433,11 @@ public class GenerateDownladFileTest  extends TestAncestor {
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);
         verify(mockManager.mockExpressionCallDAO, times(4)).setAttributes(
-                ExpressionCallDAO.Attribute.GENEID, 
-                ExpressionCallDAO.Attribute.STAGEID, ExpressionCallDAO.Attribute.ANATENTITYID, 
-                ExpressionCallDAO.Attribute.AFFYMETRIXDATA, ExpressionCallDAO.Attribute.ESTDATA,
-                ExpressionCallDAO.Attribute.INSITUDATA, ExpressionCallDAO.Attribute.RNASEQDATA,
-                ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES);
+                ExpressionCallDAO.Attribute.GENE_ID, 
+                ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+                ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, ExpressionCallDAO.Attribute.EST_DATA,
+                ExpressionCallDAO.Attribute.IN_SITU_DATA, ExpressionCallDAO.Attribute.RNA_SEQ_DATA,
+                ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES);
         verify(mockManager.mockNoExpressionCallDAO, times(4)).setAttributes(
                 NoExpressionCallDAO.Attribute.GENEID, 
                 NoExpressionCallDAO.Attribute.DEVSTAGEID, NoExpressionCallDAO.Attribute.ANATENTITYID, 

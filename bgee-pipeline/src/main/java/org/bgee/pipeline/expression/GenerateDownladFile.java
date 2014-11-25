@@ -589,11 +589,11 @@ public class GenerateDownladFile extends CallUser {
         // We don't retrieve expression call ID to be able to compare calls on gene, 
         // stage and anatomical IDs.
         // We don't need INCLUDESUBSTAGES. TODO: actually maybe we need
-        dao.setAttributes(ExpressionCallDAO.Attribute.GENEID, 
-                ExpressionCallDAO.Attribute.STAGEID, ExpressionCallDAO.Attribute.ANATENTITYID, 
-                ExpressionCallDAO.Attribute.AFFYMETRIXDATA, ExpressionCallDAO.Attribute.ESTDATA,
-                ExpressionCallDAO.Attribute.INSITUDATA, ExpressionCallDAO.Attribute.RNASEQDATA,
-                ExpressionCallDAO.Attribute.INCLUDESUBSTRUCTURES);
+        dao.setAttributes(ExpressionCallDAO.Attribute.GENE_ID, 
+                ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+                ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, ExpressionCallDAO.Attribute.EST_DATA,
+                ExpressionCallDAO.Attribute.IN_SITU_DATA, ExpressionCallDAO.Attribute.RNA_SEQ_DATA,
+                ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES);
         
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
@@ -606,7 +606,7 @@ public class GenerateDownladFile extends CallUser {
                 log.trace("Iterating ExpressionCallTO: {}", to);
                 //if the call was generated from propagated data only, we discard it 
                 //if present in a non-informative anatomical entity.
-                if (to.getOriginOfLine().equals(ExpressionCallTO.OriginOfLine.DESCENT) && 
+                if (to.getAnatOriginOfLine().equals(ExpressionCallTO.OriginOfLine.DESCENT) && 
                         nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
                     log.trace("Discarding propagated calls because in non-informative anatomical entity.");
                     continue;

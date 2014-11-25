@@ -131,7 +131,7 @@ public abstract class CallUser extends MySQLDAOUser {
             //different classes in the keyset. 
             CallTO fakeCallTO = new ExpressionCallTO(null, callTO.getGeneId(), 
                     callTO.getAnatEntityId(), callTO.getStageId(), 
-                    null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null);
             Collection<CallTO> aggregatedCalls = aggregateMap.get(fakeCallTO);
             if (aggregatedCalls == null) {
                 //note that this Collection must absolutely not be a Set, otherwise 

@@ -65,63 +65,67 @@ public class CallUserTest extends TestAncestor {
         
         Collection<CallTO> callsToGroup = Arrays.asList(
                 (CallTO) new ExpressionCallTO(null, "gene9", "organ1", "stage1", 
-                        null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.DESCENT), 
+                        null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.DESCENT, 
+                        null), 
                 (CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                        null, null, null, null, null, null, null), 
+                        null, null, null, null, null, null, null, null), 
                 (CallTO) new NoExpressionCallTO(null, "gene1", "organ2", "stage2", 
                         null, null, null, null, true, NoExpressionCallTO.OriginOfLine.BOTH), 
                 (CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage2", 
-                       null, null, null, null, null, null, null),
+                       null, null, null, null, null, null, null, null),
                 (CallTO) new NoExpressionCallTO(null, "gene3", "organ1", "stage1", 
                        null, null, null, null, true, NoExpressionCallTO.OriginOfLine.SELF), 
                 (CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                      null, null, null, null, null, null, null), 
+                      null, null, null, null, null, null, null, null), 
                 (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
-                      null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH), 
+                      null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH, 
+                      null), 
                 (CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage1", 
-                      null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.SELF),  
+                      null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.SELF, 
+                      null),  
                 (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
-                      null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF)
+                      null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF, 
+                      null)
                 );
         
         Map<CallTO, Collection<CallTO>> expectedMap = 
                 new LinkedHashMap<CallTO, Collection<CallTO>>();
         
         expectedMap.put(new ExpressionCallTO(null, "gene1", "organ2", "stage2", 
-                null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new NoExpressionCallTO(null, "gene1", "organ2", "stage2", 
                 null, null, null, null, true, NoExpressionCallTO.OriginOfLine.BOTH)));
 
         expectedMap.put(new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null), 
                           (CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                null, null, null, null, null, null, null)));
+                null, null, null, null, null, null, null, null)));
 
         expectedMap.put(new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
-                null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
-                null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH), 
+                null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH, null), 
                           (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
-                null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF), 
+                null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF, null), 
                           (CallTO) new NoExpressionCallTO(null, "gene3", "organ1", "stage1", 
                 null, null, null, null, true, NoExpressionCallTO.OriginOfLine.SELF)));
         
         expectedMap.put(new ExpressionCallTO(null, "gene9", "organ1", "stage1", 
-                    null, null, null, null, null, null, null), 
+                    null, null, null, null, null, null, null, null), 
                 Arrays.asList((CallTO) new ExpressionCallTO(null, "gene9", "organ1", "stage1", 
-                    null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.DESCENT)));
+                    null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.DESCENT, null)));
         
         expectedMap.put(new ExpressionCallTO(null, "gene9", "organ2", "stage1", 
-                null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage1", 
-                null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.SELF)));
+                null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.SELF, null)));
         
         expectedMap.put(new ExpressionCallTO(null, "gene9", "organ2", "stage2", 
-                null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage2", 
-                null, null, null, null, null, null, null)));
+                null, null, null, null, null, null, null, null)));
         
         SortedMap<CallTO, Collection<CallTO>> generatedMap = 
                 callUser.groupAndOrderByGeneAnatEntityStage(callsToGroup);

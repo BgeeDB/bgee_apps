@@ -418,7 +418,9 @@ public class BgeePreparedStatement implements AutoCloseable {
     public void close() throws SQLException {
         log.entry();
         try {
-            this.getRealPreparedStatement().close();
+            if (!this.getRealPreparedStatement().isClosed()) {
+                this.getRealPreparedStatement().close();
+            }
         } catch (SQLException e) {
             throw log.throwing(e);
         } finally {

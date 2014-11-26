@@ -55,6 +55,15 @@ public class MySQLDAOResultSetTest extends TestAncestor
         public FakeDAOResultSet(List<BgeePreparedStatement> statements) {
             super(statements);
         }
+        public FakeDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
+                int rowCountParamIndex, int rowCount) {
+            super(statement, offsetParamIndex, rowCountParamIndex, rowCount);
+        }
+        public FakeDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
+                int rowCountParamIndex, int rowCount, int stepCount) {
+            super(statement, offsetParamIndex, rowCountParamIndex, 
+                    rowCount, stepCount);
+        }
         @Override
         public TransferObject getTO() throws DAOException {
             return null;
@@ -200,9 +209,13 @@ public class MySQLDAOResultSetTest extends TestAncestor
      */
     @Test
     public void testNext() throws SQLException {
+        //we will test a situation where mockStatement3 and mockStatement4 return no results. 
+        //mockStatement5 should be executed despite that. 
         BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
         BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
         BgeePreparedStatement mockStatement3 = mock(BgeePreparedStatement.class);
+        BgeePreparedStatement mockStatement4 = mock(BgeePreparedStatement.class);
+        BgeePreparedStatement mockStatement5 = mock(BgeePreparedStatement.class);
         ResultSetMetaData metaData = mock(ResultSetMetaData.class);
         when(metaData.getColumnCount()).thenReturn(0);
         
@@ -216,12 +229,20 @@ public class MySQLDAOResultSetTest extends TestAncestor
         ResultSet mockRs3 = mock(ResultSet.class);
         when(mockRs3.getMetaData()).thenReturn(metaData);
         when(mockStatement3.executeQuery()).thenReturn(mockRs3);
+        ResultSet mockRs4 = mock(ResultSet.class);
+        when(mockRs4.getMetaData()).thenReturn(metaData);
+        when(mockStatement4.executeQuery()).thenReturn(mockRs4);
+        ResultSet mockRs5 = mock(ResultSet.class);
+        when(mockRs5.getMetaData()).thenReturn(metaData);
+        when(mockStatement5.executeQuery()).thenReturn(mockRs5);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(
-                Arrays.asList(mockStatement, mockStatement2, mockStatement3));
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(Arrays.asList(
+                mockStatement, mockStatement2, mockStatement3, mockStatement4, mockStatement5));
         verify(mockStatement).executeQuery();
         verify(mockStatement2, never()).executeQuery();
         verify(mockStatement3, never()).executeQuery();
+        verify(mockStatement4, never()).executeQuery();
+        verify(mockStatement5, never()).executeQuery();
         
 
         when(mockRs.next()).thenReturn(true);
@@ -230,12 +251,16 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockRs).next();
         verify(mockRs2, never()).next();
         verify(mockRs3, never()).next();
+        verify(mockRs4, never()).next();
+        verify(mockRs5, never()).next();
         //try again
         assertTrue("Incorrect value returend by next", myRs.next());
         //check that only the first ResultSet was used
         verify(mockRs, times(2)).next();
         verify(mockRs2, never()).next();
         verify(mockRs3, never()).next();
+        verify(mockRs4, never()).next();
+        verify(mockRs5, never()).next();
         
         //if the first ResultSet has no more result, the next statement should be executed
         when(mockRs.next()).thenReturn(false);
@@ -247,31 +272,219 @@ public class MySQLDAOResultSetTest extends TestAncestor
         //check that only the second ResultSet was used
         verify(mockRs2).next();
         verify(mockRs3, never()).next();
+        verify(mockRs4, never()).next();
+        verify(mockRs5, never()).next();
         //try again
         assertTrue("Incorrect value returend by next", myRs.next());
         //check that only the first ResultSet was used
         verify(mockRs2, times(2)).next();
         verify(mockRs3, never()).next();
+        verify(mockRs4, never()).next();
+        verify(mockRs5, never()).next();
         
-        //OK, we move the the last statement
+        //now we test a situation where the next statements has no result. The one afterwards 
+        //should be used immediately. 
         when(mockRs2.next()).thenReturn(false);
-        when(mockRs3.next()).thenReturn(true);
+        when(mockRs3.next()).thenReturn(false);
+        when(mockRs4.next()).thenReturn(false);
+        when(mockRs5.next()).thenReturn(true);
         assertTrue("Incorrect value returend by next", myRs.next());
-        //check that the second statement was closed after its call to next
+        //check that the second and third statements were closed after the call to next
         verify(mockRs2, times(3)).next();
         verify(mockStatement2).close();
-        //check that only the second ResultSet was used
-        verify(mockRs3).next();
+        verify(mockRs3, times(1)).next();
+        verify(mockStatement3).close();
+        verify(mockRs4, times(1)).next();
+        verify(mockStatement4).close();
+        //check that only the last ResultSet was used
+        verify(mockRs5).next();
         //try again
         assertTrue("Incorrect value returend by next", myRs.next());
-        //check that only the first ResultSet was used
-        verify(mockRs3, times(2)).next();
+        //check that only the last ResultSet was used
+        verify(mockRs5, times(2)).next();
         
         //we pretend we iterated all results from all statements
-        when(mockRs3.next()).thenReturn(false);
+        when(mockRs5.next()).thenReturn(false);
         assertFalse("Incorrect value returend by next", myRs.next());
-        verify(mockRs3, times(3)).next();
-        verify(mockStatement3).close();
+        verify(mockRs5, times(3)).next();
+        verify(mockStatement5).close();
+        assertFalse("Incorrect value returend by next", myRs.next());
+    }
+    
+    /**
+     * Test {@link MySQLDAOManager#next()} using the limit feature without defining 
+     * a maximum number of iterations.
+     */
+    @Test
+    public void testNextWithLimitWithoutMax() throws SQLException {
+        BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
+        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
+        when(metaData.getColumnCount()).thenReturn(0);
+        ResultSet mockRs = mock(ResultSet.class);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockStatement.executeQuery()).thenReturn(mockRs);
+        
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
+                2, 3, 20);
+        verify(mockStatement).setInt(2, 0);
+        verify(mockStatement).setInt(3, 20);
+        verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(1)).executeQuery();
+        
+        when(mockRs.next()).thenReturn(true);
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(1)).next();
+        //the statement should not have been queried again
+        verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(1)).executeQuery();
+        
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(2)).next();
+        //the statement should not have been queried again
+        verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(1)).executeQuery();
+        
+        //OK, move to next iteration of the limit clause: no more result for this iteration 
+        //(first thenReturn), results for the next iteration (second thenReturn)
+        when(mockRs.next()).thenReturn(false).thenReturn(true);
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(4)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(2)).setInt(3, 20);
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        verify(mockRs, times(1)).close();
+        
+        when(mockRs.next()).thenReturn(true);
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(5)).next();
+        //the statement should not have been queried again
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(6)).next();
+        //the statement should not have been queried again
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        
+        //OK, move to next iteration of the limit clause, that should return no results
+        when(mockRs.next()).thenReturn(false).thenReturn(false);
+        assertFalse("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(8)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(1)).setInt(2, 40);
+        verify(mockStatement, times(3)).setInt(3, 20);
+        verify(mockStatement, times(6)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(3)).executeQuery();
+        verify(mockStatement, times(1)).close();
+        verify(mockRs, times(3)).close();
+        assertFalse("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(8)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(1)).setInt(2, 40);
+        verify(mockStatement, times(3)).setInt(3, 20);
+        verify(mockStatement, times(6)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(3)).executeQuery();
+        verify(mockStatement, times(1)).close();
+        verify(mockRs, times(3)).close();
+    }
+    
+    /**
+     * Test {@link MySQLDAOManager#next()} using the limit feature and defining 
+     * a maximum number of iterations.
+     */
+    @Test
+    public void testNextWithLimitWithMax() throws SQLException {
+        BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
+        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
+        when(metaData.getColumnCount()).thenReturn(0);
+        ResultSet mockRs = mock(ResultSet.class);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockStatement.executeQuery()).thenReturn(mockRs);
+        
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
+                2, 3, 20, 2);
+        verify(mockStatement).setInt(2, 0);
+        verify(mockStatement).setInt(3, 20);
+        verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(1)).executeQuery();
+        
+        when(mockRs.next()).thenReturn(true);
+        assertTrue("Incorrect value returned by next", myRs.next());
+        verify(mockRs, times(1)).next();
+        //the statement should not have been queried again
+        verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(1)).executeQuery();
+        
+        //OK, move to next iteration of the limit clause: no more result for this iteration 
+        //(first thenReturn), results for the next iteration (second thenReturn)
+        when(mockRs.next()).thenReturn(false).thenReturn(true);
+        assertTrue("Incorrect value returned by next", myRs.next());
+        verify(mockRs, times(3)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(2)).setInt(3, 20);
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        verify(mockRs, times(1)).close();
+        
+        //OK, move to next iteration of the limit clause; even if there are more results, 
+        //we reached the max number of iterations
+        when(mockRs.next()).thenReturn(false).thenReturn(true);
+        assertFalse("Incorrect value returned by next", myRs.next());
+        verify(mockRs, times(4)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(2)).setInt(3, 20);
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        verify(mockStatement, times(1)).close();
+        verify(mockRs, times(2)).close();
+        assertFalse("Incorrect value returned by next", myRs.next());
+        verify(mockRs, times(4)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(2)).setInt(3, 20);
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        verify(mockStatement, times(1)).close();
+        verify(mockRs, times(2)).close();
+        
+        
+        //OK, now we test when there are no more results before reaching the maximum number 
+        //of iterations
+        mockStatement = mock(BgeePreparedStatement.class);
+        mockRs = mock(ResultSet.class);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockStatement.executeQuery()).thenReturn(mockRs);
+        
+        myRs = new FakeDAOResultSet(mockStatement, 2, 3, 20, 4);
+        
+        when(mockRs.next()).thenReturn(true);
+        assertTrue("Incorrect value returned by next", myRs.next());
+        
+        //OK, move to next iteration of the limit clause: no more result for this iteration 
+        //(first thenReturn), an also no results for the next iteration (second thenReturn), 
+        //before reaching the max number of iterations
+        when(mockRs.next()).thenReturn(false).thenReturn(false);
+        assertFalse("Incorrect value returned by next", myRs.next());
+        verify(mockRs, times(3)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(2)).setInt(3, 20);
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        verify(mockRs, times(2)).close();
+        verify(mockStatement, times(1)).close();
+        assertFalse("Incorrect value returned by next", myRs.next());
+        verify(mockRs, times(3)).next();
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        verify(mockRs, times(2)).close();
+        verify(mockStatement, times(1)).close();
     }
     
     /**

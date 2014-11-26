@@ -79,6 +79,11 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      */
     private ResultSet currentResultSet;
     /**
+     * An {@code int} that is the number of times the method {@code next} was successfully 
+     * called on {@link currentResultSet} (meaning, {@code next} returned {@code true}).
+     */
+    private int currentResultSetIterationCount;
+    /**
      * @see #getColumnLabels()
      */
     private final Map<Integer, String> columnLabels;
@@ -106,10 +111,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     private final int rowCount;
     /**
      * An {@code int} that is the number of times a {@code BgeePreparedStatement} using 
-     * a SQL query with a LIMIT clause should be executed. At each step, the offset argument 
-     * of the LIMIT clause will be defined as: ('step number' -1) * {@link #rowCount}. So, 
-     * at the first step the offset will be 0, at the second step the offset will be 
-     * {@code rowCount}, etc.
+     * a SQL query with a LIMIT clause should be executed. 
      * <p>
      * If this attribute is equal to 0, then the {@code BgeePreparedStatement} will be used 
      * for an undefined number of steps, until there are no more results returned.
@@ -118,6 +120,16 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * @see #MySQLDAOResultSet(BgeePreparedStatement, int, int, int, int).
      */
     private final int stepCount;
+    /**
+     * An {@code int} that is the number of times a {@code BgeePreparedStatement} using 
+     * a SQL query with a LIMIT clause has been executed so far. At each step, the offset argument 
+     * of the LIMIT clause will be defined as: (currentStep) * {@link #rowCount}. So, 
+     * at the first step the offset will be 0, at the second step the offset will be 
+     * {@code rowCount}, etc. (at the first iteration, currentStep is equal to 0).
+     * 
+     * @see #stepCount
+     */
+    private int currentStep;
     
     /**
      * Default constructor private, at least one {@code BgeePreparedStatement} 
@@ -169,6 +181,9 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      *                              int, int, int)}.
      * @param rowCount              See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
      *                              int, int, int)}.
+     * @throws IllegalArgumentException If the parameters do not allow to correctly use 
+     *                                  the LIMIT clause, or if offsetParamIndex, or 
+     *                                  rowCountParamIndex, or rowCount are less than 1.
      */
     protected MySQLDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
             int rowCountParamIndex, int rowCount) {
@@ -206,12 +221,24 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * @param stepCount             An {@code int} that is the number of times {@code statement} 
      *                              should be executed. If this argument is equal to 0, 
      *                              then {@code statement} will be used for an undefined 
-     *                              number of steps, until there are no more results returned.
+     *                              number of steps, until there are no more results returned. 
+     * @throws IllegalArgumentException If the parameters do not allow to correctly use 
+     *                                  the LIMIT clause, or if offsetParamIndex, or 
+     *                                  rowCountParamIndex, or rowCount are less than 1, 
+     *                                  or if stepCount is less than 0, or if rowCountParamIndex 
+     *                                  and offsetParamIndex are equal.
      */
     protected MySQLDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
             int rowCountParamIndex, int rowCount, int stepCount) {
         this(Arrays.asList(statement), offsetParamIndex, rowCountParamIndex, 
                 rowCount, stepCount);
+        if (!this.isUsingLimitFeature() || offsetParamIndex < 1 || rowCountParamIndex < 1 || 
+                rowCount < 1 || stepCount < 0 || offsetParamIndex == rowCountParamIndex) {
+            throw log.throwing(new IllegalArgumentException("The parameters provided " +
+            		"do not allow to correctly use the LIMIT clause. offsetParamIndex: " 
+                    + offsetParamIndex + " - rowCountParamIndex: " + rowCountParamIndex + 
+                    " - rowCount: " + rowCount + " - stepCount: " + stepCount));
+        }
     }
     /**
      * Convenient constructor used internally to centralize instantiation process.
@@ -238,11 +265,17 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             throw log.throwing(new IllegalArgumentException("At least one PreparedStatement " +
                     "must be provided"));
         }
-        if (statements.size() > 1 && offsetParamIndex != 0 && rowCountParamIndex != 0 && 
-                rowCount != 0) {
+        
+        this.offsetParamIndex = offsetParamIndex;
+        this.rowCountParamIndex = rowCountParamIndex;
+        this.rowCount = rowCount;
+        this.stepCount = stepCount;
+        this.currentStep = 0;
+        if (statements.size() > 1 && this.isUsingLimitFeature()) {
             throw log.throwing(new IllegalArgumentException("The LIMIT feature is supported " +
                     "for only one PreparedStatement"));
         }
+        
         for (BgeePreparedStatement stmt: statements) {
             if (stmt.isExecuted()) {
                 throw log.throwing(new IllegalArgumentException("A BgeePreparedStatement " +
@@ -253,11 +286,9 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         
         this.statements = new ArrayList<BgeePreparedStatement>(statements);
         this.columnLabels = new HashMap<Integer, String>();
-        
-        this.offsetParamIndex = offsetParamIndex;
-        this.rowCountParamIndex = rowCountParamIndex;
-        this.rowCount = rowCount;
-        this.stepCount = stepCount;
+        this.currentResultSet = null;
+        this.currentResultSetIterationCount = 0;
+        this.currentStatement = null;
         
         this.executeNextStatementQuery();
     }
@@ -266,8 +297,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     public boolean next() throws DAOException, QueryInterruptedException {
         log.entry();
         //If currentResultSet is null, it means that there are no more 
-        //BgeePreparedStatement to obtain results from. False should have been 
-        //already returned on the previous call, but maybe client is insisting...
+        //BgeePreparedStatement to obtain results from. 
         if (this.currentResultSet == null) {
             return log.exit(false);
         }
@@ -278,14 +308,13 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             //BgeePreparedStatement in order
             if (!this.currentResultSet.next()) {
                 this.executeNextStatementQuery();
-                //no more BgeePreparedStatement to be executed
-                if (this.currentResultSet == null) {
-                    return log.exit(false);
-                } 
-                //otherwise, already position the cursor on the first result
-                return log.exit(this.currentResultSet.next());
+                //we use recursivity here: maybe the next statement did not return 
+                //any result, but another one  afterwards might. This should be invisible 
+                //to the user.
+                return log.exit(this.next());
             }
             //otherwise, keep on iterating the current ResultSet
+            this.currentResultSetIterationCount++;
             return log.exit(true);
             
         } catch (SQLException e) {
@@ -348,7 +377,8 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     @Override
     public void close() throws DAOException {
         log.entry();
-        this.closeCurrent();
+        this.closeCurrentResultSet();
+        this.closeCurrentPreparedStatement();
         for (BgeePreparedStatement stmt: this.statements) {
             try {
                 stmt.close();
@@ -380,8 +410,49 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     private void executeNextStatementQuery() throws DAOException, QueryInterruptedException {
         log.entry();
         try {
-            this.closeCurrent();
-            this.currentStatement = this.statements.remove(0);
+            if (this.isUsingLimitFeature() && 
+                    this.stepCount != 0 && this.currentStep > this.stepCount) {
+                //if we use the LIMIT feature and we have defined a maximum number 
+                //of iterations, and we exceed it, we did something wrong ^^
+                throw log.throwing(new IllegalStateException("The PreparedStatement " +
+                		"using a LIMIT clause should not have been executed more than " +
+                		this.stepCount + " times, was executed " + this.currentStep + " times."));
+            }
+            //store number of rows retrieved from the current ResultSet, calling 
+            //closeCurrentResultSet will reinit it.
+            int resultSetIterationCount = this.currentResultSetIterationCount;
+            this.closeCurrentResultSet();
+            
+            //we try to move to the next statement either because we were not using the LIMIT feature, 
+            //or, if we were using the LIMIT feature, because we retrieved all results 
+            //for this statement (either because there were no more results to retrieve, 
+            //or, because we reached stepCount; we do not check only whether number of results 
+            //retrieved was less than rowCount, because if the LIMIT is used in a sub-query, 
+            //the number of results returned can be different from rowCount).
+            //Also, at the first call following instantiation, resultSetIterationCount 
+            //and currentStep will be equal to 0, so we will get the first statement.
+            if (!this.isUsingLimitFeature() || 
+                    //do not change the currentStep == stepCount into a >=, 
+                    //otherwise you need to check whether stepCount is different from 0 first.
+                    //anyway, a previous sanity check ensure that currentStep is never 
+                    //incorrectly greater than stepCount
+                    this.currentStep == this.stepCount || resultSetIterationCount == 0) {
+                log.trace("Try to move to next statement");
+                //currentStep is set to 0 when calling closeCurrentPreparedStatement
+                this.closeCurrentPreparedStatement();
+                this.currentStatement = this.statements.remove(0);
+            } 
+            if (this.isUsingLimitFeature()) {
+                //use the LIMIT feature
+                log.trace("Next step for query using a LIMIT clause");
+                //note that at first iteration, currentStep is equal to 0
+                this.currentStatement.setInt(this.offsetParamIndex, 
+                        this.currentStep * this.rowCount);
+                this.currentStatement.setInt(this.rowCountParamIndex, this.rowCount);
+                this.currentStep++;
+                
+            } 
+            
             this.checkCurrentStatementCanceled();
             this.currentResultSet = this.currentStatement.executeQuery();
             //store currentResultSet column labels
@@ -392,8 +463,10 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             }
         } catch (IndexOutOfBoundsException e) {
             //this simply means that we have no more BgeePreparedStatement to iterate.
-            this.currentStatement = null;
+            log.trace("No more statements to execute");
             this.currentResultSet = null;
+            this.currentResultSetIterationCount = 0;
+            this.currentStatement = null;
             this.columnLabels.clear();
             log.catching(Level.TRACE, e);
         } catch (SQLException e) {
@@ -406,36 +479,73 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     }
     
     /**
-     * Closes {@link #currentResultSet} and {@link #currentStatement}, and sets 
-     * these attributes to {@code null}.
-     * @throws  DAOException if an error occurred while closing the {@code ResultSet} 
-     *          or the {@code BgeePreparedStatement}.
+     * Closes {@link #currentResultSet} and sets it to {@code null}.
+     * @throws  DAOException if an error occurred while closing the {@code ResultSet}.
      */
-    private void closeCurrent() throws DAOException{
+    private void closeCurrentResultSet() throws DAOException{
         log.entry();
-        //closing the statement is supposed to close the ResultSet, but we are 
-        //never too careful
         try {
-            if (this.currentResultSet != null) {
+            if (this.currentResultSet != null && !this.currentResultSet.isClosed()) {
                 this.currentResultSet.close();
-            }
-            if (this.currentStatement != null) {
-                this.currentStatement.close();
             }
         } catch (SQLException e) {
             //to avoid an infinite loop when calling close, which calls closeCurrent
             this.currentResultSet = null;
-            this.currentStatement = null;
-            this.columnLabels.clear();
+            this.currentResultSetIterationCount = 0;
             //this is to close the remaining BgeePreparedStatements
             this.close();
             log.catching(e);
             throw log.throwing(new DAOException(e));
         }
         this.currentResultSet = null;
-        this.currentStatement = null;
-        this.columnLabels.clear();
+        this.currentResultSetIterationCount = 0;
         log.exit();
+    }
+    /**
+     * Closes {@link #currentStatement} and sets it to {@code null}.
+     * @throws  DAOException if an error occurred while closing the {@code BgeePreparedStatement}.
+     */
+    private void closeCurrentPreparedStatement() throws DAOException{
+        log.entry();
+        //closing the statement is supposed to close the ResultSet, but we are 
+        //never too careful
+        try {
+            if (this.currentStatement != null) {
+                this.currentStatement.close();
+            }
+        } catch (SQLException e) {
+            //to avoid an infinite loop when calling close, which calls closeCurrent
+            this.currentStatement = null;
+            this.currentStep = 0;
+            //this is to close the remaining BgeePreparedStatements
+            this.close();
+            log.catching(e);
+            throw log.throwing(new DAOException(e));
+        }
+        this.currentStatement = null;
+        this.currentStep = 0;
+        log.exit();
+    }
+    
+    /**
+     * Determines whether the {@code BgeePreparedStatement}s executed by 
+     * this {@code MySQLDAOResutSet} use the LIMIT feature (see
+     * {@link #MySQLDAOResultSet(BgeePreparedStatement, int, int, int, int)}).
+     * 
+     * @return  {@code true} if the LIMIT feature is used.
+     */
+    private boolean isUsingLimitFeature() {
+        log.entry();
+        if (this.offsetParamIndex == 0) {
+            return log.exit(false);
+        }
+        if (this.rowCountParamIndex == 0) {
+            return log.exit(false);
+        }
+        if (this.rowCount == 0) {
+            return log.exit(false);
+        }
+        return log.exit(true);
     }
     
     /**

@@ -390,7 +390,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLRelationTOResultSet(BgeePreparedStatement statement) {
+        private MySQLRelationTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

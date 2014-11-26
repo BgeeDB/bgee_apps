@@ -241,7 +241,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLAnatEntityTOResultSet(BgeePreparedStatement statement) {
+        private MySQLAnatEntityTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

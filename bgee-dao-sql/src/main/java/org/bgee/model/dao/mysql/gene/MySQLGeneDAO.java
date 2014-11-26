@@ -216,7 +216,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLGeneTOResultSet(BgeePreparedStatement statement) {
+        private MySQLGeneTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

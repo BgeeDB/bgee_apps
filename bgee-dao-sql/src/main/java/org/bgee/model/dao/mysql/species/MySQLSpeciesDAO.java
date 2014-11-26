@@ -186,7 +186,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
          *                      #MySQLDAOResultSet(BgeePreparedStatement) 
          *                      MySQLDAOResultSet(BgeePreparedStatement)}.
          */
-        public MySQLSpeciesTOResultSet(BgeePreparedStatement statement) {
+        private MySQLSpeciesTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

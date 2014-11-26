@@ -520,7 +520,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
      * @since Bgee 13
      */
     public class MySQLNoExpressionCallTOResultSet extends MySQLDAOResultSet<NoExpressionCallTO> 
-    implements NoExpressionCallTOResultSet {
+        implements NoExpressionCallTOResultSet {
 
         /**
          * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement)}
@@ -528,7 +528,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLNoExpressionCallTOResultSet(BgeePreparedStatement statement) {
+        private MySQLNoExpressionCallTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 
@@ -613,7 +613,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLGlobalNoExpressionToNoExpressionTOResultSet(BgeePreparedStatement statement) {
+        private MySQLGlobalNoExpressionToNoExpressionTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

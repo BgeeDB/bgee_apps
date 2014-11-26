@@ -53,7 +53,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             LogManager.getLogger(MySQLDAOResultSet.class.getName());
     
     /**
-     * The {@code List} of {@code BgeePreparedStatement}s that should be executed, 
+     * A {@code List} of {@code BgeePreparedStatement}s that should be executed, 
      * in order. When one of them is in use, it is put in {@link #currentStatement}, 
      * to avoid calling {@code get(0)} at each iteration of {@link #next()}, as this 
      * method needs to access the {@code BgeePreparedStatement} to check its 
@@ -84,6 +84,42 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     private final Map<Integer, String> columnLabels;
     
     /**
+     * An {@code int} that is the index of the parameter defining the offset argument 
+     * of a LIMIT clause, in a SQL query hold by a {@code BgeePreparedStatement} 
+     * used by this object.
+     * @see #MySQLDAOResultSet(BgeePreparedStatement, int, int, int, int).
+     */
+    private final int offsetParamIndex;
+    /**
+     * An {@code int} that is the index of the parameter specifying the maximum number of rows 
+     * to return in a LIMIT clause, in a SQL query hold by a {@code BgeePreparedStatement} 
+     * used by this object.
+     * @see #MySQLDAOResultSet(BgeePreparedStatement, int, int, int, int).
+     */
+    private final int rowCountParamIndex;
+    /**
+     * An {@code int} that is the maximum number of rows to use in a LIMIT clause, 
+     * in a SQL query hold by a {@code BgeePreparedStatement} used by this object.
+     * @see #rowCountParamIndex
+     * @see #MySQLDAOResultSet(BgeePreparedStatement, int, int, int, int).
+     */
+    private final int rowCount;
+    /**
+     * An {@code int} that is the number of times a {@code BgeePreparedStatement} using 
+     * a SQL query with a LIMIT clause should be executed. At each step, the offset argument 
+     * of the LIMIT clause will be defined as: ('step number' -1) * {@link #rowCount}. So, 
+     * at the first step the offset will be 0, at the second step the offset will be 
+     * {@code rowCount}, etc.
+     * <p>
+     * If this attribute is equal to 0, then the {@code BgeePreparedStatement} will be used 
+     * for an undefined number of steps, until there are no more results returned.
+     * 
+     * @see #offsetParamIndex
+     * @see #MySQLDAOResultSet(BgeePreparedStatement, int, int, int, int).
+     */
+    private final int stepCount;
+    
+    /**
      * Default constructor private, at least one {@code BgeePreparedStatement} 
      * must be provided at instantiation.
      * @see MySQLDAOResultSet(BgeePreparedStatement)
@@ -95,23 +131,19 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     }
     /**
      * Constructor providing the first {@code BgeePreparedStatement} to execute 
-     * a query on. Note that additional {@code BgeePreparedStatement}s can be provided 
-     * afterwards by calling {@link #addStatement(BgeePreparedStatement)} or 
-     * {@link #addAllStatements(List)}.
+     * a query on. 
      * 
      * @param statement the first {@code BgeePreparedStatement} to execute 
      *                  a query on
      * @throws IllegalArgumentException If {@code executeQuery} has been already called 
      *                                  on {@code statement}. 
      */
-    public MySQLDAOResultSet(BgeePreparedStatement statement) {
+    protected MySQLDAOResultSet(BgeePreparedStatement statement) {
         this(Arrays.asList(statement));
     }
     /**
      * Constructor providing some {@code BgeePreparedStatement}s to execute queries on, 
-     * in order. Note that additional {@code BgeePreparedStatement}s can be provided 
-     * afterwards by calling {@link #addStatement(BgeePreparedStatement)} or 
-     * {@link #addAllStatements(List)}.
+     * in order. 
      * 
      * @param statements    A {@code List} of {@code BgeePreparedStatement}s 
      *                      to execute queries on, in order.
@@ -119,10 +151,114 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      *                                  on any of the {@code BgeePreparedStatement}s 
      *                                  provided. 
      */
-    public MySQLDAOResultSet(List<BgeePreparedStatement> statements) {
-        this.statements = new ArrayList<BgeePreparedStatement>();
+    protected MySQLDAOResultSet(List<BgeePreparedStatement> statements) {
+        this(statements, 0, 0, 0, 0);
+    }
+    /**
+     * Constructor providing a {@code BgeePreparedStatement} that should be called 
+     * repeatedly based on a SQL LIMIT clause. This constructor delegates to 
+     * {@link #MySQLDAOResultSet(BgeePreparedStatement, int, int, int, int)}, with 
+     * the last argument {@code stepCount} set to 0 (execute query until there are no more 
+     * results).
+     * 
+     * @param statement             See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
+     *                              int, int, int)}.
+     * @param offsetParamIndex      See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
+     *                              int, int, int)}.
+     * @param rowCountParamIndex    See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
+     *                              int, int, int)}.
+     * @param rowCount              See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
+     *                              int, int, int)}.
+     */
+    protected MySQLDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
+            int rowCountParamIndex, int rowCount) {
+        this(statement, offsetParamIndex, rowCountParamIndex, rowCount, 0);
+    }
+    /**
+     * Constructor providing a {@code BgeePreparedStatement} that should be called 
+     * repeatedly based on a SQL LIMIT clause. 
+     * <p>
+     * The arguments of the LIMIT clause (offset, and maximum number of rows) should be 
+     * specified in the query using placeholder markers ('?'), with the index of 
+     * the offset parameter specified by {@code offsetParamIndex}, and the index of 
+     * the parameter for max number of row specified by {@code rowCountParamIndex} 
+     * (note that first parameter has an index equal to 1). 
+     * <p>
+     * {@code rowCount} is the value to use for the argument defining the max number of rows  
+     * (using parameter at index {@code rowCountParamIndex}). 
+     * <p>
+     * {@code stepCount} is the number of times the {@code BgeePreparedStatement} will be executed. 
+     * At each step, the offset argument of the LIMIT clause will be defined as: 
+     * ('step number' -1) * {@link #rowCount}. So, at the first step the offset will be 0, 
+     * at the second step the offset will be {@code rowCount}, etc. If this argument is equal 
+     * to 0, then the {@code BgeePreparedStatement} will be used for an undefined 
+     * number of steps, until there are no more results returned.
+     * 
+     * @param statement             A {@code BgeePreparedStatement} to execute a query on.
+     * @param offsetParamIndex      An {@code int} that is the index of the parameter 
+     *                              defining the offset argument of a LIMIT clause, 
+     *                              in the SQL query hold by {@code statement}.
+     * @param rowCountParamIndex    An {@code int} that is the index of the parameter 
+     *                              specifying the maximum number of rows to return 
+     *                              in a LIMIT clause, in the SQL query hold by {@code statement}.
+     * @param rowCount              An {@code int} that is the maximum number of rows to use 
+     *                              in a LIMIT clause, in the SQL query hold by {@code statement}.
+     * @param stepCount             An {@code int} that is the number of times {@code statement} 
+     *                              should be executed. If this argument is equal to 0, 
+     *                              then {@code statement} will be used for an undefined 
+     *                              number of steps, until there are no more results returned.
+     */
+    protected MySQLDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
+            int rowCountParamIndex, int rowCount, int stepCount) {
+        this(Arrays.asList(statement), offsetParamIndex, rowCountParamIndex, 
+                rowCount, stepCount);
+    }
+    /**
+     * Convenient constructor used internally to centralize instantiation process.
+     * 
+     * @param statements            A {@code List} of {@code BgeePreparedStatement}s 
+     *                              to execute queries on, in order.
+     * @param offsetParamIndex      See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
+     *                              int, int, int)}. Should be equal to 0 if the LIMIT feature 
+     *                              is not used.
+     * @param rowCountParamIndex    See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
+     *                              int, int, int)}. Should be equal to 0 if the LIMIT feature 
+     *                              is not used.
+     * @param rowCount              See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
+     *                              int, int, int)}. Should be equal to 0 if the LIMIT feature 
+     *                              is not used.
+     * @param stepCount             See {@link #MySQLDAOResultSet(BgeePreparedStatement, int, 
+     *                              int, int, int)}. Should be equal to 0 if the LIMIT feature 
+     *                              is not used.
+     */
+    private MySQLDAOResultSet(List<BgeePreparedStatement> statements, int offsetParamIndex, 
+            int rowCountParamIndex, int rowCount, int stepCount) {
+
+        if (statements.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("At least one PreparedStatement " +
+                    "must be provided"));
+        }
+        if (statements.size() > 1 && offsetParamIndex != 0 && rowCountParamIndex != 0 && 
+                rowCount != 0) {
+            throw log.throwing(new IllegalArgumentException("The LIMIT feature is supported " +
+                    "for only one PreparedStatement"));
+        }
+        for (BgeePreparedStatement stmt: statements) {
+            if (stmt.isExecuted()) {
+                throw log.throwing(new IllegalArgumentException("A BgeePreparedStatement " +
+                        "should not have been executed before being provided " +
+                        "to the MySQLDAOResultSet"));
+            }
+        }
+        
+        this.statements = new ArrayList<BgeePreparedStatement>(statements);
         this.columnLabels = new HashMap<Integer, String>();
-        this.addAllStatements(statements);
+        
+        this.offsetParamIndex = offsetParamIndex;
+        this.rowCountParamIndex = rowCountParamIndex;
+        this.rowCount = rowCount;
+        this.stepCount = stepCount;
+        
         this.executeNextStatementQuery();
     }
 
@@ -320,47 +456,47 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         log.exit();
     }
     
-    /**
-     * Add {@code stmt} at the tail of the {@code List} of {@code BgeePreparedStatement} 
-     * that should be executed by this {@code MysqlDAOResultSet}.
-     * 
-     * @param stmt  A {@code BgeePreparedStatement} to add to this {@code MysqlDAOResultSet}.
-     * @throws IllegalArgumentException If {@code executeQuery} has been already called 
-     *                                  on {@code stmt}. 
-     */
-    public void addStatement(BgeePreparedStatement stmt) throws IllegalArgumentException {
-        this.addAllStatements(Arrays.asList(stmt));
-    }
-    
-    /**
-     * Add {@code statements} at the tail of the {@code List} of 
-     * {@code BgeePreparedStatement} that should be executed by this 
-     * {@code MysqlDAOResultSet}, in order.
-     * 
-     * @param statements  A {@code List} of {@code BgeePreparedStatement}s to be added 
-     *              to the tail of the {@code List} held by this {@code MysqlDAOResultSet}, 
-     *              to be executed in order.
-     * @throws IllegalArgumentException If {@code executeQuery} has been already called 
-     *                                  on any of the {@code BgeePreparedStatement}s 
-     *                                  provided. 
-     */
-    public void addAllStatements(List<BgeePreparedStatement> statements) 
-            throws IllegalArgumentException {
-        for (BgeePreparedStatement stmt: statements) {
-            if (stmt.isExecuted()) {
-                throw log.throwing(new IllegalArgumentException("A BgeePreparedStatement " +
-                        "should not have been executed before being provided " +
-                        "to the MySQLDAOResultSet"));
-            }
-        }
-        this.statements.addAll(statements);
-    }
+//    /**
+//     * Add {@code stmt} at the tail of the {@code List} of {@code BgeePreparedStatement} 
+//     * that should be executed by this {@code MysqlDAOResultSet}.
+//     * 
+//     * @param stmt  A {@code BgeePreparedStatement} to add to this {@code MysqlDAOResultSet}.
+//     * @throws IllegalArgumentException If {@code executeQuery} has been already called 
+//     *                                  on {@code stmt}. 
+//     */
+//    protected void addStatement(BgeePreparedStatement stmt) throws IllegalArgumentException {
+//        this.addAllStatements(Arrays.asList(stmt));
+//    }
+//    
+//    /**
+//     * Add {@code statements} at the tail of the {@code List} of 
+//     * {@code BgeePreparedStatement} that should be executed by this 
+//     * {@code MysqlDAOResultSet}, in order.
+//     * 
+//     * @param statements  A {@code List} of {@code BgeePreparedStatement}s to be added 
+//     *              to the tail of the {@code List} held by this {@code MysqlDAOResultSet}, 
+//     *              to be executed in order.
+//     * @throws IllegalArgumentException If {@code executeQuery} has been already called 
+//     *                                  on any of the {@code BgeePreparedStatement}s 
+//     *                                  provided. 
+//     */
+//    protected void addAllStatements(List<BgeePreparedStatement> statements) 
+//            throws IllegalArgumentException {
+//        for (BgeePreparedStatement stmt: statements) {
+//            if (stmt.isExecuted()) {
+//                throw log.throwing(new IllegalArgumentException("A BgeePreparedStatement " +
+//                        "should not have been executed before being provided " +
+//                        "to the MySQLDAOResultSet"));
+//            }
+//        }
+//        this.statements.addAll(statements);
+//    }
     
     /**
      * @return  an {@code int} that is the number of {@code BgeePreparedStatement}s 
      *          currently held by this {@code MySQLDAOResultSet}.
      */
-    int getStatementCount() {
+    protected int getStatementCount() {
         return this.statements.size();
     }
     

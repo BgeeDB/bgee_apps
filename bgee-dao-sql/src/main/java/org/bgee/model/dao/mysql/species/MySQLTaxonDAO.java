@@ -161,7 +161,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLTaxonTOResultSet(BgeePreparedStatement statement) {
+        private MySQLTaxonTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

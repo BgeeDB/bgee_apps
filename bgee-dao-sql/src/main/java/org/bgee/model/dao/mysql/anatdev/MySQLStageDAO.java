@@ -178,7 +178,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLStageTOResultSet(BgeePreparedStatement statement) {
+        private MySQLStageTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

@@ -470,7 +470,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLExpressionCallTOResultSet(BgeePreparedStatement statement) {
+        private MySQLExpressionCallTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 
@@ -561,7 +561,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLGlobalExpressionToExpressionTOResultSet(BgeePreparedStatement statement) {
+        private MySQLGlobalExpressionToExpressionTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

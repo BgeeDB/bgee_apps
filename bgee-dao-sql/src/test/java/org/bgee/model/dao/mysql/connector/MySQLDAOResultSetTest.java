@@ -348,55 +348,55 @@ public class MySQLDAOResultSetTest extends TestAncestor
         assertEquals("Incorrect number of statements returned", 0, myRs.getStatementCount());
     }
     
-    /**
-     * Test {@link MySQLDAOResultSet#addStatement(BgeePreparedStatement)} and 
-     * {@link MySQLDAOResultSet#addAllStatements(List)}
-     * @throws SQLException 
-     */
-    @Test
-    public void shouldAddStatement() throws SQLException {
-        BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
-        ResultSet mockRs = mock(ResultSet.class);
-        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
-        when(mockRs.getMetaData()).thenReturn(metaData);
-        when(metaData.getColumnCount()).thenReturn(0);
-        when(mockStatement.executeQuery()).thenReturn(mockRs);
-        
-        MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(mockStatement);
-        //first statement is immediately executed, so we do not count it
-        assertEquals("Incorrect number of BgeePreparedStatement", 0, 
-                rs.getStatementCount());
-        BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
-        when(mockStatement2.executeQuery()).thenReturn(mockRs);
-        rs.addStatement(mockStatement2);
-        assertEquals("Incorrect number of BgeePreparedStatement", 1, 
-                rs.getStatementCount());
-        BgeePreparedStatement mockStatement3 = mock(BgeePreparedStatement.class);
-        when(mockStatement3.executeQuery()).thenReturn(mockRs);
-        BgeePreparedStatement mockStatement4 = mock(BgeePreparedStatement.class);
-        when(mockStatement4.executeQuery()).thenReturn(mockRs);
-        rs.addAllStatements(Arrays.asList(mockStatement3, mockStatement4));
-        assertEquals("Incorrect number of BgeePreparedStatement", 3, 
-                rs.getStatementCount());
-        
-        //test if it correctly detects when a BgeePreparedStatement was already executed
-        BgeePreparedStatement mockStatementTested = mock(BgeePreparedStatement.class);
-        when(mockStatementTested.isExecuted()).thenReturn(true);
-        
-        try {
-            BgeePreparedStatement mockStatement6 = mock(BgeePreparedStatement.class);
-            when(mockStatement6.executeQuery()).thenReturn(mockRs);
-            BgeePreparedStatement mockStatement7 = mock(BgeePreparedStatement.class);
-            when(mockStatement7.executeQuery()).thenReturn(mockRs);
-            rs.addAllStatements(Arrays.asList(mockStatement6, 
-                    mockStatementTested, 
-                    mockStatement7));
-            //if we reach that point, test failed
-            throw new AssertionError("A BgeePreparedStatement already executed should not " +
-            		"be accepted");
-        } catch (IllegalArgumentException e) {
-            //test passed
-        }
-    }
+//    /**
+//     * Test {@link MySQLDAOResultSet#addStatement(BgeePreparedStatement)} and 
+//     * {@link MySQLDAOResultSet#addAllStatements(List)}
+//     * @throws SQLException 
+//     */
+//    @Test
+//    public void shouldAddStatement() throws SQLException {
+//        BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
+//        ResultSet mockRs = mock(ResultSet.class);
+//        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
+//        when(mockRs.getMetaData()).thenReturn(metaData);
+//        when(metaData.getColumnCount()).thenReturn(0);
+//        when(mockStatement.executeQuery()).thenReturn(mockRs);
+//        
+//        MySQLDAOResultSet<TransferObject> rs = new FakeDAOResultSet(mockStatement);
+//        //first statement is immediately executed, so we do not count it
+//        assertEquals("Incorrect number of BgeePreparedStatement", 0, 
+//                rs.getStatementCount());
+//        BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
+//        when(mockStatement2.executeQuery()).thenReturn(mockRs);
+//        rs.addStatement(mockStatement2);
+//        assertEquals("Incorrect number of BgeePreparedStatement", 1, 
+//                rs.getStatementCount());
+//        BgeePreparedStatement mockStatement3 = mock(BgeePreparedStatement.class);
+//        when(mockStatement3.executeQuery()).thenReturn(mockRs);
+//        BgeePreparedStatement mockStatement4 = mock(BgeePreparedStatement.class);
+//        when(mockStatement4.executeQuery()).thenReturn(mockRs);
+//        rs.addAllStatements(Arrays.asList(mockStatement3, mockStatement4));
+//        assertEquals("Incorrect number of BgeePreparedStatement", 3, 
+//                rs.getStatementCount());
+//        
+//        //test if it correctly detects when a BgeePreparedStatement was already executed
+//        BgeePreparedStatement mockStatementTested = mock(BgeePreparedStatement.class);
+//        when(mockStatementTested.isExecuted()).thenReturn(true);
+//        
+//        try {
+//            BgeePreparedStatement mockStatement6 = mock(BgeePreparedStatement.class);
+//            when(mockStatement6.executeQuery()).thenReturn(mockRs);
+//            BgeePreparedStatement mockStatement7 = mock(BgeePreparedStatement.class);
+//            when(mockStatement7.executeQuery()).thenReturn(mockRs);
+//            rs.addAllStatements(Arrays.asList(mockStatement6, 
+//                    mockStatementTested, 
+//                    mockStatement7));
+//            //if we reach that point, test failed
+//            throw new AssertionError("A BgeePreparedStatement already executed should not " +
+//            		"be accepted");
+//        } catch (IllegalArgumentException e) {
+//            //test passed
+//        }
+//    }
     
 }

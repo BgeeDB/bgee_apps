@@ -184,7 +184,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
          * 
          * @param statement The first {@code BgeePreparedStatement} to execute a query on.
          */
-        public MySQLTaxonConstraintTOResultSet(BgeePreparedStatement statement) {
+        private MySQLTaxonConstraintTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
 

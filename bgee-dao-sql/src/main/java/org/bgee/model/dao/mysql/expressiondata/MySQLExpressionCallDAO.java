@@ -150,9 +150,23 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         if (attributes == null || attributes.isEmpty()) {
             attributes = EnumSet.allOf(ExpressionCallDAO.Attribute.class);
         }
+        //we need to know whether some of the attributes requested will allow to obtain 
+        //unique results. This is especially important when propagation from sub-stages 
+        //is requested: if results returned are not unique, there can be duplicates between 
+        //different queries, that the application must filter, which can use a lot of memory.
+        boolean uniqueResults = false;
+        if (attributes.contains(ExpressionCallDAO.Attribute.ID) || 
+                (attributes.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
+                        attributes.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
+                        attributes.contains(ExpressionCallDAO.Attribute.STAGE_ID))) {
+            uniqueResults = true;
+        }
         for (ExpressionCallDAO.Attribute attribute: attributes) {
             if (sql.isEmpty()) {
-                sql += "SELECT DISTINCT ";
+                sql += "SELECT ";
+                if (!uniqueResults) {
+                    sql += "DISTINCT ";
+                }
             } else {
                 sql += ", ";
             }
@@ -346,8 +360,15 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             int offsetParamIndex = (speciesIds == null ? 1: speciesIds.size() + 1);
             int rowCountParamIndex = offsetParamIndex + 1;
             int rowCount = this.getManager().getExprPropagationGeneCount();
+            //if attributes requested are such that there cannot be duplicated results, 
+            //we do not need to filter duplicates on the application side (which has 
+            //a huge memory cost); also, if geneIds were requested, there cannot be 
+            //duplicates between queries (duplicates inside a query will be filtered by 
+            //the DISTINCT clause), so, no need to filter on the application side.
+            boolean filterDuplicates = !uniqueResults && 
+                    !attributes.contains(ExpressionCallDAO.Attribute.GENE_ID);
             return log.exit(new MySQLExpressionCallTOResultSet(stmt, offsetParamIndex, 
-                    rowCountParamIndex, rowCount, true));
+                    rowCountParamIndex, rowCount, filterDuplicates));
             
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

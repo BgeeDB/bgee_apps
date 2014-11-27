@@ -325,7 +325,9 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      */
     private MySQLDAOResultSet(List<BgeePreparedStatement> statements, int offsetParamIndex, 
             int rowCountParamIndex, int rowCount, int stepCount, boolean filterDuplicates) {
-
+        log.entry(statements, offsetParamIndex, rowCountParamIndex, 
+                rowCount, stepCount, filterDuplicates);
+        
         if (statements.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("At least one PreparedStatement " +
                     "must be provided"));
@@ -360,6 +362,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         this.currentStatement = null;
         
         this.executeNextStatementQuery();
+        log.exit();
     }
 
     @Override

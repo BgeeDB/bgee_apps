@@ -44,14 +44,14 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * <li>Property associated to the key {@link #SCHEMAFILEKEY} to specify 
  * the path to the SQL file allowing to create the Bgee database. This will be used 
  * to create independent instances of the database to perform insertion tests.
- * <li>Property associated to the key {@link MySQLDAOManager#JDBCDRIVERNAMESKEY} 
+ * <li>Property associated to the key {@link MySQLDAOManager#JDBC_DRIVER_NAMES_KEY} 
  * to specify the class names of the JDBC {@code Driver}s to use.
- * <li>Property associated to the key {@link MySQLDAOManager#JDBCURLKEY} to provide 
+ * <li>Property associated to the key {@link MySQLDAOManager#JDBC_URL_KEY} to provide 
  * the JDBC connection URL.
- * <li>Property associated to the key {@link MySQLDAOManager#USERKEY} to specify 
+ * <li>Property associated to the key {@link MySQLDAOManager#USER_KEY} to specify 
  * the username to connect as root to the database. Or it can be provided in the 
  * connection URL.
- * <li>Property associated to the key {@link MySQLDAOManager#PASSWORDKEY} to specify 
+ * <li>Property associated to the key {@link MySQLDAOManager#PASSWORD_KEY} to specify 
  * the password to connect as root to the database. Or it can be provided in the 
  * connection URL.
  * </ul>

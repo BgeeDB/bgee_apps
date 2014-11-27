@@ -80,7 +80,7 @@ public class MySQLDAOManager extends DAOManager {
      * for more details.
      * @see #getDataSourceResourceName()
      */
-    public final static String RESOURCENAMEKEY = "bgee.dao.datasource.resource.name";
+    public final static String RESOURCE_NAME_KEY = "bgee.dao.datasource.resource.name";
     /**
      * A {@code String} that is the resource name of the {@code DataSource} to use. 
      * This parameter is not mandatory if a JDBC {@code Driver} is used to connect 
@@ -89,7 +89,7 @@ public class MySQLDAOManager extends DAOManager {
      * {@code DataSource}, it must be provided to this {@code MySQLDAOManager} 
      * (see {@link #getUser()} and {@link #getPassword()}).
      * 
-     * @see #RESOURCENAMEKEY
+     * @see #RESOURCE_NAME_KEY
      * @see #dataSource
      */
     private String dataSourceResourceName;
@@ -100,14 +100,14 @@ public class MySQLDAOManager extends DAOManager {
      * See {@link #getUser()} for more details.
      * @see #getUser()
      */
-    public final static String USERKEY = "bgee.dao.jdbc.username";
+    public final static String USER_KEY = "bgee.dao.jdbc.username";
     /**
      * A {@code String} that is the user to use to connect to the database.
      * It is used either when a {@code DataSource} is used and the user 
      * was not provided in its configuration, or a JDBC {@code Driver} is used 
      * and the user was not provided in the connection URL.
      * 
-     * @see #USERKEY
+     * @see #USER_KEY
      */
     private String user;
     
@@ -117,14 +117,14 @@ public class MySQLDAOManager extends DAOManager {
      * See {@link #getPassword()} for more details.
      * @see #getPassword()
      */
-    public final static String PASSWORDKEY = "bgee.dao.jdbc.password";
+    public final static String PASSWORD_KEY = "bgee.dao.jdbc.password";
     /**
      * A {@code String} that is the password to use to connect to the database.
      * It is used either when a {@code DataSource} is used and the password 
      * was not provided in its configuration, or a JDBC {@code Driver} is used 
      * and the password was not provided in the connection URL.
      * 
-     * @see #PASSWORDKEY
+     * @see #PASSWORD_KEY
      */
     private String password;
     
@@ -137,7 +137,7 @@ public class MySQLDAOManager extends DAOManager {
      * for instance to load both a MySQL Driver and a log4jdbc-log4j2 Driver.
      * @see #getJdbcDriverNames()
      */
-    public final static String JDBCDRIVERNAMESKEY = "bgee.dao.jdbc.driver.names";
+    public final static String JDBC_DRIVER_NAMES_KEY = "bgee.dao.jdbc.driver.names";
     /**
      * A {@code Set} of {@code String}s containing the names of the JDBC {@code Driver} 
      * to load. This parameter should not be mandatory, as starting from 
@@ -167,16 +167,45 @@ public class MySQLDAOManager extends DAOManager {
      * See {@link #getJdbcUrl()} for more details.
      * @see #getJdbcUrl()
      */
-    public final static String JDBCURLKEY = "bgee.dao.jdbc.url";
+    public final static String JDBC_URL_KEY = "bgee.dao.jdbc.url";
     /**
      * A {@code String} that is the JDBC connection URL, used to connect to the database 
      * when a JDBC {@code Driver} is used, rather than a {@code DataSource}. It means  
      * that {@link #dataSourceResourceName} is {@code null}, or does not allow 
      * to obtain a {@code DataSource}).
      * 
-     * @see #JDBCURLKEY
+     * @see #JDBC_URL_KEY
      */
     private String jdbcUrl;
+    
+    /**
+     * A {@code String} that is the key to retrieve the gene count limit for expression propagation 
+     * from the {@code Properties} provided to the method {@code setParameters}. 
+     * See {@link #getExprPropagationGeneCount()} for more details.
+     * 
+     * @see #getExprPropagationGeneCount()
+     * @see #DEFAULT_EXPR_PROPAGATION_GENE_COUNT
+     */
+    public final static String EXPR_PROPAGATION_GENE_COUNT_KEY = 
+            "bgee.dao.expr.propagation.gene.count";
+    /**
+     * An {@code int} that is the gene count limit for expression propagation. 
+     * See {@link #getExprPropagationGeneCount()} for more details.
+     * 
+     * @see #getExprPropagationGeneCount()
+     * @see #DEFAULT_EXPR_PROPAGATION_GENE_COUNT
+     * @see #EXPR_PROPAGATION_GENE_COUNT_KEY
+     */
+    private int exprPropagationGeneCount;
+    /**
+     * An {@code int} that is the defaut value for gene count limit for expression propagation. 
+     * See {@link #getExprPropagationGeneCount()} for more details.
+     * 
+     * @see #getExprPropagationGeneCount()
+     * @see #EXPR_PROPAGATION_GENE_COUNT_KEY
+     */
+    public final static int DEFAULT_EXPR_PROPAGATION_GENE_COUNT = 1000;
+    
     
     /**
      * A {@code String} representing the name of the database to use. All following 
@@ -199,6 +228,7 @@ public class MySQLDAOManager extends DAOManager {
         super();
         this.connections = new HashMap<String, BgeeConnection>();
         this.jdbcDriverNames = new HashSet<String>();
+        this.setExprPropagationGeneCount(DEFAULT_EXPR_PROPAGATION_GENE_COUNT);
     }
     
     //******************************************
@@ -529,7 +559,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @return  A {@code String} representing the resource name of a {@code DataSource} 
      *          to use.
-     * @see #RESOURCENAMEKEY
+     * @see #RESOURCE_NAME_KEY
      */
     public String getDataSourceResourceName() {
         return dataSourceResourceName;
@@ -544,7 +574,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @param name  The {@code String} that is the resource name 
      *              of the {@code DataSource} to use.
-     * @see #RESOURCENAMEKEY
+     * @see #RESOURCE_NAME_KEY
      */
     private void setDataSourceResourceName(String name) {
         this.dataSourceResourceName = name;
@@ -557,7 +587,7 @@ public class MySQLDAOManager extends DAOManager {
      * was not provided in the connection URL.
      * 
      * @return  A {@code String} that is the user to use to connect to the database.
-     * @see #USERKEY
+     * @see #USER_KEY
      */
     public String getUser() {
         return this.user;
@@ -570,7 +600,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @param user  A {@code String} that is the user to use 
      *                  to connect to the database.
-     * @see #USERKEY
+     * @see #USER_KEY
      */
     private void setUser(String user) {
         this.user = user;
@@ -583,7 +613,7 @@ public class MySQLDAOManager extends DAOManager {
      * was not provided in the connection URL.
      * 
      * @return  A {@code String} that is the password to use to connect to the database.
-     * @see #PASSWORDKEY
+     * @see #PASSWORD_KEY
      */
     public String getPassword() {
         return password;
@@ -596,7 +626,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @param password  A {@code String} that is the password to use 
      *                  to connect to the database.
-     * @see #PASSWORDKEY
+     * @see #PASSWORD_KEY
      */
     private void setPassword(String password) {
         this.password = password;
@@ -623,7 +653,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @return  A {@code Set} of {@code String}s representing the names of all 
      *          the JDBC {@code Driver} to load.
-     * @see #JDBCDRIVERNAMESKEY
+     * @see #JDBC_DRIVER_NAMES_KEY
      * @see #getJdbcUrl()
      * @see #getUser()
      * @see #getPassword()
@@ -650,7 +680,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @param driverNames   a {@code String} containing the names of JDBC drivers 
      *                      to load, separated by commas.
-     * @see #JDBCDRIVERNAMESKEY
+     * @see #JDBC_DRIVER_NAMES_KEY
      * @see #getJdbcUrl()
      * @see #getUser()
      * @see #getPassword()
@@ -670,7 +700,7 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @return  A {@code String} that is the JDBC connection URL, used to connect 
      *          to the database.
-     * @see #JDBCURLKEY
+     * @see #JDBC_URL_KEY
      */
     public String getJdbcUrl() {
         return jdbcUrl;
@@ -683,10 +713,41 @@ public class MySQLDAOManager extends DAOManager {
      * 
      * @param jdbcUrl   A {@code String} that is the JDBC connection URL, used to connect 
      *                  to the database.
-     * @see #JDBCURLKEY
+     * @see #JDBC_URL_KEY
      */
     private void setJdbcUrl(String jdbcUrl) {
         this.jdbcUrl = jdbcUrl;
+    }
+
+    /**
+     * Returns the gene count limit for expression propagation: when expression data 
+     * are propagated on-the-fly, it is not possible to propagate all data at once 
+     * (too much disk space used for temporary tables); data are thus propagated 
+     * group of genes by group of genes; this parameter specifies how many genes 
+     * should be considered at a same time when propagating data; the higher this value is, 
+     * the faster the computations should be, but more disk space will then be used. 
+     * <p>
+     * See {@link #DEFAULT_EXPR_PROPAGATION_GENE_COUNT} for default value.
+     * 
+     * @return  An {@code int} that is the gene count limit for expression propagation.
+     * @see #DEFAULT_EXPR_PROPAGATION_GENE_COUNT
+     * @see #EXPR_PROPAGATION_GENE_COUNT_KEY
+     */
+    public int getExprPropagationGeneCount() {
+        return this.exprPropagationGeneCount;
+    }
+    /**
+     * Sets the gene count limit for expression propagation. 
+     * See {@link #getExprPropagationGeneCount()} for more details.
+     * 
+     * @param exprPropagationGeneCount  An {@code int} that is the gene count limit 
+     *                                  for expression propagation.
+     * @see #getExprPropagationGeneCount()
+     * @see #DEFAULT_EXPR_PROPAGATION_GENE_COUNT
+     * @see #EXPR_PROPAGATION_GENE_COUNT_KEY
+     */
+    private void setExprPropagationGeneCount(int exprPropagationGeneCount) {
+        this.exprPropagationGeneCount = exprPropagationGeneCount;
     }
     
     //******************************************
@@ -707,9 +768,9 @@ public class MySQLDAOManager extends DAOManager {
 //              this.getDataSourceResourceName(), this.getJdbcUrl(), 
 //              this.getJdbcDriverNames(), this.getUser(), this.getPassword());
         
-        String resourceName = props.getProperty(RESOURCENAMEKEY);
-        String jdbcUrl      = props.getProperty(JDBCURLKEY);
-        String driverNames   = props.getProperty(JDBCDRIVERNAMESKEY);
+        String resourceName = props.getProperty(RESOURCE_NAME_KEY);
+        String jdbcUrl      = props.getProperty(JDBC_URL_KEY);
+        String driverNames   = props.getProperty(JDBC_DRIVER_NAMES_KEY);
         
         //check whether the required parameters are provided: this MySQLDAOManager 
         //either needs a DataSource, or a JDBC connection URL and the JDBC Driver name 
@@ -749,9 +810,9 @@ public class MySQLDAOManager extends DAOManager {
         }
         
         this.setDataSourceResourceName(resourceName);
-        this.setJdbcUrl(props.getProperty(JDBCURLKEY));
-        this.setUser(props.getProperty(USERKEY));
-        this.setPassword(props.getProperty(PASSWORDKEY));
+        this.setJdbcUrl(props.getProperty(JDBC_URL_KEY));
+        this.setUser(props.getProperty(USER_KEY));
+        this.setPassword(props.getProperty(PASSWORD_KEY));
         
         //these methods are responsible to check for the validity of resourceName 
         //and driverName, they throw an IllegalStateException if they are invalid
@@ -766,6 +827,19 @@ public class MySQLDAOManager extends DAOManager {
             log.catching(e);
             throw log.throwing(new IllegalArgumentException("The parameters provided " +
             		"did not allow to load a valid DataSource or JDBC Driver", e));
+        }
+        
+        String exprPropagGeneCountStr = props.getProperty(EXPR_PROPAGATION_GENE_COUNT_KEY);
+        if (exprPropagGeneCountStr == null) {
+            this.setExprPropagationGeneCount(DEFAULT_EXPR_PROPAGATION_GENE_COUNT);
+        } else {
+            try {
+                this.setExprPropagationGeneCount(Integer.parseInt(exprPropagGeneCountStr));
+            } catch (NumberFormatException e) {
+                throw log.throwing(new IllegalArgumentException("Incorrect format " +
+                		"when specifying gene count limit for expression propagation, " +
+                		"parameter: " + EXPR_PROPAGATION_GENE_COUNT_KEY, e));
+            }
         }
 
 //      log.trace("New parameters set: DataSource name: {} - JDBC URL: {} - Driver names: {} - User: {} - Password: {}", 

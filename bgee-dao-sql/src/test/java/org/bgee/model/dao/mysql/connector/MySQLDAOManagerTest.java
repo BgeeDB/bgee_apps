@@ -97,9 +97,9 @@ public class MySQLDAOManagerTest extends TestAncestor
         MockDriver.initialize();
         //set the properties to use it
         Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
         //test to provide several JDBC driver names
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
         //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
         //going through the DAOManager#getDAOManager() method
         MySQLDAOManager manager = new MySQLDAOManager();
@@ -127,12 +127,13 @@ public class MySQLDAOManagerTest extends TestAncestor
         MockDataSource.initialize();
         //we will try to load the mock Driver and the MySQL Driver
         Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
-        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, 
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.RESOURCE_NAME_KEY, MockDataSource.DATASOURCENAME);
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, 
                 MockDriver.class.getName() + "," + com.mysql.jdbc.Driver.class.getName());
-        props.setProperty(MySQLDAOManager.USERKEY, "bgee.jdbc.username.test");
-        props.setProperty(MySQLDAOManager.PASSWORDKEY, "bgee.jdbc.password.test");
+        props.setProperty(MySQLDAOManager.USER_KEY, "bgee.jdbc.username.test");
+        props.setProperty(MySQLDAOManager.PASSWORD_KEY, "bgee.jdbc.password.test");
+        props.setProperty(MySQLDAOManager.EXPR_PROPAGATION_GENE_COUNT_KEY, "20");
         
         MySQLDAOManager manager = new MySQLDAOManager();
         manager.setParameters(props);
@@ -147,6 +148,7 @@ public class MySQLDAOManagerTest extends TestAncestor
                 manager.getUser());
         assertEquals("Incorrect password name read", "bgee.jdbc.password.test", 
                 manager.getPassword());
+        assertEquals("Incorrect gene count limit", 20, manager.getExprPropagationGeneCount());
     
         manager.shutdown();
         MockDataSource.initialize();
@@ -179,12 +181,12 @@ public class MySQLDAOManagerTest extends TestAncestor
         }
         
         //DataSource provided? then it should work
-        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
+        props.setProperty(MySQLDAOManager.RESOURCE_NAME_KEY, MockDataSource.DATASOURCENAME);
         manager.setParameters(props);
-        props.remove(MySQLDAOManager.RESOURCENAMEKEY);
+        props.remove(MySQLDAOManager.RESOURCE_NAME_KEY);
         
         //only the JDBC Driver? The JDBC Connection URL is missing, it should fail.
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
         try {
             manager.setParameters(props);
             //if we reach this point, test failed
@@ -193,10 +195,10 @@ public class MySQLDAOManagerTest extends TestAncestor
         } catch (IllegalArgumentException e) {
             //test passed
         }
-        props.remove(MySQLDAOManager.JDBCDRIVERNAMESKEY);
+        props.remove(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY);
         
         //only the JDBC URL? Should fail also
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
         try {
             manager.setParameters(props);
             //if we reach this point, test failed
@@ -207,14 +209,14 @@ public class MySQLDAOManagerTest extends TestAncestor
         }
         
         //let's add the Driver name, it should work
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
         manager.setParameters(props);
         //let's add a DataSource, it should still work
-        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
+        props.setProperty(MySQLDAOManager.RESOURCE_NAME_KEY, MockDataSource.DATASOURCENAME);
         manager.setParameters(props);
         
         //let's set an incorrect Driver, it should fail
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, "whatever");
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, "whatever");
         try {
             manager.setParameters(props);
             //if we reach this point, test failed
@@ -225,8 +227,8 @@ public class MySQLDAOManagerTest extends TestAncestor
         }
         
         //now an incorrect URL
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, "whatever");
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, "whatever");
         try {
             manager.setParameters(props);
             //if we reach this point, test failed
@@ -237,9 +239,9 @@ public class MySQLDAOManagerTest extends TestAncestor
         }
         
         //now an incorrect DataSource resource name
-        props.remove(MySQLDAOManager.JDBCDRIVERNAMESKEY);
-        props.remove(MySQLDAOManager.JDBCURLKEY);
-        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, "whatever");
+        props.remove(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY);
+        props.remove(MySQLDAOManager.JDBC_URL_KEY);
+        props.setProperty(MySQLDAOManager.RESOURCE_NAME_KEY, "whatever");
         try {
             manager.setParameters(props);
             //if we reach this point, test failed
@@ -249,10 +251,37 @@ public class MySQLDAOManagerTest extends TestAncestor
             //test passed
         }
         
+        //now, incorrect gene count limit for expression propagation.
+        //first, check that we correctly use the default value for now
+        assertEquals("Incorrect default value of gene count limit", 
+                MySQLDAOManager.DEFAULT_EXPR_PROPAGATION_GENE_COUNT, 
+                manager.getExprPropagationGeneCount());
+        //restore correct parameters
+        props.setProperty(MySQLDAOManager.RESOURCE_NAME_KEY, MockDataSource.DATASOURCENAME);
+        props.setProperty(MySQLDAOManager.EXPR_PROPAGATION_GENE_COUNT_KEY, "30");
+        manager.setParameters(props);
+        assertEquals("Incorrect gene count limit", 30, manager.getExprPropagationGeneCount());
+        //now, set incorrect value
+        props.setProperty(MySQLDAOManager.EXPR_PROPAGATION_GENE_COUNT_KEY, "20.1");
+        try {
+            manager.setParameters(props);
+            //if we reach this point, test failed
+            throw new AssertionError("The manager should refuse properties " +
+                    "with an incorrect gene count limit.");
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        //value should have been unchanged
+        assertEquals("Incorrect gene count limit", 30, manager.getExprPropagationGeneCount());
+        
         //final check, let's provide valid parameters to check we didn't "block" 
         //the manager
-        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
+        props.remove(MySQLDAOManager.EXPR_PROPAGATION_GENE_COUNT_KEY);
         manager.setParameters(props);
+        //value should have been set to default
+        assertEquals("Incorrect default value of gene count limit", 
+                MySQLDAOManager.DEFAULT_EXPR_PROPAGATION_GENE_COUNT, 
+                manager.getExprPropagationGeneCount());
 
         MockDataSource.initialize();
         MockDriver.initialize();
@@ -267,9 +296,9 @@ public class MySQLDAOManagerTest extends TestAncestor
         MockDriver.initialize();
         //set the properties to use it
         Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
         //test to provide several JDBC driver names
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
         //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
         //going through the DAOManager#getDAOManager() method
         MySQLDAOManager manager = new MySQLDAOManager();
@@ -279,7 +308,7 @@ public class MySQLDAOManagerTest extends TestAncestor
         //get mock PreparedStatement
         conn1.prepareStatement("test");
         //get another connection
-        props.setProperty(MySQLDAOManager.USERKEY, "test");
+        props.setProperty(MySQLDAOManager.USER_KEY, "test");
         manager.setParameters(props);
         BgeeConnection conn2 = manager.getConnection();
         //get mock PreparedStatement
@@ -312,8 +341,8 @@ public class MySQLDAOManagerTest extends TestAncestor
         }
         
         Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, 
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, 
                 MockDriver.class.getName() + "," + com.mysql.jdbc.Driver.class.getName());
         MySQLDAOManager manager = new MySQLDAOManager();
         manager.setParameters(props);
@@ -360,9 +389,9 @@ public class MySQLDAOManagerTest extends TestAncestor
         MockDriver.initialize();
         //set the properties to use it
 	    Properties props = new Properties();
-	    props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+	    props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
 	    //test to provide several JDBC driver names
-	    props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+	    props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
 	    //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
 	    //going through the DAOManager#getDAOManager() method
 		MySQLDAOManager manager = new MySQLDAOManager();
@@ -390,7 +419,7 @@ public class MySQLDAOManagerTest extends TestAncestor
         MockDataSource.initialize();
         //set the properties to use it
         Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
+        props.setProperty(MySQLDAOManager.RESOURCE_NAME_KEY, MockDataSource.DATASOURCENAME);
         //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
         //going through the DAOManager#getDAOManager() method
         MySQLDAOManager manager = new MySQLDAOManager();
@@ -417,10 +446,10 @@ public class MySQLDAOManagerTest extends TestAncestor
         MockDriver.initialize();
         //set the properties to use it
         Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
-        props.setProperty(MySQLDAOManager.USERKEY, "bgee.jdbc.username.test");
-        props.setProperty(MySQLDAOManager.PASSWORDKEY, "bgee.jdbc.password.test");
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.USER_KEY, "bgee.jdbc.username.test");
+        props.setProperty(MySQLDAOManager.PASSWORD_KEY, "bgee.jdbc.password.test");
         //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
         //going through the DAOManager#getDAOManager() method
         MySQLDAOManager manager = new MySQLDAOManager();
@@ -450,9 +479,9 @@ public class MySQLDAOManagerTest extends TestAncestor
         MockDriver.initialize();
         //set the properties to use it
         Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
         //test to provide several JDBC driver names
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
         //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
         //going through the DAOManager#getDAOManager() method
         MySQLDAOManager manager = new MySQLDAOManager();
@@ -500,9 +529,9 @@ public class MySQLDAOManagerTest extends TestAncestor
         MockDataSource.initialize();
         //set the properties to use it
         Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.RESOURCENAMEKEY, MockDataSource.DATASOURCENAME);
-        props.setProperty(MySQLDAOManager.USERKEY, "bgee.jdbc.username.test");
-        props.setProperty(MySQLDAOManager.PASSWORDKEY, "bgee.jdbc.password.test");
+        props.setProperty(MySQLDAOManager.RESOURCE_NAME_KEY, MockDataSource.DATASOURCENAME);
+        props.setProperty(MySQLDAOManager.USER_KEY, "bgee.jdbc.username.test");
+        props.setProperty(MySQLDAOManager.PASSWORD_KEY, "bgee.jdbc.password.test");
         //we "manually" obtain a MySQLDAOManager and set parameters, rather than 
         //going through the DAOManager#getDAOManager() method
         MySQLDAOManager manager = new MySQLDAOManager();
@@ -530,9 +559,9 @@ public class MySQLDAOManagerTest extends TestAncestor
 
         //set the properties to use it
         final Properties props = new Properties();
-        props.setProperty(MySQLDAOManager.JDBCURLKEY, MockDriver.MOCKURL);
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
         //test to provide several JDBC driver names
-        props.setProperty(MySQLDAOManager.JDBCDRIVERNAMESKEY, MockDriver.class.getName());
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
         
         /**
          * An anonymous class to acquire {@code MySQLDAOManager}s 
@@ -557,10 +586,10 @@ public class MySQLDAOManagerTest extends TestAncestor
                     manager1.setParameters(props);
                     //acquire 2 different connection
                     conn1 = manager1.getConnection();
-                    props.setProperty(MySQLDAOManager.USERKEY, "test");
+                    props.setProperty(MySQLDAOManager.USER_KEY, "test");
                     manager1.setParameters(props);
                     conn2 = manager1.getConnection();
-                    props.remove(MySQLDAOManager.USERKEY);
+                    props.remove(MySQLDAOManager.USER_KEY);
                     manager1.setParameters(props);
                     
                     //main thread's turn
@@ -591,10 +620,10 @@ public class MySQLDAOManagerTest extends TestAncestor
             manager1.setParameters(props);
             BgeeConnection conn1 = manager1.getConnection();
             
-            props.setProperty(MySQLDAOManager.USERKEY, "test");
+            props.setProperty(MySQLDAOManager.USER_KEY, "test");
             manager1.setParameters(props);
             BgeeConnection conn2 = manager1.getConnection();
-            props.remove(MySQLDAOManager.USERKEY);
+            props.remove(MySQLDAOManager.USER_KEY);
             manager1.setParameters(props);
             
             //launch a second thread also acquiring BgeeConnections
@@ -629,12 +658,12 @@ public class MySQLDAOManagerTest extends TestAncestor
             assertEquals("Get two BgeeConnection instances for the same parameters", 
                     conn1, manager1.getConnection());
             
-            props.setProperty(MySQLDAOManager.USERKEY, "test");
+            props.setProperty(MySQLDAOManager.USER_KEY, "test");
             manager1.setParameters(props);
             assertEquals("Get two BgeeConnection instances for the same parameters", 
                     conn2, manager1.getConnection());
             
-            props.remove(MySQLDAOManager.USERKEY);
+            props.remove(MySQLDAOManager.USER_KEY);
             manager1.setParameters(props);
             assertEquals("Get two BgeeConnection instances for the same parameters", 
                     conn1, manager1.getConnection());

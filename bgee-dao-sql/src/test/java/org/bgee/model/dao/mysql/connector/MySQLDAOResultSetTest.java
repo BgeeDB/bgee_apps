@@ -43,7 +43,13 @@ public class MySQLDAOResultSetTest extends TestAncestor
     protected Logger getLogger() {
         return log;
     }
-    
+    private class FakeTO extends TransferObject {
+        private static final long serialVersionUID = 1L;
+
+        public FakeTO() {
+            super();
+        }
+    }
     /**
      * Extends {@code MySQLDAOResultSet}, which is abstract, to perform 
      * unit tests using it.
@@ -55,20 +61,28 @@ public class MySQLDAOResultSetTest extends TestAncestor
         public FakeDAOResultSet(List<BgeePreparedStatement> statements) {
             super(statements);
         }
-        public FakeDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
-                int rowCountParamIndex, int rowCount) {
-            super(statement, offsetParamIndex, rowCountParamIndex, rowCount);
+        public FakeDAOResultSet(List<BgeePreparedStatement> statements, 
+                boolean filterDuplicates) {
+            super(statements, filterDuplicates);
         }
         public FakeDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
-                int rowCountParamIndex, int rowCount, int stepCount) {
+                int rowCountParamIndex, int rowCount, boolean filterDuplicates) {
+            super(statement, offsetParamIndex, rowCountParamIndex, rowCount, filterDuplicates);
+        }
+        public FakeDAOResultSet(BgeePreparedStatement statement, int offsetParamIndex, 
+                int rowCountParamIndex, int rowCount, int stepCount, boolean filterDuplicates) {
             super(statement, offsetParamIndex, rowCountParamIndex, 
-                    rowCount, stepCount);
+                    rowCount, stepCount, filterDuplicates);
         }
         @Override
-        public TransferObject getTO() throws DAOException {
-            return null;
+        public TransferObject getNewTO() throws DAOException {
+            try {
+                //just a hack to use mocked ResultSet
+                return this.getCurrentResultSet().unwrap(FakeTO.class);
+            } catch (SQLException e) {
+                throw new DAOException(e);
+            }
         }
-        
     }
     
     /**
@@ -312,6 +326,178 @@ public class MySQLDAOResultSetTest extends TestAncestor
     }
     
     /**
+     * Test {@link MySQLDAOManager#next()} when duplicate filtering is requested.
+     */
+    @Test
+    public void testNextWithFiltering() throws SQLException {
+        BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
+        BgeePreparedStatement mockStatement2 = mock(BgeePreparedStatement.class);
+        BgeePreparedStatement mockStatement3 = mock(BgeePreparedStatement.class);
+        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
+        when(metaData.getColumnCount()).thenReturn(0);
+        
+        ResultSet mockRs = mock(ResultSet.class);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockStatement.executeQuery()).thenReturn(mockRs);
+        ResultSet mockRs2 = mock(ResultSet.class);
+        when(mockRs2.getMetaData()).thenReturn(metaData);
+        when(mockStatement2.executeQuery()).thenReturn(mockRs2);
+        ResultSet mockRs3 = mock(ResultSet.class);
+        when(mockRs3.getMetaData()).thenReturn(metaData);
+        when(mockStatement3.executeQuery()).thenReturn(mockRs3);
+
+        //4 results returned by first resultset, the last 2 will be discarded 
+        //because equal to first ones, and will move to next query. 3 results returned 
+        //by second resultset, second one discarded because equal to another one, 
+        //move to the next query. 1 results returned by it.
+        when(mockRs.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(true).
+            thenReturn(false);
+        when(mockRs2.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(mockRs3.next()).thenReturn(true).thenReturn(false);
+        FakeTO fakeTO1 = new FakeTO();
+        FakeTO fakeTO2 = new FakeTO();
+        FakeTO fakeTO3 = new FakeTO();
+        FakeTO fakeTO4 = new FakeTO();
+        FakeTO fakeTO5 = new FakeTO();
+        when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO2).
+            thenReturn(fakeTO1).thenReturn(fakeTO2);
+        when(mockRs2.unwrap(FakeTO.class)).thenReturn(fakeTO3).thenReturn(fakeTO1).
+            thenReturn(fakeTO4);
+        when(mockRs3.unwrap(FakeTO.class)).thenReturn(fakeTO5);
+        
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(Arrays.asList(
+                mockStatement, mockStatement2, mockStatement3), true);
+        verify(mockStatement).executeQuery();
+        verify(mockStatement2, never()).executeQuery();
+        verify(mockStatement3, never()).executeQuery();
+        
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(1)).next();
+        verify(mockStatement2, never()).executeQuery();
+        verify(mockStatement3, never()).executeQuery();
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(2)).next();
+        verify(mockStatement2, never()).executeQuery();
+        verify(mockStatement3, never()).executeQuery();
+        //OK, here we should discard the last two results, and move to next query
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(5)).next();
+        verify(mockStatement, times(1)).close();
+        verify(mockRs, times(1)).close();
+        verify(mockStatement2, times(1)).executeQuery();
+        verify(mockRs2, times(1)).next();
+        //next TO discarded, move to the next one
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(5)).next();
+        verify(mockStatement, times(1)).close();
+        verify(mockRs, times(1)).close();
+        verify(mockStatement2, times(1)).executeQuery();
+        verify(mockRs2, times(3)).next();
+        //no more result, move to next query
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(5)).next();
+        verify(mockStatement, times(1)).close();
+        verify(mockRs, times(1)).close();
+        verify(mockStatement2, times(1)).executeQuery();
+        verify(mockRs2, times(4)).next();
+        verify(mockStatement2, times(1)).close();
+        verify(mockRs2, times(1)).close();
+        verify(mockRs3, times(1)).next();
+        //end of all results
+        assertFalse("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(5)).next();
+        verify(mockStatement, times(1)).close();
+        verify(mockRs, times(1)).close();
+        verify(mockStatement2, times(1)).executeQuery();
+        verify(mockRs2, times(4)).next();
+        verify(mockStatement2, times(1)).close();
+        verify(mockRs2, times(1)).close();
+        verify(mockRs3, times(2)).next();
+        verify(mockStatement3, times(1)).close();
+        verify(mockRs3, times(1)).close();
+
+        //make sure there is no additional calls to getTO, as we use this trick 
+        //of using the unwrap method to generate the TO
+        verify(mockRs, times(4)).unwrap(FakeTO.class);
+        verify(mockRs2, times(3)).unwrap(FakeTO.class);
+        verify(mockRs3, times(1)).unwrap(FakeTO.class);
+        
+    }
+    
+    /**
+     * Test {@link MySQLDAOManager#next()} using the limit feature without defining 
+     * a maximum number of iterations, and requesting to filter duplicates.
+     */
+    @Test
+    public void testNextWithLimitAndFilterDuplicates() throws SQLException {
+        BgeePreparedStatement mockStatement = mock(BgeePreparedStatement.class);
+        ResultSetMetaData metaData = mock(ResultSetMetaData.class);
+        when(metaData.getColumnCount()).thenReturn(0);
+        ResultSet mockRs = mock(ResultSet.class);
+        when(mockRs.getMetaData()).thenReturn(metaData);
+        when(mockStatement.executeQuery()).thenReturn(mockRs);
+        
+        //3 results returned by first resultset, the second one will be discarded 
+        //because equal to first one. 2 results returned by second resultset, 
+        //first one discarded because equal to another one. A third query will be made 
+        //to make sure there are no more results.
+        when(mockRs.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false).
+            thenReturn(true).thenReturn(true).thenReturn(false).thenReturn(false);
+        FakeTO fakeTO1 = new FakeTO();
+        FakeTO fakeTO2 = new FakeTO();
+        FakeTO fakeTO3 = new FakeTO();
+        when(mockRs.unwrap(FakeTO.class)).thenReturn(fakeTO1).thenReturn(fakeTO1).
+            thenReturn(fakeTO2).thenReturn(fakeTO2).thenReturn(fakeTO3);
+        
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
+                2, 3, 20, true);
+        verify(mockStatement).setInt(2, 0);
+        verify(mockStatement).setInt(3, 20);
+        verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(1)).executeQuery();
+        
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(1)).next();
+        //the statement should not have been queried again
+        verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(1)).executeQuery();
+        
+        //next result redundant, skip to 3rd result
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(3)).next();
+        //the statement should not have been queried again
+        verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(1)).executeQuery();
+        
+        //end of first limit query, move to next query. The first result is redundant 
+        //and is discarded
+        assertTrue("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(6)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(2)).setInt(3, 20);
+        verify(mockStatement, times(4)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(2)).executeQuery();
+        verify(mockRs, times(1)).close();
+        
+        //end of second query - an additional third query should be run to make sure 
+        //there are no more results
+        assertFalse("Incorrect value returend by next", myRs.next());
+        verify(mockRs, times(8)).next();
+        verify(mockStatement, times(1)).setInt(2, 0);
+        verify(mockStatement, times(1)).setInt(2, 20);
+        verify(mockStatement, times(1)).setInt(2, 40);
+        verify(mockStatement, times(3)).setInt(3, 20);
+        verify(mockStatement, times(6)).setInt(anyInt(), anyInt());
+        verify(mockStatement, times(3)).executeQuery();
+        verify(mockRs, times(3)).close();
+        verify(mockStatement, times(1)).close();
+        //make sure there is no additional calls to getTO, as we use this trick 
+        //of using the unwrap method to generate the TO
+        verify(mockRs, times(5)).unwrap(FakeTO.class);
+    }
+    
+    /**
      * Test {@link MySQLDAOManager#next()} using the limit feature without defining 
      * a maximum number of iterations.
      */
@@ -325,7 +511,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
-                2, 3, 20);
+                2, 3, 20, false);
         verify(mockStatement).setInt(2, 0);
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
@@ -406,7 +592,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement, 
-                2, 3, 20, 2);
+                2, 3, 20, 2, false);
         verify(mockStatement).setInt(2, 0);
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
@@ -461,7 +647,7 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockRs.getMetaData()).thenReturn(metaData);
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
-        myRs = new FakeDAOResultSet(mockStatement, 2, 3, 20, 4);
+        myRs = new FakeDAOResultSet(mockStatement, 2, 3, 20, 4, false);
         
         when(mockRs.next()).thenReturn(true);
         assertTrue("Incorrect value returned by next", myRs.next());

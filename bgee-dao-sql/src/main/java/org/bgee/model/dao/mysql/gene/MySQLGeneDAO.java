@@ -221,7 +221,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
 
         @Override
-        public GeneTO getTO() {
+        protected GeneTO getNewTO() {
             log.entry();
             ResultSet currentResultSet = this.getCurrentResultSet();
             String geneId = null, geneName = null, geneDescription = null;

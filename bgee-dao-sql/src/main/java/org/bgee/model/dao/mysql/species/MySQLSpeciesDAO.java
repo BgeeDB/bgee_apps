@@ -191,7 +191,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         }
 
         @Override
-        public SpeciesTO getTO() {
+        protected SpeciesTO getNewTO() {
             log.entry();
             ResultSet currentResultSet = this.getCurrentResultSet();
             String speciesId = null, genus = null, species = null, 

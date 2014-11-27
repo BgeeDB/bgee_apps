@@ -395,7 +395,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         }
 
         @Override
-        public RelationTO getTO() throws DAOException {
+        protected RelationTO getNewTO() throws DAOException {
             log.entry();
             String relationId = null, sourceId = null, targetId =null;
             RelationType relationType = null;

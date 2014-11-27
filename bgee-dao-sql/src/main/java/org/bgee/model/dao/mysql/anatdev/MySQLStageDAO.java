@@ -183,7 +183,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
         }
 
         @Override
-        public StageTO getTO() throws DAOException {
+        protected StageTO getNewTO() throws DAOException {
             log.entry();
             
             String stageId = null, stageName = null, stageDescription = null;

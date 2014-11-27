@@ -8,10 +8,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
@@ -21,6 +23,7 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionT
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
+import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -332,9 +335,16 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         
         this.useSelectDB();
 
-        // On expression table 
-        MySQLExpressionCallDAO dao = new MySQLExpressionCallDAO(this.getMySQLDAOManager());
+        //to test the LIMIT feature used when propagating expression calls on-the-fly, 
+        //we change the gene count limit from the properties.
+        Properties newProps = DAOManager.getDefaultProperties();
+        newProps.setProperty(MySQLDAOManager.EXPR_PROPAGATION_GENE_COUNT_KEY, "2");
+        try {
+        MySQLDAOManager manager = this.getMySQLDAOManager(newProps);
+        
+        MySQLExpressionCallDAO dao = new MySQLExpressionCallDAO(manager);
 
+        // On expression table 
         // Without speciesIds and not include organ substructures
         // Generate parameters
         Set<String> speciesIds = new HashSet<String>();
@@ -582,6 +592,10 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         expressions = dao.getExpressionCalls(params).getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        } finally {
+            //restore default parameters
+            this.getMySQLDAOManager(DAOManager.getDefaultProperties());
+        }
     }
     
     /**

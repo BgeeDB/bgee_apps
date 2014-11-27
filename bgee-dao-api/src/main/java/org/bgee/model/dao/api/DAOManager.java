@@ -133,7 +133,7 @@ public abstract class DAOManager implements AutoCloseable
      * or from a configuration file (see {@link #DEFAULTCONFIGFILE}). They will be used 
      * when {@link #getDAOManager()} is called, as default properties.
      */
-    private static final Properties properties = DAOManager.getProperties();
+    private static final Properties properties = DAOManager.loadProperties();
     
     /**
      * Get the default <code>java.util.Properties</code> either from the System properties, 
@@ -142,7 +142,7 @@ public abstract class DAOManager implements AutoCloseable
      * will be used when {@link #getDAOManager()} is called. 
      * @return      The <code>java.util.Properties</code> to get properties from.
      */
-    private final static Properties getProperties() {
+    private final static Properties loadProperties() {
         log.entry();
         
         Properties props = new Properties(System.getProperties());
@@ -174,6 +174,20 @@ public abstract class DAOManager implements AutoCloseable
         }
         
         return log.exit(props);
+    }
+    
+    /**
+     * Return the {@code Properties} obtained at class loading either from system properties, 
+     * or from a configuration file (see {@link #DEFAULTCONFIGFILE}). They will be used 
+     * when {@link #getDAOManager()} is called, as default properties.
+     * <p>
+     * The {@code Properties} returned are a copy with the actual {@code Properties} 
+     * used by this object defined as default values.
+     * 
+     * @return  the {@code Properties} obtained at class loading.
+     */
+    public final static Properties getDefaultProperties() {
+        return new Properties(DAOManager.properties);
     }
     
     /**

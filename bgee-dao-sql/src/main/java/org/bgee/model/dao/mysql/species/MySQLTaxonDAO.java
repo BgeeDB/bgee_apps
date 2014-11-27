@@ -166,7 +166,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         }
 
         @Override
-        public TaxonTO getTO() {
+        protected TaxonTO getNewTO() {
             log.entry();
             ResultSet currentResultSet = this.getCurrentResultSet();
             String taxonId = null, taxonName = null, taxonScientificName = null;

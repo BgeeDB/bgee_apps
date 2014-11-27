@@ -189,7 +189,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
         }
 
         @Override
-        public TaxonConstraintTO getTO() throws DAOException {
+        protected TaxonConstraintTO getNewTO() throws DAOException {
             log.entry();
             
             String entityId = null, speciesId = null;

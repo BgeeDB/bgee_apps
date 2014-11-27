@@ -246,7 +246,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         }
 
         @Override
-        public AnatEntityTO getTO() throws DAOException {
+        protected AnatEntityTO getNewTO() throws DAOException {
             log.entry();
             
             String anatEntityId = null, anatEntityName = null, anatEntityDescription = null, 

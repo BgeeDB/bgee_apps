@@ -1,6 +1,7 @@
 package org.bgee.model.dao.mysql;
 
 import java.sql.SQLException;
+import java.util.Properties;
 
 import javax.sql.DataSource;
 
@@ -335,5 +336,16 @@ public abstract class MySQLITAncestor extends TestAncestor{
      */
     protected MySQLDAOManager getMySQLDAOManager() {
         return (MySQLDAOManager) DAOManager.getDAOManager();
+    }
+    /**
+     * Returns the {MySQLDAOManager} associated to the current thread. It is 
+     * the responsibility of the caller to make sure that {@code props} allows 
+     * to actually obtain a {@code MySQLDAOManager}. 
+     * 
+     * @return  the {MySQLDAOManager} associated to the current thread, with parameters set 
+     *          using {@code props}.
+     */
+    protected MySQLDAOManager getMySQLDAOManager(Properties props) {
+        return (MySQLDAOManager) DAOManager.getDAOManager(props);
     }
 }

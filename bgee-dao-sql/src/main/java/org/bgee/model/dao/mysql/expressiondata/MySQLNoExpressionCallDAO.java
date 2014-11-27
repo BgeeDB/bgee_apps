@@ -533,7 +533,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
 
         @Override
-        public NoExpressionCallTO getTO() throws DAOException {
+        protected NoExpressionCallTO getNewTO() throws DAOException {
             log.entry();
 
             String id = null, geneId = null, anatEntityId = null, devStageId = null;
@@ -618,7 +618,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
 
         @Override
-        public GlobalNoExpressionToNoExpressionTO getTO() throws DAOException {
+        protected GlobalNoExpressionToNoExpressionTO getNewTO() throws DAOException {
             log.entry();
             String globalNoExpressionId = null, noExpressionId = null;
 

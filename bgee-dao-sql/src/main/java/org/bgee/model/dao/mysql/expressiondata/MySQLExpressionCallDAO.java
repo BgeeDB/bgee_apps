@@ -292,39 +292,63 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         }
         
         sql += " FROM " + exprTableName;
-        if (speciesIds != null && speciesIds.size() > 0) {
-             sql += " INNER JOIN gene ON (gene.geneId = " + exprTableName + ".geneId)";
-        }
+
         if (isIncludeSubStages) {
+            //propagate expression calls to parent stages.
             sql += " INNER JOIN stage ON " + exprTableName + ".stageId = stage.stageId " +
-            	   " INNER JOIN stage AS " + propagatedStageTableName + " ON " +
-            		    propagatedStageTableName + ".stageLeftBound <= stage.stageLeftBound AND " +
-            		    propagatedStageTableName + ".stageRightBound >= stage.stageRightBound ";
+                   " INNER JOIN stage AS " + propagatedStageTableName + " ON " +
+                       propagatedStageTableName + ".stageLeftBound <= stage.stageLeftBound AND " +
+                       propagatedStageTableName + ".stageRightBound >= stage.stageRightBound ";
+            //there are too much data to propagate all expression calls on the fly at once, 
+            //so we need to do it using several queries, group of genes by group of genes.
+            //So we need to identify genes with expression data, and to retrieve them 
+            //with a LIMIT clause. We cannot use a subquery with a LIMIT in a IN clause 
+            //(limitation of MySQL as of version 5.5), so we use the subquery to create 
+            //a temporary table to join to in the main query. 
+            //In the subquery, the EXISTS clause is used to speed-up the main query, 
+            //to make sure we will not look up for data not present in the expression table.
+            //here, we generate the first part of the subquery, as we may need 
+            //to set speciesIds afterwards.
+            sql += " INNER JOIN (SELECT geneId from gene where exists " +
+            		"(select 1 from expression where expression.geneId = gene.geneId) ";
         }
-        
         if (speciesIds != null && speciesIds.size() > 0) {
-            sql += " WHERE gene.speciesId IN (" + 
-                           BgeePreparedStatement.generateParameterizedQueryString(
-                                   speciesIds.size()) + ") ";
+            if (isIncludeSubStages) {
+                sql += "AND ";
+            } else {
+                sql += " INNER JOIN gene ON (gene.geneId = " + exprTableName + ".geneId) WHERE ";
+            }
+            sql += "gene.speciesId IN (" + BgeePreparedStatement.generateParameterizedQueryString(
+                            speciesIds.size()) + ") ";
         }
         if (isIncludeSubStages) {
+            //finish the subquery and the join to the expression table
+            sql += "LIMIT ?, ?) as tempTable on " + exprTableName + ".geneId = tempTable.geneId ";
+            //and now, finish the main query
             sql += " GROUP BY " + exprTableName + ".geneId, " + 
                    exprTableName + ".anatEntityId, " + propagatedStageTableName + ".stageId";
-            
-                   
         }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql);
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             if (speciesIds != null && speciesIds.size() > 0) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                 Collections.sort(orderedSpeciesIds);
                 stmt.setIntegers(1, orderedSpeciesIds);
-            }             
-            return log.exit(new MySQLExpressionCallTOResultSet(stmt));
+            }
+
+            if (!isIncludeSubStages) {
+                return log.exit(new MySQLExpressionCallTOResultSet(stmt));
+            } 
+            
+            int offsetParamIndex = (speciesIds == null ? 1: speciesIds.size() + 1);
+            int rowCountParamIndex = offsetParamIndex + 1;
+            int rowCount = this.getManager().getExprPropagationGeneCount();
+            return log.exit(new MySQLExpressionCallTOResultSet(stmt, offsetParamIndex, 
+                    rowCountParamIndex, rowCount, true));
+            
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -473,9 +497,37 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         private MySQLExpressionCallTOResultSet(BgeePreparedStatement statement) {
             super(statement);
         }
+        /**
+         * Delegates to {@link MySQLDAOResultSet#MySQLDAOResultSet(BgeePreparedStatement, 
+         * int, int, int)} super constructor.
+         * 
+         * @param statement             The first {@code BgeePreparedStatement} to execute 
+         *                              a query on.
+         * @param offsetParamIndex      An {@code int} that is the index of the parameter 
+         *                              defining the offset argument of a LIMIT clause, 
+         *                              in the SQL query hold by {@code statement}.
+         * @param rowCountParamIndex    An {@code int} that is the index of the parameter 
+         *                              specifying the maximum number of rows to return 
+         *                              in a LIMIT clause, in the SQL query 
+         *                              hold by {@code statement}.
+         * @param rowCount              An {@code int} that is the maximum number of rows to use 
+         *                              in a LIMIT clause, in the SQL query 
+         *                              hold by {@code statement}.
+         * @param filterDuplicates      A {@code boolean} defining whether equal {@code TransferObject}s 
+         *                              returned by different queries should be filtered: 
+         *                              when {@code true}, only 
+         *                              one of them will be returned. This implies that all 
+         *                              {@code TransferObject}s returned will be stored, implying 
+         *                              potentially great memory usage.
+         */
+        private MySQLExpressionCallTOResultSet(BgeePreparedStatement statement, 
+                int offsetParamIndex, int rowCountParamIndex, int rowCount, 
+                boolean filterDuplicates) {
+            super(statement, offsetParamIndex, rowCountParamIndex, rowCount, filterDuplicates);
+        }
 
         @Override
-        public ExpressionCallTO getTO() throws DAOException {
+        protected ExpressionCallTO getNewTO() throws DAOException {
             log.entry();
 
             String id = null, geneId = null, anatEntityId = null, devStageId = null;
@@ -566,7 +618,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         }
 
         @Override
-        public GlobalExpressionToExpressionTO getTO() throws DAOException {
+        protected GlobalExpressionToExpressionTO getNewTO() throws DAOException {
             log.entry();
             String globalExpressionId = null, expressionId = null;
 

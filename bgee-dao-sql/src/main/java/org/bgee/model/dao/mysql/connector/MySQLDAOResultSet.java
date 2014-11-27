@@ -649,7 +649,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * 
      * @return  {@code true} if the LIMIT feature is used.
      */
-    private boolean isUsingLimitFeature() {
+    public boolean isUsingLimitFeature() {
         log.entry();
         if (this.offsetParamIndex == 0) {
             return log.exit(false);
@@ -723,6 +723,17 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      */
     protected int getStatementCount() {
         return this.statements.size();
+    }
+    /**
+     * @return  A {@code boolean} defining whether equal {@code TransferObject}s returned 
+     *          by different queries (whether because of the LIMIT feature, or because 
+     *          several statements were provided) should be filtered: when {@code true}, 
+     *          only one of them will be returned. This implies that all 
+     *          {@code TransferObject}s returned will be stored, implying potentially 
+     *          great memory usage.
+     */
+    public boolean isFilterDuplicates() {
+        return this.filterDuplicates;
     }
     
 }

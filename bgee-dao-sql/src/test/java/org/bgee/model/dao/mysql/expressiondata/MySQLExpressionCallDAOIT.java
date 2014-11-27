@@ -1,6 +1,7 @@
 package org.bgee.model.dao.mysql.expressiondata;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.SQLException;
@@ -24,6 +25,7 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.mysql.MySQLITAncestor;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -106,9 +108,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF));
         // Compare
-        List<ExpressionCallTO> expressions = dao.getExpressionCalls(params).getAllTOs();
+        MySQLExpressionCallTOResultSet rs = 
+                (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        List<ExpressionCallTO> expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // With speciesIds but not include substructures 
         // Generate parameters
@@ -128,9 +134,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         false, false, OriginOfLine.SELF, OriginOfLine.SELF)); 
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // On global expression table 
         // With speciesIds and include substructures 
@@ -154,10 +163,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
                         true, false, OriginOfLine.DESCENT, OriginOfLine.SELF));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls + 
                 ", but was: " + expressions, 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // Without species filter but include substructures
         // Generate parameters
@@ -237,9 +249,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, true, false, OriginOfLine.DESCENT, OriginOfLine.SELF));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
         // Test get only GENEID without species filter and without including substructures
         dao.clearAttributes();
@@ -251,9 +266,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // Test get only GENEID without species filter and without including substructures
         dao.clearAttributes();
@@ -261,9 +279,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         expectedExprCalls = Arrays.asList(
                 new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // Test get only ID without species filter and including substructures
         dao.clearAttributes();
@@ -295,9 +316,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("23", null, null, null, null, null, null, null, null, null, null, null), 
                 new ExpressionCallTO("24", null, null, null, null, null, null, null, null, null, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
         // Test get INCLUDESUBSTRUCTURES (and STAGEID) without OriginOfLine including substructures
         dao.clearAttributes();
@@ -321,9 +345,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO(null, null, null, "Stage_id13",
                         null, null, null, null, true, null, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
     }
 
     /**
@@ -415,10 +442,14 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.NODATA, false, true, OriginOfLine.SELF, OriginOfLine.SELF));
         // Compare
-        List<ExpressionCallTO> expressions = dao.getExpressionCalls(params).getAllTOs();
+        MySQLExpressionCallTOResultSet rs = 
+                (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        List<ExpressionCallTO> expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected " + expectedExprCalls + 
                 ", but was: " + expressions, 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // With speciesIds but not include substructures 
         // Generate parameters
@@ -447,10 +478,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, false, true, OriginOfLine.SELF, OriginOfLine.DESCENT)); 
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls + 
                 ", but was: " + expressions, 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // On global expression table 
         // With speciesIds and include substructures 
@@ -492,10 +526,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.LOWQUALITY, 
                         DataState.LOWQUALITY, true, true, OriginOfLine.BOTH, OriginOfLine.DESCENT));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls + 
                 ", but was: " + expressions, 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
         // Test get only GENEID without species filter and without including substructures, 
         // but with including sub-stages
@@ -509,9 +546,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO(null, "ID2", null, null, null, null, null, null, null, null, null, null),
                 new ExpressionCallTO(null, "ID3", null, null, null, null, null, null, null, null, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // Test get only INCLUDE_SUBSTRUCTURES without species filter and without including substructures, 
         // but with including sub-stages
@@ -520,9 +560,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         expectedExprCalls = Arrays.asList(
                 new ExpressionCallTO(null, null, null, null, null, null, null, null, false, null, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertTrue("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
        // Test get only INCLUDE_SUBSTAGES without species filter and without including substructures, 
         // but with including sub-stages
@@ -531,9 +574,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         expectedExprCalls = Arrays.asList(
                 new ExpressionCallTO(null, null, null, null, null, null, null, null, null, true, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertTrue("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
         // Test get only ID with species filter and including substructures and sub-stages
         dao.clearAttributes();
@@ -566,10 +612,13 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO("ID1__Anat_id7__Stage_id10", null, null, null, null, null, 
                         null, null, null, null, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved, expected: " + expectedExprCalls + 
                 ", but was: " + expressions, 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
         // Test get INCLUDE_SUBSTAGES (and STAGEID) without OriginOfLine including sub-stages
         dao.clearAttributes();
@@ -589,9 +638,12 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
                 new ExpressionCallTO(null, null, null, "Stage_id10", 
                         null, null, null, null, null, true, null, null));
         // Compare
-        expressions = dao.getExpressionCalls(params).getAllTOs();
+        rs = (MySQLExpressionCallTOResultSet) dao.getExpressionCalls(params);
+        expressions = rs.getAllTOs();
         assertTrue("ExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedExprCalls, expressions));
+        assertTrue("Incorrect filtering of duplicates", rs.isFilterDuplicates());
+        assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         } finally {
             //restore default parameters
             this.getMySQLDAOManager(DAOManager.getDefaultProperties());

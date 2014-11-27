@@ -138,172 +138,15 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages);
 
         // Construct sql query
-        String sql = new String(); 
         String exprTableName = "expression";
         if (isIncludeSubstructures) {
             exprTableName = "globalExpression";
         }
         String propagatedStageTableName = "propagatedStage";
-        
-        Collection<ExpressionCallDAO.Attribute> attributes = this.getAttributes();
-        //the query construct is so complex that we always iterate each Attribute in any case
-        if (attributes == null || attributes.isEmpty()) {
-            attributes = EnumSet.allOf(ExpressionCallDAO.Attribute.class);
-        }
-        //we need to know whether some of the attributes requested will allow to obtain 
-        //unique results. This is especially important when propagation from sub-stages 
-        //is requested: if results returned are not unique, there can be duplicates between 
-        //different queries, that the application must filter, which can use a lot of memory.
-        boolean uniqueResults = false;
-        if (attributes.contains(ExpressionCallDAO.Attribute.ID) || 
-                (attributes.contains(ExpressionCallDAO.Attribute.GENE_ID) && 
-                        attributes.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) && 
-                        attributes.contains(ExpressionCallDAO.Attribute.STAGE_ID))) {
-            uniqueResults = true;
-        }
-        for (ExpressionCallDAO.Attribute attribute: attributes) {
-            if (sql.isEmpty()) {
-                sql += "SELECT ";
-                if (!uniqueResults) {
-                    sql += "DISTINCT ";
-                }
-            } else {
-                sql += ", ";
-            }
-            
-            if (attribute.equals(ExpressionCallDAO.Attribute.ID)) {
-                String colName = "expressionId ";
-                if (isIncludeSubstructures) {
-                    colName = "globalExpressionId ";
-                }
-                //in case we include sub-stages, we need to generate fake IDs, 
-                //because equality of ExpressionCallTO can be based on ID, and here 
-                //a same basic call with a given ID can be associated to different propagated calls.
-                if (isIncludeSubStages) {
-                    sql += "CONCAT(" + exprTableName + ".geneId, '__', " + 
-                            exprTableName + ".anatEntityId, '__', " + 
-                            propagatedStageTableName + ".stageId) AS " + colName;
-                } else {
-                    sql += colName;
-                }
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.GENE_ID)) {
-                sql += exprTableName + ".geneId ";
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID)) {
-                sql += exprTableName + ".anatEntityId ";
-                
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGE_ID)) {
-                if (!isIncludeSubStages) {
-                    sql += exprTableName + ".stageId ";
-                } else {
-                    sql += propagatedStageTableName + ".stageId ";
-                }
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE)) {
-                //the attribute ANAT_ORIGIN_OF_LINE corresponds to a column only 
-                //in the global expression table, not in the basic expression table. 
-                //So, if no propagation was requested, we add a fake column to the query 
-                //to provide the information to the ResultSet consistently. 
-                if (!isIncludeSubstructures) {
-                    sql += "'" + OriginOfLine.SELF.getStringRepresentation() + "' ";
-                } else {
-                    //otherwise, we use the real column in the global expression table
-                    sql += "originOfLine ";
-                }
-                sql += "AS anatOriginOfLine ";
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES)) {
-                //the Attributes INCLUDE_SUBSTRUCTURES does not correspond to any columns 
-                //in a table, but it allow to determine how the TOs returned were generated. 
-                //The TOs returned by the ResultSet will have these values set to null 
-                //by default. So, we add fake columns to the query to provide 
-                //the information to the ResultSet. 
-                if (isIncludeSubstructures) {
-                    sql += "1 ";
-                } else {
-                    sql += "0 ";
-                }
-                sql += "AS includeSubstructures ";
-                
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)) {
-                //the attribute STAGE_ORIGIN_OF_LINE does not correspond to any column. 
-                //We add a fake column to the query to compute this information. 
-                if (!isIncludeSubStages) {
-                    sql += "'" + OriginOfLine.SELF.getStringRepresentation() + "' ";
-                } else {
-                    //here, this gets complicated. We need to know the stages that allowed 
-                    //to generate a propagated expression line. We use group_concat.
-                    sql +=  //if the concatenation of all stage IDs allowing to generate 
-                            //the current line contains only the propagated stage, 
-                            //origin of line = SELF
-                            "IF (GROUP_CONCAT(distinct " + exprTableName + ".stageId) = " +
-                    		propagatedStageTableName + ".stageId, " +
-                    		    "'" + OriginOfLine.SELF.getStringRepresentation() + "', " + 
-                    		    //otherwise, if the concatenation contains the propagated stage, 
-                    		    //among other stages, origin of line = BOTH. 
-                    		    //in order to not need to exceed the max size 
-                    		    //of group_concat_max_len, we order the stages to get 
-                    		    //the propagated stage first, so we're sure it's not truncated
-                    		    "IF (GROUP_CONCAT(distinct " + exprTableName + ".stageId ORDER BY " +
-                    		    exprTableName + ".stageId = " + propagatedStageTableName + ".stageId DESC) " +
-                    		    "LIKE CONCAT(" + propagatedStageTableName + ".stageId" + ", ',%'), " +
-                    		        "'" + OriginOfLine.BOTH.getStringRepresentation() + "', " +
-                    		        //otherwise, the concatenation contains only stages different from 
-                    		        //the propagated stage, origin of line = DESCENT
-                    		        "'" + OriginOfLine.DESCENT.getStringRepresentation() + "')) ";
-                }
-                sql += "AS stageOriginOfLine ";
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES)) {
-                //the Attributes INCLUDE_SUBSTAGES does not correspond to any columns 
-                //in a table, but it allow to determine how the TOs returned were generated. 
-                //The TOs returned by the ResultSet will have these values set to null 
-                //by default. So, we add fake columns to the query to provide 
-                //the information to the ResultSet. 
-                if (isIncludeSubStages) {
-                    sql += "1 ";
-                } else {
-                    sql += "0 ";
-                }
-                sql += "AS includeSubStages ";
-                
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
-                if (!isIncludeSubStages) {
-                    sql += "(affymetrixData + 0) ";
-                } else {
-                    //if expression is propagated to parent stages, we get the best value 
-                    //from all expression calls group by the propagated stage
-                    sql += "MAX(affymetrixData + 0) ";
-                }
-                sql += "AS affymetrixData ";
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_DATA)) {
-                if (!isIncludeSubStages) {
-                    sql += "(estData + 0) ";
-                } else {
-                    //if expression is propagated to parent stages, we get the best value 
-                    //from all expression calls group by the propagated stage
-                    sql += "MAX(estData + 0) ";
-                }
-                sql += "AS estData ";
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
-                if (!isIncludeSubStages) {
-                    sql += "(inSituData + 0) ";
-                } else {
-                    //if expression is propagated to parent stages, we get the best value 
-                    //from all expression calls group by the propagated stage
-                    sql += "MAX(inSituData + 0) ";
-                }
-                sql += "AS inSituData ";
-            } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
-                if (!isIncludeSubStages) {
-                    sql += "(rnaSeqData + 0) ";
-                } else {
-                    //if expression is propagated to parent stages, we get the best value 
-                    //from all expression calls group by the propagated stage
-                    sql += "MAX(rnaSeqData + 0) ";
-                }
-                sql += "AS rnaSeqData ";
-            } else {
-                throw log.throwing(new IllegalArgumentException("The attribute provided (" +
-                        attribute.toString() + ") is unknown for " + ExpressionCallDAO.class.getName()));
-            }
-        }
+
+        String sql = this.generateSelectClause(this.getAttributes(), 
+                isIncludeSubstructures, isIncludeSubStages, 
+                exprTableName, propagatedStageTableName);
         
         sql += " FROM " + exprTableName;
 
@@ -365,14 +208,179 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             //a huge memory cost); also, if geneIds were requested, there cannot be 
             //duplicates between queries (duplicates inside a query will be filtered by 
             //the DISTINCT clause), so, no need to filter on the application side.
-            boolean filterDuplicates = !uniqueResults && 
-                    !attributes.contains(ExpressionCallDAO.Attribute.GENE_ID);
+            boolean filterDuplicates = 
+                    this.getAttributes() != null && !this.getAttributes().isEmpty() && 
+                    !this.getAttributes().contains(ExpressionCallDAO.Attribute.ID) && 
+                    !this.getAttributes().contains(ExpressionCallDAO.Attribute.GENE_ID);
+            
             return log.exit(new MySQLExpressionCallTOResultSet(stmt, offsetParamIndex, 
                     rowCountParamIndex, rowCount, filterDuplicates));
             
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
+    }
+    
+    private String generateSelectClause(Collection<ExpressionCallDAO.Attribute> attributes, 
+            boolean includeSubstructures, boolean includeSubStages, 
+            String exprTableName, String propagatedStageTableName) {
+        log.entry(attributes, includeSubstructures, includeSubStages, 
+                exprTableName, propagatedStageTableName);
+        
+        String sql = "";
+        //the query construct is so complex that we always iterate each Attribute in any case
+        if (attributes == null || attributes.isEmpty()) {
+            attributes = EnumSet.allOf(ExpressionCallDAO.Attribute.class);
+        }
+        for (ExpressionCallDAO.Attribute attribute: attributes) {
+            if (sql.isEmpty()) {
+                sql += "SELECT ";
+                //does the attributes requested ensure that there will be 
+                //no duplicated results?
+                if (!attributes.contains(ExpressionCallDAO.Attribute.ID) &&  
+                        (!attributes.contains(ExpressionCallDAO.Attribute.GENE_ID) || 
+                            !attributes.contains(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
+                            !attributes.contains(ExpressionCallDAO.Attribute.STAGE_ID))) {
+                    sql += "DISTINCT ";
+                }
+            } else {
+                sql += ", ";
+            }
+            
+            if (attribute.equals(ExpressionCallDAO.Attribute.ID)) {
+                String colName = "expressionId ";
+                if (includeSubstructures) {
+                    colName = "globalExpressionId ";
+                }
+                //in case we include sub-stages, we need to generate fake IDs, 
+                //because equality of ExpressionCallTO can be based on ID, and here 
+                //a same basic call with a given ID can be associated to different propagated calls.
+                if (includeSubStages) {
+                    sql += "CONCAT(" + exprTableName + ".geneId, '__', " + 
+                            exprTableName + ".anatEntityId, '__', " + 
+                            propagatedStageTableName + ".stageId) AS " + colName;
+                } else {
+                    sql += colName;
+                }
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.GENE_ID)) {
+                sql += exprTableName + ".geneId ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID)) {
+                sql += exprTableName + ".anatEntityId ";
+                
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGE_ID)) {
+                if (!includeSubStages) {
+                    sql += exprTableName + ".stageId ";
+                } else {
+                    sql += propagatedStageTableName + ".stageId ";
+                }
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE)) {
+                //the attribute ANAT_ORIGIN_OF_LINE corresponds to a column only 
+                //in the global expression table, not in the basic expression table. 
+                //So, if no propagation was requested, we add a fake column to the query 
+                //to provide the information to the ResultSet consistently. 
+                if (!includeSubstructures) {
+                    sql += "'" + OriginOfLine.SELF.getStringRepresentation() + "' ";
+                } else {
+                    //otherwise, we use the real column in the global expression table
+                    sql += "originOfLine ";
+                }
+                sql += "AS anatOriginOfLine ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES)) {
+                //the Attributes INCLUDE_SUBSTRUCTURES does not correspond to any columns 
+                //in a table, but it allow to determine how the TOs returned were generated. 
+                //The TOs returned by the ResultSet will have these values set to null 
+                //by default. So, we add fake columns to the query to provide 
+                //the information to the ResultSet. 
+                if (includeSubstructures) {
+                    sql += "1 ";
+                } else {
+                    sql += "0 ";
+                }
+                sql += "AS includeSubstructures ";
+                
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)) {
+                //the attribute STAGE_ORIGIN_OF_LINE does not correspond to any column. 
+                //We add a fake column to the query to compute this information. 
+                if (!includeSubStages) {
+                    sql += "'" + OriginOfLine.SELF.getStringRepresentation() + "' ";
+                } else {
+                    //here, this gets complicated. We need to know the stages that allowed 
+                    //to generate a propagated expression line. We use group_concat.
+                    sql +=  //if the concatenation of all stage IDs allowing to generate 
+                            //the current line contains only the propagated stage, 
+                            //origin of line = SELF
+                            "IF (GROUP_CONCAT(distinct " + exprTableName + ".stageId) = " +
+                            propagatedStageTableName + ".stageId, " +
+                                "'" + OriginOfLine.SELF.getStringRepresentation() + "', " + 
+                                //otherwise, if the concatenation contains the propagated stage, 
+                                //among other stages, origin of line = BOTH. 
+                                //in order to not need to exceed the max size 
+                                //of group_concat_max_len, we order the stages to get 
+                                //the propagated stage first, so we're sure it's not truncated
+                                "IF (GROUP_CONCAT(distinct " + exprTableName + ".stageId ORDER BY " +
+                                exprTableName + ".stageId = " + propagatedStageTableName + ".stageId DESC) " +
+                                "LIKE CONCAT(" + propagatedStageTableName + ".stageId" + ", ',%'), " +
+                                    "'" + OriginOfLine.BOTH.getStringRepresentation() + "', " +
+                                    //otherwise, the concatenation contains only stages different from 
+                                    //the propagated stage, origin of line = DESCENT
+                                    "'" + OriginOfLine.DESCENT.getStringRepresentation() + "')) ";
+                }
+                sql += "AS stageOriginOfLine ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES)) {
+                //the Attributes INCLUDE_SUBSTAGES does not correspond to any columns 
+                //in a table, but it allow to determine how the TOs returned were generated. 
+                //The TOs returned by the ResultSet will have these values set to null 
+                //by default. So, we add fake columns to the query to provide 
+                //the information to the ResultSet. 
+                if (includeSubStages) {
+                    sql += "1 ";
+                } else {
+                    sql += "0 ";
+                }
+                sql += "AS includeSubStages ";
+                
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
+                if (!includeSubStages) {
+                    sql += "(affymetrixData + 0) ";
+                } else {
+                    //if expression is propagated to parent stages, we get the best value 
+                    //from all expression calls group by the propagated stage
+                    sql += "MAX(affymetrixData + 0) ";
+                }
+                sql += "AS affymetrixData ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.EST_DATA)) {
+                if (!includeSubStages) {
+                    sql += "(estData + 0) ";
+                } else {
+                    //if expression is propagated to parent stages, we get the best value 
+                    //from all expression calls group by the propagated stage
+                    sql += "MAX(estData + 0) ";
+                }
+                sql += "AS estData ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.IN_SITU_DATA)) {
+                if (!includeSubStages) {
+                    sql += "(inSituData + 0) ";
+                } else {
+                    //if expression is propagated to parent stages, we get the best value 
+                    //from all expression calls group by the propagated stage
+                    sql += "MAX(inSituData + 0) ";
+                }
+                sql += "AS inSituData ";
+            } else if (attribute.equals(ExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
+                if (!includeSubStages) {
+                    sql += "(rnaSeqData + 0) ";
+                } else {
+                    //if expression is propagated to parent stages, we get the best value 
+                    //from all expression calls group by the propagated stage
+                    sql += "MAX(rnaSeqData + 0) ";
+                }
+                sql += "AS rnaSeqData ";
+            } else {
+                throw log.throwing(new IllegalArgumentException("The attribute provided (" +
+                        attribute.toString() + ") is unknown for " + ExpressionCallDAO.class.getName()));
+            }
+        }
+        return log.exit(sql);
     }
 
     @Override

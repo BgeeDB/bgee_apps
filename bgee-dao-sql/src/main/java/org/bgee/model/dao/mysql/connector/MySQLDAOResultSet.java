@@ -391,7 +391,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             //as we need to know whether the database can potentially have other results.
             this.currentResultSetIterationCount++;
             //check whether we need to filter duplicated TOs
-            if (this.filterDuplicates) {
+            if (this.isFilterDuplicates()) {
                 T to = this.getTO();
                 if (to != null && !this.returnedTOs.add(to)) {
                     //duplicate TO, we do not want to return it, use recursivity to move 
@@ -415,6 +415,11 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         //even if getTO is called several times. This will save memory usage.
         //this attribute is reset to null each time the next method is called.
         if (this.lastTOGenerated == null) {
+            if (this.currentResultSet == null) {
+                throw log.throwing(new IllegalStateException("Cannot retrieve a TransferObject " +
+                		"after all results have been iterated"));
+            }
+            
             this.lastTOGenerated = this.getNewTO();
         }
         return log.exit(this.lastTOGenerated);

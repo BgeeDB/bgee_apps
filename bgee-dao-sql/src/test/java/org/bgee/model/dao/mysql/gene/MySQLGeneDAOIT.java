@@ -53,7 +53,6 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
      */
     @Test
     public void shouldGetAllGenes() throws SQLException {
-        log.entry();
         
         this.useSelectDB();
 
@@ -88,8 +87,6 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         //Compare
         assertTrue("GeneTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
-
-        log.exit();
     }
 
     /**

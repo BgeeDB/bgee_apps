@@ -252,10 +252,14 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 if (includeSubstructures) {
                     colName = "globalExpressionId ";
                 }
-                //in case we include sub-stages, we need to generate fake IDs, 
+                //in case we include sub-stages, we need to generate fake IDs,  
                 //because equality of ExpressionCallTO can be based on ID, and here 
                 //a same basic call with a given ID can be associated to different propagated calls.
                 if (includeSubStages) {
+                    log.warn("Retrieval of expression IDs with on-the-fly propagation " +
+                    		"of expression calls, can increase memory usage.");
+                    //TODO: transform into a bit value for lower memory consumption?
+                    //see convert unsigned: http://dev.mysql.com/doc/refman/5.5/en/cast-functions.html#function_convert
                     sql += "CONCAT(" + exprTableName + ".geneId, '__', " + 
                             exprTableName + ".anatEntityId, '__', " + 
                             propagatedStageTableName + ".stageId) AS " + colName;

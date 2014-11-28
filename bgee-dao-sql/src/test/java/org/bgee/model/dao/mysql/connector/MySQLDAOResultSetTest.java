@@ -257,6 +257,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement3, never()).executeQuery();
         verify(mockStatement4, never()).executeQuery();
         verify(mockStatement5, never()).executeQuery();
+        assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
 
         when(mockRs.next()).thenReturn(true);
@@ -370,6 +372,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement).executeQuery();
         verify(mockStatement2, never()).executeQuery();
         verify(mockStatement3, never()).executeQuery();
+        assertTrue("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
         assertTrue("Incorrect value returend by next", myRs.next());
         assertEquals("Incorrect TO returned", fakeTO1, myRs.getTO());
@@ -474,6 +478,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement).executeQuery();
         verify(mockStatement2, never()).executeQuery();
         verify(mockStatement3, never()).executeQuery();
+        assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
         assertTrue("Incorrect value returend by next", myRs.next());
         assertEquals("Incorrect TO returned", fakeTO1, myRs.getTO());
@@ -586,6 +592,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
         verify(mockStatement, times(1)).executeQuery();
+        assertTrue("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
         assertTrue("Incorrect value returend by next", myRs.next());
         assertEquals("Incorrect TO returned", fakeTO1, myRs.getTO());
@@ -662,6 +670,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
         verify(mockStatement, times(1)).executeQuery();
+        assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
         assertTrue("Incorrect value returend by next", myRs.next());
         assertEquals("Incorrect TO returned", fakeTO1, myRs.getTO());
@@ -739,6 +749,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
         verify(mockStatement, times(1)).executeQuery();
+        assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
         when(mockRs.next()).thenReturn(true);
         assertTrue("Incorrect value returend by next", myRs.next());
@@ -820,6 +832,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         verify(mockStatement).setInt(3, 20);
         verify(mockStatement, times(2)).setInt(anyInt(), anyInt());
         verify(mockStatement, times(1)).executeQuery();
+        assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
         when(mockRs.next()).thenReturn(true);
         assertTrue("Incorrect value returned by next", myRs.next());
@@ -871,6 +885,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
         myRs = new FakeDAOResultSet(mockStatement, 2, 3, 20, 4, false);
+        assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertTrue("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         
         when(mockRs.next()).thenReturn(true);
         assertTrue("Incorrect value returned by next", myRs.next());
@@ -928,7 +944,9 @@ public class MySQLDAOResultSetTest extends TestAncestor
         when(metaData.getColumnCount()).thenReturn(0);
         when(mockStatement.executeQuery()).thenReturn(mockRs);
         
-        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement);        
+        MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(mockStatement);   
+        assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());     
 
         when(mockRs.next()).thenReturn(true);
         assertTrue("Incorrect value returend by next", myRs.next());
@@ -963,6 +981,8 @@ public class MySQLDAOResultSetTest extends TestAncestor
         
         MySQLDAOResultSet<TransferObject> myRs = new FakeDAOResultSet(
                 Arrays.asList(mockStatement, mockStatement2, mockStatement3));
+        assertFalse("Incorrect use of duplicate filtering", myRs.isFilterDuplicates());
+        assertFalse("Incorrect use of limit feature", myRs.isUsingLimitFeature());
         myRs.close();
         verify(mockStatement).close();
         verify(mockStatement2).close();

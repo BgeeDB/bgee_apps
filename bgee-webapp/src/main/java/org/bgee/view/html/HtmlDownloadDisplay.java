@@ -125,12 +125,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<li><h2>Presence/absence of expression</h2>");
         this.writeln("<a id='expr_simple_csv' class='download_link' href='./data/fake-file.csv' download>Download simple file</a>");
         this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='expr_complete_csv' class='download_link' href='./data/fake-file.csv' download>Download complete file</a>");
+        this.writeln("<a id='expr_complete_csv' class='download_link' href='./data/fake-file.csv' download>Download advanced file</a>");
         this.writeln("</li>");
         this.writeln("<li><h2 >Over-/Under-expression</h2>");
         this.writeln("<a id='overunder_simple_csv' class='download_link' href='./data/fake-file.csv' download>Download simple file</a>");
         this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='overunder_complete_csv' class='download_link' href='./data/fake-file.csv' download>Download complete file</a>");
+        this.writeln("<a id='overunder_complete_csv' class='download_link' href='./data/fake-file.csv' download>Download advanced file</a>");
         this.writeln("</li>");
         this.writeln("</ul>");
         this.writeln("</div>");
@@ -153,7 +153,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Images source
         this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
         this.writeln("<div id='creativecommons'>");
-        this.writeln("<p><i>Homo sapiens</i> picture by Yves Picq http://veton.picq.fr (Own work) [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0-2.5-2.0-1.0</a>]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ALaos-lenten0264a.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
+        this.writeln("<p><i>Homo sapiens</i> picture by Leonardo da Vinci (Life time: 1519) [Public domain]. <a target='_blank' href='http://commons.wikimedia.org/wiki/File:Da_Vinci%27s_Anatomical_Man.jpg#mediaviewer/File:Da_Vinci%27s_Anatomical_Man.jpg'>See <i>H. sapiens</i> picture via Wikimedia Commons</a></p>");
         this.writeln("<p><i>Mus musculus</i> picture by Rasbak [<a target='_blank' href='http://www.gnu.org/copyleft/fdl.html'>GFDL</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AApodemus_sylvaticus_bosmuis.jpg'>See <i>M. musculus</i> picture via Wikimedia Commons</a></p>");
         this.writeln("<p><i>Danio rerio</i> picture by Azul (Own work) [see page for license], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3AZebrafisch.jpg'>See <i>D. rerio</i> picture via Wikimedia Commons</a></p>");
         this.writeln("<p><i>Drosophila melanogaster</i> picture by Andr&eacute; Karwath aka Aka (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ADrosophila_melanogaster_-_side_(aka).jpg'>See <i>D. melanogaster</i> picture via Wikimedia Commons</a></p>");
@@ -342,7 +342,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             else{
                 hiddenInfo = name;
             }
-            images.append(generateSpeciesImg(speciesId, name, shortName, commonName, alternateNames,true));
+            images.append(
+                    generateSpeciesImg(speciesId, name, shortName, commonName, alternateNames, true));
         }
         if (StringUtils.isBlank(figcaption)) {
             StringBuilder newFigcaption = new StringBuilder();
@@ -354,10 +355,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             figcaption=newFigcaption.toString();   
         }
         StringBuilder figure = new StringBuilder();
-        if(isGroup){
+        if (isGroup) {
             figure.append("<figure data-bgeegroupname='" + figcaption + "'>");
-        }
-        else{
+        } else {
             figure.append("<figure>");
         }
         figcaption = figcaption.concat(" <span class='invisible'>" + hiddenInfo + "</span>");

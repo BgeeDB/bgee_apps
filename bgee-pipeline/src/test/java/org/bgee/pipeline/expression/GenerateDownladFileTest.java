@@ -480,7 +480,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
                         new IsElementOf(dataElements),  // Affymetrix data
                         new IsElementOf(dataElements),  // EST data
                         new IsElementOf(dataElements),  // In Situ data
-                        new IsElementOf(dataElements),  // Relaxed in Situ data
+//                        new IsElementOf(dataElements),  // Relaxed in Situ data
                         new IsElementOf(dataElements),  // RNA-seq data
                         new IsElementOf(originElement), // Including observed data
                         new IsElementOf(dataElements)}; // Differential expression or Expression/No-expression
@@ -505,10 +505,13 @@ public class GenerateDownladFileTest  extends TestAncestor {
                     affymetrixData = (String) rowMap.get(headers[6]);
                     estData = (String) rowMap.get(headers[7]);
                     inSituData = (String) rowMap.get(headers[8]);
-                    relaxedInSituData = (String) rowMap.get(headers[9]);
-                    rnaSeqData = (String) rowMap.get(headers[10]);
-                    observedData = (String) rowMap.get(headers[11]);
-                    resume = (String) rowMap.get(headers[12]);
+//                    relaxedInSituData = (String) rowMap.get(headers[9]);
+//                  rnaSeqData = (String) rowMap.get(headers[10]);
+//                  observedData = (String) rowMap.get(headers[11]);
+//                  resume = (String) rowMap.get(headers[12]);
+                  rnaSeqData = (String) rowMap.get(headers[9]);
+                  observedData = (String) rowMap.get(headers[10]);
+                  resume = (String) rowMap.get(headers[11]);
                 }
 
                 if (speciesId.equals("11")) {
@@ -522,7 +525,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NOEXPRESSION, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.HIGHQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.HIGHQUALITY, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -537,7 +541,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NODATA, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.HIGHQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.HIGHQUALITY, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -552,7 +557,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NOEXPRESSION, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.NODATA, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NODATA, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -567,7 +573,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NOEXPRESSION, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.NODATA, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NODATA, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -582,7 +589,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NOEXPRESSION, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.NODATA, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NODATA, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -597,7 +605,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.HIGHQUALITY, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.HIGHQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NOEXPRESSION, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -612,7 +621,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.HIGHQUALITY, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.HIGHQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NOEXPRESSION, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -627,7 +637,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.HIGHQUALITY, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.HIGHQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NOEXPRESSION, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -643,7 +654,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.LOWQUALITY, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.HIGHQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.HIGHQUALITY, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -658,7 +670,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.LOWQUALITY, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.HIGHQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.LOWQUALITY, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -673,7 +686,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.LOWQUALITY, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.HIGHQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.LOWQUALITY, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -688,7 +702,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NODATA, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.NOEXPRESSION, inSituData,
-                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+//                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NOEXPRESSION, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -703,7 +718,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NOEXPRESSION, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.NOEXPRESSION, inSituData,
-                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+//                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NOEXPRESSION, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -718,7 +734,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NOEXPRESSION, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.NOEXPRESSION, inSituData,
-                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+//                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NOEXPRESSION, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);}
                     }
@@ -732,7 +749,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.HIGHQUALITY, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.LOWQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NODATA, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -747,7 +765,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.HIGHQUALITY, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.LOWQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NODATA, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -762,7 +781,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.HIGHQUALITY, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.LOWQUALITY, inSituData,
-                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+//                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NODATA, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
@@ -777,7 +797,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.HIGHQUALITY, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.LOWQUALITY, inSituData,
-                                    ExpressionData.NODATA, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NODATA, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -792,7 +813,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                     ExpressionData.NODATA, affymetrixData,
                                     ExpressionData.NODATA, estData,
                                     ExpressionData.NODATA, inSituData,
-                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+//                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+                                    null, relaxedInSituData,
                                     ExpressionData.NODATA, rnaSeqData,
                                     ObservedData.NOTOBSERVED, observedData);
                         }
@@ -881,8 +903,10 @@ public class GenerateDownladFileTest  extends TestAncestor {
         assertEquals("Incorrect in situ data for " + geneId, 
                 expInSituData.getStringRepresentation(), inSituData);
         
-        assertEquals("Incorrect relaxed in situ data for " + geneId, 
-                expRelaxedInSituData.getStringRepresentation(), relaxedInSituData);
+        if (expRelaxedInSituData != null) {
+            assertEquals("Incorrect relaxed in situ data for " + geneId, 
+                    expRelaxedInSituData.getStringRepresentation(), relaxedInSituData);
+        }
         
         assertEquals("Incorrect RNA-seq data for " + geneId, 
                 expRNAseqData.getStringRepresentation(), rnaSeqData);

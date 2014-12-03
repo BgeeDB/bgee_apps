@@ -129,7 +129,7 @@ public class GenerateDownladFile extends CallUser {
      * A {@code String} that is the name of the column containing merged expression/no-expression 
      * from different data types, in the download file.
      */
-    public final static String EXPRESSION_COLUMN_NAME = "Expression/No-expression";
+    public final static String EXPRESSION_COLUMN_NAME = "Expression";
 
     /**
      * A {@code String} that is the name of the column containing merged differential expressions 
@@ -983,12 +983,15 @@ public class GenerateDownladFile extends CallUser {
                         EXPRESSION_COLUMN_NAME};
             }
         } else {
+            // TODO For the moment, we do not write relaxed in situ column 
+            // because there is no data in the database. 
             headerFile = new String[] {
                     GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
                     STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,   
                     ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
                     AFFYMETRIXDATA_COLUMN_NAME, ESTDATA_COLUMN_NAME, INSITUDATA_COLUMN_NAME, 
-                    RELAXEDINSITUDATA_COLUMN_NAME, RNASEQDATA_COLUMN_NAME, 
+//                  RELAXEDINSITUDATA_COLUMN_NAME, 
+                    RNASEQDATA_COLUMN_NAME, 
                     INCLUDING_OBSERVED_DATA_COLUMN_NAME, EXPRESSION_COLUMN_NAME};
         }
             
@@ -1051,7 +1054,7 @@ public class GenerateDownladFile extends CallUser {
                         new IsElementOf(dataElements),  // Affymetrix data
                         new IsElementOf(dataElements),  // EST data
                         new IsElementOf(dataElements),  // In Situ data
-                        new IsElementOf(dataElements),  // Relaxed in Situ data
+//                        new IsElementOf(dataElements),  // Relaxed in Situ data
                         new IsElementOf(dataElements),  // RNA-seq data
                         new IsElementOf(originElement), // Including observed data 
                         new IsElementOf(dataElements)}; // Diff expression or Expression/No-expression
@@ -1098,6 +1101,11 @@ public class GenerateDownladFile extends CallUser {
             for (Map<String, String> map: inputList) {                
                 Map<String, Object> row = new HashMap<String, Object>();
                 for (Entry<String, String> entry : map.entrySet()) {
+                    if (entry.getKey().equals(RELAXEDINSITUDATA_COLUMN_NAME)) {
+                        // TODO For the moment, we do not write relaxed in situ column 
+                        // because there is no data in the database. 
+                        continue;
+                    }
                     if (!isSimplifiedFile ||
                             (!entry.getKey().equals(AFFYMETRIXDATA_COLUMN_NAME) &&
                              !entry.getKey().equals(ESTDATA_COLUMN_NAME) &&

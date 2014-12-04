@@ -41,7 +41,7 @@ import org.bgee.pipeline.BgeeDBUtilsTest;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.expression.GenerateDownladFile.ExpressionData;
-import org.bgee.pipeline.expression.GenerateDownladFile.FileTypes;
+import org.bgee.pipeline.expression.GenerateDownladFile.FileType;
 import org.bgee.pipeline.expression.GenerateDownladFile.ObservedData;
 import org.junit.Rule;
 import org.junit.Test;
@@ -367,20 +367,20 @@ public class GenerateDownladFileTest  extends TestAncestor {
         String directory = testFolder.newFolder("tmpFolder").getPath();
         
         Set<String> fileTypes = new HashSet<>(
-                Arrays.asList(FileTypes.EXPR_SIMPLE.getStringRepresentation(), 
-                              FileTypes.EXPR_COMPLETE.getStringRepresentation())); 
+                Arrays.asList(FileType.EXPR_SIMPLE.getStringRepresentation(), 
+                              FileType.EXPR_COMPLETE.getStringRepresentation())); 
 
         generate.generateSingleSpeciesFiles(
                 Arrays.asList("11", "22"), fileTypes, directory);
         
         String outputSimpleFile11 = directory + "11" + "_" + 
-                FileTypes.EXPR_SIMPLE + GenerateDownladFile.EXTENSION;
+                FileType.EXPR_SIMPLE + GenerateDownladFile.EXTENSION;
         String outputSimpleFile22 = directory + "22" + "_" + 
-                FileTypes.EXPR_SIMPLE + GenerateDownladFile.EXTENSION;
+                FileType.EXPR_SIMPLE + GenerateDownladFile.EXTENSION;
         String outputAdvancedFile11 = directory + "11" + "_" + 
-                FileTypes.EXPR_COMPLETE + GenerateDownladFile.EXTENSION;
+                FileType.EXPR_COMPLETE + GenerateDownladFile.EXTENSION;
         String outputAdvancedFile22 = directory + "22" + "_" + 
-                FileTypes.EXPR_COMPLETE + GenerateDownladFile.EXTENSION;
+                FileType.EXPR_COMPLETE + GenerateDownladFile.EXTENSION;
 
         assertExpressionFile(outputSimpleFile11, "11", true);
         assertExpressionFile(outputSimpleFile22, "22", true);

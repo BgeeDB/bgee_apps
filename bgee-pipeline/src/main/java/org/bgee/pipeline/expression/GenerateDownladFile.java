@@ -26,7 +26,6 @@ import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOR
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO.OriginOfLine;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -150,7 +149,7 @@ public class GenerateDownladFile extends CallUser {
     * @version Bgee 13
     * @since Bgee 13
     */
-   public enum FileTypes {
+   public enum FileType {
        EXPR_SIMPLE("expr-simple"), EXPR_COMPLETE("expr-complete"), 
        DIFFEXPR_SIMPLE("diffexpr-simple"), DIFFEXPR_COMPLETE("diffexpr-complete");
        
@@ -162,7 +161,7 @@ public class GenerateDownladFile extends CallUser {
         * @param stringRepresentation  A {@code String} corresponding to
         *                              this {@code ExpressionData}.
         */
-       private FileTypes(String stringRepresentation) {
+       private FileType(String stringRepresentation) {
            this.stringRepresentation = stringRepresentation;
        }
 
@@ -353,8 +352,33 @@ public class GenerateDownladFile extends CallUser {
         Set<String> fileTypes   = new HashSet<String>(CommandRunner.parseListArgument(args[1])); 
         String directory        = args[2];
         
+        //retrieve FileType from String argument
+        Set<String> unknownFileTypes = new HashSet<String>();
+        Set<FileType> filesToBeGenerated = EnumSet.noneOf(FileType.class);
+        for (String inputFileType: fileTypes) {
+            if (inputFileType.equals(FileType.EXPR_SIMPLE.getStringRepresentation())) {
+                filesToBeGenerated.add(FileType.EXPR_SIMPLE);  
+                
+            } else if (inputFileType.equals(FileType.EXPR_COMPLETE.getStringRepresentation())) {
+                filesToBeGenerated.add(FileType.EXPR_COMPLETE);    
+                
+            } else if (inputFileType.equals(FileType.DIFFEXPR_SIMPLE.getStringRepresentation())) {
+                filesToBeGenerated.add(FileType.DIFFEXPR_SIMPLE);  
+                
+            } else if (inputFileType.equals(FileType.DIFFEXPR_COMPLETE.getStringRepresentation())) {
+                filesToBeGenerated.add(FileType.DIFFEXPR_COMPLETE);  
+                
+            } else {
+                unknownFileTypes.add(inputFileType);
+            }
+        }
+        if (!unknownFileTypes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Some file types do not exist: " + unknownFileTypes));
+        }
+        
         GenerateDownladFile generate = new GenerateDownladFile();
-        generate.generateSingleSpeciesFiles(speciesIds, fileTypes, directory);
+        generate.generateSingleSpeciesFiles(speciesIds, filesToBeGenerated, directory);
         
         log.exit();
     }
@@ -365,7 +389,7 @@ public class GenerateDownladFile extends CallUser {
      * 
      * @param speciesIds     A {@code List} of {@code String}s that are the IDs of species for 
      *                       which files are generated.
-     * @param inputFileTypes A {@code List} of {@code String}s containing file types to be generated.
+     * @param fileTypes      A {@code Set} of {@code FileType}s containing file types to be generated.
      * @param directory      A {@code String} that is the directory path directory to store the 
      *                       generated files. 
      * @throws IOException   If an error occurred while trying to write generated files.
@@ -373,42 +397,18 @@ public class GenerateDownladFile extends CallUser {
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
-    public void generateSingleSpeciesFiles(List<String> speciesIds, Set<String> inputFileTypes, 
+    public void generateSingleSpeciesFiles(List<String> speciesIds, Set<FileType> fileTypes, 
             String directory) throws IOException, UnsupportedOperationException { 
-        log.entry(speciesIds, inputFileTypes, directory);
+        log.entry(speciesIds, fileTypes, directory);
         
         // Check user input, or retrieve all species IDs
         List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(
                 speciesIds, this.getSpeciesDAO()); 
 
-        EnumSet<FileTypes> filesToBeGenerated = EnumSet.noneOf(FileTypes.class);
-        if (inputFileTypes == null || inputFileTypes.isEmpty()) {
+        if (fileTypes == null || fileTypes.isEmpty()) {
             // If no file types are given by user, we set all file types
-            filesToBeGenerated = EnumSet.allOf(FileTypes.class);
-        } else {
-            Set<String> unknownFileTypes = new HashSet<String>();
-            for (String inputFileType: inputFileTypes) {
-                if (inputFileType.equals(FileTypes.EXPR_SIMPLE.getStringRepresentation())) {
-                    filesToBeGenerated.add(FileTypes.EXPR_SIMPLE);  
-                    
-                } else if (inputFileType.equals(FileTypes.EXPR_COMPLETE.getStringRepresentation())) {
-                    filesToBeGenerated.add(FileTypes.EXPR_COMPLETE);    
-                    
-                } else if (inputFileType.equals(FileTypes.DIFFEXPR_SIMPLE.getStringRepresentation())) {
-                    filesToBeGenerated.add(FileTypes.DIFFEXPR_SIMPLE);  
-                    
-                } else if (inputFileType.equals(FileTypes.DIFFEXPR_COMPLETE.getStringRepresentation())) {
-                    filesToBeGenerated.add(FileTypes.DIFFEXPR_COMPLETE);  
-                    
-                } else {
-                    unknownFileTypes.add(inputFileType);
-                }
-            }
-            if (!unknownFileTypes.isEmpty()) {
-                throw log.throwing(new IllegalArgumentException(
-                        "Some file types do not exist: " + unknownFileTypes));
-            }
-        }
+            fileTypes = EnumSet.allOf(FileType.class);
+        } 
         
         // Retrieve gene names, stage names, anat. entity names
         Set<String> setSpecies = new HashSet<String>(speciesIds);
@@ -422,14 +422,14 @@ public class GenerateDownladFile extends CallUser {
         for (String speciesId: speciesIdsToUse) {
             log.debug("Start generation of download files for the species {}", speciesId);
             
-            if (filesToBeGenerated.contains(FileTypes.DIFFEXPR_SIMPLE) ||
-                    inputFileTypes.contains(FileTypes.DIFFEXPR_COMPLETE)) {
+            if (fileTypes.contains(FileType.DIFFEXPR_SIMPLE) ||
+                    fileTypes.contains(FileType.DIFFEXPR_COMPLETE)) {
                 this.generateDiffExprRows(speciesId);
             }
             
-            if (filesToBeGenerated.contains(FileTypes.EXPR_SIMPLE) || 
-                    filesToBeGenerated.contains(FileTypes.EXPR_COMPLETE)) {
-                this.generateExprFiles(directory, filesToBeGenerated, speciesId, 
+            if (fileTypes.contains(FileType.EXPR_SIMPLE) || 
+                    fileTypes.contains(FileType.EXPR_COMPLETE)) {
+                this.generateExprFiles(directory, fileTypes, speciesId, 
                         geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
             }
         }
@@ -470,7 +470,8 @@ public class GenerateDownladFile extends CallUser {
     /**
      * Retrieves all expression calls for the requested species from the Bgee data source, 
      * including data propagated from anatomical substructures or not, 
-     * depending on {@code includeSubstructures}. When data propagation is requested, 
+     * depending on {@code includeSubstructures}, and propagated from sub-stages or not, 
+     * depending on {@code includeSubstages}. When data propagation is requested, 
      * calls generated by data propagation only, and occurring in anatomical entities 
      * with ID present in {@code nonInformativesAnatEntityIds}, are discarded.
      * <p>
@@ -488,7 +489,7 @@ public class GenerateDownladFile extends CallUser {
      * @param includeSubstages              A {@code boolean} defining whether the 
      *                                      {@code ExpressionCallTO}s returned should be 
      *                                      global expression calls with data propagated 
-     *                                      from substages, or basic calls with no propagation. 
+     *                                      from sub-stages, or basic calls with no propagation. 
      *                                      If {@code true}, data are propagated. 
      * @param nonInformativesAnatEntityIds  A {@code Set} of {@code String}s that are the IDs of 
      *                                      non-informative anatomical entities. Calls in these 
@@ -503,8 +504,8 @@ public class GenerateDownladFile extends CallUser {
             Set<String> nonInformativesAnatEntityIds) throws DAOException {
         log.entry(speciesIds, includeSubstructures, includeSubstages, nonInformativesAnatEntityIds);
         
-        log.debug("Start retrieving expression calls (include substructures: {}) for the species IDs {}...", 
-                includeSubstructures, speciesIds);
+        log.debug("Start retrieving expression calls (include substructures: {}, include sub-stages: {}) for the species IDs {}...", 
+                includeSubstructures, includeSubstages, speciesIds);
     
         ExpressionCallDAO dao = this.getExpressionCallDAO();
         // We don't retrieve expression call ID to be able to compare calls on gene, 
@@ -601,9 +602,9 @@ public class GenerateDownladFile extends CallUser {
     /**
      * Generate download files (simple and/or advanced) containing absence/presence of expression.
      * 
-     * @param directory             A {@code String} that is the directory path directory to store  
+     * @param directory             A {@code String} that is the directory to store  
      *                              the generated files. 
-     * @param fileTypes             An {@code EnumSet} of {@code FileTypes} that is the file types 
+     * @param fileTypes             An {@code Set} of {@code FileType}s that are the file types 
      *                              to be generated.
      * @param speciesId             A {@code String} that is the ID of species for which files are 
      *                              generated.
@@ -618,7 +619,7 @@ public class GenerateDownladFile extends CallUser {
      *                              {@code String}s corresponding to anatomical entity names. 
      * @throws IOException  If an error occurred while trying to write the {@code outputFile}.
      */
-    private void generateExprFiles(String directory, EnumSet<FileTypes> fileTypes, String speciesId, 
+    private void generateExprFiles(String directory, Set<FileType> fileTypes, String speciesId, 
             Map<String, String> geneNamesByIds, Map<String, String> stageNamesByIds, 
             Map<String, String> anatEntityNamesByIds) throws IOException {
         log.entry(directory, fileTypes, speciesId, geneNamesByIds, stageNamesByIds, 
@@ -635,14 +636,14 @@ public class GenerateDownladFile extends CallUser {
         // For the simple file, we will use only anat. entities with observed data, 
         // so it's not necessary. 
         Set<String> nonInformativesAnatEntities = new HashSet<String>();
-        if (fileTypes.contains(FileTypes.EXPR_COMPLETE)) {
+        if (fileTypes.contains(FileType.EXPR_COMPLETE)) {
             nonInformativesAnatEntities = 
                     this.loadNonInformativeAnatEntities(speciesFilter);
         }
         
         //only for the complete file we propagate expression calls
         List<ExpressionCallTO> globalExprTOs = new ArrayList<ExpressionCallTO>(); 
-        if (fileTypes.contains(FileTypes.EXPR_COMPLETE)) {
+        if (fileTypes.contains(FileType.EXPR_COMPLETE)) {
             globalExprTOs = this.loadExprCallsFromDb(speciesFilter, true, true,
                     nonInformativesAnatEntities);
             log.trace("globalExprTOs size {}", globalExprTOs.size());
@@ -652,7 +653,7 @@ public class GenerateDownladFile extends CallUser {
         // file and we don't propagate expression, and in the complete file, we do not need to 
         // be able for each data type to know whether there exist some non-propagated data.
         List<ExpressionCallTO> exprTOs = new ArrayList<ExpressionCallTO>(); 
-        if (fileTypes.contains(FileTypes.EXPR_SIMPLE)) {
+        if (fileTypes.contains(FileType.EXPR_SIMPLE)) {
             exprTOs = this.loadExprCallsFromDb(
                     speciesFilter, false, false, nonInformativesAnatEntities);
         }
@@ -670,34 +671,36 @@ public class GenerateDownladFile extends CallUser {
         log.trace("Done retrieve data for expression files for the species {}", speciesId);
 
         
-        if (fileTypes.contains(FileTypes.EXPR_SIMPLE)) {
+        if (fileTypes.contains(FileType.EXPR_SIMPLE)) {
             log.trace("Start generation of data for simple file for the species {}", speciesId);
 
             // Note that this Collection is a List, if it was a Set a global expression call 
             // could be seen as equal to a basic expression call. 
+            //TODO: should it be a Set again, now that there cannot be global and basic calls at the same time?
             List<CallTO> allCallTOs = new ArrayList<CallTO>();
             allCallTOs.addAll(exprTOs);
             allCallTOs.addAll(globalNoExprTOs);
 
             this.generateExprFile(directory + speciesId + "_" + 
-                    FileTypes.EXPR_SIMPLE.getStringRepresentation() + EXTENSION, 
+                    FileType.EXPR_SIMPLE.getStringRepresentation() + EXTENSION, 
                     geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, allCallTOs, true);
             
             log.trace("Done generation of data for simple file for the species {}",
                     speciesId);
         }
         
-        if (fileTypes.contains(FileTypes.EXPR_COMPLETE)) {
+        if (fileTypes.contains(FileType.EXPR_COMPLETE)) {
             log.trace("Start generation of data for advanced file for the species {}",
                     speciesId);
             // Note that this Collection is a List, if it was a Set a global expression call 
             // could be seen as equal to a basic expression call. 
+            //TODO: should it be a Set again, now that there cannot be global and basic calls at the same time?
             List<CallTO> allCallTOs = new ArrayList<CallTO>();
             allCallTOs.addAll(globalExprTOs);
             allCallTOs.addAll(globalNoExprTOs);
             
             this.generateExprFile(directory + speciesId + "_" + 
-                    FileTypes.EXPR_COMPLETE.getStringRepresentation() + EXTENSION, 
+                    FileType.EXPR_COMPLETE.getStringRepresentation() + EXTENSION, 
                     geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, allCallTOs, false);
 
             log.trace("Done generation of data for advanced file for the species {}", 
@@ -787,6 +790,9 @@ public class GenerateDownladFile extends CallUser {
             log.trace("Start merging the group of calls: {}", callGroup);
             Map<String, String> row = new HashMap<String, String>();
             
+            //the current version of this method assumes that there will never be a mixture 
+            //of global propagated calls and of basic calls. This is why we only have 
+            //one ExpressionCallTO, and one NoExpressionCallTO.
             ExpressionCallTO expressionTO = null;
             NoExpressionCallTO noExpressionTO = null;
 
@@ -813,41 +819,46 @@ public class GenerateDownladFile extends CallUser {
             }
             
             if (isSimplifiedFile && expressionTO == null && noExpressionTO != null  
-                    && noExpressionTO.getOriginOfLine().equals(OriginOfLine.PARENT)) {
+                    && noExpressionTO.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
                 // We do not write inferred no-expression calls in simple file 
                 // if there is no expression call.
                 continue;
             }
             
-            // Define resume column
-            ExpressionData resume = ExpressionData.NODATA;
+            // Define summary column
+            ExpressionData summary = ExpressionData.NODATA;
             if (expressionTO != null && noExpressionTO != null) {
-                if (noExpressionTO.isIncludeParentStructures()) {
-                    resume = ExpressionData.LOWAMBIGUITY;                    
+                //TODO: note that when isIncludeParentStructures is true, it means that the callTO 
+                //was generated by a query including parent structures, but the OriginOfLine could still be SELF. 
+                //the following commented line is false: 
+                //if (noExpressionTO.isIncludeParentStructures()) {
+                
+                if (noExpressionTO.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
+                    summary = ExpressionData.LOWAMBIGUITY;                    
                 } else {
-                    resume = ExpressionData.HIGHAMBIGUITY;
+                    summary = ExpressionData.HIGHAMBIGUITY;
                 }
             } else if (expressionTO != null) {
-                EnumSet<DataState> allDataState = EnumSet.of(
+                Set<DataState> allDataState = EnumSet.of(
                         expressionTO.getAffymetrixData(), expressionTO.getESTData(), 
                         expressionTO.getInSituData(), expressionTO.getRNASeqData());
                 if (allDataState.contains(DataState.HIGHQUALITY)) {
-                    resume = ExpressionData.HIGHQUALITY;
+                    summary = ExpressionData.HIGHQUALITY;
                 } else if (allDataState.contains(DataState.LOWQUALITY)) {
-                    resume = ExpressionData.LOWQUALITY;
+                    summary = ExpressionData.LOWQUALITY;
                 } else {
                     throw log.throwing(new IllegalStateException("All data states of the expression "
                             + " are set to no data)"));
                 }
             } else if (noExpressionTO != null) {
-                resume = ExpressionData.NOEXPRESSION;
+                summary = ExpressionData.NOEXPRESSION;
             } else {
                 throw log.throwing(new IllegalStateException("No basic and global calls for the triplet "
                         + "gene(" + callGroup.getKey().getGeneId() + 
                         ") - organ (" + callGroup.getKey().getAnatEntityId() + 
                         ") - stage (" + callGroup.getKey().getStageId() + ")"));
             }
-            row.put(EXPRESSION_COLUMN_NAME, resume.getStringRepresentation());
+            row.put(EXPRESSION_COLUMN_NAME, summary.getStringRepresentation());
 
             // Define if the call include observed data
             ObservedData observedData = ObservedData.NOTOBSERVED; 
@@ -915,9 +926,11 @@ public class GenerateDownladFile extends CallUser {
             DataState dataStateNoExpr) throws IllegalStateException {
         log.entry(dataStateExpr, dataStateNoExpr);
     
+        //no data at all
         if (dataStateExpr == DataState.NODATA && dataStateNoExpr == DataState.NODATA) {
             return log.exit(ExpressionData.NODATA.getStringRepresentation());
         }
+        //no no-expression data, we use the expression data
         if (dataStateNoExpr == DataState.NODATA) {
             if (dataStateExpr.equals(DataState.NODATA)) {
                 return log.exit(ExpressionData.NODATA.getStringRepresentation());
@@ -932,6 +945,7 @@ public class GenerateDownladFile extends CallUser {
                     "The DataState provided (" + dataStateExpr.getStringRepresentation() + 
                     ") is not supported"));  
         }
+        //no-expression data available
         if (dataStateExpr == DataState.NODATA) {
             return log.exit(ExpressionData.NOEXPRESSION.getStringRepresentation());
         }

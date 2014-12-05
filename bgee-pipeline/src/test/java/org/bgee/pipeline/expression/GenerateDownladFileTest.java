@@ -366,9 +366,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
         
         String directory = testFolder.newFolder("tmpFolder").getPath();
         
-        Set<String> fileTypes = new HashSet<>(
-                Arrays.asList(FileType.EXPR_SIMPLE.getStringRepresentation(), 
-                              FileType.EXPR_COMPLETE.getStringRepresentation())); 
+        Set<FileType> fileTypes = new HashSet<>(
+                Arrays.asList(FileType.EXPR_SIMPLE, FileType.EXPR_COMPLETE)); 
 
         generate.generateSingleSpeciesFiles(
                 Arrays.asList("11", "22"), fileTypes, directory);
@@ -870,7 +869,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
         assertEquals("Incorrect stage name for " + geneId, expStageName, stageName);
         assertEquals("Incorrect anaEntity name for " + geneId, expAnatEntityName, anatEntityName);
         assertEquals("Incorrect resume for " + geneId, 
-                expResume.getStringRepresentation(), expResume.getStringRepresentation());
+                expResume.getStringRepresentation(), resume);
     }
 
     /**

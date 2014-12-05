@@ -411,7 +411,7 @@ public class GenerateDownladFile extends CallUser {
             fileTypes = EnumSet.allOf(FileType.class);
         } 
         
-        // Retrieve gene names, stage names, anat. entity names
+        // Retrieve gene names, stage names, anat. entity names, once for all species
         Set<String> setSpecies = new HashSet<String>(speciesIds);
         Map<String, String> geneNamesByIds = 
                 BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());
@@ -425,7 +425,8 @@ public class GenerateDownladFile extends CallUser {
             
             if (fileTypes.contains(FileType.DIFFEXPR_SIMPLE) ||
                     fileTypes.contains(FileType.DIFFEXPR_COMPLETE)) {
-                this.generateDiffExprRows(speciesId);
+//                this.generateDiffExprFiles(directory, fileTypes, speciesId, 
+//                        geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
             }
             
             if (fileTypes.contains(FileType.EXPR_SIMPLE) || 
@@ -603,6 +604,8 @@ public class GenerateDownladFile extends CallUser {
     
     /**
      * Generate download files (simple and/or advanced) containing absence/presence of expression.
+     * This method is responsible for retrieving data from the data source, and then 
+     * to write them into files.
      * 
      * @param directory             A {@code String} that is the directory to store  
      *                              the generated files. 
@@ -742,6 +745,9 @@ public class GenerateDownladFile extends CallUser {
      * @return  A {@code List} of {@code Map}s, where each {@code Map} corresponds to 
      *          a row, and with each {@code Entry} in the {@code Map}s corresponding to a column.
      */
+    //TODO: note, this method is now responsible to determine which columns have to be generated. 
+    //Previously, it was producing all columns, that were then filtered by the method 
+    //writing in files; this was illogical and costly memory-wise.
     private List<Map<String, String>> generateExprFileRows(Map<String, String> geneNamesByIds,
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             List<CallTO> allCallTOs, boolean isSimplifiedFile) {
@@ -964,6 +970,8 @@ public class GenerateDownladFile extends CallUser {
      * @param fileType          The {@code FileType} to be generated.
      * @throws IOException      If an error occurred while trying to write the {@code outputFile}.
      */
+    //TODO: note, the responsibility of this method is now only to write file, 
+    //not to determine which columns to print, or other advanced work.
     private void writeDownloadFile(List<Map<String, String>> inputList, String outputFile, 
             FileType fileType) throws IOException {
         log.entry(inputList, outputFile, fileType);

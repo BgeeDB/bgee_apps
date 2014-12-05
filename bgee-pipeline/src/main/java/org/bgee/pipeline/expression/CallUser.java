@@ -84,6 +84,7 @@ public abstract class CallUser extends MySQLDAOUser {
     protected SortedMap<CallTO, Collection<CallTO>> groupAndOrderByGeneAnatEntityStage(
             Collection<CallTO> callTOs) throws IllegalArgumentException {
         log.entry(callTOs);
+        log.debug("Start sorting and grouping of {} calls...", callTOs.size());
         
         /**
          * {@code Comparator} used to order they keyset in the returned {@code Map}.
@@ -143,7 +144,8 @@ public abstract class CallUser extends MySQLDAOUser {
             }
             aggregatedCalls.add(callTO);
         }
-        
+
+        log.debug("Done sorting and grouping of {} calls.", callTOs.size());
         return log.exit(aggregateMap);
     }
 }

@@ -304,9 +304,21 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
          * relations, even indirect. If {@code true}, all its parents were considered. 
          * So for instance, if B is_a A, and absence of expression has been reported in A, 
          * then B could benefit from this information. In other words, when a gene 
-         * is not expressed in a structure, it is expressed nowhere in that structure.
+         * is not expressed in a structure, it is expressed nowhere in that structure. 
+         * <p>
+         * The returned {@code Boolean} can be {@code null} 
+         * if the {@link Attribute} {@code INCLUDEPARENTSTRUCTURES} was not requested.
+         * <p>
+         * Note that when the returned value is {@code true}, {@link #getOriginOfLine()} 
+         * can return any values of {@link OriginOfLine}; it can notably still return 
+         * the value {@code SELF}, meaning that there were no data to propagate 
+         * from parent structures –but they were nevertheless examined.
+         * <p>
+         * At the opposite, when the returned value is {@code false}, then 
+         * {@link #getOriginOfLine()} can only return the value {@code SELF}.
          * 
          * @return  If {@code true}, all parents of the anatomical entity were considered.
+         *          Can be {@code null} if this information was not requested.
          */
         public Boolean isIncludeParentStructures() {
             return includeParentStructures;
@@ -331,6 +343,7 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
         /**
          * @return  the {@code OriginOfLine} representing the origin of the 
          *          global expression call.
+         *          Can be {@code null} if this information was not requested.
          */
         public OriginOfLine getOriginOfLine() {
             return originOfLine;

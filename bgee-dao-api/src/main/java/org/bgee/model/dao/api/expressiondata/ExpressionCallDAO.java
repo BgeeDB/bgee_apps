@@ -204,11 +204,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
 
         /**
-         * A {@code Boolean} defining whether this expression call was generated 
-         * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
-         * alone, or by also considering all its descendants by <em>is_a</em> or 
-         * <em>part_of</em> relations, even indirect. If {@code true}, all its descendants 
-         * were also considered. 
+         * See {@link #isIncludeSubstructures()}.
          */
         private Boolean includeSubstructures;
         /**
@@ -224,10 +220,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         private OriginOfLine anatOriginOfLine;
         
         /**
-         * A {@code Boolean} defining whether this expression call was generated 
-         * using data from the developmental stage with the ID {@link CallTO#getStageId()} 
-         * alone, or by also considering all its descendants. If {@code true}, all its descendants 
-         * were also considered.
+         * See {@link #isIncludeSubStages()}.
          */
         private Boolean includeSubStages; 
         /**
@@ -321,9 +314,19 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * using data from the anatomical entity with the ID {@link CallTO#getAnatEntityId()} 
          * alone, or by also considering all its descendants by <em>is_a</em> or 
          * <em>part_of</em> relations, even indirect. If {@code true}, all its descendants 
-         * were considered.
+         * were considered. The returned {@code Boolean} can be {@code null} 
+         * if the {@link Attribute} {@code INCLUDE_SUBSTRUCTURES} was not requested.
+         * <p>
+         * Note that when the returned value is {@code true}, {@link #getAnatOriginOfLine()} 
+         * can return any values of {@link OriginOfLine}; it can notably still return 
+         * the value {@code SELF}, meaning that there were no data to propagate 
+         * from substructures –but they were nevertheless examined.
+         * <p>
+         * At the opposite, when the returned value is {@code false}, then 
+         * {@link #getAnatOriginOfLine()} can only return the value {@code SELF}.
          * 
          * @return  If {@code true}, all descendants of the anatomical entity were considered. 
+         *          Can be {@code null} if this information was not requested.
          */
         public Boolean isIncludeSubstructures() {
             return includeSubstructures;
@@ -332,6 +335,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         /**
          * @return  the {@code OriginOfLine} representing how the expression call 
          *          was propagated among anatomical entities.
+         *          Can be {@code null} if this information was not requested.
+         * @see #isIncludeSubstructures()
          */
         public OriginOfLine getAnatOriginOfLine() {
             return anatOriginOfLine;
@@ -348,10 +353,20 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
          * Returns the {@code Boolean} defining whether this expression call was generated 
          * using data from the developmental stage with the ID 
          * {@link ExpressionCallTO#getStageId()} alone, or by also considering all its
-         * descendants. If {@code true}, all its descendants were considered.
+         * descendants. If {@code true}, all its descendants were considered. 
+         * The returned {@code Boolean} can be {@code null} 
+         * if the {@link Attribute} {@code INCLUDE_SUBSTAGES} was not requested.
+         * <p>
+         * Note that when the returned value is {@code true}, {@link #getStageOriginOfLine()} 
+         * can return any values of {@link OriginOfLine}; it can notably still return 
+         * the value {@code SELF}, meaning that there were no data to propagate 
+         * from sub-stages –but they were nevertheless examined.
+         * <p>
+         * At the opposite, when the returned value is {@code false}, then 
+         * {@link #getStageOriginOfLine()} can only return the value {@code SELF}.
          * 
          * @return  If {@code true}, all descendants of the developmental stage 
-         *          were considered. 
+         *          were considered. Can be {@code null} if this information was not requested.
          */
         public Boolean isIncludeSubStages() {
             return includeSubStages;
@@ -372,6 +387,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         /**
          * @return  the {@code OriginOfLine} representing how the expression call 
          *          was propagated among developmental stages.
+         *          Can be {@code null} if this information was not requested.
+         * @see #isIncludeSubStages()
          */
         public OriginOfLine getStageOriginOfLine() {
             return stageOriginOfLine;

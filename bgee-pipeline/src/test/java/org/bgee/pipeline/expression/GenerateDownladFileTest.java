@@ -1,17 +1,14 @@
 package org.bgee.pipeline.expression;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -95,7 +92,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
         
         
-        List<String> listSpeciesIds = Arrays.asList("11", "22"); 
+        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11", "22")); 
         // Gene names
         MySQLGeneTOResultSet mockGeneTORs = createMockDAOResultSet(
                 Arrays.asList(
@@ -105,21 +102,25 @@ public class GenerateDownladFileTest  extends TestAncestor {
                         new GeneTO("ID4", "genN4", null),
                         new GeneTO("ID5", "genN5", null)),
                         MySQLGeneTOResultSet.class);
-        when(mockManager.mockGeneDAO.getGenes(eq(new HashSet<String>(listSpeciesIds)))).
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockGeneDAO.getGenes(speciesIds)).
                 thenReturn(mockGeneTORs);
 
         // Stage names
         MySQLStageTOResultSet mockStageTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new StageTO("Stage_id1", "stageN1", null, null, null, null, null, null),
-                        new StageTO("ParentStage_id1", "substageN1", null, null, null, null, null, null),
-                        new StageTO("ParentStage_id2", "substageN2", null, null, null, null, null, null),
+                        new StageTO("ParentStage_id1", "parentstageN1", null, null, null, null, null, null),
+                        new StageTO("ParentStage_id2", "parentstageN2", null, null, null, null, null, null),
                         new StageTO("Stage_id2", "stageN2", null, null, null, null, null, null),
                         new StageTO("Stage_id3", "stageN3", null, null, null, null, null, null),
                         new StageTO("Stage_id5", "stageN5", null, null, null, null, null, null),
-                        new StageTO("ParentStage_id5", "substageN5", null, null, null, null, null, null)),
+                        new StageTO("ParentStage_id5", "parentstageN5", null, null, null, null, null, null)),
                         MySQLStageTOResultSet.class);
-        when(mockManager.mockStageDAO.getStages(eq(new HashSet<String>(listSpeciesIds)))).
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockStageDAO.getStages(speciesIds)).
                 thenReturn(mockStageTORs);
 
         // Anatomical entity names
@@ -133,23 +134,24 @@ public class GenerateDownladFileTest  extends TestAncestor {
                         new AnatEntityTO("NonInfoAnatEnt1", "xxx", null, null, null, null),
                         new AnatEntityTO("NonInfoAnatEnt2", "zzz", null, null, null, null)),
                         MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getAnatEntitiesBySpeciesIds(eq(new HashSet<String>(
-                listSpeciesIds)))).thenReturn(mockAnatEntityTORs);
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockAnatEntityDAO.getAnatEntitiesBySpeciesIds(speciesIds)).
+                thenReturn(mockAnatEntityTORs);
         
         // For each species, we need to mock getNonInformativeAnatEntities(), getExpressionCalls() 
-        // and getNoExpressionCalls() (basic and global calls), getGenes(), getStages(), 
-        // getAnatEntities()
+        // and getNoExpressionCalls() (basic and global calls)
         
         //// Species 11
-        listSpeciesIds = Arrays.asList("11"); 
+        speciesIds = new HashSet<String>(Arrays.asList("11")); 
 
         // Non informative anatomical entities
         MySQLAnatEntityTOResultSet mockAnatEntityRsSp11 = createMockDAOResultSet(
                 Arrays.asList(
                         new AnatEntityTO("NonInfoAnatEnt1", null, null, null, null, null)),
                         MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(
-                eq(new HashSet<String>(listSpeciesIds)))).thenReturn(mockAnatEntityRsSp11);
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
+                thenReturn(mockAnatEntityRsSp11);
 
         // Global expression calls
         MySQLExpressionCallTOResultSet mockGlobalExprRsSp11 = createMockDAOResultSet(
@@ -187,8 +189,9 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 ExpressionCallTO.OriginOfLine.SELF)),
                         MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams globalExprParams11 = new ExpressionCallParams();
-        globalExprParams11.addAllSpeciesIds(listSpeciesIds);
+        globalExprParams11.addAllSpeciesIds(speciesIds);
         globalExprParams11.setIncludeSubstructures(true);
+        globalExprParams11.setIncludeSubStages(true);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalExprParams11))).
                 thenReturn(mockGlobalExprRsSp11);
@@ -214,22 +217,22 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.BOTH)),
                         MySQLNoExpressionCallTOResultSet.class);
         NoExpressionCallParams globalNoExprParams11 = new NoExpressionCallParams();
-        globalNoExprParams11.addAllSpeciesIds(listSpeciesIds);
+        globalNoExprParams11.addAllSpeciesIds(speciesIds);
         globalNoExprParams11.setIncludeParentStructures(true);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
                 (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams11))).
                 thenReturn(mockGlobalNoExprRsSp11);
 
         //// Species 22
-        listSpeciesIds = Arrays.asList("22"); 
+        speciesIds = new HashSet<String>(Arrays.asList("22")); 
 
         // Non informative anatomical entities
         MySQLAnatEntityTOResultSet mockAnatEntityRsSp22 = createMockDAOResultSet(
                 Arrays.asList(
                         new AnatEntityTO("NonInfoAnatEnt2", null, null, null, null, null)),
                         MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(
-                eq(new HashSet<String>(listSpeciesIds)))).thenReturn(mockAnatEntityRsSp22);
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
+                thenReturn(mockAnatEntityRsSp22);
 
         // Global expression calls
         MySQLExpressionCallTOResultSet mockGlobalExprRsSp22 = createMockDAOResultSet(
@@ -272,8 +275,9 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 ExpressionCallTO.OriginOfLine.DESCENT)),
                         MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams globalExprParams22 = new ExpressionCallParams();
-        globalExprParams22.addAllSpeciesIds(listSpeciesIds);
+        globalExprParams22.addAllSpeciesIds(speciesIds);
         globalExprParams22.setIncludeSubstructures(true);
+        globalExprParams22.setIncludeSubStages(true);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalExprParams22))).
                 thenReturn(mockGlobalExprRsSp22);
@@ -300,7 +304,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
 //                                DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.PARENT),
                         MySQLNoExpressionCallTOResultSet.class);
         NoExpressionCallParams globalNoExprParams22 = new NoExpressionCallParams();
-        globalNoExprParams22.addAllSpeciesIds(listSpeciesIds);
+        globalNoExprParams22.addAllSpeciesIds(speciesIds);
         globalNoExprParams22.setIncludeParentStructures(true);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
                 (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams22))).
@@ -348,6 +352,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
         verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);
         verify(mockManager.mockExpressionCallDAO, times(2)).setAttributes(
                 // All Attributes except ID
+                //TODO: with the EnumSet.complementOf trick, for better evolvability. 
                 ExpressionCallDAO.Attribute.GENE_ID, 
                 ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
                 ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, ExpressionCallDAO.Attribute.EST_DATA,
@@ -388,14 +393,15 @@ public class GenerateDownladFileTest  extends TestAncestor {
         log.entry(file, speciesId, isSimplified);
         
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
+            //TODO: check that the headers are what you expect
             String[] headers = mapReader.getHeader(true);
             log.trace("Headers: {}", (Object[]) headers);
 
-            List<Object> dataElements = new ArrayList<Object>();
+            Set<Object> dataElements = new HashSet<Object>();
             for (ExpressionData data : ExpressionData.values()) {
                 dataElements.add(data.getStringRepresentation());
             } 
-            List<Object> originElement = new ArrayList<Object>();
+            Set<Object> originElement = new HashSet<Object>();
             for (ObservedData data : ObservedData.values()) {
                 originElement.add(data.getStringRepresentation());
             } 
@@ -450,9 +456,9 @@ public class GenerateDownladFileTest  extends TestAncestor {
 //                  rnaSeqData = (String) rowMap.get(headers[10]);
 //                  observedData = (String) rowMap.get(headers[11]);
 //                  resume = (String) rowMap.get(headers[12]);
-                  rnaSeqData = (String) rowMap.get(headers[9]);
-                  observedData = (String) rowMap.get(headers[10]);
-                  resume = (String) rowMap.get(headers[11]);
+                    rnaSeqData = (String) rowMap.get(headers[9]);
+                    observedData = (String) rowMap.get(headers[10]);
+                    resume = (String) rowMap.get(headers[11]);
                 }
 
                 if (speciesId.equals("11")) {
@@ -474,24 +480,23 @@ public class GenerateDownladFileTest  extends TestAncestor {
                     } else if (geneId.equals("ID1") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("ParentStage_id1")) {
                         this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                "substageN1", stageName, "anatName1", anatEntityName, 
+                                "parentstageN1", stageName, "anatName1", anatEntityName, 
                                 ExpressionData.LOWQUALITY.getStringRepresentation(), resume);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
-                        } else {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.NODATA, affymetrixData,
-                                    ExpressionData.LOWQUALITY, estData,
-                                    ExpressionData.LOWQUALITY, inSituData,
-//                                    ExpressionData.NODATA, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.LOWQUALITY, rnaSeqData,
-                                    ObservedData.NOTOBSERVED, observedData);
                         }
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                ExpressionData.NODATA, affymetrixData,
+                                ExpressionData.LOWQUALITY, estData,
+                                ExpressionData.LOWQUALITY, inSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                null, relaxedInSituData,
+                                ExpressionData.LOWQUALITY, rnaSeqData,
+                                ObservedData.NOTOBSERVED, observedData);
                     } else if (geneId.equals("ID1") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("ParentStage_id2")) {
                         this.assertCommonColumnRowEqual(geneId, "genN1", geneName,
-                                "substageN2", stageName, "anatName1", anatEntityName, 
+                                "parentstageN2", stageName, "anatName1", anatEntityName, 
                                 ExpressionData.HIGHQUALITY.getStringRepresentation(), resume);
                         if (!isSimplified) {
                             this.assertCompleteColumnRowEqual(geneId, 
@@ -510,16 +515,15 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 ExpressionData.NOEXPRESSION.getStringRepresentation(), resume);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
-                        } else {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.NOEXPRESSION, affymetrixData,
-                                    ExpressionData.NODATA, estData,
-                                    ExpressionData.NODATA, inSituData,
-//                                    ExpressionData.NODATA, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.NODATA, rnaSeqData,
-                                    ObservedData.NOTOBSERVED, observedData);
                         }
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                ExpressionData.NOEXPRESSION, affymetrixData,
+                                ExpressionData.NODATA, estData,
+                                ExpressionData.NODATA, inSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                null, relaxedInSituData,
+                                ExpressionData.NODATA, rnaSeqData,
+                                ObservedData.NOTOBSERVED, observedData);
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id1") && 
                             stageId.equals("Stage_id2")) {
                         this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
@@ -542,16 +546,15 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 ExpressionData.LOWAMBIGUITY.getStringRepresentation(), resume);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
-                        } else {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.HIGHQUALITY, affymetrixData,
-                                    ExpressionData.NODATA, estData,
-                                    ExpressionData.HIGHQUALITY, inSituData,
-//                                    ExpressionData.NODATA, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.NOEXPRESSION, rnaSeqData,
-                                    ObservedData.NOTOBSERVED, observedData);
                         }
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                ExpressionData.HIGHQUALITY, affymetrixData,
+                                ExpressionData.NODATA, estData,
+                                ExpressionData.HIGHQUALITY, inSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                null, relaxedInSituData,
+                                ExpressionData.NOEXPRESSION, rnaSeqData,
+                                ObservedData.NOTOBSERVED, observedData);
                     } else if (geneId.equals("ID2") && anatEntityId.equals("Anat_id3") && 
                             stageId.equals("Stage_id2")) {
                         this.assertCommonColumnRowEqual(geneId, "genN2", geneName,
@@ -593,16 +596,15 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 ExpressionData.HIGHQUALITY.getStringRepresentation(), resume);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
-                        } else {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.LOWQUALITY, affymetrixData,
-                                    ExpressionData.LOWQUALITY, estData,
-                                    ExpressionData.HIGHQUALITY, inSituData,
-//                                    ExpressionData.NODATA, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.LOWQUALITY, rnaSeqData,
-                                    ObservedData.NOTOBSERVED, observedData);
                         }
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                ExpressionData.LOWQUALITY, affymetrixData,
+                                ExpressionData.LOWQUALITY, estData,
+                                ExpressionData.HIGHQUALITY, inSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                null, relaxedInSituData,
+                                ExpressionData.LOWQUALITY, rnaSeqData,
+                                ObservedData.NOTOBSERVED, observedData);
                     } else if (geneId.equals("ID3") && anatEntityId.equals("Anat_id5") &&
                             stageId.equals("Stage_id2")) {
                         this.assertCommonColumnRowEqual(geneId, "genN3", geneName,
@@ -655,15 +657,15 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 ExpressionData.NOEXPRESSION.getStringRepresentation(), resume);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
-                        } else {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.NOEXPRESSION, affymetrixData,
-                                    ExpressionData.NODATA, estData,
-                                    ExpressionData.NOEXPRESSION, inSituData,
+                        }
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                ExpressionData.NOEXPRESSION, affymetrixData,
+                                ExpressionData.NODATA, estData,
+                                ExpressionData.NOEXPRESSION, inSituData,
 //                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.NOEXPRESSION, rnaSeqData,
-                                    ObservedData.NOTOBSERVED, observedData);}
+                                null, relaxedInSituData,
+                                ExpressionData.NOEXPRESSION, rnaSeqData,
+                                ObservedData.NOTOBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("Stage_id5")) {
                         this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
@@ -671,37 +673,37 @@ public class GenerateDownladFileTest  extends TestAncestor {
                                 ExpressionData.HIGHQUALITY.getStringRepresentation(), resume);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
-                        } else {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.HIGHQUALITY, affymetrixData,
-                                    ExpressionData.LOWQUALITY, estData,
-                                    ExpressionData.LOWQUALITY, inSituData,
-//                                    ExpressionData.NODATA, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.NODATA, rnaSeqData,
-                                    ObservedData.NOTOBSERVED, observedData);
                         }
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                ExpressionData.HIGHQUALITY, affymetrixData,
+                                ExpressionData.LOWQUALITY, estData,
+                                ExpressionData.LOWQUALITY, inSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                null, relaxedInSituData,
+                                ExpressionData.NODATA, rnaSeqData,
+                                ObservedData.NOTOBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id1") &&
                             stageId.equals("ParentStage_id5")) {
                         this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
-                                "substageN5", stageName, "anatName1", anatEntityName,
+                                "parentstageN5", stageName, "anatName1", anatEntityName,
                                 ExpressionData.HIGHQUALITY.getStringRepresentation(), resume);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
-                        } else {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.HIGHQUALITY, affymetrixData,
-                                    ExpressionData.LOWQUALITY, estData,
-                                    ExpressionData.LOWQUALITY, inSituData,
-//                                    ExpressionData.NODATA, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.NODATA, rnaSeqData,
-                                    ObservedData.NOTOBSERVED, observedData);
                         }
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                ExpressionData.HIGHQUALITY, affymetrixData,
+                                ExpressionData.LOWQUALITY, estData,
+                                ExpressionData.LOWQUALITY, inSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                null, relaxedInSituData,
+                                ExpressionData.NODATA, rnaSeqData,
+                                ObservedData.NOTOBSERVED, observedData);
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id4") &&
                             stageId.equals("Stage_id5")) {
                         this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
                                 "stageN5", stageName, "anatName4", anatEntityName, 
+                                //note that the ambiguity comes only from relaxedInSituData, 
+                                //which are not yet implemented.
                                 ExpressionData.HIGHAMBIGUITY.getStringRepresentation(), resume);
                         if (!isSimplified) {
                             this.assertCompleteColumnRowEqual(geneId, 
@@ -716,38 +718,19 @@ public class GenerateDownladFileTest  extends TestAncestor {
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id4") &&
                             stageId.equals("ParentStage_id5")) {
                         this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
-                                "substageN5", stageName, "anatName4", anatEntityName,
+                                "parentstageN5", stageName, "anatName4", anatEntityName,
                                 ExpressionData.HIGHQUALITY.getStringRepresentation(), resume);
                         if (isSimplified) {
                             throw new IllegalStateException("This triplet should not be present in the simple file");
-                        } else {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.HIGHQUALITY, affymetrixData,
-                                    ExpressionData.LOWQUALITY, estData,
-                                    ExpressionData.LOWQUALITY, inSituData,
-//                                    ExpressionData.NODATA, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.NODATA, rnaSeqData,
-                                    ObservedData.NOTOBSERVED, observedData);
                         }
-                    // TODO: to uncomment when the relaxed in situ data will be added
-//                    } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id5") &&
-//                            stageId.equals("Stage_id5")) {
-//                        this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
-//                                "stageN5", stageName, "anatName5", anatEntityName,
-//                                ExpressionData.NOEXPRESSION.getStringRepresentation(), resume);
-//                        if (isSimplified) {
-//                            throw new IllegalStateException("This triplet should not be present in the simple file");
-//                        } else {
-//                            this.assertCompleteColumnRowEqual(geneId, 
-//                                    ExpressionData.NODATA, affymetrixData,
-//                                    ExpressionData.NODATA, estData,
-//                                    ExpressionData.NODATA, inSituData,
-//                                    //                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
-//                                    null, relaxedInSituData,
-//                                    ExpressionData.NODATA, rnaSeqData,
-//                                    ObservedData.NOTOBSERVED, observedData);
-//                        }
+                        this.assertCompleteColumnRowEqual(geneId, 
+                                ExpressionData.HIGHQUALITY, affymetrixData,
+                                ExpressionData.LOWQUALITY, estData,
+                                ExpressionData.LOWQUALITY, inSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
+                                null, relaxedInSituData,
+                                ExpressionData.NODATA, rnaSeqData,
+                                ObservedData.NOTOBSERVED, observedData);
                     } else {
                         throw new IllegalArgumentException("Unexpected row: " + rowMap);
                     }
@@ -770,6 +753,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
                     assertEquals("Incorrect number of lines in advanced download file", 7, i);
                 } else if (speciesId.equals("22")){
                     // TODO: set to 11 when the relaxed in situ data will be added
+                    //TODO: why? I don't see any line that would be added
                     assertEquals("Incorrect number of lines in advanced download file", 10, i);
                 } else {
                     throw new IllegalStateException("Test of species ID " + speciesId + 

@@ -161,10 +161,13 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         speciesIds.clear();
         speciesIds.addAll(Arrays.asList("31"));
         expectedAnatEntities = Arrays.asList(
+                new AnatEntityTO(null, "hindbrain", null, null, null, null), 
                 new AnatEntityTO(null, "anat13", null, null, null, null));
-        assertTrue("AnatEntityTOs incorrectly retrieved",
-                TOComparator.areTOCollectionsEqual(
-                        dao.getNonInformativeAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
+        List<AnatEntityTO> retrievedAnatEntities = 
+                dao.getNonInformativeAnatEntities(speciesIds).getAllTOs();
+        assertTrue("AnatEntityTOs incorrectly retrieved, expected: " + expectedAnatEntities + 
+                ", but was: " + retrievedAnatEntities,
+                TOComparator.areTOCollectionsEqual(retrievedAnatEntities, expectedAnatEntities));
     }
 
     /**

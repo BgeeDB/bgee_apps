@@ -285,6 +285,11 @@ public abstract class TestAncestor
                     ((ExpressionCallParams) expected).isIncludeSubstructures()) {
                 return false;
             }
+            if (actual instanceof ExpressionCallParams && 
+                    ((ExpressionCallParams) actual).isIncludeSubStages() != 
+                    ((ExpressionCallParams) expected).isIncludeSubStages()) {
+                return false;
+            }
             if (actual instanceof NoExpressionCallParams && 
                     ((NoExpressionCallParams) actual).isIncludeParentStructures() != 
                     ((NoExpressionCallParams) expected).isIncludeParentStructures()) {

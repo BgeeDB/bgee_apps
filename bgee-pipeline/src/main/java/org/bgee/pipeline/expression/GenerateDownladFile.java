@@ -531,10 +531,9 @@ public class GenerateDownladFile extends CallUser {
                     if (to.getAnatOriginOfLine().equals(ExpressionCallTO.OriginOfLine.DESCENT)) {
                         log.trace("Discarding propagated calls because in non-informative anatomical entity.");
                         continue;
-                    } else {
-                        throw log.throwing(new IllegalStateException("It is not possible to have a "
-                           + "non-propagated expression call in a non-informative anatomical entity"));
                     }
+                    throw log.throwing(new IllegalStateException("It is not possible to have a "
+                       + "non-propagated expression call in a non-informative anatomical entity"));
                 }
                 exprTOs.add(to);
             }
@@ -600,10 +599,9 @@ public class GenerateDownladFile extends CallUser {
                     if (to.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
                         log.trace("Discarding propagated calls because in non-informative anatomical entity.");
                         continue;
-                    } else {
-                        throw log.throwing(new IllegalStateException("It is not possible to have a "
-                                + "non-propagated no-expression call in a non-informative anatomical entity"));
                     }
+                    throw log.throwing(new IllegalStateException("It is not possible to have a "
+                            + "non-propagated no-expression call in a non-informative anatomical entity"));
                 }
                 noExprTOs.add(to);
             }

@@ -629,6 +629,8 @@ public class InsertUberon extends MySQLDAOUser {
                 }
                 //here we do something borderline: filter using a fake ObjectProperty, 
                 //to retain leaves only through is_a relations.
+                // owltools use generic OWLPropertyExpression, we have to do the same
+                @SuppressWarnings("rawtypes") 
                 Set<OWLPropertyExpression> fakeProps = new HashSet<OWLPropertyExpression>(
                         Arrays.asList(wrapper.getManager().getOWLDataFactory().
                                 getOWLObjectProperty(IRI.create(""))));

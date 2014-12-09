@@ -412,7 +412,7 @@ public class InsertGlobalCalls extends CallUser {
      *                                        {@code isIncludeSubStages} is set to {@code true},
      *                                        because it is not implemented yet.
      */
-    private Set<String> loadAllowedAnatEntities() throws DAOException, UnsupportedOperationException {
+    private Set<String> loadAllowedAnatEntities() throws DAOException {
         log.entry();
         
         log.info("Start retrieving allowed anat entities for no-expression call propagation...");
@@ -601,7 +601,8 @@ public class InsertGlobalCalls extends CallUser {
 
                 // Add propagated no-expression call (same gene ID and stage ID 
                 // but with anatomical entity ID of the current relation source ID) 
-                // only in anatomical entities having at least a global expression call.
+                // only in anatomical entities having at least a global expression call 
+                //or no-expression call.
                 if (childId.equals(noExprCallTO.getAnatEntityId()) || //reflexive relation
                             filteredAnatEntities.contains(childId)) {
                     // Set ID to null to be able to compare keys of the map on 

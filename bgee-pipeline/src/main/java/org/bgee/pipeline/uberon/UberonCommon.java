@@ -390,7 +390,6 @@ abstract class UberonCommon {
      * that were already a GCI, in which case the original taxon is conserved); 
      * iii) the taxon-specific class is removed from the ontologies.
      */
-    //TODO: transform also axioms that are not OWLSubClassOd axioms
     void convertTaxonECAs() {
         log.entry();
         log.info("Converting taxonomy Equivalent Classes Axioms...");

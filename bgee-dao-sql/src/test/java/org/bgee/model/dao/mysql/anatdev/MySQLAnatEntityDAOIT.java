@@ -138,8 +138,10 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         MySQLAnatEntityDAO dao = new MySQLAnatEntityDAO(this.getMySQLDAOManager());
         // Test recovery of all attributes without filter on species IDs
         List<AnatEntityTO> expectedAnatEntities = Arrays.asList(
-                new AnatEntityTO("Anat_id10","hindbrain","hindbrain desc","Stage_id8","Stage_id17", true),
-                new AnatEntityTO("Anat_id13","anat13","unused anatE 13","Stage_id9","Stage_id10", true));
+                new AnatEntityTO("Anat_id10", "hindbrain", "hindbrain desc", 
+                        "Stage_id8", "Stage_id17", true),
+                new AnatEntityTO("Anat_id13", "anat13", "unused anatE 13", 
+                        "Stage_id9", "Stage_id10", true));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getNonInformativeAnatEntities(null).getAllTOs(), expectedAnatEntities));
@@ -148,13 +150,21 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         Set<String> speciesIds = new HashSet<String>();
         speciesIds.addAll(Arrays.asList("11","44"));
         expectedAnatEntities = Arrays.asList(
-                new AnatEntityTO("Anat_id13","anat13","unused anatE 13","Stage_id9","Stage_id10", true));
+                new AnatEntityTO("Anat_id13", "anat13", "unused anatE 13", 
+                        "Stage_id9", "Stage_id10", true));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getNonInformativeAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
         
         // Test recovery of anatomical entity names with filter on species IDs
         dao.setAttributes(AnatEntityDAO.Attribute.NAME);
+        speciesIds.clear();
+        speciesIds.addAll(Arrays.asList("31"));
+        expectedAnatEntities = Arrays.asList(
+                new AnatEntityTO(null, "anat13", null, null, null, null));
+        assertTrue("AnatEntityTOs incorrectly retrieved",
+                TOComparator.areTOCollectionsEqual(
+                        dao.getNonInformativeAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
     }
 
     /**

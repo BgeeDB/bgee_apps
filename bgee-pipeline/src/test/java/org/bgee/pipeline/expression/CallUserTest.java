@@ -1,6 +1,8 @@
 package org.bgee.pipeline.expression;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -141,5 +143,69 @@ public class CallUserTest extends TestAncestor {
                         ", but was: " + generatedMap.get(expectedEntry.getKey())));
             }
         }
+    }
+    
+    /**
+     * Test the method {@link CallUser#isPropagatedOnly(CallTO)}.
+     */
+    @Test
+    public void shouldIsPropagatedOnly() {
+        CallUser callUser = new FakeCallUser();
+        
+        // Test expression calls
+        ExpressionCallTO exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.BOTH);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.DESCENT);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.SELF);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.SELF);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.DESCENT);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+
+        // Test no-expression calls
+        NoExpressionCallTO noExprTO = new NoExpressionCallTO(  
+                null, null, null, null, null,  null, null, null, null,
+                NoExpressionCallTO.OriginOfLine.SELF);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(noExprTO));
+        
+        noExprTO = new NoExpressionCallTO(  
+                null, null, null, null, null,  null, null, null, null,
+                NoExpressionCallTO.OriginOfLine.BOTH);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(noExprTO));
+
+        noExprTO = new NoExpressionCallTO(  
+                null, null, null, null, null,  null, null, null, null,
+                NoExpressionCallTO.OriginOfLine.PARENT);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(noExprTO));
     }
 }

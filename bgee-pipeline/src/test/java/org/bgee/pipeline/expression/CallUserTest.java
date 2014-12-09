@@ -149,7 +149,7 @@ public class CallUserTest extends TestAncestor {
      * Test the method {@link CallUser#isPropagatedOnly(CallTO)}.
      */
     @Test
-    public void shouldIsPropagatedOnly() {
+    public void testIsPropagatedOnly() {
         CallUser callUser = new FakeCallUser();
         
         // Test expression calls

@@ -62,6 +62,7 @@ public class FilterNoExprCallsTest extends TestAncestor {
     /**
      * Test {@link FilterNoExprCalls#filterNoExpressionCalls(List)}.
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void shouldFilterNoExpressionCalls() 
             throws IllegalStateException, SQLException, UnsupportedOperationException {
@@ -341,7 +342,6 @@ public class FilterNoExprCallsTest extends TestAncestor {
          Set<String> expectedAffyNoExprIds11 = new HashSet<String>(Arrays.asList("1", "2", "4", "11"));
          Set<String> expectedAffyNoExprIds21 = new HashSet<String>(Arrays.asList("3"));
          Set<String> expectedInSituNoExprIds11 = new HashSet<String>(Arrays.asList("1", "2"));
-         Set<String> expectedInSituNoExprIds21 = new HashSet<String>();
          Set<String> expectedRNASeqNoExprIds11 = new HashSet<String>(Arrays.asList("1", "4", "5", "10"));
          Set<String> expectedRNASeqNoExprIds21 = new HashSet<String>(Arrays.asList("6"));
          Set<String> expectedNoExprIdsDeleted11 = new HashSet<String>(Arrays.asList("1", "2", "10"));

@@ -552,6 +552,14 @@ abstract class UberonCommon {
                 existingEdge.getOntology(), null, 
                 filler, prop));
     }
+    
+    protected void improveGCIRelations() {
+        log.entry();
+        
+        
+        
+        log.exit();
+    }
 
 
     /**

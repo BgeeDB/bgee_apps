@@ -181,8 +181,8 @@ public class GenerateDownladFile extends CallUser {
    public final static String EXTENSION = ".tsv";
    
    /**
-    * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...), the 
-    * expression/no-expression of the call.
+    * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...), , 
+    * as well as for the summary column, the data state of the call.
     * <ul>
     * <li>{@code NODATA}:         no data from the associated data type allowed to produce the call.
     * <li>{@code NOEXPRESSION}:   no-expression was detected from the associated data type.
@@ -268,7 +268,8 @@ public class GenerateDownladFile extends CallUser {
    }
  
    /**
-    * An {@code Enum} used to define if the call has been observed.
+    * An {@code Enum} used to define whether the call has been observed. This is to distinguish 
+    * from propagated data only, that should provide a lower confidence in the call. 
     * <ul>
     * <li>{@code OBSERVED}:     the call has been observed at least once.
     * <li>{@code NOTOBSERVED}:  the call has never been observed.
@@ -325,19 +326,18 @@ public class GenerateDownladFile extends CallUser {
      * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
      * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
      * If it is not provided, all species contained in database will be used.
-     * <li> a list of files types that will be generated ({@code EXPR_SIMPLE}, {@code EXPR_COMPLETE}, 
-     * {@code DIFFEXPR_SIMPLE}, and {@code DIFFEXPR_SIMPLE}), separated by the 
-     * {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     * <li> a list of files types that will be generated ('expr-simple' for 
+     * {@link FileType EXPR_SIMPLE}, 'expr-complete' for {@link FileType EXPR_COMPLETE}, 
+     * 'diffexpr-simple' for {@link FileType DIFFEXPR_SIMPLE}, and 'diffexpr-complete' 
+     * for {@link FileType DIFFEXPR_SIMPLE}), separated by the {@code String} 
+     * {@link CommandRunner#LIST_SEPARATOR}.
      * <li>the directory path that will be used to generate download files. 
      * </ol>
      * 
      * @param args          An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IOException  If some files could not be used.
-     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
      */
-    public static void main(String[] args) throws IOException, UnsupportedOperationException {
+    public static void main(String[] args) throws IOException {
         log.entry((Object[]) args);
 
         // TODO Manage with multi-species!
@@ -394,12 +394,9 @@ public class GenerateDownladFile extends CallUser {
      * @param directory      A {@code String} that is the directory path directory to store the 
      *                       generated files. 
      * @throws IOException   If an error occurred while trying to write generated files.
-     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
      */
     public void generateSingleSpeciesFiles(List<String> speciesIds, Set<FileType> fileTypes, 
-            String directory) throws IOException, UnsupportedOperationException { 
+            String directory) throws IOException { 
         log.entry(speciesIds, fileTypes, directory);
         
         // Check user input, or retrieve all species IDs
@@ -678,16 +675,19 @@ public class GenerateDownladFile extends CallUser {
         log.trace("Done retrieving data for expression files for the species {}.", speciesId);
         
         // Note that this Collection is a Set, it cannot 
-        // contain global and basic calls at the same time  
+        // contain basic calls and global propagated calls at the same time  
         Set<CallTO> allCallTOs = new HashSet<CallTO>();
         allCallTOs.addAll(globalExprTOs);
         allCallTOs.addAll(globalNoExprTOs);
+        
+        SortedMap<CallTO, Collection<CallTO>> groupedCallTOs = 
+                this.groupAndOrderByGeneAnatEntityStage(allCallTOs);
 
         if (fileTypes.contains(FileType.EXPR_SIMPLE)) {
             log.trace("Start generation of data for simple file for the species {}", speciesId);
             
             List<Map<String, String>> fileRows = this.generateExprFileRows(geneNamesByIds, 
-                    stageNamesByIds, anatEntityNamesByIds, allCallTOs, true);
+                    stageNamesByIds, anatEntityNamesByIds, groupedCallTOs, true);
 
             this.writeDownloadFile(fileRows, directory + speciesId + "_" + 
                     FileType.EXPR_SIMPLE.getStringRepresentation() + EXTENSION, 
@@ -702,7 +702,7 @@ public class GenerateDownladFile extends CallUser {
                     speciesId);
             
             List<Map<String, String>> fileRows = this.generateExprFileRows(geneNamesByIds, 
-                    stageNamesByIds, anatEntityNamesByIds, allCallTOs, false);
+                    stageNamesByIds, anatEntityNamesByIds, groupedCallTOs, false);
 
             this.writeDownloadFile(fileRows, directory + speciesId + "_" + 
                     FileType.EXPR_COMPLETE.getStringRepresentation() + EXTENSION, 
@@ -742,16 +742,14 @@ public class GenerateDownladFile extends CallUser {
      */
     private List<Map<String, String>> generateExprFileRows(Map<String, String> geneNamesByIds,
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
-            Set<CallTO> allCallTOs, boolean isSimplifiedFile) {
+            SortedMap<CallTO, Collection<CallTO>> allCallTOs, boolean isSimplifiedFile) {
         log.entry(geneNamesByIds, stageNamesByIds, 
                 anatEntityNamesByIds, allCallTOs, isSimplifiedFile);
         
-        log.debug("Start generating file content by merging calls...");
+        log.debug("Start generating file content...");
         List<Map<String, String>> allRows = new ArrayList<Map<String, String>>();
         
-        SortedMap<CallTO, Collection<CallTO>> allCalls = 
-                this.groupAndOrderByGeneAnatEntityStage(allCallTOs);
-        for (Entry<CallTO, Collection<CallTO>> callGroup : allCalls.entrySet()) {
+        for (Entry<CallTO, Collection<CallTO>> callGroup : allCallTOs.entrySet()) {
             log.trace("Start merging the group of calls: {}", callGroup);
             Map<String, String> row = new HashMap<String, String>();
             
@@ -765,9 +763,10 @@ public class GenerateDownladFile extends CallUser {
                 if (call instanceof  ExpressionCallTO) {
                     if (expressionTO == null) {
                         expressionTO = (ExpressionCallTO) call;  
-                        if (!expressionTO.isIncludeSubstructures() || !expressionTO.isIncludeSubStages()) {
-                            throw log.throwing(new IllegalArgumentException(
-                                    "The provided ExpressionCallTO should be a global expression call"));
+                        if (!expressionTO.isIncludeSubstructures() || 
+                                !expressionTO.isIncludeSubStages()) {
+                            throw log.throwing(new IllegalArgumentException("The provided " +
+                            		"ExpressionCallTO should be a global expression call"));
                         }
                     } else {
                         throw log.throwing(new IllegalArgumentException("The provided CallTO list(" +
@@ -777,8 +776,8 @@ public class GenerateDownladFile extends CallUser {
                     if (noExpressionTO == null) {
                         noExpressionTO = (NoExpressionCallTO) call;
                         if (!noExpressionTO.isIncludeParentStructures()) {
-                            throw log.throwing(new IllegalArgumentException(
-                                    "The provided NoExpressionCallTO should be a global no-expression call"));
+                            throw log.throwing(new IllegalArgumentException("The provided " +
+                            		"NoExpressionCallTO should be a global no-expression call"));
                         }
                     } else {
                         throw log.throwing(new IllegalArgumentException("The provided CallTO list(" +
@@ -792,8 +791,8 @@ public class GenerateDownladFile extends CallUser {
             }
             
             if (expressionTO == null && noExpressionTO == null) {
-                throw log.throwing(new IllegalStateException("No basic and global calls for the triplet "
-                        + "gene(" + callGroup.getKey().getGeneId() + 
+                throw log.throwing(new IllegalStateException("No basic and global calls " +
+                		"for the triplet gene(" + callGroup.getKey().getGeneId() + 
                         ") - organ (" + callGroup.getKey().getAnatEntityId() + 
                         ") - stage (" + callGroup.getKey().getStageId() + ")"));
             }
@@ -815,9 +814,6 @@ public class GenerateDownladFile extends CallUser {
             // Define summary column
             ExpressionData summary = ExpressionData.NODATA;
             if (expressionTO != null && noExpressionTO != null) {
-                // Note: when isIncludeParentStructures is true, it means that the callTO was 
-                // generated by a query including parent structures, but the OriginOfLine could 
-                // still be SELF.  
                 if (noExpressionTO.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
                     summary = ExpressionData.LOWAMBIGUITY;                    
                 } else {
@@ -908,7 +904,7 @@ public class GenerateDownladFile extends CallUser {
             log.debug("Added row: {}", row);
         }
 
-        log.debug("Done generating file content by merging calls.");
+        log.debug("Done generating file content.");
         return log.exit(allRows);
     }
 
@@ -931,6 +927,10 @@ public class GenerateDownladFile extends CallUser {
         if (dataStateExpr == DataState.NODATA && dataStateNoExpr == DataState.NODATA) {
             return log.exit(ExpressionData.NODATA);
         }
+        if (dataStateExpr != DataState.NODATA && dataStateNoExpr != DataState.NODATA) {
+            throw log.throwing(new IllegalStateException("An expression call and " +
+            		"a no-expression call could be found for the same data type."));
+        }
         //no no-expression data, we use the expression data
         if (dataStateExpr != DataState.NODATA) {
             if (dataStateExpr.equals(DataState.HIGHQUALITY)) {
@@ -942,12 +942,14 @@ public class GenerateDownladFile extends CallUser {
             throw log.throwing(new IllegalArgumentException(
                     "The DataState provided (" + dataStateExpr.getStringRepresentation() + 
                     ") is not supported"));  
-        } else if (dataStateNoExpr != DataState.NODATA) {
+        } 
+        
+        if (dataStateNoExpr != DataState.NODATA) {
             //no-expression data available
             return log.exit(ExpressionData.NOEXPRESSION);
         }
-        throw log.throwing(new IllegalStateException("An expression call and a no-expression call " +
-                "could be found for the same data type."));
+        
+        throw log.throwing(new AssertionError("All logical conditions should have been checked."));
     }
 
     /**
@@ -985,7 +987,7 @@ public class GenerateDownladFile extends CallUser {
                     }
                     row.put(entry.getKey(), entry.getValue());
                 }
-                log.trace("Write the row: {}", row);
+                log.trace("Write row: {}", row);
                 mapWriter.write(row, headers, processors);
             }
         }
@@ -1092,11 +1094,11 @@ public class GenerateDownladFile extends CallUser {
      *                      values are data associated to the column name.
      * @throws UnsupportedOperationException Not yet implemented
      */
-    private List<Map<String, String>> generateDiffExprRows(String speciesId) 
-            throws UnsupportedOperationException {
-        log.entry(speciesId);
-        // TODO Auto-generated method stub
-        throw log.throwing(new UnsupportedOperationException("Differential expression is not yet "
-                + "supported, it's need to be implemented"));
-    }
+//    private List<Map<String, String>> generateDiffExprRows(String speciesId) 
+//            throws UnsupportedOperationException {
+//        log.entry(speciesId);
+//        // TODO Auto-generated method stub
+//        throw log.throwing(new UnsupportedOperationException("Differential expression is not yet "
+//                + "supported, it's need to be implemented"));
+//    }
 }

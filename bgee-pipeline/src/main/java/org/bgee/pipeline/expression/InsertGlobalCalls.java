@@ -252,6 +252,7 @@ public class InsertGlobalCalls extends CallUser {
                             BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
                                     this.getRelationDAO());
 
+                    int noExprCallsExamined = 0;
                     int nbInsertedNoExpressions = 0;
                     int nbInsertedGlobalNoExprToNoExpr = 0;
                     int geneCount = noExprTOs.size();
@@ -261,6 +262,7 @@ public class InsertGlobalCalls extends CallUser {
                     while (noExprTOIterator.hasNext()) {
                         Entry<String, List<NoExpressionCallTO>> entry = noExprTOIterator.next();
                         geneIterated++;
+                        noExprCallsExamined += entry.getValue().size();
                         if (log.isDebugEnabled() && geneIterated % 1000 == 0) {
                             log.debug("{}/{} genes examined.", geneIterated, geneCount);
                         }
@@ -310,8 +312,8 @@ public class InsertGlobalCalls extends CallUser {
                     }
                     
                     log.info("Done propagating no-expression calls for species {}: {} global no-expression calls inserted " +
-                            "and {} correspondances inserted", speciesId, 
-                            nbInsertedNoExpressions, nbInsertedGlobalNoExprToNoExpr);
+                            "and {} correspondances inserted, from {} basic no-expression calls examined", speciesId, 
+                            nbInsertedNoExpressions, nbInsertedGlobalNoExprToNoExpr, noExprCallsExamined);
                 } else {
 
                     log.info("Start propagating expression calls for species {}", 

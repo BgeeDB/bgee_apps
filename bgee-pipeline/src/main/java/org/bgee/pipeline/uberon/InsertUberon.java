@@ -765,7 +765,13 @@ public class InsertUberon extends MySQLDAOUser {
                                 speciesIds);
                         log.trace("OWLClass walked to produce the edge: {} - Mapped to OWLClass: {} - Exists in species: {}", 
                                 clsWalked, mappedClsWalked, inSpecies);
-                        speciesIdsToConsider.retainAll(inSpecies);
+                        boolean changed = speciesIdsToConsider.retainAll(inSpecies);
+                        if (log.isWarnEnabled() && changed && outgoingEdge.isGCI()) {
+                            log.warn("A GCI relation holds between classes not existing " +
+                            		"in the taxon defined by the GCI filler. Class {}, " +
+                            		"existing in species {}. GCI relation: {}", mappedClsWalked, 
+                            		inSpecies, outgoingEdge);
+                        }
                     }
                     //and now, in case it was a fake relation with no axioms, e.g., 
                     //reflexive edge

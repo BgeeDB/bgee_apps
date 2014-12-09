@@ -81,11 +81,9 @@ public class GenerateDownladFileTest  extends TestAncestor {
      * which is the central method of the class doing all the job.
      */
     @Test
-    public void shouldGenerateSingleSpeciesFiles() throws IOException, UnsupportedOperationException {
+    public void shouldGenerateSingleSpeciesFiles() throws IOException {
 
         // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
-        // This will allow to verify that the correct values were tried to be inserted 
-        // into the database.
         MockDAOManager mockManager = new MockDAOManager();
 
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(

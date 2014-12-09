@@ -500,11 +500,14 @@ public class GenerateDownladFile extends CallUser {
      *                                      only, will be discarded.
      * @return                              A {@code List} of {@code ExpressionCallTO}s containing 
      *                                      all expression calls for the requested species.
-     * @throws DAOException   If an error occurred while getting the data from the Bgee data source.
+     * @throws DAOException                 If an error occurred while getting the data from the 
+     *                                      Bgee data source.
+     * @throws IllegalStateException        If a non-propagated {@code ExpressionCallTO} is found 
+     *                                      in a non-informative anatomical entity
      */
     private List<ExpressionCallTO> loadExprCallsFromDb(Set<String> speciesIds, 
             boolean includeSubstructures, boolean includeSubstages,
-            Set<String> nonInformativesAnatEntityIds) throws DAOException {
+            Set<String> nonInformativesAnatEntityIds) throws DAOException, IllegalStateException {
         log.entry(speciesIds, includeSubstructures, includeSubstages, nonInformativesAnatEntityIds);
         
         log.debug("Start retrieving expression calls (include substructures: {}, include sub-stages: {}) for the species IDs {}...", 
@@ -527,10 +530,14 @@ public class GenerateDownladFile extends CallUser {
                 log.trace("Iterating ExpressionCallTO: {}", to);
                 //if the call was generated from propagated data only, we discard it 
                 //if present in a non-informative anatomical entity.
-                if (to.getAnatOriginOfLine().equals(ExpressionCallTO.OriginOfLine.DESCENT) && 
-                        nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
-                    log.trace("Discarding propagated calls because in non-informative anatomical entity.");
-                    continue;
+                if (nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
+                    if (to.getAnatOriginOfLine().equals(ExpressionCallTO.OriginOfLine.DESCENT)) {
+                        log.trace("Discarding propagated calls because in non-informative anatomical entity.");
+                        continue;
+                    } else {
+                        throw log.throwing(new IllegalStateException("It is not possible to have a "
+                           + "non-propagated expression call in a non-informative anatomical entity"));
+                    }
                 }
                 exprTOs.add(to);
             }
@@ -564,7 +571,10 @@ public class GenerateDownladFile extends CallUser {
      *                                      only, will be discarded.
      * @return                              A {@code List} of {@code NoExpressionCallTO}s containing 
      *                                      all global no-expression calls of the given species.
-     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
+     * @throws DAOException                 If an error occurred while getting the data from the 
+     *                                      Bgee database.
+     * @throws IllegalStateException        If a non-propagated {@code NoExpressionCallTO} is found 
+     *                                      in a non-informative anatomical entity
      */
     private List<NoExpressionCallTO> loadNoExprCallsFromDb(Set<String> speciesIds, 
             boolean includeParentStructures, Set<String> nonInformativesAnatEntityIds) 
@@ -589,10 +599,14 @@ public class GenerateDownladFile extends CallUser {
                 log.trace("Iterating NoExpressionCallTO: {}", to);
                 //if the call was generated from propagated data only, we discard it 
                 //if present in a non-informative anatomical entity.
-                if (to.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT) && 
-                        nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
-                    log.trace("Discarding propagated calls because in non-informative anatomical entity.");
-                    continue;
+                if (nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
+                    if (to.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
+                        log.trace("Discarding propagated calls because in non-informative anatomical entity.");
+                        continue;
+                    } else {
+                        throw log.throwing(new IllegalStateException("It is not possible to have a "
+                                + "non-propagated no-expression call in a non-informative anatomical entity"));
+                    }
                 }
                 noExprTOs.add(to);
             }
@@ -750,7 +764,11 @@ public class GenerateDownladFile extends CallUser {
             for (CallTO call: callGroup.getValue()) {
                 if (call instanceof  ExpressionCallTO) {
                     if (expressionTO == null) {
-                        expressionTO = (ExpressionCallTO) call;                        
+                        expressionTO = (ExpressionCallTO) call;  
+                        if (!expressionTO.isIncludeSubstructures() || !expressionTO.isIncludeSubStages()) {
+                            throw log.throwing(new IllegalArgumentException(
+                                    "The provided ExpressionCallTO should be a global expression call"));
+                        }
                     } else {
                         throw log.throwing(new IllegalArgumentException("The provided CallTO list(" +
                                 call.getClass() + ") contains severals expression calls"));
@@ -758,6 +776,10 @@ public class GenerateDownladFile extends CallUser {
                 } else if (call instanceof NoExpressionCallTO){
                     if (noExpressionTO == null) {
                         noExpressionTO = (NoExpressionCallTO) call;
+                        if (!noExpressionTO.isIncludeParentStructures()) {
+                            throw log.throwing(new IllegalArgumentException(
+                                    "The provided NoExpressionCallTO should be a global no-expression call"));
+                        }
                     } else {
                         throw log.throwing(new IllegalArgumentException("The provided CallTO list(" +
                                 call.getClass() + ") contains severals no-expression calls"));

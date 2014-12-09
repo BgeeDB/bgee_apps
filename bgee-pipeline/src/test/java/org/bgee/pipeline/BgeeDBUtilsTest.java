@@ -517,7 +517,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
-            when(mockManager.getAnatEntityDAO().getAnatEntities(
+            when(mockManager.getAnatEntityDAO().getAnatEntitiesBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
                             mockRS);
             
@@ -542,7 +542,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             AnatEntityTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedAnatEntityTOs, MySQLAnatEntityTOResultSet.class);
-            when(mockManager.getAnatEntityDAO().getAnatEntities(
+            when(mockManager.getAnatEntityDAO().getAnatEntitiesBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
                             mockRS);
             

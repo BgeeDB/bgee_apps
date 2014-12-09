@@ -109,7 +109,8 @@ BEGIN
                ('Anat_id10','hindbrain','hindbrain desc','Stage_id8','Stage_id17',true),
                ('Anat_id11','cerebellum','cerebellum desc','Stage_id9','Stage_id13',false),
                ('Anat_id12','anat12','unused anatE 12','Stage_id1','Stage_id13',false),
-               ('Anat_id13','anat13','unused anatE 13','Stage_id9','Stage_id10',true);
+               ('Anat_id13','anat13','unused anatE 13','Stage_id9','Stage_id10',true),
+               ('Anat_id14','anat14','anatE 14','Stage_id6','Stage_id13',true);
 
         INSERT INTO anatEntityTaxonConstraint(anatEntityId,speciesId)
         VALUES ('Anat_id1',null),
@@ -126,7 +127,8 @@ BEGIN
                ('Anat_id10',31),
                ('Anat_id11',null),
                ('Anat_id12',21),
-               ('Anat_id13',null);
+               ('Anat_id13',null),
+               ('Anat_id14',11);
                
         INSERT INTO anatEntityRelation(anatEntityRelationId,anatEntitySourceId,anatEntityTargetId,relationType,relationStatus)
         VALUES (1,'Anat_id1','Anat_id1','is_a part_of','reflexive'),
@@ -244,7 +246,8 @@ BEGIN
                (5,'ID3','Anat_id8','Stage_id10','poor quality','poor quality','poor quality'),
                (6,'ID3','Anat_id6','Stage_id7','poor quality','no data','high quality'),
                (7,'ID3','Anat_id5','Stage_id6','high quality','no data','high quality'),
-               (8,'ID3','Anat_id5','Stage_id14','poor quality','high quality','no data');
+               (8,'ID3','Anat_id5','Stage_id14','poor quality','high quality','no data'),
+               (9,'ID1','Anat_id14','Stage_id14','poor quality','high quality','no data');
 
         INSERT INTO globalNoExpression(globalNoExpressionId,geneId,anatEntityId,stageId,noExpressionAffymetrixData,noExpressionInSituData,noExpressionRnaSeqData,noExpressionOriginOfLine)
         VALUES (1,'ID2','Anat_id5','Stage_id13','poor quality','high quality','high quality','self'),
@@ -259,7 +262,9 @@ BEGIN
                (10,'ID3','Anat_id8','Stage_id10','poor quality','poor quality','poor quality','self'),
                (11,'ID3','Anat_id7','Stage_id10','poor quality','poor quality','poor quality','parent'),
                (12,'ID3','Anat_id6','Stage_id7','poor quality','no data','high quality','self'),
-               (13,'ID3','Anat_id1','Stage_id7','poor quality','no data','high quality','parent');
+               (13,'ID3','Anat_id1','Stage_id7','poor quality','no data','high quality','parent'),
+               (14,'ID1','Anat_id14','Stage_id14','poor quality','high quality','no data','self'),
+               (15,'ID1','Anat_id1','Stage_id1','high quality','high quality','poor quality','self');
 
         INSERT INTO globalNoExpressionToNoExpression (noExpressionId,globalNoExpressionId) 
         VALUES (1,1),
@@ -274,7 +279,9 @@ BEGIN
                (5,10),
                (5,11),
                (6,12),
-               (6,13);
+               (6,13),
+               (9,14),
+               (2,15);
 
         INSERT INTO estLibrary (estLibraryId,estLibraryName,estLibraryDescription,anatEntityId,stageId,dataSourceId)
         VALUES ('424', 'DKFZphamy1', 'DescDKFZ', 'Anat_id4', 'Stage_id4', 1), 

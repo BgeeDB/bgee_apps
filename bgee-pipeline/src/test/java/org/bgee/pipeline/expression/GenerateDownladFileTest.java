@@ -134,8 +134,8 @@ public class GenerateDownladFileTest  extends TestAncestor {
                         new AnatEntityTO("NonInfoAnatEnt1", "xxx", null, null, null, null),
                         new AnatEntityTO("NonInfoAnatEnt2", "zzz", null, null, null, null)),
                         MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getAnatEntities(eq(new HashSet<String>(listSpeciesIds)))).
-                thenReturn(mockAnatEntityTORs);
+        when(mockManager.mockAnatEntityDAO.getAnatEntitiesBySpeciesIds(eq(new HashSet<String>(
+                listSpeciesIds)))).thenReturn(mockAnatEntityTORs);
         
         // For each species, we need to mock getNonInformativeAnatEntities(), getExpressionCalls() 
         // and getNoExpressionCalls() (basic and global calls), getGenes(), getStages(), 

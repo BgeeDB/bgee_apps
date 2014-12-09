@@ -46,7 +46,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
 
     @Override
-    public AnatEntityTOResultSet getAnatEntities(Set<String> speciesIds) throws DAOException {
+    public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
+            throws DAOException {
         log.entry(speciesIds);      
         
         String tableName = "anatEntity";
@@ -116,7 +117,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         }
         
         String expressionTabName = "expression";
-        String noExpressionTabName = "noExpression";
+        String noExpressionTabName = "noExpression"; 
 
         sql += " FROM " + tableName +
                " LEFT OUTER JOIN " + expressionTabName + " ON (" + 

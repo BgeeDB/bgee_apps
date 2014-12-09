@@ -62,6 +62,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         new AnatEntityTO("Anat_id11", "cerebellum", "cerebellum desc", "Stage_id9", "Stage_id13", false), 
         new AnatEntityTO("Anat_id12", "anat12", "unused anatE 12", "Stage_id1", "Stage_id13", false), 
         new AnatEntityTO("Anat_id13", "anat13", "unused anatE 13", "Stage_id9", "Stage_id10", true), 
+        new AnatEntityTO("Anat_id14", "anat14", "anatE 14", "Stage_id6", "Stage_id13", true), 
         new AnatEntityTO("Anat_id2", "organ", "organ desc", "Stage_id10", "Stage_id18", false), 
         new AnatEntityTO("Anat_id3", "heart", "heart desc", "Stage_id16", "Stage_id18", false), 
         new AnatEntityTO("Anat_id4", "gill", "gill desc", "Stage_id12", "Stage_id18", false), 
@@ -75,7 +76,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         List<AnatEntityTO> expectedAnatEntities = allAnatEntityTOs;
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getAnatEntities(null).getAllTOs(), expectedAnatEntities));
+                        dao.getAnatEntitiesBySpeciesIds(null).getAllTOs(), expectedAnatEntities));
 
         // Test recovery of one attribute without filter on species IDs
         dao.setAttributes(Arrays.asList(AnatEntityDAO.Attribute.ID));
@@ -85,6 +86,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id11", null, null, null, null, null),
                 new AnatEntityTO("Anat_id12", null, null, null, null, null),
                 new AnatEntityTO("Anat_id13", null, null, null, null, null),
+                new AnatEntityTO("Anat_id14", null, null, null, null, null),
                 new AnatEntityTO("Anat_id2", null, null, null, null, null),
                 new AnatEntityTO("Anat_id3", null, null, null, null, null),
                 new AnatEntityTO("Anat_id4", null, null, null, null, null),
@@ -95,7 +97,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id9", null, null, null, null, null));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getAnatEntities(null).getAllTOs(), expectedAnatEntities));
+                        dao.getAnatEntitiesBySpeciesIds(null).getAllTOs(), expectedAnatEntities));
 
         // Test recovery of several attributes with filter on species IDs
         dao.clearAttributes();
@@ -108,12 +110,13 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                 new AnatEntityTO("Anat_id1", null, null, "Stage_id1", "Stage_id2", true),
                 new AnatEntityTO("Anat_id11", null, null, "Stage_id9", "Stage_id13", false),
                 new AnatEntityTO("Anat_id13", null, null, "Stage_id9", "Stage_id10", true),
+                new AnatEntityTO("Anat_id14", null, null, "Stage_id6", "Stage_id13", true),
                 new AnatEntityTO("Anat_id2", null, null, "Stage_id10", "Stage_id18", false),
                 new AnatEntityTO("Anat_id6", null, null, "Stage_id2", "Stage_id5", false),
                 new AnatEntityTO("Anat_id8", null, null, "Stage_id8", "Stage_id17", false));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
+                        dao.getAnatEntitiesBySpeciesIds(speciesIds).getAllTOs(), expectedAnatEntities));
 
         dao.clearAttributes();
         speciesIds = new HashSet<String>();
@@ -121,13 +124,12 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         expectedAnatEntities = allAnatEntityTOs;
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
+                        dao.getAnatEntitiesBySpeciesIds(speciesIds).getAllTOs(), expectedAnatEntities));
     }
 
     /**
      * Test the select method {@link MySQLAnatEntityDAO#getNonInformativeAnatEntities()}.
      */
-    //TODO Add tests to take account the addition of the LEFT OUTER JOIN on the noExpression table
     @Test
     public void shouldGetNonInformativeAnatEntities() throws SQLException {
         
@@ -150,6 +152,9 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
                         dao.getNonInformativeAnatEntities(speciesIds).getAllTOs(), expectedAnatEntities));
+        
+        // Test recovery of anatomical entity names with filter on species IDs
+        dao.setAttributes(AnatEntityDAO.Attribute.NAME);
     }
 
     /**

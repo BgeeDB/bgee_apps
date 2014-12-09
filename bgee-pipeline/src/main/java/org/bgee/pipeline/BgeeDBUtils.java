@@ -461,7 +461,7 @@ public class BgeeDBUtils {
         anatEntityDAO.setAttributes(AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
         
         Map<String, String> anatEntityNamesByIds = 
-                generateNamesByIdsMap(anatEntityDAO.getAnatEntities(speciesIds));
+                generateNamesByIdsMap(anatEntityDAO.getAnatEntitiesBySpeciesIds(speciesIds));
         
         //restore geneDAO in proper state
         anatEntityDAO.setAttributes(attributes);

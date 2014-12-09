@@ -96,7 +96,11 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, false, OriginOfLine.SELF),
                 new NoExpressionCallTO("8","ID3", "Anat_id5", "Stage_id14", 
                         DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, false, OriginOfLine.SELF),
+                new NoExpressionCallTO("9","ID1", "Anat_id14", "Stage_id14", 
+                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, false, OriginOfLine.SELF)); 
+
         // Compare
         assertTrue("NoExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
@@ -189,7 +193,14 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                         DataState.HIGHQUALITY, true, OriginOfLine.SELF),
                 new NoExpressionCallTO("13", "ID3", "Anat_id1", "Stage_id7", 
                         DataState.LOWQUALITY, DataState.NODATA, DataState.NODATA, 
-                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT));
+                        DataState.HIGHQUALITY, true, OriginOfLine.PARENT),
+                new NoExpressionCallTO("14", "ID1", "Anat_id14", "Stage_id14", 
+                        DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, true, OriginOfLine.SELF),
+                new NoExpressionCallTO("15", "ID1", "Anat_id1", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.LOWQUALITY, true, OriginOfLine.SELF));
+
         // Compare
         assertTrue("NoExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
@@ -208,7 +219,8 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO("5", null, null, null, null, null, null, null, null, null),
                 new NoExpressionCallTO("6", null, null, null, null, null, null, null, null, null),
                 new NoExpressionCallTO("7", null, null, null, null, null, null, null, null, null),
-                new NoExpressionCallTO("8", null, null, null, null, null, null, null, null, null));
+                new NoExpressionCallTO("8", null, null, null, null, null, null, null, null, null),
+                new NoExpressionCallTO("9", null, null, null, null, null, null, null, null, null));
         // Compare
         assertTrue("NoExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
@@ -229,8 +241,11 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 new NoExpressionCallTO(null, null, "Anat_id8", null, null, null, null, null, 
                         false, null),
                 new NoExpressionCallTO(null, null, "Anat_id11", null, null, null, null, null, 
+                        false, null),
+                new NoExpressionCallTO(null, null, "Anat_id14", null, null, null, null, null, 
                         false, null));
-        // Compare
+
+                // Compare
         assertTrue("NoExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
                         dao.getNoExpressionCalls(params).getAllTOs()));
@@ -258,6 +273,7 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.GENEID, 
                 NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES));
         expectedNoExprCalls = Arrays.asList(
+                new NoExpressionCallTO(null, "ID1", null, null, null, null, null, null, true, null),
                 new NoExpressionCallTO(null, "ID2", null, null, null, null, null, null, true, null),
                 new NoExpressionCallTO(null, "ID3", null, null, null, null, null, null, true, null));
         // Compare
@@ -278,12 +294,12 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
         MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
 
         // Generate manually expected result for expression table
-        int expectedMaxNoExprId = 8;
+        int expectedMaxNoExprId = 9;
         int maxNoExprId = dao.getMaxNoExpressionCallId(false);
         assertEquals("Max no-expression ID incorrectly retrieved", expectedMaxNoExprId, maxNoExprId);
 
         // Generate manually expected result for global expression table
-        int expectedMaxGlobalNoExprId = 13;
+        int expectedMaxGlobalNoExprId = 15;
         int maxGlobalNoExprId = dao.getMaxNoExpressionCallId(true);
         assertEquals("Max global no-expression ID incorrectly retrieved", 
                 expectedMaxGlobalNoExprId, maxGlobalNoExprId);

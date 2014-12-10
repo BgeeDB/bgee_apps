@@ -364,17 +364,26 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
         verify(mockManager.mockStageDAO, times(1)).setAttributes(
                 StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
-        
-        // Test if exception is launch when resume is NODATA 
-        // TODO: move test of exceptions to a different unit test
-        
+    }
+
+    /**
+     * Test if exception is launch when resume equals to NODATA using 
+     * {@link GenerateDownloadFile#generateSingleSpeciesFiles(List, List, String)},
+     * which is the central method of the class doing all the job.
+     */
+    @Test
+    public void shouldGenerateSingleSpeciesFilesNoDataException() throws IOException {
+
+        // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
+        MockDAOManager mockManager = new MockDAOManager();
+
+        // Species 
         MySQLSpeciesTOResultSet mockSpeciesTORs33 = createMockDAOResultSet(
-                Arrays.asList(
-                        new SpeciesTO("33", null, null, null, null, null, null, null)),
-                        MySQLSpeciesTOResultSet.class);
+                Arrays.asList(new SpeciesTO("33", null, null, null, null, null, null, null)),
+                MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs33);
 
-        speciesIds = new HashSet<String>(Arrays.asList("33")); 
+        Set<String> speciesIds = new HashSet<String>(Arrays.asList("33")); 
         // Gene names
         MySQLGeneTOResultSet mockGeneTORs33 = createMockDAOResultSet(
                 Arrays.asList(new GeneTO("IDX", "genNX", null)), MySQLGeneTOResultSet.class);
@@ -384,8 +393,8 @@ public class GenerateDownloadFileTest  extends TestAncestor {
 
         // Stage names
         MySQLStageTOResultSet mockStageTORs33 = createMockDAOResultSet(Arrays.asList(
-                        new StageTO("Stage_idX", "stageNX", null, null, null, null, null, null)),
-                        MySQLStageTOResultSet.class);
+                new StageTO("Stage_idX", "stageNX", null, null, null, null, null, null)),
+                MySQLStageTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
         when(mockManager.mockStageDAO.getStages(speciesIds)).thenReturn(mockStageTORs33);
@@ -393,18 +402,18 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         // Anatomical entity names
         MySQLAnatEntityTOResultSet mockAnatEntityTORs33 = createMockDAOResultSet(
                 Arrays.asList(new AnatEntityTO("Anat_idX", "anatNameX", null, null, null, null)),
-                        MySQLAnatEntityTOResultSet.class);
+                MySQLAnatEntityTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
         when(mockManager.mockAnatEntityDAO.getAnatEntitiesBySpeciesIds(speciesIds)).
-                thenReturn(mockAnatEntityTORs33);
-        
+        thenReturn(mockAnatEntityTORs33);
+
         // Non informative anatomical entities
         MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
                 Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
-                        MySQLAnatEntityTOResultSet.class);
+                MySQLAnatEntityTOResultSet.class);
         when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
-                thenReturn(mockAnatEntityRsSp33);
+        thenReturn(mockAnatEntityRsSp33);
 
         // Global expression calls
         MySQLExpressionCallTOResultSet mockGlobalExprRsSp33 = createMockDAOResultSet(
@@ -415,7 +424,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                                 DataState.NODATA, DataState.NODATA, true, true, 
                                 ExpressionCallTO.OriginOfLine.SELF, 
                                 ExpressionCallTO.OriginOfLine.SELF)),
-                        MySQLExpressionCallTOResultSet.class);
+                                MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams globalExprParams33 = new ExpressionCallParams();
         globalExprParams33.addAllSpeciesIds(speciesIds);
         globalExprParams33.setIncludeSubstructures(true);
@@ -431,18 +440,121 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         new NoExpressionCallTO(null, "IDX", "Anat_idX", "Stage_idX", 
                                 DataState.NODATA, DataState.NODATA, DataState.NODATA, 
                                 DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.SELF)),
-                        MySQLNoExpressionCallTOResultSet.class);
+                                MySQLNoExpressionCallTOResultSet.class);
         NoExpressionCallParams globalNoExprParams33 = new NoExpressionCallParams();
         globalNoExprParams33.addAllSpeciesIds(speciesIds);
         globalNoExprParams33.setIncludeParentStructures(true);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
                 (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams33))).
                 thenReturn(mockGlobalNoExprRsSp33);
-        
+
         thrown.expect(IllegalStateException.class);
+
+        String directory = testFolder.newFolder("tmpFolder").getPath();
+        
+        Set<FileType> fileTypes = new HashSet<>(
+                Arrays.asList(FileType.EXPR_SIMPLE, FileType.EXPR_COMPLETE)); 
+
+        GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
         generate.generateSingleSpeciesFiles(Arrays.asList("33"), fileTypes, directory);
     }
+    
+    /**
+     * Test if exception is launch when an expression call and a no-expression call 
+     * have data for the same data type using 
+     * {@link GenerateDownloadFile#generateSingleSpeciesFiles(List, List, String)},
+     * which is the central method of the class doing all the job.
+     */
+    @Test
+    public void shouldGenerateSingleSpeciesFilesDataConflictException() throws IOException {
+        // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
+        MockDAOManager mockManager = new MockDAOManager();
 
+        // Species 
+        MySQLSpeciesTOResultSet mockSpeciesTORs33 = createMockDAOResultSet(
+                Arrays.asList(new SpeciesTO("33", null, null, null, null, null, null, null)),
+                MySQLSpeciesTOResultSet.class);
+        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs33);
+
+        Set<String> speciesIds = new HashSet<String>(Arrays.asList("33")); 
+        // Gene names
+        MySQLGeneTOResultSet mockGeneTORs33 = createMockDAOResultSet(
+                Arrays.asList(new GeneTO("IDX", "genNX", null)), MySQLGeneTOResultSet.class);
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockGeneDAO.getGenes(speciesIds)). thenReturn(mockGeneTORs33);
+
+        // Stage names
+        MySQLStageTOResultSet mockStageTORs33 = createMockDAOResultSet(Arrays.asList(
+                new StageTO("Stage_idX", "stageNX", null, null, null, null, null, null)),
+                MySQLStageTOResultSet.class);
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockStageDAO.getStages(speciesIds)).thenReturn(mockStageTORs33);
+
+        // Anatomical entity names
+        MySQLAnatEntityTOResultSet mockAnatEntityTORs33 = createMockDAOResultSet(
+                Arrays.asList(new AnatEntityTO("Anat_idX", "anatNameX", null, null, null, null)),
+                MySQLAnatEntityTOResultSet.class);
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockAnatEntityDAO.getAnatEntitiesBySpeciesIds(speciesIds)).
+        thenReturn(mockAnatEntityTORs33);
+
+        // Non informative anatomical entities
+        MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
+                Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
+                MySQLAnatEntityTOResultSet.class);
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
+        thenReturn(mockAnatEntityRsSp33);
+
+        // Global expression calls
+        MySQLExpressionCallTOResultSet mockGlobalExprRsSp33 = createMockDAOResultSet(
+                // Attributes to fill: all except ID.
+                Arrays.asList(
+                        new ExpressionCallTO(null, "IDX", "Anat_idX", "Stage_idX", 
+                                DataState.NODATA, DataState.NODATA, 
+                                DataState.NODATA, DataState.LOWQUALITY, true, true, 
+                                ExpressionCallTO.OriginOfLine.SELF, 
+                                ExpressionCallTO.OriginOfLine.SELF)),
+                                MySQLExpressionCallTOResultSet.class);
+        ExpressionCallParams globalExprParams33 = new ExpressionCallParams();
+        globalExprParams33.addAllSpeciesIds(speciesIds);
+        globalExprParams33.setIncludeSubstructures(true);
+        globalExprParams33.setIncludeSubStages(true);
+        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalExprParams33))).
+                thenReturn(mockGlobalExprRsSp33);
+
+        // Global no-expression calls
+        MySQLNoExpressionCallTOResultSet mockGlobalNoExprRsSp33 = createMockDAOResultSet(
+                // Attributes to fill: all except ID.
+                Arrays.asList(
+                        new NoExpressionCallTO(null, "IDX", "Anat_idX", "Stage_idX", 
+                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF)),
+                                MySQLNoExpressionCallTOResultSet.class);
+        NoExpressionCallParams globalNoExprParams33 = new NoExpressionCallParams();
+        globalNoExprParams33.addAllSpeciesIds(speciesIds);
+        globalNoExprParams33.setIncludeParentStructures(true);
+        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams33))).
+                thenReturn(mockGlobalNoExprRsSp33);
+
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("An expression call and " +
+                "a no-expression call could be found for the same data type.");
+        String directory = testFolder.newFolder("tmpFolder").getPath();
+        
+        Set<FileType> fileTypes = new HashSet<>(
+                Arrays.asList(FileType.EXPR_COMPLETE)); 
+
+        GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
+        generate.generateSingleSpeciesFiles(Arrays.asList("33"), fileTypes, directory);
+
+        
+    }
+    
     /**
      * Asserts that the simple expression/no-expression file is good.
      * <p>

@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -184,5 +185,34 @@ public abstract class CallUser extends MySQLDAOUser {
                     callTO.toString()));
         }
         return log.exit(false);
+    }
+    
+    protected boolean isCallWithNoData(CallTO call) {
+        log.entry(call);
+
+        if (call == null) {
+            throw log.throwing(new IllegalArgumentException("The provided CallTO is null"));
+        }
+        if ((call.getAffymetrixData() !=null && !call.getAffymetrixData().equals(DataState.NODATA)) || 
+                (call.getInSituData() !=null && !call.getInSituData().equals(DataState.NODATA)) || 
+                (call.getRNASeqData() !=null && !call.getRNASeqData().equals(DataState.NODATA))) {
+            return log.exit(false);
+        }
+        if (call instanceof ExpressionCallTO) {
+            if (((ExpressionCallTO) call).getESTData() != null && 
+                    !((ExpressionCallTO) call).getESTData().equals(DataState.NODATA)) {
+                return log.exit(false);
+            }
+        } else if (call instanceof NoExpressionCallTO) {
+            if (((NoExpressionCallTO) call).getESTData() != null &&
+                    !((NoExpressionCallTO) call).getRelaxedInSituData().equals(DataState.NODATA)) {
+                return log.exit(false);
+            }
+        } else {
+            throw log.throwing(new IllegalArgumentException("The CallTO provided (" +
+                    call.getClass() + ") is not managed for expression/no-expression data: " + 
+                    call.toString()));
+        }
+        return log.exit(true);
     }
 }

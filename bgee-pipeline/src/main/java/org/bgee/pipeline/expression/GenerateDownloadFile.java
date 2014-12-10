@@ -794,6 +794,14 @@ public class GenerateDownloadFile extends CallUser {
                         ") - organ (" + callGroup.getKey().getAnatEntityId() + 
                         ") - stage (" + callGroup.getKey().getStageId() + ")"));
             }
+            if (expressionTO != null && isCallWithNoData(expressionTO)) {
+                throw log.throwing(new IllegalStateException("All data states of the expression call ("
+                        + expressionTO.toString()+ ") is set to no data"));
+            }
+            if (noExpressionTO != null && isCallWithNoData(noExpressionTO)) {
+                throw log.throwing(new IllegalStateException("All data states of the no-expression call ("
+                        + noExpressionTO.toString()+ ") is set to no data"));
+            }
             
             // Define if the call include observed data
             ObservedData observedData = ObservedData.NOTOBSERVED; 
@@ -823,11 +831,8 @@ public class GenerateDownloadFile extends CallUser {
                         expressionTO.getInSituData(), expressionTO.getRNASeqData());
                 if (allDataState.contains(DataState.HIGHQUALITY)) {
                     summary = ExpressionData.HIGHQUALITY;
-                } else if (allDataState.contains(DataState.LOWQUALITY)) {
-                    summary = ExpressionData.LOWQUALITY;
                 } else {
-                    throw log.throwing(new IllegalStateException("All data states of the expression "
-                            + " are set to no data)"));
+                    summary = ExpressionData.LOWQUALITY;
                 }
             } else if (noExpressionTO != null) {
                 summary = ExpressionData.NOEXPRESSION;

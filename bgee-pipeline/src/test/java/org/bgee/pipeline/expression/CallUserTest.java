@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.pipeline.TestAncestor;
@@ -207,5 +208,68 @@ public class CallUserTest extends TestAncestor {
                 NoExpressionCallTO.OriginOfLine.PARENT);
         assertTrue("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isPropagatedOnly(noExprTO));
+    }
+    
+    /**
+     * Test the method {@link CallUser#isCallWithNoData(CallTO)}.
+     */
+    @Test
+    public void testIsCallWithNoData() {
+        CallUser callUser = new FakeCallUser();
+        
+        // Expression call
+        // Empty call: all DataStates set to null
+        ExpressionCallTO exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, null, null);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isCallWithNoData(exprTO));
+
+        // Empty call: DataStates set to null or to NODATA
+        exprTO = new ExpressionCallTO(null, null, null, null, 
+                DataState.NODATA, null, null, null, null, null, null, null);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isCallWithNoData(exprTO));
+
+        // Call not empty without null in DataStates
+        exprTO = new ExpressionCallTO(null, null, null, null, 
+                DataState.NODATA, DataState.LOWQUALITY, 
+                DataState.LOWQUALITY, DataState.LOWQUALITY, null, null, null, null);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isCallWithNoData(exprTO));
+
+        // Call not empty with some null in DataStates
+        exprTO = new ExpressionCallTO(null, null, null, null, 
+                DataState.HIGHQUALITY, DataState.NODATA, 
+                null, DataState.HIGHQUALITY, null, null, null, null);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isCallWithNoData(exprTO));
+        
+        // No-expression call
+        // Empty call: all DataStates set to null
+        NoExpressionCallTO noExprTO = new NoExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isCallWithNoData(noExprTO));
+
+        // Empty call: DataStates set to null or to NODATA
+        noExprTO = new NoExpressionCallTO(null, null, null, null, 
+                null, null, null, DataState.NODATA, null, null);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isCallWithNoData(noExprTO));
+
+        // Call not empty without null in DataStates
+        noExprTO = new NoExpressionCallTO(null, null, null, null, 
+                DataState.NODATA, DataState.HIGHQUALITY, 
+                DataState.NODATA, DataState.NODATA, null, null);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isCallWithNoData(noExprTO));
+
+        // Call not empty with some null in DataStates
+        noExprTO = new NoExpressionCallTO(null, null, null, null, 
+                DataState.HIGHQUALITY, DataState.NODATA, 
+                null, DataState.HIGHQUALITY, null, null);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isCallWithNoData(noExprTO));
+
     }
 }

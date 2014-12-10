@@ -1,6 +1,7 @@
 package org.bgee.pipeline.expression;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -287,21 +289,20 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 // Attributes to fill: all except ID.
                 Arrays.asList(
                         new NoExpressionCallTO(null, "ID4", "Anat_id1", "Stage_id5", 
-                                DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                DataState.NODATA, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                                 DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF),
                         new NoExpressionCallTO(null, "ID4", "Anat_id4", "Stage_id5", 
-                                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                                 DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.BOTH),
                         new NoExpressionCallTO(null, "ID4", "Anat_id5", "Stage_id5", 
-                                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
+                                DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                                 DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.PARENT),
                         new NoExpressionCallTO(null, "ID5", "Anat_id4", "Stage_id5", 
-                                DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
-                                DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.SELF)),
-                        // TODO: to uncomment when the relaxed in situ data will be added
+                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                                DataState.HIGHQUALITY, true, NoExpressionCallTO.OriginOfLine.SELF)),
 //                        new NoExpressionCallTO(null, "ID5", "Anat_id5", "Stage_id5", 
-//                                DataState.NODATA, DataState.NODATA, DataState.LOWQUALITY, 
-//                                DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.PARENT),
+//                                DataState.NODATA, DataState.NODATA, DataState.HIGHQUALITY, 
+//                                DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.SELF)),
                         MySQLNoExpressionCallTOResultSet.class);
         NoExpressionCallParams globalNoExprParams22 = new NoExpressionCallParams();
         globalNoExprParams22.addAllSpeciesIds(speciesIds);
@@ -352,23 +353,10 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);
         verify(mockManager.mockExpressionCallDAO, times(2)).setAttributes(
                 // All Attributes except ID
-                //TODO: with the EnumSet.complementOf trick, for better evolvability. 
-                ExpressionCallDAO.Attribute.GENE_ID, 
-                ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
-                ExpressionCallDAO.Attribute.AFFYMETRIX_DATA, ExpressionCallDAO.Attribute.EST_DATA,
-                ExpressionCallDAO.Attribute.IN_SITU_DATA, ExpressionCallDAO.Attribute.RNA_SEQ_DATA,
-                ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES, 
-                ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES, 
-                ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE, 
-                ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE);
+                EnumSet.complementOf(EnumSet.of(ExpressionCallDAO.Attribute.ID)));
         verify(mockManager.mockNoExpressionCallDAO, times(2)).setAttributes(
                 // All Attributes except ID
-                NoExpressionCallDAO.Attribute.GENEID, 
-                NoExpressionCallDAO.Attribute.DEVSTAGEID, NoExpressionCallDAO.Attribute.ANATENTITYID, 
-                NoExpressionCallDAO.Attribute.AFFYMETRIXDATA, NoExpressionCallDAO.Attribute.INSITUDATA,
-                NoExpressionCallDAO.Attribute.RELAXEDINSITUDATA, NoExpressionCallDAO.Attribute.RNASEQDATA, 
-                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES,
-                NoExpressionCallDAO.Attribute.ORIGINOFLINE);
+                EnumSet.complementOf(EnumSet.of(NoExpressionCallDAO.Attribute.ID)));
         
         verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(
                 AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
@@ -376,6 +364,82 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
         verify(mockManager.mockStageDAO, times(1)).setAttributes(
                 StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
+        
+        // Test if exception is launch when resume is NODATA 
+        
+        MySQLSpeciesTOResultSet mockSpeciesTORs33 = createMockDAOResultSet(
+                Arrays.asList(
+                        new SpeciesTO("33", null, null, null, null, null, null, null)),
+                        MySQLSpeciesTOResultSet.class);
+        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs33);
+
+        speciesIds = new HashSet<String>(Arrays.asList("33")); 
+        // Gene names
+        MySQLGeneTOResultSet mockGeneTORs33 = createMockDAOResultSet(
+                Arrays.asList(new GeneTO("IDX", "genNX", null)), MySQLGeneTOResultSet.class);
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockGeneDAO.getGenes(speciesIds)). thenReturn(mockGeneTORs33);
+
+        // Stage names
+        MySQLStageTOResultSet mockStageTORs33 = createMockDAOResultSet(Arrays.asList(
+                        new StageTO("Stage_idX", "stageNX", null, null, null, null, null, null)),
+                        MySQLStageTOResultSet.class);
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockStageDAO.getStages(speciesIds)).thenReturn(mockStageTORs33);
+
+        // Anatomical entity names
+        MySQLAnatEntityTOResultSet mockAnatEntityTORs33 = createMockDAOResultSet(
+                Arrays.asList(new AnatEntityTO("Anat_idX", "anatNameX", null, null, null, null)),
+                        MySQLAnatEntityTOResultSet.class);
+        // The only Attributes requested should be ID and name, this will be checked 
+        // at the end of the test
+        when(mockManager.mockAnatEntityDAO.getAnatEntitiesBySpeciesIds(speciesIds)).
+                thenReturn(mockAnatEntityTORs33);
+        
+        // Non informative anatomical entities
+        MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
+                Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
+                        MySQLAnatEntityTOResultSet.class);
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
+                thenReturn(mockAnatEntityRsSp33);
+
+        // Global expression calls
+        MySQLExpressionCallTOResultSet mockGlobalExprRsSp33 = createMockDAOResultSet(
+                // Attributes to fill: all except ID.
+                Arrays.asList(
+                        new ExpressionCallTO(null, "IDX", "Anat_idX", "Stage_idX", 
+                                DataState.NODATA, DataState.NODATA, 
+                                DataState.NODATA, DataState.NODATA, true, true, 
+                                ExpressionCallTO.OriginOfLine.SELF, 
+                                ExpressionCallTO.OriginOfLine.SELF)),
+                        MySQLExpressionCallTOResultSet.class);
+        ExpressionCallParams globalExprParams33 = new ExpressionCallParams();
+        globalExprParams33.addAllSpeciesIds(speciesIds);
+        globalExprParams33.setIncludeSubstructures(true);
+        globalExprParams33.setIncludeSubStages(true);
+        when(mockManager.mockExpressionCallDAO.getExpressionCalls(
+                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalExprParams33))).
+                thenReturn(mockGlobalExprRsSp33);
+
+        // Global no-expression calls
+        MySQLNoExpressionCallTOResultSet mockGlobalNoExprRsSp33 = createMockDAOResultSet(
+                // Attributes to fill: all except ID.
+                Arrays.asList(
+                        new NoExpressionCallTO(null, "IDX", "Anat_idX", "Stage_idX", 
+                                DataState.NODATA, DataState.NODATA, DataState.NODATA, 
+                                DataState.NODATA, true, NoExpressionCallTO.OriginOfLine.SELF)),
+                        MySQLNoExpressionCallTOResultSet.class);
+        NoExpressionCallParams globalNoExprParams33 = new NoExpressionCallParams();
+        globalNoExprParams33.addAllSpeciesIds(speciesIds);
+        globalNoExprParams33.setIncludeParentStructures(true);
+        when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
+                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams33))).
+                thenReturn(mockGlobalNoExprRsSp33);
+        
+        thrown.expect(IllegalStateException.class);
+        generate.generateSingleSpeciesFiles(Arrays.asList("33"), fileTypes, directory);
     }
 
     /**
@@ -393,9 +457,36 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         log.entry(file, speciesId, isSimplified);
         
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
-            //TODO: check that the headers are what you expect
             String[] headers = mapReader.getHeader(true);
             log.trace("Headers: {}", (Object[]) headers);
+
+            // Check that the headers are what we expect
+            String[] expecteds = new String[] { 
+                    GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
+                    GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
+                    GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
+                    GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,
+                    GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
+                    GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                    GenerateDownloadFile.EXPRESSION_COLUMN_NAME};
+            if (!isSimplified) {
+                expecteds = new String[] { 
+                        GenerateDownloadFile.GENE_ID_COLUMN_NAME, 
+                        GenerateDownloadFile.GENE_NAME_COLUMN_NAME, 
+                        GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
+                        GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
+                        GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
+                        GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                        GenerateDownloadFile.AFFYMETRIXDATA_COLUMN_NAME, 
+                        GenerateDownloadFile.ESTDATA_COLUMN_NAME, 
+                        GenerateDownloadFile.INSITUDATA_COLUMN_NAME, 
+                        //GenerateDownloadFile.RELAXEDINSITUDATA_COLUMN_NAME, 
+                        GenerateDownloadFile.RNASEQDATA_COLUMN_NAME, 
+                        GenerateDownloadFile.INCLUDING_OBSERVED_DATA_COLUMN_NAME, 
+                        GenerateDownloadFile.EXPRESSION_COLUMN_NAME};
+            }
+            assertArrayEquals("Incorrect headers", expecteds, headers);
+            
 
             Set<Object> dataElements = new HashSet<Object>();
             for (ExpressionData data : ExpressionData.values()) {
@@ -415,7 +506,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         new NotNull(), // developmental stage name
                         new NotNull(), // anatomical entity ID
                         new NotNull(), // anatomical entity name
-                        new IsElementOf(dataElements)}; // Differential expression or Expression/No-expression
+                        new IsElementOf(dataElements)}; // Differential expression or Expression
             } else {
                 processors = new CellProcessor[] { 
                         new NotNull(), // gene ID
@@ -430,7 +521,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
 //                        new IsElementOf(dataElements),  // Relaxed in Situ data
                         new IsElementOf(dataElements),  // RNA-seq data
                         new IsElementOf(originElement), // Including observed data
-                        new IsElementOf(dataElements)}; // Differential expression or Expression/No-expression
+                        new IsElementOf(dataElements)}; // Differential expression or Expression
             }
 
             Map<String, Object> rowMap;
@@ -710,9 +801,9 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                                     ExpressionData.HIGHQUALITY, affymetrixData,
                                     ExpressionData.LOWQUALITY, estData,
                                     ExpressionData.LOWQUALITY, inSituData,
-//                                    ExpressionData.NOEXPRESSION, relaxedInSituData,
+//                                    ExpressionData.NODATA, relaxedInSituData,
                                     null, relaxedInSituData,
-                                    ExpressionData.NODATA, rnaSeqData,
+                                    ExpressionData.NOEXPRESSION, rnaSeqData,
                                     ObservedData.OBSERVED, observedData);
                         }
                     } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id4") &&
@@ -731,6 +822,21 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                                 null, relaxedInSituData,
                                 ExpressionData.NODATA, rnaSeqData,
                                 ObservedData.NOTOBSERVED, observedData);
+                    } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id5") &&
+                            stageId.equals("Stage_id5")) {
+                        this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
+                                "stageN5", stageName, "anatName5", anatEntityName,
+                                ExpressionData.NOEXPRESSION.getStringRepresentation(), resume);
+                        if (!isSimplified) {
+                            this.assertCompleteColumnRowEqual(geneId, 
+                                    ExpressionData.NODATA, affymetrixData,
+                                    ExpressionData.NODATA, estData,
+                                    ExpressionData.NODATA, inSituData,
+                                    //ExpressionData.NOEXPRESSION, relaxedInSituData,
+                                    null, relaxedInSituData,
+                                    ExpressionData.NODATA, rnaSeqData,
+                                    ObservedData.OBSERVED, observedData);
+                        }
                     } else {
                         throw new IllegalArgumentException("Unexpected row: " + rowMap);
                     }
@@ -742,7 +848,8 @@ public class GenerateDownloadFileTest  extends TestAncestor {
             if (isSimplified) {
                 if (speciesId.equals("11")) {
                     assertEquals("Incorrect number of lines in simple download file", 4, i);
-                } else if (speciesId.equals("22")){
+                } else if (speciesId.equals("22")) {
+                    // TODO: set to 6 when the relaxed in situ data will be added
                     assertEquals("Incorrect number of lines in simple download file", 5, i);
                 } else {
                     throw new IllegalStateException("Test of species ID " + speciesId + 
@@ -751,7 +858,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
             } else {
                 if (speciesId.equals("11")) {
                     assertEquals("Incorrect number of lines in advanced download file", 7, i);
-                } else if (speciesId.equals("22")){
+                } else if (speciesId.equals("22")) {
                     // TODO: set to 11 when the relaxed in situ data will be added
                     //TODO: why? I don't see any line that would be added
                     assertEquals("Incorrect number of lines in advanced download file", 10, i);

@@ -64,8 +64,7 @@ public class FilterNoExprCallsTest extends TestAncestor {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    public void shouldFilterNoExpressionCalls() 
-            throws IllegalStateException, SQLException, UnsupportedOperationException {
+    public void shouldFilterNoExpressionCalls() throws IllegalStateException, SQLException {
         MockDAOManager mockManager = new MockDAOManager();
 
         //*********************************************

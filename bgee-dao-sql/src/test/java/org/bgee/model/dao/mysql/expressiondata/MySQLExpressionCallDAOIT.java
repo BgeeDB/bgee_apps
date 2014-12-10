@@ -62,7 +62,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
      * Test the select method {@link MySQLExpressionCallDAO#getExpressionCalls()}.
      */
     @Test
-    public void shouldGetExpressionCalls() throws SQLException, UnsupportedOperationException {
+    public void shouldGetExpressionCalls() throws SQLException {
         
         this.useSelectDB();
 
@@ -358,7 +358,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
      * when including data from sub-stages.
      */
     @Test
-    public void shouldGetExpressionCallsIncludeSubStages() throws SQLException, UnsupportedOperationException {
+    public void shouldGetExpressionCallsIncludeSubStages() throws SQLException {
         
         this.useSelectDB();
 

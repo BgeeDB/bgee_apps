@@ -129,12 +129,8 @@ public class FilterNoExprCalls extends CallUser {
      *                                  performed for all species in the database.
      * @throws IllegalArgumentException If an ID provided through {@code SpeciesId}s is not 
      *                                  found in the database.
-     * @throws UnsupportedOperationException  If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
      */
-    public void filterNoExpressionCalls(List<String> speciesIds) 
-            throws IllegalArgumentException, UnsupportedOperationException {
+    public void filterNoExpressionCalls(List<String> speciesIds) throws IllegalArgumentException {
         log.entry(speciesIds);
         
         try {
@@ -166,12 +162,8 @@ public class FilterNoExprCalls extends CallUser {
      * @param speciesId A {@code String} that is the ID of a species for which 
      *                  the filtering is requested. 
      * @throws IllegalArgumentException If {@code speciesId} is not found in the database.
-     * @throws UnsupportedOperationException  If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
      */
-    public void filterNoExpressionCalls(String speciesId) 
-            throws IllegalArgumentException, UnsupportedOperationException {
+    public void filterNoExpressionCalls(String speciesId) throws IllegalArgumentException {
         log.entry(speciesId);
         
         //check validity of speciesId

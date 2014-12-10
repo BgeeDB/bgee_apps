@@ -301,13 +301,9 @@ public class BgeeDBUtils {
      *                          {@code LinkedHashMap} to keep the order in which 
      *                          {@code ExpressionCallTO}s are retrieved.
      * @throws DAOException     If an error occurred while getting the data from the Bgee database.
-     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
      */
     public static LinkedHashMap<String, List<ExpressionCallTO>> getExpressionCallsByGeneId(
-            Set<String> speciesIds, ExpressionCallDAO exprCallDAO) 
-                    throws DAOException, UnsupportedOperationException {
+            Set<String> speciesIds, ExpressionCallDAO exprCallDAO) throws DAOException {
         log.entry(speciesIds, exprCallDAO);
         
         ExpressionCallParams params = new ExpressionCallParams();

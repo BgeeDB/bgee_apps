@@ -1095,13 +1095,9 @@ public class GenerateDownloadFile extends CallUser {
      * @param speciesId     A {@code String} that is the ID of species for which data are retrieved.
      * @return              A {@code List} of {@code Map}s where keys are column names and 
      *                      values are data associated to the column name.
-     * @throws UnsupportedOperationException Not yet implemented
      */
-//    private List<Map<String, String>> generateDiffExprRows(String speciesId) 
-//            throws UnsupportedOperationException {
+//    private List<Map<String, String>> generateDiffExprRows(String speciesId) {
 //        log.entry(speciesId);
 //        // TODO Auto-generated method stub
-//        throw log.throwing(new UnsupportedOperationException("Differential expression is not yet "
-//                + "supported, it's need to be implemented"));
 //    }
 }

@@ -70,11 +70,8 @@ public class InsertGlobalCalls extends CallUser {
      * 
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
      * @throws DAOException  If an error occurred while inserting the data into the Bgee database.
-     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
      */
-    public static void main(String[] args) throws DAOException, UnsupportedOperationException {
+    public static void main(String[] args) throws DAOException {
         log.entry((Object[]) args);
         
         int expectedArgLengthWithoutSpecies = 1;
@@ -199,12 +196,8 @@ public class InsertGlobalCalls extends CallUser {
      * @throws DAOException    If an error occurred while inserting the data into the Bgee database.
      * @throws IllegalArgumentException If a species ID does not correspond to any species 
      *                                  in the Bgee data source.
-     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
      */
-    public void insert(List<String> speciesIds, boolean isNoExpression) 
-            throws DAOException, UnsupportedOperationException {
+    public void insert(List<String> speciesIds, boolean isNoExpression) throws DAOException {
         log.entry(speciesIds, isNoExpression);
 
         try {
@@ -410,9 +403,6 @@ public class InsertGlobalCalls extends CallUser {
      * @return              A {@code Set} of {@code String}s containing anatomical entity IDs
      *                      allowed to be used for no-expression call propagation.
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
-     * @throws UnsupportedOperationException If in the given {@code ExpressionCallParams},
-     *                                        {@code isIncludeSubStages} is set to {@code true},
-     *                                        because it is not implemented yet.
      */
     private Set<String> loadAllowedAnatEntities() throws DAOException {
         log.entry();

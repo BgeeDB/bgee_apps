@@ -257,7 +257,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
      * Test {@link BgeeDBUtils#getExpressionCallsByGeneId(Set, ExpressionCallDAO)}.
      */
     @Test
-    public void shouldGetExpressionCallsByGeneId() throws UnsupportedOperationException {
+    public void shouldGetExpressionCallsByGeneId() {
         try (MockDAOManager mockManager = new MockDAOManager()) {
         
             Map<String, Set<ExpressionCallTO>> expectedMap = 

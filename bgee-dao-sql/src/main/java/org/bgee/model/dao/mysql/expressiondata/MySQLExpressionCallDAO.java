@@ -52,7 +52,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 
     @Override
     public ExpressionCallTOResultSet getExpressionCalls(ExpressionCallParams params) 
-            throws DAOException, UnsupportedOperationException {
+            throws DAOException {
         log.entry(params);
         return log.exit(getExpressionCalls(
                 params.getSpeciesIds(), params.isIncludeSubstructures(), params.isIncludeSubStages())); 
@@ -133,8 +133,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      *                               expression calls.                      
      */
     private ExpressionCallTOResultSet getExpressionCalls(Set<String> speciesIds, 
-            boolean isIncludeSubstructures, boolean isIncludeSubStages) 
-                    throws DAOException, UnsupportedOperationException {
+            boolean isIncludeSubstructures, boolean isIncludeSubStages) throws DAOException {
         log.entry(speciesIds, isIncludeSubstructures, isIncludeSubStages);
 
         // Construct sql query

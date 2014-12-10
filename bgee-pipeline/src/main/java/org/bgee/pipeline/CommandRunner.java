@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
+import org.bgee.pipeline.expression.GenerateDownloadFile;
 import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
@@ -186,6 +187,11 @@ public class CommandRunner {
             InsertGlobalCalls.main(newArgs);
             break;
  
+        //---------- Download file generation -----------
+        case "GenerateDownloadFile":
+            GenerateDownloadFile.main(newArgs);
+            break;
+            
         default: 
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));

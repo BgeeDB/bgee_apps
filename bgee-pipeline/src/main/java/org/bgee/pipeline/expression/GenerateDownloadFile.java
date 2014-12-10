@@ -48,12 +48,12 @@ import org.supercsv.io.ICsvMapWriter;
  * @version Bgee 13
  * @since Bgee 13
  */
-public class GenerateDownladFile extends CallUser {
+public class GenerateDownloadFile extends CallUser {
     
     /**
      * {@code Logger} of the class.
      */
-    private final static Logger log = LogManager.getLogger(GenerateDownladFile.class.getName());
+    private final static Logger log = LogManager.getLogger(GenerateDownloadFile.class.getName());
         
     /**
      * A {@code String} that is the name of the column containing gene IDs, in the download file.
@@ -305,7 +305,7 @@ public class GenerateDownladFile extends CallUser {
    /**
      * Default constructor. 
      */
-    public GenerateDownladFile() {
+    public GenerateDownloadFile() {
         this(null);
     }
 
@@ -315,7 +315,7 @@ public class GenerateDownladFile extends CallUser {
      * 
      * @param manager   the {@code MySQLDAOManager} to use.
      */
-    public GenerateDownladFile(MySQLDAOManager manager) {
+    public GenerateDownloadFile(MySQLDAOManager manager) {
         super(manager);
     }
 
@@ -378,7 +378,7 @@ public class GenerateDownladFile extends CallUser {
                     "Some file types do not exist: " + unknownFileTypes));
         }
         
-        GenerateDownladFile generate = new GenerateDownladFile();
+        GenerateDownloadFile generate = new GenerateDownloadFile();
         generate.generateSingleSpeciesFiles(speciesIds, filesToBeGenerated, directory);
         
         log.exit();

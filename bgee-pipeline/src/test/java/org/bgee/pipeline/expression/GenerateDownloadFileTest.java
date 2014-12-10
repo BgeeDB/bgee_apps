@@ -37,9 +37,9 @@ import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.pipeline.BgeeDBUtilsTest;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
-import org.bgee.pipeline.expression.GenerateDownladFile.ExpressionData;
-import org.bgee.pipeline.expression.GenerateDownladFile.FileType;
-import org.bgee.pipeline.expression.GenerateDownladFile.ObservedData;
+import org.bgee.pipeline.expression.GenerateDownloadFile.ExpressionData;
+import org.bgee.pipeline.expression.GenerateDownloadFile.FileType;
+import org.bgee.pipeline.expression.GenerateDownloadFile.ObservedData;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -51,17 +51,17 @@ import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
 
-public class GenerateDownladFileTest  extends TestAncestor {
+public class GenerateDownloadFileTest  extends TestAncestor {
 
     /**
      * {@code Logger} of the class. 
      */
-    private final static Logger log = LogManager.getLogger(GenerateDownladFileTest.class.getName());
+    private final static Logger log = LogManager.getLogger(GenerateDownloadFileTest.class.getName());
 
     @Rule
     public final TemporaryFolder testFolder = new TemporaryFolder();
 
-    public GenerateDownladFileTest(){
+    public GenerateDownloadFileTest(){
         super();
     }
 
@@ -74,7 +74,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
     public ExpectedException thrown = ExpectedException.none();
 
     /**
-     * Test {@link GenerateDownladFile#generateSingleSpeciesFiles(List, List, String)},
+     * Test {@link GenerateDownloadFile#generateSingleSpeciesFiles(List, List, String)},
      * which is the central method of the class doing all the job.
      */
     @Test
@@ -310,7 +310,7 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams22))).
                 thenReturn(mockGlobalNoExprRsSp22);
 
-        GenerateDownladFile generate = new GenerateDownladFile(mockManager);
+        GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
         
         String directory = testFolder.newFolder("tmpFolder").getPath();
         
@@ -321,13 +321,13 @@ public class GenerateDownladFileTest  extends TestAncestor {
                 Arrays.asList("11", "22"), fileTypes, directory);
         
         String outputSimpleFile11 = directory + "11" + "_" + 
-                FileType.EXPR_SIMPLE + GenerateDownladFile.EXTENSION;
+                FileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION;
         String outputSimpleFile22 = directory + "22" + "_" + 
-                FileType.EXPR_SIMPLE + GenerateDownladFile.EXTENSION;
+                FileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION;
         String outputAdvancedFile11 = directory + "11" + "_" + 
-                FileType.EXPR_COMPLETE + GenerateDownladFile.EXTENSION;
+                FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION;
         String outputAdvancedFile22 = directory + "22" + "_" + 
-                FileType.EXPR_COMPLETE + GenerateDownladFile.EXTENSION;
+                FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION;
 
         assertExpressionFile(outputSimpleFile11, "11", true);
         assertExpressionFile(outputSimpleFile22, "22", true);

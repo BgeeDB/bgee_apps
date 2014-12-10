@@ -6,6 +6,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
@@ -321,14 +322,14 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         generate.generateSingleSpeciesFiles(
                 Arrays.asList("11", "22"), fileTypes, directory);
         
-        String outputSimpleFile11 = directory + "11" + "_" + 
-                FileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION;
-        String outputSimpleFile22 = directory + "22" + "_" + 
-                FileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION;
-        String outputAdvancedFile11 = directory + "11" + "_" + 
-                FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION;
-        String outputAdvancedFile22 = directory + "22" + "_" + 
-                FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION;
+        String outputSimpleFile11 = new File(directory, "11" + "_" + 
+                FileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
+        String outputSimpleFile22 = new File(directory, "22" + "_" + 
+                FileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
+        String outputAdvancedFile11 = new File(directory, "11" + "_" + 
+                FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
+        String outputAdvancedFile22 = new File(directory, "22" + "_" + 
+                FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertExpressionFile(outputSimpleFile11, "11", true);
         assertExpressionFile(outputSimpleFile22, "22", true);

@@ -41,8 +41,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
-    public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop) throws IOException
-    {
+    public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
+            BgeeProperties prop) throws IOException {
         super(response,prop);
         this.uniqueId = 0;
     }

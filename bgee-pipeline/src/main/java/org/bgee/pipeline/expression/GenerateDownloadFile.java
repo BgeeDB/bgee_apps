@@ -1,5 +1,6 @@
 package org.bgee.pipeline.expression;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -687,7 +688,7 @@ public class GenerateDownloadFile extends CallUser {
             List<Map<String, String>> fileRows = this.generateExprFileRows(geneNamesByIds, 
                     stageNamesByIds, anatEntityNamesByIds, groupedCallTOs, true);
 
-            this.writeDownloadFile(fileRows, directory + speciesId + "_" + 
+            this.writeDownloadFile(fileRows, directory, speciesId + "_" + 
                     FileType.EXPR_SIMPLE.getStringRepresentation() + EXTENSION, 
                     FileType.EXPR_SIMPLE);
             
@@ -702,7 +703,7 @@ public class GenerateDownloadFile extends CallUser {
             List<Map<String, String>> fileRows = this.generateExprFileRows(geneNamesByIds, 
                     stageNamesByIds, anatEntityNamesByIds, groupedCallTOs, false);
 
-            this.writeDownloadFile(fileRows, directory + speciesId + "_" + 
+            this.writeDownloadFile(fileRows, directory, speciesId + "_" + 
                     FileType.EXPR_COMPLETE.getStringRepresentation() + EXTENSION, 
                     FileType.EXPR_COMPLETE);
 
@@ -885,26 +886,32 @@ public class GenerateDownloadFile extends CallUser {
                 }
                 
                 // Define data state for each data type
-                row.put(AFFYMETRIXDATA_COLUMN_NAME, mergeExprAndNoExprDataStates(
-                        expressionTO.getAffymetrixData(), noExpressionTO.getAffymetrixData()).
-                        getStringRepresentation());
-                row.put(ESTDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates(
-                        expressionTO.getESTData(), DataState.NODATA).
-                        getStringRepresentation());
-                row.put(INSITUDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates(
-                        expressionTO.getInSituData(), noExpressionTO.getInSituData()).
-                        getStringRepresentation());
-                row.put(RELAXEDINSITUDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates
-                        (DataState.NODATA, noExpressionTO.getRelaxedInSituData()).
-                        getStringRepresentation());
-                row.put(RNASEQDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates(
-                        expressionTO.getRNASeqData(), noExpressionTO.getRNASeqData()).
-                        getStringRepresentation());
+                try {
+                    row.put(AFFYMETRIXDATA_COLUMN_NAME, mergeExprAndNoExprDataStates(
+                            expressionTO.getAffymetrixData(), noExpressionTO.getAffymetrixData()).
+                            getStringRepresentation());
+                    row.put(ESTDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates(
+                            expressionTO.getESTData(), DataState.NODATA).
+                            getStringRepresentation());
+                    row.put(INSITUDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates(
+                            expressionTO.getInSituData(), noExpressionTO.getInSituData()).
+                            getStringRepresentation());
+                    row.put(RELAXEDINSITUDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates
+                            (DataState.NODATA, noExpressionTO.getRelaxedInSituData()).
+                            getStringRepresentation());
+                    row.put(RNASEQDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates(
+                            expressionTO.getRNASeqData(), noExpressionTO.getRNASeqData()).
+                            getStringRepresentation());
+                } catch (Exception e) {
+                    throw log.throwing(new IllegalStateException("Incorrect data states, " +
+                    		"ExpressionCallTO: " + expressionTO + ", NoExpressionCallTo: " + 
+                    		noExpressionTO, e));
+                }
             }
             
             // Add current row to the list of rows
             allRows.add(row);
-            log.debug("Added row: {}", row);
+            log.trace("Added row: {}", row);
         }
 
         log.debug("Done generating file content.");
@@ -964,20 +971,20 @@ public class GenerateDownloadFile extends CallUser {
      * 
      * @param inputList         A {@code List} of {@code Map}s where keys are column names and 
      *                          values are data associated to the column name.
-     * @param outputFile        A {@code String} that is the path to the simple output file
-     *                          were data will be written as TSV.
+     * @param directory         A {@code String} that is the directory where to write the file.
+     * @param fileName          A {@code String} that is name of the file to write.
      * @param fileType          The {@code FileType} to be generated.
      * @throws IOException      If an error occurred while trying to write the {@code outputFile}.
      */
-    private void writeDownloadFile(List<Map<String, String>> inputList, String outputFile, 
-            FileType fileType) throws IOException {
-        log.entry(inputList, outputFile, fileType);
+    private void writeDownloadFile(List<Map<String, String>> inputList, String directory, 
+            String fileName, FileType fileType) throws IOException {
+        log.entry(inputList, directory, fileName, fileType);
                 
         CellProcessor[] processors = generateCellProcessor(fileType);
         final String[] headers = this.generateHeader(fileType);
         
-        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
-                Utils.TSVCOMMENTED)) {
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(
+                new FileWriter(new File(directory, fileName)), Utils.TSVCOMMENTED)) {
     
             mapWriter.writeHeader(headers);
             for (Map<String, String> map: inputList) {                

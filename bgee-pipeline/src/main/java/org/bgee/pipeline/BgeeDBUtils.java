@@ -455,7 +455,7 @@ public class BgeeDBUtils {
     public static Map<String, String> getAnatEntityNamesByIds(Set<String> speciesIds, 
             AnatEntityDAO anatEntityDAO) {
         log.entry(speciesIds, anatEntityDAO);
-        log.debug("Start retrieving stage names for species: {}", speciesIds);
+        log.debug("Start retrieving anatomical entity names for species: {}", speciesIds);
         //store original attributes to restore stageDAO in proper state afterwards.
         Collection<AnatEntityDAO.Attribute> attributes = anatEntityDAO.getAttributes();
         anatEntityDAO.setAttributes(AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);

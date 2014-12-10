@@ -366,6 +366,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
         
         // Test if exception is launch when resume is NODATA 
+        // TODO: move test of exceptions to a different unit test
         
         MySQLSpeciesTOResultSet mockSpeciesTORs33 = createMockDAOResultSet(
                 Arrays.asList(
@@ -822,22 +823,25 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                                 null, relaxedInSituData,
                                 ExpressionData.NODATA, rnaSeqData,
                                 ObservedData.NOTOBSERVED, observedData);
-                    } else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id5") &&
-                            stageId.equals("Stage_id5")) {
-                        this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
-                                "stageN5", stageName, "anatName5", anatEntityName,
-                                ExpressionData.NOEXPRESSION.getStringRepresentation(), resume);
-                        if (!isSimplified) {
-                            this.assertCompleteColumnRowEqual(geneId, 
-                                    ExpressionData.NODATA, affymetrixData,
-                                    ExpressionData.NODATA, estData,
-                                    ExpressionData.NODATA, inSituData,
-                                    //ExpressionData.NOEXPRESSION, relaxedInSituData,
-                                    null, relaxedInSituData,
-                                    ExpressionData.NODATA, rnaSeqData,
-                                    ObservedData.OBSERVED, observedData);
-                        }
-                    } else {
+                    } 
+                    // TODO: uncomment when relaxed in-situ will be used
+//                    else if (geneId.equals("ID5") && anatEntityId.equals("Anat_id5") &&
+//                            stageId.equals("Stage_id5")) {
+//                        this.assertCommonColumnRowEqual(geneId, "genN5", geneName,
+//                                "stageN5", stageName, "anatName5", anatEntityName,
+//                                ExpressionData.NOEXPRESSION.getStringRepresentation(), resume);
+//                        if (!isSimplified) {
+//                            this.assertCompleteColumnRowEqual(geneId, 
+//                                    ExpressionData.NODATA, affymetrixData,
+//                                    ExpressionData.NODATA, estData,
+//                                    ExpressionData.NODATA, inSituData,
+//                                    //ExpressionData.NOEXPRESSION, relaxedInSituData,
+//                                    null, relaxedInSituData,
+//                                    ExpressionData.NODATA, rnaSeqData,
+//                                    ObservedData.OBSERVED, observedData);
+//                        }
+//                    } 
+                    else {
                         throw new IllegalArgumentException("Unexpected row: " + rowMap);
                     }
                 } else {
@@ -860,7 +864,6 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                     assertEquals("Incorrect number of lines in advanced download file", 7, i);
                 } else if (speciesId.equals("22")) {
                     // TODO: set to 11 when the relaxed in situ data will be added
-                    //TODO: why? I don't see any line that would be added
                     assertEquals("Incorrect number of lines in advanced download file", 10, i);
                 } else {
                     throw new IllegalStateException("Test of species ID " + speciesId + 

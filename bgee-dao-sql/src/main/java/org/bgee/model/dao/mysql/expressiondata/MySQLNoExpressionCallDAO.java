@@ -120,7 +120,15 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                     continue;
                 }
                 if (sql.isEmpty()) {
-                    sql += "SELECT DISTINCT ";
+                    sql += "SELECT ";
+                    //does the attributes requested ensure that there will be 
+                    //no duplicated results?
+                    if (!attributes.contains(NoExpressionCallDAO.Attribute.ID) &&  
+                            (!attributes.contains(NoExpressionCallDAO.Attribute.GENEID) || 
+                                !attributes.contains(NoExpressionCallDAO.Attribute.ANATENTITYID) || 
+                                !attributes.contains(NoExpressionCallDAO.Attribute.DEVSTAGEID))) {
+                        sql += "DISTINCT ";
+                    }
                 } else {
                     sql += ", ";
                 }

@@ -796,11 +796,11 @@ public class GenerateDownloadFile extends CallUser {
             }
             if (expressionTO != null && isCallWithNoData(expressionTO)) {
                 throw log.throwing(new IllegalStateException("All data states of the expression call ("
-                        + expressionTO.toString()+ ") is set to no data"));
+                        + expressionTO + ") are set to no data"));
             }
             if (noExpressionTO != null && isCallWithNoData(noExpressionTO)) {
                 throw log.throwing(new IllegalStateException("All data states of the no-expression call ("
-                        + noExpressionTO.toString()+ ") is set to no data"));
+                        + noExpressionTO + ") are set to no data"));
             }
             
             // Define if the call include observed data

@@ -205,8 +205,16 @@ var download = {
             // so no need to care about 
             var bgeeSpeciesCommonNames = $images.data( "bgeespeciescommonname" );
             var bgeeGroupName = $currentSpecies.data( "bgeegroupname" );
-            // Load the files urls for the current species/group
-            var urls = this.getUrls( id );     
+            // Get files urls for the current species/group
+            var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
+            var bgeeExprAdvancedFileUrl = $currentSpecies.data( "bgeeexpradvancedfileurl" );
+            var bgeeDiffExprSimpleFileUrl = $currentSpecies.data( "bgeediffexprsimplefileurl" );
+            var bgeeDiffExprAdvancedFileUrl = $currentSpecies.data( "bgeediffexpradvancedfileurl" );
+            var bgeeExprSimpleFileSize = $currentSpecies.data( "bgeeexprsimplefilesize" );
+            var bgeeExprAdvancedFileSize = $currentSpecies.data( "bgeeexpradvancedfilesize" );
+            var bgeeDiffExprSimpleFileSize = $currentSpecies.data( "bgeediffexprsimplefilesize" );
+            var bgeeDiffExprAdvancedFileSize = $currentSpecies.data( "bgeediffexpradvancedfilesize" );
+
             // Proceed to the update
             var numberOfSpecies = $images.size() ;
             var namesOfAllSpecies = "";
@@ -241,11 +249,15 @@ var download = {
                 this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
                 this.$bgeeGroupDescription.text( "" );
             }
-            // Update the values of the download links 
-            this.$exprSimpleCsv.attr( "href", urls["expr_simple_csv"] );
-            this.$exprCompleteCsv.attr( "href", urls["expr_complete_csv"] );
-            this.$overUnderSimpleCsv.attr( "href", urls["overunder_simple_csv"] );
-            this.$overUnderCompleteCsv.attr( "href", urls["overunder_complete_csv"] );
+            // Update the values of the download links and size files
+            this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
+            this.$exprSimpleCsv.text( "Download simple file (" + bgeeExprSimpleFileSize + ")" );
+            this.$exprCompleteCsv.attr( "href", bgeeExprAdvancedFileUrl );
+            this.$exprCompleteCsv.text( "Download advanced file (" + bgeeExprAdvancedFileSize + ")" );
+            this.$overUnderSimpleCsv.attr( "href", bgeeDiffExprSimpleFileUrl );
+            this.$overUnderSimpleCsv.text( "Download simple file (" + bgeeDiffExprSimpleFileSize + ")" );
+            this.$overUnderCompleteCsv.attr( "href", bgeeDiffExprAdvancedFileUrl );
+            this.$overUnderCompleteCsv.text( "Download advanced file (" + bgeeDiffExprAdvancedFileSize + ")" );
 
             // Add the "selected" css class to the current species and display the detail 
             // box with a visual effect
@@ -430,41 +442,6 @@ var download = {
             if( this.autoCompletionList.indexOf( value ) == -1 ){
                 this.autoCompletionList.push( value );
             }
-        },
-
-        /**
-         * This function contains a table with all the download URL and return a subset 
-         * corresponding to the provided id
-         * 
-         * @param id    The id corresponding to the URLs to return
-         * @return      A subset of the whole URLs table corresponding to the provided id
-         */
-        getUrls: function( id ){
-
-            // Declaration of the table
-            var urls = { 
-                    "9606":
-                    {
-                        "expr_simple_csv" : "http://www.isb-sib.ch/?1",
-                        "expr_complete_csv" : "http://www.isb-sib.ch/?3",
-                        "overunder_simple_csv" : "http://www.isb-sib.ch/?5",
-                        "overunder_complete_csv" : "http://www.isb-sib.ch/?7",
-                    },
-                    "10090":
-                    {
-                        "expr_simple_csv" : "http://www.isb-sib.ch/?9",
-                        "expr_complete_csv" : "http://www.isb-sib.ch/?11",
-                        "overunder_simple_csv" : "http://www.isb-sib.ch/?13",
-                        "overunder_complete_csv" : "http://www.isb-sib.ch/?15",
-                    }
-            }
-
-            // TODO, temp to avoid bug due to missing data, remove me when the list is complete.
-            if( id != "10090" ){
-                id = "9606"
-            }
-
-            return urls[id];
         }
 };
 // Call the init function when the document is ready()

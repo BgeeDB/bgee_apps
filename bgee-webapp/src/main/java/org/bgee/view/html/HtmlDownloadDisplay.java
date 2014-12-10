@@ -64,7 +64,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
         this.writeln("It currently provides &quot;presence/absence of expression&quot; and &quot;over-/under-expression&quot; data files.</p>");
         this.writeln("<p>This page is a download page containing pre-computed files of Bgee release 13 (based on Ensembl 75). ");
-        this.writeln("<a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12 (based on Ensembl 69) is always available here</a>.</p>");
+        this.writeln("Bgee release 12 (based on Ensembl 69) is always available <a href='http://bgee.unil.ch/bgee/bgee'>here</a>.</p>");
+        this.writeln("<p>You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> or <a href='https://bgeedb.wordpress.com'>our blog</a></p>");
         this.writeln("</div>");
         this.writeln("</div>");
 
@@ -75,7 +76,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<input id='search_label' class='sib_text' type='text' name='search' "
                 + "value='Scientific name, common name...'/>&nbsp;&nbsp;");
         this.writeln("<input type='image' alt='Submit' "
-                + "src='"+prop.getImagesRootDirectory()+"submit_button.png'/>");
+                + "src='"+this.prop.getImagesRootDirectory()+"submit_button.png'/>");
         this.writeln("<div id='results_nb'></div>");
         this.writeln("</form>");
         this.writeln("</div>");
@@ -104,23 +105,23 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(generateSpeciesFigure(8364));
         this.writeln(generateSpeciesFigure(99883));
 
-        // Black banner when a species or a group is selected
+        // Black banner when a species or a group is selected.
+        // This section is empty, it will be filled by JavaScript.
         this.writeln("<div id='bgee_data_selection'>");
-
+        
+        // Cross to close the banner
         this.writeln("<div id='bgee_data_selection_cross'>");
         this.writeln("<img src='"+this.prop.getImagesRootDirectory()+"cross.png' "
                 + "title='Close banner' alt='Close banner' /> ");
         this.writeln("</div>");
-        this.writeln("<div id='bgee_data_selection_img'>");
-        this.writeln(generateSpeciesImg(9606, "Homo sapiens", "H. sapiens", "human", null, false));
-        this.writeln("</div>");
+        
+        // Section on the left of the black banner: image for single species or patchwork for group
+        this.writeln("<div id='bgee_data_selection_img'></div>");
+
+        // Section on the right of the black banner
         this.writeln("<div id='bgee_data_selection_text'>");
-        this.writeln("<h1 class='scientificname'>Homo sapiens</h1>&nbsp;&nbsp;<h1 class='commonname'>(human)</h1>");
-        this.writeln("<p class='groupdescription'>16. species: <i>H. sapiens</i>, <i>M. musculus</i>, <i>D. rerio</i>, "
-                + "<i>D. melanogaster</i>, <i>C. elegans</i>, <i>P. paniscus</i>, <i>P. troglodytes</i>, "
-                + "<i>G. gorilla</i>, <i>P. pygmaeus</i>, <i>M. mulatta</i>, <i>R. norvegicus</i>, "
-                + "<i>B. taurus</i>, <i>O. anatinus</i>, <i>G. gallus</i>, <i>A. carolinensis</i>, "
-                + "<i>T. nigroviridis</i></p>");
+        this.writeln("<h1 class='scientificname'></h1>&nbsp;&nbsp;<h1 class='commonname'></h1>");
+        this.writeln("<p class='groupdescription'></p>");
         this.writeln("<ul>");    
         this.writeln("<li><h2>Presence/absence of expression</h2>");
         this.writeln("<a id='expr_simple_csv' class='download_link' href='./data/fake-file.csv' download>Download simple file</a>");
@@ -133,12 +134,31 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<a id='overunder_complete_csv' class='download_link' href='./data/fake-file.csv' download>Download advanced file</a>");
         this.writeln("</li>");
         this.writeln("</ul>");
+        // TODO: I implemented modifications but I did not test them so I let it as comment. 
+        // I could see interface but JavaScript actions did not work whereas it was activated.
+//        this.writeln("<div>");
+//        this.writeln("<h2>Presence/absence of expression</h2>");    
+//        this.writeln("<p>");
+//        this.writeln("<a id='expr_simple_csv' class='download_link' href='' download></a>");
+//        this.writeln("&nbsp;&nbsp;");
+//        this.writeln("<a id='expr_complete_csv' class='download_link' href='' download></a>");
+//        this.writeln("</p>");
+//        this.writeln("</div>");
+//        this.writeln("<div>");
+//        this.writeln("<h2 >Over-/Under-expression</h2>");
+//        this.writeln("<p>");
+//        this.writeln("<a id='overunder_simple_csv' class='download_link' href='' download></a>");
+//        this.writeln("&nbsp;&nbsp;");
+//        this.writeln("<a id='overunder_complete_csv' class='download_link' href='' download></a>");
+//        this.writeln("</p>");
+//        this.writeln("</div>");
         this.writeln("</div>");
         this.writeln("</div>");
         this.writeln("</div>");
         this.writeln("</div>");
 
         // Multi-species part
+        // TODO: modify according to the groups that will be defined
         this.writeln("<div id='bgee_multi_species'>");
         this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
         this.writeln("<div class='biggroup'>");
@@ -209,164 +229,363 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String generateSpeciesFigure(List<Integer> speciesIds, String figcaption, 
             boolean isGroup) {
         log.entry(speciesIds, figcaption, isGroup);
+        
         StringBuilder images = new StringBuilder();
         if (speciesIds == null || speciesIds.size() == 0) {
             return ("");
         }
-        String name=null, commonName=null, shortName=null, alternateNames=null;
+        
+        String name = null, commonName = null, shortName = null, alternateNames = null;
+
         // Hidden info, to improve the jQuery search, allow to look for any of the name, short,
         // or common name, even if not displayed... for example droso.
-        String hiddenInfo="";
+        String hiddenInfo = "";
         for (Integer speciesId: speciesIds) {
             switch(speciesId) {
-            case 9606: 
-                name="Homo sapiens";
-                shortName="H. sapiens";
-                commonName="human";
-                alternateNames="";
-                break;
-            case 10090: 
-                name="Mus musculus";
-                shortName="M. musculus";
-                commonName="mouse";
-                alternateNames="house mouse, mice";
-                break;
-            case 7955: 
-                name="Danio rerio";
-                shortName="D. rerio";
-                commonName="zebrafish";
-                alternateNames="leopard danio, zebra danio";
-                break;
-            case 7227: 
-                name="Drosophila melanogaster";
-                shortName="D. melanogaster";
-                commonName="fruitfly";
-                alternateNames="vinegar fly";
-                break;
-            case 6239: 
-                name="Caenorhabditis elegans";
-                shortName="C. elegans";
-                commonName="worm";
-                alternateNames="nematode, roundworm";
-                break;
-            case 9597: 
-                name="Pan paniscus";
-                shortName="P. paniscus";
-                commonName="bonobo";
-                alternateNames="pygmy chimpanzee";
-                break;
-            case 9598: 
-                name="Pan troglodytes";
-                shortName="P. troglodytes";
-                commonName="chimpanzee";
-                alternateNames="";
-                break;
-            case 9593: 
-                name="Gorilla gorilla";
-                shortName="G. gorilla";
-                commonName="gorilla";
-                alternateNames="western gorilla";
-                break;
-            case 9600: 
-                name="Pongo pygmaeus";
-                shortName="P. pygmaeus";
-                commonName="orangutan";
-                alternateNames="orang utan, orang-utan";
-                break;
-            case 9544: 
-                name="Macaca mulatta";
-                shortName="M. mulatta";
-                commonName="macaque";
-                alternateNames="rhesus monkey";
-                break;
-            case 10116: 
-                name="Rattus norvegicus";
-                shortName="R. norvegicus";
-                commonName="rat";
-                alternateNames="brown rat";
-                break;
-            case 9913: 
-                name="Bos taurus";
-                shortName="B. taurus";
-                commonName="cow";
-                alternateNames="domestic cow, domestic cattle, bovine cow";
-                break;
-            case 9823: 
-                name="Sus scrofa";
-                shortName="S. scrofa";
-                commonName="pig";
-                alternateNames="domestic pig, swine";
-                break;
-            case 13616: 
-                name="Monodelphis domestica";
-                shortName="M. domestica";
-                commonName="opossum";
-                alternateNames="gray short-tailed opossum, gray short tailed opossum";
-                break;
-            case 9258: 
-                name="Ornithorhynchus anatinus";
-                shortName="O. anatinus";
-                commonName="platypus";
-                alternateNames="duckbill platypus, duck-billed platypus";
-                break;
-            case 9031: 
-                name="Gallus gallus";
-                shortName="G. gallus";
-                commonName="chicken";
-                alternateNames="bantam, red junglefowl, red jungle fowl";
-                break;
-            case 28377: 
-                name="Anolis carolinensis";
-                shortName="A. carolinensis";
-                commonName="anolis";
-                alternateNames="green anole, carolina anole";
-                break;
-            case 8364: 
-                name="Xenopus tropicalis";
-                shortName="X. tropicalis";
-                commonName="xenopus";
-                alternateNames="western clawed frog";
-                break;
-            case 99883: 
-                name="Tetraodon nigroviridis";
-                shortName="T. nigroviridis";
-                commonName="tetraodon";
-                alternateNames="spotted green pufferfish";
-                break;
-            default:
-                return ("");
+                case 9606: 
+                    name = "Homo sapiens";
+                    shortName = "H. sapiens";
+                    commonName = "human";
+                    alternateNames = "";
+                    break;
+                case 10090: 
+                    name = "Mus musculus";
+                    shortName="M. musculus";
+                    commonName = "mouse";
+                    alternateNames = "house mouse, mice";
+                    break;
+                case 7955: 
+                    name = "Danio rerio";
+                    shortName = "D. rerio";
+                    commonName = "zebrafish";
+                    alternateNames = "leopard danio, zebra danio";
+                    break;
+                case 7227: 
+                    name = "Drosophila melanogaster";
+                    shortName = "D. melanogaster";
+                    commonName = "fruitfly";
+                    alternateNames = "vinegar fly";
+                    break;
+                case 6239: 
+                    name = "Caenorhabditis elegans";
+                    shortName = "C. elegans";
+                    commonName = "worm";
+                    alternateNames = "nematode, roundworm";
+                    break;
+                case 9597: 
+                    name = "Pan paniscus";
+                    shortName = "P. paniscus";
+                    commonName = "bonobo";
+                    alternateNames = "pygmy chimpanzee";
+                    break;
+                case 9598: 
+                    name = "Pan troglodytes";
+                    shortName = "P. troglodytes";
+                    commonName = "chimpanzee";
+                    alternateNames = "";
+                    break;
+                case 9593: 
+                    name = "Gorilla gorilla";
+                    shortName = "G. gorilla";
+                    commonName = "gorilla";
+                    alternateNames = "western gorilla";
+                    break;
+                case 9600: 
+                    name = "Pongo pygmaeus";
+                    shortName = "P. pygmaeus";
+                    commonName = "orangutan";
+                    alternateNames = "orang utan, orang-utan";
+                    break;
+                case 9544: 
+                    name = "Macaca mulatta";
+                    shortName = "M. mulatta";
+                    commonName = "macaque";
+                    alternateNames = "rhesus monkey";
+                    break;
+                case 10116: 
+                    name = "Rattus norvegicus";
+                    shortName = "R. norvegicus";
+                    commonName = "rat";
+                    alternateNames = "brown rat";
+                    break;
+                case 9913: 
+                    name = "Bos taurus";
+                    shortName = "B. taurus";
+                    commonName = "cow";
+                    alternateNames = "domestic cow, domestic cattle, bovine cow";
+                    break;
+                case 9823: 
+                    name = "Sus scrofa";
+                    shortName = "S. scrofa";
+                    commonName = "pig";
+                    alternateNames = "domestic pig, swine";
+                    break;
+                case 13616: 
+                    name = "Monodelphis domestica";
+                    shortName = "M. domestica";
+                    commonName = "opossum";
+                    alternateNames = "gray short-tailed opossum, gray short tailed opossum";
+                    break;
+                case 9258: 
+                    name = "Ornithorhynchus anatinus";
+                    shortName = "O. anatinus";
+                    commonName = "platypus";
+                    alternateNames = "duckbill platypus, duck-billed platypus";
+                    break;
+                case 9031: 
+                    name = "Gallus gallus";
+                    shortName = "G. gallus";
+                    commonName = "chicken";
+                    alternateNames = "bantam, red junglefowl, red jungle fowl";
+                    break;
+                case 28377: 
+                    name = "Anolis carolinensis";
+                    shortName = "A. carolinensis";
+                    commonName = "anolis";
+                    alternateNames = "green anole, carolina anole";
+                    break;
+                case 8364: 
+                    name = "Xenopus tropicalis";
+                    shortName = "X. tropicalis";
+                    commonName = "xenopus";
+                    alternateNames = "western clawed frog";
+                    break;
+                case 99883: 
+                    name = "Tetraodon nigroviridis";
+                    shortName = "T. nigroviridis";
+                    commonName = "tetraodon";
+                    alternateNames = "spotted green pufferfish";
+                    break;
+                default:
+                    return ("");
             }
-            if(isGroup){
+            
+            if (isGroup) {
                 hiddenInfo = hiddenInfo.concat(name + ", " + commonName + ", ");
-            }
-            else{
+            } else {
                 hiddenInfo = name;
             }
+            
             images.append(
                     generateSpeciesImg(speciesId, name, shortName, commonName, alternateNames, true));
         }
         if (StringUtils.isBlank(figcaption)) {
-            StringBuilder newFigcaption = new StringBuilder();
-            newFigcaption.append("<p><i>");
-            newFigcaption.append(shortName);
-            newFigcaption.append("</i></p><p>");
-            newFigcaption.append(commonName);
-            newFigcaption.append("</p>");
-            figcaption=newFigcaption.toString();   
+            // If empty or null, it's generated with the last species ID of the given List. 
+            figcaption = "<p><i>" + shortName + "</i></p><p>" + commonName + "</p>";   
         }
-        StringBuilder figure = new StringBuilder();
+
+        String figure = null;
         if (isGroup) {
-            figure.append("<figure data-bgeegroupname='" + figcaption + "'>");
+            figure = "<figure data-bgeegroupname='" + figcaption + " " + 
+                        this.getGroupFileData(figcaption) + "'>";
         } else {
-            figure.append("<figure>");
+            figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0)) + ">";
         }
-        figcaption = figcaption.concat(" <span class='invisible'>" + hiddenInfo + "</span>");
-        figure.append("<div>"+images+"</div>");
-        figure.append("<figcaption>");
-        figure.append(figcaption);
-        figure.append("</figcaption>");
-        figure.append("</figure>");
-        return log.exit(figure.toString());
+        figure += "<div>" + images + "</div>" +
+                  "<figcaption>" + figcaption + 
+                  " <span class='invisible'>" + hiddenInfo + "</span>" + 
+                  "</figcaption>" + 
+                  "</figure>";
+        return log.exit(figure);
+    }
+
+    /**
+     * Get custom data for a group.
+     * 
+     * @param groupName A {@code String} that is the name of the group.
+     * @return          A {@code String} that is data according to the given group name.
+     */
+    private String getGroupFileData(String groupName) {
+        log.entry(groupName);
+        
+        String exprSimpleFileSize = null, exprAdvancedFileSize = null, 
+                diffExprSimpleFileSize = null, diffExprAdvancedFileSize = null;
+
+        switch (groupName) {
+            //TODO: set file sizes
+            case "Group 1": 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case "Group 2": 
+                    exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case "Group 3": 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case "Group 4": 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            default:
+                return ("");
+        }
+        
+        String beginFilePath = 
+                this.prop.getDownloadRootDirectory() + StringUtils.deleteWhitespace(groupName) + "_";
+        String extension = ".tsv";
+        return log.exit(" data-bgeeexprsimplefileurl='" + beginFilePath + "expr-simple" + extension + 
+                "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
+                "' data-bgeeexpradvancedfileurl='" + beginFilePath + "expr-complete" + extension + 
+                "' data-bgeeexpradvancedfilesize='" + exprAdvancedFileSize + 
+                "' data-bgeediffexprsimplefileurl='" + beginFilePath + "diffexpr-simple" + extension + 
+                "' data-bgeediffexprsimplefilesize='" + diffExprSimpleFileSize + 
+                "' data-bgeediffexpradvancedfileurl='" + beginFilePath + "diffexpr-complete" + extension + 
+                "' data-bgeediffexpradvancedfilesize='" + diffExprAdvancedFileSize + "'");
+    }
+    
+    /**
+     * Get custom data for a single species.
+     * 
+     * @param speciesId A {@code String} that is the ID of the species.
+     * @return          A {@code String} that is data according to the given species ID.
+     */
+    private String getSingleSpeciesFileData(int speciesId) {
+        log.entry(speciesId);
+        
+        String exprSimpleFileSize = null, exprAdvancedFileSize = null, 
+                diffExprSimpleFileSize = null, diffExprAdvancedFileSize = null;
+
+        switch (speciesId) {
+            //TODO: set file sizes
+            case 9606: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 10090: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 7955: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 7227: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 6239: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9597: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9598: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9593: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9600: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9544: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 10116: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9913: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9823: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 13616: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9258: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 9031: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 28377: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 8364: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            case 99883: 
+                exprSimpleFileSize = "xx MB";
+                exprAdvancedFileSize = "xx GB"; 
+                diffExprSimpleFileSize = "yy MB";
+                diffExprAdvancedFileSize  = "yy GB";
+                break;
+            default:
+                return ("");
+        }
+        
+        String beginFilePath = this.prop.getDownloadRootDirectory() + speciesId + "_";
+        String extension = ".tsv";
+        return log.exit(" data-bgeeexprsimplefileurl='" + beginFilePath + "expr-simple" + extension + 
+                "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
+                "' data-bgeeexpradvancedfileurl='" + beginFilePath + "expr-complete" + extension + 
+                "' data-bgeeexpradvancedfilesize='" + exprAdvancedFileSize + 
+                "' data-bgeediffexprsimplefileurl='" + beginFilePath + "diffexpr-simple" + extension + 
+                "' data-bgeediffexprsimplefilesize='" + diffExprSimpleFileSize + 
+                "' data-bgeediffexpradvancedfileurl='" + beginFilePath + "diffexpr-complete" + extension + 
+                "' data-bgeediffexpradvancedfilesize='" + diffExprAdvancedFileSize + "'");
     }
 
     /**

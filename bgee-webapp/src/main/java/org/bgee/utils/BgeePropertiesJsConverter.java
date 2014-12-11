@@ -6,7 +6,6 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
-import org.bgee.controller.FrontController;
 
 /**
  * Class that generates a javascript equivalent of the provided {@link BgeeProperties} class.

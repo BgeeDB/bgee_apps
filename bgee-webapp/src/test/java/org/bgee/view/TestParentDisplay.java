@@ -17,12 +17,14 @@ import org.bgee.controller.RequestParameters;
 public class TestParentDisplay extends ConcreteDisplayParent
 {
 
-	public TestParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
+	@SuppressWarnings("unused")
+    public TestParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
 	        BgeeProperties prop) throws IOException
 	{
 		super(response,prop);
 	}
 
+    @SuppressWarnings("unused")
     @Override
     public void sendHeaders(boolean ajax) {
         // Do nothing

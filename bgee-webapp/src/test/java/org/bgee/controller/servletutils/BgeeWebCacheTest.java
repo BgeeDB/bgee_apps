@@ -38,7 +38,7 @@ public class BgeeWebCacheTest {
     public void initMockObject(){
         this.mockRequest = mock(HttpServletRequest.class);
         @SuppressWarnings("unchecked")
-        Map<String,String[]> mockParamMap = (Map<String,String[]>) mock(Map.class);
+        Map<String,String[]> mockParamMap = mock(Map.class);
         when(this.mockRequest.getParameterMap()).thenReturn(mockParamMap);
         when(this.mockRequest.getMethod()).thenReturn("GET");
         when(mockParamMap.toString()).thenReturn("Param map values");

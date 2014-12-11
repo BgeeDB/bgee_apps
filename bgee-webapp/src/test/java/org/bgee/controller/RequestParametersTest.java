@@ -3,7 +3,6 @@ package org.bgee.controller;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -153,7 +152,7 @@ public class RequestParametersTest {
      */
     @Test
     public void testGetRequestURL() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException, RequestParametersNotFoundException, WrongFormatException{
+    MultipleValuesNotAllowedException, WrongFormatException{
 
         // Check that the query returned corresponds to the parameters declared in
         // the mockHttpServletRequest. Do it with the default parameters separator and with
@@ -200,32 +199,29 @@ public class RequestParametersTest {
      * @throws RequestParametersNotStorableException 
      */
     @Test
-    public void testGetValues() throws RequestParametersNotStorableException, 
-    MultipleValuesNotAllowedException {
+    public void testGetValues()  {
 
         // Check for each type that the object returned is a list of the correct
         // data type and that contains the values provided by the request
 
         List<String> testString = this.requestParametersWithNoKey.getValues(
                 testURLParameters.getParamTestString());
-        assertTrue("Incorrect data type returned",testString.get(0) 
-                instanceof String);		
-        assertEquals("Incorrect list returned ", "[string1]",
-                testString.toString());
+        assertEquals("Incorrect list returned ", "string1",
+                testString.get(0));
 
         List<Integer> testInteger = requestParametersWithNoKey.getValues(
-                testURLParameters.getParamTestInteger());
-        assertTrue("Incorrect data type returned",testInteger.get(0)  
-                instanceof Integer);		
-        assertEquals("Incorrect list returned ", "[1234, 2345]",
-                testInteger.toString());		
+                testURLParameters.getParamTestInteger());	
+        assertEquals("Incorrect list returned ", (Integer) 1234,
+                testInteger.get(0));		
+        assertEquals("Incorrect list returned ", (Integer) 2345,
+                testInteger.get(1));    
 
         List<Boolean> testBoolean = requestParametersWithNoKey.getValues(
-                testURLParameters.getParamTestBoolean());
-        assertTrue("Incorrect data type returned",testBoolean.get(0)  
-                instanceof Boolean);		
-        assertEquals("Incorrect list returned ", "[true, false]",
-                testBoolean.toString());	
+                testURLParameters.getParamTestBoolean());		
+        assertEquals("Incorrect list returned ", true,
+                testBoolean.get(0));	       
+        assertEquals("Incorrect list returned ", false,
+                testBoolean.get(1));
 
         // Check that getValues return a copy of the list and not 
         // the list itself. As all objects contained within the list should be
@@ -250,12 +246,9 @@ public class RequestParametersTest {
 
     /**
      * Test getFirstValue()
-     * @throws MultipleValuesNotAllowedException 
-     * @throws RequestParametersNotStorableException 
      */
     @Test
-    public void testGetFirstValue() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException{
+    public void testGetFirstValue() {
 
         // Test that the value is indeed the first one
         int integerValue = this.requestParametersWithNoKey
@@ -276,12 +269,10 @@ public class RequestParametersTest {
     /**
      * Test addValue()
      * @throws MultipleValuesNotAllowedException 
-     * @throws RequestParametersNotStorableException 
      * @throws WrongFormatException 
      */
     @Test
-    public void testAddValue() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException, WrongFormatException {
+    public void testAddValue() throws MultipleValuesNotAllowedException, WrongFormatException {
 
         // Add two values and check that they are there
         this.requestParametersWithNoKey.addValue(
@@ -314,12 +305,10 @@ public class RequestParametersTest {
     /**
      * Test addValue() with too much values
      * @throws MultipleValuesNotAllowedException 
-     * @throws RequestParametersNotStorableException 
      * @throws WrongFormatException 
      */
     @Test (expected=MultipleValuesNotAllowedException.class)
-    public void testAddTooMuchValue() throws RequestParametersNotStorableException,
-    MultipleValuesNotAllowedException, WrongFormatException {
+    public void testAddTooMuchValue() throws MultipleValuesNotAllowedException, WrongFormatException {
 
         // Try to add to much param when it is not allowed,
         // i.e test_string does not allow multiple values => exception
@@ -329,13 +318,10 @@ public class RequestParametersTest {
     }
 
     /**
-     * Test resetValues()
-     * @throws MultipleValuesNotAllowedException 
-     * @throws RequestParametersNotStorableException 
+     * Test resetValues() 
      */
     @Test
-    public void testResetValues() throws RequestParametersNotStorableException, 
-    MultipleValuesNotAllowedException {
+    public void testResetValues() {
         this.requestParametersWithNoKey.resetValues(
                 testURLParameters.getParamTestInteger());
         assertNull(this.requestParametersWithNoKey.getFirstValue(
@@ -344,16 +330,10 @@ public class RequestParametersTest {
 
     /**
      * Test testcloneWithAllParameters()
-     * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotStorableException 
-     * @throws RequestParametersNotFoundException 
-     * @throws IllegalAccessException 
-     * @throws InstantiationException 
      */
     @Test
-    public void testCloneWithAllParameters() throws InstantiationException, 
-    IllegalAccessException, RequestParametersNotFoundException, 
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException {
+    public void testCloneWithAllParameters() throws RequestParametersNotStorableException {
 
         // Test that the cloned parameters has exactly the same behavior as the source
         // when there is no key
@@ -381,15 +361,12 @@ public class RequestParametersTest {
     /**
      * Test cloneWithStorableParameters()
      * @throws MultipleValuesNotAllowedException 
-     * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
      * @throws IllegalAccessException 
      * @throws InstantiationException 
      */
     @Test
-    public void testCloneWithStorableParameters() throws InstantiationException, 
-    IllegalAccessException, RequestParametersNotFoundException, 
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException {
+    public void testCloneWithStorableParameters() throws RequestParametersNotStorableException {
 
         // Test that the cloned parameters return the same storable parameters
         // only as the source when there is no key
@@ -431,13 +408,12 @@ public class RequestParametersTest {
      * Test that trying to load too much values for a param that does not
      * allow multiple values throws an exception
      * @throws MultipleValuesNotAllowedException 
-     * @throws RequestParametersNotStorableException 
      * @throws RequestParametersNotFoundException 
      * @throws WrongFormatException 
      */
     @Test (expected=MultipleValuesNotAllowedException.class)
     public void testLoadTooMuchValue() throws RequestParametersNotFoundException,
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException, WrongFormatException{
+    MultipleValuesNotAllowedException, WrongFormatException{
 
         // This is actually the forth time a request parameter is instantiated
         // for this test => see the @before loadMockRequest, thus it tries to load 
@@ -451,14 +427,13 @@ public class RequestParametersTest {
     /**
      * Check that loading a value that does not match the format is not 
      * accepted 
-     * @throws RequestParametersNotStorableException 
      * @throws MultipleValuesNotAllowedException 
      * @throws RequestParametersNotFoundException 
      * @throws WrongFormatException 
      */
     @Test (expected=WrongFormatException.class)
     public void testLoadWrongFormatValue() throws MultipleValuesNotAllowedException, 
-    RequestParametersNotStorableException, RequestParametersNotFoundException, WrongFormatException{
+    RequestParametersNotFoundException, WrongFormatException{
 
         // Load the forth instance of RequestParameters that is used in
         // testLoadTooMuchValue and just ignore the exception that is not
@@ -487,13 +462,12 @@ public class RequestParametersTest {
     /**
      * Check that adding a value that does not match the format is not 
      * accepted 
-     * @throws RequestParametersNotStorableException 
      * @throws MultipleValuesNotAllowedException 
      * @throws WrongFormatException 
      */
     @Test (expected=WrongFormatException.class)
     public void testAddWrongFormatValue() throws MultipleValuesNotAllowedException, 
-    RequestParametersNotStorableException, WrongFormatException{
+    WrongFormatException{
 
         // test_string does not accept upper case => exception
 

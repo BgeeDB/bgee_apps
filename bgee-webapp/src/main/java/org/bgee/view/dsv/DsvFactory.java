@@ -1,7 +1,5 @@
 package org.bgee.view.dsv;
 
-import java.io.IOException;
-
 import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
@@ -19,12 +17,12 @@ public class DsvFactory extends ViewFactory
 	}
 
 	@Override
-	public DownloadDisplay getDownloadDisplay() throws IOException {
+	public DownloadDisplay getDownloadDisplay() {
 		return null;
 	}
 
 	@Override
-	public GeneralDisplay getGeneralDisplay() throws IOException {
+	public GeneralDisplay getGeneralDisplay() {
 		return null;
 	}
 

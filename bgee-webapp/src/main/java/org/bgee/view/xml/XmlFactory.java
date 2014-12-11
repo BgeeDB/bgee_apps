@@ -1,7 +1,5 @@
 package org.bgee.view.xml;
 
-import java.io.IOException;
-
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
@@ -30,9 +28,9 @@ public class XmlFactory extends ViewFactory
 		return log.exit(null);
 	}
 
-	@Override
-	public GeneralDisplay getGeneralDisplay() throws IOException {
+    @Override
+	public GeneralDisplay getGeneralDisplay() {
 	    log.entry();
-		return log.exit(null);
+		throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
 	}
 }

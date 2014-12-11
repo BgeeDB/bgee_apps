@@ -179,8 +179,8 @@ public class RequestParameters {
         this.httpMethod = request.getMethod();
         try {
             this.constructor(request);
-        } catch (RequestParametersNotFoundException | RequestParametersNotStorableException | 
-                MultipleValuesNotAllowedException | WrongFormatException e) {
+        } catch (RequestParametersNotFoundException | MultipleValuesNotAllowedException | 
+                WrongFormatException e) {
             //here we do nothing, 
             //because we provide a "blank" HttpServletRequest, so none of the declared exception
             //is expected
@@ -220,9 +220,6 @@ public class RequestParameters {
      *                                                  these parameters could not be found using
      *                                                  this key. See {@code 
      *                                                  loadStorableParametersFromKey(String)}
-     *                                              
-     * @throws RequestParametersNotStorableException    if an error occur while trying to use the key 
-     *                                                  or to write the query string in a file
      *                                                  
      * @throws MultipleValuesNotAllowedException        if more than one value is present in the
      *                                                  {@code request}
@@ -235,7 +232,7 @@ public class RequestParameters {
      */
     public RequestParameters(HttpServletRequest request, URLParameters urlParametersInstance,
             BgeeProperties prop,  boolean encodeUrl, String parametersSeparator)
-                    throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
+                    throws RequestParametersNotFoundException, 
                     MultipleValuesNotAllowedException, WrongFormatException {
         log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator);
 
@@ -265,9 +262,6 @@ public class RequestParameters {
      *                                                  these parameters could not be found using
      *                                                  this key. See {@code 
      *                                                  loadStorableParametersFromKey(String)}
-     *                                              
-     * @throws RequestParametersNotStorableException    if an error occur while trying to use the key 
-     *                                                  or to write the query string in a file
      *                                                  
      * @throws MultipleValuesNotAllowedException        if more than one value is present in the
      *                                                  {@code request}
@@ -282,7 +276,7 @@ public class RequestParameters {
      * @see #RequestParameters(HttpServletRequest, URLParameters, BgeeProperties, boolean, String)
      */
     private void constructor(HttpServletRequest request) throws RequestParametersNotFoundException,
-    RequestParametersNotStorableException, MultipleValuesNotAllowedException, WrongFormatException{
+    MultipleValuesNotAllowedException, WrongFormatException{
         log.entry(request);
 
         this.loadParameters(request);
@@ -310,9 +304,6 @@ public class RequestParameters {
      *                                                  these parameters could not be found using
      *                                                  this key. See {@code 
      *                                                  loadStorableParametersFromKey(String)}
-     *                                              
-     * @throws RequestParametersNotStorableException    if an error occur while trying to use the key 
-     *                                                  or to write the query string in a file
      *                                                  
      * @throws MultipleValuesNotAllowedException        if more than one value is present in the
      *                                                  {@code request}
@@ -327,7 +318,7 @@ public class RequestParameters {
      * @see #loadStorableParametersFromKey
      */
     private void loadParameters(HttpServletRequest request) 
-            throws RequestParametersNotFoundException, RequestParametersNotStorableException, 
+            throws RequestParametersNotFoundException, 
             MultipleValuesNotAllowedException, WrongFormatException{
         log.entry(request);
 
@@ -765,8 +756,7 @@ public class RequestParameters {
      *                                                  
      * @see #store()
      */
-    private void generateKey(String urlFragment)
-    {
+    private void generateKey(String urlFragment) {
         log.entry(urlFragment);
 
         log.info("Trying to generate a key based on urlFragment: {}", urlFragment);
@@ -777,8 +767,7 @@ public class RequestParameters {
             try {
                 this.addValue(this.getKeyParam(), 
                         DigestUtils.sha1Hex(urlFragment.toLowerCase(Locale.ENGLISH)));
-            } catch (MultipleValuesNotAllowedException | RequestParametersNotStorableException
-                    | WrongFormatException e) {
+            } catch (MultipleValuesNotAllowedException | WrongFormatException e) {
                 // In this particular case, should never be thrown.
                 assert false: "Unreachable code reached in generateKey";
             }
@@ -970,9 +959,6 @@ public class RequestParameters {
      * @param value     A {@code T}, the value to set
      * 
      * 
-     * @throws RequestParametersNotStorableException    if an error occur while trying to use the
-     *                                                  key or to write the query string in a file
-     *                                                  
      * @throws MultipleValuesNotAllowedException        if more than one value is present in the
      *                                                  {@code request}
      *                                                  for a {@link URLParameters.Parameter}
@@ -984,7 +970,7 @@ public class RequestParameters {
      */    
     @SuppressWarnings("unchecked")
     public <T> void addValue(URLParameters.Parameter<T> parameter, T value) 
-            throws MultipleValuesNotAllowedException, RequestParametersNotStorableException, WrongFormatException {
+            throws MultipleValuesNotAllowedException, WrongFormatException {
         log.entry(parameter,value);
 
         // Secure the value
@@ -1080,7 +1066,6 @@ public class RequestParameters {
                         this.getFirstValue(this.getKeyParam()));
             }
         } catch ( RequestParametersNotFoundException
-                | RequestParametersNotStorableException
                 | MultipleValuesNotAllowedException | WrongFormatException e) {
             // In this particular case, should never be thrown.
             assert false: "Unreachable code reached in cloneWithAllParameters";

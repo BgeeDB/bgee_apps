@@ -275,6 +275,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
     //*******************************************
     //  NON-IMPLEMENTED OVERRIDEN METHODS
     //*******************************************
+    @SuppressWarnings("unused")
     @Override
     public Object getAttribute(String arg0) {
         return null;
@@ -295,6 +296,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public ServletInputStream getInputStream() throws IOException {
         return null;
@@ -335,11 +337,13 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public BufferedReader getReader() throws IOException {
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public String getRealPath(String arg0) {
         return null;
@@ -360,6 +364,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return 0;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public RequestDispatcher getRequestDispatcher(String arg0) {
         return null;
@@ -385,11 +390,13 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return false;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public void removeAttribute(String arg0) {
 
     }
 
+    @SuppressWarnings("unused")
     @Override
     public void setAttribute(String arg0, Object arg1) {
 
@@ -410,11 +417,13 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public long getDateHeader(String arg0) {
         return 0;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public String getHeader(String arg0) {
         return null;
@@ -425,11 +434,13 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public Enumeration<String> getHeaders(String arg0) {
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public int getIntHeader(String arg0) {
         return 0;
@@ -475,6 +486,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public HttpSession getSession(boolean arg0) {
         return null;
@@ -505,6 +517,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return false;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public boolean isUserInRole(String arg0) {
         return false;
@@ -520,6 +533,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public AsyncContext startAsync(ServletRequest servletRequest,
             ServletResponse servletResponse) {
@@ -546,28 +560,33 @@ public class BgeeHttpServletRequest implements HttpServletRequest
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public boolean authenticate(HttpServletResponse response)
             throws IOException, ServletException {
         return false;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public void login(String username, String password) throws ServletException {
 
     }
 
+    @SuppressWarnings("unused")
     @Override
     public void logout() throws ServletException {
 
     }
 
+    @SuppressWarnings("unused")
     @Override
     public Collection<Part> getParts() throws IOException,
     IllegalStateException, ServletException {
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public Part getPart(String name) throws IOException, IllegalStateException,
     ServletException {

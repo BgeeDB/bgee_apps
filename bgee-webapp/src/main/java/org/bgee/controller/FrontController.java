@@ -174,8 +174,7 @@ public class FrontController extends HttpServlet {
             CommandParent controller = null;
             if (requestParameters.isADownloadPageCategory()) {
                 controller = new CommandDownload(response, requestParameters, this.prop, factory);
-            }
-            else if (controller == null) {
+            } else {
                 controller = new CommandHome(response, requestParameters, this.prop, factory);
             }
             controller.processRequest();

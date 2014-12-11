@@ -39,7 +39,7 @@ public class TestFactory extends ViewFactory
                 .getParamTestString()).equals("test")){
             return new TestDownloadDisplay(this.response, this.requestParameters, prop);
         }
-        else return null;
+        return null;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class TestFactory extends ViewFactory
      * @param prop  A {@code BgeeProperties}
      * @return  {@code null}
      */
-    public GeneralDisplay getGeneralDisplay() throws IOException {
+    public GeneralDisplay getGeneralDisplay() {
         return null;
     }
     

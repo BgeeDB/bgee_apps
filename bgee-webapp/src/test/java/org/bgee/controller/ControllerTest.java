@@ -95,7 +95,7 @@ public class ControllerTest {
      * @throws IOException
      */
     @Test
-    public void testWithInjectedDependencies() throws IOException{
+    public void testWithInjectedDependencies() {
         // Call the constructor with three injected dependency that wil be tested by the view to
         // produce the correct output
         // 1) BgeeProperties : check that the url max length is 9999

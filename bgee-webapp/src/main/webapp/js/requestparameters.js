@@ -349,8 +349,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      * @return  A {@code boolean} to tell whether the page corresponds to the homepage
      */
     this.isTheHomePage = function(){
-        if(this.getFirstValue(urlParameters.getParamPage()) == null || 
-                this.getFirstValue(urlParameters.getParamPage()) == "about"){
+        if(this.getFirstValue(urlParameters.getParamPage()) == null){
             return true;
         }
         return false;
@@ -361,20 +360,8 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isAnAboutPageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "about") {
-            return true;
-        }
-        return false;
-    };
-    /**
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "admin"
-     */
-    this.isAnAdminPageCategory = function()
-    {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
-                this.getFirstValue(urlParameters.getParamPage()) == "admin") {
             return true;
         }
         return false;
@@ -385,7 +372,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isAnAnatomyPageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "anatomy") {
             return true;
         }
@@ -397,7 +384,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isADocumentationPageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "documentation") {
             return true;
         }
@@ -420,7 +407,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isAnExpressionPageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "expression"){
             return true;
         }
@@ -432,7 +419,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isAGenePageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "gene"){
             return true;
         }
@@ -444,7 +431,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isAGeneFamilyPageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "gene_family"){
             return true;
         }
@@ -468,7 +455,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isANewsPageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "news"){
             return true;
         }
@@ -493,7 +480,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isASearchPageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "search"){
             return true;
         }
@@ -505,7 +492,7 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.isATopOBOPageCategory = function()
     {
-        if (this.getFirstValue(urlParameters.getParamPage()) == null || 
+        if (this.getFirstValue(urlParameters.getParamPage()) != null && 
                 this.getFirstValue(urlParameters.getParamPage()) == "top_anat"){
             return true;
         }

@@ -1167,8 +1167,7 @@ public class RequestParameters {
      */
     public boolean isTheHomePage(){
         log.entry();
-        if(this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("about")){
+        if(this.getFirstValue(this.urlParametersInstance.getParamPage()) == null){
             return log.exit(true);
         }
         return log.exit(false);
@@ -1184,46 +1183,46 @@ public class RequestParameters {
     public boolean isAnAboutPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("about")) {
             return log.exit(true);
         }
         return log.exit(false);
     }
 
-    /**
-     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
-     * consistent as much as possible if the method evolves.
-     * 
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "admin"
-     */
-    public boolean isAnAdminPageCategory()
-    {
-        log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("admin")) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
+//    /**
+//     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+//     * consistent as much as possible if the method evolves.
+//     * 
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "admin"
+//     */
+//    public boolean isAnAdminPageCategory()
+//    {
+//        log.entry();
+//        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+//                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("admin")) {
+//            return log.exit(true);
+//        }
+//        return log.exit(false);
+//    }
 
-    /**
-     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
-     * consistent as much as possible if the method evolves.
-     * 
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "anatomy"
-     */
-    public boolean isAnAnatomyPageCategory()
-    {
-        log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("anatomy")) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
+//    /**
+//     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+//     * consistent as much as possible if the method evolves.
+//     * 
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "anatomy"
+//     */
+//    public boolean isAnAnatomyPageCategory()
+//    {
+//        log.entry();
+//        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+//                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("anatomy")) {
+//            return log.exit(true);
+//        }
+//        return log.exit(false);
+//    }
 
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -1235,7 +1234,7 @@ public class RequestParameters {
     public boolean isADocumentationPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("documentation")) {
             return log.exit(true);
         }
@@ -1258,56 +1257,56 @@ public class RequestParameters {
         return log.exit(false);
     }    
 
-    /**
-     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
-     * consistent as much as possible if the method evolves.
-     * 
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "expression"
-     */
-    public boolean isAnExpressionPageCategory()
-    {
-        log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("expression")) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
+//    /**
+//     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+//     * consistent as much as possible if the method evolves.
+//     * 
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "expression"
+//     */
+//    public boolean isAnExpressionPageCategory()
+//    {
+//        log.entry();
+//        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+//                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("expression")) {
+//            return log.exit(true);
+//        }
+//        return log.exit(false);
+//    }
 
-    /**
-     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
-     * consistent as much as possible if the method evolves.
-     * 
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "gene"
-     */
-    public boolean isAGenePageCategory()
-    {
-        log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene")) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
+//    /**
+//     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+//     * consistent as much as possible if the method evolves.
+//     * 
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "gene"
+//     */
+//    public boolean isAGenePageCategory()
+//    {
+//        log.entry();
+//        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+//                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene")) {
+//            return log.exit(true);
+//        }
+//        return log.exit(false);
+//    }
 
-    /**
-     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
-     * consistent as much as possible if the method evolves.
-     * 
-     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
-     * category "gene_family"
-     */
-    public boolean isAGeneFamilyPageCategory()
-    {
-        log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene_family")) {
-            return log.exit(true);
-        }
-        return log.exit(false);
-    }
+//    /**
+//     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+//     * consistent as much as possible if the method evolves.
+//     * 
+//     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+//     * category "gene_family"
+//     */
+//    public boolean isAGeneFamilyPageCategory()
+//    {
+//        log.entry();
+//        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+//                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene_family")) {
+//            return log.exit(true);
+//        }
+//        return log.exit(false);
+//    }
 
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -1336,7 +1335,7 @@ public class RequestParameters {
     public boolean isANewsPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("news")) {
             return log.exit(true);
         }
@@ -1370,7 +1369,7 @@ public class RequestParameters {
     public boolean isASearchPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("search")) {
             return log.exit(true);
         }
@@ -1387,7 +1386,7 @@ public class RequestParameters {
     public boolean isATopOBOPageCategory()
     {
         log.entry();
-        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("top_anat")) {
             return log.exit(true);
         }

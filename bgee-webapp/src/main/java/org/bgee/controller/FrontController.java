@@ -65,8 +65,7 @@ public class FrontController extends HttpServlet {
      * @see ViewFactory
      */
     public FrontController() {
-        this(BgeeProperties.getBgeeProperties(), new URLParameters(), 
-                new ViewFactoryProvider(BgeeProperties.getBgeeProperties()));
+        this(null, null, null);
     }
 
     /**
@@ -82,8 +81,7 @@ public class FrontController extends HttpServlet {
      * @see URLParameters
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), new URLParameters(),
-                new ViewFactoryProvider(BgeeProperties.getBgeeProperties(prop)));
+        this(BgeeProperties.getBgeeProperties(prop), null, null);
     }
 
     /**
@@ -167,18 +165,23 @@ public class FrontController extends HttpServlet {
             requestParameters = new RequestParameters(request, this.urlParameters, this.prop,
                     true, "&");
             log.info("Analyzed URL: " + requestParameters.getRequestURL("&"));
+            
             //in order to display error message in catch clauses. 
             //we redo it here to get the correct display type and correct user, 
             // if no exception was thrown yet
             factory = this.viewFactoryProvider.getFactory(response, requestParameters);
+            
             CommandParent controller = null;
-            if (requestParameters.isADownloadPageCategory()) {
+            if (requestParameters.isTheHomePage()) {
+                controller = new CommandHome(response, requestParameters, this.prop, factory);
+            } else if (requestParameters.isADownloadPageCategory()) {
                 controller = new CommandDownload(response, requestParameters, this.prop, factory);
             } else {
-                controller = new CommandHome(response, requestParameters, this.prop, factory);
+                throw log.throwing(new PageNotFoundException("Request not recognized."));
             }
             controller.processRequest();
-            // Display the error pages
+            
+        //=== process errors ===
         } catch(RequestParametersNotFoundException e) {
             generalDisplay.displayRequestParametersNotFound(requestParameters.getFirstValue(
                     this.urlParameters.getParamData()));

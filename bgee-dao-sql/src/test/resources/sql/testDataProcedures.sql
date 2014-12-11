@@ -268,7 +268,12 @@ BEGIN
 
         INSERT INTO globalNoExpressionToNoExpression (noExpressionId,globalNoExpressionId) 
         VALUES (1,1),
+               (2,1),
                (1,2),
+               (2,2),
+-- global noExpression call with ID 3 should be removed from the globalNoExpression table 
+-- when basic call with ID 1 is removed, as it will have no more supporting basic calls 
+-- in this table 
                (1,3),
                (3,4),
                (3,5),
@@ -276,6 +281,9 @@ BEGIN
                (4,7),
                (4,8),
                (4,9),
+-- global noExpression calls with ID 10 and 11 should be removed from the globalNoExpression table 
+-- when basic call with ID 5 is removed, as it will have no more supporting basic calls 
+-- in this table 
                (5,10),
                (5,11),
                (6,12),

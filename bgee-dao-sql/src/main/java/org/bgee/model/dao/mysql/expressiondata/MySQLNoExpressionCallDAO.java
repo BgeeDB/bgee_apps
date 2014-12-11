@@ -407,13 +407,28 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         } else {
             sqlRelation += "noExpressionId IN (" + parameterizedQuery + ")";
         }
+        boolean removedFromLinkTable = false;
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sqlRelation)) {
             List<Integer> orderedNoExprIds = MySQLDAO.convertToIntList(noExprIds);
             Collections.sort(orderedNoExprIds);
             stmt.setIntegers(1, orderedNoExprIds);
-            stmt.executeUpdate();
+            removedFromLinkTable = (stmt.executeUpdate() > 0);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
+        }
+        // Then, if we are removing lines from the noExpression table, we remove propagated 
+        // data in globalNoExpression with no more supporting basic calls.
+        if (!globalCalls && removedFromLinkTable) {
+            String sqlNoSupport = "DELETE t1 FROM globalNoExpression AS t1 " +
+            		"LEFT OUTER JOIN globalNoExpressionToNoExpression AS t2 " +
+            		    "ON t1.globalNoExpressionId = t2.globalNoExpressionId " +
+            		"WHERE t2.globalNoExpressionId IS NULL";
+            try (BgeePreparedStatement stmt = 
+                    this.getManager().getConnection().prepareStatement(sqlNoSupport)) {
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
+            }
         }
 
         // Then, we delete rows in noExpression or globalNoExpression

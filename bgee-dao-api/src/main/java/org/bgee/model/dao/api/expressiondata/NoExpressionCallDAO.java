@@ -108,6 +108,10 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * removes either global no-expression calls, or basic no-expression calls, 
      * depending on the value of {@code globalCalls}. This method cannot remove 
      * both basic calls and global calls at the same time.
+     * <p>
+     * An exception is that if {@code globalCalls} is {@code false}, and that basic calls 
+     * should be removed, it will also removed global no-expression calls with no more 
+     * supporting basic calls.
      * 
      * @param noExprIds     A {@code Set} of {@code String}s that are the IDs of 
      *                      the no-expression calls to delete.

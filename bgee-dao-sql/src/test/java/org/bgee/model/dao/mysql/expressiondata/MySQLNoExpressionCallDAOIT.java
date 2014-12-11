@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -479,45 +480,109 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
     }
     
     /**
-     * Test the delete methods {@link MySQLNoExpressionCallDAO#deleteNoExprCalls()}.
+     * Test the delete methods {@link MySQLNoExpressionCallDAO#deleteNoExprCalls()} 
+     * for basic no-expression calls.
      * @throws SQLException
      */
     @Test
-    public void shouldDeleteNoExprCalls() throws SQLException {
+    public void shouldDeleteBasicNoExprCalls() throws SQLException {
         
         this.useEmptyDB();
         this.populateAndUseDatabase();
         
         Set<String> noExprIds = new HashSet<>(Arrays.asList("1", "5", "1111"));
-        Set<String> globalNoExprIds = new HashSet<>(Arrays.asList("2", "7", "13", "99"));
         
         try {
             MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
             assertEquals("Incorrect nummber of rows deleted", 
                     2, dao.deleteNoExprCalls(noExprIds, false));
 
+            //check removal from noExpression table
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("select 1 from noExpression where noExpressionId = ?")) {
                 stmt.setInt(1, 1);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                assertFalse("Incorrect deletion from noExpression table", 
                         stmt.getRealPreparedStatement().executeQuery().next());
 
                 stmt.setInt(1, 5);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                assertFalse("Incorrect deletion from noExpression table", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
-        
+            //count number of remaining lines in table
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select count(*) from noExpression")) {
+                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+                rs.next();
+                assertEquals("Incorrect deletion from noExpression table", 7, rs.getInt(1));
+            }
+
+            //check removal from globalNoExpressionToNoExpression table
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
                             "noExpressionId = ?")) {
                 stmt.setInt(1, 1);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                assertFalse("Incorrect deletion from globalNoExpressionToNoExpression table", 
                         stmt.getRealPreparedStatement().executeQuery().next());
                 
                 stmt.setInt(1, 5);
-                assertFalse("NoExpressionCallTO incorrectly deleted", 
+                assertFalse("Incorrect deletion from globalNoExpressionToNoExpression table", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            //count number of remaining lines in table
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select count(*) from globalNoExpressionToNoExpression")) {
+                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+                rs.next();
+                assertEquals("Incorrect deletion from globalNoExpressionToNoExpression table", 
+                        12, rs.getInt(1));
+            }
+            
+            //check removal for global noExpression calls with no more supporting basic calls
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from globalNoExpression where " +
+                            "globalNoExpressionId = ?")) {
+                stmt.setInt(1, 3);
+                assertFalse("Incorrect deletion from globalNoExpression table", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setInt(1, 10);
+                assertFalse("Incorrect deletion from globalNoExpression table", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setInt(1, 11);
+                assertFalse("Incorrect deletion from globalNoExpression table", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+            }
+            //count number of remaining lines in table
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select count(*) from globalNoExpression")) {
+                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+                rs.next();
+                assertEquals("Incorrect deletion from globalNoExpression table", 12, rs.getInt(1));
+            }
+            
+            thrown.expect(IllegalArgumentException.class);
+            dao.deleteNoExprCalls(new HashSet<String>(), false);
+        } finally {
+            this.emptyAndUseDefaultDB();
+        }
+    }
+    
+    /**
+     * Test the delete methods {@link MySQLNoExpressionCallDAO#deleteNoExprCalls()} 
+     * for global no-expression calls.
+     * @throws SQLException
+     */
+    @Test
+    public void shouldDeleteGlobalNoExprCalls() throws SQLException {
+        
+        this.useEmptyDB();
+        this.populateAndUseDatabase();
+        
+        Set<String> globalNoExprIds = new HashSet<>(Arrays.asList("2", "7", "13", "99"));
+        
+        try {
+            MySQLNoExpressionCallDAO dao = new MySQLNoExpressionCallDAO(this.getMySQLDAOManager());
 
             assertEquals("Incorrect nummber of rows deleted", 
                     3, dao.deleteNoExprCalls(globalNoExprIds, true));
@@ -536,6 +601,13 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 assertFalse("NoExpressionCallTO incorrectly deleted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
             }
+            //count number of remaining lines in table
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select count(*) from globalNoExpression")) {
+                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+                rs.next();
+                assertEquals("Incorrect deletion from globalNoExpression table", 12, rs.getInt(1));
+            }
             
             try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                     prepareStatement("select 1 from globalNoExpressionToNoExpression where " +
@@ -551,6 +623,22 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 stmt.setInt(1, 13);
                 assertFalse("NoExpressionCallTO incorrectly deleted", 
                         stmt.getRealPreparedStatement().executeQuery().next());
+            }
+            //count number of remaining lines in table
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select count(*) from globalNoExpressionToNoExpression")) {
+                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+                rs.next();
+                assertEquals("Incorrect deletion from globalNoExpressionToNoExpression table", 
+                        13, rs.getInt(1));
+            }
+            
+            //check that it didn't interfere with data in noExpression table
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select count(*) from noExpression")) {
+                ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+                rs.next();
+                assertEquals("Incorrect deletion from noExpression table", 9, rs.getInt(1));
             }
             
             thrown.expect(IllegalArgumentException.class);

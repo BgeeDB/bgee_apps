@@ -172,8 +172,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         sql += 
             // no relationId, provide 0 for all
             "(SELECT DISTINCT 0 AS stageRelationId, " +
-        	"t1.stageId AS stageSourceId, " +
-            "t3.stageId AS stageTargetId, " +
+        	"t3.stageId AS stageSourceId, " +
+            "t1.stageId AS stageTargetId, " +
             //no other parenthood relations between stages other than is_a
             "'" + RelationType.ISA_PARTOF.getStringRepresentation() + "' AS relationType, " +
             //emulate RelationStatus

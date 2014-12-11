@@ -543,8 +543,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 thenReturn(mockGlobalNoExprRsSp33);
 
         thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("An expression call and " +
-                "a no-expression call could be found for the same data type.");
+        thrown.expectMessage("Incorrect data states");
         String directory = testFolder.newFolder("tmpFolder").getPath();
         
         Set<FileType> fileTypes = new HashSet<>(

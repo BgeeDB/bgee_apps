@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
+import org.bgee.pipeline.expression.FilterNoExprCalls;
 import org.bgee.pipeline.expression.GenerateDownloadFile;
 import org.bgee.pipeline.expression.InsertGlobalCalls;
 import org.bgee.pipeline.gene.InsertGO;
@@ -185,6 +186,9 @@ public class CommandRunner {
         //---------- Call propagation -----------
         case "InsertGlobalCalls":
             InsertGlobalCalls.main(newArgs);
+            break;
+        case "FilterNoExprCalls":
+            FilterNoExprCalls.main(newArgs);
             break;
  
         //---------- Download file generation -----------

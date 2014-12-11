@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
@@ -20,6 +21,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
+import org.bgee.pipeline.CommandRunner;
 
 /**
  * Class used to delete or update conflicting no-expression calls in Bgee and associated 
@@ -34,6 +36,37 @@ public class FilterNoExprCalls extends CallUser {
      * {@code Logger} of the class.
      */
     private final static Logger log = LogManager.getLogger(FilterNoExprCalls.class.getName());
+    
+    /**
+     * Main method to filter no-expression calls in Bgee database, see 
+     * {@link #filterNoExpressionCalls(List)}.
+     * Parameters that must be provided in order in {@code args} are: 
+     * <ol>
+     * <li> a list of NCBI species IDs (for instance, {@code 9606} for human), separated by 
+     * the {@code String} {@link CommandRunner#LIST_SEPARATOR}. If it is not provided, all species 
+     * contained in database will be used.
+     * </ol>
+     * 
+     * @param args           An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws DAOException  If an error occurred while inserting the data into the Bgee database.
+     */
+    public static void main(String[] args) throws DAOException {
+        log.entry((Object[]) args);
+        
+        if (args.length > 1) {
+            throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                    "provided, expected 0 or 1 argument, " + args.length + " provided."));
+        }
+        
+        List<String> speciesIds = null;
+        if (args.length > 0) {
+            speciesIds = CommandRunner.parseListArgument(args[0]); 
+        }
+        FilterNoExprCalls filter = new FilterNoExprCalls();
+        filter.filterNoExpressionCalls(speciesIds);
+        
+        log.exit();
+    }
     
     /**
      * A {@code Set} of {@code String}s that are the IDs of basic no-expression calls 

@@ -744,7 +744,8 @@ public static void main(String[] args) throws IOException {
             SortedMap<CallTO, Collection<CallTO>> allCallTOs, boolean isSimplifiedFile) {
         log.entry(geneNamesByIds, stageNamesByIds, 
                 anatEntityNamesByIds, allCallTOs, isSimplifiedFile);
-        
+        //TODO: actually, we need to write lines immediately without storing them, 
+        //it consumes too much memory
         log.debug("Start generating file content...");
         List<Map<String, String>> allRows = new ArrayList<Map<String, String>>();
         

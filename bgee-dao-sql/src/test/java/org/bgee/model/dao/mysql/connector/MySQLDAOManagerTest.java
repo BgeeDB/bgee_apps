@@ -703,4 +703,29 @@ public class MySQLDAOManagerTest extends TestAncestor
         } 
 
     }
+    
+    @Test
+    public void shouldReleaseDAOManager() throws SQLException {
+        MockDriver.initialize();
+
+        //set the properties to use it
+        final Properties props = new Properties();
+        props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
+        //test to provide several JDBC driver names
+        props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, MockDriver.class.getName());
+        
+        //get a BgeeDataSource in the main thread
+        MySQLDAOManager manager1 = new MySQLDAOManager();
+
+        //acquire 2 different connections
+        manager1.setParameters(props);
+        BgeeConnection conn1 = manager1.getConnection();
+        manager1.releaseResources();
+        BgeeConnection conn2 = manager1.getConnection();
+        assertNotSame("connection was not closed", conn1, conn2);
+        
+        assertFalse("manager incorrectly closed", manager1.isClosed());
+
+        MockDriver.initialize();
+    }
 }

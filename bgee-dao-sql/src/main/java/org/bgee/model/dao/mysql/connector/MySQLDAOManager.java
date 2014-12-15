@@ -873,9 +873,9 @@ public class MySQLDAOManager extends DAOManager {
     private String getDatabaseToUse() {
         return this.databaseToUse;
     }
-    
+
     @Override
-    protected void closeDAOManager() throws DAOException {
+    public void releaseResources() throws DAOException {
         log.entry();
         synchronized(this.connections) {
             //get a shallow copy of the collection, so that the removal of 
@@ -893,6 +893,15 @@ public class MySQLDAOManager extends DAOManager {
                 }
             }
         }
+        log.exit();
+    }
+    
+    @Override
+    protected void closeDAOManager() throws DAOException {
+        log.entry();
+        //note that for now, the methods closeDAOManager and releaseResources do 
+        //the same thing, but this might change in the future, according to their javadoc.
+        this.releaseResources();
         log.exit();
     }
 

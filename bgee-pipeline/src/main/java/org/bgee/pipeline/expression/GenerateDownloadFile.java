@@ -611,7 +611,7 @@ public static void main(String[] args) throws IOException {
             }
         }
         
-        log.debug("Done retrieving basic no-expression calls, {} calls found", noExprTOs.size());
+        log.debug("Done retrieving no-expression calls, {} calls found", noExprTOs.size());
         return log.exit(noExprTOs);  
     }
     
@@ -685,18 +685,18 @@ public static void main(String[] args) throws IOException {
         SortedMap<CallTO, Collection<CallTO>> groupedCallTOs = 
                 this.groupAndOrderByGeneAnatEntityStage(allCallTOs);
 
-        if (fileTypes.contains(FileType.EXPR_SIMPLE)) {
-            log.trace("Start generation of data for simple file for the species {}", speciesId);
+        for (FileType fileType: fileTypes) {
+            log.trace("Start generation of file {} for the species {}...", fileType, speciesId);
             
             File file = new File(directory, speciesId + "_" + 
-                    FileType.EXPR_SIMPLE.getStringRepresentation() + EXTENSION);
+                    fileType.getStringRepresentation() + EXTENSION);
             //override existing file
             if (file.exists()) {
                 file.delete();
             }
             try {
                 this.writeExprFile(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, 
-                    groupedCallTOs, FileType.EXPR_SIMPLE, file);
+                    groupedCallTOs, fileType, file);
             } catch (Exception e) {
                 //if something wrong happens, we remove the generated file.
                 if (file.exists()) {
@@ -705,33 +705,7 @@ public static void main(String[] args) throws IOException {
                 throw e;
             }
             
-            log.trace("Done generation of data for simple file for the species {}",
-                    speciesId);
-        }
-        
-        if (fileTypes.contains(FileType.EXPR_COMPLETE)) {
-            log.trace("Start generation of data for advanced file for the species {}",
-                    speciesId);
-            
-            File file = new File(directory, speciesId + "_" + 
-                    FileType.EXPR_COMPLETE.getStringRepresentation() + EXTENSION);
-            //overide existing file
-            if (file.exists()) {
-                file.delete();
-            }
-            try {
-                this.writeExprFile(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, 
-                    groupedCallTOs, FileType.EXPR_COMPLETE, file);
-            } catch (Exception e) {
-                //if something wrong happens, we remove the generated file.
-                if (file.exists()) {
-                    file.delete();
-                }
-                throw e;
-            }
-
-            log.trace("Done generation of data for advanced file for the species {}", 
-                    speciesId);
+            log.trace("Done generation of file {} for the species {}.", fileType, speciesId);
         }
         
         log.debug("Done generating expression files for the species {}.", speciesId);

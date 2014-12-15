@@ -22,6 +22,11 @@ import org.bgee.controller.URLParameters.Parameter;
 public class URLParametersJsConverter extends JSConverter {
 
     private final static Logger log = LogManager.getLogger(URLParametersJsConverter.class.getName());
+    
+    public static void main(String[] args) throws IOException,
+    IllegalArgumentException {
+        JSConverter.main(args);
+    }
 
     /**
      * An instance of {@code URLParameters} that will be used as source to generate the parameters

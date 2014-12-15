@@ -1038,13 +1038,23 @@ public abstract class DAOManager implements AutoCloseable
     //*****************************************	
     
     /**
-     * Service providers must implement in this method the operations necessary 
-     * to release all resources managed by this {@code DAOManager} instance.
-     * For instance, if a service provider uses the JDBC API to use a SQL database, 
-     * the manager should close all {@code Connection}s to the database 
-     * hold by its DAOs. Calling this method should not affect other 
-     * {@code DAOManager} instances (so in our previous example, 
-     * {@code Connection}s hold by other managers should not be closed).
+     * Release all underlying resources used by this {@code DAOManager}. 
+     * This {@code DAOManager} will not be closed and can still be used. An example 
+     * of such a release process could be the closing of a JDBC connection,  
+     * hold by a {@code DAOManager} making use of a SQL database. To close 
+     * this {@code DAOManager} instead, see {@link #close()}.
+     * <p>
+     * The difference between {@code close} and {@code releaseResources} is useful 
+     * when it is impractical to acquire a new {@code DAOManager} after closing it.
+     * 
+     * @throws DAOException If an error occurred while releasing resources.
+     */
+    public abstract void releaseResources() throws DAOException;
+    
+    /**
+     * Release resources and close this {@code DAOManager}, so that no {@code DAO}s 
+     * could be obtained from it anymore. Resources are released 
+     * by calling {@link #releaseResources()}.
      * <p>
      * This method is called by {@link #close()} after having remove this 
      * {@code DAOManager} from the pool. 

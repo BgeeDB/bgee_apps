@@ -140,4 +140,9 @@ public class MockDAOManager extends DAOManager {
     protected RNASeqResultDAO getNewRNASeqResultDAO() {
         return this.instanceMockManager.getNewRNASeqResultDAO();
     }
+
+    @Override
+    public void releaseResources() {
+        this.instanceMockManager.releaseResources();
+    }
 }

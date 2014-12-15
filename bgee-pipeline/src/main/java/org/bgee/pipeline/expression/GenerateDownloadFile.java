@@ -36,6 +36,7 @@ import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
 import org.supercsv.cellprocessor.constraint.NotNull;
+import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
@@ -419,9 +420,6 @@ public static void main(String[] args) throws IOException {
                 BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
 
         for (String speciesId: speciesIdsToUse) {
-            //close connection to database between each species, to avoid idle connection reset
-            this.getManager().releaseResources();
-            
             log.info("Start generating of download files for the species {}...", speciesId);
             
             if (fileTypes.contains(FileType.DIFFEXPR_SIMPLE) ||
@@ -436,6 +434,9 @@ public static void main(String[] args) throws IOException {
                         geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
             }
             log.info("Done generating of download files for the species {}.", speciesId);
+            
+            //close connection to database between each species, to avoid idle connection reset
+            this.getManager().releaseResources();
         }
         log.exit();
     }
@@ -758,24 +759,25 @@ public static void main(String[] args) throws IOException {
         CellProcessor[] processors = null;
         if (isSimpleFile(fileType)) {
             processors = new CellProcessor[] { 
-                    new NotNull(), // gene ID
+                    new StrNotNullOrEmpty(), // gene ID
                     new NotNull(), // gene Name
-                    new NotNull(), // developmental stage ID
-                    new NotNull(), // developmental stage name
-                    new NotNull(), // anatomical entity ID
-                    new NotNull(), // anatomical entity name
+                    new StrNotNullOrEmpty(), // developmental stage ID
+                    new StrNotNullOrEmpty(), // developmental stage name
+                    new StrNotNullOrEmpty(), // anatomical entity ID
+                    new StrNotNullOrEmpty(), // anatomical entity name
                     new IsElementOf(dataElements)};
         } else {
             processors = new CellProcessor[] { 
-                new NotNull(), // gene ID
+                new StrNotNullOrEmpty(), // gene ID
                 new NotNull(), // gene Name
-                new NotNull(), // developmental stage ID
-                new NotNull(), // developmental stage name
-                new NotNull(), // anatomical entity ID
-                new NotNull(), // anatomical entity name
+                new StrNotNullOrEmpty(), // developmental stage ID
+                new StrNotNullOrEmpty(), // developmental stage name
+                new StrNotNullOrEmpty(), // anatomical entity ID
+                new StrNotNullOrEmpty(), // anatomical entity name
                 new IsElementOf(dataElements),  // Affymetrix data
                 new IsElementOf(dataElements),  // EST data
                 new IsElementOf(dataElements),  // In Situ data
+                //TODO: when relaxed in situ will be used, uncomment following line
                 //                        new IsElementOf(dataElements),  // Relaxed in Situ data
                 new IsElementOf(dataElements),  // RNA-seq data
                 new IsElementOf(originElement), // Including observed data 
@@ -900,10 +902,7 @@ public static void main(String[] args) throws IOException {
         if (StringUtils.isBlank(anatEntityId)) {
             throw log.throwing(new IllegalArgumentException("No Id provided for anat entity."));
         }
-        if (StringUtils.isBlank(geneName)) {
-            throw log.throwing(new IllegalArgumentException("No name provided " +
-                    "for gene ID " + geneId));
-        }
+        //gene name can sometimes be empty, we don't check it
         if (StringUtils.isBlank(anatEntityName)) {
             throw log.throwing(new IllegalArgumentException("No name provided " +
                     "for anatomical entity ID " + anatEntityId));

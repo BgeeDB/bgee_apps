@@ -167,6 +167,11 @@ public abstract class TestAncestor
             
         }
 
+
+        @Override
+        public void releaseResources() throws DAOException {
+            this.mockManager.releaseResources();
+        }
         @Override
         protected void closeDAOManager() throws DAOException {
             //nothing here

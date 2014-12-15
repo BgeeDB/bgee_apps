@@ -349,6 +349,9 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         verify(mockAnatEntityRsSp22).close();
         verify(mockGlobalExprRsSp22).close();
         verify(mockGlobalNoExprRsSp22).close();
+        
+        //check that the connection was closed at each species iteration
+        verify(mockManager.mockManager, times(2)).releaseResources();
 
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);

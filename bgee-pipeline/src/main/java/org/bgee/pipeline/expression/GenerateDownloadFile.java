@@ -516,9 +516,10 @@ public static void main(String[] args) throws IOException {
                 includeSubstructures, includeSubstages, speciesIds);
     
         ExpressionCallDAO dao = this.getExpressionCallDAO();
-        // We don't retrieve expression call ID to be able to compare calls on gene, 
-        // stage and anatomical IDs.
-        dao.setAttributes(EnumSet.complementOf(EnumSet.of(ExpressionCallDAO.Attribute.ID)));
+        // We need all attributes but ID, anat and stage originOfLines
+        dao.setAttributes(EnumSet.complementOf(EnumSet.of(ExpressionCallDAO.Attribute.ID, 
+                ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE, 
+                ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)));
 
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
@@ -820,11 +821,17 @@ public static void main(String[] args) throws IOException {
                 String stageId = callGroup.getKey().getStageId();
                 String anatEntityId = callGroup.getKey().getAnatEntityId();
                 
-                Map<String, String> row = this.generateExprRow(
-                        geneId, geneNamesByIds.get(geneId), 
+                Map<String, String> row = null;
+                try {
+                    row = this.generateExprRow(geneId, geneNamesByIds.get(geneId), 
                         stageId, stageNamesByIds.get(stageId), 
                         anatEntityId, anatEntityNamesByIds.get(anatEntityId), 
                         callGroup.getValue(), fileType);
+                } catch (IllegalArgumentException e) {
+                    //any IllegalArgumentException thrown by generateExprRow should come 
+                    //from a problem in the data, thus from an illegal state
+                    throw log.throwing(new IllegalStateException("Incorrect data state", e));
+                }
 
                 if (row != null) {
                     log.trace("Write row: {}", row);
@@ -966,18 +973,30 @@ public static void main(String[] args) throws IOException {
         }
 
         if (expressionTO == null && noExpressionTO == null) {
-            throw log.throwing(new IllegalStateException("No basic and global calls " +
+            throw log.throwing(new IllegalArgumentException("No basic and global calls " +
                     "for the triplet gene(" + geneId + 
                     ") - organ (" + anatEntityId + 
                     ") - stage (" + stageId + ")"));
         }
-        if (expressionTO != null && isCallWithNoData(expressionTO)) {
-            throw log.throwing(new IllegalStateException("All data states of the expression call ("
-                    + expressionTO + ") are set to no data"));
+        if (expressionTO != null) {
+            if (isCallWithNoData(expressionTO)) {
+                throw log.throwing(new IllegalArgumentException("All data states of " +
+                		"the expression call (" + expressionTO + ") are set to no data"));
+            }
+            if (expressionTO.isObservedData() == null) {
+                throw log.throwing(new IllegalArgumentException("An ExpressionCallTO " +
+                		"does not allow to determine origin of the data: " + expressionTO));
+            }
         }
-        if (noExpressionTO != null && isCallWithNoData(noExpressionTO)) {
-            throw log.throwing(new IllegalStateException("All data states of the no-expression call ("
-                    + noExpressionTO + ") are set to no data"));
+        if (noExpressionTO != null) {
+            if (isCallWithNoData(noExpressionTO)) {
+                throw log.throwing(new IllegalArgumentException("All data states of " +
+                		"the no-expression call (" + noExpressionTO + ") are set to no data"));
+            }
+            if (noExpressionTO.getOriginOfLine() == null) {
+                throw log.throwing(new IllegalArgumentException("An NoExpressionCallTO " +
+                		"does not allow to determine origin of the data: " + noExpressionTO));
+            }
         }
 
         // Define if the call include observed data
@@ -1060,7 +1079,7 @@ public static void main(String[] args) throws IOException {
                     expressionTO.getRNASeqData(), noExpressionTO.getRNASeqData()).
                     getStringRepresentation());
         } catch (Exception e) {
-            throw log.throwing(new IllegalStateException("Incorrect data states, " +
+            throw log.throwing(new IllegalArgumentException("Incorrect data states, " +
                     "ExpressionCallTO: " + expressionTO + ", NoExpressionCallTo: " + 
                     noExpressionTO, e));
         }

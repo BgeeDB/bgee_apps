@@ -356,8 +356,10 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);
         verify(mockManager.mockExpressionCallDAO, times(2)).setAttributes(
-                // All Attributes except ID
-                EnumSet.complementOf(EnumSet.of(ExpressionCallDAO.Attribute.ID)));
+                // All Attributes except ID, anat and stage OriginOfLines
+                EnumSet.complementOf(EnumSet.of(ExpressionCallDAO.Attribute.ID, 
+                        ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE, 
+                        ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)));
         verify(mockManager.mockNoExpressionCallDAO, times(2)).setAttributes(
                 // All Attributes except ID
                 EnumSet.complementOf(EnumSet.of(NoExpressionCallDAO.Attribute.ID)));
@@ -546,7 +548,6 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 thenReturn(mockGlobalNoExprRsSp33);
 
         thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("Incorrect data states");
         String directory = testFolder.newFolder("tmpFolder").getPath();
         
         Set<FileType> fileTypes = new HashSet<>(

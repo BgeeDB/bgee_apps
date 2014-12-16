@@ -155,22 +155,21 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 sql += ", " + sqlOriginOfLine;
             }
         }
-        sql += " FROM " + tableName;
-        String geneTabName = "gene";
-        //TODO: the MySQL optimizer sucks and do the join in the wrong order, 
-        //test with a join to a temp gene table, or a subquery in the where clause, 
-        //or use straight_join clause
-         if (speciesIds != null && speciesIds.size() > 0) {
-             sql += " INNER JOIN " + geneTabName + " ON (gene.geneId = " + tableName + ".geneId)" +
-                    " WHERE " + geneTabName + ".speciesId IN (" +
-                            BgeePreparedStatement.generateParameterizedQueryString(
-                                    speciesIds.size()) + ")";
-//                    " ORDER BY " + geneTabName + ".speciesId, " + tableName + ".geneId, " +  
-//                        tableName + ".anatEntityId, " + tableName + ".stageId";
-//         } else {
-//             sql +=  " ORDER BY " + tableName + ".geneId, " + tableName + ".anatEntityId, " +
-//                     tableName + ".stageId";
-         }
+        if (speciesIds != null && speciesIds.size() > 0) {
+            //the MySQL optimizer sucks and do the join in the wrong order, 
+            //when species are requested. So we use the STRAIGHT_JOIN clause, and order 
+            //the tables appropriately (gene table first).
+            //TODO: this order might not be optimal if other filtering options are added 
+            //in the future (not based only on speciesIds)
+            sql += " FROM gene STRAIGHT_JOIN " + tableName + 
+                    " ON (gene.geneId = " + tableName + ".geneId) " +
+                    
+                    " WHERE gene.speciesId IN (" +
+                    BgeePreparedStatement.generateParameterizedQueryString(
+                            speciesIds.size()) + ")";
+        } else {
+            sql += " FROM " + tableName;
+        }
 
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.

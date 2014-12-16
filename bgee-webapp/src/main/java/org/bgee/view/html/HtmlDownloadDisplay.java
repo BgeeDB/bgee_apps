@@ -122,35 +122,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='bgee_data_selection_text'>");
         this.writeln("<h1 class='scientificname'></h1>&nbsp;&nbsp;<h1 class='commonname'></h1>");
         this.writeln("<p class='groupdescription'></p>");
-        this.writeln("<ul>");    
-        this.writeln("<li><h2>Presence/absence of expression</h2>");
-        this.writeln("<a id='expr_simple_csv' class='download_link' href='./data/fake-file.csv' download>Download simple file</a>");
+        this.writeln("<div class='bgee_download_file_buttons'>");
+        this.writeln("<h2>Presence/absence of expression</h2>");    
+        this.writeln("<a id='expr_simple_csv' class='download_link' href='' download></a>");
         this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='expr_complete_csv' class='download_link' href='./data/fake-file.csv' download>Download advanced file</a>");
-        this.writeln("</li>");
-        this.writeln("<li><h2 >Over-/Under-expression</h2>");
-        this.writeln("<a id='overunder_simple_csv' class='download_link' href='./data/fake-file.csv' download>Download simple file</a>");
-        this.writeln("&nbsp;&nbsp;");
-        this.writeln("<a id='overunder_complete_csv' class='download_link' href='./data/fake-file.csv' download>Download advanced file</a>");
-        this.writeln("</li>");
-        this.writeln("</ul>");
-        // TODO: I implemented modifications but I did not test them so I let it as comment. 
-        // I could see interface but JavaScript actions did not work whereas it was activated.
-//        this.writeln("<div>");
-//        this.writeln("<h2>Presence/absence of expression</h2>");    
-//        this.writeln("<p>");
-//        this.writeln("<a id='expr_simple_csv' class='download_link' href='' download></a>");
-//        this.writeln("&nbsp;&nbsp;");
-//        this.writeln("<a id='expr_complete_csv' class='download_link' href='' download></a>");
-//        this.writeln("</p>");
-//        this.writeln("</div>");
-//        this.writeln("<div>");
+        this.writeln("<a id='expr_complete_csv' class='download_link' href='' download></a>");
+        this.writeln("</div>");
+        // TODO: uncomment when differential expression files will be generated
+//        this.writeln("<div class='bgee_download_file_buttons'>");
 //        this.writeln("<h2 >Over-/Under-expression</h2>");
-//        this.writeln("<p>");
 //        this.writeln("<a id='overunder_simple_csv' class='download_link' href='' download></a>");
 //        this.writeln("&nbsp;&nbsp;");
 //        this.writeln("<a id='overunder_complete_csv' class='download_link' href='' download></a>");
-//        this.writeln("</p>");
 //        this.writeln("</div>");
         this.writeln("</div>");
         this.writeln("</div>");
@@ -158,17 +141,17 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("</div>");
 
         // Multi-species part
-        // TODO: modify according to the groups that will be defined
-        this.writeln("<div id='bgee_multi_species'>");
-        this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
-        this.writeln("<div class='biggroup'>");
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1", true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2", true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883,9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883),
-                "Group 3",true));
-        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 28377, 10116), "Group 4", true));
-        this.writeln("</div>");
-        this.writeln("</div>");
+        // TODO: modify according to the groups that will be defined and uncomment when multi-species files will be generated
+//        this.writeln("<div id='bgee_multi_species'>");
+//        this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
+//        this.writeln("<div class='biggroup'>");
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1", true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2", true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883,9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883),
+//                "Group 3",true));
+//        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116, 28377, 10116), "Group 4", true));
+//        this.writeln("</div>");
+//        this.writeln("</div>");
 
         // Images source
         this.writeln("<p id='creativecommons_title'>Images from Wikimedia Commons. In most cases, pictures corresponds to the sequenced strains. <a>Show information about original images.</a></p>");
@@ -376,8 +359,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         String figure = null;
         if (isGroup) {
-            figure = "<figure data-bgeegroupname='" + figcaption + " " + 
-                        this.getGroupFileData(figcaption) + "'>";
+            figure = "<figure data-bgeegroupname='" + figcaption + "' " + 
+                        this.getGroupFileData(figcaption) + ">";
         } else {
             figure = "<figure " + this.getSingleSpeciesFileData(speciesIds.get(0)) + ">";
         }
@@ -404,28 +387,28 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         switch (groupName) {
             //TODO: set file sizes
             case "Group 1": 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "aa MB";
+                exprAdvancedFileSize = "bb GB"; 
+                diffExprSimpleFileSize = "cc MB";
+                diffExprAdvancedFileSize  = "dd GB";
                 break;
             case "Group 2": 
-                    exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                    exprSimpleFileSize = "ee MB";
+                exprAdvancedFileSize = "ff GB"; 
+                diffExprSimpleFileSize = "gg MB";
+                diffExprAdvancedFileSize  = "hh GB";
                 break;
             case "Group 3": 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "ii MB";
+                exprAdvancedFileSize = "jj GB"; 
+                diffExprSimpleFileSize = "kk";
+                diffExprAdvancedFileSize  = "ll GB";
                 break;
             case "Group 4": 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "mm MB";
+                exprAdvancedFileSize = "nn GB"; 
+                diffExprSimpleFileSize = "nn MB";
+                diffExprAdvancedFileSize  = "oo GB";
                 break;
             default:
                 return ("");
@@ -459,118 +442,118 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         switch (speciesId) {
             //TODO: set file sizes
             case 9606: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "1 MB";
+                exprAdvancedFileSize = "2 GB"; 
+                diffExprSimpleFileSize = "3 MB";
+                diffExprAdvancedFileSize  = "4 GB";
                 break;
             case 10090: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "5 MB";
+                exprAdvancedFileSize = "6 GB"; 
+                diffExprSimpleFileSize = "7 MB";
+                diffExprAdvancedFileSize  = "8 GB";
                 break;
             case 7955: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "9 MB";
+                exprAdvancedFileSize = "10 GB"; 
+                diffExprSimpleFileSize = "11 MB";
+                diffExprAdvancedFileSize  = "12 GB";
                 break;
             case 7227: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "13 MB";
+                exprAdvancedFileSize = "14 GB"; 
+                diffExprSimpleFileSize = "15 MB";
+                diffExprAdvancedFileSize  = "16 GB";
                 break;
             case 6239: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "17 MB";
+                exprAdvancedFileSize = "18 GB"; 
+                diffExprSimpleFileSize = "19 MB";
+                diffExprAdvancedFileSize  = "20 GB";
                 break;
             case 9597: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "21 MB";
+                exprAdvancedFileSize = "22 GB"; 
+                diffExprSimpleFileSize = "23 MB";
+                diffExprAdvancedFileSize  = "24 GB";
                 break;
             case 9598: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "25 MB";
+                exprAdvancedFileSize = "26 GB"; 
+                diffExprSimpleFileSize = "27 MB";
+                diffExprAdvancedFileSize  = "28 GB";
                 break;
             case 9593: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "29 MB";
+                exprAdvancedFileSize = "30 GB"; 
+                diffExprSimpleFileSize = "31 MB";
+                diffExprAdvancedFileSize  = "32 GB";
                 break;
             case 9600: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "33 MB";
+                exprAdvancedFileSize = "34 GB"; 
+                diffExprSimpleFileSize = "35 MB";
+                diffExprAdvancedFileSize  = "36 GB";
                 break;
             case 9544: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "37 MB";
+                exprAdvancedFileSize = "38 GB"; 
+                diffExprSimpleFileSize = "39 MB";
+                diffExprAdvancedFileSize  = "40 GB";
                 break;
             case 10116: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "41 MB";
+                exprAdvancedFileSize = "42 GB"; 
+                diffExprSimpleFileSize = "43 MB";
+                diffExprAdvancedFileSize  = "44 GB";
                 break;
             case 9913: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "45 MB";
+                exprAdvancedFileSize = "46 GB"; 
+                diffExprSimpleFileSize = "47 MB";
+                diffExprAdvancedFileSize  = "48 GB";
                 break;
             case 9823: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "49 MB";
+                exprAdvancedFileSize = "50 GB"; 
+                diffExprSimpleFileSize = "51 MB";
+                diffExprAdvancedFileSize  = "52 GB";
                 break;
             case 13616: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "53 MB";
+                exprAdvancedFileSize = "54 GB"; 
+                diffExprSimpleFileSize = "55 MB";
+                diffExprAdvancedFileSize  = "56 GB";
                 break;
             case 9258: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "57 MB";
+                exprAdvancedFileSize = "58 GB"; 
+                diffExprSimpleFileSize = "59 MB";
+                diffExprAdvancedFileSize  = "60 GB";
                 break;
             case 9031: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "61 MB";
+                exprAdvancedFileSize = "62 GB"; 
+                diffExprSimpleFileSize = "63 MB";
+                diffExprAdvancedFileSize  = "64 GB";
                 break;
             case 28377: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "65 MB";
+                exprAdvancedFileSize = "66 GB"; 
+                diffExprSimpleFileSize = "67 MB";
+                diffExprAdvancedFileSize  = "68 GB";
                 break;
             case 8364: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "69 MB";
+                exprAdvancedFileSize = "70 GB"; 
+                diffExprSimpleFileSize = "71 MB";
+                diffExprAdvancedFileSize  = "72 GB";
                 break;
             case 99883: 
-                exprSimpleFileSize = "xx MB";
-                exprAdvancedFileSize = "xx GB"; 
-                diffExprSimpleFileSize = "yy MB";
-                diffExprAdvancedFileSize  = "yy GB";
+                exprSimpleFileSize = "73 MB";
+                exprAdvancedFileSize = "74 GB"; 
+                diffExprSimpleFileSize = "75 MB";
+                diffExprAdvancedFileSize  = "76 GB";
                 break;
             default:
                 return ("");

@@ -78,7 +78,8 @@ header img {
     padding: 10px 0 50px 0;
     background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
     background-size: 100% 100%;
-    min-height: 800px;
+    /*To be modified when multi-species files will be available*/
+    min-height: 680px;
     color: #626262;
     z-index: 1;
 }
@@ -296,11 +297,9 @@ figure.highlight {
     font-size: 0.7em;
     color: #DBDBDB;
     width: 95%;
-    margin: 4px 0 0 8px;
 }
 
 #bgee_data_selection h1, #bgee_data_selection h2 {
-    margin: 0px;
     white-space: nowrap;
     text-align: left;
     color: #DBDBDB;
@@ -309,6 +308,7 @@ figure.highlight {
 #bgee_data_selection h1 {
     display: inline;
     font-size: 2.2em;
+    margin: 0;
 }
 
 #bgee_data_selection h1.scientificname {
@@ -317,7 +317,7 @@ figure.highlight {
 
 #bgee_data_selection h2 {
     font-weight: normal;
-    margin: 1.4em 0 1em;
+    margin: 1.6em 0 0.8em;
     font-size: 1.25em;
 }
 
@@ -359,8 +359,14 @@ figure.highlight {
 }
 
 #bgee_data_selection_text {
-    padding-left: 330px;
+    padding-left: 350px;
     height: 300px;
+    display: table-cell;
+    vertical-align:middle;
+}
+
+#bgee_data_selection_text div.bgee_download_file_buttons {
+    margin: 0px 0px 0px 30px;
 }
 
 .download_link {

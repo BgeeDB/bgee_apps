@@ -276,7 +276,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         this.includeJs("common.js");
         this.includeJs("requestparameters.js");
         this.includeJs("urlparameters.js");
-        this.includeJs("bgeeproperties.js");
+//        this.includeJs("bgeeproperties.js");
     }
     /**
      * Method that loads the provided javascript file.

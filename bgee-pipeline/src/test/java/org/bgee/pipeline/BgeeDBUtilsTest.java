@@ -268,17 +268,17 @@ public class BgeeDBUtilsTest extends TestAncestor {
                             DataState.NODATA, DataState.LOWQUALITY, 
                             DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                             false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                            ExpressionCallTO.OriginOfLine.SELF),
+                            ExpressionCallTO.OriginOfLine.SELF, true),
                     new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
                              DataState.HIGHQUALITY, DataState.NODATA, 
                              DataState.NODATA, DataState.LOWQUALITY, 
                              false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                             ExpressionCallTO.OriginOfLine.SELF),
+                             ExpressionCallTO.OriginOfLine.SELF, true),
                     new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
                              DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                              DataState.NODATA, DataState.LOWQUALITY, 
                              false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                             ExpressionCallTO.OriginOfLine.SELF)));
+                             ExpressionCallTO.OriginOfLine.SELF, true)));
             expectedMap.put("ID1", Id1ExprSet);
             
             Set<ExpressionCallTO> Id2ExprSet = new HashSet<ExpressionCallTO>();
@@ -287,12 +287,12 @@ public class BgeeDBUtilsTest extends TestAncestor {
                             DataState.LOWQUALITY, DataState.NODATA, 
                             DataState.HIGHQUALITY, DataState.NODATA, 
                             false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                            ExpressionCallTO.OriginOfLine.SELF),
+                            ExpressionCallTO.OriginOfLine.SELF, true),
                     new ExpressionCallTO("5", "ID2", "Anat_id1", "Stage_id7", 
                             DataState.NODATA, DataState.HIGHQUALITY, 
                             DataState.LOWQUALITY, DataState.LOWQUALITY, 
                             false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                            ExpressionCallTO.OriginOfLine.SELF)));
+                            ExpressionCallTO.OriginOfLine.SELF, true)));
             expectedMap.put("ID2", Id2ExprSet);
             
             List<ExpressionCallTO> allTOs = new ArrayList<ExpressionCallTO>(Id1ExprSet);

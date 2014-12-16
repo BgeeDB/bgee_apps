@@ -44,7 +44,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         ID, GENE_ID, STAGE_ID, ANAT_ENTITY_ID, 
         AFFYMETRIX_DATA, EST_DATA, IN_SITU_DATA, RNA_SEQ_DATA,
         INCLUDE_SUBSTRUCTURES, INCLUDE_SUBSTAGES, 
-        ANAT_ORIGIN_OF_LINE, STAGE_ORIGIN_OF_LINE;
+        ANAT_ORIGIN_OF_LINE, STAGE_ORIGIN_OF_LINE, OBSERVED_DATA;
     }
     
     /**
@@ -233,10 +233,15 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         private OriginOfLine stageOriginOfLine;
         
         /**
+         * 
+         */
+        private Boolean observedData;
+        
+        /**
          * Default constructor.
          */
         ExpressionCallTO() {
-            this(null, null, null, null, null, null, null, null, null, null, null, null);
+            this(null, null, null, null, null, null, null, null, null, null, null, null, null);
         }
 
         /**
@@ -284,13 +289,14 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
                 DataState affymetrixData, DataState estData, DataState inSituData, 
                 DataState rnaSeqData,
                 Boolean includeSubstructures, Boolean includeSubStages, 
-                OriginOfLine anatOrigin, OriginOfLine stageOrigin) {
+                OriginOfLine anatOrigin, OriginOfLine stageOrigin, Boolean observedData) {
             super(id, geneId, anatEntityId, stageId, affymetrixData, estData, inSituData, 
                     null, rnaSeqData);
             this.includeSubstructures = includeSubstructures;
             this.includeSubStages = includeSubStages;
             this.anatOriginOfLine = anatOrigin;
             this.stageOriginOfLine = stageOrigin;
+            this.observedData = observedData;
         }
         
         /**
@@ -398,6 +404,20 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
             this.stageOriginOfLine = originOfLine;
         }
 
+        /**
+         * @return the {@code Boolean} defining whether this expression call is observed.
+         */
+        public Boolean isObservedData() {
+            return observedData;
+        }
+        /**
+         * Sets the {@code boolean} defining whether this expression call is observed.
+         * 
+         * @param observedData A {@code Boolean} defining whether this expression call is observed.
+         */
+        void setObservedData(boolean observedData) {
+            this.observedData = observedData;
+        }
 
         //**************************************
         // Object methods overridden
@@ -423,6 +443,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
                         ((anatOriginOfLine == null) ? 0 : anatOriginOfLine.hashCode());
                 result = prime * result +
                         ((stageOriginOfLine == null) ? 0 : stageOriginOfLine.hashCode());
+                result = prime * result +
+                        ((observedData == null) ? 0 : observedData.hashCode());
             }
             return result;
         }
@@ -450,6 +472,9 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
                     return false;
                 }
                 if (stageOriginOfLine != other.stageOriginOfLine) {
+                    return false;
+                }
+                if (observedData != other.observedData) {
                     return false;
                 }
             }

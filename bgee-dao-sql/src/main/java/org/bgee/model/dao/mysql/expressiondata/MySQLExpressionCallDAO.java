@@ -585,7 +585,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 
             String id = null, geneId = null, anatEntityId = null, devStageId = null;
             DataState affymetrixData = null, estData = null, inSituData = null, rnaSeqData = null;
-            Boolean includeSubstructures = null, includeSubStages = null;
+            Boolean includeSubstructures = null, includeSubStages = null, observedData = null;
             OriginOfLine anatOriginOfLine = null, stageOriginOfLine = null;
 
             ResultSet currentResultSet = this.getCurrentResultSet();
@@ -636,17 +636,18 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                         includeSubstructures = currentResultSet.getBoolean(column.getKey());
                     } else if (column.getValue().equals("includeSubStages")) {
                         includeSubStages = currentResultSet.getBoolean(column.getKey());
-                    } 
+                    } else if (column.getValue().equals("observedData")) {
+                        observedData = currentResultSet.getBoolean(column.getKey());
+                    }
 
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));
                 }
             }
-            
             return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, devStageId,
                     affymetrixData, estData, inSituData, rnaSeqData,
                     includeSubstructures, includeSubStages, 
-                    anatOriginOfLine, stageOriginOfLine));
+                    anatOriginOfLine, stageOriginOfLine, observedData));
         }
     }
     

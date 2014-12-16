@@ -522,7 +522,8 @@ public class InsertGlobalCalls extends CallUser {
                         false,
                         false,
                         ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF);
+                        ExpressionCallTO.OriginOfLine.SELF,
+                        true);
                 
                 log.trace("Add the propagated expression: {}", propagatedExpression);
                 Set<ExpressionCallTO> curExprAsSet = mapGlobalExpr.get(propagatedExpression);
@@ -693,7 +694,7 @@ public class InsertGlobalCalls extends CallUser {
                             globalCall.getStageId(), 
                             affymetrixData, estData, inSituData, rnaSeqData, true,
                             globalCall.isIncludeSubStages(), origin, 
-                            globalCall.getStageOriginOfLine());
+                            globalCall.getStageOriginOfLine(), globalCall.isObservedData());
 
             log.trace("Updated global expression call: {}", updatedGlobalCall);
 

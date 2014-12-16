@@ -220,11 +220,11 @@ public class CallTOTest extends TestAncestor {
         ExpressionCallTO callTO1 = 
                 new ExpressionCallTO("1", "1", null, null, DataState.NODATA, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, false, false, 
-                        OriginOfLine.SELF, OriginOfLine.SELF);
+                        OriginOfLine.SELF, OriginOfLine.SELF, true);
         ExpressionCallTO callTO2 = 
                 new ExpressionCallTO("1", "3", null, null, DataState.NODATA, DataState.NODATA, 
                         DataState.NODATA, DataState.NODATA, false, false, 
-                        OriginOfLine.SELF, OriginOfLine.SELF);
+                        OriginOfLine.SELF, OriginOfLine.SELF, true);
         assertEquals("CallTOs with same IDs should be equal whatever their other attributes", 
                 callTO1, callTO2);
         assertEquals("CallTOs with same IDs should have equal hashCode whatever " +
@@ -233,11 +233,11 @@ public class CallTOTest extends TestAncestor {
         callTO1 = new ExpressionCallTO(null, "1", "2", "3", 
                 DataState.NODATA, DataState.NODATA, 
                 DataState.NODATA, DataState.NODATA, false, true, 
-                OriginOfLine.SELF, OriginOfLine.DESCENT);
+                OriginOfLine.SELF, OriginOfLine.DESCENT, false);
         callTO2 = new ExpressionCallTO(null, "1", "2", "3", 
                 DataState.NODATA, DataState.NODATA, 
                 DataState.NODATA, DataState.NODATA, false, false, 
-                OriginOfLine.SELF, OriginOfLine.SELF);
+                OriginOfLine.SELF, OriginOfLine.SELF, true);
         assertEquals("CallTOs with a null ID but same geneId-stageId-anatEntityId " +
                 "should be equal whatever their other attributes", 
                 callTO1, callTO2);
@@ -248,11 +248,11 @@ public class CallTOTest extends TestAncestor {
         callTO1 = new ExpressionCallTO(null, "1", "2", null, 
                 DataState.NODATA, DataState.NODATA, 
                 DataState.NODATA, DataState.NODATA, false, true, 
-                OriginOfLine.SELF, OriginOfLine.BOTH);
+                OriginOfLine.SELF, OriginOfLine.BOTH, true);
         callTO2 = new ExpressionCallTO(null, "1", "2", null, 
                 DataState.NODATA, DataState.NODATA, 
                 DataState.NODATA, DataState.NODATA, false, true, 
-                OriginOfLine.SELF, OriginOfLine.BOTH);
+                OriginOfLine.SELF, OriginOfLine.BOTH, true);
         assertEquals("CallTOs with a null ID, and at least one of " +
                 "geneId-stageId-anatEntityId also null, " +
                 "should be compared over all attributes", callTO1, callTO2);
@@ -264,11 +264,11 @@ public class CallTOTest extends TestAncestor {
         callTO1 = new ExpressionCallTO(null, "1", "2", null, 
                 DataState.NODATA, DataState.NODATA, 
                 DataState.NODATA, DataState.NODATA, false, true, 
-                OriginOfLine.SELF, OriginOfLine.SELF);
+                OriginOfLine.SELF, OriginOfLine.SELF, true);
         callTO2 = new ExpressionCallTO(null, "1", "2", null, 
                 DataState.NODATA, DataState.NODATA, 
                 DataState.NODATA, DataState.NODATA, false, false, 
-                OriginOfLine.SELF, OriginOfLine.SELF);
+                OriginOfLine.SELF, OriginOfLine.SELF, true);
         assertNotEquals("CallTOs with a null ID, and at least one of " +
                 "geneId-stageId-anatEntityId also null, " +
                 "should be compared over all attributes", callTO1, callTO2);
@@ -278,11 +278,11 @@ public class CallTOTest extends TestAncestor {
         callTO1 = new ExpressionCallTO(null, "1", "2", null, 
                 DataState.NODATA, DataState.NODATA, 
                 DataState.NODATA, DataState.NODATA, false, true, 
-                OriginOfLine.SELF, OriginOfLine.DESCENT);
+                OriginOfLine.SELF, OriginOfLine.DESCENT, true);
         callTO2 = new ExpressionCallTO(null, "1", "2", null, 
                 DataState.NODATA, DataState.NODATA, 
                 DataState.NODATA, DataState.NODATA, false, true, 
-                OriginOfLine.SELF, OriginOfLine.BOTH);
+                OriginOfLine.SELF, OriginOfLine.BOTH, true);
         assertNotEquals("CallTOs with a null ID, and at least one of " +
                 "geneId-stageId-anatEntityId also null, " +
                 "should be compared over all attributes", callTO1, callTO2);

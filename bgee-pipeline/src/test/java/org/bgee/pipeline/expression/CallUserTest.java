@@ -69,66 +69,66 @@ public class CallUserTest extends TestAncestor {
         Collection<CallTO> callsToGroup = Arrays.asList(
                 (CallTO) new ExpressionCallTO(null, "gene9", "organ1", "stage1", 
                         null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        null), 
+                        null, null), 
                 (CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                        null, null, null, null, null, null, null, null), 
+                        null, null, null, null, null, null, null, null, null), 
                 (CallTO) new NoExpressionCallTO(null, "gene1", "organ2", "stage2", 
                         null, null, null, null, true, NoExpressionCallTO.OriginOfLine.BOTH), 
                 (CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage2", 
-                       null, null, null, null, null, null, null, null),
+                       null, null, null, null, null, null, null, null, null),
                 (CallTO) new NoExpressionCallTO(null, "gene3", "organ1", "stage1", 
                        null, null, null, null, true, NoExpressionCallTO.OriginOfLine.SELF), 
                 (CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                      null, null, null, null, null, null, null, null), 
+                      null, null, null, null, null, null, null, null, null), 
                 (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
                       null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH, 
-                      null), 
+                      null, null), 
                 (CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage1", 
                       null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.SELF, 
-                      null),  
+                      null, null),  
                 (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
                       null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF, 
-                      null)
+                      null, null)
                 );
         
         Map<CallTO, Collection<CallTO>> expectedMap = 
                 new LinkedHashMap<CallTO, Collection<CallTO>>();
         
         expectedMap.put(new ExpressionCallTO(null, "gene1", "organ2", "stage2", 
-                null, null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new NoExpressionCallTO(null, "gene1", "organ2", "stage2", 
                 null, null, null, null, true, NoExpressionCallTO.OriginOfLine.BOTH)));
 
         expectedMap.put(new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                null, null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                null, null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null, null), 
                           (CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
-                null, null, null, null, null, null, null, null)));
+                null, null, null, null, null, null, null, null, null)));
 
         expectedMap.put(new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
-                null, null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
-                null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH, null), 
+                null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH, null, null), 
                           (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
-                null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF, null), 
+                null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF, null, null), 
                           (CallTO) new NoExpressionCallTO(null, "gene3", "organ1", "stage1", 
                 null, null, null, null, true, NoExpressionCallTO.OriginOfLine.SELF)));
         
         expectedMap.put(new ExpressionCallTO(null, "gene9", "organ1", "stage1", 
-                    null, null, null, null, null, null, null, null), 
+                    null, null, null, null, null, null, null, null, null), 
                 Arrays.asList((CallTO) new ExpressionCallTO(null, "gene9", "organ1", "stage1", 
-                    null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.DESCENT, null)));
+                    null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.DESCENT, null, null)));
         
         expectedMap.put(new ExpressionCallTO(null, "gene9", "organ2", "stage1", 
-                null, null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage1", 
-                null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.SELF, null)));
+                null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.SELF, null, null)));
         
         expectedMap.put(new ExpressionCallTO(null, "gene9", "organ2", "stage2", 
-                null, null, null, null, null, null, null, null), 
+                null, null, null, null, null, null, null, null, null), 
             Arrays.asList((CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage2", 
-                null, null, null, null, null, null, null, null)));
+                null, null, null, null, null, null, null, null, null)));
         
         SortedMap<CallTO, Collection<CallTO>> generatedMap = 
                 callUser.groupAndOrderByGeneAnatEntityStage(callsToGroup);
@@ -156,37 +156,49 @@ public class CallUserTest extends TestAncestor {
         // Test expression calls
         ExpressionCallTO exprTO = new ExpressionCallTO(  
                 null, null, null, null, null, null, null, null, null, null, 
-                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.BOTH);
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.BOTH, true);
         assertFalse("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isPropagatedOnly(exprTO));
-        
+
         exprTO = new ExpressionCallTO(  
                 null, null, null, null, null, null, null, null, null, null, 
-                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.DESCENT);
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.BOTH, false);
         assertTrue("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isPropagatedOnly(exprTO));
         
         exprTO = new ExpressionCallTO(  
                 null, null, null, null, null, null, null, null, null, null, 
-                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.SELF);
-        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
-                callUser.isPropagatedOnly(exprTO));
-        
-        exprTO = new ExpressionCallTO(  
-                null, null, null, null, null, null, null, null, null, null, 
-                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.SELF);
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.DESCENT, false);
         assertTrue("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isPropagatedOnly(exprTO));
         
         exprTO = new ExpressionCallTO(  
                 null, null, null, null, null, null, null, null, null, null, 
-                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF);
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.SELF, false);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.BOTH, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isPropagatedOnly(exprTO));
         
         exprTO = new ExpressionCallTO(  
                 null, null, null, null, null, null, null, null, null, null, 
-                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.DESCENT);
+                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.SELF, false);
+        assertTrue("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
+        assertFalse("Incorrect boolean returned by isPropagatedOnly", 
+                callUser.isPropagatedOnly(exprTO));
+        
+        exprTO = new ExpressionCallTO(  
+                null, null, null, null, null, null, null, null, null, null, 
+                ExpressionCallTO.OriginOfLine.DESCENT, ExpressionCallTO.OriginOfLine.DESCENT, false);
         assertTrue("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isPropagatedOnly(exprTO));
 
@@ -220,27 +232,27 @@ public class CallUserTest extends TestAncestor {
         // Expression call
         // Empty call: all DataStates set to null
         ExpressionCallTO exprTO = new ExpressionCallTO(  
-                null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null);
         assertTrue("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isCallWithNoData(exprTO));
 
         // Empty call: DataStates set to null or to NODATA
         exprTO = new ExpressionCallTO(null, null, null, null, 
-                DataState.NODATA, null, null, null, null, null, null, null);
+                DataState.NODATA, null, null, null, null, null, null, null, null);
         assertTrue("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isCallWithNoData(exprTO));
 
         // Call not empty without null in DataStates
         exprTO = new ExpressionCallTO(null, null, null, null, 
                 DataState.NODATA, DataState.LOWQUALITY, 
-                DataState.LOWQUALITY, DataState.LOWQUALITY, null, null, null, null);
+                DataState.LOWQUALITY, DataState.LOWQUALITY, null, null, null, null, null);
         assertFalse("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isCallWithNoData(exprTO));
 
         // Call not empty with some null in DataStates
         exprTO = new ExpressionCallTO(null, null, null, null, 
                 DataState.HIGHQUALITY, DataState.NODATA, 
-                null, DataState.HIGHQUALITY, null, null, null, null);
+                null, DataState.HIGHQUALITY, null, null, null, null, null);
         assertFalse("Incorrect boolean returned by isPropagatedOnly", 
                 callUser.isCallWithNoData(exprTO));
         

@@ -102,27 +102,27 @@ public class InsertGlobalCallsTest extends TestAncestor {
                                 DataState.NODATA, DataState.LOWQUALITY, 
                                 DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                                 false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF),
+                                ExpressionCallTO.OriginOfLine.SELF, true),
                         new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
                                 DataState.HIGHQUALITY, DataState.NODATA, 
                                 DataState.NODATA, DataState.LOWQUALITY, 
                                 false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF),
+                                ExpressionCallTO.OriginOfLine.SELF, true),
                         new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
                                 DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                                 DataState.NODATA, DataState.LOWQUALITY, 
                                 false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF),
+                                ExpressionCallTO.OriginOfLine.SELF, true),
                         new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", 
                                 DataState.LOWQUALITY, DataState.NODATA, 
                                 DataState.HIGHQUALITY, DataState.NODATA, 
                                 false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF),
+                                ExpressionCallTO.OriginOfLine.SELF, true),
                         new ExpressionCallTO("5", "ID3", "Anat_id1", "Stage_id7", 
                                 DataState.NODATA, DataState.HIGHQUALITY, 
                                 DataState.LOWQUALITY, DataState.LOWQUALITY, 
                                 false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF)),
+                                ExpressionCallTO.OriginOfLine.SELF, true)),
                 MySQLExpressionCallTOResultSet.class);
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("11"));
@@ -137,17 +137,17 @@ public class InsertGlobalCallsTest extends TestAncestor {
                                 DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                                 DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                                 false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF),
+                                ExpressionCallTO.OriginOfLine.SELF, true),
                         new ExpressionCallTO("7", "ID4", "Anat_id9", "Stage_id12", 
                                 DataState.NODATA, DataState.HIGHQUALITY, 
                                 DataState.NODATA, DataState.LOWQUALITY, 
                                 false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF),
+                                ExpressionCallTO.OriginOfLine.SELF, true),
                         new ExpressionCallTO("8", "ID5", "Anat_id8", "Stage_id1", 
                                 DataState.HIGHQUALITY, DataState.NODATA, 
                                 DataState.LOWQUALITY, DataState.NODATA, 
                                 false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF)),
+                                ExpressionCallTO.OriginOfLine.SELF, true)),
                 MySQLExpressionCallTOResultSet.class);
         params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("21"));
@@ -250,56 +250,56 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, true),
                 new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.BOTH, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, true),
                 new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id6", 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, false),
                 new ExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id6", 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, false),
                 new ExpressionCallTO(null, "ID1", "Anat_id3", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.NODATA, DataState.LOWQUALITY, 
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, true),
                 new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF));
+                        ExpressionCallTO.OriginOfLine.SELF, false));
         
         List<ExpressionCallTO> expectedExprSpecies11id2 = Arrays.asList(
                 new ExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id7",
                         DataState.LOWQUALITY, DataState.NODATA,
                         DataState.HIGHQUALITY, DataState.NODATA,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, true),
                 new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id7", 
                         DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.NODATA,
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, false),
                 new ExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id7", 
                         DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF));
+                        ExpressionCallTO.OriginOfLine.SELF, false));
         
         List<ExpressionCallTO> expectedExprSpecies11id3 = Arrays.asList(
                 new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", 
                         DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF));
+                        ExpressionCallTO.OriginOfLine.SELF, true));
 
         // Expected global calls for speciesID = 21.
         List<ExpressionCallTO> expectedExprSpecies21id4 = Arrays.asList(
@@ -307,34 +307,34 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         DataState.NODATA, DataState.HIGHQUALITY,
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, true),
                 new ExpressionCallTO(null, "ID4", "Anat_id8", "Stage_id12", 
                         DataState.NODATA, DataState.HIGHQUALITY,
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, false),
                 new ExpressionCallTO(null, "ID4", "Anat_id6", "Stage_id12", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.BOTH, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, false),
                 new ExpressionCallTO(null, "ID4", "Anat_id7", "Stage_id12", 
                         DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF));
+                        ExpressionCallTO.OriginOfLine.SELF, false));
 
         List<ExpressionCallTO> expectedExprSpecies21id5 = Arrays.asList(
                 new ExpressionCallTO(null, "ID5", "Anat_id8", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.LOWQUALITY, DataState.NODATA,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF),
+                        ExpressionCallTO.OriginOfLine.SELF, true),
                 new ExpressionCallTO(null, "ID5", "Anat_id6", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.LOWQUALITY, DataState.NODATA, 
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF));
+                        ExpressionCallTO.OriginOfLine.SELF, false));
 
         assertTrue("Incorrect global expression calls generated for ID1",
                 TOComparator.areTOCollectionsEqual(
@@ -504,13 +504,13 @@ public class InsertGlobalCallsTest extends TestAncestor {
         MySQLExpressionCallTOResultSet mockExprAnatTORs = createMockDAOResultSet(
                 Arrays.asList(
                         new ExpressionCallTO(null, null, "Anat_id1", 
-                            null, null, null, null, null, false, false, null, null),
+                            null, null, null, null, null, false, false, null, null, null),
                         new ExpressionCallTO(null, null, "Anat_id3", 
-                                null, null, null, null, null, false, false, null, null),
+                                null, null, null, null, null, false, false, null, null, null),
                         new ExpressionCallTO(null, null, "Anat_id8", 
-                                null, null, null, null, null, false, false, null, null),
+                                null, null, null, null, null, false, false, null, null, null),
                         new ExpressionCallTO(null, null, "Anat_id10", 
-                                null, null, null, null, null, false, false, null, null)),
+                                null, null, null, null, null, false, false, null, null, null)),
                 MySQLExpressionCallTOResultSet.class);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
                 (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(new ExpressionCallParams()))).

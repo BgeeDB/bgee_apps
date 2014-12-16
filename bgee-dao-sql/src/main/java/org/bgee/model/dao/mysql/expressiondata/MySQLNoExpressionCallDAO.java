@@ -157,6 +157,9 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         }
         sql += " FROM " + tableName;
         String geneTabName = "gene";
+        //TODO: the MySQL optimizer sucks and do the join in the wrong order, 
+        //test with a join to a temp gene table, or a subquery in the where clause, 
+        //or use straight_join clause
          if (speciesIds != null && speciesIds.size() > 0) {
              sql += " INNER JOIN " + geneTabName + " ON (gene.geneId = " + tableName + ".geneId)" +
                     " WHERE " + geneTabName + ".speciesId IN (" +

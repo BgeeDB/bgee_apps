@@ -374,11 +374,22 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                         sql += "IF(originOfLine = 'descent', 0, 1) ";
                     }
                 } else {
-                    sql += "IF(";
+                    // '..' is used to make sure we can always distinguish IDs 
+                    // (otherwise we could for instance have 'stageId1' matching 'stageId10')
+                    sql += "IF(GROUP_CONCAT(DISTINCT CONCAT('..', ";
                     if (includeSubstructures) {
-                        sql += "(GROUP_CONCAT(DISTINCT originOfLine) LIKE '%both%' " +
-                        		"OR GROUP_CONCAT(DISTINCT originOfLine) LIKE '%self%') AND ";
+                        sql += "originOfLine";
+                    } else {
+                        sql += "self";
                     }
+                    sql += ", '..', " + exprTableName + ".stageId, '..') " +
+                    		"ORDER BY " + exprTableName + ".stageId = " + 
+                            propagatedStageTableName + ".stageId DESC";
+                    if (includeSubstructures) {
+                        sql += ", originOfLine = 'self' DESC, originOfLine = 'both' DESC";
+                    }
+                    sql += ")";
+                    continue here
                     sql += "GROUP_CONCAT(" +
                             //the CONCAT here is used to make sure we can always distinguish 
                             //stage IDs (otherwise we could have 'stageId1' matching 'stageId10')

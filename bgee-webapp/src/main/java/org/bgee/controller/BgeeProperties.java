@@ -251,9 +251,9 @@ public class BgeeProperties
         bgeeRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 BGEE_ROOT_DIRECTORY_KEY, "/");
         downloadRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "download/");
+                DOWNLOAD_ROOT_DIRECTORY_KEY, "download/");
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                DOWNLOAD_ROOT_DIRECTORY_KEY, "js/");
+                JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "js/");
         cssFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 CSS_FILES_ROOT_DIRECTORY_KEY, "css/");
         imagesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
@@ -352,7 +352,7 @@ public class BgeeProperties
             Properties fileProps, String key, 
             String defaultValue)
     {
-        log.entry(prop,fileProps, sysProps, key, defaultValue);
+        log.entry(prop, sysProps, fileProps,  key, defaultValue);
 
         String propValue = null;
 

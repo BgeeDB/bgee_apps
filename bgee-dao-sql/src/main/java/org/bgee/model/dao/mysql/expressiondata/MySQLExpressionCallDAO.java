@@ -284,8 +284,29 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 if (!includeSubstructures) {
                     sql += "'" + OriginOfLine.SELF.getStringRepresentation() + "' ";
                 } else {
-                    //otherwise, we use the real column in the global expression table
-                    sql += "originOfLine ";
+                    //otherwise, we use the real column in the global expression table, 
+                    //unless we are propagating on the fly to include sub-stages
+                    if (!includeSubStages) {
+                        sql += "originOfLine ";
+                    } else {
+                        //the anatOriginOfLine has to be recomputed, as it is possible 
+                        //for a given anat. entity to have a given origin at a given stage, 
+                        //but also a different origin at a sub-stage
+                        sql += "IF (GROUP_CONCAT(DISTINCT originOfLine) LIKE '%both%', " +
+                                   //if concatenation of originOfLine contains 'both', it is easy, 
+                                   //the on-the-fly anat. origin is 'both' 
+                        	       "'both', " +
+                                   //Otherwise, if it contains 'descent'...
+                        		   "IF(GROUP_CONCAT(DISTINCT originOfLine) LIKE '%descent%', " +
+                                       //... as well as 'self'...
+                        		       "IF(GROUP_CONCAT(DISTINCT originOfLine) LIKE '%self%', " +
+                                           //... then the anat. origin is also 'both'.
+                        		           "'both', " +
+                                           //If it contains only 'descent', then this is it
+                        		           "'descent'), " +
+                                       //finally, 'self' is here the only remaining possibility
+                        		       "'self')) ";
+                    }
                 }
                 sql += "AS anatOriginOfLine ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES)) {

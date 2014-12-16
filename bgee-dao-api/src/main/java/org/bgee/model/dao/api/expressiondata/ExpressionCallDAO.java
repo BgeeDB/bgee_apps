@@ -427,7 +427,8 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
             return super.toString() + " - Include Substructures: " + this.isIncludeSubstructures() + 
                     " - Include SubStages: " + this.isIncludeSubStages() + 
                     " - Anatomy origin Of Line: " + this.getAnatOriginOfLine() + 
-                    " - Stage origin Of Line: " + this.getStageOriginOfLine();
+                    " - Stage origin Of Line: " + this.getStageOriginOfLine() + 
+                    " - Observed data: " + this.isObservedData();
         }
 
         @Override

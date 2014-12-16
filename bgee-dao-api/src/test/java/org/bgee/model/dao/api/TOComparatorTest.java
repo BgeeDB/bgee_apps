@@ -267,6 +267,12 @@ public class TOComparatorTest extends TestAncestor {
                 ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, true);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        to2 = new ExpressionCallTO("1", "ID1", "Anat_id1", "Stage_id6", 
+                DataState.HIGHQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.LOWQUALITY, false, false, 
+                ExpressionCallTO.OriginOfLine.SELF, ExpressionCallTO.OriginOfLine.SELF, false);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 
     /**

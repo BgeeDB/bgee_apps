@@ -542,7 +542,8 @@ public class TOComparator {
                 to1.isIncludeSubstructures() == to2.isIncludeSubstructures() && 
                 to1.isIncludeSubStages() == to2.isIncludeSubStages() &&
                 to1.getAnatOriginOfLine() == to2.getAnatOriginOfLine() &&
-                to1.getStageOriginOfLine() == to2.getStageOriginOfLine()) {
+                to1.getStageOriginOfLine() == to2.getStageOriginOfLine() &&
+                to1.isObservedData() == to2.isObservedData()) {
             return log.exit(true);
         }
         return log.exit(false);

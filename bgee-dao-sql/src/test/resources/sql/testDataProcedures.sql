@@ -190,7 +190,9 @@ BEGIN
                (6,'ID2','Anat_id11','Stage_id12','poor quality','high quality','no data','high quality'),
                (7,'ID2','Anat_id11','Stage_id13','high quality','no data','poor quality','no data'),
                (8,'ID3','Anat_id3','Stage_id1','high quality','no data','poor quality','no data'),
-               (9,'ID2','Anat_id1','Stage_id9','poor quality','high quality','no data','high quality');
+               (9,'ID2','Anat_id1','Stage_id9','poor quality','high quality','no data','high quality'),
+               (11,'ID2','Anat_id1','Stage_id2','high quality','no data','poor quality','no data'),
+               (12,'ID1','Anat_id1','Stage_id1','no data','no data','poor quality','no data');
 
         INSERT INTO globalExpression(globalExpressionId,geneId,anatEntityId,stageId,estData,affymetrixData,inSituData,rnaSeqData,originOfLine)
         VALUES (1,'ID3','Anat_id1','Stage_id1','no data','poor quality','high quality','high quality','self'),
@@ -215,8 +217,10 @@ BEGIN
                (19,'ID2','Anat_id9','Stage_id18','high quality','high quality','high quality','high quality','descent'),
                (20,'ID2','Anat_id10','Stage_id18','high quality','high quality','high quality','high quality','descent'),
                (21,'ID2','Anat_id11','Stage_id18','high quality','high quality','high quality','high quality','descent'), 
-               (22,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data', 'self'), 
-               (24,'ID1','Anat_id1','Stage_id8','high quality','high quality','no data','no data', 'descent');
+               (22,'ID1','Anat_id6','Stage_id8','high quality','high quality','no data','no data','self'), 
+               (24,'ID1','Anat_id1','Stage_id8','high quality','high quality','no data','no data','descent'),
+               (25,'ID2','Anat_id1','Stage_id2','high quality','no data','poor quality','no data','self'),
+               (26,'ID1','Anat_id1','Stage_id1','no data','no data','poor quality','no data','self');
 
         INSERT INTO globalExpressionToExpression (expressionId,globalExpressionId) 
         VALUES (1, 1),
@@ -236,7 +240,9 @@ BEGIN
                (4, 19),
                (4, 20),
                (4, 21),
-               (10, 22);
+               (10, 22),
+               (11, 25),
+               (12, 26);
 
         INSERT INTO noExpression(noExpressionId,geneId,anatEntityId,stageId,noExpressionAffymetrixData,noExpressionInSituData,noExpressionRnaSeqData)
         VALUES (1,'ID2','Anat_id5','Stage_id13','poor quality','high quality','high quality'),

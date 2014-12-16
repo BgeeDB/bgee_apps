@@ -367,27 +367,26 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 //the Attributes OBSERVED_DATA does not correspond to any columns 
                 //in a table. See this attribute's javadoc for an explanation of 
                 //why this attribute is needed. 
-                if (!includeSubstructures && !includeSubStages) {
-                    sql += "1 ";
+                if (!includeSubStages) {
+                    if (!includeSubstructures) {
+                        sql += "1 ";
+                    } else {
+                        sql += "IF(originOfLine = 'descent', 0, 1) ";
+                    }
                 } else {
                     sql += "IF(";
                     if (includeSubstructures) {
                         sql += "(GROUP_CONCAT(DISTINCT originOfLine) LIKE '%both%' " +
-                        		"OR GROUP_CONCAT(DISTINCT originOfLine) LIKE '%self%') ";
+                        		"OR GROUP_CONCAT(DISTINCT originOfLine) LIKE '%self%') AND ";
                     }
-                    if (includeSubStages) {
-                        if (includeSubstructures) {
-                            sql += "AND ";
-                        }
-                        sql += "GROUP_CONCAT(" +
+                    sql += "GROUP_CONCAT(" +
                             //the CONCAT here is used to make sure we can always distinguish 
                             //stage IDs (otherwise we could have 'stageId1' matching 'stageId10')
                             "distinct CONCAT(" + exprTableName + ".stageId, '..') " +
-                        	"ORDER BY " + exprTableName + ".stageId = " + 
-                                propagatedStageTableName + ".stageId DESC) " +
-                        	"LIKE CONCAT(" + propagatedStageTableName + ".stageId, '..%') ";
-                    }
-                    sql += ", 1, 0) ";
+                            "ORDER BY " + exprTableName + ".stageId = " + 
+                            propagatedStageTableName + ".stageId DESC) " +
+                            "LIKE CONCAT(" + propagatedStageTableName + ".stageId, '..%') " + 
+                            ", 1, 0) ";
                 }
                 
                 sql += "AS observedData ";

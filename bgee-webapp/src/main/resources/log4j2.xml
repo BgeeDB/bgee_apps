@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration>
-    <Appenders>
-        <RandomAccessFile name="Tomcat"
-            fileName="${sys:catalina.home}/logs/bgee-webapp-overall.log"
-            immediateFlush="true" append="true">
-            <PatternLayout
-                pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
-        </RandomAccessFile>
-    </Appenders>
-    <Loggers>
-        <Root level="info">
-            <AppenderRef ref="Tomcat" />
-        </Root>
-    </Loggers>
-</Configuration>
+<configuration status="OFF">
+  <appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %level %class{36} %L %M - %m%ex%n"/>
+    </Console>
+  </appenders>
+  <loggers>
+    <root level="off">
+      <appender-ref ref="Console"/>
+    </root>  
+    <logger name="org.bgee" level="trace" additivity="false">
+      <appender-ref ref="Console"/>
+    </logger>
+    <logger name="log4jdbc.log4j2" level="info" additivity="false">
+      <MarkerFilter marker="LOG4JDBC_OTHER" onMatch="DENY" onMismatch="NEUTRAL"/>
+      <appender-ref ref="Console"/>
+    </logger>
+  </loggers>
+</configuration>

@@ -7,7 +7,15 @@ package org.bgee.view;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public interface DownloadDisplay
-{
+public interface DownloadDisplay {
+    
+	/**
+	 * Display the download page.
+	 */
 	public void displayDownloadPage();
+	
+	/**
+     * Display the documentation page.
+	 */
+	public void displayDocumentation();
 }

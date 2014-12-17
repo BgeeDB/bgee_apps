@@ -32,4 +32,9 @@ public class TestDownloadDisplay extends TestParentDisplay implements DownloadDi
     public void displayDownloadPage() {
         this.out.println("Test page is good !");
     }
+
+    @Override
+    public void displayDocumentation() {
+        this.out.println("Test page is good !");
+    }
 }

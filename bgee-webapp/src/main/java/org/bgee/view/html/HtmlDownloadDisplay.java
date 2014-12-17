@@ -22,8 +22,7 @@ import org.bgee.view.DownloadDisplay;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay
-{
+public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
  
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
 
@@ -41,14 +40,17 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      *                          {@code PrintWriter} 
      */
     public HtmlDownloadDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop) throws IOException
-    {
+            BgeeProperties prop) throws IOException {
         super(response,requestParameters, prop);
     }
 
     @Override
-    public void displayDownloadPage()
-    {
+    public void displayDocumentation() {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void displayDownloadPage() {
         log.entry();
         this.startDisplay("download", "Bgee release 13 download page");
 
@@ -62,10 +64,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<h1>Welcome to the Bgee release 13 download page</h1>");
         this.writeln("<div class='biggroup'>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
-        this.writeln("It currently provides &quot;presence/absence of expression&quot; and &quot;over-/under-expression&quot; data files.</p>");
-        this.writeln("<p>This page is a download page containing pre-computed files of Bgee release 13 (based on Ensembl 75). ");
-        this.writeln("Bgee release 12 (based on Ensembl 69) is always available <a href='http://bgee.unil.ch/bgee/bgee'>here</a>.</p>");
-        this.writeln("<p>You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> or <a href='https://bgeedb.wordpress.com'>our blog</a></p>");
+        this.writeln("This is a beta download page, more features and documentation will be deployed soon. </p>");
+        this.writeln("<p>See also previous <a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12</a>. ");
+        this.writeln("You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> or <a href='https://bgeedb.wordpress.com'>our blog</a>.</p>");
         this.writeln("</div>");
         this.writeln("</div>");
 
@@ -93,7 +94,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(generateSpeciesFigure(9597));
         this.writeln(generateSpeciesFigure(9598));
         this.writeln(generateSpeciesFigure(9593));
-        this.writeln(generateSpeciesFigure(9600));
+//        this.writeln(generateSpeciesFigure(9600));
         this.writeln(generateSpeciesFigure(9544));
         this.writeln(generateSpeciesFigure(10116));
         this.writeln(generateSpeciesFigure(9913));
@@ -103,7 +104,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(generateSpeciesFigure(9031));
         this.writeln(generateSpeciesFigure(28377));
         this.writeln(generateSpeciesFigure(8364));
-        this.writeln(generateSpeciesFigure(99883));
+//        this.writeln(generateSpeciesFigure(99883));
 
         // Black banner when a species or a group is selected.
         // This section is empty, it will be filled by JavaScript.

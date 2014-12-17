@@ -81,6 +81,25 @@ public class RequestParameters {
     private final static Logger log = LogManager.getLogger(RequestParameters.class.getName());
 
     /**
+     * {@code ConcurrentMap} used to manage concurrent access to 
+     * the read/write locks that are used to manage concurrent reading and writing 
+     * of the files storing query strings holding storable parameters. 
+     * The generated key of the {@code RequestParameters} object to be 
+     * loaded or stored is associated to the lock in this {@code Map}.
+     * 
+     * @see #store()
+     * @see #loadStorableParametersFromKey(String)
+     */
+    private static final ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks= 
+            new ConcurrentHashMap<String, ReentrantReadWriteLock>();
+
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when a documentation is requested.
+     */
+    public static final String ACTION_DOC = "documentation";
+    
+    /**
      * A {@code BgeeProperties} instance to provide all the properties values
      */
     private final BgeeProperties prop ;
@@ -132,19 +151,6 @@ public class RequestParameters {
      * @see javax.servlet.http.HttpServletRequest#getMethod()
      */
     private final String httpMethod;
-
-    /**
-     * {@code ConcurrentMap} used to manage concurrent access to 
-     * the read/write locks that are used to manage concurrent reading and writing 
-     * of the files storing query strings holding storable parameters. 
-     * The generated key of the {@code RequestParameters} object to be 
-     * loaded or stored is associated to the lock in this {@code Map}.
-     * 
-     * @see #store()
-     * @see #loadStorableParametersFromKey(String)
-     */
-    private static final ConcurrentMap<String, ReentrantReadWriteLock> readWriteLocks= 
-            new ConcurrentHashMap<String, ReentrantReadWriteLock>();
 
     /**
      * Default constructor. 
@@ -1000,6 +1006,7 @@ public class RequestParameters {
         log.exit();
     }
 
+    
     /**
      * Reset the value for the given {@code URLParameters.Parameter<T>}
      *
@@ -1093,6 +1100,14 @@ public class RequestParameters {
         return this.httpMethod;
     }
 
+    /**
+     * @return  A {@code String} that is the value of the {@code action} URL parameter. 
+     *          It can be {@code null}. 
+     */
+    public String getAction() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamAction());
+    }
+    
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.

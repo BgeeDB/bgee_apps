@@ -24,6 +24,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     private final static Logger log = LogManager.getLogger(HtmlParentDisplay.class.getName());
 
     /**
+     * Escape HTML entities in the provided {@code String}
+     * @param stringToWrite A {@code String} that contains the HTML to escape
+     * @return  The escaped HTML
+     */
+    public static String htmlEntities(String stringToWrite)
+    {
+        log.entry(stringToWrite);
+    	try {                            
+    	    return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
+    	} catch (Exception e) {
+    		return log.exit("");
+    	}
+    }
+    /**
      * TODO comment, what is this ?
      */
     private int uniqueId;
@@ -121,22 +135,34 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         log.exit();
     }
 
-    /**
-     * Escape HTML entities in the provided {@code String}
-     * @param stringToWrite A {@code String} that contains the HTML to escape
-     * @return  The escaped HTML
-     */
-	public static String htmlEntities(String stringToWrite)
-	{
-	    log.entry(stringToWrite);
-		try {                            
-		    return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
-		} catch (Exception e) {
-			return log.exit("");
-		}
-	}
+    public void displayBgeeMenu() {
+        log.entry();
+        this.writeln("<header>");
+    
+        // Bgee logo
+        this.writeln("<a href='#' title='Go to Bgee home page'>"
+                + "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()+"bgee_logo.png' "
+                + "title='Bgee: a dataBase for Gene Expression Evolution' "
+                + "alt='Bgee: a dataBase for Gene Expression Evolution' />"
+                + "</a>");
+    
+        // Title
+        this.writeln("<h1>Bgee: Gene Expression Evolution</h1>"
+                + "<h2>Release 13 download page</h2>"
+                );
+    
+        // SIB logo
+        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' title='Link to the SIB Swiss Institute of Bioinformatics'>"
+                + "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+"sib_logo_141x75.png' "
+                + "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' "
+                + "alt='SIB Swiss Institute of Bioinformatics' />"
+                + "</a>");
+    
+        this.writeln("</header>");
+        log.exit();
+    }
 
-	@Override
+    @Override
 	public void sendHeaders(boolean ajax)
 	{
 	    log.entry(ajax);
@@ -240,32 +266,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         return log.exit(this.displayHelpLink(cat, "[?]"));
     }
 
-    public void displayBgeeMenu() {
-        log.entry();
-        this.writeln("<header>");
-
-        // Bgee logo
-        this.writeln("<a href='#' title='Go to Bgee home page'>"
-                + "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()+"bgee_logo.png' "
-                + "title='Bgee: a dataBase for Gene Expression Evolution' "
-                + "alt='Bgee: a dataBase for Gene Expression Evolution' />"
-                + "</a>");
-
-        // Title
-        this.writeln("<h1>Bgee: Gene Expression Evolution</h1>"
-                + "<h2>Release 13 download page</h2>"
-                );
-
-        // SIB logo
-        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' title='Link to the SIB Swiss Institute of Bioinformatics'>"
-                + "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+"sib_logo_141x75.png' "
-                + "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' "
-                + "alt='SIB Swiss Institute of Bioinformatics' />"
-                + "</a>");
-
-        this.writeln("</header>");
-        log.exit();
-    }
     /**
      * Method that loads the javascript files. Has to be override by a child class that needs
      * custom javascripts. Don't forget to call super.includeJs() at the beginning of the overridden

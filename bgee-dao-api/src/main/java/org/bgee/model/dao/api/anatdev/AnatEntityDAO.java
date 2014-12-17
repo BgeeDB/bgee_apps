@@ -56,9 +56,9 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
             throws DAOException;
     
     /**
-     * Retrieves non-informative anatomical entities without expression call from data source 
-     * according to a {@code Set} of {@code String}s that are the IDs of species allowing to filter 
-     * the entities to use.
+     * Retrieves non-informative anatomical entities without expression or no-expression call from 
+     * data source according to a {@code Set} of {@code String}s that are the IDs of species 
+     * allowing to filter the entities to use.
      * <p>
      * The non-informative anatomical entities are retrieved and returned as a 
      * {@code AnatEntityTOResultSet}. It is the responsibility of the caller to close this 

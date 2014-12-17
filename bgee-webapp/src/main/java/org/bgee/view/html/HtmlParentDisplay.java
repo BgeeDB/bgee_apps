@@ -246,7 +246,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         this.writeln("<a href='#' title='Go to Bgee home page'>"
                 + "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()+"bgee_logo.png' "
                 + "title='Bgee: a dataBase for Gene Expression Evolution' "
-                + "alt='Bgee: a dataBase for Gene Expression Evolution' /> "
+                + "alt='Bgee: a dataBase for Gene Expression Evolution' />"
                 + "</a>");
 
         // Title
@@ -255,10 +255,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
                 );
 
         // SIB logo
-        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' title='Link to the SIB Swiss Institute of Bioinformatics' >"
+        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' title='Link to the SIB Swiss Institute of Bioinformatics'>"
                 + "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+"sib_logo_141x75.png' "
                 + "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' "
-                + "alt='SIB Swiss Institute of Bioinformatics' /> "
+                + "alt='SIB Swiss Institute of Bioinformatics' />"
                 + "</a>");
 
         this.writeln("</header>");

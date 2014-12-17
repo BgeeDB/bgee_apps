@@ -29,6 +29,8 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * @see org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO
  * @since Bgee 13
  */
+//TODO: add a boolean to the methods, to define whether to retrieve relations valid 
+//in any requested species, or in all requested species.
 public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute> 
                                     implements RelationDAO {
     /**

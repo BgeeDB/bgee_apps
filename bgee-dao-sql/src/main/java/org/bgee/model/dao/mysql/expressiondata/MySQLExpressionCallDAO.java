@@ -231,6 +231,21 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         if (attributes == null || attributes.isEmpty()) {
             attributes = EnumSet.allOf(ExpressionCallDAO.Attribute.class);
         }
+        
+        //String used when includeSubstructures and includeSubStages are true, 
+        //so that global expression calls are propagated to parent stages on the fly.
+        //For this, we use a GROUP BY clause, and we need to use GROUP_CONCAT to examine 
+        //the different origins of a line. We can use IF clauses inside the GROUP_CONCATs, 
+        //to make sure they do not exceed the group_concat_max_len. 
+        //In the case of the stageOriginOfLine, the only possible values of 
+        //the GROUP_CONCAT DISTINCT, when using stageOriginIfClause, will be: '1' (= data come 
+        //from the stage only; corresponds to a 'self' origin of line); '0' (= data come 
+        //from some sub-stages only; corresponds to a 'descent' origin of line); 
+        //'0,1' or '1,0' (= data come from both the stage and some sub-stages; 
+        //corresponds to a 'both' origin of line); 
+        String stageOriginIfClause = "IF(" + exprTableName + ".stageId =" + 
+            propagatedStageTableName + ".stageId" + ", 1, 0)";
+        
         for (ExpressionCallDAO.Attribute attribute: attributes) {
             if (sql.isEmpty()) {
                 sql += "SELECT ";
@@ -292,20 +307,23 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                         //the anatOriginOfLine has to be recomputed, as it is possible 
                         //for a given anat. entity to have a given origin at a given stage, 
                         //but also a different origin at a sub-stage
-                        sql += "IF (GROUP_CONCAT(DISTINCT originOfLine) LIKE '%both%', " +
+                        sql += "IF (GROUP_CONCAT(DISTINCT originOfLine) LIKE " +
+                        		"'%" + OriginOfLine.BOTH.getStringRepresentation() + "%', " +
                                    //if concatenation of originOfLine contains 'both', it is easy, 
                                    //the on-the-fly anat. origin is 'both' 
-                        	       "'both', " +
+                        	       "'" + OriginOfLine.BOTH.getStringRepresentation() + "', " +
                                    //Otherwise, if it contains 'descent'...
-                        		   "IF(GROUP_CONCAT(DISTINCT originOfLine) LIKE '%descent%', " +
+                        		   "IF(GROUP_CONCAT(DISTINCT originOfLine) LIKE " +
+                        		   "'%" + OriginOfLine.DESCENT.getStringRepresentation() + "%', " +
                                        //... as well as 'self'...
-                        		       "IF(GROUP_CONCAT(DISTINCT originOfLine) LIKE '%self%', " +
+                        		       "IF(GROUP_CONCAT(DISTINCT originOfLine) LIKE " +
+                        		       "'%" + OriginOfLine.SELF.getStringRepresentation() + "%', " +
                                            //... then the anat. origin is also 'both'.
-                        		           "'both', " +
+                        		           "'" + OriginOfLine.BOTH.getStringRepresentation() + "', " +
                                            //If it contains only 'descent', then this is it
-                        		           "'descent'), " +
+                        		           "'" + OriginOfLine.DESCENT.getStringRepresentation() + "'), " +
                                        //finally, 'self' is here the only remaining possibility
-                        		       "'self')) ";
+                        		       "'" + OriginOfLine.SELF.getStringRepresentation() + "')) ";
                     }
                 }
                 sql += "AS anatOriginOfLine ";
@@ -326,28 +344,22 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                 //the attribute STAGE_ORIGIN_OF_LINE does not correspond to any column. 
                 //We add a fake column to the query to compute this information. 
                 if (!includeSubStages) {
+                    //if there was on propagation from sub-stages, the origin is always 'self'
                     sql += "'" + OriginOfLine.SELF.getStringRepresentation() + "' ";
                 } else {
-                    //here, this gets complicated. We need to know the stages that allowed 
-                    //to generate a propagated expression line. We use group_concat.
-                    sql +=  //if the concatenation of all stage IDs allowing to generate 
-                            //the current line contains only the propagated stage, 
-                            //origin of line = SELF
-                            "IF (GROUP_CONCAT(distinct " + exprTableName + ".stageId) = " +
-                            propagatedStageTableName + ".stageId, " +
-                                "'" + OriginOfLine.SELF.getStringRepresentation() + "', " + 
-                                //otherwise, if the concatenation contains the propagated stage, 
-                                //among other stages, origin of line = BOTH. 
-                                //in order to not need to exceed the max size 
-                                //of group_concat_max_len, we order the stages to get 
-                                //the propagated stage first, so we're sure it's not truncated
-                                "IF (GROUP_CONCAT(distinct " + exprTableName + ".stageId ORDER BY " +
-                                exprTableName + ".stageId = " + propagatedStageTableName + ".stageId DESC) " +
-                                "LIKE CONCAT(" + propagatedStageTableName + ".stageId" + ", ',%'), " +
-                                    "'" + OriginOfLine.BOTH.getStringRepresentation() + "', " +
-                                    //otherwise, the concatenation contains only stages different from 
-                                    //the propagated stage, origin of line = DESCENT
-                                    "'" + OriginOfLine.DESCENT.getStringRepresentation() + "')) ";
+                    // Otherwise, we need to know the stages that allowed to generate a propagated 
+                    //expression line. We use group_concat.
+                    sql +=  "IF (GROUP_CONCAT(DISTINCT " + stageOriginIfClause + ") = '1', " +
+                                //if GROUP_CONCAT = 1, only the stage itself has been seen, 
+                                //corresponds to a 'self' origin of line
+                            	"'" + OriginOfLine.SELF.getStringRepresentation() + "', " +
+                            	"IF (GROUP_CONCAT(DISTINCT " + stageOriginIfClause + ") = '0', " +
+                            	    //if GROUP_CONCAT = 0, only some sub-stages have been seen, 
+                                    //corresponds to a 'descent' origin of line
+                            	    "'" + OriginOfLine.DESCENT.getStringRepresentation() + "', " +
+                                    //'both' is the only remaining possibility, corresponds to 
+                            	    //GROUP_CONCAT = '0,1' or GROUP_CONCAT = '1,0'
+                            	    "'" + OriginOfLine.BOTH.getStringRepresentation() + "')) ";
                 }
                 sql += "AS stageOriginOfLine ";
             } else if (attribute.equals(ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES)) {
@@ -366,38 +378,42 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
             } else if (attribute.equals(ExpressionCallDAO.Attribute.OBSERVED_DATA)) {
                 //the Attributes OBSERVED_DATA does not correspond to any columns 
                 //in a table. See this attribute's javadoc for an explanation of 
-                //why this attribute is needed. 
+                //why this attribute is needed, and how it is different from 
+                //the origins of line.
+                
+                String anatOriginIfClause = "IF(originOfLine = 'descent', 0, 1) ";
                 if (!includeSubStages) {
                     if (!includeSubstructures) {
+                        //if no propagation requested, it's easy, all data are observed
                         sql += "1 ";
                     } else {
-                        sql += "IF(originOfLine = 'descent', 0, 1) ";
+                        //if we propagate only from substructures, we check the column 
+                        //originOfLine in the globalExpression table: if it equals to 'descent', 
+                        //then there are no observed data.
+                        sql += anatOriginIfClause;
                     }
                 } else {
-                    // '..' is used to make sure we can always distinguish IDs 
-                    // (otherwise we could for instance have 'stageId1' matching 'stageId10')
-                    sql += "IF(GROUP_CONCAT(DISTINCT CONCAT('..', ";
+                    //If we propagate from sub-stages, it's more complicated, as data 
+                    //are grouped, so we need to use GROUP_CONCAT to examine 
+                    //the different origins of a line.
+                    //Notably, we need to check at the same time the anat. and the stage 
+                    //origins of line, this is why we also use CONCAT. 
+                    sql += "IF(GROUP_CONCAT(DISTINCT CONCAT(";
+                    //first, retrieved observation status for anat. entity.
                     if (includeSubstructures) {
-                        sql += "originOfLine";
+                        //check the originOfLine column in globalExpression table
+                        sql += anatOriginIfClause;
                     } else {
-                        sql += "self";
+                        //no propagation from substructures, data are always observed in the organ
+                        sql += "'1'";
                     }
-                    sql += ", '..', " + exprTableName + ".stageId, '..') " +
-                    		"ORDER BY " + exprTableName + ".stageId = " + 
-                            propagatedStageTableName + ".stageId DESC";
-                    if (includeSubstructures) {
-                        sql += ", originOfLine = 'self' DESC, originOfLine = 'both' DESC";
-                    }
-                    sql += ")";
-                    continue here
-                    sql += "GROUP_CONCAT(" +
-                            //the CONCAT here is used to make sure we can always distinguish 
-                            //stage IDs (otherwise we could have 'stageId1' matching 'stageId10')
-                            "distinct CONCAT(" + exprTableName + ".stageId, '..') " +
-                            "ORDER BY " + exprTableName + ".stageId = " + 
-                            propagatedStageTableName + ".stageId DESC) " +
-                            "LIKE CONCAT(" + propagatedStageTableName + ".stageId, '..%') " + 
-                            ", 1, 0) ";
+                    //then, observation status for stage.
+                    //we use '.' as a separator between anat. and stage status.
+                    sql += ", '.', " + stageOriginIfClause + ")) " +
+                           //if we have at the same time observed data in the organ 
+                           //and in the stage (corresponds to '1.1'), then this line 
+                           //is actually observed.
+                    	   "LIKE '%1.1%', 1, 0) ";
                 }
                 
                 sql += "AS observedData ";

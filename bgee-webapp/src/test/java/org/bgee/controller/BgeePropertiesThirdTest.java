@@ -22,14 +22,30 @@ import org.junit.Test;
 public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
 
     /**
-     * Test that the {@code java.util.Properties} are read from the system properties
+     * Test that the {@code java.util.Properties} are read from the system properties, 
+     * and that they have precedence over properties from a property file.
      */
     @Test
     public void testLoadSystemProperties(){
+        System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/test.properties");
+        //BGEE_ROOT_DIRECTORY_KEY is not set in System properties, it should be retrieve 
+        //from the file. 
+        //System.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/system");
+        //Other properties are set in System properties, they should override properties 
+        //from file
+        System.setProperty(BgeeProperties.URL_MAX_LENGTH_KEY, "30");
+        System.setProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "/requestParamStorDir");
+        System.setProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY, "/downRootDir");
+        System.setProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/jsFilesRootDir");
+        System.setProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/cssFileRootDir");
+        System.setProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/imgRootDir");
+        System.setProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, "/topOboDir");
+        System.setProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cacheConfigFileName");
+        
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
-        assertEquals("Wrong property value retrieved", "/system", bgeeProp.getBgeeRootDirectory());
-        assertEquals("Wrong property value retrieved", "30", bgeeProp.getUrlMaxLength().toString());
+        assertEquals("Wrong property value retrieved", "/file", bgeeProp.getBgeeRootDirectory());
+        assertEquals("Wrong property value retrieved", 30, bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved",
                 "/requestParamStorDir", bgeeProp.getRequestParametersStorageDirectory());
         assertEquals("Wrong property value retrieved", 

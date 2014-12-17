@@ -32,17 +32,16 @@ public abstract class BgeePropertiesParentTest {
      */
     @Before
     public void initTests(){
-        System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/test.properties");
-        System.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/system");
-        System.setProperty(BgeeProperties.URL_MAX_LENGTH_KEY, "30");
-        System.setProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "/requestParamStorDir");
-        System.setProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY, "/downRootDir");
-        System.setProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/jsFilesRootDir");
-        System.setProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/cssFileRootDir");
-        System.setProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/imgRootDir");
-        System.setProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, "/topOboDir");
-        System.setProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cacheConfigFileName");
-
+        System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
+        System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
+        System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
     }
     
     /**
@@ -53,6 +52,13 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
+        System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
     }
 
 }

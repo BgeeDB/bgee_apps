@@ -45,81 +45,180 @@ public class BgeeProperties
     /**
      * A {@code String} that is the key to access to the System property that contains the name
      * of the file in the classpath that is read at the initialization 
-     * of {@code BgeeProperties}
+     * of {@code BgeeProperties}. The associated value must be provided related to the root 
+     * of the classpath (so, must start with {@code /}).
+     * 
+     * @see #PROPERTIES_FILE_NAME_DEFAULT
      */
     public final static String PROPERTIES_FILE_NAME_KEY = 
             "org.bgee.webapp.properties.file";
+    /**
+     * A {@code String} that is the default value of the name
+     * of the file in the classpath that is read at the initialization 
+     * of {@code BgeeProperties}.
+     * 
+     * @see #PROPERTIES_FILE_NAME_KEY
+     */
+    public final static String PROPERTIES_FILE_NAME_DEFAULT = "/bgee-webapp.properties";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the request parameters storage directory
+     * initialization of {@code BgeeProperties} to set the request parameters storage directory.
+     * 
+     * @see #REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT
      * @see #getRequestParametersStorageDirectory()
      */
     public final static String REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY = 
             "org.bgee.webapp.requestParametersStorageDirectory";
+    /**
+     * A {@code String} that is the default value of the request parameters storage directory. 
+     * The default is the temp directory, which is not recommended (no long-term 
+     * conservation of request parameters).
+     * 
+     * @see #REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY
+     * @see #getRequestParametersStorageDirectory()
+     */
+    public final static String REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT = 
+            System.getProperty("java.io.tmpdir");
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the bgee root directory
+     * initialization of {@code BgeeProperties} to set the bgee root directory.
+     * 
+     * @see #BGEE_ROOT_DIRECTORY_DEFAULT
      * @see #getBgeeRootDirectory()
      */
     public final static String BGEE_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.bgeeRootDirectory";
+    /**
+     * A {@code String} that is the default value of the bgee root directory.
+     * 
+     * @see #BGEE_ROOT_DIRECTORY_KEY
+     * @see #getBgeeRootDirectory()
+     */
+    public final static String BGEE_ROOT_DIRECTORY_DEFAULT = "/";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the download root directory
+     * initialization of {@code BgeeProperties} to set the download root directory. 
+     * 
+     * @see #DOWNLOAD_ROOT_DIRECTORY_DEFAULT
      * @see #getDownloadRootDirectory()
      */
     public final static String DOWNLOAD_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.downloadRootDirectory";
+    /**
+     * A {@code String} that is the default value of the download root directory. 
+     * 
+     * @see #DOWNLOAD_ROOT_DIRECTORY_KEY
+     * @see #getDownloadRootDirectory()
+     */
+    public final static String DOWNLOAD_ROOT_DIRECTORY_DEFAULT = "download/";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the javascript file root directory
+     * initialization of {@code BgeeProperties} to set the javascript file root directory. 
+     * 
+     * @see #JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT
      * @see #getJavascriptFilesRootDirectory()
      */
     public final static String JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.javascriptFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the javascript file root directory. 
+     * 
+     * @see #JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY
+     * @see #getJavascriptFilesRootDirectory()
+     */
+    public final static String JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT = "js/";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the css file root directory
+     * initialization of {@code BgeeProperties} to set the css file root directory. 
+     * 
+     * @see #CSS_FILES_ROOT_DIRECTORY_DEFAULT
      * @see #getCssFilesRootDirectory()
      */
     public final static String CSS_FILES_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.cssFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the css file root directory. 
+     * 
+     * @see #CSS_FILES_ROOT_DIRECTORY_KEY
+     * @see #getCssFilesRootDirectory()
+     */
+    public final static String CSS_FILES_ROOT_DIRECTORY_DEFAULT = "css/";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the images root directory
+     * initialization of {@code BgeeProperties} to set the images root directory. 
+     * 
+     * @see #IMAGES_ROOT_DIRECTORY_DEFAULT
      * @see #getImagesRootDirectory()
      */
     public final static String IMAGES_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.imagesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the images root directory. 
+     * 
+     * @see #IMAGES_ROOT_DIRECTORY_KEY
+     * @see #getImagesRootDirectory()
+     */
+    public final static String IMAGES_ROOT_DIRECTORY_DEFAULT = "img/";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
-     * initialization of {@code BgeeProperties} to set the top OBO results url root directory
+     * initialization of {@code BgeeProperties} to set the top OBO results url root directory. 
+     * 
+     * @see #TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_DEFAULT
      * @see #getTopOBOResultsUrlRootDirectory()
      */
     public final static String TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY = 
             "org.bgee.webapp.topOBOResultsUrlRootDirectory";
+    /**
+     * A {@code String} that is the default value of the top OBO results url root directory. 
+     * 
+     * @see #TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY
+     * @see #getTopOBOResultsUrlRootDirectory()
+     */
+    public final static String TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_DEFAULT = null;
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the url max length.
+     * 
+     * @see #URL_MAX_LENGTH_DEFAULT
      * @see #getUrlMaxLength()
      */
     public final static String URL_MAX_LENGTH_KEY = 
             "org.bgee.webapp.urlMaxLength";
+    /**
+     * An {@code int} that is the default value of the url max length.
+     * 
+     * @see #URL_MAX_LENGTH_KEY
+     * @see #getUrlMaxLength()
+     */
+    public final static int URL_MAX_LENGTH_DEFAULT = 120;
 
     /**
      * A {@code String} that is the key to access to the System property that contains the name
-     * of the file in the classpath that is read to initialize the webapp web pages cache
+     * of the file in the classpath that is read to initialize the webapp web pages cache. 
+     * The associated value must be provided related to the root of the classpath (so, 
+     * must start with {@code /}).
+     * 
+     * @see #WEBPAGES_CACHE_CONFIG_FILE_NAME_DEFAULT
      */
     public final static String WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY = 
             "org.bgee.webapp.webpages-cache.file";
+    /**
+     * A {@code String} that is the default value of the name
+     * of the file in the classpath that is read to initialize the webapp web pages cache. 
+     * Must start with {@code /} (root of the classpath).
+     * 
+     * @see #WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY
+     */
+    public final static String WEBPAGES_CACHE_CONFIG_FILE_NAME_DEFAULT = 
+            "/ehcache-webpages.xml";
 
     /**
      * A {@code ConcurrentMap} used to store {@code BgeeProperties}, 
@@ -179,7 +278,7 @@ public class BgeeProperties
     private final String topOBOResultsUrlRootDirectory;
 
     /**
-     * An {@code Integer} that definesmax length of URLs. Typically, if the URL exceeds the max length, 
+     * An {@code Integer} that defines max length of URLs. Typically, if the URL exceeds the max length, 
      * a key is generated to store and retrieve a query string, 
      * holding the "storable" parameters. The "storable" parameters are removed from the URL, 
      * and replaced by the generated key.
@@ -190,7 +289,7 @@ public class BgeeProperties
      * <p>
      * Anyway, we use a much lower limitation, as we do not want too long URL.
      */
-    private final Integer urlMaxLength;
+    private final int urlMaxLength;
 
     /**
      * {@code String} that contains the name of the web pages cache config file in the
@@ -220,7 +319,7 @@ public class BgeeProperties
         //default name is bgee.properties
         //check first if an alternative name has been provided in the System properties
         String propertyFile = sysProps.getProperty(PROPERTIES_FILE_NAME_KEY, 
-                "/bgee-webapp.properties");
+                PROPERTIES_FILE_NAME_DEFAULT);
         log.debug("Trying to use properties file {}", propertyFile);
         Properties fileProps = null;
         InputStream propStream =
@@ -247,23 +346,24 @@ public class BgeeProperties
         // previous solutions contain the property
         requestParametersStorageDirectory  = getStringOption(prop, sysProps, fileProps, 
                 REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY,  
-                System.getProperty("java.io.tmpdir"));
+                REQUEST_PARAMETERS_STORAGE_DIRECTORY_DEFAULT);
         bgeeRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                BGEE_ROOT_DIRECTORY_KEY, "/");
+                BGEE_ROOT_DIRECTORY_KEY, BGEE_ROOT_DIRECTORY_DEFAULT);
         downloadRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                DOWNLOAD_ROOT_DIRECTORY_KEY, "download/");
+                DOWNLOAD_ROOT_DIRECTORY_KEY, DOWNLOAD_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "js/");
+                JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
         cssFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                CSS_FILES_ROOT_DIRECTORY_KEY, "css/");
+                CSS_FILES_ROOT_DIRECTORY_KEY, CSS_FILES_ROOT_DIRECTORY_DEFAULT);
         imagesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                IMAGES_ROOT_DIRECTORY_KEY, "img/");
+                IMAGES_ROOT_DIRECTORY_KEY, IMAGES_ROOT_DIRECTORY_DEFAULT);
         topOBOResultsUrlRootDirectory  = getStringOption(prop, sysProps, fileProps, 
-                TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, null);
+                TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, 
+                TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_DEFAULT);
         urlMaxLength = getIntegerOption(prop, sysProps, fileProps, 
-                URL_MAX_LENGTH_KEY, 120);
+                URL_MAX_LENGTH_KEY, URL_MAX_LENGTH_DEFAULT);
         webpagesCacheConfigFileName = getStringOption(prop, sysProps, fileProps, 
-                WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "/ehcache-webpages.xml");
+                WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, WEBPAGES_CACHE_CONFIG_FILE_NAME_DEFAULT);
         log.info("Initialization done.");
         log.exit();
     }
@@ -486,7 +586,7 @@ public class BgeeProperties
      *          string, holding the "storable" parameters. The "storable" parameters are
      *          removed from the URL, and replaced by the generated key.
      */
-    public Integer getUrlMaxLength() {
+    public int getUrlMaxLength() {
         return urlMaxLength;
     }
 

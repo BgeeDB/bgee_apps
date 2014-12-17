@@ -1,7 +1,8 @@
 package org.bgee.controller;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -51,7 +52,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
         assertEquals("Wrong property value retrieved","/injectedroot",bgeeProp.getBgeeRootDirectory());
-        assertEquals("Wrong property value retrieved","10",bgeeProp.getUrlMaxLength().toString());
+        assertEquals("Wrong property value retrieved",10,bgeeProp.getUrlMaxLength());
         assertEquals("Wrong property value retrieved", 
                 "/injectedcss", bgeeProp.getCssFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
@@ -106,8 +107,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         // Get two BgeeProperties in the main thread and check that it is the same instance
         BgeeProperties bgeeProp1 = BgeeProperties.getBgeeProperties();
         BgeeProperties bgeeProp2 = BgeeProperties.getBgeeProperties();
-        assertEquals("The two objects are not the same but they should be",
-                System.identityHashCode(bgeeProp1),System.identityHashCode((bgeeProp2)));
+        assertSame("The two objects are not the same but they should be",
+                bgeeProp1, bgeeProp2);
 
         //launch a second thread also acquiring BgeeProperties
         ThreadTest test = new ThreadTest();
@@ -121,8 +122,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         if (future.isDone()) {
             future.get();
         }
-        assertNotEquals("The two objects are the same but they should not be",
-                System.identityHashCode(bgeeProp1),System.identityHashCode((test.bgeeProp3)));
+        assertNotSame("The two objects are the same but they should not be",
+                bgeeProp1, test.bgeeProp3);
 
     }
 

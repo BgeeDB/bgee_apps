@@ -74,7 +74,7 @@
     </dependencies>
 
     <build>
-        <finalName>bgee-webapp-${project.version}</finalName>
+        <finalName>bgee${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

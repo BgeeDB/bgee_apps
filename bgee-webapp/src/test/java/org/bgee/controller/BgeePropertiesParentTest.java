@@ -32,7 +32,6 @@ public abstract class BgeePropertiesParentTest {
      */
     @Before
     public void initTests(){
-        System.clearProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY);
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
         System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);
@@ -42,6 +41,10 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
+        // set the properties file to an non-existing file, 
+        // so that no property file is used (otherwise, property files in src/test/resources/ 
+        // or src/main/resources/ would be used).
+        System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/none");
     }
     
     /**

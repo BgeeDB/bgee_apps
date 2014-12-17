@@ -11,6 +11,7 @@ import org.junit.Test;
  * the per-thread singleton behavior.
  * 
  * @author Mathieu Seppey
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @since Bgee 13
  * @see BgeePropertiesParentTest
@@ -29,9 +30,31 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
         // First clear the system properties that would be used if present
         System.clearProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
+        System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
+
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
-        assertEquals("Wrong property value retrieved","/file",bgeeProp.getBgeeRootDirectory());
-        assertEquals("Wrong property value retrieved","20",bgeeProp.getUrlMaxLength().toString());
+        assertEquals("Wrong property value retrieved", "/file", bgeeProp.getBgeeRootDirectory());
+        assertEquals("Wrong property value retrieved", "20", bgeeProp.getUrlMaxLength().toString());
+        assertEquals("Wrong property value retrieved",
+                "/requestParametersStorageDirectory", bgeeProp.getRequestParametersStorageDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/downloadRootDirectory", bgeeProp.getDownloadRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/javascriptFilesRootDirectory", bgeeProp.getJavascriptFilesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/cssFilesRootDirectory", bgeeProp.getCssFilesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/imagesRootDirectory", bgeeProp.getImagesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/topOBOResultsUrlRootDirectory", bgeeProp.getTopOBOResultsUrlRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "webpagescachefile", bgeeProp.getWebpagesCacheConfigFileName());
     }
 }

@@ -20,6 +20,7 @@ import org.junit.Test;
  * the per-thread singleton behavior.
  * 
  * @author Mathieu Seppey
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @since Bgee 13
  * @see BgeePropertiesParentTest
@@ -37,12 +38,34 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
     public void testInjectedProperties(){
         // set the properties to inject
         Properties prop = new Properties();
-        prop.put(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/injected");
+        prop.put(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/injectedroot");
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "10");
+        prop.put(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/injectedcss");
+        prop.put(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY, "/injecteddownload");
+        prop.put(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/injectedimg");
+        prop.put(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/injectedjs");
+        prop.put(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "/injectedrequestparam");
+        prop.put(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, "/injectedtopobo");
+        prop.put(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cache");
+
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties(prop);
-        assertEquals("Wrong property value retrieved","/injected",bgeeProp.getBgeeRootDirectory());
+        assertEquals("Wrong property value retrieved","/injectedroot",bgeeProp.getBgeeRootDirectory());
         assertEquals("Wrong property value retrieved","10",bgeeProp.getUrlMaxLength().toString());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedcss", bgeeProp.getCssFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injecteddownload", bgeeProp.getDownloadRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedimg", bgeeProp.getImagesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedjs", bgeeProp.getJavascriptFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedrequestparam", bgeeProp.getRequestParametersStorageDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/injectedtopobo", bgeeProp.getTopOBOResultsUrlRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "cache", bgeeProp.getWebpagesCacheConfigFileName());
     }
 
     /**

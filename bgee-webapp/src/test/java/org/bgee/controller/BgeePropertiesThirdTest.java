@@ -28,7 +28,22 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
     public void testLoadSystemProperties(){
         // get the instance of bgeeproperties and check the values
         this.bgeeProp = BgeeProperties.getBgeeProperties();
-        assertEquals("Wrong property value retrieved","/system",bgeeProp.getBgeeRootDirectory());
-        assertEquals("Wrong property value retrieved","30",bgeeProp.getUrlMaxLength().toString());
+        assertEquals("Wrong property value retrieved", "/system", bgeeProp.getBgeeRootDirectory());
+        assertEquals("Wrong property value retrieved", "30", bgeeProp.getUrlMaxLength().toString());
+        assertEquals("Wrong property value retrieved",
+                "/requestParamStorDir", bgeeProp.getRequestParametersStorageDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/downRootDir", bgeeProp.getDownloadRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/jsFilesRootDir", bgeeProp.getJavascriptFilesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/cssFileRootDir", bgeeProp.getCssFilesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "/imgRootDir", bgeeProp.getImagesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "/topOboDir", bgeeProp.getTopOBOResultsUrlRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "cacheConfigFileName", bgeeProp.getWebpagesCacheConfigFileName());
+
     }
 }

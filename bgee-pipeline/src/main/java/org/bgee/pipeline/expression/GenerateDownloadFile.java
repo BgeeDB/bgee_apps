@@ -188,8 +188,8 @@ public class GenerateDownloadFile extends CallUser {
     * <ul>
     * <li>{@code NODATA}:         no data from the associated data type allowed to produce the call.
     * <li>{@code NOEXPRESSION}:   no-expression was detected from the associated data type.
-    * <li>{@code LOWEXPRESSION}:  low-quality expression was detected from the associated data type.
-    * <li>{@code HIGHEXPRESSION}: high-quality expression was detected from the associated data type.
+    * <li>{@code LOWQUALITY}:     low-quality expression was detected from the associated data type.
+    * <li>{@code HIGHQUALITY}:    high-quality expression was detected from the associated data type.
     * <li>{@code LOWAMBIGUITY}:   different data types are not coherent with a no-expression call 
     *                             inferred (for instance, Affymetrix data reveals an expression 
     *                             while <em>in situ</em> data reveals an inferred no-expression).
@@ -305,71 +305,71 @@ public class GenerateDownloadFile extends CallUser {
    }
    
    /**
- * Main method to trigger the generate TSV download files (simple and complete files) from Bgee 
- * database. Parameters that must be provided in order in {@code args} are: 
- * <ol>
- * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
- * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
- * If it is not provided, all species contained in database will be used.
- * <li> a list of files types that will be generated ('expr-simple' for 
- * {@link FileType EXPR_SIMPLE}, 'expr-complete' for {@link FileType EXPR_COMPLETE}, 
- * 'diffexpr-simple' for {@link FileType DIFFEXPR_SIMPLE}, and 'diffexpr-complete' 
- * for {@link FileType DIFFEXPR_SIMPLE}), separated by the {@code String} 
- * {@link CommandRunner#LIST_SEPARATOR}.
- * <li>the directory path that will be used to generate download files. 
- * </ol>
- * 
- * @param args          An {@code Array} of {@code String}s containing the requested parameters.
- * @throws IOException  If some files could not be used.
- */
-public static void main(String[] args) throws IOException {
-    log.entry((Object[]) args);
+    * Main method to trigger the generate TSV download files (simple and complete files) from Bgee 
+    * database. Parameters that must be provided in order in {@code args} are: 
+    * <ol>
+    * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
+    * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+    * If it is not provided, all species contained in database will be used.
+    * <li> a list of files types that will be generated ('expr-simple' for 
+    * {@link FileType EXPR_SIMPLE}, 'expr-complete' for {@link FileType EXPR_COMPLETE}, 
+    * 'diffexpr-simple' for {@link FileType DIFFEXPR_SIMPLE}, and 'diffexpr-complete' 
+    * for {@link FileType DIFFEXPR_SIMPLE}), separated by the {@code String} 
+    * {@link CommandRunner#LIST_SEPARATOR}.
+    * <li>the directory path that will be used to generate download files. 
+    * </ol>
+    * 
+    * @param args          An {@code Array} of {@code String}s containing the requested parameters.
+    * @throws IOException  If some files could not be used.
+    */
+   public static void main(String[] args) throws IOException {
+       log.entry((Object[]) args);
 
-    // TODO Manage with multi-species!
-    
-    int expectedArgLengthSingleSpecies = 3; // species list and file types to be generated
-    if (args.length != expectedArgLengthSingleSpecies) {
-        throw log.throwing(new IllegalArgumentException(
-                "Incorrect number of arguments provided, expected " + 
-                expectedArgLengthSingleSpecies + " arguments, " + args.length + " provided."));
-    }
+       // TODO Manage with multi-species!
 
-    List<String> speciesIds = CommandRunner.parseListArgument(args[0]);
-    Set<String> fileTypes   = new HashSet<String>(CommandRunner.parseListArgument(args[1])); 
-    String directory        = args[2];
-    
-    //retrieve FileType from String argument
-    Set<String> unknownFileTypes = new HashSet<String>();
-    Set<FileType> filesToBeGenerated = EnumSet.noneOf(FileType.class);
-    for (String inputFileType: fileTypes) {
-        if (inputFileType.equals(FileType.EXPR_SIMPLE.getStringRepresentation())) {
-            filesToBeGenerated.add(FileType.EXPR_SIMPLE);  
-            
-        } else if (inputFileType.equals(FileType.EXPR_COMPLETE.getStringRepresentation())) {
-            filesToBeGenerated.add(FileType.EXPR_COMPLETE);    
-            
-        } else if (inputFileType.equals(FileType.DIFFEXPR_SIMPLE.getStringRepresentation())) {
-            filesToBeGenerated.add(FileType.DIFFEXPR_SIMPLE);  
-            
-        } else if (inputFileType.equals(FileType.DIFFEXPR_COMPLETE.getStringRepresentation())) {
-            filesToBeGenerated.add(FileType.DIFFEXPR_COMPLETE);  
-            
-        } else {
-            unknownFileTypes.add(inputFileType);
-        }
-    }
-    if (!unknownFileTypes.isEmpty()) {
-        throw log.throwing(new IllegalArgumentException(
-                "Some file types do not exist: " + unknownFileTypes));
-    }
-    
-    GenerateDownloadFile generate = new GenerateDownloadFile();
-    generate.generateSingleSpeciesFiles(speciesIds, filesToBeGenerated, directory);
-    
-    log.exit();
-}
+       int expectedArgLengthSingleSpecies = 3; // species list, file types to be generated, and directory path
+       if (args.length != expectedArgLengthSingleSpecies) {
+           throw log.throwing(new IllegalArgumentException(
+                   "Incorrect number of arguments provided, expected " + 
+                           expectedArgLengthSingleSpecies + " arguments, " + args.length + " provided."));
+       }
 
-/**
+       List<String> speciesIds = CommandRunner.parseListArgument(args[0]);
+       Set<String> fileTypes   = new HashSet<String>(CommandRunner.parseListArgument(args[1])); 
+       String directory        = args[2];
+
+       //retrieve FileType from String argument
+       Set<String> unknownFileTypes = new HashSet<String>();
+       Set<FileType> filesToBeGenerated = EnumSet.noneOf(FileType.class);
+       for (String inputFileType: fileTypes) {
+           if (inputFileType.equals(FileType.EXPR_SIMPLE.getStringRepresentation())) {
+               filesToBeGenerated.add(FileType.EXPR_SIMPLE);  
+
+           } else if (inputFileType.equals(FileType.EXPR_COMPLETE.getStringRepresentation())) {
+               filesToBeGenerated.add(FileType.EXPR_COMPLETE);    
+
+           } else if (inputFileType.equals(FileType.DIFFEXPR_SIMPLE.getStringRepresentation())) {
+               filesToBeGenerated.add(FileType.DIFFEXPR_SIMPLE);  
+
+           } else if (inputFileType.equals(FileType.DIFFEXPR_COMPLETE.getStringRepresentation())) {
+               filesToBeGenerated.add(FileType.DIFFEXPR_COMPLETE);  
+
+           } else {
+               unknownFileTypes.add(inputFileType);
+           }
+       }
+       if (!unknownFileTypes.isEmpty()) {
+           throw log.throwing(new IllegalArgumentException(
+                   "Some file types do not exist: " + unknownFileTypes));
+       }
+
+       GenerateDownloadFile generate = new GenerateDownloadFile();
+       generate.generateSingleSpeciesFiles(speciesIds, filesToBeGenerated, directory);
+
+       log.exit();
+   }
+
+   /**
      * Default constructor. 
      */
     public GenerateDownloadFile() {
@@ -531,7 +531,6 @@ public static void main(String[] args) throws IOException {
             while (rsExpr.next()) {
                 ExpressionCallTO to = rsExpr.getTO();
                 log.trace("Iterating ExpressionCallTO: {}", to);
-                //if the call was generated from propagated data only, we discard it 
                 //if present in a non-informative anatomical entity.
                 if (nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
                     log.trace("Discarding propagated calls because in non-informative anatomical entity: {}.", to);
@@ -595,15 +594,10 @@ public static void main(String[] args) throws IOException {
             while (rsNoExpr.next()) {
                 NoExpressionCallTO to = rsNoExpr.getTO();
                 log.trace("Iterating NoExpressionCallTO: {}", to);
-                //if the call was generated from propagated data only, we discard it 
                 //if present in a non-informative anatomical entity.
                 if (nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
-                    if (to.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
-                        log.trace("Discarding propagated calls because in non-informative anatomical entity.");
-                        continue;
-                    }
-                    throw log.throwing(new IllegalStateException("It is not possible to have a "
-                            + "non-propagated no-expression call in a non-informative anatomical entity"));
+                    log.trace("Discarding propagated calls because in non-informative anatomical entity: {}.", to);
+                    continue;
                 }
                 noExprTOs.add(to);
             }
@@ -765,7 +759,7 @@ public static void main(String[] args) throws IOException {
                     new StrNotNullOrEmpty(), // developmental stage name
                     new StrNotNullOrEmpty(), // anatomical entity ID
                     new StrNotNullOrEmpty(), // anatomical entity name
-                    new IsElementOf(dataElements)};
+                    new IsElementOf(dataElements)}; // Diff expression or Expression
         } else {
             processors = new CellProcessor[] { 
                 new StrNotNullOrEmpty(), // gene ID
@@ -781,7 +775,7 @@ public static void main(String[] args) throws IOException {
                 //                        new IsElementOf(dataElements),  // Relaxed in Situ data
                 new IsElementOf(dataElements),  // RNA-seq data
                 new IsElementOf(originElement), // Including observed data 
-                new IsElementOf(dataElements)}; // Diff expression or Expression/No-expression
+                new IsElementOf(dataElements)}; // Diff expression or Expression
         }
 
         // ************************
@@ -972,8 +966,8 @@ public static void main(String[] args) throws IOException {
         }
 
         if (expressionTO == null && noExpressionTO == null) {
-            throw log.throwing(new IllegalArgumentException("No basic and global calls " +
-                    "for the triplet gene(" + geneId + 
+            throw log.throwing(new IllegalArgumentException("No global call " +
+                    "for the triplet gene (" + geneId + 
                     ") - organ (" + anatEntityId + 
                     ") - stage (" + stageId + ")"));
         }
@@ -1132,7 +1126,8 @@ public static void main(String[] args) throws IOException {
     
     /**
      * Determine whether the provided {@code FileType} corresponds to a simple download file.
-     * @param fileType  The {@code FileType} to examined.
+     * 
+     * @param fileType  The {@code FileType} to be examined.
      * @return          {@code true} if {@code fileType} is a simple file.
      */
     private boolean isSimpleFile(FileType fileType) {

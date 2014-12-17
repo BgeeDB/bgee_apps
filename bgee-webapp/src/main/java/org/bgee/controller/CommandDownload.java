@@ -1,20 +1,12 @@
 package org.bgee.controller;
 
-/**
- * Controller that handles requests related to download pages
- *  
- * @author 	Mathieu Seppey
- * @version Bgee 13 Aug 2014
- * @since 	Bgee 13
- *
- */
-
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -23,11 +15,11 @@ import org.bgee.view.ViewFactory;
  * page=download
  * 
  * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class CommandDownload extends CommandParent
-{
+public class CommandDownload extends CommandParent {
 
     /**
      * {@code Logger} of the class. 
@@ -46,19 +38,26 @@ public class CommandDownload extends CommandParent
      * @param viewFactory       A {@code ViewFactory} that provides the display for the correct
      *                          {@code displayTypes}
      */
-    public CommandDownload
-    (HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory) 
-    {
+    public CommandDownload (HttpServletResponse response, RequestParameters requestParameters, 
+            BgeeProperties prop, ViewFactory viewFactory) {
         super(response, requestParameters, prop, viewFactory);
     }
 
     @Override
-    public void processRequest() throws IOException 
-    {
+    public void processRequest() throws IOException, PageNotFoundException {
         log.entry();
         DownloadDisplay display = this.viewFactory.getDownloadDisplay();
-        display.displayDownloadPage();
+        if (this.requestParameters.getAction() == null) {
+            display.displayDownloadPage();
+        } else if (this.requestParameters.getAction() != null && 
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_DOC)) {
+            display.displayDocumentation();
+        } else {
+            throw log.throwing(new PageNotFoundException("Incorrect " + 
+                this.requestParameters.getUrlParametersInstance().getParamAction() + 
+                " parameter value."));
+        }
+        
         log.exit();
     }
 }

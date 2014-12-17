@@ -83,7 +83,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
                 + "evolution, ontology, anatomy, development, evo-devo database, "
                 + "anatomical ontology, developmental ontology, gene expression "
                 + "evolution'/>");
-        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2014 UNIL' />");
+        this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2015 UNIL' />");
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
                 +this.prop.getImagesRootDirectory()+"favicon.ico'/>");
         this.includeCss(page+".css"); // default css for every pages
@@ -106,11 +106,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         log.entry();
         this.writeln("</div>");
         this.writeln("<footer>");
-        this.writeln("<div id = 'sib_footer_content'>");
-        this.writeln("<a href = 'http://www.isb-sib.ch'>SIB Swiss Institute of Bioinformatics</a>");
-        this.writeln("<div id = 'sib_footer_right'>");
-        this.writeln("<a href='#TOP' id = 'sib_footer_gototop'>"
-                + "<span style = 'padding-left: 10px'>Back to the Top</span></a>");
+        this.writeln("<div id='sib_footer_content'>");
+        this.writeln("<a href='http://www.isb-sib.ch'>SIB Swiss Institute of Bioinformatics</a>");
+        this.writeln("<div id='sib_footer_right'>");
+        this.writeln("<a href='#TOP' id='sib_footer_gototop'>"
+                + "<span style='padding-left: 10px'>Back to the Top</span></a>");
         this.writeln("</div>");
         this.writeln("</div>");
         this.writeln("</footer>");
@@ -255,9 +255,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
                 );
 
         // SIB logo
-        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' title='Link to the Swiss Institute of Bioinformatics' >"
+        this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' title='Link to the SIB Swiss Institute of Bioinformatics' >"
                 + "<img id='sib_logo' src='"+this.prop.getImagesRootDirectory()+"sib_logo_141x75.png' "
-                + "title='Bgee is part of the Swiss Institute of Bioinformatics' "
+                + "title='Bgee is part of the SIB Swiss Institute of Bioinformatics' "
                 + "alt='SIB Swiss Institute of Bioinformatics' /> "
                 + "</a>");
 
@@ -285,7 +285,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
      */
     protected void includeJs(String filename){
         log.entry(filename);
-        this.writeln("<script  type='text/javascript' src='"+
+        this.writeln("<script type='text/javascript' src='"+
                 this.prop.getJavascriptFilesRootDirectory()+filename+"'></script>");
         log.exit();
     }

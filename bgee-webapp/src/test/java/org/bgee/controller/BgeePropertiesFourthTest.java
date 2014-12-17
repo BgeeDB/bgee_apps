@@ -38,7 +38,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
         // Also, set the properties file to an non-existing file, 
-        // so that no property file is used.
+        // so that no property file is used (otherwise, property files in src/test/resources/ 
+        // or src/main/resources/ would be used).
         System.setProperty(BgeeProperties.PROPERTIES_FILE_NAME_KEY, "/none");
 
         // get the instance of bgeeproperties and check the values

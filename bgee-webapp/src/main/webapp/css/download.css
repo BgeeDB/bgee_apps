@@ -79,7 +79,7 @@ header img {
     background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
     background-size: 100% 100%;
     /*To be modified when multi-species files will be available*/
-    min-height: 680px;
+    min-height: 340px;
     color: #626262;
     z-index: 1;
 }
@@ -114,7 +114,7 @@ figure img {
     margin: 0 auto;
 }
 
-div.biggroup {
+div.downloadsection {
     position: relative;
     display: inline-block;
     width: 95%;
@@ -133,7 +133,7 @@ div.biggroup {
     font-weight: normal;
 }
 
-div.biggroup figcaption p {
+div.downloadsection figcaption p {
     text-align: center;
     color: #515151;
     font-size: 0.75em;

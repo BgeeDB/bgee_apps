@@ -92,9 +92,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         this.writeln("</head>");
         this.writeln("<body>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
-        this.displayBgeeMenu();
         this.writeln("<div id='bgee_top'><a id='TOP'></a></div>");
         this.writeln("<div id='sib_container'>");
+        this.displayBgeeMenu();
         log.exit();
     }
 

@@ -62,7 +62,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Introduction
         this.writeln("<div id='bgee_introduction'>");
         this.writeln("<h1>Welcome to the Bgee release 13 download page</h1>");
-        this.writeln("<div class='biggroup'>");
+        this.writeln("<div class='downloadsection'>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
         this.writeln("This is a beta download page, more features and documentation will be deployed soon. </p>");
         this.writeln("<p>See also previous <a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12</a>. ");
@@ -85,7 +85,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // Single species part
         this.writeln("<div id='bgee_uniq_species'> ");
         this.writeln("<h1>Species</h1>");
-        this.writeln("<div class='biggroup'>");
+        this.writeln("<div class='downloadsection'>");
         this.writeln(generateSpeciesFigure(9606));
         this.writeln(generateSpeciesFigure(10090));
         this.writeln(generateSpeciesFigure(7955));
@@ -145,7 +145,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         // TODO: modify according to the groups that will be defined and uncomment when multi-species files will be generated
 //        this.writeln("<div id='bgee_multi_species'>");
 //        this.writeln("<h1>Multi-species</h1> <span>(data of only orthologous genes)</span>");
-//        this.writeln("<div class='biggroup'>");
+//        this.writeln("<div class='downloadsection'>");
 //        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090), "Group 1", true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 9823, 10116), "Group 2", true));
 //        this.writeln(generateSpeciesFigure(Arrays.asList(9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883,9606, 10090, 7955, 7227, 6239, 9597, 9598, 9593, 9600, 9544, 10116, 9913, 9258, 9031, 28377, 99883),

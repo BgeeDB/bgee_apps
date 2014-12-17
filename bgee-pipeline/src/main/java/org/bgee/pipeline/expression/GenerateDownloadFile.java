@@ -516,7 +516,7 @@ public static void main(String[] args) throws IOException {
                 includeSubstructures, includeSubstages, speciesIds);
     
         ExpressionCallDAO dao = this.getExpressionCallDAO();
-        // We need all attributes but ID, anat and stage originOfLines
+        // We need all attributes but ID, anat. and stage originOfLines
         dao.setAttributes(EnumSet.complementOf(EnumSet.of(ExpressionCallDAO.Attribute.ID, 
                 ExpressionCallDAO.Attribute.ANAT_ORIGIN_OF_LINE, 
                 ExpressionCallDAO.Attribute.STAGE_ORIGIN_OF_LINE)));
@@ -534,12 +534,8 @@ public static void main(String[] args) throws IOException {
                 //if the call was generated from propagated data only, we discard it 
                 //if present in a non-informative anatomical entity.
                 if (nonInformativesAnatEntityIds.contains(to.getAnatEntityId())) {
-                    if (to.getAnatOriginOfLine().equals(ExpressionCallTO.OriginOfLine.DESCENT)) {
-                        log.trace("Discarding propagated calls because in non-informative anatomical entity.");
-                        continue;
-                    }
-                    throw log.throwing(new IllegalStateException("It is not possible to have a "
-                       + "non-propagated expression call in a non-informative anatomical entity"));
+                    log.trace("Discarding propagated calls because in non-informative anatomical entity: {}.", to);
+                    continue;
                 }
                 exprTOs.add(to);
             }
@@ -701,6 +697,9 @@ public static void main(String[] args) throws IOException {
                     groupedCallTOs, fileType, file);
             } catch (Exception e) {
                 //if something wrong happens, we remove the generated file.
+                //TODO: actually, we should also write in a temp file, and move it 
+                //when generation is completed, this way even if the JVM crash, 
+                //there is no problem.
                 if (file.exists()) {
                     file.delete();
                 }

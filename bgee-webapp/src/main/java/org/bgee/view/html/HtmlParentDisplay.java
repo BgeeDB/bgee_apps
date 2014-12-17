@@ -70,6 +70,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     public void startDisplay(String page, String title)
     {
         log.entry(page, title);
+        this.sendHeaders(false);
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en'>");
         this.writeln("<head>");

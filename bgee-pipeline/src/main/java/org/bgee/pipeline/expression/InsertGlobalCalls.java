@@ -523,7 +523,7 @@ public class InsertGlobalCalls extends CallUser {
                         false,
                         ExpressionCallTO.OriginOfLine.SELF, 
                         ExpressionCallTO.OriginOfLine.SELF,
-                        true);
+                        null);
                 
                 log.trace("Add the propagated expression: {}", propagatedExpression);
                 Set<ExpressionCallTO> curExprAsSet = mapGlobalExpr.get(propagatedExpression);

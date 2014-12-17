@@ -250,56 +250,56 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF, true),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.BOTH, 
-                        ExpressionCallTO.OriginOfLine.SELF, true),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id6", 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF, false),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id6", 
                         DataState.HIGHQUALITY, DataState.LOWQUALITY,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF, false),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID1", "Anat_id3", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.NODATA, DataState.LOWQUALITY, 
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF, true),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF, false));
+                        ExpressionCallTO.OriginOfLine.SELF, null));
         
         List<ExpressionCallTO> expectedExprSpecies11id2 = Arrays.asList(
                 new ExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id7",
                         DataState.LOWQUALITY, DataState.NODATA,
                         DataState.HIGHQUALITY, DataState.NODATA,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF, true),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID2", "Anat_id1", "Stage_id7", 
                         DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.NODATA,
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF, false),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id7", 
                         DataState.LOWQUALITY, DataState.NODATA, 
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF, false));
+                        ExpressionCallTO.OriginOfLine.SELF, null));
         
         List<ExpressionCallTO> expectedExprSpecies11id3 = Arrays.asList(
                 new ExpressionCallTO(null, "ID3", "Anat_id1", "Stage_id7", 
                         DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.LOWQUALITY, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF, true));
+                        ExpressionCallTO.OriginOfLine.SELF, null));
 
         // Expected global calls for speciesID = 21.
         List<ExpressionCallTO> expectedExprSpecies21id4 = Arrays.asList(
@@ -307,34 +307,34 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         DataState.NODATA, DataState.HIGHQUALITY,
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF, true),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID4", "Anat_id8", "Stage_id12", 
                         DataState.NODATA, DataState.HIGHQUALITY,
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF, false),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID4", "Anat_id6", "Stage_id12", 
                         DataState.HIGHQUALITY, DataState.HIGHQUALITY,
                         DataState.HIGHQUALITY, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.BOTH, 
-                        ExpressionCallTO.OriginOfLine.SELF, false),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID4", "Anat_id7", "Stage_id12", 
                         DataState.NODATA, DataState.HIGHQUALITY, 
                         DataState.NODATA, DataState.LOWQUALITY,
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF, false));
+                        ExpressionCallTO.OriginOfLine.SELF, null));
 
         List<ExpressionCallTO> expectedExprSpecies21id5 = Arrays.asList(
                 new ExpressionCallTO(null, "ID5", "Anat_id8", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.LOWQUALITY, DataState.NODATA,
                         true, false, ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF, true),
+                        ExpressionCallTO.OriginOfLine.SELF, null),
                 new ExpressionCallTO(null, "ID5", "Anat_id6", "Stage_id1", 
                         DataState.HIGHQUALITY, DataState.NODATA, 
                         DataState.LOWQUALITY, DataState.NODATA, 
                         true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                        ExpressionCallTO.OriginOfLine.SELF, false));
+                        ExpressionCallTO.OriginOfLine.SELF, null));
 
         assertTrue("Incorrect global expression calls generated for ID1",
                 TOComparator.areTOCollectionsEqual(

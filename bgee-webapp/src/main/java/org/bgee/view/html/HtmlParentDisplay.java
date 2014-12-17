@@ -138,12 +138,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
 	@Override
 	public void sendHeaders(boolean ajax)
 	{
-	    log.exit(ajax);
+	    log.entry(ajax);
 		if (this.response == null) {
-			return;
+			log.exit(); return;
 		}
 		if (!this.headersAlreadySent) {
 			this.response.setContentType("text/html");
+			log.trace("Set content type text/html");
 			if (ajax) {
 				this.response.setDateHeader("Expires", 1);
 				this.response.setHeader("Cache-Control", 

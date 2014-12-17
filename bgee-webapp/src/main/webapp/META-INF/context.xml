@@ -10,7 +10,7 @@
 	OF ANY KIND, either express or implied. See the License for the specific 
 	language governing permissions and limitations under the License. -->
 <!-- The contents of this file will be loaded for each web application -->
-<Context docBase='bgee-webapp-13' path='/beta' reloadable='true'>
+<Context path='/beta' reloadable='true'>
 
 	<!-- Default set of monitored resources -->
 	<WatchedResource>WEB-INF/web.xml</WatchedResource>

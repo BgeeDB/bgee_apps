@@ -44,13 +44,15 @@
     </servlet-mapping>
 
     <!-- Add a filter to cache the pages using ehcache -->
+    <!-- 
     <filter>
         <filter-name>BgeeWebCache</filter-name>
         <filter-class>org.bgee.controller.servletutils.BgeeWebCache</filter-class>
-        <init-param>
+        <init-param>-->
             <!-- provide here a cache name that is declared in ehcache-production.xml 
                  in the resources folder
             -->
+            <!-- 
             <param-name>cacheName</param-name>
             <param-value>BgeeWebCache</param-value>
         </init-param>
@@ -59,5 +61,6 @@
         <filter-name>BgeeWebCache</filter-name>
         <servlet-name>FrontController</servlet-name>
     </filter-mapping>
+    -->
 
 </web-app>  

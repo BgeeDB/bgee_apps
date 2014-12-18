@@ -148,9 +148,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     public void displayBgeeMenu() {
         log.entry();
         this.writeln("<header>");
-    
+        
         // Bgee logo
-        this.writeln("<a href='#' title='Go to Bgee home page'>"
+        this.writeln("<a href='" + this.prop.getBgeeRootDirectory() + "' title='Go to Bgee home page'>"
                 + "<img id='sib_other_logo' src='"+this.prop.getImagesRootDirectory()+"bgee_logo.png' "
                 + "title='Bgee: a dataBase for Gene Expression Evolution' "
                 + "alt='Bgee: a dataBase for Gene Expression Evolution' />"

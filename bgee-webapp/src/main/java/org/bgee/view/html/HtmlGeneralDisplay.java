@@ -72,7 +72,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
         //part of endDisplay?
         this.writeln("<div id='sib_body'>");
-        this.writeln("<h1>Welcome on the last release of Bgee, Bgee release 13</h1>");
+        this.writeln("<h1>Welcome on the latest release of Bgee, Bgee release 13</h1>");
         //TODO: fix the css so that the download page use a different h1 css definition, 
         //to remove these <br />
         this.writeln("<br /><br />");
@@ -81,8 +81,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         this.writeln("<p>Features are being added incrementally: </p>");
         this.writeln("<ul><li>2014-12-19: release of the single-species " +
-        		"expression data, see <a href='" + urlGenerator.getRequestURL() + "' " +
-        				"title='Bgee download page'>download page</a>.</li></ul>");
+        		"expression data for 17 species, see <a href='" + 
+                urlGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
+                "download page</a>.</li></ul>");
         
         this.writeln("<p>The complete website remains available for the previous release of Bgee, " +
         		"see <a href='http://bgee.org/bgee/bgee/'>Bgee release 12</a>.</p>");

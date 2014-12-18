@@ -13,6 +13,9 @@ package org.bgee.controller.exception;
  * is thrown.
  * This <code>Exception</code> can then be thrown when trying to get obtain an URL 
  * from a <code>RequestParameters</code> object.
+ * <p>
+ * It extends a {@code RuntimeException} for convenience, as any such errors should be 
+ * catch by the {@code FrontController} anyway.
  * 
  * @author Frederic Bastian
  * @version Bgee 11, May 2012
@@ -20,7 +23,7 @@ package org.bgee.controller.exception;
  * @since Bgee 11
  *
  */
-public class RequestParametersNotStorableException extends Exception
+public class RequestParametersNotStorableException extends RuntimeException
 {
 
     /**

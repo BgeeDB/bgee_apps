@@ -3,13 +3,17 @@ package org.bgee.controller.exception;
 /**
  * This {@code Exception} is thrown when an value with a wrong format is provided
  * to a {@link org.bgee.controller.URLParameters.Parameter}.
+ * <p>
+ * It extends a {@code RuntimeException} for convenience, as any such errors should be 
+ * catch by the {@code FrontController} anyway.
  * 
  * @author  Mathieu Seppey
- * @version Bgee 13, Aug 2014
+ * @author Frederic Bastian
+ * @version Bgee 13, Dec 2014
  * @see     org.bgee.controller.RequestParameters
  * @since   Bgee 13
  */
-public class WrongFormatException extends Exception
+public class WrongFormatException extends RuntimeException
 {
 
     private static final long serialVersionUID = -8910679982751616114L;

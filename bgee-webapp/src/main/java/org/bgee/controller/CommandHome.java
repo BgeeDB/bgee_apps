@@ -57,7 +57,7 @@ public class CommandHome extends CommandParent
         GeneralDisplay display = this.viewFactory.getGeneralDisplay();
 
         if (requestParameters.isTheHomePage()) {
-            display.displayAbout();
+            display.displayHomePage();
         } else {
             throw new PageNotFoundException("Wrong parameters");
         }

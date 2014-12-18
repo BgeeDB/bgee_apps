@@ -15,6 +15,7 @@ import org.bgee.view.ConcreteDisplayParent;
  * Parent of all display for the {@code displayTypes} HTML
  * 
  * @author  Mathieu Seppey
+ * @author Frederic Bastian
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
@@ -38,6 +39,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     	}
     }
     /**
+     * The {@code RequestParameters} holding the parameters of the current query 
+     * being treated.
+     */
+    protected final RequestParameters requestParameters;
+    /**
      * TODO comment, what is this ?
      */
     private int uniqueId;
@@ -58,6 +64,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
             BgeeProperties prop) throws IOException {
         super(response,prop);
+        this.requestParameters = requestParameters;
         this.uniqueId = 0;
     }
 
@@ -80,7 +87,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         this.writeln("");
         log.exit();
     }
-    
+    //TODO: use an enum rather than a String page?
+    //TODO: javadoc
     public void startDisplay(String page, String title)
     {
         log.entry(page, title);
@@ -101,9 +109,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/2015 UNIL' />");
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
                 +this.prop.getImagesRootDirectory()+"favicon.ico'/>");
-        this.includeCss(page+".css"); // default css for every pages
-        this.includeCss(); // additional css
-        this.includeJs();// add js
+        this.includeCss(); // load default css files, and css files specific of a view 
+                           // (views must override this method if needed)
+        this.includeJs();  // load default js files, and css files specific of a view 
+                           // (views must override this method if needed)
         this.writeln("</head>");
         this.writeln("<body>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
@@ -135,6 +144,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         log.exit();
     }
 
+    //TODO: this is not a menu, this is a header...
     public void displayBgeeMenu() {
         log.entry();
         this.writeln("<header>");
@@ -147,8 +157,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
                 + "</a>");
     
         // Title
+        //TODO: change this hardcoded 'Release 13 download page', provide it as argument
         this.writeln("<h1>Bgee: Gene Expression Evolution</h1>"
-                + "<h2>Release 13 download page</h2>"
+                //+ "<h2>Release 13 download page</h2>"
                 );
     
         // SIB logo
@@ -282,7 +293,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     }
     /**
      * Method that loads the provided javascript file.
-     * It should be called only within {@link #includeJs()} method
+     * <strong>It should be called only within a {@link #includeJs()} method, whether overridden 
+     * or not.</strong>.
      * @param filename  The name of the file to load
      */
     protected void includeJs(String filename){
@@ -297,11 +309,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
      * method, unless it is a special page that does not use the standard css.
      */
     protected void includeCss(){
-        // Nothing loaded by default here for the moment 
+        this.includeCss("bgee.css"); 
     }
     /**
      * Method that loads the provided css file.
-     * It should be called only within {@link #includeCss()} method
+     * <strong>It should be called only within a {@link #includeCss()} method, whether overridden 
+     * or not.</strong>
      * @param filename  The name of the file to load
      */
     protected void includeCss(String filename){
@@ -311,4 +324,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         log.exit();
     }
 
+    /**
+     * Return a new {@code RequestParameters} object to be used to generate URLs. 
+     * This new {@code RequestParameters} will use the same {@code URLParameters} 
+     * as those returned by {@link #requestParameters} when calling 
+     * {@link #getUrlParametersInstance()}, and the {@code BgeeProperties} {@link #prop}. 
+     * Also, parameters will be URL encoded, and parameter separator will be {@code &amp;}.
+     * 
+     * @return  A newly created RequestParameters object.
+     */
+    protected RequestParameters getNewRequestParameters() {
+        log.entry();
+        return log.exit(new RequestParameters(this.requestParameters.getUrlParametersInstance(), 
+                this.prop, true, "&amp;"));
+    }
 }

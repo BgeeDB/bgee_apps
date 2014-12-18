@@ -54,8 +54,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry();
         this.startDisplay("download", "Bgee release 13 download page");
 
+        //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
+        //part of endDisplay?
         this.writeln("<div id='sib_body'>");
 
+        //TODO: do not use &nbsp;, use css with a left-margin or something
         this.writeln("<div id='bgee_more_results_up'> &uarr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
         this.writeln("<div id='bgee_more_results_down'> &darr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
 
@@ -613,11 +616,18 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void includeJs()
-    {
+    public void includeJs() {
         log.entry();
         super.includeJs();
         this.includeJs("download.js");
+        log.exit();
+    }
+
+    @Override
+    public void includeCss() {
+        log.entry();
+        super.includeCss();
+        this.includeCss("download.css");
         log.exit();
     }
 }

@@ -94,6 +94,11 @@ public class RequestParameters {
             new ConcurrentHashMap<String, ReentrantReadWriteLock>();
 
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a download page is requested.
+     */
+    public static final String PAGE_DOWNLOAD = "download";
+    /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a documentation is requested.
      */
@@ -418,6 +423,7 @@ public class RequestParameters {
                     // store the list of values in the HashMap using
                     // the parameter itself as a key
                     log.debug("Set {} as values for the param {}", parameterValues, parameter);
+                    //TODO: why doesn't this use addValue method?
                     this.values.put(parameter, parameterValues);
                 }
             }
@@ -869,8 +875,7 @@ public class RequestParameters {
     public String getRequestURL() throws RequestParametersNotStorableException
     {
         log.entry();
-        this.generateParametersQuery(this.parametersSeparator);
-        return log.exit(this.parametersQuery);
+        return log.exit(this.getRequestURL(this.parametersSeparator));
     }
 
     /**
@@ -895,7 +900,11 @@ public class RequestParameters {
     {
         log.entry(parametersSeparator);
         this.generateParametersQuery(parametersSeparator);
-        return log.exit(this.parametersQuery);
+        String prefix = "";
+        if (StringUtils.isNotBlank(this.parametersQuery)) {
+            prefix = "?";
+        }
+        return log.exit(prefix + this.parametersQuery);
     }
 
     /**
@@ -1101,11 +1110,49 @@ public class RequestParameters {
     }
 
     /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamAction()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
      * @return  A {@code String} that is the value of the {@code action} URL parameter. 
-     *          It can be {@code null}. 
+     *          Can be {@code null}. 
      */
     public String getAction() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamAction());
+    }
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamAction()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code action} URL parameter 
+     *                  to set.
+     */
+    public void setAction(String action) {
+        this.addValue(this.getUrlParametersInstance().getParamAction(), action);
+    }
+    
+    /**
+     * Convenient method to retrieve value of the parameter returned by 
+     * {@link URLParameters#getParamPage()}. Equivalent to calling 
+     * {@link #getFirstValue(Parameter)} for this parameter.
+     * 
+     * @return  A {@code String} that is the value of the {@code page} URL parameter. 
+     *          Can be {@code null}. 
+     */
+    public String getPage() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamPage());
+    }
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamPage()}. Equivalent to calling 
+     * {@link #addValue(Parameter, Object)} for this parameter.
+     * 
+     * @param action    A {@code String} that is the value of the {@code page} URL parameter 
+     *                  to set.
+     */
+    public void setPage(String page) {
+        this.addValue(this.getUrlParametersInstance().getParamPage(), page);
     }
     
     /**
@@ -1266,7 +1313,7 @@ public class RequestParameters {
     public boolean isADownloadPageCategory(){
         log.entry();
         if(this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("download")){
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DOWNLOAD)){
             return log.exit(true);
         }
         return log.exit(false);

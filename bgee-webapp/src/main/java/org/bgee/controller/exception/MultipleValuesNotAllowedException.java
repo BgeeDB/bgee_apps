@@ -3,13 +3,17 @@ package org.bgee.controller.exception;
 /**
  * This {@code Exception} is thrown when more than one value is provided
  * to a {@link org.bgee.controller.URLParameters.Parameter} that does not allow multiple values.
+ * <p>
+ * It extends a {@code RuntimeException} for convenience, as any such errors should be 
+ * catch by the {@code FrontController} anyway.
  * 
  * @author  Mathieu Seppey
- * @version Bgee 13, Jul 2014
+ * @author Frederic Bastian
+ * @version Bgee 13, Dec 2014
  * @see     org.bgee.controller.RequestParameters
  * @since   Bgee 13
  */
-public class MultipleValuesNotAllowedException extends Exception
+public class MultipleValuesNotAllowedException extends RuntimeException
 {
 
     private static final long serialVersionUID = -7861781334770127365L;

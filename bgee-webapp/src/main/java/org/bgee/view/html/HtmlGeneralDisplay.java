@@ -14,11 +14,11 @@ import org.bgee.view.GeneralDisplay;
  * HTML View for the general category display
  * 
  * @author Mathieu Seppey
+ * @author Frederic Bastian
  * @version Bgee 13, Aug 2014
  * @since Bgee 13
  */
-public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay
-{
+public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
 
     private final static Logger log = LogManager.getLogger(HtmlGeneralDisplay.class.getName());
 
@@ -62,14 +62,31 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.exit();
     }
 
-    /**
-     * Display the home page
-     */
+    @Override
     public void displayHomePage() 
     {
         log.entry();
         this.startDisplay("home", 
-                "welcome on Bgee: a dataBase for Gene Expression Evolution");
+                "Welcome on Bgee: a dataBase for Gene Expression Evolution");
+
+        //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
+        //part of endDisplay?
+        this.writeln("<div id='sib_body'>");
+        this.writeln("<h1>Welcome on the last release of Bgee, Bgee release 13</h1>");
+        //TODO: fix the css so that the download page use a different h1 css definition, 
+        //to remove these <br />
+        this.writeln("<br /><br />");
+        
+        RequestParameters urlGenerator = this.getNewRequestParameters();
+        urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        this.writeln("<p>Features are being added incrementally: </p>");
+        this.writeln("<ul><li>2014-12-19: release of the single-species " +
+        		"expression data, see <a href='" + urlGenerator.getRequestURL() + "' " +
+        				"title='Bgee download page'>download page</a>.</li></ul>");
+        
+        this.writeln("<p>The complete website remains available for the previous release of Bgee, " +
+        		"see <a href='http://bgee.org/bgee/bgee/'>Bgee release 12</a>.</p>");
+        this.writeln("</div>");
 
         this.endDisplay();
         log.exit();

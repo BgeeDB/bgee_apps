@@ -5,12 +5,22 @@ package org.bgee.view;
  * that corresponds to another category) has to implements
  * 
  * @author  Mathieu Seppey
+ * @author Frederic Bastian
  * @version Bgee 13 Aug 2014
  * @since   Bgee 1
  */
-public interface GeneralDisplay
-{
+public interface GeneralDisplay {
+    /**
+     * Launch the display of the "about" page, using the {@code HttpServletResponse} 
+     * provided at instantiation.
+     */
     public void displayAbout();
+    
+    /**
+     * Launch the display of the home page, using the {@code HttpServletResponse} 
+     * provided at instantiation.
+     */
+    public void displayHomePage();
     /**
      * Display an error message if no stored request parameters 
      * could be found using the key provided by the user (most likely in the URL). 

@@ -158,11 +158,11 @@ public class RequestParametersTest {
         // the mockHttpServletRequest. Do it with the default parameters separator and with
         // a custom one
 
-        assertEquals("Incorrect query returned ","test_string=string1%26test_integer="
+        assertEquals("Incorrect query returned ","?test_string=string1%26test_integer="
                 + "1234%26test_integer=2345%26test_boolean=true%26test_boolean="
                 + "false",this.requestParametersWithNoKey.getRequestURL());
 
-        assertEquals("Incorrect query returned ","test_string=string1%2Btest_integer="
+        assertEquals("Incorrect query returned ","?test_string=string1%2Btest_integer="
                 + "1234%2Btest_integer=2345%2Btest_boolean=true%2Btest_boolean="
                 + "false",this.requestParametersWithNoKey.getRequestURL("+"));
 
@@ -175,7 +175,7 @@ public class RequestParametersTest {
                 testURLParameters.getParamTestInteger(),987654321);
 
         assertEquals("Incorrect query returned ", 
-                "test_string=string1"
+                "?test_string=string1"
                         + "%2Bdata=cde384a208277a175428167464e49bf9ee3ee831", 
                         this.requestParametersWithNoKey.getRequestURL("+"));
 
@@ -187,7 +187,7 @@ public class RequestParametersTest {
                 "[1234, 2345, 987654321]",this.requestParametersHavingAKey.getValues(
                         testURLParameters.getParamTestInteger()).toString());
         assertEquals("Incorrect query returned ", 
-                "test_string=string1"
+                "?test_string=string1"
                         + "%2Bdata=cde384a208277a175428167464e49bf9ee3ee831", 
                         this.requestParametersHavingAKey.getRequestURL("+"));
 

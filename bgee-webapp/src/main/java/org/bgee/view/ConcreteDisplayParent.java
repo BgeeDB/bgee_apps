@@ -18,8 +18,7 @@ import org.bgee.controller.BgeeProperties;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 1
  */
-public abstract class ConcreteDisplayParent 
-{
+public abstract class ConcreteDisplayParent {
 
     private final static Logger log = LogManager.getLogger(ConcreteDisplayParent.class.getName());
 
@@ -57,8 +56,8 @@ public abstract class ConcreteDisplayParent
      * @throws IOException      If there is an issue when trying to get or to use the
      *                          {@code PrintWriter} 
      */
-    public ConcreteDisplayParent(HttpServletResponse response,BgeeProperties prop) throws IOException
-    {
+    public ConcreteDisplayParent(HttpServletResponse response, BgeeProperties prop) 
+            throws IOException {
         log.entry(response, prop);
         this.response = response;
 

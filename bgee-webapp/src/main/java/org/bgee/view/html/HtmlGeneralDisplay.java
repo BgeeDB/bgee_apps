@@ -87,6 +87,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<p>The complete website remains available for the previous release of Bgee, " +
         		"see <a href='http://bgee.org/bgee/bgee/'>Bgee release 12</a>.</p>");
+        this.writeln("<p>You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> " +
+        		"or <a href='https://bgeedb.wordpress.com'>our blog</a>.</p>");
         this.writeln("</div>");
 
         this.endDisplay();

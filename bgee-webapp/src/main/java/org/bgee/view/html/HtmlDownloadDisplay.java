@@ -90,7 +90,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<h1>Species</h1>");
         this.writeln("<div class='downloadsection'>");
         this.writeln(generateSpeciesFigure(9606));
-        this.writeln(generateSpeciesFigure(10090));
+        //this.writeln(generateSpeciesFigure(10090));
         this.writeln(generateSpeciesFigure(7955));
         this.writeln(generateSpeciesFigure(7227));
         this.writeln(generateSpeciesFigure(6239));
@@ -444,13 +444,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprSimpleFileSize = null, diffExprAdvancedFileSize = null;
 
         switch (speciesId) {
-            //TODO: set file sizes
             case 9606: 
-                exprSimpleFileSize = "1 MB";
-                exprAdvancedFileSize = "2 GB"; 
+                exprSimpleFileSize = "85 MB";
+                exprAdvancedFileSize = "963 MB"; 
                 diffExprSimpleFileSize = "3 MB";
                 diffExprAdvancedFileSize  = "4 GB";
                 break;
+            //TODO: set file sizes
             case 10090: 
                 exprSimpleFileSize = "5 MB";
                 exprAdvancedFileSize = "6 GB"; 
@@ -458,38 +458,38 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAdvancedFileSize  = "8 GB";
                 break;
             case 7955: 
-                exprSimpleFileSize = "9 MB";
-                exprAdvancedFileSize = "10 GB"; 
+                exprSimpleFileSize = "4.3 MB";
+                exprAdvancedFileSize = "588 MB"; 
                 diffExprSimpleFileSize = "11 MB";
                 diffExprAdvancedFileSize  = "12 GB";
                 break;
             case 7227: 
-                exprSimpleFileSize = "13 MB";
-                exprAdvancedFileSize = "14 GB"; 
+                exprSimpleFileSize = "4.9 MB";
+                exprAdvancedFileSize = "730 MB"; 
                 diffExprSimpleFileSize = "15 MB";
                 diffExprAdvancedFileSize  = "16 GB";
                 break;
             case 6239: 
-                exprSimpleFileSize = "17 MB";
-                exprAdvancedFileSize = "18 GB"; 
+                exprSimpleFileSize = "1.2 MB";
+                exprAdvancedFileSize = "340 MB"; 
                 diffExprSimpleFileSize = "19 MB";
                 diffExprAdvancedFileSize  = "20 GB";
                 break;
             case 9597: 
-                exprSimpleFileSize = "21 MB";
-                exprAdvancedFileSize = "22 GB"; 
+                exprSimpleFileSize = "0.7 MB";
+                exprAdvancedFileSize = "38 MB"; 
                 diffExprSimpleFileSize = "23 MB";
                 diffExprAdvancedFileSize  = "24 GB";
                 break;
             case 9598: 
-                exprSimpleFileSize = "25 MB";
-                exprAdvancedFileSize = "26 GB"; 
+                exprSimpleFileSize = "0.5 MB";
+                exprAdvancedFileSize = "31 MB"; 
                 diffExprSimpleFileSize = "27 MB";
                 diffExprAdvancedFileSize  = "28 GB";
                 break;
             case 9593: 
-                exprSimpleFileSize = "29 MB";
-                exprAdvancedFileSize = "30 GB"; 
+                exprSimpleFileSize = "0.5 MB";
+                exprAdvancedFileSize = "30 MB"; 
                 diffExprSimpleFileSize = "31 MB";
                 diffExprAdvancedFileSize  = "32 GB";
                 break;
@@ -500,56 +500,56 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 diffExprAdvancedFileSize  = "36 GB";
                 break;
             case 9544: 
-                exprSimpleFileSize = "37 MB";
-                exprAdvancedFileSize = "38 GB"; 
+                exprSimpleFileSize = "1.2 MB";
+                exprAdvancedFileSize = "112 MB"; 
                 diffExprSimpleFileSize = "39 MB";
                 diffExprAdvancedFileSize  = "40 GB";
                 break;
             case 10116: 
-                exprSimpleFileSize = "41 MB";
-                exprAdvancedFileSize = "42 GB"; 
+                exprSimpleFileSize = "0.8 MB";
+                exprAdvancedFileSize = "59 MB"; 
                 diffExprSimpleFileSize = "43 MB";
                 diffExprAdvancedFileSize  = "44 GB";
                 break;
             case 9913: 
-                exprSimpleFileSize = "45 MB";
-                exprAdvancedFileSize = "46 GB"; 
+                exprSimpleFileSize = "0.7 MB";
+                exprAdvancedFileSize = "58 MB"; 
                 diffExprSimpleFileSize = "47 MB";
                 diffExprAdvancedFileSize  = "48 GB";
                 break;
             case 9823: 
-                exprSimpleFileSize = "49 MB";
-                exprAdvancedFileSize = "50 GB"; 
+                exprSimpleFileSize = "0.3 MB";
+                exprAdvancedFileSize = "6.4 MB"; 
                 diffExprSimpleFileSize = "51 MB";
                 diffExprAdvancedFileSize  = "52 GB";
                 break;
             case 13616: 
-                exprSimpleFileSize = "53 MB";
-                exprAdvancedFileSize = "54 GB"; 
+                exprSimpleFileSize = "0.9 MB";
+                exprAdvancedFileSize = "49 MB"; 
                 diffExprSimpleFileSize = "55 MB";
                 diffExprAdvancedFileSize  = "56 GB";
                 break;
             case 9258: 
-                exprSimpleFileSize = "57 MB";
-                exprAdvancedFileSize = "58 GB"; 
+                exprSimpleFileSize = "0.6 MB";
+                exprAdvancedFileSize = "34 MB"; 
                 diffExprSimpleFileSize = "59 MB";
                 diffExprAdvancedFileSize  = "60 GB";
                 break;
             case 9031: 
-                exprSimpleFileSize = "61 MB";
-                exprAdvancedFileSize = "62 GB"; 
+                exprSimpleFileSize = "1 MB";
+                exprAdvancedFileSize = "55 MB"; 
                 diffExprSimpleFileSize = "63 MB";
                 diffExprAdvancedFileSize  = "64 GB";
                 break;
             case 28377: 
-                exprSimpleFileSize = "65 MB";
-                exprAdvancedFileSize = "66 GB"; 
+                exprSimpleFileSize = "0.3 MB";
+                exprAdvancedFileSize = "19 MB"; 
                 diffExprSimpleFileSize = "67 MB";
                 diffExprAdvancedFileSize  = "68 GB";
                 break;
             case 8364: 
-                exprSimpleFileSize = "69 MB";
-                exprAdvancedFileSize = "70 GB"; 
+                exprSimpleFileSize = "2.6 MB";
+                exprAdvancedFileSize = "287 MB"; 
                 diffExprSimpleFileSize = "71 MB";
                 diffExprAdvancedFileSize  = "72 GB";
                 break;

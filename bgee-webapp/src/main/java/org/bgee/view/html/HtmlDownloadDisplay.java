@@ -616,7 +616,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void includeJs() {
+    protected void includeJs() {
         log.entry();
         super.includeJs();
         this.includeJs("download.js");
@@ -624,7 +624,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     }
 
     @Override
-    public void includeCss() {
+    protected void includeCss() {
         log.entry();
         super.includeCss();
         this.includeCss("download.css");

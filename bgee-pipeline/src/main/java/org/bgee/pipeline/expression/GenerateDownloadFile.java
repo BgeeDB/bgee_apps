@@ -402,6 +402,7 @@ public class GenerateDownloadFile extends CallUser {
         log.entry(speciesIds, fileTypes, directory);
         
         // Check user input, or retrieve all species IDs
+        // TODO: we also need the latin names to generate file names
         List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(
                 speciesIds, this.getSpeciesDAO()); 
 
@@ -680,6 +681,8 @@ public class GenerateDownloadFile extends CallUser {
         for (FileType fileType: fileTypes) {
             log.trace("Start generation of file {} for the species {}...", fileType, speciesId);
             
+            // TODO: important - change file name to use latin name, e.g. 
+            // Homo_sapiens_expr-simple.tsv
             File file = new File(directory, speciesId + "_" + 
                     fileType.getStringRepresentation() + EXTENSION);
             //override existing file

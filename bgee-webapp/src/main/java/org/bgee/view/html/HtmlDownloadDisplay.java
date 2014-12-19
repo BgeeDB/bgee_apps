@@ -441,7 +441,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry(speciesId);
         
         String exprSimpleFileSize = null, exprAdvancedFileSize = null, 
-                diffExprSimpleFileSize = null, diffExprAdvancedFileSize = null;
+                diffExprSimpleFileSize = null, diffExprAdvancedFileSize = null, 
+                latinName = null;
 
         switch (speciesId) {
             case 9606: 
@@ -449,6 +450,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 exprAdvancedFileSize = "963 MB"; 
                 diffExprSimpleFileSize = "3 MB";
                 diffExprAdvancedFileSize  = "4 GB";
+                latinName = "Homo_sapiens";
                 break;
             //TODO: set file sizes
             case 10090: 
@@ -456,114 +458,132 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 exprAdvancedFileSize = "6 GB"; 
                 diffExprSimpleFileSize = "7 MB";
                 diffExprAdvancedFileSize  = "8 GB";
+                latinName = "Mus_musculus";
                 break;
             case 7955: 
                 exprSimpleFileSize = "4.3 MB";
                 exprAdvancedFileSize = "588 MB"; 
                 diffExprSimpleFileSize = "11 MB";
                 diffExprAdvancedFileSize  = "12 GB";
+                latinName = "Danio_rerio";
                 break;
             case 7227: 
                 exprSimpleFileSize = "4.9 MB";
                 exprAdvancedFileSize = "730 MB"; 
                 diffExprSimpleFileSize = "15 MB";
                 diffExprAdvancedFileSize  = "16 GB";
+                latinName = "Drosophila_melanogaster";
                 break;
             case 6239: 
                 exprSimpleFileSize = "1.2 MB";
                 exprAdvancedFileSize = "340 MB"; 
                 diffExprSimpleFileSize = "19 MB";
                 diffExprAdvancedFileSize  = "20 GB";
+                latinName = "Caenorhabditis_elegans";
                 break;
             case 9597: 
                 exprSimpleFileSize = "0.7 MB";
                 exprAdvancedFileSize = "38 MB"; 
                 diffExprSimpleFileSize = "23 MB";
                 diffExprAdvancedFileSize  = "24 GB";
+                latinName = "Pan_paniscus";
                 break;
             case 9598: 
                 exprSimpleFileSize = "0.5 MB";
                 exprAdvancedFileSize = "31 MB"; 
                 diffExprSimpleFileSize = "27 MB";
                 diffExprAdvancedFileSize  = "28 GB";
+                latinName = "Pan_troglodytes";
                 break;
             case 9593: 
                 exprSimpleFileSize = "0.5 MB";
                 exprAdvancedFileSize = "30 MB"; 
                 diffExprSimpleFileSize = "31 MB";
                 diffExprAdvancedFileSize  = "32 GB";
+                latinName = "Gorilla_gorilla";
                 break;
             case 9600: 
                 exprSimpleFileSize = "33 MB";
                 exprAdvancedFileSize = "34 GB"; 
                 diffExprSimpleFileSize = "35 MB";
                 diffExprAdvancedFileSize  = "36 GB";
+                latinName = "Pongo_pygmaeus";
                 break;
             case 9544: 
                 exprSimpleFileSize = "1.2 MB";
                 exprAdvancedFileSize = "112 MB"; 
                 diffExprSimpleFileSize = "39 MB";
                 diffExprAdvancedFileSize  = "40 GB";
+                latinName = "Macaca_mulatta";
                 break;
             case 10116: 
                 exprSimpleFileSize = "0.8 MB";
                 exprAdvancedFileSize = "59 MB"; 
                 diffExprSimpleFileSize = "43 MB";
                 diffExprAdvancedFileSize  = "44 GB";
+                latinName = "Rattus_norvegicus";
                 break;
             case 9913: 
                 exprSimpleFileSize = "0.7 MB";
                 exprAdvancedFileSize = "58 MB"; 
                 diffExprSimpleFileSize = "47 MB";
                 diffExprAdvancedFileSize  = "48 GB";
+                latinName = "Bos_taurus";
                 break;
             case 9823: 
                 exprSimpleFileSize = "0.3 MB";
                 exprAdvancedFileSize = "6.4 MB"; 
                 diffExprSimpleFileSize = "51 MB";
                 diffExprAdvancedFileSize  = "52 GB";
+                latinName = "Sus_scrofa";
                 break;
             case 13616: 
                 exprSimpleFileSize = "0.9 MB";
                 exprAdvancedFileSize = "49 MB"; 
                 diffExprSimpleFileSize = "55 MB";
                 diffExprAdvancedFileSize  = "56 GB";
+                latinName = "Monodelphis_domestica";
                 break;
             case 9258: 
                 exprSimpleFileSize = "0.6 MB";
                 exprAdvancedFileSize = "34 MB"; 
                 diffExprSimpleFileSize = "59 MB";
                 diffExprAdvancedFileSize  = "60 GB";
+                latinName = "Ornithorhynchus_anatinus";
                 break;
             case 9031: 
                 exprSimpleFileSize = "1 MB";
                 exprAdvancedFileSize = "55 MB"; 
                 diffExprSimpleFileSize = "63 MB";
                 diffExprAdvancedFileSize  = "64 GB";
+                latinName = "Gallus_gallus";
                 break;
             case 28377: 
                 exprSimpleFileSize = "0.3 MB";
                 exprAdvancedFileSize = "19 MB"; 
                 diffExprSimpleFileSize = "67 MB";
                 diffExprAdvancedFileSize  = "68 GB";
+                latinName = "Anolis_carolinensis";
                 break;
             case 8364: 
                 exprSimpleFileSize = "2.6 MB";
                 exprAdvancedFileSize = "287 MB"; 
                 diffExprSimpleFileSize = "71 MB";
                 diffExprAdvancedFileSize  = "72 GB";
+                latinName = "Xenopus_tropicalis";
                 break;
             case 99883: 
                 exprSimpleFileSize = "73 MB";
                 exprAdvancedFileSize = "74 GB"; 
                 diffExprSimpleFileSize = "75 MB";
                 diffExprAdvancedFileSize  = "76 GB";
+                latinName = "Tetraodon_nigroviridis";
                 break;
             default:
                 return ("");
         }
         
-        String beginFilePath = this.prop.getDownloadRootDirectory() + speciesId + "_";
+        String beginFilePath = this.prop.getDownloadRootDirectory() + latinName + "_";
         String extension = ".tsv.zip";
         return log.exit(" data-bgeeexprsimplefileurl='" + beginFilePath + "expr-simple" + extension + 
                 "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 

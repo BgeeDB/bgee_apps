@@ -564,7 +564,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         
         String beginFilePath = this.prop.getDownloadRootDirectory() + speciesId + "_";
-        String extension = ".tsv";
+        String extension = ".tsv.zip";
         return log.exit(" data-bgeeexprsimplefileurl='" + beginFilePath + "expr-simple" + extension + 
                 "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
                 "' data-bgeeexpradvancedfileurl='" + beginFilePath + "expr-complete" + extension + 

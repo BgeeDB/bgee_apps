@@ -81,7 +81,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         this.writeln("<p>Features are being added incrementally: </p>");
         this.writeln("<ul><li>2014-12-19: release of the single-species " +
-        		"expression data for 17 species, see <a href='" + 
+        		"expression data for 16 species, soon 17 (with mouse), see <a href='" + 
                 urlGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
                 "download page</a>.</li></ul>");
         

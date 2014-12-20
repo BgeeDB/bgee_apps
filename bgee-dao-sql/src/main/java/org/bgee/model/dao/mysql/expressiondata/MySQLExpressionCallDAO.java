@@ -220,7 +220,24 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         }
     }
     
-    private String generateSelectClause(Collection<ExpressionCallDAO.Attribute> attributes, 
+    /**
+     * Generates the SELECT clause of a MySQL query used to retrieve {@code ExpressionCallTO}s.
+     * 
+     * @param attributes                A {@code Set} of {@code Attribute}s defining 
+     *                                  the columns/information the query should retrieve.
+     * @param includeSubstructures      A {@code boolean} defining whether the query will use 
+     *                                  expression data propagated from substructures.
+     * @param includeSubStages          A {@code boolean} defining whether the query will use 
+     *                                  expression data propagated from sub-stages.
+     * @param exprTableName             A {@code String} defining the name of the expression 
+     *                                  table used.
+     * @param propagatedStageTableName  A {@code String} defining the name of the table 
+     *                                  allowing to retrieve stage IDs, when 
+     *                                  {@code includeSubStages} is {@code true}.
+     * @return                          A {@code String} containing the SELECT clause 
+     *                                  for the requested query.
+     */
+    private String generateSelectClause(Set<ExpressionCallDAO.Attribute> attributes, 
             boolean includeSubstructures, boolean includeSubStages, 
             String exprTableName, String propagatedStageTableName) {
         log.entry(attributes, includeSubstructures, includeSubStages, 

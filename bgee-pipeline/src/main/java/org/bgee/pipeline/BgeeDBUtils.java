@@ -99,7 +99,7 @@ public class BgeeDBUtils {
             return log.exit(speciesIdsFromDb);
         } else if (!speciesIdsFromDb.containsAll(speciesIds)) {
             //copy to avoid modifying user input, maybe the caller 
-            //will recover from the exception (but it should not...)
+            //will recover from the exception
             List<String> debugSpeciesIds = new ArrayList<String>(speciesIds);
             debugSpeciesIds.removeAll(speciesIdsFromDb);
             throw log.throwing(new IllegalArgumentException("Some species IDs " +

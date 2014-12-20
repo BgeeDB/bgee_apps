@@ -30,6 +30,9 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
+import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
@@ -400,11 +403,18 @@ public class GenerateDownloadFile extends CallUser {
     public void generateSingleSpeciesFiles(List<String> speciesIds, Set<FileType> fileTypes, 
             String directory) throws IOException { 
         log.entry(speciesIds, fileTypes, directory);
-        
-        // Check user input, or retrieve all species IDs
-        // TODO: we also need the latin names to generate file names
-        List<String> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(
-                speciesIds, this.getSpeciesDAO()); 
+
+        Set<String> setSpecies = new HashSet<String>();
+        if (speciesIds != null) {
+            setSpecies = new HashSet<String>(speciesIds);
+        }
+
+        // Check user input, retrieve info for generating file names
+        Map<String, String> speciesNamesForFilesByIds = this.checkAndGetLatinNamesBySpeciesIds(
+                setSpecies);
+        if (speciesIds == null || speciesIds.isEmpty()) {
+            speciesIds = new ArrayList<String>(speciesNamesForFilesByIds.keySet());
+        }
 
         if (fileTypes == null || fileTypes.isEmpty()) {
             // If no file types are given by user, we set all file types
@@ -412,7 +422,6 @@ public class GenerateDownloadFile extends CallUser {
         } 
         
         // Retrieve gene names, stage names, anat. entity names, once for all species
-        Set<String> setSpecies = new HashSet<String>(speciesIds);
         Map<String, String> geneNamesByIds = 
                 BgeeDBUtils.getGeneNamesByIds(setSpecies, this.getGeneDAO());
         Map<String, String> stageNamesByIds = 
@@ -420,7 +429,7 @@ public class GenerateDownloadFile extends CallUser {
         Map<String, String> anatEntityNamesByIds =
                 BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
 
-        for (String speciesId: speciesIdsToUse) {
+        for (String speciesId: speciesIds) {
             log.info("Start generating of download files for the species {}...", speciesId);
             
             if (fileTypes.contains(FileType.DIFFEXPR_SIMPLE) ||
@@ -431,8 +440,9 @@ public class GenerateDownloadFile extends CallUser {
             
             if (fileTypes.contains(FileType.EXPR_SIMPLE) || 
                     fileTypes.contains(FileType.EXPR_COMPLETE)) {
-                this.generateExprFiles(directory, fileTypes, speciesId, 
-                        geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
+                this.generateExprFiles(directory, speciesNamesForFilesByIds.get(speciesId), 
+                        fileTypes, speciesId, geneNamesByIds, stageNamesByIds, 
+                        anatEntityNamesByIds);
             }
             log.info("Done generating of download files for the species {}.", speciesId);
             
@@ -615,10 +625,12 @@ public class GenerateDownloadFile extends CallUser {
      * 
      * @param directory             A {@code String} that is the directory to store  
      *                              the generated files. 
+     * @param fileNamePrefix        A {@code String} to be used as a prefix of the names 
+     *                              of the generated files. 
      * @param fileTypes             An {@code Set} of {@code FileType}s that are the file types 
      *                              to be generated.
      * @param speciesId             A {@code String} that is the ID of species for which files are 
-     *                              generated.
+     *                              generated. 
      * @param geneNamesByIds        A {@code Map} where keys are {@code String}s corresponding to 
      *                              gene IDs, the associated values being {@code String}s 
      *                              corresponding to gene names. 
@@ -630,11 +642,12 @@ public class GenerateDownloadFile extends CallUser {
      *                              {@code String}s corresponding to anatomical entity names. 
      * @throws IOException  If an error occurred while trying to write the {@code outputFile}.
      */
-    private void generateExprFiles(String directory, Set<FileType> fileTypes, String speciesId, 
-            Map<String, String> geneNamesByIds, Map<String, String> stageNamesByIds, 
-            Map<String, String> anatEntityNamesByIds) throws IOException {
-        log.entry(directory, fileTypes, speciesId, geneNamesByIds, stageNamesByIds, 
-                anatEntityNamesByIds);
+    private void generateExprFiles(String directory, String fileNamePrefix, 
+            Set<FileType> fileTypes, String speciesId, Map<String, String> geneNamesByIds, 
+            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds) 
+                    throws IOException {
+        log.entry(directory, fileNamePrefix, fileTypes, speciesId, 
+                geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
         log.debug("Start generating expression files for the species {}...", speciesId);
         
         Set<String> speciesFilter = new HashSet<String>();
@@ -683,7 +696,7 @@ public class GenerateDownloadFile extends CallUser {
             
             // TODO: important - change file name to use latin name, e.g. 
             // Homo_sapiens_expr-simple.tsv
-            File file = new File(directory, speciesId + "_" + 
+            File file = new File(directory, fileNamePrefix + "_" + 
                     fileType.getStringRepresentation() + EXTENSION);
             //override existing file
             if (file.exists()) {
@@ -1139,6 +1152,64 @@ public class GenerateDownloadFile extends CallUser {
             return log.exit(true);
         }
         return log.exit(false);
+    }
+    
+    /**
+     * Validate and retrieve information for the provided species IDs, or for all species 
+     * if {@code speciesIds} is {@code null} or empty, and returns a {@code Map} 
+     * where keys are the species IDs, the associated value being a {@code String} that can be 
+     * conveniently used to construct download file names for the associated species. 
+     * It is the latin name with all whitespace replaced by "_".
+     * <p>
+     * If a species ID could not be identified, an {@code IllegalArgumentException} is thrown.
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the species IDs 
+     *                      to be checked, and for which to generate a {@code String} 
+     *                      used to construct download file names. Can be {@code null} or empty 
+     *                      to retrieve information for all species. 
+     * @return              A {@code Map} where keys are {@code String}s that are the species IDs, 
+     *                      the associated value being a {@code String} that is its latin name, 
+     *                      with whitespace replaced by "_".
+     */
+    private Map<String, String> checkAndGetLatinNamesBySpeciesIds(Set<String> speciesIds) {
+        log.entry(speciesIds);
+        
+        Map<String, String> namesByIds = new HashMap<String, String>();
+        SpeciesDAO speciesDAO = this.getSpeciesDAO();
+        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID, SpeciesDAO.Attribute.GENUS, 
+                SpeciesDAO.Attribute.SPECIES_NAME);
+        
+        try (SpeciesTOResultSet rs = speciesDAO.getSpeciesByIds(speciesIds)) {
+            while (rs.next()) {
+                SpeciesTO speciesTO = rs.getTO();
+                if (StringUtils.isBlank(speciesTO.getId()) || 
+                        StringUtils.isBlank(speciesTO.getGenus()) || 
+                        StringUtils.isBlank(speciesTO.getSpeciesName())) {
+                    throw log.throwing(new IllegalStateException("Incorrect species " +
+                    		"information retrieved: " + speciesTO));
+                    
+                }
+                //in case there is a white space in a species name, we do not simply 
+                //concatenate using "_", we replace all white spaces
+                String latinNameForFile = 
+                        speciesTO.getGenus() + " " + speciesTO.getSpeciesName();
+                latinNameForFile = latinNameForFile.replace(" ", "_");
+                namesByIds.put(speciesTO.getId(), latinNameForFile);
+            }
+        }
+        if (namesByIds.size() < speciesIds.size()) {
+            //copy to avoid modifying user input, maybe the caller 
+            //will recover from the exception
+            Set<String> copySpeciesIds = new HashSet<String>(speciesIds);
+            copySpeciesIds.removeAll(namesByIds.keySet());
+            throw log.throwing(new IllegalArgumentException("Some species IDs provided " +
+            		"do not correspond to any species: " + copySpeciesIds));
+        } else if (namesByIds.size() > speciesIds.size()) {
+            throw log.throwing(new IllegalStateException("An ID should always be associated " +
+            		"to only one species..."));
+        }
+        
+        return log.exit(namesByIds);
     }
 
     /**

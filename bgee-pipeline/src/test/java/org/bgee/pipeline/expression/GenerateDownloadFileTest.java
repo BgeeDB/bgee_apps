@@ -83,19 +83,18 @@ public class GenerateDownloadFileTest  extends TestAncestor {
     @Test
     public void shouldGenerateSingleSpeciesFiles() throws IOException {
 
+        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11", "22")); 
+        
         // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
         MockDAOManager mockManager = new MockDAOManager();
-
+        
         MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
                 Arrays.asList(
-                        new SpeciesTO("11", null, null, null, null, null, null, null),
-                        new SpeciesTO("22", null, null, null, null, null, null, null),
-                        new SpeciesTO("33", null, null, null, null, null, null, null)),
+                        new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null),
+                        new SpeciesTO("22", null, "Genus22", "species22", null, null, null, null)),
                         MySQLSpeciesTOResultSet.class);
-        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs);
+        when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds)).thenReturn(mockSpeciesTORs);
         
-        
-        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11", "22")); 
         // Gene names
         MySQLGeneTOResultSet mockGeneTORs = createMockDAOResultSet(
                 Arrays.asList(
@@ -330,13 +329,13 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         generate.generateSingleSpeciesFiles(
                 Arrays.asList("11", "22"), fileTypes, directory);
         
-        String outputSimpleFile11 = new File(directory, "11" + "_" + 
+        String outputSimpleFile11 = new File(directory, "Genus11_species11_" + 
                 FileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
-        String outputSimpleFile22 = new File(directory, "22" + "_" + 
+        String outputSimpleFile22 = new File(directory, "Genus22_species22_" + 
                 FileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
-        String outputAdvancedFile11 = new File(directory, "11" + "_" + 
+        String outputAdvancedFile11 = new File(directory, "Genus11_species11_" + 
                 FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
-        String outputAdvancedFile22 = new File(directory, "22" + "_" + 
+        String outputAdvancedFile22 = new File(directory, "Genus22_species22_" + 
                 FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertExpressionFile(outputSimpleFile11, "11", true);
@@ -393,9 +392,10 @@ public class GenerateDownloadFileTest  extends TestAncestor {
 
         // Species 
         MySQLSpeciesTOResultSet mockSpeciesTORs33 = createMockDAOResultSet(
-                Arrays.asList(new SpeciesTO("33", null, null, null, null, null, null, null)),
+                Arrays.asList(new SpeciesTO("33", null, "Genus33", "species33", null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
-        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs33);
+        when(mockManager.mockSpeciesDAO.getSpeciesByIds(
+                new HashSet<String>(Arrays.asList("33")))).thenReturn(mockSpeciesTORs33);
 
         Set<String> speciesIds = new HashSet<String>(Arrays.asList("33")); 
         // Gene names
@@ -486,9 +486,10 @@ public class GenerateDownloadFileTest  extends TestAncestor {
 
         // Species 
         MySQLSpeciesTOResultSet mockSpeciesTORs33 = createMockDAOResultSet(
-                Arrays.asList(new SpeciesTO("33", null, null, null, null, null, null, null)),
+                Arrays.asList(new SpeciesTO("33", null, "Genus33", "species33", null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
-        when(mockManager.mockSpeciesDAO.getAllSpecies()).thenReturn(mockSpeciesTORs33);
+        when(mockManager.mockSpeciesDAO.getSpeciesByIds(
+                new HashSet<String>(Arrays.asList("33")))).thenReturn(mockSpeciesTORs33);
 
         Set<String> speciesIds = new HashSet<String>(Arrays.asList("33")); 
         // Gene names

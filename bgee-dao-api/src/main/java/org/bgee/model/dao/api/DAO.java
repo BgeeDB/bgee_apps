@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Parent interface of all DAOs.
@@ -79,12 +80,12 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
     
     /**
      * Get {@code Attribute}s to retrieve in order to build {@code TransferObject}s associated 
-     * to this {@code DAO}. Returned {@code Collection} is a copy.
+     * to this {@code DAO}. Returned {@code Set} is a copy.
      * 
-     * @return	A {@code Collection} of {@code Attribute}s {@code T} defining the attributes
+     * @return	A {@code Set} of {@code Attribute}s {@code T} defining the attributes
      * 			to populate in the {@code TransferObject}s obtained from this {@code DAO}.
      */
-    public Collection<T> getAttributes();
+    public Set<T> getAttributes();
 
     /**
      * Resets what are the attributes that should be populated in 

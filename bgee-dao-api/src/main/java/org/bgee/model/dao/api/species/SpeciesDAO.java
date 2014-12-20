@@ -1,5 +1,7 @@
 package org.bgee.model.dao.api.species;
 
+import java.util.Set;
+
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
@@ -48,6 +50,22 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public SpeciesTOResultSet getAllSpecies() throws DAOException;
+    
+    /**
+     * Retrieve from the data source the species matching the provided IDs. 
+     * If {@code speciesIds} is {@code null} or empty, this equivalent to calling 
+     * {@link #getAllSpecies()}.
+     * <p>
+     * The species are retrieved and returned as a {@code SpeciesTOResultSet}. 
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * results are retrieved.
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the NCBI IDs 
+     *                      of the requested species (for instance, {@code 9606} for human).
+     * @return A {@code SpeciesTOResultSet} containing all species from data source.
+     * @throws DAOException If an error occurred when accessing the data source. 
+     */
+    public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code SpeciesTO}s

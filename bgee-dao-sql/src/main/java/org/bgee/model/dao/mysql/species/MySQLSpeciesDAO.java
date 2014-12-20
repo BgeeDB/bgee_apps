@@ -3,7 +3,10 @@ package org.bgee.model.dao.mysql.species;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,11 +45,51 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
     }
     
     @Override
-    public SpeciesTOResultSet getAllSpecies() {
+    public SpeciesTOResultSet getAllSpecies() throws DAOException {
         log.entry();
+        return log.exit(this.getSpeciesByIds(null));
+    }
+    
+    @Override
+    public SpeciesTOResultSet getSpeciesByIds(Set<String> speciesIds) throws DAOException {
+        log.entry(speciesIds);
         
-        Collection<SpeciesDAO.Attribute> attributes = this.getAttributes();
-        //Construct sql query
+        String sql = this.generateSelectClause(this.getAttributes());
+        sql += "FROM species ";
+        
+        if (speciesIds != null && speciesIds.size() > 0) {
+            sql += " WHERE speciesId IN (" + 
+                       BgeePreparedStatement.generateParameterizedQueryString(
+                               speciesIds.size()) + ")";
+        }
+
+        //we don't use a try-with-resource, because we return a pointer to the results, 
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        BgeePreparedStatement stmt = null;
+        try {
+            stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (speciesIds != null && speciesIds.size() > 0) {
+                List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
+                Collections.sort(orderedSpeciesIds);
+                stmt.setIntegers(1, orderedSpeciesIds);
+            }  
+            return log.exit(new MySQLSpeciesTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    /**
+     * Generates the SELECT clause of a MySQL query used to retrieve {@code SpeciesTO}s.
+     * 
+     * @param attributes                A {@code Set} of {@code Attribute}s defining 
+     *                                  the columns/information the query should retrieve.
+     * @return                          A {@code String} containing the SELECT clause 
+     *                                  for the requested query, ending with a whitespace.
+     */
+    private String generateSelectClause(Set<SpeciesDAO.Attribute> attributes) {
+        log.entry(attributes);
+        
         String sql = new String(); 
         if (attributes == null || attributes.size() == 0) {
             sql += "SELECT *";
@@ -57,21 +100,30 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 } else {
                     sql += ", ";
                 }
-                sql += this.attributeToString(attribute);
+                if (attribute.equals(SpeciesDAO.Attribute.ID)) {
+                    sql += "speciesId";
+                } else if (attribute.equals(SpeciesDAO.Attribute.COMMON_NAME)) {
+                    sql += "speciesCommonName";
+                } else if (attribute.equals(SpeciesDAO.Attribute.GENUS)) {
+                    sql += "genus";
+                } else if (attribute.equals(SpeciesDAO.Attribute.SPECIES_NAME)) {
+                    sql += "species";
+                } else if (attribute.equals(SpeciesDAO.Attribute.PARENT_TAXON_ID)) {
+                    sql += "taxonId";
+                } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_FILE_PATH)) {
+                    sql += "genomeFilePath";
+                } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_SPECIES_ID)) {
+                    sql += "genomeSpeciesId";
+                } else if (attribute.equals(SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX)) {
+                    sql += "fakeGeneIdPrefix";
+                } 
             }
         }
-        sql += " FROM species";
-
-        //we don't use a try-with-resource, because we return a pointer to the results, 
-        //not the actual results, so we should not close this BgeePreparedStatement.
-        BgeePreparedStatement stmt = null;
-        try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
-            return log.exit(new MySQLSpeciesTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
+        sql += " ";
+        
+        return log.exit(sql);
     }
+
 
     //***************************************************************************
     // METHODS NOT PART OF THE bgee-dao-api, USED BY THE PIPELINE AND NOT MEANT 
@@ -141,32 +193,6 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
         }
     }
 
-    private String attributeToString(SpeciesDAO.Attribute attribute) {
-        log.entry(attribute);
-        
-        String label = null;
-        if (attribute.equals(SpeciesDAO.Attribute.ID)) {
-            label = "speciesId";
-        } else if (attribute.equals(SpeciesDAO.Attribute.COMMON_NAME)) {
-            label = "speciesCommonName";
-        } else if (attribute.equals(SpeciesDAO.Attribute.GENUS)) {
-            label = "genus";
-        } else if (attribute.equals(SpeciesDAO.Attribute.SPECIES_NAME)) {
-            label = "species";
-        } else if (attribute.equals(SpeciesDAO.Attribute.PARENT_TAXON_ID)) {
-            label = "taxonId";
-        } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_FILE_PATH)) {
-            label = "genomeFilePath";
-        } else if (attribute.equals(SpeciesDAO.Attribute.GENOME_SPECIES_ID)) {
-            label = "genomeSpeciesId";
-        } else if (attribute.equals(SpeciesDAO.Attribute.FAKE_GENE_ID_PREFIX)) {
-            label = "fakeGeneIdPrefix";
-        } 
-        
-        return log.exit(label);
-    }
-    
-    
     /**
      * A {@code MySQLDAOResultSet} specific to {@code SpeciesTO}.
      * 
@@ -229,7 +255,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute>
                 }
             }
             //Set SpeciesTO
-            return log.exit(new SpeciesTO(speciesId, genus, species, speciesCommonName,
+            return log.exit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
                     taxonId, genomeFilePath, genomeSpeciesId, fakeGeneIdPrefix));
         }
     }

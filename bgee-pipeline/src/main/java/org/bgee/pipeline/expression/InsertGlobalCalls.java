@@ -101,11 +101,6 @@ public class InsertGlobalCalls extends CallUser {
         
         log.exit();
     }
-
-    /**
-     * An {@code int} used to generate IDs of global expression or no-expression calls.
-     */        
-    private int globalId;
     /**
      * A {@code FilterNoExprCalls} used to make sure no-expression calls were filtered 
      * before propagating them. See {@link FilterNoExprCalls#filterNoExpressionCalls(List)} 
@@ -534,7 +529,7 @@ public class InsertGlobalCalls extends CallUser {
         }
 
         log.debug("Done propagating expression.");
-        return log.exit(this.updateGlobalExpressions(mapGlobalExpr));        
+        return log.exit(this.updateGlobalExpressions(mapGlobalExpr, true, false));        
     }
 
     /**
@@ -626,85 +621,6 @@ public class InsertGlobalCalls extends CallUser {
     }
 
     /**
-     * Updates global expression calls of the given {@code Map} taking account {@code DataType}s and 
-     * anatomical entity IDs of calls to generate {@code OrigineOfLine} of global calls, 
-     * and returns them in a new {@code Map} associating generated global expression calls to 
-     * expression call IDs.
-     * <p>
-     * The provided {@code Map} will be empty to free up some memory.
-     * 
-     * @param globalMap     A {@code Map} associating generated global expression calls to 
-     *                      expression calls to be updated.
-     * @return              A {@code Map} associating generated global expression calls to 
-     *                      expression call IDs.
-     */
-    private Map<ExpressionCallTO, Set<String>> updateGlobalExpressions(
-            Map<ExpressionCallTO, Set<ExpressionCallTO>> globalMap) {
-        log.entry(globalMap);
-        log.debug("Updating global expression calls...");
-        // Create a Map associating generated global expression calls to expression call IDs.
-        Map<ExpressionCallTO, Set<String>> globalExprWithExprIds =
-                    new HashMap<ExpressionCallTO, Set<String>>();
-
-        // Create a Set from keySet to be able to modify globalMap.
-        Set<ExpressionCallTO> tmpGlobalCalls = new HashSet<ExpressionCallTO>(globalMap.keySet());
-        int i = 0;
-        int globalExprTOCount = tmpGlobalCalls.size();
-        for (ExpressionCallTO globalCall: tmpGlobalCalls) {
-            i++;
-            if (log.isDebugEnabled() && i % 100000 == 0) {
-                log.debug("{}/{} global expression calls analyzed.", i, globalExprTOCount);
-            }
-            // Remove generic global call which contains only 
-            // gene ID, anatomical entity ID, and stage ID
-            Set<ExpressionCallTO> calls = globalMap.remove(globalCall);
-
-            log.trace("Update global expression calls: {}; with: {}", globalCall, calls);
-            
-            // Define the best DataType of the global call according to all calls,
-            // get anatomical entity IDs to be able to define OriginOfLine later, 
-            // and get expression IDs to build the new  
-            DataState affymetrixData = DataState.NODATA, estData = DataState.NODATA, 
-                    inSituData = DataState.NODATA, rnaSeqData = DataState.NODATA;
-            Set<String> anatEntityIds = new HashSet<String>();
-            Set<String> exprIds = new HashSet<String>();
-            for (ExpressionCallTO call: calls) {
-                affymetrixData = getBestDataState(affymetrixData, call.getAffymetrixData());
-                estData = getBestDataState(estData, call.getESTData());
-                inSituData = getBestDataState(inSituData, call.getInSituData());
-                rnaSeqData = getBestDataState(rnaSeqData, call.getRNASeqData());
-                anatEntityIds.add(call.getAnatEntityId());
-                exprIds.add(call.getId());
-            }
-
-            // Define the OriginOfLine of the global expression call according to all calls
-            ExpressionCallTO.OriginOfLine origin = ExpressionCallTO.OriginOfLine.DESCENT;
-            if (anatEntityIds.contains(globalCall.getAnatEntityId())) {
-                if (anatEntityIds.size() == 1) {
-                    origin = ExpressionCallTO.OriginOfLine.SELF;
-                } else {
-                    origin = ExpressionCallTO.OriginOfLine.BOTH;
-                }
-            }
-            ExpressionCallTO updatedGlobalCall =
-                    new ExpressionCallTO(String.valueOf(this.globalId++), 
-                            globalCall.getGeneId(), globalCall.getAnatEntityId(), 
-                            globalCall.getStageId(), 
-                            affymetrixData, estData, inSituData, rnaSeqData, true,
-                            globalCall.isIncludeSubStages(), origin, 
-                            globalCall.getStageOriginOfLine(), globalCall.isObservedData());
-
-            log.trace("Updated global expression call: {}", updatedGlobalCall);
-
-            // Add the updated global expression call
-            globalExprWithExprIds.put(updatedGlobalCall, exprIds);
-        } 
-
-        log.debug("Done updating global expression calls.");
-        return log.exit(globalExprWithExprIds);
-    }
-
-    /**
      * Updates global no-expression calls of the given {@code Map} taking account {@code DataType}s 
      * and anatomical entity IDs of calls to generate {@code OrigineOfLine} of global calls, 
      * and returns them in a new {@code Map} associating generated global no-expression calls to 
@@ -780,24 +696,6 @@ public class InsertGlobalCalls extends CallUser {
 
         log.debug("Done updating global no-expression calls.");
         return log.exit(globalNoExprWithNoExprIds);
-    }
-
-    /**
-     * Get the best {@code DataState} between two {@code DataState}s.
-     * 
-     * @param dataState1    A {@code DataState} to be compare to {@code dataState2}.
-     * @param dataState2    A {@code DataState} to be compare to {@code dataState1}.
-     * @return              The best {@code DataState} between {@code dataState1} 
-     *                      and {@code dataState2}.
-     */
-    private DataState getBestDataState(DataState dataState1, DataState dataState2) {
-        log.entry(dataState1, dataState2);
-        
-        if (dataState1.ordinal() < dataState2.ordinal()) {
-            return log.exit(dataState2);
-        }
-        
-        return log.exit(dataState1);
     }
 
     /**

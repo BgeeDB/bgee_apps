@@ -205,21 +205,23 @@ public class BgeeDBUtilsTest extends TestAncestor {
     }
     
     /**
-     * Test {@link BgeeDBUtils#getStageChildrenFromParents(Set, RelationDAO)}.
+     * Test {@link BgeeDBUtils#getStageChildrenFromParents(Set, RelationDAO)} and 
+     * {@link BgeeDBUtils#getStageParentsFromChildren(Set, RelationDAO)}
      */
     @Test
-    public void shouldGetStageTargetsBySources() {
+    public void shouldGetStageTargetsOrSources() {
+        //stages can have only one direct parent
+        List<RelationTO> returnedRelTOs = Arrays.asList(
+                new RelationTO("1", "1"), 
+                new RelationTO("2", "2"), 
+                new RelationTO("3", "3"), 
+                new RelationTO("4", "4"), 
+                new RelationTO("2", "1"), 
+                new RelationTO("3", "1"), 
+                new RelationTO("4", "3"), 
+                new RelationTO("4", "1"));
+        
         try (MockDAOManager mockManager = new MockDAOManager()) {
-            //stages can have only one direct parent
-            List<RelationTO> returnedRelTOs = Arrays.asList(
-                    new RelationTO("1", "1"), 
-                    new RelationTO("2", "2"), 
-                    new RelationTO("3", "3"), 
-                    new RelationTO("4", "4"), 
-                    new RelationTO("2", "1"), 
-                    new RelationTO("3", "1"), 
-                    new RelationTO("4", "3"), 
-                    new RelationTO("4", "1"));
             
             RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
@@ -235,6 +237,29 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             assertEquals("Incorrect stage relatives by source", expectedReturnedVal, 
                     BgeeDBUtils.getStageChildrenFromParents(
+                            new HashSet<String>(Arrays.asList("1", "2")), 
+                            mockManager.getRelationDAO()));
+            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
+                    RelationDAO.Attribute.TARGETID);
+            verify(mockRelationTOResultSet).close();
+        }
+        
+        try (MockDAOManager mockManager = new MockDAOManager()) {
+            
+            RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
+                    returnedRelTOs, MySQLRelationTOResultSet.class);
+            when(mockManager.getRelationDAO().getStageRelations(
+                    new HashSet<String>(Arrays.asList("1", "2")), null)).thenReturn(
+                            mockRelationTOResultSet);
+            
+            Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
+            expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1")));
+            expectedReturnedVal.put("2", new HashSet<String>(Arrays.asList("1", "2")));
+            expectedReturnedVal.put("3", new HashSet<String>(Arrays.asList("1", "3")));
+            expectedReturnedVal.put("4", new HashSet<String>(Arrays.asList("1", "3", "4")));
+            
+            assertEquals("Incorrect stage relatives by source", expectedReturnedVal, 
+                    BgeeDBUtils.getStageParentsFromChildren(
                             new HashSet<String>(Arrays.asList("1", "2")), 
                             mockManager.getRelationDAO()));
             verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 

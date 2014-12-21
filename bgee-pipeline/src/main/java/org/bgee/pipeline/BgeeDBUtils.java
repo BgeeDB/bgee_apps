@@ -185,6 +185,35 @@ public class BgeeDBUtils {
         return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
                 speciesIds, false, true, relationDAO));
         
+    } 
+    /**
+     * Retrieves is_a/part_of developmental stage relatives from the Bgee data source 
+     * with child stages associated to their parents. In the returned 
+     * {@code Map}, keys are IDs of stages that are the source of a relation, 
+     * the associated value containing their associated target IDs.
+     * <p>
+     * Relations are retrieved for the species provided through {@code speciesIds}. 
+     * If {@code speciesIds} is {@code null} or empty, relations for any species are retrieved. 
+     * Only relations with a {@code RelationType} {@code ISA_PARTOF} are considered, 
+     * but with any {@code RelationStatus} ({@code REFLEXIVE}, {@code DIRECT}, 
+     * {@code INDIRECT}). 
+     * 
+     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
+     *                      to retrieve relations for. Can be {@code null} or empty.
+     * @param relationDAO   A {@code RelationDAO} to use to retrieve information about 
+     *                      relations between stages from the Bgee data source.
+     * @return              A {@code Map} where keys are {@code String}s representing the IDs 
+     *                      of stages that are the source of a relation, 
+     *                      the associated value being a {@code Set} of {@code String}s 
+     *                      that are the IDs of their associated targets. 
+     * @throws DAOException If an error occurred while getting the data from the Bgee database.
+     */
+    public static Map<String, Set<String>> getStageParentsFromChildren(Set<String> speciesIds, 
+            RelationDAO relationDAO) throws DAOException {
+        log.entry(speciesIds, relationDAO);
+        return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
+                speciesIds, false, false, relationDAO));
+        
     }
     
     /**

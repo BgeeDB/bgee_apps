@@ -4,16 +4,24 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
 
@@ -46,6 +54,98 @@ public abstract class CallUser extends MySQLDAOUser {
      */
     public CallUser(MySQLDAOManager manager) {
         super(manager);
+    }
+    
+
+
+    /**
+     * Retrieves all expression calls for given species in a {@code Map} associating gene IDs to 
+     * {@code ExpressionCallTO}s, present into the Bgee database.
+     * 
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     *                          allowing to filter the expression calls to use.
+     * @param exprCallDAO       A {@code ExpressionCallDAO} to use to retrieve information about 
+     *                          expression calls from the Bgee data source.
+     * @return                  A {@code LinkedHashMap} associating gene IDs to 
+     *                          {@code ExpressionCallTO}s of the given species. Returns a 
+     *                          {@code LinkedHashMap} to keep the order in which 
+     *                          {@code ExpressionCallTO}s are retrieved.
+     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
+     */
+    protected LinkedHashMap<String, List<ExpressionCallTO>> getExpressionCallsByGeneId(
+            Set<String> speciesIds) throws DAOException {
+        log.entry(speciesIds);
+        
+        ExpressionCallParams params = new ExpressionCallParams();
+        params.addAllSpeciesIds(speciesIds);
+
+        log.debug("Generating Map from genes to expression calls for species {}...", 
+                speciesIds);
+        LinkedHashMap<String, List<ExpressionCallTO>> map = 
+                new LinkedHashMap<String, List<ExpressionCallTO>>();
+        try (ExpressionCallTOResultSet exprTORs = 
+                this.getExpressionCallDAO().getExpressionCalls(params)) {
+            while (exprTORs.next()) {
+                ExpressionCallTO exprTO = exprTORs.getTO();
+                log.trace("Expression call: {}", exprTO);
+                List<ExpressionCallTO> curExprAsSet = map.get(exprTO.getGeneId());
+                if (curExprAsSet == null) {
+                    log.trace("Create new map key: {}", exprTO.getGeneId());
+                    curExprAsSet = new ArrayList<ExpressionCallTO>();
+                    map.put(exprTO.getGeneId(), curExprAsSet);
+                }
+                curExprAsSet.add(exprTO);
+            }
+        }
+        log.debug("Done generating Map from genes to expression calls for species {}, {} entries.", 
+                speciesIds, map.size());
+        
+        return log.exit(map);        
+    }
+
+    /**
+     * Retrieves all no-expression calls for given species in a {@code Map} associating gene IDs to 
+     * {@code NoExpressionCallTO}s, present into the Bgee database.
+     * 
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of species 
+     *                          allowing to filter the no-expression calls to use.
+     * @param noExprCallDAO     A {@code NoExpressionCallDAO} to use to retrieve information about 
+     *                          no-expression calls from the Bgee data source.
+     * @return                  A {@code LinkedHashMap} associating gene IDs to 
+     *                          {@code NoExpressionCallTO}s of the given species. Returns a 
+     *                          {@code LinkedHashMap} to keep the order in which 
+     *                          {@code NoExpressionCallTO}s are retrieved.
+     * @throws DAOException     If an error occurred while getting the data from the Bgee database.
+     */
+    protected LinkedHashMap<String, List<NoExpressionCallTO>> getNoExpressionCallsByGeneId(
+            Set<String> speciesIds) throws DAOException {
+        log.entry(speciesIds);
+
+        NoExpressionCallParams params = new NoExpressionCallParams();
+        params.addAllSpeciesIds(speciesIds);
+        
+        log.debug("Generating Map from genes to no-expression calls for species {}...", 
+                speciesIds);
+        LinkedHashMap<String, List<NoExpressionCallTO>> map = 
+                new LinkedHashMap<String, List<NoExpressionCallTO>>();
+        try (NoExpressionCallTOResultSet noExprTORs = 
+                this.getNoExpressionCallDAO().getNoExpressionCalls(params)) {
+            while (noExprTORs.next()) {
+                NoExpressionCallTO noExprTO = noExprTORs.getTO();
+                log.trace("No-expression call: {}", noExprTO);
+                List<NoExpressionCallTO> curNoExprAsSet = map.get(noExprTO.getGeneId());
+                if (curNoExprAsSet == null) {
+                    log.trace("Create new map key: {}", noExprTO.getGeneId());
+                    curNoExprAsSet = new ArrayList<NoExpressionCallTO>();
+                    map.put(noExprTO.getGeneId(), curNoExprAsSet);
+                }
+                curNoExprAsSet.add(noExprTO);
+            }
+        }
+        log.debug("Done generating Map from genes to no-expression calls for species {}, {} entries.", 
+                speciesIds, map.size());
+        
+        return log.exit(map);        
     }
     
     /**

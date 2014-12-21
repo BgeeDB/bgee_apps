@@ -238,8 +238,7 @@ public class InsertGlobalCalls extends CallUser {
                     log.info("Done cleaning conflicting no-expression calls before propagation.");
                     
                     LinkedHashMap<String, List<NoExpressionCallTO>> noExprTOs = 
-                            BgeeDBUtils.getNoExpressionCallsByGeneId(
-                                    speciesFilter, this.getNoExpressionCallDAO());
+                            this.getNoExpressionCallsByGeneId(speciesFilter);
                     
                     Map<String, Set<String>> anatEntityChildrenFromParents = 
                             BgeeDBUtils.getAnatEntityChildrenFromParents(speciesFilter, 
@@ -313,8 +312,7 @@ public class InsertGlobalCalls extends CallUser {
                             speciesId);
                     
                     LinkedHashMap<String, List<ExpressionCallTO>> exprTOs = 
-                            BgeeDBUtils.getExpressionCallsByGeneId(
-                                    speciesFilter, this.getExpressionCallDAO());
+                            this.getExpressionCallsByGeneId(speciesFilter);
                     
                     Map<String, Set<String>> anatEntityParentsFromChildren = 
                             BgeeDBUtils.getAnatEntityParentsFromChildren(speciesFilter, 

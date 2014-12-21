@@ -15,20 +15,12 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.TOComparator;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTOResultSet;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
-import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
@@ -41,8 +33,6 @@ import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO.MySQLAnatEntityTOResultSet;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO.MySQLStageTOResultSet;
-import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
-import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
@@ -250,138 +240,6 @@ public class BgeeDBUtilsTest extends TestAncestor {
             verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
                     RelationDAO.Attribute.TARGETID);
             verify(mockRelationTOResultSet).close();
-        }
-    }
-
-    /**
-     * Test {@link BgeeDBUtils#getExpressionCallsByGeneId(Set, ExpressionCallDAO)}.
-     */
-    @Test
-    public void shouldGetExpressionCallsByGeneId() {
-        try (MockDAOManager mockManager = new MockDAOManager()) {
-        
-            Map<String, Set<ExpressionCallTO>> expectedMap = 
-                    new HashMap<String, Set<ExpressionCallTO>>();
-            Set<ExpressionCallTO> Id1ExprSet = new HashSet<ExpressionCallTO>();
-            Id1ExprSet.addAll(Arrays.asList(
-                    new ExpressionCallTO("1", "ID1", "Anat_id4", "Stage_id6", 
-                            DataState.NODATA, DataState.LOWQUALITY, 
-                            DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                            false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                            ExpressionCallTO.OriginOfLine.SELF, true),
-                    new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
-                             DataState.HIGHQUALITY, DataState.NODATA, 
-                             DataState.NODATA, DataState.LOWQUALITY, 
-                             false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                             ExpressionCallTO.OriginOfLine.SELF, true),
-                    new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
-                             DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                             DataState.NODATA, DataState.LOWQUALITY, 
-                             false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                             ExpressionCallTO.OriginOfLine.SELF, true)));
-            expectedMap.put("ID1", Id1ExprSet);
-            
-            Set<ExpressionCallTO> Id2ExprSet = new HashSet<ExpressionCallTO>();
-            Id2ExprSet.addAll(Arrays.asList(
-                    new ExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id7", 
-                            DataState.LOWQUALITY, DataState.NODATA, 
-                            DataState.HIGHQUALITY, DataState.NODATA, 
-                            false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                            ExpressionCallTO.OriginOfLine.SELF, true),
-                    new ExpressionCallTO("5", "ID2", "Anat_id1", "Stage_id7", 
-                            DataState.NODATA, DataState.HIGHQUALITY, 
-                            DataState.LOWQUALITY, DataState.LOWQUALITY, 
-                            false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                            ExpressionCallTO.OriginOfLine.SELF, true)));
-            expectedMap.put("ID2", Id2ExprSet);
-            
-            List<ExpressionCallTO> allTOs = new ArrayList<ExpressionCallTO>(Id1ExprSet);
-            allTOs.addAll(Id2ExprSet);
-            
-            ExpressionCallTOResultSet mockExprResultSet = this.createMockDAOResultSet(
-                    allTOs, MySQLExpressionCallTOResultSet.class);
-            ExpressionCallParams params = new ExpressionCallParams();
-            params.addAllSpeciesIds(Arrays.asList("11", "21"));
-            when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                    (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).thenReturn(mockExprResultSet);
-            
-            Map<String, List<ExpressionCallTO>> returnedMap = BgeeDBUtils.getExpressionCallsByGeneId(
-                    new HashSet<String>(Arrays.asList("11", "21")),
-                    mockManager.getExpressionCallDAO());
-            
-            assertEquals("Maps not equal, different sizes", expectedMap.size() , returnedMap.size());
-            
-            for(String id : expectedMap.keySet()) {
-                if(returnedMap.containsKey(id)) {
-                    assertTrue("Incorrect map generated: different values for " + id, 
-                            TOComparator.areTOCollectionsEqual(expectedMap.get(id), returnedMap.get(id)));
-                } else {
-                    throw new AssertionError("Incorrect map generated: missing expected id " + id);
-                }
-            }
-        }
-    }
-    
-    /**
-     * Test {@link BgeeDBUtils#getNoExpressionCallsByGeneId(Set, NoExpressionCallDAO)}.
-     */
-    @Test
-    public void shouldGetNoExpressionCallsByGeneId() {
-        try (MockDAOManager mockManager = new MockDAOManager()) {
-        
-            Map<String, Set<NoExpressionCallTO>> expectedMap = 
-                    new HashMap<String, Set<NoExpressionCallTO>>();
-            Set<NoExpressionCallTO> Id1NoExprSet = new HashSet<NoExpressionCallTO>();
-            Id1NoExprSet.addAll(Arrays.asList(
-                    new NoExpressionCallTO("2", "ID1", "Anat_id3", "Stage_id1", 
-                            DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA, 
-                            DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                            new NoExpressionCallTO("3", "ID1", "Anat_id4", "Stage_id3", 
-                                    DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                                    DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF),
-                                    new NoExpressionCallTO("5", "ID1", "Anat_id5", "Stage_id3", 
-                                            DataState.NODATA, DataState.HIGHQUALITY, DataState.LOWQUALITY, 
-                                            DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF)));
-            expectedMap.put("ID1", Id1NoExprSet);
-            
-            Set<NoExpressionCallTO> Id2NoExprSet = new HashSet<NoExpressionCallTO>();
-            Id2NoExprSet.add(new NoExpressionCallTO("4", "ID2", "Anat_id4", "Stage_id3", 
-                    DataState.LOWQUALITY, DataState.NODATA, DataState.HIGHQUALITY, 
-                    DataState.NODATA, false, NoExpressionCallTO.OriginOfLine.SELF));
-            expectedMap.put("ID2", Id2NoExprSet);
-            
-            Set<NoExpressionCallTO> Id3NoExprSet = new HashSet<NoExpressionCallTO>();
-            Id3NoExprSet.add(new NoExpressionCallTO("1", "ID3", "Anat_id1", "Stage_id6", 
-                    DataState.NODATA, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                    DataState.LOWQUALITY, false, NoExpressionCallTO.OriginOfLine.SELF));
-            expectedMap.put("ID3", Id3NoExprSet);
-            
-            List<NoExpressionCallTO> allTOs = new ArrayList<NoExpressionCallTO>(Id1NoExprSet);
-            allTOs.addAll(Id2NoExprSet);
-            allTOs.addAll(Id3NoExprSet);
-            
-            NoExpressionCallTOResultSet mockNoExprResultSet = this.createMockDAOResultSet(
-                    allTOs, MySQLNoExpressionCallTOResultSet.class);
-            NoExpressionCallParams params = new NoExpressionCallParams();
-            params.addAllSpeciesIds(Arrays.asList("11", "21"));
-            when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                    (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
-                    thenReturn(mockNoExprResultSet);
-            
-            Map<String, List<NoExpressionCallTO>> returnedMap = BgeeDBUtils.getNoExpressionCallsByGeneId(
-                    new HashSet<String>(Arrays.asList("11", "21")),
-                    mockManager.getNoExpressionCallDAO());
-            
-            assertEquals("Maps not equal, different sizes", expectedMap.size() , returnedMap.size());
-            
-            for(String id : expectedMap.keySet()) {
-                if(returnedMap.containsKey(id)) {
-                    assertTrue("Incorrect map generated: different values for " + id, 
-                            TOComparator.areTOCollectionsEqual(expectedMap.get(id), returnedMap.get(id)));
-                } else {
-                    throw new AssertionError("Incorrect map generated: missing expected id " + id);
-                }
-            }
         }
     }
     

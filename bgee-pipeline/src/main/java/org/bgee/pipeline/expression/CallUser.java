@@ -379,7 +379,6 @@ public abstract class CallUser extends MySQLDAOUser {
      *                      {@code Set}s of {@code String}s that are the IDs of the 
      *                      {@code ExpressionCallTO}s they were generated from.
      */
-    //TODO: unit test this method now that it is not private anymore
     protected Map<ExpressionCallTO, Set<String>> updateGlobalExpressions(
             Map<ExpressionCallTO, Set<ExpressionCallTO>> globalMap, 
             boolean propagatingAnatomy, boolean propagatingStage) {

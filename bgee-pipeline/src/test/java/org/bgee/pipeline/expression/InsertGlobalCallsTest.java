@@ -39,7 +39,6 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpre
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
-import org.bgee.pipeline.BgeeDBUtilsTest;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Rule;
 import org.junit.Test;
@@ -127,7 +126,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("11"));
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(params))).
                 thenReturn(mockExpr11TORs);
         
         // We need a mock MySQLExpressionCallTOResultSet to mock the return of getExpressionCalls().
@@ -152,7 +151,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("21"));
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(params))).
                 thenReturn(mockExpr21TORs);
 
         // We need to mock the return of insertExpressionCalls() for species 11 (ID1, ID2 then ID3)
@@ -513,7 +512,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
                                 null, null, null, null, null, false, false, null, null, null)),
                 MySQLExpressionCallTOResultSet.class);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(new ExpressionCallParams()))).
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(new ExpressionCallParams()))).
                 thenReturn(mockExprAnatTORs);
         
         // Mock MySQLNoExpressionCallTOResultSet to mock the return of getNoExpressionCalls(),
@@ -535,7 +534,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
                                       null, null, null, null, null, false, null)),
                 MySQLNoExpressionCallTOResultSet.class);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(
+                (NoExpressionCallParams) TestAncestor.valueCallParamEq(
                         new NoExpressionCallParams()))).
                 thenReturn(mockNoExprAnatTORs);
         
@@ -590,7 +589,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         NoExpressionCallParams noExprparams = new NoExpressionCallParams();
         noExprparams.addAllSpeciesIds(Arrays.asList("11"));
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(noExprparams))).
+                (NoExpressionCallParams) TestAncestor.valueCallParamEq(noExprparams))).
                 thenReturn(mockNoExprTORs);
         
         // We need to mock the return of insertNoExpressionCalls() for species 11 (ID1, ID2 then ID3)

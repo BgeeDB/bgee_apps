@@ -37,7 +37,6 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpre
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO.MySQLGeneTOResultSet;
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
-import org.bgee.pipeline.BgeeDBUtilsTest;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.expression.GenerateDownloadFile.ExpressionData;
@@ -200,7 +199,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         globalExprParams11.setIncludeSubstructures(true);
         globalExprParams11.setIncludeSubStages(true);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalExprParams11))).
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(globalExprParams11))).
                 thenReturn(mockGlobalExprRsSp11);
 
         // Global no-expression calls
@@ -230,7 +229,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         globalNoExprParams11.addAllSpeciesIds(speciesIds);
         globalNoExprParams11.setIncludeParentStructures(true);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams11))).
+                (NoExpressionCallParams) TestAncestor.valueCallParamEq(globalNoExprParams11))).
                 thenReturn(mockGlobalNoExprRsSp11);
 
         //// Species 22
@@ -289,7 +288,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         globalExprParams22.setIncludeSubstructures(true);
         globalExprParams22.setIncludeSubStages(true);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalExprParams22))).
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(globalExprParams22))).
                 thenReturn(mockGlobalExprRsSp22);
 
         // Global no-expression calls
@@ -316,7 +315,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         globalNoExprParams22.addAllSpeciesIds(speciesIds);
         globalNoExprParams22.setIncludeParentStructures(true);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams22))).
+                (NoExpressionCallParams) TestAncestor.valueCallParamEq(globalNoExprParams22))).
                 thenReturn(mockGlobalNoExprRsSp22);
 
         GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
@@ -444,7 +443,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         globalExprParams33.setIncludeSubstructures(true);
         globalExprParams33.setIncludeSubStages(true);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalExprParams33))).
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(globalExprParams33))).
                 thenReturn(mockGlobalExprRsSp33);
 
         // Global no-expression calls
@@ -459,7 +458,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         globalNoExprParams33.addAllSpeciesIds(speciesIds);
         globalNoExprParams33.setIncludeParentStructures(true);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams33))).
+                (NoExpressionCallParams) TestAncestor.valueCallParamEq(globalNoExprParams33))).
                 thenReturn(mockGlobalNoExprRsSp33);
 
         thrown.expect(IllegalStateException.class);
@@ -538,7 +537,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         globalExprParams33.setIncludeSubstructures(true);
         globalExprParams33.setIncludeSubStages(true);
         when(mockManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalExprParams33))).
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(globalExprParams33))).
                 thenReturn(mockGlobalExprRsSp33);
 
         // Global no-expression calls
@@ -553,7 +552,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         globalNoExprParams33.addAllSpeciesIds(speciesIds);
         globalNoExprParams33.setIncludeParentStructures(true);
         when(mockManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(globalNoExprParams33))).
+                (NoExpressionCallParams) TestAncestor.valueCallParamEq(globalNoExprParams33))).
                 thenReturn(mockGlobalNoExprRsSp33);
 
         thrown.expect(IllegalStateException.class);

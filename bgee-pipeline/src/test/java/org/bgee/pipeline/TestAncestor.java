@@ -309,7 +309,7 @@ public abstract class TestAncestor
      * 
      *  @param expected  A {@code CallParams} that is the argument to be verified.
      */
-    public static CallParams valueCallParamEq(CallParams params) {
+    protected static CallParams valueCallParamEq(CallParams params) {
         return argThat(new CallParamsMatcher(params));
     }
 }

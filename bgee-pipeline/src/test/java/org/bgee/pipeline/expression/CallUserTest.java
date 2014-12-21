@@ -30,7 +30,6 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
-import org.bgee.pipeline.BgeeDBUtilsTest;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Before;
 import org.junit.Test;
@@ -137,7 +136,7 @@ public class CallUserTest extends TestAncestor {
         ExpressionCallParams params = new ExpressionCallParams();
         params.addAllSpeciesIds(Arrays.asList("11", "21"));
         when(mockDAOManager.mockExpressionCallDAO.getExpressionCalls(
-                (ExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).thenReturn(mockExprResultSet);
+                (ExpressionCallParams) TestAncestor.valueCallParamEq(params))).thenReturn(mockExprResultSet);
         
         Map<String, List<ExpressionCallTO>> returnedMap = callUser.getExpressionCallsByGeneId(
                 new HashSet<String>(Arrays.asList("11", "21")));
@@ -197,7 +196,7 @@ public class CallUserTest extends TestAncestor {
             NoExpressionCallParams params = new NoExpressionCallParams();
             params.addAllSpeciesIds(Arrays.asList("11", "21"));
             when(mockDAOManager.mockNoExpressionCallDAO.getNoExpressionCalls(
-                    (NoExpressionCallParams) BgeeDBUtilsTest.valueCallParamEq(params))).
+                    (NoExpressionCallParams) TestAncestor.valueCallParamEq(params))).
                     thenReturn(mockNoExprResultSet);
             
             Map<String, List<NoExpressionCallTO>> returnedMap = callUser.getNoExpressionCallsByGeneId(

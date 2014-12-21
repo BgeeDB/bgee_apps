@@ -195,7 +195,7 @@ public abstract class CallUser extends MySQLDAOUser {
     protected SortedMap<CallTO, Collection<CallTO>> groupAndOrderByGeneAnatEntityStage(
             Collection<CallTO> callTOs) throws IllegalArgumentException {
         log.entry(callTOs);
-        log.debug("Start sorting and grouping of {} calls...", callTOs.size());
+        log.trace("Start sorting and grouping of {} calls...", callTOs.size());
         
         /**
          * {@code Comparator} used to order they keyset in the returned {@code Map}.
@@ -256,7 +256,7 @@ public abstract class CallUser extends MySQLDAOUser {
             aggregatedCalls.add(callTO);
         }
 
-        log.debug("Done sorting and grouping of {} calls.", callTOs.size());
+        log.trace("Done sorting and grouping of {} calls.", callTOs.size());
         return log.exit(aggregateMap);
     }
     
@@ -348,8 +348,10 @@ public abstract class CallUser extends MySQLDAOUser {
      * of all status ({@code REFLEXIVE}, {@code INDIRECT}, {@code DIRECT}), with child IDs 
      * as keys, see {@link BgeeDBUtils#getStageChildrenFromParents(Set, RelationDAO)}.
      * 
-     * @param expressionTOs         A {@code List} of {@code ExpressionCallTO}s containing 
-     *                              all expression calls to propagate.
+     * @param expressionTOs         A {@code Collection} of {@code ExpressionCallTO}s containing 
+     *                              all expression calls to propagate. It is a {@code Collection} 
+     *                              so that it can contain equal {@code ExpressionCallTO}s, 
+     *                              but with different propagation status.
      * @param parentsFromChildren   A {@code Map} where keys are IDs of anatomical entities 
      *                              or developmental stages that are sources of a relation, 
      *                              the associated value being a {@code Set} of {@code String}s 
@@ -364,13 +366,12 @@ public abstract class CallUser extends MySQLDAOUser {
      * @see #updateGlobalExpressions(Map, boolean, boolean)
      */
     //NOTE: this method does not call updateGlobalExpressions anymore, to provide better 
-    //unity of the method, and allow better unit testing
-    //TODO: why is expressionTOs a List?
+    //unicity of the method, and allow better unit testing
     protected Map<ExpressionCallTO, Set<ExpressionCallTO>> groupExpressionCallTOsByPropagatedCalls(
-            List<ExpressionCallTO> expressionTOs, Map<String, Set<String>> parentsFromChildren, 
+            Collection<ExpressionCallTO> expressionTOs, Map<String, Set<String>> parentsFromChildren, 
             boolean anatomyPropagation) {
         log.entry(expressionTOs, parentsFromChildren, anatomyPropagation);
-        log.debug("Generating propagated calls (to anatomy? {} - to stages? {})...", 
+        log.trace("Generating propagated calls (to anatomy? {} - to stages? {})...", 
                 anatomyPropagation, !anatomyPropagation);
         
         Map<ExpressionCallTO, Set<ExpressionCallTO>> mapGlobalExpr = 
@@ -437,7 +438,7 @@ public abstract class CallUser extends MySQLDAOUser {
             }
         }
 
-        log.debug("Done generating propagated calls.");
+        log.trace("Done generating propagated calls.");
         return log.exit(mapGlobalExpr);        
     }
 
@@ -499,7 +500,7 @@ public abstract class CallUser extends MySQLDAOUser {
             boolean propagatingAnatomy, boolean propagatingStage) {
         log.entry(globalMap, propagatingAnatomy, propagatingStage);
         
-        log.debug("Updating expression calls...");
+        log.trace("Updating expression calls...");
         // Create a Map associating generated expression calls to expression call IDs.
         Map<ExpressionCallTO, Set<String>> globalExprWithExprIds =
                     new HashMap<ExpressionCallTO, Set<String>>();
@@ -657,7 +658,7 @@ public abstract class CallUser extends MySQLDAOUser {
             globalExprWithExprIds.put(updatedGlobalCall, exprIds);
         } 
 
-        log.debug("Done updating global expression calls.");
+        log.trace("Done updating global expression calls.");
         return log.exit(globalExprWithExprIds);
     }
 

@@ -72,25 +72,34 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
         //part of endDisplay?
         this.writeln("<div id='sib_body'>");
-        this.writeln("<h1>Welcome on the latest release of Bgee, Bgee release 13</h1>");
-        //TODO: fix the css so that the download page use a different h1 css definition, 
-        //to remove these <br />
-        this.writeln("<br /><br />");
+        this.writeln("<h2>Welcome on the latest release of Bgee, Bgee release 13</h2>");
         
         RequestParameters urlGenerator = this.getNewRequestParameters();
         urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        
+        this.writeln("<div id='feature_list'>");
+        this.writeln("<a href='" + urlGenerator.getRequestURL() + "' title='Bgee download page'>" +
+        		"<figure><div><img src='" + this.prop.getImagesRootDirectory() + 
+        		"download_screenshot.png' alt='Download page screenshot' /></div>" +
+                "<figcaption>See download page</figcaption>" +
+                "</figure></a>");
+        this.writeln("</div>");
+        
+        this.writeln("<div id='home_info'>");
         this.writeln("<p>Features are being added incrementally: </p>");
         this.writeln("<ul><li>2014-12-19: release of the single-species " +
-        		"expression data for 16 species, soon 17 (with mouse), see <a href='" + 
+                "expression data for 17 species, see <a href='" + 
                 urlGenerator.getRequestURL() + "' " + "title='Bgee download page'>" +
                 "download page</a>.</li></ul>");
-        
         this.writeln("<p>The complete website remains available for the previous release of Bgee, " +
-        		"see <a href='http://bgee.org/bgee/bgee/'>Bgee release 12</a>.</p>");
-        this.writeln("<p>You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> " +
+        		"see <a href='http://bgee.org/bgee/bgee/'>Bgee release 12</a>. ");
+        this.writeln("You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> " +
         		"or <a href='https://bgeedb.wordpress.com'>our blog</a>.</p>");
         this.writeln("</div>");
 
+        //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
+        //part of endDisplay?
+        this.writeln("</div>");
         this.endDisplay();
         log.exit();
     }
@@ -186,6 +195,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "</p>"
                 + "Please check the URL and retry.</p>");
         this.endDisplay();  
+        log.exit();
+    }
+
+    @Override
+    protected void includeCss() {
+        log.entry();
+        super.includeCss();
+        this.includeCss("general.css");
         log.exit();
     }
 }

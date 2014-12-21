@@ -159,6 +159,22 @@ figure.highlight {
 }
 
 /****BGEE DATASELECTION****/
+label {
+    color: #920209;
+}
+
+p {
+    margin: 0 2%;
+}
+
+#sib_body h1 {
+    display: inline-block; 
+    margin: 0 0 0 2%;
+    color: #920209;
+    font-size: 1em;
+    font-weight: normal;
+}
+
 #bgee_data_selection {
     position: relative;
     background-color: #282828;
@@ -265,6 +281,11 @@ figure.highlight {
 
 .download_link:visited {
     color: #282828;
+}
+
+figure {
+    cursor: pointer;
+    float: left;
 }
 
 figure.selected {

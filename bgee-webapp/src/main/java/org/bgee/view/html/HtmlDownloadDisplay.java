@@ -22,6 +22,7 @@ import org.bgee.view.DownloadDisplay;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
+//TODO: all images should have an alt attribute
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
  
     private final static Logger log = LogManager.getLogger(HtmlDownloadDisplay.class.getName());
@@ -90,7 +91,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<h1>Species</h1>");
         this.writeln("<div class='downloadsection'>");
         this.writeln(generateSpeciesFigure(9606));
-        //this.writeln(generateSpeciesFigure(10090));
+        this.writeln(generateSpeciesFigure(10090));
         this.writeln(generateSpeciesFigure(7955));
         this.writeln(generateSpeciesFigure(7227));
         this.writeln(generateSpeciesFigure(6239));
@@ -181,7 +182,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
         this.writeln("</div>");
 
-        // 
+        //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
+        //part of endDisplay?
+        this.writeln("</div>");
         this.endDisplay();
         log.exit();
     }
@@ -454,8 +457,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 break;
             //TODO: set file sizes
             case 10090: 
-                exprSimpleFileSize = "5 MB";
-                exprAdvancedFileSize = "6 GB"; 
+                exprSimpleFileSize = "115 MB";
+                exprAdvancedFileSize = "1.5 GB"; 
                 diffExprSimpleFileSize = "7 MB";
                 diffExprAdvancedFileSize  = "8 GB";
                 latinName = "Mus_musculus";

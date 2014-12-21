@@ -128,7 +128,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     public void endDisplay()
     {
         log.entry();
-        this.writeln("</div>");
         this.writeln("<footer>");
         this.writeln("<div id='sib_footer_content'>");
         this.writeln("<a href='http://www.isb-sib.ch'>SIB Swiss Institute of Bioinformatics</a>");

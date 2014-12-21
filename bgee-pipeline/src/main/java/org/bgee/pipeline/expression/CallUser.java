@@ -327,6 +327,121 @@ public abstract class CallUser extends MySQLDAOUser {
 
 
     /**
+     * Propagate {@code ExpressionCallTO}s contained in {@code expressionTOs} 
+     * to parent anatomical entities or to parent developmental stages, depending on 
+     * {@code anatomyPropagation}, using the relations provided through 
+     * {@code parentsFromChildren}.
+     * <p>
+     * This method generates a {@code Map} where keys are the generated propagated 
+     * {@code ExpressionCallTO}s, the associated value containing all provided 
+     * {@code ExpressionCallTO}s it was generated from. {@link #updateGlobalExpressions(
+     * Map, boolean, boolean)} should then be called to compute correct parameters 
+     * for these propagated {@code ExpressionCallTO}s.
+     * <p>
+     * If {@code anatomyPropagation} is {@code true}, {@code parentsFromChildren} 
+     * should contain the relations {@code IS_A PART_OF} between anatomical entities, 
+     * of all status ({@code REFLEXIVE}, {@code INDIRECT}, {@code DIRECT}), with child IDs 
+     * as keys, see {@link BgeeDBUtils#getAnatEntityParentsFromChildren(Set, RelationDAO)}.
+     * <p>
+     * If {@code anatomyPropagation} is {@code false}, {@code parentsFromChildren} 
+     * should contain the relations {@code IS_A PART_OF} between stages, 
+     * of all status ({@code REFLEXIVE}, {@code INDIRECT}, {@code DIRECT}), with child IDs 
+     * as keys, see {@link BgeeDBUtils#getStageChildrenFromParents(Set, RelationDAO)}.
+     * 
+     * @param expressionTOs         A {@code List} of {@code ExpressionCallTO}s containing 
+     *                              all expression calls to propagate.
+     * @param parentsFromChildren   A {@code Map} where keys are IDs of anatomical entities 
+     *                              or developmental stages that are sources of a relation, 
+     *                              the associated value being a {@code Set} of {@code String}s 
+     *                              that are the IDs of their associated targets.
+     * @param anatomyPropagation    A {@code boolean} defining whether {@code ExpressionCallTO}s 
+     *                              should be propagated to parent anatomical entities 
+     *                              (if {@code true}), or to parent stages (if {@code false}).
+     * @return                      A {@code Map} where keys are propagated global 
+     *                              {@code ExpressionCallTO}s, the associated value being 
+     *                              a {@code Set} containing the {@code ExpressionCallTO}s  
+     *                              it was generated from.
+     * @see #updateGlobalExpressions(Map, boolean, boolean)
+     */
+    //NOTE: this method does not call updateGlobalExpressions anymore, to provide better 
+    //unity of the method, and allow better unit testing
+    //TODO: why is expressionTOs a List?
+    protected Map<ExpressionCallTO, Set<ExpressionCallTO>> groupExpressionCallTOsByPropagatedCalls(
+            List<ExpressionCallTO> expressionTOs, Map<String, Set<String>> parentsFromChildren, 
+            boolean anatomyPropagation) {
+        log.entry(expressionTOs, parentsFromChildren, anatomyPropagation);
+        log.debug("Generating propagated calls (to anatomy? {} - to stages? {})...", 
+                anatomyPropagation, !anatomyPropagation);
+        
+        Map<ExpressionCallTO, Set<ExpressionCallTO>> mapGlobalExpr = 
+                new HashMap<ExpressionCallTO, Set<ExpressionCallTO>>();
+        int i = 0;
+        int exprTOCount = expressionTOs.size();
+        for (ExpressionCallTO exprCallTO : expressionTOs) {
+            i++;
+            if (log.isDebugEnabled() && i % 100000 == 0) {
+                log.debug("{}/{} expression calls analyzed.", i, exprTOCount);
+            }
+            log.trace("Propagation for expression call: {}", exprCallTO);
+            String childId = null;
+            if (anatomyPropagation) {
+                childId = exprCallTO.getAnatEntityId();
+            } else {
+                childId = exprCallTO.getStageId();
+            }
+            Set<String> parents = parentsFromChildren.get(childId);
+            //the relations include a reflexive relation, where sourceId == targetId, 
+            //this will allow to also include the actual not-propagated calls. 
+            //we should always have at least a reflexive relation, so, if there is 
+            //not a least one "parents" , something is wrong in the database. 
+            if (parents == null) {
+                throw log.throwing(new IllegalStateException("The anatomical or stage entity " +
+                        childId + " is not defined as existing " +
+                                "in the species of gene " + exprCallTO.getGeneId() + 
+                                ", while it has expression data in it."));
+            }
+            for (String parentId : parents) {
+                log.trace("Propagation of the current expression to parent: {}", parentId);
+                // Set ID to null to be able to compare keys of the map on 
+                // gene ID, anatomical entity ID, and stage ID.
+                // Add propagated expression call.
+                String newAnatEntityId = exprCallTO.getAnatEntityId();
+                String newStageId = exprCallTO.getStageId();
+                if (anatomyPropagation) {
+                    newAnatEntityId = parentId;
+                } else {
+                    newStageId = parentId;
+                }
+                ExpressionCallTO propagatedExpression = new ExpressionCallTO(
+                        null, 
+                        exprCallTO.getGeneId(),
+                        newAnatEntityId,
+                        newStageId,
+                        DataState.NODATA,      
+                        DataState.NODATA,
+                        DataState.NODATA,
+                        DataState.NODATA,
+                        false,
+                        false,
+                        ExpressionCallTO.OriginOfLine.SELF, 
+                        ExpressionCallTO.OriginOfLine.SELF,
+                        null);
+                
+                log.trace("Add the propagated expression: {}", propagatedExpression);
+                Set<ExpressionCallTO> curExprAsSet = mapGlobalExpr.get(propagatedExpression);
+                if (curExprAsSet == null) {
+                    curExprAsSet = new HashSet<ExpressionCallTO>();
+                    mapGlobalExpr.put(propagatedExpression, curExprAsSet);
+                }
+                curExprAsSet.add(exprCallTO);
+            }
+        }
+
+        log.debug("Done generating propagated calls.");
+        return log.exit(mapGlobalExpr);        
+    }
+
+    /**
      * Generates correct global propagated {@code ExpressionCallTO}s using {@code globalMap}, 
      * with IDs generated, correct values of {@code DataState} for each data type, 
      * correct values of {@code OriginOfLine} for both stage and anatomical entity 

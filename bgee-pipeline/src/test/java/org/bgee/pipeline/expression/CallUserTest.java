@@ -441,6 +441,176 @@ public class CallUserTest extends TestAncestor {
     }
     
     /**
+     * Test the method {@link CallUser#generateGlobalExpressionTOs(List, Map, boolean)} 
+     * with the boolean argument set to {@code true}.
+     */
+    @Test
+    public void shouldGenerateGlobalExpressionTOsToAnatomy() {
+        CallUser callUser = new FakeCallUser();
+        
+        ExpressionCallTO callTO1 = new ExpressionCallTO("4", "geneId", "childAnatId1", "stageId",
+                DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO callTO2 = new ExpressionCallTO("10", "geneId", "childAnatId2", "stageId",
+                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO callTO3 = new ExpressionCallTO("11", "geneId", "parentAnatId", "stageId",
+                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO callTO4 = new ExpressionCallTO("12", "geneId", "otherAnatId", "stageId",
+                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        List<ExpressionCallTO> basicCalls = Arrays.asList(callTO1, callTO2, callTO3, callTO4);
+        Map<String, Set<String>> anatRelations = new HashMap<String, Set<String>>();
+        anatRelations.put("parentAnatId", new HashSet<String>(Arrays.asList("parentAnatId")));
+        anatRelations.put("parentAnatId2", new HashSet<String>(Arrays.asList("parentAnatId2")));
+        anatRelations.put("otherAnatId", new HashSet<String>(Arrays.asList("otherAnatId")));
+        anatRelations.put("whatever", new HashSet<String>(Arrays.asList("whatever")));
+        anatRelations.put("childAnatId1", new HashSet<String>(
+                Arrays.asList("childAnatId1", "parentAnatId")));
+        anatRelations.put("childAnatId2", new HashSet<String>(
+                Arrays.asList("childAnatId2", "parentAnatId", "parentAnatId2")));
+        
+        Map<ExpressionCallTO, Set<ExpressionCallTO>> expectedMap = 
+                new HashMap<ExpressionCallTO, Set<ExpressionCallTO>>();
+        ExpressionCallTO propagatedTO1 = new ExpressionCallTO(
+                null, "geneId", "parentAnatId", "stageId", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO propagatedTO2 = new ExpressionCallTO(
+                null, "geneId", "parentAnatId2", "stageId", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO propagatedTO3 = new ExpressionCallTO(
+                null, "geneId", "otherAnatId", "stageId", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO propagatedTO4 = new ExpressionCallTO(
+                null, "geneId", "childAnatId1", "stageId", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO propagatedTO5 = new ExpressionCallTO(
+                null, "geneId", "childAnatId2", "stageId", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        //propagated call from children and from self
+        expectedMap.put(propagatedTO1, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO1, callTO2, callTO3)));
+        //propagated call from child only
+        expectedMap.put(propagatedTO2, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO2)));
+        //propagated calls from self only
+        expectedMap.put(propagatedTO3, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO4)));
+        expectedMap.put(propagatedTO4, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO1)));
+        expectedMap.put(propagatedTO5, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO2)));
+        Map<ExpressionCallTO, Set<ExpressionCallTO>> generatedMap = 
+                callUser.groupExpressionCallTOsByPropagatedCalls(basicCalls, anatRelations, true);
+        assertTrue("Incorrect generated calls, expected: " + expectedMap.keySet() + 
+                ", but was: " + generatedMap.keySet(), 
+                TOComparator.areTOCollectionsEqual(expectedMap.keySet(), generatedMap.keySet()));
+        //we check the whole Map with the regular equals method, this is enough to check 
+        //values
+        assertEquals("Incorrect generated Map", expectedMap, generatedMap);
+    }
+    
+    /**
+     * Test the method {@link CallUser#generateGlobalExpressionTOs(List, Map, boolean)} 
+     * with the boolean argument set to {@code false}.
+     */
+    @Test
+    public void shouldGenerateGlobalExpressionTOsToStages() {
+        CallUser callUser = new FakeCallUser();
+        
+        ExpressionCallTO callTO1 = new ExpressionCallTO("4", "geneId", "anatEntityId", "childStageId1",
+                DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO callTO2 = new ExpressionCallTO("10", "geneId", "anatEntityId", "childStageId2",
+                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO callTO3 = new ExpressionCallTO("11", "geneId", "anatEntityId", "parentStageId",
+                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO callTO4 = new ExpressionCallTO("12", "geneId", "anatEntityId", "otherStageId",
+                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        List<ExpressionCallTO> basicCalls = Arrays.asList(callTO1, callTO2, callTO3, callTO4);
+        Map<String, Set<String>> anatRelations = new HashMap<String, Set<String>>();
+        anatRelations.put("parentStageId", new HashSet<String>(Arrays.asList("parentStageId")));
+        anatRelations.put("parentStageId2", new HashSet<String>(Arrays.asList("parentStageId2")));
+        anatRelations.put("otherStageId", new HashSet<String>(Arrays.asList("otherStageId")));
+        anatRelations.put("whatever", new HashSet<String>(Arrays.asList("whatever")));
+        anatRelations.put("childStageId1", new HashSet<String>(
+                Arrays.asList("childStageId1", "parentStageId")));
+        anatRelations.put("childStageId2", new HashSet<String>(
+                Arrays.asList("childStageId2", "parentStageId", "parentStageId2")));
+        
+        Map<ExpressionCallTO, Set<ExpressionCallTO>> expectedMap = 
+                new HashMap<ExpressionCallTO, Set<ExpressionCallTO>>();
+        ExpressionCallTO propagatedTO1 = new ExpressionCallTO(
+                null, "geneId", "anatEntityId", "parentStageId", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO propagatedTO2 = new ExpressionCallTO(
+                null, "geneId", "anatEntityId", "parentStageId2", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO propagatedTO3 = new ExpressionCallTO(
+                null, "geneId", "anatEntityId", "otherStageId", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO propagatedTO4 = new ExpressionCallTO(
+                null, "geneId", "anatEntityId", "childStageId1", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        ExpressionCallTO propagatedTO5 = new ExpressionCallTO(
+                null, "geneId", "anatEntityId", "childStageId2", 
+                DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null);
+        //propagated call from children and from self
+        expectedMap.put(propagatedTO1, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO1, callTO2, callTO3)));
+        //propagated call from child only
+        expectedMap.put(propagatedTO2, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO2)));
+        //propagated calls from self only
+        expectedMap.put(propagatedTO3, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO4)));
+        expectedMap.put(propagatedTO4, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO1)));
+        expectedMap.put(propagatedTO5, new HashSet<ExpressionCallTO>(Arrays.asList(
+                callTO2)));
+        Map<ExpressionCallTO, Set<ExpressionCallTO>> generatedMap = 
+                callUser.groupExpressionCallTOsByPropagatedCalls(basicCalls, anatRelations, false);
+        assertTrue("Incorrect generated calls, expected: " + expectedMap.keySet() + 
+                ", but was: " + generatedMap.keySet(), 
+                TOComparator.areTOCollectionsEqual(expectedMap.keySet(), generatedMap.keySet()));
+        //we check the whole Map with the regular equals method, this is enough to check 
+        //values
+        assertEquals("Incorrect generated Map", expectedMap, generatedMap);
+    }
+    
+    /**
      * Test the method {@link CallUser#updateGlobalExpressions(Map, boolean, boolean)}.
      */
     @Test

@@ -327,8 +327,10 @@ public class InsertGlobalCalls extends CallUser {
                         }
                         // For each expression row, propagate to parents.
                         Map<ExpressionCallTO, Set<String>> globalExprMap =
-                                this.generateGlobalExpressionTOs(
-                                        entry.getValue(), anatEntityParentsFromChildren);
+                                this.updateGlobalExpressions(
+                                        this.groupExpressionCallTOsByPropagatedCalls(
+                                            entry.getValue(), anatEntityParentsFromChildren, true), 
+                                        true, false);
 
                         // Generate the globalExprToExprTOs.
                         Set<GlobalExpressionToExpressionTO> globalExprToExprTOs = 
@@ -449,87 +451,6 @@ public class InsertGlobalCalls extends CallUser {
                 allowedAnatEntities.size());
     
         return log.exit(allowedAnatEntities);        
-    }
-
-    /**
-     * Generate the global expression calls from given expression calls filling the return 
-     * {@code Map} associating each generated global expression calls to expression call IDs used 
-     * to generate it.
-     * <p>
-     * First, the method fills the map with generic global expression calls as key (only gene ID, 
-     * anatomical entity ID, and stage ID are defined) with all expression calls used to generate 
-     * the global expression call. Second, it updates the global expression calls calling
-     * {@link #updateGlobalExpressions()}.
-     * 
-     * @param expressionTOs         A {@code List} of {@code ExpressionCallTO}s containing 
-     *                              all expression calls to propagate.
-     * @param parentsFromChildren   A {@code Map} where keys are IDs of anatomical entities 
-     *                              that are sources of a relation, the associated value 
-     *                              being a {@code Set} of {@code String}s that are 
-     *                              the IDs of their associated targets. 
-     * @return                      A {@code Map} associating generated global expression calls to 
-     *                              expression call IDs used to generate it.
-     */
-    private Map<ExpressionCallTO, Set<String>> generateGlobalExpressionTOs(
-            List<ExpressionCallTO> expressionTOs, 
-            Map<String, Set<String>> parentsFromChildren) {
-        log.entry(expressionTOs, parentsFromChildren);
-        log.debug("Propagating expression...");
-        Map<ExpressionCallTO, Set<ExpressionCallTO>> mapGlobalExpr = 
-                new HashMap<ExpressionCallTO, Set<ExpressionCallTO>>();
-        int i = 0;
-        int exprTOCount = expressionTOs.size();
-        for (ExpressionCallTO exprCallTO : expressionTOs) {
-            i++;
-            if (log.isDebugEnabled() && i % 100000 == 0) {
-                log.debug("{}/{} expression calls analyzed.", i, exprTOCount);
-            }
-            log.trace("Propagation for expression call: {}", exprCallTO);
-            //the relations include a reflexive relation, where sourceId == targetId, 
-            //this will allow to also include the actual not-propagated calls. 
-            //we should always have at least a reflexive relation, so, if there is 
-            //no "parents" for the anatomical entity, something is wrong 
-            //in the database. 
-            Set<String> parents = parentsFromChildren.get(exprCallTO.getAnatEntityId());
-            if (parents == null) {
-                throw log.throwing(new IllegalStateException("The anatomical entity " +
-                        exprCallTO.getAnatEntityId() + " is not defined as existing " +
-                        		"in the species of gene " + exprCallTO.getGeneId() + 
-                        		", while it has expression data in it."));
-            }
-            for (String parentId : parents) {
-                log.trace("Propagation of the current expression to parent: {}", parentId);
-                // Set ID to null to be able to compare keys of the map on 
-                // gene ID, anatomical entity ID, and stage ID.
-                // Add propagated expression call (same gene ID and stage ID 
-                // but with anatomical entity ID of the current relation target ID).
-                ExpressionCallTO propagatedExpression = new ExpressionCallTO(
-                        null, 
-                        exprCallTO.getGeneId(),
-                        parentId,
-                        exprCallTO.getStageId(),
-                        DataState.NODATA,      
-                        DataState.NODATA,
-                        DataState.NODATA,
-                        DataState.NODATA,
-                        false,
-                        false,
-                        ExpressionCallTO.OriginOfLine.SELF, 
-                        ExpressionCallTO.OriginOfLine.SELF,
-                        null);
-                
-                log.trace("Add the propagated expression: {}", propagatedExpression);
-                Set<ExpressionCallTO> curExprAsSet = mapGlobalExpr.get(propagatedExpression);
-                if (curExprAsSet == null) {
-                    curExprAsSet = new HashSet<ExpressionCallTO>();
-                    mapGlobalExpr.put(propagatedExpression, curExprAsSet);
-                }
-                curExprAsSet.add(exprCallTO);
-            }
-        }
-
-        log.debug("Done propagating expression.");
-        return log.exit(this.updateGlobalExpressions(mapGlobalExpr, true, false));        
     }
 
     /**

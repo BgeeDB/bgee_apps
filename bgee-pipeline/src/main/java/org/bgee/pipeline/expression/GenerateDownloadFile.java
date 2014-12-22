@@ -822,7 +822,8 @@ public class GenerateDownloadFile extends CallUser {
                 //OK, first, we need to propagate expression calls to parent stages 
                 //(calls were retrieved with propagation to parent organs already performed)
                 Set<ExpressionCallTO> stagePropagatedExprCallTOs = new HashSet<ExpressionCallTO>();
-                Set<ExpressionCallTO> exprCallTOs = globalExprTOsByGeneIds.get(geneId);
+                //remove calls from Map to free some memory
+                Set<ExpressionCallTO> exprCallTOs = globalExprTOsByGeneIds.remove(geneId);
                 if (exprCallTOs != null && !exprCallTOs.isEmpty()) {
                     stagePropagatedExprCallTOs = this.updateGlobalExpressions(
                             this.groupExpressionCallTOsByPropagatedCalls(
@@ -832,7 +833,8 @@ public class GenerateDownloadFile extends CallUser {
                 //now, we need to aggregate expression and no-expression calls, and to order them.
                 Set<CallTO> allCallTOs = new HashSet<CallTO>();
                 allCallTOs.addAll(stagePropagatedExprCallTOs);
-                Set<NoExpressionCallTO> noExprCallTOs = globalNoExprTOsByGeneIds.get(geneId);
+                //remove calls from Map to free some memory
+                Set<NoExpressionCallTO> noExprCallTOs = globalNoExprTOsByGeneIds.remove(geneId);
                 if (noExprCallTOs != null) {
                     allCallTOs.addAll(noExprCallTOs);
                 }

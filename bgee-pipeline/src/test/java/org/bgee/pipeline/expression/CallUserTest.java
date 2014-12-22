@@ -628,19 +628,19 @@ public class CallUserTest extends TestAncestor {
         Set<ExpressionCallTO> basicCalls = new HashSet<ExpressionCallTO>(Arrays.asList(
                     new ExpressionCallTO("4", "geneId", "childAnatId1", "stageId",
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                        DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                        DataState.NODATA, false, true, ExpressionCallTO.OriginOfLine.SELF, 
                         ExpressionCallTO.OriginOfLine.SELF, null), 
                     new ExpressionCallTO("10", "geneId", "childAnatId2", "stageId",
                             DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                            DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                            ExpressionCallTO.OriginOfLine.SELF, null)));
+                            DataState.NODATA, false, true, ExpressionCallTO.OriginOfLine.SELF, 
+                            ExpressionCallTO.OriginOfLine.DESCENT, null)));
         
         toUpate.put(globalCallTO, basicCalls);
         ExpressionCallTO expectedGlobalCallTO = new ExpressionCallTO("1", "geneId", 
                 "parentAnatId", "stageId",
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
-                ExpressionCallTO.OriginOfLine.SELF, false);
+                true, true, ExpressionCallTO.OriginOfLine.DESCENT, 
+                ExpressionCallTO.OriginOfLine.BOTH, false);
         Map<ExpressionCallTO, Set<String>> updatedMap = callUser.updateGlobalExpressions(
                 toUpate, true, false);
         ExpressionCallTO upatedGlobalCallTO = updatedMap.keySet().iterator().next();
@@ -655,15 +655,15 @@ public class CallUserTest extends TestAncestor {
         
         ExpressionCallTO selfTO = new ExpressionCallTO("12", "geneId", "parentAnatId", "stageId",
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                DataState.LOWQUALITY, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                DataState.LOWQUALITY, false, true, ExpressionCallTO.OriginOfLine.SELF, 
                 ExpressionCallTO.OriginOfLine.SELF, null);
         basicCalls.add(selfTO);
         toUpate.put(expectedGlobalCallTO, basicCalls);
         expectedGlobalCallTO = new ExpressionCallTO("1", "geneId", 
                 "parentAnatId", "stageId",
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.LOWQUALITY,
-                true, false, ExpressionCallTO.OriginOfLine.BOTH, 
-                ExpressionCallTO.OriginOfLine.SELF, true);
+                true, true, ExpressionCallTO.OriginOfLine.BOTH, 
+                ExpressionCallTO.OriginOfLine.BOTH, true);
         updatedMap = callUser.updateGlobalExpressions(
                 toUpate, true, false);
         upatedGlobalCallTO = updatedMap.keySet().iterator().next();
@@ -682,7 +682,7 @@ public class CallUserTest extends TestAncestor {
         expectedGlobalCallTO = new ExpressionCallTO("1", "geneId", 
                 "parentAnatId", "stageId",
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.LOWQUALITY,
-                true, false, ExpressionCallTO.OriginOfLine.SELF, 
+                true, true, ExpressionCallTO.OriginOfLine.SELF, 
                 ExpressionCallTO.OriginOfLine.SELF, true);
         updatedMap = callUser.updateGlobalExpressions(
                 toUpate, true, false);
@@ -704,7 +704,7 @@ public class CallUserTest extends TestAncestor {
         basicCalls = new HashSet<ExpressionCallTO>(Arrays.asList(
                     new ExpressionCallTO("4", "geneId", "anatId", "stageId1",
                         DataState.LOWQUALITY, DataState.LOWQUALITY, DataState.HIGHQUALITY, 
-                        DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.SELF, 
+                        DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
                         ExpressionCallTO.OriginOfLine.SELF, null), 
                     new ExpressionCallTO("10", "geneId", "anatId", "stageId2",
                             DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
@@ -714,7 +714,7 @@ public class CallUserTest extends TestAncestor {
         toUpate.put(globalCallTO, basicCalls);
         expectedGlobalCallTO = new ExpressionCallTO("myID", "geneId", "anatId", "parentStageId",
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                true, true, ExpressionCallTO.OriginOfLine.SELF, 
+                true, true, ExpressionCallTO.OriginOfLine.BOTH, 
                 ExpressionCallTO.OriginOfLine.DESCENT, false);
         updatedMap = callUser.updateGlobalExpressions(
                 toUpate, false, true);
@@ -735,7 +735,7 @@ public class CallUserTest extends TestAncestor {
         toUpate.put(globalCallTO, basicCalls);
         expectedGlobalCallTO = new ExpressionCallTO("myID", "geneId", "anatId", "parentStageId",
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.HIGHQUALITY, DataState.NODATA,
-                true, true, ExpressionCallTO.OriginOfLine.SELF, 
+                true, true, ExpressionCallTO.OriginOfLine.BOTH, 
                 ExpressionCallTO.OriginOfLine.BOTH, true);
         updatedMap = callUser.updateGlobalExpressions(
                 toUpate, false, true);
@@ -752,13 +752,17 @@ public class CallUserTest extends TestAncestor {
         basicCalls.clear();
         basicCalls.add(new ExpressionCallTO("12", "geneId", "anatId", "parentStageId",
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
-                DataState.NODATA, true, false, ExpressionCallTO.OriginOfLine.SELF, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.SELF, null));
+        basicCalls.add(new ExpressionCallTO("13", "geneId", "anatId", "stageId1",
+                DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, 
+                DataState.NODATA, false, false, ExpressionCallTO.OriginOfLine.SELF, 
                 ExpressionCallTO.OriginOfLine.SELF, null));
         toUpate.put(globalCallTO, basicCalls);
         expectedGlobalCallTO = new ExpressionCallTO("myID", "geneId", "anatId", "parentStageId",
                 DataState.LOWQUALITY, DataState.HIGHQUALITY, DataState.NODATA, DataState.NODATA,
-                true, true, ExpressionCallTO.OriginOfLine.SELF, 
-                ExpressionCallTO.OriginOfLine.SELF, true);
+                false, true, ExpressionCallTO.OriginOfLine.SELF, 
+                ExpressionCallTO.OriginOfLine.BOTH, true);
         updatedMap = callUser.updateGlobalExpressions(
                 toUpate, false, true);
         upatedGlobalCallTO = updatedMap.keySet().iterator().next();
@@ -766,14 +770,14 @@ public class CallUserTest extends TestAncestor {
         assertTrue("Incorrect TO generated, expected: " + expectedGlobalCallTO + ", but was: " + 
                 upatedGlobalCallTO, 
                 TOComparator.areTOsEqual(expectedGlobalCallTO, upatedGlobalCallTO));
-        assertEquals("Incorrect associated IDs", new HashSet<String>(Arrays.asList("12")), 
+        assertEquals("Incorrect associated IDs", new HashSet<String>(Arrays.asList("12", "13")), 
                 updatedMap.values().iterator().next());
         assertTrue("Provided Map was not emptied", toUpate.isEmpty());
         
         
         globalCallTO = new ExpressionCallTO("myID", "geneId", "anatId", "parentStageId",
                 DataState.NODATA, DataState.NODATA, DataState.NODATA, DataState.NODATA,
-                true, false, ExpressionCallTO.OriginOfLine.DESCENT, 
+                false, false, ExpressionCallTO.OriginOfLine.SELF, 
                 ExpressionCallTO.OriginOfLine.SELF, null);
         
         basicCalls.clear();

@@ -69,6 +69,11 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div class='downloadsection'>");
         this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns between animal species. ");
         this.writeln("This is a beta download page, more features and documentation will be deployed soon. </p>");
+        this.writeln("<p>Click on a species to browse files to download. You can also download " +
+        //TODO: change this ugly '../' once we'll have added a property to distinguish 
+        //FTP root and download_files directory. See todo in BgeeProperties
+        		"<a href='" + this.prop.getDownloadRootDirectory() + "../statistics.tsv' " +
+        				"title='Database statistics TSV file'>database statistics</a>.</p>");
         this.writeln("<p>See also previous <a href='http://bgee.unil.ch/bgee/bgee'>Bgee release 12</a>. ");
         this.writeln("You can follow us on <a href='https://twitter.com/Bgeedb'>twitter</a> or <a href='https://bgeedb.wordpress.com'>our blog</a>.</p>");
         this.writeln("</div>");
@@ -253,14 +258,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 case 7227: 
                     name = "Drosophila melanogaster";
                     shortName = "D. melanogaster";
-                    commonName = "fruitfly";
+                    commonName = "fruit fly";
                     alternateNames = "vinegar fly";
                     break;
                 case 6239: 
                     name = "Caenorhabditis elegans";
                     shortName = "C. elegans";
-                    commonName = "worm";
-                    alternateNames = "nematode, roundworm";
+                    commonName = "nematode";
+                    alternateNames = "worm, roundworm";
                     break;
                 case 9597: 
                     name = "Pan paniscus";
@@ -301,8 +306,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 case 9913: 
                     name = "Bos taurus";
                     shortName = "B. taurus";
-                    commonName = "cow";
-                    alternateNames = "domestic cow, domestic cattle, bovine cow";
+                    commonName = "cattle";
+                    alternateNames = "cow, domestic cow, domestic cattle, bovine cow";
                     break;
                 case 9823: 
                     name = "Sus scrofa";
@@ -331,14 +336,14 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 case 28377: 
                     name = "Anolis carolinensis";
                     shortName = "A. carolinensis";
-                    commonName = "anolis";
-                    alternateNames = "green anole, carolina anole";
+                    commonName = "green anole";
+                    alternateNames = "anolis, carolina anole";
                     break;
                 case 8364: 
                     name = "Xenopus tropicalis";
                     shortName = "X. tropicalis";
-                    commonName = "xenopus";
-                    alternateNames = "western clawed frog";
+                    commonName = "western clawed frog";
+                    alternateNames = "xenopus";
                     break;
                 case 99883: 
                     name = "Tetraodon nigroviridis";
@@ -618,7 +623,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         image.append("<img src='");
         image.append(this.prop.getImagesRootDirectory());
         image.append("species/");
-        image.append(commonName);
+        image.append(id);
         if (lightImg) {
             image.append("_light");
         }

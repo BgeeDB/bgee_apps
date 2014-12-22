@@ -543,6 +543,9 @@ public class BgeeProperties
      *          available for download, to be added to the {@code bgeeRootDirectory} to 
      *          generate URL to download files
      */
+    //TODO: create a property downloadRootDirectory that will be the root of the Bgee FTP
+    //then  property downloadFilesDirectory, relative to this downloadRootDirectory 
+    //(because we have other files to link to, that are not in the download_files dir.)
     public String getDownloadRootDirectory() {
         return downloadRootDirectory;
     }

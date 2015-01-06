@@ -26,8 +26,6 @@ public interface DAO<T extends Enum<?> & DAO.Attribute> {
      * @see #setAttributes(Enum[])
      * @since Bgee 13
      */
-    //TODO: change all attribute names to use _ as separator
-    //TODO: use STAGE_ID instead of DEV_STAGE_ID
     public interface Attribute {
         //nothing here, it is only used for typing the Enum classes.
     }

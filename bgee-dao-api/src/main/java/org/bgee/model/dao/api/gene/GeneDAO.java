@@ -60,8 +60,7 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
      * @return              An {@code GeneTOResultSet} containing all genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    //TODO: change method name to 'getGenesBySpeciesIds'
-    public GeneTOResultSet getGenes(Set<String> speciesIds) throws DAOException;
+    public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException;
 
     /**
      * Update {@code Attribute}s of the provided genes, which are represented as a 

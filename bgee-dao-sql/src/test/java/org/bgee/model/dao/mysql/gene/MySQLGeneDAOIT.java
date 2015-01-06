@@ -101,7 +101,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // Without specified species IDs
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-        List<GeneTO> methGenes = dao.getGenes(null).getAllTOs();
+        List<GeneTO> methGenes = dao.getGenesBySpeciesIds(null).getAllTOs();
         List<GeneTO> expectedGenes = Arrays.asList(
                 new GeneTO("ID1", null, null, null, null, null, null), 
                 new GeneTO("ID2", null, null, null, null, null, null), 
@@ -114,7 +114,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
         Set<String> speciesIds = new HashSet<String>();
         speciesIds.addAll(Arrays.asList("11", "31", "44"));
         dao.clearAttributes();
-        methGenes = dao.getGenes(speciesIds).getAllTOs();
+        methGenes = dao.getGenesBySpeciesIds(speciesIds).getAllTOs();
 
         // Generate manually expected result
         expectedGenes = Arrays.asList(

@@ -94,7 +94,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
     
     @Override
-    public AnatEntityTOResultSet getNonInformativeAnatEntities(Set<String> speciesIds) 
+    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);      
 

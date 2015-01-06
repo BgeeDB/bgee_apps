@@ -57,8 +57,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * @return              An {@code StageTOResultSet} containing all stages from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    //TODO: rename to getStagesBySpeciesIds
-    public StageTOResultSet getStages(Set<String> speciesIds) throws DAOException;
+    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds) throws DAOException;
     
     /**
      * Inserts the provided stages into the Bgee database, represented as 

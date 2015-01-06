@@ -316,7 +316,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
-        // Test get only GENEID without species filter and without including substructures
+        // Test get only GENE_ID without species filter and without including substructures
         dao.clearAttributes();
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID));
         params.clearSpeciesIds();
@@ -333,7 +333,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
 
-        // Test get only GENEID without species filter and without including substructures
+        // Test get only GENE_ID without species filter and without including substructures
         dao.clearAttributes();
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES));
         expectedExprCalls = Arrays.asList(
@@ -385,7 +385,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
         assertFalse("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
-        // Test get INCLUDESUBSTRUCTURES (and STAGEID) without OriginOfLine including substructures
+        // Test get INCLUDE_SUBSTRUCTURES (and STAGE_ID) without OriginOfLine including substructures
         dao.clearAttributes();
         dao.setAttributes(
                 ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.INCLUDE_SUBSTRUCTURES);
@@ -713,7 +713,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
         assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
-        // Test get only GENEID without species filter and without including substructures, 
+        // Test get only GENE_ID without species filter and without including substructures, 
         // but with including sub-stages
         dao.clearAttributes();
         dao.setAttributes(Arrays.asList(ExpressionCallDAO.Attribute.GENE_ID));
@@ -799,7 +799,7 @@ public class MySQLExpressionCallDAOIT extends MySQLITAncestor {
         assertFalse("Incorrect filtering of duplicates", rs.isFilterDuplicates());
         assertTrue("Incorrect use of the LIMIT feature", rs.isUsingLimitFeature());
         
-        // Test get INCLUDE_SUBSTAGES (and STAGEID) without OriginOfLine including sub-stages
+        // Test get INCLUDE_SUBSTAGES (and STAGE_ID) without OriginOfLine including sub-stages
         dao.clearAttributes();
         dao.setAttributes(
                 ExpressionCallDAO.Attribute.STAGE_ID, ExpressionCallDAO.Attribute.INCLUDE_SUBSTAGES);

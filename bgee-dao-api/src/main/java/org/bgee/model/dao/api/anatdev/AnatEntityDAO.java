@@ -70,7 +70,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      *                      anatomical entities from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public AnatEntityTOResultSet getNonInformativeAnatEntities(Set<String> speciesIds) 
+    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Set<String> speciesIds) 
             throws DAOException;
     
     /**

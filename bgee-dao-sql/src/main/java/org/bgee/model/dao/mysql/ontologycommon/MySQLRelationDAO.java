@@ -50,7 +50,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    public RelationTOResultSet getAnatEntityRelations(Set<String> speciesIds, 
+    public RelationTOResultSet getAnatEntityRelationsBySpeciesIds(Set<String> speciesIds, 
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes, relationStatus);    
 
@@ -141,7 +141,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
      
     @Override
-    public RelationTOResultSet getStageRelations(Set<String> speciesIds, 
+    public RelationTOResultSet getStageRelationsBySpeciesIds(Set<String> speciesIds, 
             Set<RelationStatus> relationStatus) {
         //NOTE: there is no relation table for stages, as they are represented 
         //as a nested set model. So, this method will emulate the existence of such a table, 

@@ -270,10 +270,10 @@ public class BgeeDBUtils {
         Map<String, Set<String>> relativesMap = new HashMap<String, Set<String>>();
         try {
             if (anatEntityRelatives) {
-                relTORs = relationDAO.getAnatEntityRelations(
+                relTORs = relationDAO.getAnatEntityRelationsBySpeciesIds(
                         speciesIds, EnumSet.of(RelationType.ISA_PARTOF), null);
             } else {
-                relTORs = relationDAO.getStageRelations(speciesIds, null);
+                relTORs = relationDAO.getStageRelationsBySpeciesIds(speciesIds, null);
             }
             
             //now, populate Map where keys are sourceId and values the associated targetIds, 
@@ -327,7 +327,8 @@ public class BgeeDBUtils {
         Collection<GeneDAO.Attribute> attributes = geneDAO.getAttributes();
         geneDAO.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
         
-        Map<String, String> geneNamesByIds = generateNamesByIdsMap(geneDAO.getGenes(speciesIds));
+        Map<String, String> geneNamesByIds = 
+                generateNamesByIdsMap(geneDAO.getGenesBySpeciesIds(speciesIds));
         
         //restore geneDAO in proper state
         geneDAO.setAttributes(attributes);
@@ -357,7 +358,8 @@ public class BgeeDBUtils {
         Collection<StageDAO.Attribute> attributes = stageDAO.getAttributes();
         stageDAO.setAttributes(StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
         
-        Map<String, String> stageNamesByIds = generateNamesByIdsMap(stageDAO.getStages(speciesIds));
+        Map<String, String> stageNamesByIds = generateNamesByIdsMap(
+                stageDAO.getStagesBySpeciesIds(speciesIds));
         
         //restore geneDAO in proper state
         stageDAO.setAttributes(attributes);

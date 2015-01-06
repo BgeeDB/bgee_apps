@@ -160,7 +160,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
-            when(mockManager.getRelationDAO().getAnatEntityRelations(
+            when(mockManager.getRelationDAO().getAnatEntityRelationsBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")), 
                     EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
             
@@ -183,7 +183,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
-            when(mockManager.getRelationDAO().getAnatEntityRelations(
+            when(mockManager.getRelationDAO().getAnatEntityRelationsBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")), 
                     EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
             
@@ -225,7 +225,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
-            when(mockManager.getRelationDAO().getStageRelations(
+            when(mockManager.getRelationDAO().getStageRelationsBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")), null)).thenReturn(
                             mockRelationTOResultSet);
             
@@ -248,7 +248,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             RelationTOResultSet mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
-            when(mockManager.getRelationDAO().getStageRelations(
+            when(mockManager.getRelationDAO().getStageRelationsBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")), null)).thenReturn(
                             mockRelationTOResultSet);
             
@@ -282,7 +282,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
-            when(mockManager.getGeneDAO().getGenes(
+            when(mockManager.getGeneDAO().getGenesBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
                             mockRS);
             
@@ -307,7 +307,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             GeneTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedGeneTOs, MySQLGeneTOResultSet.class);
-            when(mockManager.getGeneDAO().getGenes(
+            when(mockManager.getGeneDAO().getGenesBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
                             mockRS);
             
@@ -341,7 +341,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             StageTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedStageTOs, MySQLStageTOResultSet.class);
-            when(mockManager.getStageDAO().getStages(
+            when(mockManager.getStageDAO().getStagesBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
                             mockRS);
             
@@ -366,7 +366,7 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             StageTOResultSet mockRS = this.createMockDAOResultSet(
                     returnedStageTOs, MySQLStageTOResultSet.class);
-            when(mockManager.getStageDAO().getStages(
+            when(mockManager.getStageDAO().getStagesBySpeciesIds(
                     new HashSet<String>(Arrays.asList("1", "2")))).thenReturn(
                             mockRS);
             

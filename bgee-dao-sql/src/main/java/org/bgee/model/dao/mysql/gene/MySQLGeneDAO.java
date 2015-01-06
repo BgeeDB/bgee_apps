@@ -80,7 +80,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     }
     
     @Override
-    public GeneTOResultSet getGenes(Set<String> speciesIds) throws DAOException {
+    public GeneTOResultSet getGenesBySpeciesIds(Set<String> speciesIds) throws DAOException {
         log.entry();      
 
         Collection<GeneDAO.Attribute> attributes = this.getAttributes();

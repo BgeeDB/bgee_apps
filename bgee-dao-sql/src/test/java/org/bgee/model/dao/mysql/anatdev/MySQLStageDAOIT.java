@@ -77,7 +77,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
         // Test recovery of all attributes without filter on species IDs
         List<StageTO> expectedStages = allStageTOs;
         assertTrue("StageTOs incorrectly retrieved",
-                TOComparator.areTOCollectionsEqual(dao.getStages(null).getAllTOs(), expectedStages));
+                TOComparator.areTOCollectionsEqual(dao.getStagesBySpeciesIds(null).getAllTOs(), expectedStages));
         
         // Test recovery of one attribute without filter on species IDs
         dao.setAttributes(Arrays.asList(StageDAO.Attribute.ID, StageDAO.Attribute.NAME));
@@ -101,7 +101,7 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                 new StageTO("Stage_id17", "stageN17", null, null, null, null, null, null), 
                 new StageTO("Stage_id18", "stageN18", null, null, null, null, null, null));
         assertTrue("StageTOs incorrectly retrieved",
-                TOComparator.areTOCollectionsEqual(dao.getStages(null).getAllTOs(), expectedStages));
+                TOComparator.areTOCollectionsEqual(dao.getStagesBySpeciesIds(null).getAllTOs(), expectedStages));
 
         // Test recovery of all attributes with filter on species IDs
         dao.clearAttributes();
@@ -119,12 +119,12 @@ public class MySQLStageDAOIT extends MySQLITAncestor {
                 new StageTO("Stage_id18", "stageN18", "stage Desc 18", 33, 34, 3, false, false));
         assertTrue("StageTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getStages(speciesIds).getAllTOs(), expectedStages));
+                        dao.getStagesBySpeciesIds(speciesIds).getAllTOs(), expectedStages));
         
         dao.clearAttributes();
         speciesIds = new HashSet<String>(Arrays.asList("11", "21", "31", "44"));
         expectedStages = allStageTOs;
-        List<StageTO> retrievedStageTOs = dao.getStages(speciesIds).getAllTOs();
+        List<StageTO> retrievedStageTOs = dao.getStagesBySpeciesIds(speciesIds).getAllTOs();
         assertTrue("StageTOs incorrectly retrieved, expected " + expectedStages + 
                 " - but was: " + retrievedStageTOs,
                 TOComparator.areTOCollectionsEqual(retrievedStageTOs, expectedStages));

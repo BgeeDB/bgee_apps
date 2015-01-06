@@ -35,7 +35,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     }
 
     @Override
-    public StageTOResultSet getStages(Set<String> speciesIds) throws DAOException {
+    public StageTOResultSet getStagesBySpeciesIds(Set<String> speciesIds) throws DAOException {
         log.entry(speciesIds);       
         
         String tableName = "stage";

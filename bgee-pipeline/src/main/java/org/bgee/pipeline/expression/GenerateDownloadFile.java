@@ -514,7 +514,7 @@ public class GenerateDownloadFile extends CallUser {
         AnatEntityDAO dao = this.getAnatEntityDAO();
         dao.setAttributes(AnatEntityDAO.Attribute.ID);
         Set<String> anatEntities = new HashSet<String>();
-        try (AnatEntityTOResultSet rs = dao.getNonInformativeAnatEntities(speciesIds)) {
+        try (AnatEntityTOResultSet rs = dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)) {
             while (rs.next()) {
                 anatEntities.add(rs.getTO().getId());
             }

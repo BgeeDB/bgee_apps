@@ -135,8 +135,8 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         private final String OMAGroupId;
 
         /**
-         * An {@code Integer} representing the NCBI taxonomy ID of the hierarchical level
-         * queried.
+         * An {@code Integer} representing the NCBI taxonomy ID corresponding to 
+         * the node in the tree of hierarchical groups. It is equal to {@code 0} for paralog groups.
          */
         private final Integer taxonId;
 
@@ -171,15 +171,15 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
          * If a bound is not {@code null}, it should be positive.
          * 
          * @param id            An {@code Integer} that is the ID of a node in the tree of
-         *                      hierarchical groups
+         *                      hierarchical groups.
          * @param OMAGroupId    A {@code String} that is the ID for a particular OMA
          *                      group of orthologous genes
          * @param leftBound     An {@code Integer} that is the hierarchical left bound of the
          *                      nested set.
          * @param rightBound    An {@code Integer} that is the hierarchical right bound of
          *                      the nested set.
-         * @param taxonId       An {@code Integer} that is the NCBI taxonomy ID of the
-         *                      hierarchical level queried.
+         * @param taxonId       An {@code Integer} that is the NCBI taxonomy ID corresponding to 
+         *                      the node in the tree of hierarchical groups.
          * @throws IllegalArgumentException If {@code id} is empty, or if any of {code leftBound} or
          *                                  {code rightBound} is not {@code null} and less than 0.
          */
@@ -213,10 +213,10 @@ public interface HierarchicalGroupDAO extends DAO<HierarchicalGroupDAO.Attribute
         }
 
         /**
-         * @return An {@code Integer} representing the NCBI taxonomy ID of the hierarchical
-         *         level queried.
+         * @return An {@code Integer} that is the NCBI taxonomy ID corresponding to 
+         *         the node in the tree of hierarchical groups. 
+         *         It is equal to {@code 0} for paralog groups.
          */
-        //TODO: more explanatory javadoc
         public int getTaxonId() {
             return this.taxonId;
         }

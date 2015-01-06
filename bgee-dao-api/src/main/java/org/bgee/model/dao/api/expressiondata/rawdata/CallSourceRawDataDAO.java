@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 public interface CallSourceRawDataDAO extends DAO<CallSourceRawDataDAO.Attribute> {
     
     /**
-     * {@code Enum} used to define the attributes to populate in the {@code CallTO}s 
+     * {@code Enum} used to define the attributes to populate in the {@code CallSourceRawDataTO}s 
      * obtained from this {@code CallSourceRawDataDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link CallSourceRawDataTO#getId()}.

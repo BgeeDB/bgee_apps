@@ -227,11 +227,11 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
                         dao.getNoExpressionCalls(params).getAllTOs()));
 
-        // Test get INCLUDEPARENTSTRUCTURES (and ANATENTITYID) without species filter and without 
-        // ORIGINOFLINE and without including substructures
+        // Test get INCLUDE_PARENT_STRUCTURES (and ANAT_ENTITY_ID) without species filter and 
+        // without ORIGIN_OF_LINE and without including substructures
         dao.clearAttributes();
-        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.ANATENTITYID, 
-                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES));
+        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID, 
+                NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES));
         expectedNoExprCalls = Arrays.asList(
                 new NoExpressionCallTO(null, null, "Anat_id1", null, null, null, null, null, 
                         false, null),
@@ -251,9 +251,9 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(expectedNoExprCalls, 
                         dao.getNoExpressionCalls(params).getAllTOs()));
 
-        // Test get only AFFYMETRIXDATA without species filter and including substructures
+        // Test get only AFFYMETRIX_DATA without species filter and including substructures
         dao.clearAttributes();
-        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.AFFYMETRIXDATA));
+        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.AFFYMETRIX_DATA));
         params.setIncludeParentStructures(true);
         expectedNoExprCalls = Arrays.asList(
                 new NoExpressionCallTO(null, null, null, null, DataState.NODATA, 
@@ -268,11 +268,11 @@ public class MySQLNoExpressionCallDAOIT extends MySQLITAncestor {
                         dao.getNoExpressionCalls(params).getAllTOs()));
         
         
-        // Test get INCLUDEPARENTSTRUCTURES (and GENEID) without species filter and 
-        // without ORIGINOFLINE including substructures
+        // Test get INCLUDE_PARENT_STRUCTURES (and GENE_ID) without species filter and 
+        // without ORIGIN_OF_LINE including substructures
         dao.clearAttributes();
-        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.GENEID, 
-                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES));
+        dao.setAttributes(Arrays.asList(NoExpressionCallDAO.Attribute.GENE_ID, 
+                NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES));
         expectedNoExprCalls = Arrays.asList(
                 new NoExpressionCallTO(null, "ID1", null, null, null, null, null, null, true, null),
                 new NoExpressionCallTO(null, "ID2", null, null, null, null, null, null, true, null),

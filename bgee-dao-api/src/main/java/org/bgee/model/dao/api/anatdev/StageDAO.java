@@ -42,7 +42,7 @@ public interface StageDAO extends DAO<StageDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, LEFTBOUND, RIGHTBOUND, LEVEL, GRANULAR, GROUPING;
+        ID, NAME, DESCRIPTION, LEFT_BOUND, RIGHT_BOUND, LEVEL, GRANULAR, GROUPING;
     }
 
     /**

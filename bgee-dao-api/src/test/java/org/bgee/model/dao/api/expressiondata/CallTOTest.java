@@ -386,9 +386,9 @@ public class CallTOTest extends TestAncestor {
         callTO.setGeneId(geneId);
         assertEquals("Incorrect geneId set/get", geneId, callTO.getGeneId());
         
-        String devStageId = "stageId1";
-        callTO.setStageId(devStageId);
-        assertEquals("Incorrect devStageId set/get", devStageId, callTO.getStageId());
+        String stageId = "stageId1";
+        callTO.setStageId(stageId);
+        assertEquals("Incorrect stageId set/get", stageId, callTO.getStageId());
         
         String anatEntityId = "anatEntityId1";
         callTO.setAnatEntityId(anatEntityId);

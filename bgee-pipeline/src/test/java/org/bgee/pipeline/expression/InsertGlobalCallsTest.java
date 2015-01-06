@@ -226,7 +226,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         verify(mockManager.mockExpressionCallDAO, never()).setAttributes(anyCollection());
         verify(mockManager.mockSpeciesDAO, times(1)).setAttributes(SpeciesDAO.Attribute.ID);
         verify(mockManager.mockRelationDAO, times(2)).setAttributes(
-                RelationDAO.Attribute.SOURCEID, RelationDAO.Attribute.TARGETID);
+                RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID);
         // 
         ArgumentCaptor<Set> exprTOsArgGlobalExpr = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockExpressionCallDAO, times(5)).
@@ -657,9 +657,9 @@ public class InsertGlobalCallsTest extends TestAncestor {
         verify(mockManager.mockExpressionCallDAO).
                                         setAttributes(ExpressionCallDAO.Attribute.ANAT_ENTITY_ID);
         verify(mockManager.mockNoExpressionCallDAO).
-                                        setAttributes(NoExpressionCallDAO.Attribute.ANATENTITYID);
+                                        setAttributes(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID);
         verify(mockManager.mockRelationDAO, times(2)).setAttributes(
-                RelationDAO.Attribute.SOURCEID, RelationDAO.Attribute.TARGETID);
+                RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID);
 
         //
         ArgumentCaptor<Set> exprTOsArgGlobalNoExpr = ArgumentCaptor.forClass(Set.class);

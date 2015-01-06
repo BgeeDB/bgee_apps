@@ -245,7 +245,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
 
             log.info("Start updating genes...");
             nbUpdatedGenes = this.getGeneDAO().updateGenes(this.geneTOs,
-                    Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID));
+                    Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID));
             log.info("Done updating genes.");
 
             this.commit();

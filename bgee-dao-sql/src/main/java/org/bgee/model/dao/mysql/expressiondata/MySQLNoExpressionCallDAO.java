@@ -98,7 +98,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             sqlIncludeParentStructures = " 1";
         }
         sqlIncludeParentStructures +=  " AS " + this.attributeToString(
-                NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES, isIncludeParentStructures);
+                NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES, isIncludeParentStructures);
         
         //the attribute ORIGINOFLINE does not correspond to any columns in basic no-expression call 
         //table.  
@@ -106,7 +106,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         //So, we add a fake column to the query to provide the information to the 
         //ResultSet, otherwise it is not needed. 
         String sqlOriginOfLine = "'" + OriginOfLine.SELF.getStringRepresentation() + "' AS " + 
-                this.attributeToString(NoExpressionCallDAO.Attribute.ORIGINOFLINE, 
+                this.attributeToString(NoExpressionCallDAO.Attribute.ORIGIN_OF_LINE, 
                         isIncludeParentStructures);
 
         if (attributes != null) {
@@ -115,7 +115,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                 //but we can still provide the information SELF for basic calls. As it is 
                 //the default value in the TOs returned, we just need to skip this attribute 
                 //if basic calls were requested. 
-                if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGINOFLINE) && 
+                if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGIN_OF_LINE) && 
                         !isIncludeParentStructures) {
                     continue;
                 }
@@ -124,18 +124,18 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                     //does the attributes requested ensure that there will be 
                     //no duplicated results?
                     if (!attributes.contains(NoExpressionCallDAO.Attribute.ID) &&  
-                            (!attributes.contains(NoExpressionCallDAO.Attribute.GENEID) || 
-                                !attributes.contains(NoExpressionCallDAO.Attribute.ANATENTITYID) || 
-                                !attributes.contains(NoExpressionCallDAO.Attribute.DEVSTAGEID))) {
+                            (!attributes.contains(NoExpressionCallDAO.Attribute.GENE_ID) || 
+                                !attributes.contains(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID) || 
+                                !attributes.contains(NoExpressionCallDAO.Attribute.STAGE_ID))) {
                         sql += "DISTINCT ";
                     }
                 } else {
                     sql += ", ";
                 }
-                if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES)) {
+                if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES)) {
                     //add fake column
                     sql += sqlIncludeParentStructures;
-                } else if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGINOFLINE) 
+                } else if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGIN_OF_LINE) 
                         && !isIncludeParentStructures) {
                     //add fake column
                     sql += sqlOriginOfLine;
@@ -239,23 +239,23 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             } else {
                 label = "noExpressionId";
             }
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.GENEID)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.GENE_ID)) {
             label = "geneId";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.DEVSTAGEID)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.STAGE_ID)) {
             label = "stageId";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.ANATENTITYID)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID)) {
             label = "anatEntityId";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.AFFYMETRIXDATA)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.AFFYMETRIX_DATA)) {
             label = "noExpressionAffymetrixData";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.INSITUDATA)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.IN_SITU_DATA)) {
             label = "noExpressionInSituData";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.RELAXEDINSITUDATA)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.RELAXED_IN_SITU_DATA)) {
             label = "noExpressionRelaxedInSituData";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.RNASEQDATA)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.RNA_SEQ_DATA)) {
             label = "noExpressionRnaSeqData";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGINOFLINE)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.ORIGIN_OF_LINE)) {
             label = "noExpressionOriginOfLine";
-        } else if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDEPARENTSTRUCTURES)) {
+        } else if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES)) {
             label = "includeParentStructures";
         } else {
             throw log.throwing(new IllegalStateException("The attribute provided (" +
@@ -561,7 +561,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         protected NoExpressionCallTO getNewTO() throws DAOException {
             log.entry();
 
-            String id = null, geneId = null, anatEntityId = null, devStageId = null;
+            String id = null, geneId = null, anatEntityId = null, stageId = null;
             DataState noExprAffymetrixData = null, noExprInSituData = null, 
                     noExprRelaxedInSituData = null, noExprRnaSeqData = null;
             Boolean includeParentStructures = null;
@@ -583,7 +583,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
                         anatEntityId = currentResultSet.getString(column.getKey());
 
                     } else if (column.getValue().equals("stageId")) {
-                        devStageId = currentResultSet.getString(column.getKey());
+                        stageId = currentResultSet.getString(column.getKey());
 
                     } else if (column.getValue().equals("noExpressionAffymetrixData")) {
                         noExprAffymetrixData = DataState.convertToDataState(
@@ -617,7 +617,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
             }
 
             return log.exit(new NoExpressionCallTO(id, geneId, anatEntityId,
-                    devStageId, noExprAffymetrixData, noExprInSituData, noExprRelaxedInSituData,
+                    stageId, noExprAffymetrixData, noExprInSituData, noExprRelaxedInSituData,
                     noExprRnaSeqData, includeParentStructures, noExpressionOriginOfLine));
         }
     }

@@ -376,7 +376,7 @@ public interface ExpressionCallDAO extends DAO<ExpressionCallDAO.Attribute> {
         }
         /**
          * Sets the {@code boolean} defining whether this expression call was generated 
-         * using data from the developmental stage with the ID {@link CallTO#getDevStageId()} 
+         * using data from the developmental stage with the ID {@link CallTO#getStageId()} 
          * alone, or by also considering all its descendants. If {@code true}, all its descendants 
          * were considered.
          * 

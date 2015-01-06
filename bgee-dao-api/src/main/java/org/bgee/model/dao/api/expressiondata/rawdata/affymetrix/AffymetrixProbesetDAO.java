@@ -43,8 +43,8 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, BGEEAFFYMETRIXCHIPID, GENEID, NORMALIZEDSIGNALINTENSITY, DETECTIONFLAG, 
-        EXPRESSIONID, NOEXPRESSIONID, AFFYMETRIXDATA, REASONFOREXCLUSION;
+        ID, BGEE_AFFYMETRIX_CHIP_ID, GENE_ID, NORMALIZED_SIGNAL_INTENSITY, DETECTION_FLAG, 
+        EXPRESSION_ID, NOEXPRESSION_ID, AFFYMETRIX_DATA, REASON_FOR_EXCLUSION;
     }
     
 	/**

@@ -95,7 +95,7 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(expectedRelations, resultSet.getAllTOs()));
 
         // Test recovery of one attribute with filter on species IDs ONLY
-        dao.setAttributes(Arrays.asList(RelationDAO.Attribute.RELATIONID));
+        dao.setAttributes(Arrays.asList(RelationDAO.Attribute.RELATION_ID));
         Set<String> speciesIds = new HashSet<String>(Arrays.asList("11","44"));
         expectedRelations = Arrays.asList(
                 new RelationTO("1", null, null, null, null),

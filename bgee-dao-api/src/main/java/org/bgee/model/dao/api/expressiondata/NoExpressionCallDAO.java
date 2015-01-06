@@ -42,9 +42,9 @@ public interface NoExpressionCallDAO extends DAO<NoExpressionCallDAO.Attribute> 
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, GENEID, DEVSTAGEID, ANATENTITYID, AFFYMETRIXDATA, 
-        RELAXEDINSITUDATA, INSITUDATA, RNASEQDATA,
-        INCLUDEPARENTSTRUCTURES, ORIGINOFLINE;
+        ID, GENE_ID, STAGE_ID, ANAT_ENTITY_ID, AFFYMETRIX_DATA, 
+        RELAXED_IN_SITU_DATA, IN_SITU_DATA, RNA_SEQ_DATA,
+        INCLUDE_PARENT_STRUCTURES, ORIGIN_OF_LINE;
     }
 
     /**

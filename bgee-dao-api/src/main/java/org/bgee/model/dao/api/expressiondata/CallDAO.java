@@ -34,8 +34,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, GENEID, DEVSTAGEID, ANATENTITYID, 
-        AFFYMETRIXDATA, ESTDATA, INSITUDATA, RELAXEDINSITUDATA, RNASEQDATA;
+        ID, GENE_ID, STAGE_ID, ANAT_ENTITY_ID, 
+        AFFYMETRIX_DATA, EST_DATA, IN_SITU_DATA, RELAXED_IN_SITU_DATA, RNA_SEQ_DATA;
     }
 
     /**
@@ -272,8 +272,8 @@ public interface CallDAO extends DAO<CallDAO.Attribute> {
          * @param stageId    the {@code String} representing the ID of the 
          *                      developmental stage associated to this call.
          */
-        void setStageId(String devStageId) {
-            this.stageId = devStageId;
+        void setStageId(String stageId) {
+            this.stageId = stageId;
         }
         /**
          * @return  the {@code String} representing the ID of the anatomical entity 

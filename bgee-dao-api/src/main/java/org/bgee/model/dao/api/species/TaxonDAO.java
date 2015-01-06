@@ -39,7 +39,7 @@ public interface TaxonDAO extends DAO<TaxonDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, COMMONNAME, SCIENTIFICNAME, LEFTBOUND, RIGHTBOUND, LEVEL, LCA;
+        ID, COMMON_NAME, SCIENTIFIC_NAME, LEFT_BOUND, RIGHT_BOUND, LEVEL, LCA;
     }
     
     /**

@@ -102,8 +102,8 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
         // Test recovery of several attributes with filter on species IDs
         dao.clearAttributes();
         dao.setAttributes(Arrays.asList(AnatEntityDAO.Attribute.ID,
-                AnatEntityDAO.Attribute.STARTSTAGEID, AnatEntityDAO.Attribute.ENDSTAGEID,
-                AnatEntityDAO.Attribute.NONINFORMATIVE));
+                AnatEntityDAO.Attribute.START_STAGE_ID, AnatEntityDAO.Attribute.END_STAGE_ID,
+                AnatEntityDAO.Attribute.NON_INFORMATIVE));
         Set<String> speciesIds = new HashSet<String>();
         speciesIds.addAll(Arrays.asList("11","44"));
         expectedAnatEntities = Arrays.asList(

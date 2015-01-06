@@ -35,7 +35,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, STARTSTAGEID, ENDSTAGEID, NONINFORMATIVE;
+        ID, NAME, DESCRIPTION, START_STAGE_ID, END_STAGE_ID, NON_INFORMATIVE;
     }
 
     /**

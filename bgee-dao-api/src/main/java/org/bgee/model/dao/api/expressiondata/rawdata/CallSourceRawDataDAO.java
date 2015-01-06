@@ -35,8 +35,8 @@ public interface CallSourceRawDataDAO extends DAO<CallSourceRawDataDAO.Attribute
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, GENEID, DETECTIONFLAG, EXPRESSIONID, NOEXPRESSIONID,
-        EXPRESSIONCONFIDENCE, EXCLUSIONREASON;
+        ID, GENE_ID, DETECTION_FLAG, EXPRESSION_ID, NOEXPRESSION_ID,
+        EXPRESSION_CONFIDENCE, EXCLUSION_REASON;
     }
 
     /**

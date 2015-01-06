@@ -215,7 +215,7 @@ public class ParseOrthoXMLTest extends TestAncestor {
 
         ArgumentCaptor<Set> geneTOsArg = ArgumentCaptor.forClass(Set.class);
         verify(mockManager.mockGeneDAO).updateGenes(geneTOsArg.capture(), 
-                eq(Arrays.asList(GeneDAO.Attribute.OMAPARENTNODEID)));
+                eq(Arrays.asList(GeneDAO.Attribute.OMA_PARENT_NODE_ID)));
         assertTrue("Incorrect GeneTOs generated to update genes",
                 TOComparator.areTOCollectionsEqual(expectedGeneTOs, geneTOsArg.getValue()));
     }

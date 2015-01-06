@@ -255,15 +255,15 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         log.entry(attribute);
         
         String label = null;
-        if (attribute.equals(RelationDAO.Attribute.RELATIONID)) {
+        if (attribute.equals(RelationDAO.Attribute.RELATION_ID)) {
                 label = "anatEntityRelationId";
-        } else if (attribute.equals(RelationDAO.Attribute.SOURCEID)) {
+        } else if (attribute.equals(RelationDAO.Attribute.SOURCE_ID)) {
             label = "anatEntitySourceId";
-        } else if (attribute.equals(RelationDAO.Attribute.TARGETID)) {
+        } else if (attribute.equals(RelationDAO.Attribute.TARGET_ID)) {
             label = "anatEntityTargetId";
-        } else if (attribute.equals(RelationDAO.Attribute.RELATIONTYPE)) {
+        } else if (attribute.equals(RelationDAO.Attribute.RELATION_TYPE)) {
             label = "relationType";
-        } else if (attribute.equals(RelationDAO.Attribute.RELATIONSTATUS)) {
+        } else if (attribute.equals(RelationDAO.Attribute.RELATION_STATUS)) {
             label = "relationStatus";
         } else {
             throw log.throwing(new IllegalStateException("The attribute provided (" +
@@ -287,15 +287,15 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         log.entry(attribute);
         
         String label = null;
-        if (attribute.equals(RelationDAO.Attribute.RELATIONID)) {
+        if (attribute.equals(RelationDAO.Attribute.RELATION_ID)) {
                 label = "stageRelationId";
-        } else if (attribute.equals(RelationDAO.Attribute.SOURCEID)) {
+        } else if (attribute.equals(RelationDAO.Attribute.SOURCE_ID)) {
             label = "stageSourceId";
-        } else if (attribute.equals(RelationDAO.Attribute.TARGETID)) {
+        } else if (attribute.equals(RelationDAO.Attribute.TARGET_ID)) {
             label = "stageTargetId";
-        } else if (attribute.equals(RelationDAO.Attribute.RELATIONTYPE)) {
+        } else if (attribute.equals(RelationDAO.Attribute.RELATION_TYPE)) {
             label = "relationType";
-        } else if (attribute.equals(RelationDAO.Attribute.RELATIONSTATUS)) {
+        } else if (attribute.equals(RelationDAO.Attribute.RELATION_STATUS)) {
             label = "relationStatus";
         } else {
             throw log.throwing(new IllegalStateException("The attribute provided (" +

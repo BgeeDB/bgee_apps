@@ -128,13 +128,13 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute>
         String label = null;
         if (attribute.equals(TaxonDAO.Attribute.ID)) {
             label = "taxonId";
-        } else if (attribute.equals(TaxonDAO.Attribute.COMMONNAME)) {
+        } else if (attribute.equals(TaxonDAO.Attribute.COMMON_NAME)) {
             label = "taxonCommonName";
-        } else if (attribute.equals(TaxonDAO.Attribute.SCIENTIFICNAME)) {
+        } else if (attribute.equals(TaxonDAO.Attribute.SCIENTIFIC_NAME)) {
             label = "taxonScientificName";
-        } else if (attribute.equals(TaxonDAO.Attribute.LEFTBOUND)) {
+        } else if (attribute.equals(TaxonDAO.Attribute.LEFT_BOUND)) {
             label = "taxonLeftBound";
-        } else if (attribute.equals(TaxonDAO.Attribute.RIGHTBOUND)) {
+        } else if (attribute.equals(TaxonDAO.Attribute.RIGHT_BOUND)) {
             label = "taxonRightBound";
         } else if (attribute.equals(TaxonDAO.Attribute.LEVEL)) {
             label = "taxonLevel";

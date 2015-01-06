@@ -177,11 +177,11 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 return log.exit("anatEntityName");
             case DESCRIPTION: 
                 return log.exit("anatEntityDescription");
-            case STARTSTAGEID: 
+            case START_STAGE_ID: 
                 return log.exit("startStageId");
-            case ENDSTAGEID: 
+            case END_STAGE_ID: 
                 return log.exit("endStageId");
-            case NONINFORMATIVE: 
+            case NON_INFORMATIVE: 
                 return log.exit("nonInformative");
             default: 
                 throw log.throwing(new AssertionError("The attribute provided (" + 

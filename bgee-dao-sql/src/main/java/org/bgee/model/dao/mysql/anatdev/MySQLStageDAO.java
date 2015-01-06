@@ -99,9 +99,9 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
                 return log.exit("stageName");
             case DESCRIPTION: 
                 return log.exit("stageDescription");
-            case LEFTBOUND: 
+            case LEFT_BOUND: 
                 return log.exit("stageLeftBound");
-            case RIGHTBOUND: 
+            case RIGHT_BOUND: 
                 return log.exit("stageRightBound");
             case LEVEL: 
                 return log.exit("stageLevel");

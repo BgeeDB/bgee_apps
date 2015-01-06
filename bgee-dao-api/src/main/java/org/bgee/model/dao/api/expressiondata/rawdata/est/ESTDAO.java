@@ -34,7 +34,7 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ESTID, ESTID2, ESTLIBRARYID, GENEID, UNIGENECLUSTERID, EXPRESSIONID, ESTDATA;
+        EST_ID, EST_ID2, EST_LIBRARY_ID, GENE_ID, UNIGENE_CLUSTER_ID, EXPRESSION_ID, EST_DATA;
     }
 
     /**

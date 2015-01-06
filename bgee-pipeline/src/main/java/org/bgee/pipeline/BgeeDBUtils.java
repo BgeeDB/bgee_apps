@@ -263,8 +263,8 @@ public class BgeeDBUtils {
         //store original attributes to restore relationDAO in proper state afterwards.
         Collection<RelationDAO.Attribute> attributes = relationDAO.getAttributes();
         
-        relationDAO.setAttributes(RelationDAO.Attribute.SOURCEID, 
-                RelationDAO.Attribute.TARGETID);
+        relationDAO.setAttributes(RelationDAO.Attribute.SOURCE_ID, 
+                RelationDAO.Attribute.TARGET_ID);
         // get direct, indirect, and reflexive is_a/part_of relations 
         RelationTOResultSet relTORs = null;
         Map<String, Set<String>> relativesMap = new HashMap<String, Set<String>>();

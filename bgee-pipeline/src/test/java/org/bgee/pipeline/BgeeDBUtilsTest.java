@@ -175,8 +175,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
                     BgeeDBUtils.getAnatEntityChildrenFromParents(
                             new HashSet<String>(Arrays.asList("1", "2")), 
                             mockManager.getRelationDAO()));
-            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
-                    RelationDAO.Attribute.TARGETID);
+            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCE_ID, 
+                    RelationDAO.Attribute.TARGET_ID);
             verify(mockRelationTOResultSet).close();
         }
         
@@ -198,8 +198,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
                     BgeeDBUtils.getAnatEntityParentsFromChildren(
                             new HashSet<String>(Arrays.asList("1", "2")), 
                             mockManager.getRelationDAO()));
-            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
-                    RelationDAO.Attribute.TARGETID);
+            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCE_ID, 
+                    RelationDAO.Attribute.TARGET_ID);
             verify(mockRelationTOResultSet).close();
         }
     }
@@ -239,8 +239,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
                     BgeeDBUtils.getStageChildrenFromParents(
                             new HashSet<String>(Arrays.asList("1", "2")), 
                             mockManager.getRelationDAO()));
-            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
-                    RelationDAO.Attribute.TARGETID);
+            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCE_ID, 
+                    RelationDAO.Attribute.TARGET_ID);
             verify(mockRelationTOResultSet).close();
         }
         
@@ -262,8 +262,8 @@ public class BgeeDBUtilsTest extends TestAncestor {
                     BgeeDBUtils.getStageParentsFromChildren(
                             new HashSet<String>(Arrays.asList("1", "2")), 
                             mockManager.getRelationDAO()));
-            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCEID, 
-                    RelationDAO.Attribute.TARGETID);
+            verify(mockManager.getRelationDAO()).setAttributes(RelationDAO.Attribute.SOURCE_ID, 
+                    RelationDAO.Attribute.TARGET_ID);
             verify(mockRelationTOResultSet).close();
         }
     }

@@ -20,8 +20,8 @@ import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSo
 public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
     
     public enum Attribute implements DAO.Attribute {
-        ID, GENEID, LOG2RPK, READSCOUNT, EXPRESSIONID, NOEXPRESSIONID, DETECTIONFLAG, 
-        RNASEQDATA, REASONFOREXCLUSION
+        ID, GENE_ID, LOG2_RPK, READS_COUNT, EXPRESSION_ID, NOEXPRESSION_ID, DETECTION_FLAG, 
+        RNA_SEQ_DATA, REASON_FOR_EXCLUSION
     }
 
     /**

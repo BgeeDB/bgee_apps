@@ -38,9 +38,9 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ID, GENEID, STAGEID, ANATENTITYID, 
-        AFFYMETRIXDATA, ESTDATA, INSITUDATA, RNASEQDATA,
-        DIFFCALLTYPE, MINCONDITIONCOUNT, FACTOR;
+        ID, GENE_ID, STAGE_ID, ANAT_ENTITY_ID, 
+        AFFYMETRIX_DATA, EST_DATA, IN_SITU_DATA, RNA_SEQ_DATA,
+        DIFF_CALL_TYPE, MIN_CONDITION_COUNT, FACTOR;
     }
 
     /**
@@ -247,10 +247,10 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          *                          conditions that were compared, among all the differential 
          *                          expression analyzes that allowed to produce this call.
          */
-        DiffExpressionCallTO(String id, String geneId, String anatEntityId, String devStageId, 
+        DiffExpressionCallTO(String id, String geneId, String anatEntityId, String stageId, 
                 DataState affymetrixData, DataState rnaSeqData, 
                 DiffCallType diffCallType, Factor factor, Integer minConditionCount) {
-            super(id, geneId, anatEntityId, devStageId, affymetrixData, null, null, 
+            super(id, geneId, anatEntityId, stageId, affymetrixData, null, null, 
                     null, rnaSeqData);
             this.diffCallType = diffCallType;
             this.factor = factor;

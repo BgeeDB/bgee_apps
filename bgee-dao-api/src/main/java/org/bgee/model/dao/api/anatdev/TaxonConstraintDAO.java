@@ -30,7 +30,7 @@ public interface TaxonConstraintDAO {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        ENTITYID, SPECIESID;
+        ENTITY_ID, SPECIES_ID;
     }
 
     /**

@@ -411,7 +411,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         // Verify that setAttributes are correctly called.
         verify(mockManager.mockAnatEntityDAO, times(2)).setAttributes(AnatEntityDAO.Attribute.ID);
         verify(mockManager.mockRelationDAO, times(2)).setAttributes(
-                RelationDAO.Attribute.SOURCEID, RelationDAO.Attribute.TARGETID);
+                RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID);
         verify(mockManager.mockExpressionCallDAO, times(2)).setAttributes(
                 // All Attributes except ID, anat and stage OriginOfLines
                 EnumSet.complementOf(EnumSet.of(ExpressionCallDAO.Attribute.ID, 

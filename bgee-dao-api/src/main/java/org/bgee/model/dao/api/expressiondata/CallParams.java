@@ -129,11 +129,11 @@ public abstract class CallParams {
      * 
      * @see #useDevDescendants
      */
-    private Set<String> devStageIds;
+    private Set<String> stageIds;
     /**
      * A {@code boolean} defining whether calls for descendants of 
-     * {@link #devStageIds} should also be used. It is used when {@link 
-     * #devStageIds} is not empty, to define whether calls, with 
+     * {@link #stageIds} should also be used. It is used when {@link 
+     * #stageIds} is not empty, to define whether calls, with 
      * a developmental stage ID equals to the ID of one of their descendants, 
      * by <em>is_a</em> or <em>part_of</em> relations, should also be used.
      * <p>
@@ -150,7 +150,7 @@ public abstract class CallParams {
      * <p>
      * Default value is {@code false}.
      * 
-     * @see #devStageIds
+     * @see #stageIds
      */
     private boolean useDevDescendants;
     
@@ -193,7 +193,7 @@ public abstract class CallParams {
         this.anatEntityIds = new HashSet<String>();
         this.setUseAnatDescendants(false);
         
-        this.devStageIds  = new HashSet<String>();
+        this.stageIds  = new HashSet<String>();
         this.setUseDevDescendants(false);
         
         this.geneIds      = new HashSet<String>();
@@ -295,9 +295,9 @@ public abstract class CallParams {
             //to try to merge it again: the order of the merges matters. 
             //
             //For instance, if a 1st CallParams defines a filter on geneId A  
-            //at devStageId A, a 2nd CallParams on geneId B at devStageId A, 
+            //at stageId A, a 2nd CallParams on geneId B at stageId A, 
             //and a 3rd CallParams defines filters both on geneId A and B, 
-            //but at devStageId B.
+            //but at stageId B.
             //If we try to merge the 1st CallParams and the 3rd CallParams, 
             //it will fail: it is not equivalent to query data for gene A at stage A 
             //in one hand, and for gene A or B at stage B in the other hand.
@@ -394,7 +394,7 @@ public abstract class CallParams {
         newResultingParams.setRNASeqData(mergeDataStates(this.getRNASeqData(), 
                 paramsToMerge.getRNASeqData()));
         
-        //merge Sets of anatEntityIds, devStageIds, geneIds, and related parameters.
+        //merge Sets of anatEntityIds, stageIds, geneIds, and related parameters.
         //if a parameter is empty for a CallParams, it must remain empty in the merged
         if (!this.getAnatEntityIds().isEmpty() && 
                 !paramsToMerge.getAnatEntityIds().isEmpty()) {
@@ -408,16 +408,16 @@ public abstract class CallParams {
                             !paramsToMerge.getAnatEntityIds().isEmpty()));
         }
 
-        if (!this.getDevStageIds().isEmpty() && 
-                !paramsToMerge.getDevStageIds().isEmpty()) {
-            newResultingParams.addAllDevStageIds(this.getDevStageIds());
-            newResultingParams.addAllDevStageIds(paramsToMerge.getDevStageIds());
+        if (!this.getStageIds().isEmpty() && 
+                !paramsToMerge.getStageIds().isEmpty()) {
+            newResultingParams.addAllStageIds(this.getStageIds());
+            newResultingParams.addAllStageIds(paramsToMerge.getStageIds());
             //yes, we already now the collections are not empty, but just to keep track 
             //of the proper way of merging this parameter...
             newResultingParams.setUseDevDescendants(
-                    (this.isUseDevDescendants() && !this.getDevStageIds().isEmpty()) || 
+                    (this.isUseDevDescendants() && !this.getStageIds().isEmpty()) || 
                     (paramsToMerge.isUseDevDescendants() && 
-                            !paramsToMerge.getDevStageIds().isEmpty()));
+                            !paramsToMerge.getStageIds().isEmpty()));
         }
 
         if (!this.getGeneIds().isEmpty() && !paramsToMerge.getGeneIds().isEmpty()) {
@@ -485,16 +485,16 @@ public abstract class CallParams {
              (paramsToMerge.isUseAnatDescendants() && 
                  !paramsToMerge.getAnatEntityIds().isEmpty()) || 
                
-             (this.isUseDevDescendants() && !this.getDevStageIds().isEmpty()) != 
+             (this.isUseDevDescendants() && !this.getStageIds().isEmpty()) != 
              (paramsToMerge.isUseDevDescendants() && 
-                 !paramsToMerge.getDevStageIds().isEmpty())
+                 !paramsToMerge.getStageIds().isEmpty())
                  
            ) {
             return log.exit(false);
         }
         
         //count the number of filters on IDs that differ 
-        //(geneIds, speciesIds, anatEntityIds, devStageIds)
+        //(geneIds, speciesIds, anatEntityIds, stageIds)
         int diffParamCount = this.getDifferentParametersCount(paramsToMerge);
         //if there is absolutely no difference between the parameters used 
         //to filter anat entities, dev stages, and genes, then at this point 
@@ -521,7 +521,7 @@ public abstract class CallParams {
         //as this simply represents a "OR" condition on geneIds 
         //({@code where geneId = A or geneId = B}). 
         //
-        //But if both the CallParams also had another filter, on different devStageIds 
+        //But if both the CallParams also had another filter, on different stageIds 
         //for instance, then they could not be merged, the query generated would not 
         //be equivalent to the two distinct queries, it would not be a simple "OR" 
         //anymore (more than 1 filter different). For instance, it is not mergeable 
@@ -555,7 +555,7 @@ public abstract class CallParams {
             return log.exit(true);
         }
         if (!this.getAnatEntityIds().isEmpty() || 
-                !this.getDevStageIds().isEmpty() || 
+                !this.getStageIds().isEmpty() || 
                 !this.getGeneIds().isEmpty() || 
                 !this.getSpeciesIds().isEmpty()) {
             return log.exit(true);
@@ -586,7 +586,7 @@ public abstract class CallParams {
         if (!this.getAnatEntityIds().equals(otherParams.getAnatEntityIds())) {
             diff++;
         }
-        if (!this.getDevStageIds().equals(otherParams.getDevStageIds())) {
+        if (!this.getStageIds().equals(otherParams.getStageIds())) {
             diff++;
         }
         if (!this.getGeneIds().equals(otherParams.getGeneIds())) {
@@ -600,9 +600,9 @@ public abstract class CallParams {
                     !otherParams.getAnatEntityIds().isEmpty())) {
             diff++;
         }
-        if ((this.isUseDevDescendants() && !this.getDevStageIds().isEmpty()) != 
+        if ((this.isUseDevDescendants() && !this.getStageIds().isEmpty()) != 
             (otherParams.isUseDevDescendants() && 
-                    !otherParams.getDevStageIds().isEmpty())) {
+                    !otherParams.getStageIds().isEmpty())) {
             diff++;
         }
         if ((this.isAllDataTypes() && this.getDataTypesSetCount() > 1) != 
@@ -1000,8 +1000,8 @@ public abstract class CallParams {
      *              used to filter the calls to use
      * @see #setUseDevDescendants(boolean)
      */
-    public void addDevStageId(String id) {
-        this.devStageIds.add(id);
+    public void addStageId(String id) {
+        this.stageIds.add(id);
     }
     /**
      * Add {@code ids} to the {@code Set} of {@code String}s that are the IDs 
@@ -1020,8 +1020,8 @@ public abstract class CallParams {
      *              of developmental stages used to filter the calls to use.
      * @see #setUseDevDescendants(boolean)
      */
-    public void addAllDevStageIds(Collection<String> ids) {
-        this.devStageIds.addAll(ids);
+    public void addAllStageIds(Collection<String> ids) {
+        this.stageIds.addAll(ids);
     }
     /**
      * Returns the unmodifiable {@code Set} of {@code String}s that are the IDs 
@@ -1040,21 +1040,21 @@ public abstract class CallParams {
      *              of developmental stages used to filter the calls to use.
      * @see #isUseDevDescendants()
      */
-    public Set<String> getDevStageIds() {
-        return Collections.unmodifiableSet(this.devStageIds);
+    public Set<String> getStageIds() {
+        return Collections.unmodifiableSet(this.stageIds);
     }
     /**
      * Clears the {@code Set} of {@code String}s that are the IDs 
      * of developmental stages allowing to filter the calls to use. 
-     * @see #getDevStageIds()
+     * @see #getStageIds()
      */
-    public void clearDevStageIds() {
-        this.devStageIds.clear();
+    public void clearStageIds() {
+        this.stageIds.clear();
     }
     /**
      * Returns the {@code boolean} defining whether calls for descendants of 
-     * the developmental stages defined by {@link #getDevStageIds()} should also 
-     * be used. It is used when {@link #getDevStageIds()} is not empty, 
+     * the developmental stages defined by {@link #getStageIds()} should also 
+     * be used. It is used when {@link #getStageIds()} is not empty, 
      * to define whether calls, with a developmental stage ID
      * equals to the ID of one of their descendants, by <em>is_a</em> or <em>part_of</em> 
      * relations, should also be used.
@@ -1074,15 +1074,15 @@ public abstract class CallParams {
      * 
      * @return  a {@code boolean} defining whether calls generated in the descendants 
      *          of the developmental stages provided should also be used.
-     * @see #getDevStageIds()
+     * @see #getStageIds()
      */
     public boolean isUseDevDescendants() {
         return this.useDevDescendants;
     }
     /**
      * Sets the {@code boolean} defining whether calls for descendants of 
-     * the developmental stages defined by {@link #getDevStageIds()} should also 
-     * be used. It is used when {@link #getDevStageIds()} is not empty, 
+     * the developmental stages defined by {@link #getStageIds()} should also 
+     * be used. It is used when {@link #getStageIds()} is not empty, 
      * to define whether calls, with a developmental stage ID
      * equals to the ID of one of their descendants, by <em>is_a</em> or <em>part_of</em> 
      * relations, should also be used.
@@ -1103,7 +1103,7 @@ public abstract class CallParams {
      * @param use       a {@code boolean} defining whether calls generated 
      *                  in the descendants of the developmental stages 
      *                  provided should also be used.
-     * @see #getDevStageIds()
+     * @see #getStageIds()
      */
     public void setUseDevDescendants(boolean use) {
         this.useDevDescendants = use;

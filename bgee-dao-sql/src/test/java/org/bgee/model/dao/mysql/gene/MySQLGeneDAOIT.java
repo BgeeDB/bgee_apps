@@ -139,11 +139,11 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 new GeneTO("ID2", "GNMod2", "DescMod2", 11, 12, 6, false));
         
         Collection<GeneDAO.Attribute> attributesToUpdate1 = Arrays.asList(
-                GeneDAO.Attribute.OMAPARENTNODEID);
+                GeneDAO.Attribute.OMA_PARENT_NODE_ID);
         Collection<GeneDAO.Attribute> attributesToUpdate2 = Arrays.asList(
                 GeneDAO.Attribute.NAME, GeneDAO.Attribute.DESCRIPTION,
-                GeneDAO.Attribute.SPECIESID, GeneDAO.Attribute.GENEBIOTYPEID,
-                GeneDAO.Attribute.OMAPARENTNODEID, GeneDAO.Attribute.ENSEMBLGENE);
+                GeneDAO.Attribute.SPECIES_ID, GeneDAO.Attribute.GENE_BIO_TYPE_ID,
+                GeneDAO.Attribute.OMA_PARENT_NODE_ID, GeneDAO.Attribute.ENSEMBL_GENE);
         
         try {
             //Test with only one Attribute

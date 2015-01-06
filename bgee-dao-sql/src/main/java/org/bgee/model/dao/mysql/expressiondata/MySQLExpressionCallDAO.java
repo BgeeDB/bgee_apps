@@ -66,7 +66,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 //            callStmt = this.getManager().getConnection().prepareCall(sql);
 //            callStmt.setString(1, createStringFromSet(params.getGeneIds(), '|'));
 //            callStmt.setString(2, createStringFromSet(params.getAnatEntityIds(), '|'));
-//            callStmt.setString(3, createStringFromSet(params.getDevStageIds(), '|'));
+//            callStmt.setString(3, createStringFromSet(params.getStageIds(), '|'));
 //            callStmt.setString(4, createStringFromSet(params.getSpeciesIds(), '|'));
 //            callStmt.setInt(5, CallTO.getMinLevelData(params.getAffymetrixData(), '|'));
 //            callStmt.setInt(6, CallTO.getMinLevelData(params.getESTData()));
@@ -655,7 +655,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
         protected ExpressionCallTO getNewTO() throws DAOException {
             log.entry();
 
-            String id = null, geneId = null, anatEntityId = null, devStageId = null;
+            String id = null, geneId = null, anatEntityId = null, stageId = null;
             DataState affymetrixData = null, estData = null, inSituData = null, rnaSeqData = null;
             Boolean includeSubstructures = null, includeSubStages = null, observedData = null;
             OriginOfLine anatOriginOfLine = null, stageOriginOfLine = null;
@@ -678,7 +678,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                         anatEntityId = currentResultSet.getString(column.getKey());
 
                     } else if (column.getValue().equals("stageId")) {
-                        devStageId = currentResultSet.getString(column.getKey());
+                        stageId = currentResultSet.getString(column.getKey());
 
                     } else if (column.getValue().equals("affymetrixData")) {
                         //index of the enum in the mysql database corresponds to the ordinal 
@@ -716,7 +716,7 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, devStageId,
+            return log.exit(new ExpressionCallTO(id, geneId, anatEntityId, stageId,
                     affymetrixData, estData, inSituData, rnaSeqData,
                     includeSubstructures, includeSubStages, 
                     anatOriginOfLine, stageOriginOfLine, observedData));

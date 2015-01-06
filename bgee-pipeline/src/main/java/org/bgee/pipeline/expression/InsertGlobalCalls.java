@@ -425,7 +425,7 @@ public class InsertGlobalCalls extends CallUser {
         
         log.debug("Retrieving anat entities with no-expression calls...");
         NoExpressionCallDAO noExprDao = this.getNoExpressionCallDAO();
-        noExprDao.setAttributes(NoExpressionCallDAO.Attribute.ANATENTITYID);
+        noExprDao.setAttributes(NoExpressionCallDAO.Attribute.ANAT_ENTITY_ID);
         NoExpressionCallTOResultSet rsNoExpressionCalls = noExprDao.getNoExpressionCalls(
                 new NoExpressionCallParams());
         while (rsNoExpressionCalls.next()) {

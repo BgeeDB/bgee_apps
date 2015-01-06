@@ -166,12 +166,12 @@ public class CallParamsTest extends TestAncestor {
         assertTrue("Incorrect boolean returned by canMerge", 
                 params.canMerge(paramsToCompare));
         //but if we had yet another different filter, it is not mergeable anymore
-        paramsToCompare.addDevStageId(id);
+        paramsToCompare.addStageId(id);
         assertFalse("Incorrect boolean returned by canMerge", 
                 params.canMerge(paramsToCompare));
         
         //now, let's make their filter identical
-        params.addDevStageId(id);
+        params.addStageId(id);
         paramsToCompare.addAnatEntityId(id);
         //it should be possible to merge them even if their DataStates are slightly 
         //different (as long as they are consecutive)
@@ -247,8 +247,8 @@ public class CallParamsTest extends TestAncestor {
         //same for their associated boolean
         params.addAnatEntityId(id1);
         params.setUseAnatDescendants(true);
-        params.addDevStageId(id1);
-        paramsToCompare.addDevStageId(id2);
+        params.addStageId(id1);
+        paramsToCompare.addStageId(id2);
         params.setUseDevDescendants(true);
         params.addGeneId(id1);
         paramsToCompare.addGeneId(id1);
@@ -278,7 +278,7 @@ public class CallParamsTest extends TestAncestor {
         assertFalse("Incorrect resulting merged CallParameters", 
                 mergedParams.isUseAnatDescendants());
         assertEquals("Incorrect resulting merged CallParameters", twoElements, 
-                mergedParams.getDevStageIds());
+                mergedParams.getStageIds());
         assertTrue("Incorrect resulting merged CallParameters", 
                 mergedParams.isUseDevDescendants());
         assertEquals("Incorrect resulting merged CallParameters", oneElement, 
@@ -301,7 +301,7 @@ public class CallParamsTest extends TestAncestor {
         assertEquals("incorrect number of parameters that are different", 1, 
                 params.getDifferentParametersCount(paramsToCompare));
         
-        params.addDevStageId(id);
+        params.addStageId(id);
         assertEquals("incorrect number of parameters that are different", 2, 
                 params.getDifferentParametersCount(paramsToCompare));
         
@@ -337,7 +337,7 @@ public class CallParamsTest extends TestAncestor {
         assertEquals("incorrect number of parameters that are different", 6, 
                 params.getDifferentParametersCount(paramsToCompare));
         
-        paramsToCompare.addDevStageId(id);
+        paramsToCompare.addStageId(id);
         assertEquals("incorrect number of parameters that are different", 5, 
                 params.getDifferentParametersCount(paramsToCompare));
         
@@ -439,10 +439,10 @@ public class CallParamsTest extends TestAncestor {
         assertFalse("hasDataRestriction returned true, while no parameter was set", 
                 params.hasDataRestrictions());
     
-        params.addDevStageId("test");
+        params.addStageId("test");
         assertTrue("hasDataRestriction returned false, while a parameter was set", 
                 params.hasDataRestrictions());
-        params.clearDevStageIds();
+        params.clearStageIds();
         assertFalse("hasDataRestriction returned true, while no parameter was set", 
                 params.hasDataRestrictions());
     
@@ -518,7 +518,7 @@ public class CallParamsTest extends TestAncestor {
         
         //---------- plays with several parameters at the same time ---------------
         params.addAnatEntityId("test");
-        params.addDevStageId("test2");
+        params.addStageId("test2");
         params.addGeneId("test3");
         params.addSpeciesId("test4");
         params.setRNASeqData(dataState);
@@ -908,15 +908,15 @@ public class CallParamsTest extends TestAncestor {
         assertEquals("Incorrect anatEntityIds set/get", new HashSet<String>(), 
                 params.getAnatEntityIds());
         
-        params.addAllDevStageIds(twoElementSet);
-        assertEquals("Incorrect devStageIds set/get", twoElementSet, 
-                params.getDevStageIds());
-        params.addDevStageId(thirdElement);
-        assertEquals("Incorrect devStageIds set/get", threeElementSet, 
-                params.getDevStageIds());
-        params.clearDevStageIds();
-        assertEquals("Incorrect devStageIds set/get", new HashSet<String>(), 
-                params.getDevStageIds());
+        params.addAllStageIds(twoElementSet);
+        assertEquals("Incorrect stageIds set/get", twoElementSet, 
+                params.getStageIds());
+        params.addStageId(thirdElement);
+        assertEquals("Incorrect stageIds set/get", threeElementSet, 
+                params.getStageIds());
+        params.clearStageIds();
+        assertEquals("Incorrect stageIds set/get", new HashSet<String>(), 
+                params.getStageIds());
         
         params.addAllGeneIds(twoElementSet);
         assertEquals("Incorrect geneIds set/get", twoElementSet, 

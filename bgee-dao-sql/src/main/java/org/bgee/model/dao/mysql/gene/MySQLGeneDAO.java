@@ -157,13 +157,13 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                         stmt.setString(i++, gene.getName());
                     } else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
                         stmt.setString(i++, gene.getDescription());
-                    } else if (attribute.equals(GeneDAO.Attribute.SPECIESID)) {
+                    } else if (attribute.equals(GeneDAO.Attribute.SPECIES_ID)) {
                         stmt.setInt(i++, gene.getSpeciesId());
-                    } else if (attribute.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
+                    } else if (attribute.equals(GeneDAO.Attribute.GENE_BIO_TYPE_ID)) {
                         stmt.setInt(i++, gene.getGeneBioTypeId());
-                    } else if (attribute.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
+                    } else if (attribute.equals(GeneDAO.Attribute.OMA_PARENT_NODE_ID)) {
                         stmt.setInt(i++, gene.getOMAParentNodeId());
-                    } else if (attribute.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
+                    } else if (attribute.equals(GeneDAO.Attribute.ENSEMBL_GENE)) {
                         stmt.setBoolean(i++, gene.isEnsemblGene());
                     }
                 }
@@ -187,13 +187,13 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             label = "geneName";
         } else if (attribute.equals(GeneDAO.Attribute.DESCRIPTION)) {
             label = "geneDescription";
-        } else if (attribute.equals(GeneDAO.Attribute.SPECIESID)) {
+        } else if (attribute.equals(GeneDAO.Attribute.SPECIES_ID)) {
             label = "speciesId";
-        } else if (attribute.equals(GeneDAO.Attribute.GENEBIOTYPEID)) {
+        } else if (attribute.equals(GeneDAO.Attribute.GENE_BIO_TYPE_ID)) {
             label = "geneBioTypeId";
-        } else if (attribute.equals(GeneDAO.Attribute.OMAPARENTNODEID)) {
+        } else if (attribute.equals(GeneDAO.Attribute.OMA_PARENT_NODE_ID)) {
             label = "OMAParentNodeId";
-        } else if (attribute.equals(GeneDAO.Attribute.ENSEMBLGENE)) {
+        } else if (attribute.equals(GeneDAO.Attribute.ENSEMBL_GENE)) {
             label = "ensemblGene";
         } 
         

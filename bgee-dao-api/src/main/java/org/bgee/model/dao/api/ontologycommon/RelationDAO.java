@@ -36,7 +36,7 @@ public interface RelationDAO  extends DAO<RelationDAO.Attribute> {
      * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        RELATIONID, SOURCEID, TARGETID, RELATIONTYPE, RELATIONSTATUS;
+        RELATION_ID, SOURCE_ID, TARGET_ID, RELATION_TYPE, RELATION_STATUS;
     }
 
     /**

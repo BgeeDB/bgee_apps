@@ -22,8 +22,8 @@ import org.bgee.model.dao.api.expressiondata.rawdata.CallSourceRawDataDAO.CallSo
 public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
     
     public enum Attribute implements DAO.Attribute {
-        ID, INSITUEVIDENCEID, INSITUEXPRESSIONPATTERNID, ANATENTITYID, STAGEID, GENEID, 
-        DETECTIONFLAG, EXPRESSIONID, NOEXPRESSIONID, INSITUDATA, REASONFOREXCLUSION;
+        ID, INSITU_EVIDENCE_ID, INSITU_EXPRESSION_PATTERN_ID, ANAT_ENTITY_ID, STAGE_ID, GENE_ID, 
+        DETECTION_FLAG, EXPRESSION_ID, NOEXPRESSION_ID, IN_SITU_DATA, REASON_FOR_EXCLUSION;
     }
     
     /**

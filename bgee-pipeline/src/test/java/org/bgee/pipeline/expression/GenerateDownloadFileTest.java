@@ -108,7 +108,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         MySQLGeneTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
-        when(mockManager.mockGeneDAO.getGenes(speciesIds)).
+        when(mockManager.mockGeneDAO.getGenesBySpeciesIds(speciesIds)).
                 thenReturn(mockGeneTORs);
 
         // Stage names
@@ -124,7 +124,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         MySQLStageTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
-        when(mockManager.mockStageDAO.getStages(speciesIds)).
+        when(mockManager.mockStageDAO.getStagesBySpeciesIds(speciesIds)).
                 thenReturn(mockStageTORs);
 
         // Anatomical entity names
@@ -154,7 +154,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 Arrays.asList(
                         new AnatEntityTO("NonInfoAnatEnt1", null, null, null, null, null)),
                         MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
                 thenReturn(mockAnatEntityRsSp11);
         
         //stage relations
@@ -167,7 +167,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         new RelationTO("Stage_id1", "Stage_id1"), 
                         new RelationTO("Stage_id2", "Stage_id2")),
                         MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getStageRelations(speciesIds, null)).
+        when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(speciesIds, null)).
                 thenReturn(mockRelationRsSp11);
 
         // Global expression calls
@@ -273,7 +273,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 Arrays.asList(
                         new AnatEntityTO("NonInfoAnatEnt2", null, null, null, null, null)),
                         MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
                 thenReturn(mockAnatEntityRsSp22);
 
         //stage relations
@@ -284,7 +284,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         new RelationTO("Stage_id2", "Stage_id2"), 
                         new RelationTO("Stage_id5", "Stage_id5")),
                         MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getStageRelations(speciesIds, null)).
+        when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(speciesIds, null)).
                 thenReturn(mockRelationRsSp22);
 
         // Global expression calls
@@ -453,7 +453,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 Arrays.asList(new GeneTO("IDX", "genNX", null)), MySQLGeneTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
-        when(mockManager.mockGeneDAO.getGenes(speciesIds)). thenReturn(mockGeneTORs33);
+        when(mockManager.mockGeneDAO.getGenesBySpeciesIds(speciesIds)). thenReturn(mockGeneTORs33);
 
         // Stage names
         MySQLStageTOResultSet mockStageTORs33 = createMockDAOResultSet(Arrays.asList(
@@ -461,7 +461,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 MySQLStageTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
-        when(mockManager.mockStageDAO.getStages(speciesIds)).thenReturn(mockStageTORs33);
+        when(mockManager.mockStageDAO.getStagesBySpeciesIds(speciesIds)).thenReturn(mockStageTORs33);
 
         // Anatomical entity names
         MySQLAnatEntityTOResultSet mockAnatEntityTORs33 = createMockDAOResultSet(
@@ -476,14 +476,14 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
                 Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
                 MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
         thenReturn(mockAnatEntityRsSp33);
         
         //stage relations
         MySQLRelationTOResultSet mockRelationRsSp33 = createMockDAOResultSet(
                 Arrays.asList(new RelationTO("Stage_idX", "Stage_idX")),
                         MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getStageRelations(speciesIds, null)).
+        when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(speciesIds, null)).
                 thenReturn(mockRelationRsSp33);
 
         // Global expression calls
@@ -554,7 +554,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 Arrays.asList(new GeneTO("IDX", "genNX", null)), MySQLGeneTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
-        when(mockManager.mockGeneDAO.getGenes(speciesIds)). thenReturn(mockGeneTORs33);
+        when(mockManager.mockGeneDAO.getGenesBySpeciesIds(speciesIds)). thenReturn(mockGeneTORs33);
 
         // Stage names
         MySQLStageTOResultSet mockStageTORs33 = createMockDAOResultSet(Arrays.asList(
@@ -562,7 +562,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 MySQLStageTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
-        when(mockManager.mockStageDAO.getStages(speciesIds)).thenReturn(mockStageTORs33);
+        when(mockManager.mockStageDAO.getStagesBySpeciesIds(speciesIds)).thenReturn(mockStageTORs33);
 
         // Anatomical entity names
         MySQLAnatEntityTOResultSet mockAnatEntityTORs33 = createMockDAOResultSet(
@@ -577,14 +577,14 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         MySQLAnatEntityTOResultSet mockAnatEntityRsSp33 = createMockDAOResultSet(
                 Arrays.asList(new AnatEntityTO("NonInfoAnatEnt3", null, null, null, null, null)),
                 MySQLAnatEntityTOResultSet.class);
-        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntities(speciesIds)).
+        when(mockManager.mockAnatEntityDAO.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).
         thenReturn(mockAnatEntityRsSp33);
         
         //stage relations
         MySQLRelationTOResultSet mockRelationRsSp33 = createMockDAOResultSet(
                 Arrays.asList(new RelationTO("Stage_idX", "Stage_idX")),
                         MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getStageRelations(speciesIds, null)).
+        when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(speciesIds, null)).
                 thenReturn(mockRelationRsSp33);
 
         // Global expression calls

@@ -297,12 +297,12 @@ public class FilterNoExprCallsTest extends TestAncestor {
                 anatEntityRelTOs,
                 MySQLRelationTOResultSet.class);
         // Determine the behavior of call to getAnatEntityRelations().
-        when(mockManager.mockRelationDAO.getAnatEntityRelations(
+        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(
                 eq(new HashSet<String>(Arrays.asList("11"))), 
                 eq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 eq((Set<RelationStatus>) null))).
                 thenReturn(mockRelationTORS11);
-        when(mockManager.mockRelationDAO.getAnatEntityRelations(
+        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(
                 eq(new HashSet<String>(Arrays.asList("21"))), 
                 eq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 eq((Set<RelationStatus>) null))).
@@ -328,11 +328,11 @@ public class FilterNoExprCallsTest extends TestAncestor {
                  stageRelTOs,
                  MySQLRelationTOResultSet.class);
          // Determine the behavior of call to getStageRelations().
-         when(mockManager.mockRelationDAO.getStageRelations(
+         when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(
                  eq(new HashSet<String>(Arrays.asList("11"))), 
                  eq((Set<RelationStatus>) null))).
                  thenReturn(mockStageRelationTORS11);
-         when(mockManager.mockRelationDAO.getStageRelations(
+         when(mockManager.mockRelationDAO.getStageRelationsBySpeciesIds(
                  eq(new HashSet<String>(Arrays.asList("21"))), 
                  eq((Set<RelationStatus>) null))).
                  thenReturn(mockStageRelationTORS21);

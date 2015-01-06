@@ -183,7 +183,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         Set<String> speciesFilter = new HashSet<String>(); 
         speciesFilter.add("11");
         // Determine the behavior of call to getAnatEntityRelations().
-        when(mockManager.mockRelationDAO.getAnatEntityRelations(
+        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(
                 eq(speciesFilter), 
                 eq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 eq((Set<RelationStatus>) null))).
@@ -204,7 +204,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
         speciesFilter = new HashSet<String>();
         speciesFilter.add("21");
         // Determine the behavior of call to getAnatEntityRelations().
-        when(mockManager.mockRelationDAO.getAnatEntityRelations(
+        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(
                 eq(speciesFilter), 
                 eq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 eq((Set<RelationStatus>) null))).
@@ -556,7 +556,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         new RelationTO("Anat_id5", "Anat_id5"),
                         new RelationTO("Anat_idX", "Anat_idX")),
                 MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getAnatEntityRelations(
+        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(
                 eq(new HashSet<String>(speciesId)), 
                 eq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 eq((Set<RelationStatus>) null))).
@@ -630,7 +630,7 @@ public class InsertGlobalCallsTest extends TestAncestor {
                         new RelationTO("Anat_id10", "Anat_id10"),
                         new RelationTO("Anat_idX", "Anat_idX")),        
                 MySQLRelationTOResultSet.class);
-        when(mockManager.mockRelationDAO.getAnatEntityRelations(
+        when(mockManager.mockRelationDAO.getAnatEntityRelationsBySpeciesIds(
                 eq((HashSet<String>) null), 
                 eq(EnumSet.of(RelationType.ISA_PARTOF)), 
                 eq((Set<RelationStatus>) null))).

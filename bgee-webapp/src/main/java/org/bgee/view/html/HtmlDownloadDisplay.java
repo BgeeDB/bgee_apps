@@ -55,10 +55,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.entry();
         this.startDisplay("download", "Bgee release 13 download page");
 
-        //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
-        //part of endDisplay?
-        this.writeln("<div id='sib_body'>");
-
         //TODO: do not use &nbsp;, use css with a left-margin or something
         this.writeln("<div id='bgee_more_results_up'> &uarr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
         this.writeln("<div id='bgee_more_results_down'> &darr;&nbsp;&nbsp;&nbsp;More result(s)</div>");
@@ -103,7 +99,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(generateSpeciesFigure(9597));
         this.writeln(generateSpeciesFigure(9598));
         this.writeln(generateSpeciesFigure(9593));
-//        this.writeln(generateSpeciesFigure(9600));
+//        this.writeln(generateSpeciesFigure(9600)); // no more data for Pongo pygmaeus
         this.writeln(generateSpeciesFigure(9544));
         this.writeln(generateSpeciesFigure(10116));
         this.writeln(generateSpeciesFigure(9913));
@@ -113,7 +109,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln(generateSpeciesFigure(9031));
         this.writeln(generateSpeciesFigure(28377));
         this.writeln(generateSpeciesFigure(8364));
-//        this.writeln(generateSpeciesFigure(99883));
+//        this.writeln(generateSpeciesFigure(99883)); // no more data for Tetraodon nigroviridis
 
         // Black banner when a species or a group is selected.
         // This section is empty, it will be filled by JavaScript.
@@ -187,9 +183,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' href='http://creativecommons.org/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' href='http://commons.wikimedia.org/wiki/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
         this.writeln("</div>");
 
-        //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
-        //part of endDisplay?
-        this.writeln("</div>");
         this.endDisplay();
         log.exit();
     }

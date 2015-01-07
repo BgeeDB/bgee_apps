@@ -69,9 +69,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.startDisplay("home", 
                 "Welcome on Bgee: a dataBase for Gene Expression Evolution");
 
-        //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
-        //part of endDisplay?
-        this.writeln("<div id='sib_body'>");
         this.writeln("<h2>Welcome on the latest release of Bgee, Bgee release 13</h2>");
         
         RequestParameters urlGenerator = this.getNewRequestParameters();
@@ -97,9 +94,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         		"or <a href='https://bgeedb.wordpress.com'>our blog</a>.</p>");
         this.writeln("</div>");
 
-        //TODO: shouldn't this sib_body be part of startDisplay, and its closing div 
-        //part of endDisplay?
-        this.writeln("</div>");
         this.endDisplay();
         log.exit();
     }

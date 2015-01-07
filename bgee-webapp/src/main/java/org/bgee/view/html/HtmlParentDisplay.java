@@ -130,6 +130,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         this.writeln("<div id='bgee_top'><a id='TOP'></a></div>");
         this.writeln("<div id='sib_container'>");
         this.displayBgeeMenu();
+        this.writeln("<div id='sib_body'>");
+
         log.exit();
     }
 
@@ -139,6 +141,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     public void endDisplay()
     {
         log.entry();
+
+        this.writeln("</div>");
         this.writeln("<footer>");
         this.writeln("<div id='sib_footer_content'>");
         this.writeln("<a href='http://www.isb-sib.ch'>SIB Swiss Institute of Bioinformatics</a>");

@@ -435,4 +435,52 @@ public class MySQLRelationDAOIT extends MySQLITAncestor {
             this.emptyAndUseDefaultDB();
         }
     }
+    
+    /**
+     * Test the insert method {@link MySQLRelationDAO#insertGeneOntologyRelations(Collection)}.
+     */
+    @Test
+    public void shouldInsertGeneOntologyRelations() throws SQLException {
+        
+        this.useEmptyDB();
+        
+        //create a Collection of TaxonConstraintTO to be inserted
+        Collection<RelationTO> relationTOs = Arrays.asList(
+                new RelationTO("1", "sourceId1", "targetId1", RelationType.ISA_PARTOF, RelationStatus.DIRECT),
+                new RelationTO("sourceId2", "targetId2"),
+                new RelationTO("sourceId3", "targetId3"));
+
+        try {
+            MySQLRelationDAO dao = new MySQLRelationDAO(this.getMySQLDAOManager());
+            assertEquals("Incorrect number of rows inserted", 3, 
+                    dao.insertGeneOntologyRelations(relationTOs));
+            
+            //we manually verify the insertion, as we do not want to rely on other methods 
+            //that are tested elsewhere.
+            try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
+                    prepareStatement("select 1 from geneOntologyRelation " +
+                            "where goAllSourceId = ? AND goAllTargetId = ?")) {
+                
+                stmt.setString(1, "sourceId1");
+                stmt.setString(2, "targetId1");
+                assertTrue("RelationTO (GeneOntologyRelations) incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+                
+                stmt.setString(1, "sourceId2");
+                stmt.setString(2, "targetId2");
+                assertTrue("RelationTO (GeneOntologyRelations) incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+
+                stmt.setString(1, "sourceId3");
+                stmt.setString(2, "targetId3");
+                assertTrue("RelationTO (GeneOntologyRelations) incorrectly inserted", 
+                        stmt.getRealPreparedStatement().executeQuery().next());
+            }
+            
+            this.thrown.expect(IllegalArgumentException.class);
+            dao.insertAnatEntityRelations(new HashSet<RelationTO>());
+        } finally {
+            this.emptyAndUseDefaultDB();
+        }
+    }
 }

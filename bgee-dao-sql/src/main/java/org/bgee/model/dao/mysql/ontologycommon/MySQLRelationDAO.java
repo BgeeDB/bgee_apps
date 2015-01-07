@@ -344,7 +344,6 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
 
     @Override
-    //TODO: add IT for this method
     public int insertGeneOntologyRelations(Collection<RelationTO> relations) 
             throws DAOException, IllegalArgumentException {
         log.entry(relations);

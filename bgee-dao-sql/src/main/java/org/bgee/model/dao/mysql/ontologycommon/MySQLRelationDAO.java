@@ -357,7 +357,6 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         //to not overload MySQL with an error com.mysql.jdbc.PacketTooBigException, 
         //and because of laziness, we insert terms one at a time
         int relInsertedCount = 0;
-        //TODO: this is where the new system appears to suck... continue here.
         String sql = "Insert into geneOntologyRelation (goAllTargetId, goAllSourceId) " +
                 "values (?, ?) ";
         

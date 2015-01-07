@@ -867,4 +867,33 @@ public class CallUserTest extends TestAncestor {
                 updatedMap.values().iterator().next());
         assertTrue("Provided Map was not emptied", toUpate.isEmpty());
     }
+    
+    /**
+     * Test the method {@link CallUser#getBestDataState(DataState, DataState)}.
+     */
+    @Test
+    public void shouldGetBestDataState() {
+        CallUser callUser = new FakeCallUser();
+
+        assertEquals("Incorrect DataState", DataState.HIGHQUALITY, 
+                callUser.getBestDataState(DataState.HIGHQUALITY, DataState.HIGHQUALITY));
+        assertEquals("Incorrect DataState", DataState.HIGHQUALITY, 
+                callUser.getBestDataState(DataState.HIGHQUALITY, DataState.LOWQUALITY));
+        assertEquals("Incorrect DataState", DataState.HIGHQUALITY, 
+                callUser.getBestDataState(DataState.HIGHQUALITY, DataState.NODATA));
+
+        assertEquals("Incorrect DataState", DataState.HIGHQUALITY, 
+                callUser.getBestDataState(DataState.LOWQUALITY, DataState.HIGHQUALITY));
+        assertEquals("Incorrect DataState", DataState.LOWQUALITY, 
+                callUser.getBestDataState(DataState.LOWQUALITY, DataState.LOWQUALITY));
+        assertEquals("Incorrect DataState", DataState.LOWQUALITY, 
+                callUser.getBestDataState(DataState.LOWQUALITY, DataState.NODATA));
+
+        assertEquals("Incorrect DataState", DataState.HIGHQUALITY, 
+                callUser.getBestDataState(DataState.NODATA, DataState.HIGHQUALITY));
+        assertEquals("Incorrect DataState", DataState.LOWQUALITY, 
+                callUser.getBestDataState(DataState.NODATA, DataState.LOWQUALITY));
+        assertEquals("Incorrect DataState", DataState.NODATA, 
+                callUser.getBestDataState(DataState.NODATA, DataState.NODATA));
+    }
 }

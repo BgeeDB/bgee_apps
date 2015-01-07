@@ -711,7 +711,6 @@ public abstract class CallUser extends MySQLDAOUser {
      * @return              The best {@code DataState} between {@code dataState1} 
      *                      and {@code dataState2}.
      */
-    //TODO: unit test this method now that it is not private anymore
     protected DataState getBestDataState(DataState dataState1, DataState dataState2) {
         log.entry(dataState1, dataState2);
         

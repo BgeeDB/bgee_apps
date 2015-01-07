@@ -132,7 +132,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             throw log.throwing(new IllegalArgumentException(
                     "No gene is given, then no gene is updated"));
         }
-        // TODO add check on attributesToUpdate
+        if (attributesToUpdate == null || attributesToUpdate.size() == 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "No attribute is given, then no gene is updated"));
+        }
         
         int geneUpdatedCount = 0;
         //Construct sql query according to currents attributes

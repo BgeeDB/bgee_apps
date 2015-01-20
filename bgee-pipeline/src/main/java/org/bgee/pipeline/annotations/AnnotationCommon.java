@@ -63,7 +63,8 @@ public class AnnotationCommon {
      * annotation files. These values are ordered by order of preference of use.
      */
     public static final List<String> TAXON_COL_NAMES = Collections.unmodifiableList(
-            Arrays.asList("taxon ID", "species ID", "taxonID", "speciesID"));
+            Arrays.asList(SimilarityAnnotation.TAXON_COL_NAME, 
+                    "taxon ID", "species ID", "taxonID", "speciesID"));
     
     /**
      * An unmodifiable {@code List} of {@code String}s that are the potential names 

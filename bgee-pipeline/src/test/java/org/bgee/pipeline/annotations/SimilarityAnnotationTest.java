@@ -612,17 +612,6 @@ public class SimilarityAnnotationTest extends TestAncestor {
     }
     
     /**
-     * Test the method {@link SimilarityAnnotation#extractTaxonIds(String)}
-     */
-    @Test
-    public void shouldExtractTaxonIds() throws FileNotFoundException, IOException {
-        Set<Integer> expectedIds = new HashSet<Integer>(Arrays.asList(7742, 40674, 1294634));
-        assertEquals("Incorrect taxon IDs extract from similarity annotation file", 
-                expectedIds, new SimilarityAnnotation().extractTaxonIds(
-                        this.getClass().getResource("/annotations/similarity.tsv").getFile()));
-    }
-    
-    /**
      * Test the method {@link SimilarityAnnotation#extractTaxonIdsToFile(String, String)}
      */
     @Test

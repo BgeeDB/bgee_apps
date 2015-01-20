@@ -1459,7 +1459,7 @@ public class SimilarityAnnotation {
             throws UnsupportedEncodingException, FileNotFoundException, IOException {
         log.entry(annotFile, outputFile);
         
-        Set<Integer> taxonIds = this.extractTaxonIds(annotFile);
+        Set<Integer> taxonIds = AnnotationCommon.getTaxonIds(annotFile);
         try(PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(outputFile), "utf-8")))) {
             for (int taxonId: taxonIds) {
@@ -1468,36 +1468,6 @@ public class SimilarityAnnotation {
         }
         
         log.exit();
-    }
-    
-    /**
-     * Extract from the similarity annotation file {@code annotFile} the list 
-     * of all taxon IDs used. The first line of the file should be a header line, 
-     * defining a column to get IDs from, named exactly as {@link #TAXON_COL_NAME}. 
-     * The IDs returned are {@code Integer}s corresponding to the NCBI ID, 
-     * for instance, "9606" for human.
-     * 
-     * @param annotFile A {@code String} that is the path to the similarity annotation file.
-     * @return          A {@code Set} of {@code Integer}s that contains all IDs 
-     *                  of the taxa used in the annotation file.
-     * @throws IllegalArgumentException If {@code annotFile} did not allow to obtain 
-     *                                  any valid taxon ID.
-     * @throws FileNotFoundException    If {@code annotFile} could not be found.
-     * @throws IOException              If {@code annotFile} could not be read.
-     */
-    public Set<Integer> extractTaxonIds(String annotFile) 
-            throws IllegalArgumentException, FileNotFoundException, IOException {
-        log.entry(annotFile);
-        
-        Set<Integer> taxonIds = new HashSet<Integer>(Utils.parseColumnAsInteger(
-                annotFile, TAXON_COL_NAME, null));
-        
-        if (taxonIds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The annotation file " +
-                    annotFile + " did not contain any valid taxon ID"));
-        }
-        
-        return log.exit(taxonIds);
     }
     
     /**

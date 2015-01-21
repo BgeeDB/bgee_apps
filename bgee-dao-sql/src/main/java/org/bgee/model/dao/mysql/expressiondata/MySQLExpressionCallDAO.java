@@ -114,10 +114,12 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
 
     /**
      * Retrieve expression calls from data source according to a {@code Set} of {@code String}s 
-     * that are the IDs of species allowing to filter the calls to use, and a {@code boolean} 
-     * defining whether this expression call was generated using data from the anatomical entity 
-     * with the ID {@link CallTO#getAnatEntityId()} alone, or by also considering all its 
-     * descendants by <em>is_a</em> or <em>part_of</em> relations, even indirect. 
+     * that are the IDs of species allowing to filter the calls to use, a {@code boolean} defining
+     * whether this expression call was generated using data from the anatomical entity with  
+     * the ID {@link CallTO#getAnatEntityId()} alone, or by also considering all its descendants  
+     * by <em>is_a</em> or <em>part_of</em> relations, even indirect, and a {@code boolean}  
+     * defining whether this expression call was generated using data from the stage with   
+     * the ID {@link CallTO#getStageId()} alone, or by also considering all its descendants.
      * <p>
      * The expression calls are retrieved and returned as a {@code ExpressionCallTOResultSet}. 
      * It is the responsibility of the caller to close this {@code DAOResultSet} once 
@@ -127,6 +129,8 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      *                               allowing to filter the calls to use
      * @param isIncludeSubstructures A {@code boolean} defining whether descendants 
      *                               of the anatomical entity were considered.
+     * @param isIncludeSubStages     A {@code boolean} defining whether descendants 
+     *                               of the stage were considered.
      * @return                       An {@code ExpressionCallTOResultSet} containing all expression 
      *                               calls from data source.
      * @throws DAOException          If a {@code SQLException} occurred while trying to get 

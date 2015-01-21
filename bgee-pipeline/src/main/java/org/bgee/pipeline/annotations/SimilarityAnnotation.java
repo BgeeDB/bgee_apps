@@ -115,14 +115,14 @@ public class SimilarityAnnotation {
     public final static String ECO_NAME_COL_NAME = "ECO name";
     /**
      * A {@code String} that is the name of the column containing the confidence code IDs 
-     * in the similarity annotation file (for instance, "CONF:0000003").
+     * in the similarity annotation file (for instance, "CIO:0000003").
      */
-    public final static String CONF_COL_NAME = "confidence code ID";
+    public final static String CONF_COL_NAME = "CIO ID";
     /**
      * A {@code String} that is the name of the column containing the confidence code names 
      * in the similarity annotation file (for instance, "High confidence assertion").
      */
-    public final static String CONF_NAME_COL_NAME = "confidence code name";
+    public final static String CONF_NAME_COL_NAME = "CIO name";
     /**
      * A {@code String} that is the name of the column containing the taxon IDs 
      * in the similarity annotation file (for instance, 9606).
@@ -202,17 +202,17 @@ public class SimilarityAnnotation {
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "high confidence level".
      */
-    private final static String HIGH_CONF_ID = "CONF:0000029";
+    private final static String HIGH_CONF_ID = "CIO:0000029";
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "medium confidence level".
      */
-    private final static String MEDIUM_CONF_ID = "CONF:0000030";
+    private final static String MEDIUM_CONF_ID = "CIO:0000030";
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "low confidence level".
      */
-    private final static String LOW_CONF_ID = "CONF:0000031";
+    private final static String LOW_CONF_ID = "CIO:0000031";
     
     /**
      * A {@code String} that is the value to fill the column {@link #ASSIGN_COL_NAME} 
@@ -448,7 +448,7 @@ public class SimilarityAnnotation {
      * 
      * @param similarityFile    A {@code String} that is the path to a similarity 
      *                          annotation file. This file can be of any flavor 
-     *                          (curator annotation file, genrated simple file, 
+     *                          (curator annotation file, generated simple file, 
      *                          generated file with names).
      * @param rawFile           A {@code boolean} defining whether the similarity file used 
      *                          is a raw file from annotators, or a clean generated file 
@@ -713,6 +713,12 @@ public class SimilarityAnnotation {
                 ecoOntWrapper, homOntWrapper, confOntWrapper);
         
         List<Map<String, Object>> releaseData = new ArrayList<Map<String, Object>>();
+        //We will store taxa associated to positive and negative annotations, 
+        //to verify NOT annotations (if there is a NOT annotation 
+        //in a taxon, most likely there should be also a NOT annotation for all parent taxa 
+        //annotated). We will use the concatenation of HOM ID and UBERON ID as key
+        Map<String, Set<Integer>> positiveAnnotsToTaxa = new HashMap<String, Set<Integer>>();
+        Map<String, Set<Integer>> negativeAnnotsToTaxa = new HashMap<String, Set<Integer>>();
         //first pass, check each annotation, and add extra information to them 
         //(names corresponding to Uberon IDs, etc). We will generate new Maps, 
         //not to modify the raw annotations.
@@ -732,6 +738,8 @@ public class SimilarityAnnotation {
                     (String) rawAnnot.get(ENTITY_COL_NAME));
             //get the corresponding names
             List<String> uberonNames = new ArrayList<String>();
+            //store a String of Uberon IDs to be used to store association to positive/negative annots.
+            String uberonIdsConcat = "";
             for (String uberonId: uberonIds) {
                 //it is the responsibility of the checkAnnotation method to make sure 
                 //the Uberon IDs exist, so we accept null values, it's not our job here.
@@ -742,6 +750,7 @@ public class SimilarityAnnotation {
                         uberonNames.add(name);
                     }
                 }
+                uberonIdsConcat += uberonId + "-";
             }
             //store Uberon IDs and names as column values
             releaseAnnot.put(ENTITY_COL_NAME, 
@@ -750,8 +759,10 @@ public class SimilarityAnnotation {
                     AnnotationCommon.getTermsToColumnValue(uberonNames));
             
             //taxon
+            //store taxon to be used to store association to positive/negative annots. 
+            int taxonId = 0;
             if (rawAnnot.get(TAXON_COL_NAME) != null) {
-                int taxonId = (int) rawAnnot.get(TAXON_COL_NAME);
+                taxonId = (int) rawAnnot.get(TAXON_COL_NAME);
                 releaseAnnot.put(TAXON_COL_NAME, taxonId);
                 
                 String ontologyTaxId = OntologyUtils.getTaxOntologyId(taxonId);
@@ -761,20 +772,33 @@ public class SimilarityAnnotation {
                 }
             }
             
-            //qualifier
-            if (rawAnnot.get(QUALIFIER_COL_NAME) != null) {
-                releaseAnnot.put(QUALIFIER_COL_NAME, NEGATE_QUALIFIER);
-            }
-            
             //HOM
+            //store HOM ID to be used to store association to positive/negative annots. 
+            String homId = "";
             if (rawAnnot.get(HOM_COL_NAME) != null) {
-                String homId = ((String) rawAnnot.get(HOM_COL_NAME)).trim();
+                homId = ((String) rawAnnot.get(HOM_COL_NAME)).trim();
                 releaseAnnot.put(HOM_COL_NAME, homId);
                 if (homOntWrapper.getOWLClassByIdentifier(homId, true) != null) {
                     releaseAnnot.put(HOM_NAME_COL_NAME, homOntWrapper.getLabel(
                             homOntWrapper.getOWLClassByIdentifier(homId, true)));
                 }
             }
+            
+            //qualifier
+            //we store positive and negative annotations associated to taxa here. 
+            Map<String, Set<Integer>> posOrNegAnnotsToTaxa = positiveAnnotsToTaxa;
+            if (rawAnnot.get(QUALIFIER_COL_NAME) != null) {
+                releaseAnnot.put(QUALIFIER_COL_NAME, NEGATE_QUALIFIER);
+                posOrNegAnnotsToTaxa = negativeAnnotsToTaxa;
+            }
+            //generate a key from HOM ID and UBERON IDs
+            String key = homId + "-" + uberonIdsConcat;
+            Set<Integer> taxIds = posOrNegAnnotsToTaxa.get(key);
+            if (taxIds == null) {
+                taxIds = new HashSet<Integer>();
+                posOrNegAnnotsToTaxa.put(key, taxIds);
+            }
+            taxIds.add(taxonId);
             
             //ECO
             if (rawAnnot.get(ECO_COL_NAME) != null) {
@@ -864,6 +888,11 @@ public class SimilarityAnnotation {
             throw new IllegalArgumentException(e);
         }
         
+        //now we check negative annotations: if there is a NOT annotation 
+        //in a taxon, most likely there should be also a NOT annotation for all parent taxa 
+        //annotated. This is not formally an error (maybe a structure can have been lost 
+        //in a taxon, then reappeared independently later?)
+        
         //now we add the generated lines that summarize several related annotations 
         //using a confidence code for multiple evidences assertion.
         this.addGeneratedAnnotations(releaseData, ecoOntWrapper, confOntWrapper);
@@ -873,6 +902,51 @@ public class SimilarityAnnotation {
         this.sortAnnotations(releaseData);
         
         return log.exit(releaseData);
+    }
+    
+    private Map<String, Set<Integer>> checkNegativeAnnotsParentTaxa(
+            Map<String, Set<Integer>> positiveAnnotsToTaxa, 
+            Map<String, Set<Integer>> negativeAnnotsToTaxa, OWLGraphWrapper taxOntWrapper) {
+        log.entry(positiveAnnotsToTaxa, negativeAnnotsToTaxa, taxOntWrapper);
+
+        Map<String, Set<Integer>> missingNegativeAnnots = new HashMap<String, Set<Integer>>();
+        
+        for (Entry<String, Set<Integer>> negativeAnnot: negativeAnnotsToTaxa.entrySet()) {
+            //the key should represent the concatenation of HOM ID and Uberon IDs, 
+            //that were associated to a negative annotation
+            String key = negativeAnnot.getKey();
+            //if there are positive annotations for the same structure, in parent taxa 
+            //of the taxa used, checked that there also exist corresponding NOT annotations. 
+            //First, we retrieve taxa associated to corresponding positive annotations.
+            if (positiveAnnotsToTaxa.get(key) == null) {
+                continue;
+            }
+            //store in a new HashSet, as we will modify it
+            Set<Integer> positiveTaxIds = new HashSet<Integer>(positiveAnnotsToTaxa.get(key));
+            //identify the taxa used in corresponding positive annotations, that are parents 
+            //of the taxa used in the negative annotation. 
+            //First, we store all parents of the taxa associated to negative annotations.
+            Set<Integer> negativeParentTaxa = new HashSet<Integer>();
+            for (int negativeTaxonId: negativeAnnot.getValue()) {
+                OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
+                        OntologyUtils.getTaxOntologyId(negativeTaxonId), true);
+                if (taxCls != null) {
+                    for (OWLClass parentTaxon: taxOntWrapper.getAncestorsThroughIsA(taxCls)) {
+                        negativeParentTaxa.add(OntologyUtils.getTaxNcbiId(
+                                taxOntWrapper.getIdentifier(parentTaxon)));
+                    }
+                }
+            }
+            //now, retain taxa of positive annotations, parent of taxa used in neg. annotations.
+            positiveTaxIds.retainAll(negativeParentTaxa);
+            //and check whether there exist corresponding negative annotations
+            positiveTaxIds.removeAll(negativeAnnot.getValue());
+            if (!positiveTaxIds.isEmpty()) {
+                missingNegativeAnnots.put(key, positiveTaxIds);
+            }
+        }
+        
+        return log.exit(missingNegativeAnnots);
     }
     
     /**
@@ -1245,7 +1319,7 @@ public class SimilarityAnnotation {
      * it will be stored in {@link #missingECOIds}.
      * <li>If a HOM ID cannot be found in the ontology wrapped in {@code homOntWrapper}, 
      * it will be stored in {@link #missingHOMIds}.
-     * <li>If a CONF ID cannot be found in the ontology wrapped in {@code confOntWrapper}, 
+     * <li>If a CIO ID cannot be found in the ontology wrapped in {@code confOntWrapper}, 
      * it will be stored in {@link #missingCONFIds}.
      * </ul>
      * 
@@ -1503,7 +1577,7 @@ public class SimilarityAnnotation {
     /**
      * Retrieve summarized annotations for a specific taxon from a <strong>clean</strong> 
      * similarity annotation file. Only <strong>positive</strong> annotations are retrieved 
-     * (annotations with soleley a "NOT" qualifier with not be returned).
+     * (annotations with soleley a "NOT" qualifier are not returned).
      * <p>
      * This method will retrieve all annotations that are applicable to the taxon 
      * with the NCBI ID {@code taxonId} (for instance, {@code 9606}), and to 
@@ -1553,7 +1627,7 @@ public class SimilarityAnnotation {
         List<Map<String, Object>> allAnnotations = this.extractAnnotations(similarityFile, false);
         //associate annotations to a key to be able to identify SUMMARY annotations
         Map<String, Map<String, Object>> summarizedAnnotations = new HashMap<String, Map<String, Object>>();
-        //we iterate all annotations, plus a last iteration after the last annotation
+        //iterate all annotations
         for (Map<String, Object> annotation: allAnnotations) {
             String key = annotation.get(ENTITY_COL_NAME) + " - " + 
                 annotation.get(HOM_COL_NAME) + " - " + annotation.get(TAXON_COL_NAME);

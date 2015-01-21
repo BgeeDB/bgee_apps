@@ -397,10 +397,13 @@ public abstract class CallUser extends MySQLDAOUser {
             //we should always have at least a reflexive relation, so, if there is 
             //not a least one "parents" , something is wrong in the database. 
             if (parents == null) {
-                throw log.throwing(new IllegalStateException("The anatomical or stage entity " +
+                IllegalStateException e = new IllegalStateException("The anatomical or stage entity " +
                         childId + " is not defined as existing " +
-                                "in the species of gene " + exprCallTO.getGeneId() + 
-                                ", while it has expression data in it."));
+                        "in the species of gene " + exprCallTO.getGeneId() + 
+                        ", while it has expression data in it.");
+                log.debug("Throwing exception {}, offending call: {}, relations used: {}", 
+                        e, exprCallTO, parentsFromChildren);
+                throw log.throwing(e);
             }
             for (String parentId : parents) {
                 log.trace("Propagation of the current expression to parent: {}", parentId);

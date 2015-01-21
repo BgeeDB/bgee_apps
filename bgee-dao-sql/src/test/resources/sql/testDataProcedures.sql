@@ -333,7 +333,6 @@ BEGIN
                ('MGI:2677299.7', 'MGI:2677299', true, '5V_id'),
                ('BDGP_140958', 'BDGP_IP07646', true, ''),
                ('FBrf0219073.2', 'FBrf0219073', false, 'url2');
-               
 
         INSERT INTO inSituSpot (inSituSpotId, inSituEvidenceId, inSituExpressionPatternId, anatEntityId, stageId, geneId, detectionFlag, expressionId, noExpressionId, inSituData, reasonForExclusion)
         VALUES ('mgi-1118', 'MGI:3041492.9', '', 'Anat_id1', 'Stage_id1', 'ID3', 'present', 8, NULL, 'high quality', 'not excluded'),
@@ -352,11 +351,16 @@ BEGIN
                ('GSM1015164', 'SRX191163', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id13', 'Stage_id18', 1.000000, 43.85, 37.72, 6.23, 81401754, 28408829, 28299304, 75, 75, 'paired', 'unstranded'),
                ('GSM1015162', 'SRX191161', 'GSE41338', 'Illumina HiSeq 2000', 'Anat_id10', 'Stage_id4', 1.000000, 60.13, 51.96, 12.61, 81401754, 43858614, 10260750, 75, 75, 'paired', 'unstranded');
 
-       INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, log2RPK, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
+        INSERT INTO rnaSeqResult (rnaSeqLibraryId, geneId, log2RPK, readsCount, expressionId, noExpressionId, detectionFlag, rnaSeqData, reasonForExclusion)
         VALUES ('GSM1015164', 'ID1', 0.780113, 117, 2, NULL, 'present', 'high quality', 'not excluded'),
                ('GSM1015161', 'ID1', -26.575425, 0, NULL, NULL, 'absent', 'high quality', 'pre-filtering'),
                ('GSM1015161', 'ID2', -1.687530, 31, NULL, 4, 'absent', 'high quality', 'not excluded'),
                ('GSM1015162', 'ID3', -2.462678, 31, NULL, 8, 'absent', 'poor quality', 'not excluded');
+               
+        INSERT INTO differentialExpression(differentialExpressionId, geneId, anatEntityId, stageId, comparisonFactor, diffExprCallAffymetrix, diffExprAffymetrixData, bestPValueAffymetrix, consistentDEACountAffymetrix, inconsistentDEACountAffymetrix, diffExprCallRNASeq, diffExprRNASeqData, bestPValueRNASeq, consistentDEACountRNASeq, inconsistentDEACountRNASeq)
+        VALUES (321, 'ID1', 'Anat_id1', 'Stage_id1', 'anatomy', 'no diff expression', 'high quality', 0.02, 2, 0, 'no diff expression', 'poor quality', 0.05, 1, 0),
+               (322, 'ID2', 'Anat_id9', 'Stage_id3', 'development', 'under-expression', 'poor quality', 0.06, 3, 1, 'not expressed', 'no data', 1, 0, 0);
+
     END IF; 
 END
 ;

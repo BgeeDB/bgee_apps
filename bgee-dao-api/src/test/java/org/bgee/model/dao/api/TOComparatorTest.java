@@ -11,6 +11,9 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
@@ -381,5 +384,61 @@ public class TOComparatorTest extends TestAncestor {
                 new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
         assertFalse(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertFalse(TOComparator.areTOCollectionsEqual(c1, c2, false));
+    }
+
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(Object, Object, boolean)} 
+     * using {@code DiffExpressionCallTO}s.
+     */
+    @Test
+    public void testAreDiffExpressionCallTOEqual() {
+        DiffExpressionCallTO to1 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.LOWQUALITY, 0.05f, 1, 0);
+        DiffExpressionCallTO to2 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.LOWQUALITY, 0.05f, 1, 0);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+        
+        //Different diffExprCallTypeRNASeq
+        to2 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.UNDER_EXPRESSED, 
+                DataState.LOWQUALITY, 0.05f, 1, 0);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, false));
+        
+        //Different id
+        to2 = new DiffExpressionCallTO("322", "ID1", "Anat_id1", "Stage_id1", 
+                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.LOWQUALITY, 0.05f, 1, 0);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        //both best p-value are null
+        to1 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.HIGHQUALITY, null, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.LOWQUALITY, 0.05f, 1, 0);
+        to2 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.HIGHQUALITY, null, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.LOWQUALITY, 0.05f, 1, 0);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+
+        //best p-value for Affymetrix is null
+        to1 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.HIGHQUALITY, null, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.LOWQUALITY, 0.05f, 1, 0);
+        to2 = new DiffExpressionCallTO("321", "ID1", "Anat_id1", "Stage_id1", 
+                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.HIGHQUALITY, 0.05f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                DataState.LOWQUALITY, 0.05f, 1, 0);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
     }
 }

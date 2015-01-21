@@ -11,6 +11,7 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTO;
 import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.GlobalExpressionToExpressionTO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.GlobalNoExpressionToNoExpressionTO;
@@ -121,6 +122,9 @@ public class TOComparator {
             return log.exit(areTOsEqual((
                     GlobalNoExpressionToNoExpressionTO) to1, 
                     (GlobalNoExpressionToNoExpressionTO) to2));
+        } else if (to1 instanceof DiffExpressionCallTO) {
+            return log.exit(areTOsEqual((DiffExpressionCallTO) to1, (DiffExpressionCallTO) to2, 
+                    compareId));
         }
         throw log.throwing(new IllegalArgumentException("There is no comparison method " +
                 "implemented for TransferObject " + to1.getClass() + ", you must implement one"));
@@ -610,5 +614,55 @@ public class TOComparator {
             return log.exit(true);
         }
         return log.exit(false);
+    }
+    
+    /**
+     * Method to compare two {@code DiffExpressionCallTO}s, to check for complete equality of each
+     * attribute. 
+     * <p>
+     * If {@code compareId} is {@code false}, the value returned by the method {@code getId} 
+     * will not be used for comparison.
+     * 
+     * @param to1       A {@code DiffExpressionCallTO} to be compared to {@code to2}.
+     * @param to2       A {@code DiffExpressionCallTO} to be compared to {@code to1}.
+     * @param compareId A {@code boolean} defining whether IDs of {@code EntityTO}s should be 
+     *                  used for comparisons. 
+     * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
+     */
+    private static boolean areTOsEqual(DiffExpressionCallTO to1, DiffExpressionCallTO to2, 
+            boolean compareId) {
+        log.entry(to1, to2);
+        if (TOComparator.areCallTOsEqual(to1, to2, compareId) && 
+                to1.getComparisonFactor() == to2.getComparisonFactor() &&
+                to1.getDiffExprCallTypeAffymetrix() == to2.getDiffExprCallTypeAffymetrix() &&
+                TOComparator.areNearlyEqualFloat(
+                        to1.getBestPValueAffymetrix(), to2.getBestPValueAffymetrix()) &&
+                to1.getConsistentDEACountAffymetrix() == to2.getConsistentDEACountAffymetrix() &&
+                to1.getInconsistentDEACountAffymetrix() == to2.getInconsistentDEACountAffymetrix() &&
+                to1.getDiffExprCallTypeRNASeq() == to2.getDiffExprCallTypeRNASeq() &&
+                TOComparator.areNearlyEqualFloat(
+                        to1.getBestPValueRNASeq(), to2.getBestPValueRNASeq()) &&
+                to1.getConsistentDEACountRNASeq() == to2.getConsistentDEACountRNASeq() &&
+                to1.getInconsistentDEACountRNASeq() == to2.getInconsistentDEACountRNASeq()) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * Method to compare floating-point values using an epsilon. 
+     *
+     * @param f1    A {@code Float} to be compared to {@code f2}.
+     * @param f2    A {@code Float} to be compared to {@code f1}.
+     * @return      {@code true} if {@code f1} and {@code f2} are nearly equals.
+     */
+    private static boolean areNearlyEqualFloat(Float f1, Float f2) {
+        log.entry(f1, f2); 
+        double epsilon = 1e-11;
+
+        if ((f1 == null && f2 == null) || (f1 != null && Math.abs(f1 - f2) < epsilon)) {
+            return log.exit(true);            
+        }
+        return log.exit(false);            
     }
 }

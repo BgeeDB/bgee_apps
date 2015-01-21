@@ -29,6 +29,7 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
@@ -1005,6 +1006,11 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLNoExpressionCallDAO getNewNoExpressionCallDAO() {
         log.entry();
         return log.exit(new MySQLNoExpressionCallDAO(this));
+    }
+    @Override
+    protected MySQLDiffExpressionCallDAO getNewDiffExpressionCallDAO() {
+        log.entry();
+        return log.exit(new MySQLDiffExpressionCallDAO(this));
     }
     @Override
     protected MySQLAnatEntityDAO getNewAnatEntityDAO() {

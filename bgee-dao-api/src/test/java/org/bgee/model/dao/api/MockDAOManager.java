@@ -6,6 +6,7 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.affymetrix.AffymetrixProbesetDAO;
@@ -123,6 +124,10 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected NoExpressionCallDAO getNewNoExpressionCallDAO() {
         return this.instanceMockManager.getNewNoExpressionCallDAO();
+    }
+    @Override
+    protected DiffExpressionCallDAO getNewDiffExpressionCallDAO() {
+        return this.instanceMockManager.getNewDiffExpressionCallDAO();
     }
     @Override
     protected AnatEntityDAO getNewAnatEntityDAO() {

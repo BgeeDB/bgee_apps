@@ -194,6 +194,8 @@ public class Uberon extends UberonCommon {
                         "3 arguments, " + args.length + " provided."));
             }
             new Uberon(args[1]).saveXRefMappingsToFile(args[2]);
+//        } else if (args[0].equalsIgnoreCase("test")) {
+//            Uberon.test();
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -201,6 +203,189 @@ public class Uberon extends UberonCommon {
         
         log.exit();
     }
+
+//    public static void test() throws FileNotFoundException, IOException, 
+//    OBOFormatParserException, OWLOntologyCreationException {
+//        log.entry();
+//        
+//        String sourceOntName = "composite-metazoan.owl";
+//        
+//        Set<String> nonHumanAnatEntityIds = AnnotationCommon.extractAnatEntityIdsFromFile(
+//                "anatEntityIds_non_human.txt", true);
+//        Set<String> noHumanExpressionAnatEntityIds = AnnotationCommon.extractAnatEntityIdsFromFile(
+//                "anatEntityIds_no_human_global_expression.txt", true);
+//        
+//        Set<String> relIds = new HashSet<String>(
+//                Arrays.asList("BFO:0000050", "RO:0002202", "RO:0002494"));
+//        Map<String, Set<String>> relsBetweenToRemove = CommandRunner.parseMapArgument("UBERON:0000922/UBERON:0002050,UBERON:0004716/UBERON:0000922,UBERON:0001640/UBERON:0001194");
+//        List<String> toRemoveSubgraphRootIds = CommandRunner.parseListArgument("NBO:0000313,GO:0008150,ENVO:01000254,BFO:0000040,GO:0003674,PATO:0000001,CHEBI:24431,SO:0000704");
+//        List<String> toFilterSubgraphRootIds = CommandRunner.parseListArgument("NCBITaxon:1,UBERON:0001062,GO:0005575");
+//        
+//        
+//        Uberon ub = new Uberon(sourceOntName);
+//        ub.convertTaxonECAs();
+//        ub.getOntologyUtils().removeOBOProblematicAxioms();
+//        
+//        ub.getOntologyUtils().saveAsOBO(sourceOntName + "_base.obo", false);
+//        
+////        Uberon ub2 = new Uberon(ub.getOntologyUtils());
+////        OWLGraphManipulator manipulator = ub2.getOntologyUtils().getManipulator();
+////        
+////        manipulator.removeUnrelatedRelations(relIds);
+////        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
+////            for (String targetId: relsToRemove.getValue()) {
+////                manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+////            }
+////        }
+////        manipulator.mapRelationsToParent(relIds);
+////        manipulator.filterRelations(relIds, true);
+////        for (String subgraphRootId: toRemoveSubgraphRootIds) {
+////            manipulator.removeSubgraphs(Arrays.asList(subgraphRootId), true, 
+////                    toFilterSubgraphRootIds);
+////        }
+////        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
+////    
+////        ub2.getOntologyUtils().removeOBOProblematicAxioms();
+////        ub2.getOntologyUtils().saveAsOBO(sourceOntName + "_base_simple.obo", false);
+////        
+////        
+////        ub2 = new Uberon(ub.getOntologyUtils());
+////        manipulator = ub2.getOntologyUtils().getManipulator();
+////        
+////        manipulator.removeUnrelatedRelations(relIds);
+////        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
+////            for (String targetId: relsToRemove.getValue()) {
+////                manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+////            }
+////        }
+////        manipulator.reduceRelations();
+////        manipulator.reducePartOfIsARelations();
+////        manipulator.mapRelationsToParent(relIds);
+////        manipulator.filterRelations(relIds, true);
+////        for (String subgraphRootId: toRemoveSubgraphRootIds) {
+////            manipulator.removeSubgraphs(Arrays.asList(subgraphRootId), true, 
+////                    toFilterSubgraphRootIds);
+////        }
+////        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
+////    
+////        ub2.getOntologyUtils().removeOBOProblematicAxioms();
+////        ub2.getOntologyUtils().saveAsOBO(sourceOntName + "_base_simple_reduced.obo", false);
+////        
+////        Uberon ub2 = new Uberon(ub.getOntologyUtils());
+////        OWLGraphManipulator manipulator = ub2.getOntologyUtils().getManipulator();
+////        
+////        manipulator.removeUnrelatedRelations(relIds);
+////        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
+////            for (String targetId: relsToRemove.getValue()) {
+////                manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+////            }
+////        }
+////        manipulator.mapRelationsToParent(relIds);
+////        manipulator.filterRelations(relIds, true);
+////        for (String subgraphRootId: toRemoveSubgraphRootIds) {
+////            manipulator.removeSubgraphs(Arrays.asList(subgraphRootId), true, 
+////                    toFilterSubgraphRootIds);
+////        }
+////        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
+////        for (String classIdToRemove: nonHumanAnatEntityIds) {
+////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+////                manipulator.removeClassAndPropagateEdges(classIdToRemove);
+////            }
+////        }
+////    
+////        ub2.getOntologyUtils().removeOBOProblematicAxioms();
+////        ub2.getOntologyUtils().saveAsOBO(sourceOntName + "_base_simple_human_only.obo", false);
+////
+////        
+////        ub2 = new Uberon(ub.getOntologyUtils());
+////        manipulator = ub2.getOntologyUtils().getManipulator();
+////        
+////        manipulator.removeUnrelatedRelations(relIds);
+////        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
+////            for (String targetId: relsToRemove.getValue()) {
+////                manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+////            }
+////        }
+////        manipulator.mapRelationsToParent(relIds);
+////        manipulator.filterRelations(relIds, true);
+////        for (String subgraphRootId: toRemoveSubgraphRootIds) {
+////            manipulator.removeSubgraphs(Arrays.asList(subgraphRootId), true, 
+////                    toFilterSubgraphRootIds);
+////        }
+////        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
+////        for (String classIdToRemove: noHumanExpressionAnatEntityIds) {
+////            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+////                manipulator.removeClassAndPropagateEdges(classIdToRemove);
+////            }
+////        }
+////    
+////        ub2.getOntologyUtils().removeOBOProblematicAxioms();
+////        ub2.getOntologyUtils().saveAsOBO(sourceOntName + "_base_simple_human_expression_only.obo", false);
+//        
+//        
+//        Uberon ub2 = new Uberon(ub.getOntologyUtils());
+//        OWLGraphManipulator manipulator = ub2.getOntologyUtils().getManipulator();
+//        
+//        manipulator.removeUnrelatedRelations(relIds);
+//        for (String classIdToRemove: nonHumanAnatEntityIds) {
+//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+//                manipulator.removeClassAndPropagateEdges(classIdToRemove);
+//            }
+//        }
+//        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
+//            for (String targetId: relsToRemove.getValue()) {
+//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(relsToRemove.getKey()) != null && 
+//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(targetId) != null) {
+//                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+//                }
+//            }
+//        }
+//        manipulator.reduceRelations();
+//        manipulator.reducePartOfIsARelations();
+//        manipulator.mapRelationsToParent(relIds);
+//        manipulator.filterRelations(relIds, true);
+//        for (String subgraphRootId: toRemoveSubgraphRootIds) {
+//            manipulator.removeSubgraphs(Arrays.asList(subgraphRootId), true, 
+//                    toFilterSubgraphRootIds);
+//        }
+//        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
+//    
+//        ub2.getOntologyUtils().removeOBOProblematicAxioms();
+//        ub2.getOntologyUtils().saveAsOBO(sourceOntName + "_base_simple_reduced_human_only.obo", false);
+//        
+//        
+//        ub2 = new Uberon(ub.getOntologyUtils());
+//        manipulator = ub2.getOntologyUtils().getManipulator();
+//        
+//        manipulator.removeUnrelatedRelations(relIds);
+//        for (String classIdToRemove: noHumanExpressionAnatEntityIds) {
+//            if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(classIdToRemove) != null) {
+//                manipulator.removeClassAndPropagateEdges(classIdToRemove);
+//            }
+//        }
+//        for (Entry<String, Set<String>> relsToRemove: relsBetweenToRemove.entrySet()) {
+//            for (String targetId: relsToRemove.getValue()) {
+//                if (manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(relsToRemove.getKey()) != null && 
+//                        manipulator.getOwlGraphWrapper().getOWLClassByIdentifier(targetId) != null) {
+//                    manipulator.removeDirectEdgesBetween(relsToRemove.getKey(), targetId);
+//                }
+//            }
+//        }
+//        manipulator.reduceRelations();
+//        manipulator.reducePartOfIsARelations();
+//        manipulator.mapRelationsToParent(relIds);
+//        manipulator.filterRelations(relIds, true);
+//        for (String subgraphRootId: toRemoveSubgraphRootIds) {
+//            manipulator.removeSubgraphs(Arrays.asList(subgraphRootId), true, 
+//                    toFilterSubgraphRootIds);
+//        }
+//        manipulator.filterSubgraphs(toFilterSubgraphRootIds);
+//    
+//        ub2.getOntologyUtils().removeOBOProblematicAxioms();
+//        ub2.getOntologyUtils().saveAsOBO(sourceOntName + "_base_simple_reduced_human_expression_only.obo", false);
+//        
+//        log.exit();
+//    }
 
     /**
      * A {@code Collection} of {@code String}s that are the names of the targeted subsets, 

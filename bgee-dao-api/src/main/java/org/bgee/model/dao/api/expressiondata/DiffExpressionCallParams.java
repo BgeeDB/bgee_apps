@@ -1,11 +1,9 @@
 package org.bgee.model.dao.api.expressiondata;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffCallType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.Factor;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 
 /**
  * This class allows to provide the parameters specific to differential expression 
@@ -22,7 +20,7 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
  * <p>
  * In general, a {@code DiffCallType} and a {@code Factor} should be provided (see 
  * {@link #setDiffCallType(DiffCallType)} and 
- * {@link #setFactor(Factor)}).
+ * {@link #setComparisonFactor(ComparisonFactor)}).
  * Otherwise, It means that different types of call would be used (for instance, 
  * {@code OVEREXPRESSED} and {@code UNDEREXPRESSED}), or comparing different things 
  * (for instance, comparing expression in an organ at different stage, or comparing 
@@ -46,26 +44,29 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
  * getDifferentParametersCount.
  */
 public class DiffExpressionCallParams extends CallParams {
+        
+//    /**
+//     * An {@code int} defining the minimum number of conditions compared in Bgee 
+//     * when performing a differential expression analysis. As of Bgee 13, 
+//     * is equals to 3.
+//     */
+//    public final static int MINCONDITIONCOUNT = 3;
+
     /**
-     * {@code Logger} of the class. 
+     * A {@code boolean} defining whether both requested minimum contributions (Affymetrix 
+     * and RNA-seq data) have to be satisfied or at least one of the two.
      */
-    private final static Logger log = 
-            LogManager.getLogger(DiffExpressionCallParams.class.getName());
-    /**
-     * An {@code int} defining the minimum number of conditions compared in Bgee 
-     * when performing a differential expression analysis. As of Bgee 13, 
-     * is equals to 3.
-     */
-    public final static int MINCONDITIONCOUNT = 3;
-    
+    private boolean whatever;
+
     /**
      * Default constructor.
      */
     public DiffExpressionCallParams() {
         super(new DiffExpressionCallTO());
-        this.setFactor(null);
-        this.setDiffCallType(null);
-        this.setMinConditionCount(MINCONDITIONCOUNT);
+        this.setComparisonFactor(null);
+        this.setDiffExprCallTypeAffymetrix(null);
+        this.setDiffExprCallTypeRNASeq(null);
+        this.setWhatever(true);
     }
     
     @Override
@@ -77,153 +78,153 @@ public class DiffExpressionCallParams extends CallParams {
     // MERGE METHODS
     //****************************************
     
-    /**
-     * @see #canMerge(CallParams)
-     */
-    @Override
-    protected DiffExpressionCallParams merge(CallParams paramsToMerge) {
-        log.entry(paramsToMerge);
-        //first, determine whether we can merge the CallParams
-        if (!this.canMerge(paramsToMerge)) {
-            return log.exit(null);
-        }
-
-        //OK, let's proceed to the merging
-        //we blindly perform the merging here, even if if meaningless, it is the 
-        //responsibility of the method canMerge to determine whether it is appropriate.
-        DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
-        DiffExpressionCallParams mergedParams = new DiffExpressionCallParams();
-        //of note, data types and qualities are merged by super.merge method
-        super.merge(otherParams, mergedParams);
-        
-        mergedParams.setMinConditionCount(Math.max(this.getMinConditionCount(), 
-                otherParams.getMinConditionCount()));
-        //this condition check that if one of the CallParams did not have any 
-        //condition on Factor, it will remain that way (more data retrieved).
-        //otherwise, we simply pick up the value of one of the CallParams
-        if (this.getFactor() != null && otherParams.getFactor() != null) {
-            mergedParams.setFactor(this.getFactor());
-        }
-        //this condition check that if one of the CallParams did not have any 
-        //condition on CallType, it will remain that way (more data retrieved).
-        //otherwise, we simply pick up the value of one of the CallParams
-        if (this.getDiffCallType() != null && otherParams.getDiffCallType() != null) {
-            mergedParams.setDiffCallType(this.getDiffCallType());
-        }
-
-        return log.exit(mergedParams);
-    }
-
-    /**
-     * Determines whether this {@code DiffExpressionCallParams} and 
-     * {@code paramsToMerge} can be merged. 
-     * 
-     * @param paramsToMerge A {@code CallParams} that is tried to be merged 
-     *                      with this {@code DiffExpressionCallParams}.
-     * @return              {@code true} if they could be merged. 
-     */
-    @Override
-    protected boolean canMerge(CallParams paramsToMerge) {
-        log.entry(paramsToMerge);
-        
-        if (!(paramsToMerge instanceof DiffExpressionCallParams)) {
-            return log.exit(false);
-        }
-        DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
-
-        //here we cannot just keep the smallest condition count, 
-        //the summary of differential expression calls are different 
-        //depending on the minimum number of conditions requested.
-        //so whatever happens, we cannot merge DiffExpressionCallParams 
-        //with different minConditionCounts (even if one of them is the default one, 
-        //this is why we do this check before the hasDataRestrictions check below)
-        if (this.getMinConditionCount() != otherParams.getMinConditionCount()) {
-            return log.exit(false);
-        }
-        
-        //if one of the CallParams has no restriction at all (all data retrieved), 
-        //then obviously a merging can occur, as the data retrieved by one CallParams 
-        //will be a subset of the data retrieved by the other one.
-        if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
-            return log.exit(true);
-        }
-        
-        //if there is more than 1 difference between the parameters of 
-        //the two DiffExpressionCallParams, merge not possible 
-        //(no "OR" condition possible).
-        if (this.getDifferentParametersCount(otherParams) > 1) {
-            return log.exit(false);
-        }
-        
-        //now that we have checked there were not more than 1 difference, 
-        //we can merge the CallParams if one of their parameter is null and 
-        //the other is not (one CallParams requests all data, and the other one 
-        //only a subset, so it will work). Otherwise, they have to be equal.
-        
-        //if one of the DiffCallType is null, then it means no restriction on it, all data 
-        //whatever their call type will be used, so we can merge the CallParams whatever 
-        //the value of the call type for the other CallParams is.
-        if (this.getDiffCallType() != null && otherParams.getDiffCallType() != null &&
-            !this.getDiffCallType().equals(otherParams.getDiffCallType())) {
-            return log.exit(false);
-        }
-        //if one of the Factor is null, then it means no restriction on it, all data 
-        //whatever their factor will be used, so we can merge the CallParams whatever 
-        //the value of Factor for the other CallParams is.
-        if (this.getFactor() != null && otherParams.getFactor() != null &&
-            !this.getFactor().equals(otherParams.getFactor())) {
-              return log.exit(false);
-        }
-
-        //of note, this method also takes care of the check for data types 
-        //and qualities
-        if (!super.canMerge(otherParams)) {
-            return log.exit(false);
-        }
-        
-        return log.exit(true);
-    }
-    
-    @Override
-    protected boolean hasDataRestrictions() {
-        log.entry();
-        if (this.getFactor() != null || this.getDiffCallType() != null || 
-                this.getMinConditionCount() != MINCONDITIONCOUNT) {
-            return log.exit(true);
-        }
-        
-        return log.exit(super.hasDataRestrictions());
-    }
-    
-    @Override
-    protected int getDifferentParametersCount(CallParams otherParams) {
-        log.entry();
-        int diff = 0;
-        if (otherParams instanceof DiffExpressionCallParams) {
-            DiffExpressionCallParams params = (DiffExpressionCallParams) otherParams;
-            
-            if (  (this.getDiffCallType() == null && params.getDiffCallType() != null) || 
-                    
-                  (this.getDiffCallType() != null && 
-                  !this.getDiffCallType().equals(params.getDiffCallType()))) {
-                diff ++;
-            }
-            if (  (this.getFactor() == null && params.getFactor() != null) || 
-                    
-                  (this.getFactor() != null && 
-                  !this.getFactor().equals(params.getFactor()))) {
-                diff ++;
-            }
-            if (this.getMinConditionCount() != params.getMinConditionCount()) {
-                diff++;
-            }
-        } else {
-            //number of parameters in this class restraining data retrieved
-            diff = 3;
-        }
-        
-        return log.exit(diff + super.getDifferentParametersCount(otherParams));
-    }
+//    /**
+//     * @see #canMerge(CallParams)
+//     */
+//    @Override
+//    protected DiffExpressionCallParams merge(CallParams paramsToMerge) {
+//        log.entry(paramsToMerge);
+//        //first, determine whether we can merge the CallParams
+//        if (!this.canMerge(paramsToMerge)) {
+//            return log.exit(null);
+//        }
+//
+//        //OK, let's proceed to the merging
+//        //we blindly perform the merging here, even if if meaningless, it is the 
+//        //responsibility of the method canMerge to determine whether it is appropriate.
+//        DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
+//        DiffExpressionCallParams mergedParams = new DiffExpressionCallParams();
+//        //of note, data types and qualities are merged by super.merge method
+//        super.merge(otherParams, mergedParams);
+//        
+//        mergedParams.setMinConditionCount(Math.max(this.getMinConditionCount(), 
+//                otherParams.getMinConditionCount()));
+//        //this condition check that if one of the CallParams did not have any 
+//        //condition on Factor, it will remain that way (more data retrieved).
+//        //otherwise, we simply pick up the value of one of the CallParams
+//        if (this.getFactor() != null && otherParams.getFactor() != null) {
+//            mergedParams.setFactor(this.getFactor());
+//        }
+//        //this condition check that if one of the CallParams did not have any 
+//        //condition on CallType, it will remain that way (more data retrieved).
+//        //otherwise, we simply pick up the value of one of the CallParams
+//        if (this.getDiffCallType() != null && otherParams.getDiffCallType() != null) {
+//            mergedParams.setDiffCallType(this.getDiffCallType());
+//        }
+//
+//        return log.exit(mergedParams);
+//    }
+//
+//    /**
+//     * Determines whether this {@code DiffExpressionCallParams} and 
+//     * {@code paramsToMerge} can be merged. 
+//     * 
+//     * @param paramsToMerge A {@code CallParams} that is tried to be merged 
+//     *                      with this {@code DiffExpressionCallParams}.
+//     * @return              {@code true} if they could be merged. 
+//     */
+//    @Override
+//    protected boolean canMerge(CallParams paramsToMerge) {
+//        log.entry(paramsToMerge);
+//        
+//        if (!(paramsToMerge instanceof DiffExpressionCallParams)) {
+//            return log.exit(false);
+//        }
+//        DiffExpressionCallParams otherParams = (DiffExpressionCallParams) paramsToMerge;
+//
+//        //here we cannot just keep the smallest condition count, 
+//        //the summary of differential expression calls are different 
+//        //depending on the minimum number of conditions requested.
+//        //so whatever happens, we cannot merge DiffExpressionCallParams 
+//        //with different minConditionCounts (even if one of them is the default one, 
+//        //this is why we do this check before the hasDataRestrictions check below)
+//        if (this.getMinConditionCount() != otherParams.getMinConditionCount()) {
+//            return log.exit(false);
+//        }
+//        
+//        //if one of the CallParams has no restriction at all (all data retrieved), 
+//        //then obviously a merging can occur, as the data retrieved by one CallParams 
+//        //will be a subset of the data retrieved by the other one.
+//        if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
+//            return log.exit(true);
+//        }
+//        
+//        //if there is more than 1 difference between the parameters of 
+//        //the two DiffExpressionCallParams, merge not possible 
+//        //(no "OR" condition possible).
+//        if (this.getDifferentParametersCount(otherParams) > 1) {
+//            return log.exit(false);
+//        }
+//        
+//        //now that we have checked there were not more than 1 difference, 
+//        //we can merge the CallParams if one of their parameter is null and 
+//        //the other is not (one CallParams requests all data, and the other one 
+//        //only a subset, so it will work). Otherwise, they have to be equal.
+//        
+//        //if one of the DiffCallType is null, then it means no restriction on it, all data 
+//        //whatever their call type will be used, so we can merge the CallParams whatever 
+//        //the value of the call type for the other CallParams is.
+//        if (this.getDiffCallType() != null && otherParams.getDiffCallType() != null &&
+//            !this.getDiffCallType().equals(otherParams.getDiffCallType())) {
+//            return log.exit(false);
+//        }
+//        //if one of the Factor is null, then it means no restriction on it, all data 
+//        //whatever their factor will be used, so we can merge the CallParams whatever 
+//        //the value of Factor for the other CallParams is.
+//        if (this.getFactor() != null && otherParams.getFactor() != null &&
+//            !this.getFactor().equals(otherParams.getFactor())) {
+//              return log.exit(false);
+//        }
+//
+//        //of note, this method also takes care of the check for data types 
+//        //and qualities
+//        if (!super.canMerge(otherParams)) {
+//            return log.exit(false);
+//        }
+//        
+//        return log.exit(true);
+//    }
+//    
+//    @Override
+//    protected boolean hasDataRestrictions() {
+//        log.entry();
+//        if (this.getFactor() != null || this.getDiffCallType() != null || 
+//                this.getMinConditionCount() != MINCONDITIONCOUNT) {
+//            return log.exit(true);
+//        }
+//        
+//        return log.exit(super.hasDataRestrictions());
+//    }
+//    
+//    @Override
+//    protected int getDifferentParametersCount(CallParams otherParams) {
+//        log.entry();
+//        int diff = 0;
+//        if (otherParams instanceof DiffExpressionCallParams) {
+//            DiffExpressionCallParams params = (DiffExpressionCallParams) otherParams;
+//            
+//            if (  (this.getDiffCallType() == null && params.getDiffCallType() != null) || 
+//                    
+//                  (this.getDiffCallType() != null && 
+//                  !this.getDiffCallType().equals(params.getDiffCallType()))) {
+//                diff ++;
+//            }
+//            if (  (this.getFactor() == null && params.getFactor() != null) || 
+//                    
+//                  (this.getFactor() != null && 
+//                  !this.getFactor().equals(params.getFactor()))) {
+//                diff ++;
+//            }
+//            if (this.getMinConditionCount() != params.getMinConditionCount()) {
+//                diff++;
+//            }
+//        } else {
+//            //number of parameters in this class restraining data retrieved
+//            diff = 3;
+//        }
+//        
+//        return log.exit(diff + super.getDifferentParametersCount(otherParams));
+//    }
     
 
     //**************************************
@@ -232,84 +233,91 @@ public class DiffExpressionCallParams extends CallParams {
     //**************************************
     /**
      * Returns the {@code DiffCallType} defining the type of the differential 
-     * expression calls to be used. If {@code null}, any will be used 
+     * expression calls to be used for Affymetrix data. If {@code null}, any will be used 
+     * (take caution when interpreting the results in that case).
+     * 
+     * @return  the {@code DiffCallType} defining the type of the differential 
+     *          expression calls to be used for Affymetrix data.
+     */
+    public DiffExprCallType getDiffExprCallTypeAffymetrix() {
+        return this.getReferenceCallTO().getDiffExprCallTypeAffymetrix();
+    }
+    /**
+     * Sets the {@code DiffCallType} defining the type of the differential 
+     * expression calls to be used for Affymetrix data. If {@code null}, any will be used 
+     * (take caution when interpreting the results in that case).
+     * 
+     * @param callType  the {@code DiffCallType} defining the type of the differential 
+     *                  expression calls to be used for Affymetrix data.
+     */
+    public void setDiffExprCallTypeAffymetrix(DiffExprCallType callType) {
+        this.getReferenceCallTO().setDiffExprCallTypeAffymetrix(callType);
+    }
+
+    /**
+     * Returns the {@code DiffCallType} defining the type of the differential 
+     * expression calls to be used for RNA-seq data. If {@code null}, any will be used 
      * (take caution when interpreting the results in that case).
      * 
      * @return  the {@code DiffCallType} defining the type of the differential 
      *          expression calls to be used.
      */
-    public DiffCallType getDiffCallType() {
-        return this.getReferenceCallTO().getDiffCallType();
+    public DiffExprCallType getDiffExprCallTypeRNASeq() {
+        return this.getReferenceCallTO().getDiffExprCallTypeRNASeq();
     }
     /**
      * Sets the {@code DiffCallType} defining the type of the differential 
-     * expression calls to be used. If {@code null}, any will be used 
+     * expression calls to be used for RNA-seq data. If {@code null}, any will be used 
      * (take caution when interpreting the results in that case).
      * 
      * @param callType  the {@code DiffCallType} defining the type of the differential 
-     *                  expression calls to be used.
+     *                  expression calls to be used for RNA-seq data.
      */
-    public void setDiffCallType(DiffCallType callType) {
-        this.getReferenceCallTO().setDiffCallType(callType);
+    public void setDiffExprCallTypeRNASeq(DiffExprCallType callType) {
+        this.getReferenceCallTO().setDiffExprCallTypeRNASeq(callType);
     }
 
     /**
-     * Returns the {@code Factor} defining what should be the experimental factor 
+     * Returns the {@code ComparisonFactor} defining what should be the experimental factor 
      * compared that generated the differential expression calls to be used. 
      * If {@code null}, any will be used (take caution when interpreting the results 
      * in that case).
      * 
-     * @return  the {@code Factor} defining what should be the experimental factor 
+     * @return  the {@code ComparisonFactor} defining what should be the experimental factor 
      *          compared of the calls to use.
      */
-    public Factor getFactor() {
-        return this.getReferenceCallTO().getFactor();
+    public ComparisonFactor getComparisonFactor() {
+        return this.getReferenceCallTO().getComparisonFactor();
     }
     /**
-     * Sets the {@code Factor} defining what should be the experimental factor 
+     * Sets the {@code ComparisonFactor} defining what should be the experimental factor 
      * compared that generated the differential expression calls to be used. 
      * If {@code null}, any will be used (take caution when interpreting the results 
      * in that case).
      * 
-     * @param factor    the {@code Factor} defining what should be the experimental 
+     * @param factor    the {@code ComparisonFactor} defining what should be the experimental 
      *                  factor compared of the calls to use.
      */
-    public void setFactor(Factor factor) {
-        this.getReferenceCallTO().setFactor(factor);
+    public void setComparisonFactor(ComparisonFactor factor) {
+        this.getReferenceCallTO().setComparisonFactor(factor);
     }
     
     /**
-     * An {@code int} allowing to params the differential calls to be used, 
-     * based on the minimum number of conditions that were compared during 
-     * the differential expression analyzes that generated them. Default is 
-     * {@link #MINCONDITIONCOUNT}. 
+     * A {@code boolean} defining whether both requested minimum contributions (Affymetrix 
+     * and RNA-seq data) have to be satisfied or at least one of the two. 
      * 
-     * @return  the {@code int} defining the minimum number of conditions that 
-     *          should have been compared when generating the differential calls 
-     *          to be used.
+     * @return  the {@code boolean} defining whether .
      */
-    public int getMinConditionCount() {
-        return this.getReferenceCallTO().getMinConditionCount();
+    public boolean isWhatever() {
+        return this.whatever;
     }
+    
     /**
-     * An {@code int} allowing to params the differential calls to be used, 
-     * based on the minimum number of conditions that were compared during 
-     * the differential expression analyzes that generated them. Default is 
-     * {@link #MINCONDITIONCOUNT}. This methods will throw an {@code 
-     * IllegalArgumentException} if {@code conditionCount} is below this value.
-     * 
-     * @param conditionCount    the {@code int} defining the minimum number of 
-     *                          conditions that should have been compared when 
-     *                          generating the differential calls to be used.
-     * @throws IllegalArgumentException If {@code conditionCount} is less than 
-     *                                  {@code #MINCONDITIONCOUNT}.
+     * @param whatever  the {@code boolean} defining whether both requested minimum contributions 
+     *                  (Affymetrix and RNA-seq data) have to be satisfied or at least one of the two.
      */
-    public void setMinConditionCount(int conditionCount) throws IllegalArgumentException {
-        if (conditionCount < MINCONDITIONCOUNT) {
-            throw log.throwing(new IllegalArgumentException("minConditionCount " +
-            		"cannot be less than " + MINCONDITIONCOUNT));
-        }
-        this.getReferenceCallTO().setMinConditionCount(conditionCount);
+    public void setWhatever(boolean whatever) {
+        this.whatever = whatever;
     }
 
     //***********************************************

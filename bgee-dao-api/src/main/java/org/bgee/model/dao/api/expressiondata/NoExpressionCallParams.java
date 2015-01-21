@@ -1,7 +1,5 @@
 package org.bgee.model.dao.api.expressiondata;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTO;
 
@@ -33,11 +31,6 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
  * getDifferentParametersCount.
  */
 public class NoExpressionCallParams extends CallParams {
-    /**
-     * {@code Logger} of the class. 
-     */
-    private final static Logger log = 
-            LogManager.getLogger(NoExpressionCallParams.class.getName());
     
     /**
      * Default constructor.
@@ -56,122 +49,122 @@ public class NoExpressionCallParams extends CallParams {
     // MERGE METHODS
     //****************************************
 
-    /**
-     * @see #canMerge(CallParams)
-     */
-    @Override
-    protected NoExpressionCallParams merge(CallParams paramsToMerge) {
-        log.entry(paramsToMerge);
-        //first, determine whether we can merge the CallParams
-        if (!this.canMerge(paramsToMerge)) {
-            return log.exit(null);
-        }
-
-        //OK, let's proceed to the merging
-        //we blindly perform the merging here, even if if meaningless, it is the 
-        //responsibility of the method canMerge to determine whether it is appropriate.
-        NoExpressionCallParams otherParams  = (NoExpressionCallParams) paramsToMerge;
-        NoExpressionCallParams mergedParams = new NoExpressionCallParams();
-        //of note, data types and qualities are merged by super.merge method
-        super.merge(otherParams, mergedParams);
-        //here, we take care of the merging of the attributes specific to 
-        //NoExpressionCallParams (except the data types and qualities, managed by 
-        //the parent class)
-        mergedParams.setIncludeParentStructures(
-                (this.isIncludeParentStructures() || otherParams.isIncludeParentStructures()));
-
-        return log.exit(mergedParams);
-    }
-
-    /**
-     * Determines whether this {@code NoExpressionCallParams} and 
-     * {@code paramsToMerge} can be merged. 
-     * 
-     * @param paramsToMerge   A {@code CallParams} that is tried to be merged 
-     *                      with this {@code NoExpressionCallParams}.
-     * @return              {@code true} if they could be merged. 
-     */
-    @Override
-    protected boolean canMerge(CallParams paramsToMerge) {
-        log.entry(paramsToMerge);
-        
-        if (!(paramsToMerge instanceof NoExpressionCallParams)) {
-            return log.exit(false);
-        }
-        NoExpressionCallParams otherParams = (NoExpressionCallParams) paramsToMerge;
-        
-        //NoExpressionCallParams with different expression propagation rules 
-        //are not merged, because no-expression calls using propagation would use 
-        //the best data qualities over all parent structures. As a result, 
-        //it would not be possible to retrieve data qualities when no propagation is used, 
-        //and so, not possible to check for the data quality conditions held 
-        //by an NoExpressionCallParams not using propagation.
-        //An exception is that, if an NoExpressionCallParams not using propagation 
-        //was not requesting any specific quality, it could be merged with 
-        //a NoExpressionCallParams using propagation. But it would be a nightmare to deal 
-        //with all these specific cases in other parts of the code, as these calls 
-        //would not be flagged "not taking into account parent structures" anymore...
-        //So, we simply do not merge in that case.
-        if (this.isIncludeParentStructures() != otherParams.isIncludeParentStructures()) {
-            return log.exit(false);
-        }
-        
-        //if one of the CallParams has no restriction at all (all data retrieved), 
-        //then obviously a merging can occur, as the data retrieved by one CallParams 
-        //will be a subset of the data retrieved by the other one.
-        //we let this stub here, even if super.canMerge will do the same check 
-        //just below, because if other parameters would be added, they should be checked 
-        //after this stub (see DiffExpressionCallParams#canMerge(CallParams) for 
-        //an example).
-        if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
-            return log.exit(true);
-        }
-
-        //of note, this method also takes care of the check for data types 
-        //and qualities
-        if (!super.canMerge(otherParams)) {
-            return log.exit(false);
-        }
-        
-        return log.exit(true);
-    }
-    
-    @Override
-    protected boolean hasDataRestrictions() {
-        log.entry();
-        //the only parameters specific to this class are not seen as parameters 
-        //restraining the data retrieved, but rather, as parameters about the way 
-        //the data were generated (taking into account substructures or not, etc).
-        //And NoExpressionCallParams with differences for these parameters could not 
-        //be merged (see method canMerge).
-        //
-        //So we do not consider these parameters as relevant for this method call.
-        //We simply delegate to the super class
-        
-        return log.exit(super.hasDataRestrictions());
-    }
-    
-    @Override
-    protected int getDifferentParametersCount(CallParams otherParams) {
-        log.entry();
-        log.entry();
-        int diff = 0;
-        if (otherParams instanceof NoExpressionCallParams) {
-            NoExpressionCallParams params = (NoExpressionCallParams) otherParams;
-            //these parameters do not really restrict data retrieved, but 
-            //for the sake of completeness...
-            //in any case, NoExpressionCallParams with different values for 
-            //these parameters are not mergeable
-            if (this.isIncludeParentStructures() != params.isIncludeParentStructures()) {
-                diff++;
-            }
-        } else {
-            //number of parameters in this class 
-            diff = 1;
-        }
-        
-        return log.exit(diff + super.getDifferentParametersCount(otherParams));
-    }
+//    /**
+//     * @see #canMerge(CallParams)
+//     */
+//    @Override
+//    protected NoExpressionCallParams merge(CallParams paramsToMerge) {
+//        log.entry(paramsToMerge);
+//        //first, determine whether we can merge the CallParams
+//        if (!this.canMerge(paramsToMerge)) {
+//            return log.exit(null);
+//        }
+//
+//        //OK, let's proceed to the merging
+//        //we blindly perform the merging here, even if if meaningless, it is the 
+//        //responsibility of the method canMerge to determine whether it is appropriate.
+//        NoExpressionCallParams otherParams  = (NoExpressionCallParams) paramsToMerge;
+//        NoExpressionCallParams mergedParams = new NoExpressionCallParams();
+//        //of note, data types and qualities are merged by super.merge method
+//        super.merge(otherParams, mergedParams);
+//        //here, we take care of the merging of the attributes specific to 
+//        //NoExpressionCallParams (except the data types and qualities, managed by 
+//        //the parent class)
+//        mergedParams.setIncludeParentStructures(
+//                (this.isIncludeParentStructures() || otherParams.isIncludeParentStructures()));
+//
+//        return log.exit(mergedParams);
+//    }
+//
+//    /**
+//     * Determines whether this {@code NoExpressionCallParams} and 
+//     * {@code paramsToMerge} can be merged. 
+//     * 
+//     * @param paramsToMerge   A {@code CallParams} that is tried to be merged 
+//     *                      with this {@code NoExpressionCallParams}.
+//     * @return              {@code true} if they could be merged. 
+//     */
+//    @Override
+//    protected boolean canMerge(CallParams paramsToMerge) {
+//        log.entry(paramsToMerge);
+//        
+//        if (!(paramsToMerge instanceof NoExpressionCallParams)) {
+//            return log.exit(false);
+//        }
+//        NoExpressionCallParams otherParams = (NoExpressionCallParams) paramsToMerge;
+//        
+//        //NoExpressionCallParams with different expression propagation rules 
+//        //are not merged, because no-expression calls using propagation would use 
+//        //the best data qualities over all parent structures. As a result, 
+//        //it would not be possible to retrieve data qualities when no propagation is used, 
+//        //and so, not possible to check for the data quality conditions held 
+//        //by an NoExpressionCallParams not using propagation.
+//        //An exception is that, if an NoExpressionCallParams not using propagation 
+//        //was not requesting any specific quality, it could be merged with 
+//        //a NoExpressionCallParams using propagation. But it would be a nightmare to deal 
+//        //with all these specific cases in other parts of the code, as these calls 
+//        //would not be flagged "not taking into account parent structures" anymore...
+//        //So, we simply do not merge in that case.
+//        if (this.isIncludeParentStructures() != otherParams.isIncludeParentStructures()) {
+//            return log.exit(false);
+//        }
+//        
+//        //if one of the CallParams has no restriction at all (all data retrieved), 
+//        //then obviously a merging can occur, as the data retrieved by one CallParams 
+//        //will be a subset of the data retrieved by the other one.
+//        //we let this stub here, even if super.canMerge will do the same check 
+//        //just below, because if other parameters would be added, they should be checked 
+//        //after this stub (see DiffExpressionCallParams#canMerge(CallParams) for 
+//        //an example).
+//        if (!this.hasDataRestrictions() || !otherParams.hasDataRestrictions()) {
+//            return log.exit(true);
+//        }
+//
+//        //of note, this method also takes care of the check for data types 
+//        //and qualities
+//        if (!super.canMerge(otherParams)) {
+//            return log.exit(false);
+//        }
+//        
+//        return log.exit(true);
+//    }
+//    
+//    @Override
+//    protected boolean hasDataRestrictions() {
+//        log.entry();
+//        //the only parameters specific to this class are not seen as parameters 
+//        //restraining the data retrieved, but rather, as parameters about the way 
+//        //the data were generated (taking into account substructures or not, etc).
+//        //And NoExpressionCallParams with differences for these parameters could not 
+//        //be merged (see method canMerge).
+//        //
+//        //So we do not consider these parameters as relevant for this method call.
+//        //We simply delegate to the super class
+//        
+//        return log.exit(super.hasDataRestrictions());
+//    }
+//    
+//    @Override
+//    protected int getDifferentParametersCount(CallParams otherParams) {
+//        log.entry();
+//        log.entry();
+//        int diff = 0;
+//        if (otherParams instanceof NoExpressionCallParams) {
+//            NoExpressionCallParams params = (NoExpressionCallParams) otherParams;
+//            //these parameters do not really restrict data retrieved, but 
+//            //for the sake of completeness...
+//            //in any case, NoExpressionCallParams with different values for 
+//            //these parameters are not mergeable
+//            if (this.isIncludeParentStructures() != params.isIncludeParentStructures()) {
+//                diff++;
+//            }
+//        } else {
+//            //number of parameters in this class 
+//            diff = 1;
+//        }
+//        
+//        return log.exit(diff + super.getDifferentParametersCount(otherParams));
+//    }
     
     //**************************************
     // GETTERS/SETTERS FOR PARAMETERS SPECIFIC TO THIS CLASS, 

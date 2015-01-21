@@ -7,8 +7,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TestAncestor;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffCallType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.Factor;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO.OriginOfLine;
@@ -71,19 +71,19 @@ public class CallTOTest extends TestAncestor {
     @Test
     public void shouldConvertToDiffCallType() {
         boolean hasElement = false;
-        for (DiffCallType element: DiffCallType.values()) {
+        for (DiffExprCallType element: DiffExprCallType.values()) {
             hasElement = true;
             log.trace("Testing: {}", element);
             assertEquals("Incorrect DiffCallType returned", element, 
-                    DiffCallType.convertToDiffCallType(element.getStringRepresentation()));
+                    DiffExprCallType.convertToDiffExprCallType(element.getStringRepresentation()));
             assertEquals("Incorrect DiffCallType returned", element, 
-                    DiffCallType.convertToDiffCallType(element.name()));
+                    DiffExprCallType.convertToDiffExprCallType(element.name()));
         }
         assertTrue("No element for DiffCallType", hasElement);
         
         //should throw an IllegalArgumentException when not matching any DiffCallType
         try {
-            DiffCallType.convertToDiffCallType("whatever");
+            DiffExprCallType.convertToDiffExprCallType("whatever");
             //test failed
             throw new AssertionError("convertToDiffCallType did not throw " +
                     "an IllegalArgumentException as expected");
@@ -94,24 +94,24 @@ public class CallTOTest extends TestAncestor {
     }
     
     /**
-     * Test {@link DiffExpressionCallTO.Factor#convertToFactor(String)}.
+     * Test {@link DiffExpressionCallTO.ComparisonFactor#convertToComparisonFactor(String)}.
      */
     @Test
     public void shouldConvertToFactor() {
         boolean hasElement = false;
-        for (Factor element: Factor.values()) {
+        for (ComparisonFactor element: ComparisonFactor.values()) {
             hasElement = true;
             log.trace("Testing: {}", element);
             assertEquals("Incorrect Factor returned", element, 
-                    Factor.convertToFactor(element.getStringRepresentation()));
+                    ComparisonFactor.convertToComparisonFactor(element.getStringRepresentation()));
             assertEquals("Incorrect Factor returned", element, 
-                    Factor.convertToFactor(element.name()));
+                    ComparisonFactor.convertToComparisonFactor(element.name()));
         }
         assertTrue("No element for Factor", hasElement);
         
         //should throw an IllegalArgumentException when not matching any Factor
         try {
-            Factor.convertToFactor("whatever");
+            ComparisonFactor.convertToComparisonFactor("whatever");
             //test failed
             throw new AssertionError("convertToFactor did not throw " +
                     "an IllegalArgumentException as expected");
@@ -185,16 +185,20 @@ public class CallTOTest extends TestAncestor {
     @Test
     public void testDiffExpressionCallTOHashCodeEquals() {
         DiffExpressionCallTO callTO1 = 
-                new DiffExpressionCallTO("1", "1", null, null, null, null, null, null, 0);
+                new DiffExpressionCallTO("1", "1", null, null, null, null, null, null, null, 
+                        null, null, null, null, null, null);
         DiffExpressionCallTO callTO2 = 
-                new DiffExpressionCallTO("1", "3", null, null, null, null, null, null, 0);
+                new DiffExpressionCallTO("1", "3", null, null, null, null, null, null, null, 
+                        null, null, null, null, null, null);
         assertEquals("CallTOs with same IDs should be equal whatever their other attributes", 
                 callTO1, callTO2);
         assertEquals("CallTOs with same IDs should have equal hashCode whatever " +
         		"their other attributes", callTO1.hashCode(), callTO2.hashCode());
         
-        callTO1 = new DiffExpressionCallTO(null, "1", "2", "3", null, null, null, null, 2);
-        callTO2 = new DiffExpressionCallTO(null, "1", "2", "3", null, null, null, null, 0);
+        callTO1 = new DiffExpressionCallTO(null, "1", "2", "3", null, null, null, null, null, 
+                null, null, null, null, null, 0);
+        callTO2 = new DiffExpressionCallTO(null, "1", "2", "3", null, null, null, null, null, 
+                null, null, null, null, null, 2);
         assertEquals("CallTOs with a null ID but same geneId-stageId-anatEntityId " +
                 "should be equal whatever their other attributes", 
                 callTO1, callTO2);
@@ -202,8 +206,10 @@ public class CallTOTest extends TestAncestor {
                 "should be have equal hashCode whatever their other attributes", 
                 callTO1.hashCode(), callTO2.hashCode());
         
-        callTO1 = new DiffExpressionCallTO(null, "1", "2", null, null, null, null, null, 2);
-        callTO2 = new DiffExpressionCallTO(null, "1", "2", null, null, null, null, null, 0);
+        callTO1 = new DiffExpressionCallTO(null, "1", "2", null, null, null, null, null, null, 
+                null, null, null, null, null, 2);
+        callTO2 = new DiffExpressionCallTO(null, "1", "2", null, null, null, null, null, null, 
+                null, null, null, null, null, 0);
         assertNotEquals("CallTOs with a null ID, and at least one of " +
                 "geneId-stageId-anatEntityId also null, " +
                 "should be compared over all attributes", callTO1, callTO2);
@@ -458,17 +464,23 @@ public class CallTOTest extends TestAncestor {
     public void shouldSetGetDiffExpressionCallTO() {
         DiffExpressionCallTO callTO = new DiffExpressionCallTO();
         
-        DiffCallType callType = DiffCallType.UNDEREXPRESSED;
-        callTO.setDiffCallType(callType);
-        assertEquals("Incorrect DiffCallType set/get", callType, callTO.getDiffCallType());
+        DiffExprCallType callType = DiffExprCallType.UNDER_EXPRESSED;
+        callTO.setDiffExprCallTypeAffymetrix(callType);
+        assertEquals("Incorrect DiffCallType set/get for Affymetrix", callType, 
+                callTO.getDiffExprCallTypeAffymetrix());
         
-        Factor factor = Factor.DEVELOPMENT;
-        callTO.setFactor(factor);
-        assertEquals("Incorrect Factor set/get", factor, callTO.getFactor());
+        callType = DiffExprCallType.OVER_EXPRESSED;
+        callTO.setDiffExprCallTypeRNASeq(callType);
+        assertEquals("Incorrect DiffCallType set/get for RNA-Seq", callType, 
+                callTO.getDiffExprCallTypeRNASeq());
+
+        ComparisonFactor factor = ComparisonFactor.DEVELOPMENT;
+        callTO.setComparisonFactor(factor);
+        assertEquals("Incorrect Factor set/get", factor, callTO.getComparisonFactor());
         
-        int count = 10;
-        callTO.setMinConditionCount(count);
-        assertEquals("Incorrect minConditionCount set/get", 
-                count, (int) callTO.getMinConditionCount());
+//        int count = 10;
+//        callTO.setMinConditionCount(count);
+//        assertEquals("Incorrect minConditionCount set/get", 
+//                count, (int) callTO.getMinConditionCount());
     }
 }

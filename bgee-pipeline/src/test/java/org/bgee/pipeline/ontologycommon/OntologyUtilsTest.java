@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -952,6 +953,81 @@ public class OntologyUtilsTest extends TestAncestor {
                 Arrays.asList(wrapper.getManager().getOWLDataFactory().getOWLObjectProperty(
                         IRI.create("")))));
         assertEquals("Incorrect filtering of parent classes", expectedModifiedSet, setToModify);
+    }
+    
+    /**
+     * Test {@link OntologyUtils#containsUnrelatedClassesByIsAPartOf(Collection)}.
+     */
+    @Test
+    public void testContainsUnrelatedClassesByIsAPartOfSingleCollection() 
+            throws OBOFormatParserException, OWLOntologyCreationException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/unrelated_classes_test.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+        OWLClass cls6 = wrapper.getOWLClassByIdentifier("FOO:0006");
+        OWLClass cls7 = wrapper.getOWLClassByIdentifier("FOO:0007");
+        
+        Collection<OWLClass> classes1 = Arrays.asList(cls1, cls2, cls5);
+        assertTrue("Collection should contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1));
+        
+        classes1 = Arrays.asList(cls1, cls2, cls6);
+        assertTrue("Collection should contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1));
+        
+        classes1 = Arrays.asList(cls1, cls2, cls6, cls7);
+        assertTrue("Collection should contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1));
+        
+        classes1 = Arrays.asList(cls1, cls2);
+        assertFalse("Collection should not contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1));
+        
+        classes1 = Arrays.asList(cls6, cls7);
+        assertFalse("Collection should not contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1));
+        
+        classes1 = Arrays.asList(cls2);
+        assertFalse("Collection should not contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1));
+    }
+    
+    /**
+     * Test {@link OntologyUtils#containsUnrelatedClassesByIsAPartOf(Collection, Collection)}.
+     */
+    @Test
+    public void testContainsUnrelatedClassesByIsAPartOfTwoCollections() 
+            throws OBOFormatParserException, OWLOntologyCreationException, IOException {
+        OWLOntology ont = OntologyUtils.loadOntology(OntologyUtilsTest.class.
+                getResource("/ontologies/unrelated_classes_test.obo").getFile());
+        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
+        OntologyUtils utils = new OntologyUtils(wrapper);
+        
+        OWLClass cls1 = wrapper.getOWLClassByIdentifier("FOO:0001");
+        OWLClass cls2 = wrapper.getOWLClassByIdentifier("FOO:0002");
+        OWLClass cls3 = wrapper.getOWLClassByIdentifier("FOO:0003");
+        OWLClass cls4 = wrapper.getOWLClassByIdentifier("FOO:0004");
+        OWLClass cls5 = wrapper.getOWLClassByIdentifier("FOO:0005");
+        
+        Collection<OWLClass> classes1 = Arrays.asList(cls1, cls2, cls5);
+        Collection<OWLClass> classes2 = Arrays.asList(cls3, cls4, cls5);
+        
+        assertTrue("Collections should contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1, classes2));
+        
+        classes2 = Arrays.asList(cls3, cls4);
+        assertTrue("Collections should contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1, classes2));
+        
+        classes1 = Arrays.asList(cls1, cls2);
+        classes2 = Arrays.asList(cls1, cls2, cls3, cls4);
+        assertFalse("Collections should not contain unrelated OWLClasses", 
+                utils.containsUnrelatedClassesByIsAPartOf(classes1, classes2));
     }
     
     /**

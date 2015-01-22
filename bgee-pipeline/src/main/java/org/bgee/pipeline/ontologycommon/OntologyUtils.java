@@ -1851,6 +1851,67 @@ public class OntologyUtils {
     }
     
     /**
+     * Determine whether {@code classes} contain unrelated {@code OWLClass}es. 
+     * This means that there is at least one {@code OWLClass} in {@code classes} that is 
+     * neither the ancestor nor the descendant of any other {@code OWLClass} in {@code classes}.
+     * 
+     * @param classes   A {@code Collection} of {@code OWLClass}es to check for presence 
+     *                  of unrelated {@code OWLClass}es.
+     * @return  A {@code boolean} that is {@code true} if {@code classes}
+     *          contain unrelated {@code OWLClass}es.
+     * @see #containsUnrelatedClassesByIsAPartOf(Collection, Collection)
+     */
+    public boolean containsUnrelatedClassesByIsAPartOf(Collection<OWLClass> classes) {
+        log.entry(classes);
+        return log.exit(this.containsUnrelatedClassesByIsAPartOf(classes, classes));
+    }
+    
+    /**
+     * Compare two {@code Collection}s of {@code OWLClass}es to determine whether 
+     * they contain unrelated {@code OWLClass}es. This means that there is at least one 
+     * {@code OWLClass} in {@code classes1} that is absent from {@code classes2}, 
+     * and that has no ancestor or descendant through is_a or part_of relations 
+     * in {@code classes2}. GCI relations are taken into account.
+     * <p>
+     * {@code classes1} and {@code classes2} are interchangeable, the {@code boolean} 
+     * returned by this method will be the same.
+     * 
+     * @param classes1  A {@code Collection} of {@code OWLClass}es to check for presence 
+     *                  of unrelated {@code OWLClass}es in {@code classes2}.
+     * @param classes2  A {@code Collection} of {@code OWLClass}es to check for presence 
+     *                  of unrelated {@code OWLClass}es in {@code classes1}.
+     * @return  A {@code boolean} that is {@code true} if {@code classes1} and {@code classes2} 
+     *          contain unrelated {@code OWLClass}es.
+     * @see #containsUnrelatedClassesByIsAPartOf(Collection)
+     */
+    public boolean containsUnrelatedClassesByIsAPartOf(Collection<OWLClass> classes1, 
+            Collection<OWLClass> classes2) {
+        log.entry(classes1, classes2);
+        
+        for (OWLClass cls1: classes1) {
+            log.trace("Examining : {}", cls1);
+            //retrieve ancestors and descendants of cls1, and add itself to the Collection
+            Set<OWLNamedObject> relatedClasses = new HashSet<OWLNamedObject>();
+            relatedClasses.addAll(this.getWrapper().getNamedAncestorsWithGCI(cls1, 
+                    this.getGenericPartOfProps()));
+            relatedClasses.addAll(this.getWrapper().getOWLClassDescendantsWithGCI(cls1, 
+                    this.getGenericPartOfProps()));
+            relatedClasses.add(cls1);
+            log.trace("Related OWLClasses: {}", relatedClasses);
+            //copy OWLClasses to compare to, to be able to remove terms from it
+            Set<OWLClass> testClasses = new HashSet<OWLClass>(classes2);
+            testClasses.removeAll(relatedClasses);
+            if (!testClasses.isEmpty()) {
+                log.trace("Unrelated OWLClasses in Collection to compare to: {}", testClasses);
+                return log.exit(true);
+            }
+            log.trace("No Unrelated OWLClasses in Collection to compare to.");
+        }
+        
+        return log.exit(false);
+    }
+    
+    /**
      * Return the {@code OWLGraphWrapper} wrapping the ontology on which operations 
      * should be performed. If not provided at instantiation, it will be automatically 
      * loaded the first time this method is called, from the {@code OWLOntology} provided 

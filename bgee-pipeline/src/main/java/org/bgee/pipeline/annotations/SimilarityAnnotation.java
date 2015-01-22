@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.ontologycommon.CIOUtils;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
@@ -223,22 +224,6 @@ public class SimilarityAnnotation {
      * in the {@code Pattern} {@link #REF_COL_PATTERN}.
      */
     private final static int REF_TITLE_PATTERN_GROUP = 2;
-    
-    /**
-     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-     * of the term "high confidence level".
-     */
-    private final static String HIGH_CONF_ID = "CIO:0000029";
-    /**
-     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-     * of the term "medium confidence level".
-     */
-    private final static String MEDIUM_CONF_ID = "CIO:0000030";
-    /**
-     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-     * of the term "low confidence level".
-     */
-    private final static String LOW_CONF_ID = "CIO:0000031";
     
     /**
      * A {@code String} that is the value to fill the column {@link #ASSIGN_COL_NAME} 
@@ -896,9 +881,8 @@ public class SimilarityAnnotation {
                     throws IllegalArgumentException {
         log.entry(annotations, ecoOntWrapper, confOntWrapper);
         
-        OWLClass highQual = confOntWrapper.getOWLClassByIdentifier(HIGH_CONF_ID, true);
-        OWLClass mediumQual = confOntWrapper.getOWLClassByIdentifier(MEDIUM_CONF_ID, true);
-        OWLClass lowQual = confOntWrapper.getOWLClassByIdentifier(LOW_CONF_ID, true);
+        OntologyUtils ecoUtils = new OntologyUtils(ecoOntWrapper);
+        CIOUtils cioUtils = new CIOUtils(confOntWrapper);
         
         //in order to identify related annotations, we will use a Map where keys 
         //are the concatenation of the entity column, the taxon column, the HOM column, and 
@@ -908,6 +892,11 @@ public class SimilarityAnnotation {
         
         //first pass, group related annotations
         for (Map<String, Object> annot: annotations) {
+            //discard rejected annotations to generate summaries
+            if (cioUtils.isRejectedConfidenceInformation(
+                    confOntWrapper.getOWLClassByIdentifier((String) annot.get(CONF_COL_NAME)))) {
+                continue;
+            }
             String concat = annot.get(ENTITY_COL_NAME) + "-" + 
                 annot.get(HOM_COL_NAME) + "-" + annot.get(TAXON_COL_NAME);
             
@@ -968,41 +957,34 @@ public class SimilarityAnnotation {
                 toUseConfs.add(confOntWrapper.getOWLClassByIdentifier(
                         (String) annot.get(CONF_COL_NAME), true));
             }
-            
             if (!hasPositiveAnnots && !hasNegativeAnnots) {
                 throw log.throwing(new AssertionError("No assertion associated to an annotation?"));
             }
-            //if we have conflicting evidences, we want to know whether they are of the same 
+            
+            //if we have conflicting evidence lines, we want to know whether they are of the same 
             //or of different types (in that case, we do not want to know whether 
             //positive annotations on one hand, or negative annotations on the other hand, 
             //have same or multiple evidence types). Otherwise, we check that over all evidences. 
-            //To summarize: if hasPositiveAnnots and hasNegativeAnnots are both true, 
-            //we will compare positive ECOs to negative ECOs. Otherwise, if only positive 
-            //or only negative assertions are available, we compare positive to positive, 
-            //or negative to negative.
-            Set<OWLClass> baseECOs = positiveECOs;
-            if (!hasPositiveAnnots) {
-                baseECOs = negativeECOs;
-            }
-            Set<OWLClass> toCompareECOs = positiveECOs;
-            if (hasNegativeAnnots) {
-                toCompareECOs = negativeECOs;
-            }
-            boolean differentTypes = false;
-            for (OWLClass baseECO: baseECOs) {
-                //retrieve ancestors and descendants of baseECO
-                Set<OWLClass> relatedECOs = new HashSet<OWLClass>();
-                relatedECOs.addAll(ecoOntWrapper.getOWLClassAncestors(baseECO));
-                relatedECOs.addAll(ecoOntWrapper.getOWLClassDescendants(baseECO));
-                //copy ECOs to compare to, to be able to remove terms from it
-                Set<OWLClass> testECOs = new HashSet<OWLClass>(toCompareECOs);
-                testECOs.removeAll(relatedECOs);
-                if (!testECOs.isEmpty()) {
-                    differentTypes = true;
-                    break;
+            OWLClass evidenceTypeConcordance = cioUtils.getSameTypeEvidenceConcordance();
+            if (hasPositiveAnnots && hasNegativeAnnots) {
+                if (ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveConfs, negativeConfs)) {
+                    evidenceTypeConcordance = cioUtils.getDifferentTypesEvidenceConcordance();
                 }
+            } else if (hasPositiveAnnots && 
+                    ecoUtils.containsUnrelatedClassesByIsAPartOf(positiveConfs)) {
+                evidenceTypeConcordance = cioUtils.getDifferentTypesEvidenceConcordance();
+            } else if (hasNegativeAnnots && 
+                    ecoUtils.containsUnrelatedClassesByIsAPartOf(negativeConfs)) {
+                evidenceTypeConcordance = cioUtils.getDifferentTypesEvidenceConcordance();
             }
-            
+            //Also, if we have conflicting evidence lines, we determine the conflict level 
+            //(weak or strong). For this, we need to determine the best confidence level 
+            //for positive and negative annotations.
+            OWLClass bestPositiveConfLevel = null;
+            OWLClass bestNegativeConfLevel = null;
+            if (hasPositiveAnnots) {
+                
+            }
             
             //infer the confidence information ID for the summary line.
             //this is hardcoded, there should be a way to obtain this information 

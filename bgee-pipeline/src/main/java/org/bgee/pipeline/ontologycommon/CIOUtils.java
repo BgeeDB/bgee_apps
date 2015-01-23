@@ -43,6 +43,14 @@ public class CIOUtils extends OntologyUtils {
     public final static String SINGLE_EVIDENCE_CONF_ID = "CIO:0000001";
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
+     * of the term "rejected".
+     * @see #LOW_CONF_LEVEL_ID
+     * @see #MEDIUM_CONF_LEVEL_ID
+     * @see #HIGH_CONF_LEVEL_ID
+     */
+    public final static String REJECTED_TERM_ID = "CIO:0000039";
+    /**
+     * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "confidence from multiple evidence lines".
      * @see #SINGLE_EVIDENCE_CONF_ID
      */
@@ -83,7 +91,7 @@ public class CIOUtils extends OntologyUtils {
      * of the term "high confidence level".
      * @see #MEDIUM_CONF_LEVEL_ID
      * @see #LOW_CONF_LEVEL_ID
-     * @see #REJECTED_ID
+     * @see #REJECTED_TERM_ID
      */
     public final static String HIGH_CONF_LEVEL_ID = "CIO:0000029";
     /**
@@ -91,7 +99,7 @@ public class CIOUtils extends OntologyUtils {
      * of the term "medium confidence level".
      * @see #HIGH_CONF_LEVEL_ID
      * @see #LOW_CONF_LEVEL_ID
-     * @see #REJECTED_ID
+     * @see #REJECTED_TERM_ID
      */
     public final static String MEDIUM_CONF_LEVEL_ID = "CIO:0000030";
     /**
@@ -99,18 +107,9 @@ public class CIOUtils extends OntologyUtils {
      * of the term "low confidence level".
      * @see #MEDIUM_CONF_LEVEL_ID
      * @see #HIGH_CONF_LEVEL_ID
-     * @see #REJECTED_ID
+     * @see #REJECTED_TERM_ID
      */
     public final static String LOW_CONF_LEVEL_ID = "CIO:0000031";
-    /**
-     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-     * of the term "rejected".
-     * @see #LOW_CONF_LEVEL_ID
-     * @see #MEDIUM_CONF_LEVEL_ID
-     * @see #HIGH_CONF_LEVEL_ID
-     */
-    public final static String REJECTED_ID = "CIO:0000039";
-
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "congruent".
@@ -265,7 +264,7 @@ public class CIOUtils extends OntologyUtils {
         this.highConfLevel = this.getWrapper().getOWLClassByIdentifier(HIGH_CONF_LEVEL_ID);
         this.mediumConfLevel = this.getWrapper().getOWLClassByIdentifier(MEDIUM_CONF_LEVEL_ID);
         this.lowConfLevel = this.getWrapper().getOWLClassByIdentifier(LOW_CONF_LEVEL_ID);
-        this.rejectedTerm = this.getWrapper().getOWLClassByIdentifier(REJECTED_ID);
+        this.rejectedTerm = this.getWrapper().getOWLClassByIdentifier(REJECTED_TERM_ID);
         if (this.highConfLevel == null || this.mediumConfLevel == null || 
                 this.lowConfLevel == null || this.rejectedTerm == null) {
             throw log.throwing(new IllegalArgumentException("The ontology used does not allow "
@@ -601,8 +600,8 @@ public class CIOUtils extends OntologyUtils {
     }
     /**
      * @return  An {@code OWLClass} corresponding to the term from provided ontology 
-     *          with OBO-like ID {@link #REJECTED_ID}.
-     * @see #REJECTED_ID
+     *          with OBO-like ID {@link #REJECTED_TERM_ID}.
+     * @see #REJECTED_TERM_ID
      */
     public OWLClass getRejectedTerm() {
         return rejectedTerm;

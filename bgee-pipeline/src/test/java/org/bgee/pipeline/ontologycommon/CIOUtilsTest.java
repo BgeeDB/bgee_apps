@@ -58,57 +58,77 @@ public class CIOUtilsTest extends TestAncestor {
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         CIOUtils utils = new CIOUtils(wrapper);
         
+        Set<OWLClass> allClasses = new HashSet<OWLClass>();
         assertEquals("single evidence conf. not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.SINGLE_EVIDENCE_CONF_ID), 
                 utils.getSingleEvidenceConf());
+        allClasses.add(utils.getSingleEvidenceConf());
         assertEquals("rejected term not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.REJECTED_TERM_ID), 
                 utils.getRejectedTerm());
+        allClasses.add(utils.getRejectedTerm());
         assertEquals("multiple evidence lines conf. not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.MULTIPLE_EVIDENCE_CONF_ID), 
                 utils.getMultipleEvidenceConf());
+        allClasses.add(utils.getMultipleEvidenceConf());
         assertEquals("congruent same type evidence lines conf. not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.CONGRUENT_SAME_TYPE_EVIDENCE_CONF_ID), 
                 utils.getCongruentSameTypeEvidenceConf());
+        allClasses.add(utils.getCongruentSameTypeEvidenceConf());
         assertEquals("congruent multiple types evidence lines conf. not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.CONGRUENT_MULTIPLE_TYPES_EVIDENCE_CONF_ID), 
                 utils.getCongruentMultipleTypesEvidenceConf());
+        allClasses.add(utils.getCongruentMultipleTypesEvidenceConf());
         assertEquals("weakly conflicting same type evidence lines conf. not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.WEAK_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID), 
                 utils.getWeakConflictSameTypeEvidenceConf());
+        allClasses.add(utils.getWeakConflictSameTypeEvidenceConf());
         assertEquals("weakly conflicting multiple types evidence lines conf. not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.WEAK_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID), 
                 utils.getWeakConflictMultipleTypesEvidenceConf());
+        allClasses.add(utils.getWeakConflictMultipleTypesEvidenceConf());
         assertEquals("strong conflicting same type evidence lines conf. not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.STRONG_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID), 
                 utils.getStrongConflictSameTypeEvidenceConf());
+        allClasses.add(utils.getStrongConflictSameTypeEvidenceConf());
         assertEquals("strong conflicting multiple types evidence lines conf. not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.STRONG_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID), 
                 utils.getStrongConflictMultipleTypesEvidenceConf());
+        allClasses.add(utils.getStrongConflictMultipleTypesEvidenceConf());
         assertEquals("high conf. level not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.HIGH_CONF_LEVEL_ID), 
                 utils.getHighConfLevel());
+        allClasses.add(utils.getHighConfLevel());
         assertEquals("medium conf. level not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.MEDIUM_CONF_LEVEL_ID), 
                 utils.getMediumConfLevel());
+        allClasses.add(utils.getMediumConfLevel());
         assertEquals("low conf. level not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.LOW_CONF_LEVEL_ID), 
                 utils.getLowConfLevel());
+        allClasses.add(utils.getLowConfLevel());
         assertEquals("congruant concordance term not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.CONGRUENT_CONCORDANCE_ID), 
                 utils.getCongruentConcordance());
+        allClasses.add(utils.getCongruentConcordance());
         assertEquals("weakly conflicting concordance term not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.WEAKLY_CONFLICTING_CONCORDANCE_ID), 
                 utils.getWeaklyConflictingConcordance());
+        allClasses.add(utils.getWeaklyConflictingConcordance());
         assertEquals("strongly conflicting concordance term not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.STRONGLY_CONFLICTING_CONCORDANCE_ID), 
                 utils.getStronglyConflictingConcordance());
+        allClasses.add(utils.getStronglyConflictingConcordance());
         assertEquals("same type evidence concordance term not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.SAME_TYPE_EVIDENCE_CONCORDANCE_ID), 
                 utils.getSameTypeEvidenceConcordance());
+        allClasses.add(utils.getSameTypeEvidenceConcordance());
         assertEquals("different types evidence concordance term not retrieved.", 
                 wrapper.getOWLClassByIdentifier(CIOUtils.DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID), 
                 utils.getDifferentTypesEvidenceConcordance());
+        allClasses.add(utils.getDifferentTypesEvidenceConcordance());
+        //check there is no equal classes
+        assertEquals("Incorrect number of classes", 17, allClasses.size());
         
         Set<OWLClass> expectedValidBranches = new HashSet<OWLClass>(Arrays.asList(
                 wrapper.getOWLClassByIdentifier(CIOUtils.SINGLE_EVIDENCE_CONF_ID), 

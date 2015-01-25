@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.Utils;
-import org.bgee.pipeline.ontologycommon.CIOUtils;
+import org.bgee.pipeline.ontologycommon.CIOWrapper;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
@@ -882,7 +882,7 @@ public class SimilarityAnnotation {
 //        log.entry(annotations, ecoOntWrapper, confOntWrapper);
 //        
 //        OntologyUtils ecoUtils = new OntologyUtils(ecoOntWrapper);
-//        CIOUtils cioUtils = new CIOUtils(confOntWrapper);
+//        CIOWrapper cioUtils = new CIOWrapper(confOntWrapper);
 //        
 //        //in order to identify related annotations, we will use a Map where keys 
 //        //are the concatenation of the entity column, the taxon column, the HOM column, and 

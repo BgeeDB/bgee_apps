@@ -29,11 +29,57 @@ import owltools.graph.OWLGraphWrapper;
 //TODO: check whether it is actually needed to extend OntologyUtils
 //TODO: this class might be of interest to all CIO users, maybe could we provide it as a jar 
 //with only owltools jar in classpath?
-public class CIOUtils extends OntologyUtils {
+public class CIOWrapper extends OntologyUtils {
     /**
      * {@code Logger} of the class.
      */
-    private final static Logger log = LogManager.getLogger(CIOUtils.class.getName());
+    private final static Logger log = LogManager.getLogger(CIOWrapper.class.getName());
+    
+    /**
+     * A class allowing to wrap an {@code OWLClass} retrieved from the CIO, 
+     * providing functionalities common to all these {@code OWLClass}es.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    private class CIOTerm {
+        /**
+         * The {@code OWLClass} that this object wraps. 
+         */
+        private final OWLClass clsWrapped;
+        /**
+         * The {@code CIOWrapper} which {@code clsWrapped} was retrieved from.
+         */
+        private final CIOWrapper wrapper;
+        /**
+         * Constructor providing the {@code OWLClass} wrapped by this object, 
+         * and the {@code CIOWrapper} wrapping the ontology which {@code clsWrapped} 
+         * was retrieved from.
+         * 
+         * @param clsWrapped    the {@code OWLClass} from the CIO wrapped by this object.
+         * @param cioWrapper    the {@code CIOWrapper} wrapping the ontology {@code clsWrapped} 
+         *                      was retrieved from.
+         * @throws NullPointerException If {@code clsWrapped} or {@code cioWrapper} 
+         *                              are {@code null}.
+         */
+        private CIOTerm(OWLClass clsWrapped, CIOWrapper cioWrapper) throws NullPointerException {
+            this.clsWrapped = clsWrapped;
+            this.wrapper = cioWrapper;
+        }
+        
+//        public OWLClass getConfidenceLevel() {
+//            
+//        }
+//        
+//        public OWLClass getEvidenceConcordance() {
+//            
+//        }
+//        
+//        public OWLClass getEvidenceTypeConcordance() {
+//            
+//        }
+    }
 
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
@@ -218,7 +264,7 @@ public class CIOUtils extends OntologyUtils {
      * @param wrapper   the {@code OWLGraphWrapper} wrapping the {@code OWLOntology} 
      *                  which operations should be performed on.
      */
-    public CIOUtils(OWLGraphWrapper wrapper) {
+    public CIOWrapper(OWLGraphWrapper wrapper) {
         super(wrapper);
         
         this.singleEvidenceConf = this.getWrapper().getOWLClassByIdentifier(

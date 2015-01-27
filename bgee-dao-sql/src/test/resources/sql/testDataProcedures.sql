@@ -359,7 +359,8 @@ BEGIN
                
         INSERT INTO differentialExpression(differentialExpressionId, geneId, anatEntityId, stageId, comparisonFactor, diffExprCallAffymetrix, diffExprAffymetrixData, bestPValueAffymetrix, consistentDEACountAffymetrix, inconsistentDEACountAffymetrix, diffExprCallRNASeq, diffExprRNASeqData, bestPValueRNASeq, consistentDEACountRNASeq, inconsistentDEACountRNASeq)
         VALUES (321, 'ID1', 'Anat_id1', 'Stage_id1', 'anatomy', 'no diff expression', 'high quality', 0.02, 2, 0, 'no diff expression', 'poor quality', 0.05, 1, 0),
-               (322, 'ID2', 'Anat_id9', 'Stage_id3', 'development', 'under-expression', 'poor quality', 0.06, 3, 1, 'not expressed', 'no data', 1, 0, 0);
+               (322, 'ID2', 'Anat_id9', 'Stage_id3', 'development', 'under-expression', 'poor quality', 0.06, 3, 1, 'not expressed', 'no data', 1, 0, 0),
+               (323, 'ID1', 'Anat_id2', 'Stage_id1', 'anatomy', 'no diff expression', 'poor quality', 0.01, 3, 1, 'over-expression', 'high quality', 0.001, 4, 0);
 
     END IF; 
 END

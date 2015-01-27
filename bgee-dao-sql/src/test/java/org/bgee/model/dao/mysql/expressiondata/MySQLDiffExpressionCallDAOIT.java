@@ -70,7 +70,11 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
                 new DiffExpressionCallTO("322", "ID2", "Anat_id9", "Stage_id3", 
                         ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
                         DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
-                        DataState.NODATA, 1f, 0, 0));
+                        DataState.NODATA, 1f, 0, 0),
+                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
+                        DataState.HIGHQUALITY, 0.001f, 4, 0));
         // Compare
         assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
@@ -98,6 +102,86 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
                         null, null, null, null, null, null, null, null, null, null),
                 new DiffExpressionCallTO(null, null, null, null, ComparisonFactor.DEVELOPMENT,
                         null, null, null, null, null, null, null, null, null, null));
+        // Compare
+        assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
+                        dao.getDiffExpressionCalls(params).getAllTOs()));
+        
+        // Test filter on comparison factor without other filter
+        params.setComparisonFactor(ComparisonFactor.DEVELOPMENT);
+        dao.setAttributes(Arrays.asList(DiffExpressionCallDAO.Attribute.ID));
+        // Generate manually expected result
+        expectedDiffExprCalls = Arrays.asList(
+                new DiffExpressionCallTO("322", null, null, null, null, null, 
+                        null, null, null, null, null, null, null, null, null));
+        // Compare
+        assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
+                        dao.getDiffExpressionCalls(params).getAllTOs()));
+        
+        // Test filter on diffExprCallTypeAffymetrix without other filter
+        params.setComparisonFactor(null);
+        params.setDiffExprCallTypeAffymetrix(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        dao.clearAttributes();
+        // Generate manually expected result
+        expectedDiffExprCalls = Arrays.asList(
+                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.05f, 1, 0),
+                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
+                        DataState.HIGHQUALITY, 0.001f, 4, 0));
+        // Compare
+        assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
+                        dao.getDiffExpressionCalls(params).getAllTOs()));
+
+        // Test filter on diffExprCallTypeRNASeq without other filter
+        params.setDiffExprCallTypeAffymetrix(null);
+        params.setDiffExprCallTypeRNASeq(DiffExprCallType.OVER_EXPRESSED);
+        dao.clearAttributes();
+        // Generate manually expected result
+        expectedDiffExprCalls = Arrays.asList(
+                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
+                        DataState.HIGHQUALITY, 0.001f, 4, 0));
+        // Compare
+        assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
+                        dao.getDiffExpressionCalls(params).getAllTOs()));
+
+        // Test filter on diffExprCallTypeAffymetrix and diffExprCallTypeRNASeq
+        params.setDiffExprCallTypeAffymetrix(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        params.setDiffExprCallTypeRNASeq(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        params.setSatisfyAllCallTypeCondition(true);
+        dao.clearAttributes();
+        // Generate manually expected result
+        expectedDiffExprCalls = Arrays.asList(
+                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.05f, 1, 0));
+        // Compare
+        assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
+                        dao.getDiffExpressionCalls(params).getAllTOs()));
+
+        // Test filter on diffExprCallTypeAffymetrix and diffExprCallTypeRNASeq
+        params.setSatisfyAllCallTypeCondition(false);
+        dao.clearAttributes();
+        // Generate manually expected result
+        expectedDiffExprCalls = Arrays.asList(
+                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.05f, 1, 0),
+                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
+                        DataState.HIGHQUALITY, 0.001f, 4, 0));
         // Compare
         assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 

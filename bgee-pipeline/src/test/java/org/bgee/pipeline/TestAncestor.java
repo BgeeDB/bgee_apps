@@ -14,6 +14,7 @@ import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallParams;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallParams;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
@@ -21,6 +22,7 @@ import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.connector.BgeeConnection;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.affymetrix.MySQLAffymetrixProbesetDAO;
@@ -157,6 +159,8 @@ public abstract class TestAncestor
                 mock(MySQLExpressionCallDAO.class);
         public final MySQLNoExpressionCallDAO mockNoExpressionCallDAO = 
                 mock(MySQLNoExpressionCallDAO.class);
+        public final MySQLDiffExpressionCallDAO mockDiffExpressionCallDAO = 
+                mock(MySQLDiffExpressionCallDAO.class);
         public final MySQLAnatEntityDAO mockAnatEntityDAO = mock(MySQLAnatEntityDAO.class);
         public final MySQLAffymetrixProbesetDAO mockAffymetrixProbesetDAO = 
                 mock(MySQLAffymetrixProbesetDAO.class);
@@ -240,6 +244,10 @@ public abstract class TestAncestor
             return this.mockNoExpressionCallDAO;
         }
         @Override
+        protected MySQLDiffExpressionCallDAO getNewDiffExpressionCallDAO() {
+            return this.mockDiffExpressionCallDAO;
+        }
+        @Override
         protected MySQLAnatEntityDAO getNewAnatEntityDAO() {
             return this.mockAnatEntityDAO;
         }
@@ -290,9 +298,9 @@ public abstract class TestAncestor
                     ((ExpressionCallParams) expected).isIncludeSubstructures()) {
                 return false;
             }
-            if (actual instanceof ExpressionCallParams && 
-                    ((ExpressionCallParams) actual).isIncludeSubStages() != 
-                    ((ExpressionCallParams) expected).isIncludeSubStages()) {
+            if (actual instanceof DiffExpressionCallParams && 
+                    ((DiffExpressionCallParams) actual).getComparisonFactor() != 
+                    ((DiffExpressionCallParams) expected).getComparisonFactor()) {
                 return false;
             }
             if (actual instanceof NoExpressionCallParams && 

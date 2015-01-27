@@ -119,6 +119,7 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          * Represents different types of differential expression calls obtained 
          * from differential expression analyzes: 
          * <ul>
+         * <li>{@code NO_DATA}:            means that the call was never been observed.
          * <li>{@code NOT_EXPRESSED}:      means that the call was never seen as 'expressed'.
          * <li>{@code OVER_EXPRESSION}:    over-expressed calls.
          * <li>{@code UNDER_EXPRESSION}:   under-expressed calls.
@@ -127,7 +128,7 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
          * </ul>
          */
         public enum DiffExprCallType implements EnumDAOField {
-            NOT_EXPRESSED("not expressed"), OVER_EXPRESSED("over-expression"), 
+            NO_DATA("no data"), NOT_EXPRESSED("not expressed"), OVER_EXPRESSED("over-expression"), 
             UNDER_EXPRESSED("under-expression"), NOT_DIFF_EXPRESSED("no diff expression");
             
             /**

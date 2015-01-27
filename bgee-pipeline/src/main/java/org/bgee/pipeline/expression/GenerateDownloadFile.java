@@ -23,6 +23,12 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTOResultSet;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
@@ -38,7 +44,9 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
+import org.supercsv.cellprocessor.constraint.DMinMax;
 import org.supercsv.cellprocessor.constraint.IsElementOf;
+import org.supercsv.cellprocessor.constraint.LMinMax;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -102,6 +110,32 @@ public class GenerateDownloadFile extends CallUser {
     public final static String AFFYMETRIXDATA_COLUMN_NAME = "Affymetrix data";
 
     /**
+     * A {@code String} that is the name of the column containing call quality found 
+     * with Affymetrix experiment, in the download file.
+     */
+    public final static String AFFYMETRIX_CALL_QUALITY_COLUMN_NAME = "Affymetrix call quality";
+
+    /**
+     * A {@code String} that is the name of the column containing best p-value using Affymetrix, 
+     * in the download file.
+     */
+    public final static String AFFYMETRIX_P_VALUE_COLUMN_NAME = "Best p-value using Affymetrix";
+
+    /**
+     * A {@code String} that is the name of the column containing the number of analysis using 
+     * Affymetrix data where the same call is found, in the download file.
+     */
+    public final static String AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME = 
+            "Number of analysis using Affymetrix data where the same call is found";
+
+    /**
+     * A {@code String} that is the name of the column containing the number of analysis using 
+     * Affymetrix data where a different call is found, in the download file.
+     */
+    public final static String AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
+            "Number of analysis using Affymetrix data where a different call is found";
+
+    /**
      * A {@code String} that is the name of the column containing expression/no-expression found 
      * with EST experiment, in the download file.
      */
@@ -123,7 +157,33 @@ public class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the name of the column containing expression/no-expression found 
      * with RNA-Seq experiment, in the download file.
      */
-    public final static String RNASEQDATA_COLUMN_NAME = "RNA-Seq data";
+    public final static String RNASEQ_DATA_COLUMN_NAME = "RNA-Seq data";
+
+    /**
+     * A {@code String} that is the name of the column containing call quality found 
+     * with RNA-Seq experiment, in the download file.
+     */
+    public final static String RNASEQ_CALL_QUALITY_COLUMN_NAME = "RNA-Seq call quality";
+
+    /**
+     * A {@code String} that is the name of the column containing best p-value using RNA-Seq, 
+     * in the download file.
+     */
+    public final static String RNASEQ_P_VALUE_COLUMN_NAME = "Best p-value using RNA-Seq";
+
+    /**
+     * A {@code String} that is the name of the column containing the number of analysis using 
+     * RNA-Seq data where the same call is found, in the download file.
+     */
+    public final static String RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME = 
+            "Number of analysis using RNA-Seq data where the same call is found";
+
+    /**
+     * A {@code String} that is the name of the column containing the number of analysis using 
+     * RNA-Seq data where a different call is found, in the download file.
+     */
+    public final static String RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
+            "Number of analysis using RNA-Seq data where a different call is found";
 
     /**
      * A {@code String} that is the name of the column containing whether the call 
@@ -141,8 +201,20 @@ public class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the name of the column containing merged differential expressions 
      * from different data types, in the download file.
      */
-    public final static String DIFFEXPRESSION_COLUMN_NAME = "Over/Under-expression";
-   
+    public final static String DIFFEXPRESSION_COLUMN_NAME = "Differential expression";
+
+    /**
+     * A {@code String} that is the name of the column containing the merged quality of the call,
+     * in the download file.
+     */
+    public final static String QUALITY_COLUMN_NAME = "Call quality";
+
+    /**
+     * A {@code String} that is the value of the cell containing not applicable,
+     * in the download file.
+     */
+    public final static String NA_VALUE = "N/A";
+
    /**
     * An {@code Enum} used to define the possible file types as class arguments.
     * <ul>
@@ -157,9 +229,16 @@ public class GenerateDownloadFile extends CallUser {
     * @since Bgee 13
     */
    public enum FileType {
-       EXPR_SIMPLE("expr-simple", true, true), EXPR_COMPLETE("expr-complete", false, true), 
-       DIFFEXPR_SIMPLE("diffexpr-simple", true, false), 
-       DIFFEXPR_COMPLETE("diffexpr-complete", false, false);
+       EXPR_SIMPLE("expr-simple", true, true, false), 
+       EXPR_COMPLETE("expr-complete", false, true, false), 
+       DIFF_EXPR_SIMPLE_ANAT_ENTITY("diffexpr-simple-anat-entity", true, false, true,
+               ComparisonFactor.ANATOMY), 
+       DIFF_EXPR_COMPLETE_ANAT_ENTITY("diffexpr-complete-anat-entity", false, false, true,
+               ComparisonFactor.ANATOMY),
+       DIFF_EXPR_SIMPLE_STAGE("diffexpr-simple-stage", true, false, true,
+               ComparisonFactor.DEVELOPMENT), 
+       DIFF_EXPR_COMPLETE_STAGE("diffexpr-complete-stage", false, false, true,
+               ComparisonFactor.DEVELOPMENT);
        
        /**
         * A {@code String} that can be used to generate names of files of this type.
@@ -175,6 +254,16 @@ public class GenerateDownloadFile extends CallUser {
         * file type
         */
        private final boolean expressionFileType;
+       /**
+        * A {@code boolean} defining whether this {@code FileType} is a differential expression 
+        * file type
+        */
+       private final boolean diffExpressionFileType;
+       /**
+        * A {@code ComparisonFactor} defining what is the experimental factor 
+        * compared that generated the differential expression calls.
+        */
+       private final ComparisonFactor comparisonFactor;
 
        /**
         * Constructor providing the {@code String} representation of this {@code ExpressionData}.
@@ -184,13 +273,39 @@ public class GenerateDownloadFile extends CallUser {
         * @param simpleFileType         A {@code boolean} defining whether this {@code FileType} 
         *                               is a simple file type.
         * @param expressionFileType     A {@code boolean} defining whether this {@code FileType} 
-        *                               is a expression file type.
+        *                               is an expression file type.
+        * @param diffExpressionFileType A {@code boolean} defining whether this {@code FileType} 
+        *                               is a differential expression file type.
         */
        private FileType(String stringRepresentation, boolean simpleFileType, 
-               boolean expressionFileType) {
+               boolean expressionFileType, boolean diffExpressionFileType) {
+           this(stringRepresentation, simpleFileType, expressionFileType, 
+                   diffExpressionFileType, null);
+       }
+       
+       /**
+        * Constructor providing the {@code String} representation of this {@code ExpressionData}.
+        * 
+        * @param stringRepresentation   A {@code String} corresponding to
+        *                               this {@code ExpressionData}.
+        * @param simpleFileType         A {@code boolean} defining whether this {@code FileType} 
+        *                               is a simple file type.
+        * @param expressionFileType     A {@code boolean} defining whether this {@code FileType} 
+        *                               is an expression file type.
+        * @param diffExpressionFileType A {@code boolean} defining whether this {@code FileType} 
+        *                               is a differential expression file type.
+        * @param comparisonFactor       A {@code ComparisonFactor} defining what is the experimental 
+        *                               factor compared that generated the differential expression 
+        *                               calls.
+        */
+       private FileType(String stringRepresentation, boolean simpleFileType, 
+               boolean expressionFileType, boolean diffExpressionFileType, 
+               ComparisonFactor comparisonFactor) {
            this.stringRepresentation = stringRepresentation;
            this.simpleFileType = simpleFileType;
            this.expressionFileType = expressionFileType;
+           this.diffExpressionFileType = diffExpressionFileType;
+           this.comparisonFactor = comparisonFactor;
        }
 
        /**
@@ -211,10 +326,26 @@ public class GenerateDownloadFile extends CallUser {
        
        /**
         * @return   A {@code boolean} defining whether this {@code FileType} is an expression 
-        *           file type
+        *           file type.
         */
        public boolean isExpressionFileType() {
            return this.expressionFileType;
+       }
+
+       /**
+        * @return   A {@code boolean} defining whether this {@code FileType} is a differential
+        *           expression file type.
+        */
+       public boolean isDiffExprFileType() {
+           return this.diffExpressionFileType;
+       }
+
+       /**
+        * @return   A {@code ComparisonFactor} defining what is the experimental factor 
+        *           compared that generated the differential expression calls.
+        */
+       public ComparisonFactor getComparisonFactor() {
+           return this.comparisonFactor;
        }
 
        public String toString() {
@@ -228,10 +359,10 @@ public class GenerateDownloadFile extends CallUser {
    public final static String EXTENSION = ".tsv";
    
    /**
-    * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...), , 
+    * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...),
     * as well as for the summary column, the data state of the call.
     * <ul>
-    * <li>{@code NODATA}:         no data from the associated data type allowed to produce the call.
+    * <li>{@code NO_DATA}:         no data from the associated data type allowed to produce the call.
     * <li>{@code NOEXPRESSION}:   no-expression was detected from the associated data type.
     * <li>{@code LOWQUALITY}:     low-quality expression was detected from the associated data type.
     * <li>{@code HIGHQUALITY}:    high-quality expression was detected from the associated data type.
@@ -249,9 +380,9 @@ public class GenerateDownloadFile extends CallUser {
     * @since Bgee 13
     */
    public enum ExpressionData {
-       NODATA("no data"), NOEXPRESSION("absent high quality"), 
-       LOWQUALITY("expression low quality"), HIGHQUALITY("expression high quality"), 
-       LOWAMBIGUITY("low ambiguity"), HIGHAMBIGUITY("high ambiguity");
+       NO_DATA("no data"), NO_EXPRESSION("absent high quality"), 
+       LOW_QUALITY("expression low quality"), HIGH_QUALITY("expression high quality"), 
+       LOW_AMBIGUITY("low ambiguity"), HIGH_AMBIGUITY("high ambiguity");
 
        private final String stringRepresentation;
 
@@ -275,31 +406,40 @@ public class GenerateDownloadFile extends CallUser {
    }
 
    /**
-    * An {@code Enum} used to define, for each data type (Affymetrix, RNA-Seq, ...), the 
-    * differential expression of the call.
+    * An {@code Enum} used to define, for each data type (Affymetrix and RNA-Seq), 
+    * as well as for the summary column, the data state of the call.
     * <ul>
-    * <li>{@code NODATA}:           no data from the associated data type allowed to produce the call.
-    * <li>{@code OVEREXPRESSED}:    over-expression was detected from the associated data type.
-    * <li>{@code UNDEREXPRESSED}:   under-expression was detected from the associated data type.
-    * <li>{@code NOTDIFFEXPRESSED}: not differential expression was detected from the associated 
-    *                               data type.
+    * <li>{@code NO_DATA}:              no data from the associated data type allowed to produce 
+    *                                   the call.
+    * <li>{@code NOT_EXPRESSED}:        means that the call was never seen as 'expressed'.
+    * <li>{@code OVER_EXPRESSED}:       means that the call is seen as over-expressed.
+    * <li>{@code UNDER_EXPRESSED}:      means that  the call is seen as under-expressed.
+    * <li>{@code NOT_DIFF_EXPRESSED}:   means that the gene has expression, but 
+   *                                    <strong>no</strong> significant fold change observe.
+    * <li>{@code WEAK_AMBIGUITY}:       different data types are not completely coherent: a data type 
+    *                                   says over or under-expressed, while the other says 'not 
+    *                                   differentially expressed'; or a data type says over-expressed,  
+    *                                   while the other data type says 'not expressed'.
+    * <li>{@code STRONG_AMBIGUITY}:     different data types are not coherent: a data type says over 
+    *                                   or under-expressed, while the other data says the opposite.
     * </ul>
     * 
     * @author Valentine Rech de Laval
     * @version Bgee 13
     * @since Bgee 13
     */
-   //TODO: needs to take into account quality levels, as for expression calls
    public enum DiffExpressionData {
-       NODATA("no data"), OVEREXPRESSED("over-expression"), UNDEREXPRESSED("under-expression"), 
-       NOTDIFFEXPRESSED("no diff expression");
-       
+       NO_DATA("no data"), NOT_EXPRESSED("not expressed"), OVER_EXPRESSED("over-expression"), 
+       UNDER_EXPRESSED("under-expression"), NOT_DIFF_EXPRESSED("no diff expression"), 
+       WEAK_AMBIGUITY("weak ambiguity"), STRONG_AMBIGUITY("strong ambiguity");
+
        private final String stringRepresentation;
-       
+
        /**
-        * Constructor providing the {@code String} representation of this {@code DiffCallType}.
+        * Constructor providing the {@code String} representation of this {@code DiffExpressionData}.
         * 
-        * @param stringRepresentation  A {@code String} corresponding to this {@code DiffCallType}.
+        * @param stringRepresentation  A {@code String} corresponding to
+        *                              this {@code DiffExpressionData}.
         */
        private DiffExpressionData(String stringRepresentation) {
            this.stringRepresentation = stringRepresentation;
@@ -313,6 +453,7 @@ public class GenerateDownloadFile extends CallUser {
            return this.getStringRepresentation();
        }
    }
+
  
    /**
     * An {@code Enum} used to define whether the call has been observed. This is to distinguish 
@@ -327,7 +468,7 @@ public class GenerateDownloadFile extends CallUser {
     * @since Bgee 13
     */
    public enum ObservedData {
-       OBSERVED("yes"), NOTOBSERVED("no");
+       OBSERVED("yes"), NOT_OBSERVED("no");
        
        private final String stringRepresentation;
        
@@ -393,11 +534,21 @@ public class GenerateDownloadFile extends CallUser {
            } else if (inputFileType.equals(FileType.EXPR_COMPLETE.getStringRepresentation())) {
                filesToBeGenerated.add(FileType.EXPR_COMPLETE);    
 
-           } else if (inputFileType.equals(FileType.DIFFEXPR_SIMPLE.getStringRepresentation())) {
-               filesToBeGenerated.add(FileType.DIFFEXPR_SIMPLE);  
+           } else if (inputFileType.equals(
+                   FileType.DIFF_EXPR_SIMPLE_ANAT_ENTITY.getStringRepresentation())) {
+               filesToBeGenerated.add(FileType.DIFF_EXPR_SIMPLE_ANAT_ENTITY);  
 
-           } else if (inputFileType.equals(FileType.DIFFEXPR_COMPLETE.getStringRepresentation())) {
-               filesToBeGenerated.add(FileType.DIFFEXPR_COMPLETE);  
+           } else if (inputFileType.equals(
+                   FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY.getStringRepresentation())) {
+               filesToBeGenerated.add(FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY);
+
+           } else if (inputFileType.equals(
+                   FileType.DIFF_EXPR_SIMPLE_STAGE.getStringRepresentation())) {
+               filesToBeGenerated.add(FileType.DIFF_EXPR_SIMPLE_STAGE);
+
+           } else if (inputFileType.equals(
+                   FileType.DIFF_EXPR_COMPLETE_STAGE.getStringRepresentation())) {
+               filesToBeGenerated.add(FileType.DIFF_EXPR_COMPLETE_STAGE);
 
            } else {
                unknownFileTypes.add(inputFileType);
@@ -474,10 +625,18 @@ public class GenerateDownloadFile extends CallUser {
         for (String speciesId: speciesIds) {
             log.info("Start generating of download files for the species {}...", speciesId);
             
-            if (fileTypes.contains(FileType.DIFFEXPR_SIMPLE) ||
-                    fileTypes.contains(FileType.DIFFEXPR_COMPLETE)) {
-//                this.generateDiffExprFiles(directory, fileTypes, speciesId, 
-//                        geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
+            if (fileTypes.contains(FileType.DIFF_EXPR_SIMPLE_ANAT_ENTITY) ||
+                    fileTypes.contains(FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY)) {
+                this.generateDiffExprFiles(directory, speciesNamesForFilesByIds.get(speciesId), 
+                        fileTypes, speciesId, geneNamesByIds, stageNamesByIds, 
+                        anatEntityNamesByIds, ComparisonFactor.ANATOMY);
+            }
+            
+            if (fileTypes.contains(FileType.DIFF_EXPR_SIMPLE_STAGE) ||
+                    fileTypes.contains(FileType.DIFF_EXPR_COMPLETE_STAGE)) {
+                this.generateDiffExprFiles(directory, speciesNamesForFilesByIds.get(speciesId), 
+                        fileTypes, speciesId, geneNamesByIds, stageNamesByIds, 
+                        anatEntityNamesByIds, ComparisonFactor.DEVELOPMENT);
             }
             
             if (fileTypes.contains(FileType.EXPR_SIMPLE) || 
@@ -757,6 +916,7 @@ public class GenerateDownloadFile extends CallUser {
         //****************************
         log.trace("Start generating and writing file content for species {} and file types {}...", 
                 speciesId, fileTypes);
+        
         //now, we write all requested expression files at once. This way, we will generate 
         //the data only once, and we will not have to store them in memory (the memory usage 
         //could be huge).
@@ -873,7 +1033,6 @@ public class GenerateDownloadFile extends CallUser {
                     }
                 }
             }
-            
         } catch (Exception e) {
             for (String fileName: generatedFileNames.values()) {
                 //if tmp file exists, remove it.
@@ -921,8 +1080,7 @@ public class GenerateDownloadFile extends CallUser {
             throw log.throwing(new IllegalArgumentException("File type not handled " +
             		"by this method: " + fileType));
         }
-            
-        
+
         List<Object> dataElements = new ArrayList<Object>();
         for (ExpressionData data : ExpressionData.values()) {
             dataElements.add(data.getStringRepresentation());
@@ -939,7 +1097,7 @@ public class GenerateDownloadFile extends CallUser {
                     new StrNotNullOrEmpty(), // developmental stage name
                     new StrNotNullOrEmpty(), // anatomical entity ID
                     new StrNotNullOrEmpty(), // anatomical entity name
-                    new IsElementOf(dataElements)}); // Diff expression or Expression
+                    new IsElementOf(dataElements)}); // Expression
         } 
         return log.exit(new CellProcessor[] { 
                 new StrNotNullOrEmpty(), // gene ID
@@ -955,9 +1113,8 @@ public class GenerateDownloadFile extends CallUser {
                 //                        new IsElementOf(dataElements),  // Relaxed in Situ data
                 new IsElementOf(dataElements),  // RNA-seq data
                 new IsElementOf(originElement), // Including observed data 
-                new IsElementOf(dataElements)}); // Diff expression or Expression
+                new IsElementOf(dataElements)}); // Expression
     }
-    
 
     /**
      * Generates an {@code Array} of {@code String}s used to generate the header of  
@@ -986,7 +1143,7 @@ public class GenerateDownloadFile extends CallUser {
                 ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
                 AFFYMETRIXDATA_COLUMN_NAME, ESTDATA_COLUMN_NAME, INSITUDATA_COLUMN_NAME, 
                 //                  RELAXEDINSITUDATA_COLUMN_NAME, 
-                RNASEQDATA_COLUMN_NAME, 
+                RNASEQ_DATA_COLUMN_NAME, 
                 INCLUDING_OBSERVED_DATA_COLUMN_NAME, EXPRESSION_COLUMN_NAME});
         
     }
@@ -1036,6 +1193,7 @@ public class GenerateDownloadFile extends CallUser {
      * @throw IllegalArgumentException  If some information is missing, or data provided 
      *                                  are inconsistent. 
      */
+    //TODO: divide the Expression column into two columns: Expression and Quality columns
     private Map<String, String> generateExprRow(String geneId, String geneName, 
             String stageId, String stageName, String anatEntityId, String anatEntityName, 
             Collection<CallTO> callTOs, FileType fileType) throws IllegalArgumentException {
@@ -1046,32 +1204,8 @@ public class GenerateDownloadFile extends CallUser {
 
         // ********************************
         // Set IDs and names
-        // ********************************
-        if (StringUtils.isBlank(geneId)) {
-            throw log.throwing(new IllegalArgumentException("No Id provided for gene."));
-        }
-        if (StringUtils.isBlank(stageId)) {
-            throw log.throwing(new IllegalArgumentException("No Id provided for stage."));
-        }
-        if (StringUtils.isBlank(anatEntityId)) {
-            throw log.throwing(new IllegalArgumentException("No Id provided for anat entity."));
-        }
-        //gene name can sometimes be empty, we don't check it
-        if (StringUtils.isBlank(anatEntityName)) {
-            throw log.throwing(new IllegalArgumentException("No name provided " +
-                    "for anatomical entity ID " + anatEntityId));
-        }
-        if (StringUtils.isBlank(stageName)) {
-            throw log.throwing(new IllegalArgumentException("No name provided " +
-                    "for stage ID " + stageId));
-        }
-        row.put(GENE_ID_COLUMN_NAME, geneId);
-        row.put(ANATENTITY_ID_COLUMN_NAME, anatEntityId);
-        row.put(STAGE_ID_COLUMN_NAME, stageId);
-        row.put(GENE_NAME_COLUMN_NAME, geneName);
-        row.put(STAGE_NAME_COLUMN_NAME, stageName);
-        row.put(ANATENTITY_NAME_COLUMN_NAME, anatEntityName);
-
+        // ********************************        
+        this.addIdsAndNames(row, geneId, anatEntityId, stageId, geneName, stageName, anatEntityName);
 
         // ********************************
         // Set simple file columns
@@ -1147,7 +1281,7 @@ public class GenerateDownloadFile extends CallUser {
         }
 
         // Define if the call include observed data
-        ObservedData observedData = ObservedData.NOTOBSERVED; 
+        ObservedData observedData = ObservedData.NOT_OBSERVED; 
         if ((expressionTO != null && !isPropagatedOnly(expressionTO))
                 || (noExpressionTO != null && !isPropagatedOnly(noExpressionTO))) {
             // stage and anatomical entity not propagated in the expression call 
@@ -1156,29 +1290,29 @@ public class GenerateDownloadFile extends CallUser {
         }
 
         // We do not write calls in simple file if there are not observed.
-        if (fileType.isSimpleFileType() && observedData.equals(ObservedData.NOTOBSERVED)) {
+        if (fileType.isSimpleFileType() && observedData.equals(ObservedData.NOT_OBSERVED)) {
             return log.exit(null);                
         }
 
         // Define summary column
-        ExpressionData summary = ExpressionData.NODATA;
+        ExpressionData summary = ExpressionData.NO_DATA;
         if (expressionTO != null && noExpressionTO != null) {
             if (noExpressionTO.getOriginOfLine().equals(NoExpressionCallTO.OriginOfLine.PARENT)) {
-                summary = ExpressionData.LOWAMBIGUITY;                    
+                summary = ExpressionData.LOW_AMBIGUITY;                    
             } else {
-                summary = ExpressionData.HIGHAMBIGUITY;
+                summary = ExpressionData.HIGH_AMBIGUITY;
             }
         } else if (expressionTO != null) {
             Set<DataState> allDataState = EnumSet.of(
                     expressionTO.getAffymetrixData(), expressionTO.getESTData(), 
                     expressionTO.getInSituData(), expressionTO.getRNASeqData());
             if (allDataState.contains(DataState.HIGHQUALITY)) {
-                summary = ExpressionData.HIGHQUALITY;
+                summary = ExpressionData.HIGH_QUALITY;
             } else {
-                summary = ExpressionData.LOWQUALITY;
+                summary = ExpressionData.LOW_QUALITY;
             }
         } else if (noExpressionTO != null) {
-            summary = ExpressionData.NOEXPRESSION;
+            summary = ExpressionData.NO_EXPRESSION;
         } 
         row.put(EXPRESSION_COLUMN_NAME, summary.getStringRepresentation());
 
@@ -1222,7 +1356,7 @@ public class GenerateDownloadFile extends CallUser {
 //            row.put(RELAXEDINSITUDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates
 //                    (DataState.NODATA, noExpressionTO.getRelaxedInSituData()).
 //                    getStringRepresentation());
-            row.put(RNASEQDATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates(
+            row.put(RNASEQ_DATA_COLUMN_NAME, this.mergeExprAndNoExprDataStates(
                     expressionTO.getRNASeqData(), noExpressionTO.getRNASeqData()).
                     getStringRepresentation());
         } catch (Exception e) {
@@ -1232,6 +1366,51 @@ public class GenerateDownloadFile extends CallUser {
         }
         
         return log.exit(row);
+    }
+
+    /**
+     * TODO
+     * <p>
+     * row modified
+     *
+     * @param row
+     * @param geneId
+     * @param anatEntityId
+     * @param stageId
+     * @param geneName
+     * @param stageName
+     * @param anatEntityName
+     */
+    private void addIdsAndNames(Map<String, String> row, String geneId, String anatEntityId, 
+            String stageId, String geneName, String stageName, String anatEntityName) {
+        log.entry(row, geneId, anatEntityId, stageId, geneName, stageName, anatEntityName);
+        
+        if (StringUtils.isBlank(geneId)) {
+            throw log.throwing(new IllegalArgumentException("No Id provided for gene."));
+        }
+        if (StringUtils.isBlank(stageId)) {
+            throw log.throwing(new IllegalArgumentException("No Id provided for stage."));
+        }
+        if (StringUtils.isBlank(anatEntityId)) {
+            throw log.throwing(new IllegalArgumentException("No Id provided for anat entity."));
+        }
+        //gene name can sometimes be empty, we don't check it
+        if (StringUtils.isBlank(anatEntityName)) {
+            throw log.throwing(new IllegalArgumentException("No name provided " +
+                    "for anatomical entity ID " + anatEntityId));
+        }
+        if (StringUtils.isBlank(stageName)) {
+            throw log.throwing(new IllegalArgumentException("No name provided " +
+                    "for stage ID " + stageId));
+        }
+        row.put(GENE_ID_COLUMN_NAME, geneId);
+        row.put(ANATENTITY_ID_COLUMN_NAME, anatEntityId);
+        row.put(STAGE_ID_COLUMN_NAME, stageId);
+        row.put(GENE_NAME_COLUMN_NAME, geneName);
+        row.put(STAGE_NAME_COLUMN_NAME, stageName);
+        row.put(ANATENTITY_NAME_COLUMN_NAME, anatEntityName);
+
+        log.exit();
     }
 
     /**
@@ -1251,7 +1430,7 @@ public class GenerateDownloadFile extends CallUser {
     
         //no data at all
         if (dataStateExpr == DataState.NODATA && dataStateNoExpr == DataState.NODATA) {
-            return log.exit(ExpressionData.NODATA);
+            return log.exit(ExpressionData.NO_DATA);
         }
         if (dataStateExpr != DataState.NODATA && dataStateNoExpr != DataState.NODATA) {
             throw log.throwing(new IllegalStateException("An expression call and " +
@@ -1260,10 +1439,10 @@ public class GenerateDownloadFile extends CallUser {
         //no no-expression data, we use the expression data
         if (dataStateExpr != DataState.NODATA) {
             if (dataStateExpr.equals(DataState.HIGHQUALITY)) {
-                return log.exit(ExpressionData.HIGHQUALITY);
+                return log.exit(ExpressionData.HIGH_QUALITY);
             } 
             if (dataStateExpr.equals(DataState.LOWQUALITY)) {
-                return log.exit(ExpressionData.LOWQUALITY); 
+                return log.exit(ExpressionData.LOW_QUALITY); 
             } 
             throw log.throwing(new IllegalArgumentException(
                     "The DataState provided (" + dataStateExpr.getStringRepresentation() + 
@@ -1272,7 +1451,7 @@ public class GenerateDownloadFile extends CallUser {
         
         if (dataStateNoExpr != DataState.NODATA) {
             //no-expression data available
-            return log.exit(ExpressionData.NOEXPRESSION);
+            return log.exit(ExpressionData.NO_EXPRESSION);
         }
         
         throw log.throwing(new AssertionError("All logical conditions should have been checked."));
@@ -1337,15 +1516,459 @@ public class GenerateDownloadFile extends CallUser {
     }
 
     /**
-     * Generate the {@code List} of {@code Map}s containing data to be written in download file
-     * for differential expression.
-     * 
-     * @param speciesId     A {@code String} that is the ID of species for which data are retrieved.
-     * @return              A {@code List} of {@code Map}s where keys are column names and 
-     *                      values are data associated to the column name.
+     * TODO Javadoc
+     *
+     * @param speciesIds
+     * @return
      */
-//    private List<Map<String, String>> generateDiffExprRows(String speciesId) {
-//        log.entry(speciesId);
-//        // TODO Auto-generated method stub
-//    }
+    private Map<String, Set<DiffExpressionCallTO>> loadDiffExprCallsByGeneId(
+            Set<String> speciesIds, ComparisonFactor factor) {
+        log.entry(speciesIds, factor);
+        
+        log.debug("Start retrieving differential expression calls for the species IDs {}...", 
+                speciesIds);
+        Map<String, Set<DiffExpressionCallTO>> callsByGeneIds = 
+                new HashMap<String, Set<DiffExpressionCallTO>>();
+        DiffExpressionCallDAO dao = this.getDiffExpressionCallDAO();
+        dao.setAttributes(EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
+
+        DiffExpressionCallParams params = new DiffExpressionCallParams();
+        params.addAllSpeciesIds(speciesIds);
+        params.setComparisonFactor(factor);
+    
+        int i = 0;
+        try (DiffExpressionCallTOResultSet rsDiffExpr = dao.getDiffExpressionCalls(params)) {
+            while (rsDiffExpr.next()) {
+                DiffExpressionCallTO to = rsDiffExpr.getTO();
+                log.trace("Iterating DiffExpressionCallTO: {}", to);
+                Set<DiffExpressionCallTO> diffExprTOs = callsByGeneIds.get(to.getGeneId());
+                if (diffExprTOs == null) {
+                    log.trace("Create new map key: {}", to.getGeneId());
+                    diffExprTOs = new HashSet<DiffExpressionCallTO>();
+                    callsByGeneIds.put(to.getGeneId(), diffExprTOs);
+                }
+                diffExprTOs.add(to);
+                i++;
+            }
+        }
+
+        log.debug("Done retrieving global expression calls, {} calls found", i);
+        return log.exit(callsByGeneIds); 
+    }
+    
+    /**
+     * TODO Javadoc
+     *
+     * @param directory
+     * @param fileNamePrefix
+     * @param fileTypes
+     * @param speciesId
+     * @param geneNamesByIds
+     * @param stageNamesByIds
+     * @param anatEntityNamesByIds
+     * @param factor
+     * @throws IOException
+     */
+    private void generateDiffExprFiles(String directory, String fileNamePrefix, 
+            Set<FileType> fileTypes, String speciesId, Map<String, String> geneNamesByIds, 
+            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds,
+            ComparisonFactor factor) throws IOException {
+        log.entry(directory, fileNamePrefix, fileTypes, speciesId, 
+                geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, factor);
+        log.debug("Start generating differential expression files for the species {} and file types {}...", 
+                speciesId, fileTypes);
+        
+        //********************************
+        // RETRIEVE DATA FROM DATA SOURCE
+        //********************************
+        Set<String> speciesFilter = new HashSet<String>();
+        speciesFilter.add(speciesId);
+    
+        log.trace("Start retrieving data for differential expression files for the species {}...", 
+                speciesId);
+        
+        Map<String, Set<DiffExpressionCallTO>> diffExprTOsByGeneIds =  
+                    this.loadDiffExprCallsByGeneId(speciesFilter, factor);
+    
+        log.trace("Done retrieving data for differential expression files for the species {}.", 
+                speciesId);
+        
+        //****************************
+        // PRODUCE AND WRITE DATA
+        //****************************
+        log.trace("Start generating and writing file content for species {} and file types {}...", 
+                speciesId, fileTypes);
+        
+        //now, we write all requested diff expression files at once. This way, we will generate 
+        //the data only once, and we will not have to store them in memory (the memory usage 
+        //could be huge).
+        //OK, first we allow to store file names, writers, etc, associated to a FileType, 
+        //for the catch and finally clauses. 
+        Map<FileType, String> generatedFileNames = new HashMap<FileType, String>();
+        //we will write results in tmp files that we will rename at the end 
+        //if everything is correct
+        String tmpExtension = ".tmp";
+        //in order to close all writers in a finally clause
+        Map<FileType, ICsvMapWriter> writersUsed = new HashMap<FileType, ICsvMapWriter>();
+        try {
+            //**************************
+            // OPEN FILES, CREATE WRITERS, WRITE HEADERS
+            //**************************
+            Map<FileType, CellProcessor[]> processors = new HashMap<FileType, CellProcessor[]>();
+            Map<FileType, String[]> headers = new HashMap<FileType, String[]>();
+            for (FileType fileType: fileTypes) {
+                if (!fileType.isDiffExprFileType() && !fileType.getComparisonFactor().equals(factor)) {
+                    continue;
+                }
+                CellProcessor[] fileTypeProcessors = this.generateDiffExprFileCellProcessors(fileType);
+                processors.put(fileType, fileTypeProcessors);
+                String[] fileTypeHeaders = this.generateDiffExprFileHeader(fileType);
+                headers.put(fileType, fileTypeHeaders);
+                
+                //Create file name
+                String fileName = fileNamePrefix + "_" + 
+                        fileType.getStringRepresentation() + EXTENSION;
+                generatedFileNames.put(fileType, fileName);
+                
+                //write in temp file
+                File file = new File(directory, fileName + tmpExtension);
+                //override any existing file
+                if (file.exists()) {
+                    file.delete();
+                }
+                
+                //create writer and write header
+                ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file), Utils.TSVCOMMENTED);
+                mapWriter.writeHeader(fileTypeHeaders);
+                writersUsed.put(fileType, mapWriter);
+            }
+            
+            //****************************
+            // WRITE ROWS
+            //****************************
+            //first, we retrieve and order all unique gene IDs, to have rows in files 
+            //ordered by gene IDs
+            List<String> orderedGeneIds =
+                    new ArrayList<String>(new HashSet<String>(diffExprTOsByGeneIds.keySet()));
+            Collections.sort(orderedGeneIds);
+            
+            //now, we generate and write data one gene at a time to not overload memory.
+            int geneCount = 0;
+            for (String geneId: orderedGeneIds) {
+                geneCount++;
+                if (log.isDebugEnabled() && geneCount % 2000 == 0) {
+                    log.debug("Iterating gene {} over {}", geneCount, orderedGeneIds.size());
+                }
+                //remove calls from Map to free some memory
+                Set<CallTO> diffExprCallTOs = new HashSet<CallTO>(diffExprTOsByGeneIds.remove(geneId));
+                SortedMap<CallTO, Collection<CallTO>> groupedSortedCallTOs = 
+                        this.groupAndOrderByGeneAnatEntityStage(diffExprCallTOs);
+                
+                //and now, we compute and write the rows in all files
+                for (Entry<CallTO, Collection<CallTO>> callGroup : groupedSortedCallTOs.entrySet()) {
+                    if (!geneId.equals(callGroup.getKey().getGeneId())) {
+                        throw log.throwing(new IllegalStateException("Grouped calls should " +
+                                "have the gene ID " + geneId + ": " + callGroup));
+                    }
+                    String stageId = callGroup.getKey().getStageId();
+                    String anatEntityId = callGroup.getKey().getAnatEntityId();
+                    
+                    for (Entry<FileType, ICsvMapWriter> writerFileType: writersUsed.entrySet()) {
+                        Map<String, String> row = null;
+                        try {
+                            for (CallTO callTO : callGroup.getValue()) {
+                                // We do not write NOT_DIFF_EXPRESSED rows in simple file
+                                if (writerFileType.getKey().isSimpleFileType() &&
+                                    !((DiffExpressionCallTO)callTO).getAffymetrixData().
+                                        equals(DiffExprCallType.NOT_DIFF_EXPRESSED) &&
+                                    !((DiffExpressionCallTO)callTO).getRNASeqData().
+                                        equals(DiffExprCallType.NOT_DIFF_EXPRESSED)) {
+                                    row = this.generateDiffExprRow(geneId, geneNamesByIds.get(geneId), 
+                                            stageId, stageNamesByIds.get(stageId), 
+                                            anatEntityId, anatEntityNamesByIds.get(anatEntityId), 
+                                            (DiffExpressionCallTO)callTO, writerFileType.getKey());
+                                }
+                            }
+                        } catch (IllegalArgumentException e) {
+                            //any IllegalArgumentException thrown by generateExprRow should come 
+                            //from a problem in the data, thus from an illegal state
+                            throw log.throwing(new IllegalStateException("Incorrect data state", e));
+                        }
+                        
+                        if (row != null) {
+                            log.trace("Write row: {} - using writer: {}", 
+                                    row, writerFileType.getValue());
+                            writerFileType.getValue().write(row, 
+                                    headers.get(writerFileType.getKey()), 
+                                    processors.get(writerFileType.getKey()));
+                        }
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            for (String fileName: generatedFileNames.values()) {
+                //if tmp file exists, remove it.
+                File file = new File(directory, fileName + tmpExtension);
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
+            throw e;
+        } finally {
+            for (ICsvMapWriter writer: writersUsed.values()) {
+                writer.close();
+            }
+        }
+        
+        //now, if everything went fine, we rename the temp files
+        for (String fileName: generatedFileNames.values()) {
+            //if tmp file exists, rename it.
+            File tmpFile = new File(directory, fileName + tmpExtension);
+            File file = new File(directory, fileName);
+            if (tmpFile.exists()) {
+                tmpFile.renameTo(file);
+            }
+        }
+    
+        log.debug("Done generating differential expression files for the species {} and file types {}.", 
+                speciesId, fileTypes);
+    }
+
+    /**
+     * Generates an {@code Array} of {@code CellProcessor}s used to process 
+     * a differential expression TSV file of type {@code fileType}.
+     * 
+     * @param fileType  The {@code FileType} of the file to be generated.
+     * @return          An {@code Array} of {@code CellProcessor}s used to process 
+     *                  a differential expression file.
+     * @throw IllegalArgumentException  If {@code fileType} is not managed by this method.
+     */
+    private CellProcessor[] generateDiffExprFileCellProcessors(FileType fileType) 
+            throws IllegalArgumentException {
+        log.entry(fileType);
+        
+        if (!fileType.equals(FileType.DIFF_EXPR_SIMPLE_ANAT_ENTITY) && 
+                !fileType.equals(FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY) && 
+                !fileType.equals(FileType.DIFF_EXPR_SIMPLE_STAGE) && 
+                !fileType.equals(FileType.DIFF_EXPR_COMPLETE_STAGE)) {
+            throw log.throwing(new IllegalArgumentException("File type not handled " +
+                    "by this method: " + fileType));
+        }
+
+        List<Object> data = new ArrayList<Object>();
+        for (DiffExpressionData diffExprData: DiffExpressionData.values()) {
+            data.add(diffExprData.getStringRepresentation());
+        } 
+        
+        List<Object> qualities = new ArrayList<Object>();
+        qualities.add(DataState.HIGHQUALITY.getStringRepresentation());
+        qualities.add(DataState.LOWQUALITY.getStringRepresentation());
+        qualities.add(GenerateDownloadFile.NA_VALUE);
+        
+        if (fileType.isSimpleFileType()) {
+            return log.exit(new CellProcessor[] { 
+                    new StrNotNullOrEmpty(),      // gene ID
+                    new NotNull(),                // gene Name
+                    new StrNotNullOrEmpty(),      // developmental stage ID
+                    new StrNotNullOrEmpty(),      // developmental stage name
+                    new StrNotNullOrEmpty(),      // anatomical entity ID
+                    new StrNotNullOrEmpty(),      // anatomical entity name
+                    new IsElementOf(data),        // Differential expression
+                    new IsElementOf(qualities)}); // Quality
+        } 
+        return log.exit(new CellProcessor[] { 
+                new StrNotNullOrEmpty(),        // gene ID
+                new NotNull(),                  // gene Name
+                new StrNotNullOrEmpty(),        // developmental stage ID
+                new StrNotNullOrEmpty(),        // developmental stage name
+                new StrNotNullOrEmpty(),        // anatomical entity ID
+                new StrNotNullOrEmpty(),        // anatomical entity name
+                new IsElementOf(data),          // Affymetrix data
+                new IsElementOf(qualities),     // Affymetrix call quality
+                new DMinMax(0, 1),              // Best p-value using Affymetrix
+                new LMinMax(0, Long.MAX_VALUE), // Consistent DEA count using Affymetrix
+                new LMinMax(0, Long.MAX_VALUE), // Inconsistent DEA count using Affymetrix
+                new IsElementOf(data),          // RNA-seq data
+                new IsElementOf(qualities),     // RNA-seq call quality
+                new DMinMax(0, 1),              // Best p-value using RNA-Seq
+                new LMinMax(0, Long.MAX_VALUE), // Consistent DEA count using RNA-Seq
+                new LMinMax(0, Long.MAX_VALUE), // Inconsistent DEA count using RNA-Seq
+                new IsElementOf(data),          // Differential expression
+                new IsElementOf(qualities)});   // Quality
+    }
+    
+    /**
+     * Generates an {@code Array} of {@code String}s used to generate the header of  
+     * a differential expression TSV file of type {@code fileType}.
+     * 
+     * @param fileType  The {@code FileType} of the file to be generated.
+     * @return          An {@code Array} of {@code String}s used to produce the header.
+     * @throw IllegalArgumentException  If {@code fileType} is not managed by this method.
+     */
+    private String[] generateDiffExprFileHeader(FileType fileType) 
+            throws IllegalArgumentException {
+        log.entry(fileType);
+        
+        if (fileType.isSimpleFileType()) {
+            return log.exit(new String[] { 
+                    GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
+                    STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,
+                    ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
+                    DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME});
+        } 
+        return log.exit(new String[] {
+                GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
+                STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,   
+                ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
+                AFFYMETRIXDATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
+                AFFYMETRIX_P_VALUE_COLUMN_NAME, AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
+                AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
+                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME,
+                RNASEQ_P_VALUE_COLUMN_NAME, RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
+                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
+                DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME});
+    }
+
+    /**
+     * TODO Javadoc
+     *
+     * @param geneId
+     * @param geneName
+     * @param stageId
+     * @param stageName
+     * @param anatEntityId
+     * @param anatEntityName
+     * @param callTOs
+     * @param fileType
+     * @return
+     */
+    private Map<String, String> generateDiffExprRow(String geneId, String geneName, 
+            String stageId, String stageName, String anatEntityId, String anatEntityName, 
+            DiffExpressionCallTO to, FileType fileType) {
+        log.entry(geneId, geneName, stageId, stageName, anatEntityId, anatEntityName, to, fileType);
+        
+        Map<String, String> row = new HashMap<String, String>();
+    
+        // ********************************
+        // Set IDs and names
+        // ********************************        
+        this.addIdsAndNames(row, geneId, anatEntityId, stageId, geneName, stageName, anatEntityName);
+    
+        // ********************************
+        // Set simple file columns
+        // ********************************
+        this.addMergedDataToRow(row, to.getDiffExprCallTypeAffymetrix(), to.getAffymetrixData(), 
+                to.getDiffExprCallTypeRNASeq(), to.getRNASeqData());
+    
+        // ********************************
+        // Set advance file columns
+        // ********************************
+        if (!fileType.isSimpleFileType()) {
+            row.put(AFFYMETRIXDATA_COLUMN_NAME, to.getAffymetrixData().getStringRepresentation());
+            row.put(AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, 
+                    to.getDiffExprCallTypeAffymetrix().getStringRepresentation());
+            row.put(AFFYMETRIX_P_VALUE_COLUMN_NAME, String.valueOf(to.getBestPValueAffymetrix()));
+            row.put(AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
+                    String.valueOf(to.getConsistentDEACountAffymetrix()));
+            row.put(AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME, 
+                    String.valueOf(to.getInconsistentDEACountAffymetrix()));
+
+            row.put(RNASEQ_DATA_COLUMN_NAME, to.getRNASeqData().getStringRepresentation());
+            row.put(RNASEQ_CALL_QUALITY_COLUMN_NAME,
+                    to.getDiffExprCallTypeRNASeq().getStringRepresentation());
+            row.put(RNASEQ_P_VALUE_COLUMN_NAME, String.valueOf(to.getBestPValueRNASeq()));
+            row.put(RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME,
+                    String.valueOf(to.getConsistentDEACountRNASeq()));
+            row.put(RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME, 
+                    String.valueOf(to.getInconsistentDEACountRNASeq()));
+        }
+
+        return log.exit(row);
+    }
+
+    /**
+     * Add to the provides row merged {@code DataState}s and qualities.
+     * <p>
+     * The provided {@code Map} will be modified.
+     *
+     * @param row               A {@code Map} where keys are {@code String}s that are column names,
+                                the associated value being a {@code String} that is the value 
+                                for the call. 
+     * @param affymetrixQuality 
+     * @param affymetrixType
+     * @param rnaSeqQuality
+     * @param rnaSeqType
+     */
+    private void addMergedDataToRow(Map<String, String> row,
+            DiffExprCallType affymetrixType, DataState affymetrixQuality, 
+            DiffExprCallType rnaSeqType, DataState rnaSeqQuality) {
+        log.entry(row, affymetrixQuality, affymetrixType, rnaSeqQuality, rnaSeqType);
+        
+        DiffExpressionData summary = DiffExpressionData.NO_DATA;
+        String quality = GenerateDownloadFile.NA_VALUE;
+
+        Set<DiffExprCallType> allType = EnumSet.of(affymetrixType, rnaSeqType);
+        Set<DataState> allDataQuality = EnumSet.of(affymetrixQuality, rnaSeqQuality);
+        
+        if (allType.size() == 1 && 
+                (affymetrixType.equals(DiffExprCallType.NOT_DIFF_EXPRESSED) ||
+                        affymetrixType.equals(DiffExprCallType.NO_DATA))) {
+            throw log.throwing(new IllegalArgumentException("One call could't be "+
+                    DiffExprCallType.NOT_DIFF_EXPRESSED.getStringRepresentation() + " or " + 
+                    DiffExprCallType.NO_DATA.getStringRepresentation()));
+        }
+
+        if ((allType.contains(DiffExprCallType.UNDER_EXPRESSED) &&
+                allType.contains(DiffExprCallType.OVER_EXPRESSED)) ||
+            (allType.contains(DiffExprCallType.NOT_EXPRESSED) &&
+                allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED))) {
+            summary = DiffExpressionData.STRONG_AMBIGUITY;
+            quality = GenerateDownloadFile.NA_VALUE;
+            
+        } else if (affymetrixType.equals(rnaSeqType) || allType.contains(DiffExprCallType.NO_DATA)) {
+            DiffExprCallType type = affymetrixType;
+            if (affymetrixType.equals(DiffExprCallType.NO_DATA)) {
+                type = rnaSeqType;
+            }
+            switch (type) {
+                case OVER_EXPRESSED: 
+                    summary = DiffExpressionData.OVER_EXPRESSED;
+                    break;
+                case UNDER_EXPRESSED: 
+                    summary = DiffExpressionData.UNDER_EXPRESSED;
+                    break;
+                case NOT_DIFF_EXPRESSED: 
+                    summary = DiffExpressionData.NOT_DIFF_EXPRESSED;
+                    break;
+                case NOT_EXPRESSED:
+                    summary = DiffExpressionData.NOT_EXPRESSED;
+                    break;
+                default:
+                    throw log.throwing(new IllegalArgumentException(
+                            "Both DiffExprCallType are set to 'no data'"));
+            }
+            
+            if (allDataQuality.contains(DataState.HIGHQUALITY)) {
+                quality = DataState.HIGHQUALITY.getStringRepresentation();
+            } else {
+                quality = DataState.LOWQUALITY.getStringRepresentation();
+            }
+        } else if ((allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED) && 
+                        (allType.contains(DiffExprCallType.OVER_EXPRESSED) ||
+                        allType.contains(DiffExprCallType.UNDER_EXPRESSED))) || 
+                   (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
+                        allType.contains(DiffExprCallType.OVER_EXPRESSED))) {
+            summary = DiffExpressionData.WEAK_AMBIGUITY;
+            quality = GenerateDownloadFile.NA_VALUE;
+        } else if (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
+                allType.contains(DiffExprCallType.UNDER_EXPRESSED)) {
+            summary = DiffExpressionData.UNDER_EXPRESSED;
+            quality = DataState.LOWQUALITY.getStringRepresentation();
+        }
+        
+        row.put(DIFFEXPRESSION_COLUMN_NAME, summary.getStringRepresentation());
+        row.put(QUALITY_COLUMN_NAME, quality);
+    }
 }
+

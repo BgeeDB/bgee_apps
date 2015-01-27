@@ -50,7 +50,7 @@ public class CIOWrapperTest extends TestAncestor {
      * @throws OWLOntologyCreationException
      * @throws IOException
      */
-    //@Test
+    @Test
     public void shouldLoadCIO() throws OBOFormatParserException, OWLOntologyCreationException, 
     IOException {
         OWLOntology ont = OntologyUtils.loadOntology(CIOWrapperTest.class.

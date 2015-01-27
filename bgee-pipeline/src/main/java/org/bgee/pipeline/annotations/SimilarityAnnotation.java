@@ -59,6 +59,7 @@ import owltools.graph.OWLGraphWrapper;
  * @version Bgee 13
  * @since Bgee 13
  */
+//TODO: do not forget to generate annotations based on transformation_of relations.
 public class SimilarityAnnotation {
     /**
      * {@code Logger} of the class.

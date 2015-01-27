@@ -56,7 +56,7 @@ public class DiffExpressionCallParams extends CallParams {
      * A {@code boolean} defining whether both requested minimum contributions (Affymetrix 
      * and RNA-seq data) have to be satisfied or at least one of the two.
      */
-    private boolean whatever;
+    private boolean satisfyAllCallTypeCondition;
 
     /**
      * Default constructor.
@@ -66,7 +66,7 @@ public class DiffExpressionCallParams extends CallParams {
         this.setComparisonFactor(null);
         this.setDiffExprCallTypeAffymetrix(null);
         this.setDiffExprCallTypeRNASeq(null);
-        this.setWhatever(true);
+        this.setSatisfyAllCallTypeCondition(true);
     }
     
     @Override
@@ -303,21 +303,20 @@ public class DiffExpressionCallParams extends CallParams {
     }
     
     /**
-     * A {@code boolean} defining whether both requested minimum contributions (Affymetrix 
-     * and RNA-seq data) have to be satisfied or at least one of the two. 
-     * 
-     * @return  the {@code boolean} defining whether .
+     * @return  the {@code boolean} defining whether both requested minimum contributions 
+     *          (Affymetrix and RNA-seq data) have to be satisfied or at least one of the two.
      */
-    public boolean isWhatever() {
-        return this.whatever;
+    public boolean isSatisfyAllCallTypeCondition() {
+        return this.satisfyAllCallTypeCondition;
     }
     
     /**
-     * @param whatever  the {@code boolean} defining whether both requested minimum contributions 
-     *                  (Affymetrix and RNA-seq data) have to be satisfied or at least one of the two.
+     * @param whatever  the {@code boolean} defining whether both requested minimum 
+     *                  contributions (Affymetrix and RNA-seq data) have to be satisfied 
+     *                  or at least one of the two.
      */
-    public void setWhatever(boolean whatever) {
-        this.whatever = whatever;
+    public void setSatisfyAllCallTypeCondition(boolean whatever) {
+        this.satisfyAllCallTypeCondition = whatever;
     }
 
     //***********************************************

@@ -14,6 +14,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
 
@@ -54,225 +55,232 @@ public class CIOWrapper extends OntologyUtils {
      * @version Bgee 13
      * @since Bgee 13
      */
-    private class CIOTerm {
-        /**
-         * The {@code OWLClass} that this object wraps. 
-         */
-        private final OWLClass clsWrapped;
-        /**
-         * The {@code CIOWrapper} which {@code clsWrapped} was retrieved from.
-         */
-        private final CIOWrapper cioWrapper;
+//    private class CIOTerm {
+//        /**
+//         * The {@code OWLClass} that this object wraps. 
+//         */
+//        private final OWLClass clsWrapped;
+//        /**
+//         * The {@code CIOWrapper} which {@code clsWrapped} was retrieved from.
+//         */
+//        private final CIOWrapper cioWrapper;
+//
+//        /**
+//         * See {@link #isConfidenceStatement()}.
+//         */
+//        private final boolean confidenceStatement;
+//        /**
+//         * See {@link #getConfidenceLevel()}.
+//         */
+//        private final OWLClass confidenceLevel;
+//        /**
+//         * See {@link #getEvidenceConcordance()}.
+//         */
+//        private final OWLClass evidenceConcordance;
+//        /**
+//         * See {@link #getEvidenceTypeConcordance()}.
+//         */
+//        private final OWLClass evidenceTypeConcordance;
+//        
+//        /**
+//         * Constructor providing the {@code OWLClass} wrapped by this object, 
+//         * and the {@code CIOWrapper} wrapping the ontology which {@code clsWrapped} 
+//         * was retrieved from.
+//         * 
+//         * @param clsWrapped    the {@code OWLClass} from the CIO wrapped by this object.
+//         * @param cioWrapper    the {@code CIOWrapper} wrapping the ontology {@code clsWrapped} 
+//         *                      was retrieved from.
+//         * @throws NullPointerException If {@code clsWrapped} or {@code cioWrapper} 
+//         *                              are {@code null}.
+//         */
+//        private CIOTerm(OWLClass clsWrapped, CIOWrapper cioWrapper) throws NullPointerException {
+//            log.entry(clsWrapped, cioWrapper);
+//            this.clsWrapped = clsWrapped;
+//            this.cioWrapper = cioWrapper;
+//            
+//            boolean isStatement = false;
+//            OWLClass confidenceLevel = null;
+//            OWLClass evidenceConcordance = null;
+//            OWLClass evidenceTypeConcordance = null;
+//            Set<OWLClass> ancestors = 
+//                    this.cioWrapper.getWrapper().getAncestorsThroughIsA(this.clsWrapped);
+//            
+//            if (ancestors.contains(this.cioWrapper.getConfidenceStatement())) {
+//                isStatement = true;
+//            }
+//            this.confidenceStatement = isStatement;
+//
+//            //if this OWLClas is a confidence information statement, 
+//            //determine confidence elements composing it
+//            if (this.isConfidenceStatement()) {
+//                confidenceLevel = this.getConfidenceElement(ancestors, 
+//                        this.cioWrapper.getConfidenceLevels());
+//                evidenceConcordance = this.getConfidenceElement(ancestors, 
+//                        this.cioWrapper.getEvidenceConcordances());
+//                evidenceTypeConcordance = this.getConfidenceElement(ancestors, 
+//                        this.cioWrapper.getEvidenceTypeConcordances());
+//            }
+//            
+//            this.confidenceLevel = confidenceLevel;
+//            this.evidenceConcordance = evidenceConcordance;
+//            this.evidenceTypeConcordance = evidenceTypeConcordance;
+//            
+//            log.exit();
+//        }
+//        
+//        /**
+//         * Identify the most precise {@code OWLClass} among the {@code OWLClass}es 
+//         * in {@code clsWrappedAncestors} that is present in {@code validConfidenceElements}. 
+//         * This is a convenience method used by the constructor to identify the correct 
+//         * 'confidence information element' of each type ('confidence level', 
+//         * 'evidence concordance', 'evidence type concordance').
+//         * {@code clsWrappedAncestors} should contain all is_a ancestors of {@link #clsWrapped}, 
+//         * while {@code validConfidenceElements} should contain all valid 'confidence information 
+//         * elements' of a given type.
+//         * 
+//         * @param clsWrappedAncestors       A {@code Set} of {@code OWLClass}es that are 
+//         *                                  all ancestors of {@link #clsWrapped} by is_a relations.
+//         * @param validConfidenceElements   A {@code Set} of {@code OWLClass}es that are 
+//         *                                  the 'confidence information elements' of a same type.
+//         * @return  An {@code OWLClass} that is the most precise term among 
+//         *          {@code clsWrappedAncestors}, present in {@code validConfidenceElements}. 
+//         *          Can be {@code null} if none could be identified. 
+//         * @throws IllegalArgumentException If several same level {@code OWLClass}es 
+//         *                                  are present in both {@code clsWrappedAncestors} 
+//         *                                  and {@code validConfidenceElements}.
+//         */
+//        private OWLClass getConfidenceElement(Set<OWLClass> clsWrappedAncestors, 
+//                Set<OWLClass> validConfidenceElements) throws IllegalArgumentException {
+//            log.entry(clsWrappedAncestors, validConfidenceElements);
+//            
+//            Set<OWLClass> confElementsAncestors = new HashSet<OWLClass>(clsWrappedAncestors);
+//            confElementsAncestors.retainAll(validConfidenceElements);
+//            this.retainLeafClasses(confElementsAncestors);
+//            if (confElementsAncestors.size() > 1) {
+//                throw log.throwing(new IllegalArgumentException("The provided ontology "
+//                        + "does not allow to identify a unique confidence information element "
+//                        + "of a given type for OWLClass: " + this.clsWrapped + 
+//                        " - Confidence information elements of same type identified: "
+//                        + confElementsAncestors));
+//            } else if (confElementsAncestors.size() == 1) {
+//                return log.exit(confElementsAncestors.iterator().next());
+//            }
+//            
+//            return log.exit(null);
+//        }
+//        /**
+//         * Modify {@code classes} to retain only {@code OWLClass}es with no descendants 
+//         * via is_a relations in the {@code Set}. {@code classes} will be modified 
+//         * as a result of the call to this method.
+//         * 
+//         * @param classes   A {@code Set} of {@code OWLClass}es to be modified to retain only 
+//         *                  leaf classes (with no descendants in this {@code Set} through 
+//         *                  is_a relations)
+//         */
+//        /*
+//         * Note: we do not use the methods from OntologyUtils to avoid dependency 
+//         * to the Bgee project, to provide this class as an example, on the CIO tracker. 
+//         * Unlike the OntolgyUtils method, this one does not manage cycles (should not be 
+//         * necessary with the CIO).
+//         */
+//        private void retainLeafClasses(Set<OWLClass> classes) {
+//            log.entry(classes);
+//            Set<OWLClass> allAncestors = new HashSet<OWLClass>();
+//            for (OWLClass cls: classes) {
+//                allAncestors.addAll(this.cioWrapper.getWrapper().getAncestorsThroughIsA(cls));
+//            }
+//            classes.removeAll(allAncestors);
+//            log.trace("Leaf classes retained: {}", classes);
+//            log.exit();
+//        }
+//        
+//        
+//        /**
+//         * @return  {@code true} if the wrapped {@code OWLClass} is a subclass of 
+//         *          'confidence information statement' 
+//         *          (see {@link CIOWrapper#CONFIDENCE_STATEMENT_ID}).
+//         */
+//        public boolean isConfidenceStatement() {
+//            return confidenceStatement;
+//        }
+//        /**
+//         * Gets the confidence level of this {@code CIOTerm}. The returned {@code OWLClass} 
+//         * is one of the {@code OWLClass}es returned by {@link CIOWrapper#getConfidenceLevels()}. 
+//         * It can be {@code null} in the following cases: 
+//         * <ul>
+//         * <li>if this {@code CIOTerm} is not a 'confidence information statement', 
+//         * but a 'confidence information element' ({@link #isConfidenceStatement()} 
+//         * returns {@code false}).
+//         * <li>If this {@code CIOTerm} is not associated to a confidence level (non-leaf 
+//         * statement, or statement for which a confidence level cannot be assigned, 
+//         * such as 'confidence from strongly conflicting evidence lines').
+//         * </ul>
+//         *          
+//         * @return  The {@code OWLClass} representing the confidence level 
+//         *          of this {@code CIOTerm}. Can be {@code null}.
+//         * @see CIOWrapper#getConfidenceLevels()
+//         */
+//        public OWLClass getConfidenceLevel() {
+//            return this.confidenceLevel;
+//        }
+//        /**
+//         * Gets the evidence concordance of this {@code CIOTerm}. The returned {@code OWLClass} 
+//         * is one of the {@code OWLClass}es returned by 
+//         * {@link CIOWrapper#getEvidenceConcordances()}. It can be {@code null} 
+//         * in the following cases: 
+//         * <ul>
+//         * <li>if this {@code CIOTerm} is not a 'confidence information statement', 
+//         * but a 'confidence information element' ({@link #isConfidenceStatement()} 
+//         * returns {@code false}).
+//         * <li>If this {@code CIOTerm} is a root of the ontology. In all other cases, 
+//         * an evidence concordance is always associated to a CIO term. 
+//         * </ul>
+//         *          
+//         * @return  The {@code OWLClass} representing the evidence concordance 
+//         *          of this {@code CIOTerm}. Can be {@code null}.
+//         * @see CIOWrapper#getEvidenceConcordances()
+//         */
+//        public OWLClass getEvidenceConcordance() {
+//            return this.evidenceConcordance;
+//        }
+//        /**
+//         * Gets the evidence type concordance of this {@code CIOTerm}. The returned 
+//         * {@code OWLClass} is one of the {@code OWLClass}es returned by 
+//         * {@link CIOWrapper#getEvidenceTypeConcordances()}. It can be {@code null} 
+//         * in the following cases: 
+//         * <ul>
+//         * <li>if this {@code CIOTerm} is not a 'confidence information statement', 
+//         * but a 'confidence information element' ({@link #isConfidenceStatement()} 
+//         * returns {@code false}).
+//         * <li>If this {@code CIOTerm} is not a subclass of the term 'confidence from multiple 
+//         * evidence lines' ({@link #getEvidenceConcordance()} does not return a term 
+//         * from the branch 'concordance of multiple evidence lines').
+//         * </ul>
+//         *          
+//         * @return  The {@code OWLClass} representing the evidence type concordance 
+//         *          of this {@code CIOTerm}. Can be {@code null}.
+//         * @see CIOWrapper#getEvidenceTypeConcordances()
+//         */
+//        public OWLClass getEvidenceTypeConcordance() {
+//            return this.evidenceTypeConcordance;
+//        }
+//        
+//        /**
+//         * @return  The {@code OWLClass} wrapped by this {@code CIOTerm}, 
+//         *          provided at instantiation.
+//         */
+//        public OWLClass getWrappedOWLClass() {
+//            return this.clsWrapped;
+//        }
+//    }
 
-        /**
-         * See {@link #isConfidenceStatement()}.
-         */
-        private final boolean confidenceStatement;
-        /**
-         * See {@link #getConfidenceLevel()}.
-         */
-        private final OWLClass confidenceLevel;
-        /**
-         * See {@link #getEvidenceConcordance()}.
-         */
-        private final OWLClass evidenceConcordance;
-        /**
-         * See {@link #getEvidenceTypeConcordance()}.
-         */
-        private final OWLClass evidenceTypeConcordance;
-        
-        /**
-         * Constructor providing the {@code OWLClass} wrapped by this object, 
-         * and the {@code CIOWrapper} wrapping the ontology which {@code clsWrapped} 
-         * was retrieved from.
-         * 
-         * @param clsWrapped    the {@code OWLClass} from the CIO wrapped by this object.
-         * @param cioWrapper    the {@code CIOWrapper} wrapping the ontology {@code clsWrapped} 
-         *                      was retrieved from.
-         * @throws NullPointerException If {@code clsWrapped} or {@code cioWrapper} 
-         *                              are {@code null}.
-         */
-        private CIOTerm(OWLClass clsWrapped, CIOWrapper cioWrapper) throws NullPointerException {
-            log.entry(clsWrapped, cioWrapper);
-            this.clsWrapped = clsWrapped;
-            this.cioWrapper = cioWrapper;
-            
-            boolean isStatement = false;
-            OWLClass confidenceLevel = null;
-            OWLClass evidenceConcordance = null;
-            OWLClass evidenceTypeConcordance = null;
-            Set<OWLClass> ancestors = 
-                    this.cioWrapper.getWrapper().getAncestorsThroughIsA(this.clsWrapped);
-            
-            if (ancestors.contains(this.cioWrapper.getConfidenceStatement())) {
-                isStatement = true;
-            }
-            this.confidenceStatement = isStatement;
 
-            //if this OWLClas is a confidence information statement, 
-            //determine confidence elements composing it
-            if (this.isConfidenceStatement()) {
-                confidenceLevel = this.getConfidenceElement(ancestors, 
-                        this.cioWrapper.getConfidenceLevels());
-                evidenceConcordance = this.getConfidenceElement(ancestors, 
-                        this.cioWrapper.getEvidenceConcordances());
-                evidenceTypeConcordance = this.getConfidenceElement(ancestors, 
-                        this.cioWrapper.getEvidenceTypeConcordances());
-            }
-            
-            this.confidenceLevel = confidenceLevel;
-            this.evidenceConcordance = evidenceConcordance;
-            this.evidenceTypeConcordance = evidenceTypeConcordance;
-            
-            log.exit();
-        }
-        
-        /**
-         * Identify the most precise {@code OWLClass} among the {@code OWLClass}es 
-         * in {@code clsWrappedAncestors} that is present in {@code validConfidenceElements}. 
-         * This is a convenience method used by the constructor to identify the correct 
-         * 'confidence information element' of each type ('confidence level', 
-         * 'evidence concordance', 'evidence type concordance').
-         * {@code clsWrappedAncestors} should contain all is_a ancestors of {@link #clsWrapped}, 
-         * while {@code validConfidenceElements} should contain all valid 'confidence information 
-         * elements' of a given type.
-         * 
-         * @param clsWrappedAncestors       A {@code Set} of {@code OWLClass}es that are 
-         *                                  all ancestors of {@link #clsWrapped} by is_a relations.
-         * @param validConfidenceElements   A {@code Set} of {@code OWLClass}es that are 
-         *                                  the 'confidence information elements' of a same type.
-         * @return  An {@code OWLClass} that is the most precise term among 
-         *          {@code clsWrappedAncestors}, present in {@code validConfidenceElements}. 
-         *          Can be {@code null} if none could be identified. 
-         * @throws IllegalArgumentException If several same level {@code OWLClass}es 
-         *                                  are present in both {@code clsWrappedAncestors} 
-         *                                  and {@code validConfidenceElements}.
-         */
-        private OWLClass getConfidenceElement(Set<OWLClass> clsWrappedAncestors, 
-                Set<OWLClass> validConfidenceElements) throws IllegalArgumentException {
-            log.entry(clsWrappedAncestors, validConfidenceElements);
-            
-            Set<OWLClass> confElementsAncestors = new HashSet<OWLClass>(clsWrappedAncestors);
-            confElementsAncestors.retainAll(validConfidenceElements);
-            this.retainLeafClasses(confElementsAncestors);
-            if (confElementsAncestors.size() > 1) {
-                throw log.throwing(new IllegalArgumentException("The provided ontology "
-                        + "does not allow to identify a unique confidence information element "
-                        + "of a given type for OWLClass: " + this.clsWrapped + 
-                        " - Confidence information elements of same type identified: "
-                        + confElementsAncestors));
-            } else if (confElementsAncestors.size() == 1) {
-                return log.exit(confElementsAncestors.iterator().next());
-            }
-            
-            return log.exit(null);
-        }
-        /**
-         * Modify {@code classes} to retain only {@code OWLClass}es with no descendants 
-         * via is_a relations in the {@code Set}. {@code classes} will be modified 
-         * as a result of the call to this method.
-         * 
-         * @param classes   A {@code Set} of {@code OWLClass}es to be modified to retain only 
-         *                  leaf classes (with no descendants in this {@code Set} through 
-         *                  is_a relations)
-         */
-        /*
-         * Note: we do not use the methods from OntologyUtils to avoid dependency 
-         * to the Bgee project, to provide this class as an example, on the CIO tracker. 
-         * Unlike the OntolgyUtils method, this one does not manage cycles (should not be 
-         * necessary with the CIO).
-         */
-        private void retainLeafClasses(Set<OWLClass> classes) {
-            log.entry(classes);
-            Set<OWLClass> allAncestors = new HashSet<OWLClass>();
-            for (OWLClass cls: classes) {
-                allAncestors.addAll(this.cioWrapper.getWrapper().getAncestorsThroughIsA(cls));
-            }
-            classes.removeAll(allAncestors);
-            log.trace("Leaf classes retained: {}", classes);
-            log.exit();
-        }
-        
-        
-        /**
-         * @return  {@code true} if the wrapped {@code OWLClass} is a subclass of 
-         *          'confidence information statement' 
-         *          (see {@link CIOWrapper#CONFIDENCE_STATEMENT_ID}).
-         */
-        public boolean isConfidenceStatement() {
-            return confidenceStatement;
-        }
-        /**
-         * Gets the confidence level of this {@code CIOTerm}. The returned {@code OWLClass} 
-         * is one of the {@code OWLClass}es returned by {@link CIOWrapper#getConfidenceLevels()}. 
-         * It can be {@code null} in the following cases: 
-         * <ul>
-         * <li>if this {@code CIOTerm} is not a 'confidence information statement', 
-         * but a 'confidence information element' ({@link #isConfidenceStatement()} 
-         * returns {@code false}).
-         * <li>If this {@code CIOTerm} is not associated to a confidence level (non-leaf 
-         * statement, or statement for which a confidence level cannot be assigned, 
-         * such as 'confidence from strongly conflicting evidence lines').
-         * </ul>
-         *          
-         * @return  The {@code OWLClass} representing the confidence level 
-         *          of this {@code CIOTerm}. Can be {@code null}.
-         * @see CIOWrapper#getConfidenceLevels()
-         */
-        public OWLClass getConfidenceLevel() {
-            return this.confidenceLevel;
-        }
-        /**
-         * Gets the evidence concordance of this {@code CIOTerm}. The returned {@code OWLClass} 
-         * is one of the {@code OWLClass}es returned by 
-         * {@link CIOWrapper#getEvidenceConcordances()}. It can be {@code null} 
-         * in the following cases: 
-         * <ul>
-         * <li>if this {@code CIOTerm} is not a 'confidence information statement', 
-         * but a 'confidence information element' ({@link #isConfidenceStatement()} 
-         * returns {@code false}).
-         * <li>If this {@code CIOTerm} is a root of the ontology. In all other cases, 
-         * an evidence concordance is always associated to a CIO term. 
-         * </ul>
-         *          
-         * @return  The {@code OWLClass} representing the evidence concordance 
-         *          of this {@code CIOTerm}. Can be {@code null}.
-         * @see CIOWrapper#getEvidenceConcordances()
-         */
-        public OWLClass getEvidenceConcordance() {
-            return this.evidenceConcordance;
-        }
-        /**
-         * Gets the evidence type concordance of this {@code CIOTerm}. The returned 
-         * {@code OWLClass} is one of the {@code OWLClass}es returned by 
-         * {@link CIOWrapper#getEvidenceTypeConcordances()}. It can be {@code null} 
-         * in the following cases: 
-         * <ul>
-         * <li>if this {@code CIOTerm} is not a 'confidence information statement', 
-         * but a 'confidence information element' ({@link #isConfidenceStatement()} 
-         * returns {@code false}).
-         * <li>If this {@code CIOTerm} is not a subclass of the term 'confidence from multiple 
-         * evidence lines' ({@link #getEvidenceConcordance()} does not return a term 
-         * from the branch 'concordance of multiple evidence lines').
-         * </ul>
-         *          
-         * @return  The {@code OWLClass} representing the evidence type concordance 
-         *          of this {@code CIOTerm}. Can be {@code null}.
-         * @see CIOWrapper#getEvidenceTypeConcordances()
-         */
-        public OWLClass getEvidenceTypeConcordance() {
-            return this.evidenceTypeConcordance;
-        }
-        
-        /**
-         * @return  The {@code OWLClass} wrapped by this {@code CIOTerm}, 
-         *          provided at instantiation.
-         */
-        public OWLClass getWrappedOWLClass() {
-            return this.clsWrapped;
-        }
-    }
-
+    /**
+     * A {@code String} that is the OBO-like ID from the CIO 
+     * of the relation "has_confidence_element", parent of all object properties 
+     * used to relate CI statements to CI elements.
+     */
+    public final static String HAS_CONFIDENCE_ELEMENT_ID = "has_confidence_element";
     /**
      * A {@code String} that is the OBO-like ID from the CIO 
      * of the relation "has_evidence_concordance".
@@ -432,6 +440,12 @@ public class CIOWrapper extends OntologyUtils {
     
     /**
      * An {@code OWLObjectProperty} retrieved using the OBO-like ID 
+     * {@link #HAS_CONFIDENCE_ELEMENT_ID}.
+     * @see #HAS_CONFIDENCE_ELEMENT_ID
+     */
+    private final OWLObjectProperty hasConfidenceElement;
+    /**
+     * An {@code OWLObjectProperty} retrieved using the OBO-like ID 
      * {@link #HAS_EVIDENCE_CONCORDANCE_ID}.
      * @see #HAS_EVIDENCE_CONCORDANCE_ID
      */
@@ -579,6 +593,8 @@ public class CIOWrapper extends OntologyUtils {
     public CIOWrapper(final OWLGraphWrapper wrapper) throws IllegalArgumentException {
         super(wrapper);
         
+        this.hasConfidenceElement = this.getWrapper().getOWLObjectPropertyByIdentifier(
+                HAS_CONFIDENCE_ELEMENT_ID);
         this.hasEvidenceConcordance = this.getWrapper().getOWLObjectPropertyByIdentifier(
                 HAS_EVIDENCE_CONCORDANCE_ID);
         this.hasEvidenceTypeConcordance = this.getWrapper().getOWLObjectPropertyByIdentifier(
@@ -587,11 +603,13 @@ public class CIOWrapper extends OntologyUtils {
                 HAS_CONFIDENCE_LEVEL_ID);
         this.providesGreaterConfidenceThan = this.getWrapper().getOWLObjectPropertyByIdentifier(
                 PROVIDES_GREATER_CONF_THAN_ID);
-        if (this.hasEvidenceConcordance == null || this.hasEvidenceTypeConcordance == null || 
+        if (this.hasConfidenceElement == null || 
+                this.hasEvidenceConcordance == null || this.hasEvidenceTypeConcordance == null || 
                 this.hasConfidenceLevel == null || this.providesGreaterConfidenceThan == null) {
             throw log.throwing(new IllegalArgumentException("The provided CIO does not allow "
                     + "to retrieve required relations. "
-                    + "'has_evidence_concordance': " + this.hasEvidenceConcordance 
+                    + "'has_confidence_element': " + this.hasConfidenceElement 
+                    + " - 'has_evidence_concordance': " + this.hasEvidenceConcordance 
                     + " - 'has_evidence_type_concordance': " + this.hasEvidenceTypeConcordance 
                     + " - 'has_confidence_level': " + this.hasConfidenceLevel
                     + " - 'provides_greater_confidence_than': " + 
@@ -824,34 +842,34 @@ public class CIOWrapper extends OntologyUtils {
         }
     }
 
-    /**
-     * Retrieve all {@code OWLClass}es from the ontology wrapped that have 
-     * all {@code OWLClass}es in {@code ancestors} as ancestors by is_a relations 
-     * (is_a relations are inferred by owltools, so this includes EquivalentClasses axiom, etc.). 
-     * This is a bit similar to retrieving classes equivalent to the intersection of 
-     * {@code ancestors}. {@code ancestors} will not be included in the returned {@code Set}
-     * 
-     * @param ancestors     A {@code Set} of {@code OWLClass}es defining all the ancestors 
-     *                      that {@code OWLClass}es to retrieve must have.
-     * @return              A {@code Set} containing the {@code OWLClass}es that have all 
-     *                      {@code ancestors} as is_a ancestors. 
-     *                      Will not contain {@code ancestors} themselves.
-     */
-    private Set<OWLClass> getIntersectingClasses(Set<OWLClass> ancestors) {
-        log.entry(ancestors);
-        
-        Set<OWLClass> intersectingClasses = new HashSet<OWLClass>();
-        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
-            Set<OWLClass> relatedClasses = new HashSet<OWLClass>();
-            relatedClasses.add(cls);
-            relatedClasses.addAll(this.getWrapper().getAncestorsThroughIsA(cls));
-            if (relatedClasses.containsAll(ancestors)) {
-                intersectingClasses.add(cls);
-            }
-            
-        }
-        return log.exit(intersectingClasses);
-    }
+//    /**
+//     * Retrieve all {@code OWLClass}es from the ontology wrapped that have 
+//     * all {@code OWLClass}es in {@code ancestors} as ancestors by is_a relations 
+//     * (is_a relations are inferred by owltools, so this includes EquivalentClasses axiom, etc.). 
+//     * This is a bit similar to retrieving classes equivalent to the intersection of 
+//     * {@code ancestors}. {@code ancestors} will not be included in the returned {@code Set}
+//     * 
+//     * @param ancestors     A {@code Set} of {@code OWLClass}es defining all the ancestors 
+//     *                      that {@code OWLClass}es to retrieve must have.
+//     * @return              A {@code Set} containing the {@code OWLClass}es that have all 
+//     *                      {@code ancestors} as is_a ancestors. 
+//     *                      Will not contain {@code ancestors} themselves.
+//     */
+//    private Set<OWLClass> getIntersectingClasses(Set<OWLClass> ancestors) {
+//        log.entry(ancestors);
+//        
+//        Set<OWLClass> intersectingClasses = new HashSet<OWLClass>();
+//        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+//            Set<OWLClass> relatedClasses = new HashSet<OWLClass>();
+//            relatedClasses.add(cls);
+//            relatedClasses.addAll(this.getWrapper().getAncestorsThroughIsA(cls));
+//            if (relatedClasses.containsAll(ancestors)) {
+//                intersectingClasses.add(cls);
+//            }
+//            
+//        }
+//        return log.exit(intersectingClasses);
+//    }
     
     /**
      * Determines whether {@code cls} is part if the 'confidence information statement' branch, 
@@ -860,7 +878,7 @@ public class CIOWrapper extends OntologyUtils {
      * @param cls   An {@code OWLClass} for which we want to determine whether it is 
      *              a 'confidence information statement'.
      * @return      {@code true} if {@code cls} is a 'confidence information statement', 
-     *              {@code false} if it is a 'confidence information element'.
+     *              {@code false} otherwise.
      */
     public boolean isConfidenceStatement(OWLClass cls) {
         log.entry(cls);
@@ -870,8 +888,25 @@ public class CIOWrapper extends OntologyUtils {
         return log.exit(false);
     }
     /**
+     * Determines whether {@code cls} is part if the 'confidence information element' branch, 
+     * containing terms used to compose CI statements.
+     * 
+     * @param cls   An {@code OWLClass} for which we want to determine whether it is 
+     *              a 'confidence information element'.
+     * @return      {@code true} if {@code cls} is a 'confidence information element', 
+     *              {@code false} otherwise.
+     */
+    public boolean isConfidenceElement(OWLClass cls) {
+        log.entry(cls);
+        if (this.getWrapper().getAncestorsThroughIsA(cls).contains(this.confidenceElement)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    /**
      * Returns the 'confidence level' associated to {@code cls}. The returned {@code OWLClass} 
-     * is one of the {@code OWLClass}es returned by {@link #getConfidenceLevels()}. 
+     * is associated to {@code cls} through the relation 'has confidence level' 
+     * (see {@link #HAS_CONFIDENCE_LEVEL_ID}). 
      * Returns {@code null} if {@code cls} is not associated to any confidence level.
      * 
      * @param cls   An {@code OWLClass} for which we want to retrieve the associated 
@@ -879,101 +914,188 @@ public class CIOWrapper extends OntologyUtils {
      * @return      An {@code OWLClass} that is the 'confidence level' term associated to 
      *              {@code cls}. {@code null} if {@code cls} is not associated to 
      *              any 'confidence level' term.
-     * @throws IllegalArgumentException If {@code cls} could not be found in the wrapped CIO.
+     * @throws IllegalArgumentException If {@code cls} is not a CI statement.
+     * @throws IllegalStateException    If the ontology wrapped allowed to retrieve more than 
+     *                                  one confidence level associated, or an invalid 
+     *                                  confidence level. 
      */
-    public OWLClass getConfidenceLevel(OWLClass cls) throws IllegalArgumentException {
-        CIOTerm cioTerm = this.cioTerms.get(cls);
-        if (cioTerm == null) {
-            throw log.throwing(new IllegalArgumentException(cls + 
-                    " is not part of the wrapped CIO."));
+    public OWLClass getConfidenceLevel(OWLClass cls) throws IllegalArgumentException, 
+    IllegalStateException {
+        log.entry(cls);
+        OWLClass confidenceLevel = this.getConfidenceElement(cls, this.hasConfidenceLevel);
+        if (confidenceLevel != null && 
+                !this.getWrapper().getAncestorsThroughIsA(confidenceLevel).contains(
+                        this.confidenceLevel)) {
+            throw log.throwing(new IllegalStateException("Invalid confidence level retrieved "
+                    + "for " + cls + ": " + confidenceLevel));
         }
-        return cioTerm.getConfidenceLevel();
+        return log.exit(confidenceLevel);
     }
-
     /**
-     * Returns the 'evidence concordance' associated to {@code cls}. The returned 
-     * {@code OWLClass} is one of the {@code OWLClass}es returned by 
-     * {@link #getEvidenceConcordances()}. Returns {@code null} if {@code cls} is not 
-     * associated to an 'evidence concordance' term.
+     * Returns the 'evidence concordance' associated to {@code cls}. The returned {@code OWLClass} 
+     * is associated to {@code cls} through the relation 'has evidence concordance' 
+     * (see {@link #HAS_EVIDENCE_CONCORDANCE_ID}). 
+     * Returns {@code null} if {@code cls} is not associated to any evidence concordance.
      * 
      * @param cls   An {@code OWLClass} for which we want to retrieve the associated 
      *              'evidence concordance' term.
      * @return      An {@code OWLClass} that is the 'evidence concordance' term associated to 
      *              {@code cls}. {@code null} if {@code cls} is not associated to 
      *              any 'evidence concordance' term.
-     * @throws IllegalArgumentException If {@code cls} could not be found in the wrapped CIO.
+     * @throws IllegalArgumentException If {@code cls} is not a CI statement.
+     * @throws IllegalStateException    If the ontology wrapped allowed to retrieve more than 
+     *                                  one evidence concordance associated, or an invalid 
+     *                                  evidence concordance. 
      */
-    public OWLClass getEvidenceConcordance(OWLClass cls) throws IllegalArgumentException {
-        CIOTerm cioTerm = this.cioTerms.get(cls);
-        if (cioTerm == null) {
-            throw log.throwing(new IllegalArgumentException(cls + 
-                    " is not part of the wrapped CIO."));
+    public OWLClass getEvidenceConcordance(OWLClass cls) throws IllegalArgumentException, 
+    IllegalStateException {
+        log.entry(cls);
+        OWLClass evidenceConcordance = this.getConfidenceElement(cls, this.hasEvidenceConcordance);
+        
+        //All CI statements should always be associated to an evidence concordance
+        if (evidenceConcordance == null) {
+            throw log.throwing(new IllegalStateException(cls + 
+                    " is not associated to any evidence concordance, all CI statements should be."));
         }
-        return cioTerm.getEvidenceConcordance();
+        
+        if (!this.getWrapper().getAncestorsThroughIsA(evidenceConcordance).contains(
+                        this.evidenceConcordance)) {
+            throw log.throwing(new IllegalStateException("Invalid evidence concordance retrieved "
+                    + "for " + cls + ": " + evidenceConcordance));
+        }
+        return log.exit(evidenceConcordance);
     }
-
     /**
      * Returns the 'evidence type concordance' associated to {@code cls}. The returned 
-     * {@code OWLClass} is one of the {@code OWLClass}es returned by 
-     * {@link #getEvidenceTypeConcordances()}. Returns {@code null} if {@code cls} is not 
-     * associated to an 'evidence type concordance' term.
+     * {@code OWLClass} is associated to {@code cls} through the relation 
+     * 'has evidence type concordance' (see {@link #HAS_EVIDENCE_TYPE_CONCORDANCE_ID}). 
+     * Returns {@code null} if {@code cls} is not associated to any evidence type concordance.
      * 
      * @param cls   An {@code OWLClass} for which we want to retrieve the associated 
      *              'evidence type concordance' term.
      * @return      An {@code OWLClass} that is the 'evidence type concordance' term associated to 
      *              {@code cls}. {@code null} if {@code cls} is not associated to 
      *              any 'evidence type concordance' term.
-     * @throws IllegalArgumentException If {@code cls} could not be found in the wrapped CIO.
+     * @throws IllegalArgumentException If {@code cls} is not a CI statement.
+     * @throws IllegalStateException    If the ontology wrapped allowed to retrieve more than 
+     *                                  one evidence type concordance associated, or an invalid 
+     *                                  evidence type concordance. 
      */
-    public OWLClass getEvidenceTypeConcordance(OWLClass cls) throws IllegalArgumentException {
-        CIOTerm cioTerm = this.cioTerms.get(cls);
-        if (cioTerm == null) {
-            throw log.throwing(new IllegalArgumentException(cls + 
-                    " is not part of the wrapped CIO."));
+    public OWLClass getEvidenceTypeConcordance(OWLClass cls) throws IllegalArgumentException, 
+    IllegalStateException {
+        log.entry(cls);
+        OWLClass evidenceTypeConcordance = this.getConfidenceElement(cls, 
+                this.hasEvidenceTypeConcordance);
+        if (evidenceTypeConcordance != null && 
+                !this.getWrapper().getAncestorsThroughIsA(evidenceTypeConcordance).contains(
+                        this.evidenceTypeConcordance)) {
+            throw log.throwing(new IllegalStateException("Invalid evidence type concordance retrieved "
+                    + "for " + cls + ": " + evidenceTypeConcordance));
         }
-        return cioTerm.getEvidenceTypeConcordance();
+        return log.exit(evidenceTypeConcordance);
+    }
+    /**
+     * Retrieve the confidence element associated to {@code cls} through {@code relation}. 
+     * 
+     * @param cls       An {@code OWLClass} being a CI statement, for which we want 
+     *                  to retrieve a CI element associated through {@code relation}.
+     * @param relation  An {@code OWLObjectProperty} that should be a sub-property 
+     *                  of 'has confidence element', used to retrieve the appropriate 
+     *                  CI element associated to {@code cls}.
+     * @return          An {@code OWLClass} that is the CI element associated to {@code cls} 
+     *                  through {@code relation}. {@code null} if {@code cls} was associated to 
+     *                  no CI elements through {@code relation}.
+     * @throws IllegalArgumentException If {@code cls} is not a CI statement, or {@code relation} 
+     *                                  is not a 'has confidence element' relation type. 
+     * @throws IllegalStateException    If the ontology wrapped allowed to retrieve more than 
+     *                                  one CI element through {@code relation}, or the target 
+     *                                  of the relation used is not a CI element. 
+     */
+    //suppress warning because OWLGraphWrapper use an unparameterized argument 
+    // for method getOutgoingEdges
+    @SuppressWarnings("rawtypes")
+    private OWLClass getConfidenceElement(OWLClass cls, OWLObjectProperty relation) 
+            throws IllegalArgumentException, IllegalStateException {
+        log.entry(cls, relation);
+        
+        //check that cls is a CI statement
+        if (!this.isConfidenceStatement(cls)) {
+            throw log.throwing(new IllegalArgumentException(cls + " is not a CI statement."));
+        }
+        //check that relation is a 'has confidence element' type of relation, 
+        //without being the 'has confidence element' relation itself
+        if (!this.getWrapper().getSuperPropertyClosureOf(relation).contains(
+                this.hasConfidenceElement)) {
+            throw log.throwing(new IllegalArgumentException("The provided relation "
+                    + "is not a sub-property of 'has_confidence_element'"));
+        }
+        
+        //retrieve associated CI element
+        Set<OWLGraphEdge> edges = this.getWrapper().getOutgoingEdges(cls, 
+                new HashSet<OWLPropertyExpression>(Arrays.asList(relation)));
+        
+        //only one CI element at most should be retrieved for a given relation
+        if (edges.size() > 1) {
+            throw log.throwing(new IllegalStateException(cls + " is associated to "
+                    + "more than one confidence element through relation " + relation 
+                    + ": " + edges));
+        }
+        if (edges.size() == 0) {
+            return log.exit(null);
+        }
+        
+        //check validity of CI element retrieved
+        OWLObject target = edges.iterator().next().getTarget();
+        if (!(target instanceof OWLClass) || 
+            !this.isConfidenceElement((OWLClass) target)) {
+            throw log.throwing(new IllegalStateException(cls + " is associated to "
+                    + "an incorrect confidence element through relation " + relation 
+                    + ": " + target));
+        }
+        
+        return log.exit((OWLClass) target);
     }
     
-    /**
-     * Returns the direct superClass of {@code subClass} through the relation {@code rel}. 
-     * {@code rel} should be a relation allowing a unique superClass (used of 
-     * {@code ObjectAllValuesFrom}). Returns {@code null} if no direct superClass 
-     * was retrieved from {@code subClass} through {@code rel}.
-     * 
-     * @param subClass  An {@code OWLClass} for which we want to retrieve superClass 
-     *                  through {@code rel}.
-     * @param rel       An {@code OWLObjectProperty} representing the relation that should 
-     *                  relate {@code subClass} and its ancestor.
-     * @return          An {@code OWLClass} that is the unique direct ancestor of {@code cls} 
-     *                  through {@code rel}. {@code null} if none could be retrieved. 
-     * @throws IllegalArgumentException If it exists more than one direct ancestor 
-     *                                  of {@code cls} through {@code rel}.
-     */
-    private OWLClass getUniqueSuperClass(OWLClass subClass, OWLObjectProperty rel) 
-        throws IllegalArgumentException {
-        log.entry(subClass, rel);
-        Set<OWLClass> superClasses = new HashSet<OWLClass>();
-        for (OWLGraphEdge edge: this.getWrapper().getOutgoingEdges(subClass, 
-                new HashSet<OWLPropertyExpression>(Arrays.asList(rel)))) {
-            if (edge.getTarget() instanceof OWLClass) {
-                superClasses.add((OWLClass) edge.getTarget());
-            }
-        }
-        if (superClasses.size() > 1) {
-            throw log.throwing(new IllegalArgumentException("The provided class " + subClass 
-                    + " does not have a unique superClass through the relation " + rel));
-        }
-        if (superClasses.size() == 1) {
-            return log.exit(superClasses.iterator().next());
-        }
-        return log.exit(null);
-    }
+//    /**
+//     * Returns the direct superClass of {@code subClass} through the relation {@code rel}. 
+//     * {@code rel} should be a relation allowing a unique superClass (used of 
+//     * {@code ObjectAllValuesFrom}). Returns {@code null} if no direct superClass 
+//     * was retrieved from {@code subClass} through {@code rel}.
+//     * 
+//     * @param subClass  An {@code OWLClass} for which we want to retrieve superClass 
+//     *                  through {@code rel}.
+//     * @param rel       An {@code OWLObjectProperty} representing the relation that should 
+//     *                  relate {@code subClass} and its ancestor.
+//     * @return          An {@code OWLClass} that is the unique direct ancestor of {@code cls} 
+//     *                  through {@code rel}. {@code null} if none could be retrieved. 
+//     * @throws IllegalArgumentException If it exists more than one direct ancestor 
+//     *                                  of {@code cls} through {@code rel}.
+//     */
+//    private OWLClass getUniqueSuperClass(OWLClass subClass, OWLObjectProperty rel) 
+//        throws IllegalArgumentException {
+//        log.entry(subClass, rel);
+//        Set<OWLClass> superClasses = new HashSet<OWLClass>();
+//        for (OWLGraphEdge edge: this.getWrapper().getOutgoingEdges(subClass, 
+//                new HashSet<OWLPropertyExpression>(Arrays.asList(rel)))) {
+//            if (edge.getTarget() instanceof OWLClass) {
+//                superClasses.add((OWLClass) edge.getTarget());
+//            }
+//        }
+//        if (superClasses.size() > 1) {
+//            throw log.throwing(new IllegalArgumentException("The provided class " + subClass 
+//                    + " does not have a unique superClass through the relation " + rel));
+//        }
+//        if (superClasses.size() == 1) {
+//            return log.exit(superClasses.iterator().next());
+//        }
+//        return log.exit(null);
+//    }
 
     /**
      * Determines the best confidence term with level information among {@code cioTerms}. 
      * The {@code OWLClass}es in {@code cioTerms} must meet the following conditions: 
      * <ul>
-     * <li>They must be confidence information statements ({@link #isStatement(OWLClass)} 
+     * <li>They must be confidence information statements ({@link #isConfidenceStatement(OWLClass)} 
      * returns {@code true}).
      * <li>They must all be part of the same branch (meaning, they must have equal 
      * evidence concordance and evidence type concordance, see {@link 
@@ -981,14 +1103,11 @@ public class CIOWrapper extends OntologyUtils {
      * <li>They must all represent a confidence level (meaning, {@link 
      * #getConfidenceLevel(OWLClass)} must return a value not {@code null}).
      * </ul>
-     * Otherwise, an {@code IllegalArgumentException} is thrown. Note that confidences 
-     * from strongly conflicting evidence lines cannot be associated to 
-     * a confidence level (see {@link #getStrongConflictSameTypeEvidenceConf()} and 
-     * {@link #getStrongConflictMultipleTypesEvidenceConf()}).
+     * Otherwise, an {@code IllegalArgumentException} is thrown. 
      * <p>
      * This means in practice that {@code OWLClass}es in {@code cioTerms} must be one 
      * of the pre-composed terms usable for annotations, leaves of the ontology,  
-     * not belonging to the 'strongly conflicting evidence lines' branch.
+     * associated to a confidence level term.
      * 
      * @param cioTerms  A {@code Collection} of {@code OWLClass}es providing confidence level 
      *                  information, from a same branch, for which we want to determine 

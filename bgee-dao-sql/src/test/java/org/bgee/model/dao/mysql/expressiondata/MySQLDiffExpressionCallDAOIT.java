@@ -121,7 +121,8 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
         
         // Test filter on diffExprCallTypeAffymetrix without other filter
         params.setComparisonFactor(null);
-        params.setDiffExprCallTypeAffymetrix(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        params.setIncludeAffymetrixTypes(true);
+        params.addAffymetrixDiffExprCallType(DiffExprCallType.NOT_DIFF_EXPRESSED);
         dao.clearAttributes();
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
@@ -139,23 +140,30 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
                         dao.getDiffExpressionCalls(params).getAllTOs()));
 
         // Test filter on diffExprCallTypeRNASeq without other filter
-        params.setDiffExprCallTypeAffymetrix(null);
-        params.setDiffExprCallTypeRNASeq(DiffExprCallType.OVER_EXPRESSED);
+        params.clearAffymetrixDiffExprCallTypes();
+        params.setIncludeRNASeqTypes(false);
+        params.addRNASeqDiffExprCallType(DiffExprCallType.OVER_EXPRESSED);
         dao.clearAttributes();
         // Generate manually expected result
         expectedDiffExprCalls = Arrays.asList(
-                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                new DiffExpressionCallTO ("321", "ID1", "Anat_id1", "Stage_id1", 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
-                        DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
-                        DataState.HIGHQUALITY, 0.001f, 4, 0));
+                        DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.05f, 1, 0),
+                new DiffExpressionCallTO("322", "ID2", "Anat_id9", "Stage_id3", 
+                        ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
+                        DataState.NODATA, 1f, 0, 0));
         // Compare
         assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
                 TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
                         dao.getDiffExpressionCalls(params).getAllTOs()));
 
         // Test filter on diffExprCallTypeAffymetrix and diffExprCallTypeRNASeq
-        params.setDiffExprCallTypeAffymetrix(DiffExprCallType.NOT_DIFF_EXPRESSED);
-        params.setDiffExprCallTypeRNASeq(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        params.clearRNASeqDiffExprCallTypes();
+        params.addAffymetrixDiffExprCallType(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        params.setIncludeRNASeqTypes(true);
+        params.addRNASeqDiffExprCallType(DiffExprCallType.NOT_DIFF_EXPRESSED);
         params.setSatisfyAllCallTypeCondition(true);
         dao.clearAttributes();
         // Generate manually expected result
@@ -178,6 +186,25 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.HIGHQUALITY, 0.02f, 2, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.05f, 1, 0),
+                new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
+                        DataState.HIGHQUALITY, 0.001f, 4, 0));
+        // Compare
+        assertTrue("DiffExpressionCallTOs incorrectly retrieved", 
+                TOComparator.areTOCollectionsEqual(expectedDiffExprCalls, 
+                        dao.getDiffExpressionCalls(params).getAllTOs()));
+        
+        // Test all filters in same time
+        params.clearAffymetrixDiffExprCallTypes();
+        params.addAffymetrixDiffExprCallType(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        params.setIncludeAffymetrixTypes(true);
+        params.clearRNASeqDiffExprCallTypes();
+        params.addRNASeqDiffExprCallType(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        params.setIncludeRNASeqTypes(false);
+        params.setSatisfyAllCallTypeCondition(true);
+        // Generate manually expected result
+        expectedDiffExprCalls = Arrays.asList(
                 new DiffExpressionCallTO("323", "ID1", "Anat_id2", "Stage_id1", 
                         ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                         DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,

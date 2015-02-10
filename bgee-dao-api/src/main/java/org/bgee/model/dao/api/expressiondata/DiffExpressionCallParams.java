@@ -1,9 +1,13 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
+import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
 
 /**
  * This class allows to provide the parameters specific to differential expression 
@@ -57,16 +61,46 @@ public class DiffExpressionCallParams extends CallParams {
      * and RNA-seq data) have to be satisfied or at least one of the two.
      */
     private boolean satisfyAllCallTypeCondition;
+    
+    /**
+     * A {@code Set} of {@code DiffExprCallType} that are the differential expression call types
+     * from Affymetrix data to be include or exclude (according to {@link isIncludeAffymetrixTypes}).
+     */
+    private Set<DiffExprCallType> affymetrixTypes;
+
+    /**
+     * A {@code Set} of {@code DiffExprCallType} that are the differential expression call types
+     * from RNA-seq data to be include or exclude (according to {@link isIncludeRnaSeqTypes}).
+     */
+    private Set<DiffExprCallType> rnaSeqTypes;
+    
+    /**
+     * A {@code boolean} defining whether differential expression call types from Affymetrix data
+     * should be include or exclude.
+     */
+    private boolean includeAffymetrixTypes;
+    
+    /**
+     * A {@code boolean} defining whether differential expression call types from RNA-seq data
+     * should be include or exclude.
+     */
+    private boolean includeRnaSeqTypes;
 
     /**
      * Default constructor.
      */
     public DiffExpressionCallParams() {
         super(new DiffExpressionCallTO());
+        
         this.setComparisonFactor(null);
-        this.setDiffExprCallTypeAffymetrix(null);
-        this.setDiffExprCallTypeRNASeq(null);
-        this.setSatisfyAllCallTypeCondition(true);
+        
+        this.affymetrixTypes = new HashSet<DiffExprCallType>();
+        this.setIncludeAffymetrixTypes(false);
+        
+        this.rnaSeqTypes = new HashSet<DiffExprCallType>();
+        this.setIncludeRNASeqTypes(false);
+        
+        this.setSatisfyAllCallTypeCondition(false);
     }
     
     @Override
@@ -232,49 +266,77 @@ public class DiffExpressionCallParams extends CallParams {
     // DELEGATED TO referenceCallTO
     //**************************************
     /**
-     * Returns the {@code DiffCallType} defining the type of the differential 
-     * expression calls to be used for Affymetrix data. If {@code null}, any will be used 
-     * (take caution when interpreting the results in that case).
-     * 
-     * @return  the {@code DiffCallType} defining the type of the differential 
-     *          expression calls to be used for Affymetrix data.
+     * @return  the {@code Set} of {@code DiffExprCallType} that are the differential expression 
+     *          call types from Affymetrix data to be include or exclude 
+     *          (according to {@link isIncludeAffymetrixTypes}). If {@code null}, any will be used 
+     *          (take caution when interpreting the results in that case).
+     * @see #isIncludeAffymetrixTypes()
      */
-    public DiffExprCallType getDiffExprCallTypeAffymetrix() {
-        return this.getReferenceCallTO().getDiffExprCallTypeAffymetrix();
+    public Set<DiffExprCallType> getAffymetrixDiffExprCallTypes() {
+        return Collections.unmodifiableSet(this.affymetrixTypes);
     }
     /**
-     * Sets the {@code DiffCallType} defining the type of the differential 
-     * expression calls to be used for Affymetrix data. If {@code null}, any will be used 
-     * (take caution when interpreting the results in that case).
-     * 
-     * @param callType  the {@code DiffCallType} defining the type of the differential 
-     *                  expression calls to be used for Affymetrix data.
+     * @param callType  A {@code DiffExprCallType} to be added to the differential expression call  
+     *                  type from Affymetrix data to be included or excluded (according to 
+     *                  {@link isIncludeAffymetrixTypes}).
+     * @see #isIncludeAffymetrixTypes()
      */
-    public void setDiffExprCallTypeAffymetrix(DiffExprCallType callType) {
-        this.getReferenceCallTO().setDiffExprCallTypeAffymetrix(callType);
+    public void addAffymetrixDiffExprCallType(DiffExprCallType callType) {
+        this.affymetrixTypes.add(callType);
+    }
+    /**
+     * @param callTypes A {@code Set} of {@code DiffExprCallType} to be added to the differential 
+     *                  expression call types from Affymetrix data to be included or excluded 
+     *                  (according to {@link isIncludeAffymetrixTypes}).
+     * @see #isIncludeAffymetrixTypes()
+     */
+    public void addAllAffymetrixDiffExprCallTypes(Set<DiffExprCallType> callTypes) {
+        this.affymetrixTypes.addAll(callTypes);
+    }
+    /**
+     * Clears the {@code Set} of {@code DiffExprCallType}s that are the differential expression 
+     * call types from Affymetrix data allowing to filter the calls to use. 
+     * @see #getAffymetrixDiffExprCallTypes()
+     */
+    public void clearAffymetrixDiffExprCallTypes() {
+        this.affymetrixTypes.clear();
     }
 
     /**
-     * Returns the {@code DiffCallType} defining the type of the differential 
-     * expression calls to be used for RNA-seq data. If {@code null}, any will be used 
-     * (take caution when interpreting the results in that case).
-     * 
-     * @return  the {@code DiffCallType} defining the type of the differential 
-     *          expression calls to be used.
+     * @return  the {@code Set} of {@code DiffExprCallType} that are the differential expression 
+     *          call types from RNA-seq data to be include or exclude (according to 
+     *          {@link isIncludeRNASeqTypes}). If {@code null}, any will be used 
+     *          (take caution when interpreting the results in that case).
+     * @see #isIncludeRNASeqTypes()
      */
-    public DiffExprCallType getDiffExprCallTypeRNASeq() {
-        return this.getReferenceCallTO().getDiffExprCallTypeRNASeq();
+    public Set<DiffExprCallType> getRNASeqDiffExprCallTypes() {
+        return Collections.unmodifiableSet(this.rnaSeqTypes);
     }
     /**
-     * Sets the {@code DiffCallType} defining the type of the differential 
-     * expression calls to be used for RNA-seq data. If {@code null}, any will be used 
-     * (take caution when interpreting the results in that case).
-     * 
-     * @param callType  the {@code DiffCallType} defining the type of the differential 
-     *                  expression calls to be used for RNA-seq data.
+     * @param callType  A {@code DiffExprCallType} to be added to the differential expression call  
+     *                  type from RNA-seq data to be included or excluded (according to 
+     *                  {@link isIncludeRNASeqTypes}).
+     * @see #isIncludeRNASeqTypes()
      */
-    public void setDiffExprCallTypeRNASeq(DiffExprCallType callType) {
-        this.getReferenceCallTO().setDiffExprCallTypeRNASeq(callType);
+    public void addRNASeqDiffExprCallType(DiffExprCallType callType) {
+        this.rnaSeqTypes.add(callType);
+    }
+    /**
+     * @param callTypes A {@code Set} of {@code DiffExprCallType} to be added to the differential 
+     *                  expression call types from RNA-seq data to be included or excluded 
+     *                  (according to {@link isIncludeRNASeqTypes}).
+     * @see #isIncludeRNASeqTypes()
+     */
+    public void addAllRNASeqDiffExprCallTypes(Set<DiffExprCallType> callTypes) {
+        this.rnaSeqTypes.addAll(callTypes);
+    }
+    /**
+     * Clears the {@code Set} of {@code DiffExprCallType}s that are the differential expression 
+     * call types from RNA-seq data allowing to filter the calls to use. 
+     * @see #getRNASeqDiffExprCallTypes()
+     */
+    public void clearRNASeqDiffExprCallTypes() {
+        this.rnaSeqTypes.clear();
     }
 
     /**
@@ -317,6 +379,38 @@ public class DiffExpressionCallParams extends CallParams {
      */
     public void setSatisfyAllCallTypeCondition(boolean whatever) {
         this.satisfyAllCallTypeCondition = whatever;
+    }
+
+    /**
+     * @return  the {@code boolean} defining whether differential expression call types from 
+     *          Affymetrix data should be include or exclude.
+     */
+    public boolean isIncludeAffymetrixTypes() {
+        return this.includeAffymetrixTypes;
+    }
+    
+    /**
+     * @param includeAffymetrixTypes    A {@code boolean} defining whether differential expression 
+     *                                  call types from Affymetrix data should be include or exclude.
+     */
+    public void setIncludeAffymetrixTypes(boolean includeAffymetrixTypes) {
+        this.includeAffymetrixTypes = includeAffymetrixTypes;
+    }
+
+    /**
+     * @return  the {@code boolean} defining whether differential expression call types from 
+     *          RNA-seq data should be include or exclude.
+     */
+    public boolean isIncludeRNASeqTypes() {
+        return this.includeRnaSeqTypes;
+    }
+    
+    /**
+     * @param includeRnaSeqTypes    A {@code boolean} defining whether differential expression call
+     *                              types from RNA-seq data should be include or exclude.
+     */
+    public void setIncludeRNASeqTypes(boolean includeRnaSeqTypes) {
+        this.includeRnaSeqTypes = includeRnaSeqTypes;
     }
 
     //***********************************************

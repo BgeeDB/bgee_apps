@@ -2,6 +2,9 @@ package org.bgee.model.dao.api.expressiondata;
 
 import static org.junit.Assert.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TestAncestor;
@@ -256,13 +259,45 @@ public class DiffExpressionCallParamsTest extends TestAncestor {
         assertEquals("Incorrect set/get for factor", ComparisonFactor.DEVELOPMENT, 
                 params.getComparisonFactor());
         
-        params.setDiffExprCallTypeAffymetrix(DiffExprCallType.NOT_DIFF_EXPRESSED);
-        assertEquals("Incorrect set/get for diffExprCallTypeAffymetrix", 
-                DiffExprCallType.NOT_DIFF_EXPRESSED, params.getDiffExprCallTypeAffymetrix());
+        params.setIncludeAffymetrixTypes(true);
+        assertTrue("Incorrect includeAffymetrixTypes set/get", params.isIncludeAffymetrixTypes());
+        params.setIncludeAffymetrixTypes(false);
 
-        params.setDiffExprCallTypeRNASeq(DiffExprCallType.OVER_EXPRESSED);
-        assertEquals("Incorrect set/get for diffExprCallTypeRNASeq", 
-                DiffExprCallType.OVER_EXPRESSED, params.getDiffExprCallTypeRNASeq());
+        params.setIncludeRNASeqTypes(true);
+        assertTrue("Incorrect includeRnaSeqTypes set/get", params.isIncludeRNASeqTypes());
+        params.setIncludeRNASeqTypes(false);
+
+        params.setSatisfyAllCallTypeCondition(true);
+        assertTrue("Incorrect satisfyAllCallTypeCondition set/get", 
+                params.isSatisfyAllCallTypeCondition());
+        params.setSatisfyAllCallTypeCondition(false);
+
+        Set<DiffExprCallType> twoElementSet = new HashSet<DiffExprCallType>();
+        twoElementSet.add(DiffExprCallType.NO_DATA);
+        twoElementSet.add(DiffExprCallType.NOT_DIFF_EXPRESSED);
+        DiffExprCallType thirdElement = DiffExprCallType.UNDER_EXPRESSED;
+        Set<DiffExprCallType> threeElementSet = new HashSet<DiffExprCallType>(twoElementSet);
+        threeElementSet.add(thirdElement);
+        
+        params.addAllAffymetrixDiffExprCallTypes(twoElementSet);
+        assertEquals("Incorrect affymetrixTypes set/get", twoElementSet, 
+                params.getAffymetrixDiffExprCallTypes());
+        params.addAffymetrixDiffExprCallType(thirdElement);
+        assertEquals("Incorrect affymetrixTypes set/get", threeElementSet, 
+                params.getAffymetrixDiffExprCallTypes());
+        params.clearAffymetrixDiffExprCallTypes();
+        assertEquals("Incorrect affymetrixTypes set/get", new HashSet<String>(), 
+                params.getAffymetrixDiffExprCallTypes());
+
+        params.addAllRNASeqDiffExprCallTypes(twoElementSet);
+        assertEquals("Incorrect rnaSeqTypes set/get", twoElementSet, 
+                params.getRNASeqDiffExprCallTypes());
+        params.addRNASeqDiffExprCallType(thirdElement);
+        assertEquals("Incorrect rnaSeqTypes set/get", threeElementSet, 
+                params.getRNASeqDiffExprCallTypes());
+        params.clearRNASeqDiffExprCallTypes();
+        assertEquals("Incorrect rnaSeqTypes set/get", new HashSet<String>(), 
+                params.getRNASeqDiffExprCallTypes());
 
 //        assertEquals("Incorrect set/get for minConditionCount", 
 //                DiffExpressionCallParams.MINCONDITIONCOUNT, params.getMinConditionCount());

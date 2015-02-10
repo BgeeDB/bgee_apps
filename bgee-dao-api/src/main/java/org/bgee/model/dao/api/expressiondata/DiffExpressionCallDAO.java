@@ -514,15 +514,15 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
         
         @Override
         public String toString() {
-            return super.toString() + "Comparison factor: " + this.getComparisonFactor() + " - " + 
-                    "Differential expression call by Affymetrix: " + this.getDiffExprCallTypeAffymetrix() + " - " + 
-                    "Best p-value with Affymetrix: " + this.getBestPValueAffymetrix() + " - " + 
-                    "Consistent DEA Count with Affymetrix: " + this.getConsistentDEACountAffymetrix() + " - " + 
-                    "Inconsistent DEA Count with Affymetrix: " + this.getInconsistentDEACountAffymetrix() + " - " + 
-                    "Differential expression call by RNA-seq: " + this.getDiffExprCallTypeRNASeq()+ " - " + 
-                    "Best p-value with RNA-seq: " + this.getBestPValueRNASeq()+ " - " + 
-                    "Consistent DEA Count with RNA-seq: " + this.getConsistentDEACountRNASeq()+ " - " + 
-                    "Inconsistent DEA Count with RNA-seq: " + this.getInconsistentDEACountRNASeq();
+            return super.toString() + " - Comparison factor: " + this.getComparisonFactor() + 
+                    " - Differential expression call by Affymetrix: " + this.getDiffExprCallTypeAffymetrix() +
+                    " - Best p-value with Affymetrix: " + this.getBestPValueAffymetrix() +
+                    " - Consistent DEA Count with Affymetrix: " + this.getConsistentDEACountAffymetrix() + 
+                    " - Inconsistent DEA Count with Affymetrix: " + this.getInconsistentDEACountAffymetrix() + 
+                    " - Differential expression call by RNA-seq: " + this.getDiffExprCallTypeRNASeq() + 
+                    " - Best p-value with RNA-seq: " + this.getBestPValueRNASeq() +
+                    " - Consistent DEA Count with RNA-seq: " + this.getConsistentDEACountRNASeq() + 
+                    " - Inconsistent DEA Count with RNA-seq: " + this.getInconsistentDEACountRNASeq();
         }
 
         @Override

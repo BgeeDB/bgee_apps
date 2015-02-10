@@ -634,7 +634,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
                         GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
                         GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
-                        GenerateDownloadFile.AFFYMETRIXDATA_COLUMN_NAME, 
+                        GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME, 
                         GenerateDownloadFile.ESTDATA_COLUMN_NAME, 
                         GenerateDownloadFile.INSITUDATA_COLUMN_NAME, 
                         //GenerateDownloadFile.RELAXEDINSITUDATA_COLUMN_NAME, 
@@ -1148,7 +1148,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
      * Test {@link GenerateDownloadFile#generateSingleSpeciesFiles(List, List, String)},
      * which is the central method of the class doing all the job.
      */
-//    @Test
+    @Test
     public void shouldGenerateSingleSpeciesDiffExprFiles() throws IOException {
         Set<String> speciesIds = new HashSet<String>(Arrays.asList("11", "22")); 
         
@@ -1164,13 +1164,20 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         //// Species 11
         speciesIds = new HashSet<String>(Arrays.asList("11")); 
         MySQLDiffExpressionCallTOResultSet mockAnatDiffExprRsSp11 = createMockDAOResultSet(
-                //FIXME to be implemented
                 Arrays.asList(
-                        new DiffExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
-                                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
-                                DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
-                                DataState.HIGHQUALITY, 0.001f, 4, 0)),
-                        MySQLDiffExpressionCallTOResultSet.class);
+                new DiffExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.001f, 3, 1, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.05f, 1, 0), 
+                new DiffExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id2", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.UNDER_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.001f, 5, 0, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.03f, 1, 0), 
+                new DiffExpressionCallTO(null, "ID1", "Anat_id13", "Stage_id18",
+                        ComparisonFactor.ANATOMY, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.03f, 2, 1, DiffExprCallType.NOT_EXPRESSED, 
+                        DataState.NODATA, 1f, 0, 0)),
+                MySQLDiffExpressionCallTOResultSet.class);
         DiffExpressionCallParams anatDiffExprParams11 = new DiffExpressionCallParams();
         anatDiffExprParams11.addAllSpeciesIds(speciesIds);
         anatDiffExprParams11.setComparisonFactor(ComparisonFactor.ANATOMY);
@@ -1180,13 +1187,16 @@ public class GenerateDownloadFileTest  extends TestAncestor {
 
         
         MySQLDiffExpressionCallTOResultSet mockDevDiffExprRsSp11 = createMockDAOResultSet(
-                //FIXME to be implemented
                 Arrays.asList(
-                        new DiffExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id2", 
-                                ComparisonFactor.DEVELOPMENT, DiffExprCallType.UNDER_EXPRESSED, 
-                                DataState.LOWQUALITY, 0.06f, 3, 1, DiffExprCallType.NOT_EXPRESSED, 
-                                DataState.NODATA, 1f, 0, 0)),
-                        MySQLDiffExpressionCallTOResultSet.class);
+                        new DiffExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id1", 
+                                ComparisonFactor.DEVELOPMENT, DiffExprCallType.OVER_EXPRESSED, 
+                                DataState.LOWQUALITY, 0.05f, 2, 1, DiffExprCallType.NO_DATA, 
+                                DataState.NODATA, 1f, 0, 0), 
+                        new DiffExpressionCallTO(null, "ID1", "Anat_id13", "Stage_id18", 
+                                ComparisonFactor.DEVELOPMENT, DiffExprCallType.NOT_EXPRESSED, 
+                                DataState.NODATA, 1f, 0, 0, DiffExprCallType.UNDER_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.001f, 1, 0)),
+                 MySQLDiffExpressionCallTOResultSet.class);
         DiffExpressionCallParams devDiffExprParams11 = new DiffExpressionCallParams();
         devDiffExprParams11.addAllSpeciesIds(speciesIds);
         devDiffExprParams11.setComparisonFactor(ComparisonFactor.DEVELOPMENT);
@@ -1196,14 +1206,16 @@ public class GenerateDownloadFileTest  extends TestAncestor {
 
         //// Species 22
         speciesIds = new HashSet<String>(Arrays.asList("22")); 
-        //FIXME to be implemented
         MySQLDiffExpressionCallTOResultSet mockAnatDiffExprRsSp22 = createMockDAOResultSet(
-                //FIXME to be implemented
                 Arrays.asList(
                         new DiffExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id1", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.NO_DATA, 
+                                DataState.NODATA, 1f, 0, 0, DiffExprCallType.UNDER_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.008f, 3, 0), 
+                        new DiffExpressionCallTO(null, "ID2", "Anat_id13", "Stage_id3",
                                 ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
-                                DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
-                                DataState.HIGHQUALITY, 0.001f, 4, 0)),
+                                DataState.HIGHQUALITY, 0.002f, 10, 1, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.007f, 9, 2)),
                         MySQLDiffExpressionCallTOResultSet.class);
         DiffExpressionCallParams anatDiffExprParams22 = new DiffExpressionCallParams();
         anatDiffExprParams22.addAllSpeciesIds(speciesIds);
@@ -1213,12 +1225,15 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 thenReturn(mockAnatDiffExprRsSp22);
 
         MySQLDiffExpressionCallTOResultSet mockDevDiffExprRsSp22 = createMockDAOResultSet(
-                //FIXME to be implemented
                 Arrays.asList(
                         new DiffExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id1", 
-                                ComparisonFactor.DEVELOPMENT, DiffExprCallType.NOT_DIFF_EXPRESSED, 
-                                DataState.LOWQUALITY, 0.01f, 3, 1, DiffExprCallType.OVER_EXPRESSED,
-                                DataState.HIGHQUALITY, 0.001f, 4, 0)),
+                                ComparisonFactor.DEVELOPMENT, DiffExprCallType.NOT_EXPRESSED, 
+                                DataState.NODATA, 1f, 0, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.009f, 4, 1), 
+                        new DiffExpressionCallTO(null, "ID2", "Anat_id13", "Stage_id3", 
+                                ComparisonFactor.DEVELOPMENT, DiffExprCallType.OVER_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.003f, 8, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.008f, 22, 6)),
                         MySQLDiffExpressionCallTOResultSet.class);
         DiffExpressionCallParams devDiffExprParams22 = new DiffExpressionCallParams();
         devDiffExprParams22.addAllSpeciesIds(speciesIds);
@@ -1226,7 +1241,6 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(devDiffExprParams22))).
                 thenReturn(mockDevDiffExprRsSp22);
-
 
         ////////////////
         GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
@@ -1258,15 +1272,15 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         String outputAdvancedStageFile22 = new File(directory, "Genus22_species22_" + 
                 FileType.DIFF_EXPR_COMPLETE_STAGE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
-        assertDiffExpressionFile(outputSimpleAnatFile11, "11", true);
-        assertDiffExpressionFile(outputAdvancedAnatFile11, "11", false);
-        assertDiffExpressionFile(outputSimpleAnatFile22, "22", true);
-        assertDiffExpressionFile(outputAdvancedAnatFile22, "22", false);
+        assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY);
+        assertDiffExpressionFile(outputAdvancedAnatFile11, "11", false, ComparisonFactor.ANATOMY);
+        assertDiffExpressionFile(outputSimpleAnatFile22, "22", true, ComparisonFactor.ANATOMY);
+        assertDiffExpressionFile(outputAdvancedAnatFile22, "22", false, ComparisonFactor.ANATOMY);
         
-        assertDiffExpressionFile(outputSimpleStageFile11, "11", true);
-        assertDiffExpressionFile(outputAdvancedStageFile11, "11", false);
-        assertDiffExpressionFile(outputSimpleStageFile22, "22", true);
-        assertDiffExpressionFile(outputAdvancedStageFile22, "22", false);
+        assertDiffExpressionFile(outputSimpleStageFile11, "11", true, ComparisonFactor.DEVELOPMENT);
+        assertDiffExpressionFile(outputAdvancedStageFile11, "11", false, ComparisonFactor.DEVELOPMENT);
+        assertDiffExpressionFile(outputSimpleStageFile22, "22", true, ComparisonFactor.DEVELOPMENT);
+        assertDiffExpressionFile(outputAdvancedStageFile22, "22", false, ComparisonFactor.DEVELOPMENT);
 
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
@@ -1311,9 +1325,9 @@ public class GenerateDownloadFileTest  extends TestAncestor {
      * @param isSimplifiedFile  A {@code String} defining the species ID.
      * @throws IOException      If the file could not be used.
      */
-    private void assertDiffExpressionFile(String file, String speciesId, boolean isSimplified)
-            throws IOException {
-        log.entry(file, speciesId, isSimplified);
+    private void assertDiffExpressionFile(String file, String speciesId, boolean isSimplified, 
+            ComparisonFactor factor) throws IOException {
+        log.entry(file, speciesId, isSimplified, factor);
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
             String[] headers = mapReader.getHeader(true);
             log.trace("Headers: {}", (Object[]) headers);
@@ -1336,7 +1350,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
                         GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
                         GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
-                        GenerateDownloadFile.AFFYMETRIXDATA_COLUMN_NAME, 
+                        GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME, 
                         GenerateDownloadFile.AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, 
                         GenerateDownloadFile.AFFYMETRIX_P_VALUE_COLUMN_NAME, 
                         GenerateDownloadFile.AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
@@ -1355,10 +1369,15 @@ public class GenerateDownloadFileTest  extends TestAncestor {
             for (DiffExpressionData data : DiffExpressionData.values()) {
                 dataElements.add(data.getStringRepresentation());
             } 
-            List<Object> qualities = new ArrayList<Object>();
-            qualities.add(DataState.HIGHQUALITY.getStringRepresentation());
-            qualities.add(DataState.LOWQUALITY.getStringRepresentation());
-            qualities.add(GenerateDownloadFile.NA_VALUE);
+            List<Object> specificTypeQualities = new ArrayList<Object>();
+            specificTypeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
+            specificTypeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
+            specificTypeQualities.add(DataState.NODATA.getStringRepresentation());
+            
+            List<Object> resumeQualities = new ArrayList<Object>();
+            resumeQualities.add(DataState.HIGHQUALITY.getStringRepresentation());
+            resumeQualities.add(DataState.LOWQUALITY.getStringRepresentation());
+            resumeQualities.add(GenerateDownloadFile.NA_VALUE);
 
             CellProcessor[] processors = null;
             if (isSimplified) {
@@ -1370,7 +1389,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         new NotNull(), // anatomical entity ID
                         new NotNull(), // anatomical entity name
                         new IsElementOf(dataElements), // Differential expression
-                        new IsElementOf(qualities)}; // Quality
+                        new IsElementOf(resumeQualities)}; // Quality
             } else {
                 processors = new CellProcessor[] { 
                         new NotNull(), // gene ID
@@ -1380,17 +1399,17 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         new NotNull(), // anatomical entity ID
                         new NotNull(), // anatomical entity name
                         new IsElementOf(dataElements),  // Affymetrix data
-                        new IsElementOf(qualities),     // Affymetrix call quality
+                        new IsElementOf(specificTypeQualities),     // Affymetrix call quality
                         new DMinMax(0, 1),              // Best p-value using Affymetrix
                         new LMinMax(0, Long.MAX_VALUE), // Consistent DEA count using Affymetrix
                         new LMinMax(0, Long.MAX_VALUE), // Inconsistent DEA count using Affymetrix
                         new IsElementOf(dataElements),  // RNA-seq data
-                        new IsElementOf(qualities),     // RNA-seq call quality
+                        new IsElementOf(specificTypeQualities),     // RNA-seq call quality
                         new DMinMax(0, 1),              // Best p-value using RNA-Seq
                         new LMinMax(0, Long.MAX_VALUE), // Consistent DEA count using RNA-Seq
                         new LMinMax(0, Long.MAX_VALUE), // Inconsistent DEA count using RNA-Seq
                         new IsElementOf(dataElements),  // Differential expression
-                        new IsElementOf(qualities)};    // Quality
+                        new IsElementOf(resumeQualities)};    // Quality
             }
 
             Map<String, Object> rowMap;
@@ -1404,56 +1423,303 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 String stageName = (String) rowMap.get(headers[3]);
                 String anatEntityId = (String) rowMap.get(headers[4]);
                 String anatEntityName = (String) rowMap.get(headers[5]);
-                String affymetrixData = null, affymetrixQuality = null, affymetrixPValue = null,  
-                        affymetrixConsistentCount = null, affymetrixInconsistentCount = null,  
-                        rnaSeqData = null, rnaSeqQuality = null, rnaSeqPValue = null,  
-                        rnaSeqConsistentCount = null, rnaSeqInconsistentCount = null,
-                        resume = null, quality = null;
+                String affymetrixData = null, affymetrixQuality = null,  
+                        rnaSeqData = null, rnaSeqQuality = null, resume = null, quality = null;
+                Float affymetrixPValue = null, rnaSeqPValue = null;
+                Integer affymetrixConsistentCount = null, affymetrixInconsistentCount = null,
+                        rnaSeqConsistentCount = null, rnaSeqInconsistentCount = null;
                 if (isSimplified) {
                     resume = (String) rowMap.get(headers[6]);
                     quality = (String) rowMap.get(headers[7]);
                 } else {
                     affymetrixData = (String) rowMap.get(headers[6]);
                     affymetrixQuality = (String) rowMap.get(headers[7]);
-                    affymetrixPValue = (String) rowMap.get(headers[8]);
-                    affymetrixConsistentCount = (String) rowMap.get(headers[9]);
-                    affymetrixInconsistentCount = (String) rowMap.get(headers[10]);
+                    affymetrixPValue = ((Double) rowMap.get(headers[8])).floatValue();
+                    affymetrixConsistentCount = ((Long) rowMap.get(headers[9])).intValue();
+                    affymetrixInconsistentCount = ((Long) rowMap.get(headers[10])).intValue();
                     rnaSeqData = (String) rowMap.get(headers[11]);
                     rnaSeqQuality = (String) rowMap.get(headers[12]);
-                    rnaSeqPValue = (String) rowMap.get(headers[13]);  
-                    rnaSeqConsistentCount = (String) rowMap.get(headers[14]); 
-                    rnaSeqInconsistentCount = (String) rowMap.get(headers[15]);
+                    rnaSeqPValue = ((Double) rowMap.get(headers[13])).floatValue();  
+                    rnaSeqConsistentCount = ((Long) rowMap.get(headers[14])).intValue();
+                    rnaSeqInconsistentCount = ((Long) rowMap.get(headers[15])).intValue();
                     resume = (String) rowMap.get(headers[16]);
                     quality = (String) rowMap.get(headers[17]);
                 }
 
-                //TODO Add row checks 
                 if (speciesId.equals("11")) {
+                    if (factor.equals(ComparisonFactor.ANATOMY)) {
+                        if (geneId.equals("ID1") && stageId.equals("Stage_id1") && 
+                                anatEntityId.equals("Anat_id1")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                                    "stageN1", stageName, "anatName1", anatEntityName, 
+                                    DiffExpressionData.OVER_EXPRESSED.getStringRepresentation(), resume,
+                                    DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.OVER_EXPRESSED, affymetrixData,
+                                        DataState.HIGHQUALITY, affymetrixQuality,
+                                        0.001f, affymetrixPValue,
+                                        3, affymetrixConsistentCount,
+                                        1, affymetrixInconsistentCount,
+                                        DiffExprCallType.OVER_EXPRESSED, rnaSeqData,
+                                        DataState.LOWQUALITY, rnaSeqQuality,
+                                        0.05f, rnaSeqPValue,
+                                        1, rnaSeqConsistentCount, 
+                                        0, rnaSeqInconsistentCount);
+                            }
+                        } else if (geneId.equals("ID1") && stageId.equals("Stage_id2") && 
+                                anatEntityId.equals("Anat_id2")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                                    "stageN2", stageName, "anatName2", anatEntityName, 
+                                    DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), resume,
+                                    GenerateDownloadFile.NA_VALUE, quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.UNDER_EXPRESSED, affymetrixData,
+                                        DataState.HIGHQUALITY, affymetrixQuality,
+                                        0.001f, affymetrixPValue,
+                                        5, affymetrixConsistentCount,
+                                        0, affymetrixInconsistentCount,
+                                        DiffExprCallType.OVER_EXPRESSED, rnaSeqData,
+                                        DataState.LOWQUALITY, rnaSeqQuality,
+                                        0.03f, rnaSeqPValue,
+                                        1, rnaSeqConsistentCount, 
+                                        0, rnaSeqInconsistentCount);
+                            }
+                        } else if (geneId.equals("ID1") && stageId.equals("Stage_id18") && 
+                                anatEntityId.equals("Anat_id13")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                                    "stageN18", stageName, "anatName13", anatEntityName, 
+                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
+                                    GenerateDownloadFile.NA_VALUE, quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.OVER_EXPRESSED, affymetrixData,
+                                        DataState.LOWQUALITY, affymetrixQuality,
+                                        0.03f, affymetrixPValue,
+                                        2, affymetrixConsistentCount,
+                                        1, affymetrixInconsistentCount,
+                                        DiffExprCallType.NOT_EXPRESSED, rnaSeqData,
+                                        DataState.NODATA, rnaSeqQuality,
+                                        1f, rnaSeqPValue,
+                                        0, rnaSeqConsistentCount, 
+                                        0, rnaSeqInconsistentCount);
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Unexpected row: " + rowMap);
+                        }
+                        // end of sp11 & anatomy
+                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
+                        if (geneId.equals("ID1") && stageId.equals("Stage_id1") && 
+                                anatEntityId.equals("Anat_id2")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                                    "stageN1", stageName, "anatName2", anatEntityName, 
+                                    DiffExpressionData.OVER_EXPRESSED.getStringRepresentation(), resume,
+                                    DataState.LOWQUALITY.getStringRepresentation(), quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.OVER_EXPRESSED, affymetrixData,
+                                        DataState.LOWQUALITY, affymetrixQuality,
+                                        0.05f, affymetrixPValue,
+                                        2, affymetrixConsistentCount,
+                                        1, affymetrixInconsistentCount,
+                                        DiffExprCallType.NO_DATA, rnaSeqData,
+                                        DataState.NODATA, rnaSeqQuality,
+                                        1f, rnaSeqPValue,
+                                        0, rnaSeqConsistentCount, 
+                                        0, rnaSeqInconsistentCount);
+                            }
+                        } else if (geneId.equals("ID1") && stageId.equals("Stage_id18") && 
+                                anatEntityId.equals("Anat_id13")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN1", geneName,
+                                    "stageN18", stageName, "anatName13", anatEntityName, 
+                                    DiffExpressionData.UNDER_EXPRESSED.getStringRepresentation(), resume,
+                                    DataState.LOWQUALITY.getStringRepresentation(), quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.NOT_EXPRESSED, affymetrixData,
+                                        DataState.NODATA, affymetrixQuality,
+                                        1f, affymetrixPValue,
+                                        0, affymetrixConsistentCount,
+                                        0, affymetrixInconsistentCount,
+                                        DiffExprCallType.UNDER_EXPRESSED, rnaSeqData,
+                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        0.001f, rnaSeqPValue,
+                                        1, rnaSeqConsistentCount, 
+                                        0, rnaSeqInconsistentCount);
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Unexpected row: " + rowMap);
+                        }
+                        // end of sp11 & development
+                    } else {
+                        throw new IllegalArgumentException("Unexpected factor: " + factor);
+                    }
+                    // end of sp11
                 } else if (speciesId.equals("22")){
+                    if (factor.equals(ComparisonFactor.ANATOMY)) {
+                        if (geneId.equals("ID2") && stageId.equals("Stage_id1") && 
+                                anatEntityId.equals("Anat_id2")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
+                                    "stageN1", stageName, "anatName2", anatEntityName, 
+                                    DiffExpressionData.UNDER_EXPRESSED.getStringRepresentation(), resume,
+                                    DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.NO_DATA, affymetrixData,
+                                        DataState.NODATA, affymetrixQuality,
+                                        1f, affymetrixPValue,
+                                        0, affymetrixConsistentCount,
+                                        0, affymetrixInconsistentCount,
+                                        DiffExprCallType.UNDER_EXPRESSED, rnaSeqData,
+                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        0.008f, rnaSeqPValue,
+                                        3, rnaSeqConsistentCount, 
+                                        0, rnaSeqInconsistentCount);
+                            }
+                        } else if (geneId.equals("ID2") && stageId.equals("Stage_id3") && 
+                                anatEntityId.equals("Anat_id13")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
+                                    "stageN3", stageName, "anatName13", anatEntityName, 
+                                    DiffExpressionData.NOT_DIFF_EXPRESSED.getStringRepresentation(), resume,
+                                    DataState.HIGHQUALITY.getStringRepresentation(), quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.NOT_DIFF_EXPRESSED, affymetrixData,
+                                        DataState.HIGHQUALITY, affymetrixQuality,
+                                        0.002f, affymetrixPValue,
+                                        10, affymetrixConsistentCount,
+                                        1, affymetrixInconsistentCount,
+                                        DiffExprCallType.NOT_DIFF_EXPRESSED, rnaSeqData,
+                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        0.007f, rnaSeqPValue,
+                                        9, rnaSeqConsistentCount, 
+                                        2, rnaSeqInconsistentCount);
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Unexpected row: " + rowMap);
+                        }
+                        // end of sp22 & anatomy
+                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
+                        if (geneId.equals("ID2") && stageId.equals("Stage_id1") && 
+                                anatEntityId.equals("Anat_id2")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
+                                    "stageN1", stageName, "anatName2", anatEntityName, 
+                                    DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), resume,
+                                    GenerateDownloadFile.NA_VALUE, quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.NOT_EXPRESSED, affymetrixData,
+                                        DataState.NODATA, affymetrixQuality,
+                                        1f, affymetrixPValue,
+                                        0, affymetrixConsistentCount,
+                                        0, affymetrixInconsistentCount,
+                                        DiffExprCallType.NOT_DIFF_EXPRESSED, rnaSeqData,
+                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        0.009f, rnaSeqPValue,
+                                        4, rnaSeqConsistentCount, 
+                                        1, rnaSeqInconsistentCount);
+                            }
+                        } else if (geneId.equals("ID2") && stageId.equals("Stage_id3") && 
+                                anatEntityId.equals("Anat_id13")) {
+                            this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
+                                    "stageN3", stageName, "anatName13", anatEntityName, 
+                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
+                                    GenerateDownloadFile.NA_VALUE, quality);
+                            if (!isSimplified) {
+                                this.assertCompleteDiffExprColumnRowEqual(geneId,
+                                        DiffExprCallType.OVER_EXPRESSED, affymetrixData,
+                                        DataState.HIGHQUALITY, affymetrixQuality,
+                                        0.003f, affymetrixPValue,
+                                        8, affymetrixConsistentCount,
+                                        0, affymetrixInconsistentCount,
+                                        DiffExprCallType.NOT_DIFF_EXPRESSED, rnaSeqData,
+                                        DataState.HIGHQUALITY, rnaSeqQuality,
+                                        0.008f, rnaSeqPValue,
+                                        22, rnaSeqConsistentCount, 
+                                        6, rnaSeqInconsistentCount);
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Unexpected row: " + rowMap);
+                        }
+                        // end of sp22 & development
+                    } else {
+                        throw new IllegalArgumentException("Unexpected factor: " + factor);
+                    }
+                    // end of sp22
                 } else {
                     throw new IllegalStateException("Test of species ID " + speciesId + 
                             "not implemented yet");
                 }
             }
-            //TODO add check on number of lines
+            
+            //Check on number of lines
+            if (isSimplified) {
+                if (speciesId.equals("11")) {
+                    if (factor.equals(ComparisonFactor.ANATOMY)) {
+                        assertEquals("Incorrect number of lines in simple/anatomy file", 3, i);
+                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
+                        assertEquals("Incorrect number of lines in simple/development file", 2, i);
+                    }
+                } else if (speciesId.equals("22")) {
+                    if (factor.equals(ComparisonFactor.ANATOMY)) {
+                        assertEquals("Incorrect number of lines in simple/anatomy file", 1, i);
+                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
+                        assertEquals("Incorrect number of lines in simple/development file", 2, i);
+                    }
+                } else {
+                    throw new IllegalStateException("Test of species ID " + speciesId + 
+                            "not implemented yet");
+                }
+            } else {
+                if (speciesId.equals("11")) {
+                    if (factor.equals(ComparisonFactor.ANATOMY)) {
+                        assertEquals("Incorrect number of lines in advance/anatomy file", 3, i);
+                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
+                        assertEquals("Incorrect number of lines in advance/development file", 2, i);
+                    }
+                } else if (speciesId.equals("22")) {
+                    if (factor.equals(ComparisonFactor.ANATOMY)) {
+                        assertEquals("Incorrect number of lines in advance/anatomy file", 2, i);
+                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
+                        assertEquals("Incorrect number of lines in advance/development file", 2, i);
+                    }
+                } else {
+                    throw new IllegalStateException("Test of species ID " + speciesId + 
+                            "not implemented yet");
+                }
+            }            
         }
     }
     
+    /**
+     * Assert that, for differential expression file, common column rows are equal. 
+     * It checks gene name, stage ID, stage name, anatomical entity ID, and 
+     * anatomical entity name columns and quality.
+     */
+    private void assertDiffExprCommonColumnRowEqual(String geneId, 
+            String expGeneName, String geneName, String expStageName, String stageName, 
+            String expAnatEntityName, String anatEntityName, String expResume, String resume,
+            String expQuality, String quality) {
+        this.assertCommonColumnRowEqual(geneId, expGeneName, geneName, expStageName, stageName, 
+                expAnatEntityName, anatEntityName, expResume, resume);
+        assertEquals("Incorrect Quality for " + geneId, expQuality, quality);
+    }
+
     /**
      * Assert that specific complete differential expression file columns row are equal.
      */
     private void assertCompleteDiffExprColumnRowEqual(String geneId, 
             DiffExprCallType expAffyData, String affyData,
             DataState expAffyQuality, String affyQuality,
-            Float expAffyPValue, String affyPValue,
-            int expAffyConsistentCount, String affyConsistentCount,
-            int expAffyInonsistentCount, String affyInconsistentCount,
-            DiffExprCallType expRNASeqData, String  rnaSeqData,
+            Float expAffyPValue, Float affyPValue,
+            int expAffyConsistentCount, int affyConsistentCount,
+            int expAffyInonsistentCount, int affyInconsistentCount,
+            DiffExprCallType expRNASeqData, String rnaSeqData,
             DataState expRNASeqQuality, String rnaSeqQuality,
-            Float expRNASeqPValue, String  rnaSeqPValue,
-            int expRNASeqConsistentCount, String rnaSeqConsistentCount, 
-            int expRNASeqInconsistentCount, String rnaSeqInconsistentCount,
-            DataState expQuality, String quality) {
+            Float expRNASeqPValue, Float rnaSeqPValue,
+            int expRNASeqConsistentCount, int rnaSeqConsistentCount, 
+            int expRNASeqInconsistentCount, int rnaSeqInconsistentCount) {
         assertEquals("Incorrect Affymetrix data for " + geneId, 
                 expAffyData.getStringRepresentation(), affyData);
         assertEquals("Incorrect Affymetrix quality for " + geneId, 
@@ -1477,9 +1743,6 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 expRNASeqConsistentCount, rnaSeqConsistentCount);
         assertEquals("Incorrect RNA-Seq inconsistent DEA count for " + geneId, 
                 expRNASeqInconsistentCount, rnaSeqInconsistentCount);
-
-        assertEquals("Incorrect call quality for " + geneId, 
-                expQuality, quality);
     }
 
     /**
@@ -1531,8 +1794,9 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         new StageTO("Stage_id2", "stageN2", null, null, null, null, null, null),
                         new StageTO("Stage_id3", "stageN3", null, null, null, null, null, null),
                         new StageTO("Stage_id5", "stageN5", null, null, null, null, null, null),
-                        new StageTO("ParentStage_id5", "parentstageN5", null, null, null, null, null, null)),
-                        MySQLStageTOResultSet.class);
+                        new StageTO("ParentStage_id5", "parentstageN5", null, null, null, null, null, null),
+                        new StageTO("Stage_id18", "stageN18", null, null, null, null, null, null)),
+                MySQLStageTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
         when(mockManager.mockStageDAO.getStagesBySpeciesIds(speciesIds)).thenReturn(mockStageTORs);
@@ -1553,8 +1817,9 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                         new AnatEntityTO("Anat_id4", "anatName4", null, null, null, null),
                         new AnatEntityTO("Anat_id5", "anatName5", null, null, null, null),
                         new AnatEntityTO("NonInfoAnatEnt1", "xxx", null, null, null, null),
-                        new AnatEntityTO("NonInfoAnatEnt2", "zzz", null, null, null, null)),
-                        MySQLAnatEntityTOResultSet.class);
+                        new AnatEntityTO("NonInfoAnatEnt2", "zzz", null, null, null, null),
+                        new AnatEntityTO("Anat_id13", "anatName13", null, null, null, null)),
+                 MySQLAnatEntityTOResultSet.class);
         // The only Attributes requested should be ID and name, this will be checked 
         // at the end of the test
         when(mockManager.mockAnatEntityDAO.getAnatEntitiesBySpeciesIds(speciesIds)).

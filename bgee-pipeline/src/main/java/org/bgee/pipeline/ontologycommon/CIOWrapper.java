@@ -1,7 +1,7 @@
 package org.bgee.pipeline.ontologycommon;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,16 +13,20 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
 
 import owltools.graph.OWLGraphEdge;
 import owltools.graph.OWLGraphWrapper;
+import owltools.io.ParserWrapper;
 
 /**
  * Class providing convenient methods to use the Confidence Information Ontology (CIO, see the 
- * <a href='https://github.com/BgeeDB/confidence-information-ontology'>CIO repository</a>).
+ * <a href='https://github.com/BgeeDB/confidence-information-ontology'>CIO repository</a>). 
+ * This class does not use the usual bgee utils, to be provided as code example. 
+ * The dependencies for this class are: OWLTools, OWLAPI, Log4j2. 
  * <p>
  * The CIO is divided into 'confidence information statement', that are terms usable 
  * in annotations, and 'confidence information element', that are terms representing 
@@ -40,15 +44,18 @@ import owltools.graph.OWLGraphWrapper;
  * 'evidence type concordance', and 'confidence level' (see {@link 
  * #getSingleEvidenceConfidenceStatement(OWLClass)} and 
  * {@link #getConfidenceStatement(OWLClass, OWLClass, OWLClass)}).
+ * <p>
+ * This class also provides static final {@code String}s that are OBO-like IDs 
+ * of classes and object properties that are likely to be useful to users. They allow 
+ * to retrieve the corresponding {@code OWLClass} or {@code OWLObjectProperty} by calling 
+ * the {@code OWLGraphWrapper} methods {@code getOWLClassByIdentifier} and 
+ * {@code getOWLObjectPropertyByIdentifier}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 13 Feb. 2015
  * @since Bgee 13
  */
-//TODO: check whether it is actually needed to extend OntologyUtils
-//TODO: this class might be of interest to all CIO users, maybe could we provide it as a jar 
-//with only owltools jar in classpath?
-public class CIOWrapper extends OntologyUtils {
+public class CIOWrapper {
     /**
      * {@code Logger} of the class.
      */
@@ -339,6 +346,76 @@ public class CIOWrapper extends OntologyUtils {
      * information, subclass of 'confidence element' (see {@link #CONFIDENCE_ELEMENT_ID}).
      */
     public final static String CONFIDENCE_LEVEL_ID = "CIO:0000028";
+    //    /**
+    //     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+    //     * of the term "confidence from single evidence".
+    //     * @see #MULTIPLE_EVIDENCE_CONF_ID
+    //     */
+    //    public final static String SINGLE_EVIDENCE_CONF_ID = "CIO:0000001";
+    //    /**
+    //     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+    //     * of the term "confidence from multiple evidence lines".
+    //     * @see #SINGLE_EVIDENCE_CONF_ID
+    //     */
+    //    public final static String MULTIPLE_EVIDENCE_CONF_ID = "CIO:0000002";
+    //    /**
+    //     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+    //     * of the term "confidence from congruent evidence lines of same type".
+    //     */
+    //    public final static String CONGRUENT_SAME_TYPE_EVIDENCE_CONF_ID = "CIO:0000016";
+    //    /**
+    //     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+    //     * of the term "confidence from congruent evidence lines of multiple types".
+    //     */
+    //    public final static String CONGRUENT_MULTIPLE_TYPES_EVIDENCE_CONF_ID = "CIO:0000008";
+    //    /**
+    //     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+    //     * of the term "confidence from weakly conflicting evidence lines of same type".
+    //     */
+    //    public final static String WEAK_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID = "CIO:0000021";
+    //    /**
+    //     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+    //     * of the term "confidence from weakly conflicting evidence lines of multiple types".
+    //     */
+    //    public final static String WEAK_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID = "CIO:0000011";
+    //    /**
+    //     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+    //     * of the term "confidence from strongly conflicting evidence lines of same type".
+    //     */
+    //    public final static String STRONG_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID = "CIO:0000020";
+    //    /**
+    //     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+    //     * of the term "confidence from strongly conflicting evidence lines of multiple types".
+    //     */
+    //    public final static String STRONG_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID = "CIO:0000010";
+    //    
+        /**
+         * A {@code String} that is the OBO-like ID from the confidence information ontology 
+         * of the term "high confidence level", subclass of 'confidence level'.
+         * @see #CONFIDENCE_LEVEL_ID
+         * @see #MEDIUM_CONF_LEVEL_ID
+         * @see #LOW_CONF_LEVEL_ID
+         */
+        public final static String HIGH_CONF_LEVEL_ID = "CIO:0000029";
+
+    /**
+     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+     * of the term "medium confidence level", subclass of 'confidence level'.
+     * @see #CONFIDENCE_LEVEL_ID
+     * @see #HIGH_CONF_LEVEL_ID
+     * @see #LOW_CONF_LEVEL_ID
+     */
+    public final static String MEDIUM_CONF_LEVEL_ID = "CIO:0000030";
+
+    /**
+     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+     * of the term "low confidence level", subclass of 'confidence level'.
+     * @see #CONFIDENCE_LEVEL_ID
+     * @see #MEDIUM_CONF_LEVEL_ID
+     * @see #HIGH_CONF_LEVEL_ID
+     */
+    public final static String LOW_CONF_LEVEL_ID = "CIO:0000031";
+
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "evidence concordance", parent of all classes providing 'evidence concordance' 
@@ -353,87 +430,12 @@ public class CIOWrapper extends OntologyUtils {
     public final static String SINGLE_EVIDENCE_CONCORDANCE_ID = "CIO:0000042";
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
-     * of the term "evidence concordance", parent of all classes providing 'evidence type 
-     * concordance' information, subclass of 'confidence element' (see 
-     * {@link #CONFIDENCE_ELEMENT_ID}).
-     */
-    public final static String EVIDENCE_TYPE_CONCORDANCE_ID = "CIO:0000041";
-
-//    /**
-//     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-//     * of the term "confidence from single evidence".
-//     * @see #MULTIPLE_EVIDENCE_CONF_ID
-//     */
-//    public final static String SINGLE_EVIDENCE_CONF_ID = "CIO:0000001";
-//    /**
-//     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-//     * of the term "confidence from multiple evidence lines".
-//     * @see #SINGLE_EVIDENCE_CONF_ID
-//     */
-//    public final static String MULTIPLE_EVIDENCE_CONF_ID = "CIO:0000002";
-//    /**
-//     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-//     * of the term "confidence from congruent evidence lines of same type".
-//     */
-//    public final static String CONGRUENT_SAME_TYPE_EVIDENCE_CONF_ID = "CIO:0000016";
-//    /**
-//     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-//     * of the term "confidence from congruent evidence lines of multiple types".
-//     */
-//    public final static String CONGRUENT_MULTIPLE_TYPES_EVIDENCE_CONF_ID = "CIO:0000008";
-//    /**
-//     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-//     * of the term "confidence from weakly conflicting evidence lines of same type".
-//     */
-//    public final static String WEAK_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID = "CIO:0000021";
-//    /**
-//     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-//     * of the term "confidence from weakly conflicting evidence lines of multiple types".
-//     */
-//    public final static String WEAK_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID = "CIO:0000011";
-//    /**
-//     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-//     * of the term "confidence from strongly conflicting evidence lines of same type".
-//     */
-//    public final static String STRONG_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID = "CIO:0000020";
-//    /**
-//     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-//     * of the term "confidence from strongly conflicting evidence lines of multiple types".
-//     */
-//    public final static String STRONG_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID = "CIO:0000010";
-//    
-    /**
-     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-     * of the term "high confidence level", subclass of 'confidence level'.
-     * @see #CONFIDENCE_LEVEL_ID
-     * @see #MEDIUM_CONF_LEVEL_ID
-     * @see #LOW_CONF_LEVEL_ID
-     */
-    public final static String HIGH_CONF_LEVEL_ID = "CIO:0000029";
-    /**
-     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-     * of the term "medium confidence level", subclass of 'confidence level'.
-     * @see #CONFIDENCE_LEVEL_ID
-     * @see #HIGH_CONF_LEVEL_ID
-     * @see #LOW_CONF_LEVEL_ID
-     */
-    public final static String MEDIUM_CONF_LEVEL_ID = "CIO:0000030";
-    /**
-     * A {@code String} that is the OBO-like ID from the confidence information ontology 
-     * of the term "low confidence level", subclass of 'confidence level'.
-     * @see #CONFIDENCE_LEVEL_ID
-     * @see #MEDIUM_CONF_LEVEL_ID
-     * @see #HIGH_CONF_LEVEL_ID
-     */
-    public final static String LOW_CONF_LEVEL_ID = "CIO:0000031";
-    
-    /**
-     * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "congruent".
      * @see #WEAKLY_CONFLICTING_CONCORDANCE_ID
      * @see #STRONGLY_CONFLICTING_CONCORDANCE_ID
      */
     public final static String CONGRUENT_CONCORDANCE_ID = "CIO:0000033";
+
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "weakly conflicting".
@@ -441,6 +443,7 @@ public class CIOWrapper extends OntologyUtils {
      * @see #STRONGLY_CONFLICTING_CONCORDANCE_ID
      */
     public final static String WEAKLY_CONFLICTING_CONCORDANCE_ID = "CIO:0000036";
+
     /**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "strongly conflicting".
@@ -450,6 +453,14 @@ public class CIOWrapper extends OntologyUtils {
     public final static String STRONGLY_CONFLICTING_CONCORDANCE_ID = "CIO:0000035";
 
     /**
+     * A {@code String} that is the OBO-like ID from the confidence information ontology 
+     * of the term "evidence concordance", parent of all classes providing 'evidence type 
+     * concordance' information, subclass of 'confidence element' (see 
+     * {@link #CONFIDENCE_ELEMENT_ID}).
+     */
+    public final static String EVIDENCE_TYPE_CONCORDANCE_ID = "CIO:0000041";
+
+/**
      * A {@code String} that is the OBO-like ID from the confidence information ontology 
      * of the term "same type".
      * @see #DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID
@@ -462,6 +473,32 @@ public class CIOWrapper extends OntologyUtils {
      */
     public final static String DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID = "CIO:0000038";
     
+    /**
+     * Load {@code pathToOntology} as an {@code OWLOntology}.
+     * @param pathToOntology    A {@code String} that is the path to an ontology to be loaded, 
+     *                          either in obo or owl format.
+     * @return                  An {@code OWLOntology} loaded from the file 
+     *                          {@code pathToOntology}.
+     * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
+     * @throws IOException                  If {@code pathToOntology} could not be read.
+     */
+    private static final OWLOntology loadOntology(String pathToOntology) 
+            throws OWLOntologyCreationException, IOException {
+        log.entry(pathToOntology);
+        ParserWrapper parserWrapper = new ParserWrapper();
+        parserWrapper.setCheckOboDoc(true);
+        return log.exit(parserWrapper.parse(pathToOntology));
+    }
+    
+    
+    //*********************************************
+    //    INSTANCE ATTRIBUTES AND METHODS
+    //*********************************************
+    
+    /**
+     * An {@code OWLGraphWrapper} wrapping the CIO ontology to use.
+     */
+    private final OWLGraphWrapper wrapper;
     /**
      * An {@code OWLObjectProperty} retrieved using the OBO-like ID 
      * {@link #HAS_CONFIDENCE_ELEMENT_ID}.
@@ -612,7 +649,24 @@ public class CIOWrapper extends OntologyUtils {
 //    private final OWLClass sameTypeEvidenceConcordance;
 //    private final OWLClass differentTypesEvidenceConcordance;
     
-    
+    /**
+     * Constructor providing the path to the file storing the CIO ontology  
+     * to use. It can be either obo or owl format.
+     * 
+     * @param pathToOntology    A {@code String} that is the path to the CIO ontology. 
+     * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
+     * @throws IOException                  If {@code pathToOntology} could not be read.
+     */
+    public CIOWrapper(String pathToOntology) throws OWLOntologyCreationException, IOException {
+        this(CIOWrapper.loadOntology(pathToOntology));
+    }
+    /**
+     * Constructor providing the CIO {@code OWLOntology} used.
+     * @param ontology  the {@code OWLOntology} that is the CIO ontology to use.
+     */
+    public CIOWrapper(OWLOntology ontology) { 
+        this(new OWLGraphWrapper(ontology));
+    }
     /**
      * Constructor providing the {@code OWLGraphWrapper} wrapping 
      * the {@code OWLOntology} which operations should be performed on.
@@ -623,17 +677,17 @@ public class CIOWrapper extends OntologyUtils {
      *                                  all necessary information.
      */
     public CIOWrapper(final OWLGraphWrapper wrapper) throws IllegalArgumentException {
-        super(wrapper);
+        this.wrapper = wrapper;
         
-        this.hasConfidenceElement = this.getWrapper().getOWLObjectPropertyByIdentifier(
+        this.hasConfidenceElement = this.wrapper.getOWLObjectPropertyByIdentifier(
                 HAS_CONFIDENCE_ELEMENT_ID);
-        this.hasEvidenceConcordance = this.getWrapper().getOWLObjectPropertyByIdentifier(
+        this.hasEvidenceConcordance = this.wrapper.getOWLObjectPropertyByIdentifier(
                 HAS_EVIDENCE_CONCORDANCE_ID);
-        this.hasEvidenceTypeConcordance = this.getWrapper().getOWLObjectPropertyByIdentifier(
+        this.hasEvidenceTypeConcordance = this.wrapper.getOWLObjectPropertyByIdentifier(
                 HAS_EVIDENCE_TYPE_CONCORDANCE_ID);
-        this.hasConfidenceLevel = this.getWrapper().getOWLObjectPropertyByIdentifier(
+        this.hasConfidenceLevel = this.wrapper.getOWLObjectPropertyByIdentifier(
                 HAS_CONFIDENCE_LEVEL_ID);
-        this.providesGreaterConfidenceThan = this.getWrapper().getOWLObjectPropertyByIdentifier(
+        this.providesGreaterConfidenceThan = this.wrapper.getOWLObjectPropertyByIdentifier(
                 PROVIDES_GREATER_CONF_THAN_ID);
         if (this.hasConfidenceElement == null || 
                 this.hasEvidenceConcordance == null || this.hasEvidenceTypeConcordance == null || 
@@ -649,19 +703,19 @@ public class CIOWrapper extends OntologyUtils {
         }
         
         //load the basic components of CIO used to pre-compose other terms
-        this.confidenceStatement = this.getWrapper().getOWLClassByIdentifier(
+        this.confidenceStatement = this.wrapper.getOWLClassByIdentifier(
                 CONFIDENCE_STATEMENT_ID);
-        this.rejectedStatement = this.getWrapper().getOWLClassByIdentifier(
+        this.rejectedStatement = this.wrapper.getOWLClassByIdentifier(
                 REJECTED_STATEMENT_ID);
-        this.confidenceElement = this.getWrapper().getOWLClassByIdentifier(
+        this.confidenceElement = this.wrapper.getOWLClassByIdentifier(
                 CONFIDENCE_ELEMENT_ID);
-        this.confidenceLevel = this.getWrapper().getOWLClassByIdentifier(
+        this.confidenceLevel = this.wrapper.getOWLClassByIdentifier(
                 CONFIDENCE_LEVEL_ID);
-        this.evidenceConcordance = this.getWrapper().getOWLClassByIdentifier(
+        this.evidenceConcordance = this.wrapper.getOWLClassByIdentifier(
                 EVIDENCE_CONCORDANCE_ID);
-        this.singleEvidenceConcordance = this.getWrapper().getOWLClassByIdentifier(
+        this.singleEvidenceConcordance = this.wrapper.getOWLClassByIdentifier(
                 SINGLE_EVIDENCE_CONCORDANCE_ID);
-        this.evidenceTypeConcordance = this.getWrapper().getOWLClassByIdentifier(
+        this.evidenceTypeConcordance = this.wrapper.getOWLClassByIdentifier(
                 EVIDENCE_TYPE_CONCORDANCE_ID);
         if (this.confidenceStatement == null || this.rejectedStatement == null || 
                 this.confidenceElement == null || 
@@ -687,9 +741,9 @@ public class CIOWrapper extends OntologyUtils {
 //        List<OWLClass> confidenceLevels = new ArrayList<OWLClass>();
 //        Set<OWLClass> evidenceConcordances = new HashSet<OWLClass>();
 //        Set<OWLClass> evidenceTypeConcordances = new HashSet<OWLClass>();
-//        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
 //            log.trace("Iterating {}", cls);
-//            Set<OWLClass> ancestors = this.getWrapper().getAncestorsThroughIsA(cls);
+//            Set<OWLClass> ancestors = this.wrapper.getAncestorsThroughIsA(cls);
 //            if (ancestors.contains(this.getConfidenceStatement()) || 
 //                    cls.equals(this.getConfidenceStatement())) {
 //                log.trace("Is confidence statement, skip.");
@@ -744,7 +798,7 @@ public class CIOWrapper extends OntologyUtils {
 //        
 //        //now we order the confidence levels.
 //        OWLObjectProperty greaterConfThan = 
-//                this.getWrapper().getOWLObjectPropertyByIdentifier(GREATER_CONF_THAN_ID);
+//                this.wrapper.getOWLObjectPropertyByIdentifier(GREATER_CONF_THAN_ID);
 //        if (greaterConfThan == null) {
 //            throw log.throwing(new IllegalArgumentException("The CIO provided does not allow "
 //                    + "to retrieve the relation ordering confidence level."));
@@ -785,7 +839,7 @@ public class CIOWrapper extends OntologyUtils {
 //        //now, we wrap and store all OWLClasses in CIOTerms
 //        Map<OWLClass, CIOTerm> classesTOCIOTerm = new HashMap<OWLClass, CIOTerm>();
 //        boolean hasStatement = false;
-//        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
 //            CIOTerm cioTerm = new CIOTerm(cls, this);
 //            if (cioTerm.isConfidenceStatement()) {
 //                hasStatement = true;
@@ -801,21 +855,21 @@ public class CIOWrapper extends OntologyUtils {
 //        
 //        
 //        
-//        this.singleEvidenceConf = this.getWrapper().getOWLClassByIdentifier(
+//        this.singleEvidenceConf = this.wrapper.getOWLClassByIdentifier(
 //                SINGLE_EVIDENCE_CONF_ID);
-//        this.multipleEvidenceConf = this.getWrapper().getOWLClassByIdentifier(
+//        this.multipleEvidenceConf = this.wrapper.getOWLClassByIdentifier(
 //                MULTIPLE_EVIDENCE_CONF_ID);
-//        this.congruentSameTypeEvidenceConf = this.getWrapper().getOWLClassByIdentifier(
+//        this.congruentSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifier(
 //                CONGRUENT_SAME_TYPE_EVIDENCE_CONF_ID);
-//        this.congruentMultipleTypesEvidenceConf = this.getWrapper().getOWLClassByIdentifier(
+//        this.congruentMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifier(
 //                CONGRUENT_MULTIPLE_TYPES_EVIDENCE_CONF_ID);
-//        this.weakConflictSameTypeEvidenceConf = this.getWrapper().getOWLClassByIdentifier(
+//        this.weakConflictSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifier(
 //                WEAK_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID);
-//        this.weakConflictMultipleTypesEvidenceConf = this.getWrapper().getOWLClassByIdentifier(
+//        this.weakConflictMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifier(
 //                WEAK_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID);
-//        this.strongConflictSameTypeEvidenceConf = this.getWrapper().getOWLClassByIdentifier(
+//        this.strongConflictSameTypeEvidenceConf = this.wrapper.getOWLClassByIdentifier(
 //                STRONG_CONFLICT_SAME_TYPE_EVIDENCE_CONF_ID);
-//        this.strongConflictMultipleTypesEvidenceConf = this.getWrapper().getOWLClassByIdentifier(
+//        this.strongConflictMultipleTypesEvidenceConf = this.wrapper.getOWLClassByIdentifier(
 //                STRONG_CONFLICT_MULTIPLE_TYPES_EVIDENCE_CONF_ID);
 //        if (this.singleEvidenceConf == null || this.multipleEvidenceConf == null || 
 //                this.congruentSameTypeEvidenceConf == null || 
@@ -842,10 +896,10 @@ public class CIOWrapper extends OntologyUtils {
 //        }
 //        
 //        
-//        this.highConfLevel = this.getWrapper().getOWLClassByIdentifier(HIGH_CONF_LEVEL_ID);
-//        this.mediumConfLevel = this.getWrapper().getOWLClassByIdentifier(MEDIUM_CONF_LEVEL_ID);
-//        this.lowConfLevel = this.getWrapper().getOWLClassByIdentifier(LOW_CONF_LEVEL_ID);
-//        this.rejectedTerm = this.getWrapper().getOWLClassByIdentifier(REJECTED_TERM_ID);
+//        this.highConfLevel = this.wrapper.getOWLClassByIdentifier(HIGH_CONF_LEVEL_ID);
+//        this.mediumConfLevel = this.wrapper.getOWLClassByIdentifier(MEDIUM_CONF_LEVEL_ID);
+//        this.lowConfLevel = this.wrapper.getOWLClassByIdentifier(LOW_CONF_LEVEL_ID);
+//        this.rejectedTerm = this.wrapper.getOWLClassByIdentifier(REJECTED_TERM_ID);
 //        if (this.highConfLevel == null || this.mediumConfLevel == null || 
 //                this.lowConfLevel == null || this.rejectedTerm == null) {
 //            throw log.throwing(new IllegalArgumentException("The ontology used does not allow "
@@ -854,11 +908,11 @@ public class CIOWrapper extends OntologyUtils {
 //                    " - Low conf: " + this.lowConfLevel + " - Rejected: " + this.rejectedTerm));
 //        }
 //        
-//        this.congruentConcordance = this.getWrapper().getOWLClassByIdentifier(
+//        this.congruentConcordance = this.wrapper.getOWLClassByIdentifier(
 //                CONGRUENT_CONCORDANCE_ID);
-//        this.weaklyConflictingConcordance = this.getWrapper().getOWLClassByIdentifier(
+//        this.weaklyConflictingConcordance = this.wrapper.getOWLClassByIdentifier(
 //                WEAKLY_CONFLICTING_CONCORDANCE_ID);
-//        this.stronglyConflictingConcordance = this.getWrapper().getOWLClassByIdentifier(
+//        this.stronglyConflictingConcordance = this.wrapper.getOWLClassByIdentifier(
 //                STRONGLY_CONFLICTING_CONCORDANCE_ID);
 //        if (this.congruentConcordance == null || this.weaklyConflictingConcordance == null || 
 //                this.stronglyConflictingConcordance == null) {
@@ -869,9 +923,9 @@ public class CIOWrapper extends OntologyUtils {
 //                " - Strongly conflicting concordance: " + this.stronglyConflictingConcordance));
 //        }
 //        
-//        this.sameTypeEvidenceConcordance = this.getWrapper().getOWLClassByIdentifier(
+//        this.sameTypeEvidenceConcordance = this.wrapper.getOWLClassByIdentifier(
 //                SAME_TYPE_EVIDENCE_CONCORDANCE_ID);
-//        this.differentTypesEvidenceConcordance = this.getWrapper().getOWLClassByIdentifier(
+//        this.differentTypesEvidenceConcordance = this.wrapper.getOWLClassByIdentifier(
 //                DIFFERENT_TYPES_EVIDENCE_CONCORDANCE_ID);
 //        if (this.sameTypeEvidenceConcordance == null || 
 //                this.differentTypesEvidenceConcordance == null) {
@@ -899,10 +953,10 @@ public class CIOWrapper extends OntologyUtils {
 //        log.entry(ancestors);
 //        
 //        Set<OWLClass> intersectingClasses = new HashSet<OWLClass>();
-//        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+//        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
 //            Set<OWLClass> relatedClasses = new HashSet<OWLClass>();
 //            relatedClasses.add(cls);
-//            relatedClasses.addAll(this.getWrapper().getAncestorsThroughIsA(cls));
+//            relatedClasses.addAll(this.wrapper.getAncestorsThroughIsA(cls));
 //            if (relatedClasses.containsAll(ancestors)) {
 //                intersectingClasses.add(cls);
 //            }
@@ -1002,7 +1056,7 @@ public class CIOWrapper extends OntologyUtils {
     private boolean isMemberOfBranch(OWLClass cls, OWLClass branchRoot) {
         log.entry(cls, branchRoot);
         if (branchRoot.equals(cls) || 
-                this.getWrapper().getAncestorsThroughIsA(cls).contains(branchRoot)) {
+                this.wrapper.getAncestorsThroughIsA(cls).contains(branchRoot)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -1026,13 +1080,11 @@ public class CIOWrapper extends OntologyUtils {
      * Returns the 'confidence level' associated to {@code cls}. The returned {@code OWLClass} 
      * is associated to {@code cls} through the relation 'has confidence level' 
      * (see {@link #HAS_CONFIDENCE_LEVEL_ID}). 
-     * Returns {@code null} if {@code cls} is not associated to any confidence level.
      * 
      * @param cls   An {@code OWLClass} for which we want to retrieve the associated 
      *              'confidence level' term.
      * @return      An {@code OWLClass} that is the 'confidence level' term associated to 
-     *              {@code cls}. {@code null} if {@code cls} is not associated to 
-     *              any 'confidence level' term.
+     *              {@code cls}. 
      * @throws IllegalArgumentException If {@code cls} is not a CI statement.
      * @throws IllegalStateException    If the ontology wrapped allowed to retrieve more than 
      *                                  one confidence level associated, or an invalid 
@@ -1048,7 +1100,7 @@ public class CIOWrapper extends OntologyUtils {
      * Returns the 'evidence concordance' associated to {@code cls}. The returned {@code OWLClass} 
      * is associated to {@code cls} through the relation 'has evidence concordance' 
      * (see {@link #HAS_EVIDENCE_CONCORDANCE_ID}). 
-     * Returns {@code null} if {@code cls} is not associated to any evidence concordance.
+     * All CI statements should always be associated to an 'evidence concordance'.
      * 
      * @param cls   An {@code OWLClass} for which we want to retrieve the associated 
      *              'evidence concordance' term.
@@ -1078,13 +1130,11 @@ public class CIOWrapper extends OntologyUtils {
      * Returns the 'evidence type concordance' associated to {@code cls}. The returned 
      * {@code OWLClass} is associated to {@code cls} through the relation 
      * 'has evidence type concordance' (see {@link #HAS_EVIDENCE_TYPE_CONCORDANCE_ID}). 
-     * Returns {@code null} if {@code cls} is not associated to any evidence type concordance.
      * 
      * @param cls   An {@code OWLClass} for which we want to retrieve the associated 
      *              'evidence type concordance' term.
      * @return      An {@code OWLClass} that is the 'evidence type concordance' term associated to 
-     *              {@code cls}. {@code null} if {@code cls} is not associated to 
-     *              any 'evidence type concordance' term.
+     *              {@code cls}. 
      * @throws IllegalArgumentException If {@code cls} is not a CI statement.
      * @throws IllegalStateException    If the ontology wrapped allowed to retrieve more than 
      *                                  one evidence type concordance associated, or an invalid 
@@ -1128,40 +1178,80 @@ public class CIOWrapper extends OntologyUtils {
         }
         //check that relation is a 'has confidence element' type of relation, 
         //without being the 'has confidence element' relation itself
-        if (!this.getWrapper().getSuperPropertyClosureOf(relation).contains(
+        if (!this.wrapper.getSuperPropertyClosureOf(relation).contains(
                 this.hasConfidenceElement)) {
             throw log.throwing(new IllegalArgumentException("The provided relation "
                     + "is not a sub-property of 'has_confidence_element'"));
         }
         
-        //retrieve associated CI element
-        //suppress warning because OWLGraphWrapper use an unparameterized argument 
-        //for method getOutgoingEdges
-        @SuppressWarnings("rawtypes")
-        Set<OWLGraphEdge> edges = this.getWrapper().getOutgoingEdges(cls, 
-                new HashSet<OWLPropertyExpression>(Arrays.asList(relation)));
+        //retrieve associated CI element.
         
-        //only one CI element at most should be retrieved for a given relation
-        if (edges.size() > 1) {
+        //in order to store the target of edges
+        Set<OWLClass> confElements = new HashSet<OWLClass>();
+        //we check outgoing edges in two passes: first we check direct outgoing edges, 
+        //and if no appropriate edge was found, we check also indirect outgoing edges.
+        //This is to improve performances.
+        int i = 0;
+        while (i < 2) {
+            Set<OWLGraphEdge> edges = null;
+            if (i == 0) {
+                //first pass
+                edges = this.wrapper.getOutgoingEdges(cls);
+            } else {
+                //second pass
+                edges = this.wrapper.getOutgoingEdgesClosure(cls);
+            }
+            for (OWLGraphEdge edge: edges) {
+                //filter correct edges
+                if (edge.getTarget() instanceof OWLClass && 
+                        //only relations with successful composition
+                        edge.getQuantifiedPropertyList().size() == 1 && 
+                        //only objectAllValuesFrom and objectSomeValuesFrom accepted
+                        (edge.getFirstQuantifiedProperty().isAllValuesFrom() || 
+                                edge.getFirstQuantifiedProperty().isSomeValuesFrom()) && 
+                        //and with the requested relation
+                        relation.equals(edge.getFirstQuantifiedProperty().getProperty())) {
+                    
+                    log.trace("Edge used to retrieve CI element: {}", edge);
+                    confElements.add((OWLClass) edge.getTarget());
+                }
+            }
+            //if we found elements at the first pass, no need for a second pass.
+            if (!confElements.isEmpty()) {
+                break;
+            }
+            i++;
+        }
+        //keep only the most precises CI element, only if necessary, to improve performances.
+        if (confElements.size() > 1) {
+            Set<OWLClass> confElementAncestors = new HashSet<OWLClass>();
+            for (OWLClass confElement: confElements) {
+                confElementAncestors.addAll(this.wrapper.getAncestorsThroughIsA(confElement));
+            }
+            confElements.removeAll(confElementAncestors);
+        }
+        log.trace("Confidence elements retrieved: {}", confElements);
+        
+        //only one precise CI element at most should be retrieved for a given relation
+        if (confElements.size() > 1) {
             throw log.throwing(new IllegalStateException(cls + " is associated to "
                     + "more than one confidence element through relation " + relation 
-                    + ": " + edges));
+                    + ": " + confElements));
         }
-        if (edges.size() == 0) {
+        if (confElements.size() == 0) {
             return log.exit(null);
         }
         
         //check validity of CI element retrieved
-        OWLObject target = edges.iterator().next().getTarget();
-        if (!(target instanceof OWLClass) || 
-            !this.isConfidenceElement((OWLClass) target) || 
-            !this.getWrapper().getAncestorsThroughIsA(target).contains(expectedAncestor)) {
+        OWLClass element = confElements.iterator().next();
+        if (!this.isConfidenceElement(element) || 
+            !this.isMemberOfBranch(element, expectedAncestor)) {
             throw log.throwing(new IllegalStateException(cls + " is associated to "
                     + "an incorrect confidence element through relation " + relation 
-                    + ": " + target + " - expected ancestor: " + expectedAncestor));
+                    + ": " + element + " - expected ancestor: " + expectedAncestor));
         }
         
-        return log.exit((OWLClass) target);
+        return log.exit(element);
     }
     
 //    /**
@@ -1183,7 +1273,7 @@ public class CIOWrapper extends OntologyUtils {
 //        throws IllegalArgumentException {
 //        log.entry(subClass, rel);
 //        Set<OWLClass> superClasses = new HashSet<OWLClass>();
-//        for (OWLGraphEdge edge: this.getWrapper().getOutgoingEdges(subClass, 
+//        for (OWLGraphEdge edge: this.wrapper.getOutgoingEdges(subClass, 
 //                new HashSet<OWLPropertyExpression>(Arrays.asList(rel)))) {
 //            if (edge.getTarget() instanceof OWLClass) {
 //                superClasses.add((OWLClass) edge.getTarget());
@@ -1209,8 +1299,8 @@ public class CIOWrapper extends OntologyUtils {
      * evidence concordance and evidence type concordance, see {@link 
      * #getEvidenceConcordance(OWLClass)} and {@link #getEvidenceTypeConcordance(OWLClass)}).
      * <li>They must all represent a confidence level (meaning, {@link 
-     * #getConfidenceLevel(OWLClass)} must return a value not {@code null}, and 
-     * {@link #isRejectedStatement(OWLClass)} must return {@code false}).
+     * #getConfidenceLevel(OWLClass)} must return a value not {@code null}, contained in 
+     * the collection returned by {@link #getConfidenceLevels()}).
      * </ul>
      * Otherwise, an {@code IllegalArgumentException} is thrown. 
      * <p>
@@ -1232,6 +1322,7 @@ public class CIOWrapper extends OntologyUtils {
         log.entry(cioTerms);
     
         //check pre-conditions
+        Set<OWLClass> validConfLevels = this.getConfidenceLevels();
         if (cioTerms.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("The provided Collection "
                     + "of OWLClasses to be ordered based on confidence levels is empty."));
@@ -1243,9 +1334,9 @@ public class CIOWrapper extends OntologyUtils {
                 throw log.throwing(new IllegalArgumentException(cls + " is not a confidence "
                         + "information statement, cannot identify best confidence term."));
             }
-            if (this.getConfidenceLevel(cls) == null) {
+            if (!validConfLevels.contains(this.getConfidenceLevel(cls))) {
                 throw log.throwing(new IllegalArgumentException(cls
-                        + " is not associated to a confidence level, cannot be ordered."));
+                        + " is not associated to a valid confidence level, cannot be ordered."));
             }
             evidenceConcordances.add(this.getEvidenceConcordance(cls));
             evidenceTypeConcordances.add(this.getEvidenceTypeConcordance(cls));
@@ -1297,22 +1388,18 @@ public class CIOWrapper extends OntologyUtils {
     public OWLClass getSingleEvidenceConfidenceStatement(OWLClass confidenceLevel) {
         log.entry(confidenceLevel);
         return log.exit(this.getConfidenceStatement(this.singleEvidenceConcordance, 
-                null, confidenceLevel));
+                this.evidenceTypeConcordance, confidenceLevel));
     }
     /**
      * Retrieve a CI statement associated to the provided {@code evidenceConcordance}, 
      * {@code evidenceTypeConcordance}, and {@code confidenceLevel}. The following requirements 
      * must be met: 
      * <ul>
-     * <li>{@code evidenceConcordance} must be not-{@code null}, and of type 
+     * <li>{@code evidenceConcordance} must be of type 
      * 'evidence concordance' ({@link #isEvidenceConcordance(OWLClass)} returns {@code true}); 
-     * <li>{@code evidenceTypeConcordance}, if not-{@code null}, must be of type 
+     * <li>{@code evidenceTypeConcordance} must be of type 
      * 'evidence type concordance' ({@link #isEvidenceTypeConcordance(OWLClass)} returns 
      * {@code true}); 
-     * <li>if {@code evidenceConcordance} is of type 'single evidence' ({@link 
-     * #isSingleEvidenceConcordance(OWLClass)} returns {@code true}), 
-     * {@code evidenceTypeConcordance} must be {@code null}, otherwise it must be 
-     * not-{@code null}; 
      * <li>{@code confidenceLevel} can be {@code null}, but when not-{@code null}, 
      * it must be one of the confidence levels returned by {@code #getConfidenceLevels()}.
      * </ul>
@@ -1359,7 +1446,8 @@ public class CIOWrapper extends OntologyUtils {
         //evidence type concordance must be provided only when evidenceConcordance is not 
         //a single evidence concordance
         if ((this.isSingleEvidenceConcordance(evidenceConcordance) && 
-                evidenceTypeConcordance != null) || 
+                evidenceTypeConcordance != null && 
+                !evidenceTypeConcordance.equals(this.evidenceTypeConcordance)) || 
             (!this.isSingleEvidenceConcordance(evidenceConcordance) && 
                         evidenceTypeConcordance == null)) {
             throw log.throwing(new IllegalArgumentException("An evidence type concordance "
@@ -1374,25 +1462,36 @@ public class CIOWrapper extends OntologyUtils {
         }
         
         //to identify the correct class, we use a graph-based approach, 
-        //rather than using a reasoner to retrieve equivalent classes
+        //rather than using a reasoner to retrieve equivalent classes. 
+        //we store all classes retrieved to check for errors
         Set<OWLClass> identifiedClasses = new HashSet<OWLClass>();
-        for (OWLClass cls: this.getWrapper().getAllOWLClasses()) {
+        for (OWLClass cls: this.wrapper.getAllOWLClasses()) {
+            if (!this.isConfidenceStatement(cls)) {
+                continue;
+            }
             OWLClass clsEvidenceConcordance = this.getEvidenceConcordance(cls);
+            if (!evidenceConcordance.equals(clsEvidenceConcordance)) {
+                continue;
+            }
             OWLClass clsEvidenceTypeConcordance = this.getEvidenceTypeConcordance(cls);
+            if (!Objects.equals(evidenceTypeConcordance, clsEvidenceTypeConcordance)) {
+                continue;
+            }
             OWLClass clsConfidenceLevel = this.getConfidenceLevel(cls);
             if (!validConfidenceLevels.contains(clsConfidenceLevel)) {
                 clsConfidenceLevel = null;
             }
-            
-            if (evidenceConcordance.equals(clsEvidenceConcordance) && 
-                    Objects.equals(evidenceTypeConcordance, clsEvidenceTypeConcordance) && 
-                    Objects.equals(confidenceLevel, clsConfidenceLevel)) {
-                if (!this.isConfidenceStatement(cls)) {
-                    throw log.throwing(new IllegalStateException("The CIO wrapped identified "
-                            + "an invalid class, that should be a CI statement: " + cls));
-                }
-                identifiedClasses.add(cls);
+            if (!Objects.equals(confidenceLevel, clsConfidenceLevel)) {
+                continue;
             }
+
+            identifiedClasses.add(cls);
+            log.trace("Confidence elements retrieved for class {} - evidence conc.: {} - evidence type conc.: {} - conf. level: {}", 
+                    cls, clsEvidenceConcordance, clsEvidenceTypeConcordance, clsConfidenceLevel);
+                
+            //XXX: actually, stop iteration as soon as a class is found, it is too slow 
+            //to iterate all classes each time
+            break;
         }
         
         //check validity of results
@@ -1418,12 +1517,13 @@ public class CIOWrapper extends OntologyUtils {
     /**
      * @return  A {@code Set} of {@code OWLClass}es that are 
      *          confidence information elements representing confidence levels 
-     *          in the wrapped CIO, subclasses of the term 'confidence level'. 
+     *          in the wrapped CIO, subclasses of the term 'confidence level' 
+     *          (and not the 'confidence level' term itself). 
      * @see #CONFIDENCE_LEVEL_ID
      */
     public Set<OWLClass> getConfidenceLevels() {
         log.entry();
-        return log.exit(this.getWrapper().getDescendantsThroughIsA(this.confidenceLevel));
+        return log.exit(this.wrapper.getDescendantsThroughIsA(this.confidenceLevel));
     }
     /**
      * @return  A {@code List} of {@code OWLClass}es that are 
@@ -1441,7 +1541,7 @@ public class CIOWrapper extends OntologyUtils {
         log.entry();
 
         List<OWLClass> orderedConfLevels = new ArrayList<OWLClass>(this.getConfidenceLevels());
-        final OWLGraphWrapper wrapper = this.getWrapper();
+        final OWLGraphWrapper wrapper = this.wrapper;
         //suppress warning because the wrapper uses unparameterized arguments
         @SuppressWarnings("rawtypes")
         final Set<OWLPropertyExpression> greaterConfThanRels = new HashSet<OWLPropertyExpression>();
@@ -1465,6 +1565,13 @@ public class CIOWrapper extends OntologyUtils {
         
         return log.exit(orderedConfLevels);
     }
+    
+    /**
+     * @return  The {@code OWLGraphWrapper} that this object is using.
+     */
+    public OWLGraphWrapper getOWLGraphWrapper() {
+        return this.wrapper;
+    }
 
 //    /**
 //     * Determines the branch in the ontology which {@code cls} belongs to, among the branches 
@@ -1486,7 +1593,7 @@ public class CIOWrapper extends OntologyUtils {
 //        
 //        Set<OWLClass> relatedClasses = new HashSet<OWLClass>();
 //        relatedClasses.add(cls);
-//        relatedClasses.addAll(this.getWrapper().getAncestorsThroughIsA(cls));
+//        relatedClasses.addAll(this.wrapper.getAncestorsThroughIsA(cls));
 //        relatedClasses.retainAll(this.getValidBranches());
 //        if (relatedClasses.size() != 1) {
 //            throw log.throwing(new IllegalArgumentException(cls + " does not belong to "
@@ -1546,7 +1653,7 @@ public class CIOWrapper extends OntologyUtils {
 //        log.entry(cls);
 //        Set<OWLClass> relatedClasses = new HashSet<OWLClass>();
 //        relatedClasses.add(cls);
-//        relatedClasses.addAll(this.getWrapper().getAncestorsThroughIsA(cls));
+//        relatedClasses.addAll(this.wrapper.getAncestorsThroughIsA(cls));
 //        relatedClasses.retainAll(this.getOrderedConfidenceLevels());
 //        if (relatedClasses.size() != 1) {
 //            throw log.throwing(new IllegalArgumentException(cls + " does not provide "
@@ -1671,7 +1778,7 @@ public class CIOWrapper extends OntologyUtils {
 //        if (subgraphRoot.equals(cls)) {
 //            return log.exit(true);
 //        }
-//        if (this.getWrapper().getAncestorsThroughIsA(cls).contains(subgraphRoot)) {
+//        if (this.wrapper.getAncestorsThroughIsA(cls).contains(subgraphRoot)) {
 //            return log.exit(true);
 //        }
 //        return log.exit(false);

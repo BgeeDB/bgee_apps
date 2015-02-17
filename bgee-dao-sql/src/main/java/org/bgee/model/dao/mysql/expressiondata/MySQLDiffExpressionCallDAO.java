@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -46,6 +45,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      * @param manager                       The {@code MySQLDAOManager} to use.
      * @throws IllegalArgumentException     If {@code manager} is {@code null}.
      */
+    //XXX shouldn't it be a NullPointerException then? (also in other DAOs)
     public MySQLDiffExpressionCallDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
@@ -125,6 +125,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         boolean filterRNASeqTypes = 
                 (diffExprCallTypeRNASeq != null && diffExprCallTypeRNASeq.size() != 0 );
         if (factor != null || filterAffymetrixTypes || filterRNASeqTypes) {
+            //FIXME: seems to me that this will bug when speciesIds are provided
+            //(WHERE clause already provided)
             sql += " WHERE ";
         }
         if (factor != null) {
@@ -137,40 +139,41 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         if (filterRNASeqTypes) {
             nbFilterCallType++;
         }
+        assert nbFilterCallType < 2;
         if (factor != null && nbFilterCallType > 0) {
             sql += " AND ";
         }
-        if (nbFilterCallType == 2) {
+        if (nbFilterCallType > 1) {
             sql += " (";
         }
         if (filterAffymetrixTypes) {
-            String not = " NOT ";
-            if (includeAffymetrixTypes) {
-                not = "";
+            sql += diffExprTableName + ".diffExprCallAffymetrix ";
+            if (!includeAffymetrixTypes) {
+                sql += "NOT";
             }
-            sql += diffExprTableName + ".diffExprCallAffymetrix " + not + " IN (" + 
-                    BgeePreparedStatement.generateParameterizedQueryString(
+            sql += " IN (" + BgeePreparedStatement.generateParameterizedQueryString(
                             diffExprCallTypeAffymetrix.size()) + ")";
         }
-        if (nbFilterCallType == 2) {
+        if (nbFilterCallType > 1) {
             if (isSatisfyAllCallTypeCondition) {
                 sql += " AND ";
             } else {
                 sql += " OR ";
             }
-        } else if (factor != null && filterRNASeqTypes) {
+        } 
+        //FIXME: ?? 'AND' is already written line 145, isn't it?
+        else if (factor != null && filterRNASeqTypes) {
             sql += " AND ";
         }
         if (filterRNASeqTypes) {
-            String not = " NOT ";
-            if (includeRnaSeqTypes) {
-                not = "";
+            sql += diffExprTableName + ".diffExprCallRNASeq ";
+            if (!includeRnaSeqTypes) {
+                sql += "NOT";
             }
-            sql += diffExprTableName + ".diffExprCallRNASeq " + not + " IN (" + 
-                    BgeePreparedStatement.generateParameterizedQueryString(
+            sql += " IN (" + BgeePreparedStatement.generateParameterizedQueryString(
                             diffExprCallTypeRNASeq.size()) + ")";
         }
-        if (nbFilterCallType == 2) {
+        if (nbFilterCallType > 1) {
             sql += ")";
         }
         
@@ -178,7 +181,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         //not the actual results, so we should not close this BgeePreparedStatement.
         BgeePreparedStatement stmt = null;
         try {
-            stmt = this.getManager().getConnection().prepareStatement(sql.toString());
+            stmt = this.getManager().getConnection().prepareStatement(sql);
             int stmtIndex = 0;
             if (speciesIds != null && speciesIds.size() > 0) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
@@ -229,9 +232,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
                     Set<DiffExpressionCallDAO.Attribute> attributes, String diffExprTableName) {
         log.entry(attributes, diffExprTableName);
         
-        //the query construct is so complex that we always iterate each Attribute in any case
         if (attributes == null || attributes.isEmpty()) {
-            attributes = EnumSet.allOf(DiffExpressionCallDAO.Attribute.class);
+            return log.exit("SELECT * ");
         }
         
         String sql = "";

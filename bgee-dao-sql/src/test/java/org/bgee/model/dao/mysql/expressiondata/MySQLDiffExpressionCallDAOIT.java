@@ -196,6 +196,7 @@ public class MySQLDiffExpressionCallDAOIT extends MySQLITAncestor {
                         dao.getDiffExpressionCalls(params).getAllTOs()));
         
         // Test all filters in same time
+        //FIXME: this doesn't test with species IDs
         params.clearAffymetrixDiffExprCallTypes();
         params.addAffymetrixDiffExprCallType(DiffExprCallType.NOT_DIFF_EXPRESSED);
         params.setIncludeAffymetrixTypes(true);

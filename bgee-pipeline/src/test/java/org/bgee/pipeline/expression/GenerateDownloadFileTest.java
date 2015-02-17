@@ -1272,15 +1272,15 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         String outputAdvancedStageFile22 = new File(directory, "Genus22_species22_" + 
                 FileType.DIFF_EXPR_COMPLETE_STAGE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
-        assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY);
-        assertDiffExpressionFile(outputAdvancedAnatFile11, "11", false, ComparisonFactor.ANATOMY);
-        assertDiffExpressionFile(outputSimpleAnatFile22, "22", true, ComparisonFactor.ANATOMY);
-        assertDiffExpressionFile(outputAdvancedAnatFile22, "22", false, ComparisonFactor.ANATOMY);
+        assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY, 3);
+        assertDiffExpressionFile(outputAdvancedAnatFile11, "11", false, ComparisonFactor.ANATOMY, 3);
+        assertDiffExpressionFile(outputSimpleAnatFile22, "22", true, ComparisonFactor.ANATOMY, 1);
+        assertDiffExpressionFile(outputAdvancedAnatFile22, "22", false, ComparisonFactor.ANATOMY, 2);
         
-        assertDiffExpressionFile(outputSimpleStageFile11, "11", true, ComparisonFactor.DEVELOPMENT);
-        assertDiffExpressionFile(outputAdvancedStageFile11, "11", false, ComparisonFactor.DEVELOPMENT);
-        assertDiffExpressionFile(outputSimpleStageFile22, "22", true, ComparisonFactor.DEVELOPMENT);
-        assertDiffExpressionFile(outputAdvancedStageFile22, "22", false, ComparisonFactor.DEVELOPMENT);
+        assertDiffExpressionFile(outputSimpleStageFile11, "11", true, ComparisonFactor.DEVELOPMENT, 2);
+        assertDiffExpressionFile(outputAdvancedStageFile11, "11", false, ComparisonFactor.DEVELOPMENT, 2);
+        assertDiffExpressionFile(outputSimpleStageFile22, "22", true, ComparisonFactor.DEVELOPMENT, 2);
+        assertDiffExpressionFile(outputAdvancedStageFile22, "22", false, ComparisonFactor.DEVELOPMENT, 2);
 
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
@@ -1316,6 +1316,103 @@ public class GenerateDownloadFileTest  extends TestAncestor {
     }
     
     /**
+     * Test {@link GenerateDownloadFile#generateSingleSpeciesFiles(List, List, String)},
+     * which is the central method of the class doing all the job.
+     */
+    @Test
+    public void shouldGenerateSingleSpeciesDiffExprFile() throws IOException {
+        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11")); 
+        
+        // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
+        MockDAOManager mockManager = new MockDAOManager();
+                
+        MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
+                Arrays.asList(new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null)),
+                MySQLSpeciesTOResultSet.class);
+        when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds)).thenReturn(mockSpeciesTORs);
+
+        GeneTOResultSet mockGeneTORs = this.mockGetGenes(mockManager, speciesIds);
+        AnatEntityTOResultSet mockAnatEntityTORs = this.mockGetAnatEntities(mockManager, speciesIds);
+        StageTOResultSet mockStageTORs = this.mockGetStages(mockManager, speciesIds);
+        
+        // we need to mock getDiffExpressionCalls() for ComparisonFactor.ANATOMY for species 11
+        speciesIds = new HashSet<String>(Arrays.asList("11")); 
+        MySQLDiffExpressionCallTOResultSet mockAnatDiffExprRsSp11 = createMockDAOResultSet(
+                Arrays.asList(
+                new DiffExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.001f, 3, 1, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.05f, 1, 0), 
+                new DiffExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id2", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.UNDER_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.001f, 5, 0, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.03f, 1, 0), 
+                new DiffExpressionCallTO(null, "ID1", "Anat_id13", "Stage_id18",
+                        ComparisonFactor.ANATOMY, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.03f, 2, 1, DiffExprCallType.NOT_EXPRESSED, 
+                        DataState.NODATA, 1f, 0, 0)),
+                MySQLDiffExpressionCallTOResultSet.class);
+        DiffExpressionCallParams anatDiffExprParams11 = new DiffExpressionCallParams();
+        anatDiffExprParams11.addAllSpeciesIds(speciesIds);
+        anatDiffExprParams11.setComparisonFactor(ComparisonFactor.ANATOMY);
+        anatDiffExprParams11.setSatisfyAllCallTypeCondition(true);
+        anatDiffExprParams11.setIncludeAffymetrixTypes(false);
+        anatDiffExprParams11.addAllAffymetrixDiffExprCallTypes(
+                EnumSet.of(DiffExprCallType.NOT_EXPRESSED, DiffExprCallType.NO_DATA));
+        anatDiffExprParams11.setIncludeRNASeqTypes(false);
+        anatDiffExprParams11.addAllRNASeqDiffExprCallTypes(
+                EnumSet.of(DiffExprCallType.NOT_EXPRESSED, DiffExprCallType.NO_DATA));
+        
+        when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
+                (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams11))).
+                thenReturn(mockAnatDiffExprRsSp11);
+
+        ////////////////
+        GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
+        
+        String directory = testFolder.newFolder("tmpFolder").getPath();
+        
+        Set<FileType> fileTypes = new HashSet<>(Arrays.asList(FileType.DIFF_EXPR_SIMPLE_ANAT_ENTITY)); 
+
+        generate.generateSingleSpeciesFiles(
+                Arrays.asList("11"), fileTypes, directory);
+        
+        String outputSimpleAnatFile11 = new File(directory, "Genus11_species11_" + 
+                FileType.DIFF_EXPR_SIMPLE_ANAT_ENTITY + GenerateDownloadFile.EXTENSION).getAbsolutePath();
+
+        assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY, 3);
+
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockGeneTORs).close();
+        verify(mockAnatEntityTORs).close();
+        verify(mockStageTORs).close();
+        
+        verify(mockAnatDiffExprRsSp11).close();
+                
+        //check that the connection was closed at each species iteration
+        verify(mockManager.mockManager, times(1)).releaseResources();
+
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(
+                AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
+        verify(mockManager.mockGeneDAO, times(1)).setAttributes(
+                GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
+        verify(mockManager.mockStageDAO, times(1)).setAttributes(
+                StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
+
+        verify(mockManager.mockDiffExpressionCallDAO, times(1)).setAttributes(
+                // All Attributes except ID
+                EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
+
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockGeneTORs).close();
+        verify(mockAnatEntityTORs).close();
+        verify(mockStageTORs).close();
+    }
+    
+    /**
      * Asserts that the simple differential expression file is good.
      * <p>
      * Read given download file and check whether the file contents corresponds to what is expected. 
@@ -1326,8 +1423,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
      * @throws IOException      If the file could not be used.
      */
     private void assertDiffExpressionFile(String file, String speciesId, boolean isSimplified, 
-            ComparisonFactor factor) throws IOException {
-        log.entry(file, speciesId, isSimplified, factor);
+            ComparisonFactor factor, int expNbLines) throws IOException {
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
             String[] headers = mapReader.getHeader(true);
             log.trace("Headers: {}", (Object[]) headers);
@@ -1653,42 +1749,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 }
             }
             
-            //Check on number of lines
-            if (isSimplified) {
-                if (speciesId.equals("11")) {
-                    if (factor.equals(ComparisonFactor.ANATOMY)) {
-                        assertEquals("Incorrect number of lines in simple/anatomy file", 3, i);
-                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
-                        assertEquals("Incorrect number of lines in simple/development file", 2, i);
-                    }
-                } else if (speciesId.equals("22")) {
-                    if (factor.equals(ComparisonFactor.ANATOMY)) {
-                        assertEquals("Incorrect number of lines in simple/anatomy file", 1, i);
-                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
-                        assertEquals("Incorrect number of lines in simple/development file", 2, i);
-                    }
-                } else {
-                    throw new IllegalStateException("Test of species ID " + speciesId + 
-                            "not implemented yet");
-                }
-            } else {
-                if (speciesId.equals("11")) {
-                    if (factor.equals(ComparisonFactor.ANATOMY)) {
-                        assertEquals("Incorrect number of lines in advance/anatomy file", 3, i);
-                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
-                        assertEquals("Incorrect number of lines in advance/development file", 2, i);
-                    }
-                } else if (speciesId.equals("22")) {
-                    if (factor.equals(ComparisonFactor.ANATOMY)) {
-                        assertEquals("Incorrect number of lines in advance/anatomy file", 2, i);
-                    } else if (factor.equals(ComparisonFactor.DEVELOPMENT)) {
-                        assertEquals("Incorrect number of lines in advance/development file", 2, i);
-                    }
-                } else {
-                    throw new IllegalStateException("Test of species ID " + speciesId + 
-                            "not implemented yet");
-                }
-            }            
+            assertEquals("Incorrect number of lines in simple/anatomy file", expNbLines, i);
         }
     }
     

@@ -528,18 +528,30 @@ public class GenerateDownloadFile extends CallUser {
 
         // TODO Manage with multi-species!
 
-        // Arguments: species list, file types to be generated, and directory path
-        // FIXME be able to not provide a species list to use all species contained in database
-        int expectedArgLengthSingleSpecies = 3; 
-        if (args.length != expectedArgLengthSingleSpecies) {
+        // Arguments: species list (if null, all species will be used), 
+        // file types to be generated, and directory path
+        int expectedArgLengthWithoutSpecies = 2;
+        int expectedArgLengthWithSpecies = 3;
+    
+        if (args.length != expectedArgLengthWithSpecies &&
+                args.length != expectedArgLengthWithoutSpecies) {
             throw log.throwing(new IllegalArgumentException(
                     "Incorrect number of arguments provided, expected " + 
-                    expectedArgLengthSingleSpecies + " arguments, " + args.length + " provided."));
+                    expectedArgLengthWithoutSpecies + " or " + expectedArgLengthWithSpecies + 
+                    " arguments, " + args.length + " provided."));
         }
-
-        List<String> speciesIds = CommandRunner.parseListArgument(args[0]);
-        Set<String> fileTypes   = new HashSet<String>(CommandRunner.parseListArgument(args[1])); 
-        String directory        = args[2];
+                
+        List<String> speciesIds = null;
+        Set<String> fileTypes= null;
+        String directory = null;
+        if (args.length == expectedArgLengthWithSpecies) {
+            speciesIds = CommandRunner.parseListArgument(args[0]);
+            fileTypes  = new HashSet<String>(CommandRunner.parseListArgument(args[1])); 
+            directory  = args[2];
+        } else {
+            fileTypes  = new HashSet<String>(CommandRunner.parseListArgument(args[0])); 
+            directory  = args[1];
+        }
 
         // Retrieve FileType from String argument
         Set<String> unknownFileTypes = new HashSet<String>();

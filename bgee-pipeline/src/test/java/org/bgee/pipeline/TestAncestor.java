@@ -294,14 +294,26 @@ public abstract class TestAncestor
                 return false;
             }
             if (actual instanceof ExpressionCallParams && 
-                    ((ExpressionCallParams) actual).isIncludeSubstructures() != 
-                    ((ExpressionCallParams) expected).isIncludeSubstructures()) {
+                    (((ExpressionCallParams) actual).isIncludeSubstructures() != 
+                        ((ExpressionCallParams) expected).isIncludeSubstructures() || 
+                    ((ExpressionCallParams) actual).isIncludeSubStages() != 
+                        ((ExpressionCallParams) expected).isIncludeSubStages())) {
                 return false;
             }
-            if (actual instanceof DiffExpressionCallParams && 
-                    ((DiffExpressionCallParams) actual).getComparisonFactor() != 
-                    ((DiffExpressionCallParams) expected).getComparisonFactor()) {
-                return false;
+            if (actual instanceof DiffExpressionCallParams) {
+                DiffExpressionCallParams tmpActual = (DiffExpressionCallParams) actual;
+                DiffExpressionCallParams tmpExpected = (DiffExpressionCallParams) expected;
+                if (tmpActual.getComparisonFactor() != tmpExpected.getComparisonFactor() ||
+                    !tmpActual.getAffymetrixDiffExprCallTypes().equals(
+                            tmpExpected.getAffymetrixDiffExprCallTypes()) ||
+                    tmpActual.isIncludeAffymetrixTypes() != tmpExpected.isIncludeAffymetrixTypes() ||
+                    !tmpActual.getRNASeqDiffExprCallTypes().equals(
+                            tmpExpected.getRNASeqDiffExprCallTypes()) ||
+                    tmpActual.isIncludeRNASeqTypes() != tmpExpected.isIncludeRNASeqTypes() ||
+                    tmpActual.isSatisfyAllCallTypeCondition() != 
+                            tmpExpected.isSatisfyAllCallTypeCondition()){
+                    return false;
+                }
             }
             if (actual instanceof NoExpressionCallParams && 
                     ((NoExpressionCallParams) actual).isIncludeParentStructures() != 

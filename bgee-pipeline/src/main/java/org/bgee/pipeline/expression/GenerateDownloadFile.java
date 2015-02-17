@@ -675,7 +675,7 @@ public class GenerateDownloadFile extends CallUser {
                         directory, speciesNamesForFilesByIds.get(speciesId), 
                         diffexprAnatEntityFT, speciesId, geneNamesByIds, stageNamesByIds, 
                         anatEntityNamesByIds, ComparisonFactor.ANATOMY,
-                        fileTypes.contains(FileType.DIFF_EXPR_COMPLETE_STAGE));
+                        fileTypes.contains(FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY));
             }
             
             // Differential expression files across stages 
@@ -920,7 +920,7 @@ public class GenerateDownloadFile extends CallUser {
         params.setComparisonFactor(factor);
         //if the advanced file won't be generated we don't retrieve 'not expressed' calls 
         if (!generateAdvancedFile) {
-            params.setSatisfyAllCallTypeCondition(true);
+            params.setSatisfyAllCallTypeConditions(true);
             params.setIncludeAffymetrixTypes(false);
             params.addAllAffymetrixDiffExprCallTypes(
                     EnumSet.of(DiffExprCallType.NOT_EXPRESSED, DiffExprCallType.NO_DATA));
@@ -1690,7 +1690,9 @@ public class GenerateDownloadFile extends CallUser {
             copySpeciesIds.removeAll(namesByIds.keySet());
             throw log.throwing(new IllegalArgumentException("Some species IDs provided " +
             		"do not correspond to any species: " + copySpeciesIds));
-        } else if (namesByIds.size() > speciesIds.size()) {
+        } else if (namesByIds.size() > speciesIds.size() && speciesIds.size() > 0) {
+            // if speciesIds is empty or null to get all species contained in database, 
+            // speciesIds.size() == 0 but this exception should not be launched
             throw log.throwing(new IllegalStateException("An ID should always be associated " +
             		"to only one species..."));
         }

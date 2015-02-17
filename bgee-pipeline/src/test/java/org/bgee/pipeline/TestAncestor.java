@@ -310,8 +310,8 @@ public abstract class TestAncestor
                     !tmpActual.getRNASeqDiffExprCallTypes().equals(
                             tmpExpected.getRNASeqDiffExprCallTypes()) ||
                     tmpActual.isIncludeRNASeqTypes() != tmpExpected.isIncludeRNASeqTypes() ||
-                    tmpActual.isSatisfyAllCallTypeCondition() != 
-                            tmpExpected.isSatisfyAllCallTypeCondition()){
+                    tmpActual.isSatisfyAllCallTypeConditions() != 
+                            tmpExpected.isSatisfyAllCallTypeConditions()){
                     return false;
                 }
             }

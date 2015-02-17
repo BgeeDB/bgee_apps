@@ -1,7 +1,7 @@
 package org.bgee.pipeline.expression;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -351,10 +351,12 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         String outputAdvancedFile22 = new File(directory, "Genus22_species22_" + 
                 FileType.EXPR_COMPLETE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
-        assertExpressionFile(outputSimpleFile11, "11", true);
-        assertExpressionFile(outputAdvancedFile11, "11", false);
-        assertExpressionFile(outputSimpleFile22, "22", true);
-        assertExpressionFile(outputAdvancedFile22, "22", false);
+        assertExpressionFile(outputSimpleFile11, "11", true, 5);
+        assertExpressionFile(outputAdvancedFile11, "11", false, 10);
+        // TODO: set to 6 when the relaxed in situ data will be added
+        assertExpressionFile(outputSimpleFile22, "22", true, 5);
+        // TODO: set to 11 when the relaxed in situ data will be added
+        assertExpressionFile(outputAdvancedFile22, "22", false, 10);
 
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
@@ -607,11 +609,13 @@ public class GenerateDownloadFileTest  extends TestAncestor {
      * @param file              A {@code String} that is the path to the file were data was written 
      *                          as TSV.
      * @param isSimplifiedFile  A {@code String} defining the species ID.
+     * @param expNbLines        An {@code Integer} defining the expected number of lines in 
+     *                          {@code file}.
      * @throws IOException      If the file could not be used.
      */
-    private void assertExpressionFile(String file, String speciesId, boolean isSimplified)
-            throws IOException {
-        log.entry(file, speciesId, isSimplified);
+    private void assertExpressionFile(String file, String speciesId, boolean isSimplified, 
+            int expNbLines) throws IOException {
+        log.entry(file, speciesId, isSimplified, expNbLines);
         
         try (ICsvMapReader mapReader = new CsvMapReader(new FileReader(file), Utils.TSVCOMMENTED)) {
             String[] headers = mapReader.getHeader(true);
@@ -1052,28 +1056,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                             "not implemented yet");
                 }
             }
-            if (isSimplified) {
-                if (speciesId.equals("11")) {
-                    assertEquals("Incorrect number of lines in simple download file", 5, i);
-                } else if (speciesId.equals("22")) {
-                    // TODO: set to 6 when the relaxed in situ data will be added
-                    assertEquals("Incorrect number of lines in simple download file", 5, i);
-                } else {
-                    throw new IllegalStateException("Test of species ID " + speciesId + 
-                            "not implemented yet");
-                }
-            } else {
-                if (speciesId.equals("11")) {
-                    assertEquals("Incorrect number of lines in advanced download file", 10, i);
-                } else if (speciesId.equals("22")) {
-                    // TODO: set to 11 when the relaxed in situ data will be added
-                    assertEquals("Incorrect number of lines in advanced download file", 10, i);
-                } else {
-                    throw new IllegalStateException("Test of species ID " + speciesId + 
-                            "not implemented yet");
-                }
-
-            }            
+            assertEquals("Incorrect number of lines in simple download file", expNbLines, i);
         }
     }
 
@@ -1355,7 +1338,7 @@ public class GenerateDownloadFileTest  extends TestAncestor {
         DiffExpressionCallParams anatDiffExprParams11 = new DiffExpressionCallParams();
         anatDiffExprParams11.addAllSpeciesIds(speciesIds);
         anatDiffExprParams11.setComparisonFactor(ComparisonFactor.ANATOMY);
-        anatDiffExprParams11.setSatisfyAllCallTypeCondition(true);
+        anatDiffExprParams11.setSatisfyAllCallTypeConditions(true);
         anatDiffExprParams11.setIncludeAffymetrixTypes(false);
         anatDiffExprParams11.addAllAffymetrixDiffExprCallTypes(
                 EnumSet.of(DiffExprCallType.NOT_EXPRESSED, DiffExprCallType.NO_DATA));
@@ -1413,6 +1396,90 @@ public class GenerateDownloadFileTest  extends TestAncestor {
     }
     
     /**
+     * Test {@link GenerateDownloadFile#generateSingleSpeciesFiles(List, List, String)},
+     * which is the central method of the class doing all the job.
+     */
+    @Test
+    public void shouldGenerateSingleSpeciesDiffExprFileWithoutSpeciesList() throws IOException {
+        Set<String> speciesIds = new HashSet<String>(); 
+        
+        // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
+        MockDAOManager mockManager = new MockDAOManager();
+                
+        MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
+                Arrays.asList(new SpeciesTO("22", null, "Genus22", "species22", null, null, null, null)),
+                MySQLSpeciesTOResultSet.class);
+        when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds)).thenReturn(mockSpeciesTORs);
+
+        GeneTOResultSet mockGeneTORs = this.mockGetGenes(mockManager, speciesIds);
+        AnatEntityTOResultSet mockAnatEntityTORs = this.mockGetAnatEntities(mockManager, speciesIds);
+        StageTOResultSet mockStageTORs = this.mockGetStages(mockManager, speciesIds);
+        
+        // we need to mock getDiffExpressionCalls() for ComparisonFactor.ANATOMY for species 11
+        speciesIds = new HashSet<String>(Arrays.asList("22")); 
+        MySQLDiffExpressionCallTOResultSet mockAnatDiffExprRsSp22 = createMockDAOResultSet(
+                Arrays.asList(
+                        new DiffExpressionCallTO(null, "ID2", "Anat_id2", "Stage_id1", 
+                                ComparisonFactor.ANATOMY, DiffExprCallType.NO_DATA, 
+                                DataState.NODATA, 1f, 0, 0, DiffExprCallType.UNDER_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.008f, 3, 0), 
+                        new DiffExpressionCallTO(null, "ID2", "Anat_id13", "Stage_id3",
+                                ComparisonFactor.ANATOMY, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.002f, 10, 1, DiffExprCallType.NOT_DIFF_EXPRESSED, 
+                                DataState.HIGHQUALITY, 0.007f, 9, 2)),
+                        MySQLDiffExpressionCallTOResultSet.class);
+        DiffExpressionCallParams anatDiffExprParams22 = new DiffExpressionCallParams();
+        anatDiffExprParams22.addAllSpeciesIds(speciesIds);
+        anatDiffExprParams22.setComparisonFactor(ComparisonFactor.ANATOMY);
+        when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
+                (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams22))).
+                thenReturn(mockAnatDiffExprRsSp22);
+
+        ////////////////
+        GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
+        
+        String directory = testFolder.newFolder("tmpFolder").getPath();
+        
+        Set<FileType> fileTypes = new HashSet<>(Arrays.asList(FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY)); 
+
+        generate.generateSingleSpeciesFiles(null, fileTypes, directory);
+        
+        String outputAdvancedAnatFile22 = new File(directory, "Genus22_species22_" + 
+                FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY + GenerateDownloadFile.EXTENSION).getAbsolutePath();
+
+        assertDiffExpressionFile(outputAdvancedAnatFile22, "22", false, ComparisonFactor.ANATOMY, 2);
+
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockGeneTORs).close();
+        verify(mockAnatEntityTORs).close();
+        verify(mockStageTORs).close();
+        
+        verify(mockAnatDiffExprRsSp22).close();
+                
+        //check that the connection was closed at each species iteration
+        verify(mockManager.mockManager, times(1)).releaseResources();
+
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(
+                AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
+        verify(mockManager.mockGeneDAO, times(1)).setAttributes(
+                GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
+        verify(mockManager.mockStageDAO, times(1)).setAttributes(
+                StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
+
+        verify(mockManager.mockDiffExpressionCallDAO, times(1)).setAttributes(
+                // All Attributes except ID
+                EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
+
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockGeneTORs).close();
+        verify(mockAnatEntityTORs).close();
+        verify(mockStageTORs).close();
+    }
+
+    /**
      * Asserts that the simple differential expression file is good.
      * <p>
      * Read given download file and check whether the file contents corresponds to what is expected. 
@@ -1420,6 +1487,8 @@ public class GenerateDownloadFileTest  extends TestAncestor {
      * @param file              A {@code String} that is the path to the file were data was written 
      *                          as TSV.
      * @param isSimplifiedFile  A {@code String} defining the species ID.
+     * @param expNbLines        An {@code Integer} defining the expected number of lines in 
+     *                          {@code file}.
      * @throws IOException      If the file could not be used.
      */
     private void assertDiffExpressionFile(String file, String speciesId, boolean isSimplified, 
@@ -1785,25 +1854,49 @@ public class GenerateDownloadFileTest  extends TestAncestor {
                 expAffyData.getStringRepresentation(), affyData);
         assertEquals("Incorrect Affymetrix quality for " + geneId, 
                 expAffyQuality.getStringRepresentation(), affyQuality);
-        // FIXME correct comparison of float
-        assertEquals("Incorrect Affymetrix p-value for " + geneId, 
+        double epsilon = 1e-11;
+        if (areDifferentFloats(expAffyPValue, affyPValue, epsilon)) {
+            throw new AssertionError("Incorrect Affymetrix p-value for " + geneId + ": expected " +  
+                    String.valueOf(expAffyPValue) + ", but was " + String.valueOf(affyPValue));
+        }
+                assertEquals("Incorrect Affymetrix p-value for " + geneId, 
                 expAffyPValue, Float.valueOf(affyPValue));
         assertEquals("Incorrect Affymetrix consistent DEA count for " + geneId, 
                 expAffyConsistentCount, affyConsistentCount);
         assertEquals("Incorrect Affymetrix inconsistent DEA count for " + geneId, 
                 expAffyInonsistentCount, affyInconsistentCount);
-
         assertEquals("Incorrect RNA-Seq data for " + geneId, 
                 expRNASeqData.getStringRepresentation(), rnaSeqData);
         assertEquals("Incorrect RNA-Seq quality for " + geneId, 
                 expRNASeqQuality.getStringRepresentation(), rnaSeqQuality);
-        // FIXME correct comparison of float
+        if (areDifferentFloats(expRNASeqPValue, rnaSeqPValue, epsilon)) {
+            throw new AssertionError("Incorrect Affymetrix p-value for " + geneId + ": expected " +  
+                    String.valueOf(expAffyPValue) + ", but was " + String.valueOf(affyPValue));
+        }
         assertEquals("Incorrect RNA-Seq p-value for " + geneId, 
                 expRNASeqPValue, Float.valueOf(rnaSeqPValue));
         assertEquals("Incorrect RNA-Seq consistent DEA count for " + geneId, 
                 expRNASeqConsistentCount, rnaSeqConsistentCount);
         assertEquals("Incorrect RNA-Seq inconsistent DEA count for " + geneId, 
                 expRNASeqInconsistentCount, rnaSeqInconsistentCount);
+    }
+    
+    /**
+     * Method to compare floating-point values using an epsilon. 
+     *
+     * @param f1        A {@code Float} to be compared to {@code f2}.
+     * @param f2        A {@code Float} to be compared to {@code f1}.
+     * @param epsilon   A {@code double} that is the accepted difference.
+     * @return      {@code true} if {@code f1} and {@code f2} are differents.
+     */
+    private boolean areDifferentFloats(Float f1, Float f2, double epsilon) {
+        log.entry(f1, f2, epsilon);
+        if ((f1 != null && f2 == null) || 
+                (f1 == null && f2 != null) || 
+                (f1 != null && f2 != null && Math.abs(f1 - f2) > epsilon)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
     }
 
     /**

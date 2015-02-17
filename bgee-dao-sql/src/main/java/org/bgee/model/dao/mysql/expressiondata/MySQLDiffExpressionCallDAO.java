@@ -46,6 +46,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      * @throws IllegalArgumentException     If {@code manager} is {@code null}.
      */
     //XXX shouldn't it be a NullPointerException then? (also in other DAOs)
+    //but IllegalArgumentException is thrown to indicate that a method has been passed 
+    //an illegal or inappropriate argument.
     public MySQLDiffExpressionCallDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
@@ -57,7 +59,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         return log.exit(getDiffExpressionCalls(params.getSpeciesIds(), params.getComparisonFactor(), 
                 params.getAffymetrixDiffExprCallTypes(), params.isIncludeAffymetrixTypes(),
                 params.getRNASeqDiffExprCallTypes(), params.isIncludeRNASeqTypes(), 
-                params.isSatisfyAllCallTypeCondition()));
+                params.isSatisfyAllCallTypeConditions()));
     }
 
     /**
@@ -125,9 +127,11 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         boolean filterRNASeqTypes = 
                 (diffExprCallTypeRNASeq != null && diffExprCallTypeRNASeq.size() != 0 );
         if (factor != null || filterAffymetrixTypes || filterRNASeqTypes) {
-            //FIXME: seems to me that this will bug when speciesIds are provided
-            //(WHERE clause already provided)
-            sql += " WHERE ";
+            if (speciesIds != null && speciesIds.size() > 0) {
+                sql += " AND ";                
+            } else {
+                sql += " WHERE ";
+            }
         }
         if (factor != null) {
             sql += diffExprTableName + ".comparisonFactor = ?";
@@ -139,7 +143,8 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         if (filterRNASeqTypes) {
             nbFilterCallType++;
         }
-        assert nbFilterCallType < 2;
+        //XXX: both filter can be defined, so why doing an assert?
+        assert nbFilterCallType < 3;
         if (factor != null && nbFilterCallType > 0) {
             sql += " AND ";
         }
@@ -161,10 +166,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
                 sql += " OR ";
             }
         } 
-        //FIXME: ?? 'AND' is already written line 145, isn't it?
-        else if (factor != null && filterRNASeqTypes) {
-            sql += " AND ";
-        }
         if (filterRNASeqTypes) {
             sql += diffExprTableName + ".diffExprCallRNASeq ";
             if (!includeRnaSeqTypes) {
@@ -182,36 +183,35 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql);
-            int stmtIndex = 0;
+            int stmtIndex = 1;
             if (speciesIds != null && speciesIds.size() > 0) {
                 List<Integer> orderedSpeciesIds = MySQLDAO.convertToIntList(speciesIds);
                 Collections.sort(orderedSpeciesIds);
-                stmt.setIntegers(1, orderedSpeciesIds);
-                stmtIndex = speciesIds.size();
+                stmt.setIntegers(stmtIndex, orderedSpeciesIds);
+                stmtIndex += speciesIds.size();
             }             
+            
             if (factor != null) {
-                stmtIndex++;
                 stmt.setString(stmtIndex, factor.getStringRepresentation());
-            }
-
-            if (filterAffymetrixTypes) {
                 stmtIndex++;
+            }
+            
+            if (filterAffymetrixTypes) {
                 List<DiffExprCallType> orderedAffymetrixTypes = 
                         new ArrayList<DiffExprCallType>(diffExprCallTypeAffymetrix);
                 Collections.sort(orderedAffymetrixTypes);
                 stmt.setEnumDAOFields(stmtIndex, orderedAffymetrixTypes);
-                stmtIndex =+ orderedAffymetrixTypes.size();
+                stmtIndex += orderedAffymetrixTypes.size();
             }             
-
+            
             if (filterRNASeqTypes) {
-                stmtIndex++;
                 List<DiffExprCallType> orderedRNASeqTypes = 
                         new ArrayList<DiffExprCallType>(diffExprCallTypeRNASeq);
                 Collections.sort(orderedRNASeqTypes);
                 stmt.setEnumDAOFields(stmtIndex, orderedRNASeqTypes);
-                stmtIndex =+ orderedRNASeqTypes.size();
+                stmtIndex += orderedRNASeqTypes.size();
             }             
-
+            
             return log.exit(new MySQLDiffExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

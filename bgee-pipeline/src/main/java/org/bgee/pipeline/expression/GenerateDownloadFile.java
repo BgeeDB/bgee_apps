@@ -1876,10 +1876,11 @@ public class GenerateDownloadFile extends CallUser {
      * @param rnaSeqQuality     A {@code DataState} that is the RNA-Seq call quality to be merged
      *                          with {@code affymetrixQuality}.
      * @return                  A {@code boolean} that is {@code true} if data added to {@code row}.
+     * @throws IllegalStateException If call data are inconsistent (for instance, without any data).
      */
     private boolean addDiffExprCallMergedDataToRow(FileType fileType, Map<String, String> row,
             DiffExprCallType affymetrixType, DataState affymetrixQuality, 
-            DiffExprCallType rnaSeqType, DataState rnaSeqQuality) {
+            DiffExprCallType rnaSeqType, DataState rnaSeqQuality) throws IllegalStateException {
         log.entry(row, affymetrixType, affymetrixQuality, rnaSeqType, rnaSeqQuality);
         
         DiffExpressionData summary = DiffExpressionData.NO_DATA;
@@ -1887,12 +1888,13 @@ public class GenerateDownloadFile extends CallUser {
 
         Set<DiffExprCallType> allType = EnumSet.of(affymetrixType, rnaSeqType);
         Set<DataState> allDataQuality = EnumSet.of(affymetrixQuality, rnaSeqQuality);
-        
-        if (allType.size() == 1 && 
-                (affymetrixType.equals(DiffExprCallType.NOT_EXPRESSED) ||
-                        affymetrixType.equals(DiffExprCallType.NO_DATA))) {
-            throw log.throwing(new IllegalArgumentException("One call could't be only "+
-                    DiffExprCallType.NOT_EXPRESSED.getStringRepresentation() + " or " + 
+
+        if ((affymetrixType.equals(DiffExprCallType.NOT_EXPRESSED) ||
+                affymetrixType.equals(DiffExprCallType.NO_DATA)) &&
+            (rnaSeqType.equals(DiffExprCallType.NOT_EXPRESSED) ||
+                    rnaSeqType.equals(DiffExprCallType.NO_DATA))) {
+            throw log.throwing(new IllegalStateException("One call could't be only "+
+                    DiffExprCallType.NOT_EXPRESSED.getStringRepresentation() + " and/or " + 
                     DiffExprCallType.NO_DATA.getStringRepresentation()));
         }
 
@@ -1926,7 +1928,7 @@ public class GenerateDownloadFile extends CallUser {
                     summary = DiffExpressionData.NOT_EXPRESSED;
                     break;
                 default:
-                    throw log.throwing(new IllegalArgumentException(
+                    throw log.throwing(new IllegalStateException(
                             "Both DiffExprCallType are set to 'no data'"));
             }
             if (allDataQuality.contains(DataState.HIGHQUALITY)) {

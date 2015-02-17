@@ -597,8 +597,6 @@ public class GenerateDownloadFileTest  extends TestAncestor {
 
         GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
         generate.generateSingleSpeciesFiles(Arrays.asList("33"), fileTypes, directory);
-
-        
     }
     
     /**
@@ -1470,6 +1468,88 @@ public class GenerateDownloadFileTest  extends TestAncestor {
 
         verify(mockManager.mockDiffExpressionCallDAO, times(1)).setAttributes(
                 // All Attributes except ID
+                EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
+
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockGeneTORs).close();
+        verify(mockAnatEntityTORs).close();
+        verify(mockStageTORs).close();
+    }
+    
+    /**
+     * Test if exception is launch when a differential expression call have data for the same data type using 
+     * {@link GenerateDownloadFile#generateSingleSpeciesFiles(List, List, String)},
+     * which is the central method of the class doing all the job.
+     */
+    @Test
+    public void shouldGenerateSingleSpeciesDiffExprFilesDataConflictException() throws IOException {
+        // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
+        MockDAOManager mockManager = new MockDAOManager();
+
+        Set<String> speciesIds = new HashSet<String>(Arrays.asList("11")); 
+
+        MySQLSpeciesTOResultSet mockSpeciesTORs = createMockDAOResultSet(
+                Arrays.asList(new SpeciesTO("11", null, "Genus11", "species11", null, null, null, null)),
+                MySQLSpeciesTOResultSet.class);
+        when(mockManager.mockSpeciesDAO.getSpeciesByIds(speciesIds)).thenReturn(mockSpeciesTORs);
+
+        GeneTOResultSet mockGeneTORs = this.mockGetGenes(mockManager, speciesIds);
+        AnatEntityTOResultSet mockAnatEntityTORs = this.mockGetAnatEntities(mockManager, speciesIds);
+        StageTOResultSet mockStageTORs = this.mockGetStages(mockManager, speciesIds);
+        
+        // we need to mock getDiffExpressionCalls() for ComparisonFactor.ANATOMY for species 11
+        speciesIds = new HashSet<String>(Arrays.asList("11")); 
+        MySQLDiffExpressionCallTOResultSet mockAnatDiffExprRsSp11 = createMockDAOResultSet(
+                Arrays.asList(
+                new DiffExpressionCallTO(null, "ID1", "Anat_id1", "Stage_id1", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.NOT_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.001f, 3, 1, DiffExprCallType.NO_DATA, 
+                        DataState.NODATA, 1f, 0, 0), 
+                new DiffExpressionCallTO(null, "ID1", "Anat_id2", "Stage_id2", 
+                        ComparisonFactor.ANATOMY, DiffExprCallType.UNDER_EXPRESSED, 
+                        DataState.HIGHQUALITY, 0.001f, 5, 0, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.03f, 1, 0), 
+                new DiffExpressionCallTO(null, "ID1", "Anat_id13", "Stage_id18",
+                        ComparisonFactor.ANATOMY, DiffExprCallType.OVER_EXPRESSED, 
+                        DataState.LOWQUALITY, 0.03f, 2, 1, DiffExprCallType.NOT_EXPRESSED, 
+                        DataState.NODATA, 1f, 0, 0)),
+                MySQLDiffExpressionCallTOResultSet.class);
+        DiffExpressionCallParams anatDiffExprParams11 = new DiffExpressionCallParams();
+        anatDiffExprParams11.addAllSpeciesIds(speciesIds);
+        anatDiffExprParams11.setComparisonFactor(ComparisonFactor.ANATOMY);        
+        when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
+                (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams11))).
+                thenReturn(mockAnatDiffExprRsSp11);
+
+        ////////////////
+        
+        thrown.expect(IllegalStateException.class);
+        
+        Set<FileType> fileTypes = new HashSet<>(Arrays.asList(FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY)); 
+
+        GenerateDownloadFile generate = new GenerateDownloadFile(mockManager);
+        generate.generateSingleSpeciesFiles(
+                Arrays.asList("11"), fileTypes, testFolder.newFolder("tmpFolder").getPath());
+
+        // Verify that all ResultSet are closed.
+        verify(mockSpeciesTORs).close();
+        verify(mockGeneTORs).close();
+        verify(mockAnatEntityTORs).close();
+        verify(mockStageTORs).close();
+        verify(mockAnatDiffExprRsSp11).close();
+                
+        //check that the connection was closed at each species iteration
+        verify(mockManager.mockManager, times(1)).releaseResources();
+
+        // Verify that setAttributes are correctly called.
+        verify(mockManager.mockAnatEntityDAO, times(1)).setAttributes(
+                AnatEntityDAO.Attribute.ID, AnatEntityDAO.Attribute.NAME);
+        verify(mockManager.mockGeneDAO, times(1)).setAttributes(
+                GeneDAO.Attribute.ID, GeneDAO.Attribute.NAME);
+        verify(mockManager.mockStageDAO, times(1)).setAttributes(
+                StageDAO.Attribute.ID, StageDAO.Attribute.NAME);
+        verify(mockManager.mockDiffExpressionCallDAO, times(1)).setAttributes(
                 EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
 
         // Verify that all ResultSet are closed.

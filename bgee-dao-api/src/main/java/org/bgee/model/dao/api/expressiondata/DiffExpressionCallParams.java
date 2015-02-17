@@ -33,6 +33,7 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressio
  * used with caution.
  * 
  * @author Frederic Bastian
+ * @author Valentine Rech de Laval
  * @version Bgee 13
  * @since Bgee 13
  */
@@ -59,30 +60,39 @@ public class DiffExpressionCallParams extends CallParams {
     /**
      * A {@code boolean} defining whether both requested minimum contributions (Affymetrix 
      * and RNA-seq data) have to be satisfied or at least one of the two.
+     * @see #affymetrixTypes
+     * @see #includeAffymetrixTypes
+     * @see #rnaSeqTypes
+     * @see #includeRnaSeqTypes
      */
-    private boolean satisfyAllCallTypeCondition;
+    private boolean satisfyAllCallTypeConditions;
     
     /**
      * A {@code Set} of {@code DiffExprCallType} that are the differential expression call types
-     * from Affymetrix data to be include or exclude (according to {@link isIncludeAffymetrixTypes}).
+     * from Affymetrix data to be included or excluded (according to 
+     * {@link #isIncludeAffymetrixTypes()}).
+     * @see #includeAffymetrixTypes
      */
     private Set<DiffExprCallType> affymetrixTypes;
 
     /**
      * A {@code Set} of {@code DiffExprCallType} that are the differential expression call types
-     * from RNA-seq data to be include or exclude (according to {@link isIncludeRnaSeqTypes}).
+     * from RNA-seq data to be included or excluded (according to {@link #isIncludeRnaSeqTypes()}).
+     * @see #includeRnaSeqTypes
      */
     private Set<DiffExprCallType> rnaSeqTypes;
     
     /**
      * A {@code boolean} defining whether differential expression call types from Affymetrix data
-     * should be include or exclude.
+     * should be included or excluded.
+     * @see #affymetrixTypes
      */
     private boolean includeAffymetrixTypes;
     
     /**
      * A {@code boolean} defining whether differential expression call types from RNA-seq data
-     * should be include or exclude.
+     * should be included or excluded.
+     * @see #rnaSeqTypes
      */
     private boolean includeRnaSeqTypes;
 
@@ -100,7 +110,7 @@ public class DiffExpressionCallParams extends CallParams {
         this.rnaSeqTypes = new HashSet<DiffExprCallType>();
         this.setIncludeRNASeqTypes(false);
         
-        this.setSatisfyAllCallTypeCondition(false);
+        this.setSatisfyAllCallTypeConditions(false);
     }
     
     @Override
@@ -266,10 +276,10 @@ public class DiffExpressionCallParams extends CallParams {
     // DELEGATED TO referenceCallTO
     //**************************************
     /**
-     * @return  the {@code Set} of {@code DiffExprCallType} that are the differential expression 
-     *          call types from Affymetrix data to be include or exclude 
-     *          (according to {@link isIncludeAffymetrixTypes}). If {@code null}, any will be used 
-     *          (take caution when interpreting the results in that case).
+     * @return  An unmodifiable {@code Set} of {@code DiffExprCallType} that are 
+     *          the differential expression call types from Affymetrix data to be included or excluded 
+     *          (according to {@link #isIncludeAffymetrixTypes()}). If {@code null}, 
+     *          any will be used.
      * @see #isIncludeAffymetrixTypes()
      */
     public Set<DiffExprCallType> getAffymetrixDiffExprCallTypes() {
@@ -278,7 +288,7 @@ public class DiffExpressionCallParams extends CallParams {
     /**
      * @param callType  A {@code DiffExprCallType} to be added to the differential expression call  
      *                  type from Affymetrix data to be included or excluded (according to 
-     *                  {@link isIncludeAffymetrixTypes}).
+     *                  {@link #isIncludeAffymetrixTypes()}).
      * @see #isIncludeAffymetrixTypes()
      */
     public void addAffymetrixDiffExprCallType(DiffExprCallType callType) {
@@ -287,7 +297,7 @@ public class DiffExpressionCallParams extends CallParams {
     /**
      * @param callTypes A {@code Set} of {@code DiffExprCallType} to be added to the differential 
      *                  expression call types from Affymetrix data to be included or excluded 
-     *                  (according to {@link isIncludeAffymetrixTypes}).
+     *                  (according to {@link #isIncludeAffymetrixTypes()}).
      * @see #isIncludeAffymetrixTypes()
      */
     public void addAllAffymetrixDiffExprCallTypes(Set<DiffExprCallType> callTypes) {
@@ -303,10 +313,10 @@ public class DiffExpressionCallParams extends CallParams {
     }
 
     /**
-     * @return  the {@code Set} of {@code DiffExprCallType} that are the differential expression 
-     *          call types from RNA-seq data to be include or exclude (according to 
-     *          {@link isIncludeRNASeqTypes}). If {@code null}, any will be used 
-     *          (take caution when interpreting the results in that case).
+     * @return  An unmodifiable {@code Set} of {@code DiffExprCallType} that are 
+     *          the differential expression call types from RNA-seq data to be included 
+     *          or excluded (according to {@link #isIncludeRNASeqTypes()}). If {@code null}, 
+     *          any will be used.
      * @see #isIncludeRNASeqTypes()
      */
     public Set<DiffExprCallType> getRNASeqDiffExprCallTypes() {
@@ -315,7 +325,7 @@ public class DiffExpressionCallParams extends CallParams {
     /**
      * @param callType  A {@code DiffExprCallType} to be added to the differential expression call  
      *                  type from RNA-seq data to be included or excluded (according to 
-     *                  {@link isIncludeRNASeqTypes}).
+     *                  {@link #isIncludeRNASeqTypes()}).
      * @see #isIncludeRNASeqTypes()
      */
     public void addRNASeqDiffExprCallType(DiffExprCallType callType) {
@@ -324,7 +334,7 @@ public class DiffExpressionCallParams extends CallParams {
     /**
      * @param callTypes A {@code Set} of {@code DiffExprCallType} to be added to the differential 
      *                  expression call types from RNA-seq data to be included or excluded 
-     *                  (according to {@link isIncludeRNASeqTypes}).
+     *                  (according to {@link #isIncludeRNASeqTypes()}).
      * @see #isIncludeRNASeqTypes()
      */
     public void addAllRNASeqDiffExprCallTypes(Set<DiffExprCallType> callTypes) {
@@ -367,31 +377,36 @@ public class DiffExpressionCallParams extends CallParams {
     /**
      * @return  the {@code boolean} defining whether both requested minimum contributions 
      *          (Affymetrix and RNA-seq data) have to be satisfied or at least one of the two.
+     * @see #getAffymetrixDiffExprCallTypes()
+     * @see #getRNASeqDiffExprCallTypes()
      */
-    public boolean isSatisfyAllCallTypeCondition() {
-        return this.satisfyAllCallTypeCondition;
+    public boolean isSatisfyAllCallTypeConditions() {
+        return this.satisfyAllCallTypeConditions;
     }
-    
     /**
      * @param whatever  the {@code boolean} defining whether both requested minimum 
      *                  contributions (Affymetrix and RNA-seq data) have to be satisfied 
      *                  or at least one of the two.
+     * @see #getAffymetrixDiffExprCallTypes()
+     * @see #getRNASeqDiffExprCallTypes()
      */
-    public void setSatisfyAllCallTypeCondition(boolean whatever) {
-        this.satisfyAllCallTypeCondition = whatever;
+    public void setSatisfyAllCallTypeConditions(boolean condition) {
+        this.satisfyAllCallTypeConditions = condition;
     }
 
     /**
      * @return  the {@code boolean} defining whether differential expression call types from 
      *          Affymetrix data should be include or exclude.
+     * @see #getAffymetrixDiffExprCallTypes()
      */
     public boolean isIncludeAffymetrixTypes() {
         return this.includeAffymetrixTypes;
     }
-    
     /**
      * @param includeAffymetrixTypes    A {@code boolean} defining whether differential expression 
-     *                                  call types from Affymetrix data should be include or exclude.
+     *                                  call types from Affymetrix data should be included 
+     *                                  or excluded.
+     * @see #getAffymetrixDiffExprCallTypes()
      */
     public void setIncludeAffymetrixTypes(boolean includeAffymetrixTypes) {
         this.includeAffymetrixTypes = includeAffymetrixTypes;
@@ -399,15 +414,16 @@ public class DiffExpressionCallParams extends CallParams {
 
     /**
      * @return  the {@code boolean} defining whether differential expression call types from 
-     *          RNA-seq data should be include or exclude.
+     *          RNA-seq data should be included or excluded.
+     * @see #getRNASeqDiffExprCallTypes()
      */
     public boolean isIncludeRNASeqTypes() {
         return this.includeRnaSeqTypes;
     }
-    
     /**
      * @param includeRnaSeqTypes    A {@code boolean} defining whether differential expression call
-     *                              types from RNA-seq data should be include or exclude.
+     *                              types from RNA-seq data should be included or excluded.
+     * @see #getRNASeqDiffExprCallTypes()
      */
     public void setIncludeRNASeqTypes(boolean includeRnaSeqTypes) {
         this.includeRnaSeqTypes = includeRnaSeqTypes;

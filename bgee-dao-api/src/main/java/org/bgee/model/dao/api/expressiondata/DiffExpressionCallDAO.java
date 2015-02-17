@@ -61,17 +61,17 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
     }
 
     /**
-     * Retrieve differential expression calls from data source according 
+     * Retrieve differential expression calls from data source according to 
      * {@code DiffExpressionCallParams}.
      * <p>
      * The differential expression calls are retrieved and returned as a
-     * {@code DiffExpressionCallTOResultSet}. It is the responsibility of the caller to close this 
-     * {@code DAOResultSet} once results are retrieved.
+     * {@code DiffExpressionCallTOResultSet}. It is the responsibility of the caller to close 
+     * this {@code DAOResultSet} once results are retrieved.
      * 
-     * @param params        An {@code DiffExpressionCallParams} that provide the parameters specific 
+     * @param params        A {@code DiffExpressionCallParams} that provide the parameters specific 
      *                      to differential expression calls
-     * @return              An {@code DiffExpressionCallTOResultSet} containing all differential 
-     *                      expression calls from data source.
+     * @return              A {@code DiffExpressionCallTOResultSet} allowing to retrieve 
+     *                      the requested differential expression calls from the data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     public DiffExpressionCallTOResultSet getDiffExpressionCalls(DiffExpressionCallParams params) 
@@ -90,12 +90,11 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
     /**
      * A {@code CallTO} specific to differential expression calls (comparison of 
      * the expression of a gene in different conditions, as part of a differential 
-     * expression analysis). Their specificities are that: they can be associated to 
-     * different differential expression call types, see {@link DiffExprCallType}; 
-     * they are associated to the minimum number of conditions that were compared 
-     * among all the differential expression analyzes that allowed to produce that call; 
-     * and that they are associated to a {@link ComparisonFactor}, defining what was 
-     * the comparison factor used during the analyzes generating this call.
+     * expression analysis). Their specificities are: 
+     * they are associated to a {@link ComparisonFactor}, defining what was 
+     * the comparison factor used during the analyzes generating this call; for each 
+     * data type, various information can be retrieved, such as the {@link DiffExprCallType} 
+     * that was produced by this data type, the best p-value supporting it, etc.
      * <p>
      * Of note, there is no data propagation from anatomical entities nor developmental stages 
      * for differential expression calls.
@@ -116,15 +115,19 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
         private final static Logger log = 
                 LogManager.getLogger(DiffExpressionCallTO.class.getName());
         /**
-         * Represents different types of differential expression calls obtained 
-         * from differential expression analyzes: 
+         * Represents the differential expression calls obtained 
+         * from differential expression analyzes, for a given data type: 
          * <ul>
-         * <li>{@code NO_DATA}:            means that the call was never been observed.
-         * <li>{@code NOT_EXPRESSED}:      means that the call was never seen as 'expressed'.
-         * <li>{@code OVER_EXPRESSION}:    over-expressed calls.
-         * <li>{@code UNDER_EXPRESSION}:   under-expressed calls.
-         * <li>{@code NO_DIFF_EXPRESSION}: means that the gene has expression, but 
-         *                                 <strong>no</strong> significant fold change observe.
+         * <li>{@code NO_DATA}:             means that the call has never been observed 
+         *                                  for the related data type.
+         * <li>{@code NOT_EXPRESSED}:       means that the related gene was never seen 
+         *                                  as 'expressed' in any of the samples used 
+         *                                  in the analysis for the related data type, 
+         *                                  it was then not tested for differential expression.
+         * <li>{@code OVER_EXPRESSED}:      over-expressed calls.
+         * <li>{@code UNDER_EXPRESSED}:     under-expressed calls.
+         * <li>{@code NOT_DIFF_EXPRESSED}:  means that the gene was tested for differential 
+         *                                  expression, but no significant fold change observed.
          * </ul>
          */
         public enum DiffExprCallType implements EnumDAOField {
@@ -176,8 +179,7 @@ public interface DiffExpressionCallDAO extends DAO<DiffExpressionCallDAO.Attribu
         }
         
         /**
-         * Define the different types of differential expression analysis, 
-         * based on the experimental factor studied: 
+         * Define the comparison factors used for differential expression analysis: 
          * <ul>
          * <li>{@code ANATOMY}: analyzes comparing different anatomical structures at a same 
          * (broad) developmental stage. The experimental factor is the anatomy, 

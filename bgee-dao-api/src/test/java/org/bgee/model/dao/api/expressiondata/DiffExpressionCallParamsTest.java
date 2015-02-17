@@ -267,10 +267,10 @@ public class DiffExpressionCallParamsTest extends TestAncestor {
         assertTrue("Incorrect includeRnaSeqTypes set/get", params.isIncludeRNASeqTypes());
         params.setIncludeRNASeqTypes(false);
 
-        params.setSatisfyAllCallTypeCondition(true);
+        params.setSatisfyAllCallTypeConditions(true);
         assertTrue("Incorrect satisfyAllCallTypeCondition set/get", 
-                params.isSatisfyAllCallTypeCondition());
-        params.setSatisfyAllCallTypeCondition(false);
+                params.isSatisfyAllCallTypeConditions());
+        params.setSatisfyAllCallTypeConditions(false);
 
         Set<DiffExprCallType> twoElementSet = new HashSet<DiffExprCallType>();
         twoElementSet.add(DiffExprCallType.NO_DATA);

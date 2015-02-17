@@ -237,8 +237,8 @@ public class GenerateDownloadFile extends CallUser {
     * @since Bgee 13
     */
     public enum FileType {
-        EXPR_SIMPLE("expr-simple", true, true, false), 
-        EXPR_COMPLETE("expr-complete", false, true, false), 
+        EXPR_SIMPLE("expr-simple", true, true, false, null), 
+        EXPR_COMPLETE("expr-complete", false, true, false, null), 
         DIFF_EXPR_SIMPLE_ANAT_ENTITY("diffexpr-anat-entity-simple", true, false, true,
                 ComparisonFactor.ANATOMY), 
         DIFF_EXPR_COMPLETE_ANAT_ENTITY("diffexpr-anat-entity-complete", false, false, true,
@@ -276,27 +276,6 @@ public class GenerateDownloadFile extends CallUser {
         /**
          * Constructor providing the {@code String} representation of this {@code FileType}, a
          * {@code boolean} defining whether this {@code FileType} is a simple file type, a
-         * {@code boolean} defining whether this {@code FileType} is an expression file type, and a
-         * {@code boolean} defining whether this {@code FileType} is a differential expression file
-         * type.
-         * 
-         * @param stringRepresentation   A {@code String} corresponding to this {@code FileType}.
-         * @param simpleFileType         A {@code boolean} defining whether this {@code FileType} 
-         *                               is a simple file type.
-         * @param expressionFileType     A {@code boolean} defining whether this {@code FileType} 
-         *                               is an expression file type.
-         * @param diffExpressionFileType A {@code boolean} defining whether this {@code FileType} 
-         *                               is a differential expression file type.
-         */
-        private FileType(String stringRepresentation, boolean simpleFileType, 
-                boolean expressionFileType, boolean diffExpressionFileType) {
-            this(stringRepresentation, simpleFileType, expressionFileType, 
-                    diffExpressionFileType, null);
-        }
-
-        /**
-         * Constructor providing the {@code String} representation of this {@code FileType}, a
-         * {@code boolean} defining whether this {@code FileType} is a simple file type, a
          * {@code boolean} defining whether this {@code FileType} is an expression file type, a
          * {@code boolean} defining whether this {@code FileType} is a differential expression file
          * type, and a {@code ComparisonFactor} defining what is the experimental factor compared 
@@ -313,6 +292,8 @@ public class GenerateDownloadFile extends CallUser {
          *                               experimental factor compared that generated the  
          *                               differential expressioncalls.
          */
+        //XXX: wouldn't expressionFileType alone be enough? If expressionFileType is true, 
+        //I guess diffExpressionFileType is false?
         private FileType(String stringRepresentation, boolean simpleFileType, 
                 boolean expressionFileType, boolean diffExpressionFileType, 
                 ComparisonFactor comparisonFactor) {
@@ -329,14 +310,12 @@ public class GenerateDownloadFile extends CallUser {
         public String getStringRepresentation() {
             return this.stringRepresentation;
         }
-
         /**
          * @return   A {@code boolean} defining whether this {@code FileType} is a simple file type.
          */
         public boolean isSimpleFileType() {
             return this.simpleFileType;
         }
-
         /**
          * @return   A {@code boolean} defining whether this {@code FileType} is an expression 
          *           file type.
@@ -344,7 +323,6 @@ public class GenerateDownloadFile extends CallUser {
         public boolean isExpressionFileType() {
             return this.expressionFileType;
         }
-
         /**
          * @return   A {@code boolean} defining whether this {@code FileType} is a differential
          *           expression file type.
@@ -352,7 +330,6 @@ public class GenerateDownloadFile extends CallUser {
         public boolean isDiffExprFileType() {
             return this.diffExpressionFileType;
         }
-
         /**
          * @return   A {@code ComparisonFactor} defining what is the experimental factor 
          *           compared that generated the differential expression calls.
@@ -422,13 +399,16 @@ public class GenerateDownloadFile extends CallUser {
      * An {@code Enum} used to define, for each data type (Affymetrix and RNA-Seq), 
      * as well as for the summary column, the data state of the call.
      * <ul>
-     * <li>{@code NO_DATA}:              no data from the associated data type allowed to produce 
-     *                                   the call.
-     * <li>{@code NOT_EXPRESSED}:        means that the call was never seen as 'expressed'.
-     * <li>{@code OVER_EXPRESSED}:       means that the call is seen as over-expressed.
-     * <li>{@code UNDER_EXPRESSED}:      means that  the call is seen as under-expressed.
-     * <li>{@code NOT_DIFF_EXPRESSED}:   means that the gene has expression, but 
-     *                                   <strong>no</strong> significant fold change observe.
+     * <li>{@code NO_DATA}:              means that the call has never been observed 
+     *                                   for the related data type.
+     * <li>{@code NOT_EXPRESSED}:        means that the related gene was never seen 
+     *                                   as 'expressed' in any of the samples used 
+     *                                   in the analysis for the related data type, 
+     *                                   it was then not tested for differential expression.
+     * <li>{@code OVER_EXPRESSED}:       over-expressed calls.
+     * <li>{@code UNDER_EXPRESSED}:      under-expressed calls.
+     * <li>{@code NOT_DIFF_EXPRESSED}:   means that the gene was tested for differential 
+     *                                   expression, but no significant fold change observed.
      * <li>{@code WEAK_AMBIGUITY}:       different data types are not completely coherent: a data 
      *                                   type says over or under-expressed, while the other says 
      *                                   'not differentially expressed'; or a data type says 
@@ -556,32 +536,15 @@ public class GenerateDownloadFile extends CallUser {
         // Retrieve FileType from String argument
         Set<String> unknownFileTypes = new HashSet<String>();
         Set<FileType> filesToBeGenerated = EnumSet.noneOf(FileType.class);
-        for (String inputFileType: fileTypes) {
-            if (inputFileType.equals(FileType.EXPR_SIMPLE.getStringRepresentation())) {
-                filesToBeGenerated.add(FileType.EXPR_SIMPLE);  
-
-            } else if (inputFileType.equals(FileType.EXPR_COMPLETE.getStringRepresentation())) {
-                filesToBeGenerated.add(FileType.EXPR_COMPLETE);    
-
-            } else if (inputFileType.equals(
-                    FileType.DIFF_EXPR_SIMPLE_ANAT_ENTITY.getStringRepresentation())) {
-                filesToBeGenerated.add(FileType.DIFF_EXPR_SIMPLE_ANAT_ENTITY);  
-
-            } else if (inputFileType.equals(
-                    FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY.getStringRepresentation())) {
-                filesToBeGenerated.add(FileType.DIFF_EXPR_COMPLETE_ANAT_ENTITY);
-
-            } else if (inputFileType.equals(
-                    FileType.DIFF_EXPR_SIMPLE_STAGE.getStringRepresentation())) {
-                filesToBeGenerated.add(FileType.DIFF_EXPR_SIMPLE_STAGE);
-
-            } else if (inputFileType.equals(
-                    FileType.DIFF_EXPR_COMPLETE_STAGE.getStringRepresentation())) {
-                filesToBeGenerated.add(FileType.DIFF_EXPR_COMPLETE_STAGE);
-
-            } else {
-                unknownFileTypes.add(inputFileType);
+        inputFiles: for (String inputFileType: fileTypes) {
+            for (FileType fileType: FileType.values()) {
+                if (inputFileType.equals(fileType.getStringRepresentation())) {
+                    filesToBeGenerated.add(fileType);
+                    continue inputFiles;
+                }
             }
+            //if no correspondence found
+            unknownFileTypes.add(inputFileType);
         }
         if (!unknownFileTypes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
@@ -1895,7 +1858,7 @@ public class GenerateDownloadFile extends CallUser {
     }
 
     /**
-     * Add, to the provides {@ code row}, merged {@code DataState}s and qualities.
+     * Add, to the provided {@code row}, merged {@code DataState}s and qualities.
      * <p>
      * The provided {@code Map} will be modified.
      *

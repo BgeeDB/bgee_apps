@@ -143,7 +143,6 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
         if (filterRNASeqTypes) {
             nbFilterCallType++;
         }
-        //XXX: both filter can be defined, so why doing an assert?
         assert nbFilterCallType < 3;
         if (factor != null && nbFilterCallType > 0) {
             sql += " AND ";

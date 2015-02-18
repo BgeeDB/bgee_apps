@@ -589,58 +589,40 @@ public class SimilarityAnnotation {
         return log.exit(annotations);
     }
     
-    public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
-            String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
-            String uberonOntFile, String taxOntFile, 
-            String homOntFile, String ecoOntFile, String confOntFile, String outputDirectory) 
-            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
-            OWLOntologyCreationException, OBOFormatParserException {
-        
-        log.entry(rawAnnotFile, fileTypes, taxonConstraintsFile, idStartsToOverridenTaxonIds, 
-                uberonOntFile, taxOntFile, homOntFile, ecoOntFile, confOntFile, 
-                outputDirectory);
-        
-        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(uberonOntFile));
-        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(taxOntFile));
-        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(ecoOntFile));
-        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(homOntFile));
-        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
-                OntologyUtils.loadOntology(confOntFile));
-        
-        this.generateFiles(this.extractAnnotations(rawAnnotFile, GeneratedFileType.RAW), 
-                fileTypes, 
-                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
-                        idStartsToOverridenTaxonIds), 
-                TaxonConstraints.extractTaxonIds(taxonConstraintsFile), 
-                uberonOntWrapper, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
-                confOntWrapper, outputDirectory);
-        
-        log.exit();
-    }
-    
-    public void generateFiles(List<Map<String, Object>> rawAnnots, 
-            Set<GeneratedFileType> fileTypes, 
-            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
-            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
-            OWLGraphWrapper confOntWrapper, String outputDirectory)  {
-        log.entry(rawAnnots, fileTypes, taxonConstraints, taxonIds, uberonOntWrapper, 
-                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper, outputDirectory);
-        
-        
-        log.exit();
-    }
-    
+    /**
+     * Check the correctness of the annotations provided. This methods perform many checks, 
+     * such as checking for presence of mandatory fields, checking for duplicated annotations, 
+     * or potentially missing annotations. This methods will also log some warnings 
+     * for issues that might be present on purpose, so that it does not raise an exception, 
+     * but might be potential errors.
+     * 
+     * @param annots            A {@code List} of {@code Map}s, where each {@code Map} 
+     *                          represents a line of annotation. See {@link 
+     *                          #extractAnnotations(String, GeneratedFileType)} for more details.
+     * @param fileType          A {@code GeneratedFileType} defining the type of the file 
+     *                          which to retrieve annotations from. This will constrain, 
+     *                          for instance, what fields are mandatory.
+     * @param taxonConstraints  A {@code Map} where keys are IDs of Uberon terms, 
+     *                          and values are {@code Set}s of {@code Integer}s 
+     *                          containing the IDs of taxa in which the Uberon term 
+     *                          exists.
+     * @param taxonIds          A {@code Set} of {@code Integer}s that are the taxon IDs 
+     *                          of all taxa that were used to define taxon constraints 
+     *                          on Uberon terms.
+     * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the NCBI taxonomy ontology.
+     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
+     *                          (ontology of homology an related concepts).
+     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
+     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
+     *                          code ontology.
+     * @throws IllegalArgumentException     If some errors were detected.
+     */
     public void checkAnnotations(List<Map<String, Object>> annots, GeneratedFileType fileType, 
             Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
-            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
-            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
-            OWLGraphWrapper confOntWrapper) {
-        log.entry(annots, fileType, taxonConstraints, taxonIds, uberonOntWrapper, 
+            OWLGraphWrapper taxOntWrapper, OWLGraphWrapper homOntWrapper, 
+            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper confOntWrapper) 
+                    throws IllegalArgumentException {
+        log.entry(annots, fileType, taxonConstraints, taxonIds, 
                 taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper);
         
         //We will store taxa associated to positive and negative annotations, 
@@ -661,7 +643,7 @@ public class SimilarityAnnotation {
                     ecoOntWrapper, homOntWrapper, confOntWrapper)) {
                 continue;
             }
-
+    
             List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
                     (String) annot.get(ENTITY_COL_NAME));
             
@@ -988,7 +970,7 @@ public class SimilarityAnnotation {
         //columns mandatory in both RAW and RAW_CLEAN
         if (fileType == GeneratedFileType.RAW || 
                 fileType == GeneratedFileType.RAW_CLEAN) {
-
+    
             String ecoId = (String) annotation.get(ECO_COL_NAME);
             if (StringUtils.isBlank(ecoId)) {
                 log.error("Missing ECO ID at line {}", lineNumber);
@@ -1107,6 +1089,52 @@ public class SimilarityAnnotation {
     }
 
 
+    public void generateFiles(String rawAnnotFile, Set<GeneratedFileType> fileTypes, 
+            String taxonConstraintsFile, Map<String, Set<Integer>> idStartsToOverridenTaxonIds, 
+            String uberonOntFile, String taxOntFile, 
+            String homOntFile, String ecoOntFile, String confOntFile, String outputDirectory) 
+            throws FileNotFoundException, IOException, UnknownOWLOntologyException, 
+            OWLOntologyCreationException, OBOFormatParserException {
+        
+        log.entry(rawAnnotFile, fileTypes, taxonConstraintsFile, idStartsToOverridenTaxonIds, 
+                uberonOntFile, taxOntFile, homOntFile, ecoOntFile, confOntFile, 
+                outputDirectory);
+        
+        OWLGraphWrapper uberonOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(uberonOntFile));
+        OWLGraphWrapper taxOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(taxOntFile));
+        OWLGraphWrapper ecoOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(ecoOntFile));
+        OWLGraphWrapper homOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(homOntFile));
+        OWLGraphWrapper confOntWrapper = new OWLGraphWrapper(
+                OntologyUtils.loadOntology(confOntFile));
+        
+        this.generateFiles(this.extractAnnotations(rawAnnotFile, GeneratedFileType.RAW), 
+                fileTypes, 
+                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
+                        idStartsToOverridenTaxonIds), 
+                TaxonConstraints.extractTaxonIds(taxonConstraintsFile), 
+                uberonOntWrapper, taxOntWrapper, homOntWrapper, ecoOntWrapper, 
+                confOntWrapper, outputDirectory);
+        
+        log.exit();
+    }
+    
+    public void generateFiles(List<Map<String, Object>> rawAnnots, 
+            Set<GeneratedFileType> fileTypes, 
+            Map<String, Set<Integer>> taxonConstraints, Set<Integer> taxonIds, 
+            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
+            OWLGraphWrapper homOntWrapper, OWLGraphWrapper ecoOntWrapper, 
+            OWLGraphWrapper confOntWrapper, String outputDirectory)  {
+        log.entry(rawAnnots, fileTypes, taxonConstraints, taxonIds, uberonOntWrapper, 
+                taxOntWrapper, homOntWrapper, ecoOntWrapper, confOntWrapper, outputDirectory);
+        
+        
+        log.exit();
+    }
+    
     /**
      * Generates the proper annotations to be used for the file of type {@code fileType}, 
      * from the raw annotations provided by curators. This method will check validity 

@@ -13,8 +13,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.annotations.SimilarityAnnotation;
 import org.bgee.pipeline.expression.FilterNoExprCalls;
-import org.bgee.pipeline.expression.GenerateDownloadFile;
 import org.bgee.pipeline.expression.InsertGlobalCalls;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile;
+import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile;
 import org.bgee.pipeline.gene.InsertGO;
 import org.bgee.pipeline.gene.ParseOrthoXML;
 import org.bgee.pipeline.ontologycommon.OntologyTools;
@@ -192,8 +193,11 @@ public class CommandRunner {
             break;
  
         //---------- Download file generation -----------
-        case "GenerateDownloadFile":
-            GenerateDownloadFile.main(newArgs);
+        case "GenerateDiffExprFile":
+            GenerateDiffExprFile.main(newArgs);
+            break;
+        case "GenerateBasicExprFile":
+            GenerateExprFile.main(newArgs);
             break;
             
         default: 

@@ -68,6 +68,20 @@ public class AnnotationCommonTest extends TestAncestor {
     }
     
     /**
+     * Test {@link AnnotationCommon#convertToMultipleEntitiesColumn(List)}
+     */
+    @Test
+    public void shouldConvertToMultipleEntitiesColumn() {
+        
+        assertEquals("ID:2" + AnnotationCommon.ENTITY_SEPARATORS.get(0) 
+                + "ID:3" + AnnotationCommon.ENTITY_SEPARATORS.get(0) + "ID:1", 
+                AnnotationCommon.convertToMultipleEntitiesColumn(
+                        Arrays.asList("ID:2", "ID:3", "ID:1")));
+        assertEquals("ID:1", 
+                AnnotationCommon.convertToMultipleEntitiesColumn(Arrays.asList("ID:1")));
+    }
+    
+    /**
      * Test {@link AnnotationCommon#parseMultipleEntitiesColumn(String)}
      */
     @Test

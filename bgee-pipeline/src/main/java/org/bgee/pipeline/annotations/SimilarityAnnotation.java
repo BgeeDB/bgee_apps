@@ -401,6 +401,14 @@ public class SimilarityAnnotation {
     
     /**
      * A {@code Collection} of {@code Map}s, where each {@code Map} represents 
+     * an annotation line that was duplicated.
+     * @see verifyErrors()
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<Map<String, Object>> duplicates;
+    
+    /**
+     * A {@code Collection} of {@code Map}s, where each {@code Map} represents 
      * an annotation line that was incorrectly formatted.
      * @see #checkAnnotation(Map)
      */
@@ -422,6 +430,7 @@ public class SimilarityAnnotation {
         this.missingECOIds = new HashSet<String>();
         this.missingHOMIds = new HashSet<String>();
         this.missingCONFIds = new HashSet<String>();
+        this.duplicates = new HashSet<Map<String, Object>>();
         this.incorrectFormat = new HashSet<Map<String, Object>>();
         this.uberonOntWrapper = null;
         
@@ -568,16 +577,7 @@ public class SimilarityAnnotation {
             }
             
             Map<String, Object> row;
-            while( (row = reader.read(header, processors)) != null ) {
-                //the only values permitted for QUALIFIER_COL_NAME are null value, 
-                //or a String equal to NEGATE_QUALIFIER.
-                if (row.get(QUALIFIER_COL_NAME) != null && 
-                   !((String) row.get(QUALIFIER_COL_NAME)).equalsIgnoreCase(NEGATE_QUALIFIER)) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "Incorrect value for column " + QUALIFIER_COL_NAME + 
-                            ": " + row.get(QUALIFIER_COL_NAME) + " at line " + 
-                                    reader.getRowNumber()));
-                }
+            while( (row = reader.read(header, processors)) != null) {
                 annotations.add(row);
             }
         }
@@ -649,6 +649,10 @@ public class SimilarityAnnotation {
         //annotated). We will use the concatenation of HOM ID and UBERON ID as key
         Map<String, Set<Integer>> positiveAnnotsToTaxa = new HashMap<String, Set<Integer>>();
         Map<String, Set<Integer>> negativeAnnotsToTaxa = new HashMap<String, Set<Integer>>();
+        //Also, we will look for potentially duplicated annotations. We will search for 
+        //exact duplicates, and potential duplicates (see below).
+        Set<Map<String, Object>> checkExactDuplicates = new HashSet<Map<String, Object>>();
+        Set<Map<String, Object>> checkPotentialDuplicates = new HashSet<Map<String, Object>>();
         //first pass, check each annotation
         int i = 0;
         for (Map<String, Object> annot: annots) {
@@ -657,11 +661,52 @@ public class SimilarityAnnotation {
                     ecoOntWrapper, homOntWrapper, confOntWrapper)) {
                 continue;
             }
+
+            List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
+                    (String) annot.get(ENTITY_COL_NAME));
+            
+            //to check for duplicates, we will use only some columns
+            Map<String, Object> checkPotentialDuplicate = new HashMap<String, Object>();
+            checkPotentialDuplicate.put(TAXON_COL_NAME, 
+                    StringUtils.trim((String) annot.get(TAXON_COL_NAME)));
+            //need to order potential multiple values in ENTITY_COL_NAME to identify duplicates
+            checkPotentialDuplicate.put(ENTITY_COL_NAME, 
+                    AnnotationCommon.convertToMultipleEntitiesColumn(uberonIds));
+            checkPotentialDuplicate.put(HOM_COL_NAME, 
+                    StringUtils.trim((String) annot.get(HOM_COL_NAME)));
+            //use only the ID of the reference
+            checkPotentialDuplicate.put(REF_COL_NAME, 
+                    this.getRefIdFromRefColValue((String) annot.get(REF_COL_NAME)));
+            checkPotentialDuplicate.put(ECO_COL_NAME, 
+                    StringUtils.trim((String) annot.get(ECO_COL_NAME)));
+            checkPotentialDuplicate.put(QUALIFIER_COL_NAME, 
+                    StringUtils.trim((String) annot.get(QUALIFIER_COL_NAME)));
+            //an exact duplicate will have same supporting text: we cannot rule out 
+            //the possibility that 2 identical annotations come from a same reference with same 
+            //ECOs, but in that case the supporting text should be different; 
+            //but we cannot discard the fact that the supporting textes can be slightly 
+            //different, but corresponding to a same quote, therefore we also need 
+            //to check for "potential" duplicates. We do not consider CIO IDs here, 
+            //as confidence is subjective and might be assigned different values 
+            //by different curators. 
+            Map<String, Object> checkExactDuplicate = 
+                    new HashMap<String, Object>(checkPotentialDuplicate);
+            checkExactDuplicate.put(SUPPORT_TEXT_COL_NAME, 
+                    StringUtils.trim((String) annot.get(SUPPORT_TEXT_COL_NAME)));
+            
+            if (!checkExactDuplicates.add(checkExactDuplicate)) {
+                //an exception will be thrown afterwards (see method verifyErrors)
+                this.duplicates.add(checkExactDuplicate);
+            } else if (!checkPotentialDuplicates.add(checkPotentialDuplicate)) {
+                //we do not throw an exception for a potential duplicate, 
+                //but we log a warn message, it's still most likely a duplicate
+                log.warn("Some annotations seem duplicated (different supporting textes, "
+                        + "but all other fields equal): " + checkPotentialDuplicate);
+            }
+            
             
             //Uberon ID(s) used to define the entity annotated. 
             //store a String of Uberon IDs to be used to store association to positive/negative annots.
-            List<String> uberonIds = AnnotationCommon.parseMultipleEntitiesColumn(
-                    (String) annot.get(ENTITY_COL_NAME));
             String uberonIdsConcat = "";
             for (String uberonId: uberonIds) {
                 uberonIdsConcat += uberonId.trim() + "-";
@@ -706,11 +751,48 @@ public class SimilarityAnnotation {
             throw new IllegalArgumentException(e);
         }
         
-        //second pass, now we check coherence of positive and negative annotations 
-        //related to relations between taxa (if there is a NOT annotation 
-        //in a taxon, most likely there should be also a NOT annotation for all parent taxa 
-        //annotated)
-        continue here
+        //now we check coherence of positive and negative annotations 
+        //related to relations between taxa, in RAW and RAW_CLEAN files 
+        //(if there is a NOT annotation in a taxon, most likely there should be also 
+        //a NOT annotation for all parent taxa annotated; this is not mandatory, 
+        //as a structure can disappear in a taxon, so we can only log an error)
+        if (fileType == GeneratedFileType.RAW || 
+                fileType == GeneratedFileType.RAW_CLEAN) {
+            for (Entry<String, Set<Integer>> negativeAnnot: negativeAnnotsToTaxa.entrySet()) {
+                log.trace("Checking negative annotations: {}", negativeAnnot);
+                //check positive annotation for same HOM and Uberon IDs, in parent taxa.
+                Set<Integer> positiveAnnotTaxa = positiveAnnotsToTaxa.get(negativeAnnot.getKey());
+                if (positiveAnnotTaxa == null) {
+                    continue;
+                }
+                log.trace("Taxa associated to positive annotations: {}", positiveAnnotTaxa);
+                
+                //first, get all parent taxa of all taxa associated to these negative annotations
+                Set<Integer> parentTaxonIds = new HashSet<Integer>();
+                for (int taxId: negativeAnnot.getValue()) {
+                    for (OWLClass parentTaxon: taxOntWrapper.getAncestorsThroughIsA(
+                            taxOntWrapper.getOWLClassByIdentifier(
+                                    OntologyUtils.getTaxOntologyId(taxId)))) {
+                        parentTaxonIds.add(OntologyUtils.getTaxNcbiId(
+                                taxOntWrapper.getIdentifier(parentTaxon)));
+                    }
+                }
+                //now, we keep only the parent taxa associated to a positive annotation
+                parentTaxonIds.retainAll(positiveAnnotTaxa);
+                //and we remove all taxa already associated to a negative annotation
+                parentTaxonIds.removeAll(negativeAnnot.getValue());
+                //what remains are potentially missing annotations
+                if (!parentTaxonIds.isEmpty()) {
+                    log.warn("Potentially missing annotation(s)! There exist negative annotation(s) "
+                            + "for HOM ID - Uberon ID: " + negativeAnnot.getKey() 
+                            + " in taxon IDs: " + negativeAnnot.getValue() + 
+                            " - There are also positive annotations in parent taxa for same "
+                            + "HOM ID - Uberon ID, but some miss a corresponding negative annotation. "
+                            + "Negative annotations potentially missing in taxa: " 
+                            + parentTaxonIds);
+                }
+            }
+        }
         
         log.exit();
     }
@@ -1737,7 +1819,7 @@ public class SimilarityAnnotation {
      * Checks that no errors were detected and stored, in {@link #missingUberonIds}, 
      * and/or {@link #missingTaxonIds}, and/or {@link #missingECOIds}, and/or 
      * {@link #missingHOMIds}, and/or {@link #missingCONFIds}, and/or 
-     * {@link #idsNotExistingInTaxa}. If some errors were stored, an 
+     * {@link #idsNotExistingInTaxa}, and/or {@link #duplicates}. If some errors were stored, an 
      * {@code IllegalStateException} will be thrown with a detailed error message, 
      * otherwise, nothing happens.
      * @throws IllegalStateException    if some errors were detected and stored.
@@ -1797,6 +1879,13 @@ public class SimilarityAnnotation {
                 errorMsg += confId + Utils.CR;
             }
         }
+        if (!this.duplicates.isEmpty()) {
+            errorMsg += Utils.CR + "Some annotations are duplicated: " + 
+                Utils.CR;
+            for (Map<String, Object> duplicate: this.duplicates) {
+                errorMsg += duplicate + Utils.CR;
+            }
+        }
         if (!errorMsg.equals("")) {
             throw log.throwing(new IllegalStateException(errorMsg));
         }
@@ -1808,7 +1897,9 @@ public class SimilarityAnnotation {
     /**
      * Gets a reference ID from a value in the column {@link #REF_COL_NAME}. This is 
      * because in the curator annotation file, reference titles can be mixed in 
-     * the column containing reference IDs, so we need to extract them.
+     * the column containing reference IDs, so we need to extract them. 
+     * <p>
+     * If {@code refColValue} is {@code null} or empty, the returned value will be the same.
      * 
      * @param refColValue   A {@code String} that is a value retrieved from 
      *                      the column {@link #REF_COL_NAME}.
@@ -1820,8 +1911,8 @@ public class SimilarityAnnotation {
     private String getRefIdFromRefColValue(String refColValue) 
             throws IllegalArgumentException {
         log.entry(refColValue);
-        if (refColValue == null) {
-            return log.exit(null);
+        if (refColValue == null || refColValue.equals("")) {
+            return log.exit(refColValue);
         }
         
         Matcher m = REF_COL_PATTERN.matcher(refColValue);

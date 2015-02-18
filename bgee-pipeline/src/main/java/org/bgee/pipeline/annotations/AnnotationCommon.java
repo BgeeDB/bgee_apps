@@ -96,15 +96,15 @@ public class AnnotationCommon {
     public final static String DEFAULT_ENTITY_SEPARATOR = "|";
     
     /**
-     * An unmodifiable {@code Set} of {@code String}s that are the allowed separators 
-     * between entities in columns containing multiple entities, in annotation files. 
+     * An unmodifiable {@code List} of {@code String}s that are the allowed separators 
+     * between entities in columns containing multiple entities, in annotation files, 
+     * in preferred order of use. 
      * See {@link #MULTIPLE_ANAT_ENTITY_COL_NAMES} for an example of such columns.
      * 
      * @see #DEFAULT_ENTITY_SEPARATOR
      */
-    public final static Set<String> ENTITY_SEPARATORS = 
-            Collections.unmodifiableSet(new HashSet<String>(
-                    Arrays.asList(DEFAULT_ENTITY_SEPARATOR, ",")));
+    public final static List<String> ENTITY_SEPARATORS = 
+            Collections.unmodifiableList(Arrays.asList(DEFAULT_ENTITY_SEPARATOR, ","));
     
     /**
      * Actions that can be launched from this main method, depending on the first 
@@ -558,6 +558,7 @@ public class AnnotationCommon {
      * @return                  A {@code List} of {@code String}s that are the values 
      *                          corresponding to each individual entity,  
      *                          ordered by alphabetical order.
+     * @see #convertToMultipleEntitiesColumn(List)
      */
     public static List<String> parseMultipleEntitiesColumn(String columnContent) {
         log.entry(columnContent);
@@ -581,6 +582,39 @@ public class AnnotationCommon {
         Collections.sort(orderedValues);
         
         return log.exit(orderedValues);
+    }
+    
+    /**
+     * Convert a {@code entities} into a {@code String} that can be used in columns 
+     * accepting multiple entities for annotations. This is the opposite method to 
+     * {@link #parseMultipleEntitiesColumn(String)}. The preferred separator will be used 
+     * between entities (first separator in {@link #ENTITY_SEPARATORS}).
+     * 
+     * @param entities  A {@code List} of {@code String}s that are entities to be written 
+     *                  in a column accepting multiple entities. 
+     * @return          A {@code String} that can be used in a column accepting 
+     *                  multiple entities, with entities separated by the preferred separator.
+     * @throws IllegalArgumentException If one of the entity is {@code null} or empty.
+     * @see #parseMultipleEntitiesColumn(String)
+     */
+    public static String convertToMultipleEntitiesColumn(List<String> entities) {
+        log.entry(entities);
+        
+        //use the preferred separator
+        String separator = ENTITY_SEPARATORS.get(0);
+        StringBuilder columnContent = new StringBuilder();
+        for (String entity: entities) {
+            if (entity == null || entity.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException(
+                        "No element can be empty or null"));
+            }
+            if (columnContent.length() > 0) {
+                columnContent.append(separator);
+            }
+            columnContent.append(entity.trim());
+        }
+        
+        return log.exit(columnContent.toString());
     }
     
     /**

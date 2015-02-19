@@ -356,89 +356,6 @@ public class SimilarityAnnotation {
     }
 
     /**
-     * A {@code Set} of {@code String}s that are the IDs of the Uberon terms  
-     * that were present in the similarity annotation file, but for which no taxon 
-     * constraints could be found.
-     * @see #checkAnnotation(Map)
-     */
-    private final Set<String> missingUberonIds;
-    /**
-     * A {@code Set} of {@code Integer}s that are the IDs of the taxa   
-     * that were present in the similarity annotation file, but for which no taxon 
-     * constraints could be found.
-     * @see #checkAnnotation(Map)
-     */
-    private final Set<Integer> missingTaxonIds;
-    /**
-     * A {@code Set} of {@code String}s that are the IDs of the ECO terms that were 
-     * present in the similarity annotation file, but could not be found in 
-     * the ECO ontology. 
-     * @see #checkAnnotation(Map)
-     */
-    private final Set<String> missingECOIds;
-    /**
-     * A {@code Set} of {@code String}s that are the IDs of the HOM terms that were 
-     * present in the similarity annotation file, but could not be found in 
-     * the HOM ontology (ontology of homology and related concepts). 
-     * @see #checkAnnotation(Map)
-     */
-    private final Set<String> missingHOMIds;
-    /**
-     * A {@code Set} of {@code String}s that are the IDs of the CONF terms that were 
-     * present in the similarity annotation file, but could not be found in 
-     * the confidence code ontology. 
-     * @see #checkAnnotation(Map)
-     */
-    private final Set<String> missingCONFIds;
-    /**
-     * A {@code Map} where keys are the IDs of the Uberon terms that were incorrectly 
-     * scoped to some taxa, in which they are not supposed to exist, according to 
-     * the taxon constraints. Associated value is a {@code Set} of {@code Integer}s 
-     * that are the IDs of the taxa incorrectly used.
-     * @see #checkAnnotation(Map)
-     */
-    private final Map<String, Set<Integer>> idsNotExistingInTaxa;
-    
-    /**
-     * A {@code Collection} of {@code Map}s, where each {@code Map} represents 
-     * an annotation line that was duplicated.
-     * @see verifyErrors()
-     * @see #checkAnnotation(Map)
-     */
-    private final Set<Map<String, Object>> duplicates;
-    
-    /**
-     * A {@code Collection} of {@code Map}s, where each {@code Map} represents 
-     * an annotation line that was incorrectly formatted.
-     * @see #checkAnnotation(Map)
-     */
-    private final Set<Map<String, Object>> incorrectFormat;
-    
-    /**
-     * A {@code OWLGraphWrapper} storing the Uberon ontology, for methods 
-     * that need to share such a wrapper. 
-     * @see {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}
-     */
-    private OWLGraphWrapper uberonOntWrapper;
-    
-    /**
-     * Default constuctor.
-     */
-    public SimilarityAnnotation() {
-        this.missingUberonIds = new HashSet<String>();
-        this.missingTaxonIds = new HashSet<Integer>();
-        this.missingECOIds = new HashSet<String>();
-        this.missingHOMIds = new HashSet<String>();
-        this.missingCONFIds = new HashSet<String>();
-        this.duplicates = new HashSet<Map<String, Object>>();
-        this.incorrectFormat = new HashSet<Map<String, Object>>();
-        this.uberonOntWrapper = null;
-        
-        this.idsNotExistingInTaxa = new HashMap<String, Set<Integer>>();
-    }
-    
-    
-    /**
      * Extracts the similarity annotations from the provided file. It returns a 
      * {@code List} of {@code Map}s, where each {@code Map} represents a row in the file. 
      * The {@code Map}s in the {@code List} are ordered as they were read from the file. 
@@ -484,7 +401,7 @@ public class SimilarityAnnotation {
      * @throws IllegalArgumentException If {@code similarityFile} could not be 
      *                                  properly parsed.
      */
-    public List<Map<String, Object>> extractAnnotations(String similarityFile, 
+    public static List<Map<String, Object>> extractAnnotations(String similarityFile, 
             GeneratedFileType fileType) throws FileNotFoundException, IOException {
         log.entry(similarityFile, fileType);
         
@@ -502,7 +419,7 @@ public class SimilarityAnnotation {
                         header[i].equalsIgnoreCase(HOM_COL_NAME) || 
                         header[i].equalsIgnoreCase(TAXON_COL_NAME) || 
                         header[i].equalsIgnoreCase(CONF_COL_NAME)) {
-
+    
                     if (header[i].equalsIgnoreCase(TAXON_COL_NAME)) {
                         processors[i] = new NotNull(new ParseInt());
                     } else {
@@ -516,7 +433,7 @@ public class SimilarityAnnotation {
                         header[i].equalsIgnoreCase(CONF_NAME_COL_NAME) ||   
                         header[i].equalsIgnoreCase(TAXON_NAME_COL_NAME) ||   
                         header[i].equalsIgnoreCase(HOM_NAME_COL_NAME)) {
-
+    
                     if (fileType == GeneratedFileType.RAW) {
                         processors[i] = new Optional();
                     } else {
@@ -588,6 +505,342 @@ public class SimilarityAnnotation {
         }
         return log.exit(annotations);
     }
+
+    /**
+     * This methods is a helper method for 
+     * {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}, 
+     * allowing to provide the path to the Uberon ontology as {@code String}. 
+     * @param annotFile     A {@code String} that is the path to 
+     *                      the similarity annotation file.
+     * @param uberonOntFile A {@code String} that is the path to the Uberon 
+     *                      ontology file.
+     * @return              See related method.
+     * @see #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)
+     * @throws IllegalArgumentException See related method.
+     * @throws FileNotFoundException    See related method.
+     * @throws IOException              See related method.
+     * @throws UnknownOWLOntologyException  If an error occurred while loading Uberon.
+     * @throws OWLOntologyCreationException If an error occurred while loading Uberon.
+     * @throws OBOFormatParserException     If an error occurred while loading Uberon.
+     */
+    public static Set<OWLClass> getAnatEntitiesWithNoTransformationOf(String annotFile, 
+            String uberonOntFile) throws IllegalArgumentException, FileNotFoundException, 
+            IOException, UnknownOWLOntologyException, OWLOntologyCreationException, 
+            OBOFormatParserException {
+        log.entry(annotFile, uberonOntFile);
+        return log.exit(getAnatEntitiesWithNoTransformationOf(annotFile, 
+                    new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile))));
+    }
+    /**
+     * Obtains the anatomical entities used in the similarity annotation file 
+     * that have no {@code transformation_of} relations in the Uberon ontology 
+     * (nor any sub-relation of {@code transformation_of}). 
+     * <p>
+     * The {@code transformation_of} relations are important to be able to link 
+     * a same structure with its different developmental states, as we annotate 
+     * by default only the fully formed structures. The {@code transformation_of} 
+     * relations allow to expand our annotations to developmental structures. 
+     * 
+     * @param annotFile         A {@code String} that is the path to 
+     *                          the similarity annotation file.
+     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
+     * @return                  A {@code Set} of {@code OWLClass}es representing 
+     *                          the anatomical entities with no {@code transformation_of} 
+     *                          relations.
+     * @throws IllegalArgumentException If {@code annotFile} did not allow to obtain 
+     *                                  any valid anatomical entity ID, or {@code uberonOntWrapper} 
+     *                                  does not allow to retrieve any 
+     *                                  {@code transformation_of} relations.
+     * @throws FileNotFoundException    If {@code annotFile} could not be found.
+     * @throws IOException              If {@code annotFile} could not be read.
+     */
+    public static Set<OWLClass> getAnatEntitiesWithNoTransformationOf(String annotFile, 
+            OWLGraphWrapper uberonOntWrapper) throws IllegalArgumentException, 
+            FileNotFoundException, IOException {
+        log.entry(annotFile, uberonOntWrapper);
+        
+        //get the transformation_of Object Property, and its sub-object properties
+        OWLObjectProperty transfOfRel = 
+                uberonOntWrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.TRANSFORMATION_OF_ID);
+        Set<OWLObjectPropertyExpression> transfOfRels = new HashSet<OWLObjectPropertyExpression>();
+        if (transfOfRel != null) {
+            transfOfRels = uberonOntWrapper.getSubPropertyReflexiveClosureOf(transfOfRel);
+        } 
+        if (transfOfRel == null || transfOfRels.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
+            		"did not contain any transformation_of relations."));
+        }
+        log.debug("Transformation_of relations identified: {}", transfOfRels);
+        
+        //now, identify all entities used in our annotations, with no transformation_of relation
+        Set<String> anatEntityIds = 
+                AnnotationCommon.extractAnatEntityIdsFromFile(annotFile, false);
+        Set<OWLClass> withNoTransfOf = new HashSet<OWLClass>();
+        anatEntities: for (String anatEntityId: anatEntityIds) {
+            OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(anatEntityId, true);
+            log.trace("Testing OWLClass for ID {}: {}", anatEntityId, anatEntity);
+            if (anatEntity == null) {
+                log.trace("Entity {} not found in the ontology.", anatEntityId);
+                continue anatEntities;
+            }
+            for (OWLGraphEdge edge: uberonOntWrapper.getOutgoingEdges(anatEntity)) {
+                log.trace("  OutgoingEdge: {}", edge);
+                if (transfOfRels.contains(edge.getSingleQuantifiedProperty().getProperty())) {
+                    continue anatEntities;
+                }
+            }
+            //if we reach that point, it means that the anat entity does not have 
+            //any transformation_of relation
+            log.trace("No transformation_of relation found for {}.", anatEntityId);
+            withNoTransfOf.add(anatEntity);
+        }
+        
+        return log.exit(withNoTransfOf);
+    }
+    /**
+     * Delegates to {@link #writeAnatEntitiesWithNoTransformationOfToFile(String, 
+     * OWLGraphWrapper, String)} after having loaded the Uberon ontology.
+     * 
+     * @param annotFile     A {@code String} that is the path to 
+     *                      the similarity annotation file.
+     * @param uberonOntFile A {@code String} that is the path to the Uberon 
+     *                      ontology file.
+     * @param outputFile    A {@code String} that is the path to the file where to write results.
+     * @throws UnknownOWLOntologyException
+     * @throws IllegalArgumentException
+     * @throws FileNotFoundException
+     * @throws OWLOntologyCreationException
+     * @throws OBOFormatParserException
+     * @throws IOException
+     */
+    public static void writeAnatEntitiesWithNoTransformationOfToFile(String annotFile, 
+            String uberonOntFile, String outputFile) throws UnknownOWLOntologyException, 
+            IllegalArgumentException, FileNotFoundException, OWLOntologyCreationException, 
+            OBOFormatParserException, IOException {
+        log.entry(annotFile, uberonOntFile, outputFile);
+        
+        writeAnatEntitiesWithNoTransformationOfToFile(annotFile, 
+                new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile)), 
+                outputFile);
+                
+        log.exit();
+    }
+    /**
+     * Call {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}, 
+     * and write the results into {@code outputFile}, one per line. This method will also 
+     * add additional information about other relations {@code developmentally related to} 
+     * that identified {@code OWLClass}es could have (because, often, the missing 
+     * {@code transformation_of} relation is replaced by another relation, 
+     * such as {@code develops_from} for instance)
+     * 
+     * @param annotFile         A {@code String} that is the path to 
+     *                          the similarity annotation file.
+     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
+     * @param outputFile        A {@code String} that is the path to the file where 
+     *                          to write results.
+     * @throws IllegalArgumentException If the Uberon ontology provided did not contain 
+     *                                  transformation_of relations.
+     * @throws FileNotFoundException    If some files used could not be found.
+     * @throws IOException              If some files used could not be used.
+     * @see #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)
+     */
+    public static void writeAnatEntitiesWithNoTransformationOfToFile(String annotFile, 
+            OWLGraphWrapper uberonOntWrapper, String outputFile) throws 
+            IllegalArgumentException, FileNotFoundException, IOException {
+        log.entry(annotFile, uberonOntWrapper, outputFile);
+        
+        //note that the method getAnatEntitiesWithNoTransformationOf will load the Uberon ontology 
+        //into the attribute uberonOntWrapper, so that we can use it afterwards. 
+        Set<OWLClass> entities = getAnatEntitiesWithNoTransformationOf(annotFile, uberonOntWrapper);
+        //we want to retrieve the "developmentally related to" relations, and sub-relations, 
+        //for the OWLClasses with no transformation_of relations (because, often, the missing 
+        //"transformation_of" relation is replaced by another relation, 
+        //such as "develops_from" for instance)
+        //we load all relations related to "developmentally related to".
+        OWLObjectProperty dvlptRel = 
+                uberonOntWrapper.getOWLObjectProperty(OntologyUtils.DEVELOPMENTALLY_RELATED_TO_IRI);
+        Set<OWLObjectPropertyExpression> dvlptRels = new HashSet<OWLObjectPropertyExpression>();
+        if (dvlptRel != null) {
+            dvlptRels = uberonOntWrapper.getSubPropertyReflexiveClosureOf(dvlptRel);
+        } 
+        if (dvlptRel == null || dvlptRels.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
+                    "did not contain any \"developmentally related to\" relations."));
+        }
+        
+        //iterate the OWLClasses, and write info to output file
+        String dvlptRelsHeader = "'developmentally related to' relations";
+        String[] header = new String[] {ENTITY_COL_NAME, ENTITY_NAME_COL_NAME, dvlptRelsHeader};
+        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
+                new Optional()};
+        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
+                Utils.TSVCOMMENTED)) {
+            
+            mapWriter.writeHeader(header);
+            
+            for (OWLClass entity: entities) {
+                //get the relations "developmentally related to" outgoing from this class. 
+                String dvlptRelInfo = "";
+                for (OWLGraphEdge edge: uberonOntWrapper.getOutgoingEdges(entity)) {
+                    log.trace("Testing OutgoingEdge for 'developmentally related to' relation: {}", edge);
+                    if (dvlptRels.contains(edge.getSingleQuantifiedProperty().getProperty())) {
+                        if (StringUtils.isNotEmpty(dvlptRelInfo)) {
+                            dvlptRelInfo += " - ";
+                        }
+                        dvlptRelInfo += uberonOntWrapper.getLabel(
+                                edge.getSingleQuantifiedProperty().getProperty()) + ": " + 
+                                uberonOntWrapper.getIdentifier(edge.getTarget()) + " " + 
+                                uberonOntWrapper.getLabel(edge.getTarget());
+                    }
+                }
+                
+                //write info to file
+                Map<String, String> line = new HashMap<String, String>();
+                line.put(ENTITY_COL_NAME, uberonOntWrapper.getIdentifier(entity));
+                line.put(ENTITY_NAME_COL_NAME, uberonOntWrapper.getLabel(entity));
+                line.put(dvlptRelsHeader, dvlptRelInfo);
+                mapWriter.write(line, header, processors);
+            }
+        }
+        
+        log.exit();
+    }
+
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of the Uberon terms  
+     * that were present in the similarity annotation file, but for which no taxon 
+     * constraints could be found.
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<String> missingUberonIds;
+    /**
+     * A {@code Set} of {@code Integer}s that are the IDs of the taxa   
+     * that were present in the similarity annotation file, but for which no taxon 
+     * constraints could be found.
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<Integer> missingTaxonIds;
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of the ECO terms that were 
+     * present in the similarity annotation file, but could not be found in 
+     * the ECO ontology. 
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<String> missingECOIds;
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of the HOM terms that were 
+     * present in the similarity annotation file, but could not be found in 
+     * the HOM ontology (ontology of homology and related concepts). 
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<String> missingHOMIds;
+    /**
+     * A {@code Set} of {@code String}s that are the IDs of the CONF terms that were 
+     * present in the similarity annotation file, but could not be found in 
+     * the confidence code ontology. 
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<String> missingCONFIds;
+    /**
+     * A {@code Map} where keys are the IDs of the Uberon terms that were incorrectly 
+     * scoped to some taxa, in which they are not supposed to exist, according to 
+     * the taxon constraints. Associated value is a {@code Set} of {@code Integer}s 
+     * that are the IDs of the taxa incorrectly used.
+     * @see #checkAnnotation(Map)
+     */
+    private final Map<String, Set<Integer>> idsNotExistingInTaxa;
+    
+    /**
+     * A {@code Collection} of {@code Map}s, where each {@code Map} represents 
+     * an annotation line that was duplicated.
+     * @see verifyErrors()
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<Map<String, Object>> duplicates;
+    
+    /**
+     * A {@code Collection} of {@code Map}s, where each {@code Map} represents 
+     * an annotation line that was incorrectly formatted.
+     * @see #checkAnnotation(Map)
+     */
+    private final Set<Map<String, Object>> incorrectFormat;
+    
+    /**
+     * A {@code OWLGraphWrapper} storing the Uberon ontology, for methods 
+     * that need to share such a wrapper. 
+     * @see {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}
+     */
+    private OWLGraphWrapper uberonOntWrapper;
+    
+    /**
+     * Constructor using pathes to the required files. 
+     * 
+     * @param annotFile                     A {@code String} that is the path to the file
+     *                                      containing the raw annotations provided by curators 
+     *                                      (corresponds to {@link GeneratedFileType 
+     *                                      GeneratedFileType RAW}).
+     * @param taxonConstraintsFile          A {@code String} that is the path to the file 
+     *                                      containing taxon constraints. 
+     *                                      See {@link org.bgee.pipeline.uberon.TaxonConstraints}
+     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
+     *                                      representing prefixes of uberon terms to match, 
+     *                                      the associated value being a {@code Set} 
+     *                                      of {@code Integer}s to replace taxon constraints 
+     *                                      of matching terms. Can be {@code null}.
+     * @param uberonOntFile                 A {@code String} that is the path to the Uberon 
+     *                                      ontology.
+     * @param taxOntFile                    A {@code String} that is the path to the taxonomy 
+     *                                      ontology.
+     * @param homOntFile                    A {@code String} that is the path to the homology  
+     *                                      and related concepts (HOM) ontology.
+     * @param ecoOntFile                    A {@code String} that is the path to the ECO 
+     *                                      ontology.
+     * @param confOntFile                   A {@code String} that is the path to the confidence 
+     *                                      information ontology.
+     */
+    public SimilarityAnnotation(String annotFile, String taxonConstraintsFile, 
+            Map<String, Set<Integer>> idStartsToOverridenTaxonIds, String uberonOntFile, 
+            String taxOntFile, String homOntFile, String ecoOntFile, String confOntFile) {
+        
+    }
+    /**
+     * Constuctor receiving directly the objects needed.
+     * 
+     * @param rawAnnots         A {@code List} of {@code Map}s, where 
+     *                          each {@code Map} represents a raw annotation line, 
+     *                          as provided by curators in their RAW annotation file.
+     * @param taxonConstraints  A {@code Map} where keys are IDs of Uberon terms, 
+     *                          and values are {@code Set}s of {@code Integer}s 
+     *                          containing the IDs of taxa in which the Uberon term 
+     *                          exists.
+     * @param taxonIds          A {@code Set} of {@code Integer}s that are the taxon IDs 
+     *                          of all taxa that were used to define taxon constraints 
+     *                          on Uberon terms.
+     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
+     * @param taxOntWrapper     An {@code OWLGraphWrapper} wrapping the taxonomy ontology.
+     * @param ecoOntWrapper     An {@code OWLGraphWrapper} wrapping the ECO ontology.
+     * @param homOntWrapper     An {@code OWLGraphWrapper} wrapping the HOM ontology 
+     *                          (ontology of homology an related concepts).
+     * @param confOntWrapper    An {@code OWLGraphWrapper} wrapping the confidence 
+     *                          code ontology.
+     */
+    public SimilarityAnnotation(List<Map<String, Object>> rawAnnots, 
+            Map<String, Set<Integer>> taxonConstraints, 
+            OWLGraphWrapper uberonOntWrapper, OWLGraphWrapper taxOntWrapper, 
+            OWLGraphWrapper ecoOntWrapper, OWLGraphWrapper homOntWrapper, 
+            OWLGraphWrapper confOntWrapper) {
+        this.missingUberonIds = new HashSet<String>();
+        this.missingTaxonIds = new HashSet<Integer>();
+        this.missingECOIds = new HashSet<String>();
+        this.missingHOMIds = new HashSet<String>();
+        this.missingCONFIds = new HashSet<String>();
+        this.duplicates = new HashSet<Map<String, Object>>();
+        this.incorrectFormat = new HashSet<Map<String, Object>>();
+        this.uberonOntWrapper = null;
+        
+        this.idsNotExistingInTaxa = new HashMap<String, Set<Integer>>();
+    }
+    
     
     /**
      * Check the correctness of the annotations provided. This methods perform many checks, 
@@ -2143,191 +2396,5 @@ public class SimilarityAnnotation {
         }
         
         return log.exit(filteredAnnotations);
-    }
-    
-    /**
-     * This methods is a helper method for 
-     * {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}, 
-     * allowing to provide the path to the Uberon ontology as {@code String}. 
-     * @param annotFile     A {@code String} that is the path to 
-     *                      the similarity annotation file.
-     * @param uberonOntFile A {@code String} that is the path to the Uberon 
-     *                      ontology file.
-     * @return              See related method.
-     * @see #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)
-     * @throws IllegalArgumentException See related method.
-     * @throws FileNotFoundException    See related method.
-     * @throws IOException              See related method.
-     * @throws UnknownOWLOntologyException  If an error occurred while loading Uberon.
-     * @throws OWLOntologyCreationException If an error occurred while loading Uberon.
-     * @throws OBOFormatParserException     If an error occurred while loading Uberon.
-     */
-    public Set<OWLClass> getAnatEntitiesWithNoTransformationOf(String annotFile, 
-            String uberonOntFile) throws IllegalArgumentException, FileNotFoundException, 
-            IOException, UnknownOWLOntologyException, OWLOntologyCreationException, 
-            OBOFormatParserException {
-        log.entry(annotFile, uberonOntFile);
-        return log.exit(
-                this.getAnatEntitiesWithNoTransformationOf(annotFile, 
-                    new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile))));
-    }
-    
-    /**
-     * Obtains the anatomical entities used in the similarity annotation file 
-     * that have no {@code transformation_of} relations in the Uberon ontology 
-     * (nor any sub-relation of {@code transformation_of}). 
-     * <p>
-     * The {@code transformation_of} relations are important to be able to link 
-     * a same structure with its different developmental states, as we annotate 
-     * by default only the fully formed structures. The {@code transformation_of} 
-     * relations allow to expand our annotations to developmental structures. 
-     * 
-     * @param annotFile         A {@code String} that is the path to 
-     *                          the similarity annotation file.
-     * @param uberonOntWrapper  An {@code OWLGraphWrapper} wrapping the Uberon ontology.
-     * @return                  A {@code Set} of {@code OWLClass}es representing 
-     *                          the anatomical entities with no {@code transformation_of} 
-     *                          relations.
-     * @throws IllegalArgumentException If {@code annotFile} did not allow to obtain 
-     *                                  any valid anatomical entity ID, or {@code uberonOntWrapper} 
-     *                                  does not allow to retrieve any 
-     *                                  {@code transformation_of} relations.
-     * @throws FileNotFoundException    If {@code annotFile} could not be found.
-     * @throws IOException              If {@code annotFile} could not be read.
-     */
-    /*
-     * (non-javadoc)
-     * Note that this method will load the Uberon ontology into {@link #uberonOntWrapper}, 
-     * so that it can be called by other methods following a call to this one. 
-     */
-    public Set<OWLClass> getAnatEntitiesWithNoTransformationOf(String annotFile, 
-            OWLGraphWrapper uberonOntWrapper) throws IllegalArgumentException, 
-            FileNotFoundException, IOException {
-        log.entry(annotFile, uberonOntWrapper);
-        
-        //get the transformation_of Object Property, and its sub-object properties
-        OWLObjectProperty transfOfRel = 
-                uberonOntWrapper.getOWLObjectPropertyByIdentifier(OntologyUtils.TRANSFORMATION_OF_ID);
-        Set<OWLObjectPropertyExpression> transfOfRels = new HashSet<OWLObjectPropertyExpression>();
-        if (transfOfRel != null) {
-            transfOfRels = uberonOntWrapper.getSubPropertyReflexiveClosureOf(transfOfRel);
-        } 
-        if (transfOfRel == null || transfOfRels.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
-            		"did not contain any transformation_of relations."));
-        }
-        log.debug("Transformation_of relations identified: {}", transfOfRels);
-        
-        //now, identify all entities used in our annotations, with no transformation_of relation
-        Set<String> anatEntityIds = 
-                AnnotationCommon.extractAnatEntityIdsFromFile(annotFile, false);
-        Set<OWLClass> withNoTransfOf = new HashSet<OWLClass>();
-        anatEntities: for (String anatEntityId: anatEntityIds) {
-            OWLClass anatEntity = uberonOntWrapper.getOWLClassByIdentifier(anatEntityId, true);
-            log.trace("Testing OWLClass for ID {}: {}", anatEntityId, anatEntity);
-            if (anatEntity == null) {
-                log.trace("Entity {} not found in the ontology.", anatEntityId);
-                continue anatEntities;
-            }
-            for (OWLGraphEdge edge: uberonOntWrapper.getOutgoingEdges(anatEntity)) {
-                log.trace("  OutgoingEdge: {}", edge);
-                if (transfOfRels.contains(edge.getSingleQuantifiedProperty().getProperty())) {
-                    continue anatEntities;
-                }
-            }
-            //if we reach that point, it means that the anat entity does not have 
-            //any transformation_of relation
-            log.trace("No transformation_of relation found for {}.", anatEntityId);
-            withNoTransfOf.add(anatEntity);
-        }
-
-        //store the uberon ontology for use by methods calling this one
-        this.uberonOntWrapper = uberonOntWrapper;
-        
-        return log.exit(withNoTransfOf);
-    }
-    
-    /**
-     * Call {@link #getAnatEntitiesWithNoTransformationOf(String, String)}, 
-     * and write the results into {@code outputFile}, one per line. This method will also 
-     * add additional information about other relations {@code developmentally related to} 
-     * that identified {@code OWLClass}es could have (because, often, the missing 
-     * {@code transformation_of} relation is replaced by another relation, 
-     * such as {@code develops_from} for instance)
-     * 
-     * @param annotFile     A {@code String} that is the path to 
-     *                      the similarity annotation file.
-     * @param uberonOntFile A {@code String} that is the path to the Uberon 
-     *                      ontology file.
-     * @param outputFile    A {@code String} that is the path to the file where to write results.
-     * @see #getAnatEntitiesWithNoTransformationOf(String, String)
-     * @throws IllegalArgumentException See related method.
-     * @throws FileNotFoundException    See related method.
-     * @throws IOException              See related method.
-     * @throws UnknownOWLOntologyException  See related method.
-     * @throws OWLOntologyCreationException See related method.
-     * @throws OBOFormatParserException     See related method.
-     */
-    public void writeAnatEntitiesWithNoTransformationOfToFile(String annotFile, 
-            String uberonOntFile, String outputFile) throws UnknownOWLOntologyException, 
-            IllegalArgumentException, FileNotFoundException, OWLOntologyCreationException, 
-            OBOFormatParserException, IOException {
-        log.entry(annotFile, uberonOntFile, outputFile);
-        
-        //note that the method getAnatEntitiesWithNoTransformationOf will load the Uberon ontology 
-        //into the attribute uberonOntWrapper, so that we can use it afterwards. 
-        Set<OWLClass> entities = this.getAnatEntitiesWithNoTransformationOf(annotFile, uberonOntFile);
-        //we want to retrieve the "developmentally related to" relations, and sub-relations, 
-        //for the OWLClasses with no transformation_of relations (because, often, the missing 
-        //"transformation_of" relation is replaced by another relation, 
-        //such as "develops_from" for instance)
-        //we load all relations related to "developmentally related to".
-        OWLObjectProperty dvlptRel = 
-                uberonOntWrapper.getOWLObjectProperty(OntologyUtils.DEVELOPMENTALLY_RELATED_TO_IRI);
-        Set<OWLObjectPropertyExpression> dvlptRels = new HashSet<OWLObjectPropertyExpression>();
-        if (dvlptRel != null) {
-            dvlptRels = uberonOntWrapper.getSubPropertyReflexiveClosureOf(dvlptRel);
-        } 
-        if (dvlptRel == null || dvlptRels.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("The Uberon ontology provided " +
-                    "did not contain any \"developmentally related to\" relations."));
-        }
-        
-        //iterate the OWLClasses, and write info to output file
-        String dvlptRelsHeader = "'developmentally related to' relations";
-        String[] header = new String[] {ENTITY_COL_NAME, ENTITY_NAME_COL_NAME, dvlptRelsHeader};
-        CellProcessor[] processors = new CellProcessor[] {new NotNull(), new NotNull(), 
-                new Optional()};
-        try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(outputFile),
-                Utils.TSVCOMMENTED)) {
-            
-            mapWriter.writeHeader(header);
-            
-            for (OWLClass entity: entities) {
-                //get the relations "developmentally related to" outgoing from this class. 
-                String dvlptRelInfo = "";
-                for (OWLGraphEdge edge: this.uberonOntWrapper.getOutgoingEdges(entity)) {
-                    log.trace("Testing OutgoingEdge for 'developmentally related to' relation: {}", edge);
-                    if (dvlptRels.contains(edge.getSingleQuantifiedProperty().getProperty())) {
-                        if (StringUtils.isNotEmpty(dvlptRelInfo)) {
-                            dvlptRelInfo += " - ";
-                        }
-                        dvlptRelInfo += this.uberonOntWrapper.getLabel(
-                                edge.getSingleQuantifiedProperty().getProperty()) + ": " + 
-                                this.uberonOntWrapper.getIdentifier(edge.getTarget()) + " " + 
-                                this.uberonOntWrapper.getLabel(edge.getTarget());
-                    }
-                }
-                
-                //write info to file
-                Map<String, String> line = new HashMap<String, String>();
-                line.put(ENTITY_COL_NAME, this.uberonOntWrapper.getIdentifier(entity));
-                line.put(ENTITY_NAME_COL_NAME, this.uberonOntWrapper.getLabel(entity));
-                line.put(dvlptRelsHeader, dvlptRelInfo);
-                mapWriter.write(line, header, processors);
-            }
-        }
-        
-        log.exit();
     }
 }

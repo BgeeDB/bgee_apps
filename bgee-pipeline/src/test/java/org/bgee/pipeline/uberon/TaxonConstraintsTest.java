@@ -172,15 +172,16 @@ public class TaxonConstraintsTest extends TestAncestor {
         
         File ontFile = null;
         ontFile = new File(directory, "uberon_subset" + taxonId + ".owl");
-        OWLGraphWrapper wrapper = 
-                new OWLGraphWrapper(OntologyUtils.loadOntology(ontFile.getPath()));
-        //the taxonomy ontology will have been added in this intermediate ontology as well
-        assertEquals("Incorrect OWLCLasses contained in intermediate ontology", 
-                wrapper.getAllOWLClasses().size(), 
-                expectedClassIds.size() + TAXONIDS.size());
-        for (String classId: expectedClassIds) {
-            assertNotNull("Missing class " + classId, 
-                    wrapper.getOWLClassByIdentifier(classId));
+        try (OWLGraphWrapper wrapper = 
+                new OWLGraphWrapper(OntologyUtils.loadOntology(ontFile.getPath()))) {
+            //the taxonomy ontology will have been added in this intermediate ontology as well
+            assertEquals("Incorrect OWLCLasses contained in intermediate ontology", 
+                    wrapper.getAllOWLClasses().size(), 
+                    expectedClassIds.size() + TAXONIDS.size());
+            for (String classId: expectedClassIds) {
+                assertNotNull("Missing class " + classId, 
+                        wrapper.getOWLClassByIdentifier(classId));
+            }
         }
     }
     
@@ -274,10 +275,31 @@ public class TaxonConstraintsTest extends TestAncestor {
      * Test the method {@link TaxonConstraints#extractTaxonIds(String)}
      */
     @Test
-    public void shouldExtractTaxonIds() throws FileNotFoundException, IOException {
+    public void shouldExtractTaxonIdsFromFile() throws FileNotFoundException, IOException {
         Set<Integer> expectedTaxonIds = new HashSet<Integer>(Arrays.asList(10, 15, 16, 19));
         assertEquals(expectedTaxonIds, TaxonConstraints.extractTaxonIds(
                 this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
+    }
+
+    /**
+     * Test the method {@link TaxonConstraints#extractTaxonIds(Map)}
+     */
+    @Test
+    public void shouldExtractTaxonIdsFromConstraints() {
+        Map<String, Set<Integer>> constraints = new HashMap<String, Set<Integer>>();
+        String clsId1 = "id1";
+        String clsId2 = "id2";
+        String clsId3 = "id3";
+        String clsId4 = "id4";
+        String clsId5 = "id5_1_5";
+        constraints.put(clsId1, new HashSet<Integer>(Arrays.asList(10, 15, 16, 19)));
+        constraints.put(clsId2, new HashSet<Integer>(Arrays.asList(10, 15, 16)));
+        constraints.put(clsId3, new HashSet<Integer>(Arrays.asList(10, 15)));
+        constraints.put(clsId4, new HashSet<Integer>(Arrays.asList(10)));
+        constraints.put(clsId5, new HashSet<Integer>());
+        
+        assertEquals(new HashSet<Integer>(Arrays.asList(10, 15, 16, 19)), 
+                TaxonConstraints.extractTaxonIds(constraints));
     }
     
     /**

@@ -806,6 +806,33 @@ public class TaxonConstraints {
             return log.exit(taxonIds);
         }
     }
+    /**
+     * Extract from the taxon constraints the taxon IDs used. 
+     * 
+     * @param taxonConstraints          A {@code Map} where keys are IDs of the Uberon 
+     *                                  {@code OWLClass}es, and values are {@code Set}s 
+     *                                  of {@code Integer}s containing the IDs of taxa 
+     *                                  in which the {@code OWLClass} exists.
+     * @return                          A {@code Set} of {@code Integer}s representing 
+     *                                  the NCBI IDs (e.g., 9606) of the taxa present 
+     *                                  in {@code taxonConstraints}
+     * @throws IllegalArgumentException If {@code taxonConstraints} does not allow 
+     *                                  to retrieve any taxon ID.
+     */
+    public static Set<Integer> extractTaxonIds(Map<String, Set<Integer>> taxonConstraints) {
+        log.entry(taxonConstraints);
+        
+        Set<Integer> taxIds = new HashSet<Integer>();
+        for (Set<Integer> iterateTaxIds: taxonConstraints.values()) {
+            taxIds.addAll(iterateTaxIds);
+        }
+        
+        if (taxIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("The taxon constraints provided "
+                    + "did not allow to retrieve taxon IDs"));
+        }
+        return log.exit(taxIds);
+    }
     
     /**
      * Delegates to {@link #extractTaxonConstraints(String, Map)} with the {@code Map} 

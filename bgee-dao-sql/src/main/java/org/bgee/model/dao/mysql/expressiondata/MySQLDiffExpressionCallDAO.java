@@ -226,9 +226,11 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
      *                              expression table used.
      * @return                      A {@code String} containing the SELECT clause 
      *                              for the requested query.
+     * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
      */
     private String generateSelectClause(
-                    Set<DiffExpressionCallDAO.Attribute> attributes, String diffExprTableName) {
+                    Set<DiffExpressionCallDAO.Attribute> attributes, String diffExprTableName) 
+                            throws IllegalArgumentException {
         log.entry(attributes, diffExprTableName);
         
         if (attributes == null || attributes.isEmpty()) {
@@ -286,7 +288,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLDAO<DiffExpressionCallDAO.A
                     DiffExpressionCallDAO.Attribute.INCONSISTENT_DEA_COUNT_RNA_SEQ)) {
                 sql += "inconsistentDEACountRNASeq";
             } else {
-                throw log.throwing(new IllegalStateException("The attribute provided (" +
+                throw log.throwing(new IllegalArgumentException("The attribute provided (" +
                         attribute.toString() + ") is unknown for " + 
                         DiffExpressionCallDAO.class.getName()));
             }

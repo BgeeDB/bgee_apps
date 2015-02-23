@@ -180,7 +180,15 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         }
     }
 
-    private String attributeToString(GeneDAO.Attribute attribute) {
+    /** 
+     * Returns a {@code String} that correspond to the given {@code GeneDAO.Attribute}.
+     * 
+     * @param attribute   An {code GeneDAO.Attribute} that is the attribute to
+     *                    convert into a {@code String}.
+     * @return            A {@code String} that corresponds to the given {@code GeneDAO.Attribute}
+     * @throws IllegalArgumentException If the {@code attribute} is unknown.
+     */
+    private String attributeToString(GeneDAO.Attribute attribute) throws IllegalArgumentException{
         log.entry(attribute);
         
         String label = null;
@@ -198,7 +206,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             label = "OMAParentNodeId";
         } else if (attribute.equals(GeneDAO.Attribute.ENSEMBL_GENE)) {
             label = "ensemblGene";
-        } 
+        } else {
+            throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
+                    attribute.toString() + ") is unknown for " + GeneDAO.class.getName()));
+        }
         
         return log.exit(label);
     }

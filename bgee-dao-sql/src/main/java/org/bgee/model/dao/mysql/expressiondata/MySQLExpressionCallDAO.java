@@ -240,10 +240,11 @@ public class MySQLExpressionCallDAO extends MySQLDAO<ExpressionCallDAO.Attribute
      *                                  {@code includeSubStages} is {@code true}.
      * @return                          A {@code String} containing the SELECT clause 
      *                                  for the requested query.
+     * @throws IllegalArgumentException If one {@code Attribute} of {@code attributes} is unknown.
      */
     private String generateSelectClause(Set<ExpressionCallDAO.Attribute> attributes, 
             boolean includeSubstructures, boolean includeSubStages, 
-            String exprTableName, String propagatedStageTableName) {
+            String exprTableName, String propagatedStageTableName) throws IllegalArgumentException {
         log.entry(attributes, includeSubstructures, includeSubStages, 
                 exprTableName, propagatedStageTableName);
         

@@ -250,8 +250,10 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      *                    convert in a {@code String}.
      * @return            A {@code String} that correspond to the given 
      *                    {@code RelationDAO.Attribute}
+     * @throws IllegalArgumentException If the {@code attribute} is unknown.
      */
-    private String attributeAnatEntityRelationToString(RelationDAO.Attribute attribute) {
+    private String attributeAnatEntityRelationToString(RelationDAO.Attribute attribute) 
+            throws IllegalArgumentException {
         log.entry(attribute);
         
         String label = null;
@@ -266,7 +268,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         } else if (attribute.equals(RelationDAO.Attribute.RELATION_STATUS)) {
             label = "relationStatus";
         } else {
-            throw log.throwing(new IllegalStateException("The attribute provided (" +
+            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
                     attribute.toString() + ") is unknown for " + RelationDAO.class.getName()));
         }
         
@@ -282,8 +284,10 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      *                    convert in a {@code String}.
      * @return            A {@code String} that correspond to the given 
      *                    {@code RelationDAO.Attribute}
+     * @throws IllegalArgumentException If the {@code attribute} is unknown.
      */
-    private String attributeStageRelationToString(RelationDAO.Attribute attribute) {
+    private String attributeStageRelationToString(RelationDAO.Attribute attribute) 
+            throws IllegalArgumentException {
         log.entry(attribute);
         
         String label = null;
@@ -298,7 +302,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         } else if (attribute.equals(RelationDAO.Attribute.RELATION_STATUS)) {
             label = "relationStatus";
         } else {
-            throw log.throwing(new IllegalStateException("The attribute provided (" +
+            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
                     attribute.toString() + ") is unknown for " + RelationDAO.class.getName()));
         }
         

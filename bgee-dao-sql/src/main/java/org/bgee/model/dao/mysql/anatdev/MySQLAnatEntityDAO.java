@@ -162,12 +162,14 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     /** 
      * Returns a {@code String} that correspond to the given {@code AnatEntityDAO.Attribute}.
      * 
-     * @param attribute   An {code AnatEntityDAO.Attribute} that is the attribute to
-     *                    convert into a {@code String}.
-     * @return            A {@code String} that corresponds to the given 
-     *                    {@code AnatEntityDAO.Attribute}
+     * @param attribute     An {code AnatEntityDAO.Attribute} that is the attribute to
+     *                      convert into a {@code String}.
+     * @return              A {@code String} that corresponds to the given 
+     *                      {@code AnatEntityDAO.Attribute}
+     * @throws IllegalArgumentException If the {@code attribute} is unknown.
      */
-    private String attributeToString(AnatEntityDAO.Attribute attribute) {
+    private String attributeToString(AnatEntityDAO.Attribute attribute) 
+            throws IllegalArgumentException {
         log.entry(attribute);
         
         switch (attribute) {
@@ -184,7 +186,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             case NON_INFORMATIVE: 
                 return log.exit("nonInformative");
             default: 
-                throw log.throwing(new AssertionError("The attribute provided (" + 
+                throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
                        attribute.toString() + ") is unknown for " + AnatEntityDAO.class.getName()));
         }
     }

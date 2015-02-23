@@ -258,7 +258,7 @@ public class MySQLNoExpressionCallDAO extends MySQLDAO<NoExpressionCallDAO.Attri
         } else if (attribute.equals(NoExpressionCallDAO.Attribute.INCLUDE_PARENT_STRUCTURES)) {
             label = "includeParentStructures";
         } else {
-            throw log.throwing(new IllegalStateException("The attribute provided (" +
+            throw log.throwing(new IllegalArgumentException("The attribute provided (" +
                     attribute.toString() + ") is unknown for " + NoExpressionCallDAO.class.getName()));
         }
         

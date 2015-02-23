@@ -88,8 +88,9 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
      *                    convert into a {@code String}.
      * @return            A {@code String} that corresponds to the given 
      *                    {@code AnatEntityDAO.Attribute}
+     * @throws IllegalArgumentException If the {@code attribute} is unknown.
      */
-    private String attributeToString(StageDAO.Attribute attribute) {
+    private String attributeToString(StageDAO.Attribute attribute) throws IllegalArgumentException {
         log.entry(attribute);
         
         switch (attribute) {
@@ -110,7 +111,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
             case GROUPING: 
                 return log.exit("groupingStage");
             default: 
-                throw log.throwing(new AssertionError("The attribute provided (" + 
+                throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
                        attribute.toString() + ") is unknown for " + StageDAO.class.getName()));
         }
     }

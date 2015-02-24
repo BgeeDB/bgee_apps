@@ -115,4 +115,9 @@ public abstract class EntityTO extends TransferObject {
         }
         return true;
     }
+    @Override
+    public String toString() {
+        return " ID: " + this.getId() + " - Name: " + this.getName() +
+        " - Description: " + this.getDescription();
+    }
 }

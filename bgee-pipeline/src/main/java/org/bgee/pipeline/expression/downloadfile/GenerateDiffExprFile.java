@@ -423,9 +423,6 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     /**
      * Retrieves all differential expression calls for the requested species from the Bgee data 
      * source, grouped by gene ID.
-     * <p>
-     * The returned {@code DiffExpressionCallTO}s have no ID set, to be able 
-     * to compare calls based on gene, stage and anatomical entity IDs.
      * 
      * @param speciesIds            A {@code Set} of {@code String}s that are the IDs of species 
      *                              allowing to filter the expression calls to retrieve.
@@ -439,6 +436,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      *                              all differential expression calls for the requested species. 
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
+    //TODO: we don't need to group by geneId, return directly a List of DiffExpressionCallTO (already ordered?) 
     private Map<String, Set<DiffExpressionCallTO>> loadDiffExprCallsByGeneId(
             Set<String> speciesIds, ComparisonFactor factor, boolean generateAdvancedFile) 
                     throws DAOException {
@@ -449,6 +447,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         Map<String, Set<DiffExpressionCallTO>> callsByGeneIds = 
                 new HashMap<String, Set<DiffExpressionCallTO>>();
         DiffExpressionCallDAO dao = this.getDiffExpressionCallDAO();
+        //do not retrieve the internal diff. expression IDs
         dao.setAttributes(EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
     
         DiffExpressionCallParams params = new DiffExpressionCallParams();
@@ -509,6 +508,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      *                              {@code String}s corresponding to anatomical entity names. 
      * @throws IOException  If an error occurred while trying to write the {@code outputFile}.
      */
+    //TODO: do not use a factor argument. Iterate the fileTypes, check they are all of same factor, get the factor.
     private void generateDiffExprFilesForOneSpecies(String directory, String fileNamePrefix, 
             Set<DiffExprFileType> fileTypes, String speciesId, Map<String, String> geneNamesByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds,
@@ -526,7 +526,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         Set<String> speciesFilter = new HashSet<String>();
         speciesFilter.add(speciesId);
 
-        //Load differential expression calls grouped by geneIds.
+        //Load differential expression calls.
         boolean generateCompleteFile = 
                 fileTypes.contains(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE) || 
                 fileTypes.contains(DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE);
@@ -546,6 +546,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         //now, we write all requested differential expression files at once. This way, we will 
         //generate the data only once, and we will not have to store them in memory (the memory  
         //usage could be huge).
+        //XXX: well, you do store them in memory here :p
         
         //OK, first we allow to store file names, writers, etc, associated to a DiffExprFileType, 
         //for the catch and finally clauses. 
@@ -600,6 +601,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             //****************************
             //first, we retrieve and order all unique gene IDs, to have rows in files 
             //ordered by gene IDs
+            //TODO: order also by anatEntityId stageId (see CallUser#groupAndOrderByGeneAnatEntityStage(Collection))
             Set<String> geneIds = new HashSet<String>(diffExprTOsByGeneIds.keySet());
             List<String> orderedGeneIds = new ArrayList<String>(geneIds);
             Collections.sort(orderedGeneIds);
@@ -883,6 +885,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             if (affymetrixType.equals(DiffExprCallType.NO_DATA)) {
                 type = rnaSeqType;
             }
+            assert !type.equals(DiffExprCallType.NO_DATA);
+            
             switch (type) {
                 case OVER_EXPRESSED: 
                     summary = DiffExpressionData.OVER_EXPRESSION;

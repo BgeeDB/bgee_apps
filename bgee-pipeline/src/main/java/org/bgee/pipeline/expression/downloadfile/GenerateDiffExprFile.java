@@ -39,7 +39,7 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
 
-
+//TODO: class javadoc
 public class GenerateDiffExprFile extends GenerateDownloadFile {
 
     /**
@@ -159,6 +159,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
          * A {@code boolean} defining whether this {@code DiffExprFileType} is a differential 
          * expression file type.
          */
+        //TODO: fix javadoc
         private final ComparisonFactor comparisonFactor;
 
         /**

@@ -71,6 +71,7 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the name of the column containing expression/no-expression found 
      * with Affymetrix experiment, in the download file.
      */
+    //TODO: either fix the javadoc, or move this field to GenerateExprFile if it is specific to expression/no-expression
     public final static String AFFYMETRIX_DATA_COLUMN_NAME = "Affymetrix data";
 
     /**
@@ -122,7 +123,7 @@ public abstract class GenerateDownloadFile extends CallUser {
     }
 
     /**
-     * Default constructor. 
+     * Default constructor, that will load the default {@code DAOManager} to be used. 
      */
     public GenerateDownloadFile() {
         this(null);
@@ -150,6 +151,8 @@ public abstract class GenerateDownloadFile extends CallUser {
      *                      to be generated.
      * @param directory     A {@code String} that is the directory to store the generated files. 
      */
+    //TODO: Strings are immutable, you cannot modify 'directory'. And modifying speciesIds and fileTypes 
+    //is a bit ugly, you should store relevant information in class attributes. 
     protected static void getClassParameters(
             String[] args, List<String> speciesIds, Set<String> fileTypes, String directory) {
         log.entry(args, speciesIds, fileTypes, directory);

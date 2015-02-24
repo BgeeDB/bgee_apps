@@ -160,6 +160,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
          * expression file type.
          */
         //TODO: fix javadoc
+        //XXX: I find it a bit weird to use the ComparisonFactor of DiffExpressionCallTO at this point, 
+        //but maybe it's just me...
         private final ComparisonFactor comparisonFactor;
 
         /**
@@ -285,13 +287,15 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * <ol>
      * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
      * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
-     * If it is not provided, all species contained in database will be used.
+     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), all species 
+     * contained in database will be used.
      * <li> a list of files types that will be generated ('diffexpr-anat-entity-simple' for 
      * {@link DiffExprFileType DIFF_EXPR_ANAT_ENTITY_SIMPLE}, 'diffexpr-anat-entity-complete' for 
      * {@link DiffExprFileType DIFF_EXPR_ANAT_ENTITY_COMPLETE}, 'diffexpr-stage-simple' for 
      * {@link DiffExprFileType DIFF_EXPR_STAGE_SIMPLE}, and 'diffexpr-stage-complete' for 
      * {@link DiffExprFileType DIFF_EXPR_STAGE_COMPLETE}), separated by the {@code String} 
-     * {@link CommandRunner#LIST_SEPARATOR}.
+     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
+     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
      * <li>the directory path that will be used to generate download files. 
      * </ol>
      * 
@@ -375,6 +379,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 stagesFilteTypes = new HashSet<FileType>();
 
         for (DiffExprFileType fileType : fileTypes) {
+            //TODO: do this based on the ComparisonFactor attribute, not based on names
             if (fileType.equals(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE) ||
                     fileType.equals(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE)) {
                 anatEntityFileTypes.add(fileType);
@@ -392,6 +397,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         for (String speciesId: speciesIds) {
             log.info("Start generating of differential expresion files for the species {}...", 
                     speciesId);
+            //TODO: actually, all of these could be done without using anatEntityFileTypes 
+            //and stagesFilteTypes, simply by using the ComparisonFactor
             if (anatEntityFileTypes.size() > 0) {
                 this.generateDiffExprFilesForOneSpecies(
                         directory, speciesNamesForFilesByIds.get(speciesId), 

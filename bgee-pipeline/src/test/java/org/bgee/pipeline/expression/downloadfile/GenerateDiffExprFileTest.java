@@ -108,9 +108,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                         DataState.LOWQUALITY, 0.03f, 2, 1, DiffExprCallType.NOT_EXPRESSED, 
                         DataState.NODATA, 1f, 0, 0)),
                 MySQLDiffExpressionCallTOResultSet.class);
-        DiffExpressionCallParams anatDiffExprParams11 = new DiffExpressionCallParams();
-        anatDiffExprParams11.addAllSpeciesIds(speciesIds);
-        anatDiffExprParams11.setComparisonFactor(ComparisonFactor.ANATOMY);
+        DiffExpressionCallParams anatDiffExprParams11 = 
+                this.getDiffExpressionCallParams(speciesIds, ComparisonFactor.ANATOMY, false);
         when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams11))).
                 thenReturn(mockAnatDiffExprRsSp11);
@@ -127,9 +126,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 DataState.NODATA, 1f, 0, 0, DiffExprCallType.UNDER_EXPRESSED, 
                                 DataState.HIGHQUALITY, 0.001f, 1, 0)),
                  MySQLDiffExpressionCallTOResultSet.class);
-        DiffExpressionCallParams devDiffExprParams11 = new DiffExpressionCallParams();
-        devDiffExprParams11.addAllSpeciesIds(speciesIds);
-        devDiffExprParams11.setComparisonFactor(ComparisonFactor.DEVELOPMENT);
+        DiffExpressionCallParams devDiffExprParams11 = 
+                this.getDiffExpressionCallParams(speciesIds, ComparisonFactor.DEVELOPMENT, false);
         when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(devDiffExprParams11))).
                 thenReturn(mockDevDiffExprRsSp11);
@@ -147,9 +145,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 DataState.HIGHQUALITY, 0.002f, 10, 1, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                                 DataState.HIGHQUALITY, 0.007f, 9, 2)),
                         MySQLDiffExpressionCallTOResultSet.class);
-        DiffExpressionCallParams anatDiffExprParams22 = new DiffExpressionCallParams();
-        anatDiffExprParams22.addAllSpeciesIds(speciesIds);
-        anatDiffExprParams22.setComparisonFactor(ComparisonFactor.ANATOMY);
+        DiffExpressionCallParams anatDiffExprParams22 = 
+                this.getDiffExpressionCallParams(speciesIds, ComparisonFactor.ANATOMY, false);
         when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams22))).
                 thenReturn(mockAnatDiffExprRsSp22);
@@ -165,9 +162,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 DataState.HIGHQUALITY, 0.003f, 8, 0, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                                 DataState.HIGHQUALITY, 0.008f, 22, 6)),
                         MySQLDiffExpressionCallTOResultSet.class);
-        DiffExpressionCallParams devDiffExprParams22 = new DiffExpressionCallParams();
-        devDiffExprParams22.addAllSpeciesIds(speciesIds);
-        devDiffExprParams22.setComparisonFactor(ComparisonFactor.DEVELOPMENT);
+        DiffExpressionCallParams devDiffExprParams22 = 
+                this.getDiffExpressionCallParams(speciesIds, ComparisonFactor.DEVELOPMENT, false);
         when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(devDiffExprParams22))).
                 thenReturn(mockDevDiffExprRsSp22);
@@ -177,38 +173,42 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         
         String directory = testFolder.newFolder("tmpFolder").getPath();
         
-        Set<DiffExprFileType> fileTypes = new HashSet<DiffExprFileType>(Arrays.asList(
-                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE, 
-                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE,
-                DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE, 
-                DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE)); 
+        Set<DiffExprFileType> fileTypes = EnumSet.allOf(DiffExprFileType.class); 
 
         generate.generateDiffExprFiles(Arrays.asList("11", "22"), fileTypes, directory);
         
         String outputSimpleAnatFile11 = new File(
-                directory, "Genus11_species11_" + DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE + 
+                directory, "Genus11_species11_" + 
+                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputSimpleAnatFile22 = new File(
-                directory, "Genus22_species22_" + DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE + 
+                directory, "Genus22_species22_" + 
+                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedAnatFile11 = new File(
-                directory, "Genus11_species11_" + DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE + 
+                directory, "Genus11_species11_" + 
+                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedAnatFile22 = new File(
-                directory, "Genus22_species22_" + DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE + 
+                directory, "Genus22_species22_" + 
+                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         String outputSimpleStageFile11 = new File(
-                directory, "Genus11_species11_" + DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE +
+                directory, "Genus11_species11_" + 
+                DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputSimpleStageFile22 = new File(
-                directory, "Genus22_species22_" + DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE +
+                directory, "Genus22_species22_" + 
+                DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedStageFile11 = new File(
-                directory, "Genus11_species11_" + DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE +
+                directory, "Genus11_species11_" + 
+                DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedStageFile22 = new File(
-                directory, "Genus22_species22_" + DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE + 
+                directory, "Genus22_species22_" + 
+                DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY, 3);
@@ -291,16 +291,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                         DataState.LOWQUALITY, 0.03f, 2, 1, DiffExprCallType.NOT_EXPRESSED, 
                         DataState.NODATA, 1f, 0, 0)),
                 MySQLDiffExpressionCallTOResultSet.class);
-        DiffExpressionCallParams anatDiffExprParams11 = new DiffExpressionCallParams();
-        anatDiffExprParams11.addAllSpeciesIds(speciesIds);
-        anatDiffExprParams11.setComparisonFactor(ComparisonFactor.ANATOMY);
-        anatDiffExprParams11.setSatisfyAllCallTypeConditions(true);
-        anatDiffExprParams11.setIncludeAffymetrixTypes(false);
-        anatDiffExprParams11.addAllAffymetrixDiffExprCallTypes(
-                EnumSet.of(DiffExprCallType.NOT_EXPRESSED, DiffExprCallType.NO_DATA));
-        anatDiffExprParams11.setIncludeRNASeqTypes(false);
-        anatDiffExprParams11.addAllRNASeqDiffExprCallTypes(
-                EnumSet.of(DiffExprCallType.NOT_EXPRESSED, DiffExprCallType.NO_DATA));
+        DiffExpressionCallParams anatDiffExprParams11 = 
+                this.getDiffExpressionCallParams(speciesIds, ComparisonFactor.ANATOMY, true);
         
         when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams11))).
@@ -385,9 +377,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 DataState.HIGHQUALITY, 0.002f, 10, 1, DiffExprCallType.NOT_DIFF_EXPRESSED, 
                                 DataState.HIGHQUALITY, 0.007f, 9, 2)),
                         MySQLDiffExpressionCallTOResultSet.class);
-        DiffExpressionCallParams anatDiffExprParams22 = new DiffExpressionCallParams();
-        anatDiffExprParams22.addAllSpeciesIds(speciesIds);
-        anatDiffExprParams22.setComparisonFactor(ComparisonFactor.ANATOMY);
+        DiffExpressionCallParams anatDiffExprParams22 = 
+                this.getDiffExpressionCallParams(speciesIds, ComparisonFactor.ANATOMY, false);
         when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams22))).
                 thenReturn(mockAnatDiffExprRsSp22);
@@ -476,9 +467,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                         DataState.LOWQUALITY, 0.03f, 2, 1, DiffExprCallType.NOT_EXPRESSED, 
                         DataState.NODATA, 1f, 0, 0)),
                 MySQLDiffExpressionCallTOResultSet.class);
-        DiffExpressionCallParams anatDiffExprParams11 = new DiffExpressionCallParams();
-        anatDiffExprParams11.addAllSpeciesIds(speciesIds);
-        anatDiffExprParams11.setComparisonFactor(ComparisonFactor.ANATOMY);        
+        DiffExpressionCallParams anatDiffExprParams11 = 
+                this.getDiffExpressionCallParams(speciesIds, ComparisonFactor.ANATOMY, false);     
         when(mockManager.mockDiffExpressionCallDAO.getDiffExpressionCalls(
                 (DiffExpressionCallParams) TestAncestor.valueCallParamEq(anatDiffExprParams11))).
                 thenReturn(mockAnatDiffExprRsSp11);
@@ -941,6 +931,37 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         return log.exit(false);
     }
 
+    /**
+     * Produce a {@code DiffExpressionCallParams} to be used for tests of this class 
+     * using a {@code DiffExpressionCallDAO}.
+     * 
+     * @param speciesIds        A {@code Set} of {@code String}s that are the IDs of the species 
+     *                          to retrieve data for.
+     * @param factor            A {@code ComparisonFactor} defining the type of data to retrieve.
+     * @param filterNoDiffExpr  A {@code boolean} defining whether all data should be retrieved 
+     *                          (when {@code false}), or only data with at least one data type 
+     *                          showing differential expression (when {@code true}). 
+     * @return              A {@code DiffExpressionCallParams} that can be used for tests 
+     *                      with a {@code DiffExpressionCallDAO}.
+     */
+    private DiffExpressionCallParams getDiffExpressionCallParams(Set<String> speciesIds, 
+            ComparisonFactor factor, boolean filterNoDiffExpr) {
+        log.entry(speciesIds, factor, filterNoDiffExpr);
+        DiffExpressionCallParams diffExprParams = new DiffExpressionCallParams();
+        diffExprParams.addAllSpeciesIds(speciesIds);
+        diffExprParams.setComparisonFactor(factor);
+        if (filterNoDiffExpr) {
+            diffExprParams.setSatisfyAllCallTypeConditions(false);
+            diffExprParams.setIncludeAffymetrixTypes(true);
+            diffExprParams.addAllAffymetrixDiffExprCallTypes(
+                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
+            diffExprParams.setIncludeRNASeqTypes(true);
+            diffExprParams.addAllRNASeqDiffExprCallTypes(
+                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
+        }
+        
+        return log.exit(diffExprParams);
+    }
 
 
 }

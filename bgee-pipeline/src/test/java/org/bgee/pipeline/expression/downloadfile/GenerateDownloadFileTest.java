@@ -25,7 +25,14 @@ import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
-
+/**
+ * This abstract class provides convenient common methods that test generation of TSV download files 
+ * from the Bgee database.
+ * 
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @since Bgee 13
+ */
 public abstract class GenerateDownloadFileTest extends TestAncestor {
 
     /**

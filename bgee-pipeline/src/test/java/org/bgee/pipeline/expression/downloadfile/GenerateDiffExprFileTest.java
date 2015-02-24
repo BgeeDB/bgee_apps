@@ -52,6 +52,13 @@ import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
 
+/**
+ * Unit tests for {@link GenerateDiffExprFile}
+ * 
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @since Bgee 13
+ */
 public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
     
     /**
@@ -364,7 +371,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         AnatEntityTOResultSet mockAnatEntityTORs = this.mockGetAnatEntities(mockManager, speciesIds);
         StageTOResultSet mockStageTORs = this.mockGetStages(mockManager, speciesIds);
         
-        // we need to mock getDiffExpressionCalls() for ComparisonFactor.ANATOMY for species 11
+        // we need to mock getDiffExpressionCalls() for ComparisonFactor.ANATOMY for species 22
         speciesIds = new HashSet<String>(Arrays.asList("22")); 
         MySQLDiffExpressionCallTOResultSet mockAnatDiffExprRsSp22 = createMockDAOResultSet(
                 Arrays.asList(
@@ -802,7 +809,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                                 anatEntityId.equals("Anat_id2")) {
                             this.assertDiffExprCommonColumnRowEqual(geneId, "genN2", geneName,
                                     "stageN1", stageName, "anatName2", anatEntityName, 
-                                    DiffExpressionData.STRONG_AMBIGUITY.getStringRepresentation(), resume,
+                                    DiffExpressionData.WEAK_AMBIGUITY.getStringRepresentation(), resume,
                                     GenerateDiffExprFile.NA_VALUE, quality);
                             if (!isSimplified) {
                                 this.assertCompleteDiffExprColumnRowEqual(geneId,

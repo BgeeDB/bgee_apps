@@ -57,7 +57,13 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 
-
+/**
+ * Unit tests for {@link GenerateExprFile}
+ * 
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @since Bgee 13
+ */
 public class GenerateExprFileTest extends GenerateDownloadFileTest {
 
     /**
@@ -618,9 +624,9 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                         GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
                         GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
                         GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME, 
-                        GenerateDownloadFile.ESTDATA_COLUMN_NAME, 
-                        GenerateDownloadFile.INSITUDATA_COLUMN_NAME, 
-                        //GenerateDownloadFile.RELAXEDINSITUDATA_COLUMN_NAME, 
+                        GenerateExprFile.ESTDATA_COLUMN_NAME, 
+                        GenerateExprFile.INSITUDATA_COLUMN_NAME, 
+                        //GenerateExprFile.RELAXEDINSITUDATA_COLUMN_NAME, 
                         GenerateDownloadFile.RNASEQ_DATA_COLUMN_NAME, 
                         GenerateExprFile.INCLUDING_OBSERVED_DATA_COLUMN_NAME, 
                         GenerateExprFile.EXPRESSION_COLUMN_NAME};

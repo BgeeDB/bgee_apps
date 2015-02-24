@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +22,6 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.DiffExprCallType;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallParams;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.BgeeDBUtils;
@@ -39,7 +36,14 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
 
-//TODO: class javadoc
+/**
+ * Class used to generate differential expression TSV download files (simple and advanced files) 
+ * from the Bgee database. 
+ * 
+ * @author Valentine Rech de Laval
+ * @version Bgee 13
+ * @since Bgee 13
+ */
 public class GenerateDiffExprFile extends GenerateDownloadFile {
 
     /**
@@ -156,10 +160,9 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         private final boolean simpleFileType;
 
         /**
-         * A {@code boolean} defining whether this {@code DiffExprFileType} is a differential 
-         * expression file type.
+         * A {@code ComparisonFactor} defining what is the compared experimental factor that 
+         * generated the differential expression calls.
          */
-        //TODO: fix javadoc
         //XXX: I find it a bit weird to use the ComparisonFactor of DiffExpressionCallTO at this point, 
         //but maybe it's just me...
         private final ComparisonFactor comparisonFactor;
@@ -305,12 +308,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     public static void main(String[] args) throws IOException {
         log.entry((Object[]) args);
 
-        List<String> speciesIds = new ArrayList<String>();
-        Set<String> fileTypes = new HashSet<String>();
-        String directory = null;
-        
         // Retrieve arguments and initialize speciesIds, fileTypes, and directory
-        GenerateDownloadFile.getClassParameters(args, speciesIds, fileTypes, directory);
+        setClassParameters(args);
         
         // Retrieve DiffExprFileType from String argument
         Set<String> unknownFileTypes = new HashSet<String>();
@@ -339,12 +338,12 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * Generate differential expression files, for the types defined by {@code fileTypes}, 
      * for species defined by {@code speciesIds}, in the directory {@code directory}.
      * 
-     * @param speciesIds     A {@code List} of {@code String}s that are the IDs of species for 
-     *                       which files are generated.
-     * @param fileTypes      A {@code Set} of {@code FileType}s containing file types to be generated.
-     * @param directory      A {@code String} that is the directory path directory to store the 
-     *                       generated files. 
-     * @throws IOException   If an error occurred while trying to write generated files.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species for 
+     *                      which files are generated.
+     * @param fileTypes     A {@code Set} of {@code FileType}s containing file types to be generated.
+     * @param directory     A {@code String} that is the directory path directory to store the 
+     *                      generated files. 
+     * @throws IOException  If an error occurred while trying to write generated files.
      */
     public void generateDiffExprFiles(List<String> speciesIds, Set<DiffExprFileType> fileTypes, 
             String directory) throws IOException { 
@@ -354,13 +353,12 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         if (speciesIds != null) {
             setSpecies = new HashSet<String>(speciesIds);
         }
-    
+
         // Check user input, retrieve info for generating file names
+        // Retrieve species names and IDs (all species names if speciesIds is null or empty)
         Map<String, String> speciesNamesForFilesByIds = 
                 checkAndGetLatinNamesBySpeciesIds(setSpecies);
-        if (speciesIds == null || speciesIds.isEmpty()) {
-            speciesIds = new ArrayList<String>(speciesNamesForFilesByIds.keySet());
-        }
+        assert speciesNamesForFilesByIds.size() >= setSpecies.size();
     
         // If no file types are given by user, we set all file types
         if (fileTypes == null || fileTypes.isEmpty()) {
@@ -375,41 +373,34 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         Map<String, String> anatEntityNamesByIds =
                 BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
     
-        Set<FileType> anatEntityFileTypes = new HashSet<FileType>(), 
-                stagesFilteTypes = new HashSet<FileType>();
-
+        // Split file types according comparison factor 
+        Set<DiffExprFileType> anatEntityFileTypes = new HashSet<DiffExprFileType>(), 
+                stagesFileTypes = new HashSet<DiffExprFileType>();
         for (DiffExprFileType fileType : fileTypes) {
-            //TODO: do this based on the ComparisonFactor attribute, not based on names
-            if (fileType.equals(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE) ||
-                    fileType.equals(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE)) {
+            if (fileType.getComparisonFactor().equals(ComparisonFactor.ANATOMY)) {
                 anatEntityFileTypes.add(fileType);
-            } else if (fileType.equals(DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE) ||
-                    fileType.equals(DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE)) {
-                stagesFilteTypes.add(fileType);
+            } else if (fileType.getComparisonFactor().equals(ComparisonFactor.DEVELOPMENT)) {
+                stagesFileTypes.add(fileType);
             } else {
                 throw log.throwing(new AssertionError(
                         "All logical conditions should have been checked."));
-
             }
         }
 
         // Generate differential expression files, species by species. 
-        for (String speciesId: speciesIds) {
+        for (String speciesId: speciesNamesForFilesByIds.keySet()) {
             log.info("Start generating of differential expresion files for the species {}...", 
                     speciesId);
-            //TODO: actually, all of these could be done without using anatEntityFileTypes 
-            //and stagesFilteTypes, simply by using the ComparisonFactor
-            if (anatEntityFileTypes.size() > 0) {
-                this.generateDiffExprFilesForOneSpecies(
-                        directory, speciesNamesForFilesByIds.get(speciesId), 
-                        fileTypes, speciesId, geneNamesByIds, stageNamesByIds, 
-                        anatEntityNamesByIds, ComparisonFactor.ANATOMY);
+            
+            if (!anatEntityFileTypes.isEmpty()) {
+                this.generateDiffExprFilesForOneSpecies(directory, 
+                        speciesNamesForFilesByIds.get(speciesId), anatEntityFileTypes, speciesId, 
+                        geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
             }
-            if (stagesFilteTypes.size() > 0) {
-                this.generateDiffExprFilesForOneSpecies(
-                        directory, speciesNamesForFilesByIds.get(speciesId), 
-                        fileTypes, speciesId, geneNamesByIds, stageNamesByIds, 
-                        anatEntityNamesByIds, ComparisonFactor.DEVELOPMENT);
+            if (!stagesFileTypes.isEmpty()) {
+                this.generateDiffExprFilesForOneSpecies(directory, 
+                        speciesNamesForFilesByIds.get(speciesId), stagesFileTypes, speciesId, 
+                        geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
             }
 
             //close connection to database between each species, to avoid idle connection reset
@@ -417,6 +408,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             log.info("Done generating of differential expresion files for the species {}.", 
                     speciesId);
         }
+        
         log.exit();
     }
 
@@ -436,16 +428,14 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      *                              all differential expression calls for the requested species. 
      * @throws DAOException If an error occurred while getting the data from the Bgee data source.
      */
-    //TODO: we don't need to group by geneId, return directly a List of DiffExpressionCallTO (already ordered?) 
-    private Map<String, Set<DiffExpressionCallTO>> loadDiffExprCallsByGeneId(
+    private List<DiffExpressionCallTO> loadDiffExprCalls(
             Set<String> speciesIds, ComparisonFactor factor, boolean generateAdvancedFile) 
                     throws DAOException {
         log.entry(speciesIds, factor, generateAdvancedFile);
         
         log.debug("Start retrieving differential expression calls for the species IDs {}...", 
                 speciesIds);
-        Map<String, Set<DiffExpressionCallTO>> callsByGeneIds = 
-                new HashMap<String, Set<DiffExpressionCallTO>>();
+
         DiffExpressionCallDAO dao = this.getDiffExpressionCallDAO();
         //do not retrieve the internal diff. expression IDs
         dao.setAttributes(EnumSet.complementOf(EnumSet.of(DiffExpressionCallDAO.Attribute.ID)));
@@ -453,35 +443,24 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         DiffExpressionCallParams params = new DiffExpressionCallParams();
         params.addAllSpeciesIds(speciesIds);
         params.setComparisonFactor(factor);
-        //if the advanced file won't be generated we don't retrieve 'not expressed' calls 
+        // If the advanced file won't be generated, we do not retrieve calls without at least
+        // one data type with over- or under-expressed. 
         if (!generateAdvancedFile) {
-            params.setSatisfyAllCallTypeConditions(true);
-            params.setIncludeAffymetrixTypes(false);
+            params.setSatisfyAllCallTypeConditions(false);
+            params.setIncludeAffymetrixTypes(true);
             params.addAllAffymetrixDiffExprCallTypes(
-                    EnumSet.of(DiffExprCallType.NOT_EXPRESSED, DiffExprCallType.NO_DATA));
-            params.setIncludeRNASeqTypes(false);
+                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
+            params.setIncludeRNASeqTypes(true);
             params.addAllRNASeqDiffExprCallTypes(
-                    EnumSet.of(DiffExprCallType.NOT_EXPRESSED, DiffExprCallType.NO_DATA));
+                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
         }
         
-        int i = 0;
-        try (DiffExpressionCallTOResultSet rsDiffExpr = dao.getDiffExpressionCalls(params)) {
-            while (rsDiffExpr.next()) {
-                DiffExpressionCallTO to = rsDiffExpr.getTO();
-                log.trace("Iterating DiffExpressionCallTO: {}", to);
-                Set<DiffExpressionCallTO> diffExprTOs = callsByGeneIds.get(to.getGeneId());
-                if (diffExprTOs == null) {
-                    log.trace("Create new map key: {}", to.getGeneId());
-                    diffExprTOs = new HashSet<DiffExpressionCallTO>();
-                    callsByGeneIds.put(to.getGeneId(), diffExprTOs);
-                }
-                diffExprTOs.add(to);
-                i++;
-            }
-        }
-    
-        log.debug("Done retrieving global expression calls, {} calls found", i);
-        return log.exit(callsByGeneIds); 
+        List<DiffExpressionCallTO> diffExpressionCallTOs = dao.getDiffExpressionCalls(params).getAllTOs();
+
+        log.debug("Done retrieving global expression calls, {} calls found", 
+                diffExpressionCallTOs.size());
+        
+        return log.exit(diffExpressionCallTOs); 
     }
 
     /**
@@ -505,20 +484,43 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      *                              corresponding to stage names. 
      * @param anatEntityNamesByIds  A {@code Map} where keys are {@code String}s corresponding to 
      *                              anatomical entity IDs, the associated values being 
-     *                              {@code String}s corresponding to anatomical entity names. 
-     * @throws IOException  If an error occurred while trying to write the {@code outputFile}.
+     *                              {@code String}s corresponding to anatomical entity names.
+     * @throws IOException              If an error occurred while trying to write the 
+     *                                  {@code outputFile}.
+     * @throws IllegalArgumentException If all provided {@code DiffExprFileType}s do not have the   
+     *                                  same {@code ComparisonFactor}.
      */
     //TODO: do not use a factor argument. Iterate the fileTypes, check they are all of same factor, get the factor.
     private void generateDiffExprFilesForOneSpecies(String directory, String fileNamePrefix, 
             Set<DiffExprFileType> fileTypes, String speciesId, Map<String, String> geneNamesByIds, 
-            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds,
-            ComparisonFactor factor) 
-                    throws IOException {
+            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds)
+                    throws IOException, IllegalArgumentException {
         log.entry(directory, fileNamePrefix, fileTypes, speciesId, 
                 geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
         
         log.debug("Start generating download files for the species {} and file types {}...", 
                 speciesId, fileTypes);
+
+        if (fileTypes== null || fileTypes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("No provided file types to be generated"));
+        }
+        
+        // We check that all file types have the same comparison factor and retrieve informations: 
+        // comparison factor and if there is an advanced file to be generated.
+        boolean generateCompleteFile = false; 
+        ComparisonFactor factor = null;
+        for (DiffExprFileType fileType: fileTypes) {
+            if (factor == null) {
+                factor = fileType.getComparisonFactor(); 
+            } else if (!fileType.getComparisonFactor().equals(factor)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "All file types do not have the same comparison factor: " + fileTypes));
+            }
+            if (fileType.isSimpleFileType() == false) {
+                generateCompleteFile = true;
+            }
+        }
+        assert factor != null;
 
         //********************************
         // RETRIEVE DATA FROM DATA SOURCE
@@ -527,12 +529,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         speciesFilter.add(speciesId);
 
         //Load differential expression calls.
-        boolean generateCompleteFile = 
-                fileTypes.contains(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE) || 
-                fileTypes.contains(DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE);
-        
-        Map<String, Set<DiffExpressionCallTO>> diffExprTOsByGeneIds =  
-                this.loadDiffExprCallsByGeneId(speciesFilter, factor, generateCompleteFile);
+        List<DiffExpressionCallTO> diffExprTOs =  
+                this.loadDiffExprCalls(speciesFilter, factor, generateCompleteFile);
 
         log.trace("Done retrieving data for differential expression files for the species {}.", 
                 speciesId);
@@ -570,12 +568,10 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 if (!fileType.getComparisonFactor().equals(factor)) {
                     continue;
                 }
-                CellProcessor[] fileTypeProcessors = null;
-                String[] fileTypeHeaders = null;
                 
-                fileTypeProcessors = this.generateDiffExprFileCellProcessors(fileType);
+                CellProcessor[] fileTypeProcessors = this.generateDiffExprFileCellProcessors(fileType);
                 processors.put(fileType, fileTypeProcessors);
-                fileTypeHeaders = this.generateDiffExprFileHeader(fileType);
+                String[] fileTypeHeaders = this.generateDiffExprFileHeader(fileType);
                 headers.put(fileType, fileTypeHeaders);
 
                 //Create file name
@@ -599,29 +595,10 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             //****************************
             // WRITE ROWS
             //****************************
-            //first, we retrieve and order all unique gene IDs, to have rows in files 
-            //ordered by gene IDs
-            //TODO: order also by anatEntityId stageId (see CallUser#groupAndOrderByGeneAnatEntityStage(Collection))
-            Set<String> geneIds = new HashSet<String>(diffExprTOsByGeneIds.keySet());
-            List<String> orderedGeneIds = new ArrayList<String>(geneIds);
-            Collections.sort(orderedGeneIds);
+            // Now, we write the rows in all files
+            this.writeDiffExprRows(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds,
+                    writersUsed, processors, headers, new HashSet<CallTO>(diffExprTOs));
 
-            //now, we generate and write data one gene at a time to not overload memory.
-            int geneCount = 0;
-            for (String geneId: orderedGeneIds) {
-                geneCount++;
-                if (log.isDebugEnabled() && geneCount % 2000 == 0) {
-                    log.debug("Iterating gene {} over {}", geneCount, orderedGeneIds.size());
-                }
-
-                //remove calls from Map to free some memory
-                Set<CallTO> allCallTOs = new HashSet<CallTO>(diffExprTOsByGeneIds.remove(geneId));
-                
-                //and, we compute and write the rows in all files
-                this.writeDiffExprRows(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds,
-                        writersUsed, processors, headers, geneId, allCallTOs);
-
-            }
         } catch (Exception e) {
             this.deleteTempFiles(directory, generatedFileNames, tmpExtension);
             throw e;
@@ -649,14 +626,6 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             throws IllegalArgumentException {
         log.entry(fileType);
         
-        if (!fileType.equals(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE) && 
-                !fileType.equals(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE) && 
-                !fileType.equals(DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE) && 
-                !fileType.equals(DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE)) {
-            throw log.throwing(new IllegalArgumentException("File type not handled " +
-                    "by this method: " + fileType));
-        }
-
         List<Object> data = new ArrayList<Object>();
         for (DiffExpressionData diffExprData: DiffExpressionData.values()) {
             data.add(diffExprData.getStringRepresentation());
@@ -766,32 +735,35 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * {@link #RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME}.
      * </ul>
      * 
-     * @param geneId            A {@code String} that is the ID of the gene considered.
-     * @param geneName          A {@code String} that is the name of the gene considered.
-     * @param stageId           A {@code String} that is the ID of the stage considered.
-     * @param stageName         A {@code String} that is the name of the stage considered.
-     * @param anatEntityId      A {@code String} that is the ID of the anatomical entity 
-     *                          considered.
-     * @param anatEntityName    A {@code String} that is the name of the anatomical entity 
-     *                          considered.
-     * @param to                A {@code DiffExpressionCallTO} that is the call to be written.
-     * @param fileType          The {@code DiffExprFileType} defining which type of file should be 
-     *                          generated.
-     * @return                  A {@code Map} containing the generated information. {@code null} 
-     *                          if no information should be generated for the provided 
-     *                          {@code fileType}.
+     * @param geneNamesByIds        A {@code Map} where keys are {@code String}s corresponding to 
+     *                              gene IDs, the associated values being {@code String}s 
+     *                              corresponding to gene names. 
+     * @param stageNamesByIds       A {@code Map} where keys are {@code String}s corresponding to 
+     *                              stage IDs, the associated values being {@code String}s 
+     *                              corresponding to stage names. 
+     * @param anatEntityNamesByIds  A {@code Map} where keys are {@code String}s corresponding to 
+     *                              anatomical entity IDs, the associated values being 
+     *                              {@code String}s corresponding to anatomical entity names.
+     * @param to                    A {@code DiffExpressionCallTO} that is the call to be written.
+     * @param fileType              The {@code DiffExprFileType} defining which type of file should 
+     *                              be generated.
+     * @return                      A {@code Map} containing the generated information. {@code null} 
+     *                              if no information should be generated for the provided 
+     *                              {@code fileType}.
      */
-    private Map<String, String> generateDiffExprRow(String geneId, String geneName, 
-            String stageId, String stageName, String anatEntityId, String anatEntityName, 
+    private Map<String, String> generateDiffExprRow(Map<String, String> geneNamesByIds, 
+            Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             DiffExpressionCallTO to, DiffExprFileType fileType) {
-        log.entry(geneId, geneName, stageId, stageName, anatEntityId, anatEntityName, to, fileType);
+        log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, to, fileType);
         
         Map<String, String> row = new HashMap<String, String>();
     
         // ********************************
         // Set IDs and names
-        // ********************************        
-        this.addIdsAndNames(row, geneId, geneName, anatEntityId, anatEntityName, stageId, stageName);
+        // ********************************    
+        this.addIdsAndNames(row, to.getGeneId(), geneNamesByIds.get(to.getGeneId()), 
+                to.getAnatEntityId(), anatEntityNamesByIds.get(to.getAnatEntityId()),
+                to.getStageId(), stageNamesByIds.get(to.getStageId()));
     
         // ********************************
         // Set simple file columns
@@ -864,22 +836,24 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         Set<DiffExprCallType> allType = EnumSet.of(affymetrixType, rnaSeqType);
         Set<DataState> allDataQuality = EnumSet.of(affymetrixQuality, rnaSeqQuality);
 
+        // Sanity check on data: one call should't be only no data and/or not_expressed data.
         if ((affymetrixType.equals(DiffExprCallType.NOT_EXPRESSED) ||
                 affymetrixType.equals(DiffExprCallType.NO_DATA)) &&
             (rnaSeqType.equals(DiffExprCallType.NOT_EXPRESSED) ||
                     rnaSeqType.equals(DiffExprCallType.NO_DATA))) {
-            throw log.throwing(new IllegalStateException("One call could't be only "+
+            throw log.throwing(new IllegalStateException("One call should not be only "+
                     DiffExprCallType.NOT_EXPRESSED.getStringRepresentation() + " and/or " + 
                     DiffExprCallType.NO_DATA.getStringRepresentation()));
         }
 
+        // One call containing over- AND under- expression returns STRONG_AMBIGUITY.
         if ((allType.contains(DiffExprCallType.UNDER_EXPRESSED) &&
-                allType.contains(DiffExprCallType.OVER_EXPRESSED)) ||
-            (allType.contains(DiffExprCallType.NOT_EXPRESSED) &&
-                allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED))) {
+                allType.contains(DiffExprCallType.OVER_EXPRESSED))) {
             summary = DiffExpressionData.STRONG_AMBIGUITY;
             quality = GenerateDiffExprFile.NA_VALUE;
 
+        // Both data types are equals or only one is set to 'no data': 
+        // we choose the data which is not 'no data'.
         } else if (affymetrixType.equals(rnaSeqType) || allType.contains(DiffExprCallType.NO_DATA)) {
             DiffExprCallType type = affymetrixType;
             if (affymetrixType.equals(DiffExprCallType.NO_DATA)) {
@@ -896,9 +870,9 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     break;
                 case NOT_DIFF_EXPRESSED: 
                     summary = DiffExpressionData.NOT_DIFF_EXPRESSION;
-                    //we don't write 'not expressed' calls in simple file, we need to 
-                    //check it again because when simple file is generated in same time as 
-                    //advance file we don't filter these calls when retrieving calls from database 
+                    // We don't write 'not expressed' calls in simple file, we need to check it
+                    // again because when simple file is generated in same time as advanced file  
+                    // we do not filter these calls when retrieving calls from database.
                     if (fileType.isSimpleFileType()) {
                         return log.exit(false);
                     }
@@ -916,19 +890,31 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 quality = DataState.LOWQUALITY.getStringRepresentation();
             }
 
+        // All possible cases where the summary is WEAK_AMBIGUITY:
+        // - NOT_DIFF_EXPRESSED and (OVER_EXPRESSED or UNDER_EXPRESSED)
+        // - NOT_EXPRESSED and OVER_EXPRESSED
+        // - NOT_EXPRESSED and NOT_DIFF_EXPRESSED
         } else if ((allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED) && 
                         (allType.contains(DiffExprCallType.OVER_EXPRESSED) ||
                         allType.contains(DiffExprCallType.UNDER_EXPRESSED))) || 
                    (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
-                        allType.contains(DiffExprCallType.OVER_EXPRESSED))) {
+                        allType.contains(DiffExprCallType.OVER_EXPRESSED)) ||
+                   (allType.contains(DiffExprCallType.NOT_EXPRESSED) &&
+                        allType.contains(DiffExprCallType.NOT_DIFF_EXPRESSED))) {
             summary = DiffExpressionData.WEAK_AMBIGUITY;
             quality = GenerateDiffExprFile.NA_VALUE;
 
+        // One call containing NOT_EXPRESSED and UNDER_EXPRESSED returns 
+        // UNDER_EXPRESSION with LOWQUALITY 
         } else if (allType.contains(DiffExprCallType.NOT_EXPRESSED) && 
                 allType.contains(DiffExprCallType.UNDER_EXPRESSED)) {
             summary = DiffExpressionData.UNDER_EXPRESSION;
             quality = DataState.LOWQUALITY.getStringRepresentation();
+            
+        } else {
+            throw log.throwing(new AssertionError("All logical conditions should have been checked."));
         }
+        assert !summary.equals(DiffExpressionData.NO_DATA);
 
         row.put(DIFFEXPRESSION_COLUMN_NAME, summary.getStringRepresentation());
         row.put(QUALITY_COLUMN_NAME, quality);
@@ -975,48 +961,39 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds, 
             Map<DiffExprFileType, ICsvMapWriter> writersUsed, 
             Map<DiffExprFileType, CellProcessor[]> processors, 
-            Map<DiffExprFileType, String[]> headers, String geneId, Set<CallTO> allCallTOs)
+            Map<DiffExprFileType, String[]> headers, Set<CallTO> allCallTOs)
                     throws IOException {
         log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, writersUsed, 
-                processors, headers, geneId, allCallTOs);
+                processors, headers, allCallTOs);
 
-        SortedMap<CallTO, Collection<CallTO>> groupedSortedCallTOs = 
-                this.groupAndOrderByGeneAnatEntityStage(allCallTOs);
+        // We order TOs, according to the values returned by the methods {@code CallTO#getGeneId()}, 
+        // {@code CallTO#getAnatEntityId()}, and {@code CallTO#getStageId()}
+        List<CallTO> sortedCallTOs = new ArrayList<CallTO>(allCallTOs); 
+        Collections.sort(sortedCallTOs, new CallTOComparator());
 
-        for (Entry<CallTO, Collection<CallTO>> callGroup : groupedSortedCallTOs.entrySet()) {
-            if (!geneId.equals(callGroup.getKey().getGeneId())) {
-                throw log.throwing(new IllegalStateException("Grouped calls should " +
-                        "have the gene ID " + geneId + ": " + callGroup));
-            }
-            String stageId = callGroup.getKey().getStageId();
-            String anatEntityId = callGroup.getKey().getAnatEntityId();
-
-            for (Entry<DiffExprFileType, ICsvMapWriter> writerFileType: writersUsed.entrySet()) {
-                Map<String, String> row = null;
-                try {
-                    if (callGroup.getValue().size() > 1) {
-                        throw log.throwing(new IllegalStateException(
-                                "It should not have several calls for on triplet"));                                    
+        for (Entry<DiffExprFileType, ICsvMapWriter> writerFileType: writersUsed.entrySet()) {
+            Map<String, String> row = null;
+            try {
+                int callCount = 0;
+                for (CallTO callTO: sortedCallTOs) {
+                    callCount++;
+                    if (log.isDebugEnabled() && callCount % 2000 == 0) {
+                        log.debug("Iterating call {} over {}", callCount, sortedCallTOs.size());
                     }
-                    for (CallTO callTO: callGroup.getValue()) {
-                        row = this.generateDiffExprRow(geneId, geneNamesByIds.get(geneId), 
-                                stageId, stageNamesByIds.get(stageId), 
-                                anatEntityId, anatEntityNamesByIds.get(anatEntityId), 
-                                (DiffExpressionCallTO)callTO, writerFileType.getKey());
+                    row = this.generateDiffExprRow(geneNamesByIds, stageNamesByIds, 
+                            anatEntityNamesByIds, (DiffExpressionCallTO)callTO, 
+                            writerFileType.getKey());
+                    if (row != null) {
+                        log.trace("Write row: {} - using writer: {}", row, writerFileType.getValue());
+                        writerFileType.getValue().write(row, 
+                                headers.get(writerFileType.getKey()), 
+                                processors.get(writerFileType.getKey()));
                     }
-                } catch (IllegalArgumentException e) {
-                    //any IllegalArgumentException thrown by generateExprRow should come 
-                    //from a problem in the data, thus from an illegal state
-                    throw log.throwing(new IllegalStateException("Incorrect data state", e));
                 }
-
-                if (row != null) {
-                    log.trace("Write row: {} - using writer: {}", 
-                            row, writerFileType.getValue());
-                    writerFileType.getValue().write(row, 
-                            headers.get(writerFileType.getKey()), 
-                            processors.get(writerFileType.getKey()));
-                }
+            } catch (IllegalArgumentException e) {
+                //any IllegalArgumentException thrown by generateExprRow should come 
+                //from a problem in the data, thus from an illegal state
+                throw log.throwing(new IllegalStateException("Incorrect data state", e));
             }
         }
         log.exit();

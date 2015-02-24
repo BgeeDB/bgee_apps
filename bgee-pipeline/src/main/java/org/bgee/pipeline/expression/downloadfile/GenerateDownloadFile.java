@@ -68,33 +68,14 @@ public abstract class GenerateDownloadFile extends CallUser {
     public final static String ANATENTITY_NAME_COLUMN_NAME = "Anatomical entity name";
 
     /**
-     * A {@code String} that is the name of the column containing expression/no-expression found 
-     * with Affymetrix experiment, in the download file.
+     * A {@code String} that is the name of the column containing expression, no-expression or
+     * differential expression found with Affymetrix experiment, in the download file.
      */
-    //TODO: either fix the javadoc, or move this field to GenerateExprFile if it is specific to expression/no-expression
     public final static String AFFYMETRIX_DATA_COLUMN_NAME = "Affymetrix data";
 
     /**
-     * A {@code String} that is the name of the column containing expression/no-expression found 
-     * with EST experiment, in the download file.
-     */
-    public final static String ESTDATA_COLUMN_NAME = "EST data";
-
-    /**
-     * A {@code String} that is the name of the column containing expression/no-expression found 
-     * with <em>in situ</em> experiment, in the download file.
-     */
-    public final static String INSITUDATA_COLUMN_NAME = "In situ data";
-
-    /**
-     * A {@code String} that is the name of the column containing expression/no-expression found 
-     * with relaxed <em>in situ</em> experiment, in the download file.
-     */
-    public final static String RELAXEDINSITUDATA_COLUMN_NAME = "Relaxed in situ data";
-    
-    /**
-     * A {@code String} that is the name of the column containing expression/no-expression found 
-     * with RNA-Seq experiment, in the download file.
+     * A {@code String} that is the name of the column containing expression, no-expression or
+     * differential expression found with RNA-Seq experiment, in the download file.
      */
     public final static String RNASEQ_DATA_COLUMN_NAME = "RNA-Seq data";
 
@@ -103,6 +84,22 @@ public abstract class GenerateDownloadFile extends CallUser {
      */
     public final static String EXTENSION = ".tsv";
 
+    /**
+     * A {@code List} of {@code String}s that are the IDs of species allowing 
+     * to filter the calls to retrieve.
+     */
+    protected static List<String> speciesIds;
+    
+    /**
+     * A {@code Set} of {@code String}s that are the file types to be generated.
+     */
+    protected static Set<String> fileTypes;
+    
+    /**
+     * A {@code String} that is the directory to store the generated files.
+     */
+    protected static String directory;
+    
     /**
      * An {@code interface} that must be implemented by {@code Enum}s representing a file type.
      * 
@@ -141,21 +138,11 @@ public abstract class GenerateDownloadFile extends CallUser {
 
     /**
      * Get the requested class parameters.
-     * <p>
-     * The {@code speciesIds}, {@code fileTypes} and {@code directory} will be modified.
      *
      * @param args          An {@code Array} of {@code String}s containing the requested parameters.
-     * @param speciesIds    A {@code Set} of {@code String}s that are the IDs of species 
-     *                      allowing to filter the expression calls to retrieve.
-     * @param fileTypes     An {@code Set} of {@code String}s that are the file types  
-     *                      to be generated.
-     * @param directory     A {@code String} that is the directory to store the generated files. 
      */
-    //TODO: Strings are immutable, you cannot modify 'directory'. And modifying speciesIds and fileTypes 
-    //is a bit ugly, you should store relevant information in class attributes. 
-    protected static void getClassParameters(
-            String[] args, List<String> speciesIds, Set<String> fileTypes, String directory) {
-        log.entry(args, speciesIds, fileTypes, directory);
+    protected static void setClassParameters(String[] args) {
+        log.entry((Object[]) args);
         
         int expectedArgLengthWithoutSpecies = 2;
         int expectedArgLengthWithSpecies = 3;
@@ -169,11 +156,11 @@ public abstract class GenerateDownloadFile extends CallUser {
         }
               
         if (args.length == expectedArgLengthWithSpecies) {
-            speciesIds = CommandRunner.parseListArgument(args[0]);
-            fileTypes  = new HashSet<String>(CommandRunner.parseListArgument(args[1])); 
+            speciesIds.addAll(CommandRunner.parseListArgument(args[0]));
+            fileTypes.addAll(CommandRunner.parseListArgument(args[1])); 
             directory  = args[2];
         } else {
-            fileTypes  = new HashSet<String>(CommandRunner.parseListArgument(args[0])); 
+            fileTypes.addAll(CommandRunner.parseListArgument(args[0])); 
             directory  = args[1];
         }
         

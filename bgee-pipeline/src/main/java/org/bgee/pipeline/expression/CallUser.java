@@ -50,6 +50,37 @@ public abstract class CallUser extends MySQLDAOUser {
     protected int globalId;
     
     /**
+     * {@code Comparator} used to order {@code CallTO}, according to the values returned by 
+     * the methods {@code CallTO#getGeneId()}, {@code CallTO#getAnatEntityId()}, and 
+     * {@code CallTO#getStageId()}.
+     */
+    public static final class CallTOComparator implements Comparator<CallTO>, Serializable {
+        
+        private static final long serialVersionUID = 3537157597163398354L;
+
+                @Override
+                public int compare(CallTO callTO1, CallTO callTO2) {
+                    log.entry(callTO1, callTO2);
+                    int geneIdComp = callTO1.getGeneId().compareToIgnoreCase(
+                            callTO2.getGeneId());
+                    if (geneIdComp != 0) {
+                        return log.exit(geneIdComp);
+                    }
+                    int anatEntityIdComp = callTO1.getAnatEntityId().compareToIgnoreCase(
+                            callTO2.getAnatEntityId());
+                    if (anatEntityIdComp != 0) {
+                        return log.exit(anatEntityIdComp);
+                    }
+                    int stageIdComp = callTO1.getStageId().compareToIgnoreCase(
+                            callTO2.getStageId());
+                    if (stageIdComp != 0) {
+                        return log.exit(stageIdComp);
+                    }
+                    return log.exit(0);
+                }
+    }
+
+    /**
      * Default constructor using default {@code MySQLDAOManager}.
      */
     public CallUser() {
@@ -198,34 +229,6 @@ public abstract class CallUser extends MySQLDAOUser {
         log.entry(callTOs);
         log.trace("Start sorting and grouping of {} calls...", callTOs.size());
         
-        /**
-         * {@code Comparator} used to order they keyset in the returned {@code Map}.
-         */
-        final class CallTOComparator implements Comparator<CallTO>, Serializable {
-            private static final long serialVersionUID = 3537157597163398354L;
-
-                    @Override
-                    public int compare(CallTO callTO1, CallTO callTO2) {
-                        log.entry(callTO1, callTO2);
-                        int geneIdComp = callTO1.getGeneId().compareToIgnoreCase(
-                                callTO2.getGeneId());
-                        if (geneIdComp != 0) {
-                            return log.exit(geneIdComp);
-                        }
-                        int anatEntityIdComp = callTO1.getAnatEntityId().compareToIgnoreCase(
-                                callTO2.getAnatEntityId());
-                        if (anatEntityIdComp != 0) {
-                            return log.exit(anatEntityIdComp);
-                        }
-                        int stageIdComp = callTO1.getStageId().compareToIgnoreCase(
-                                callTO2.getStageId());
-                        if (stageIdComp != 0) {
-                            return log.exit(stageIdComp);
-                        }
-                        return log.exit(0);
-                    }
-            
-        };
         SortedMap<CallTO, Collection<CallTO>> aggregateMap = 
                 new TreeMap<CallTO, Collection<CallTO>>(new CallTOComparator());
        

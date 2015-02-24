@@ -42,7 +42,7 @@ import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
 
 /**
- * Class responsible to generate expression TSV download files of (simple and complete files) 
+ * Class used to generate expression TSV download files (simple and advanced files) 
  * from the Bgee database. 
  * 
  * @author Valentine Rech de Laval
@@ -56,6 +56,24 @@ public class GenerateExprFile extends GenerateDownloadFile {
      */
     private final static Logger log = LogManager.getLogger(GenerateExprFile.class.getName());
 
+    /**
+     * A {@code String} that is the name of the column containing expression/no-expression found 
+     * with EST experiment, in the download file.
+     */
+    public final static String ESTDATA_COLUMN_NAME = "EST data";
+
+    /**
+     * A {@code String} that is the name of the column containing expression/no-expression found 
+     * with <em>in situ</em> experiment, in the download file.
+     */
+    public final static String INSITUDATA_COLUMN_NAME = "In situ data";
+
+    /**
+     * A {@code String} that is the name of the column containing expression/no-expression found 
+     * with relaxed <em>in situ</em> experiment, in the download file.
+     */
+    public final static String RELAXEDINSITUDATA_COLUMN_NAME = "Relaxed in situ data";
+    
     /**
      * A {@code String} that is the name of the column containing whether the call 
      * include observed data or not.
@@ -239,12 +257,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
     public static void main(String[] args) throws IOException {
         log.entry((Object[]) args);
 
-        List<String> speciesIds = new ArrayList<String>();
-        Set<String> fileTypes = new HashSet<String>();
-        String directory = null;
-
         // Retrieve arguments and initialize speciesIds, fileTypes, and directory
-        GenerateDownloadFile.getClassParameters(args, speciesIds, fileTypes, directory);
+        setClassParameters(args);
 
         // Retrieve ExprFileType from String argument
         Set<String> unknownFileTypes = new HashSet<String>();
@@ -292,11 +306,10 @@ public class GenerateExprFile extends GenerateDownloadFile {
         }
 
         // Check user input, retrieve info for generating file names
+        // Retrieve species names and IDs (all species names if speciesIds is null or empty)
         Map<String, String> speciesNamesForFilesByIds = 
                 this.checkAndGetLatinNamesBySpeciesIds(setSpecies);
-        if (speciesIds == null || speciesIds.isEmpty()) {
-            speciesIds = new ArrayList<String>(speciesNamesForFilesByIds.keySet());
-        }
+        assert speciesNamesForFilesByIds.size() >= setSpecies.size();
 
         // If no file types are given by user, we set all file types
         if (fileTypes == null || fileTypes.isEmpty()) {
@@ -312,7 +325,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
 
         // Generate expression files, species by species. 
-        for (String speciesId: speciesIds) {
+        for (String speciesId: speciesNamesForFilesByIds.keySet()) {
             log.info("Start generating of expression files for the species {}...", 
                     speciesId);
 

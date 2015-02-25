@@ -176,46 +176,45 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 thenReturn(mockDevDiffExprRsSp22);
 
         ////////////////
-        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager);
-        
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        
         Set<DiffExprFileType> fileTypes = EnumSet.allOf(DiffExprFileType.class); 
-
-        generate.generateDiffExprFiles(Arrays.asList("11", "22"), fileTypes, directory);
+        
+        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
+                Arrays.asList("11", "22"), fileTypes, directory);
+        generate.generateDiffExprFiles();
         
         String outputSimpleAnatFile11 = new File(
                 directory, "Genus11_species11_" + 
-                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE.getStringRepresentation() + 
+                DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputSimpleAnatFile22 = new File(
                 directory, "Genus22_species22_" + 
-                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE.getStringRepresentation() + 
+                DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedAnatFile11 = new File(
                 directory, "Genus11_species11_" + 
-                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE.getStringRepresentation() + 
+                DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedAnatFile22 = new File(
                 directory, "Genus22_species22_" + 
-                DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE.getStringRepresentation() + 
+                DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         String outputSimpleStageFile11 = new File(
                 directory, "Genus11_species11_" + 
-                DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE.getStringRepresentation() +
+                DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputSimpleStageFile22 = new File(
                 directory, "Genus22_species22_" + 
-                DiffExprFileType.DIFF_EXPR_STAGE_SIMPLE.getStringRepresentation() +
+                DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedStageFile11 = new File(
                 directory, "Genus11_species11_" + 
-                DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE.getStringRepresentation() +
+                DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation() +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
         String outputAdvancedStageFile22 = new File(
                 directory, "Genus22_species22_" + 
-                DiffExprFileType.DIFF_EXPR_STAGE_COMPLETE.getStringRepresentation() + 
+                DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation() + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY, 3);
@@ -306,17 +305,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 thenReturn(mockAnatDiffExprRsSp11);
 
         ////////////////
-        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager);
-        
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        
         Set<DiffExprFileType> fileTypes = new HashSet<DiffExprFileType>
-                (Arrays.asList(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE)); 
-
-        generate.generateDiffExprFiles(Arrays.asList("11"), fileTypes, directory);
+                (Arrays.asList(DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE)); 
+        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
+                Arrays.asList("11"), fileTypes, directory);
+        
+        generate.generateDiffExprFiles();
         
         String outputSimpleAnatFile11 = new File(
-                directory, "Genus11_species11_" + DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_SIMPLE + 
+                directory, "Genus11_species11_" + DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE + 
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertDiffExpressionFile(outputSimpleAnatFile11, "11", true, ComparisonFactor.ANATOMY, 3);
@@ -391,17 +389,16 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 thenReturn(mockAnatDiffExprRsSp22);
 
         ////////////////
-        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager);
-        
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        
         Set<DiffExprFileType> fileTypes = new HashSet<DiffExprFileType>(
-                Arrays.asList(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE)); 
-
-        generate.generateDiffExprFiles(null, fileTypes, directory);
+                Arrays.asList(DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE)); 
+        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
+                null, fileTypes, directory);
+        
+        generate.generateDiffExprFiles();
         
         String outputAdvancedAnatFile22 = new File(
-                directory, "Genus22_species22_" + DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE +
+                directory, "Genus22_species22_" + DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE +
                 GenerateDownloadFile.EXTENSION).getAbsolutePath();
 
         assertDiffExpressionFile(outputAdvancedAnatFile22, "22", false, ComparisonFactor.ANATOMY, 2);
@@ -485,11 +482,11 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         thrown.expect(IllegalStateException.class);
         
         Set<DiffExprFileType> fileTypes = new HashSet<DiffExprFileType>(
-                Arrays.asList(DiffExprFileType.DIFF_EXPR_ANAT_ENTITY_COMPLETE)); 
+                Arrays.asList(DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE)); 
 
-        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager);
-        generate.generateDiffExprFiles(
+        GenerateDiffExprFile generate = new GenerateDiffExprFile(mockManager, 
                 Arrays.asList("11"), fileTypes, testFolder.newFolder("tmpFolder").getPath());
+        generate.generateDiffExprFiles();
 
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();

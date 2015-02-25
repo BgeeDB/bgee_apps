@@ -224,18 +224,44 @@ public class GenerateExprFile extends GenerateDownloadFile {
     /**
      * Default constructor. 
      */
-    public GenerateExprFile() {
-        this(null);
+    //suppress warning as this default constructor should not be used.
+    @SuppressWarnings("unused")
+    private GenerateExprFile() {
+        this(null, null, null, null);
     }
-
+    /**
+     * Constructor providing parameters to generate files, and using the default {@code DAOManager}.
+     * 
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species 
+     *                      we want to generate data for. If {@code null} or empty, all species 
+     *                      are used.
+     * @param fileTypes     A {@code Set} of {@code ExprFileType}s that are the types
+     *                      of files we want to generate. If {@code null} or empty, 
+     *                      all {@code ExprFileType}s are generated .
+     * @param directory     A {@code String} that is the directory where to store files.
+     * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
+     */
+    public GenerateExprFile(List<String> speciesIds, Set<ExprFileType> fileTypes, 
+            String directory) throws IllegalArgumentException {
+        this(null, speciesIds, fileTypes, directory);
+    }
     /**
      * Constructor providing the {@code MySQLDAOManager} that will be used by 
      * this object to perform queries to the database. This is useful for unit testing.
      * 
-     * @param manager   the {@code MySQLDAOManager} to use.
+     * @param manager       the {@code MySQLDAOManager} to use.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species 
+     *                      we want to generate data for. If {@code null} or empty, all species 
+     *                      are used.
+     * @param fileTypes     A {@code Set} of {@code ExprFileType}s that are the types
+     *                      of files we want to generate. If {@code null} or empty, 
+     *                      all {@code ExprFileType}s are generated .
+     * @param directory     A {@code String} that is the directory where to store files.
+     * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateExprFile(MySQLDAOManager manager) {
-        super(manager);
+    public GenerateExprFile(MySQLDAOManager manager, List<String> speciesIds, 
+            Set<ExprFileType> fileTypes, String directory) {
+        super(manager, speciesIds, fileTypes, directory);
     }
 
     /**
@@ -257,13 +283,34 @@ public class GenerateExprFile extends GenerateDownloadFile {
     public static void main(String[] args) throws IOException {
         log.entry((Object[]) args);
 
-        // Retrieve arguments and initialize speciesIds, fileTypes, and directory
-        setClassParameters(args);
+        int expectedArgLengthWithoutSpecies = 2;
+        int expectedArgLengthWithSpecies = 3;
+    
+        if (args.length != expectedArgLengthWithSpecies &&
+                args.length != expectedArgLengthWithoutSpecies) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect number of arguments provided, expected " + 
+                    expectedArgLengthWithoutSpecies + " or " + expectedArgLengthWithSpecies + 
+                    " arguments, " + args.length + " provided."));
+        }
+
+        List<String> speciesIds          = new ArrayList<String>();
+        List<String> fileTypeNames       = new ArrayList<String>();
+        String directory = null;
+        
+        if (args.length == expectedArgLengthWithSpecies) {
+            speciesIds.addAll(CommandRunner.parseListArgument(args[0]));
+            fileTypeNames.addAll(CommandRunner.parseListArgument(args[1])); 
+            directory  = args[2];
+        } else {
+            fileTypeNames.addAll(CommandRunner.parseListArgument(args[0])); 
+            directory  = args[1];
+        }
 
         // Retrieve ExprFileType from String argument
         Set<String> unknownFileTypes = new HashSet<String>();
         Set<ExprFileType> filesToBeGenerated = new HashSet<ExprFileType>();
-        inputFiles: for (String inputFileType: fileTypes) {
+        inputFiles: for (String inputFileType: fileTypeNames) {
             for (ExprFileType fileType: ExprFileType.values()) {
                 if (inputFileType.equals(fileType.getStringRepresentation())) {
                     filesToBeGenerated.add(fileType);
@@ -278,8 +325,9 @@ public class GenerateExprFile extends GenerateDownloadFile {
                     "Some file types do not exist: " + unknownFileTypes));
         }
 
-        GenerateExprFile generator = new GenerateExprFile();
-        generator.generateExprFiles(speciesIds, filesToBeGenerated, directory);
+        GenerateExprFile generator = new GenerateExprFile(speciesIds, filesToBeGenerated, 
+                directory);
+        generator.generateExprFiles();
 
         log.exit();
     }
@@ -296,13 +344,12 @@ public class GenerateExprFile extends GenerateDownloadFile {
      *                      generated files. 
      * @throws IOException  If an error occurred while trying to write generated files.
      */
-    public void generateExprFiles(List<String> speciesIds, Set<ExprFileType> fileTypes, 
-            String directory) throws IOException { 
-        log.entry(speciesIds, fileTypes, directory);
+    public void generateExprFiles() throws IOException { 
+        log.entry(this.speciesIds, this.fileTypes, this.directory);
 
         Set<String> setSpecies = new HashSet<String>();
-        if (speciesIds != null) {
-            setSpecies = new HashSet<String>(speciesIds);
+        if (this.speciesIds != null) {
+            setSpecies = new HashSet<String>(this.speciesIds);
         }
 
         // Check user input, retrieve info for generating file names
@@ -312,8 +359,8 @@ public class GenerateExprFile extends GenerateDownloadFile {
         assert speciesNamesForFilesByIds.size() >= setSpecies.size();
 
         // If no file types are given by user, we set all file types
-        if (fileTypes == null || fileTypes.isEmpty()) {
-            fileTypes = EnumSet.allOf(ExprFileType.class);
+        if (this.fileTypes == null || this.fileTypes.isEmpty()) {
+            this.fileTypes = EnumSet.allOf(ExprFileType.class);
         } 
 
         // Retrieve gene names, stage names, anat. entity names, once for all species
@@ -328,10 +375,9 @@ public class GenerateExprFile extends GenerateDownloadFile {
         for (String speciesId: speciesNamesForFilesByIds.keySet()) {
             log.info("Start generating of expression files for the species {}...", 
                     speciesId);
-
-            this.generateExprFilesForOneSpecies(
-                    directory, speciesNamesForFilesByIds.get(speciesId), 
-                    fileTypes, speciesId, geneNamesByIds, stageNamesByIds, 
+            
+            this.generateExprFilesForOneSpecies(speciesNamesForFilesByIds.get(speciesId), 
+                    speciesId, geneNamesByIds, stageNamesByIds, 
                     anatEntityNamesByIds);
 
             //close connection to database between each species, to avoid idle connection reset
@@ -531,10 +577,9 @@ public class GenerateExprFile extends GenerateDownloadFile {
     /**
      * Generate download files (simple and/or advanced) containing absence/presence of expression, 
      * for species defined by {@code speciesId}. This method is responsible for retrieving data 
-     * from the data source, and then to write them into files.
+     * from the data source, and then to write them into files, in the directory provided 
+     * at instantiation. File types to be generated are provided at instantiation.
      * 
-     * @param directory             A {@code String} that is the directory to store  
-     *                              the generated files. 
      * @param fileNamePrefix        A {@code String} to be used as a prefix of the names 
      *                              of the generated files. 
      * @param fileTypes             A {@code Set} of {@code ExprFileType}s that are the file 
@@ -552,11 +597,11 @@ public class GenerateExprFile extends GenerateDownloadFile {
      *                              {@code String}s corresponding to anatomical entity names. 
      * @throws IOException  If an error occurred while trying to write the {@code outputFile}.
      */
-    private void generateExprFilesForOneSpecies(String directory, String fileNamePrefix, 
-            Set<ExprFileType> fileTypes, String speciesId, Map<String, String> geneNamesByIds, 
+    private void generateExprFilesForOneSpecies(String fileNamePrefix, 
+            String speciesId, Map<String, String> geneNamesByIds, 
             Map<String, String> stageNamesByIds, Map<String, String> anatEntityNamesByIds) 
                     throws IOException {
-        log.entry(directory, fileNamePrefix, fileTypes, speciesId, 
+        log.entry(this.directory, fileNamePrefix, this.fileTypes, speciesId, 
                 geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
 
         log.debug("Start generating expression files for the species {} and file types {}...", 
@@ -607,7 +652,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
         // PRODUCE AND WRITE DATA
         //****************************
         log.trace("Start generating and writing file content for species {} and file types {}...", 
-                speciesId, fileTypes);
+                speciesId, this.fileTypes);
 
         //now, we write all requested differential expression files at once. This way, we will 
         //generate the data only once, and we will not have to store them in memory (the memory  
@@ -630,13 +675,13 @@ public class GenerateExprFile extends GenerateDownloadFile {
             Map<FileType, CellProcessor[]> processors = new HashMap<FileType, CellProcessor[]>();
             Map<FileType, String[]> headers = new HashMap<FileType, String[]>();
 
-            for (ExprFileType fileType: fileTypes) {
+            for (FileType fileType: this.fileTypes) {
                 CellProcessor[] fileTypeProcessors = null;
                 String[] fileTypeHeaders = null;
 
-                fileTypeProcessors = this.generateExprFileCellProcessors(fileType);
+                fileTypeProcessors = this.generateExprFileCellProcessors((ExprFileType) fileType);
                 processors.put(fileType, fileTypeProcessors);
-                fileTypeHeaders = this.generateExprFileHeader(fileType);
+                fileTypeHeaders = this.generateExprFileHeader((ExprFileType) fileType);
                 headers.put(fileType, fileTypeHeaders);
 
                 //Create file name
@@ -645,7 +690,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
                 generatedFileNames.put(fileType, fileName);
 
                 //write in temp file
-                File file = new File(directory, fileName + tmpExtension);
+                File file = new File(this.directory, fileName + tmpExtension);
                 //override any existing file
                 if (file.exists()) {
                     file.delete();
@@ -702,7 +747,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
                         writersUsed, processors, headers, geneId, allCallTOs);
             }
         } catch (Exception e) {
-            this.deleteTempFiles(directory, generatedFileNames, tmpExtension);
+            this.deleteTempFiles(generatedFileNames, tmpExtension);
             throw e;
         } finally {
             for (ICsvMapWriter writer: writersUsed.values()) {
@@ -710,7 +755,7 @@ public class GenerateExprFile extends GenerateDownloadFile {
             }
         }
         //now, if everything went fine, we rename the temporary files
-        this.renameTempFiles(directory, generatedFileNames, tmpExtension);
+        this.renameTempFiles(generatedFileNames, tmpExtension);
 
         log.exit();
     }

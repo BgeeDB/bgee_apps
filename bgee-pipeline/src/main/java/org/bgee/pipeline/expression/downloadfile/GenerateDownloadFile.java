@@ -14,8 +14,8 @@ import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.expression.CallUser;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ExprFileType;
 
 
 /**
@@ -88,17 +88,17 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code List} of {@code String}s that are the IDs of species allowing 
      * to filter the calls to retrieve.
      */
-    protected static List<String> speciesIds;
+    protected List<String> speciesIds;
     
     /**
-     * A {@code Set} of {@code String}s that are the file types to be generated.
+     * A {@code List} of {@code String}s that are the file types to be generated.
      */
-    protected static Set<String> fileTypes;
+    protected Set<? extends FileType> fileTypes;
     
     /**
      * A {@code String} that is the directory to store the generated files.
      */
-    protected static String directory;
+    protected String directory;
     
     /**
      * An {@code interface} that must be implemented by {@code Enum}s representing a file type.
@@ -122,49 +122,50 @@ public abstract class GenerateDownloadFile extends CallUser {
     /**
      * Default constructor, that will load the default {@code DAOManager} to be used. 
      */
-    public GenerateDownloadFile() {
-        this(null);
+    //suppress warning as this default constructor should not be used.
+    @SuppressWarnings("unused")
+    private GenerateDownloadFile() {
+        this(null, null, null, null);
     }
-
+    /**
+     * Constructor providing parameters to generate files, and using the default {@code DAOManager}.
+     * 
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species 
+     *                      we want to generate data for. If {@code null} or empty, all species 
+     *                      are used.
+     * @param fileTypes     A {@code Set} of {@code FileType}s that are the types
+     *                      of files we want to generate. If {@code null} or empty, 
+     *                      all {@code FileType}s of the given type are generated.
+     * @param directory     A {@code String} that is the directory where to store files.
+     * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
+     */
+    public GenerateDownloadFile(List<String> speciesIds, Set<? extends ExprFileType> fileTypes, 
+            String directory) throws IllegalArgumentException {
+        this(null, speciesIds, fileTypes, directory);
+    }
     /**
      * Constructor providing the {@code MySQLDAOManager} that will be used by 
      * this object to perform queries to the database. This is useful for unit testing.
      * 
-     * @param manager   the {@code MySQLDAOManager} to use.
+     * @param manager       the {@code MySQLDAOManager} to use.
+     * @param speciesIds    A {@code List} of {@code String}s that are the IDs of species 
+     *                      we want to generate data for. If {@code null} or empty, all species 
+     *                      are used.
+     * @param fileTypes     A {@code Set} of {@code FileType}s that are the types
+     *                      of files we want to generate. If {@code null} or empty, 
+     *                      all {@code FileType}s of the given type are generated .
+     * @param directory     A {@code String} that is the directory where to store files.
+     * @throws IllegalArgumentException If {@code directory} is {@code null} or blank.
      */
-    public GenerateDownloadFile(MySQLDAOManager manager) {
+    public GenerateDownloadFile(MySQLDAOManager manager, List<String> speciesIds, 
+            Set<? extends FileType> fileTypes, String directory) {
         super(manager);
-    }
-
-    /**
-     * Get the requested class parameters.
-     *
-     * @param args          An {@code Array} of {@code String}s containing the requested parameters.
-     */
-    protected static void setClassParameters(String[] args) {
-        log.entry((Object[]) args);
-        
-        int expectedArgLengthWithoutSpecies = 2;
-        int expectedArgLengthWithSpecies = 3;
-    
-        if (args.length != expectedArgLengthWithSpecies &&
-                args.length != expectedArgLengthWithoutSpecies) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect number of arguments provided, expected " + 
-                    expectedArgLengthWithoutSpecies + " or " + expectedArgLengthWithSpecies + 
-                    " arguments, " + args.length + " provided."));
+        if (StringUtils.isBlank(directory)) {
+            throw log.throwing(new IllegalArgumentException("A directory must be provided"));
         }
-              
-        if (args.length == expectedArgLengthWithSpecies) {
-            speciesIds.addAll(CommandRunner.parseListArgument(args[0]));
-            fileTypes.addAll(CommandRunner.parseListArgument(args[1])); 
-            directory  = args[2];
-        } else {
-            fileTypes.addAll(CommandRunner.parseListArgument(args[0])); 
-            directory  = args[1];
-        }
-        
-        log.exit();
+        this.speciesIds = speciesIds;
+        this.fileTypes = fileTypes;
+        this.directory = directory;
     }
 
     /**
@@ -275,22 +276,19 @@ public abstract class GenerateDownloadFile extends CallUser {
     }
     
     /**
-     * Rename temporary files. 
+     * Rename temporary files in directory provided at instantiation. 
      *
      * @param generatedFileNames    A {@code Map} where keys are {@code FileType}s corresponding to 
      *                              which type of file should be generated, the associated values
      *                              being {@code String}s corresponding to files names.  
-     * @param directory             A {@code String} that is the directory to store  
-     *                              the generated files. 
      * @param tmpExtension          A {@code String} that is the temporary extension used to write 
      *                              temporary files.
      */
-    protected void renameTempFiles(String directory,
-            Map<FileType, String> generatedFileNames, String tmpExtension) {
+    protected void renameTempFiles(Map<FileType, String> generatedFileNames, String tmpExtension) {
         for (String fileName: generatedFileNames.values()) {
             //if temporary file exists, rename it.
-            File tmpFile = new File(directory, fileName + tmpExtension);
-            File file = new File(directory, fileName);
+            File tmpFile = new File(this.directory, fileName + tmpExtension);
+            File file = new File(this.directory, fileName);
             if (tmpFile.exists()) {
                 tmpFile.renameTo(file);
             }
@@ -298,21 +296,18 @@ public abstract class GenerateDownloadFile extends CallUser {
     }
 
     /**
-     * Delete temporary files. 
+     * Delete temporary files from directory provided at instantiation. 
      *
      * @param generatedFileNames    A {@code Map} where keys are {@code FileType}s corresponding to 
      *                              which type of file should be generated, the associated values
      *                              being {@code String}s corresponding to files names.  
-     * @param directory             A {@code String} that is the directory to store 
-     *                              the generated files. 
      * @param tmpExtension          A {@code String} that is the temporary extension used to write 
      *                              temporary files.
      */
-    protected void deleteTempFiles(String directory,
-            Map<FileType, String> generatedFileNames, String tmpExtension) {
+    protected void deleteTempFiles(Map<FileType, String> generatedFileNames, String tmpExtension) {
         for (String fileName: generatedFileNames.values()) {
             //if tmp file exists, remove it.
-            File file = new File(directory, fileName + tmpExtension);
+            File file = new File(this.directory, fileName + tmpExtension);
             if (file.exists()) {
                 file.delete();
             }

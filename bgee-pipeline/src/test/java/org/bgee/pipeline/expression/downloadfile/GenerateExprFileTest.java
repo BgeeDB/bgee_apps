@@ -319,15 +319,13 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
                 (NoExpressionCallParams) TestAncestor.valueCallParamEq(globalNoExprParams22))).
                 thenReturn(mockGlobalNoExprRsSp22);
 
-        GenerateExprFile generate = new GenerateExprFile(mockManager);
-        
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        
         Set<ExprFileType> fileTypes = new HashSet<ExprFileType>(
                 Arrays.asList(ExprFileType.EXPR_SIMPLE, ExprFileType.EXPR_COMPLETE)); 
-
-        generate.generateExprFiles(
+        GenerateExprFile generate = new GenerateExprFile(mockManager, 
                 Arrays.asList("11", "22"), fileTypes, directory);
+        
+        generate.generateExprFiles();
         
         String outputSimpleFile11 = new File(directory, "Genus11_species11_" + 
                 ExprFileType.EXPR_SIMPLE + GenerateDownloadFile.EXTENSION).getAbsolutePath();
@@ -478,12 +476,11 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         thrown.expect(IllegalStateException.class);
 
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        
         Set<ExprFileType> fileTypes = new HashSet<ExprFileType>(
                 Arrays.asList(ExprFileType.EXPR_SIMPLE, ExprFileType.EXPR_COMPLETE)); 
-
-        GenerateExprFile generate = new GenerateExprFile(mockManager);
-        generate.generateExprFiles(Arrays.asList("33"), fileTypes, directory);
+        GenerateExprFile generate = new GenerateExprFile(mockManager, 
+                Arrays.asList("33"), fileTypes, directory);
+        generate.generateExprFiles();
     }
     
     /**
@@ -578,12 +575,11 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
 
         thrown.expect(IllegalStateException.class);
         String directory = testFolder.newFolder("tmpFolder").getPath();
-        
         Set<ExprFileType> fileTypes = new HashSet<ExprFileType>(
                 Arrays.asList(ExprFileType.EXPR_COMPLETE)); 
-
-        GenerateExprFile generate = new GenerateExprFile(mockManager);
-        generate.generateExprFiles(Arrays.asList("33"), fileTypes, directory);
+        GenerateExprFile generate = new GenerateExprFile(mockManager, 
+                Arrays.asList("33"), fileTypes, directory);
+        generate.generateExprFiles();
     }
     
     /**

@@ -1,6 +1,8 @@
 package org.bgee.pipeline.expression.downloadfile;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +25,7 @@ import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ExprFileType;
  * from the Bgee database.
  * 
  * @author Valentine Rech de Laval
+ * @author Frederic Bastian
  * @version Bgee 13
  * @since Bgee 13
  */
@@ -85,6 +88,60 @@ public abstract class GenerateDownloadFile extends CallUser {
     public final static String EXTENSION = ".tsv";
 
     /**
+     * An {@code interface} that must be implemented by {@code Enum}s representing a file type.
+     * 
+     * @author Valentine Rech de Laval
+     * @version Bgee 13
+     * @since Bgee 13
+     */
+    public interface FileType {
+        /**
+         * @return   A {@code String} that can be used to generate names of files of this type.
+         */
+        public String getStringRepresentation();
+    
+        /**
+         * @return   A {@code boolean} defining whether this {@code FileType} is a simple file type.
+         */
+        public boolean isSimpleFileType();
+    }
+
+    /**
+     * Convert {@code fileTypeNames} into a {@code Set} of {@code FileType}s of type 
+     * {@code fileType}. 
+     * 
+     * @param fileTypeNames A {@code Collection} of {@code String}s corresponding to either 
+     *                      the value returned by the method {@code getStringRepresentation}, 
+     *                      or to the name of the {@code enum}, of some {@code FileType}s 
+     *                      of type {@code fileType}.
+     * @param fileType      The {@code Class} defining the type of {@code FileType} that 
+     *                      should be retrieved. 
+     * @return              A {@code Set} of {@code FileType}s of type {@code fileType}, 
+     *                      corresponding to {@code fileTypeNames}.
+     * @throws IllegalArgumentException If a {@code String} in {@code fileTypeNames} could not 
+     *                                  be converted into a valid {@code FileType}.
+     */
+    protected static <T extends Enum<T> & FileType> Set<T> convertToFyleTypes(
+            Collection<String> fileTypeNames, Class<T> fileType) throws IllegalArgumentException {
+        log.entry(fileTypeNames, fileType);
+        
+        Set<T> fileTypes = EnumSet.noneOf(fileType);
+        fileTypeName: for (String fileTypeName: fileTypeNames) {
+            for (T element: fileType.getEnumConstants()) {
+                if (element.getStringRepresentation().equals(fileTypeName) || 
+                        element.name().equals(fileTypeName)) {
+                    fileTypes.add(element);
+                    continue fileTypeName;
+                }
+            }
+            throw log.throwing(new IllegalArgumentException("\"" + fileTypeName + 
+                    "\" does not correspond to any element of " + fileType.getName()));
+        }
+        
+        return log.exit(fileTypes);
+    }
+
+    /**
      * A {@code List} of {@code String}s that are the IDs of species allowing 
      * to filter the calls to retrieve.
      */
@@ -100,25 +157,6 @@ public abstract class GenerateDownloadFile extends CallUser {
      */
     protected String directory;
     
-    /**
-     * An {@code interface} that must be implemented by {@code Enum}s representing a file type.
-     * 
-     * @author Valentine Rech de Laval
-     * @version Bgee 13
-     * @since Bgee 13
-     */
-    public interface FileType {
-        /**
-         * @return   A {@code String} that can be used to generate names of files of this type.
-         */
-        public String getStringRepresentation();
-
-        /**
-         * @return   A {@code boolean} defining whether this {@code FileType} is a simple file type.
-         */
-        public boolean isSimpleFileType();
-    }
-
     /**
      * Default constructor, that will load the default {@code DAOManager} to be used. 
      */
@@ -167,7 +205,7 @@ public abstract class GenerateDownloadFile extends CallUser {
         this.fileTypes = fileTypes;
         this.directory = directory;
     }
-
+    
     /**
      * Add gene, anatomical entity, and stage IDs and names to the provided {@code row}.
      * <p>

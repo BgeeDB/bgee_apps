@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -273,6 +272,46 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     }
     
     /**
+     * Main method to trigger the generate differential expression TSV download files (simple and 
+     * advanced) from Bgee database. Parameters that must be provided in order in {@code args} are: 
+     * <ol>
+     * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
+     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), all species 
+     * contained in database will be used.
+     * <li> a list of files types that will be generated ('diffexpr-anatomy-simple' for 
+     * {@link DiffExprFileType DIFF_EXPR_ANATOMY_SIMPLE}, 'diffexpr-anatomy-complete' for 
+     * {@link DiffExprFileType DIFF_EXPR_ANATOMY_COMPLETE}, 'diffexpr-development-simple' for 
+     * {@link DiffExprFileType DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 'diffexpr-development-complete' for 
+     * {@link DiffExprFileType DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the {@code String} 
+     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
+     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
+     * <li>the directory path that will be used to generate download files. 
+     * </ol>
+     * 
+     * @param args          An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws IllegalArgumentException If incorrect parameters were provided.
+     * @throws IOException              If an error occurred while trying to write generated files.
+     */
+    public static void main(String[] args) throws IllegalArgumentException, IOException {
+        log.entry((Object[]) args);
+    
+        int expectedArgLength = 3;
+        if (args.length != expectedArgLength) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect number of arguments provided, expected " + 
+                    expectedArgLength + " arguments, " + args.length + " provided."));
+        }
+        
+        GenerateDiffExprFile generator = new GenerateDiffExprFile(
+                    CommandRunner.parseListArgument(args[0]), 
+                    GenerateDownloadFile.convertToFyleTypes(
+                            CommandRunner.parseListArgument(args[1]), DiffExprFileType.class), 
+                    args[2]);
+        generator.generateDiffExprFiles();
+        log.exit();
+    }
+    /**
      * Default constructor. 
      */
     //suppress warning as this default constructor should not be used.
@@ -313,79 +352,6 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
     public GenerateDiffExprFile(MySQLDAOManager manager, List<String> speciesIds, 
             Set<DiffExprFileType> fileTypes, String directory) throws IllegalArgumentException {
         super(manager, speciesIds, fileTypes, directory);     
-    }
-
-    /**
-     * Main method to trigger the generate differential expression TSV download files (simple and 
-     * advanced) from Bgee database. Parameters that must be provided in order in {@code args} are: 
-     * <ol>
-     * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
-     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
-     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), all species 
-     * contained in database will be used.
-     * <li> a list of files types that will be generated ('diffexpr-anatomy-simple' for 
-     * {@link DiffExprFileType DIFF_EXPR_ANATOMY_SIMPLE}, 'diffexpr-anatomy-complete' for 
-     * {@link DiffExprFileType DIFF_EXPR_ANATOMY_COMPLETE}, 'diffexpr-development-simple' for 
-     * {@link DiffExprFileType DIFF_EXPR_DEVELOPMENT_SIMPLE}, and 'diffexpr-development-complete' for 
-     * {@link DiffExprFileType DIFF_EXPR_DEVELOPMENT_COMPLETE}), separated by the {@code String} 
-     * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
-     * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
-     * <li>the directory path that will be used to generate download files. 
-     * </ol>
-     * 
-     * @param args          An {@code Array} of {@code String}s containing the requested parameters.
-     * @throws IOException  If an error occurred while trying to write generated files.
-     */
-    public static void main(String[] args) throws IOException {
-        log.entry((Object[]) args);
-
-        //TODO: refactor as compared to GenerateExprFile
-        int expectedArgLengthWithoutSpecies = 2;
-        int expectedArgLengthWithSpecies = 3;
-    
-        if (args.length != expectedArgLengthWithSpecies &&
-                args.length != expectedArgLengthWithoutSpecies) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect number of arguments provided, expected " + 
-                    expectedArgLengthWithoutSpecies + " or " + expectedArgLengthWithSpecies + 
-                    " arguments, " + args.length + " provided."));
-        }
-
-        List<String> speciesIds          = new ArrayList<String>();
-        List<String> fileTypeNames       = new ArrayList<String>();
-        String directory = null;
-              
-        if (args.length == expectedArgLengthWithSpecies) {
-            speciesIds.addAll(CommandRunner.parseListArgument(args[0]));
-            fileTypeNames.addAll(CommandRunner.parseListArgument(args[1])); 
-            directory  = args[2];
-        } else {
-            fileTypeNames.addAll(CommandRunner.parseListArgument(args[0])); 
-            directory  = args[1];
-        }
-        
-        // Retrieve DiffExprFileType from String argument
-        Set<String> unknownFileTypes = new HashSet<String>();
-        Set<DiffExprFileType> filesToBeGenerated = new HashSet<DiffExprFileType>();
-        inputFiles: for (String inputFileType: fileTypeNames) {
-            for (DiffExprFileType fileType: DiffExprFileType.values()) {
-                if (inputFileType.equals(fileType.getStringRepresentation())) {
-                    filesToBeGenerated.add(fileType);
-                    continue inputFiles;
-                }
-            }
-            //if no correspondence found
-            unknownFileTypes.add(inputFileType);
-        }
-        if (!unknownFileTypes.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Some file types do not exist: " + unknownFileTypes));
-        }
-        
-        GenerateDiffExprFile generator = 
-                new GenerateDiffExprFile(speciesIds, filesToBeGenerated, directory);
-        generator.generateDiffExprFiles();
-        log.exit();
     }
 
     /**

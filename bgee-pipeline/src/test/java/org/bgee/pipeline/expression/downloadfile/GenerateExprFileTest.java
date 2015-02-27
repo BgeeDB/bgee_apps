@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,6 +46,7 @@ import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOR
 import org.bgee.model.dao.mysql.species.MySQLSpeciesDAO.MySQLSpeciesTOResultSet;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
+import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.DiffExprFileType;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ExprFileType;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ExpressionData;
 import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ObservedData;
@@ -78,6 +78,60 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
     @Override
     protected Logger getLogger() {
         return log;
+    }
+    
+    /**
+     * Test method {@link GenerateDownloadFile#convertToFyleTypes(Collection, Class)} 
+     * used with a {@code ExprFileType}.
+     */
+    @Test
+    public void shouldConvertToFyleTypes() {
+        //all expression file types
+        Set<ExprFileType> exprExpectedFileTypes = new HashSet<ExprFileType>(
+                EnumSet.of(ExprFileType.EXPR_SIMPLE, ExprFileType.EXPR_COMPLETE));
+        assertEquals("Incorrect ExprFileTypes retrieved", exprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                        ExprFileType.EXPR_SIMPLE.getStringRepresentation(), 
+                        ExprFileType.EXPR_COMPLETE.getStringRepresentation()), 
+                        ExprFileType.class));
+        assertEquals("Incorrect ExprFileTypes retrieved", exprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                        ExprFileType.EXPR_SIMPLE.name(), 
+                        ExprFileType.EXPR_COMPLETE.name()), 
+                        ExprFileType.class));
+        
+        //only one expression file type
+        exprExpectedFileTypes = new HashSet<ExprFileType>(
+                EnumSet.of(ExprFileType.EXPR_COMPLETE));
+        assertEquals("Incorrect ExprFileTypes retrieved", exprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                        ExprFileType.EXPR_COMPLETE.getStringRepresentation()), 
+                        ExprFileType.class));
+        assertEquals("Incorrect ExprFileTypes retrieved", exprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                        ExprFileType.EXPR_COMPLETE.name()), 
+                        ExprFileType.class));
+        
+        //test exceptions
+        try {
+            //existing FileType name, but incorrect type provided
+            GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                    ExprFileType.EXPR_COMPLETE.getStringRepresentation()), 
+                    DiffExprFileType.class);
+            //test failed, exception not thrown as expected
+            throw log.throwing(new AssertionError("IllegalArgumentException not thrown as expected"));
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        try {
+            //non-existing FileType name
+            GenerateDownloadFile.convertToFyleTypes(Arrays.asList("whatever"), 
+                    ExprFileType.class);
+            //test failed, exception not thrown as expected
+            throw log.throwing(new AssertionError("IllegalArgumentException not thrown as expected"));
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
     }
 
     /**

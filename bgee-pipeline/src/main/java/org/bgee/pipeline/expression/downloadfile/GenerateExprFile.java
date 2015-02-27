@@ -222,6 +222,45 @@ public class GenerateExprFile extends GenerateDownloadFile {
     }
 
     /**
+     * Main method to trigger the generate expression TSV download files (simple and advanced 
+     * files) from Bgee database. Parameters that must be provided in order in {@code args} are: 
+     * <ol>
+     * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
+     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
+     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), all species 
+     * contained in database will be used.
+     * <li> a list of files types that will be generated ('expr-simple' for 
+     * {@link FileType EXPR_SIMPLE}, and 'expr-complete' for {@link FileType EXPR_COMPLETE}), 
+     * separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}. 
+     * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), 
+     * all possible file types will be generated.
+     * <li>the directory path that will be used to generate download files. 
+     * </ol>
+     * 
+     * @param args          An {@code Array} of {@code String}s containing the requested parameters.
+     * @throws IllegalArgumentException If incorrect parameters were provided.
+     * @throws IOException              If an error occurred while trying to write generated files.
+     */
+    public static void main(String[] args) throws IllegalArgumentException, IOException {
+        log.entry((Object[]) args);
+    
+        int expectedArgLength = 3;
+        if (args.length != expectedArgLength) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect number of arguments provided, expected " + 
+                    expectedArgLength + " arguments, " + args.length + " provided."));
+        }
+    
+        GenerateExprFile generator = new GenerateExprFile(
+                CommandRunner.parseListArgument(args[0]), 
+                GenerateDownloadFile.convertToFyleTypes(
+                        CommandRunner.parseListArgument(args[1]), ExprFileType.class), 
+                args[2]);
+        generator.generateExprFiles();
+    
+        log.exit();
+    }
+    /**
      * Default constructor. 
      */
     //suppress warning as this default constructor should not be used.
@@ -262,74 +301,6 @@ public class GenerateExprFile extends GenerateDownloadFile {
     public GenerateExprFile(MySQLDAOManager manager, List<String> speciesIds, 
             Set<ExprFileType> fileTypes, String directory) {
         super(manager, speciesIds, fileTypes, directory);
-    }
-
-    /**
-     * Main method to trigger the generate expression TSV download files (simple and advanced 
-     * files) from Bgee database. Parameters that must be provided in order in {@code args} are: 
-     * <ol>
-     * <li> a list of NCBI species IDs (for instance, {@code 9606} for human) that will be used to 
-     * generate download files, separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
-     * If it is not provided, all species contained in database will be used.
-     * <li> a list of files types that will be generated ('expr-simple' for 
-     * {@link FileType EXPR_SIMPLE}, and 'expr-complete' for {@link FileType EXPR_COMPLETE}), 
-     * separated by the {@code String} {@link CommandRunner#LIST_SEPARATOR}.
-     * <li>the directory path that will be used to generate download files. 
-     * </ol>
-     * 
-     * @param args          An {@code Array} of {@code String}s containing the requested parameters.
-     * @throws IOException  If an error occurred while trying to write generated files.
-     */
-    public static void main(String[] args) throws IOException {
-        log.entry((Object[]) args);
-
-        int expectedArgLengthWithoutSpecies = 2;
-        int expectedArgLengthWithSpecies = 3;
-    
-        if (args.length != expectedArgLengthWithSpecies &&
-                args.length != expectedArgLengthWithoutSpecies) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect number of arguments provided, expected " + 
-                    expectedArgLengthWithoutSpecies + " or " + expectedArgLengthWithSpecies + 
-                    " arguments, " + args.length + " provided."));
-        }
-
-        List<String> speciesIds          = new ArrayList<String>();
-        List<String> fileTypeNames       = new ArrayList<String>();
-        String directory = null;
-        
-        if (args.length == expectedArgLengthWithSpecies) {
-            speciesIds.addAll(CommandRunner.parseListArgument(args[0]));
-            fileTypeNames.addAll(CommandRunner.parseListArgument(args[1])); 
-            directory  = args[2];
-        } else {
-            fileTypeNames.addAll(CommandRunner.parseListArgument(args[0])); 
-            directory  = args[1];
-        }
-
-        // Retrieve ExprFileType from String argument
-        Set<String> unknownFileTypes = new HashSet<String>();
-        Set<ExprFileType> filesToBeGenerated = new HashSet<ExprFileType>();
-        inputFiles: for (String inputFileType: fileTypeNames) {
-            for (ExprFileType fileType: ExprFileType.values()) {
-                if (inputFileType.equals(fileType.getStringRepresentation())) {
-                    filesToBeGenerated.add(fileType);
-                    continue inputFiles;
-                }
-            }
-            //if no correspondence found
-            unknownFileTypes.add(inputFileType);
-        }
-        if (!unknownFileTypes.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Some file types do not exist: " + unknownFileTypes));
-        }
-
-        GenerateExprFile generator = new GenerateExprFile(speciesIds, filesToBeGenerated, 
-                directory);
-        generator.generateExprFiles();
-
-        log.exit();
     }
 
     /**

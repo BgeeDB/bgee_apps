@@ -39,6 +39,7 @@ import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.DiffExprFileType;
 import org.bgee.pipeline.expression.downloadfile.GenerateDiffExprFile.DiffExpressionData;
+import org.bgee.pipeline.expression.downloadfile.GenerateExprFile.ExprFileType;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -81,6 +82,69 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    
+    /**
+     * Test method {@link GenerateDownloadFile#convertToFyleTypes(Collection, Class)} 
+     * used with a {@code DiffExprFileType}.
+     */
+    @Test
+    public void shouldConvertToFyleTypes() {
+        
+        //All diff expression file types
+        Set<DiffExprFileType> diffExprExpectedFileTypes = new HashSet<DiffExprFileType>(
+                EnumSet.of(DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE, 
+                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE, 
+                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE, 
+                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE));
+        assertEquals("Incorrect DiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                        DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.getStringRepresentation(), 
+                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation(), 
+                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.getStringRepresentation(), 
+                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.getStringRepresentation()), 
+                        DiffExprFileType.class));
+        assertEquals("Incorrect DiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                        DiffExprFileType.DIFF_EXPR_ANATOMY_COMPLETE.name(), 
+                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name(), 
+                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_COMPLETE.name(), 
+                        DiffExprFileType.DIFF_EXPR_DEVELOPMENT_SIMPLE.name()), 
+                        DiffExprFileType.class));
+        
+        //one diff expression file type
+        diffExprExpectedFileTypes = new HashSet<DiffExprFileType>(
+                EnumSet.of(DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE));
+        assertEquals("Incorrect DiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.getStringRepresentation()), 
+                        DiffExprFileType.class));
+        assertEquals("Incorrect DiffExprFileTypes retrieved", diffExprExpectedFileTypes, 
+                GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                        DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name()), 
+                        DiffExprFileType.class));
+        
+        //test exceptions
+        try {
+            //existing FileType name, but incorrect type provided
+            GenerateDownloadFile.convertToFyleTypes(Arrays.asList(
+                    DiffExprFileType.DIFF_EXPR_ANATOMY_SIMPLE.name()), 
+                    ExprFileType.class);
+            //test failed, exception not thrown as expected
+            throw log.throwing(new AssertionError("IllegalArgumentException not thrown as expected"));
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+        try {
+            //non-existing FileType name
+            GenerateDownloadFile.convertToFyleTypes(Arrays.asList("whatever"), 
+                    DiffExprFileType.class);
+            //test failed, exception not thrown as expected
+            throw log.throwing(new AssertionError("IllegalArgumentException not thrown as expected"));
+        } catch (IllegalArgumentException e) {
+            //test passed
+        }
+    }
+    
     /**
      * Test {@link GenerateDownloadFile#generateSingleSpeciesFiles(List, List, String)},
      * which is the central method of the class doing all the job.

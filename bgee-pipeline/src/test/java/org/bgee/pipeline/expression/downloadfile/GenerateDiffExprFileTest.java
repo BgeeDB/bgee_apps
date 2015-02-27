@@ -80,6 +80,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
     }
 
     @Rule
+    //TODO: why not using the thrown attribute of the super class?
+    //- anyway, is the use of ExpectedException still needed?
     public ExpectedException thrown = ExpectedException.none();
 
     
@@ -552,6 +554,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 Arrays.asList("11"), fileTypes, testFolder.newFolder("tmpFolder").getPath());
         generate.generateDiffExprFiles();
 
+        //FIXME: none of these tests are performed: an Exception has been thrown.
+        //thrown.expect will verify that the Exception is thrown, it will not catch it!
         // Verify that all ResultSet are closed.
         verify(mockSpeciesTORs).close();
         verify(mockGeneTORs).close();
@@ -956,10 +960,10 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
         assertEquals("Incorrect Affymetrix quality for " + geneId, 
                 expAffyQuality.getStringRepresentation(), affyQuality);
         double epsilon = 1e-11;
-        if (areDifferentFloats(expAffyPValue, affyPValue, epsilon)) {
-            throw new AssertionError("Incorrect Affymetrix p-value for " + geneId + ": expected " +  
-                    String.valueOf(expAffyPValue) + ", but was " + String.valueOf(affyPValue));
-        }
+        assertEquals("Incorrect Affymetrix p-value for " + geneId + ": expected " +  
+                String.valueOf(expAffyPValue) + ", but was " + String.valueOf(affyPValue), 
+                expAffyPValue, affyPValue, epsilon);
+        
                 assertEquals("Incorrect Affymetrix p-value for " + geneId, 
                 expAffyPValue, Float.valueOf(affyPValue));
         assertEquals("Incorrect Affymetrix consistent DEA count for " + geneId, 
@@ -970,34 +974,15 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 expRNASeqData.getStringRepresentation(), rnaSeqData);
         assertEquals("Incorrect RNA-Seq quality for " + geneId, 
                 expRNASeqQuality.getStringRepresentation(), rnaSeqQuality);
-        if (areDifferentFloats(expRNASeqPValue, rnaSeqPValue, epsilon)) {
-            throw new AssertionError("Incorrect Affymetrix p-value for " + geneId + ": expected " +  
-                    String.valueOf(expAffyPValue) + ", but was " + String.valueOf(affyPValue));
-        }
+        assertEquals("Incorrect Affymetrix p-value for " + geneId + ": expected " +  
+                String.valueOf(expAffyPValue) + ", but was " + String.valueOf(affyPValue), 
+                expRNASeqPValue, rnaSeqPValue, epsilon);
         assertEquals("Incorrect RNA-Seq p-value for " + geneId, 
                 expRNASeqPValue, Float.valueOf(rnaSeqPValue));
         assertEquals("Incorrect RNA-Seq consistent DEA count for " + geneId, 
                 expRNASeqConsistentCount, rnaSeqConsistentCount);
         assertEquals("Incorrect RNA-Seq inconsistent DEA count for " + geneId, 
                 expRNASeqInconsistentCount, rnaSeqInconsistentCount);
-    }
-    
-    /**
-     * Method to compare floating-point values using an epsilon. 
-     *
-     * @param f1        A {@code Float} to be compared to {@code f2}.
-     * @param f2        A {@code Float} to be compared to {@code f1}.
-     * @param epsilon   A {@code double} that is the accepted difference.
-     * @return      {@code true} if {@code f1} and {@code f2} are differents.
-     */
-    private boolean areDifferentFloats(Float f1, Float f2, double epsilon) {
-        log.entry(f1, f2, epsilon);
-        if ((f1 != null && f2 == null) || 
-                (f1 == null && f2 != null) || 
-                (f1 != null && f2 != null && Math.abs(f1 - f2) > epsilon)) {
-            return log.exit(true);
-        }
-        return log.exit(false);
     }
 
     /**

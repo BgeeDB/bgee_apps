@@ -535,6 +535,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         GenerateExprFile generate = new GenerateExprFile(mockManager, 
                 Arrays.asList("33"), fileTypes, directory);
         generate.generateExprFiles();
+
+        //TODO: verify release of resources - then, do not use thrown.expect
     }
     
     /**
@@ -634,6 +636,8 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
         GenerateExprFile generate = new GenerateExprFile(mockManager, 
                 Arrays.asList("33"), fileTypes, directory);
         generate.generateExprFiles();
+        
+        //TODO: verify release of resources - then, do not use thrown.expect
     }
     
     /**
@@ -721,6 +725,7 @@ public class GenerateExprFileTest extends GenerateDownloadFileTest {
             }
 
             Map<String, Object> rowMap;
+            //TODO: add assertion tests to check correct order of the lines
             int i = 0;
             while ((rowMap = mapReader.read(headers, processors)) != null ) {
                 log.trace("Row: {}", rowMap);

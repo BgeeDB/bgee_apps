@@ -73,7 +73,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      */
     //XXX: maybe we should also provide number of probesets, not only number of analysis
     public final static String AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
-            "Affymetrix analysis count conflicting Affymetrix call";
+            "Affymetrix analysis count in conflict with Affymetrix call";
 
     /**
      * A {@code String} that is the name of the column containing call quality found 
@@ -96,7 +96,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * RNA-Seq data where a different call is found, in the download file.
      */
     public final static String RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME = 
-            "RNA-Seq analysis count supporting RNA-Seq call";
+            "RNA-Seq analysis count in conflict with RNA-Seq call";
 
     /**
      * A {@code String} that is the name of the column containing merged differential expressions 
@@ -382,19 +382,16 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 BgeeDBUtils.getAnatEntityNamesByIds(setSpecies, this.getAnatEntityDAO());
     
         // Split file types according to comparison factor 
-        Set<DiffExprFileType> anatEntityFileTypes = new HashSet<DiffExprFileType>(), 
-                              stagesFileTypes     = new HashSet<DiffExprFileType>();
+        Map<ComparisonFactor, Set<DiffExprFileType>> factorsToFileTypes = 
+                new HashMap<ComparisonFactor, Set<DiffExprFileType>>();
         for (FileType fileType: this.fileTypes) {
-            if (((DiffExprFileType) fileType).getComparisonFactor().equals(
-                    ComparisonFactor.ANATOMY)) {
-                anatEntityFileTypes.add((DiffExprFileType) fileType);
-            } else if (((DiffExprFileType) fileType).getComparisonFactor().equals(
-                    ComparisonFactor.DEVELOPMENT)) {
-                stagesFileTypes.add((DiffExprFileType) fileType);
-            } else {
-                throw log.throwing(new AssertionError(
-                        "All logical conditions should have been checked."));
+            Set<DiffExprFileType> types = factorsToFileTypes.get(
+                    ((DiffExprFileType) fileType).getComparisonFactor());
+            if (types == null) {
+                types = EnumSet.noneOf(DiffExprFileType.class);
+                factorsToFileTypes.put(((DiffExprFileType) fileType).getComparisonFactor(), types);
             }
+            types.add((DiffExprFileType) fileType);
         }
 
         // Generate differential expression files, species by species. 
@@ -402,14 +399,11 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             log.info("Start generating of differential expresion files for the species {}...", 
                     speciesId);
             
-            if (!anatEntityFileTypes.isEmpty()) {
+            //generate files grouped by ComparisonFactor (the queries are not the same 
+            //depending on the comparison factor)
+            for (Set<DiffExprFileType> groupedFileTypes: factorsToFileTypes.values()) {
                 this.generateDiffExprFiles(
-                        speciesNamesForFilesByIds.get(speciesId), anatEntityFileTypes, speciesId, 
-                        geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
-            }
-            if (!stagesFileTypes.isEmpty()) {
-                this.generateDiffExprFiles(
-                        speciesNamesForFilesByIds.get(speciesId), stagesFileTypes, speciesId, 
+                        speciesNamesForFilesByIds.get(speciesId), groupedFileTypes, speciesId, 
                         geneNamesByIds, stageNamesByIds, anatEntityNamesByIds);
             }
 

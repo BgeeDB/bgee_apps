@@ -50,9 +50,9 @@ public abstract class CallUser extends MySQLDAOUser {
     protected int globalId;
     
     /**
-     * {@code Comparator} used to order {@code CallTO}, according to the values returned by 
-     * the methods {@code CallTO#getGeneId()}, {@code CallTO#getAnatEntityId()}, and 
-     * {@code CallTO#getStageId()}.
+     * {@code Comparator} used to order {@code CallTO}s, according to the values returned by 
+     * the methods {@link CallTO#getGeneId()}, {@link CallTO#getAnatEntityId()}, and 
+     * {@link CallTO#getStageId()}.
      */
     public static final class CallTOComparator implements Comparator<CallTO>, Serializable {
 

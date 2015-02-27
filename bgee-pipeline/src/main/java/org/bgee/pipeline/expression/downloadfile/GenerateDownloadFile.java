@@ -40,7 +40,6 @@ public abstract class GenerateDownloadFile extends CallUser {
      * A {@code String} that is the name of the column containing gene IDs, in the download file.
      */
     public final static String GENE_ID_COLUMN_NAME = "Gene ID";
-
     /**
      * A {@code String} that is the name of the column containing gene names, in the download file.
      */
@@ -51,7 +50,6 @@ public abstract class GenerateDownloadFile extends CallUser {
      * in the download file.
      */
     public final static String STAGE_ID_COLUMN_NAME = "Developmental stage ID";
-
     /**
      * A {@code String} that is the name of the column containing developmental stage names, 
      * in the download file.
@@ -63,7 +61,6 @@ public abstract class GenerateDownloadFile extends CallUser {
      * in the download file.
      */
     public final static String ANATENTITY_ID_COLUMN_NAME = "Anatomical entity ID";
-
     /**
      * A {@code String} that is the name of the column containing anatomical entity names, 
      * in the download file.
@@ -75,13 +72,11 @@ public abstract class GenerateDownloadFile extends CallUser {
      * differential expression found with Affymetrix experiment, in the download file.
      */
     public final static String AFFYMETRIX_DATA_COLUMN_NAME = "Affymetrix data";
-
     /**
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with RNA-Seq experiment, in the download file.
      */
     public final static String RNASEQ_DATA_COLUMN_NAME = "RNA-Seq data";
-
     /**
      * A {@code String} that is the extension of download files to be generated.
      */

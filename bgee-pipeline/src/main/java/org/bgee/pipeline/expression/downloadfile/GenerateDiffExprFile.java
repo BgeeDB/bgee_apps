@@ -354,6 +354,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
      * 
      * @throws IOException  If an error occurred while trying to write generated files.
      */
+    //TODO: do not generate files with absolutely no data in it.
     public void generateDiffExprFiles() throws IOException { 
         log.entry(this.speciesIds, this.fileTypes, this.directory);
     

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.exception.DAOException;
@@ -415,7 +416,8 @@ public class BgeeDBUtils {
      *              entity IDs, the associated values being {@code String}s 
      *              corresponding to entity names. 
      */
-    private static Map<String, String> generateNamesByIdsMap(DAOResultSet rs) {
+    private static Map<String, String> generateNamesByIdsMap(
+            DAOResultSet<? extends TransferObject> rs) {
         log.entry(rs);
         Map<String, String> namesByIds = new HashMap<String, String>();
         try {

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -30,6 +31,7 @@ import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCal
 import org.bgee.model.dao.api.expressiondata.NoExpressionCallDAO.NoExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExpressionCallDAO.MySQLExpressionCallTOResultSet;
 import org.bgee.model.dao.mysql.expressiondata.MySQLNoExpressionCallDAO.MySQLNoExpressionCallTOResultSet;
+import org.bgee.pipeline.expression.CallUser.CallTOComparator;
 import org.bgee.pipeline.TestAncestor;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,6 +87,54 @@ public class CallUserTest extends TestAncestor {
     }
     
 
+    /**
+     * Test {@link CallUser.CallTOComparator}.
+     */
+    @Test
+    public void testCallTOComparator() {
+        List<ExpressionCallTO> referenceList = Arrays.asList(
+                new ExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id5", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id5", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null));
+        
+        //first, order by anatomy for equal gene IDs
+        List<ExpressionCallTO> expectedList = Arrays.asList(
+                new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id5", 
+                        null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id5", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null));
+        List<ExpressionCallTO> toOrder = new ArrayList<ExpressionCallTO>(referenceList);
+        Collections.sort(toOrder, new CallTOComparator(true));
+        assertEquals("Incorrect ordering by anatomy", expectedList, toOrder);
+
+        //now, order by stage for equal gene IDs
+        expectedList = Arrays.asList(
+                new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id5", 
+                        null, null, null, null, null, null, null, null, null), 
+                new ExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id5", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID1", "Anat_id4", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID1", "Anat_id5", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null),
+                new ExpressionCallTO(null, "ID2", "Anat_id4", "Stage_id6", 
+                        null, null, null, null, null, null, null, null, null));
+        Collections.sort(toOrder, new CallTOComparator(false));
+        assertEquals("Incorrect ordering by anatomy", expectedList, toOrder);
+    }
 
     /**
      * Test {@link CallUser#getExpressionCallsByGeneId(Set, ExpressionCallDAO)}.
@@ -102,16 +152,16 @@ public class CallUserTest extends TestAncestor {
                         DataState.HIGHQUALITY, DataState.LOWQUALITY, 
                         false, false, ExpressionCallTO.OriginOfLine.SELF, 
                         ExpressionCallTO.OriginOfLine.SELF, true),
-                        new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
-                                DataState.HIGHQUALITY, DataState.NODATA, 
-                                DataState.NODATA, DataState.LOWQUALITY, 
-                                false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                ExpressionCallTO.OriginOfLine.SELF, true),
-                                new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
-                                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
-                                        DataState.NODATA, DataState.LOWQUALITY, 
-                                        false, false, ExpressionCallTO.OriginOfLine.SELF, 
-                                        ExpressionCallTO.OriginOfLine.SELF, true)));
+                new ExpressionCallTO("2", "ID1", "Anat_id5", "Stage_id6", 
+                        DataState.HIGHQUALITY, DataState.NODATA, 
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                        ExpressionCallTO.OriginOfLine.SELF, true),
+                new ExpressionCallTO("3", "ID1", "Anat_id3", "Stage_id1", 
+                        DataState.HIGHQUALITY, DataState.HIGHQUALITY, 
+                        DataState.NODATA, DataState.LOWQUALITY, 
+                        false, false, ExpressionCallTO.OriginOfLine.SELF, 
+                        ExpressionCallTO.OriginOfLine.SELF, true)));
         expectedMap.put("ID1", Id1ExprSet);
         
         Set<ExpressionCallTO> Id2ExprSet = new HashSet<ExpressionCallTO>();
@@ -222,26 +272,26 @@ public class CallUserTest extends TestAncestor {
         CallUser callUser = new FakeCallUser();
         
         Collection<CallTO> callsToGroup = Arrays.asList(
-                (CallTO) new ExpressionCallTO(null, "gene9", "organ1", "stage1", 
+                new ExpressionCallTO(null, "gene9", "organ1", "stage1", 
                         null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.DESCENT, 
                         null, null), 
-                (CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
+                new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
                         null, null, null, null, null, null, null, null, null), 
-                (CallTO) new NoExpressionCallTO(null, "gene1", "organ2", "stage2", 
+                new NoExpressionCallTO(null, "gene1", "organ2", "stage2", 
                         null, null, null, null, true, NoExpressionCallTO.OriginOfLine.BOTH), 
-                (CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage2", 
+                new ExpressionCallTO(null, "gene9", "organ2", "stage2", 
                        null, null, null, null, null, null, null, null, null),
-                (CallTO) new NoExpressionCallTO(null, "gene3", "organ1", "stage1", 
+                new NoExpressionCallTO(null, "gene3", "organ1", "stage1", 
                        null, null, null, null, true, NoExpressionCallTO.OriginOfLine.SELF), 
-                (CallTO) new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
+                new ExpressionCallTO(null, "gene2", "organ2", "stage1", 
                       null, null, null, null, null, null, null, null, null), 
-                (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
+                new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
                       null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH, 
                       null, null), 
-                (CallTO) new ExpressionCallTO(null, "gene9", "organ2", "stage1", 
+                new ExpressionCallTO(null, "gene9", "organ2", "stage1", 
                       null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.SELF, 
                       null, null),  
-                (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
+                new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
                       null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF, 
                       null, null)
                 );
@@ -263,11 +313,11 @@ public class CallUserTest extends TestAncestor {
 
         expectedMap.put(new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
                 null, null, null, null, null, null, null, null, null), 
-            Arrays.asList((CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
+            Arrays.asList(new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
                 null, null, null, null, true, null, ExpressionCallTO.OriginOfLine.BOTH, null, null), 
-                          (CallTO) new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
+                          new ExpressionCallTO(null, "gene3", "organ1", "stage1", 
                 null, null, null, null, false, null, ExpressionCallTO.OriginOfLine.SELF, null, null), 
-                          (CallTO) new NoExpressionCallTO(null, "gene3", "organ1", "stage1", 
+                          new NoExpressionCallTO(null, "gene3", "organ1", "stage1", 
                 null, null, null, null, true, NoExpressionCallTO.OriginOfLine.SELF)));
         
         expectedMap.put(new ExpressionCallTO(null, "gene9", "organ1", "stage1", 

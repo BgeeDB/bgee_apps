@@ -669,6 +669,8 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 new StrNotNullOrEmpty(),        // developmental stage name
                 new StrNotNullOrEmpty(),        // anatomical entity ID
                 new StrNotNullOrEmpty(),        // anatomical entity name
+                new IsElementOf(data),          // Differential expression
+                new IsElementOf(resumeQualities),// Quality
                 new IsElementOf(data),          // Affymetrix data
                 new IsElementOf(specificTypeQualities),     // Affymetrix call quality
                 new DMinMax(0, 1),              // Best p-value using Affymetrix
@@ -678,9 +680,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 new IsElementOf(specificTypeQualities),     // RNA-seq call quality
                 new DMinMax(0, 1),              // Best p-value using RNA-Seq
                 new LMinMax(0, Long.MAX_VALUE), // Consistent DEA count using RNA-Seq
-                new LMinMax(0, Long.MAX_VALUE), // Inconsistent DEA count using RNA-Seq
-                new IsElementOf(data),          // Differential expression
-                new IsElementOf(resumeQualities)});         // Quality
+                new LMinMax(0, Long.MAX_VALUE)}); // Inconsistent DEA count using RNA-Seq
     }
     
     /**
@@ -704,13 +704,13 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME, 
                 STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME,   
                 ANATENTITY_ID_COLUMN_NAME, ANATENTITY_NAME_COLUMN_NAME,
+                DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME, 
                 AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
                 AFFYMETRIX_P_VALUE_COLUMN_NAME, AFFYMETRIX_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
                 AFFYMETRIX_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
                 RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME,
                 RNASEQ_P_VALUE_COLUMN_NAME, RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME,
-                DIFFEXPRESSION_COLUMN_NAME, QUALITY_COLUMN_NAME});
+                RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME});
     }
 
     /**
@@ -757,12 +757,31 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, writersUsed, 
                 processors, headers, allCallTOs);
     
-        // We order TOs, according to the values returned by the methods {@code CallTO#getGeneId()}, 
-        // {@code CallTO#getAnatEntityId()}, and {@code CallTO#getStageId()}. 
-        // we do not copy the List to save memory, so the provided argument will be modified.
-        Collections.sort(allCallTOs, new CallTOComparator());
     
         for (Entry<DiffExprFileType, ICsvMapWriter> writerFileType: writersUsed.entrySet()) {
+            // We order TOs, according to the values returned by the methods {@code CallTO#getGeneId()}, 
+            // {@code CallTO#getAnatEntityId()}, and {@code CallTO#getStageId()}. 
+            // we do not copy the List to save memory, so the provided argument will be modified.
+            // We do not order in the same way depending on the comparison factor.
+            //XXX: we could optimize by sorting only once for a given comparison factor, 
+            //and without duplicating the List. But it is not a big deal for now, execution 
+            //time is small.
+            Boolean orderByAnatomy = null;
+            if (writerFileType.getKey().getComparisonFactor().equals(ComparisonFactor.ANATOMY)) {
+                //ComparisonFactor = anatomy means that we compared different organs 
+                //at a same stage, so we want to group the organs by stage, thus, ordering 
+                //by stage first.
+                orderByAnatomy = false;
+            } else if (writerFileType.getKey().getComparisonFactor().equals(
+                    ComparisonFactor.DEVELOPMENT)) {
+                //ComparisonFactor = development means that we compared a same organ 
+                //at different stages, so we want to group by organs
+                orderByAnatomy = true;
+            } else {
+                throw log.throwing(new AssertionError("Unsupported ComparisonFactor."));
+            }
+            Collections.sort(allCallTOs, new CallTOComparator(orderByAnatomy));
+            
             Map<String, String> row = null;
             try {
                 int callCount      = 0;

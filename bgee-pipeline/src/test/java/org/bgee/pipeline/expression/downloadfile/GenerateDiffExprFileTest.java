@@ -618,7 +618,9 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                         GenerateDownloadFile.STAGE_ID_COLUMN_NAME, 
                         GenerateDownloadFile.STAGE_NAME_COLUMN_NAME,   
                         GenerateDownloadFile.ANATENTITY_ID_COLUMN_NAME, 
-                        GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME,
+                        GenerateDownloadFile.ANATENTITY_NAME_COLUMN_NAME, 
+                        GenerateDiffExprFile.DIFFEXPRESSION_COLUMN_NAME,
+                        GenerateDiffExprFile.QUALITY_COLUMN_NAME,
                         GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME, 
                         GenerateDiffExprFile.AFFYMETRIX_CALL_QUALITY_COLUMN_NAME, 
                         GenerateDiffExprFile.AFFYMETRIX_P_VALUE_COLUMN_NAME, 
@@ -628,9 +630,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                         GenerateDiffExprFile.RNASEQ_CALL_QUALITY_COLUMN_NAME, 
                         GenerateDiffExprFile.RNASEQ_P_VALUE_COLUMN_NAME, 
                         GenerateDiffExprFile.RNASEQ_CONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                        GenerateDiffExprFile.RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME, 
-                        GenerateDiffExprFile.DIFFEXPRESSION_COLUMN_NAME,
-                        GenerateDiffExprFile.QUALITY_COLUMN_NAME};
+                        GenerateDiffExprFile.RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME};
             }
             assertArrayEquals("Incorrect headers", expecteds, headers);
 
@@ -667,6 +667,8 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                         new NotNull(), // developmental stage name
                         new NotNull(), // anatomical entity ID
                         new NotNull(), // anatomical entity name
+                        new IsElementOf(dataElements),  // Differential expression
+                        new IsElementOf(resumeQualities),    // Quality
                         new IsElementOf(dataElements),  // Affymetrix data
                         new IsElementOf(specificTypeQualities),     // Affymetrix call quality
                         new DMinMax(0, 1),              // Best p-value using Affymetrix
@@ -676,9 +678,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                         new IsElementOf(specificTypeQualities),     // RNA-seq call quality
                         new DMinMax(0, 1),              // Best p-value using RNA-Seq
                         new LMinMax(0, Long.MAX_VALUE), // Consistent DEA count using RNA-Seq
-                        new LMinMax(0, Long.MAX_VALUE), // Inconsistent DEA count using RNA-Seq
-                        new IsElementOf(dataElements),  // Differential expression
-                        new IsElementOf(resumeQualities)};    // Quality
+                        new LMinMax(0, Long.MAX_VALUE)}; // Inconsistent DEA count using RNA-Seq
             }
 
             Map<String, Object> rowMap;
@@ -693,27 +693,24 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
                 String stageName = (String) rowMap.get(headers[3]);
                 String anatEntityId = (String) rowMap.get(headers[4]);
                 String anatEntityName = (String) rowMap.get(headers[5]);
+                String resume = (String) rowMap.get(headers[6]);
+                String quality = (String) rowMap.get(headers[7]);
                 String affymetrixData = null, affymetrixQuality = null,  
-                        rnaSeqData = null, rnaSeqQuality = null, resume = null, quality = null;
+                        rnaSeqData = null, rnaSeqQuality = null;
                 Float affymetrixPValue = null, rnaSeqPValue = null;
                 Integer affymetrixConsistentCount = null, affymetrixInconsistentCount = null,
                         rnaSeqConsistentCount = null, rnaSeqInconsistentCount = null;
-                if (isSimplified) {
-                    resume = (String) rowMap.get(headers[6]);
-                    quality = (String) rowMap.get(headers[7]);
-                } else {
-                    affymetrixData = (String) rowMap.get(headers[6]);
-                    affymetrixQuality = (String) rowMap.get(headers[7]);
-                    affymetrixPValue = ((Double) rowMap.get(headers[8])).floatValue();
-                    affymetrixConsistentCount = ((Long) rowMap.get(headers[9])).intValue();
-                    affymetrixInconsistentCount = ((Long) rowMap.get(headers[10])).intValue();
-                    rnaSeqData = (String) rowMap.get(headers[11]);
-                    rnaSeqQuality = (String) rowMap.get(headers[12]);
-                    rnaSeqPValue = ((Double) rowMap.get(headers[13])).floatValue();  
-                    rnaSeqConsistentCount = ((Long) rowMap.get(headers[14])).intValue();
-                    rnaSeqInconsistentCount = ((Long) rowMap.get(headers[15])).intValue();
-                    resume = (String) rowMap.get(headers[16]);
-                    quality = (String) rowMap.get(headers[17]);
+                if (!isSimplified) {
+                    affymetrixData = (String) rowMap.get(headers[8]);
+                    affymetrixQuality = (String) rowMap.get(headers[9]);
+                    affymetrixPValue = ((Double) rowMap.get(headers[10])).floatValue();
+                    affymetrixConsistentCount = ((Long) rowMap.get(headers[11])).intValue();
+                    affymetrixInconsistentCount = ((Long) rowMap.get(headers[12])).intValue();
+                    rnaSeqData = (String) rowMap.get(headers[13]);
+                    rnaSeqQuality = (String) rowMap.get(headers[14]);
+                    rnaSeqPValue = ((Double) rowMap.get(headers[15])).floatValue();  
+                    rnaSeqConsistentCount = ((Long) rowMap.get(headers[16])).intValue();
+                    rnaSeqInconsistentCount = ((Long) rowMap.get(headers[17])).intValue();
                 }
 
                 if (speciesId.equals("11")) {

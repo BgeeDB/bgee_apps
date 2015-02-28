@@ -54,9 +54,31 @@ public abstract class CallUser extends MySQLDAOUser {
      * the methods {@link CallTO#getGeneId()}, {@link CallTO#getAnatEntityId()}, and 
      * {@link CallTO#getStageId()}.
      */
+    //TODO: actually, for the differential expression file, it would be better to order 
+    //the stages by developmental time, not by name.
+    //We need to provide a List where stage IDs are ordered by their left bound. 
+    //Such a List could be returned by a new method in BgeeDBUtils.
     public static final class CallTOComparator implements Comparator<CallTO>, Serializable {
 
         private static final long serialVersionUID = 3537157597163398354L;
+        
+        /**
+         * See {@link #CallTOComparator(boolean) constructor}.
+         */
+        private final boolean byAnatomy;
+        
+        /**
+         * Constructor defining how to order {@code CallTO}s for equal gene IDs. 
+         * If {@code byAnatomy} is {@code true}, {@code CallTO}s with equal gene IDs 
+         * will be ordered first by anatEntityId, then by stageId; otherwise, first by 
+         * stageId, then by anatEntityId.
+         * 
+         * @param byAnatomy A {@code boolean} defining which attribute to use first 
+         *                  for {@code CallTO}s with equal gene IDs.
+         */
+        public CallTOComparator(boolean byAnatomy) {
+            this.byAnatomy = byAnatomy;
+        }
 
         @Override
         public int compare(CallTO callTO1, CallTO callTO2) {
@@ -68,14 +90,25 @@ public abstract class CallUser extends MySQLDAOUser {
             }
             int anatEntityIdComp = callTO1.getAnatEntityId().compareToIgnoreCase(
                     callTO2.getAnatEntityId());
-            if (anatEntityIdComp != 0) {
-                return log.exit(anatEntityIdComp);
-            }
             int stageIdComp = callTO1.getStageId().compareToIgnoreCase(
                     callTO2.getStageId());
-            if (stageIdComp != 0) {
-                return log.exit(stageIdComp);
+            
+            if (this.byAnatomy) {
+                if (anatEntityIdComp != 0) {
+                    return log.exit(anatEntityIdComp);
+                }
+                if (stageIdComp != 0) {
+                    return log.exit(stageIdComp);
+                }
+            } else {
+                if (stageIdComp != 0) {
+                    return log.exit(stageIdComp);
+                }
+                if (anatEntityIdComp != 0) {
+                    return log.exit(anatEntityIdComp);
+                }
             }
+            
             return log.exit(0);
         }
     }
@@ -230,7 +263,7 @@ public abstract class CallUser extends MySQLDAOUser {
         log.trace("Start sorting and grouping of {} calls...", callTOs.size());
         
         SortedMap<CallTO, Collection<CallTO>> aggregateMap = 
-                new TreeMap<CallTO, Collection<CallTO>>(new CallTOComparator());
+                new TreeMap<CallTO, Collection<CallTO>>(new CallTOComparator(true));
        
         for (CallTO callTO: callTOs) {
             //sanity checks

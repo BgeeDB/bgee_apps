@@ -604,18 +604,17 @@ public class BgeeProperties
     }
 
     /**
-     * @return  A {@code String} that defines the root directory where are located expression
-     *          files available for download, to be added to the {@code bgeeRootDirectory} to 
-     *          generate URL to download files.
+     * @return  A {@code String} that defines the absolute root directory where are located 
+     *          expression files available for download, to generate URL to download files.
      */
     public String getDownloadExprFilesRootDirectory() {
         return downloadExprFilesRootDirectory;
     }
     
     /**
-     * @return  A {@code String} that defines the root directory where are located differential 
-     *          expression files available for download, to be added to the 
-     *          {@code bgeeRootDirectory} to generate URL to download files.
+     * @return  A {@code String} that defines the absolute root directory where are located 
+     *          differential expression files available for download, to generate URL 
+     *          to download files.
      */
     public String getDownloadDiffExprFilesRootDirectory() {
         return downloadDiffExprFilesRootDirectory;

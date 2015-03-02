@@ -117,6 +117,43 @@ public class BgeeProperties
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the expression download files root directory. 
+     * 
+     * @see #DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadExprFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadExprFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the expression download file root directory. 
+     * 
+     * @see #DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadExprFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = "expressionFiles/";
+
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the differential expression download files
+     * root directory. 
+     * 
+     * @see #DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadDiffExprFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadDiffExprFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the differential expression download files
+     * root directory. 
+     * 
+     * @see #DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadDiffExprFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "diffExpressionFiles/";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the javascript file root directory. 
      * 
      * @see #JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT
@@ -254,6 +291,20 @@ public class BgeeProperties
     private final String downloadRootDirectory;
 
     /**
+     * A {@code String} that defines the expression download file directory where are located 
+     * expression files available for download, to be added to the {@code bgeeRootDirectory} to 
+     * generate URL to expression download files.
+     */
+    private final String downloadExprFilesRootDirectory;
+    
+    /**
+     * A {@code String} that defines the differential expression download file directory where are 
+     * located differential expression files available for download, to be added to the 
+     * {@code bgeeRootDirectory} to generate URL to differential expression download files.
+     */
+    private final String downloadDiffExprFilesRootDirectory;
+    
+    /**
      * A {@code String} that defines the root directory where are located javascript files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain javascript files.
      */
@@ -351,6 +402,11 @@ public class BgeeProperties
                 BGEE_ROOT_DIRECTORY_KEY, BGEE_ROOT_DIRECTORY_DEFAULT);
         downloadRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 DOWNLOAD_ROOT_DIRECTORY_KEY, DOWNLOAD_ROOT_DIRECTORY_DEFAULT);
+        downloadExprFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+                DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadDiffExprFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
+                DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
         cssFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
@@ -543,13 +599,28 @@ public class BgeeProperties
      *          available for download, to be added to the {@code bgeeRootDirectory} to 
      *          generate URL to download files
      */
-    //TODO: create a property downloadRootDirectory that will be the root of the Bgee FTP
-    //then  property downloadFilesDirectory, relative to this downloadRootDirectory 
-    //(because we have other files to link to, that are not in the download_files dir.)
     public String getDownloadRootDirectory() {
         return downloadRootDirectory;
     }
 
+    /**
+     * @return  A {@code String} that defines the root directory where are located expression
+     *          files available for download, to be added to the {@code bgeeRootDirectory} to 
+     *          generate URL to download files.
+     */
+    public String getDownloadExprFilesRootDirectory() {
+        return downloadExprFilesRootDirectory;
+    }
+    
+    /**
+     * @return  A {@code String} that defines the root directory where are located differential 
+     *          expression files available for download, to be added to the 
+     *          {@code bgeeRootDirectory} to generate URL to download files.
+     */
+    public String getDownloadDiffExprFilesRootDirectory() {
+        return downloadDiffExprFilesRootDirectory;
+    }
+    
     /**
      * @return  A {@code String} that defines the root directory where are located javascript 
      *          files, to be added to the {@code bgeeRootDirectory} to generate URL to obtain 

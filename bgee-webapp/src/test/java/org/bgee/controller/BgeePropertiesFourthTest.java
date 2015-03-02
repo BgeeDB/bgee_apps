@@ -32,6 +32,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.URL_MAX_LENGTH_KEY);
         System.clearProperty(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY);  
         System.clearProperty(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
@@ -54,6 +56,12 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getDownloadRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT, 
+                bgeeProp.getDownloadExprFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT, 
+                bgeeProp.getDownloadDiffExprFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getJavascriptFilesRootDirectory());

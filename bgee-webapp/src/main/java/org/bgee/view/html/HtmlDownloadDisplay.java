@@ -128,19 +128,28 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         this.writeln("<div id='bgee_data_selection_text'>");
         this.writeln("<h1 class='scientificname'></h1>&nbsp;&nbsp;<h1 class='commonname'></h1>");
         this.writeln("<p class='groupdescription'></p>");
+        // Presence/absence expression files
         this.writeln("<div class='bgee_download_file_buttons'>");
         this.writeln("<h2>Presence/absence of expression</h2>");    
         this.writeln("<a id='expr_simple_csv' class='download_link' href='' download></a>");
         this.writeln("&nbsp;&nbsp;");
         this.writeln("<a id='expr_complete_csv' class='download_link' href='' download></a>");
         this.writeln("</div>");
-        // TODO: uncomment when differential expression files will be generated
-//        this.writeln("<div class='bgee_download_file_buttons'>");
-//        this.writeln("<h2 >Over-/Under-expression</h2>");
-//        this.writeln("<a id='overunder_simple_csv' class='download_link' href='' download></a>");
-//        this.writeln("&nbsp;&nbsp;");
-//        this.writeln("<a id='overunder_complete_csv' class='download_link' href='' download></a>");
-//        this.writeln("</div>");
+        // Differential expression files
+        this.writeln("<div class='bgee_download_file_buttons'>");
+        this.writeln("<h2>Over-/Under-expression across anatomy</h2>");
+        this.writeln("<p id='diffexpr_anatomy_no_data' class='not_enough_data'>Not enough data</p>");
+        this.writeln("<a id='diffexpr_anatomy_simple_csv' class='download_link' href='' download></a>");
+        this.writeln("&nbsp;&nbsp;");
+        this.writeln("<a id='diffexpr_anatomy_complete_csv' class='download_link' href='' download></a>");
+        this.writeln("</div>");
+        this.writeln("<div class='bgee_download_file_buttons'>");
+        this.writeln("<h2>Over-/Under-expression across life stages</h2>");
+        this.writeln("<p id='diffexpr_development_no_data' class='not_enough_data'>Not enough data</p>");
+        this.writeln("<a id='diffexpr_development_simple_csv' class='download_link' href='' download></a>");
+        this.writeln("&nbsp;&nbsp;");
+        this.writeln("<a id='diffexpr_development_complete_csv' class='download_link' href='' download></a>");
+        this.writeln("</div>");
         this.writeln("</div>");
         this.writeln("</div>");
         this.writeln("</div>");
@@ -386,34 +395,34 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getGroupFileData(String groupName) {
         log.entry(groupName);
         
-        String exprSimpleFileSize = null, exprAdvancedFileSize = null, 
-                diffExprSimpleFileSize = null, diffExprAdvancedFileSize = null;
+        String exprSimpleFileSize = null, exprCompleteFileSize = null, 
+                diffExprSimpleFileSize = null, diffExprCompleteFileSize = null;
 
         switch (groupName) {
             //TODO: set file sizes
             case "Group 1": 
                 exprSimpleFileSize = "aa MB";
-                exprAdvancedFileSize = "bb GB"; 
+                exprCompleteFileSize = "bb GB"; 
                 diffExprSimpleFileSize = "cc MB";
-                diffExprAdvancedFileSize  = "dd GB";
+                diffExprCompleteFileSize  = "dd GB";
                 break;
             case "Group 2": 
                     exprSimpleFileSize = "ee MB";
-                exprAdvancedFileSize = "ff GB"; 
+                exprCompleteFileSize = "ff GB"; 
                 diffExprSimpleFileSize = "gg MB";
-                diffExprAdvancedFileSize  = "hh GB";
+                diffExprCompleteFileSize  = "hh GB";
                 break;
             case "Group 3": 
                 exprSimpleFileSize = "ii MB";
-                exprAdvancedFileSize = "jj GB"; 
+                exprCompleteFileSize = "jj GB"; 
                 diffExprSimpleFileSize = "kk";
-                diffExprAdvancedFileSize  = "ll GB";
+                diffExprCompleteFileSize  = "ll GB";
                 break;
             case "Group 4": 
                 exprSimpleFileSize = "mm MB";
-                exprAdvancedFileSize = "nn GB"; 
+                exprCompleteFileSize = "nn GB"; 
                 diffExprSimpleFileSize = "nn MB";
-                diffExprAdvancedFileSize  = "oo GB";
+                diffExprCompleteFileSize  = "oo GB";
                 break;
             default:
                 return ("");
@@ -424,12 +433,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         String extension = ".tsv";
         return log.exit(" data-bgeeexprsimplefileurl='" + beginFilePath + "expr-simple" + extension + 
                 "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
-                "' data-bgeeexpradvancedfileurl='" + beginFilePath + "expr-complete" + extension + 
-                "' data-bgeeexpradvancedfilesize='" + exprAdvancedFileSize + 
+                "' data-bgeeexprcompletefileurl='" + beginFilePath + "expr-complete" + extension + 
+                "' data-bgeeexprcompletefilesize='" + exprCompleteFileSize + 
                 "' data-bgeediffexprsimplefileurl='" + beginFilePath + "diffexpr-simple" + extension + 
                 "' data-bgeediffexprsimplefilesize='" + diffExprSimpleFileSize + 
-                "' data-bgeediffexpradvancedfileurl='" + beginFilePath + "diffexpr-complete" + extension + 
-                "' data-bgeediffexpradvancedfilesize='" + diffExprAdvancedFileSize + "'");
+                "' data-bgeediffexprcompletefileurl='" + beginFilePath + "diffexpr-complete" + extension + 
+                "' data-bgeediffexprcompletefilesize='" + diffExprCompleteFileSize + "'");
     }
     
     /**
@@ -441,143 +450,135 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getSingleSpeciesFileData(int speciesId) {
         log.entry(speciesId);
         
-        String exprSimpleFileSize = null, exprAdvancedFileSize = null, 
-                diffExprSimpleFileSize = null, diffExprAdvancedFileSize = null, 
+        String exprSimpleFileSize = null, exprCompleteFileSize = null, 
+                diffExprAnatSimpleFileSize = null, diffExprAnatCompleteFileSize = null, 
+                diffExprDevSimpleFileSize = null, diffExprDevCompleteFileSize = null, 
                 latinName = null;
 
         switch (speciesId) {
             case 9606: 
                 exprSimpleFileSize = "85 MB";
-                exprAdvancedFileSize = "963 MB"; 
-                diffExprSimpleFileSize = "3 MB";
-                diffExprAdvancedFileSize  = "4 GB";
+                exprCompleteFileSize = "963 MB"; 
+                diffExprAnatSimpleFileSize = "4.3 MB";
+                diffExprAnatCompleteFileSize  = "24.5 MB";
+                diffExprDevSimpleFileSize = "0.7 MB";
+                diffExprDevCompleteFileSize = "15.8 MB"; 
                 latinName = "Homo_sapiens";
                 break;
-            //TODO: set file sizes
             case 10090: 
                 exprSimpleFileSize = "115 MB";
-                exprAdvancedFileSize = "1.5 GB"; 
-                diffExprSimpleFileSize = "7 MB";
-                diffExprAdvancedFileSize  = "8 GB";
+                exprCompleteFileSize = "1.5 GB"; 
+                diffExprAnatSimpleFileSize = "7.8 MB";
+                diffExprAnatCompleteFileSize  = "30.9 MB";
+                diffExprDevSimpleFileSize = "4.3 MB";
+                diffExprDevCompleteFileSize = "33.2 MB"; 
                 latinName = "Mus_musculus";
                 break;
             case 7955: 
                 exprSimpleFileSize = "4.3 MB";
-                exprAdvancedFileSize = "588 MB"; 
-                diffExprSimpleFileSize = "11 MB";
-                diffExprAdvancedFileSize  = "12 GB";
+                exprCompleteFileSize = "588 MB"; 
+                diffExprDevSimpleFileSize = "0,4 MB";
+                diffExprDevCompleteFileSize = "1.3 MB"; 
                 latinName = "Danio_rerio";
                 break;
             case 7227: 
                 exprSimpleFileSize = "4.9 MB";
-                exprAdvancedFileSize = "730 MB"; 
-                diffExprSimpleFileSize = "15 MB";
-                diffExprAdvancedFileSize  = "16 GB";
+                exprCompleteFileSize = "730 MB"; 
+                diffExprAnatSimpleFileSize = "0.4 MB";
+                diffExprAnatCompleteFileSize  = "1.3 MB";
+                diffExprDevSimpleFileSize = "0.2 MB";
+                diffExprDevCompleteFileSize = "0.8 MB"; 
                 latinName = "Drosophila_melanogaster";
                 break;
             case 6239: 
                 exprSimpleFileSize = "1.2 MB";
-                exprAdvancedFileSize = "340 MB"; 
-                diffExprSimpleFileSize = "19 MB";
-                diffExprAdvancedFileSize  = "20 GB";
+                exprCompleteFileSize = "340 MB"; 
+                diffExprDevSimpleFileSize = "0.1 MB";
+                diffExprDevCompleteFileSize = "1.2 MB"; 
                 latinName = "Caenorhabditis_elegans";
                 break;
             case 9597: 
                 exprSimpleFileSize = "0.7 MB";
-                exprAdvancedFileSize = "38 MB"; 
-                diffExprSimpleFileSize = "23 MB";
-                diffExprAdvancedFileSize  = "24 GB";
+                exprCompleteFileSize = "38 MB"; 
                 latinName = "Pan_paniscus";
                 break;
             case 9598: 
                 exprSimpleFileSize = "0.5 MB";
-                exprAdvancedFileSize = "31 MB"; 
-                diffExprSimpleFileSize = "27 MB";
-                diffExprAdvancedFileSize  = "28 GB";
+                exprCompleteFileSize = "31 MB"; 
                 latinName = "Pan_troglodytes";
                 break;
             case 9593: 
                 exprSimpleFileSize = "0.5 MB";
-                exprAdvancedFileSize = "30 MB"; 
-                diffExprSimpleFileSize = "31 MB";
-                diffExprAdvancedFileSize  = "32 GB";
+                exprCompleteFileSize = "30 MB"; 
                 latinName = "Gorilla_gorilla";
                 break;
             case 9600: 
                 exprSimpleFileSize = "33 MB";
-                exprAdvancedFileSize = "34 GB"; 
-                diffExprSimpleFileSize = "35 MB";
-                diffExprAdvancedFileSize  = "36 GB";
+                exprCompleteFileSize = "34 GB"; 
                 latinName = "Pongo_pygmaeus";
                 break;
             case 9544: 
                 exprSimpleFileSize = "1.2 MB";
-                exprAdvancedFileSize = "112 MB"; 
-                diffExprSimpleFileSize = "39 MB";
-                diffExprAdvancedFileSize  = "40 GB";
+                exprCompleteFileSize = "112 MB"; 
+                diffExprAnatSimpleFileSize = "0.4 MB";
+                diffExprAnatCompleteFileSize  = "2.5 MB";
                 latinName = "Macaca_mulatta";
                 break;
             case 10116: 
                 exprSimpleFileSize = "0.8 MB";
-                exprAdvancedFileSize = "59 MB"; 
-                diffExprSimpleFileSize = "43 MB";
-                diffExprAdvancedFileSize  = "44 GB";
+                exprCompleteFileSize = "59 MB"; 
+                diffExprAnatSimpleFileSize = "0.5 MB";
+                diffExprAnatCompleteFileSize  = "1.9 MB";
                 latinName = "Rattus_norvegicus";
                 break;
             case 9913: 
                 exprSimpleFileSize = "0.7 MB";
-                exprAdvancedFileSize = "58 MB"; 
-                diffExprSimpleFileSize = "47 MB";
-                diffExprAdvancedFileSize  = "48 GB";
+                exprCompleteFileSize = "58 MB"; 
+                diffExprAnatSimpleFileSize = "0.3 MB";
+                diffExprAnatCompleteFileSize  = "1.8 MB";
                 latinName = "Bos_taurus";
                 break;
             case 9823: 
                 exprSimpleFileSize = "0.3 MB";
-                exprAdvancedFileSize = "6.4 MB"; 
-                diffExprSimpleFileSize = "51 MB";
-                diffExprAdvancedFileSize  = "52 GB";
+                exprCompleteFileSize = "6.4 MB"; 
                 latinName = "Sus_scrofa";
                 break;
             case 13616: 
                 exprSimpleFileSize = "0.9 MB";
-                exprAdvancedFileSize = "49 MB"; 
-                diffExprSimpleFileSize = "55 MB";
-                diffExprAdvancedFileSize  = "56 GB";
+                exprCompleteFileSize = "49 MB"; 
                 latinName = "Monodelphis_domestica";
                 break;
             case 9258: 
                 exprSimpleFileSize = "0.6 MB";
-                exprAdvancedFileSize = "34 MB"; 
-                diffExprSimpleFileSize = "59 MB";
-                diffExprAdvancedFileSize  = "60 GB";
+                exprCompleteFileSize = "34 MB"; 
+                diffExprAnatSimpleFileSize = "0.2 MB";
+                diffExprAnatCompleteFileSize  = "1.2 MB";
                 latinName = "Ornithorhynchus_anatinus";
                 break;
             case 9031: 
                 exprSimpleFileSize = "1 MB";
-                exprAdvancedFileSize = "55 MB"; 
-                diffExprSimpleFileSize = "63 MB";
-                diffExprAdvancedFileSize  = "64 GB";
+                exprCompleteFileSize = "55 MB"; 
+                diffExprAnatSimpleFileSize = "0.4 MB";
+                diffExprAnatCompleteFileSize  = "1.7 MB";
                 latinName = "Gallus_gallus";
                 break;
             case 28377: 
                 exprSimpleFileSize = "0.3 MB";
-                exprAdvancedFileSize = "19 MB"; 
-                diffExprSimpleFileSize = "67 MB";
-                diffExprAdvancedFileSize  = "68 GB";
+                exprCompleteFileSize = "19 MB"; 
                 latinName = "Anolis_carolinensis";
                 break;
             case 8364: 
                 exprSimpleFileSize = "2.6 MB";
-                exprAdvancedFileSize = "287 MB"; 
-                diffExprSimpleFileSize = "71 MB";
-                diffExprAdvancedFileSize  = "72 GB";
+                exprCompleteFileSize = "287 MB"; 
+                diffExprAnatSimpleFileSize = "0.2 MB";
+                diffExprAnatCompleteFileSize  = "1 MB";
+                diffExprDevSimpleFileSize = "0.1 MB";
+                diffExprDevCompleteFileSize = "0.6 MB"; 
                 latinName = "Xenopus_tropicalis";
                 break;
             case 99883: 
                 exprSimpleFileSize = "73 MB";
-                exprAdvancedFileSize = "74 GB"; 
-                diffExprSimpleFileSize = "75 MB";
-                diffExprAdvancedFileSize  = "76 GB";
+                exprCompleteFileSize = "74 GB"; 
                 latinName = "Tetraodon_nigroviridis";
                 break;
             default:
@@ -586,14 +587,33 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         String beginFilePath = this.prop.getDownloadRootDirectory() + latinName + "_";
         String extension = ".tsv.zip";
-        return log.exit(" data-bgeeexprsimplefileurl='" + beginFilePath + "expr-simple" + extension + 
+        
+        String data = " data-bgeeexprsimplefileurl='" + beginFilePath + "expr-simple" + extension + 
                 "' data-bgeeexprsimplefilesize='" + exprSimpleFileSize + 
-                "' data-bgeeexpradvancedfileurl='" + beginFilePath + "expr-complete" + extension + 
-                "' data-bgeeexpradvancedfilesize='" + exprAdvancedFileSize + 
-                "' data-bgeediffexprsimplefileurl='" + beginFilePath + "diffexpr-simple" + extension + 
-                "' data-bgeediffexprsimplefilesize='" + diffExprSimpleFileSize + 
-                "' data-bgeediffexpradvancedfileurl='" + beginFilePath + "diffexpr-complete" + extension + 
-                "' data-bgeediffexpradvancedfilesize='" + diffExprAdvancedFileSize + "'");
+                "' data-bgeeexprcompletefileurl='" + beginFilePath + "expr-complete" + extension + 
+                "' data-bgeeexprcompletefilesize='" + exprCompleteFileSize+ "'";
+        
+        if (diffExprAnatSimpleFileSize != null) {
+            data += " data-bgeediffexpranatomysimplefileurl='" + beginFilePath + 
+                                    "diffexpr-anatomy-simple" + extension +
+                    "' data-bgeediffexpranatomysimplefilesize='" + diffExprAnatSimpleFileSize + "'"; 
+        }
+        if (diffExprAnatCompleteFileSize != null) {
+            data += " data-bgeediffexpranatomycompletefileurl='" + beginFilePath + 
+                                    "diffexpr-anatomy-complete" + extension +
+                    "' data-bgeediffexpranatomycompletefilesize='" + diffExprAnatCompleteFileSize + "'"; 
+        }
+        if (diffExprDevSimpleFileSize != null) {
+            data += " data-bgeediffexprdevelopmentsimplefileurl='" + beginFilePath + 
+                                    "diffexpr-development-simple" + extension +
+                    "' data-bgeediffexprdevelopmentsimplefilesize='" + diffExprDevSimpleFileSize + "'"; 
+        }
+        if (diffExprDevCompleteFileSize != null) {
+            data += " data-bgeediffexprdevelopmentcompletefileurl='" + beginFilePath + 
+                                    "diffexpr-development-complete" + extension +
+                    "' data-bgeediffexprdevelopmentcompletefilesize='" + diffExprDevCompleteFileSize + "'"; 
+        }
+        return log.exit(data);
     }
 
     /**

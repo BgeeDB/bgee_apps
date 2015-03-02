@@ -59,8 +59,12 @@ var download = {
             this.$bgeeGroupDescription = $( "#bgee_data_selection_text p.groupdescription" );
             this.$exprSimpleCsv = $( "#expr_simple_csv" );
             this.$exprCompleteCsv = $( "#expr_complete_csv" );        
-            this.$overUnderSimpleCsv = $( "#overunder_simple_csv" );
-            this.$overUnderCompleteCsv = $( "#overunder_complete_csv" );   
+            this.$diffExprAnatomySimpleCsv = $( "#diffexpr_anatomy_simple_csv" );
+            this.$diffExprAnatomyCompleteCsv = $( "#diffexpr_anatomy_complete_csv" );   
+            this.$diffExprDevelopmentSimpleCsv = $( "#diffexpr_development_simple_csv" );
+            this.$diffExprDevelopmentCompleteCsv = $( "#diffexpr_development_complete_csv" );
+            this.$diffExprAnatomyNoData = $( "#diffexpr_anatomy_no_data" );
+            this.$diffExprDevelopmentNoData = $( "#diffexpr_development_no_data" );
             this.$bgeeSearchForm = $( "#bgee_search_box form" );
             this.$bgeeSearchBox = $( "#bgee_search_box input" );
             this.$bgeeSearchResults = $( "#results_nb" );
@@ -207,13 +211,25 @@ var download = {
             var bgeeGroupName = $currentSpecies.data( "bgeegroupname" );
             // Get files urls for the current species/group
             var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
-            var bgeeExprAdvancedFileUrl = $currentSpecies.data( "bgeeexpradvancedfileurl" );
-            var bgeeDiffExprSimpleFileUrl = $currentSpecies.data( "bgeediffexprsimplefileurl" );
-            var bgeeDiffExprAdvancedFileUrl = $currentSpecies.data( "bgeediffexpradvancedfileurl" );
+            var bgeeExprCompleteFileUrl = $currentSpecies.data( "bgeeexprcompletefileurl" );
+            var bgeeDiffExprAnatomySimpleFileUrl =
+            	$currentSpecies.data( "bgeediffexpranatomysimplefileurl" );
+            var bgeeDiffExprAnatomyCompleteFileUrl =
+            	$currentSpecies.data( "bgeediffexpranatomycompletefileurl" );
+            var bgeeDiffExprDevelopmentSimpleFileUrl =
+            	$currentSpecies.data( "bgeediffexprdevelopmentsimplefileurl" );
+            var bgeeDiffExprDevelopmentCompleteFileUrl = 
+            	$currentSpecies.data( "bgeediffexprdevelopmentcompletefileurl" );
             var bgeeExprSimpleFileSize = $currentSpecies.data( "bgeeexprsimplefilesize" );
-            var bgeeExprAdvancedFileSize = $currentSpecies.data( "bgeeexpradvancedfilesize" );
-            var bgeeDiffExprSimpleFileSize = $currentSpecies.data( "bgeediffexprsimplefilesize" );
-            var bgeeDiffExprAdvancedFileSize = $currentSpecies.data( "bgeediffexpradvancedfilesize" );
+            var bgeeExprCompleteFileSize = $currentSpecies.data( "bgeeexprcompletefilesize" );
+            var bgeeDiffExprAnatomySimpleFileSize =
+            	$currentSpecies.data( "bgeediffexpranatomysimplefilesize" );
+            var bgeeDiffExprAnatomyCompleteFileSize = 
+            	$currentSpecies.data( "bgeediffexpranatomycompletefilesize" );
+            var bgeeDiffExprDevelopmentSimpleFileSize =
+            	$currentSpecies.data( "bgeediffexprdevelopmentsimplefilesize" );
+            var bgeeDiffExprDevelopmentCompleteFileSize =
+            	$currentSpecies.data( "bgeediffexprdevelopmentcompletefilesize" );
 
             // Proceed to the update
             var numberOfSpecies = $images.size() ;
@@ -243,8 +259,7 @@ var download = {
                 this.$bgeeDataSelectionTextCommon.text( bgeeGroupName );
                 this.$bgeeGroupDescription.text( numberOfSpecies + " species: " );
                 this.$bgeeGroupDescription.append( $( "<i></i>" ).append( namesOfAllSpecies ) );
-            }
-            else {
+            } else {
                 this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
                 this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
                 this.$bgeeGroupDescription.text( "" );
@@ -252,12 +267,43 @@ var download = {
             // Update the values of the download links and size files
             this.$exprSimpleCsv.attr( "href", bgeeExprSimpleFileUrl );
             this.$exprSimpleCsv.text( "Download simple file (" + bgeeExprSimpleFileSize + ")" );
-            this.$exprCompleteCsv.attr( "href", bgeeExprAdvancedFileUrl );
-            this.$exprCompleteCsv.text( "Download advanced file (" + bgeeExprAdvancedFileSize + ")" );
-            this.$overUnderSimpleCsv.attr( "href", bgeeDiffExprSimpleFileUrl );
-            this.$overUnderSimpleCsv.text( "Download simple file (" + bgeeDiffExprSimpleFileSize + ")" );
-            this.$overUnderCompleteCsv.attr( "href", bgeeDiffExprAdvancedFileUrl );
-            this.$overUnderCompleteCsv.text( "Download advanced file (" + bgeeDiffExprAdvancedFileSize + ")" );
+            this.$exprCompleteCsv.attr( "href", bgeeExprCompleteFileUrl );
+            this.$exprCompleteCsv.text( "Download complete file (" + bgeeExprCompleteFileSize + ")" );
+            
+            this.$diffExprAnatomyCompleteNoData = $( "#diffexpr_anatomy_complete_no_data" );   
+            this.$diffExprDevelopmentSimpleNoData = $( "#diffexpr_development_simple_no_data" );
+            this.$diffExprDevelopmentCompleteNoData = $( "#diffexpr_development_complete_no_data" );
+
+            if (bgeeDiffExprAnatomySimpleFileUrl === undefined) {
+            	this.$diffExprAnatomySimpleCsv.hide();
+            	this.$diffExprAnatomyCompleteCsv.hide();
+            	this.$diffExprAnatomyNoData.show();
+            } else {
+            	this.$diffExprAnatomySimpleCsv.show();
+            	this.$diffExprAnatomyCompleteCsv.show();
+            	this.$diffExprAnatomyNoData.hide();
+            	this.$diffExprAnatomySimpleCsv.attr( "href", bgeeDiffExprAnatomySimpleFileUrl );
+            	this.$diffExprAnatomyCompleteCsv.attr( "href", bgeeDiffExprAnatomyCompleteFileUrl );
+            	this.$diffExprAnatomySimpleCsv.text( 
+            			"Download simple file (" + bgeeDiffExprAnatomySimpleFileSize + ")" );
+            	this.$diffExprAnatomyCompleteCsv.text( 
+            			"Download complete file (" + bgeeDiffExprAnatomyCompleteFileSize + ")" );
+            }
+            if( bgeeDiffExprDevelopmentSimpleFileUrl === undefined ) {
+            	this.$diffExprDevelopmentSimpleCsv.hide();
+            	this.$diffExprDevelopmentCompleteCsv.hide();
+            	this.$diffExprDevelopmentNoData.show();
+            } else {
+            	this.$diffExprDevelopmentSimpleCsv.show();
+            	this.$diffExprDevelopmentCompleteCsv.show();
+            	this.$diffExprDevelopmentNoData.hide();
+            	this.$diffExprDevelopmentSimpleCsv.attr( "href", bgeeDiffExprDevelopmentSimpleFileUrl );
+            	this.$diffExprDevelopmentCompleteCsv.attr( "href", bgeeDiffExprDevelopmentCompleteFileUrl );
+            	this.$diffExprDevelopmentSimpleCsv.text( 
+            			"Download simple file (" + bgeeDiffExprDevelopmentSimpleFileSize + ")" );
+            	this.$diffExprDevelopmentCompleteCsv.text( 
+            			"Download complete file (" + bgeeDiffExprDevelopmentCompleteFileSize + ")" );
+            }
 
             // Add the "selected" css class to the current species and display the detail 
             // box with a visual effect

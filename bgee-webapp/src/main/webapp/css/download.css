@@ -199,7 +199,7 @@ p {
 
 #bgee_data_selection h1 {
     display: inline;
-    font-size: 2.2em;
+    font-size: 2em;
     margin: 0;
 }
 
@@ -209,7 +209,7 @@ p {
 
 #bgee_data_selection h2 {
     font-weight: normal;
-    margin: 1.6em 0 0.8em;
+    margin: 1.4em 0 0.2em;
     font-size: 1.25em;
 }
 
@@ -259,19 +259,22 @@ p {
 
 #bgee_data_selection_text div.bgee_download_file_buttons {
     margin: 0px 0px 0px 30px;
+    height: 55px;
+}
+
+.download_link, #bgee_data_selection p.not_enough_data {
+	padding: 5px;
+	font-size: 0.9em;
 }
 
 .download_link {
     display:inline-block;
-    background-color:#515151;
-    border: 1px solid black;
+    background-color:#3E3E3E;
+    border: 1px solid #141414;
     border-radius: 3px;
-    padding: 8px;
-    color: #DBDBDB;
-    font-weight: bold;
-    font-size: 0.9em;
     text-decoration: none;
     white-space: nowrap;
+    color: #AAA;
 }
 
 .download_link:hover {
@@ -279,8 +282,9 @@ p {
     background-color:#717171;
 }
 
-.download_link:visited {
-    color: #282828;
+#bgee_data_selection p.not_enough_data {
+    color: #717171;
+    margin: 0;
 }
 
 figure {

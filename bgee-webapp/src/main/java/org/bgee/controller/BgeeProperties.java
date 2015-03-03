@@ -606,6 +606,8 @@ public class BgeeProperties
     /**
      * @return  A {@code String} that defines the absolute root directory where are located 
      *          expression files available for download, to generate URL to download files.
+     * @see #DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
      */
     public String getDownloadExprFilesRootDirectory() {
         return downloadExprFilesRootDirectory;
@@ -615,6 +617,8 @@ public class BgeeProperties
      * @return  A {@code String} that defines the absolute root directory where are located 
      *          differential expression files available for download, to generate URL 
      *          to download files.
+     * @see #DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT
      */
     public String getDownloadDiffExprFilesRootDirectory() {
         return downloadDiffExprFilesRootDirectory;
@@ -624,6 +628,8 @@ public class BgeeProperties
      * @return  A {@code String} that defines the root directory where are located javascript 
      *          files, to be added to the {@code bgeeRootDirectory} to generate URL to obtain 
      *          javascript files.
+     * @see #JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY
+     * @see #JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT
      */
     public String getJavascriptFilesRootDirectory() {
         return javascriptFilesRootDirectory;
@@ -632,6 +638,8 @@ public class BgeeProperties
     /**
      * @return  A {@code String} that defines the root directory where are located css files, 
      *          to be added to the {@code bgeeRootDirectory} to generate URL to obtain css files.
+     * @see #CSS_FILES_ROOT_DIRECTORY_KEY
+     * @see #CSS_FILES_ROOT_DIRECTORY_DEFAULT
      */
     public String getCssFilesRootDirectory() {
         return cssFilesRootDirectory;

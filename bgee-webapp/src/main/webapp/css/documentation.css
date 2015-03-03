@@ -1,0 +1,50 @@
+div.documentationsubsection, div.documentationmenu {
+    position: relative;
+    display: inline-block;
+    width: 95%;
+}
+
+div.documentationsubsection {
+    text-align: left;
+	padding: 0.5%;
+	border-top: 2px #920209 solid;
+}
+
+div.documentationsubsection p {
+    margin: 1% 0;
+}
+
+div.documentationmenu {
+    text-align: center;
+}
+
+div.documentationmenu ul {
+    margin: 0;
+    padding: 0;
+}
+
+div.documentationmenu li {
+    list-style-type: none;
+}
+
+#sib_body h1, #sib_body h2, #sib_body h3 {
+    display: inline-block; 
+    color: #920209;
+    font-weight: normal;
+}
+
+#sib_body h1 {
+	text-align: center;
+	width: 95%;
+    font-size: 2em;
+}
+
+#sib_body h2 {
+    font-size: 1.6em;
+    margin: 2% 0 0 0;
+}
+
+#sib_body h3 {
+    font-size: 1.2em;
+    margin: 1% 0 0 0;
+}

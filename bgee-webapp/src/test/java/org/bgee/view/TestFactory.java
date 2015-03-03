@@ -16,12 +16,10 @@ import org.bgee.controller.TestURLParameters;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class TestFactory extends ViewFactory
-{
+public class TestFactory extends ViewFactory {
     
     public TestFactory(HttpServletResponse response, RequestParameters requestParameters,
-            BgeeProperties prop)
-    {
+            BgeeProperties prop) {
         super(response, requestParameters, prop);
     }
     
@@ -29,11 +27,11 @@ public class TestFactory extends ViewFactory
     /**
      * This method check that the injected {@code BgeeProperties} and {@code URLParameters}
      * are present with correct values.
+     * 
      * @param prop  The injected {@code BgeeProperties}
      * @return  A new {@code TestURLParameters} if the parameters are correct, else {@code null}
      */
-    public DownloadDisplay getDownloadDisplay()  throws IOException
-    {
+    public DownloadDisplay getDownloadDisplay()  throws IOException {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
                 .getParamTestString()).equals("test")){
@@ -49,6 +47,16 @@ public class TestFactory extends ViewFactory
      * @return  {@code null}
      */
     public GeneralDisplay getGeneralDisplay() {
+        return null;
+    }
+
+    @Override
+    public DocumentationDisplay getDocumentationDisplay() throws IOException {
+        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
+                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
+                .getParamTestString()).equals("test")){
+            return new TestDocumentationDisplay(this.response, this.requestParameters, prop);
+        }
         return null;
     }
     

@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.view.DocumentationDisplay;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.ViewFactory;
@@ -16,11 +17,12 @@ import org.bgee.view.ViewFactory;
  * {@code ViewFactory} that returns all displays for the {@code displayTypes} HTML
  * 
  * @author  Mathieu Seppey
+ * @author  Valentine Rech de Laval
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
-public class HtmlFactory extends ViewFactory
-{
+public class HtmlFactory extends ViewFactory {
+    
     private final static Logger log = LogManager.getLogger(HtmlFactory.class.getName());
     
     /**
@@ -36,14 +38,12 @@ public class HtmlFactory extends ViewFactory
      *                          the properties values
      */
 	public HtmlFactory(HttpServletResponse response, RequestParameters requestParameters,
-	        BgeeProperties prop)
-    {
+	        BgeeProperties prop) {
     	super(response, requestParameters, prop);
     }
     
 	@Override
-	public DownloadDisplay getDownloadDisplay()  throws IOException
-	{
+	public DownloadDisplay getDownloadDisplay()  throws IOException {
 	    log.entry();
 		return log.exit(new HtmlDownloadDisplay(this.response, this.requestParameters,
 		        this.prop));
@@ -55,5 +55,11 @@ public class HtmlFactory extends ViewFactory
 		return log.exit(new HtmlGeneralDisplay(this.response, this.requestParameters,
 		        this.prop));
 	}
-    
+
+    @Override
+    public DocumentationDisplay getDocumentationDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlDocumentationDisplay(
+                this.response, this.requestParameters, this.prop));
+    }
 }

@@ -98,6 +98,13 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a download page is requested.
      */
     public static final String PAGE_DOWNLOAD = "download";
+
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a download page is requested.
+     */
+    public static final String PAGE_DOCUMENTATION = "documentation";
+    
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when a documentation is requested.
@@ -1293,11 +1300,10 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      * category "documentation"
      */
-    public boolean isADocumentationPageCategory()
-    {
+    public boolean isADocumentationPageCategory() {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("documentation")) {
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DOCUMENTATION)) {
             return log.exit(true);
         }
         return log.exit(false);

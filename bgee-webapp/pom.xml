@@ -104,7 +104,36 @@
                             <!-- override the destination directory for this resource -->
                             <targetPath>js-${project.version}</targetPath>
                         </resource>
+                    
+                        <!-- Now, we want the path to these directories in web.xml and bgee-webapp.properties -->
+                        <resource>
+                            <!-- this is relative to the pom.xml directory -->
+                            <directory>src/main/webapp/WEB-INF</directory>
+                            <!-- the list has a default value of ** -->
+                            <includes>
+                                <include>**/web.xml</include>
+                            </includes>
+                            <!-- Activates filtering -->
+                            <filtering>true</filtering>
+                            <!-- override the destination directory for this resource, relative to the root of the WAR file -->
+                            <targetPath>WEB-INF</targetPath>
+                        </resource>
+                        <resource>
+                            <!-- this is relative to the pom.xml directory -->
+                            <directory>src/main/resources/</directory>
+                            <!-- the list has a default value of ** -->
+                            <includes>
+                                <include>**/bgee-webapp.properties</include>
+                            </includes>
+                            <!-- Activates filtering -->
+                            <filtering>true</filtering>
+                            <!-- override the destination directory for this resource, relative to the root of the WAR file -->
+                            <targetPath>WEB-INF/classes</targetPath>
+                        </resource>
                     </webResources>
+                    
+                    <attachClasses>true</attachClasses>
+                    
                 </configuration>
             </plugin>
             <plugin>
@@ -113,12 +142,6 @@
                 <configuration>
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-war-plugin</artifactId>
-                <configuration>
-                    <attachClasses>true</attachClasses>
                 </configuration>
             </plugin>
         </plugins>

@@ -35,12 +35,16 @@
 
     <servlet-mapping>
         <servlet-name>default</servlet-name>
-        <url-pattern>/js/*</url-pattern>
+        <!-- The project version is filled using the maven-war-plugin, 
+             see bgee-applications/bgee-webapp/pom.xml -->
+        <url-pattern>/js-${project.version}/*</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
         <servlet-name>default</servlet-name>
-        <url-pattern>/css/*</url-pattern>
+        <!-- The project version is filled using the maven-war-plugin, 
+             see bgee-applications/bgee-webapp/pom.xml -->
+        <url-pattern>/css-${project.version}/*</url-pattern>
     </servlet-mapping>
 
     <!-- Add a filter to cache the pages using ehcache -->

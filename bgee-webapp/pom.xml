@@ -130,6 +130,7 @@
                             <!-- override the destination directory for this resource, relative to the root of the WAR file -->
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
+                        
                     </webResources>
                     
                     <attachClasses>true</attachClasses>
@@ -145,6 +146,13 @@
                 </configuration>
             </plugin>
         </plugins>
+        
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>  
+        </resources>
     </build>
 
 </project>

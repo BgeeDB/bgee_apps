@@ -51,7 +51,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.startDisplay("download", "Bgee release 13 documentation page");
         
-        this.writeln("<h1>Section name</h1>");
+        this.writeln("<h1 id='sectionname'>Section name</h1>");
         this.writeln("<div class='documentationmenu'>");
         this.writeln("<ul>");
         this.writeln("<li><a href='#subsection1' title='Quick jump to this section'>" + 
@@ -63,7 +63,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.writeln("</ul>");
         this.writeln("</div>"); // end of documentationmenu
 
-        this.writeln("<h2>" + subsectionName1 + "</h2>");
+        this.writeln("<div id='subsection1'>");
+        this.writeln("<h2>" + subsectionName1 + "</h2><a class='backlink' href='#sectionname'>Back</a>");
         this.writeln("<div class='documentationsubsection'>");
         this.writeln("<h3>H3 title</h3>");
         this.writeln("<p>The raw data in .sra format are downloaded from " +
@@ -91,20 +92,24 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
                 "Reads that map to the features are summed up using the htseq-count software. " +
                 "The RPK (read per kilobase) value for every feature is obtained by dividing " +
                 "the number of reads that match a given feature by its length. </p>");
-        this.writeln("</div>"); // end of subsectionName1
+        this.writeln("</div>");
+        this.writeln("</div>"); // end of subsection1
 
-        this.writeln("<h2>" + subsectionName2 + "</h2>");
+        this.writeln("<div id='subsection2'>");
+        this.writeln("<h2>" + subsectionName2 + "</h2><a class='backlink' href='#sectionname'>Back</a>");
         this.writeln("<div class='documentationsubsection'>");
         this.writeln("<p> </p>");
         this.writeln("<p> </p>");
-        this.writeln("</div>"); // end of subsectionName2
+        this.writeln("</div>");
+        this.writeln("</div>"); // end of subsection2
 
-        this.writeln("<div>");
-        this.writeln("<h2>" + subsectionName3 + "</h2>");
+        this.writeln("<div id='subsection3'>");
+        this.writeln("<h2>" + subsectionName3 + "</h2><a class='backlink' href='#sectionname'>Back</a>");
         this.writeln("<div class='documentationsubsection'>");
         this.writeln("<p> </p>");
         this.writeln("<p> </p>");
-        this.writeln("</div>"); // end of subsectionName3
+        this.writeln("</div>");
+        this.writeln("</div>"); // end of subsection3
 
         this.endDisplay();
 

@@ -48,3 +48,8 @@ div.documentationmenu li {
     font-size: 1.2em;
     margin: 1% 0 0 0;
 }
+
+.backlink {
+	color: #626262;
+	margin-left: 2%;
+}

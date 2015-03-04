@@ -16,7 +16,6 @@ div.subsectiontext p {
 }
 
 div.documentationmenu {
-    text-align: center;
     width: 100%;
     margin-bottom: 2%;
 }
@@ -37,14 +36,15 @@ div.documentationmenu li {
 }
 
 #sib_body h1 {
-    text-align: center;
     width: 100%;
     font-size: 2em;
+    font-weight: bold;
 }
 
 #sib_body h2 {
-    font-size: 1.6em;
     margin: 1em 0 0 0;
+    font-size: 1.6em;
+    font-weight: bold;
 }
 
 #sib_body h3 {

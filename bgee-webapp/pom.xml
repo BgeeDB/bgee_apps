@@ -97,27 +97,15 @@
                         <resource>
                             <directory>src/main/webapp/css</directory>
                             <!-- override the destination directory for this resource -->
-                            <targetPath>css-${project.version}</targetPath>
+                            <targetPath>css/${project.version}</targetPath>
                         </resource>
                         <resource>
                             <directory>src/main/webapp/js</directory>
                             <!-- override the destination directory for this resource -->
-                            <targetPath>js-${project.version}</targetPath>
+                            <targetPath>js/${project.version}</targetPath>
                         </resource>
                     
-                        <!-- Now, we want the path to these directories in web.xml and bgee-webapp.properties -->
-                        <resource>
-                            <!-- this is relative to the pom.xml directory -->
-                            <directory>src/main/webapp/WEB-INF</directory>
-                            <!-- the list has a default value of ** -->
-                            <includes>
-                                <include>**/web.xml</include>
-                            </includes>
-                            <!-- Activates filtering -->
-                            <filtering>true</filtering>
-                            <!-- override the destination directory for this resource, relative to the root of the WAR file -->
-                            <targetPath>WEB-INF</targetPath>
-                        </resource>
+                        <!-- Now, we want the path to these directories in bgee-webapp.properties -->
                         <resource>
                             <!-- this is relative to the pom.xml directory -->
                             <directory>src/main/resources/</directory>
@@ -147,6 +135,7 @@
             </plugin>
         </plugins>
         
+        <!-- In order to correctly filter bgee-webapp.properties even outside of the WAR file -->
         <resources>
             <resource>
                 <directory>src/main/resources</directory>

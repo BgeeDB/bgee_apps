@@ -75,7 +75,7 @@ header img {
 /****SIB BODY****/
 #sib_body {
     position: relative;
-    padding: 10px 0 50px 10px;
+    padding: 10px 10px 50px 10px;
     background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
     background-size: 100% 100%;
     /*To be modified when multi-species files will be available*/
@@ -85,14 +85,13 @@ header img {
 }
 
 /****LINKS****/
-a {
+a, a:visited {
     cursor: pointer;
-    color: #920209;
+    color: #BC161D;
     text-decoration: none;
 }
 
 a:hover {
-    color: #D6161D;
     text-decoration: underline;
 }
 

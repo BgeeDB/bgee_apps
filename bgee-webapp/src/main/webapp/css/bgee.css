@@ -3,7 +3,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    min-width: 600px;
+    min-width: 700px;
     font: 100% Helvetica, Verdana, sans-serif;
 }
 
@@ -97,8 +97,9 @@ header img {
     float: left;
     width: 160px;
     height: 20px;
-    padding-top: 0.3em;
+    padding-top: 0.4em;
     text-align: center;
+    font-size: 0.9em;
 }
 
 #nav ul li:hover {

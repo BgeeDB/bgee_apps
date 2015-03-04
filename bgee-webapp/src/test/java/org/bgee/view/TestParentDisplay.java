@@ -14,6 +14,7 @@ import org.bgee.controller.RequestParameters;
  * @version Bgee 13 Aug 2014
  * @since   Bgee 13
  */
+// None of these classes launch test
 public class TestParentDisplay extends ConcreteDisplayParent
 {
 

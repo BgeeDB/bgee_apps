@@ -129,7 +129,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><a id='TOP'></a></div>");
         this.writeln("<div id='sib_container'>");
-        this.displayBgeeMenu();
+        this.displayBgeeHeader();
         this.writeln("<div id='sib_body'>");
 
         log.exit();
@@ -159,8 +159,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         log.exit();
     }
 
-    //TODO: this is not a menu, this is a header...
-    public void displayBgeeMenu() {
+    public void displayBgeeHeader() {
         log.entry();
         this.writeln("<header>");
         
@@ -184,6 +183,36 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
                 + "alt='SIB Swiss Institute of Bioinformatics' />"
                 + "</a>");
     
+        // Navigation bar
+        this.writeln("<div id='nav'>");
+        this.writeln("<ul>");
+        this.writeln("<li>");
+        this.writeln("<a title='Data download page' href='" + 
+                this.prop.getBgeeRootDirectory() + "?page=download'>Data download</a>");
+        this.writeln("</li>");
+        this.writeln("<li>");
+        this.writeln("<a title='Documentation page' href='" + 
+                this.prop.getBgeeRootDirectory() + "?page=documentation'>Documentation</a>");
+        this.writeln("<ul>");
+        this.writeln("<li><a class='drop' title='Section 1' href='" + 
+                this.prop.getBgeeRootDirectory() + "?page=documentation'>Section 1</a></li>");
+        this.writeln("<li><a class='drop' title='Section 2' href='" + 
+                this.prop.getBgeeRootDirectory() + "?page=documentation'>Section 2</a></li>");
+        this.writeln("<li><a class='drop' title='Section 1' href='" + 
+                this.prop.getBgeeRootDirectory() + "?page=documentation'>Section 3</a></li>");
+        this.writeln("<li><a class='drop' title='Section 1' href='" + 
+                this.prop.getBgeeRootDirectory() + "?page=documentation'>Section 4</a></li>");
+        this.writeln("</ul>");
+        this.writeln("</li>");
+        this.writeln("<li>");
+        this.writeln("<a id='about' rel='help' title='About page' href='/webapp/?page=about'>About</a>");
+        this.writeln("</li>");
+        this.writeln("<li>");
+        this.writeln("<a id='contact' title='Contact page' href='mailto:Bgee@isb-sib.ch'>Contact</a>");
+        this.writeln("</li>");
+        this.writeln("</ul>");
+        this.writeln("</div>");
+        
         this.writeln("</header>");
         log.exit();
     }

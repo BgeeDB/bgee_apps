@@ -25,7 +25,7 @@ header {
     position: relative;
     display: inline-block;
     background: #F7F8FA url(../img/sib_header_bkgd.png) repeat-x top left;
-    height: 100px;
+    height: 120px;
     width: 100%;
     color: #282828;
     z-index: 2;
@@ -72,10 +72,102 @@ header img {
     height: 75px;
 }
 
+/****NAVIGATION BAR****/
+#nav {
+    position: absolute;
+    bottom: 0;
+    height: 18px;
+    width: 98%;
+    margin: 1em 10px 0px;
+    display: block;
+    border-bottom: 4px solid #920209;
+}
+
+#nav ul {
+    background-color: #ABBDC4;
+	margin: -7px 0px 0px;
+    padding: 0;
+    height: 25px;
+    list-style: outside none none;
+    font-weight: 0.9em;
+}
+
+#nav ul li {
+	position: relative;
+    float: left;
+    width: 160px;
+    height: 20px;
+    padding-top: 0.3em;
+    text-align: center;
+}
+
+#nav ul li:hover {
+    border-bottom: 4px solid #BC161D;
+    background-color: #416982;
+}
+
+/* style the links for the top level */
+#nav a, #nav a:visited {
+    color: #416982;
+    text-decoration: none;
+    width: 160px;
+}
+#nav a:hover, #nav :hover>a {
+    color: white;
+    height: 25px;
+    margin-bottom: 3px;
+}
+
+/* style the second level links */
+#nav ul ul a.drop, #nav ul ul a.drop:visited {
+	background-color: #ABBDC4;
+}
+#nav ul ul a.drop:hover, #nav ul ul :hover>a.drop {
+    color: white;
+    background-color: #416982;
+    margin-bottom: 0px;
+    height: auto;
+}
+
+/* hide the sub levels and give them a positon absolute so that they take up no room */
+#nav ul ul {
+    visibility: hidden;
+    padding: 5px;
+    position: absolute;
+    height: 0;
+    top: 33px;
+    left: 0;
+    width: 150px;
+}
+#nav ul ul li{
+	width: 100%;
+}
+
+#nav ul ul li:hover {
+	border-bottom: none;
+	background-color: #416982;
+}
+
+/* make the second level visible when hover on first level list OR link */
+#nav ul li:hover ul, #nav ul a:hover ul {
+    visibility: visible;
+    height: auto;
+    margin-top: -4px;
+    background-color: #ABBDC4;
+}
+ /* keep the third level hidden when you hover on first level list OR link */
+#nav ul :hover ul ul {
+    visibility: hidden;
+}
+/* make the third level visible when you hover over second level list OR link */
+#nav ul :hover ul :hover ul {
+    visibility: visible;
+}
+
 /****SIB BODY****/
 #sib_body {
     position: relative;
-    padding: 10px 10px 50px 10px;
+    padding: 10px 1% 50px 1%;
     background: #F7F8FA url(../img/sib_body_bkgd.png) repeat-x top left;
     background-size: 100% 100%;
     /*To be modified when multi-species files will be available*/
@@ -85,14 +177,14 @@ header img {
 }
 
 /****LINKS****/
-a, a:visited {
+a {
     cursor: pointer;
     color: #BC161D;
-    text-decoration: none;
+    text-decoration: underline;
 }
 
-a:hover {
-    text-decoration: underline;
+a:visited, a:hover {
+    color: #6A1818;
 }
 
 /****BGEE SPECIFIC STUFF****/
@@ -141,6 +233,7 @@ footer {
     background: transparent url(../img/triangle_hover.png) no-repeat top left;
     padding-left: 10px;
 }
+
 
 /*! jQuery UI - v1.11.0 - 2014-06-26
 * http://jqueryui.com

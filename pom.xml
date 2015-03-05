@@ -505,15 +505,18 @@
         <pluginManagement>
             <plugins>
                 <!-- *******Used to generate executable JAR files with depedencies******** -->
-                <plugin>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>2.4</version>
-                </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>2.3</version>
+                </plugin>
+                
+                
+                <!-- *******Used to rename static files with version number in bgee-webapp******** -->
+                <plugin>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.8</version>
                 </plugin>
 
                 <!-- ******************** Integration tests *********************** -->

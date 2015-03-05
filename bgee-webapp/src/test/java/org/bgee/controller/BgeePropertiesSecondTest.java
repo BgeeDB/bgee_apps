@@ -12,7 +12,8 @@ import org.junit.Test;
  * 
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Mar. 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -45,7 +46,11 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved",
                 "/javascriptFilesRootDirectory", bgeeProp.getJavascriptFilesRootDirectory());
         assertEquals("Wrong property value retrieved",
+                "-test-extension-1", bgeeProp.getJavascriptVersionExtension());
+        assertEquals("Wrong property value retrieved",
                 "/cssFilesRootDirectory", bgeeProp.getCssFilesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "", bgeeProp.getCssVersionExtension());
         assertEquals("Wrong property value retrieved",
                 "/imagesRootDirectory", bgeeProp.getImagesRootDirectory());
         assertEquals("Wrong property value retrieved",

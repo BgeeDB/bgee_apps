@@ -12,7 +12,8 @@ import org.junit.Test;
  * 
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Mar. 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -35,7 +36,9 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
@@ -66,8 +69,14 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
                 BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getJavascriptFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
+                BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_DEFAULT, 
+                bgeeProp.getJavascriptVersionExtension());
+        assertEquals("Wrong property value retrieved", 
                 BgeeProperties.CSS_FILES_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getCssFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                BgeeProperties.CSS_VERSION_EXTENSION_DEFAULT, 
+                bgeeProp.getCssVersionExtension());
         assertEquals("Wrong property value retrieved", 
                 BgeeProperties.IMAGES_ROOT_DIRECTORY_DEFAULT, 
                 bgeeProp.getImagesRootDirectory());

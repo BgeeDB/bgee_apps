@@ -160,7 +160,7 @@ public class BgeeProperties
      * @see #getJavascriptFilesRootDirectory()
      */
     public final static String JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.javascriptFilesRootDirectory";
+            "org.bgee.webapp.javascript.directory";
     /**
      * A {@code String} that is the default value of the javascript file root directory. 
      * 
@@ -168,6 +168,22 @@ public class BgeeProperties
      * @see #getJavascriptFilesRootDirectory()
      */
     public final static String JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT = "js/";
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the javascript version extension. 
+     * 
+     * @see #JAVASCRIPT_VERSION_EXTENSION_DEFAULT
+     * @see #getJavascriptVersionExtension()
+     */
+    public final static String JAVASCRIPT_VERSION_EXTENSION_KEY = 
+            "org.bgee.webapp.javascript.version.extension";
+    /**
+     * A {@code String} that is the default value of the javascript version extension. 
+     * 
+     * @see #JAVASCRIPT_VERSION_EXTENSION_KEY
+     * @see #getJavascriptVersionExtension()
+     */
+    public final static String JAVASCRIPT_VERSION_EXTENSION_DEFAULT = "";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -177,7 +193,7 @@ public class BgeeProperties
      * @see #getCssFilesRootDirectory()
      */
     public final static String CSS_FILES_ROOT_DIRECTORY_KEY = 
-            "org.bgee.webapp.cssFilesRootDirectory";
+            "org.bgee.webapp.css.directory";
     /**
      * A {@code String} that is the default value of the css file root directory. 
      * 
@@ -185,6 +201,22 @@ public class BgeeProperties
      * @see #getCssFilesRootDirectory()
      */
     public final static String CSS_FILES_ROOT_DIRECTORY_DEFAULT = "css/";
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the css version extension. 
+     * 
+     * @see #CSS_VERSION_EXTENSION_DEFAULT
+     * @see #getCssVersionExtension()
+     */
+    public final static String CSS_VERSION_EXTENSION_KEY = 
+            "org.bgee.webapp.css.version.extension";
+    /**
+     * A {@code String} that is the default value of the css version extension. 
+     * 
+     * @see #CSS_VERSION_EXTENSION_KEY
+     * @see #getCssVersionExtension()
+     */
+    public final static String CSS_VERSION_EXTENSION_DEFAULT = "";
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
@@ -309,12 +341,26 @@ public class BgeeProperties
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain javascript files.
      */
     private final String javascriptFilesRootDirectory;
+    /**
+     * A {@code String} defining the version extension to generate versioned javascript file names.
+     * For instance, if this attribute is equal to "-13", a js file originally named "common.js" 
+     * should be used with name "common-13.js".
+     * 
+     */
+    private final String javascriptVersionExtension;
 
     /**
      * A {@code String} that defines the root directory where are located css files, 
      * to be added to the {@code bgeeRootDirectory} to generate URL to obtain css files.
      */
     private final String cssFilesRootDirectory;
+    /**
+     * A {@code String} defining the version extension to generate versioned CSS file names.
+     * For instance, if this attribute is equal to "-13", a css file originally named "bgee.css" 
+     * should be used with name "bgee-13.css".
+     * 
+     */
+    private final String cssVersionExtension;
 
     /**
      * A {@code String} that defines the root directory where are located images, 
@@ -409,8 +455,12 @@ public class BgeeProperties
                 DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
+        javascriptVersionExtension  = getStringOption(prop, sysProps, fileProps, 
+                JAVASCRIPT_VERSION_EXTENSION_KEY, JAVASCRIPT_VERSION_EXTENSION_DEFAULT);
         cssFilesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 CSS_FILES_ROOT_DIRECTORY_KEY, CSS_FILES_ROOT_DIRECTORY_DEFAULT);
+        cssVersionExtension  = getStringOption(prop, sysProps, fileProps, 
+                CSS_VERSION_EXTENSION_KEY, CSS_VERSION_EXTENSION_DEFAULT);
         imagesRootDirectory  = getStringOption(prop, sysProps, fileProps, 
                 IMAGES_ROOT_DIRECTORY_KEY, IMAGES_ROOT_DIRECTORY_DEFAULT);
         topOBOResultsUrlRootDirectory  = getStringOption(prop, sysProps, fileProps, 
@@ -634,6 +684,16 @@ public class BgeeProperties
     public String getJavascriptFilesRootDirectory() {
         return javascriptFilesRootDirectory;
     }
+    /**
+     * @return  A {@code String} defining the version extension to generate versioned javscript 
+     *          file names. For instance, if this attribute is equal to "-13", a javscript file 
+     *          originally named "common.js" should be used with name "common-13.js".
+     * @see #JAVASCRIPT_VERSION_EXTENSION_KEY
+     * @see #JAVSCRIPT_VERSION_EXTENSION_DEFAULT
+     */
+    public String getJavascriptVersionExtension() {
+        return javascriptVersionExtension;
+    }
 
     /**
      * @return  A {@code String} that defines the root directory where are located css files, 
@@ -643,6 +703,16 @@ public class BgeeProperties
      */
     public String getCssFilesRootDirectory() {
         return cssFilesRootDirectory;
+    }
+    /**
+     * @return  A {@code String} defining the version extension to generate versioned CSS 
+     *          file names. For instance, if this attribute is equal to "-13", a css file 
+     *          originally named "bgee.css" should be used with name "bgee-13.css".
+     * @see #CSS_VERSION_EXTENSION_KEY
+     * @see #CSS_VERSION_EXTENSION_DEFAULT
+     */
+    public String getCssVersionExtension() {
+        return cssVersionExtension;
     }
 
     /**

@@ -78,40 +78,116 @@
 
     </dependencies>
 
+    <properties>
+        <m2eclipse.wtp.contextRoot>/</m2eclipse.wtp.contextRoot>
+        <!-- properties used to rename css and js files with version number, 
+             to avoid caching issues with proxis/web browers. Corresponds by default 
+             to the project version number, but we might have additional updates of these files. -->
+        <css.version>${project.version}</css.version>
+        <js.version>${project.version}</js.version>
+        <!-- We will rename css and javascript files with version number using 
+             maven-antrun-plugin. The files will be copied in the directory 
+             used by maven-war-plugin to prepare the WAR packaging, 
+             which is by default ${project.build.directory}/${project.build.finalName}. 
+             We declare this directory explicitly to ensure proper communication 
+             between maven-antrun-plugin and maven-war-plugin in any case. -->
+        <webapp.directory>${project.build.directory}/${project.build.finalName}</webapp.directory>
+    </properties>
+    
+    <profiles>
+        <profile>
+            <id>m2e</id>
+            <!-- This profile is only active when the property "m2e.version"
+            is set, which is the case when building in Eclipse with m2e. -->
+            <activation>
+                <property>
+                    <name>m2e.version</name>
+                </property>
+            </activation>
+            <properties>
+                <webapp.directory>${project.build.directory}/m2e-wtp/web-resources/</webapp.directory>
+            </properties>
+        </profile>
+    </profiles>
+      
+      
     <build>
         <finalName>bgee-webapp-${project.version}</finalName>
         <plugins>
+            <!-- We use the maven-antrun-plugin to rename css and javascript files 
+                 with version number, to avoid caching issues with proxis/web browsers. 
+                 I couldn't find any other convenient way to rename files. 
+                 Other solutions included: renaming the css and javascript directories, 
+                 but this would need reconfiguring the server firewall at each release; adding 
+                 a sub-directory with version number in css and javascript directories, 
+                 but this causes problems of relative paths (e.g., images included in css files 
+                 from the img/ directory). -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <!-- perform copy before the package phase, 
+                             where maven-war-plugin builds the WAR file -->
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <!-- We copy our resource files to the directory that 
+                                     maven-war-plugin uses to prepare the packaging 
+                                     of the WAR file. This corresponds to the parameter 
+                                     webappDirectory of the maven-war-plugin, which is by default 
+                                     ${project.build.directory}/${project.build.finalName}; 
+                                     but we have declared this directory explicitly to ensure 
+                                     proper communication between maven-antrun-plugin and 
+                                     maven-war-plugin in any case. 
+                                     Note that we will configure the maven-war-plugin to not copy 
+                                     files in src/main/webapp/css/ and src/main/webapp/js/ itself. -->
+                                 <!-- Explanation to select files to copy/rename: 
+                                      http://stackoverflow.com/a/16092997/1768736 -->
+                                 <copy todir="${webapp.directory}/css/">
+                                     <fileset dir="src/main/webapp/css/">
+                                         <include name="**/*.css" />
+                                     </fileset>
+                                     <mapper type="glob" from="*.css" to="*-${css.version}.css"/>
+                                 </copy>
+                                 <copy todir="${webapp.directory}/js/">
+                                     <fileset dir="src/main/webapp/js/">
+                                         <include name="**/*.js" />
+                                     </fileset>
+                                     <mapper type="glob" from="*.js" to="*-${js.version}.js"/>
+                                 </copy>
+                             </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <configuration>
-                    <!-- We want to rename the css/ and js/ folders in the WAR file 
-                         with version number, to avoid caching problem with web browsers. 
-                         So, first, we exclude these folders, see http://stackoverflow.com/a/15116110/1768736 -->
+                    
+                    <!-- We do no let the maven-war-plugin take care of the css and 
+                         javascript files: in order to avoid caching issues with proxis/web browsers, 
+                         we want to rename css and javascript files with version number, which is not 
+                         easily doable with this plugin. See comments on the use 
+                         of the maven-antrun-plugin above for more details. -->
                     <warSourceExcludes>css/,js/</warSourceExcludes>
-                    
-                    <!-- this will do the renaming : i.e. we specify the source directory 
-                         relative to pom.xml and the target directory relative to root, 
-                         see http://stackoverflow.com/a/15116110/1768736 -->
+                    <!-- maven-antrun-plugin will copy renamed javascript and css files 
+                         in the directory that maven-war-plugin uses to prepare the packaging 
+                         of the WAR file. We declare this directory explicitly to ensure 
+                         proper communication between maven-antrun-plugin and maven-war-plugin 
+                         in any case. -->
+                    <webappDirectory>${webapp.directory}</webappDirectory>
                     <webResources>
-                        <resource>
-                            <directory>src/main/webapp/css</directory>
-                            <!-- override the destination directory for this resource -->
-                            <targetPath>css/${project.version}</targetPath>
-                        </resource>
-                        <resource>
-                            <directory>src/main/webapp/js</directory>
-                            <!-- override the destination directory for this resource -->
-                            <targetPath>js/${project.version}</targetPath>
-                        </resource>
-                    
-                        <!-- Now, we want the path to these directories in bgee-webapp.properties -->
+                        <!-- We filter bgee-webapp.properties so that css version number 
+                             and javacript version number are configured. -->
                         <resource>
                             <!-- this is relative to the pom.xml directory -->
                             <directory>src/main/resources/</directory>
-                            <!-- the list has a default value of ** -->
                             <includes>
-                                <include>**/bgee-webapp.properties</include>
+                                <include>bgee-webapp.properties</include>
                             </includes>
                             <!-- Activates filtering -->
                             <filtering>true</filtering>
@@ -125,6 +201,7 @@
                     
                 </configuration>
             </plugin>
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -140,8 +217,42 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <includes>
+                    <include>bgee-webapp.properties</include>
+                </includes>
             </resource>  
         </resources>
+        
+        <pluginManagement>
+            <plugins>
+                <plugin>
+     <groupId>org.eclipse.m2e</groupId>
+     <artifactId>lifecycle-mapping</artifactId>
+     <version>1.0.0</version>
+     <configuration>
+       <lifecycleMappingMetadata>
+         <pluginExecutions>
+           <pluginExecution>
+             <pluginExecutionFilter>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-antrun-plugin</artifactId>
+               <versionRange>[1.0.0,)</versionRange>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+             </pluginExecutionFilter>
+             <action>
+               <execute>
+                 <runOnIncremental>false</runOnIncremental>
+               </execute >
+             </action>
+           </pluginExecution>
+         </pluginExecutions>
+       </lifecycleMappingMetadata>
+     </configuration>
+    </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
 </project>

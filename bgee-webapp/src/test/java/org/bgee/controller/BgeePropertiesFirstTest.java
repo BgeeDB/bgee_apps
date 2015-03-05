@@ -22,7 +22,8 @@ import org.junit.Test;
  * 
  * @author Mathieu Seppey
  * @author Valentine Rech de Laval
- * @version Bgee 13
+ * @author Frederic Bastian
+ * @version Bgee 13 Mar. 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -42,11 +43,13 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/injectedroot");
         prop.put(BgeeProperties.URL_MAX_LENGTH_KEY, "10");
         prop.put(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/injectedcss");
+        prop.put(BgeeProperties.CSS_VERSION_EXTENSION_KEY, "injectedCssVersion");
         prop.put(BgeeProperties.DOWNLOAD_ROOT_DIRECTORY_KEY, "/injecteddownload");
         prop.put(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injectedexprfiles");
         prop.put(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/injecteddiffexprfiles");
         prop.put(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/injectedimg");
         prop.put(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/injectedjs");
+        prop.put(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "injectedJsVersion");
         prop.put(BgeeProperties.REQUEST_PARAMETERS_STORAGE_DIRECTORY_KEY, "/injectedrequestparam");
         prop.put(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, "/injectedtopobo");
         prop.put(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cache");
@@ -58,6 +61,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved", 
                 "/injectedcss", bgeeProp.getCssFilesRootDirectory());
         assertEquals("Wrong property value retrieved", 
+                "injectedCssVersion", bgeeProp.getCssVersionExtension());
+        assertEquals("Wrong property value retrieved", 
                 "/injecteddownload", bgeeProp.getDownloadRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injectedexprfiles", bgeeProp.getDownloadExprFilesRootDirectory());
@@ -67,6 +72,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 "/injectedimg", bgeeProp.getImagesRootDirectory());
         assertEquals("Wrong property value retrieved", 
                 "/injectedjs", bgeeProp.getJavascriptFilesRootDirectory());
+        assertEquals("Wrong property value retrieved", 
+                "injectedJsVersion", bgeeProp.getJavascriptVersionExtension());
         assertEquals("Wrong property value retrieved", 
                 "/injectedrequestparam", bgeeProp.getRequestParametersStorageDirectory());
         assertEquals("Wrong property value retrieved", 

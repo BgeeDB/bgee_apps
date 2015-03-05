@@ -16,11 +16,10 @@ import org.bgee.view.ConcreteDisplayParent;
  * 
  * @author  Mathieu Seppey
  * @author Frederic Bastian
- * @version Bgee 13 Aug 2014
+ * @version Bgee 13 Mar. 2015
  * @since   Bgee 13
  */
-public class HtmlParentDisplay extends ConcreteDisplayParent
-{
+public class HtmlParentDisplay extends ConcreteDisplayParent {
 
     private final static Logger log = LogManager.getLogger(HtmlParentDisplay.class.getName());
 
@@ -322,11 +321,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
     }
 
     /**
-     * Method that loads the javascript files. Has to be override by a child class that needs
-     * custom javascripts. Don't forget to call super.includeJs() at the beginning of the overridden
-     * method, unless it is a special page that does not use the standard js.
+     * Write HTML code allowing to include common javascript files. Subclasses needing to include 
+     * additional javascript files must override this method. 
+     * <p>
+     * <strong>Important</strong>:
+     * <ul>
+     * <li>Javascript files should always be included by calling {@link #includeJs(String)}. 
+     * {@link #includeJs(String)} will set the proper directory, and will automatically 
+     * define versioned file names.
+     * <li>{@code super.includeJs()} should always be called by these overriding methods, 
+     * unless the aim is to generate a special page not using the common Bgee javascript libraries.
+     * </ul>
+     * @see #includeJs(String)
      */
     protected void includeJs(){
+        log.entry();
         this.includeJs("lib/jquery.min.js");
         this.includeJs("lib/jquery.visible.js");
         this.includeJs("lib/jquery-ui.min.js");
@@ -334,38 +343,117 @@ public class HtmlParentDisplay extends ConcreteDisplayParent
         this.includeJs("requestparameters.js");
         this.includeJs("urlparameters.js");
 //        this.includeJs("bgeeproperties.js");
-    }
-    /**
-     * Method that loads the provided javascript file.
-     * <strong>It should be called only within a {@link #includeJs()} method, whether overridden 
-     * or not.</strong>.
-     * @param filename  The name of the file to load
-     */
-    protected void includeJs(String filename){
-        log.entry(filename);
-        this.writeln("<script type='text/javascript' src='"+
-                this.prop.getJavascriptFilesRootDirectory()+filename+"'></script>");
         log.exit();
     }
     /**
-     * Method that loads the css files. Has to be override by a child class that needs
-     * custom css. Don't forget to call super.includeCss() at the beginning of the overridden
-     * method, unless it is a special page that does not use the standard css.
+     * Write the HTML code allowing to include the javascript file named {@code fileName}. 
+     * This method will notably retrieve the directory hosting the files, and will 
+     * define the versioned file name corresponding to {@code fileName}, as hosted 
+     * on the server. HTML is written using {@link #writeln()}.
+     * <strong>It should be called only within a {@link #includeJs()} method, whether overridden 
+     * or not.</strong>.
+     * 
+     * @param filename  The original name of the javascript file to include.
+     * @see #getVersionedJsFileName(String)
+     */
+    protected void includeJs(String fileName){
+        log.entry(fileName);
+        this.writeln("<script type='text/javascript' src='" +
+                this.prop.getJavascriptFilesRootDirectory() + 
+                this.getVersionedJsFileName(fileName) + "'></script>");
+        log.exit();
+    }
+    /**
+     * Transform the name of a javascript file into a name including version information, 
+     * following the pattern used for javascript files hosted on the server. This is to avoid 
+     * caching issues. The extension to use for version information is provided by 
+     * {@link BgeeProperties#getJavascriptVersionExtension()}. 
+     * <p>
+     * For instance, if {@code getJavascriptVersionExtension} returns "-13", 
+     * and if {@code originalFileName} is equal to "common.js", the value returned 
+     * by this method will be: "common-13.js".
+     * <p>
+     * For simplicity, only file names ending with '.js' are accepted, otherwise, 
+     * an {@code IllegalArgumentException} is thrown.
+     * 
+     * @param originalFileName  A {@code String} that is the name of a javascript file, 
+     *                          ending with ".js", to transform into a versioned file name.
+     * @return                  A {@code String} that is the versioned javascript file name, 
+     *                          as used on the server, including the version extension 
+     *                          returned by {@link BgeeProperties#getJavascriptVersionExtension()}.
+     */
+    protected String getVersionedJsFileName(String originalFileName) {
+        log.entry(originalFileName);
+        if (!originalFileName.endsWith(".js")) {
+            throw log.throwing(new IllegalArgumentException("The provided file name "
+                    + "must end with an extension '.js'."));
+        }
+        return log.exit(originalFileName.replaceAll("(.+?)\\.js", 
+                "$1" + this.prop.getJavascriptVersionExtension() + ".js"));
+    }
+    
+    /**
+     * Write HTML code allowing to include common CSS files. Subclasses needing to include 
+     * additional CSS files must override this method. 
+     * <p>
+     * <strong>Important</strong>:
+     * <ul>
+     * <li>CSS files should always be included by calling {@link #includeCss(String)}. 
+     * {@link #includeCss(String)} will set the proper directory, and will automatically 
+     * define versioned file names.
+     * <li>{@code super.includeCss()} should always be called by these overriding methods, 
+     * unless the aim is to generate a special page not using the common CSS definitions.
+     * </ul>
+     * @see #includeCss(String)
      */
     protected void includeCss(){
         this.includeCss("bgee.css"); 
     }
     /**
-     * Method that loads the provided css file.
+     * Write the HTML code allowing to include the CSS file named {@code fileName}. 
+     * This method will notably retrieve the directory hosting the files, and will 
+     * define the versioned file name corresponding to {@code fileName}, as hosted 
+     * on the server. HTML is written using {@link #writeln()}.
      * <strong>It should be called only within a {@link #includeCss()} method, whether overridden 
-     * or not.</strong>
-     * @param filename  The name of the file to load
+     * or not.</strong>.
+     * 
+     * @param fileName  The original name of the CSS file to include.
+     * @see #getVersionedCssFileName(String)
      */
-    protected void includeCss(String filename){
-        log.entry(filename);
+    protected void includeCss(String fileName){
+        log.entry(fileName);
         this.writeln("<link rel='stylesheet' type='text/css' href='"
-                + this.prop.getCssFilesRootDirectory() + filename + "'/>");
+                + this.prop.getCssFilesRootDirectory() 
+                + this.getVersionedCssFileName(fileName) + "'/>");
         log.exit();
+    }
+    /**
+     * Transform the name of a CSS file into a name including version information, 
+     * following the pattern used for CSS files hosted on the server. This is to avoid 
+     * caching issues. The extension to use for version information is provided by 
+     * {@link BgeeProperties#getCssVersionExtension()}. 
+     * <p>
+     * For instance, if {@code getCssVersionExtension} returns "-13", 
+     * and if {@code originalFileName} is equal to "bgee.css", the value returned 
+     * by this method will be: "bgee-13.css".
+     * <p>
+     * For simplicity, only file names ending with '.css' are accepted, otherwise, 
+     * an {@code IllegalArgumentException} is thrown.
+     * 
+     * @param originalFileName  A {@code String} that is the name of a CSS file, 
+     *                          ending with ".css", to transform into a versioned file name.
+     * @return                  A {@code String} that is the versioned CSS file name, 
+     *                          as used on the server, including the version extension 
+     *                          returned by {@link BgeeProperties#getCssVersionExtension()}.
+     */
+    protected String getVersionedCssFileName(String originalFileName) {
+        log.entry(originalFileName);
+        if (!originalFileName.endsWith(".css")) {
+            throw log.throwing(new IllegalArgumentException("The provided file name "
+                    + "must end with an extension '.css'."));
+        }
+        return log.exit(originalFileName.replaceAll("(.+?)\\.css", 
+                "$1" + this.prop.getCssVersionExtension() + ".css"));
     }
 
     /**

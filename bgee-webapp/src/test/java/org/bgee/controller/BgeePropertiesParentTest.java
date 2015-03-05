@@ -12,7 +12,9 @@ import org.junit.Before;
  * {@link BgeeProperties} tests.
  * 
  * @author Mathieu Seppey
- * @version Bgee 13
+ * @author Valentine Rech de Laval
+ * @author Frederic Bastian
+ * @version Bgee 13 Mar. 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -39,7 +41,9 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);
@@ -62,7 +66,9 @@ public abstract class BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY);
+        System.clearProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY);
         System.clearProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY);

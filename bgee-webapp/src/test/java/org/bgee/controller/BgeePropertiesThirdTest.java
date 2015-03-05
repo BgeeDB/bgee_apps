@@ -11,7 +11,9 @@ import org.junit.Test;
  * the per-thread singleton behavior.
  * 
  * @author Mathieu Seppey
- * @version Bgee 13
+ * @author Valentine Rech de Laval
+ * @author Frederic Bastian
+ * @version Bgee 13 Mar. 2015
  * @since Bgee 13
  * @see BgeePropertiesParentTest
  * @see BgeePropertiesFirstTest
@@ -39,7 +41,9 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         System.setProperty(BgeeProperties.DOWNLOAD_EXPR_FILES_ROOT_DIRECTORY_KEY, "/downExprFileDir");
         System.setProperty(BgeeProperties.DOWNLOAD_DIFF_EXPR_FILES_ROOT_DIRECTORY_KEY, "/downDiffExprFileDir");
         System.setProperty(BgeeProperties.JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, "/jsFilesRootDir");
+        System.setProperty(BgeeProperties.JAVASCRIPT_VERSION_EXTENSION_KEY, "-extension-js-1");
         System.setProperty(BgeeProperties.CSS_FILES_ROOT_DIRECTORY_KEY, "/cssFileRootDir");
+        System.setProperty(BgeeProperties.CSS_VERSION_EXTENSION_KEY, "-extension-css-1");
         System.setProperty(BgeeProperties.IMAGES_ROOT_DIRECTORY_KEY, "/imgRootDir");
         System.setProperty(BgeeProperties.TOP_OBO_RESULTS_URL_ROOT_DIRECTORY_KEY, "/topOboDir");
         System.setProperty(BgeeProperties.WEBPAGES_CACHE_CONFIG_FILE_NAME_KEY, "cacheConfigFileName");
@@ -59,7 +63,11 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved",
                 "/jsFilesRootDir", bgeeProp.getJavascriptFilesRootDirectory());
         assertEquals("Wrong property value retrieved",
+                "-extension-js-1", bgeeProp.getJavascriptVersionExtension());
+        assertEquals("Wrong property value retrieved",
                 "/cssFileRootDir", bgeeProp.getCssFilesRootDirectory());
+        assertEquals("Wrong property value retrieved",
+                "-extension-css-1", bgeeProp.getCssVersionExtension());
         assertEquals("Wrong property value retrieved",
                 "/imgRootDir", bgeeProp.getImagesRootDirectory());
         assertEquals("Wrong property value retrieved", 

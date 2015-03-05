@@ -117,13 +117,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     }
 
     @Override
-    protected void includeJs() {
-        log.entry();
-        super.includeJs();
-        log.exit();
-    }
-
-    @Override
     protected void includeCss() {
         log.entry();
         super.includeCss();

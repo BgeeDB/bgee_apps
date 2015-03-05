@@ -15,11 +15,6 @@
 
     <dependencies>
 
-        <!-- TODO: when bgee-core will be included, and that parameters will include 
-             sensible information such as database password, we could use 
-             the filtering feature of the maven-war-plugin, see 
-             http://maven.apache.org/plugins/maven-war-plugin/examples/adding-filtering-webresources.html 
-             (filtering section)-->
         <!-- Remove these dependencies as long as the webapp does not use 
             the actual Bgee API <dependency> <groupId>${project.groupId}</groupId> <artifactId>bgee-core</artifactId> 
             <version>${project.version}</version> <scope>compile</scope> </dependency> 
@@ -79,7 +74,6 @@
     </dependencies>
 
     <properties>
-        <m2eclipse.wtp.contextRoot>/</m2eclipse.wtp.contextRoot>
         <!-- properties used to rename css and js files with version number, 
              to avoid caching issues with proxis/web browers. Corresponds by default 
              to the project version number, but we might have additional updates of these files. -->
@@ -89,23 +83,30 @@
              maven-antrun-plugin. The files will be copied in the directory 
              used by maven-war-plugin to prepare the WAR packaging, 
              which is by default ${project.build.directory}/${project.build.finalName}. 
-             We declare this directory explicitly to ensure proper communication 
-             between maven-antrun-plugin and maven-war-plugin in any case. -->
+             But we declare this directory explicitly, to ensure proper communication 
+             between maven-antrun-plugin and maven-war-plugin in any case, 
+             and to be able to change the directory when running from Eclipse using m2e. -->
         <webapp.directory>${project.build.directory}/${project.build.finalName}</webapp.directory>
     </properties>
     
+    <!-- We define a profile so that maven-antrun-plugin knows where to copy 
+         the files when the webapp is run using m2e-wpt from Eclipse.  -->
     <profiles>
         <profile>
             <id>m2e</id>
             <!-- This profile is only active when the property "m2e.version"
-            is set, which is the case when building in Eclipse with m2e. -->
+                 is set, which is the case when building in Eclipse with m2e, 
+                 see http://stackoverflow.com/a/21574285/1768736. -->
             <activation>
                 <property>
                     <name>m2e.version</name>
                 </property>
             </activation>
             <properties>
+                <!-- change path where maven-antrun-plugin renames static files -->
                 <webapp.directory>${project.build.directory}/m2e-wtp/web-resources/</webapp.directory>
+                <!-- In order to have no extension in URLs, change tomcat context root -->
+                <m2eclipse.wtp.contextRoot>/</m2eclipse.wtp.contextRoot>
             </properties>
         </profile>
     </profiles>
@@ -113,7 +114,9 @@
       
     <build>
         <finalName>bgee-webapp-${project.version}</finalName>
+        
         <plugins>
+        
             <!-- We use the maven-antrun-plugin to rename css and javascript files 
                  with version number, to avoid caching issues with proxis/web browsers. 
                  I couldn't find any other convenient way to rename files. 
@@ -163,6 +166,7 @@
                     </execution>
                 </executions>
             </plugin>
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -194,14 +198,14 @@
                             <!-- override the destination directory for this resource, relative to the root of the WAR file -->
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
-                        
                     </webResources>
                     
                     <attachClasses>true</attachClasses>
-                    
                 </configuration>
             </plugin>
             
+            <!-- In order to properly test the class BgeeProperties, we need to ensure 
+                 that tests are run one at a time. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -211,6 +215,46 @@
                 </configuration>
             </plugin>
         </plugins>
+        
+        
+        <!-- When running server from Eclipse, we need to tell m2e to execute 
+             maven-antrun-plugin, to properly rename css and js files, by default it is not done. 
+             We need to modify the life cycle mapping, see 
+             https://www.eclipse.org/m2e/documentation/m2e-execution-not-covered.html. -->
+        <pluginManagement>
+            <plugins>
+                <!-- This plugin is not a real one, it is only used by m2e to obtain 
+                     config information. This is why it needs to be put in the section 
+                     pluginManagement, otherwise Maven would try to download it. -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-antrun-plugin</artifactId>
+                                        <versionRange>[1.0.0,)</versionRange>
+                                        <goals>
+                                            <goal>run</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <execute>
+                                            <runOnIncremental>false</runOnIncremental>
+                                        </execute >
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        
         
         <!-- In order to correctly filter bgee-webapp.properties even outside of the WAR file -->
         <resources>
@@ -223,36 +267,5 @@
             </resource>  
         </resources>
         
-        <pluginManagement>
-            <plugins>
-                <plugin>
-     <groupId>org.eclipse.m2e</groupId>
-     <artifactId>lifecycle-mapping</artifactId>
-     <version>1.0.0</version>
-     <configuration>
-       <lifecycleMappingMetadata>
-         <pluginExecutions>
-           <pluginExecution>
-             <pluginExecutionFilter>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-antrun-plugin</artifactId>
-               <versionRange>[1.0.0,)</versionRange>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-             </pluginExecutionFilter>
-             <action>
-               <execute>
-                 <runOnIncremental>false</runOnIncremental>
-               </execute >
-             </action>
-           </pluginExecution>
-         </pluginExecutions>
-       </lifecycleMappingMetadata>
-     </configuration>
-    </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
-
 </project>

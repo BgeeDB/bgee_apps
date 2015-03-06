@@ -80,17 +80,16 @@
         <css.version>${project.version}</css.version>
         <js.version>${project.version}</js.version>
         <!-- We will rename css and javascript files with version number using 
-             maven-antrun-plugin. The files will be copied in the directory 
-             used by maven-war-plugin to prepare the WAR packaging, 
-             which is by default ${project.build.directory}/${project.build.finalName}. 
-             But we declare this directory explicitly, to ensure proper communication 
-             between maven-antrun-plugin and maven-war-plugin in any case, 
-             and to be able to change the directory when running from Eclipse using m2e. -->
-        <webapp.directory>${project.build.directory}/${project.build.finalName}</webapp.directory>
+             maven-antrun-plugin. The files will be copied in a temp directory, 
+             and added by maven-war-plugin to the WAR file in the standard directory. -->
+        <rename.tmp.directory>${project.build.directory}/rename_tmp</rename.tmp.directory>
     </properties>
     
-    <!-- We define a profile so that maven-antrun-plugin knows where to copy 
-         the files when the webapp is run using m2e-wpt from Eclipse.  -->
+    <!-- There is a problem when running the webapp from Eclipse: m2e-wtp acquires 
+         the web-resources before any lifecycle can be launched, so, before 
+         maven-antrun-plugin can rename the files. We define a profile so that 
+         maven-antrun-plugin copies files directly into the m2e-wtp web-resources directory, 
+         when running from Eclipse. -->
     <profiles>
         <profile>
             <id>m2e</id>
@@ -104,7 +103,7 @@
             </activation>
             <properties>
                 <!-- change path where maven-antrun-plugin renames static files -->
-                <webapp.directory>${project.build.directory}/m2e-wtp/web-resources/</webapp.directory>
+                <rename.tmp.directory>${project.build.directory}/m2e-wtp/web-resources/</rename.tmp.directory>
                 <!-- In order to have no extension in URLs, change tomcat context root -->
                 <m2eclipse.wtp.contextRoot>/</m2eclipse.wtp.contextRoot>
             </properties>
@@ -132,31 +131,26 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
+                        <id>rename-resources</id>
                         <!-- perform copy before the package phase, 
-                             where maven-war-plugin builds the WAR file -->
-                        <phase>prepare-package</phase>
+                             when maven-war-plugin builds the WAR file -->
+                        <phase>process-resources</phase>
                         <configuration>
                             <target>
-                                <!-- We copy our resource files to the directory that 
-                                     maven-war-plugin uses to prepare the packaging 
-                                     of the WAR file. This corresponds to the parameter 
-                                     webappDirectory of the maven-war-plugin, which is by default 
-                                     ${project.build.directory}/${project.build.finalName}; 
-                                     but we have declared this directory explicitly to ensure 
-                                     proper communication between maven-antrun-plugin and 
-                                     maven-war-plugin in any case. 
-                                     Note that we will configure the maven-war-plugin to not copy 
-                                     files in src/main/webapp/css/ and src/main/webapp/js/ itself. -->
+                                <!-- Copy renamed files in a temp directory. 
+                                     We will configure the maven-war-plugin to not copy 
+                                     files in src/main/webapp/css/ and src/main/webapp/js/ itself, 
+                                     and to rather include these renamed files. -->
                                  <!-- Explanation to select files to copy/rename: 
                                       http://stackoverflow.com/a/16092997/1768736 -->
-                                 <copy todir="${webapp.directory}/css/">
-                                     <fileset dir="src/main/webapp/css/">
+                                 <copy todir="${rename.tmp.directory}/css/">
+                                     <fileset dir="${basedir}/src/main/webapp/css/">
                                          <include name="**/*.css" />
                                      </fileset>
                                      <mapper type="glob" from="*.css" to="*-${css.version}.css"/>
                                  </copy>
-                                 <copy todir="${webapp.directory}/js/">
-                                     <fileset dir="src/main/webapp/js/">
+                                 <copy todir="${rename.tmp.directory}/js/">
+                                     <fileset dir="${basedir}/src/main/webapp/js/">
                                          <include name="**/*.js" />
                                      </fileset>
                                      <mapper type="glob" from="*.js" to="*-${js.version}.js"/>
@@ -173,18 +167,18 @@
                 <configuration>
                     
                     <!-- We do no let the maven-war-plugin take care of the css and 
-                         javascript files: in order to avoid caching issues with proxis/web browsers, 
-                         we want to rename css and javascript files with version number, which is not 
-                         easily doable with this plugin. See comments on the use 
-                         of the maven-antrun-plugin above for more details. -->
+                         javascript files, they are renamed with version number 
+                         by maven-antrun-plugin, see above. -->
                     <warSourceExcludes>css/,js/</warSourceExcludes>
-                    <!-- maven-antrun-plugin will copy renamed javascript and css files 
-                         in the directory that maven-war-plugin uses to prepare the packaging 
-                         of the WAR file. We declare this directory explicitly to ensure 
-                         proper communication between maven-antrun-plugin and maven-war-plugin 
-                         in any case. -->
-                    <webappDirectory>${webapp.directory}</webappDirectory>
                     <webResources>
+                        <!-- include the resources renamed by maven-antrun-plugin, 
+                             at the root of the WAR file -->
+                        <resource>
+                            <directory>${rename.tmp.directory}</directory>
+                            <includes>
+                                <include>**/*</include>
+                            </includes>
+                        </resource>
                         <!-- We filter bgee-webapp.properties so that css version number 
                              and javacript version number are configured. -->
                         <resource>
@@ -195,7 +189,8 @@
                             </includes>
                             <!-- Activates filtering -->
                             <filtering>true</filtering>
-                            <!-- override the destination directory for this resource, relative to the root of the WAR file -->
+                            <!-- override the destination directory for this resource, 
+                                 relative to the root of the WAR file -->
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
                     </webResources>
@@ -218,7 +213,7 @@
         
         
         <!-- When running server from Eclipse, we need to tell m2e to execute 
-             maven-antrun-plugin, to properly rename css and js files, by default it is not done. 
+             maven-antrun-plugin, to properly rename css and js files, by default it doesn't. 
              We need to modify the life cycle mapping, see 
              https://www.eclipse.org/m2e/documentation/m2e-execution-not-covered.html. -->
         <pluginManagement>
@@ -244,7 +239,10 @@
                                     </pluginExecutionFilter>
                                     <action>
                                         <execute>
-                                            <runOnIncremental>false</runOnIncremental>
+                                            <!-- set to true, otherwise changes are not seen, 
+                                            e.g., to a css file, and you would need to perform 
+                                            a project update each time. -->
+                                            <runOnIncremental>true</runOnIncremental>
                                         </execute >
                                     </action>
                                 </pluginExecution>
